@@ -17,7 +17,7 @@ import heapq
 
 import tensorflow as tf
 from zoo import init_nncontext
-from zoo.pipeline.api.net import TFOptimizer, TFDataset
+from zoo.tfpark import TFOptimizer, TFDataset
 from bigdl.optim.optimizer import *
 import numpy as np
 import sys

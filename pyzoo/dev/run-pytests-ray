@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #
 # Copyright 2018 Analytics Zoo Authors.
 #
@@ -14,5 +16,17 @@
 # limitations under the License.
 #
 
-from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFPredictor
-from zoo.tfpark.model import KerasModel
+. `dirname $0`/prepare_env.sh
+
+cd "`dirname $0`"
+
+export PYSPARK_PYTHON=python
+export PYSPARK_DRIVER_PYTHON=python
+
+python -m pytest -v ../test/zoo/ray/ \
+       --ignore=../test/zoo/ray/integration/
+exit_status_2=$?
+if [ $exit_status_2 -ne 0 ];
+then
+    exit $exit_status_2
+fi
