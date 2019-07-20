@@ -14,31 +14,17 @@
 # limitations under the License.
 #
 import torch
-import torch.nn as nn
 import os
 import tempfile
+import shutil
 import numpy as np
 
 from pyspark import RDD
 from bigdl.nn.layer import Layer
-from bigdl.nn.criterion import Criterion
 from zoo import getOrCreateSparkContext
 from zoo.feature.image import ImageSet
 from bigdl.util.common import callBigDlFunc
 from zoo.pipeline.api.net.tfnet import to_sample_rdd
-
-class TempModule(nn.Module):
-    def __init__(self, lossFunc):
-        super(TempModule, self).__init__()
-        self.func = lossFunc
-
-    def forward(self, x, y):
-        return self.func(x, y)
-
-class TorchIdentityCriterion(Criterion):
-    def __init__(self):
-        super(TorchIdentityCriterion, self).__init__(None, "float")
-
 
 
 class TorchNet(Layer):
@@ -48,12 +34,11 @@ class TorchNet(Layer):
     :param path: path to the TorchScript model.
     """
 
-    def __init__(self, path, lossPath=None, bigdl_type="float"):
-        super(TorchNet, self).__init__(None, bigdl_type, path, lossPath)
+    def __init__(self, path, bigdl_type="float"):
+        super(TorchNet, self).__init__(None, bigdl_type, path)
 
     @staticmethod
-    def from_pytorch(module, input_shape, lossFunc=None, pred_shape=None, label_shape=None,
-                     pred_input=None, label_input=None):
+    def from_pytorch(module, input_shape):
         """
         Create a TorchNet directly from PyTorch model, e.g. model in torchvision.models
         :param module: a PyTorch model
@@ -66,17 +51,8 @@ class TorchNet(Layer):
         path = os.path.join(temp, "model.pt")
         traced_script_module.save(path)
 
-        if lossFunc:
-            pred_input = pred_input if pred_input is not None else torch.rand(pred_shape)
-            label_input = label_input if label_input is not None else torch.rand(label_shape)
-
-            traced_script_loss = torch.jit.trace(TempModule(lossFunc).eval(),
-                                                 (pred_input, label_input))
-            lossPath = os.path.join(temp, "loss.pt")
-            traced_script_loss.save(lossPath)
-            net = TorchNet(path, lossPath)
-        else:
-            net = TorchNet(path)
+        net = TorchNet(path)
+        shutil.rmtree(temp)
 
         return net
 
@@ -111,3 +87,4 @@ class TorchNet(Layer):
                 return [Layer.convert_output(result) for result in results]
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))
+

@@ -193,16 +193,12 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
     pids.asScala.foreach(pid => processToBeKill.add(pid + ""))
   }
 
-  def createTorchNet(modelPath: String, lossPath: String): TorchNet = {
-    if (lossPath == null) {
+  def createTorchNet(modelPath: String): TorchNet = {
       TorchNet(modelPath)
-    } else {
-      TorchNet(modelPath, lossPath)
-    }
   }
 
-  def createTorchIdentityCriterion(): TorchIdentityCriterion = {
-    new TorchIdentityCriterion()
+  def createTorchCriterion(lossPath: String): TorchCriterion = {
+    TorchCriterion(lossPath)
   }
 
 }

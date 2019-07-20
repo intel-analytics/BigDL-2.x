@@ -13,11 +13,20 @@ import java.nio.file.Paths;
  */
 class PytorchModel {
 
-    static native long loadNative(String modelPath, String lossPath);
+    static native long loadModelNative(String modelPath);
 
-    static native JTensor forwardNative(long nativeRef, float[] storage, int offset, int[] shape);
+    static native long loadLossNative(String lossPath);
 
-    static native JTensor backwardNative(long nativeRef, float[] storage, int offset, int[] shape);
+    static native JTensor modelForwardNative(
+            long nativeRef, float[] storage, int offset, int[] shape);
+
+    static native JTensor modelBackwardNative(long nativeRef, float[] storage, int offset, int[] shape);
+
+    static native JTensor lossForwardNative(
+            long nativeRef, float[] input_storage, int input_offset, int[] input_shape,
+            float[] label_storage, int label_offset, int[] label_shape);
+
+    static native JTensor lossBackwardNative(long nativeRef);
 
     static native float[] getGradientNative(long nativeRef);
 
@@ -25,7 +34,9 @@ class PytorchModel {
 
     static native float[] getWeightNative(long nativeRef);
 
-    static native void releaseNative(long nativeRef);
+    static native void releaseModelNative(long nativeRef);
+
+    static native void releaseLossNative(long nativeRef);
 
     static native int test();
 

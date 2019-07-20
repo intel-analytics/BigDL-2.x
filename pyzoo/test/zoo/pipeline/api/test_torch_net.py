@@ -16,12 +16,14 @@
 
 import torch
 from torch import nn
+import torch.nn.functional as F
 import torchvision
 import numpy as np
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.pipeline.api.net.torch_net import TorchNet
+from zoo.pipeline.api.net.torch_criterion import TorchCriterion
 
 
 class TestTF(ZooTestCase):
@@ -36,10 +38,10 @@ class TestTF(ZooTestCase):
                                [-0.03913354128599167, 0.11446280777454376, -1.7967549562454224,
                                 -1.2342952489852905, -0.819004476070404]))
 
-    def test_linear_gradient_match(self):
 
-        input = [[1., -0.5], [0.5, -1.]]
-        label = [[0.1], [-1]]
+    def test_linear_gradient_match(self):
+        input = [[0.5, 1.], [-0.3, 1.2]]
+        label = [[0.6], [-0.9]]
         torch_input = torch.tensor(input)
         torch_label = torch.tensor(label)
 
@@ -51,17 +53,26 @@ class TestTF(ZooTestCase):
         torch_loss.backward()
         torch_grad = model.weight.grad.tolist()[0] + model.bias.grad.tolist()
 
-        torch_net = TorchNet.from_pytorch(model, [1, 2], criterion.forward, pred_shape=[1, 1], label_shape=[1, 1])
+        # AZ part
+        az_net = TorchNet.from_pytorch(model, [1, 2])
+        az_criterion = TorchCriterion.from_pytorch(lossFunc=criterion, input_shape=[1, 1],
+                                                   label_shape=[1, 1])
 
-        az_output = torch_net.forward(np.array(input))
+        az_input = np.array(input)
         az_label = np.array(label)
-        az_loss = torch_net.backward(az_output, az_label)
-        az_grad = list(torch_net.parameters().values())[0]['gradWeight']
 
+        az_output = az_net.forward(az_input)
+        az_loss_output = az_criterion.forward(az_output, az_label)
+        az_loss_backward = az_criterion.backward(az_output, az_label)
+        az_model_backward = az_net.backward(az_input, az_loss_backward)
+
+        az_grad = list(az_net.parameters().values())[0]['gradWeight']
+
+        assert np.allclose(torch_loss.tolist(), az_loss_output)
         assert np.allclose(torch_grad, az_grad.tolist())
 
-    def test_conv2D_gradient_match(self):
 
+    def test_conv2D_gradient_match(self):
         class SimpleTorchModel(nn.Module):
             def __init__(self):
                 super(SimpleTorchModel, self).__init__()
@@ -72,38 +83,78 @@ class TestTF(ZooTestCase):
             def forward(self, x):
                 x = self.dense1(x)
                 x = x.view(-1, 3, 4, 4)
-                x = F.relu(self.conv1(x))
-                x = F.max_pool2d(x, 2)
+                x = torch.relu(self.conv1(x))
+                x = torch.max_pool2d(x, 2)
                 x = x.view(x.size(0), -1)
-                x = F.sigmoid(self.dense2(x))
+                x = torch.sigmoid(self.dense2(x))
                 return x
-
 
         input = [[1., -0.5], [0.5, -1.]]
         label = [[1., -0.5]]
         torch_input = torch.tensor(input)
         torch_label = torch.tensor(label)
 
-        model = SimpleTorchModel()
-        criterion = nn.MSELoss()
+        torch_model = SimpleTorchModel()
+        torch_criterion = nn.MSELoss()
+
+        torch_output = torch_model.forward(torch_input)
+        torch_loss = torch_criterion.forward(torch_output, torch_label)
+        torch_loss.backward()
+        torch_grad = torch_model.dense1.weight.grad.flatten().tolist() + torch_model.dense1.bias.grad.flatten().tolist() + \
+                     torch_model.conv1.weight.grad.flatten().tolist() + torch_model.conv1.bias.grad.flatten().tolist() + \
+                     torch_model.dense2.weight.grad.flatten().tolist() + torch_model.dense2.bias.grad.flatten().tolist()
+
+        # AZ part
+        az_net = TorchNet.from_pytorch(torch_model, [1, 2])
+        az_criterion = TorchCriterion.from_pytorch(lossFunc=torch_criterion.forward, input_shape=[1, 1],
+                                                   label_shape=[1, 1])
+
+        az_input = np.array(input)
+        az_label = np.array(label)
+        az_output = az_net.forward(np.array(input))
+        az_loss_output = az_criterion.forward(az_output, az_label)
+        az_loss_backward = az_criterion.backward(az_output, az_label)
+        az_model_backward = az_net.backward(az_input, az_loss_backward)
+
+        az_grad = list(az_net.parameters().values())[0]['gradWeight']
+
+        assert np.allclose(torch_loss.tolist(), az_loss_output)
+        assert np.allclose(torch_grad, az_grad.tolist())
+
+
+    def test_cross_entrophy_match(self):
+        input = [[0.5, 1.], [-0.3, 1.2]]
+        label = [3, 6]
+        torch_input = torch.tensor(input)
+        torch_label = torch.tensor(label).long()
+
+        model = nn.Linear(2, 10)
+        criterion = nn.CrossEntropyLoss()
+        def lossFunc(input, target):
+            return criterion.forward(input, target.flatten().long())
 
         torch_output = model.forward(torch_input)
         torch_loss = criterion.forward(torch_output, torch_label)
         torch_loss.backward()
-        torch_grad = model.dense1.weight.grad.flatten().tolist() + model.dense1.bias.grad.flatten().tolist() + \
-                     model.conv1.weight.grad.flatten().tolist() + model.conv1.bias.grad.flatten().tolist() + \
-                     model.dense2.weight.grad.flatten().tolist() + model.dense2.bias.grad.flatten().tolist()
+        torch_grad = model.weight.grad.flatten().tolist() + model.bias.grad.tolist()
 
-        torch_net = TorchNet.from_pytorch(model, [1, 2], criterion.forward, pred_shape=[1, 1], label_shape=[1, 1])
+        # AZ part
+        az_net = TorchNet.from_pytorch(model, [1, 2])
+        az_criterion = TorchCriterion.from_pytorch(lossFunc=lossFunc, input_shape=[1, 10],
+                                                   label_shape=[1, 1])
 
-        az_output = torch_net.forward(np.array(input))
+        az_input = np.array(input)
         az_label = np.array(label)
-        az_loss = torch_net.backward(az_output, az_label)
-        az_grad = list(torch_net.parameters().values())[0]['gradWeight']
 
+        az_output = az_net.forward(az_input)
+        az_loss_output = az_criterion.forward(az_output, az_label)
+        az_loss_backward = az_criterion.backward(az_output, az_label)
+        az_model_backward = az_net.backward(az_input, az_loss_backward)
+
+        az_grad = list(az_net.parameters().values())[0]['gradWeight']
+
+        assert np.allclose(torch_loss.tolist(), az_loss_output)
         assert np.allclose(torch_grad, az_grad.tolist())
-
-
 
 
 if __name__ == "__main__":

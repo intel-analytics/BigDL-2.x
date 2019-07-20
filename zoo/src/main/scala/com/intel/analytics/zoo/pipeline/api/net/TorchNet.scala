@@ -34,10 +34,8 @@ import scala.reflect.ClassTag
 /**
  * [[TorchNet]] wraps a TorchScript model as a single layer.
  */
-class TorchNet private(private val modelHolder: TorchModelHolder,
-                       // TODO: separate it to TorchCriterion?
-                       private val lossHolder: TorchModelHolder)
-  extends AbstractModule[Tensor[Float], Tensor[Float], Float] with Predictable[Float] {
+class TorchNet private(private val modelHolder: TorchModelHolder)
+    extends AbstractModule[Tensor[Float], Tensor[Float], Float] with Predictable[Float] {
 
   protected val module: Module[Float] = this
   implicit val ev = TensorNumeric.NumericFloat
@@ -53,30 +51,24 @@ class TorchNet private(private val modelHolder: TorchModelHolder,
   @transient
   lazy val nativeRef: Long = {
     println("TorchNet loading in " + this)
-    val ref = if (lossHolder != null)
-      TorchNet.loadPytorchModel(modelHolder.torchBytes, lossHolder.torchBytes)
-    else
-      TorchNet.loadPytorchModel(modelHolder.torchBytes, modelHolder.torchBytes)
+    val ref = TorchNet.loadPytorchModel(modelHolder.torchBytes)
 
     if (weights == null) {
       val w = PytorchModel.getWeightNative(ref).clone()
       weights = Tensor(w, Array(w.length))
-      gradients = Tensor(Array.tabulate(w.length)(i => 0f), Array(w.length))
+      if(this.isTraining()) {
+        gradients = Tensor(Array.tabulate(w.length)(i => 0f), Array(w.length))
+      } else {
+        gradients = Tensor.ones(1)
+      }
     } else{
       PytorchModel.updateWeightNative(ref, weights.storage().array())
     }
     ref
   }
 
-  ModelBroadcast
-
-
   override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
     nativeRef
-    println("-------- weights: " + weights.storage().array().take(5).mkString(", ")
-      + "-------- gradients: " + gradients.storage().array().take(5).mkString(", ")
-      + "-------- TORCH_NET: " + this
-      + "-------- TORCH_MODEL: " + this.nativeRef)
     (Array(weights), Array(gradients))
   }
 
@@ -89,7 +81,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder,
     val data = input.storage().array()
     val size = input.size()
     val offset = input.storageOffset() - 1
-    val result = PytorchModel.forwardNative(nativeRef, data, offset, size)
+    val result = PytorchModel.modelForwardNative(nativeRef, data, offset, size)
     val resultTensor = Tensor(result.getData, result.getShape)
     output.set(resultTensor)
   }
@@ -98,12 +90,11 @@ class TorchNet private(private val modelHolder: TorchModelHolder,
     val data = gradOutput.storage().array()
     val size = gradOutput.size()
     val offset = gradOutput.storageOffset() - 1
-    val result = PytorchModel.backwardNative(nativeRef, data, offset, size)
+    val result = PytorchModel.modelBackwardNative(nativeRef, data, offset, size)
     val resultTensor = Tensor(result.getData, result.getShape)
 
     val g = PytorchModel.getGradientNative(this.nativeRef).clone()
     System.arraycopy(g, 0, gradients.storage().array(), 0, g.length)
-
     gradInput.set(resultTensor)
   }
 
@@ -113,9 +104,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder,
 
   override def release(): Unit = {
     super.release()
-    if (nativeRef != null) {
-      PytorchModel.releaseNative(nativeRef)
-    }
+    PytorchModel.releaseModelNative(nativeRef)
   }
 }
 
@@ -172,29 +161,21 @@ object TorchNet {
 
   /**
    * Create a TorchNet from a saved TorchScript Model
-   * @param path Path to the TorchScript Model.
+   * @param modelPath Path to the TorchScript Model.
    * @return
    */
-  def apply(path: String): TorchNet = {
-    // TODO: add support for HDFS path
-    val modelbytes = Files.readAllBytes(Paths.get(path))
-    new TorchNet(new TorchModelHolder(modelbytes, path), null)
-  }
-
-  def apply(modelPath: String, lossPath: String): TorchNet = {
+  def apply(modelPath: String): TorchNet = {
     // TODO: add support for HDFS path
     val modelbytes = Files.readAllBytes(Paths.get(modelPath))
-    val lossbytes = Files.readAllBytes(Paths.get(lossPath))
-    new TorchNet(new TorchModelHolder(modelbytes, modelPath),
-      new TorchModelHolder(lossbytes, lossPath))
+    new TorchNet(new TorchModelHolder(modelbytes, modelPath))
   }
 
   // extract libs from zoo jar file
   private def loadPytorchNatives(): Unit = {
-      loadNative("pytorch/libpytorch-engine.so")
+    loadNativelib("pytorch/libpytorch-engine.so")
   }
 
-  private def loadNative(path: String): Unit = {
+  private def loadNativelib(path: String): Unit = {
     val inputStream = TorchNet.getClass.getResourceAsStream(s"/${path}")
     val file = File.createTempFile("PytorchLoader", "tmp")
     val src = Channels.newChannel(inputStream)
@@ -211,16 +192,13 @@ object TorchNet {
   }
 
 
-  private[net] def loadPytorchModel(bytes: Array[Byte], lossBytes: Array[Byte]): Long = {
+  private[net] def loadPytorchModel(bytes: Array[Byte]): Long = {
     var nativeRef = -1L
     try {
       val tmpFile = File.createTempFile("TorchNet", "_pt")
       Files.write(Paths.get(tmpFile.toURI), bytes)
-      val lossFile = File.createTempFile("TorchNet", "_lpt")
-      Files.write(Paths.get(lossFile.toURI), lossBytes)
-      nativeRef = PytorchModel.loadNative(tmpFile.getAbsolutePath, lossFile.getAbsolutePath)
+      nativeRef = PytorchModel.loadModelNative(tmpFile.getAbsolutePath)
       FileUtils.deleteQuietly(tmpFile)
-      FileUtils.deleteQuietly(lossFile)
     }
     catch {
       case io: IOException => {
@@ -231,16 +209,5 @@ object TorchNet {
     nativeRef
   }
 
-}
-
-class TorchIdentityCriterion extends AbstractCriterion[Activity, Activity, Float]() {
-
-  override def updateOutput(input: Activity, target: Activity): Float = {
-    input.toTensor[Float].mean()
-  }
-  override def updateGradInput(input: Activity, target: Activity): Activity = {
-    gradInput = target
-    gradInput
-  }
 }
 

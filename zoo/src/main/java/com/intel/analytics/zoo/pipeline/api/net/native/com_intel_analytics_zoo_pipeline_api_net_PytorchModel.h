@@ -9,27 +9,51 @@ extern "C" {
 #endif
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
- * Method:    loadNative
- * Signature: (Ljava/lang/String;Ljava/lang/String;)J
+ * Method:    loadModelNative
+ * Signature: (Ljava/lang/String;)J
  */
-JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_loadNative
-  (JNIEnv *, jclass, jstring, jstring);
+JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_loadModelNative
+  (JNIEnv *, jclass, jstring);
 
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
- * Method:    forwardNative
+ * Method:    loadLossNative
+ * Signature: (Ljava/lang/String;)J
+ */
+JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_loadLossNative
+  (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
+ * Method:    modelForwardNative
  * Signature: (J[FI[I)Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
  */
-JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_forwardNative
+JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_modelForwardNative
   (JNIEnv *, jclass, jlong, jfloatArray, jint, jintArray);
 
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
- * Method:    backwardNative
+ * Method:    modelBackwardNative
  * Signature: (J[FI[I)Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
  */
-JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_backwardNative
+JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_modelBackwardNative
   (JNIEnv *, jclass, jlong, jfloatArray, jint, jintArray);
+
+/*
+ * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
+ * Method:    lossForwardNative
+ * Signature: (J[FI[I[FI[I)Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
+ */
+JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_lossForwardNative
+  (JNIEnv *, jclass, jlong, jfloatArray, jint, jintArray, jfloatArray, jint, jintArray);
+
+/*
+ * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
+ * Method:    lossBackwardNative
+ * Signature: (J)Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
+ */
+JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_lossBackwardNative
+  (JNIEnv *, jclass, jlong);
 
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
@@ -57,18 +81,26 @@ JNIEXPORT jfloatArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_Pyto
 
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
- * Method:    releaseNative
+ * Method:    releaseModelNative
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_releaseNative
+JNIEXPORT void JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_releaseModelNative
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
+ * Method:    releaseLossNative
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_releaseLossNative
   (JNIEnv *, jclass, jlong);
 
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
  * Method:    test
- * Signature: ()V
+ * Signature: ()I
  */
-JNIEXPORT int JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_test
+JNIEXPORT jint JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_test
   (JNIEnv *, jclass);
 
 #ifdef __cplusplus
