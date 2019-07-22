@@ -156,30 +156,27 @@ class ImageClassificationSpec extends ZooSpecHelper {
   }
 
   "ImageClassifier" should "throw exception if input is empty locally" in {
-    val path = "./tempEmpty"
-    "mkdir " + path !!
+    val tempDir = Files.createTempDir()
     val thrown = intercept[Exception]{
       predictLocal("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/" +
         "imageclassification/imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model",
-        "analytics-zoo", path)
+        "analytics-zoo", tempDir.getAbsolutePath)
     }
     assert("requirement failed: ImageModel.predictImageSet: input is empty, please check your " +
       "image path." == thrown.getMessage)
-    "rm -rf " +  path +  " ./imc.model" !!
+    "rm -rf ./imc.model" !!
   }
 
   "ImageClassifier" should "throw exception if input is empty" in {
-    val path = "./tempEmpty"
-    "mkdir " + path !!
+    val tempDir = Files.createTempDir()
     val thrown = intercept[Exception]{
       predict("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/" +
         "imageclassification/imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model",
-        "analytics-zoo", path)
+        "analytics-zoo", tempDir.getAbsolutePath)
     }
     assert("requirement failed: ImageModel.predictImageSet: input is empty, please check your " +
       "image path." == thrown.getMessage)
-
-    "rm -rf " +  path +  " ./imc.model" !!
+    "rm -rf ./imc.model" !!
   }
 }
 
