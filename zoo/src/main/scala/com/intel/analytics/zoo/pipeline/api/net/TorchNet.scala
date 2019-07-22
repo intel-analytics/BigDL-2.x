@@ -104,11 +104,10 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     super.accGradParameters(input, gradOutput)
   }
 
-  override def release(): Unit = {
-    super.release()
-    if(nativeRef != null) {
-      PytorchModel.releaseModelNative(nativeRef)
-    }
+  // TODO: use release if possible. now for larger model it's causing early release
+  override def finalize(): Unit = {
+    super.finalize()
+    PytorchModel.releaseModelNative(nativeRef)
   }
 }
 

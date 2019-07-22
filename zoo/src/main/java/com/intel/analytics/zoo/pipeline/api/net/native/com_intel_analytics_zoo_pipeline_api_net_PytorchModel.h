@@ -95,13 +95,6 @@ JNIEXPORT void JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchMode
 JNIEXPORT void JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_releaseLossNative
   (JNIEnv *, jclass, jlong);
 
-/*
- * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
- * Method:    test
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_test
-  (JNIEnv *, jclass);
 
 #ifdef __cplusplus
 }

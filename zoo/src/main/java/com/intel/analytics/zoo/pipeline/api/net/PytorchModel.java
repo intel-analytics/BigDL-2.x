@@ -38,6 +38,4 @@ class PytorchModel {
 
     static native void releaseLossNative(long nativeRef);
 
-    static native int test();
-
 }
