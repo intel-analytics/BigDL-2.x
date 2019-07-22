@@ -223,7 +223,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
                 continue
                 # raise KeyError("Can not find " + name + " in config!")
             feat_config[name] = config[name]
-        self.past_seq_len = feat_config.get("past_seq_len", 50)
+        self.past_seq_len = feat_config.get("past_seq_len", 1)
         return feat_config
 
     def _check_input(self, input_df, mode="train"):
