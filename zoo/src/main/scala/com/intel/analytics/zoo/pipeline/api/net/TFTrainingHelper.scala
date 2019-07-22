@@ -195,7 +195,6 @@ class IdentityCriterion extends AbstractCriterion[Activity, Activity, Float]() {
     }
   }
   override def updateGradInput(input: Activity, target: Activity): Activity = {
-    gradInput = target
     gradInput
   }
 }
