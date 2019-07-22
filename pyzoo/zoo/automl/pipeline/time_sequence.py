@@ -40,7 +40,7 @@ class TimeSequencePipeline(Pipeline):
         print("**** Initialization info ****")
         for info in init_info:
             print(info + ":", self.config[info])
-        print("\n")
+        print("")
 
     def fit(self, input_df, validation_df=None, epoch_num=20):
         x, y = self.feature_transformers.transform(input_df, is_train=True)
@@ -56,7 +56,7 @@ class TimeSequencePipeline(Pipeline):
                  input_df,
                  metric=["mean_squared_error"]):
         """
-        evaluate the pipeline
+        evdev/run-pytestsaluate the pipeline
         :param input_df:
         :param metric:
         :return:

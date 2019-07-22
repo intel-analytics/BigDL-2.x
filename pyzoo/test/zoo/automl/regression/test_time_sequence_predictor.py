@@ -26,35 +26,28 @@ class TestTimeSequencePredictor(ZooTestCase):
         super().setup_method(method)
         ray.init()
 
-    def test_fit(self):
-        # sample_num should > past_seq_len, the default value of which is 50
+        # sample_num should > past_seq_len, the default value of which is 1
         sample_num = 100
-        dates = pd.date_range('1/1/2019', periods=sample_num)
-        values = np.random.randn(sample_num)
-        train_df = pd.DataFrame({"datetime": dates, "value": values})
-        tsp = TimeSequencePredictor(dt_col="datetime",
-                                    target_col="value",
-                                    extra_features_col=None, )
-        pipeline = tsp.fit(train_df)
-        assert isinstance(pipeline, TimeSequencePipeline)
-        assert isinstance(pipeline.feature_transformers, TimeSequenceFeatureTransformer)
-        assert isinstance(pipeline.model, BaseModel)
-        assert pipeline.config is not None
+        self.train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019',
+                                                                periods=sample_num),
+                                      "value": np.random.randn(sample_num)})
+        self.test_sample_num = 64
+        self.test_df = pd.DataFrame({"datetime": pd.date_range('1/10/2019',
+                                                               periods=self.test_sample_num),
+                                     "value": np.random.randn(self.test_sample_num)})
 
-    def test_fit_RandomRecipe(self):
-        # sample_num should > past_seq_len, the default value of which is 50
-        sample_num = 100
-        dates = pd.date_range('1/1/2019', periods=sample_num)
-        values = np.random.randn(sample_num)
-        train_df = pd.DataFrame({"datetime": dates, "value": values})
-        tsp = TimeSequencePredictor(dt_col="datetime",
-                                    target_col="value",
-                                    extra_features_col=None, )
-        pipeline = tsp.fit(train_df, recipe=RandomRecipe(1))
-        assert isinstance(pipeline, TimeSequencePipeline)
-        assert isinstance(pipeline.feature_transformers, TimeSequenceFeatureTransformer)
-        assert isinstance(pipeline.model, BaseModel)
-        assert pipeline.config is not None
+        self.future_seq_len_1 = 1
+        self.tsp_1 = TimeSequencePredictor(dt_col="datetime",
+                                           target_col="value",
+                                           future_seq_len=self.future_seq_len_1,
+                                           extra_features_col=None, )
+
+        self.future_seq_len_3 = 3
+        self.tsp_3 = TimeSequencePredictor(dt_col="datetime",
+                                           target_col="value",
+                                           future_seq_len=self.future_seq_len_3,
+                                           extra_features_col=None, )
+        self.default_past_seq_len = 1
 
     def teardown_method(self, method):
         """
@@ -62,6 +55,23 @@ class TestTimeSequencePredictor(ZooTestCase):
         """
         super().teardown_method(method)
         ray.shutdown()
+
+    def test_fit(self):
+        pipeline_1 = self.tsp_1.fit(self.train_df)
+        pipeline_3 = self.tsp_3.fit(self.train_df)
+        assert isinstance(pipeline_1, TimeSequencePipeline)
+        assert isinstance(pipeline_1.feature_transformers, TimeSequenceFeatureTransformer)
+        assert isinstance(pipeline_1.model, BaseModel)
+        assert pipeline_1.config is not None
+
+    def test_fit_RandomRecipe(self):
+        random_pipeline_1 = self.tsp_1.fit(self.train_df, recipe=RandomRecipe(1))
+        random_pipeline_3 = self.tsp_3.fit(self.train_df, recipe=RandomRecipe(1))
+        assert isinstance(random_pipeline_1, TimeSequencePipeline)
+        assert isinstance(random_pipeline_1.feature_transformers,
+                          TimeSequenceFeatureTransformer)
+        assert isinstance(random_pipeline_1.model, BaseModel)
+        assert random_pipeline_1.config is not None
 
 
 if __name__ == '__main__':

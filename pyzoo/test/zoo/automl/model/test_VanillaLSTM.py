@@ -42,7 +42,7 @@ class TestVanillaLSTM(ZooTestCase):
                                                   future_seq_len=future_seq_len)
         self.x_test = tsft._roll_test(test_data, past_seq_len=past_seq_len)
         self.config = {
-            'epochs': 2,
+            'epochs': 1,
             "lr": 0.001,
             "lstm_1_units": 16,
             "dropout_1": 0.2,
@@ -51,20 +51,14 @@ class TestVanillaLSTM(ZooTestCase):
             "batch_size": 32,
         }
         self.model = VanillaLSTM(check_optional_config=False, future_seq_len=future_seq_len)
-        self.y_pred = None
-        self.fitted = False
 
     def test_fit_eval(self):
         print("fit_eval:", self.model.fit_eval(self.x_train,
                                                self.y_train,
                                                **self.config))
-        self.fitted = True
 
     def test_evaluate(self):
-        if not self.fitted:
-            self.model.fit_eval(self.x_train,
-                                self.y_train,
-                                **self.config)
+        self.model.fit_eval(self.x_train, self.y_train, **self.config)
         mse, rs = self.model.evaluate(self.x_val,
                                       self.y_val,
                                       metric=['mean_squared_error', 'r_square'])
@@ -72,20 +66,14 @@ class TestVanillaLSTM(ZooTestCase):
         print("R square is:", rs)
 
     def test_predict(self):
-        if not self.fitted:
-            self.model.fit_eval(self.x_train,
-                                self.y_train,
-                                **self.config)
+        self.model.fit_eval(self.x_train, self.y_train, **self.config)
         self.y_pred = self.model.predict(self.x_test)
         assert self.y_pred.shape == (self.x_test.shape[0], 1)
 
     def test_save_restore(self):
         new_model = VanillaLSTM(check_optional_config=False)
-        if self.y_pred:
-            predict_before = self.y_pred
-        else:
-            self.model.fit_eval(self.x_train, self.y_train, **self.config)
-            predict_before = self.model.predict(self.x_test)
+        self.model.fit_eval(self.x_train, self.y_train, **self.config)
+        predict_before = self.model.predict(self.x_test)
 
         dirname = tempfile.mkdtemp(prefix="automl_test_vanilla")
         try:
