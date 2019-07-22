@@ -161,7 +161,7 @@ JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchMod
  * Signature: ([F[I)Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
  */
 JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_modelForwardNative
-  (JNIEnv * jenv, jclass jobj, jlong nativeRef, jfloatArray jstorage, jint joffset, jintArray jshape) {
+  (JNIEnv * jenv, jclass jobj, jlong nativeRef, jboolean isTraining, jfloatArray jstorage, jint joffset, jintArray jshape) {
 
     // to Torch Tensor
     jfloat* c_storage = (jfloat*) jenv -> GetPrimitiveArrayCritical(jstorage, JNI_FALSE);
@@ -177,7 +177,9 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
     }
     // create a Tensor
     auto torch_input_tensor = torch::from_blob(c_storage + joffset, torch_shape, at::kFloat);
-    torch_input_tensor.set_requires_grad(true);
+    if (isTraining) {
+        torch_input_tensor.set_requires_grad(true);
+    }
 
     // Create a vector of inputs.
     std::vector<torch::jit::IValue> inputs;
@@ -187,10 +189,13 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
 
     // Execute the model and turn its output into a tensor.
     at::Tensor output = model_ptr->forward(inputs).toTensor();
-    mtx.lock();
-    modelInputs[nativeRef] = torch_input_tensor;
-    modelOutputs[nativeRef] = output;
-    mtx.unlock();
+
+    if (isTraining) {
+        mtx.lock();
+        modelInputs[nativeRef] = torch_input_tensor;
+        modelOutputs[nativeRef] = output;
+        mtx.unlock();
+    }
 
     // Release critical part
     jenv -> ReleasePrimitiveArrayCritical(jstorage, c_storage, 0);

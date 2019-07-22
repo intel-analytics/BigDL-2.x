@@ -81,7 +81,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     val data = input.storage().array()
     val size = input.size()
     val offset = input.storageOffset() - 1
-    val result = PytorchModel.modelForwardNative(nativeRef, data, offset, size)
+    val result = PytorchModel.modelForwardNative(nativeRef, this.isTraining(), data, offset, size)
     val resultTensor = Tensor(result.getData, result.getShape)
     output.set(resultTensor)
   }
@@ -104,7 +104,9 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
 
   override def release(): Unit = {
     super.release()
-    PytorchModel.releaseModelNative(nativeRef)
+    if(nativeRef != null) {
+      PytorchModel.releaseModelNative(nativeRef)
+    }
   }
 }
 

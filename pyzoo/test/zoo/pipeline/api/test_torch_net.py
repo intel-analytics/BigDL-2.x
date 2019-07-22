@@ -55,7 +55,7 @@ class TestTF(ZooTestCase):
 
         # AZ part
         az_net = TorchNet.from_pytorch(model, [1, 2])
-        az_criterion = TorchCriterion.from_pytorch(lossFunc=criterion, input_shape=[1, 1],
+        az_criterion = TorchCriterion.from_pytorch(loss=criterion, input_shape=[1, 1],
                                                    label_shape=[1, 1])
 
         az_input = np.array(input)
@@ -106,7 +106,8 @@ class TestTF(ZooTestCase):
 
         # AZ part
         az_net = TorchNet.from_pytorch(torch_model, [1, 2])
-        az_criterion = TorchCriterion.from_pytorch(lossFunc=torch_criterion.forward, input_shape=[1, 1],
+        az_criterion = TorchCriterion.from_pytorch(loss=torch_criterion.forward,
+                                                   input_shape=[1, 1],
                                                    label_shape=[1, 1])
 
         az_input = np.array(input)
@@ -140,13 +141,70 @@ class TestTF(ZooTestCase):
 
         # AZ part
         az_net = TorchNet.from_pytorch(model, [1, 2])
-        az_criterion = TorchCriterion.from_pytorch(lossFunc=lossFunc, input_shape=[1, 10],
+        az_criterion = TorchCriterion.from_pytorch(loss=lossFunc, input_shape=[1, 10],
                                                    label_shape=[1, 1])
 
         az_input = np.array(input)
         az_label = np.array(label)
 
         az_output = az_net.forward(az_input)
+        az_loss_output = az_criterion.forward(az_output, az_label)
+        az_loss_backward = az_criterion.backward(az_output, az_label)
+        az_model_backward = az_net.backward(az_input, az_loss_backward)
+
+        az_grad = list(az_net.parameters().values())[0]['gradWeight']
+
+        assert np.allclose(torch_loss.tolist(), az_loss_output)
+        assert np.allclose(torch_grad, az_grad.tolist())
+
+
+    def test_Lenet_gradient_match(self):
+        class LeNet(nn.Module):
+            def __init__(self):
+                super(LeNet, self).__init__()
+                self.conv1 = nn.Conv2d(1, 20, 5, 1)
+                self.conv2 = nn.Conv2d(20, 50, 5, 1)
+                self.fc1 = nn.Linear(4 * 4 * 50, 500)
+                self.fc2 = nn.Linear(500, 10)
+
+            def forward(self, x):
+                x = F.relu(self.conv1(x))
+                x = F.max_pool2d(x, 2, 2)
+                x = F.relu(self.conv2(x))
+                x = F.max_pool2d(x, 2, 2)
+                x = x.view(-1, 4 * 4 * 50)
+                x = F.relu(self.fc1(x))
+                x = self.fc2(x)
+                return F.log_softmax(x, dim=1)
+
+        input = np.random.rand(2, 1, 28, 28)
+        label = [7, 3]
+        torch_input = torch.tensor(input).float()
+        torch_label = torch.tensor(label).long()
+
+        torch_model = LeNet()
+        torch_criterion = nn.CrossEntropyLoss()
+
+        torch_output = torch_model.forward(torch_input)
+        torch_loss = torch_criterion.forward(torch_output, torch_label)
+        torch_loss.backward()
+        torch_grad = torch_model.conv1.weight.grad.flatten().tolist() + torch_model.conv1.bias.grad.flatten().tolist() + \
+                     torch_model.conv2.weight.grad.flatten().tolist() + torch_model.conv2.bias.grad.flatten().tolist() + \
+                     torch_model.fc1.weight.grad.flatten().tolist() + torch_model.fc1.bias.grad.flatten().tolist() + \
+                     torch_model.fc2.weight.grad.flatten().tolist() + torch_model.fc2.bias.grad.flatten().tolist()
+
+        # AZ part
+        az_net = TorchNet.from_pytorch(torch_model, input_shape=[1, 1, 28, 28])
+
+        def lossFunc(input, target):
+            return torch_criterion.forward(input, target.flatten().long())
+
+        az_criterion = TorchCriterion.from_pytorch(loss=lossFunc, input_shape=[1, 10],
+                                                   label_shape=[1, 1])
+
+        az_input = np.array(input)
+        az_label = np.array(label)
+        az_output = az_net.forward(np.array(input))
         az_loss_output = az_criterion.forward(az_output, az_label)
         az_loss_backward = az_criterion.backward(az_output, az_label)
         az_model_backward = az_net.backward(az_input, az_loss_backward)
