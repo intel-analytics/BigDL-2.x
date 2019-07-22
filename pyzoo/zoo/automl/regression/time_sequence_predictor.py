@@ -44,14 +44,55 @@ class Recipe(ABC):
         pass
 
 
-class BasicRecipe(Recipe):
+class SmokeRecipe(Recipe):
     """
-    A basic recipe which can be used to get a taste of how it works.
-    tsp = TimeSequencePredictor(...,recipe = BasicRecipe(1))
+    A very simple Recipe for smoke test that runs one epoch and one iteration
+    with only 1 random sample.
+    """
+    def __init__(self):
+        pass
+
+    def search_space(self, all_available_features):
+        return {
+            "selected_features": all_available_features,
+            "lstm_1_units": RandomSample(lambda spec: np.random.choice([32, 64], size=1)[0]),
+            "dropout_1": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
+            "lstm_2_units": RandomSample(lambda spec: np.random.choice([32, 64], size=1)[0]),
+            "dropout_2": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
+            "lr": 0.001,
+            "batch_size": 1024,
+            "epochs": 1,
+            "past_seq_len": 1,
+        }
+
+    def runtime_params(self):
+        return {
+            "training_iteration": 1,
+            "num_samples": 1,
+        }
+
+
+class GridRandomRecipe(Recipe):
+    """
+    A recipe involves both grid search and random search.
+       tsp = TimeSequencePredictor(...,recipe = GridRandomRecipe(1))
+
+    @param num_rand_samples: number of hyper-param configurations sampled randomly
+    @param look_back: the length to look back, either a tuple with 2 int values,
+          which is in format is [min len, max len], or a single int, which is
+          a fixed length to look back.
     """
 
-    def __init__(self, num_samples=1):
-        self.num_samples = num_samples
+    def __init__(self, num_rand_samples=1, look_back=1):
+        self.num_samples = num_rand_samples
+        if isinstance(look_back, tuple) and len(look_back) == 2 and \
+                isinstance(look_back[0]) and isinstance(look_back[1]):
+            self.past_seq_config = RandomSample(
+                lambda spec: np.random.uniform(look_back[0], look_back[1]))
+        elif isinstance(look_back, int):
+            self.past_seq_config = look_back
+        else:
+            raise ValueError("look_back should be either [min_len,max_len] or fixed_len")
 
     def search_space(self, all_available_features):
         return {
@@ -66,14 +107,16 @@ class BasicRecipe(Recipe):
             "lr": 0.001,
             "lstm_1_units": GridSearch([16, 32]),
             "dropout_1": 0.2,
-            "lstm_2_units": 8,
+            "lstm_2_units": GridSearch([16, 32]),
             "dropout_2": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
             "batch_size": 1024,
+            "epochs": 5,
+            "past_seq_len": self.past_seq_config,
         }
 
     def runtime_params(self):
         return {
-            "training_iteration": 1,
+            "training_iteration": 10,
             "num_samples": self.num_samples,
         }
 
@@ -81,12 +124,28 @@ class BasicRecipe(Recipe):
 class RandomRecipe(Recipe):
     """
     Pure random sample Recipe. Often used as baseline.
-    tsp = TimeSequencePredictor(...,recipe = RandomRecipe(5))
+       tsp = TimeSequencePredictor(...,recipe = RandomRecipe(5))
+
+    @param num_rand_samples: number of hyper-param configurations sampled randomly
+    @param look_back: the length to look back, either a tuple with 2 int values,
+          which is in format is [min len, max len], or a single int, which is
+          a fixed length to look back.
     """
 
-    def __init__(self, num_samples=5, reward_metric=-0.05):
-        self.num_samples = num_samples
+    def __init__(self, num_rand_samples=1, look_back=1, reward_metric=-0.05):
+        self.num_samples = num_rand_samples
         self.reward_metric = reward_metric
+        if isinstance(look_back, list) and len(look_back) == 2 and \
+                isinstance(look_back[0], int) and isinstance(look_back[1], int):
+            self.past_seq_config = \
+                RandomSample(lambda spec:
+                             np.random.randint(look_back[0], look_back[1]+1, size=1)[0])
+        elif isinstance(look_back, int):
+            self.past_seq_config = look_back
+        else:
+            raise ValueError("look back is {}.\n "
+                             "look_back should be either [min_len,max_len] or fixed_len"
+                             .format(look_back))
 
     def search_space(self, all_available_features):
         return {
@@ -109,6 +168,8 @@ class RandomRecipe(Recipe):
             "lr": RandomSample(lambda spec: np.random.uniform(0.001, 0.01)),
             "batch_size": RandomSample(lambda spec:
                                        np.random.choice([32, 64, 1024], size=1, replace=False)[0]),
+            "epochs": 5,
+            "past_seq_len": self.past_seq_config,
         }
 
     def runtime_params(self):
@@ -163,7 +224,7 @@ class TimeSequencePredictor(object):
             input_df,
             validation_df=None,
             metric="mean_squared_error",
-            recipe=BasicRecipe(1),
+            recipe=SmokeRecipe(),
             distributed=False,
             hdfs_url=None
             ):
@@ -178,7 +239,11 @@ class TimeSequencePredictor(object):
         :param metric: String. Metric used for train and validation. Available values are
                        "mean_squared_error" or "r_square"
         :param recipe: a Recipe object. Various recipes covers different search space and stopping
-                      criteria. Default is BasicRecipe(1).
+                      criteria. Default is SmokeRecipe().
+        :param distributed: bool. Indicate if running in distributed mode. If true, we will upload
+                            models to HDFS.
+        :param hdfs_url: the hdfs url used to save file in distributed model. If None, the default
+                         hdfs_url will be used.
         :return: self
         """
         # check if cols are in the df
@@ -324,6 +389,7 @@ class TimeSequencePredictor(object):
 
 
 if __name__ == "__main__":
+    pass
     dataset_path = os.getenv("ANALYTICS_ZOO_HOME") + "/bin/data/NAB/nyc_taxi/nyc_taxi.csv"
     df = pd.read_csv(dataset_path)
     from zoo.automl.common.util import split_input_df
@@ -386,7 +452,7 @@ if __name__ == "__main__":
     pipeline = tsp.fit(train_df,
                        validation_df=val_df,
                        metric="mean_squared_error",
-                       # recipe=RandomRecipe(1),
+                       # recipe=RandomRecipe(look_back=[2, 4]),
                        distributed=distributed,
                        hdfs_url=hdfs_url)
 
