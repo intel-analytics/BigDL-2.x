@@ -94,6 +94,8 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     val resultTensor = Tensor(result.getData, result.getShape)
 
     val g = PytorchModel.getGradientNative(this.nativeRef).clone()
+    require(g.length == gradients.size().product && g.length == weights.size().product,
+      "gradients should have expected length")
     System.arraycopy(g, 0, gradients.storage().array(), 0, g.length)
     gradInput.set(resultTensor)
   }

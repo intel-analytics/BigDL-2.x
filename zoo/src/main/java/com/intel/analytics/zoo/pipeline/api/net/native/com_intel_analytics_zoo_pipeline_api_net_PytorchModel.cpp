@@ -66,7 +66,7 @@ auto getWeights(std::shared_ptr<torch::jit::script::Module> m, std::vector<float
     return 1;
 }
 
-auto getGradients(std::shared_ptr<torch::jit::script::Module> m, std::vector<float> &xv) -> int {
+auto getAndZeroGradients(std::shared_ptr<torch::jit::script::Module> m, std::vector<float> &xv) -> int {
     auto children = m->get_modules();
 
     if (children.size() == 0) {
@@ -74,18 +74,21 @@ auto getGradients(std::shared_ptr<torch::jit::script::Module> m, std::vector<flo
 
         for (size_t i = 0; i < slots.size(); ++i) {
             auto& x = slots[i];
-            if (x.value().toTensor().grad().defined()) {
-                size_t x_size = x.value().toTensor().grad().numel();
-                auto p = static_cast<float*>(x.value().toTensor().grad().storage().data());
+            auto& grad = x.value().toTensor().grad();
+            if (grad.defined()) {
+                size_t x_size = grad.numel();
+                auto p = static_cast<float*>(grad.storage().data());
                 for(size_t i = 0; i < x_size; i++)
                 {
                     xv.push_back(p[i]);
                 }
+                grad = grad.detach();
+                grad.zero_();
             }
         }
     } else {
         for (const auto& child : children) {
-            getGradients(child, xv);
+            getAndZeroGradients(child, xv);
         }
     }
 
@@ -423,7 +426,7 @@ JNIEXPORT jfloatArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_Pyto
   (JNIEnv * jenv, jclass jobj, jlong nativeRef) {
     std::shared_ptr<torch::jit::script::Module> model_ptr = modelHandles[nativeRef];
     std::vector<float> gradients;
-    getGradients(model_ptr, gradients);
+    getAndZeroGradients(model_ptr, gradients);
 
     jfloatArray result_storage = jenv -> NewFloatArray(gradients.size());
     jenv -> SetFloatArrayRegion(result_storage, 0, gradients.size(), &gradients[0]);
