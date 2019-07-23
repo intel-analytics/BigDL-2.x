@@ -36,11 +36,15 @@ class NetSpec extends ZooSpecHelper{
   }
 
   "Zoo CaffeLoader and BigDL CaffeLoader" should "have the same result" in {
-    val pp = "/home/litchy/bvlc.caffemodel"
-    val dd = "/home/litchy/deploy_overlap.prototxt"
-    val bigDlModel = BigDLCaffeLoader.loadCaffe[Float](dd, pp)._1
+    // val pp = "/home/litchy/bvlc.caffemodel"
+    // val dd = "/home/litchy/deploy_overlap.prototxt"
+    val resource = getClass().getClassLoader().getResource("models")
+    val path = resource.getPath + "/" + "caffe"
+    val ww = s"$path/test_persist.caffemodel"
+    val dd = s"$path/test_persist.prototxt"
+    val bigDlModel = BigDLCaffeLoader.loadCaffe[Float](dd, ww)._1
 
-    val zooModel = Net.loadCaffe[Float](dd, pp)
+    val zooModel = Net.loadCaffe[Float](dd, ww)
 
     val inputTensor = Tensor[Float](1, 3, 224, 224).apply1( e => Random.nextFloat())
     val zooResult = zooModel.forward(inputTensor)
