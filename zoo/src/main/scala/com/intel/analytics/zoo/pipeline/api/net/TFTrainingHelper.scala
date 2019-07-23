@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.pipeline.api.net
 
 import java.nio.FloatBuffer
 
-import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample, Transformer}
+import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, AbstractModule, Activity}
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.python.api.{PythonBigDLKeras, Sample => JSample}
@@ -27,6 +27,7 @@ import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, Ima
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.feature.image.ImageProcessing
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.{Accuracy, BinaryAccuracy, CategoricalAccuracy, SparseCategoricalAccuracy}
+import com.intel.analytics.zoo.pipeline.api.keras.models.InternalDistriOptimizer
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.tensorflow.{Session, Tensor => TTensor}
@@ -277,12 +278,25 @@ case class TrainMeta(inputNames: Array[String], outputNames: Array[String],
 class TFOptimizer(modelPath: String,
                   optimMethod: OptimMethod[Float],
                   x: RDD[Sample[Float]],
-                  batchSize: Int = 32) {
+                  batchSize: Int = 32,
+                  sparseOptimMethod: OptimMethod[Float] = null) {
   private val trainer: TFTrainingHelper = TFTrainingHelper(modelPath)
   private val optimizer: Optimizer[Float, MiniBatch[Float]] = {
-    val optimizer = Optimizer[Float](trainer, x, new IdentityCriterion(), batchSize)
+//    val optimizer = Optimizer[Float](trainer, x, new IdentityCriterion(), batchSize)
+    val optimizer =
+
+    new InternalDistriOptimizer[Float](
+      _model = trainer,
+      _dataset = (DataSet.rdd(x) ->
+        SampleToMiniBatch(batchSize))
+        .toDistributed(),
+      _criterion = new IdentityCriterion()
+    )
 
     optimizer.setOptimMethod(optimMethod)
+    if (sparseOptimMethod != null) {
+      optimizer.setSparseParameterProcessor(sparseOptimMethod)
+    }
     optimizer
   }
 
