@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import os
 import torch
 import torchvision
 import torch.nn as nn
@@ -43,6 +44,12 @@ class CatDogModel(nn.Module):
 
 
 if __name__ == '__main__':
+
+    if len(sys.argv) != 2:
+        print(sys.argv)
+        print("Need parameters: <imagePath>")
+        exit(-1)
+
     sparkConf = init_spark_conf().setAppName("resnet").setMaster("local[2]") \
         .set('spark.driver.memory', '10g')
     sc = init_nncontext(sparkConf)
@@ -57,7 +64,7 @@ if __name__ == '__main__':
                                                  sample_label=torch.LongTensor([1]))
 
     # prepare training data as Spark DataFrame
-    image_path = '/home/yuhao/workspace/data/dogs-vs-cats/demo/*/*'
+    image_path = sys.argv[1]
     imageDF = NNImageReader.readImages(image_path, sc, resizeH=256, resizeW=256, image_codec=1)
     getName = udf(lambda row: os.path.basename(row[0]), StringType())
     getLabel = udf(lambda name: 1.0 if name.startswith('cat') else 0.0, DoubleType())

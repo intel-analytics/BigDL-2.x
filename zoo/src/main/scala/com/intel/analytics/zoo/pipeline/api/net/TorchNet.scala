@@ -56,11 +56,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     if (weights == null) {
       val w = PytorchModel.getWeightNative(ref).clone()
       weights = Tensor(w, Array(w.length))
-      if(this.isTraining()) {
-        gradients = Tensor(Array.tabulate(w.length)(i => 0f), Array(w.length))
-      } else {
-        gradients = Tensor.ones(1)
-      }
+      gradients = Tensor()
     } else {
       PytorchModel.updateWeightNative(ref, weights.storage().array())
     }
@@ -93,7 +89,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     val result = PytorchModel.modelBackwardNative(nativeRef, data, offset, size)
     val resultTensor = Tensor(result.getData, result.getShape)
 
-    val g = PytorchModel.getGradientNative(this.nativeRef).clone()
+    val g = PytorchModel.getGradientNative(this.nativeRef)
     require(g.length == gradients.size().product && g.length == weights.size().product,
       "gradients should have expected length")
     System.arraycopy(g, 0, gradients.storage().array(), 0, g.length)
@@ -102,6 +98,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
 
   override def accGradParameters(input: Tensor[Float], gradOutput: Tensor[Float]): Unit = {
     super.accGradParameters(input, gradOutput)
+    gradients.resizeAs(weights)
   }
 
   // TODO: use release if possible. now for larger model it's causing early release

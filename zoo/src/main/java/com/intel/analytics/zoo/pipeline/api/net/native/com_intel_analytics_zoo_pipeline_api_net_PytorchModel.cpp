@@ -120,6 +120,36 @@ auto updateWeights(std::shared_ptr<torch::jit::script::Module> m, float* xv, int
     return 1;
 }
 
+jobject torch2JTensor(JNIEnv *jenv, at::Tensor &tensor) {
+    // Wrap to Zoo JTensor
+    jclass jtensor_class = jenv -> FindClass("com/intel/analytics/zoo/pipeline/inference/JTensor");
+    jmethodID jtensor_constructor = jenv -> GetMethodID(jtensor_class, "<init>", "([F[I)V");
+
+    auto sizes = tensor.sizes();
+
+    int result_storage_len = 1;
+    float *pytorch_result_storage = tensor.data<float>();
+    int result_shape_len = sizes.size();
+
+    int pytorch_result_shape[result_shape_len];
+    int j = 0;
+    while (j < result_shape_len) {
+        pytorch_result_shape[j] = sizes[j];
+        result_storage_len *= sizes[j];
+        j++;
+    }
+
+    jfloatArray result_storage = jenv -> NewFloatArray(result_storage_len);
+    jenv -> SetFloatArrayRegion(result_storage, 0, result_storage_len, pytorch_result_storage);
+
+    jintArray result_shape = jenv -> NewIntArray(result_shape_len);
+    jenv -> SetIntArrayRegion(result_shape, 0, result_shape_len, pytorch_result_shape);
+
+    jobject jTensor = jenv -> NewObject(jtensor_class, jtensor_constructor, result_storage, result_shape);
+
+    return jTensor;
+}
+
 
 JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_loadModelNative
   (JNIEnv *jenv, jclass jobj, jstring jmodel_path) {
@@ -205,32 +235,7 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
     jenv -> ReleasePrimitiveArrayCritical(jstorage, c_storage, 0);
     jenv -> ReleasePrimitiveArrayCritical(jshape, c_shape, 0);
 
-    // Wrap to Zoo JTensor
-    jclass jtensor_class = jenv -> FindClass("com/intel/analytics/zoo/pipeline/inference/JTensor");
-    jmethodID jtensor_constructor = jenv -> GetMethodID(jtensor_class, "<init>", "([F[I)V");
-
-    auto sizes = output.sizes();
-
-    int result_storage_len = 1;
-    float *pytorch_result_storage = output.data<float>();
-    int result_shape_len = sizes.size();
-
-    int pytorch_result_shape[result_shape_len];
-    int j = 0;
-    while (j < result_shape_len) {
-        pytorch_result_shape[j] = sizes[j];
-        result_storage_len *= sizes[j];
-        j++;
-    }
-
-    jfloatArray result_storage = jenv -> NewFloatArray(result_storage_len);
-    jenv -> SetFloatArrayRegion(result_storage, 0, result_storage_len, pytorch_result_storage);
-
-    jintArray result_shape = jenv -> NewIntArray(result_shape_len);
-    jenv -> SetIntArrayRegion(result_shape, 0, result_shape_len, pytorch_result_shape);
-
-    jobject result = jenv -> NewObject(jtensor_class, jtensor_constructor, result_storage, result_shape);
-
+    jobject result = torch2JTensor(jenv, output);
     return result;
   }
 
@@ -271,32 +276,7 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
     jenv -> ReleasePrimitiveArrayCritical(jstorage, c_storage, 0);
     jenv -> ReleasePrimitiveArrayCritical(jshape, c_shape, 0);
 
-    // Wrap to Zoo JTensor
-    jclass jtensor_class = jenv -> FindClass("com/intel/analytics/zoo/pipeline/inference/JTensor");
-    jmethodID jtensor_constructor = jenv -> GetMethodID(jtensor_class, "<init>", "([F[I)V");
-
-    auto sizes = gradInput.sizes();
-
-    int result_storage_len = 1;
-    float *pytorch_result_storage = gradInput.data<float>();
-    int result_shape_len = sizes.size();
-
-    int pytorch_result_shape[result_shape_len];
-    int j = 0;
-    while (j < result_shape_len) {
-        pytorch_result_shape[j] = sizes[j];
-        result_storage_len *= sizes[j];
-        j++;
-    }
-
-    jfloatArray result_storage = jenv -> NewFloatArray(result_storage_len);
-    jenv -> SetFloatArrayRegion(result_storage, 0, result_storage_len, pytorch_result_storage);
-
-    jintArray result_shape = jenv -> NewIntArray(result_shape_len);
-    jenv -> SetIntArrayRegion(result_shape, 0, result_shape_len, pytorch_result_shape);
-
-    jobject result = jenv -> NewObject(jtensor_class, jtensor_constructor, result_storage, result_shape);
-
+    jobject result = torch2JTensor(jenv, gradInput);
     return result;
   }
 
@@ -352,66 +332,16 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
     jenv -> ReleasePrimitiveArrayCritical(label_jstorage, label_c_storage, 0);
     jenv -> ReleasePrimitiveArrayCritical(label_jshape, label_c_shape, 0);
 
-    // Wrap to Zoo JTensor
-    jclass jtensor_class = jenv -> FindClass("com/intel/analytics/zoo/pipeline/inference/JTensor");
-    jmethodID jtensor_constructor = jenv -> GetMethodID(jtensor_class, "<init>", "([F[I)V");
-
-    auto sizes = loss.sizes();
-
-    int result_storage_len = 1;
-    float *pytorch_result_storage = loss.data<float>();
-    int result_shape_len = sizes.size();
-
-    int pytorch_result_shape[result_shape_len];
-    int j = 0;
-    while (j < result_shape_len) {
-        pytorch_result_shape[j] = sizes[j];
-        result_storage_len *= sizes[j];
-        j++;
-    }
-
-    jfloatArray result_storage = jenv -> NewFloatArray(result_storage_len);
-    jenv -> SetFloatArrayRegion(result_storage, 0, result_storage_len, pytorch_result_storage);
-
-    jintArray result_shape = jenv -> NewIntArray(result_shape_len);
-    jenv -> SetIntArrayRegion(result_shape, 0, result_shape_len, pytorch_result_shape);
-
-    jobject lossJTensor = jenv -> NewObject(jtensor_class, jtensor_constructor, result_storage, result_shape);
-
-    return lossJTensor;
+    jobject result = torch2JTensor(jenv, loss);
+    return result;
   }
 
 JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_lossBackwardNative
   (JNIEnv * jenv, jclass jobj, jlong nativeRef) {
     auto grad = lossGrads[nativeRef];
 
-    // Wrap to Zoo JTensor
-    jclass jtensor_class = jenv -> FindClass("com/intel/analytics/zoo/pipeline/inference/JTensor");
-    jmethodID jtensor_constructor = jenv -> GetMethodID(jtensor_class, "<init>", "([F[I)V");
-
-    auto sizes = grad.sizes();
-
-    int result_storage_len = 1;
-    float *pytorch_result_storage = grad.data<float>();
-    int result_shape_len = sizes.size();
-
-    int pytorch_result_shape[result_shape_len];
-    int j = 0;
-    while (j < result_shape_len) {
-        pytorch_result_shape[j] = sizes[j];
-        result_storage_len *= sizes[j];
-        j++;
-    }
-
-    jfloatArray result_storage = jenv -> NewFloatArray(result_storage_len);
-    jenv -> SetFloatArrayRegion(result_storage, 0, result_storage_len, pytorch_result_storage);
-
-    jintArray result_shape = jenv -> NewIntArray(result_shape_len);
-    jenv -> SetIntArrayRegion(result_shape, 0, result_shape_len, pytorch_result_shape);
-
-    jobject gradJTensor = jenv -> NewObject(jtensor_class, jtensor_constructor, result_storage, result_shape);
-
-    return gradJTensor;
+    jobject result = torch2JTensor(jenv, grad);
+    return result;
   }
 
 
