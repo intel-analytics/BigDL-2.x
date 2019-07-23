@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.shaded.protobuf.TextFormat.ParseException
 import com.intel.analytics.bigdl.shaded.protobuf.{CodedInputStream, GeneratedMessage, TextFormat}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.bigdl.utils.{Node, Table}
 import com.intel.analytics.bigdl.utils.caffe.{CaffeConversionException, LayerConverter, V1LayerConverter}
 import com.intel.analytics.zoo.utils.FileReader
 import org.apache.log4j.Logger
@@ -294,10 +294,91 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
     val outputs = layers.filter(layer => layer.nextNodes.isEmpty ||
       outputNames.contains(layer.element.getName())).toArray
     val module = Graph(inputs, outputs)
+
     module.setName(netparam.getName)
     copyParameters(module)
-    (module, criterions)
+
+    // modify nodes information of inputs and outputs
+    toDnnCaffe(module.asInstanceOf[StaticGraph[T]])
+    val newGraph = Graph(inputs, outputs)
+
+    (newGraph, criterions)
   }
+
+  /**
+    * Original loading caffe model would bring Scale layer, which is
+    * not supported by mkldnn, thus leads to bad performance
+    * this method basically change the nodes information of the
+    * old graph, nodes information contains all the information of
+    * a net, thus only by modifying nodes we can get the new graph
+    * Besides, many initializations are based on nodes information,
+    * thus, a new construction of Graph is required after nodes are changed
+    * @param graph origin graph which is not supported by mkldnn
+    */
+  def toDnnCaffe(graph: StaticGraph[T]): Unit = {
+    for (thisInput <- graph.inputs) {
+      // for multiple inputs, iterate all the inputs
+      // start from the beginning node and search
+      // each node has nextNodes operation
+      // it is the similar behavior of pointer operation
+
+      searchAndMergeBnScale(thisInput)
+    }
+  }
+
+  /**
+    * This method recursively modify the nodes information
+    * and merge the BatchNorm layer and Scale layer
+    * Specifically, given a node in Graph, it search the nextNodes
+    * of this node, and copy the parameter of Scale to BatchNorm,
+    * then operate the pointer of BatchNorm to skip Scale layer and
+    * directly pointer to the next layer of Scale layer
+    * @param curNode the node to be operated recursively
+    */
+  def searchAndMergeBnScale(curNode: ModuleNode[T]): Unit = {
+    if (curNode.element.isInstanceOf[BatchNormalization[T]]
+      && curNode.nextNodes.head.element.isInstanceOf[Scale[T]]) {
+
+      // start pointer operation here
+      // to copy the parameter from SCALE to BN
+      // delete node SCALE and fix the pointer
+
+      val bnTable = curNode.element.getParametersTable()
+      val scaleTable = curNode.nextNodes.head.element.getParametersTable()
+      scaleTable.keySet.map(_.toString).foreach { layerName =>
+
+        val bnLayerName = layerName.replace("scale", "bn")
+
+        // do not add table here it would change pointer
+        // bnTable[Table](bnLayerName).add(scaleTable[Table](layerName))
+
+        scaleTable[Table](layerName).keySet.foreach { param =>
+          bnTable[Table](bnLayerName).apply[Tensor[Float]](param).copy(
+            scaleTable[Table](layerName)[Tensor[Float]](param)
+          )
+        }
+        val bb = curNode.element.getParametersTable()
+        None
+      }
+
+      val scaleNode = curNode.nextNodes.head
+      val newNextNode = curNode.nextNodes.head.nextNodes.head
+
+      // note that all nodes connected to scale are to be deleted
+      curNode.delete(scaleNode)
+      scaleNode.delete(newNextNode)
+
+      curNode.add(newNextNode)
+
+    }
+    if (curNode.nextNodes.nonEmpty){
+      for (nextNode <- curNode.nextNodes) {
+        searchAndMergeBnScale(nextNode)
+      }
+    }
+
+  }
+
 
   private val dataLayerList = Array("INPUT", "DATA", "DUMMYDATA", "ANNOTATEDDATA", "MEMORYDATA")
 
@@ -440,6 +521,9 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
                 v1layerConverter.convertBnFromCaffe(layer)
               }
             }
+            else {
+              nodes = convertCaffeLayer(layer)
+            }
           }
           else {
             nodes = convertCaffeLayer(layer)
@@ -458,7 +542,7 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
             // this modification based on the assumption
             // that there must be a bn before scale
 
-            if (layerType == "SCALE" && lastLayerName == "BATCHNORM") {
+            if (false) {
 
               val bnTable = layers.last.element.getParametersTable()
               val scaleTable = curr.element.getParametersTable()
@@ -472,11 +556,14 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
             }
             else {
               layers.append(curr)
-              layersMap(name) = curr
-              topList.foreach(output => {
-                top2LayerMap(output) = name
-              })
+
             }
+            layersMap(name) = curr
+            topList.foreach(output => {
+              top2LayerMap(output) = name
+            })
+
+
             lastLayerName = layerType
             lastLayer = layer
           }

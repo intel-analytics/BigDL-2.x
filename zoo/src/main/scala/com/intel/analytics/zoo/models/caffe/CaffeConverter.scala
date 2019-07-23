@@ -259,6 +259,16 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
     }
     Seq(ops)
   }
+
+  /**
+    * This method is for generating BatchNorm layer with weight and bias
+    * Since once the layer is created, the weight and bias could either
+    * be empty or non-empty, but this attribute could not be changed
+    * based on current behavior. Thus, to support BatchNorm with weight
+    * and bias, we need to create a layer with non-empty weight and bias
+    * @param layer protocol buffer of BatchNorm layer
+    * @return
+    */
   protected def fromCaffeBnScale(layer: GeneratedMessage): Seq[ModuleNode[T]] = {
     val weightBlob = getBlob(layer, 0)
     sanityBlobCheck(layer, "weight", weightBlob)
