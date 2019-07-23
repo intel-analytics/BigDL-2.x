@@ -20,6 +20,7 @@ import tempfile
 import shutil
 from bigdl.nn.criterion import Criterion
 
+
 class LossWrapperModule(nn.Module):
     def __init__(self, lossFunc):
         super(LossWrapperModule, self).__init__()
@@ -74,4 +75,3 @@ class TorchCriterion(Criterion):
         shutil.rmtree(temp)
 
         return criterion
-

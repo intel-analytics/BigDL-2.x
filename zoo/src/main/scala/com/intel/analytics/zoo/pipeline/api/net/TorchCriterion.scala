@@ -35,9 +35,9 @@ class TorchCriterion private(private val lossHolder: TorchModelHolder)
   gradInput = Activity.allocate[Tensor[Float], Float]().toTensor
 
   /**
-    * sequential id in cpp: std::vector<std::shared_ptr<torch::jit::script::Module>> handles;
-    * mark the model as transient and reload TorchNet from byteArray on executors
-    */
+   * sequential id in cpp: std::vector<std::shared_ptr<torch::jit::script::Module>> handles;
+   * mark the model as transient and reload TorchNet from byteArray on executors
+   */
   @transient
   lazy val nativeRef: Long = {
     println("TorchCriterion loading in " + this)
@@ -105,12 +105,10 @@ object TorchCriterion {
       Files.write(Paths.get(tmpFile.toURI), bytes)
       nativeRef = PytorchModel.loadLossNative(tmpFile.getAbsolutePath)
       FileUtils.deleteQuietly(tmpFile)
-    }
-    catch {
-      case io: IOException => {
+    } catch {
+      case io: IOException =>
         System.out.println("error during loading Torch model")
         throw io
-      }
     }
     nativeRef
   }

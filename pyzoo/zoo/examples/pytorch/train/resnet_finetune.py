@@ -43,14 +43,18 @@ class CatDogModel(nn.Module):
 
 
 if __name__ == '__main__':
-    sparkConf = init_spark_conf().setAppName("resnet").setMaster("local[2]").set('spark.driver.memory', '10g')
+    sparkConf = init_spark_conf().setAppName("resnet").setMaster("local[2]") \
+        .set('spark.driver.memory', '10g')
     sc = init_nncontext(sparkConf)
     spark = SparkSession.builder.config(conf=sparkConf).getOrCreate()
 
     torchnet = TorchNet.from_pytorch(CatDogModel(), [4, 3, 224, 224])
+
     def lossFunc(input, target):
         return nn.CrossEntropyLoss().forward(input, target.flatten().long())
-    torchcriterion = TorchCriterion.from_pytorch(loss=lossFunc, input_shape=[1, 2], sample_label=torch.LongTensor([1]))
+
+    torchcriterion = TorchCriterion.from_pytorch(loss=lossFunc, input_shape=[1, 2],
+                                                 sample_label=torch.LongTensor([1]))
 
     # prepare training data as Spark DataFrame
     image_path = '/home/yuhao/workspace/data/dogs-vs-cats/demo/*/*'
@@ -79,7 +83,8 @@ if __name__ == '__main__':
     catdogModel = classifier.fit(trainingDF)
 
     shift = udf(lambda p: p - 1, DoubleType())
-    predictionDF = catdogModel.transform(validationDF).withColumn("prediction", shift(col('prediction'))).cache()
+    predictionDF = catdogModel.transform(validationDF) \
+        .withColumn("prediction", shift(col('prediction'))).cache()
     predictionDF.sample(False, 0.1).show()
 
     correct = predictionDF.filter("label=prediction").count()

@@ -38,7 +38,6 @@ class TestTF(ZooTestCase):
                                [-0.03913354128599167, 0.11446280777454376, -1.7967549562454224,
                                 -1.2342952489852905, -0.819004476070404]))
 
-
     def test_linear_gradient_match(self):
         input = [[0.5, 1.], [-0.3, 1.2]]
         label = [[0.6], [-0.9]]
@@ -71,7 +70,6 @@ class TestTF(ZooTestCase):
         assert np.allclose(torch_loss.tolist(), az_loss_output)
         assert np.allclose(torch_grad, az_grad.tolist())
 
-
     def test_conv2D_gradient_match(self):
         class SimpleTorchModel(nn.Module):
             def __init__(self):
@@ -100,9 +98,12 @@ class TestTF(ZooTestCase):
         torch_output = torch_model.forward(torch_input)
         torch_loss = torch_criterion.forward(torch_output, torch_label)
         torch_loss.backward()
-        torch_grad = torch_model.dense1.weight.grad.flatten().tolist() + torch_model.dense1.bias.grad.flatten().tolist() + \
-                     torch_model.conv1.weight.grad.flatten().tolist() + torch_model.conv1.bias.grad.flatten().tolist() + \
-                     torch_model.dense2.weight.grad.flatten().tolist() + torch_model.dense2.bias.grad.flatten().tolist()
+        torch_grad = torch_model.dense1.weight.grad.flatten().tolist() + \
+                     torch_model.dense1.bias.grad.flatten().tolist() + \
+                     torch_model.conv1.weight.grad.flatten().tolist() + \
+                     torch_model.conv1.bias.grad.flatten().tolist() + \
+                     torch_model.dense2.weight.grad.flatten().tolist() + \
+                     torch_model.dense2.bias.grad.flatten().tolist()
 
         # AZ part
         az_net = TorchNet.from_pytorch(torch_model, [1, 2])
@@ -122,7 +123,6 @@ class TestTF(ZooTestCase):
         assert np.allclose(torch_loss.tolist(), az_loss_output)
         assert np.allclose(torch_grad, az_grad.tolist())
 
-
     def test_cross_entrophy_match(self):
         input = [[0.5, 1.], [-0.3, 1.2]]
         label = [3, 6]
@@ -131,6 +131,7 @@ class TestTF(ZooTestCase):
 
         model = nn.Linear(2, 10)
         criterion = nn.CrossEntropyLoss()
+
         def lossFunc(input, target):
             return criterion.forward(input, target.flatten().long())
 
@@ -156,7 +157,6 @@ class TestTF(ZooTestCase):
 
         assert np.allclose(torch_loss.tolist(), az_loss_output)
         assert np.allclose(torch_grad, az_grad.tolist())
-
 
     def test_Lenet_gradient_match(self):
         class LeNet(nn.Module):
@@ -188,10 +188,14 @@ class TestTF(ZooTestCase):
         torch_output = torch_model.forward(torch_input)
         torch_loss = torch_criterion.forward(torch_output, torch_label)
         torch_loss.backward()
-        torch_grad = torch_model.conv1.weight.grad.flatten().tolist() + torch_model.conv1.bias.grad.flatten().tolist() + \
-                     torch_model.conv2.weight.grad.flatten().tolist() + torch_model.conv2.bias.grad.flatten().tolist() + \
-                     torch_model.fc1.weight.grad.flatten().tolist() + torch_model.fc1.bias.grad.flatten().tolist() + \
-                     torch_model.fc2.weight.grad.flatten().tolist() + torch_model.fc2.bias.grad.flatten().tolist()
+        torch_grad = torch_model.conv1.weight.grad.flatten().tolist() + \
+                     torch_model.conv1.bias.grad.flatten().tolist() + \
+                     torch_model.conv2.weight.grad.flatten().tolist() + \
+                     torch_model.conv2.bias.grad.flatten().tolist() + \
+                     torch_model.fc1.weight.grad.flatten().tolist() + \
+                     torch_model.fc1.bias.grad.flatten().tolist() + \
+                     torch_model.fc2.weight.grad.flatten().tolist() + \
+                     torch_model.fc2.bias.grad.flatten().tolist()
 
         # AZ part
         az_net = TorchNet.from_pytorch(torch_model, input_shape=[1, 1, 28, 28])

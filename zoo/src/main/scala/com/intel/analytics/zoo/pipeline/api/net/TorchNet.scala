@@ -61,7 +61,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
       } else {
         gradients = Tensor.ones(1)
       }
-    } else{
+    } else {
       PytorchModel.updateWeightNative(ref, weights.storage().array())
     }
     ref
@@ -73,7 +73,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
   }
 
   override def updateOutput(input: Tensor[Float]): Tensor[Float] = {
-    if(this.isTraining()) {
+    if (this.isTraining()) {
       PytorchModel.updateWeightNative(this.nativeRef, weights.storage().array())
     }
 
@@ -100,7 +100,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     gradInput.set(resultTensor)
   }
 
-  override def accGradParameters(input: Tensor[Float], gradOutput: Tensor[Float]): Unit =  {
+  override def accGradParameters(input: Tensor[Float], gradOutput: Tensor[Float]): Unit = {
     super.accGradParameters(input, gradOutput)
   }
 
@@ -204,10 +204,9 @@ object TorchNet {
       FileUtils.deleteQuietly(tmpFile)
     }
     catch {
-      case io: IOException => {
+      case io: IOException =>
         System.out.println("error during loading Torch model")
         throw io
-      }
     }
     nativeRef
   }

@@ -27,6 +27,7 @@ from pyspark.sql.functions import col, udf
 from pyspark.sql.types import DoubleType
 from zoo.pipeline.api.net.torch_criterion import TorchCriterion
 
+
 # define model with Pytorch API
 class LeNet(nn.Module):
     def __init__(self):
@@ -48,7 +49,8 @@ class LeNet(nn.Module):
 
 
 if __name__ == '__main__':
-    sparkConf = init_spark_conf().setAppName("test_pytorch_lenet").setMaster("local[1]").set('spark.driver.memory', '10g')
+    sparkConf = init_spark_conf().setAppName("test_pytorch_lenet").setMaster("local[1]")\
+        .set('spark.driver.memory', '10g')
     sc = init_nncontext(sparkConf)
     spark = SparkSession.builder.config(conf=sparkConf).getOrCreate()
 
@@ -69,7 +71,8 @@ if __name__ == '__main__':
 
     torch_model = LeNet()
     model = TorchNet.from_pytorch(module=torch_model, input_shape=[1, 1, 28, 28])
-    criterion = TorchCriterion.from_pytorch(loss=lossFunc, input_shape=[1, 10], sample_label=torch.LongTensor([5]))
+    criterion = TorchCriterion.from_pytorch(loss=lossFunc, input_shape=[1, 10],
+                                            sample_label=torch.LongTensor([5]))
     classifier = NNClassifier(model, criterion, SeqToTensor([1, 28, 28])) \
         .setBatchSize(64) \
         .setOptimMethod(Adam()) \
@@ -80,7 +83,8 @@ if __name__ == '__main__':
 
     print("After training: ")
     shift = udf(lambda p: p - 1, DoubleType())
-    res = nnClassifierModel.transform(validationDF).withColumn("prediction", shift(col('prediction')))
+    res = nnClassifierModel.transform(validationDF) \
+        .withColumn("prediction", shift(col('prediction')))
     res.show(100)
 
     correct = res.filter("label=prediction").count()

@@ -87,4 +87,3 @@ class TorchNet(Layer):
                 return [Layer.convert_output(result) for result in results]
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))
-
