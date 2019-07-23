@@ -75,7 +75,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     assert(estimator.getFeaturesCol == "features")
     assert(estimator.getLabelCol == "label")
     assert(estimator.getMaxEpoch == 50)
-    assert(estimator.getBatchSize == 32)
+    assert(estimator.getBatchSize == 1)
     assert(estimator.getLearningRate == 1e-3)
     assert(estimator.getLearningRateDecay == 0)
   }

@@ -37,7 +37,7 @@ class HasBatchSize(Params):
         super(HasBatchSize, self).__init__()
         #: param for batch size.
         self.batchSize = Param(self, "batchSize", "batchSize")
-        self._setDefault(batchSize=32)
+        self._setDefault(batchSize=1)
 
     def setBatchSize(self, val):
         """

@@ -159,7 +159,7 @@ private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeatu
     }
   }
   // set default here to apply to both estimator and model
-  setDefault(batchSize -> 32)
+  setDefault(batchSize -> 1)
 }
 
 /**
@@ -200,7 +200,7 @@ class NNEstimator[T: ClassTag] private[zoo] (
 
   /**
    * Set global batch size across the cluster. Global batch size = Batch per thread * num of cores.
-   * default is 32.
+   * default is 1.
    */
   def setBatchSize(value: Int): this.type = set(batchSize, value)
 
