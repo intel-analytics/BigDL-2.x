@@ -40,6 +40,7 @@ def get_df(sqlContext):
     df = sqlContext.createDataFrame(data, schema)
     return df
 
+
 # define model with Pytorch
 class SimpleTorchModel(nn.Module):
     def __init__(self):
@@ -78,4 +79,3 @@ if __name__ == '__main__':
     print("After training: ")
     res = nnClassifierModel.transform(df)
     res.show(10, False)
-

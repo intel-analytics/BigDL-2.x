@@ -99,11 +99,11 @@ class TestTF(ZooTestCase):
         torch_loss = torch_criterion.forward(torch_output, torch_label)
         torch_loss.backward()
         torch_grad = torch_model.dense1.weight.grad.flatten().tolist() + \
-                     torch_model.dense1.bias.grad.flatten().tolist() + \
-                     torch_model.conv1.weight.grad.flatten().tolist() + \
-                     torch_model.conv1.bias.grad.flatten().tolist() + \
-                     torch_model.dense2.weight.grad.flatten().tolist() + \
-                     torch_model.dense2.bias.grad.flatten().tolist()
+            torch_model.dense1.bias.grad.flatten().tolist() + \
+            torch_model.conv1.weight.grad.flatten().tolist() + \
+            torch_model.conv1.bias.grad.flatten().tolist() + \
+            torch_model.dense2.weight.grad.flatten().tolist() + \
+            torch_model.dense2.bias.grad.flatten().tolist()
 
         # AZ part
         az_net = TorchNet.from_pytorch(torch_model, [1, 2])
@@ -189,13 +189,13 @@ class TestTF(ZooTestCase):
         torch_loss = torch_criterion.forward(torch_output, torch_label)
         torch_loss.backward()
         torch_grad = torch_model.conv1.weight.grad.flatten().tolist() + \
-                     torch_model.conv1.bias.grad.flatten().tolist() + \
-                     torch_model.conv2.weight.grad.flatten().tolist() + \
-                     torch_model.conv2.bias.grad.flatten().tolist() + \
-                     torch_model.fc1.weight.grad.flatten().tolist() + \
-                     torch_model.fc1.bias.grad.flatten().tolist() + \
-                     torch_model.fc2.weight.grad.flatten().tolist() + \
-                     torch_model.fc2.bias.grad.flatten().tolist()
+            torch_model.conv1.bias.grad.flatten().tolist() + \
+            torch_model.conv2.weight.grad.flatten().tolist() + \
+            torch_model.conv2.bias.grad.flatten().tolist() + \
+            torch_model.fc1.weight.grad.flatten().tolist() + \
+            torch_model.fc1.bias.grad.flatten().tolist() + \
+            torch_model.fc2.weight.grad.flatten().tolist() + \
+            torch_model.fc2.bias.grad.flatten().tolist()
 
         # AZ part
         az_net = TorchNet.from_pytorch(torch_model, input_shape=[1, 1, 28, 28])
