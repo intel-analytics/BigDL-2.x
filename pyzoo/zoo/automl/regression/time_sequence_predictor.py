@@ -456,7 +456,7 @@ if __name__ == "__main__":
                        distributed=distributed,
                        hdfs_url=hdfs_url)
 
-    print("evaluate:", pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"]))
+    print("evaluate:", pipeline.evaluate(test_df, metrics=["mean_squared_error", "r_square"]))
     pred = pipeline.predict(test_df)
     print("predict:", pred.shape)
 
@@ -467,14 +467,14 @@ if __name__ == "__main__":
     os.remove(save_pipeline_file)
 
     new_pipeline.describe()
-    print("evaluate:", new_pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"]))
+    print("evaluate:", new_pipeline.evaluate(test_df, metrics=["mean_squared_error", "r_square"]))
 
     new_pred = new_pipeline.predict(test_df)
     print("predict:", pred.shape)
     np.testing.assert_allclose(pred["value"].values, new_pred["value"].values)
 
     new_pipeline.fit(train_df, val_df, epoch_num=5)
-    print("evaluate:", new_pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"]))
+    print("evaluate:", new_pipeline.evaluate(test_df, metrics=["mean_squared_error", "r_square"]))
 
     if args.hadoop_conf or args.spark_local:
         ray_ctx.stop()
