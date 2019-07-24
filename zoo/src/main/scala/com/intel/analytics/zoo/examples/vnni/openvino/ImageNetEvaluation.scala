@@ -31,8 +31,7 @@ case class ImageNetEvaluationParams(folder: String = "./",
                                     model: String = "",
                                     weight: String = "",
                                     batchSize: Int = 4,
-                                    partitionNum: Int = 32,
-                                    isInt8: Boolean = false)
+                                    partitionNum: Int = 32)
 
 object ImageNetEvaluation {
   LoggerFilter.redirectSparkInfoLogs()
@@ -63,20 +62,13 @@ object ImageNetEvaluation {
       opt[Int]("partitionNum")
         .text("The partition number of the dataset")
         .action((x, c) => c.copy(partitionNum = x))
-      opt[Boolean]("isInt8")
-        .text("Is Int8 optimized model?")
-        .action((x, c) => c.copy(isInt8 = x))
     }
     parser.parse(args, ImageNetEvaluationParams()).foreach(param => {
       val sc = NNContext.initNNContext("ImageNet2012 with OpenVINO Evaluation Example")
 
 
       val model = new InferenceModel(1)
-      if (param.isInt8) {
-        model.doLoadOpenVINOInt8(param.model, param.weight, param.batchSize)
-      } else {
-        model.doLoadOpenVINO(param.model, param.weight)
-      }
+      model.doLoadOpenVINO(param.model, param.weight, param.batchSize)
 
       // Read ImageNet val
       val images = ImageSet.readSequenceFiles(param.folder, sc, param.partitionNum)
