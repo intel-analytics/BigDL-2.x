@@ -27,6 +27,8 @@ py_version="$(python -V 2>&1)"
 spark_version="$(pyspark --version 2>&1)"
 temp="${spark_version% /_/*}"
 spark_version="${temp##*\\}"
+echo "pyspark version is "$spark_version
+echo "spark home is "$SPARK_HOME
 
 #check version whether it's support ray
 if [[ $py_version == *"Python 3.5"* || $py_version == *"Python 3.6"* ]]; then
