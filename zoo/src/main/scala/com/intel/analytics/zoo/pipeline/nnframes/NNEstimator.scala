@@ -164,7 +164,7 @@ private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeatu
   }
   // set default here to apply to both estimator and model
   setDefault(batchSize -> 1)
-  setDefault(zeroBasedLabel -> true)
+  setDefault(zeroBasedLabel -> false)
 }
 
 /**

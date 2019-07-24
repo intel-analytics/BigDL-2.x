@@ -47,7 +47,7 @@ class NNClassifier[T: ClassTag] private[zoo]  (
   extends NNEstimator[T](model, criterion) {
 
   /**
-   * Set whether to use zero-based label for classification models
+   * Set whether to use zero-based label for classification models. Default False
    */
   def setZeroBasedLabel(value: Boolean): this.type = {
     set(this.zeroBasedLabel, value)

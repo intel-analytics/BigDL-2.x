@@ -71,7 +71,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "NNClassifier" should "has correct default params" in {
     val model = Linear[Float](10, 1)
-    val criterion = SparseCategoricalCrossEntropy[Float]()
+    val criterion = ClassNLLCriterion[Float]()
     val estimator = NNClassifier(model, criterion, Array(10))
     assert(estimator.getFeaturesCol == "features")
     assert(estimator.getLabelCol == "label")
@@ -83,7 +83,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "NNClassifier" should "apply with differnt params" in {
     val model = Linear[Float](6, 2)
-    val criterion = SparseCategoricalCrossEntropy[Float]()
+    val criterion = ClassNLLCriterion[Float]()
     val data = sc.parallelize(smallData)
     val df = sqlContext.createDataFrame(data).toDF("features", "label")
 
@@ -96,13 +96,30 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "NNClassifier" should "get reasonable accuracy" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
-    val criterion = SparseCategoricalCrossEntropy[Float]()
+    val criterion = ClassNLLCriterion[Float]()
     val classifier = NNClassifier(model, criterion, Array(6))
       .setOptimMethod(new LBFGS[Float]())
       .setLearningRate(0.1)
       .setBatchSize(nRecords)
       .setMaxEpoch(maxEpoch)
     val data = sc.parallelize(smallData)
+    val df = sqlContext.createDataFrame(data).toDF("features", "label")
+
+    val nnModel = classifier.fit(df)
+    nnModel.isInstanceOf[NNClassifierModel[_]] should be(true)
+    assert(nnModel.transform(df).where("prediction=label").count() > nRecords * 0.8)
+  }
+
+  "NNClassifier" should "support zero based label" in {
+    val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
+    val criterion = SparseCategoricalCrossEntropy[Float]()
+    val classifier = NNClassifier(model, criterion, Array(6))
+      .setOptimMethod(new LBFGS[Float]())
+      .setLearningRate(0.1)
+      .setBatchSize(nRecords)
+      .setMaxEpoch(maxEpoch)
+      .setZeroBasedLabel(true)
+    val data = sc.parallelize(smallData.map(t => (t._1, t._2 - 1.0)))
     val df = sqlContext.createDataFrame(data).toDF("features", "label")
 
     val nnModel = classifier.fit(df)
@@ -119,7 +136,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
       .setLearningRate(0.01)
       .setBatchSize(10)
       .setMaxEpoch(10)
-    val data = sc.parallelize(smallData.map(t => (t._1, t._2)))
+    val data = sc.parallelize(smallData.map(t => (t._1, t._2 - 1.0)))
     val df = sqlContext.createDataFrame(data).toDF("features", "label")
 
     val nnModel = classifier.fit(df)
@@ -135,11 +152,12 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
       .setLearningRate(0.1)
       .setBatchSize(2)
       .setEndWhen(Trigger.maxIteration(2))
+      .setZeroBasedLabel(true)
 
     Array(
-      sqlContext.createDataFrame(sc.parallelize(smallData.map(p => (p._1, p._2))))
+      sqlContext.createDataFrame(sc.parallelize(smallData.map(p => (p._1, p._2 - 1))))
         .toDF("features", "label"), // Array[Double]
-      sqlContext.createDataFrame(sc.parallelize(smallData.map(p => (p._1.map(_.toFloat), p._2))))
+      sqlContext.createDataFrame(sc.parallelize(smallData.map(p => (p._1.map(_.toFloat), p._2 - 1))))
         .toDF("features", "label") // Array[Float]
       // TODO: add ML Vector when ut for Spark 2.0+ is ready
     ).foreach { df =>
@@ -150,7 +168,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "NNClassifier" should "support scalar FEATURE" in {
     val model = new Sequential().add(Linear[Float](1, 2)).add(LogSoftMax[Float])
-    val criterion = SparseCategoricalCrossEntropy[Float]()
+    val criterion = ClassNLLCriterion[Float]()
     val classifier = NNClassifier(model, criterion, Array(1))
       .setLearningRate(0.1)
       .setBatchSize(2)
@@ -170,7 +188,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "NNClassifier" should "fit with adam and LBFGS" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
-    val criterion = SparseCategoricalCrossEntropy[Float]()
+    val criterion = ClassNLLCriterion[Float]()
     Seq(new LBFGS[Float], new Adam[Float]).foreach { optimMethod =>
       val classifier = NNClassifier(model, criterion, Array(6))
         .setBatchSize(nRecords)
@@ -190,13 +208,13 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     val logdir = com.google.common.io.Files.createTempDir()
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
-    val criterion = SparseCategoricalCrossEntropy[Float]()
+    val criterion = ClassNLLCriterion[Float]()
     val classifier = NNClassifier(model, criterion, Array(6))
       .setBatchSize(nRecords)
       .setEndWhen(Trigger.maxIteration(5))
       .setOptimMethod(new Adam[Float])
       .setLearningRate(0.1)
-      .setValidation(Trigger.severalIteration(1), df, Array(new Loss[Float](criterion)), 2)
+      .setValidation(Trigger.severalIteration(1), df, Array(new Loss[Float]()), 2)
       .setValidationSummary(ValidationSummary(logdir.getPath, "NNEstimatorValidation"))
 
     classifier.fit(df)
@@ -209,6 +227,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "NNClassifier" should "get the same classification result with BigDL model" in {
     Logger.getLogger("org").setLevel(Level.WARN)
     Logger.getLogger("akka").setLevel(Level.WARN)
+
     val model = LeNet5(10)
 
     // init
@@ -240,7 +259,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
       val scaler = new MinMaxScaler().setInputCol("features").setOutputCol("scaled")
         .setMax(1).setMin(-1)
       val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
-      val criterion = SparseCategoricalCrossEntropy[Float]()
+      val criterion = ClassNLLCriterion[Float]()
       val estimator = NNClassifier(model, criterion)
         .setBatchSize(nRecords)
         .setOptimMethod(new LBFGS[Float]())
@@ -272,7 +291,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "NNClasifierModel" should "has default batchperthread as 4" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
-    val criterion = SparseCategoricalCrossEntropy[Float]()
+    val criterion = ClassNLLCriterion[Float]()
     Seq(new LBFGS[Float], new Adam[Float]).foreach { optimMethod =>
       val classifier = NNClassifier(model, criterion, Array(6))
         .setBatchSize(nRecords)
