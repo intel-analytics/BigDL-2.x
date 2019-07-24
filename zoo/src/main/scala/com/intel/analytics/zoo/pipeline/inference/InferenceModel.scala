@@ -204,18 +204,18 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   }
 
   /**
-    * load TF model as OpenVINO IR
-    *
-    * @param modelBytes             the bytes of the tensorflow model
-    * @param imageClassificationModelType the type of the tensorflow model
-    * @param checkpointBytes        the bytes of the tensorflow checkpoint file
-    * @param inputShape             input shape that should be fed to an input node(s) of the model
-    * @param ifReverseInputChannels the boolean value of if need reverse input channels.
-    *                               switch the input channels order from RGB to BGR (or vice versa).
-    * @param meanValues             all input values coming from original network inputs
-    *                               will be divided by this value.
-    * @param scale                  the scale value, to be used for the input image per channel.
-    */
+   * load TF model as OpenVINO IR
+   *
+   * @param modelBytes             the bytes of the tensorflow model
+   * @param imageClassificationModelType the type of the tensorflow model
+   * @param checkpointBytes        the bytes of the tensorflow checkpoint file
+   * @param inputShape             input shape that should be fed to an input node(s) of the model
+   * @param ifReverseInputChannels the boolean value of if need reverse input channels.
+   *                               switch the input channels order from RGB to BGR (or vice versa).
+   * @param meanValues             all input values coming from original network inputs
+   *                               will be divided by this value.
+   * @param scale                  the scale value, to be used for the input image per channel.
+   */
   def doLoadTF(modelBytes: Array[Byte],
                imageClassificationModelType: String,
                checkpointBytes: Array[Byte],
