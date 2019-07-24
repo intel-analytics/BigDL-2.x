@@ -25,8 +25,16 @@ export PYSPARK_DRIVER_PYTHON=python
 
 py_version="$(python -V 2>&1)"
 spark_version="$(pyspark --version 2>&1)"
+
+exit_status_0=$?
+if [ $exit_status_0 -eq 127 ];
+then
+    temp=$SPARK_HOME/bin/pyspark
+    spark_version="$($temp --version 2>&1)"
+fi
 temp="${spark_version% /_/*}"
 spark_version="${temp##*\\}"
+
 echo "pyspark version is "$spark_version
 echo "spark home is "$SPARK_HOME
 
