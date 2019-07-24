@@ -399,10 +399,12 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
                            bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffeMaxPooling(module : AbstractModule[Activity, Activity, T],
-                                  bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                                  bottoms : ArrayBuffer[String], nextSize : Int):
+                                 Seq[GeneratedMessage]
 
   protected def toCaffeAvePooling(module : AbstractModule[Activity, Activity, T],
-                                  bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                                  bottoms : ArrayBuffer[String], nextSize : Int):
+                                 Seq[GeneratedMessage]
 
   protected def toCaffeInnerProduct(module : AbstractModule[Activity, Activity, T],
                                     bottoms : ArrayBuffer[String], nextSize : Int):
