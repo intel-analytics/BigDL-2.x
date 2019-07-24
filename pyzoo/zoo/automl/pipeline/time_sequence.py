@@ -54,20 +54,23 @@ class TimeSequencePipeline(Pipeline):
 
     def evaluate(self,
                  input_df,
-                 metric=["mean_squared_error"]):
+                 metrics=["mean_squared_error"]):
         """
         evdev/run-pytestsaluate the pipeline
         :param input_df:
-        :param metric:
+        :param metrics:
         :return:
         """
+        if not isinstance(metrics, list):
+            raise ValueError("Expected metrics to be a list!")
+
         x, y = self.feature_transformers.transform(input_df, is_train=True)
         y_pred = self.model.predict(x)
         y_unscale, y_pred_unscale = self.feature_transformers.post_processing(input_df,
                                                                               y_pred,
                                                                               is_train=True)
 
-        return [Evaluator.evaluate(m, y_unscale, y_pred_unscale) for m in metric]
+        return [Evaluator.evaluate(m, y_unscale, y_pred_unscale) for m in metrics]
 
     def predict(self, input_df):
         """
@@ -90,7 +93,7 @@ class TimeSequencePipeline(Pipeline):
         print("Pipeline is saved in", file)
 
 
-def load_ts_pipeline(file):
+def load_ts_pipeline(file, distributed=False):
     feature_transformers = TimeSequenceFeatureTransformer()
     model = TimeSequenceModel(check_optional_config=False)
 
