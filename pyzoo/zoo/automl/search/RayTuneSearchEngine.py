@@ -103,30 +103,30 @@ class RayTuneSearchEngine(SearchEngine):
         :return: trials result
         """
         # function based
-        # trials = tune.run(
-        #     self.train_func,
-        #     name=self.name,
-        #     stop=self.stop_criteria,
-        #     config=self.search_space,
-        #     num_samples=self.num_samples,
-        #     resources_per_trial=self.resources_per_trail,
-        #     verbose=1,
-        #     reuse_actors=True
-        # )
-        # class based
         trials = tune.run(
-            self.trainable_class,
+            self.train_func,
             name=self.name,
             stop=self.stop_criteria,
             config=self.search_space,
-            checkpoint_freq=1,
-            checkpoint_at_end=True,
-            # resume="prompt",
             num_samples=self.num_samples,
             resources_per_trial=self.resources_per_trail,
             verbose=1,
             reuse_actors=True
         )
+        # class based
+        # trials = tune.run(
+        #     self.trainable_class,
+        #     name=self.name,
+        #     stop=self.stop_criteria,
+        #     config=self.search_space,
+        #     checkpoint_freq=1,
+        #     checkpoint_at_end=True,
+        #     # resume="prompt",
+        #     num_samples=self.num_samples,
+        #     resources_per_trial=self.resources_per_trail,
+        #     verbose=1,
+        #     reuse_actors=True
+        # )
         self.trials = trials
         return self
 
