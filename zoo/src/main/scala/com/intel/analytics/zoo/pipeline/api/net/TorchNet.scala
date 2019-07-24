@@ -110,6 +110,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
 
 object TorchNet {
 
+  PytorchModel.isLoaded
   loadPytorchNatives() // load once per JVM
 
   private val modelBytesRegistry = new RegistryMap[Array[Byte]]()
