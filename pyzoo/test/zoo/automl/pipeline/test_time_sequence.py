@@ -65,7 +65,7 @@ class TestTimeSequencePipeline(ZooTestCase):
 
     def test_evaluate_1(self):
         self.pipeline_1 = self.tsp_1.fit(self.train_df)
-        mse, rs = self.pipeline_1.evaluate(self.test_df, metric=["mean_squared_error", "r_square"])
+        mse, rs = self.pipeline_1.evaluate(self.test_df, metrics=["mean_squared_error", "r_square"])
         assert len(mse) == self.future_seq_len_1
         assert len(rs) == self.future_seq_len_1
         print("Mean square error (future_seq_len=1) is:", mse)
@@ -73,7 +73,7 @@ class TestTimeSequencePipeline(ZooTestCase):
 
     def test_evaluate_3(self):
         self.pipeline_3 = self.tsp_3.fit(self.train_df)
-        mse, rs = self.pipeline_3.evaluate(self.test_df, metric=["mean_squared_error", "r_square"])
+        mse, rs = self.pipeline_3.evaluate(self.test_df, metrics=["mean_squared_error", "r_square"])
         assert len(mse) == self.future_seq_len_3
         assert len(rs) == self.future_seq_len_3
         print("Mean square error (future_seq_len=3) is:", mse)
@@ -82,7 +82,7 @@ class TestTimeSequencePipeline(ZooTestCase):
     def test_evaluate_RandomRecipe_1(self):
         self.random_pipeline_1 = self.tsp_1.fit(self.train_df, recipe=RandomRecipe(1))
         mse, rs = self.random_pipeline_1.evaluate(self.test_df,
-                                                  metric=["mean_squared_error", "r_square"])
+                                                  metrics=["mean_squared_error", "r_square"])
         assert len(mse) == self.future_seq_len_1
         assert len(rs) == self.future_seq_len_1
         print("Mean square error (future_seq_len=1) is:", mse)
@@ -91,7 +91,7 @@ class TestTimeSequencePipeline(ZooTestCase):
     def test_evaluate_RandomRecipe_3(self):
         self.random_pipeline_3 = self.tsp_3.fit(self.train_df, recipe=RandomRecipe(1))
         mse, rs = self.random_pipeline_3.evaluate(self.test_df,
-                                                  metric=["mean_squared_error", "r_square"])
+                                                  metrics=["mean_squared_error", "r_square"])
         assert len(mse) == self.future_seq_len_3
         assert len(rs) == self.future_seq_len_3
         print("Mean square error (future_seq_len=3) is:", mse)
@@ -152,7 +152,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         self.pipeline_1 = self.tsp_1.fit(self.train_df)
         y_pred_1 = self.pipeline_1.predict(self.test_df)
         mse, rs = self.pipeline_1.evaluate(self.test_df,
-                                           metric=["mean_squared_error", "r_square"])
+                                           metrics=["mean_squared_error", "r_square"])
         print("Evaluation result: Mean square error is: {}, R square is: {}.".format(mse, rs))
 
         dirname = tempfile.mkdtemp(prefix="saved_pipeline")
@@ -169,7 +169,7 @@ class TestTimeSequencePipeline(ZooTestCase):
 
         new_pipeline.fit(self.train_df, epoch_num=1)
         new_mse, new_rs = new_pipeline.evaluate(self.test_df,
-                                                metric=["mean_squared_error", "r_square"])
+                                                metrics=["mean_squared_error", "r_square"])
         print("Evaluation result after restore and fit: "
               "Mean square error is: {}, R square is: {}.".format(new_mse, new_rs))
 
@@ -178,7 +178,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         self.pipeline_3 = self.tsp_3.fit(self.train_df)
         y_pred_3 = self.pipeline_3.predict(self.test_df)
         mse, rs = self.pipeline_3.evaluate(self.test_df,
-                                           metric=["mean_squared_error", "r_square"])
+                                           metrics=["mean_squared_error", "r_square"])
         print("Evaluation result: Mean square error is: {}, R square is: {}.".format(mse, rs))
 
         dirname = tempfile.mkdtemp(prefix="saved_pipeline")
@@ -198,7 +198,7 @@ class TestTimeSequencePipeline(ZooTestCase):
 
         new_pipeline.fit(self.train_df, epoch_num=10)
         new_mse, new_rs = new_pipeline.evaluate(self.test_df,
-                                                metric=["mean_squared_error", "r_square"])
+                                                metrics=["mean_squared_error", "r_square"])
         print("Evaluation result after restore and fit: "
               "Mean square error is: {}, R square is: {}.".format(new_mse, new_rs))
 
@@ -231,7 +231,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert y_pred_random_1.shape[0] <= self.test_sample_num - min_past_seq_len + 1
         assert y_pred_random_1.shape[1] == self.future_seq_len_1 + 1
         mse, rs = random_pipeline_1.evaluate(self.test_df,
-                                             metric=["mean_squared_error", "r_square"])
+                                             metrics=["mean_squared_error", "r_square"])
         assert len(mse) == self.future_seq_len_1
         assert len(rs) == self.future_seq_len_1
 
@@ -247,7 +247,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert y_pred_random_3.shape[0] <= self.test_sample_num - min_past_seq_len - 2 + 1
         assert y_pred_random_3.shape[1] == self.future_seq_len_3 + 1
         mse, rs = random_pipeline_3.evaluate(self.test_df,
-                                             metric=["mean_squared_error", "r_square"])
+                                             metrics=["mean_squared_error", "r_square"])
         assert len(mse) == self.future_seq_len_3
         assert len(rs) == self.future_seq_len_3
 
