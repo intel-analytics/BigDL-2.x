@@ -29,23 +29,23 @@ object File {
   private[zoo] val s3aPrefix: String = "s3a:"
 
   /**
-    * Load torch object from a torch binary file
-    *
-    * @param fileName file name.
-    * @return An instance of T
-    */
+   * Load torch object from a torch binary file
+   *
+   * @param fileName file name.
+   * @return An instance of T
+   */
   def loadTorch[T](fileName: String): T = {
     TorchFile.load[T](fileName)
   }
 
   /**
-    * Save scala object into a torch binary file
-    *
-    * @param source  The object to be saved.
-    * @param fileName file name to saving.
-    * @param objectType The object type.
-    * @param overWrite If over write.
-    */
+   * Save scala object into a torch binary file
+   *
+   * @param source  The object to be saved.
+   * @param fileName file name to saving.
+   * @param objectType The object type.
+   * @param overWrite If over write.
+   */
   def saveTorch(
                  source: Any,
                  fileName: String,
@@ -55,17 +55,17 @@ object File {
   }
 
   /**
-    * Save scala object into a local/hdfs/s3 path
-    *
-    * Notice: S3 path should be like s3a://bucket/xxx.
-    *
-    * See (hadoop aws)[http://hadoop.apache.org/docs/r2.7.3/hadoop-aws/tools/hadoop-aws/index.html]
-    * for details, if you want to save model to s3.
-    *
-    * @param obj object to be saved.
-    * @param fileName local/hdfs output path.
-    * @param isOverwrite if overwrite.
-    */
+   * Save scala object into a local/hdfs/s3 path
+   *
+   * Notice: S3 path should be like s3a://bucket/xxx.
+   *
+   * See (hadoop aws)[http://hadoop.apache.org/docs/r2.7.3/hadoop-aws/tools/hadoop-aws/index.html]
+   * for details, if you want to save model to s3.
+   *
+   * @param obj object to be saved.
+   * @param fileName local/hdfs output path.
+   * @param isOverwrite if overwrite.
+   */
   def save(obj: Serializable, fileName: String, isOverwrite: Boolean = false): Unit = {
     var fw: FileWriter = null
     var out: OutputStream = null
@@ -113,11 +113,11 @@ object File {
   }
 
   /**
-    * Write file to HDFS.
-    * @param obj
-    * @param fileName
-    * @param overwrite
-    */
+   * Write file to HDFS.
+   * @param obj
+   * @param fileName
+   * @param overwrite
+   */
   def saveToHdfs(obj: Serializable, fileName: String, overwrite: Boolean): Unit = {
     require(fileName.startsWith(File.hdfsPrefix),
       s"hdfs path ${fileName} should have prefix 'hdfs:'")
@@ -147,10 +147,10 @@ object File {
   }
 
   /**
-    * Load file from HDFS
-    *
-    * @param fileName
-    */
+   * Load file from HDFS
+   *
+   * @param fileName
+   */
   def loadFromHdfs[T](fileName: String): T = {
     val byteArrayOut = readHdfsByte(fileName)
     var objFile: ObjectInputStream = null
@@ -165,15 +165,15 @@ object File {
   }
 
   /**
-    * Load a scala object from a local/hdfs/s3 path.
-    *
-    * Notice: S3 path should be like s3a://bucket/xxx.
-    *
-    * See (hadoop aws)[http://hadoop.apache.org/docs/r2.7.3/hadoop-aws/tools/hadoop-aws/index.html]
-    * for details, if you want to load model from s3.
-    *
-    * @param fileName file name.
-    */
+   * Load a scala object from a local/hdfs/s3 path.
+   *
+   * Notice: S3 path should be like s3a://bucket/xxx.
+   *
+   * See (hadoop aws)[http://hadoop.apache.org/docs/r2.7.3/hadoop-aws/tools/hadoop-aws/index.html]
+   * for details, if you want to load model from s3.
+   *
+   * @param fileName file name.
+   */
   def load[T](fileName: String): T = {
     var fr: FileReader = null
     var in: InputStream = null
@@ -209,10 +209,10 @@ object File {
   }
 
   /**
-    * load binary file from HDFS
-    * @param fileName
-    * @return
-    */
+   * load binary file from HDFS
+   * @param fileName
+   * @return
+   */
   def readHdfsByte(fileName: String): Array[Byte] = {
     val src: Path = new Path(fileName)
     var fs: FileSystem = null
@@ -231,9 +231,9 @@ object File {
 }
 
 /**
-  * FileReader.
-  * @param fileName
-  */
+ * FileReader.
+ * @param fileName
+ */
 private[zoo] class FileReader(fileName: String) {
   private var inputStream: InputStream = null
   private val conf = File.getConfiguration(fileName)
@@ -241,9 +241,9 @@ private[zoo] class FileReader(fileName: String) {
   private val fs: FileSystem = path.getFileSystem(conf)
 
   /**
-    * get an InputStream
-    * @return
-    */
+   * get an InputStream
+   * @return
+   */
   def open(): InputStream = {
     require(inputStream == null, s"File $fileName has been opened already.")
     require(fs.exists(path), s"$fileName is empty!")
@@ -252,8 +252,8 @@ private[zoo] class FileReader(fileName: String) {
   }
 
   /**
-    * close the resources.
-    */
+   * close the resources.
+   */
   def close(): Unit = {
     if (null != inputStream) inputStream.close()
     fs.close()
@@ -267,9 +267,9 @@ object FileReader {
 }
 
 /**
-  * FileWriter.
-  * @param fileName
-  */
+ * FileWriter.
+ * @param fileName
+ */
 private[zoo] class FileWriter(fileName: String) {
   private var outputStream: OutputStream = null
   private val conf = File.getConfiguration(fileName)
@@ -277,10 +277,10 @@ private[zoo] class FileWriter(fileName: String) {
   private val fs: FileSystem = path.getFileSystem(conf)
 
   /**
-    * get an OutputStream
-    * @param overwrite if overwrite
-    * @return
-    */
+   * get an OutputStream
+   * @param overwrite if overwrite
+   * @return
+   */
   def create(overwrite: Boolean = false): OutputStream = {
     require(outputStream == null, s"File $fileName has been created already.")
     if (!overwrite) {
@@ -291,8 +291,8 @@ private[zoo] class FileWriter(fileName: String) {
   }
 
   /**
-    * close the resources.
-    */
+   * close the resources.
+   */
   def close(): Unit = {
     if (null != outputStream) outputStream.close()
     fs.close()

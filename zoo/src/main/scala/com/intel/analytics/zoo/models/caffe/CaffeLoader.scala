@@ -47,15 +47,17 @@ abstract class Customizable[T: ClassTag](implicit ev: TensorNumeric[T]) {
     contexts += (name -> context)
   }
 }
+
+
 /**
-  * An utility to load pre-trained caffe model from prototxt and binary
-  * and convert it to Zoo equivalent modules
-  * @param prototxtPath caffe model define prototxt path
-  * @param modelPath    caffe serialized binary model path
-  * @param matchAll     if match all modules with parameters
-  * @param customizedConverters customized converter
-  * @tparam T type
-  */
+ * An utility to load pre-trained caffe model from prototxt and binary
+ * and convert it to Zoo equivalent modules
+ * @param prototxtPath caffe model define prototxt path
+ * @param modelPath    caffe serialized binary model path
+ * @param matchAll     if match all modules with parameters
+ * @param customizedConverters customized converter
+ * @tparam T type
+ */
 
 
 class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
@@ -252,11 +254,11 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
   }
 
   /**
-    * copy caffe parameters to module
-    * if matchAll, throw an exception if some layers are not mapped
-    * @param model the model defined in big-dl
-    * @return
-    */
+   * copy caffe parameters to module
+   * if matchAll, throw an exception if some layers are not mapped
+   * @param model the model defined in big-dl
+   * @return
+   */
   private def copyParameters(model: Module[T]): Module[T] = {
     loadCaffe(prototxtPath, modelPath)
     val parameterTable = model.getParametersTable()
@@ -280,11 +282,12 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
   }
 
   /**
-    * Load caffe model from prototxt file and binary pre-trained model and converted
-    * to Zoo graph module
-    * @param outputNames additional output layer names besides the default(layers without next nodes)
-    * @return Zoo model and criterion
-    */
+   * Load caffe model from prototxt file and binary pre-trained model and converted
+   * to Zoo graph module
+   * @param outputNames additional output layer names besides
+   *                    the default(layers without next nodes)
+   * @return Zoo model and criterion
+   */
   def createCaffeModel(outputNames: Array[String] = Array[String]())
   : (Module[T], ParallelCriterion[T]) = {
     loadCaffe(prototxtPath, modelPath)
@@ -306,15 +309,15 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
   }
 
   /**
-    * Original loading caffe model would bring Scale layer, which is
-    * not supported by mkldnn, thus leads to bad performance
-    * this method basically change the nodes information of the
-    * old graph, nodes information contains all the information of
-    * a net, thus only by modifying nodes we can get the new graph
-    * Besides, many initializations are based on nodes information,
-    * thus, a new construction of Graph is required after nodes are changed
-    * @param graph origin graph which is not supported by mkldnn
-    */
+   * Original loading caffe model would bring Scale layer, which is
+   * not supported by mkldnn, thus leads to bad performance
+   * this method basically change the nodes information of the
+   * old graph, nodes information contains all the information of
+   * a net, thus only by modifying nodes we can get the new graph
+   * Besides, many initializations are based on nodes information,
+   * thus, a new construction of Graph is required after nodes are changed
+   * @param graph origin graph which is not supported by mkldnn
+   */
   def toDnnCaffe(graph: StaticGraph[T]): Unit = {
     for (thisInput <- graph.inputs) {
       // for multiple inputs, iterate all the inputs
@@ -327,14 +330,14 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
   }
 
   /**
-    * This method recursively modify the nodes information
-    * and merge the BatchNorm layer and Scale layer
-    * Specifically, given a node in Graph, it search the nextNodes
-    * of this node, and copy the parameter of Scale to BatchNorm,
-    * then operate the pointer of BatchNorm to skip Scale layer and
-    * directly pointer to the next layer of Scale layer
-    * @param curNode the node to be operated recursively
-    */
+   * This method recursively modify the nodes information
+   * and merge the BatchNorm layer and Scale layer
+   * Specifically, given a node in Graph, it search the nextNodes
+   * of this node, and copy the parameter of Scale to BatchNorm,
+   * then operate the pointer of BatchNorm to skip Scale layer and
+   * directly pointer to the next layer of Scale layer
+   * @param curNode the node to be operated recursively
+   */
   def searchAndMergeBnScale(curNode: ModuleNode[T]): Unit = {
     if (curNode.element.isInstanceOf[BatchNormalization[T]]
       && curNode.nextNodes.head.element.isInstanceOf[Scale[T]]) {
@@ -371,7 +374,7 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
       curNode.add(newNextNode)
 
     }
-    if (curNode.nextNodes.nonEmpty){
+    if (curNode.nextNodes.nonEmpty) {
       for (nextNode <- curNode.nextNodes) {
         searchAndMergeBnScale(nextNode)
       }
@@ -603,12 +606,12 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
   }
 
   /**
-    * Add criterion according to layer type from train protocol
-    * if only test/model define prototxt file provided, there won't be criterion detected
-    *  @param layerType caffe layer type
-    *  @param layerName caffe layer name
-    *  @return if this layer is only criterion layer
-    */
+   * Add criterion according to layer type from train protocol
+   * if only test/model define prototxt file provided, there won't be criterion detected
+   *  @param layerType caffe layer type
+   *  @param layerName caffe layer name
+   *  @return if this layer is only criterion layer
+   */
   private def tryAddCriterion(layerType : String, layerName: String = null) : Boolean = {
     layerType.toUpperCase match {
       case "SOFTMAX_LOSS" => criterions.add(ClassNLLCriterion[T]())
@@ -672,16 +675,16 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
 object CaffeLoader {
 
   /**
-    * Load weight for pre-defined model
-    * @param model pre-defined model
-    * @param defPath prototxt file which defines the network
-    * @param modelPath weight file which contains the parameters
-    * @param matchAll  if we need to match all layers from prototxt in weight file
-    * @param customizedConverters customized converters
-    * @param ev tensor numeric
-    * @tparam T data type
-    * @return pre-defined model populated with weights
-    */
+   * Load weight for pre-defined model
+   * @param model pre-defined model
+   * @param defPath prototxt file which defines the network
+   * @param modelPath weight file which contains the parameters
+   * @param matchAll  if we need to match all layers from prototxt in weight file
+   * @param customizedConverters customized converters
+   * @param ev tensor numeric
+   * @tparam T data type
+   * @return pre-defined model populated with weights
+   */
   def load[T: ClassTag](model: Module[T],
                         defPath: String, modelPath: String, matchAll: Boolean = true,
                         customizedConverters : mutable.HashMap[String, Customizable[T]] = null)
@@ -691,14 +694,15 @@ object CaffeLoader {
   }
 
   /**
-    * load caffe model dynamically from prototxt and binary files
-    * @param defPath prototxt file which illustrates the caffe model structure
-    * @param modelPath binary file containing the weight and bias
-    * @param customizedConverters customized layer converter
-    * @param outputNames additional output layer names besides the default(layers without next nodes)
-    * @tparam T data type
-    * @return created module (graph) and criterion
-    */
+   * load caffe model dynamically from prototxt and binary files
+   * @param defPath prototxt file which illustrates the caffe model structure
+   * @param modelPath binary file containing the weight and bias
+   * @param customizedConverters customized layer converter
+   * @param outputNames additional output layer names besides
+   *                    the default(layers without next nodes)
+   * @tparam T data type
+   * @return created module (graph) and criterion
+   */
   def loadCaffe[T: ClassTag](defPath: String, modelPath: String,
                              customizedConverters : mutable.HashMap[String, Customizable[T]] = null,
                              outputNames: Array[String] = Array[String]())
