@@ -15,7 +15,7 @@
 #
 
 from bigdl.util.common import *
-from bigdl.optim.optimizer import OptimMethod, Default
+from bigdl.optim.optimizer import OptimMethod, Default, Optimizer, MaxEpoch
 from zoo.pipeline.api.keras.base import ZooKerasCreator
 
 if sys.version >= '3':
@@ -105,3 +105,83 @@ class AdamWeightDecay(OptimMethod, ZooKerasCreator):
             epsilon,
             weight_decay)
         self.bigdl_type = bigdl_type
+
+
+class ZooOptimizer(Optimizer):
+    @staticmethod
+    def create(model,
+               training_set,
+               criterion,
+               end_trigger=None,
+               batch_size=32,
+               optim_method=None,
+               cores=None,
+               sparse_optim_method=None,
+               bigdl_type="float"):
+        """
+        Create an optimizer.
+        Depend on the input type, the returning optimizer can be a local optimizer \
+        or a distributed optimizer.
+
+        :param model: the neural net model
+        :param training_set: (features, label) for local mode. RDD[Sample] for distributed mode.
+        :param criterion: the loss function
+        :param optim_method: the algorithm to use for optimization,
+           e.g. SGD, Adagrad, etc. If optim_method is None, the default algorithm is SGD.
+        :param end_trigger: when to end the optimization. default value is MapEpoch(1)
+        :param batch_size: training batch size
+        :param cores: This is for local optimizer only and use total physical cores as the default value
+        """
+        if not end_trigger:
+            end_trigger = MaxEpoch(1)
+        if not optim_method:
+            optim_method = SGD()
+        if isinstance(training_set, RDD):
+            return InternalDistriOptimizer(model=model,
+                                   training_rdd=training_set,
+                                   criterion=criterion,
+                                   end_trigger=end_trigger,
+                                   batch_size=batch_size,
+                                   optim_method=optim_method,
+                                   sparse_optim_method=sparse_optim_method,
+                                   bigdl_type=bigdl_type)
+        elif (isinstance(training_set, tuple) and len(training_set) == 2) or isinstance(training_set, DataSet):
+            Optimizer.create(model, training_set, criterion, end_trigger, batch_size, optim_method, cores, bigdl_type)
+        else:
+            raise Exception("Not supported training set: %s" % type(training_set))
+
+
+class InternalDistriOptimizer(ZooOptimizer):
+    def __init__(self,
+                 model,
+                 training_rdd,
+                 criterion,
+                 end_trigger,
+                 batch_size,
+                 optim_method=None,
+                 sparse_optim_method=None,
+                 bigdl_type="float"):
+        """
+        Create an optimizer.
+
+
+        :param model: the neural net model
+        :param training_data: the training dataset
+        :param criterion: the loss function
+        :param optim_method: the algorithm to use for optimization,
+           e.g. SGD, Adagrad, etc. If optim_method is None, the default algorithm is SGD.
+        :param end_trigger: when to end the optimization
+        :param batch_size: training batch size
+        """
+        if not optim_method:
+            optim_methods = {model.name(): SGD()}
+        elif isinstance(optim_method, OptimMethod):
+            optim_methods = {model.name(): optim_method}
+        elif isinstance(optim_method, JavaObject):
+            optim_methods = {model.name(): OptimMethod(optim_method, bigdl_type)}
+        else:
+            optim_methods = optim_method
+        if isinstance(training_rdd, RDD):
+            JavaValue.__init__(self, None, bigdl_type, model.value,
+                               training_rdd, criterion,
+                               optim_methods, end_trigger, batch_size, sparse_optim_method)

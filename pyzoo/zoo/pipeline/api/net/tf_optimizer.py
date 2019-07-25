@@ -25,6 +25,7 @@ from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Layer
 from bigdl.util.common import to_list, JavaValue
 from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer
+from zoo.pipeline.api.keras.optimizers import ZooOptimizer
 from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric
 from zoo.pipeline.api.net.utils import _find_placeholders, _check_the_same
 from zoo.util import nest
@@ -59,7 +60,8 @@ class TFOptimizer:
                  grads=None, variables=None, graph=None,
                  val_outputs=None, val_labels=None, val_method=None, val_split=0.0,
                  tensors_with_value=None, session_config=None,
-                 clip_norm=None, clip_value=None):
+                 clip_norm=None, clip_value=None, sparse_grads=None, sparse_variables=None,
+                 sparse_optim_method=None):
         '''
         TFOptimizer is used for distributed training of TensorFlow
         on Spark/BigDL.
@@ -75,9 +77,9 @@ class TFOptimizer:
 
         if dataset is None:
             args = TFOptimizer._get_arguments_from_loss(loss, optim_method, sess,
-                                                        val_outputs, val_labels, val_method)
+                                                        val_outputs, val_labels, val_method, sparse_optim_method)
             loss, optim_method, sess, dataset, inputs = args[:5]
-            grads, variables, graph, val_outputs, val_labels, val_method = args[5:]
+            grads, variables, graph, val_outputs, val_labels, val_method, sparse_grads, sparse_variables, sparse_optim_method = args[5:]
 
         additional_inputs = []
         additional_values = []
@@ -93,6 +95,7 @@ class TFOptimizer:
             inputs = nest.flatten(inputs)
 
         self.optim_method = optim_method
+        self.sparse_optim_method = sparse_optim_method
         self.sess = sess
         self.dataset = dataset
         self.inputs = inputs + additional_inputs
@@ -109,8 +112,8 @@ class TFOptimizer:
             raise ValueError("The clip_value argument should be a tuple (min_value, max_value)")
         self.clip_constant = clip_value
 
-        from zoo.util.tf import process_grad
-        grads = [process_grad(grad) for grad in grads]
+        # from zoo.util.tf import process_grad
+        # grads = [process_grad(grad) for grad in grads]
 
         if self.dataset.batch_size <= 0:
             raise ValueError("You should set batch_size instead of batch_per_thread for training")
@@ -123,15 +126,20 @@ class TFOptimizer:
             outputs = [loss]
 
         self.grads = grads
+        self.sparseGrads = sparse_grads
         self.outputs = outputs
 
         self.export_dir = tempfile.mkdtemp()
         export_tf(self.sess, self.export_dir,
                   inputs=self.inputs,
-                  outputs=self.grads + self.outputs)
+                  outputs=self.grads + self.sparseGrads + self.outputs)
 
         variable_names = [v.name for v in variables]
         grad_names = [g.name for g in grads]
+
+        sparse_variable_names = [v.name for v in sparse_variables]
+        sparse_grad_names = [g.name for g in sparse_grads]
+
         output_names = [o.name for o in outputs]
 
         def to_floats(vs):
@@ -142,7 +150,9 @@ class TFOptimizer:
             "output_names": output_names,
             "variables": variable_names,
             "grad_variables": grad_names,
-            "default_tensor_values": [to_floats(v) for v in additional_values]
+            "default_tensor_values": [to_floats(v) for v in additional_values],
+            "sparse_variables": sparse_variable_names,
+            "sparse_grad_variables": sparse_grad_names,
         }
 
         with open(os.path.join(self.export_dir, "training_meta.json"), "w") as f:
@@ -194,22 +204,25 @@ with variable_creator_scope():
                 raise ValueError("Validation data is not specified. Please set " +
                                  "val rdd in TFDataset, or set val_split larger than zero")
 
-            self.optimizer = Optimizer.create(self.training_helper_layer,
+            # TODO: InternalDistriOptimizer
+            self.optimizer = ZooOptimizer.create(self.training_helper_layer,
                                               training_rdd,
                                               IdentityCriterion(),
                                               batch_size=batch_size,
-                                              optim_method=self.optim_method)
+                                              optim_method=self.optim_method,
+                                              sparse_optim_method=self.sparse_optim_method)
             self.optimizer.set_validation(self.dataset.batch_size,
                                           val_rdd,
                                           EveryEpoch(),
                                           val_method)
         else:
             training_rdd = sample_rdd
-            self.optimizer = Optimizer.create(self.training_helper_layer,
+            self.optimizer = ZooOptimizer.create(self.training_helper_layer,
                                               training_rdd,
                                               IdentityCriterion(),
                                               batch_size=batch_size,
-                                              optim_method=self.optim_method)
+                                              optim_method=self.optim_method,
+                                              sparse_optim_method=self.sparse_optim_method)
 
         if self.clip_norm:
             self.optimizer.set_gradclip_l2norm(self.clip_norm)
@@ -218,7 +231,7 @@ with variable_creator_scope():
             self.optimizer.set_gradclip_const(min_value, max_value)
 
     @staticmethod
-    def _get_arguments_from_loss(loss, optim_method, session, val_outputs, val_labels, val_method):
+    def _get_arguments_from_loss(loss, optim_method, session, val_outputs, val_labels, val_method, sparse_optim_method):
         import tensorflow as tf
         if session is None:
             sess = tf.Session()
@@ -228,8 +241,15 @@ with variable_creator_scope():
         grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
         variables = []
         grads = []
+
+        sparse_variables = []
+        sparse_grads = []
         for (grad, var) in grads_vars:
-            if grad is not None:
+            from zoo.util.tf import grad_is_indexed_slices
+            if grad_is_indexed_slices(grad):
+                sparse_variables.append(var)
+                sparse_grads.append(grad)
+            else:
                 variables.append(var)
                 grads.append(grad)
 
@@ -241,15 +261,15 @@ with variable_creator_scope():
         _check_the_same(all_required_inputs, inputs)
 
         return [loss, optim_method, sess, dataset, inputs,
-                grads, variables, loss.graph, val_outputs, val_labels, val_method]
+                grads, variables, loss.graph, val_outputs, val_labels, val_method, sparse_grads, sparse_variables, sparse_optim_method]
 
     @classmethod
     def from_loss(cls, loss, optim_method, session=None, val_outputs=None,
                   val_labels=None, val_method=None, val_split=0.0,
-                  clip_norm=None, clip_value=None, **kwargs):
+                  clip_norm=None, clip_value=None, sparse_optim_method=None, **kwargs):
         args = TFOptimizer._get_arguments_from_loss(loss, optim_method,
                                                     session, val_outputs,
-                                                    val_labels, val_method)
+                                                    val_labels, val_method, sparse_optim_method)
         if clip_value is not None:
             if isinstance(clip_value, float) or isinstance(clip_value, int):
                 if clip_value <= 0:

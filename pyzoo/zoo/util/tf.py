@@ -39,6 +39,15 @@ def process_grad(grad):
     return grad
 
 
+def grad_is_indexed_slices(grad):
+    if grad is not None:
+        grad = ops.convert_to_tensor_or_indexed_slices(grad)
+        if isinstance(grad, ops.IndexedSlices):
+            return True
+        else:
+            return False
+
+
 def export_tf(sess, folder, inputs, outputs,
               generate_backward=False, allow_non_differentiable_input=True):
     """

@@ -19,10 +19,10 @@ package com.intel.analytics.zoo.pipeline.api.net
 import java.nio.FloatBuffer
 
 import com.intel.analytics.bigdl.dataset._
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, AbstractModule, Activity, SparseAbstractModule}
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.python.api.{PythonBigDLKeras, Sample => JSample}
-import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.tensor.{SparseTensorUtils, Storage, Tensor}
 import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.feature.image.ImageProcessing
@@ -42,8 +42,10 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
                                     outputs: Array[String],
                                     variables: Array[String],
                                     gradVariables: Array[String],
-                                    defaultTensorValue: Array[Array[Float]])
-  extends AbstractModule[Activity, Activity, Float] {
+                                    defaultTensorValue: Array[Array[Float]],
+                                    sparseVariables: Array[String] = null,
+                                    sparseGradVariables: Array[String] = null)
+  extends AbstractModule[Activity, Activity, Float] with SparseAbstractModule[Float] {
 
   override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
     (weights, gradWeights)
@@ -60,6 +62,18 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
 
   private val gradWeights = variables.map(_ => Tensor[Float]())
 
+  sWeight = if (sparseVariables != null) {
+    val ws = new Array[Tensor[Float]](sparseVariables.length)
+    var i = 0
+    while (i < ws.length) {
+      ws(i) = Tensor[Float]()
+      i += 1
+    }
+    setSparseWeights(ws)
+  } else null
+
+  sparseGradWeight = if (sparseVariables != null) sparseVariables.map(_ => Tensor[Float]())
+  else null
 
   private def setWeights(weights: Array[Tensor[Float]]) = {
     val sess = tfnet.sess
@@ -71,6 +85,18 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
       t
     }
     weights
+  }
+
+  private def setSparseWeights(sparseWeights: Array[Tensor[Float]]) = {
+    val sess = tfnet.sess
+    val runner = sess.runner()
+    sparseVariables.foreach(runner.fetch)
+    runner.run().asScala.zipWithIndex.map { case (fetch, idx) =>
+      val t = sparseWeights(idx)
+      tf2bigdl(fetch.asInstanceOf[TTensor[Float]], t)
+      t
+    }
+    sparseWeights
   }
 
   private def tf2bigdl(t: TTensor[_], output: Tensor[Float]) = {
@@ -122,9 +148,18 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
       gradWeights.zipWithIndex.foreach { case (grad, idx) =>
         grad.resizeAs(weights(idx)).add(fetches(idx))
       }
+
+      if (sparseGradWeight != null) {
+        var i = 0
+        while (i < sparseGradWeight.length) {
+          sparseGradWeight(i) = fetches(i + weights.length)
+          i += 1
+        }
+      }
     }
 
-    val realOutputs = fetches.slice(weights.length, fetches.length)
+    val realOutputs = if (sparseGradWeight == null) fetches.slice(weights.length, fetches.length)
+    else fetches.slice(weights.length + sparseGradWeight.length, fetches.length)
 
     output = if (realOutputs.length == 1) {
       realOutputs.head
