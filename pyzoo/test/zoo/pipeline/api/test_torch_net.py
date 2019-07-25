@@ -82,7 +82,7 @@ class TestTF(ZooTestCase):
                 x = self.dense1(x)
                 x = x.view(-1, 3, 4, 4)
                 x = torch.relu(self.conv1(x))
-                x = torch.max_pool2d(x, 2)
+                x = F.max_pool2d(x, 2)
                 x = x.view(x.size(0), -1)
                 x = torch.sigmoid(self.dense2(x))
                 return x
@@ -216,7 +216,7 @@ class TestTF(ZooTestCase):
         az_grad = list(az_net.parameters().values())[0]['gradWeight']
 
         assert np.allclose(torch_loss.tolist(), az_loss_output)
-        assert np.allclose(torch_grad, az_grad.tolist())
+        assert np.allclose(torch_grad, az_grad.tolist(), atol=1.e-5, rtol=1.e-3)
 
 
 if __name__ == "__main__":
