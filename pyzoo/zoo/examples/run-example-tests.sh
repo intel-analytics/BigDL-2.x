@@ -364,7 +364,7 @@ ${SPARK_HOME}/bin/spark-submit \
 now=$(date "+%s")
 time8=$((now-start))
 
-SPARK_HOME=$SPARK_2_1_HOME
+SPARK_HOME=$SPARK_2_4_HOME
 
 execute_ray_test () {
     echo "start example $1"
