@@ -17,71 +17,97 @@
 package com.intel.analytics.zoo.pipeline.api.net
 
 import java.io._
+import java.nio.channels.Channels
 import java.nio.file.{Files, Paths}
-import java.util.zip.ZipInputStream
 
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.pipeline.api.Predictable
 import com.intel.analytics.zoo.pipeline.api.net.TorchNet.TorchModelHolder
-import com.intel.analytics.zoo.pipeline.inference.JTensor
 import org.apache.commons.io.FileUtils
 
-import scala.collection.mutable
 import scala.reflect.ClassTag
 
 /**
  * [[TorchNet]] wraps a TorchScript model as a single layer.
  */
 class TorchNet private(private val modelHolder: TorchModelHolder)
-  extends AbstractModule[Tensor[Float], Tensor[Float], Float] with Predictable[Float] {
-
-  /**
-   * mark the model as transient and reload TorchNet from byteArray on executors
-   */
-  @transient
-  private lazy val torchModel = {
-    println("TorchNet loading in " + this)
-    TorchNet.load(modelHolder.torchBytes)
-  }
-
-  private def forward(storage: Array[Float], offset: Int, shape: Array[Int]): JTensor = {
-    PytorchModel.forwardNative(this.torchModel, storage, offset, shape).asInstanceOf[JTensor]
-  }
-
-  override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
-    (Array.empty, Array.empty)
-  }
+    extends AbstractModule[Tensor[Float], Tensor[Float], Float] with Predictable[Float] {
 
   protected val module: Module[Float] = this
   implicit val ev = TensorNumeric.NumericFloat
   implicit val tag: ClassTag[Float] = ClassTag.Float
 
+  var weights: Tensor[Float] = _
+  var gradients: Tensor[Float] = _
+
+  /**
+   * sequential id in cpp: std::vector<std::shared_ptr<torch::jit::script::Module>> handles;
+   * mark the model as transient and reload TorchNet from byteArray on executors
+   */
+  @transient
+  lazy val nativeRef: Long = {
+    println("TorchNet loading in " + this)
+    val ref = TorchNet.loadPytorchModel(modelHolder.torchBytes)
+
+    if (weights == null) {
+      val w = PytorchModel.getWeightNative(ref).clone()
+      weights = Tensor(w, Array(w.length))
+    } else {
+      PytorchModel.updateWeightNative(ref, weights.storage().array())
+    }
+
+    if (gradients == null) {
+      gradients = Tensor()
+    }
+    ref
+  }
+
+  override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
+    nativeRef
+    (Array(weights), Array(gradients))
+  }
+
   override def updateOutput(input: Tensor[Float]): Tensor[Float] = {
+    if (this.isTraining()) {
+      PytorchModel.updateWeightNative(this.nativeRef, weights.storage().array())
+    }
+
     require(input.isContiguous())
     val data = input.storage().array()
     val size = input.size()
     val offset = input.storageOffset() - 1
-    val result = forward(data, offset, size)
+    val result = PytorchModel.modelForwardNative(nativeRef, this.isTraining(), data, offset, size)
     val resultTensor = Tensor(result.getData, result.getShape)
     output.set(resultTensor)
   }
 
   override def updateGradInput(input: Tensor[Float], gradOutput: Tensor[Float]): Tensor[Float] = {
-    throw new NotImplementedError("backward is not supported for now")
+    val data = gradOutput.storage().array()
+    val size = gradOutput.size()
+    val offset = gradOutput.storageOffset() - 1
+    val result = PytorchModel.modelBackwardNative(nativeRef, data, offset, size)
+    val resultTensor = Tensor(result.getData, result.getShape)
+
+    gradients.resizeAs(weights)
+    val g = PytorchModel.getGradientNative(this.nativeRef)
+    System.arraycopy(g, 0, gradients.storage().array(), 0, g.length)
+    gradInput.set(resultTensor)
   }
 
-  override def release(): Unit = {
-    super.release()
-    if (torchModel != null) {
-      PytorchModel.releaseNative(torchModel)
-    }
+  // TODO: use release if possible. now for larger model it's causing early release
+  override def finalize(): Unit = {
+    super.finalize()
+    PytorchModel.releaseModelNative(nativeRef)
   }
 }
 
 object TorchNet {
+
+  PytorchModel.isLoaded
+  loadPytorchNatives() // load once per JVM
 
   private val modelBytesRegistry = new RegistryMap[Array[Byte]]()
 
@@ -132,27 +158,52 @@ object TorchNet {
 
   /**
    * Create a TorchNet from a saved TorchScript Model
-   * @param path Path to the TorchScript Model.
+   * @param modelPath Path to the TorchScript Model.
    * @return
    */
-  def apply(path: String): TorchNet = {
+  def apply(modelPath: String): TorchNet = {
     // TODO: add support for HDFS path
-    val modelbytes = Files.readAllBytes(Paths.get(path))
-    new TorchNet(new TorchModelHolder(modelbytes, path))
+    val modelbytes = Files.readAllBytes(Paths.get(modelPath))
+    new TorchNet(new TorchModelHolder(modelbytes, modelPath))
   }
 
-  private def load(bytes: Array[Byte]): Long = {
+  // extract libs from zoo jar file
+  private def loadPytorchNatives(): Unit = {
+    loadNativelib("pytorch/libpytorch-engine.so")
+  }
+
+  private def loadNativelib(path: String): Unit = {
+    val inputStream = TorchNet.getClass.getResourceAsStream(s"/${path}")
+    val file = File.createTempFile("PytorchLoader", "tmp")
+    val src = Channels.newChannel(inputStream)
+    val dest = new FileOutputStream(file).getChannel
+    dest.transferFrom(src, 0, Long.MaxValue)
+    dest.close()
+    src.close()
+    val filePath = file.getAbsolutePath
     try {
-      val tmpFile = File.createTempFile("TorchNet", "_pt")
-      Files.write(Paths.get(tmpFile.toURI()), bytes)
-      val ref = PytorchModel.loadNative(tmpFile.getAbsolutePath())
-      FileUtils.deleteQuietly(tmpFile)
-      ref
-    } catch {
-      case io: IOException =>
-      System.out.println("error during loading Torch model")
-      throw io;
+      System.load(filePath)
+    } finally {
+      file.delete()
     }
   }
 
+
+  private[net] def loadPytorchModel(bytes: Array[Byte]): Long = {
+    var nativeRef = -1L
+    try {
+      val tmpFile = File.createTempFile("TorchNet", "_pt")
+      Files.write(Paths.get(tmpFile.toURI), bytes)
+      nativeRef = PytorchModel.loadModelNative(tmpFile.getAbsolutePath)
+      FileUtils.deleteQuietly(tmpFile)
+    }
+    catch {
+      case io: IOException =>
+        System.out.println("error during loading Torch model")
+        throw io
+    }
+    nativeRef
+  }
+
 }
+
