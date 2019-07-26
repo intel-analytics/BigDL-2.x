@@ -376,6 +376,9 @@ now=$(date "+%s")
 time9=$((now-start))
 echo "qaranker time used:$time9 seconds"
 
+echo "#9-12 strat ray examples"
+SPARK_HOME=$SPARK_2_4_HOME
+
 execute_ray_test () {
     echo "start example $1"
     start=$(date "+%s")
@@ -395,7 +398,13 @@ spark_version="$($SPARK_HOME/bin/pyspark --version 2>&1)"
 temp="${spark_version% /_/*}"
 spark_version="${temp##*\\}"
 py_version="$(python -V 2>&1)"
-
+#test install some package which is needed by ray example
+ray="$(ray 2>&1)"
+exit_status=$?
+if [ $exit_status -ne 0 ];then
+    pip install ray
+fi
+pip install gym
 
 if [[ $py_version == *"Python 3.5"* || $py_version == *"Python 3.6"* ]]; then
     if [[ $spark_version == *"version 2.4.3"* || $spark_version == *"version 2.4.0"* ]]; then
