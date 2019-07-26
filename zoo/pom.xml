@@ -329,6 +329,18 @@
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
                 <filtering>true</filtering>
+                <includes>
+                    <include>*.txt</include>
+                    <include>*.conf</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>*.txt</exclude>
+                    <exclude>*.conf</exclude>
+                </excludes>
             </resource>
             <resource>
                 <!-- Include the properties file to provide the build information. -->

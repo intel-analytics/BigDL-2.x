@@ -10,6 +10,8 @@ pyzoo/ray_poc.zip
 
 # External Python packages
 python_packages/
+/zoo/src/main/resources/pytorch/lib
+/zoo/src/main/java/com/intel/analytics/zoo/pipeline/api/net/native/build
 
 # SBT, Maven specific
 .cache
