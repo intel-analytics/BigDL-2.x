@@ -379,17 +379,38 @@ execute_ray_test () {
     return $((now-start))
 }
 
-execute_ray_test rl_pong ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py
-time9 = $?
+#run only when python >=3.5 and spark >=2.4.0
 
-execute_ray_test sync_parameter_server ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/sync_parameter_server.py
-time10 = $?
+spark_version="$($SPARK_HOME/bin/pyspark --version 2>&1)"
+temp="${spark_version% /_/*}"
+spark_version="${temp##*\\}"
+py_version="$(python -V 2>&1)"
 
-execute_ray_test async_parameter_server ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/async_parameter_server.py
-time11 = $?
 
-execute_ray_test multiagent_two_trainers ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py
-time12 = $?
+if [[ $py_version == *"Python 3.5"* || $py_version == *"Python 3.6"* ]]; then
+    if [[ $spark_version == *"version 2.4.3"* || $spark_version == *"version 2.4.0"* ]]; then
+        execute_ray_test rl_pong ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py
+        time9 = $?
+
+        execute_ray_test sync_parameter_server ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/sync_parameter_server.py
+        time10 = $?
+
+        execute_ray_test async_parameter_server ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/async_parameter_server.py
+        time11 = $?
+
+        execute_ray_test multiagent_two_trainers ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py
+        time12 = $?
+    else
+        echo "Current spark version is not support ray."
+        echo "Skipping ray examples tests."
+        echo "Please check your spark version or check SPARK_HOME."
+    fi
+else
+    echo "Current python version is not support ray."
+    echo "Skipping ray examples tests."
+    echo "Please check your pyhton version."
+fi
+
 
 echo "#1 textclassification time used:$time1 seconds"
 echo "#2 customized loss and layer time used:$time2 seconds"
