@@ -16,6 +16,7 @@
 import torch
 import os
 import tempfile
+import shutil
 import numpy as np
 
 from pyspark import RDD
@@ -44,10 +45,14 @@ class TorchNet(Layer):
         :param input_shape: list of integers. E.g. for ResNet, this may be [1, 3, 224, 224]
         """
         temp = tempfile.mkdtemp()
+
+        # save model
         traced_script_module = torch.jit.trace(module, torch.rand(input_shape))
         path = os.path.join(temp, "model.pt")
         traced_script_module.save(path)
+
         net = TorchNet(path)
+        shutil.rmtree(temp)
 
         return net
 
