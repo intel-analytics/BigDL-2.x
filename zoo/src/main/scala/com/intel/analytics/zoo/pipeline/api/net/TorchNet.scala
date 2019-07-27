@@ -24,9 +24,11 @@ import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.pipeline.api.Predictable
 import com.intel.analytics.zoo.pipeline.api.net.TorchNet.TorchModelHolder
 import org.apache.commons.io.FileUtils
+import org.slf4j.LoggerFactory
 
 import scala.reflect.ClassTag
 
@@ -34,14 +36,16 @@ import scala.reflect.ClassTag
  * [[TorchNet]] wraps a TorchScript model as a single layer.
  */
 class TorchNet private(private val modelHolder: TorchModelHolder)
-    extends AbstractModule[Tensor[Float], Tensor[Float], Float] with Predictable[Float] {
+    extends AbstractModule[Activity, Activity, Float] with Predictable[Float] {
 
   protected val module: Module[Float] = this
   implicit val ev = TensorNumeric.NumericFloat
   implicit val tag: ClassTag[Float] = ClassTag.Float
+  val logger = LoggerFactory.getLogger(getClass)
 
   var weights: Tensor[Float] = _
   var gradients: Tensor[Float] = _
+  gradInput = Tensor()
 
   /**
    * sequential id in cpp: std::vector<std::shared_ptr<torch::jit::script::Module>> handles;
@@ -70,31 +74,57 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     (Array(weights), Array(gradients))
   }
 
-  override def updateOutput(input: Tensor[Float]): Tensor[Float] = {
+  override def updateOutput(input: Activity): Activity = {
+    if (!input.isTensor) {
+      val msg = "Table input is not supported by TorchNet for now."
+      throw new UnsupportedOperationException(msg)
+    }
+
+    val inputTensor = input.toTensor
     if (this.isTraining()) {
       PytorchModel.updateWeightNative(this.nativeRef, weights.storage().array())
     }
 
-    require(input.isContiguous())
-    val data = input.storage().array()
-    val size = input.size()
-    val offset = input.storageOffset() - 1
+    require(inputTensor.isContiguous())
+    val data = inputTensor.storage().array()
+    val size = inputTensor.size()
+    val offset = inputTensor.storageOffset() - 1
     val result = PytorchModel.modelForwardNative(nativeRef, this.isTraining(), data, offset, size)
-    val resultTensor = Tensor(result.getData, result.getShape)
-    output.set(resultTensor)
+    if (result.length == 1) {
+      val resultTensor = Tensor(result(0).getData, result(0).getShape)
+      if (output == null) {
+        output = Tensor()
+      }
+      output.toTensor.set(resultTensor)
+    } else {
+      if (output == null) {
+        output = T()
+      }
+      result.foreach { t =>
+        output.toTable.insert(Tensor(t.getData, t.getShape))
+      }
+    }
+    output
   }
 
-  override def updateGradInput(input: Tensor[Float], gradOutput: Tensor[Float]): Tensor[Float] = {
-    val data = gradOutput.storage().array()
-    val size = gradOutput.size()
-    val offset = gradOutput.storageOffset() - 1
+  override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
+    if (!gradOutput.isTensor) {
+      val msg = "Table input is not supported by TorchNet for now."
+      throw new UnsupportedOperationException(msg)
+    }
+
+    val gradOutputTensor = gradOutput.toTensor
+    val data = gradOutputTensor.storage().array()
+    val size = gradOutputTensor.size()
+    val offset = gradOutputTensor.storageOffset() - 1
     val result = PytorchModel.modelBackwardNative(nativeRef, data, offset, size)
     val resultTensor = Tensor(result.getData, result.getShape)
 
     gradients.resizeAs(weights)
     val g = PytorchModel.getGradientNative(this.nativeRef)
     System.arraycopy(g, 0, gradients.storage().array(), 0, g.length)
-    gradInput.set(resultTensor)
+    gradInput.toTensor.set(resultTensor)
+    gradInput
   }
 
   // TODO: use release if possible. now for larger model it's causing early release

@@ -37,7 +37,7 @@ std::mutex mtx;
 std::unordered_map<int, std::shared_ptr<torch::jit::script::Module>> modelHandles;
 std::unordered_map<int, std::shared_ptr<torch::jit::script::Module>> lossHandles;
 std::unordered_map<int, at::Tensor> modelInputs;
-std::unordered_map<int, at::Tensor> modelOutputs;
+std::unordered_map<int, c10::IValue> modelOutputs;
 std::unordered_map<int, at::Tensor> lossGrads;
 long modelID;
 long lossID;
@@ -193,7 +193,7 @@ JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchMod
  * Method:    forward
  * Signature: ([F[I)Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
  */
-JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_modelForwardNative
+JNIEXPORT jobjectArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_modelForwardNative
   (JNIEnv * jenv, jclass jobj, jlong nativeRef, jboolean isTraining, jfloatArray jstorage, jint joffset, jintArray jshape) {
 
     // to Torch Tensor
@@ -222,7 +222,7 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
     assert(model_ptr != nullptr);
 
     // Execute the model and turn its output into a tensor.
-    at::Tensor output = model_ptr->forward(inputs).toTensor();
+    auto output = model_ptr->forward(inputs);
 
     if (isTraining) {
         mtx.lock();
@@ -235,8 +235,27 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
     jenv -> ReleasePrimitiveArrayCritical(jstorage, c_storage, 0);
     jenv -> ReleasePrimitiveArrayCritical(jshape, c_shape, 0);
 
-    jobject result = torch2JTensor(jenv, output);
-    return result;
+    int resultSize = 1;
+    jclass jtensor_class = jenv -> FindClass("com/intel/analytics/zoo/pipeline/inference/JTensor");
+
+    if(output.isTuple()) {
+        resultSize = output.toTuple()-> elements().size();
+        jobjectArray jTensorArray = jenv->NewObjectArray(resultSize, jtensor_class, NULL);
+        auto outputTuple = output.toTuple();
+        for (size_t i = 0; i < resultSize; i++) {
+            auto t = outputTuple -> elements()[i].toTensor();
+            jobject jt = torch2JTensor(jenv, t);
+            jenv->SetObjectArrayElement(jTensorArray, i, jt);
+        }
+        return jTensorArray;
+    } else {
+        jobjectArray jTensorArray = jenv->NewObjectArray(resultSize, jtensor_class, NULL);
+        auto t = output.toTensor();
+        jobject jt = torch2JTensor(jenv, t);
+        jenv->SetObjectArrayElement(jTensorArray, 0, jt);
+        return jTensorArray;
+    }
+
   }
 
 
@@ -267,7 +286,7 @@ JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchM
     // create gradOutput Tensor
     auto gradOutput_tensor = torch::from_blob(c_storage + joffset, torch_shape, at::kFloat);
 
-    at::Tensor y = modelOutputs[nativeRef];
+    at::Tensor y = modelOutputs[nativeRef].toTensor();
     y.backward(gradOutput_tensor);
 
     auto gradInput = modelInputs[nativeRef].grad();
