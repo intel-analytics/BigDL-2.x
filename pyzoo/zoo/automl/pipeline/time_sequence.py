@@ -77,7 +77,8 @@ class TimeSequencePipeline(Pipeline):
                                                                               y_pred,
                                                                               is_train=True)
 
-        return [Evaluator.evaluate(m, y_unscale, y_pred_unscale, multioutput=multioutput) for m in metrics]
+        return [Evaluator.evaluate(m, y_unscale, y_pred_unscale, multioutput=multioutput)
+                for m in metrics]
 
     def predict(self, input_df):
         """
