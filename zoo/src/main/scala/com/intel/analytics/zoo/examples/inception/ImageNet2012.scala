@@ -122,12 +122,11 @@ object ImageNet2012 {
         nodeNumber: Int,
         coresPerNode: Int,
         classNumber: Int,
-        memoryType: MemoryType = DRAM,
-        dataStrategy: DataStrategy = PARTITIONED): FeatureSet[MiniBatch[Float]] = {
+        memoryType: MemoryType = DRAM): FeatureSet[MiniBatch[Float]] = {
     val rawData = readFromSeqFiles(path, sc, classNumber)
       .map(byteRecordToImageFeature(_))
       .setName("ImageNet2012 Training Set")
-    val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType, dataStrategy)
+    val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType)
     val transformer = ImagePixelBytesToMat() ->
       ImageRandomCrop(imageSize, imageSize) ->
       ImageChannelNormalize(0.485f, 0.456f, 0.406f, 0.229f, 0.224f, 0.225f) ->
