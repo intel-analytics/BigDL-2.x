@@ -54,11 +54,18 @@ class TimeSequencePipeline(Pipeline):
 
     def evaluate(self,
                  input_df,
-                 metrics=["mean_squared_error"]):
+                 metrics=["mean_squared_error"],
+                 multioutput='raw_values'
+                 ):
         """
         evdev/run-pytestsaluate the pipeline
         :param input_df:
         :param metrics:
+        :param multioutput: string in ['raw_values', 'uniform_average']
+                'raw_values' :
+                    Returns a full set of errors in case of multioutput input.
+                'uniform_average' :
+                    Errors of all outputs are averaged with uniform weight.
         :return:
         """
         if not isinstance(metrics, list):
@@ -70,7 +77,7 @@ class TimeSequencePipeline(Pipeline):
                                                                               y_pred,
                                                                               is_train=True)
 
-        return [Evaluator.evaluate(m, y_unscale, y_pred_unscale) for m in metrics]
+        return [Evaluator.evaluate(m, y_unscale, y_pred_unscale, multioutput=multioutput) for m in metrics]
 
     def predict(self, input_df):
         """
@@ -93,7 +100,7 @@ class TimeSequencePipeline(Pipeline):
         print("Pipeline is saved in", file)
 
 
-def load_ts_pipeline(file, distributed=False):
+def load_ts_pipeline(file):
     feature_transformers = TimeSequenceFeatureTransformer()
     model = TimeSequenceModel(check_optional_config=False)
 
