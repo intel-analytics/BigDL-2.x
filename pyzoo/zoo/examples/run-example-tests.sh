@@ -409,8 +409,8 @@ if [[ $py_version == *"Python 3.5"* || $py_version == *"Python 3.6"* ]]; then
         start=$(date "+%s")
         ${SPARK_HOME}/bin/spark-submit \
             --master ${MASTER} \
-            --driver-memory 10g \
-            --executor-memory 10g \
+            --driver-memory 200g \
+            --executor-memory 200g \
             --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py \
             --jars ${ANALYTICS_ZOO_JAR} \
             --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
@@ -424,8 +424,8 @@ if [[ $py_version == *"Python 3.5"* || $py_version == *"Python 3.6"* ]]; then
         start=$(date "+%s")
         ${SPARK_HOME}/bin/spark-submit \
             --master ${MASTER} \
-            --driver-memory 10g \
-            --executor-memory 10g \
+            --driver-memory 200g \
+            --executor-memory 200g \
             --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/async_parameter_server.py \
             --jars ${ANALYTICS_ZOO_JAR} \
             --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
@@ -438,8 +438,8 @@ if [[ $py_version == *"Python 3.5"* || $py_version == *"Python 3.6"* ]]; then
         start=$(date "+%s")
         ${SPARK_HOME}/bin/spark-submit \
             --master ${MASTER} \
-            --driver-memory 10g \
-            --executor-memory 10g \
+            --driver-memory 200g \
+            --executor-memory 200g \
             --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/sync_parameter_server.py \
             --jars ${ANALYTICS_ZOO_JAR} \
             --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
@@ -452,8 +452,8 @@ if [[ $py_version == *"Python 3.5"* || $py_version == *"Python 3.6"* ]]; then
         start=$(date "+%s")
         ${SPARK_HOME}/bin/spark-submit \
             --master ${MASTER} \
-            --driver-memory 10g \
-            --executor-memory 10g \
+            --driver-memory 200g \
+            --executor-memory 200g \
             --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py \
             --jars ${ANALYTICS_ZOO_JAR} \
             --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
