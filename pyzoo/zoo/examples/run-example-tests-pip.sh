@@ -378,8 +378,6 @@ echo "qaranker time used:$time9 seconds"
 
 echo "#9-12 strat ray examples"
 SPARK_HOME=$SPARK_2_4_HOME
-echo "Install gym"
-pip install gym
 
 execute_ray_test () {
     echo "start example $1"
@@ -400,17 +398,23 @@ spark_version="$($SPARK_HOME/bin/pyspark --version 2>&1)"
 temp="${spark_version% /_/*}"
 spark_version="${temp##*\\}"
 py_version="$(python -V 2>&1)"
-#test install some package which is needed by ray example
-ehco "check ray"
-ray="$(ray 2>&1)"
-exit_status=$?
-if [ $exit_status -ne 0 ];then
-    echo "Ray is not in this system.Install ray."
-    pip install ray
-fi
 
 if [[ $py_version == *"Python 3.5"* || $py_version == *"Python 3.6"* ]]; then
     if [[ $spark_version == *"version 2.4.3"* || $spark_version == *"version 2.4.0"* ]]; then
+        #test install some package which is needed by ray example
+        echo "check ray"
+        ray="$(ray 2>&1)"
+        exit_status=$?
+        if [ $exit_status -ne 0 ];then
+            echo "Ray is not in this system.Install ray."
+            pip install ray
+        else
+            echo "Ray already installed."
+        fi
+        echo "Install gym"
+        pip install gym
+
+        #start execute
         execute_ray_test rl_pong ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py
         time9 = $?
 
@@ -431,14 +435,17 @@ if [[ $py_version == *"Python 3.5"* || $py_version == *"Python 3.6"* ]]; then
         echo "Current spark version is not support ray."
         echo "Skipping ray examples tests."
         echo "Please check your spark version or check SPARK_HOME."
+        pip uninstall -y gym
         clear_up
     fi
 else
     echo "Current python version is not support ray."
     echo "Skipping ray examples tests."
     echo "Please check your pyhton version."
+    pip uninstall -y gym
     clear_up
 fi
 
 # This should be done at the very end after all tests finish.
+pip uninstall -y gym
 clear_up
