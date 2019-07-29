@@ -292,6 +292,7 @@ class CachedDistributedFeatureSet[T: ClassTag]
   }
 
   override def unpersist(): Unit = {
+    FeatureSet.logger.info(s"Unpersisting ${buffer.name}.")
     buffer.map(_.free()).count()
     buffer.unpersist()
     indexes.unpersist()
@@ -353,14 +354,17 @@ class DiskFeatureSet[T: ClassTag]
       }
     } else {
       if (train) {
-        if (currentFeatureSet != null && trained) {
-          currentFeatureSet.unpersist()
+        if (trained) {
+          if (currentFeatureSet != null) {
+            currentFeatureSet.unpersist()
+          }
           newSample()
         }
         currentFeatureSet.shuffle()
         trained = true
         currentFeatureSet.data(train)
       } else {
+        trained = false
         currentFeatureSet.data(train)
       }
     }

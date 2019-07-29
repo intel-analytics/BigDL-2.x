@@ -77,24 +77,27 @@ object ImageNet2012 {
     coresPerNode: Int,
     classNumber: Int,
     memoryType: MemoryType = DRAM,
-    opencvPreprocessing: Boolean = false,
-    dataStrategy: DataStrategy = PARTITIONED
+    opencvPreprocessing: Boolean = false
   )
   : FeatureSet[MiniBatch[Float]] = {
     if (opencvPreprocessing) {
       logger.info("Using opencv preprocessing for training set")
       opencv(path, sc, imageSize, batchSize,
-        nodeNumber, coresPerNode, classNumber, memoryType, dataStrategy)
+        nodeNumber, coresPerNode, classNumber, memoryType)
     } else {
       val rawData = readFromSeqFiles(path, sc, classNumber)
         .setName("ImageNet2012 Training Set")
-      val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType, dataStrategy)
-      featureSet.transform(BytesToBGRImg()
+      val featureSet = FeatureSet.rdd(rawData, memoryType = memoryType)
+      featureSet.transform(
+        MTLabeledBGRImgToBatch[ByteRecord](
+          width = imageSize,
+          height = imageSize,
+          batchSize = batchSize,
+          transformer = (BytesToBGRImg()
             -> BGRImgCropper(imageSize, imageSize)
             -> DatasetHFlip(0.5)
-            -> BGRImgNormalizer(0.485, 0.456, 0.406, 0.229, 0.224, 0.225)
-            -> BGRImgToSample()
-            -> SampleToMiniBatch(batchSize))
+            -> BGRImgNormalizer(0.485, 0.456, 0.406, 0.229, 0.224, 0.225))
+        ))
     }
   }
 
