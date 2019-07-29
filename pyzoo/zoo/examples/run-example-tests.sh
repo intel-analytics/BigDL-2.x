@@ -365,6 +365,8 @@ now=$(date "+%s")
 time8=$((now-start))
 
 SPARK_HOME=$SPARK_2_4_HOME
+echo "Install gym"
+pip install gym
 
 execute_ray_test () {
     echo "start example $1"
@@ -388,12 +390,14 @@ spark_version="${temp##*\\}"
 py_version="$(python -V 2>&1)"
 
 #test install some package which is needed by ray example
+ehco "check ray"
 ray="$(ray 2>&1)"
 exit_status=$?
 if [ $exit_status -ne 0 ];then
+    echo "Ray is not in this system.Install ray."
     pip install ray
 fi
-pip install gym
+
 
 if [[ $py_version == *"Python 3.5"* || $py_version == *"Python 3.6"* ]]; then
     if [[ $spark_version == *"version 2.4.3"* || $spark_version == *"version 2.4.0"* ]]; then
