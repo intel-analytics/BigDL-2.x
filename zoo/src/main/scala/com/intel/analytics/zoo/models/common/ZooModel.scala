@@ -28,7 +28,6 @@ import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
 
-
 /**
  * The base class for models in Analytics Zoo.
  *
