@@ -46,9 +46,8 @@ def check_input(y_true, y_pred, multioutput):
     if isinstance(multioutput, str):
         if multioutput not in allowed_multioutput_str:
             raise ValueError("Allowed 'multioutput' string values are {}. "
-                             "You provided multioutput={!r}".format(
-                              allowed_multioutput_str,
-                              multioutput))
+                             "You provided multioutput={!r}"
+                             .format(allowed_multioutput_str, multioutput))
 
     return y_true, y_pred
 
