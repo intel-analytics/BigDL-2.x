@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The BigDL Authors.
+ * Copyright 2018 Analytics Zoo Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,20 @@
  */
 package com.intel.analytics.zoo.models.caffe
 
-import java.io._
+import java.io.{InputStream, InputStreamReader}
 
 import caffe.Caffe
 import caffe.Caffe._
-import com.google.protobuf.TextFormat.ParseException
-import com.google.protobuf.{CodedInputStream, GeneratedMessage, TextFormat}
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn._
+import com.intel.analytics.bigdl.shaded.protobuf.TextFormat.ParseException
+import com.intel.analytics.bigdl.shaded.protobuf.{CodedInputStream, GeneratedMessage, TextFormat}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{FileReader, Table}
+import com.intel.analytics.bigdl.utils.{Node, Table}
+import com.intel.analytics.bigdl.utils.caffe.{CaffeConversionException, LayerConverter, V1LayerConverter}
+import com.intel.analytics.zoo.utils.FileReader
 import org.apache.log4j.Logger
 
 import scala.collection.JavaConverters._
@@ -46,19 +48,22 @@ abstract class Customizable[T: ClassTag](implicit ev: TensorNumeric[T]) {
   }
 }
 
+
 /**
  * An utility to load pre-trained caffe model from prototxt and binary
- * and convert it to BigDL equivalent modules
+ * and convert it to Zoo equivalent modules
  * @param prototxtPath caffe model define prototxt path
  * @param modelPath    caffe serialized binary model path
  * @param matchAll     if match all modules with parameters
  * @param customizedConverters customized converter
  * @tparam T type
  */
+
+
 class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
-  matchAll: Boolean = true,
-  customizedConverters: mutable.HashMap[String, Customizable[T]] = null
-)(implicit ev: TensorNumeric[T]) {
+                               matchAll: Boolean = true,
+                               customizedConverters: mutable.HashMap[String, Customizable[T]] = null
+                              )(implicit ev: TensorNumeric[T]) {
 
   private val logger = Logger.getLogger(getClass)
 
@@ -108,6 +113,7 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
       prototxtReader = new InputStreamReader(prototxtStream, "ASCII")
 
       val netBuilder = NetParameter.newBuilder
+
       TextFormat.merge(prototxtReader, netBuilder)
       logger.info(s"start loading caffe model from $modelPath")
       val cis = CodedInputStream.newInstance(modelStream)
@@ -214,9 +220,9 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
       val caffeWeightData = caffeWeight.get.getDataList
       val weight = params[Tensor[T]]("weight")
       require(params != null && weight.nElement() == caffeWeightData.size(),
-        s"weight element number is not equal between caffe layer and bigdl module $name, " +
+        s"weight element number is not equal between caffe layer and zoo module $name, " +
           s"data shape in caffe is ${ caffeWeight.get.getShape() }," +
-          s" while data shape in bigdl is ${ weight.size().mkString(",") }")
+          s" while data shape in zoo is ${ weight.size().mkString(",") }")
       var i = 0
       val weightData = weight.storage().array()
       var offset = weight.storageOffset() - 1
@@ -233,9 +239,9 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
       val caffeBiasList = caffeBias.get.getDataList
       val bias = params[Tensor[T]]("bias")
       require(bias.nElement() == caffeBiasList.size(),
-        s"bias element number is not equal between caffe layer and bigdl module $name, " +
+        s"bias element number is not equal between caffe layer and zoo module $name, " +
           s"data shape in caffe is ${ caffeBias.get.getShape() }," +
-          s" while data shape in bigdl is ${ bias.size().mkString(",") }")
+          s" while data shape in zoo is ${ bias.size().mkString(",") }")
       var i = 0
       val biasData = bias.storage().array()
       var offset = bias.storageOffset() - 1
@@ -247,12 +253,12 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
     }
   }
 
-/**
- * copy caffe parameters to module
- * if matchAll, throw an exception if some layers are not mapped
- * @param model the model defined in big-dl
- * @return
- */
+  /**
+   * copy caffe parameters to module
+   * if matchAll, throw an exception if some layers are not mapped
+   * @param model the model defined in big-dl
+   * @return
+   */
   private def copyParameters(model: Module[T]): Module[T] = {
     loadCaffe(prototxtPath, modelPath)
     val parameterTable = model.getParametersTable()
@@ -275,12 +281,13 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
     loadParameters(name, params)
   }
 
-/**
- * Load caffe model from prototxt file and binary pre-trained model and converted
- * to BigDL graph module
- * @param outputNames additional output layer names besides the default(layers without next nodes)
- * @return BigDL model and criterion
- */
+  /**
+   * Load caffe model from prototxt file and binary pre-trained model and converted
+   * to Zoo graph module
+   * @param outputNames additional output layer names besides
+   *                    the default(layers without next nodes)
+   * @return Zoo model and criterion
+   */
   def createCaffeModel(outputNames: Array[String] = Array[String]())
   : (Module[T], ParallelCriterion[T]) = {
     loadCaffe(prototxtPath, modelPath)
@@ -290,26 +297,107 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
     val outputs = layers.filter(layer => layer.nextNodes.isEmpty ||
       outputNames.contains(layer.element.getName())).toArray
     val module = Graph(inputs, outputs)
+
     module.setName(netparam.getName)
     copyParameters(module)
-    (module, criterions)
+
+    // modify nodes information of inputs and outputs
+    toDnnCaffe(module.asInstanceOf[StaticGraph[T]])
+    val newGraph = Graph(inputs, outputs)
+
+    (newGraph, criterions)
   }
+
+  /**
+   * Original loading caffe model would bring Scale layer, which is
+   * not supported by mkldnn, thus leads to bad performance
+   * this method basically change the nodes information of the
+   * old graph, nodes information contains all the information of
+   * a net, thus only by modifying nodes we can get the new graph
+   * Besides, many initializations are based on nodes information,
+   * thus, a new construction of Graph is required after nodes are changed
+   * @param graph origin graph which is not supported by mkldnn
+   */
+  def toDnnCaffe(graph: StaticGraph[T]): Unit = {
+    for (thisInput <- graph.inputs) {
+      // for multiple inputs, iterate all the inputs
+      // start from the beginning node and search
+      // each node has nextNodes operation
+      // it is the similar behavior of pointer operation
+
+      searchAndMergeBnScale(thisInput)
+    }
+  }
+
+  /**
+   * This method recursively modify the nodes information
+   * and merge the BatchNorm layer and Scale layer
+   * Specifically, given a node in Graph, it search the nextNodes
+   * of this node, and copy the parameter of Scale to BatchNorm,
+   * then operate the pointer of BatchNorm to skip Scale layer and
+   * directly pointer to the next layer of Scale layer
+   * @param curNode the node to be operated recursively
+   */
+  def searchAndMergeBnScale(curNode: ModuleNode[T]): Unit = {
+    if (curNode.element.isInstanceOf[BatchNormalization[T]]
+      && curNode.nextNodes.head.element.isInstanceOf[Scale[T]]) {
+
+      // start pointer operation here
+      // to copy the parameter from SCALE to BN
+      // delete node SCALE and fix the pointer
+
+      val bnTable = curNode.element.getParametersTable()
+      val scaleTable = curNode.nextNodes.head.element.getParametersTable()
+      scaleTable.keySet.map(_.toString).foreach { layerName =>
+
+        val bnLayerName = layerName.replace("scale", "bn")
+
+        // do not add table here it would change pointer
+        // bnTable[Table](bnLayerName).add(scaleTable[Table](layerName))
+
+        scaleTable[Table](layerName).keySet.foreach { param =>
+          bnTable[Table](bnLayerName).apply[Tensor[Float]](param).copy(
+            scaleTable[Table](layerName)[Tensor[Float]](param)
+          )
+        }
+        val bb = curNode.element.getParametersTable()
+        None
+      }
+
+      val scaleNode = curNode.nextNodes.head
+      val newNextNode = curNode.nextNodes.head.nextNodes.head
+
+      // note that all nodes connected to scale are to be deleted
+      curNode.delete(scaleNode)
+      scaleNode.delete(newNextNode)
+
+      curNode.add(newNextNode)
+
+    }
+    if (curNode.nextNodes.nonEmpty) {
+      for (nextNode <- curNode.nextNodes) {
+        searchAndMergeBnScale(nextNode)
+      }
+    }
+
+  }
+
 
   private val dataLayerList = Array("INPUT", "DATA", "DUMMYDATA", "ANNOTATEDDATA", "MEMORYDATA")
 
   private def tryConvertInput(layer: GeneratedMessage, layerType: String,
-    layers: ArrayBuffer[ModuleNode[T]],
-    top2LayerMap: mutable.HashMap[String, String],
-    layersMap: mutable.HashMap[String, ModuleNode[T]]): Boolean = {
+                              layers: ArrayBuffer[ModuleNode[T]],
+                              top2LayerMap: mutable.HashMap[String, String],
+                              layersMap: mutable.HashMap[String, ModuleNode[T]]): Boolean = {
     val inputs = if (dataLayerList.contains(layerType)) convertCaffeLayer(layer) else null
     addInputList(inputs, layers, top2LayerMap, layersMap)
   }
 
   // try to get input list (without data layer)
   private def tryConvertInput(netparam: Caffe.NetParameter,
-    layers: ArrayBuffer[ModuleNode[T]],
-    top2LayerMap: mutable.HashMap[String, String],
-    layersMap: mutable.HashMap[String, ModuleNode[T]]): Boolean = {
+                              layers: ArrayBuffer[ModuleNode[T]],
+                              top2LayerMap: mutable.HashMap[String, String],
+                              layersMap: mutable.HashMap[String, ModuleNode[T]]): Boolean = {
     val inputNames = netparam.getInputList
     val inputs = if (!inputNames.isEmpty) {
       (0 until inputNames.size()).map(i => {
@@ -324,9 +412,9 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
   }
 
   private def addInputList(inputs: Seq[ModuleNode[T]],
-    layers: ArrayBuffer[ModuleNode[T]],
-    top2LayerMap: mutable.HashMap[String, String],
-    layersMap: mutable.HashMap[String, ModuleNode[T]]): Boolean = {
+                           layers: ArrayBuffer[ModuleNode[T]],
+                           top2LayerMap: mutable.HashMap[String, String],
+                           layersMap: mutable.HashMap[String, ModuleNode[T]]): Boolean = {
     if (null != inputs) {
       inputs.foreach(input => {
         top2LayerMap(input.element.getName()) = input.element.getName()
@@ -377,7 +465,11 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
     }
 
     tryConvertInput(netparam, layers, top2LayerMap, layersMap)
-    allLayers.foreach(layer => {
+    var lastLayerName: String = null
+    var lastLayer: GeneratedMessage = null
+
+    //    allLayers.foreach(layer => {
+    for ((layer, idx) <- allLayers.view.zipWithIndex) {
       var name : String = null
       val topList = new ArrayBuffer[String]()
       val bottomList = new ArrayBuffer[String]()
@@ -409,7 +501,36 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
         } else false
 
         if (!isCriterionLayerOnly && !isInput) {
-          val nodes = convertCaffeLayer(layer)
+
+          var nodes: Seq[Graph.ModuleNode[T]] = null
+
+          if (layerType == "BATCHNORM") {
+            val nextLayer = allLayers(idx + 1)
+            var nextName: String = null
+            nextLayer match {
+              case v2 : LayerParameter =>
+                nextName = v2.getName
+              case v1 : V1LayerParameter =>
+                nextName = v1.getName
+            }
+            val nextType = getLayerType(nextName).get.toUpperCase
+
+            if (nextType == "SCALE") {
+              //            layers.remove(layers.length - 1)
+              nodes = if (layer.isInstanceOf[LayerParameter]) {
+                layerConverter.convertBnFromCaffe(layer)
+              }
+              else {
+                v1layerConverter.convertBnFromCaffe(layer)
+              }
+            }
+            else {
+              nodes = convertCaffeLayer(layer)
+            }
+          }
+          else {
+            nodes = convertCaffeLayer(layer)
+          }
           if (nodes != null) {
             var curr = nodes.head
             bottomList.foreach(dependency => {
@@ -421,15 +542,37 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
               layers.append(curr)
               curr = curr.nextNodes.head
             }
-            layers.append(curr)
+            // this modification based on the assumption
+            // that there must be a bn before scale
+
+            if (false) {
+
+              val bnTable = layers.last.element.getParametersTable()
+              val scaleTable = curr.element.getParametersTable()
+              scaleTable.keySet.map(_.toString).foreach { layerName =>
+
+                val bnLayerName = layerName.replace("scale", "bn")
+
+                bnTable[Table](bnLayerName).add(scaleTable[Table](layerName))
+
+              }
+            }
+            else {
+              layers.append(curr)
+
+            }
             layersMap(name) = curr
             topList.foreach(output => {
               top2LayerMap(output) = name
             })
+
+
+            lastLayerName = layerType
+            lastLayer = layer
           }
         }
       }
-    })
+    }
     // process with split separately in case of out of order
     allLayers.foreach(layer => {
       var name : String = null
@@ -449,7 +592,7 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
       })
     })
     layers.filter(layer => !(layer.prevNodes.isEmpty && layer.nextNodes.isEmpty)
-    || outputNames.contains(layer.element.getName))
+      || outputNames.contains(layer.element.getName))
   }
 
   private def convertCaffeLayer(layer : GeneratedMessage): Seq[ModuleNode[T]] = {
@@ -550,19 +693,20 @@ object CaffeLoader {
     caffeLoader.copyParameters(model)
   }
 
-/**
- * load caffe model dynamically from prototxt and binary files
- * @param defPath prototxt file which illustrates the caffe model structure
- * @param modelPath binary file containing the weight and bias
- * @param customizedConverters customized layer converter
- * @param outputNames additional output layer names besides the default(layers without next nodes)
- * @tparam T data type
- * @return created module (graph) and criterion
- */
+  /**
+   * load caffe model dynamically from prototxt and binary files
+   * @param defPath prototxt file which illustrates the caffe model structure
+   * @param modelPath binary file containing the weight and bias
+   * @param customizedConverters customized layer converter
+   * @param outputNames additional output layer names besides
+   *                    the default(layers without next nodes)
+   * @tparam T data type
+   * @return created module (graph) and criterion
+   */
   def loadCaffe[T: ClassTag](defPath: String, modelPath: String,
-    customizedConverters : mutable.HashMap[String, Customizable[T]] = null,
-    outputNames: Array[String] = Array[String]())
-                              (implicit ev: TensorNumeric[T]): (Module[T], ParallelCriterion[T]) = {
+                             customizedConverters : mutable.HashMap[String, Customizable[T]] = null,
+                             outputNames: Array[String] = Array[String]())
+                            (implicit ev: TensorNumeric[T]): (Module[T], ParallelCriterion[T]) = {
     try {
       val caffeLoader = new CaffeLoader[T](defPath, modelPath, true, customizedConverters)
       caffeLoader.createCaffeModel(outputNames)

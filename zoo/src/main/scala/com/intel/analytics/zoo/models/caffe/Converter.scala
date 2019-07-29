@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The BigDL Authors.
+ * Copyright 2018 Analytics Zoo Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.intel.analytics.zoo.models.caffe
 
 import caffe.Caffe
@@ -20,25 +21,26 @@ import caffe.Caffe.EltwiseParameter.EltwiseOp
 import caffe.Caffe.LRNParameter.NormRegion
 import caffe.Caffe.PoolingParameter.PoolMethod
 import caffe.Caffe._
-import com.google.protobuf.GeneratedMessage
 import com.intel.analytics.bigdl.nn.Graph._
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.shaded.protobuf.GeneratedMessage
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.utils.caffe.CaffeConversionException
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
-
 /**
  * An abstract class to define interfaces when loading from/to caffe models
  * Caffe supports two kinds of layer definition LayerParameter & V1LayerParameter
- * Implementation [[V1LayerConverter]] and [[LayerConverter]]
+ * Implementation [[com.intel.analytics.zoo.models.caffe.V1LayerConverter]]
+ * and [[com.intel.analytics.zoo.models.caffe.LayerConverter]]
  * V1LayerParameter is not recommended any more but we need to support old-versioned model
  */
 abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
 
-  // support user to customized BigDL compatible module to support those we have no mappings now
+  // support user to customized Zoo compatible module to support those we have no mappings now
   private val customizedConverter =
     new mutable.HashMap[String, (GeneratedMessage) => Seq[ModuleNode[T]]]()
 
@@ -48,8 +50,8 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
   init
 
   def registerCutomizedConverter(layerType : String,
-    converter : (GeneratedMessage) => Seq[ModuleNode[T]])
-    : Unit = {
+                                 converter : (GeneratedMessage) => Seq[ModuleNode[T]])
+  : Unit = {
     require(!caffe2BigDL.contains(layerType), s"$layerType is already supported")
     require(!customizedConverter.contains(layerType), s"$layerType is already customized")
     customizedConverter(layerType) = converter
@@ -58,16 +60,27 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
    * Support customized layer mapping implemented by user for specific type
    */
   private def tryCustomizedConverter(layerType : String, layer : GeneratedMessage) :
-    Seq[ModuleNode[T]] = {
+  Seq[ModuleNode[T]] = {
     if (customizedConverter.contains(layerType)) {
       return customizedConverter(layerType)(layer)
     }
-    throw new CaffeConversionException(s"$layerType is not supported in BigDL for now")
+    throw new CaffeConversionException(s"$layerType is not supported in Zoo for now")
   }
 
   def convertLayerFromCaffe(layer : GeneratedMessage) : Seq[ModuleNode[T]] = {
     val layerName = getLayerName(layer)
     val layerType = getLayerType(layer).toUpperCase
+    if (caffe2BigDL.contains(layerType)) {
+      if (caffe2BigDL(layerType) != null) caffe2BigDL(layerType)(layer)
+      else null
+    } else {
+      tryCustomizedConverter(layerType, layer)
+    }
+  }
+
+  def convertBnFromCaffe(layer : GeneratedMessage) : Seq[ModuleNode[T]] = {
+    val layerName = getLayerName(layer)
+    val layerType = "BNSCALE"
     if (caffe2BigDL.contains(layerType)) {
       if (caffe2BigDL(layerType) != null) caffe2BigDL(layerType)(layer)
       else null
@@ -248,6 +261,45 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
     Seq(ops)
   }
 
+  /**
+   * This method is for generating BatchNorm layer with weight and bias
+   * Since once the layer is created, the weight and bias could either
+   * be empty or non-empty, but this attribute could not be changed
+   * based on current behavior. Thus, to support BatchNorm with weight
+   * and bias, we need to create a layer with non-empty weight and bias
+   * @param layer protocol buffer of BatchNorm layer
+   * @return
+   */
+  protected def fromCaffeBnScale(layer: GeneratedMessage): Seq[ModuleNode[T]] = {
+    val weightBlob = getBlob(layer, 0)
+    sanityBlobCheck(layer, "weight", weightBlob)
+    val weight = weightBlob.get
+    val nOutPlane = if (weight.hasShape) weight.getShape.getDim(0).toInt
+    else weight.getNum
+    val param = layer.asInstanceOf[LayerParameter].getBatchNormParam
+    val eps = param.getEps
+    val batchNorm = SpatialBatchNormalization[T](nOutPlane.toInt, eps, affine = true)
+      .setName(getLayerName(layer))
+    val scalaBlob = getBlob(layer, 2)
+    sanityBlobCheck(layer, "scale", scalaBlob)
+    val scaleData = scalaBlob.get.getData(0)
+    val scale = if (scaleData == 0) 0 else 1 / scaleData
+    sanityBlobCheck(layer, "mean", getBlob(layer, 0))
+    val means = getBlob(layer, 0).get.getDataList
+    sanityBlobCheck(layer, "variance", getBlob(layer, 1))
+    val variances = getBlob(layer, 1).get.getDataList
+    batchNorm.runningMean.resize(nOutPlane)
+    batchNorm.runningVar.resize(nOutPlane)
+
+    batchNorm.saveMean.resize(nOutPlane)
+    batchNorm.saveStd.resize(nOutPlane)
+    (1 to nOutPlane).foreach(i => {
+      batchNorm.runningMean.setValue(i, ev.fromType[Float](means.get(i - 1) * scale))
+      batchNorm.runningVar.setValue(i, ev.fromType[Float](variances.get(i - 1) * scale))
+    })
+    Seq(batchNorm.inputs())
+  }
+
   protected def fromCaffeBatchNormalization(layer : GeneratedMessage) : Seq[ModuleNode[T]]
 
   protected def fromCaffeConvolution(layer : GeneratedMessage) : Seq[ModuleNode[T]]
@@ -333,97 +385,111 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
   }
 
   protected def toCaffeConvolution(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                                   bottoms : ArrayBuffer[String], nextSize : Int):
+                                  Seq[GeneratedMessage]
 
   protected def toCaffeDeConvolution(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                                     bottoms : ArrayBuffer[String], nextSize : Int):
+                                    Seq[GeneratedMessage]
 
   protected def toCaffeRelu(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                            bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffeLRN(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                           bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffeMaxPooling(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                                  bottoms : ArrayBuffer[String], nextSize : Int):
+                                 Seq[GeneratedMessage]
 
   protected def toCaffeAvePooling(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                                  bottoms : ArrayBuffer[String], nextSize : Int):
+                                 Seq[GeneratedMessage]
 
   protected def toCaffeInnerProduct(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                                    bottoms : ArrayBuffer[String], nextSize : Int):
+                                   Seq[GeneratedMessage]
 
   protected def toCaffeDropOut(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                               bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffeLogSoftMax(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                                  bottoms : ArrayBuffer[String], nextSize : Int):
+                                 Seq[GeneratedMessage]
 
   protected def toCaffeTanh(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                            bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffeSigmoid(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                               bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffeAbs(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                           bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffeBatchNormalization(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                                          bottoms : ArrayBuffer[String], nextSize : Int):
+                                         Seq[GeneratedMessage]
 
   protected def toCaffeConcat(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                              bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffeElu(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                           bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffeFlattern(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                                bottoms : ArrayBuffer[String], nextSize : Int):
+                               Seq[GeneratedMessage]
 
   protected def toCaffeLog(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                           bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffePower(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                             bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffePReLu(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                             bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffeRecurrent(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                                 bottoms : ArrayBuffer[String], nextSize : Int):
+                                Seq[GeneratedMessage]
 
   protected def toCaffeReshape(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                               bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffeScale(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                             bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffeBias(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                            bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffeThreshold(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                                 bottoms : ArrayBuffer[String], nextSize : Int):
+                                Seq[GeneratedMessage]
 
   protected def toCaffeExp(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                           bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffeSlice(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                             bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffeTile(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                            bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
 
   protected def toCaffeEltWiseMax(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                                  bottoms : ArrayBuffer[String], nextSize : Int):
+                                 Seq[GeneratedMessage]
 
   protected def toCaffeEltWiseAdd(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                                  bottoms : ArrayBuffer[String], nextSize : Int):
+                                 Seq[GeneratedMessage]
 
   protected def toCaffeEltWiseSub(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                                  bottoms : ArrayBuffer[String], nextSize : Int):
+                                 Seq[GeneratedMessage]
 
   protected def toCaffeSequential(module : AbstractModule[Activity, Activity, T],
-    bottoms : ArrayBuffer[String], nextSize : Int): Seq[GeneratedMessage]
+                                  bottoms : ArrayBuffer[String], nextSize : Int):
+                                 Seq[GeneratedMessage]
 
   protected def toCaffeConvolutionParam(module : AbstractModule[Activity, Activity, T])
   : mutable.HashMap[String, Int] = {
@@ -667,5 +733,7 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
     caffe2BigDL("MEMORYDATA") = fromCaffeInput
     caffe2BigDL("ACCURACY") = null
     caffe2BigDL("SILENCE") = null
+
+    caffe2BigDL("BNSCALE") = fromCaffeBnScale
   }
 }
