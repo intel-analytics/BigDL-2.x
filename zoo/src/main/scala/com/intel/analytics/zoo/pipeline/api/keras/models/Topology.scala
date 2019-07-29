@@ -906,6 +906,8 @@ object Sequential extends KerasLayerSerializable {
 }
 
 private[zoo] object InternalOptimizerUtil {
+
+
   def getModelCacheFromOptimizer[T: ClassTag](
         optimizer: Optimizer[T, MiniBatch[T]]): RDD[Cache[T]] = {
     val field = classOf[DistriOptimizer[T]].getDeclaredField("models")
@@ -914,7 +916,7 @@ private[zoo] object InternalOptimizerUtil {
     models
   }
 
-  def getStateFromOptiMethod[T: ClassTag](optimMethod: OptimMethod[T]): Table = {
+  def getStateFromOptiMethod[T](optimMethod: OptimMethod[T]): Table = {
     val method = classOf[OptimMethod[T]].getDeclaredMethod("state")
     method.setAccessible(true)
     val state = method.invoke(optimMethod).asInstanceOf[Table]
@@ -1005,18 +1007,14 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
   protected var numSlice: Int = 1
   protected var cachedModels: RDD[DistriOptimizer.Cache[T]] = null
   protected var modelBroadcast: ModelBroadcast[T] = null
-  protected var parameters: Map[String, AllReduceParameter[T]] = null
+  protected var parameterSplits: Map[String, (Int, Int)] = null
+  protected var allReduceParameter: AllReduceParameter[T] = null
 
   def train(): Module[T] = {
     val distDataset = dataset.toDistributed()
-    val trainingModel = if (EngineRef.getEngineType() == MklDnn && !model.isInstanceOf[MklDnnModule]
-      && !model.isInstanceOf[Graph[T]]) {
+    val trainingModel = if (EngineRef.getEngineType() == MklDnn) {
       model.toGraph().setName(model.getName())
     } else model
-
-    optimMethods.values.foreach { optimMethod =>
-      optimMethod.clearHistory()
-    }
 
     // To be compatible with the old usage that user define hyperparameters in a table.
     if (optimMethods.size == 1) {
@@ -1038,10 +1036,12 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     prepareInput()
 
     // subModuleName -> (storageOffset, length, AllReduceParameter)
-    if (parameters == null || cachedModels == null) {
+    if (allReduceParameter == null || cachedModels == null) {
+      allReduceParameter = AllReduceParameter.newParameter[T](partitionNum,
+        modelParameters._1.nElement())
       this.close()
-      parameters = if (optimMethods.size != 1) {
-        val p = optimMethods.map { case (subModuleName, optimMethods) =>
+      parameterSplits = if (optimMethods.size != 1) {
+        val p = optimMethods.map { case (subModuleName, optimMethod) =>
           val subModule = trainingModel(subModuleName)
           require(subModule.isDefined, s"Optimizer couldn't find $subModuleName in $model")
           val subModuleWeights = InternalOptimizerUtil
@@ -1051,22 +1051,25 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
         val sortedWeights = p.values.toArray.sortWith((a, b) => a.storageOffset() < b.storageOffset())
         val compactWeights = Module.isCompact(sortedWeights)
         require(modelParameters._1 == compactWeights,
-          s"DistriOptimizer: All subModules should have an OptimMethod.")
+          s"InternDistriOptimizer: All subModules should have an OptimMethod.")
         p.map { case (subModuleName, weights) =>
-          (subModuleName, AllReduceParameter.newParameter[T](
-            partitionNum, weights.nElement(), weights.storageOffset()))
+          (subModuleName, (weights.storageOffset(), weights.nElement()))
         }
       } else if (optimMethods.contains(trainingModel.getName())) {
-        Map(trainingModel.getName() -> AllReduceParameter.newParameter[T](
-          partitionNum, modelParameters._1.nElement()))
+        Map(trainingModel.getName() -> (1, modelParameters._1.nElement()))
       } else {
         throw new IllegalArgumentException(s"${trainingModel.getName()} doesn't " +
           s"have corresponding OptimMethod")
       }
 
+      // TODO: Enable LarsSGD
+//      LarsSGD.containsLarsSGD(optimMethods).foreach(weightDecay =>
+//        parameterProcessors.append(new LarsProcessor(parameterSplits, weightDecay))
+//      )
+
       val modelsAndBroadcast = InternalOptimizerUtil.initThreadModels[T](trainingModel, distDataset, criterion,
         state, Int.box(nodeNumber), Int.box(coresPerNode), Boolean.box(checkSingleton),
-        parameters, validationMethods, optimMethods, parameterProcessors)
+        allReduceParameter, parameterSplits, validationMethods, optimMethods, parameterProcessors)
       cachedModels = modelsAndBroadcast._1
       modelBroadcast = modelsAndBroadcast._2
     }
@@ -1079,6 +1082,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     } else {
       checkpointPath
     }
+
 
     var retryNum = 0
     val maxRetry = System.getProperty("bigdl.failure.retryTimes", "5").toInt
@@ -1096,7 +1100,8 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
           metrics,
           cachedModels,
           optimMethods,
-          parameters,
+          allReduceParameter,
+          parameterSplits,
           validationTrigger,
           validationDataSet,
           validationMethods,
@@ -1112,7 +1117,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
           throw e
         case t: Throwable =>
           DistriOptimizer.logger.error("Error: " + ExceptionUtils.getStackTrace(t))
-          if (currentCheckPoint.isDefined) {
+          if (checkpointPath.isDefined) {
             /* To avoid retry number is used up by first few exceptions, we count time here.
              * If exception exceeds maxRetry times in maxRetry*retryTimeInterval seconds,
              * we will give up retry Or we will reset retryNum
@@ -1153,7 +1158,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
             }
             val modelsAndBroadcast = InternalOptimizerUtil.initThreadModels[T](newModel, distDataset,
               criterion, state, Int.box(nodeNumber), Int.box(coresPerNode), Boolean.box(checkSingleton),
-              parameters, validationMethods, optimMethods)
+              allReduceParameter, parameterSplits, validationMethods, optimMethods)
             cachedModels = modelsAndBroadcast._1
             modelBroadcast = modelsAndBroadcast._2
           } else {
@@ -1163,7 +1168,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     }
 
     InternalOptimizerUtil.getModel(
-      cachedModels, parameters, trainingModel)
+      cachedModels, allReduceParameter, trainingModel)
 
     trainingModel
   }

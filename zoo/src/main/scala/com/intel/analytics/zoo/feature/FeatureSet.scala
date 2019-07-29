@@ -286,13 +286,12 @@ class CachedDistributedFeatureSet[T: ClassTag]
   override def originRDD(): RDD[_] = buffer
 
   override def cache(): Unit = {
-    buffer.count()
-    indexes.count()
+    buffer.cache().count()
+    indexes.cache().count()
     isCached = true
   }
 
   override def unpersist(): Unit = {
-    FeatureSet.logger.info(s"Unpersisting ${buffer.name}.")
     buffer.map(_.free()).count()
     buffer.unpersist()
     indexes.unpersist()
@@ -358,7 +357,6 @@ class DiskFeatureSet[T: ClassTag]
           currentFeatureSet.unpersist()
           newSample()
         }
-        currentFeatureSet.cache()
         currentFeatureSet.shuffle()
         trained = true
         currentFeatureSet.data(train)
