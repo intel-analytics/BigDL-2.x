@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The BigDL Authors.
+ * Copyright 2018 Analytics Zoo Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.utils.caffe
+package com.intel.analytics.zoo.models.caffe
 
-import scala.collection.JavaConverters._
 import caffe.Caffe
 import caffe.Caffe.EltwiseParameter.EltwiseOp
 import caffe.Caffe.LRNParameter.NormRegion
 import caffe.Caffe.{BlobProto, PoolingParameter, _}
-import com.google.protobuf.GeneratedMessage
 import com.intel.analytics.bigdl.nn.Graph._
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.shaded.protobuf.GeneratedMessage
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 

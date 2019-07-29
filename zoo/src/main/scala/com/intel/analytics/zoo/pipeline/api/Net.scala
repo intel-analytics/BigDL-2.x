@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.nn.{Container, Graph, InitializationMethod}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.File
-import com.intel.analytics.bigdl.utils.caffe.CaffeLoader
+import com.intel.analytics.zoo.models.caffe.CaffeLoader
 import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.bigdl.utils.tf.{Session, TensorflowLoader}
 import com.intel.analytics.zoo.pipeline.api.autograd.Variable
@@ -61,8 +61,8 @@ object Net {
   GraphNet
   WordEmbedding
   def setInitMethod(module: AbstractModule[_, _, _],
-      weightInitMethod: InitializationMethod = null,
-      biasInitMethod: InitializationMethod = null, throwException: Boolean = true): Unit = {
+                    weightInitMethod: InitializationMethod = null,
+                    biasInitMethod: InitializationMethod = null, throwException: Boolean = true): Unit = {
     module match {
       case i: Initializable =>
         i.setInitMethod(weightInitMethod, biasInitMethod)
@@ -89,7 +89,7 @@ object Net {
    * @return An Analytics Zoo model.
    */
   def load[T: ClassTag](path : String,
-      weightPath : String = null)(implicit ev: TensorNumeric[T])
+                        weightPath : String = null)(implicit ev: TensorNumeric[T])
   : KerasNet[T] = {
     val model = ModuleLoader.loadFromFile(path, weightPath)
     if (!model.isInstanceOf[KerasNet[T]]) {
@@ -110,7 +110,7 @@ object Net {
    * @return model loaded from path
    */
   def loadBigDL[T: ClassTag](path : String,
-      weightPath : String = null)(implicit ev: TensorNumeric[T])
+                             weightPath : String = null)(implicit ev: TensorNumeric[T])
   : GraphNet[T] = {
     val graph = ModuleLoader.loadFromFile(path, weightPath).toGraph()
     new GraphNet(graph)
@@ -137,7 +137,7 @@ object Net {
    * @param modelPath caffe model binary file containing weight and bias
    */
   def loadCaffe[T: ClassTag](defPath: String, modelPath: String)(
-      implicit ev: TensorNumeric[T]): GraphNet[T] = {
+    implicit ev: TensorNumeric[T]): GraphNet[T] = {
     val graph = CaffeLoader.loadCaffe[T](defPath, modelPath)._1
       .asInstanceOf[Graph[T]]
     new GraphNet[T](graph)
@@ -153,9 +153,9 @@ object Net {
    * @return model loaded from path
    */
   def loadTF[T: ClassTag](graphFile: String, inputs: Seq[String], outputs: Seq[String],
-      byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN,
-      binFile: Option[String] = None)(
-      implicit ev: TensorNumeric[T]): GraphNet[T] = {
+                          byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN,
+                          binFile: Option[String] = None)(
+                           implicit ev: TensorNumeric[T]): GraphNet[T] = {
 
     val graph = TensorflowLoader.load(graphFile, inputs, outputs, byteOrder, binFile)
       .asInstanceOf[Graph[T]]
@@ -169,7 +169,7 @@ object Net {
    * @return model loaded from path
    */
   def loadTF[T: ClassTag](folder: String)
-      (implicit ev: TensorNumeric[T]): GraphNet[T] = {
+                         (implicit ev: TensorNumeric[T]): GraphNet[T] = {
     val (model, meta) = NetUtils.processTFFolder(folder)
     loadTF[T](model, NetUtils.removePort(meta.inputNames), NetUtils.removePort(meta.outputNames))
   }
@@ -182,8 +182,8 @@ object Net {
    * @return
    */
   def loadTFCheckpoints[T: ClassTag](graphFile: String, binFile: String,
-      byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN)(
-      implicit ev: TensorNumeric[T]): Session[T] = {
+                                     byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN)(
+                                      implicit ev: TensorNumeric[T]): Session[T] = {
     TensorflowLoader.checkpoints(graphFile, binFile, byteOrder)
   }
 }
