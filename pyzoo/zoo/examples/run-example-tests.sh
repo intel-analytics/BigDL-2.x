@@ -364,7 +364,7 @@ ${SPARK_HOME}/bin/spark-submit \
 now=$(date "+%s")
 time8=$((now-start))
 
-echo "#9-12 start ray example"
+echo "#9 start ray examples"
 SPARK_HOME=$SPARK_2_4_HOME
 
 execute_ray_test () {
@@ -405,17 +405,62 @@ if [[ $py_version == *"Python 3.5"* || $py_version == *"Python 3.6"* ]]; then
         echo "Install gym"
         pip install gym
         #start execute
-        execute_ray_test rl_pong ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py
-        time9 = $?
+        echo "Start pong example"
+        start=$(date "+%s")
+        ${SPARK_HOME}/bin/spark-submit \
+            --master ${MASTER} \
+            --driver-memory 10g \
+            --executor-memory 10g \
+            --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py \
+            --jars ${ANALYTICS_ZOO_JAR} \
+            --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+            --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+            ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py \
+            --iterations 20
+        now=$(date "+%s")
+        time9 = $((now-start))
 
-        execute_ray_test sync_parameter_server ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/sync_parameter_server.py
-        time10 = $?
+        echo "Start async_parameter example"
+        start=$(date "+%s")
+        ${SPARK_HOME}/bin/spark-submit \
+            --master ${MASTER} \
+            --driver-memory 10g \
+            --executor-memory 10g \
+            --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/async_parameter_server.py \
+            --jars ${ANALYTICS_ZOO_JAR} \
+            --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+            --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+            ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/async_parameter_server.py \
+        now=$(date "+%s")
+        time10 = $((now-start))
 
-        execute_ray_test async_parameter_server ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/async_parameter_server.py
-        time11 = $?
+        echo "Start pong example"
+        start=$(date "+%s")
+        ${SPARK_HOME}/bin/spark-submit \
+            --master ${MASTER} \
+            --driver-memory 10g \
+            --executor-memory 10g \
+            --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/sync_parameter_server.py \
+            --jars ${ANALYTICS_ZOO_JAR} \
+            --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+            --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+            ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/sync_parameter_server.py \
+        now=$(date "+%s")
+        time11 = $((now-start))
 
-        execute_ray_test multiagent_two_trainers ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py
-        time12 = $?
+        echo "Start multiagent example"
+        start=$(date "+%s")
+        ${SPARK_HOME}/bin/spark-submit \
+            --master ${MASTER} \
+            --driver-memory 10g \
+            --executor-memory 10g \
+            --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py \
+            --jars ${ANALYTICS_ZOO_JAR} \
+            --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+            --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+            ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py \
+        now=$(date "+%s")
+        time12 = $((now-start))
     else
         echo "Current spark version is not support ray."
         echo "Skipping ray examples tests."
