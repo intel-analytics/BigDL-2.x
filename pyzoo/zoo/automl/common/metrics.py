@@ -66,7 +66,8 @@ def sMAPE(y_true, y_pred, multioutput='raw_values'):
         array of floating point values, one for each individual target.
     """
     y_true, y_pred = check_input(y_true, y_pred, multioutput)
-    output_errors = np.mean(100 * 2.0 * np.abs(y_true - y_pred) / (np.abs(y_true) + np.abs(y_pred)))
+    output_errors = np.mean(100 * np.abs(y_true - y_pred) / (np.abs(y_true) + np.abs(y_pred)),
+                            axis=0,)
     if multioutput == 'raw_values':
         return output_errors
     return np.mean(output_errors)
@@ -84,10 +85,10 @@ class Evaluator(object):
     }
 
     @staticmethod
-    def evaluate(metric, y_true, y_pred):
+    def evaluate(metric, y_true, y_pred, multioutput='raw_values'):
         if not Evaluator.check_metric(metric):
             raise ValueError("metric " + metric + " is not supported")
-        return Evaluator.metrics_func[metric](y_true, y_pred, multioutput='raw_values')
+        return Evaluator.metrics_func[metric](y_true, y_pred, multioutput=multioutput)
 
     @staticmethod
     def check_metric(metric):
