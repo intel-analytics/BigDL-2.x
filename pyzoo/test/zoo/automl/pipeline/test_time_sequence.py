@@ -81,21 +81,48 @@ class TestTimeSequencePipeline(ZooTestCase):
 
     def test_evaluate_RandomRecipe_1(self):
         self.random_pipeline_1 = self.tsp_1.fit(self.train_df, recipe=RandomRecipe(1))
-        mse, rs = self.random_pipeline_1.evaluate(self.test_df,
-                                                  metrics=["mean_squared_error", "r_square"])
+        mse, rs, smape = self.random_pipeline_1.evaluate(self.test_df,
+                                                         metrics=["mean_squared_error",
+                                                                  "r_square", "sMAPE"])
         assert len(mse) == self.future_seq_len_1
         assert len(rs) == self.future_seq_len_1
+        assert len(smape) == self.future_seq_len_1
+        assert all(100 > i > 0 for i in smape)
         print("Mean square error (future_seq_len=1) is:", mse)
         print("R square (future_seq_len=1) is:", rs)
+        print("sMAPE (future_seq_len=1) is:", smape)
+
+        mse, rs, smape = self.random_pipeline_1.evaluate(self.test_df,
+                                                         metrics=["mean_squared_error",
+                                                                  "r_square", "sMAPE"],
+                                                         multioutput='uniform_average')
+        assert isinstance(mse, np.float)
+        assert isinstance(rs, np.float)
+        assert isinstance(smape, np.float)
+        assert 0 < smape < 100
 
     def test_evaluate_RandomRecipe_3(self):
         self.random_pipeline_3 = self.tsp_3.fit(self.train_df, recipe=RandomRecipe(1))
-        mse, rs = self.random_pipeline_3.evaluate(self.test_df,
-                                                  metrics=["mean_squared_error", "r_square"])
+        mse, rs, smape = self.random_pipeline_3.evaluate(self.test_df,
+                                                         metrics=["mean_squared_error",
+                                                                  "r_square", "sMAPE"])
         assert len(mse) == self.future_seq_len_3
         assert len(rs) == self.future_seq_len_3
+        assert len(smape) == self.future_seq_len_3
+        assert all(100 > i > 0 for i in smape)
+
         print("Mean square error (future_seq_len=3) is:", mse)
         print("R square (future_seq_len=3) is:", rs)
+        print("sMAPE (future_seq_len=1) is:", smape)
+
+        mse, rs, smape = self.random_pipeline_3.evaluate(self.test_df,
+                                                         metrics=["mean_squared_error",
+                                                                  "r_square", "sMAPE"],
+                                                         multioutput='uniform_average')
+        assert isinstance(mse, np.float)
+        assert isinstance(rs, np.float)
+        assert isinstance(smape, np.float)
+        assert 0 < smape < 100
 
     def test_predict_1(self):
         self.pipeline_1 = self.tsp_1.fit(self.train_df)
@@ -243,8 +270,8 @@ class TestTimeSequencePipeline(ZooTestCase):
                                            recipe=RandomRecipe(
                                                look_back=[min_past_seq_len, max_past_seq_len]))
         y_pred_random_3 = random_pipeline_3.predict(self.test_df)
-        assert y_pred_random_3.shape[0] >= self.test_sample_num - max_past_seq_len - 2 + 1
-        assert y_pred_random_3.shape[0] <= self.test_sample_num - min_past_seq_len - 2 + 1
+        assert y_pred_random_3.shape[0] >= self.test_sample_num - max_past_seq_len + 1
+        assert y_pred_random_3.shape[0] <= self.test_sample_num - min_past_seq_len + 1
         assert y_pred_random_3.shape[1] == self.future_seq_len_3 + 1
         mse, rs = random_pipeline_3.evaluate(self.test_df,
                                              metrics=["mean_squared_error", "r_square"])
