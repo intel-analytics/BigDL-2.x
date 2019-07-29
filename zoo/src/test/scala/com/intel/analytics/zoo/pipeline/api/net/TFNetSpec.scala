@@ -24,37 +24,56 @@ import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.SparkConf
+import org.json4s.jackson.JsonMethods._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
+import scala.io.Source
+import scala.reflect.io.Path
 import scala.util.Random
 
 class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "TFNet " should "work with different data types" in {
+    val folderPath = Path("/tmp/wnd")
+    val trainingMetaPath = folderPath / Path("training_meta.json")
+    val jsonStr = Source.fromFile(trainingMetaPath.jfile).getLines().mkString
 
-    val resource = getClass().getClassLoader().getResource("tf")
-    val path = resource.getPath + "/" + "multi_type_inputs_outputs.pb"
+    val trainingMetaPath2 = folderPath / Path("training_meta2.json")
+    val jsonStr2 = Source.fromFile(trainingMetaPath2.jfile).getLines().mkString
 
-    val inputs = Array("float_input:0", "double_input:0",
-      "int_input:0", "long_input:0", "uint8_input:0")
-    val outputs = Array("float_output:0", "double_output:0",
-      "int_output:0", "long_output:0", "uint8_output:0")
-    val net = TFNet(path, inputs, outputs)
-    val data = T(Tensor[Float](Array[Float](1.0f), Array(1, 1)),
-      Tensor[Float](Array[Float](2.0f), Array(1, 1)),
-      Tensor[Float](Array[Float](3.0f), Array(1, 1)),
-      Tensor[Float](Array[Float](4.0f), Array(1, 1)),
-      Tensor[Float](Array[Float](255.0f), Array(1, 1))
-    )
-    val result = net.forward(data)
-    val gradInput = net.backward(data, null)
+    import org.json4s._
+    import org.json4s.jackson.JsonMethods._
+    implicit val formats = DefaultFormats
 
-    result should be(data)
-    var i = 0
-    while (i < 5) {
-      gradInput.toTable[Tensor[Float]](i + 1).sum() should be(0.0f)
-      i = i + 1
-    }
+    val trainingMeta = parse(jsonStr).camelizeKeys.extract[TrainMeta]
+
+    val trainingMeta2 = parse(jsonStr2).camelizeKeys.extract[TrainMeta]
+
+
+val t = 0
+//    val resource = getClass().getClassLoader().getResource("tf")
+//    val path = resource.getPath + "/" + "multi_type_inputs_outputs.pb"
+//
+//    val inputs = Array("float_input:0", "double_input:0",
+//      "int_input:0", "long_input:0", "uint8_input:0")
+//    val outputs = Array("float_output:0", "double_output:0",
+//      "int_output:0", "long_output:0", "uint8_output:0")
+//    val net = TFNet(path, inputs, outputs)
+//    val data = T(Tensor[Float](Array[Float](1.0f), Array(1, 1)),
+//      Tensor[Float](Array[Float](2.0f), Array(1, 1)),
+//      Tensor[Float](Array[Float](3.0f), Array(1, 1)),
+//      Tensor[Float](Array[Float](4.0f), Array(1, 1)),
+//      Tensor[Float](Array[Float](255.0f), Array(1, 1))
+//    )
+//    val result = net.forward(data)
+//    val gradInput = net.backward(data, null)
+//
+//    result should be(data)
+//    var i = 0
+//    while (i < 5) {
+//      gradInput.toTable[Tensor[Float]](i + 1).sum() should be(0.0f)
+//      i = i + 1
+//    }
 
   }
 

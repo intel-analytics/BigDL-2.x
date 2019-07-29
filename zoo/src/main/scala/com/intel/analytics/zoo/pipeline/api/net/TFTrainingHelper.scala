@@ -63,6 +63,9 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
   private val gradWeights = variables.map(_ => Tensor[Float]())
 
   sWeight = if (sparseVariables != null) {
+    // TODO: Currently only support sWeight with 1 element, need remove the limitation
+    println("sparse variables is not empty")
+    require(sparseVariables.length == 1, "Only support with 1 sparse layer")
     val ws = new Array[Tensor[Float]](sparseVariables.length)
     var i = 0
     while (i < ws.length) {
@@ -70,7 +73,10 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
       i += 1
     }
     setSparseWeights(ws)
-  } else null
+  } else {
+    println("sparse variables is empty")
+    null
+  }
 
   sparseGradWeight = if (sparseVariables != null) sparseVariables.map(_ => Tensor[Float]())
   else null
@@ -150,6 +156,7 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
       }
 
       if (sparseGradWeight != null) {
+        println("fetch sparse gradients")
         var i = 0
         while (i < sparseGradWeight.length) {
           sparseGradWeight(i) = fetches(i + weights.length)
@@ -158,7 +165,10 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
       }
     }
 
-    val realOutputs = if (sparseGradWeight == null) fetches.slice(weights.length, fetches.length)
+    val realOutputs = if (sparseGradWeight == null) {
+      println("Enter here")
+      fetches.slice(weights.length, fetches.length)
+    }
     else fetches.slice(weights.length + sparseGradWeight.length, fetches.length)
 
     output = if (realOutputs.length == 1) {
@@ -186,7 +196,7 @@ object TFTrainingHelper {
     val (model, meta) = NetUtils.processTFFolder(modelPath)
 
     val folderPath = Path(modelPath)
-    val trainingMetaPath = folderPath / Path("training_meta.json")
+    val trainingMetaPath = folderPath / Path("training_meta2.json")
 
     val jsonStr = Source.fromFile(trainingMetaPath.jfile).getLines().mkString
     import org.json4s._
@@ -214,7 +224,9 @@ object TFTrainingHelper {
       trainingMeta.outputNames,
       trainingMeta.variables,
       trainingMeta.gradVariables,
-      trainingMeta.defaultTensorValues
+      trainingMeta.defaultTensorValues,
+      trainingMeta.sparseVariables,
+      trainingMeta.sparseGradVariables
     )
   }
 }
@@ -307,7 +319,8 @@ class MergeFeatureLabel() extends ImageProcessing {
 
 case class TrainMeta(inputNames: Array[String], outputNames: Array[String],
                      variables: Array[String], gradVariables: Array[String],
-                     defaultTensorValues: Array[Array[Float]])
+                     defaultTensorValues: Array[Array[Float]],
+                     sparseVariables: Array[String], sparseGradVariables: Array[String])
 
 
 class TFOptimizer(modelPath: String,
