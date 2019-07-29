@@ -164,8 +164,8 @@ def process(cmd):
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     # process.wait()
     outs, errors = proc.communicate()
-    if outs:
-        print("hdfs std out:", outs)
+    # if outs:
+    #     print("hdfs std out:", outs)
     if errors:
         print("hdfs errors:", errors)
     return outs, errors
