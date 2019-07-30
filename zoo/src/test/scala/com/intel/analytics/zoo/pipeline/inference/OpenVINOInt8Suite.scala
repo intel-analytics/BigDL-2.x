@@ -173,7 +173,6 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     val modelFilePath = s"${resnet_v1_50_int8_path}.xml"
     val weightFilePath = s"${resnet_v1_50_int8_path}.bin"
     val batchSize = resnet_v1_50_inputShape.apply(0)
-    
     val modelFileSize = new File(modelFilePath).length()
     val modelFileInputStream = new FileInputStream(modelFilePath)
     val modelFileBytes = new Array[Byte](modelFileSize.toInt)
