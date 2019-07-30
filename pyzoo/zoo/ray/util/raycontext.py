@@ -233,6 +233,7 @@ class RayContext(object):
         self.ray_processesMonitor = None
         self.verbose = verbose
         self.redis_password = password
+        self.object_store_memory = object_store_memory
         self.redis_port = self._new_port() if not redis_port else redis_port
         self.ray_service = RayServiceFuncGenerator(
             python_loc=self.python_loc,
@@ -256,8 +257,9 @@ class RayContext(object):
 
     def _enrich_object_sotre_memory(self, sc, object_store_memory):
         if is_local(sc):
-            assert not object_store_memory, "you should not set object_store_memory on spark local"
-            return resourceToBytes(self._get_ray_plasma_memory_local())
+            if self.object_store_memory is None:
+                self.object_store_memory = self._get_ray_plasma_memory_local()
+            return resourceToBytes(self.object_store_memory)
         else:
             return resourceToBytes(
                 str(object_store_memory)) if object_store_memory else None
