@@ -421,6 +421,7 @@ object FeatureSet {
             logger.info("~~~~~~~ Caching with DIRECT ~~~~~~~")
             PmemFeatureSet.rdd[T](repartitionedData, DIRECT)
           case diskM: DISK_AND_DRAM =>
+            logger.info(s"~~~~~~~ Caching with DISK_AND_DRAM(${diskM.numSlice}) ~~~~~~~")
             new DiskFeatureSet[T](data, diskM.numSlice)
           case _ =>
             throw new IllegalArgumentException(
