@@ -377,8 +377,6 @@ time9=$((now-start))
 echo "qaranker time used:$time9 seconds"
 
 echo "#9-12 strat ray examples"
-SPARK_HOME=$SPARK_2_4_HOME
-
 execute_ray_test () {
     echo "start example $1"
     start=$(date "+%s")
