@@ -411,6 +411,7 @@ if [[ $py_version == *"Python 3.5"* || $py_version == *"Python 3.6"* ]]; then
         fi
         echo "Install gym"
         pip install gym
+        pip install gym[atari]
 
         #start execute
         execute_ray_test rl_pong ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py

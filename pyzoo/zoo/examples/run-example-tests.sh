@@ -386,6 +386,7 @@ if [[ $py_version == *"Python 3.5"* || $py_version == *"Python 3.6"* ]]; then
 
         echo "Install gym"
         pip install gym
+        pip install gym[atari]
 
         #start execute
         echo "Start pong example"
