@@ -6,6 +6,9 @@
   <br>[LSTM-Based Time Series Anomaly Detection Using Analytics Zoo for Apache Spark* and BigDL at Baosight](https://software.intel.com/en-us/articles/lstm-based-time-series-anomaly-detection-using-analytics-zoo-for-apache-spark-and-bigdl)
 * __Cern__
  <br>[Topology classification at CERN’s Large Hadron Collider using Analytics Zoo](https://db-blog.web.cern.ch/blog/luca-canali/machine-learning-pipelines-high-energy-physics-using-apache-spark-bigdl)
+ * __China Telecom__
+ <br>[Face Recognition Application and Practice Based on Intel Analytics Zoo: Part 1](https://mp.weixin.qq.com/s/FEiXoTDi-yy04PJ2Mlfl4A)(Chinese Version)
+ <br>[Face Recognition Application and Practice Based on Intel Analytics Zoo: Part 2](https://mp.weixin.qq.com/s/VIyWRORTAVAAsC4v6Fi0xw)(Chinese Version)
 * __Cray__ 
 <br>[A deep learning approach for precipitation nowcasting with RNN using Analytics Zoo in Cray](https://conferences.oreilly.com/strata/strata-ny-2018/public/schedule/detail/69413)
 * __Dell EMC__
@@ -18,8 +21,8 @@ Learning on Apache Spark and Analytics Zoo](https://www.dellemc.com/resources/en
 <br>[Use Analytics Zoo to Inject AI Into Customer Service Platforms on Microsoft Azure: Part 1]( https://software.intel.com/en-us/use-analytics-zoo-to-inject-ai-into-customer-service-platforms-on-microsoft-azure-part-1)
 <br>[Use Analytics Zoo to Inject AI Into Customer Service Platforms on Microsoft Azure: Part 2](https://www.infoq.com/articles/analytics-zoo-qa-module/?from=timeline&isappinstalled=0)
 * __Midea__
-<br>[Industrial Inspection Platform in Midea* and KUKA*: Using Distributed TensorFlow* on Analytics Zoo](https://software.intel.com/en-us/articles/industrial-inspection-platform-in-midea-and-kuka-using-distributed-tensorflow-on-analytics) 
 <br>[[White Paper] Ability to add "eyes" and "brains" to smart manufacturing](https://www.intel.cn/content/www/cn/zh/analytics/artificial-intelligence/midea-case-study.html)(Chinese Version)
+<br>[Industrial Inspection Platform in Midea* and KUKA*: Using Distributed TensorFlow* on Analytics Zoo](https://software.intel.com/en-us/articles/industrial-inspection-platform-in-midea-and-kuka-using-distributed-tensorflow-on-analytics) 
 * __Office Depot__
 <br>[Office Depot product recommender using Analytics Zoo on AWS](https://conferences.oreilly.com/strata/strata-ca/public/schedule/detail/73079)
 * __Talroo__
