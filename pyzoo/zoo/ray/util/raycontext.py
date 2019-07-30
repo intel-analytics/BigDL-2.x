@@ -349,7 +349,7 @@ class RayContext(object):
              labels="",
              extra_params={}):
         """
-        :param object_store_memory: Memory size of object_store for local driver.
+        :param object_store_memory: Memory size of object_store for local driver. e.g 10g
         :param num_cores set the cpu cores for local driver which 0 by default.
         :param extra_params: key value dictionary for extra options to launch Ray.
                              i.e extra_params={"temp-dir": "/tmp/ray2/"}
