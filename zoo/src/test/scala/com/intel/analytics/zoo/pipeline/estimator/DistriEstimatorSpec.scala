@@ -266,7 +266,6 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     val state = InternalOptimizerUtil.getStateFromOptiMethod(sgd)
     estimator.train(dset, mse, endTrigger = Some(MaxEpoch(2)))
 
-    state[Int]("neval") should be >= 64
     state[Int]("epoch") should be (3)
   }
 
@@ -282,7 +281,6 @@ class DistriEstimatorSpec extends ZooSpecHelper {
     val state = InternalOptimizerUtil.getStateFromOptiMethod(sgd)
     estimator.train(dset, mse, endTrigger = Some(MaxEpoch(2)))
 
-    state[Int]("neval") should be >= 256
     state[Int]("epoch") should be (3)
   }
 
