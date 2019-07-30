@@ -943,10 +943,11 @@ private[zoo] object InternalOptimizerUtil {
   }
 
   def initThreadModels[T: ClassTag](
-      args: Object*)(implicit ev: TensorNumeric[T]): (RDD[DistriOptimizer.Cache[T]], ModelBroadcast[T]) = {
+      args: Object*)(
+      implicit ev: TensorNumeric[T]): (RDD[DistriOptimizer.Cache[T]], ModelBroadcast[T]) = {
     KerasUtils.invokeMethodWithEv(DistriOptimizer,
       "com$intel$analytics$bigdl$optim$DistriOptimizer$$initThreadModels",
-      args:_*).asInstanceOf[(RDD[DistriOptimizer.Cache[T]], ModelBroadcast[T])]
+      args: _*).asInstanceOf[(RDD[DistriOptimizer.Cache[T]], ModelBroadcast[T])]
   }
 
   def clearState[T: ClassTag](
@@ -959,18 +960,20 @@ private[zoo] object InternalOptimizerUtil {
       args: Object*
       )(implicit ev: TensorNumeric[T]): Unit = {
     KerasUtils.invokeMethodWithEv(DistriOptimizer, "optimize",
-      args:_*)
+      args: _*)
   }
 
   def getModel[T: ClassTag](
       args: Object*)(implicit ev: TensorNumeric[T]): Unit = {
     KerasUtils.invokeMethodWithEv(DistriOptimizer, "getModel",
-      args:_*)
+      args: _*)
   }
 
   def releaseBroadcast[T: ClassTag](
         uuid: String)(implicit ev: TensorNumeric[T]): Unit = {
-    KerasUtils.invokeMethodWithEv("com.intel.analytics.bigdl.models.utils.CachedModels", "deleteKey",
+    KerasUtils.invokeMethodWithEv(
+      "com.intel.analytics.bigdl.models.utils.CachedModels",
+      "deleteKey",
       uuid)
   }
 
@@ -1048,7 +1051,8 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
             .getParametersFromModel(subModule.get)._1
           (subModuleName, subModuleWeights)
         }
-        val sortedWeights = p.values.toArray.sortWith((a, b) => a.storageOffset() < b.storageOffset())
+        val sortedWeights = p.values.toArray.sortWith(
+          (a, b) => a.storageOffset() < b.storageOffset())
         val compactWeights = Module.isCompact(sortedWeights)
         require(modelParameters._1 == compactWeights,
           s"InternDistriOptimizer: All subModules should have an OptimMethod.")
@@ -1067,8 +1071,9 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
 //        parameterProcessors.append(new LarsProcessor(parameterSplits, weightDecay))
 //      )
 
-      val modelsAndBroadcast = InternalOptimizerUtil.initThreadModels[T](trainingModel, distDataset, criterion,
-        state, Int.box(nodeNumber), Int.box(coresPerNode), Boolean.box(checkSingleton),
+      val modelsAndBroadcast = InternalOptimizerUtil.initThreadModels[T](
+        trainingModel, distDataset, criterion, state,
+        Int.box(nodeNumber), Int.box(coresPerNode), Boolean.box(checkSingleton),
         allReduceParameter, parameterSplits, validationMethods, optimMethods, parameterProcessors)
       cachedModels = modelsAndBroadcast._1
       modelBroadcast = modelsAndBroadcast._2
@@ -1156,8 +1161,9 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
               newOptimMethod.clearHistory()
               (moduleName, newOptimMethod)
             }
-            val modelsAndBroadcast = InternalOptimizerUtil.initThreadModels[T](newModel, distDataset,
-              criterion, state, Int.box(nodeNumber), Int.box(coresPerNode), Boolean.box(checkSingleton),
+            val modelsAndBroadcast = InternalOptimizerUtil.initThreadModels[T](
+              newModel, distDataset, criterion, state,
+              Int.box(nodeNumber), Int.box(coresPerNode), Boolean.box(checkSingleton),
               allReduceParameter, parameterSplits, validationMethods, optimMethods)
             cachedModels = modelsAndBroadcast._1
             modelBroadcast = modelsAndBroadcast._2
@@ -1249,10 +1255,11 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
       val state = InternalOptimizerUtil.getStateFromOptiMethod(
         optimMethods.values.head)
       if (checkPointTrigger.isDefined) {
-        if(checkPointTrigger.get.isInstanceOf[ZooTrigger]) {
+        if (checkPointTrigger.get.isInstanceOf[ZooTrigger]) {
           checkPointTrigger.get.asInstanceOf[ZooTrigger].setZooState(state)
         } else {
-          throw new IllegalArgumentException(s"Excepted com.intel.analytics.zoo.common.ZooTrigger." +
+          throw new IllegalArgumentException(
+            s"Excepted com.intel.analytics.zoo.common.ZooTrigger." +
             s" Please change your trigger to an instance of ZooTrigger.")
         }
       }

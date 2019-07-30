@@ -84,9 +84,9 @@ object TrainInceptionV1 {
         val warmupDelta = if (warmupIteration == 0) 0.0
         else (param.maxLr.getOrElse(param.learningRate) - param.learningRate) / warmupIteration
         val polyIteration = maxIteration - warmupIteration
-        // When you are using incremental training, the training iteration may exceed the polyIteration,
-        // if you are using MaxEpoch to end the training. So we add a very small fixed learning rate to
-        // avoid a error thrown by SequentialSchedule(iterationPerEpoch).
+        // When you are using incremental training, the training iteration may exceed the
+        // polyIteration, if you are using MaxEpoch to end the training. So we add a very
+        // small fixed learning rate to avoid a error thrown by SequentialSchedule.
         val lrSchedule = SequentialSchedule(iterationPerEpoch)
           .add(Warmup(warmupDelta), warmupIteration)
           .add(Poly(0.5, maxIteration), polyIteration)
