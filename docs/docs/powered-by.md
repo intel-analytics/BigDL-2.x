@@ -4,7 +4,7 @@
   <br>[Deploy Analytics Zoo in Aliyun EMR](https://partners-intl.aliyun.com/help/doc-detail/93155.htm )
 * __2. Baosight__
   <br>[LSTM-Based Time Series Anomaly Detection Using Analytics Zoo for Apache Spark* and BigDL at Baosight](https://software.intel.com/en-us/articles/lstm-based-time-series-anomaly-detection-using-analytics-zoo-for-apache-spark-and-bigdl)
-* __3. Cern__
+* __3. CERN__
  <br>[Topology classification at CERN’s Large Hadron Collider using Analytics Zoo](https://db-blog.web.cern.ch/blog/luca-canali/machine-learning-pipelines-high-energy-physics-using-apache-spark-bigdl)
  * __4. China Telecom__
  <br>[Face Recognition Application and Practice Based on Intel Analytics Zoo: Part 1](https://mp.weixin.qq.com/s/FEiXoTDi-yy04PJ2Mlfl4A)(Chinese Version)
@@ -12,7 +12,7 @@
 * __5. Cray__ 
 <br>[A deep learning approach for precipitation nowcasting with RNN using Analytics Zoo in Cray](https://conferences.oreilly.com/strata/strata-ny-2018/public/schedule/detail/69413)
 * __6. Dell EMC__
-<br>[[White Paper] AI-assisted Radiology Using Distributed Deep
+<br>[AI-assisted Radiology Using Distributed Deep
 Learning on Apache Spark and Analytics Zoo](https://www.dellemc.com/resources/en-us/asset/white-papers/solutions/h17686_hornet_wp.pdf)
 * __7. JD__
 <br>[Object Detection and Image Feature Extraction at JD.com](https://software.intel.com/en-us/articles/building-large-scale-image-feature-extraction-with-bigdl-at-jdcom)
@@ -21,7 +21,7 @@ Learning on Apache Spark and Analytics Zoo](https://www.dellemc.com/resources/en
 <br>[Use Analytics Zoo to Inject AI Into Customer Service Platforms on Microsoft Azure: Part 1]( https://software.intel.com/en-us/use-analytics-zoo-to-inject-ai-into-customer-service-platforms-on-microsoft-azure-part-1)
 <br>[Use Analytics Zoo to Inject AI Into Customer Service Platforms on Microsoft Azure: Part 2](https://www.infoq.com/articles/analytics-zoo-qa-module/?from=timeline&isappinstalled=0)
 * __10. Midea__
-<br>[[White Paper] Ability to add "eyes" and "brains" to smart manufacturing](https://www.intel.cn/content/www/cn/zh/analytics/artificial-intelligence/midea-case-study.html)(Chinese Version)
+<br>[Ability to add "eyes" and "brains" to smart manufacturing](https://www.intel.cn/content/www/cn/zh/analytics/artificial-intelligence/midea-case-study.html)(Chinese Version)
 <br>[Industrial Inspection Platform in Midea* and KUKA*: Using Distributed TensorFlow* on Analytics Zoo](https://software.intel.com/en-us/articles/industrial-inspection-platform-in-midea-and-kuka-using-distributed-tensorflow-on-analytics) 
 * __11. Office Depot__
 <br>[Office Depot product recommender using Analytics Zoo on AWS](https://conferences.oreilly.com/strata/strata-ca/public/schedule/detail/73079)
@@ -34,7 +34,7 @@ Learning on Apache Spark and Analytics Zoo](https://www.dellemc.com/resources/en
 * __15. World Bank__
 <br>[Deep Learning and Artificial Intelligence Help World Bank Team Create Image-Recognition Models for Crowdsourced Photos](https://itpeernetwork.intel.com/artificial-intelligence-world-bank-image-recognition/)
 * __16. Yunda__
-<br>[[White Paper] Intelligent transformation brings "quality change" to the express delivery industry](https://www.intel.cn/content/www/cn/zh/analytics/artificial-intelligence/yunda-brings-quality-change-to-the-express-delivery-industry.html)(Chinese Version)
+<br>[Intelligent transformation brings "quality change" to the express delivery industry](https://www.intel.cn/content/www/cn/zh/analytics/artificial-intelligence/yunda-brings-quality-change-to-the-express-delivery-industry.html)(Chinese Version)
 
 
 
