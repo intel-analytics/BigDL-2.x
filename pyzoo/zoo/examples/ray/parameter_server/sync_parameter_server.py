@@ -100,6 +100,7 @@ if __name__ == "__main__":
 
     i = 0
     current_weights = ps.get_weights.remote()
+    print("Begin iteration")
     while i < args.iterations:
         # Compute and apply gradients.
         gradients = [worker.compute_gradients.remote(current_weights)

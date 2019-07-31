@@ -40,7 +40,6 @@ parser.add_argument("--hadoop_conf", type=str,
                     help="turn on yarn mode by passing the path to the hadoop"
                     "Configuration folder. Otherwise, turn on local mode.")
 
-
 @ray.remote
 class ParameterServer(object):
     def __init__(self, keys, values):
@@ -56,7 +55,6 @@ class ParameterServer(object):
     def pull(self, keys):
         return [self.weights[key] for key in keys]
 
-
 @ray.remote
 def worker_task(ps, worker_index, batch_size=50):
     # Download MNIST.
@@ -66,20 +64,18 @@ def worker_task(ps, worker_index, batch_size=50):
     net = model.SimpleCNN()
     keys = net.get_weights()[0]
 
-    while True:
+    #while True:
+    for i in range(10):
         # Get the current weights from the parameter server.
         weights = ray.get(ps.pull.remote(keys))
         net.set_weights(keys, weights)
-
         # Compute an update and push it to the parameter server.
         xs, ys = mnist.train.next_batch(batch_size)
         gradients = net.compute_update(xs, ys)
         ps.push.remote(keys, gradients)
 
-
 if __name__ == "__main__":
     args = parser.parse_args()
-
     if args.hadoop_conf:
         slave_num = 2
         sc = init_spark_on_yarn(
@@ -95,7 +91,6 @@ if __name__ == "__main__":
     else:
         sc = init_spark_on_local(cores=4)
         ray_ctx = RayContext(sc=sc,object_store_memory="4g")
-
     ray_ctx.init()
 
     # Create a parameter server with some random weights.
@@ -108,7 +103,7 @@ if __name__ == "__main__":
 
     # Download MNIST.
     mnist = model.download_mnist_retry()
-
+    print("Begin iteration")
     i = 0
     while i < args.iterations:
         # Get and evaluate the current model.
