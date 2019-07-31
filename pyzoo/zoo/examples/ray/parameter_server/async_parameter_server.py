@@ -58,6 +58,7 @@ class ParameterServer(object):
 @ray.remote
 def worker_task(ps, worker_index, batch_size=50):
     # Download MNIST.
+    print("Worker "+ str(worker_index))
     mnist = model.download_mnist_retry(seed=worker_index)
 
     # Initialize the model.
@@ -107,6 +108,7 @@ if __name__ == "__main__":
     i = 0
     while i < args.iterations:
         # Get and evaluate the current model.
+        print("-----Iteration" + str(i) + "------")
         current_weights = ray.get(ps.pull.remote(all_keys))
         net.set_weights(all_keys, current_weights)
         test_xs, test_ys = mnist.test.next_batch(1000)
