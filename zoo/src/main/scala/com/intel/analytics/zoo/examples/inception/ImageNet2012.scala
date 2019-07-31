@@ -19,14 +19,13 @@ package com.intel.analytics.zoo.examples.inception
 import java.nio.ByteBuffer
 
 import com.intel.analytics.bigdl.dataset._
-import com.intel.analytics.bigdl.dataset.image.CropCenter
-import com.intel.analytics.bigdl.dataset.image.{BGRImgCropper, BGRImgNormalizer, BytesToBGRImg, MTLabeledBGRImgToBatch, HFlip => DatasetHFlip}
+import com.intel.analytics.bigdl.dataset.image.{BGRImgCropper, BGRImgNormalizer, BGRImgToSample, BytesToBGRImg, CropCenter, MTLabeledBGRImgToBatch, HFlip => DatasetHFlip}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.bigdl.utils.{Engine, T}
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet}
-import com.intel.analytics.zoo.feature.pmem.{DRAM, MemoryType, PMEM}
+import com.intel.analytics.zoo.feature.pmem._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.hadoop.io.Text
 import org.apache.log4j.Logger

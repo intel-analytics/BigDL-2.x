@@ -17,11 +17,13 @@ package com.intel.analytics.zoo.examples.inception
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.models.inception.Inception_v1_NoAuxClassifier
-import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, Module}
+import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.optim.SGD.{Poly, SequentialSchedule, Warmup}
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, T, Table}
-import com.intel.analytics.zoo.feature.pmem.MemoryType
+import com.intel.analytics.zoo.common.Optim.Fixed
+import com.intel.analytics.zoo.common.{EveryEpoch, MaxEpoch, MaxIteration, SeveralIteration}
+import com.intel.analytics.zoo.feature.pmem.{MemoryType, PARTITIONED}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.estimator.{ConstantClipping, Estimator, L2NormClipping}
 import org.apache.spark.SparkContext
@@ -82,8 +84,13 @@ object TrainInceptionV1 {
         val warmupDelta = if (warmupIteration == 0) 0.0
         else (param.maxLr.getOrElse(param.learningRate) - param.learningRate) / warmupIteration
         val polyIteration = maxIteration - warmupIteration
+        // When you are using incremental training, the training iteration may exceed the
+        // polyIteration, if you are using MaxEpoch to end the training. So we add a very
+        // small fixed learning rate to avoid a error thrown by SequentialSchedule.
         val lrSchedule = SequentialSchedule(iterationPerEpoch)
-          .add(Warmup(warmupDelta), warmupIteration).add(Poly(0.5, maxIteration), polyIteration)
+          .add(Warmup(warmupDelta), warmupIteration)
+          .add(Poly(0.5, maxIteration), polyIteration)
+          .add(Fixed(1e-10), Int.MaxValue)
         new SGD[Float](learningRate = param.learningRate, learningRateDecay = 0.0,
           weightDecay = param.weightDecay, momentum = 0.9, dampening = 0.0, nesterov = false,
           learningRateSchedule = lrSchedule)
@@ -95,10 +102,10 @@ object TrainInceptionV1 {
       }
 
       val (checkpointTrigger, endTrigger) = if (param.maxEpoch.isDefined) {
-        (Trigger.everyEpoch, Trigger.maxEpoch(param.maxEpoch.get))
+        (EveryEpoch(), MaxEpoch(param.maxEpoch.get))
       } else {
-        (Trigger.severalIteration(param.checkpointIteration),
-          Trigger.maxIteration(param.maxIteration))
+        (SeveralIteration(param.checkpointIteration),
+          MaxIteration(param.maxIteration))
       }
       if (param.gradientL2NormThreshold.isDefined) {
         estimator.setGradientClippingByL2Norm(param.gradientL2NormThreshold.get)
@@ -111,6 +118,7 @@ object TrainInceptionV1 {
         checkPointTrigger = Some(checkpointTrigger),
         valSet, Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))
 
+      estimator.close()
       sc.stop()
     })
   }
