@@ -40,6 +40,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/async_parameter_server.py \
+    --iterations 100
 now=$(date "+%s")
 time2 = $((now-start))
 
@@ -54,6 +55,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/sync_parameter_server.py \
+    --iterations 100
 now=$(date "+%s")
 time3 = $((now-start))
 
@@ -67,7 +69,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --jars ${ANALYTICS_ZOO_JAR} \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py
 now=$(date "+%s")
 time4 = $((now-start))
 
