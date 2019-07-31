@@ -25,10 +25,10 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implic
                                     state: Table)(implicit ev2: TensorNumeric[T]) : Unit = {
     // 1. aggregate sparseG first in each node
     // 2. aggregate sparseG on driver side
+    println("sparseparameterprocess.collectglobaldata")
     globalSparseG = models.mapPartitions(modelIter => {
       val cached = modelIter.next()
       val sparseG = cached.localModels.map(
-        // TODO: remove asInstanceOf
         _.asInstanceOf[SparseAbstractModule[U]].sparseParameters()._2)
 
       // aggregate sparseG first in each node
@@ -36,6 +36,7 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implic
         var res = sparseG.head
         var i = 1
         while (i < sparseG.length) {
+          println("sparse g is: " + sparseG(i).toString)
           res = SparseTensorUtils.addSparseTensor[U](res, sparseG(i))
           i += 1
         }
@@ -77,6 +78,7 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implic
   override def processParameters[T](parameters: AllReduceParameter[T],
                                     modelCache: Cache[T],
                                     state: Table)(implicit ev: TensorNumeric[T]): Unit = {
+    println("sparseparameterprocess.processParameters")
       modelCache.localModels.head
         .asInstanceOf[SparseAbstractModule[U]].sparseParameters()._1.zip(bcGlobalW.value)
         .foreach {case (w, bw) => w.copy(bw)}

@@ -23,13 +23,14 @@ import com.intel.analytics.bigdl.dataset.{MiniBatch, _}
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.{DataSet, _}
 import com.intel.analytics.bigdl.nn.Graph._
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, SparseAbstractModule}
 import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasLayerSerializable}
 import com.intel.analytics.bigdl.nn.{Container, Graph, StaticGraph, Sequential => TSequential}
 import com.intel.analytics.bigdl.optim.DistriOptimizer.Cache
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.parameters.SparseParameterProcessor
 import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}

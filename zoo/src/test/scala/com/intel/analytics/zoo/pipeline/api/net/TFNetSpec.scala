@@ -34,7 +34,28 @@ import scala.util.Random
 class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "TFNet " should "work with different data types" in {
-    val folderPath = Path("/tmp/wnd")
+    val path = "/tmp/tmp_0Ug7e"
+    val helper = TFTrainingHelper(path)
+
+    val input2 = T()
+    input2.insert(Tensor[Float](Array[Float](0.8139907f,0.28042847f), Array(1, 2)))
+    input2.insert(Tensor[Float](1, 30))
+    input2.insert(Tensor[Float](1, 30))
+    input2.insert(Tensor[Float](1, 30))
+    input2.insert(Tensor[Float](1, 30))
+    input2.insert(Tensor[Float](1, 30))
+    input2.insert(Tensor[Float](1, 30))
+    input2.insert(Tensor[Float](1, 30))
+    input2.insert(Tensor[Float](1, 30))
+    input2.insert(Tensor[Float](1, 30))
+    input2.insert(Tensor[Float](1, 30))
+    input2.insert(Tensor[Float](1, 1))
+    input2.insert(Tensor[Float](1, 30))
+
+    helper.forward(input2)
+
+
+    val folderPath = Path("/tmp/tmpU0Xc73")
     val trainingMetaPath = folderPath / Path("training_meta.json")
     val jsonStr = Source.fromFile(trainingMetaPath.jfile).getLines().mkString
 

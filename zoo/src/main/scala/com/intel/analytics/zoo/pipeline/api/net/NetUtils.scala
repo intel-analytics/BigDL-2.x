@@ -214,7 +214,9 @@ private[zoo] case class Meta(inputNames: Array[String],
                              tempTensors: Option[Array[String]] = None,
                              variables: Option[Array[String]] = None,
                              gradVariables: Option[Array[String]] = None,
-                             gradInputs: Option[Array[String]] = None
+                             gradInputs: Option[Array[String]] = None,
+                             sparseVariables: Option[Array[String]] = None,
+                             sparseGradVariables: Option[Array[String]] = None
                              )
 
 

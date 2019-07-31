@@ -18,13 +18,20 @@ package com.intel.analytics.bigdl.tensor
 
 import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.bigdl.dataset.{DistributedDataSet, MiniBatch}
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.nn.keras.Input
 import com.intel.analytics.bigdl.nn.{MSECriterion, Sequential, SoftMax}
 import com.intel.analytics.bigdl.optim.{DistriOptimizer, Trigger, sudoSparseSGD}
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, T}
-import com.intel.analytics.zoo.pipeline.api.keras.models.InternalDistriOptimizer
+import com.intel.analytics.zoo.models.common.ZooModel
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, KerasLayerWrapper, Merge, SparseDense}
+import com.intel.analytics.zoo.pipeline.api.keras.models.{InternalDistriOptimizer, Model}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
+
+import scala.reflect.ClassTag
 
 object SparseGradientsSpec {
   private val output1 = 0.0f
@@ -39,6 +46,7 @@ object SparseGradientsSpec {
   private val prepareData: Int => (MiniBatch[Float]) = index => {
     val input = Tensor[Float](batchSize)
     val target = Tensor[Float]().resize(batchSize)
+
     var i = 0
     while (i < batchSize) {
       if (i % 2 == 0) {
@@ -52,6 +60,50 @@ object SparseGradientsSpec {
     }
     MiniBatch(input, target)
   }
+
+  private val prepareSparseData: Int => (MiniBatch[Float]) = index => {
+    val input1 = Tensor[Float](batchSize)
+    val input2 = Tensor[Float](batchSize)
+    val target = Tensor[Float]().resize(batchSize)
+
+    var i = 0
+    while (i < batchSize) {
+      if (i % 2 == 0) {
+        target.setValue(i + 1, output1 + plusOne)
+        input1.setValue(i + 1, 1.0f)
+        input2.setValue(i + 1, 1.0f)
+      } else {
+        target.setValue(i + 1, output2 + plusOne)
+        input1.setValue(i + 1, 0.0f)
+        input2.setValue(i + 1, 0.0f)
+      }
+      i += 1
+    }
+    MiniBatch(Array(input1, input2), target)
+  }
+}
+
+class SparseGradientsSpecModel[T: ClassTag]()(implicit ev: TensorNumeric[T])
+  extends ZooModel[Activity, Tensor[T], T] {
+
+  override def buildModel(): AbstractModule[Activity, Tensor[T], T] = {
+    import com.intel.analytics.bigdl.utils._
+
+    val input1 = Input[Float](Shape(6))
+    val input2 = Input[Float](Shape(10))
+
+    val linear1 = new KerasLayerWrapper[Float](
+      new sudoLookupTableSparse[Float]().asInstanceOf[AbstractModule[Activity, Activity, Float]])
+      .inputs(input1)
+
+    val linear2 = new KerasLayerWrapper[Float](
+      new sudoLookupTableSparse[Float]().asInstanceOf[AbstractModule[Activity, Activity, Float]])
+      .inputs(input2)
+
+    val out = Merge.merge(List(linear1, linear2), "sum")
+    val model = Model(Array(input1, input2), out)
+    model.asInstanceOf[AbstractModule[Activity, Tensor[T], T]]
+  }
 }
 
 class SparseGradientsSpec extends FlatSpec with Matchers with BeforeAndAfter {
@@ -59,6 +111,8 @@ class SparseGradientsSpec extends FlatSpec with Matchers with BeforeAndAfter {
   private var sc: SparkContext = _
 
   private var dataSet: DistributedDataSet[MiniBatch[Float]] = _
+
+  private var dataSet2: DistributedDataSet[MiniBatch[Float]] = _
 
   before {
     sc = new SparkContext("local[1]", "RDDOptimizerSpec")
@@ -71,6 +125,18 @@ class SparseGradientsSpec extends FlatSpec with Matchers with BeforeAndAfter {
       override def data(train: Boolean): RDD[MiniBatch[Float]] = rdd
 
       override def size(): Long = rdd.count()
+
+      override def shuffle(): Unit = {}
+    }
+
+    val rdd2 = sc.parallelize(1 to (256 * nodeNumber), nodeNumber).map(prepareSparseData)
+
+    dataSet2 = new DistributedDataSet[MiniBatch[Float]] {
+      override def originRDD(): RDD[_] = rdd2
+
+      override def data(train: Boolean): RDD[MiniBatch[Float]] = rdd2
+
+      override def size(): Long = rdd2.count()
 
       override def shuffle(): Unit = {}
     }
@@ -163,5 +229,22 @@ class SparseGradientsSpec extends FlatSpec with Matchers with BeforeAndAfter {
       == Array(1, 2, 1, 3, 4, 0, 3, 0).deep)
     require(sparseG.head.asInstanceOf[SparseTensor[Float]]._values.array().deep
       == Array(4.0f, 12.0f, 32.0f, 12.0f, 16.0f, 8.0f, 8.0f, 8.0f).deep)
+  }
+
+  "Train with multiple sparse layers" should "work" in {
+    LoggerFilter.redirectSparkInfoLogs()
+
+    System.setProperty("bigdl.ModelBroadcastFactory",
+      "com.intel.analytics.bigdl.models.utils.ZooModelBroadcastFactory")
+
+    val model = new SparseGradientsSpecModel[Float]().build()
+    val optimizer = new InternalDistriOptimizer[Float](model.asInstanceOf[Module[Float]],
+      dataSet2, new MSECriterion[Float]().asInstanceOf[Criterion[Float]])
+      .setState(T("learningRate" -> 20.0))
+      .setEndWhen(Trigger.maxIteration(1))
+    optimizer.setSparseParameterProcessor(new sudoSparseSGD[Float]())
+    optimizer.optimize()
+
+    val t = 0
   }
 }

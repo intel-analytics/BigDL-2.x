@@ -107,6 +107,30 @@ class AdamWeightDecay(OptimMethod, ZooKerasCreator):
         self.bigdl_type = bigdl_type
 
 
+class SparseAdagrad(OptimMethod, ZooKerasCreator):
+    """
+    >>> adam = SparseAdagrad()
+    creating: createZooKerasSparseAdagrad
+    """
+    def __init__(self,
+                 lr=1e-3,
+                 lr_decay=0.01,
+                 bigdl_type="float"):
+        """
+        :param lr learning rate
+        :param lr_decay weight decay
+        """
+
+        # explicitly reimplement the constructor since:
+        # 1. This class need to be a subclass of OptimMethod
+        # 2. The constructor of OptimMethod invokes JavaValue.jvm_class_constructor() directly
+        #    and does not take the polymorphism.
+        self.value = callBigDlFunc(
+            bigdl_type, ZooKerasCreator.jvm_class_constructor(self),
+            lr,
+            lr_decay)
+        self.bigdl_type = bigdl_type
+
 class ZooOptimizer(Optimizer):
     @staticmethod
     def create(model,

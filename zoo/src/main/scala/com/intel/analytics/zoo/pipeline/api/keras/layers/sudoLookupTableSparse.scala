@@ -43,7 +43,8 @@ class sudoLookupTableSparse[T: ClassTag]()(implicit ev: TensorNumeric[T])
   sparseGradWeight = Array(Tensor[T]())
 
   override def updateOutput(input: Tensor[T]): Tensor[T] = {
-    output = input
+//    output = input
+    output = sWeight.head
     output
   }
 

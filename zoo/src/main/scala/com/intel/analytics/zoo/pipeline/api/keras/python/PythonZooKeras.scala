@@ -1359,6 +1359,12 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       epsilon, weightDecay)
   }
 
+  def createZooKerasSparseAdagrad(
+                                     learningRate: Double = 1e-3,
+                                     lrDecay: Double = 0.01): SparseAdagrad[T] = {
+    new SparseAdagrad[T](learningRate, lrDecay)
+  }
+
   def createInternalDistriOptimizer(model: AbstractModule[Activity, Activity, T],
                             trainingRdd: JavaRDD[Sample],
                             criterion: Criterion[T],

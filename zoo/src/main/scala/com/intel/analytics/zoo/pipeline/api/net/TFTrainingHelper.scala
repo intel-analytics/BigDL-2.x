@@ -63,9 +63,6 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
   private val gradWeights = variables.map(_ => Tensor[Float]())
 
   sWeight = if (sparseVariables != null) {
-    // TODO: Currently only support sWeight with 1 element, need remove the limitation
-    println("sparse variables is not empty")
-    require(sparseVariables.length == 1, "Only support with 1 sparse layer")
     val ws = new Array[Tensor[Float]](sparseVariables.length)
     var i = 0
     while (i < ws.length) {
@@ -74,7 +71,6 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
     }
     setSparseWeights(ws)
   } else {
-    println("sparse variables is empty")
     null
   }
 
@@ -118,10 +114,15 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
   override def updateOutput(input: Activity): Activity = {
     val feeds = T()
     if (input.isTensor) {
+      println("input tensor shape is: " + input.toTensor[Float].size().mkString("_"))
+      println("input tensor is: " + input.toTensor[Float].toString)
       feeds.insert(input)
     } else {
       var i = 0
       while (i < input.toTable.length()) {
+        println("i is: " + i)
+        println("input shape is: " + input.toTable[Tensor[Float]](i + 1).size().mkString("_"))
+        println("input is: " + input.toTable[Tensor[Float]](i + 1).toString)
         feeds.insert(input.toTable(i + 1))
         i += 1
       }
@@ -145,6 +146,12 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
     var i = 0
     while (i < weights.length) {
       feeds.insert(weights(i))
+      i += 1
+    }
+
+    i = 0
+    while (i < sWeight.length) {
+      feeds.insert(sWeight(i))
       i += 1
     }
 
@@ -207,7 +214,7 @@ object TFTrainingHelper {
 
     val newMeta = Meta(
       (meta.inputNames.toSeq ++:
-        trainingMeta.variables.toSeq).toArray,
+        trainingMeta.variables.toSeq ++: trainingMeta.sparseVariables.toSeq).toArray,
       meta.outputNames)
     val graphDef = TFNet.parseGraph(model)
     val config = if (sessionConfig != null) {

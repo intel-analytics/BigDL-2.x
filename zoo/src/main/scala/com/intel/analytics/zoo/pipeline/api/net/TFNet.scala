@@ -146,7 +146,6 @@ class TFNet(private val graphDef: TFGraphHolder,
   }
 
   private val weights = {
-
     if (graphMeta.variables.isDefined) {
       val ws = new Array[Tensor[Float]](graphMeta.variables.get.length)
         var i = 0
@@ -177,6 +176,37 @@ class TFNet(private val graphDef: TFGraphHolder,
     }
   }
 
+
+  private val sWeights = {
+    if (graphMeta.sparseVariables.isDefined) {
+      val ws = new Array[Tensor[Float]](graphMeta.sparseVariables.get.length)
+      var i = 0
+      while (i < ws.length) {
+        ws(i) = Tensor[Float]()
+        i += 1
+      }
+      setSWeights(ws)
+    } else {
+      Array[Tensor[Float]]()
+    }
+  }
+
+
+  private val sparseGradWeights = {
+    if (graphMeta.sparseVariables.isDefined) {
+      graphMeta.sparseVariables.get.map(_ => Tensor[Float]())
+    } else {
+      Array[Tensor[Float]]()
+    }
+  }
+
+  private val sparseGradWeightsBuffer = {
+    if (graphMeta.sparseVariables.isDefined) {
+      graphMeta.sparseVariables.get.map(_ => Tensor[Float]())
+    } else {
+      Array[Tensor[Float]]()
+    }
+  }
 
   output = {
     if (outputNames.length == 1) {
@@ -216,10 +246,14 @@ class TFNet(private val graphDef: TFGraphHolder,
   @transient
   private lazy val weightTFTensors = new Array[TTensor[_]](weights.length)
   @transient
+  private lazy val sWeightTFTensors = new Array[TTensor[_]](sWeights.length)
+  @transient
   private lazy val tempTFTensors =
     new Array[TTensor[_]](graphMeta.tempTensors.map(_.length).getOrElse(0))
   @transient
   private lazy val gradWeightTFTensors = new Array[TTensor[_]](gradWeights.length)
+  @transient
+  private lazy val sGradWeightTFTensors = new Array[TTensor[_]](sparseGradWeights.length)
 
   override def updateOutput(input: Activity): Activity = {
     try {
@@ -227,7 +261,8 @@ class TFNet(private val graphDef: TFGraphHolder,
       val runner = sess.runner()
 
       require(activityLength(input) == inputTypes.length,
-        s"require ${inputTypes.length} inputs, but ${activityLength(input)} given. " +
+        s"require" +
+          s" ${inputTypes.length} inputs, but ${activityLength(input)} given. " +
           s"The inputs are ${inputNames.toSeq}")
 
       activity2TFTensors(input, inputTypes, inputTFTensors)
@@ -265,6 +300,34 @@ class TFNet(private val graphDef: TFGraphHolder,
         }
       }
 
+      // feed new sparseWeights if possible
+      graphMeta.sparseVariables.map { variableNames =>
+        if (! this.isTraining()) {
+          var i = 0
+          while (i < variableNames.length) {
+            if (sWeightTFTensors(i) == null) {
+              val tensor = bigdl2Tf(sWeights(i), DataType.FLOAT)
+              sWeightTFTensors(i) = tensor
+            }
+            i += 1
+          }
+        } else {
+          var i = 0
+          while (i < variableNames.length) {
+            if (sWeightTFTensors(i) != null) {
+              sWeightTFTensors(i).close()
+            }
+            val tensor = bigdl2Tf(sWeights(i), DataType.FLOAT)
+            sWeightTFTensors(i) = tensor
+            i += 1
+          }
+        }
+        variableNames.zip(sWeightTFTensors).map { case (name, tensor) =>
+          runner.feed(name, tensor)
+          tensor
+        }
+      }
+
       // fetch outputs
       floatOutputNames.foreach(runner.fetch)
 
@@ -292,6 +355,7 @@ class TFNet(private val graphDef: TFGraphHolder,
       } else {
         // clean up variable tensorflow tensors
         emptyTFTensorArray(weightTFTensors)
+        emptyTFTensorArray(sWeightTFTensors)
         // clean up model output tensorflow tensors
         emptyTFTensorArray(outputs.asScala.slice(0, outputNames.length))
 
@@ -421,6 +485,18 @@ class TFNet(private val graphDef: TFGraphHolder,
     val runner = sess.runner()
     val variables = graphMeta.variables.get
     variables.foreach(runner.fetch)
+    runner.run().asScala.zipWithIndex.map { case (fetch, idx) =>
+      val t = weights(idx)
+      tf2bigdl(fetch.asInstanceOf[TTensor[Float]], t)
+      t
+    }
+    weights
+  }
+
+  private def setSWeights(weights: Array[Tensor[Float]]) = {
+    val runner = sess.runner()
+    val sVariables = graphMeta.sparseVariables.get
+    sVariables.foreach(runner.fetch)
     runner.run().asScala.zipWithIndex.map { case (fetch, idx) =>
       val t = weights(idx)
       tf2bigdl(fetch.asInstanceOf[TTensor[Float]], t)

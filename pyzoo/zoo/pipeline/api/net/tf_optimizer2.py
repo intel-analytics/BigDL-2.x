@@ -114,9 +114,6 @@ class TFOptimizerDebug:
             raise ValueError("The clip_value argument should be a tuple (min_value, max_value)")
         self.clip_constant = clip_value
 
-        # from zoo.util.tf import process_grad
-        # grads = [process_grad(grad) for grad in grads]
-
         if self.dataset.batch_size <= 0:
             raise ValueError("You should set batch_size instead of batch_per_thread for training")
 
@@ -206,7 +203,6 @@ with variable_creator_scope():
                 raise ValueError("Validation data is not specified. Please set " +
                                  "val rdd in TFDataset, or set val_split larger than zero")
 
-            # TODO: InternalDistriOptimizer
             self.optimizer = ZooOptimizer.create(self.training_helper_layer,
                                               training_rdd,
                                               IdentityCriterion(),
@@ -251,8 +247,10 @@ with variable_creator_scope():
                 from zoo.util.tf import grad_is_indexed_slices
                 if grad_is_indexed_slices(grad):
                     # TODO: need to convert to a format that are acceptable by java api
+                    from zoo.util.tf import process_grad
+                    grad2 = process_grad(grad)
                     sparse_variables.append(var)
-                    sparse_grads.append(grad)
+                    sparse_grads.append(grad2)
                 else:
                     variables.append(var)
                     grads.append(grad)
