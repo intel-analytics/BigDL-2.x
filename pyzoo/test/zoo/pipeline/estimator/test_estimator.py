@@ -15,23 +15,9 @@
 #
 
 import pytest
-import shutil
-import errno
-import string
-from bigdl.nn.criterion import *
-from bigdl.nn.layer import *
-from bigdl.optim.optimizer import *
-from numpy.testing import assert_allclose
 from pyspark.ml import Pipeline
-from pyspark.ml.feature import MinMaxScaler
-from pyspark.sql.types import *
 
-from zoo.common.nncontext import *
 from zoo.pipeline.estimator import *
-from zoo.pipeline.api.keras.optimizers import Adam as KAdam
-from zoo.feature.common import *
-from zoo.feature.image import *
-from zoo.util.tf import *
 
 from bigdl.nn.layer import *
 from bigdl.nn.criterion import *
