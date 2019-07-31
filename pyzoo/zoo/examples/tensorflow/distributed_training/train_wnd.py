@@ -11,7 +11,6 @@ import numpy as np
 import tensorflow as tf
 from zoo.common import set_core_number
 from zoo.common.nncontext import init_nncontext, init_spark_conf
-from zoo.pipeline.api.net import TFOptimizerDebug
 from zoo.pipeline.api.net import TFDataset, TFOptimizer
 from zoo.pipeline.api.keras.metrics import AUC
 # from zoo.pipeline.api.keras.optimizers import EpochStep
@@ -231,6 +230,6 @@ if __name__ == '__main__':
     from zoo.pipeline.api.keras.optimizers import SparseAdagrad
     # optimizer = TFOptimizer.from_loss(loss, optim_method, val_outputs=[model.score], val_labels=[model.label], val_method=AUC(), session_config=tf.ConfigProto(inter_op_parallelism_threads=1, intra_op_parallelism_threads=2))
     # optimizer = TFOptimizer.from_loss(loss, optim_method, val_outputs=[model.score], val_labels=[model.label], val_method=AUC())
-    optimizer = TFOptimizerDebug.from_loss(loss, optim_method, val_outputs=[model.score], val_labels=[model.label],
+    optimizer = TFOptimizer.from_loss(loss, optim_method, val_outputs=[model.score], val_labels=[model.label],
                                       val_method=AUC(), sparse_optim_method=SparseAdagrad())
     optimizer.optimize(end_trigger=MaxEpoch(FLAGS.epoch_num))

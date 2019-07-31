@@ -18,6 +18,5 @@ from .graph_net import GraphNet
 from .net_load import Net
 from .tf_dataset import TFDataset
 from .tf_optimizer import TFOptimizer
-from .tf_optimizer2 import TFOptimizerDebug
 from .tf_predictor import TFPredictor
 from .tfnet import TFNet
