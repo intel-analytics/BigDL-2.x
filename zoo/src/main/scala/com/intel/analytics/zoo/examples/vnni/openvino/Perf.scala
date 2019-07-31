@@ -28,8 +28,7 @@ case class ResNet50PerfParams(model: String = "",
                               weight: String = "",
                               batchSize: Int = 4,
                               numBatch: Int = 1,
-                              iteration: Int = 1,
-                              isInt8: Boolean = false)
+                              iteration: Int = 1)
 
 object Perf {
 
@@ -54,9 +53,6 @@ object Perf {
       opt[Int]('i', "iteration")
         .text("Iteration of perf test. The result will be average of each iteration time cost")
         .action((v, p) => p.copy(iteration = v))
-      opt[Boolean]("isInt8")
-        .text("Is Int8 optimized model?")
-        .action((x, c) => c.copy(isInt8 = x))
     }
 
     parser.parse(args, ResNet50PerfParams()).foreach { param =>
@@ -68,11 +64,7 @@ object Perf {
 
       val model = new InferenceModel(1)
 
-      if (param.isInt8) {
-        model.doLoadOpenVINOInt8(param.model, param.weight, param.batchSize)
-      } else {
-        model.doLoadOpenVINO(param.model, param.weight)
-      }
+      model.doLoadOpenVINO(param.model, param.weight, param.batchSize)
 
       val predictStart = System.nanoTime()
       var averageLatency = 0L
