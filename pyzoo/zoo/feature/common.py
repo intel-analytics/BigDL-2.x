@@ -233,7 +233,7 @@ class FeatureSet(DataSet):
     def image_set(cls, imageset, memory_type="DRAM", bigdl_type="float"):
         """
         Create FeatureSet from ImageFrame.
-        :param image_frame: ImageFrame
+        :param imageset: ImageFrame
         :param memory_type: string, DRAM or PMEM
                             If it's DRAM, will cache dataset into dynamic random-access memory
                             If it's PMEM, will cache dataset into Intel Optane DC Persistent Memory
@@ -242,6 +242,20 @@ class FeatureSet(DataSet):
         """
         jvalue = callBigDlFunc(bigdl_type, "createFeatureSetFromImageFrame",
                                imageset.to_image_frame(), memory_type)
+        return cls(jvalue=jvalue)
+
+    @classmethod
+    def sample_rdd(cls, rdd, memory_type="DRAM", bigdl_type="float"):
+        """
+        Create FeatureSet from RDD[Sample].
+        :param rdd: A RDD[Sample]
+        :param memory_type: string, DRAM or PMEM
+                            If it's DRAM, will cache dataset into dynamic random-access memory
+                            If it's PMEM, will cache dataset into Intel Optane DC Persistent Memory
+        :param bigdl_type:numeric type
+        :return: A feature set
+        """
+        jvalue = callBigDlFunc(bigdl_type, "createSampleFeatureSetFromRDD", rdd, memory_type)
         return cls(jvalue=jvalue)
 
     @classmethod
