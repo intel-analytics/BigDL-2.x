@@ -34,6 +34,8 @@ parser = argparse.ArgumentParser(description="Run the asynchronous parameter "
                                              "server example.")
 parser.add_argument("--num-workers", default=4, type=int,
                     help="The number of workers to use.")
+parser.add_argument("--iterations", default=10, type=int,
+                    help="Iteration time.")
 parser.add_argument("--hadoop_conf", type=str,
                     help="turn on yarn mode by passing the path to the hadoop"
                     "Configuration folder. Otherwise, turn on local mode.")
@@ -108,7 +110,7 @@ if __name__ == "__main__":
     mnist = model.download_mnist_retry()
 
     i = 0
-    while True:
+    while i < args.iterations:
         # Get and evaluate the current model.
         current_weights = ray.get(ps.pull.remote(all_keys))
         net.set_weights(all_keys, current_weights)

@@ -33,6 +33,8 @@ parser = argparse.ArgumentParser(description="Run the synchronous parameter "
                                              "server example.")
 parser.add_argument("--num-workers", default=4, type=int,
                     help="The number of workers to use.")
+parser.add_argument("--iterations", default=50, type=int,
+                    help="Iteration time.")
 parser.add_argument("--hadoop_conf", type=str,
                     help="turn on yarn mode by passing the path to the hadoop"
                     "configuration folder. Otherwise, turn on local mode.")
@@ -98,7 +100,7 @@ if __name__ == "__main__":
 
     i = 0
     current_weights = ps.get_weights.remote()
-    while True:
+    while i < args.iterations:
         # Compute and apply gradients.
         gradients = [worker.compute_gradients.remote(current_weights)
                      for worker in workers]

@@ -11,27 +11,23 @@ export ANALYTICS_ZOO_CONF=${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf
 export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
 
 set -e
-#if image exist this two dependency, remove below
-echo "Install gym and atari"
-pip install gym
-pip install gym[atari]
 
 echo "Start ray exmples tests"
 #start execute
-echo "Start pong example"
-start=$(date "+%s")
-${SPARK_HOME}/bin/spark-submit \
-    --master ${MASTER} \
-    --driver-memory 20g \
-    --executor-memory 20g \
-    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py \
-    --jars ${ANALYTICS_ZOO_JAR} \
-    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py \
-        --iterations 10
-now=$(date "+%s")
-time1 = $((now-start))
+#echo "Start pong example"
+#start=$(date "+%s")
+#${SPARK_HOME}/bin/spark-submit \
+#    --master ${MASTER} \
+#    --driver-memory 20g \
+#    --executor-memory 20g \
+#    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py \
+#    --jars ${ANALYTICS_ZOO_JAR} \
+#    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+#    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+#    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py \
+#        --iterations 10
+#now=$(date "+%s")
+#time1 = $((now-start))
 
 echo "Start async_parameter example"
 start=$(date "+%s")
