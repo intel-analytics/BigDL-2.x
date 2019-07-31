@@ -118,3 +118,4 @@ if __name__ == "__main__":
         i += 1
         time.sleep(1)
     ray_ctx.stop()
+    sc.stop()

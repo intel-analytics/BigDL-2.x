@@ -363,100 +363,6 @@ ${SPARK_HOME}/bin/spark-submit \
 
 now=$(date "+%s")
 time8=$((now-start))
-
-echo "#9 start ray examples"
-#run only when python >=3.5 and spark >=2.4.0
-spark_version="$($SPARK_HOME/bin/pyspark --version 2>&1)"
-temp="${spark_version% /_/*}"
-spark_version="${temp##*\\}"
-py_version="$(python -V 2>&1)"
-
-if [[ $py_version == *"Python 3.5"* || $py_version == *"Python 3.6"* ]]; then
-    if [[ $spark_version == *"version 2.4.3"* || $spark_version == *"version 2.4.0"* ]]; then
-        #test install some package which is needed by ray example
-        echo "check ray"
-        ray="$(ray 2>&1)"
-        exit_status=$?
-        if [ $exit_status -ne 0 ];then
-            echo "Ray is not in this system.Install ray."
-            pip install ray
-        else
-            echo "Ray already installed."
-        fi
-
-        echo "Install gym"
-        pip install gym
-        pip install gym[atari]
-
-        #start execute
-        echo "Start pong example"
-        start=$(date "+%s")
-        ${SPARK_HOME}/bin/spark-submit \
-            --master ${MASTER} \
-            --driver-memory 20g \
-            --executor-memory 20g \
-            --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py \
-            --jars ${ANALYTICS_ZOO_JAR} \
-            --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-            --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-            ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py \
-            --iterations 20
-        now=$(date "+%s")
-        time9 = $((now-start))
-
-        echo "Start async_parameter example"
-        start=$(date "+%s")
-        ${SPARK_HOME}/bin/spark-submit \
-            --master ${MASTER} \
-            --driver-memory 20g \
-            --executor-memory 20g \
-            --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/async_parameter_server.py \
-            --jars ${ANALYTICS_ZOO_JAR} \
-            --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-            --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-            ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/async_parameter_server.py \
-        now=$(date "+%s")
-        time10 = $((now-start))
-
-        echo "Start pong example"
-        start=$(date "+%s")
-        ${SPARK_HOME}/bin/spark-submit \
-            --master ${MASTER} \
-            --driver-memory 20g \
-            --executor-memory 20g \
-            --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/sync_parameter_server.py \
-            --jars ${ANALYTICS_ZOO_JAR} \
-            --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-            --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-            ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/sync_parameter_server.py \
-        now=$(date "+%s")
-        time11 = $((now-start))
-
-        echo "Start multiagent example"
-        start=$(date "+%s")
-        ${SPARK_HOME}/bin/spark-submit \
-            --master ${MASTER} \
-            --driver-memory 20g \
-            --executor-memory 20g \
-            --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py \
-            --jars ${ANALYTICS_ZOO_JAR} \
-            --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-            --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-            ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py \
-        now=$(date "+%s")
-        time12 = $((now-start))
-    else
-        echo "Current spark version is not support ray."
-        echo "Skipping ray examples tests."
-        echo "Please check your spark version or check SPARK_HOME."
-    fi
-else
-    echo "Current python version is not support ray."
-    echo "Skipping ray examples tests."
-    echo "Please check your pyhton version."
-fi
-
-
 echo "#1 textclassification time used:$time1 seconds"
 echo "#2 customized loss and layer time used:$time2 seconds"
 echo "#3 image-classification time used:$time3 seconds"
@@ -465,7 +371,3 @@ echo "#5 nnframes time used:$time5 seconds"
 echo "#6 tensorflow time used:$time6 seconds"
 echo "#7 anomalydetection time used:$time7 seconds"
 echo "#8 qaranker time used:$time8 seconds"
-echo "#9 rl_pong time used:$time9 seconds"
-echo "#10 sync_parameter_server time used:$time10 seconds"
-echo "#11 async_parameter_server time used:$time11 seconds"
-echo "#12 multiagent_two_trainers time used:$time12 seconds"

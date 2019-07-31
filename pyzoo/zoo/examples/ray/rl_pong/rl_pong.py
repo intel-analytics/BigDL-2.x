@@ -262,3 +262,4 @@ if __name__ == "__main__":
         batch_num += 1
 
     ray_ctx.stop()
+    sc.stop()

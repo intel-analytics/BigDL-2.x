@@ -112,3 +112,4 @@ if __name__ == "__main__":
             print("Iteration {}: accuracy is {}".format(i, accuracy))
         i += 1
     ray_ctx.stop()
+    sc.stop()
