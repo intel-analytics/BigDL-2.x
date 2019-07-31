@@ -6,82 +6,36 @@ clear_up () {
     pip uninstall -y pyspark
 }
 #if image exist this two dependency, remove below
-echo "Install gym and atari"
-pip install gym
-pip install gym[atari]
+execute_ray_test(){
+    echo "start example $1"
+    start=$(date "+%s")
+    python $2
+    exit_status=$?
+    if [ $exit_status -ne 0 ];
+    then
+        clear_up
+        echo "$1 failed"
+        exit $exit_status
+    fi
+    now=$(date "+%s")
+    return $((now-start))
+}
 
-#start execute
-echo "Start pong example"
-start=$(date "+%s")
-export SPARK_DRIVER_MEMORY=4g
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py \
-      --iterations 10
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "rl_pong failed"
-    exit $exit_status
-fi
+execute_ray_test rl_pong ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py  --iterations 10
+time9=$?
 
-unset SPARK_DRIVER_MEMORY
-now=$(date "+%s")
-time1=$((now-start))
-echo "rl_pong time used:$time1 seconds"
+execute_ray_test sync_parameter_server ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/sync_parameter_server.py
+time10=$?
 
-echo "Start async_parameter example"
-start=$(date "+%s")
-export SPARK_DRIVER_MEMORY=4g
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/async_parameter_server.py \
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "async_parameter_server failed"
-    exit $exit_status
-fi
+execute_ray_test async_parameter_server ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/async_parameter_server.py
+time11=$?
 
-unset SPARK_DRIVER_MEMORY
-now=$(date "+%s")
-time2=$((now-start))
-echo "async_parameter_server time used:$time2 seconds"
+execute_ray_test multiagent_two_trainers ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py
+time12=$?
 
+echo "#9 rl_pong time used:$time9 seconds"
+echo "#10 sync_parameter_server time used:$time10 seconds"
+echo "#11 async_parameter_server time used:$time11 seconds"
+echo "#12 multiagent_two_trainers time used:$time12 seconds"
 
-echo "Start sync_parameter_server example"
-start=$(date "+%s")
-export SPARK_DRIVER_MEMORY=4g
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/sync_parameter_server.py \
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "aync_parameter_server failed"
-    exit $exit_status
-fi
-
-unset SPARK_DRIVER_MEMORY
-now=$(date "+%s")
-time3=$((now-start))
-echo "sync_parameter_server time used:$time3 seconds"
-
-
-echo "Start multiagent example"
-start=$(date "+%s")
-export SPARK_DRIVER_MEMORY=4g
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py \
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "async_parameter_server failed"
-    exit $exit_status
-fi
-
-unset SPARK_DRIVER_MEMORY
-now=$(date "+%s")
-time4=$((now-start))
-echo "async_parameter_server time used:$time4 seconds"
-
-pip uninstall gym
-pip uninstall gym[artri]
 clear_up

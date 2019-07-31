@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-
-
 clear_up () {
     echo "Clearing up environment. Uninstalling analytics-zoo"
     pip uninstall -y analytics-zoo
