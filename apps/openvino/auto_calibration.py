@@ -6,6 +6,7 @@ import subprocess
 import re
 import shutil
 import imghdr
+import xml.etree.ElementTree as ET
 
 
 OBJECT_DETECTION = ["fastrcnn",
@@ -26,6 +27,9 @@ def get_calibration_tool_path():
 
 
 def find_file(name, path):
+    """
+    Find and return abs path of given name in given path
+    """
     if not os.path.exists(path):
         return None
     for root, dirs, files in os.walk(path):
@@ -69,14 +73,28 @@ def object_detection_val_prepare(image_path):
     copy images (*.png etc) into image subdir
     """
     # Create anno and image dir
+    new_image_path = os.path.join(image_path, "images")
     val_image_path = os.path.join(image_path, "images")
     val_anno_path = os.path.join(image_path, "anno")
     val_txt = ""
+    folder = ""
+    for f in os.listdir(image_path):
+        curr_path = os.path.join(image_path, f)
+        if os.path.isdir(curr_path):
+            continue
+        if curr_path.endswith("xml") and len(folder) == 0:
+            xml_tree = ET.parse(curr_path)
+            doc = xml_tree.getroot()
+            folder_element = doc.find("folder")
+            if folder_element is not None:
+                folder = folder_element.text
     if os.path.exists(val_image_path):
         shutil.rmtree(val_image_path)
     if os.path.exists(val_anno_path):
         shutil.rmtree(val_anno_path)
-    os.mkdir(val_image_path)
+    if len(folder) != 0:
+        val_image_path = os.path.join(val_image_path, folder)
+    os.makedirs(val_image_path)
     os.mkdir(val_anno_path)
     for f in os.listdir(image_path):
         curr_path = os.path.join(image_path, f)
@@ -90,7 +108,7 @@ def object_detection_val_prepare(image_path):
             shutil.copy(curr_path, val_image_path)
         elif curr_path.endswith("txt"):
             val_txt = curr_path
-    return (val_image_path, val_anno_path, val_txt)
+    return (new_image_path, val_anno_path, val_txt)
 
 
 if __name__ == '__main__':
