@@ -38,16 +38,23 @@ class TorchNet(Layer):
         super(TorchNet, self).__init__(None, bigdl_type, path)
 
     @staticmethod
-    def from_pytorch(module, input_shape):
+    def from_pytorch(module, input_shape=None, sample_input=None):
         """
-        Create a TorchNet directly from PyTorch model, e.g. model in torchvision.models
+        Create a TorchNet directly from PyTorch model, e.g. model in torchvision.models.
+        Users need to specify sample_input or input_shape.
         :param module: a PyTorch model
         :param input_shape: list of integers. E.g. for ResNet, this may be [1, 3, 224, 224]
+        :param sample_input. A sample of Torch Tensor or tuple to trace the model.
         """
+        if not input_shape and not sample_input:
+            raise Exception("please specify input_shape or sample_input")
+
         temp = tempfile.mkdtemp()
 
+        sample = sample_input if sample_input else torch.rand(input_shape)
+
         # save model
-        traced_script_module = torch.jit.trace(module, torch.rand(input_shape))
+        traced_script_module = torch.jit.trace(module, sample)
         path = os.path.join(temp, "model.pt")
         traced_script_module.save(path)
 

@@ -26,33 +26,33 @@ JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchMod
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
  * Method:    modelForwardNative
- * Signature: (JZ[FI[I)[Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
+ * Signature: (JZ[[F[I[[I)[Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_modelForwardNative
-  (JNIEnv *, jclass, jlong, jboolean, jfloatArray, jint, jintArray);
+  (JNIEnv *, jclass, jlong, jboolean, jobjectArray, jintArray, jobjectArray);
 
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
  * Method:    modelBackwardNative
- * Signature: (J[FI[I)Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
+ * Signature: (J[[F[I[[I)[Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
  */
-JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_modelBackwardNative
-  (JNIEnv *, jclass, jlong, jfloatArray, jint, jintArray);
+JNIEXPORT jobjectArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_modelBackwardNative
+  (JNIEnv *, jclass, jlong, jobjectArray, jintArray, jobjectArray);
 
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
  * Method:    lossForwardNative
- * Signature: (J[FI[I[FI[I)Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
+ * Signature: (J[[F[I[[I[[F[I[[I)Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
  */
 JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_lossForwardNative
-  (JNIEnv *, jclass, jlong, jfloatArray, jint, jintArray, jfloatArray, jint, jintArray);
+  (JNIEnv *, jclass, jlong, jobjectArray, jintArray, jobjectArray, jobjectArray, jintArray, jobjectArray);
 
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
  * Method:    lossBackwardNative
- * Signature: (J)Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
+ * Signature: (J)[Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
  */
-JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_lossBackwardNative
+JNIEXPORT jobjectArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_lossBackwardNative
   (JNIEnv *, jclass, jlong);
 
 /*

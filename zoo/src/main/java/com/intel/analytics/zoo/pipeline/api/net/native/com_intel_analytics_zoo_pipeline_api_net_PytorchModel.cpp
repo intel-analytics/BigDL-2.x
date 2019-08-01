@@ -36,9 +36,9 @@ extern "C" {
 std::mutex mtx;
 std::unordered_map<int, std::shared_ptr<torch::jit::script::Module>> modelHandles;
 std::unordered_map<int, std::shared_ptr<torch::jit::script::Module>> lossHandles;
-std::unordered_map<int, at::Tensor> modelInputs;
-std::unordered_map<int, c10::IValue> modelOutputs;
-std::unordered_map<int, at::Tensor> lossGrads;
+std::unordered_map<int, c10::IValue> modelInputs; // always store tuple
+std::unordered_map<int, c10::IValue> modelOutputs; // tensor or tuple, depending on the model
+std::unordered_map<int, c10::IValue> lossGrads; // always store tuple
 long modelID;
 long lossID;
 
@@ -120,23 +120,20 @@ auto updateWeights(std::shared_ptr<torch::jit::script::Module> m, float* xv, int
     return 1;
 }
 
+// convert Torch Tensor to JTensor, copy data
 jobject torch2JTensor(JNIEnv *jenv, at::Tensor &tensor) {
     // Wrap to Zoo JTensor
     jclass jtensor_class = jenv -> FindClass("com/intel/analytics/zoo/pipeline/inference/JTensor");
     jmethodID jtensor_constructor = jenv -> GetMethodID(jtensor_class, "<init>", "([F[I)V");
 
     auto sizes = tensor.sizes();
-
     int result_storage_len = 1;
     float *pytorch_result_storage = tensor.data<float>();
     int result_shape_len = sizes.size();
-
     int pytorch_result_shape[result_shape_len];
-    int j = 0;
-    while (j < result_shape_len) {
+    for (int j = 0; j < result_shape_len; j++) {
         pytorch_result_shape[j] = sizes[j];
         result_storage_len *= sizes[j];
-        j++;
     }
 
     jfloatArray result_storage = jenv -> NewFloatArray(result_storage_len);
@@ -194,68 +191,82 @@ JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchMod
  * Signature: ([F[I)Lcom/intel/analytics/zoo/pipeline/inference/JTensor;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_modelForwardNative
-  (JNIEnv * jenv, jclass jobj, jlong nativeRef, jboolean isTraining, jfloatArray jstorage, jint joffset, jintArray jshape) {
+  (JNIEnv * jenv, jclass jobj, jlong nativeRef, jboolean isTraining, jobjectArray input_jstorage, jintArray input_joffset, jobjectArray input_jshape) {
 
-    // to Torch Tensor
-    jfloat* c_storage = (jfloat*) jenv -> GetPrimitiveArrayCritical(jstorage, JNI_FALSE);
-    jint* c_shape = (jint*) jenv -> GetPrimitiveArrayCritical(jshape, JNI_FALSE);
-    int c_shape_len = jenv -> GetArrayLength(jshape);
+    // keep track of the primitive array to release later.
+    std::vector<jfloatArray> j_data_vector;
+    std::vector<jfloat*> c_data_vector;
+    std::vector<jintArray> j_shape_vector;
+    std::vector<jint*> c_shape_vector;
 
-    //Generate pytorch shape
-    std::vector<int64_t> torch_shape;
-    int i = 0;
-    while(i < c_shape_len) {
-        torch_shape.push_back(*(c_shape + i));
-        i++;
+    // create Input tuple
+    int input_size = jenv -> GetArrayLength(input_jstorage);
+    jint* c_input_offsets = (jint*) jenv -> GetPrimitiveArrayCritical(input_joffset, JNI_FALSE);
+    std::vector<c10::IValue> input_vector;
+
+    for (int i = 0; i < input_size; i++) {
+        jfloatArray tensor_storage = (jfloatArray)jenv->GetObjectArrayElement(input_jstorage, i);
+        jfloat* input_c_storage = (jfloat*) jenv -> GetPrimitiveArrayCritical(tensor_storage, JNI_FALSE);
+        jintArray tensor_shape = (jintArray)jenv -> GetObjectArrayElement(input_jshape, i);
+        jint* input_c_shape = (jint*) jenv -> GetPrimitiveArrayCritical(tensor_shape, JNI_FALSE);
+        int c_dim_count = jenv -> GetArrayLength(tensor_shape);
+
+        std::vector<int64_t> input_torch_shape;
+        for (int i = 0; i < c_dim_count; i++) {
+            input_torch_shape.push_back(*(input_c_shape + i));
+        }
+
+        auto input_tensor = torch::from_blob(input_c_storage + c_input_offsets[i], input_torch_shape, at::kFloat);
+        input_tensor.set_requires_grad(true);
+
+        input_vector.push_back(input_tensor);
+
+        j_data_vector.push_back(tensor_storage);
+        c_data_vector.push_back(input_c_storage);
+        j_shape_vector.push_back(tensor_shape);
+        c_shape_vector.push_back(input_c_shape);
     }
-    // create a Tensor
-    auto torch_input_tensor = torch::from_blob(c_storage + joffset, torch_shape, at::kFloat);
-    if (isTraining) {
-        torch_input_tensor.set_requires_grad(true);
-    }
+    auto input_tuple = torch::jit::Tuple::create(input_vector);
 
-    // Create a vector of inputs.
-    std::vector<torch::jit::IValue> inputs;
-    inputs.push_back(torch_input_tensor);
-
+    // Execute the model
     std::shared_ptr<torch::jit::script::Module> model_ptr = modelHandles[nativeRef];
     assert(model_ptr != nullptr);
-
-    // Execute the model and turn its output into a tensor.
-    auto output = model_ptr->forward(inputs);
+    auto output = model_ptr->forward(input_vector);
 
     if (isTraining) {
         mtx.lock();
-        modelInputs[nativeRef] = torch_input_tensor;
+        modelInputs[nativeRef] = input_tuple;
         modelOutputs[nativeRef] = output;
         mtx.unlock();
     }
 
     // Release critical part
-    jenv -> ReleasePrimitiveArrayCritical(jstorage, c_storage, 0);
-    jenv -> ReleasePrimitiveArrayCritical(jshape, c_shape, 0);
+    for (int i = 0; i < input_size; i++) {
+        jenv -> ReleasePrimitiveArrayCritical(j_data_vector[i], c_data_vector[i], 0);
+        jenv -> ReleasePrimitiveArrayCritical(j_shape_vector[i], c_shape_vector[i], 0);
+    }
 
-    int resultSize = 1;
     jclass jtensor_class = jenv -> FindClass("com/intel/analytics/zoo/pipeline/inference/JTensor");
 
+    // TODO release output after conversion?
     if(output.isTuple()) {
-        resultSize = output.toTuple()-> elements().size();
-        jobjectArray jTensorArray = jenv->NewObjectArray(resultSize, jtensor_class, NULL);
+        int resultSize = output.toTuple() -> elements().size();
+        jobjectArray jTensorArray = jenv -> NewObjectArray(resultSize, jtensor_class, NULL);
         auto outputTuple = output.toTuple();
         for (size_t i = 0; i < resultSize; i++) {
             auto t = outputTuple -> elements()[i].toTensor();
             jobject jt = torch2JTensor(jenv, t);
-            jenv->SetObjectArrayElement(jTensorArray, i, jt);
+            jenv -> SetObjectArrayElement(jTensorArray, i, jt);
         }
         return jTensorArray;
     } else {
-        jobjectArray jTensorArray = jenv->NewObjectArray(resultSize, jtensor_class, NULL);
+        int resultSize = 1;
+        jobjectArray jTensorArray = jenv -> NewObjectArray(resultSize, jtensor_class, NULL);
         auto t = output.toTensor();
         jobject jt = torch2JTensor(jenv, t);
-        jenv->SetObjectArrayElement(jTensorArray, 0, jt);
+        jenv -> SetObjectArrayElement(jTensorArray, 0, jt);
         return jTensorArray;
     }
-
   }
 
 
@@ -268,99 +279,195 @@ JNIEXPORT void JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchMode
     mtx.unlock();
   }
 
-JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_modelBackwardNative
-  (JNIEnv * jenv, jclass jobj, jlong nativeRef, jfloatArray jstorage, jint joffset, jintArray jshape) {
+JNIEXPORT jobjectArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_modelBackwardNative
+  (JNIEnv * jenv, jclass jobj, jlong nativeRef, jobjectArray input_jstorage, jintArray input_joffset, jobjectArray input_jshape) {
 
-    // to Torch Tensor
-    jfloat* c_storage = (jfloat*) jenv -> GetPrimitiveArrayCritical(jstorage, JNI_FALSE);
-    jint* c_shape = (jint*) jenv -> GetPrimitiveArrayCritical(jshape, JNI_FALSE);
-    int c_shape_len = jenv -> GetArrayLength(jshape);
+    std::vector<jfloatArray> j_data_vector;
+    std::vector<jfloat*> c_data_vector;
+    std::vector<jintArray> j_shape_vector;
+    std::vector<jint*> c_shape_vector;
 
-    //Generate pytorch shape
-    std::vector<int64_t> torch_shape;
-    int i = 0;
-    while(i < c_shape_len) {
-        torch_shape.push_back(*(c_shape + i));
-        i++;
+    // create gradOutput tuple
+    int input_size = jenv -> GetArrayLength(input_jstorage);
+    jint* c_input_offsets = (jint*) jenv -> GetPrimitiveArrayCritical(input_joffset, JNI_FALSE);
+    std::vector<c10::IValue> input_tuple;
+
+    for (int i = 0; i < input_size; i++) {
+        jfloatArray tensor_storage = (jfloatArray)jenv->GetObjectArrayElement(input_jstorage, i);
+        jfloat* input_c_storage = (jfloat*) jenv -> GetPrimitiveArrayCritical(tensor_storage, JNI_FALSE);
+
+        jintArray tensor_shape = (jintArray)jenv->GetObjectArrayElement(input_jshape, i);
+        jint* input_c_shape = (jint*) jenv -> GetPrimitiveArrayCritical(tensor_shape, JNI_FALSE);
+        int c_dim_count = jenv -> GetArrayLength(tensor_shape);
+
+        std::vector<int64_t> input_torch_shape;
+        for (int i = 0; i < c_dim_count; i++) {
+            input_torch_shape.push_back(*(input_c_shape + i));
+        }
+
+        auto input_tensor = torch::from_blob(input_c_storage + c_input_offsets[i], input_torch_shape, at::kFloat);
+        input_tensor.set_requires_grad(true);
+
+        input_tuple.push_back(input_tensor);
+
+        j_data_vector.push_back(tensor_storage);
+        c_data_vector.push_back(input_c_storage);
+        j_shape_vector.push_back(tensor_shape);
+        c_shape_vector.push_back(input_c_shape);
     }
-    // create gradOutput Tensor
-    auto gradOutput_tensor = torch::from_blob(c_storage + joffset, torch_shape, at::kFloat);
+    auto gradOutput_table = torch::jit::Tuple::create(input_tuple);
 
-    at::Tensor y = modelOutputs[nativeRef].toTensor();
-    y.backward(gradOutput_tensor);
-
-    auto gradInput = modelInputs[nativeRef].grad();
+    auto y = modelOutputs[nativeRef];
+    if (y.isTuple()) {
+        auto yTuple = y.toTuple();
+        assert (input_size == yTuple -> elements().size());
+        for (int i = 0; i < input_size; i++) {
+            auto gradTensor = gradOutput_table -> elements()[i].toTensor();
+            auto outputTensor = yTuple -> elements()[i].toTensor();
+            outputTensor.backward(gradTensor);
+        }
+    } else {
+        y.toTensor().backward(gradOutput_table -> elements()[0].toTensor());
+    }
 
     // Release critical part
-    jenv -> ReleasePrimitiveArrayCritical(jstorage, c_storage, 0);
-    jenv -> ReleasePrimitiveArrayCritical(jshape, c_shape, 0);
+    for (int i = 0; i < input_size; i++) {
+        jenv -> ReleasePrimitiveArrayCritical(j_data_vector[i], c_data_vector[i], 0);
+        jenv -> ReleasePrimitiveArrayCritical(j_shape_vector[i], c_shape_vector[i], 0);
+    }
 
-    jobject result = torch2JTensor(jenv, gradInput);
-    return result;
+    auto modelInput = modelInputs[nativeRef].toTuple();
+    int resultSize = modelInput -> elements().size();
+    jclass jtensor_class = jenv -> FindClass("com/intel/analytics/zoo/pipeline/inference/JTensor");
+    jobjectArray jTensorArray = jenv -> NewObjectArray(resultSize, jtensor_class, NULL);
+    for (size_t i = 0; i < resultSize; i++) {
+        auto t = modelInput -> elements()[i].toTensor().grad();
+        jobject jt = torch2JTensor(jenv, t);
+        jenv -> SetObjectArrayElement(jTensorArray, i, jt);
+    }
+    return jTensorArray;
   }
 
 
 JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_lossForwardNative
-  (JNIEnv * jenv, jclass jobj, jlong nativeRef, jfloatArray input_jstorage, jint input_joffset, jintArray input_jshape, jfloatArray label_jstorage, jint label_joffset, jintArray label_jshape) {
+  (JNIEnv * jenv, jclass jobj, jlong nativeRef, jobjectArray input_jstorage, jintArray input_joffset, jobjectArray input_jshape, jobjectArray label_jstorage, jintArray label_joffset, jobjectArray label_jshape) {
 
-    // create input Tensor
-    jfloat* input_c_storage = (jfloat*) jenv -> GetPrimitiveArrayCritical(input_jstorage, JNI_FALSE);
-    jint* input_c_shape = (jint*) jenv -> GetPrimitiveArrayCritical(input_jshape, JNI_FALSE);
-    int input_c_shape_len = jenv -> GetArrayLength(input_jshape);
+    std::vector<jfloatArray> j_data_vector;
+    std::vector<jfloat*> c_data_vector;
+    std::vector<jintArray> j_shape_vector;
+    std::vector<jint*> c_shape_vector;
 
-    std::vector<int64_t> input_torch_shape;
-    int i = 0;
-    while(i < input_c_shape_len) {
-        input_torch_shape.push_back(*(input_c_shape + i));
-        i++;
+    // create input tuple
+    int input_size = jenv -> GetArrayLength(input_jstorage);
+    jint* c_input_offsets = (jint*) jenv -> GetPrimitiveArrayCritical(input_joffset, JNI_FALSE);
+    std::vector<c10::IValue> input_tuple;
+
+    for (int i = 0; i < input_size; i++) {
+        jfloatArray tensor_storage = (jfloatArray)jenv->GetObjectArrayElement(input_jstorage, i);
+        jfloat* input_c_storage = (jfloat*) jenv -> GetPrimitiveArrayCritical(tensor_storage, JNI_FALSE);
+
+        jintArray tensor_shape = (jintArray)jenv->GetObjectArrayElement(input_jshape, i);
+        jint* input_c_shape = (jint*) jenv -> GetPrimitiveArrayCritical(tensor_shape, JNI_FALSE);
+        int c_dim_count = jenv -> GetArrayLength(tensor_shape);
+
+        std::vector<int64_t> input_torch_shape;
+        for (int i = 0; i < c_dim_count; i++) {
+            input_torch_shape.push_back(*(input_c_shape + i));
+        }
+
+        auto input_tensor = torch::from_blob(input_c_storage + c_input_offsets[i], input_torch_shape, at::kFloat);
+        input_tensor.set_requires_grad(true);
+
+        input_tuple.push_back(input_tensor);
+
+        j_data_vector.push_back(tensor_storage);
+        c_data_vector.push_back(input_c_storage);
+        j_shape_vector.push_back(tensor_shape);
+        c_shape_vector.push_back(input_c_shape);
     }
+    auto input_table = torch::jit::Tuple::create(input_tuple);
 
-    auto input_tensor = torch::from_blob(input_c_storage + input_joffset, input_torch_shape, at::kFloat);
-    input_tensor.set_requires_grad(true);
+    // create label tuple
+    int label_size = jenv -> GetArrayLength(label_jstorage);
+    jint* c_label_offsets = (jint*) jenv -> GetPrimitiveArrayCritical(label_joffset, JNI_FALSE);
+    std::vector<c10::IValue> label_tuple;
+    for (int i = 0; i < label_size; i++) {
+        jfloatArray tensor_storage = (jfloatArray)jenv->GetObjectArrayElement(label_jstorage, i);
+        jfloat* label_c_storage = (jfloat*) jenv -> GetPrimitiveArrayCritical(tensor_storage, JNI_FALSE);
 
-    // create label Tensor
-    jfloat* label_c_storage = (jfloat*) jenv -> GetPrimitiveArrayCritical(label_jstorage, JNI_FALSE);
-    jint* label_c_shape = (jint*) jenv -> GetPrimitiveArrayCritical(label_jshape, JNI_FALSE);
-    int label_c_shape_len = jenv -> GetArrayLength(label_jshape);
+        jintArray tensor_shape = (jintArray)jenv->GetObjectArrayElement(label_jshape, i);
+        jint* label_c_shape = (jint*) jenv -> GetPrimitiveArrayCritical(tensor_shape, JNI_FALSE);
+        int c_dim_count = jenv -> GetArrayLength(tensor_shape);
 
-    std::vector<int64_t> label_torch_shape;
-    i = 0;
-    while(i < label_c_shape_len) {
-        label_torch_shape.push_back(*(label_c_shape + i));
-        i++;
+        std::vector<int64_t> label_torch_shape;
+        for (int i = 0; i < c_dim_count; i++) {
+            label_torch_shape.push_back(*(label_c_shape + i));
+        }
+
+        auto label_tensor = torch::from_blob(label_c_storage + c_label_offsets[i], label_torch_shape, at::kFloat);
+        label_tuple.push_back(label_tensor);
+
+        j_data_vector.push_back(tensor_storage);
+        c_data_vector.push_back(label_c_storage);
+        j_shape_vector.push_back(tensor_shape);
+        c_shape_vector.push_back(label_c_shape);
     }
-    auto label_tensor = torch::from_blob(label_c_storage + label_joffset, label_torch_shape, at::kFloat);
+    auto label_table = torch::jit::Tuple::create(label_tuple);
 
     // Create a vector of inputs.
     std::vector<torch::jit::IValue> lossInputs;
-    lossInputs.push_back(input_tensor);
-    lossInputs.push_back(label_tensor);
+    if (input_table -> elements().size() == 1) {
+        lossInputs.push_back(input_table -> elements()[0]);
+    } else {
+        lossInputs.push_back(input_table);
+    }
+
+    if (label_table -> elements().size() == 1) {
+        lossInputs.push_back(label_table -> elements()[0]);
+    } else {
+        lossInputs.push_back(label_table);
+    }
 
     std::shared_ptr<torch::jit::script::Module> loss_ptr = lossHandles[nativeRef];
     assert(loss_ptr != nullptr);
     at::Tensor loss = loss_ptr->forward(lossInputs).toTensor();
     loss.backward();
 
+    std::vector<torch::jit::IValue> grad_tuple;
+    for(auto const& value: input_tuple) {
+        grad_tuple.push_back(value.toTensor().grad());
+    }
+    auto grad_table = torch::jit::Tuple::create(grad_tuple);
+
     mtx.lock();
-    lossGrads[nativeRef] = input_tensor.grad();
+    lossGrads[nativeRef] = grad_table;
     mtx.unlock();
 
     // Release critical part
-    jenv -> ReleasePrimitiveArrayCritical(input_jstorage, input_c_storage, 0);
-    jenv -> ReleasePrimitiveArrayCritical(input_jshape, input_c_shape, 0);
-    jenv -> ReleasePrimitiveArrayCritical(label_jstorage, label_c_storage, 0);
-    jenv -> ReleasePrimitiveArrayCritical(label_jshape, label_c_shape, 0);
+    for (int i = 0; i < input_size + label_size; i++) {
+        jenv -> ReleasePrimitiveArrayCritical(j_data_vector[i], c_data_vector[i], 0);
+        jenv -> ReleasePrimitiveArrayCritical(j_shape_vector[i], c_shape_vector[i], 0);
+    }
 
     jobject result = torch2JTensor(jenv, loss);
     return result;
   }
 
-JNIEXPORT jobject JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_lossBackwardNative
+JNIEXPORT jobjectArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_lossBackwardNative
   (JNIEnv * jenv, jclass jobj, jlong nativeRef) {
     auto grad = lossGrads[nativeRef];
 
-    jobject result = torch2JTensor(jenv, grad);
-    return result;
+    int resultSize = grad.toTuple() -> elements().size();
+    jclass jtensor_class = jenv -> FindClass("com/intel/analytics/zoo/pipeline/inference/JTensor");
+
+    jobjectArray jTensorArray = jenv -> NewObjectArray(resultSize, jtensor_class, NULL);
+    auto outputTuple = grad.toTuple();
+    for (size_t i = 0; i < resultSize; i++) {
+        auto t = outputTuple -> elements()[i].toTensor();
+        jobject jt = torch2JTensor(jenv, t);
+        jenv -> SetObjectArrayElement(jTensorArray, i, jt);
+    }
+    return jTensorArray;
   }
 
 

@@ -45,7 +45,6 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
 
   var weights: Tensor[Float] = _
   var gradients: Tensor[Float] = _
-  gradInput = Tensor()
 
   /**
    * sequential id in cpp: std::vector<std::shared_ptr<torch::jit::script::Module>> handles;
@@ -75,21 +74,15 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
   }
 
   override def updateOutput(input: Activity): Activity = {
-    if (!input.isTensor) {
-      val msg = "Table input is not supported by TorchNet for now."
-      throw new UnsupportedOperationException(msg)
-    }
+    val inputTable = if (input.isTensor) T(input.toTensor) else input.toTable
 
-    val inputTensor = input.toTensor
+    val (sto1, off1, shape1) = TorchCriterion.extract(inputTable)
+
     if (this.isTraining()) {
       PytorchModel.updateWeightNative(this.nativeRef, weights.storage().array())
     }
 
-    require(inputTensor.isContiguous())
-    val data = inputTensor.storage().array()
-    val size = inputTensor.size()
-    val offset = inputTensor.storageOffset() - 1
-    val result = PytorchModel.modelForwardNative(nativeRef, this.isTraining(), data, offset, size)
+    val result = PytorchModel.modelForwardNative(nativeRef, this.isTraining(), sto1, off1, shape1)
     if (result.length == 1) {
       val resultTensor = Tensor(result(0).getData, result(0).getShape)
       if (output == null) {
@@ -108,22 +101,31 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
   }
 
   override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
-    if (!gradOutput.isTensor) {
-      val msg = "Table input is not supported by TorchNet for now."
-      throw new UnsupportedOperationException(msg)
-    }
+    val gradOutputTabel = if (gradOutput.isTensor) T(gradOutput.toTensor) else gradOutput.toTable
 
-    val gradOutputTensor = gradOutput.toTensor
-    val data = gradOutputTensor.storage().array()
-    val size = gradOutputTensor.size()
-    val offset = gradOutputTensor.storageOffset() - 1
-    val result = PytorchModel.modelBackwardNative(nativeRef, data, offset, size)
-    val resultTensor = Tensor(result.getData, result.getShape)
+    val (sto1, off1, shape1) = TorchCriterion.extract(gradOutputTabel)
 
+    val result = PytorchModel.modelBackwardNative(nativeRef, sto1, off1, shape1)
+    // update gradients
     gradients.resizeAs(weights)
     val g = PytorchModel.getGradientNative(this.nativeRef)
     System.arraycopy(g, 0, gradients.storage().array(), 0, g.length)
-    gradInput.toTensor.set(resultTensor)
+
+    // update gradinput
+    if (result.length == 1) {
+      val resultTensor = Tensor(result(0).getData, result(0).getShape)
+      if (gradInput == null) {
+        gradInput = Tensor()
+      }
+      gradInput.toTensor.set(resultTensor)
+    } else {
+      if (gradInput == null) {
+        gradInput = T()
+      }
+      result.foreach { t =>
+        gradInput.toTable.insert(Tensor(t.getData, t.getShape))
+      }
+    }
     gradInput
   }
 
@@ -217,7 +219,6 @@ object TorchNet {
       file.delete()
     }
   }
-
 
   private[net] def loadPytorchModel(bytes: Array[Byte]): Long = {
     var nativeRef = -1L
