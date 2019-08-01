@@ -71,8 +71,8 @@ class TorchCriterion(Criterion):
         if not label_shape:
             label_shape = input_shape
 
-        sample_input = sample_input if sample_input else torch.rand(input_shape)
-        sample_label = sample_label if sample_label else torch.rand(label_shape)
+        sample_input = TorchNet.get_sample_input(input_shape, sample_input)
+        sample_label = TorchNet.get_sample_input(label_shape, sample_label)
 
         traced_script_loss = torch.jit.trace(LossWrapperModule(loss),
                                              (sample_input, sample_label))

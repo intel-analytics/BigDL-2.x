@@ -283,6 +283,37 @@ class TestTF(ZooTestCase):
         assert np.allclose(torch_loss.tolist(), az_loss_output)
         assert np.allclose(torch_grad, az_grad.tolist())
 
+    def test_torchnet_constructor(self):
+        class TwoInputModel(nn.Module):
+            def __init__(self):
+                super(TwoInputModel, self).__init__()
+                self.dense1 = nn.Linear(2, 2)
+                self.dense2 = nn.Linear(3, 1)
+
+            def forward(self, x1, x2):
+                x1 = self.dense1(x1)
+                x2 = self.dense2(x2)
+                return x1, x2
+
+        az_net = TorchNet.from_pytorch(
+            TwoInputModel(), sample_input=(torch.ones(2, 2), torch.ones(2, 3)))
+        az_net = TorchNet.from_pytorch(TwoInputModel(), ([2, 2], [2, 3]))
+
+    def test_torchcriterion_constructor(self):
+        criterion = nn.MSELoss()
+        
+        def lossFunc(input, label):
+            loss1 = criterion(input[0], label[0])
+            loss2 = criterion(input[1], label[1])
+            loss = loss1 + 0.4 * loss2
+            return loss
+
+        az_criterion = TorchCriterion.from_pytorch(
+            lossFunc,
+            sample_input=(torch.ones(2, 2), torch.ones(2, 3)),
+            sample_label=(torch.ones(2, 2), torch.ones(2, 3)))
+        az_criterion = TorchCriterion.from_pytorch(lossFunc, ([2, 2], [2, 3]), ([2, 2], [2, 3]))
+
     def test_model_train_with_multiple_input(self):
         class TwoInputModel(nn.Module):
             def __init__(self):
