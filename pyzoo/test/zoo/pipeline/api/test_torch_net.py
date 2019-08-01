@@ -38,25 +38,6 @@ class TestTF(ZooTestCase):
                                [-0.03913354128599167, 0.11446280777454376, -1.7967549562454224,
                                 -1.2342952489852905, -0.819004476070404]))
 
-    def test_model_inference_with_multiple_output(self):
-        class TwoOutputModel(nn.Module):
-            def __init__(self):
-                super(TwoOutputModel, self).__init__()
-                self.dense1 = nn.Linear(2, 1)
-
-            def forward(self, x):
-                x1 = self.dense1(x)
-                return x, x1
-
-        torch_model = TwoOutputModel()
-        az_net = TorchNet.from_pytorch(TwoOutputModel(), [1, 2])
-
-        az_input = np.array([[0.5, 1.], [-0.3, 1.2]])
-        az_output = az_net.forward(az_input)
-        assert (len(az_output) == 2)
-        assert (az_output[0].shape == (2, 2))
-        assert (az_output[1].shape == (2, 1))
-
     def test_linear_gradient_match(self):
         input = [[0.5, 1.], [-0.3, 1.2]]
         label = [[0.6], [-0.9]]
