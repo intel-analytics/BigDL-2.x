@@ -93,6 +93,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
       if (output == null) {
         output = T()
       }
+      output.toTable.clear()
       result.foreach { t =>
         output.toTable.insert(Tensor(t.getData, t.getShape))
       }
@@ -101,9 +102,9 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
   }
 
   override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
-    val gradOutputTabel = if (gradOutput.isTensor) T(gradOutput.toTensor) else gradOutput.toTable
+    val gradOutputTable = if (gradOutput.isTensor) T(gradOutput.toTensor) else gradOutput.toTable
 
-    val (sto1, off1, shape1) = TorchCriterion.extract(gradOutputTabel)
+    val (sto1, off1, shape1) = TorchCriterion.extract(gradOutputTable)
 
     val result = PytorchModel.modelBackwardNative(nativeRef, sto1, off1, shape1)
     // update gradients
@@ -122,6 +123,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
       if (gradInput == null) {
         gradInput = T()
       }
+      gradInput.toTable.clear()
       result.foreach { t =>
         gradInput.toTable.insert(Tensor(t.getData, t.getShape))
       }

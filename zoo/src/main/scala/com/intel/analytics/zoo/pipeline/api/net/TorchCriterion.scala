@@ -69,6 +69,7 @@ class TorchCriterion private(private val lossHolder: TorchModelHolder)
       if (gradInput == null) {
         gradInput = T()
       }
+      gradInput.toTable.clear()
       result.foreach { t =>
         gradInput.toTable.insert(Tensor(t.getData, t.getShape))
       }

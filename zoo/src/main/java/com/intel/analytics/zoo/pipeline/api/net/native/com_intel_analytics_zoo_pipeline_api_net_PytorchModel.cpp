@@ -217,7 +217,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_Pyt
         }
 
         auto input_tensor = torch::from_blob(input_c_storage + c_input_offsets[i], input_torch_shape, at::kFloat);
-        input_tensor.set_requires_grad(true);
+        if (isTraining) {
+            input_tensor.set_requires_grad(true);
+        }
 
         input_vector.push_back(input_tensor);
 
@@ -306,7 +308,6 @@ JNIEXPORT jobjectArray JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_Pyt
         }
 
         auto input_tensor = torch::from_blob(input_c_storage + c_input_offsets[i], input_torch_shape, at::kFloat);
-        input_tensor.set_requires_grad(true);
 
         input_tuple.push_back(input_tensor);
 
