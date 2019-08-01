@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-
-
 import sys
 import os
 import argparse
@@ -10,8 +8,11 @@ import shutil
 import imghdr
 
 
-OBJECT_DETECTION  = ["fastrcnn", "rfcn" "fasterrcnn", "ssd", "maskrcnn", "yolo"]
-IMAGE_EXTENSIONS = []
+OBJECT_DETECTION = ["fastrcnn",
+                    "rfcn",
+                    "ssd",
+                    "maskrcnn",
+                    "yolo"]
 
 
 def get_calibration_tool_path():
@@ -33,6 +34,9 @@ def find_file(name, path):
 
 
 def get_model_type(model_path):
+    """
+    Get model type from model path
+    """
     regex = re.compile('[^a-zA-Z]')
     alpha_path = regex.sub('', model_path).lower()
     for od_model in OBJECT_DETECTION:
@@ -119,7 +123,7 @@ if __name__ == '__main__':
     if args.type is None:
         model_type = get_model_type(args.model)
     cmd_string = "%s -m %s -t %s" % (tool_path,
-                                           args.model, model_type)
+                                     args.model, model_type)
     # Handle validation dataset
     if model_type == "OD":
         # TODO
