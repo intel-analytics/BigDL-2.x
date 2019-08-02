@@ -33,16 +33,16 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implic
 
       // aggregate sparseG first in each node
       if (sparseG.length > 1) {
-        var res = sparseG.head
+        var aggregatedG = sparseG.head
         var i = 1
         while (i < sparseG.length) {
-          println("sparse g is: " + sparseG(i).toString)
-          res = SparseTensorUtils.addSparseTensor[U](res, sparseG(i))
+          aggregatedG = SparseTensorUtils.addSparseTensor[U](aggregatedG, sparseG(i))
           i += 1
         }
-        Iterator(res)
+        Iterator(aggregatedG)
       } else Iterator(sparseG.head)
     }).reduce(SparseTensorUtils.addSparseTensor[U](_, _))
+
     globalSparseG.foreach(x =>
       SparseTensorUtils.dotSparseTensorValueByConstant[U](x,
         ev.fromType(1.0 / state[Int]("numFinishedModel"))))

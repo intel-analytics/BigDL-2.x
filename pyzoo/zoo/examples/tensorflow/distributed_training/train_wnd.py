@@ -25,6 +25,31 @@ from zoo.examples.tensorflow.distributed_training.wnd import WideAndDeep
 # sys.stderr = Unbuffered(sys.stderr)
 
 
+# import tensorflow as tf
+# import numpy as np
+#
+# example = tf.SparseTensor(indices=[[0], [1], [2]], values=[3, 6, 9], dense_shape=[3])
+# vocabulary_size = 10
+# embedding_size = 3
+# # var = np.array([0.0, 1.0, 4.0, 9.0, 16.0, 25.0, 36.0, 49.0, 64.0, 81.0])
+# var = np.random.random_sample((vocabulary_size, embedding_size))
+# embeddings = tf.Variable(var)
+#
+# embed = tf.nn.embedding_lookup_sparse(embeddings, example, None)
+# prob = tf.nn.sigmoid(embed)
+# loss = tf.reduce_sum(-tf.log(prob+1e-12))
+# optimizer = tf.train.FtrlOptimizer(0.01, l1_regularization_strength = 0.01)
+# wide_grad_and_vars = optimizer.compute_gradients(loss, var_list=embeddings)
+# grad = tf.unsorted_segment_sum(wide_grad_and_vars[0][0].values, wide_grad_and_vars[0][0].indices,
+#                                wide_grad_and_vars[0][0].dense_shape[0])
+#
+# with tf.Session() as sess:
+#     sess.run(tf.initialize_all_variables())
+#     print(sess.run(wide_grad_and_vars))
+#     print(sess.run(grad))
+
+# t = 0
+
 def get_conf(hdfs_conf_path):
         file = tf.gfile.Open(hdfs_conf_path, 'r')
         field_name_list = []

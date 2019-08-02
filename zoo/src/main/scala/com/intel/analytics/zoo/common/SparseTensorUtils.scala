@@ -77,6 +77,32 @@ object SparseTensorUtils {
       sparseT._shape, sparseT._shape.length)
   }
 
+  def addDenseIndexedSlicesTensor[@specialized(Float, Double) T: ClassTag](tensor: Tensor[T],
+    tensor2: Tensor[T])(implicit ev: TensorNumeric[T]): Tensor[T] = {
+    require(tensor.isInstanceOf[DenseTensor[T]] && tensor2.isInstanceOf[IndexedSlicesTensor[T]])
+    val denseT = tensor.asInstanceOf[DenseTensor[T]]
+    require(denseT.dim() == 2,
+      "Only support addDenseIndexedSlicesTensor with 2 dimension dense tensor")
+    val dValues = denseT.storage().array()
+
+    val sliceTensor = tensor2.asInstanceOf[IndexedSlicesTensor[T]]
+    val indices = sliceTensor._indices
+    val values = sliceTensor._values
+
+    var i = 0
+    var j = 0
+    while (i < indices.length) {
+      while (j < denseT.size(2)) {
+        dValues(denseT.size(2) * indices(i) + j) = ev.plus(dValues(denseT.size(2) * indices(i) + j),
+          values(i)(j))
+        j += 1
+      }
+      i += 1
+      j = 0
+    }
+    tensor
+  }
+
   def addDenseSparseTensor[@specialized(Float, Double) T: ClassTag](tensor: Tensor[T],
     tensor2: Tensor[T])(implicit ev: TensorNumeric[T]): Tensor[T] = {
     require(tensor.isInstanceOf[DenseTensor[T]] && tensor2.isInstanceOf[SparseTensor[T]])
@@ -103,7 +129,13 @@ object SparseTensorUtils {
     var i = 0
     val res = ArrayBuffer[Tensor[T]]()
     while (i < tensor.length) {
-      res += addSparseTensor(tensor(i), tensor2(i))
+      if (tensor(i).isInstanceOf[SparseTensor[T]]) {
+        res += addSparseTensor(tensor(i), tensor2(i))
+      } else if (tensor(i).isInstanceOf[IndexedSlicesTensor[T]]) {
+        res += tensor(i).add(tensor2(i))
+      } else {
+        throw new UnsupportedOperationException("addSparseTensor only support add sparse tensor")
+      }
       i += 1
     }
     res.toArray
@@ -137,13 +169,18 @@ object SparseTensorUtils {
 
   def dotSparseTensorValueByConstant[@specialized(Float, Double) T: ClassTag](tensor: Tensor[T],
     constant: T)(implicit ev: TensorNumeric[T]): Unit = {
-    val sparseT = tensor.asInstanceOf[SparseTensor[T]]
-    val values = sparseT._values.array()
-    var i = 0
-    while (i < values.length) {
-      values(i) = (ev.times(values(i), constant))
-      i += 1
-    }
+    if (tensor.isInstanceOf[SparseTensor[T]]) {
+      val sparseT = tensor.asInstanceOf[SparseTensor[T]]
+      val values = sparseT._values.array()
+      var i = 0
+      while (i < values.length) {
+        values(i) = (ev.times(values(i), constant))
+        i += 1
+      }
+    } else if (tensor.isInstanceOf[IndexedSlicesTensor[T]]) {
+      tensor.mul(constant)
+    } else throw new UnsupportedOperationException("dotSparseTensorValueByConstant" +
+      "only support sparse tensor")
   }
 
   def resizeAsSparseTensor[@specialized(Float, Double) T: ClassTag](tensor: Tensor[T])
@@ -151,6 +188,11 @@ object SparseTensorUtils {
     val sparseT = tensor.asInstanceOf[SparseTensor[T]]
 
     SparseTensor(sparseT._shape)
+  }
+
+  def resizeAsIndexedSlicesTensor[@specialized(Float, Double) T: ClassTag](tensor: Tensor[T])
+    (implicit ev: TensorNumeric[T]): Tensor[T] = {
+    IndexedSlicesTensor(Array[Int](), Array[Array[T]](), Array[Int]()).resizeAs(tensor)
   }
 
   def copySparseTensor[T](src: Tensor[T], dst: Tensor[T]): Unit = {
@@ -397,6 +439,9 @@ object SparseTensorUtils {
         val t = divSparseTensor(x, y)
         dotSparseTensorValueByConstant(t, value)
         addSparseTensor(a, t)
+      case (a: DenseTensor[T], x: IndexedSlicesTensor[T], y: IndexedSlicesTensor[T]) =>
+        val t = x.clone().div(y).mul(value)
+        addDenseIndexedSlicesTensor(a, t)
       case _ =>
         throw new IllegalArgumentException(s"addcdivSparseTensor doesn't support")
     }

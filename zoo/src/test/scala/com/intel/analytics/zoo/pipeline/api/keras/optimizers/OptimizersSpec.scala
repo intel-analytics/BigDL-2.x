@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.pipeline.api.keras.optimizers
 import com.intel.analytics.bigdl.nn.{BCECriterion, Linear, Sequential, Sigmoid}
 import com.intel.analytics.bigdl.optim.SGD._
 import com.intel.analytics.bigdl.optim.{Adagrad, SparseAdagrad}
-import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.{IndexedSlicesTensor, Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.{Engine, RandomGenerator, T}
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
@@ -133,6 +133,29 @@ class OptimizersSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     for (i <- 1 to 5) {
       sparseAdagrad.optimize(_ => (1f, sGrad), sParam)
+    }
+    require(param.almostEqual(sParam, 1e-8) == true)
+  }
+
+  "IndexedSlicesAdam" should "generate correct result" in {
+    RandomGenerator.RNG.setSeed(10)
+    val grad = Tensor[Float](Array[Float](0.0f, 0.0f, 0.0f, 1.0f, 4.5f, 3.0f,
+      10.0f, 4.0f, 3.0f, 0.0f, 0.0f, 0.0f, 2.0f, 4.4f, 7.8f, 0.0f, 0.0f, 0.0f), Array(6, 3))
+    val param = Tensor[Float](6, 3).rand()
+    val adam = new Adam[Float]()
+
+    val sparseAdam = new IndexedSlicesAdam[Float]()
+    val sGrad = IndexedSlicesTensor[Float](Array[Int](1, 2, 4),
+      Array(Array[Float](1.0f, 4.5f, 3.0f), Array[Float](10.0f, 4.0f, 3.0f),
+        Array[Float](2.0f, 4.4f, 7.8f)), Array[Int](6, 3))
+    val sParam = param.clone()
+
+    for (i <- 1 to 5) {
+      adam.optimize(_ => (1f, grad), param)
+    }
+
+    for (i <- 1 to 5) {
+      sparseAdam.optimize(_ => (1f, sGrad), sParam)
     }
     require(param.almostEqual(sParam, 1e-8) == true)
   }
