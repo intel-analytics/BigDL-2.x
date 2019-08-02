@@ -196,40 +196,40 @@ class SparseGradientsSpec extends FlatSpec with Matchers with BeforeAndAfter {
       Array(5.0f, 8.0f, 11.0f, 20.0f).deep)
   }
 
-  "Train with sudoSparseEmbedding and SGD" should "be trained with good result" in {
-    LoggerFilter.redirectSparkInfoLogs()
-    val layer = new sudoLookupTableSparse[Float]()
-
-    System.setProperty("bigdl.ModelBroadcastFactory",
-      "com.intel.analytics.bigdl.models.utils.ZooModelBroadcastFactory")
-
-//    val oriW = Tensor.sparse(Tensor[Float](6, 5).setValue(1, 3, 1.5f)
-//      .setValue(2, 2, 3.0f).setValue(4, 5, 2.0f).setValue(6, 1, 1.0f))
-    val oriW = Tensor[Float](Array(6, 5)).rand()
-    layer.setSparseParameters(Array(oriW.clone()), null)
-    val optimizer = new InternalDistriOptimizer[Float](layer.asInstanceOf[Module[Float]],
-      dataSet, new MSECriterion[Float]().asInstanceOf[Criterion[Float]])
-      .setState(T("learningRate" -> 20.0))
-      .setEndWhen(Trigger.maxIteration(1))
-    optimizer.setSparseParameterProcessor(new sudoSparseSGD[Float]())
-    optimizer.optimize()
-    val (sparseW, sparseG) = layer.sparseParameters()
-
-//    require(sparseW.asInstanceOf[SparseTensor[Float]]._indices.head.array().deep
-//      == Array(0, 1, 3, 5).deep)
-//    require(sparseW.asInstanceOf[SparseTensor[Float]]._indices.last.array().deep
-//      == Array(2, 1, 4, 0).deep)
-//    require(sparseW.asInstanceOf[SparseTensor[Float]]._values.array().deep
-//      == Array(2.5f, 4.0f, 3.0f, 2.0f).deep)
-
-    require(sparseW.head.almostEqual(oriW.add(1.0f), 1e-8))
-    require(sparseG.head.asInstanceOf[SparseTensor[Float]]._indices.head.array().deep
-      == Array(0, 0, 1, 2, 3, 4, 4, 5).deep)
-    require(sparseG.head.asInstanceOf[SparseTensor[Float]]._indices.last.array().deep
-      == Array(1, 2, 1, 3, 4, 0, 3, 0).deep)
-    require(sparseG.head.asInstanceOf[SparseTensor[Float]]._values.array().deep
-      == Array(4.0f, 12.0f, 32.0f, 12.0f, 16.0f, 8.0f, 8.0f, 8.0f).deep)
-  }
+//  "Train with sudoSparseEmbedding and SGD" should "be trained with good result" in {
+//    LoggerFilter.redirectSparkInfoLogs()
+//    val layer = new sudoLookupTableSparse[Float]()
+//
+//    System.setProperty("bigdl.ModelBroadcastFactory",
+//      "com.intel.analytics.bigdl.models.utils.ZooModelBroadcastFactory")
+//
+////    val oriW = Tensor.sparse(Tensor[Float](6, 5).setValue(1, 3, 1.5f)
+////      .setValue(2, 2, 3.0f).setValue(4, 5, 2.0f).setValue(6, 1, 1.0f))
+//    val oriW = Tensor[Float](Array(6, 5)).rand()
+//    layer.setSparseParameters(Array(oriW.clone()), null)
+//    val optimizer = new InternalDistriOptimizer[Float](layer.asInstanceOf[Module[Float]],
+//      dataSet, new MSECriterion[Float]().asInstanceOf[Criterion[Float]])
+//      .setState(T("learningRate" -> 20.0))
+//      .setEndWhen(Trigger.maxIteration(1))
+//    optimizer.setSparseParameterProcessor(new sudoSparseSGD[Float]())
+//    optimizer.optimize()
+//    val (sparseW, sparseG) = layer.sparseParameters()
+//
+////    require(sparseW.asInstanceOf[SparseTensor[Float]]._indices.head.array().deep
+////      == Array(0, 1, 3, 5).deep)
+////    require(sparseW.asInstanceOf[SparseTensor[Float]]._indices.last.array().deep
+////      == Array(2, 1, 4, 0).deep)
+////    require(sparseW.asInstanceOf[SparseTensor[Float]]._values.array().deep
+////      == Array(2.5f, 4.0f, 3.0f, 2.0f).deep)
+//
+//    require(sparseW.head.almostEqual(oriW.add(1.0f), 1e-8))
+//    require(sparseG.head.asInstanceOf[SparseTensor[Float]]._indices.head.array().deep
+//      == Array(0, 0, 1, 2, 3, 4, 4, 5).deep)
+//    require(sparseG.head.asInstanceOf[SparseTensor[Float]]._indices.last.array().deep
+//      == Array(1, 2, 1, 3, 4, 0, 3, 0).deep)
+//    require(sparseG.head.asInstanceOf[SparseTensor[Float]]._values.array().deep
+//      == Array(4.0f, 12.0f, 32.0f, 12.0f, 16.0f, 8.0f, 8.0f, 8.0f).deep)
+//  }
 
   "Train with multiple sparse layers" should "work" in {
     LoggerFilter.redirectSparkInfoLogs()
@@ -244,7 +244,5 @@ class SparseGradientsSpec extends FlatSpec with Matchers with BeforeAndAfter {
       .setEndWhen(Trigger.maxIteration(1))
     optimizer.setSparseParameterProcessor(new sudoSparseSGD[Float]())
     optimizer.optimize()
-
-    val t = 0
   }
 }
