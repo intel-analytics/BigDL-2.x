@@ -15,10 +15,16 @@
 #
 import torch
 import torch.nn as nn
+import sys
 import os
 import tempfile
 import shutil
 from bigdl.nn.criterion import Criterion
+from .torch_net import TorchNet
+
+if sys.version >= '3':
+    long = int
+    unicode = str
 
 
 class LossWrapperModule(nn.Module):

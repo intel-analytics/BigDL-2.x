@@ -18,6 +18,7 @@ import os
 import tempfile
 import shutil
 import numpy as np
+import sys
 
 from pyspark import RDD
 from bigdl.nn.layer import Layer
@@ -25,6 +26,10 @@ from zoo import getOrCreateSparkContext
 from zoo.feature.image import ImageSet
 from bigdl.util.common import callBigDlFunc
 from zoo.pipeline.api.net.tfnet import to_sample_rdd
+
+if sys.version >= '3':
+    long = int
+    unicode = str
 
 
 class TorchNet(Layer):
@@ -65,12 +70,12 @@ class TorchNet(Layer):
 
     @staticmethod
     def get_sample_input(shape, sample):
-        if sample_input:
-            return sample_input
-        elif isinstance(input_shape, list):
-            return torch.rand(input_shape)
-        elif isinstance(input_shape, tuple):
-            return tuple(map(lambda s: torch.rand(s), input_shape))
+        if sample:
+            return sample
+        elif isinstance(shape, list):
+            return torch.rand(shape)
+        elif isinstance(shape, tuple):
+            return tuple(map(lambda s: torch.rand(s), shape))
         else:
             raise Exception("please specify shape as list of ints or tuples of int lists")
 

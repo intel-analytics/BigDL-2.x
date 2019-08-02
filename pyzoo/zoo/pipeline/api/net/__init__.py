@@ -20,5 +20,3 @@ from .tf_dataset import TFDataset
 from .tf_optimizer import TFOptimizer
 from .tf_predictor import TFPredictor
 from .tfnet import TFNet
-from .torch_net import TorchNet
-from .torch_criterion import TorchCriterion
