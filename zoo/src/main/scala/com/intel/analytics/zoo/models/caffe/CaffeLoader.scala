@@ -340,14 +340,25 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
    */
   def searchAndMergeBnScale(curNode: ModuleNode[T]): Unit = {
     if (curNode.element.isInstanceOf[BatchNormalization[T]]
+      && curNode.nextNodes.size == 1
       && curNode.nextNodes.head.element.isInstanceOf[Scale[T]]) {
 
-      // start pointer operation here
-      // to copy the parameter from SCALE to BN
-      // delete node SCALE and fix the pointer
+      val oldBatchNorm = curNode.element.asInstanceOf[BatchNormalization[T]]
+      if (oldBatchNorm.affine) {
+        // already a merged BN layer, skip
+        // this is to avoid continuous scale layer after BN
+        return
+      }
 
-      val bnTable = curNode.element.getParametersTable()
+      val layerName = curNode.element.getParametersTable().keySet.head.toString
+      val batchNorm = SpatialBatchNormalization[T](
+        oldBatchNorm.nOutput, oldBatchNorm.eps, affine = true)
+        .setName(layerName)
+      val newNode = batchNorm.inputs()
+
+      val bnTable = newNode.element.getParametersTable()
       val scaleTable = curNode.nextNodes.head.element.getParametersTable()
+
       scaleTable.keySet.map(_.toString).foreach { layerName =>
 
         val bnLayerName = layerName.replace("scale", "bn")
@@ -360,21 +371,37 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
             scaleTable[Table](layerName)[Tensor[Float]](param)
           )
         }
-        val bb = curNode.element.getParametersTable()
-        None
+        // bnTable change does not equals to the valid change of params
+        // so uncomment the following line to check if the change is valid
+        // val bb = newNode.element.getParametersTable()
+      }
+      // start pointer operation here
+      // to copy the parameter from SCALE to BN
+      // delete node SCALE and fix the pointer
+      val prevNodes = curNode.prevNodes
+      for (prevNode <- prevNodes) {
+        prevNode.delete(curNode)
+        prevNode.add(newNode)
       }
 
       val scaleNode = curNode.nextNodes.head
-      val newNextNode = curNode.nextNodes.head.nextNodes.head
 
-      // note that all nodes connected to scale are to be deleted
-      curNode.delete(scaleNode)
-      scaleNode.delete(newNextNode)
+      for (newNextNode <- curNode.nextNodes.head.nextNodes) {
+        // get head of nextNode would not cause any side-effects
+        // because this merge is based on nextNode size is only 1
+        newNode.add(newNextNode)
+        scaleNode.delete(newNextNode)
 
-      curNode.add(newNextNode)
-
+      }
+      // graph has changed, curNode has been deleted, so search next of newNode
+      if (newNode.nextNodes.nonEmpty) {
+        for (nextNode <- newNode.nextNodes) {
+          searchAndMergeBnScale(nextNode)
+        }
+      }
     }
-    if (curNode.nextNodes.nonEmpty) {
+    else if (curNode.nextNodes.nonEmpty) {
+      // no newNode in this case, search next of curNode
       for (nextNode <- curNode.nextNodes) {
         searchAndMergeBnScale(nextNode)
       }
@@ -504,33 +531,9 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
 
           var nodes: Seq[Graph.ModuleNode[T]] = null
 
-          if (layerType == "BATCHNORM") {
-            val nextLayer = allLayers(idx + 1)
-            var nextName: String = null
-            nextLayer match {
-              case v2 : LayerParameter =>
-                nextName = v2.getName
-              case v1 : V1LayerParameter =>
-                nextName = v1.getName
-            }
-            val nextType = getLayerType(nextName).get.toUpperCase
 
-            if (nextType == "SCALE") {
-              //            layers.remove(layers.length - 1)
-              nodes = if (layer.isInstanceOf[LayerParameter]) {
-                layerConverter.convertBnFromCaffe(layer)
-              }
-              else {
-                v1layerConverter.convertBnFromCaffe(layer)
-              }
-            }
-            else {
-              nodes = convertCaffeLayer(layer)
-            }
-          }
-          else {
-            nodes = convertCaffeLayer(layer)
-          }
+          nodes = convertCaffeLayer(layer)
+
           if (nodes != null) {
             var curr = nodes.head
             bottomList.foreach(dependency => {
@@ -545,22 +548,8 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
             // this modification based on the assumption
             // that there must be a bn before scale
 
-            if (false) {
+            layers.append(curr)
 
-              val bnTable = layers.last.element.getParametersTable()
-              val scaleTable = curr.element.getParametersTable()
-              scaleTable.keySet.map(_.toString).foreach { layerName =>
-
-                val bnLayerName = layerName.replace("scale", "bn")
-
-                bnTable[Table](bnLayerName).add(scaleTable[Table](layerName))
-
-              }
-            }
-            else {
-              layers.append(curr)
-
-            }
             layersMap(name) = curr
             topList.foreach(output => {
               top2LayerMap(output) = name
