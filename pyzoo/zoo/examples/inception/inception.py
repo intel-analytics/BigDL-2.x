@@ -5,12 +5,12 @@ from datetime import datetime
 from zoo.common.nncontext import *
 from zoo.feature.image import *
 from zoo.pipeline.nnframes import *
+from zoo.pipeline.estimator import *
 from bigdl.optim.optimizer import *
 from bigdl.util.common import *
 from bigdl.nn.layer import *
 from bigdl.nn.criterion import *
-from bigdl.models import inception
-from zoo.pipeline.estimator import *
+from bigdl.nn.initialization_method import *
 
 
 def config_option_parser():
@@ -44,6 +44,104 @@ def config_option_parser():
 def get_inception_data(url, sc=None, data_type="train"):
     path = os.path.join(url, data_type)
     return SeqFileFolder.files_to_image_frame(url=path, sc=sc, class_num=1000)
+
+
+def t(input_t):
+    if type(input_t) is list:
+        # insert into index 0 spot, such that the real data starts from index 1
+        temp = [0]
+        temp.extend(input_t)
+        return dict(enumerate(temp))
+    # if dictionary, return it back
+    return input_t
+
+
+def inception_layer_v1(input_size, config, name_prefix=""):
+    concat = Concat(2)
+    conv1 = Sequential()
+    conv1.add(SpatialConvolution(input_size, config[1][1], 1, 1, 1, 1)
+              .set_init_method(weight_init_method=Xavier(),bias_init_method=ConstInitMethod(0.1))
+              .set_name(name_prefix + "1x1"))
+    conv1.add(ReLU(True).set_name(name_prefix + "relu_1x1"))
+    concat.add(conv1)
+    conv3 = Sequential()
+    conv3.add(SpatialConvolution(input_size, config[2][1], 1, 1, 1, 1)
+              .set_init_method(weight_init_method=Xavier(), bias_init_method=ConstInitMethod(0.1))
+              .set_name(name_prefix + "3x3_reduce"))
+    conv3.add(ReLU(True).set_name(name_prefix + "relu_3x3_reduce"))
+    conv3.add(SpatialConvolution(config[2][1], config[2][2], 3, 3, 1, 1, 1, 1)
+              .set_init_method(weight_init_method=Xavier(), bias_init_method=ConstInitMethod(0.1))
+              .set_name(name_prefix + "3x3"))
+    conv3.add(ReLU(True).set_name(name_prefix + "relu_3x3"))
+    concat.add(conv3)
+    conv5 = Sequential()
+    conv5.add(SpatialConvolution(input_size, config[3][1], 1, 1, 1, 1)
+              .set_init_method(weight_init_method=Xavier(), bias_init_method=ConstInitMethod(0.1))
+              .set_name(name_prefix + "5x5_reduce"))
+    conv5.add(ReLU(True).set_name(name_prefix + "relu_5x5_reduce"))
+    conv5.add(SpatialConvolution(config[3][1], config[3][2], 5, 5, 1, 1, 2, 2)
+              .set_init_method(weight_init_method=Xavier(), bias_init_method=ConstInitMethod(0.1))
+              .set_name(name_prefix + "5x5"))
+    conv5.add(ReLU(True).set_name(name_prefix + "relu_5x5"))
+    concat.add(conv5)
+    pool = Sequential()
+    pool.add(SpatialMaxPooling(3, 3, 1, 1, 1, 1, to_ceil=True).set_name(name_prefix + "pool"))
+    pool.add(SpatialConvolution(input_size, config[4][1], 1, 1, 1, 1)
+             .set_init_method(weight_init_method=Xavier(), bias_init_method=ConstInitMethod(0.1))
+             .set_name(name_prefix + "pool_proj"))
+    pool.add(ReLU(True).set_name(name_prefix + "relu_pool_proj"))
+    concat.add(pool).set_name(name_prefix + "output")
+    return concat
+
+
+def inception_v1_no_aux_classifier(class_num, has_dropout=True):
+    model = Sequential()
+    model.add(SpatialConvolution(3, 64, 7, 7, 2, 2, 3, 3, 1, False)
+              .set_init_method(weight_init_method=Xavier(), bias_init_method=ConstInitMethod(0.1))
+              .set_name("conv1/7x7_s2"))
+    model.add(ReLU(True).set_name("conv1/relu_7x7"))
+    model.add(SpatialMaxPooling(3, 3, 2, 2, to_ceil=True).set_name("pool1/3x3_s2"))
+    model.add(SpatialCrossMapLRN(5, 0.0001, 0.75).set_name("pool1/norm1"))
+    model.add(SpatialConvolution(64, 64, 1, 1, 1, 1)
+              .set_init_method(weight_init_method=Xavier(), bias_init_method=ConstInitMethod(0.1))
+              .set_name("conv2/3x3_reduce"))
+    model.add(ReLU(True).set_name("conv2/relu_3x3_reduce"))
+    model.add(SpatialConvolution(64, 192, 3, 3, 1, 1, 1, 1)
+              .set_init_method(weight_init_method=Xavier(), bias_init_method=ConstInitMethod(0.1))
+              .set_name("conv2/3x3"))
+    model.add(ReLU(True).set_name("conv2/relu_3x3"))
+    model.add(SpatialCrossMapLRN(5, 0.0001, 0.75).set_name("conv2/norm2"))
+    model.add(SpatialMaxPooling(3, 3, 2, 2, to_ceil=True).set_name("pool2/3x3_s2"))
+    model.add(inception_layer_v1(192, t([t([64]), t(
+        [96, 128]), t([16, 32]), t([32])]), "inception_3a/"))
+    model.add(inception_layer_v1(256, t([t([128]), t(
+        [128, 192]), t([32, 96]), t([64])]), "inception_3b/"))
+    model.add(SpatialMaxPooling(3, 3, 2, 2, to_ceil=True))
+    model.add(inception_layer_v1(480, t([t([192]), t(
+        [96, 208]), t([16, 48]), t([64])]), "inception_4a/"))
+    model.add(inception_layer_v1(512, t([t([160]), t(
+        [112, 224]), t([24, 64]), t([64])]), "inception_4b/"))
+    model.add(inception_layer_v1(512, t([t([128]), t(
+        [128, 256]), t([24, 64]), t([64])]), "inception_4c/"))
+    model.add(inception_layer_v1(512, t([t([112]), t(
+        [144, 288]), t([32, 64]), t([64])]), "inception_4d/"))
+    model.add(inception_layer_v1(528, t([t([256]), t(
+        [160, 320]), t([32, 128]), t([128])]), "inception_4e/"))
+    model.add(SpatialMaxPooling(3, 3, 2, 2, to_ceil=True))
+    model.add(inception_layer_v1(832, t([t([256]), t(
+        [160, 320]), t([32, 128]), t([128])]), "inception_5a/"))
+    model.add(inception_layer_v1(832, t([t([384]), t(
+        [192, 384]), t([48, 128]), t([128])]), "inception_5b/"))
+    model.add(SpatialAveragePooling(7, 7, 1, 1).set_name("pool5/7x7_s1"))
+    if has_dropout:
+        model.add(Dropout(0.4).set_name("pool5/drop_7x7_s1"))
+    model.add(View([1024], num_input_dims=3))
+    model.add(Linear(1024, class_num)
+              .set_init_method(weight_init_method=Xavier(), bias_init_method=Zeros())
+              .set_name("loss3/classifier"))
+    model.add(LogSoftMax().set_name("loss3/loss3"))
+    model.reset()
+    return model
 
 
 if __name__ == "__main__":
@@ -86,7 +184,7 @@ if __name__ == "__main__":
         # load model snapshot
         inception_model = Model.load(options.model)
     else:
-        inception_model = inception.inception_v1_no_aux_classifier(options.classNum)
+        inception_model = inception_v1_no_aux_classifier(options.classNum)
 
     # set optimization method
     iterationPerEpoch = int(ceil(float(1281167) / options.batchSize))
