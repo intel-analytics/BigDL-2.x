@@ -341,14 +341,12 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
   def searchAndMergeBnScale(curNode: ModuleNode[T]): Unit = {
     if (curNode.element.isInstanceOf[BatchNormalization[T]]
       && curNode.nextNodes.size == 1
-      && curNode.nextNodes.head.element.isInstanceOf[Scale[T]]) {
-
+      && curNode.nextNodes.head.element.isInstanceOf[Scale[T]]
+      && !curNode.element.asInstanceOf[BatchNormalization[T]].affine) {
+      // the last condition is to detect already merged BN layer
+      // if merged, then skip
+      // this is to avoid continuous scale layer after BN
       val oldBatchNorm = curNode.element.asInstanceOf[BatchNormalization[T]]
-      if (oldBatchNorm.affine) {
-        // already a merged BN layer, skip
-        // this is to avoid continuous scale layer after BN
-        return
-      }
 
       val layerName = curNode.element.getParametersTable().keySet.head.toString
       val batchNorm = SpatialBatchNormalization[T](
