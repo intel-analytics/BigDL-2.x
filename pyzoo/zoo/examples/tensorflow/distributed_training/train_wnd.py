@@ -252,9 +252,9 @@ if __name__ == '__main__':
     from bigdl.optim.optimizer import Adam
     optim_method = Adam(FLAGS.Adam_learning_rate)
 
-    from zoo.pipeline.api.keras.optimizers import SparseAdagrad
+    from zoo.pipeline.api.keras.optimizers import IndexedSlicesAdam
     # optimizer = TFOptimizer.from_loss(loss, optim_method, val_outputs=[model.score], val_labels=[model.label], val_method=AUC(), session_config=tf.ConfigProto(inter_op_parallelism_threads=1, intra_op_parallelism_threads=2))
     # optimizer = TFOptimizer.from_loss(loss, optim_method, val_outputs=[model.score], val_labels=[model.label], val_method=AUC())
     optimizer = TFOptimizer.from_loss(loss, optim_method, val_outputs=[model.score], val_labels=[model.label],
-                                      val_method=AUC(), sparse_optim_method=SparseAdagrad())
+                                      val_method=AUC(), sparse_optim_method=IndexedSlicesAdam())
     optimizer.optimize(end_trigger=MaxEpoch(FLAGS.epoch_num))

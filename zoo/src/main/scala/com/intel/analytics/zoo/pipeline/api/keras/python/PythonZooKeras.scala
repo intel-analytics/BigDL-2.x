@@ -39,7 +39,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.{KerasLayerWrapper, _}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.{InternalDistriOptimizer, KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.keras.objectives._
-import com.intel.analytics.zoo.pipeline.api.keras.optimizers.{Adam, AdamWeightDecay}
+import com.intel.analytics.zoo.pipeline.api.keras.optimizers.{Adam, AdamWeightDecay, IndexedSlicesAdam}
 import org.apache.spark.api.java.JavaRDD
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.text.TextSet
@@ -1390,5 +1390,16 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     }
 
     optimizer.asInstanceOf[Optimizer[T, MiniBatch[T]]]
+  }
+
+  def createZooKerasIndexedSlicesAdam(
+    lr: Double = 1e-3,
+    beta_1: Double = 0.9,
+    beta_2: Double = 0.999,
+    epsilon: Double = 1e-8,
+    decay: Double = 0.0,
+    schedule: SGD.LearningRateSchedule = SGD.Default()
+  ): IndexedSlicesAdam[T] = {
+    new IndexedSlicesAdam[T](lr, beta_1, beta_2, epsilon, decay, schedule)
   }
 }

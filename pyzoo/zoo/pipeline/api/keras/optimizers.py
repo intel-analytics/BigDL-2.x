@@ -131,6 +131,40 @@ class SparseAdagrad(OptimMethod, ZooKerasCreator):
             lr_decay)
         self.bigdl_type = bigdl_type
 
+
+class IndexedSlicesAdam(OptimMethod, ZooKerasCreator):
+    """
+    >>> adam = IndexedSlicesAdam()
+    creating: createZooKerasIndexedSlicesAdam
+    creating: createDefault
+    """
+    def __init__(self,
+                 lr=1e-3,
+                 beta_1=0.9,
+                 beta_2=0.999,
+                 epsilon=1e-8,
+                 decay=0.0,
+                 schedule=None,
+                 bigdl_type="float"):
+        """
+        :param lr learning rate
+        :param beta_1 first moment coefficient
+        :param beta_2 second moment coefficient
+        :param epsilon for numerical stability
+        :param decay learning rate decay
+        :param schedule learning rate schedule, e.g. Warmup or Poly from BigDL
+        """
+
+        self.value = callBigDlFunc(
+            bigdl_type, ZooKerasCreator.jvm_class_constructor(self),
+            lr,
+            beta_1,
+            beta_2,
+            epsilon,
+            decay,
+            schedule if (schedule) else Default())
+        self.bigdl_type = bigdl_type
+
 class ZooOptimizer(Optimizer):
     @staticmethod
     def create(model,
