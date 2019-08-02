@@ -261,45 +261,6 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
     Seq(ops)
   }
 
-  /**
-   * This method is for generating BatchNorm layer with weight and bias
-   * Since once the layer is created, the weight and bias could either
-   * be empty or non-empty, but this attribute could not be changed
-   * based on current behavior. Thus, to support BatchNorm with weight
-   * and bias, we need to create a layer with non-empty weight and bias
-   * @param layer protocol buffer of BatchNorm layer
-   * @return
-   */
-  protected def fromCaffeBnScale(layer: GeneratedMessage): Seq[ModuleNode[T]] = {
-    val weightBlob = getBlob(layer, 0)
-    sanityBlobCheck(layer, "weight", weightBlob)
-    val weight = weightBlob.get
-    val nOutPlane = if (weight.hasShape) weight.getShape.getDim(0).toInt
-    else weight.getNum
-    val param = layer.asInstanceOf[LayerParameter].getBatchNormParam
-    val eps = param.getEps
-    val batchNorm = SpatialBatchNormalization[T](nOutPlane.toInt, eps, affine = true)
-      .setName(getLayerName(layer))
-    val scalaBlob = getBlob(layer, 2)
-    sanityBlobCheck(layer, "scale", scalaBlob)
-    val scaleData = scalaBlob.get.getData(0)
-    val scale = if (scaleData == 0) 0 else 1 / scaleData
-    sanityBlobCheck(layer, "mean", getBlob(layer, 0))
-    val means = getBlob(layer, 0).get.getDataList
-    sanityBlobCheck(layer, "variance", getBlob(layer, 1))
-    val variances = getBlob(layer, 1).get.getDataList
-    batchNorm.runningMean.resize(nOutPlane)
-    batchNorm.runningVar.resize(nOutPlane)
-
-    batchNorm.saveMean.resize(nOutPlane)
-    batchNorm.saveStd.resize(nOutPlane)
-    (1 to nOutPlane).foreach(i => {
-      batchNorm.runningMean.setValue(i, ev.fromType[Float](means.get(i - 1) * scale))
-      batchNorm.runningVar.setValue(i, ev.fromType[Float](variances.get(i - 1) * scale))
-    })
-    Seq(batchNorm.inputs())
-  }
-
   protected def fromCaffeBatchNormalization(layer : GeneratedMessage) : Seq[ModuleNode[T]]
 
   protected def fromCaffeConvolution(layer : GeneratedMessage) : Seq[ModuleNode[T]]
@@ -733,7 +694,5 @@ abstract class Converter[T: ClassTag](implicit ev: TensorNumeric[T]) {
     caffe2BigDL("MEMORYDATA") = fromCaffeInput
     caffe2BigDL("ACCURACY") = null
     caffe2BigDL("SILENCE") = null
-
-    caffe2BigDL("BNSCALE") = fromCaffeBnScale
   }
 }
