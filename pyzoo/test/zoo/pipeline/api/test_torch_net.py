@@ -301,7 +301,7 @@ class TestTF(ZooTestCase):
 
     def test_torchcriterion_constructor(self):
         criterion = nn.MSELoss()
-        
+
         def lossFunc(input, label):
             loss1 = criterion(input[0], label[0])
             loss2 = criterion(input[1], label[1])
