@@ -322,7 +322,7 @@ class TestNNClassifer():
 
         criterion = MSECriterion()
         df = self.get_estimator_df()
-        estimator = NNEstimator(zmodel, criterion).setMaxEpoch(5) \
+        estimator = NNEstimator(zmodel, criterion, [[1],[1]]).setMaxEpoch(5) \
             .setBatchSize(4)
         nnmodel = estimator.fit(df)
         nnmodel.transform(df).collect()
