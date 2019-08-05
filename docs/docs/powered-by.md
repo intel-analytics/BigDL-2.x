@@ -34,12 +34,8 @@ Learning on Apache Spark and Analytics Zoo](https://www.dellemc.com/resources/en
  <br>[Running Analytics Zoo jobs on Telefónica Open Cloud’s MRS Service](https://medium.com/@fernando.delaiglesia/running-analytics-zoo-jobs-on-telef%C3%B3nica-open-clouds-mrs-service-2e64bc823c50)
 * __14. Tencent__
 <br>[Enhance Tencent's TUSI Identity Practice with Intel Analytics Zoo](https://mp.weixin.qq.com/s?__biz=MzAwNzc5NzM5Mw==&mid=2651030944&idx=1&sn=d6e06c6e14a7355971953a501689b232&chksm=808f8a5eb7f80348fc8e88c4c9e415341bf43ef6bdf3fd4f3001da89e2c9ba7fa2ed5deeb09a&mpshare=1&scene=1&srcid=0412WxM3eWdsLLoO2TYJGWbS&pass_ticket=E6l%2FfOZNKjhr05lsU7inAVCi7mAy5LFEehvEJOS2ZGdHg6%2FH%2BeBQisHA9sfXDOoy#rd)(Chinese Version)
-<br>[Data science service built on top of Analytics Zoo in Tencent Cloud Sparkling product](https://ai.oreilly.com.cn/ai-cn/public/schedule/detail/75442)
 * __15. World Bank__
-<br>[Deep Learning and Artificial Intelligence Help World Bank Team Create Image-Recognition Models for Crowdsourced Photos](https://itpeernetwork.intel.com/artificial-intelligence-world-bank-image-recognition/)
+<br>[Deep Learning and AI Help World Bank Team Create Image-Recognition Models for Crowdsourced Photos](https://itpeernetwork.intel.com/artificial-intelligence-world-bank-image-recognition/)
 <br>[Using Crowdsourced Images to Create Image Recognition Models with Analytics Zoo using BigDL](https://databricks.com/session/using-crowdsourced-images-to-create-image-recognition-models-with-bigdl)
 * __16. Yunda__
 <br>[Intelligent transformation brings "quality change" to the express delivery industry](https://www.intel.cn/content/www/cn/zh/analytics/artificial-intelligence/yunda-brings-quality-change-to-the-express-delivery-industry.html)(Chinese Version)
-
-
-
