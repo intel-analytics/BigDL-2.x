@@ -1,4 +1,3 @@
-## Powered By
 ---
 * __1. Alibaba__
   <br>[Deploy Analytics Zoo in Aliyun EMR](https://partners-intl.aliyun.com/help/doc-detail/93155.htm )
@@ -26,6 +25,7 @@ Learning on Apache Spark and Analytics Zoo](https://www.dellemc.com/resources/en
 <br>[Ability to add "eyes" and "brains" to smart manufacturing](https://www.intel.cn/content/www/cn/zh/analytics/artificial-intelligence/midea-case-study.html)(Chinese Version)
 <br>[Industrial Inspection Platform in Midea* and KUKA*: Using Distributed TensorFlow* on Analytics Zoo](https://software.intel.com/en-us/articles/industrial-inspection-platform-in-midea-and-kuka-using-distributed-tensorflow-on-analytics) 
 * __11. Office Depot__
+<br>[Real-time Product Recommendations for Office Depot* Using Apache Spark* and Analytics Zoo on AWS*](https://software.intel.com/en-us/articles/real-time-product-recommendations-for-office-depot-using-apache-spark-and-analytics-zoo-on)
 <br>[Office Depot product recommender using Analytics Zoo on AWS](https://conferences.oreilly.com/strata/strata-ca/public/schedule/detail/73079)
 * __12. Talroo__
 <br>[Uses Analytics Zoo and AWS* to Leverage Deep Learning for Job Recommendations](https://software.intel.com/en-us/articles/talroo-uses-analytics-zoo-and-aws-to-leverage-deep-learning-for-job-recommendations)
