@@ -29,6 +29,8 @@ from pyspark.sql.types import *
 from zoo.common.nncontext import *
 from zoo.pipeline.nnframes import *
 from zoo.pipeline.api.keras.optimizers import Adam as KAdam
+from zoo.pipeline.api.keras import layers as ZLayer
+from zoo.pipeline.api.keras.models import Model as ZModel
 from zoo.feature.common import *
 from zoo.feature.image import *
 from zoo.util.tf import *
@@ -310,6 +312,20 @@ class TestNNClassifer():
             except OSError as exc:
                 if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
                     raise  # re-raise exception
+
+    def test_NNEstimator_multi_input(self):
+        zx1 = ZLayer.Input(shape=(1, ))
+        zx2 = ZLayer.Input(shape=(1, ))
+        zz = ZLayer.merge([zx1, zx2], mode="concat")
+        zy = ZLayer.Dense(2)(zz)
+        zmodel = ZModel([zx1, zx2], zy)
+
+        criterion = MSECriterion()
+        df = self.get_estimator_df()
+        estimator = NNEstimator(zmodel, criterion).setMaxEpoch(5) \
+            .setBatchSize(4)
+        nnmodel = estimator.fit(df)
+        nnmodel.transform(df).collect()
 
     def test_NNModel_transform_with_nonDefault_featureCol(self):
         model = Sequential().add(Linear(2, 2))
