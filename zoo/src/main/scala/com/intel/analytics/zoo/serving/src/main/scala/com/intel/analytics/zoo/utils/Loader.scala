@@ -24,10 +24,12 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.utils.ModelConvertor
+import com.intel.analytics.zoo.pipeline.api.Net
 import scopt.OptionParser
 import org.apache.log4j.Logger
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.SparkSession
+
 
 import scala.reflect.ClassTag
 
@@ -81,6 +83,10 @@ class Loader {
   var batchSize: Int = 4
   var topN: Int = 1
 
+  var weightPath: String = null
+  var defPath: String = null
+//  var modelType: String = null
+
   def init(args: Array[String]) = {
     params = parser.parse(args, LoaderParams()).get
 
@@ -100,14 +106,16 @@ class Loader {
   def loadModel[T: ClassTag]()
     (implicit ev: TensorNumeric[T]) = {
 
-    val model = if (params.modelType == "caffe") {
-      val loadedModel = Module.loadCaffeModel[Float](params.defPath, params.weightPath)
-      ModelConvertor.convert[Float](
-        ModelConvertor.caffe2zoo(loadedModel), Boolean.box(false)).evaluate()
-    } else {
-      val loadedModel = Module.loadModule[Float](params.weightPath).quantize()
-      loadedModel.evaluate()
-    }
+//    val model = if (modelType == "caffe") {
+//      val loadedModel = Module.loadCaffeModel[Float](params.defPath, params.weightPath)
+//      ModelConvertor.convert[Float](
+//        ModelConvertor.caffe2zoo(loadedModel), Boolean.box(false)).evaluate()
+//    } else {
+//      val loadedModel = Module.loadModule[Float](params.weightPath).quantize()
+//      loadedModel.evaluate()
+//    }
+    val model = parseModelLocation(params.weightPath)
+
     val sc = NNContext.initNNContext()
     val bcModel = ModelBroadcast[Float]().broadcast(sc, model)
     val cachedModel = sc.range(1, 100, EngineRef.getNodeNumber())
@@ -123,6 +131,28 @@ class Loader {
       .config("spark.redis.host", redisHost)
       .config("spark.redis.port", redisPort)
       .getOrCreate()
+  }
+  def parseModelLocation(location: String):
+      AbstractModule[Activity, Activity, Float] = {
+
+    import java.io.File
+    val f = new File(location)
+    val fileList = f.listFiles
+    var modelType: String = null
+    var model: AbstractModule[Activity, Activity, Float] = null
+    for (file <- fileList) {
+      val fName = file.getName
+      val fPath = new File(location, fName).toString
+      if (fName.endsWith("caffemodel")) {
+        weightPath = fPath
+        modelType = "caffe"
+      }
+      else if (fName.endsWith("prototxt")) {
+        defPath = fPath
+      }
+
+    }
+    model
   }
 
 }
