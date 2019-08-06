@@ -24,7 +24,7 @@ from py4j.protocol import Py4JJavaError
 from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Layer
 from bigdl.util.common import to_list, JavaValue
-from bigdl.optim.optimizer import EveryEpoch, MaxEpoch
+from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, SeveralIteration
 from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric
 from zoo.pipeline.api.keras.optimizers import DistriOptimizer
 from zoo.pipeline.api.net.utils import _find_placeholders, _check_the_same
@@ -202,7 +202,7 @@ with variable_creator_scope():
                                               optim_method=self.optim_method)
             self.optimizer.set_validation(self.dataset.batch_size,
                                           val_rdd,
-                                          EveryEpoch(),
+                                          SeveralIteration(50),
                                           val_method)
         else:
             training_rdd = sample_rdd
