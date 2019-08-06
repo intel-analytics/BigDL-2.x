@@ -35,7 +35,7 @@ time3=$((now-start))
 
 echo "Start multiagent example"
 start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/rayexample/rllib/multiagent_two_trainers.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/rayexample/rllibexample/multiagent_two_trainers.py
 now=$(date "+%s")
 time4=$((now-start))
 
