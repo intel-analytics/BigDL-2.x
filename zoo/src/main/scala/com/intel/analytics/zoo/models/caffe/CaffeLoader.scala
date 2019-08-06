@@ -355,7 +355,9 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
       val newNode = batchNorm.inputs()
 
       val bnTable = newNode.element.getParametersTable()
+
       val oldBnTable = curNode.element.getParametersTable()
+
       val scaleTable = curNode.nextNodes.head.element.getParametersTable()
 
       scaleTable.keySet.map(_.toString).foreach { layerName =>
@@ -364,6 +366,7 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
 
         // do not add table here it would change pointer
         // bnTable[Table](bnLayerName).add(scaleTable[Table](layerName))
+
         oldBnTable[Table](bnLayerName).keySet.foreach{ param =>
           bnTable[Table](bnLayerName).apply[Tensor[Float]](param).copy(
             oldBnTable[Table](bnLayerName)[Tensor[Float]](param)
