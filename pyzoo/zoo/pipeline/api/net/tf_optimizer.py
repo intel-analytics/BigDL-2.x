@@ -246,11 +246,10 @@ with variable_creator_scope():
             if grad is not None:
                 from zoo.util.tf import grad_is_indexed_slices
                 if grad_is_indexed_slices(grad):
-                    # TODO: need to convert to a format that are acceptable by java api
-                    from zoo.util.tf import process_grad
-                    grad2 = process_grad(grad)
                     sparse_variables.append(var)
-                    sparse_grads.append(grad2)
+                    sparse_grads.append(grad.indices)
+                    sparse_grads.append(grad.values)
+                    sparse_grads.append(grad.dense_shape)
                 else:
                     variables.append(var)
                     grads.append(grad)

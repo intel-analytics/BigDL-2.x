@@ -22,7 +22,8 @@ import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, AbstractModule, Activity, SparseAbstractModule}
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.python.api.{PythonBigDLKeras, Sample => JSample}
-import com.intel.analytics.bigdl.tensor.{SparseTensorUtils, Storage, Tensor}
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.tensor.{IndexedSlicesTensor, SparseTensorUtils, Storage, Tensor}
 import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.feature.image.ImageProcessing
@@ -74,8 +75,9 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
     null
   }
 
-  sparseGradWeight = if (sparseVariables != null) sparseVariables.map(_ => Tensor[Float]())
-  else null
+  val sparseSplitGradWeight = if (sparseGradVariables != null) {
+    sparseVariables.map(_ => Array(Tensor[Int](), Tensor[Float], Tensor[Int]())).flatten
+  } else null
 
   private def setWeights(weights: Array[Tensor[Float]]) = {
     val sess = tfnet.sess
@@ -114,15 +116,10 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
   override def updateOutput(input: Activity): Activity = {
     val feeds = T()
     if (input.isTensor) {
-      println("input tensor shape is: " + input.toTensor[Float].size().mkString("_"))
-      println("input tensor is: " + input.toTensor[Float].toString)
       feeds.insert(input)
     } else {
       var i = 0
       while (i < input.toTable.length()) {
-        println("i is: " + i)
-        println("input shape is: " + input.toTable[Tensor[Float]](i + 1).size().mkString("_"))
-        println("input is: " + input.toTable[Tensor[Float]](i + 1).toString)
         feeds.insert(input.toTable(i + 1))
         i += 1
       }
@@ -162,21 +159,38 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
         grad.resizeAs(weights(idx)).add(fetches(idx))
       }
 
-      if (sparseGradWeight != null) {
-        println("fetch sparse gradients")
+      if (sparseSplitGradWeight != null) {
         var i = 0
-        while (i < sparseGradWeight.length) {
-          sparseGradWeight(i) = fetches(i + weights.length)
+        while (i < sparseSplitGradWeight.length) {
+          sparseSplitGradWeight(i) = fetches(i + weights.length)
           i += 1
+        }
+
+        // assemble sparseSplitGradWeight to sparseGradWeight(IndexedSlice Tensor)
+        sparseGradWeight = new Array[Tensor[Float]](sparseVariables.length)
+        i = 0
+        while (i < sparseVariables.length) {
+          import com.intel.analytics.bigdl.tensor.IndexedSlicesTensor
+          val indices = sparseSplitGradWeight(i).storage().array().map(_.asInstanceOf[Float].toInt)
+          var j = 0
+          val values = new Array[Array[Float]](indices.length)
+          while (j < indices.length) {
+            values(j) = sparseSplitGradWeight(i + 1).select(1, j + 1).storage().array()
+              .asInstanceOf[Array[Float]]
+            j += 1
+          }
+          val shape = sparseSplitGradWeight(i + 2).storage().array().map(_.asInstanceOf[Float].toInt)
+          val g = IndexedSlicesTensor(indices, values, shape)
+          sparseGradWeight(i) = g
+          i += 3
         }
       }
     }
 
-    val realOutputs = if (sparseGradWeight == null) {
-      println("Enter here")
+    val realOutputs = if (sparseSplitGradWeight == null) {
       fetches.slice(weights.length, fetches.length)
     }
-    else fetches.slice(weights.length + sparseGradWeight.length, fetches.length)
+    else fetches.slice(weights.length + sparseSplitGradWeight.length, fetches.length)
 
     output = if (realOutputs.length == 1) {
       realOutputs.head
