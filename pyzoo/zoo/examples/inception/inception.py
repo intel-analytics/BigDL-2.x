@@ -163,7 +163,7 @@ if __name__ == "__main__":
                                               ImageRandomCrop(image_size, image_size),
                                               ImageRandomPreprocessing(ImageHFlip(), 0.5),
                                               ImageChannelNormalize(123.0, 117.0, 104.0),
-                                              ImageMatToTensor(format="NHWC", to_RGB=True),
+                                              ImageMatToTensor(format="NCHW", to_RGB=False),
                                               ImageSetToSample(input_keys=["imageTensor"], target_keys=["label"])
                                               ])
     # train_transformer = Pipeline([PixelBytesToMat(),
@@ -181,7 +181,7 @@ if __name__ == "__main__":
                                             ImageRandomCrop(image_size, image_size),
                                             ImageRandomPreprocessing(ImageHFlip(), 0.5),
                                             ImageChannelNormalize(123.0, 117.0, 104.0),
-                                            ImageMatToTensor(format="NHWC", to_RGB=True),
+                                            ImageMatToTensor(format="NCHW", to_RGB=True),
                                             ImageSetToSample(input_keys=["imageTensor"], target_keys=["label"])
                                             ])
 
