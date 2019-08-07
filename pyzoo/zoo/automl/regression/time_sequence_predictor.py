@@ -246,21 +246,8 @@ class TimeSequencePredictor(object):
                          hdfs_url will be used.
         :return: self
         """
-        # check if cols are in the df
-        cols_list = [self.dt_col, self.target_col]
-        if self.extra_features_col is not None:
-            if not isinstance(self.extra_features_col, (list,)):
-                raise ValueError("extra_features_col needs to be either None or a list")
-            cols_list.extend(self.extra_features_col)
 
-        missing_cols = set(cols_list) - set(input_df.columns)
-        if len(missing_cols) != 0:
-            raise ValueError("Missing Columns in the input dataframe:" +
-                             ','.join(list(missing_cols)))
-
-        if not Evaluator.check_metric(metric):
-            raise ValueError("metric" + metric + "is not supported")
-
+        self._check_input(input_df, validation_df, metric)
         if distributed:
             if hdfs_url is not None:
                 remote_dir = os.path.join(hdfs_url, "ray_results", self.name)
@@ -314,6 +301,44 @@ class TimeSequencePredictor(object):
         """
         return self.pipeline.predict(input_df)
 
+    def _check_input_format(self, input_df):
+        if isinstance(input_df, list) and all([isinstance(d, pd.DataFrame) for d in input_df]):
+            input_is_list = True
+            return input_is_list
+        elif isinstance(input_df, pd.DataFrame):
+            input_is_list = False
+            return input_is_list
+        else:
+            raise ValueError("input_df should be a dataframe or a list of dataframes")
+
+    def _check_missing_col(self, input_df):
+        cols_list = [self.dt_col, self.target_col]
+        if self.extra_features_col is not None:
+            if not isinstance(self.extra_features_col, (list,)):
+                raise ValueError("extra_features_col needs to be either None or a list")
+            cols_list.extend(self.extra_features_col)
+
+        missing_cols = set(cols_list) - set(input_df.columns)
+        if len(missing_cols) != 0:
+            raise ValueError("Missing Columns in the input dataframe:" +
+                             ','.join(list(missing_cols)))
+
+    def _check_input(self, input_df, validation_df, metric):
+        input_is_list = self._check_input_format(input_df)
+        if not input_is_list:
+            self._check_missing_col(input_df)
+            if validation_df is not None:
+                self._check_missing_col(validation_df)
+        else:
+            for d in input_df:
+                self._check_missing_col(d)
+            if validation_df is not None:
+                for val_d in validation_df:
+                    self._check_missing_col(val_d)
+
+        if not Evaluator.check_metric(metric):
+            raise ValueError("metric" + metric + "is not supported")
+
     def _hp_search(self,
                    input_df,
                    validation_df,
@@ -326,8 +351,10 @@ class TimeSequencePredictor(object):
                                             self.target_col,
                                             self.extra_features_col,
                                             self.drop_missing)
-
-        feature_list = ft.get_feature_list(input_df)
+        if isinstance(input_df, list):
+            feature_list = ft.get_feature_list(input_df[0])
+        else:
+            feature_list = ft.get_feature_list(input_df)
 
         # model = VanillaLSTM(check_optional_config=False)
         model = TimeSequenceModel(check_optional_config=False, future_seq_len=self.future_seq_len)
@@ -389,7 +416,6 @@ class TimeSequencePredictor(object):
 
 
 if __name__ == "__main__":
-    pass
     dataset_path = os.getenv("ANALYTICS_ZOO_HOME") + "/bin/data/NAB/nyc_taxi/nyc_taxi.csv"
     df = pd.read_csv(dataset_path)
     from zoo.automl.common.util import split_input_df
@@ -408,6 +434,9 @@ if __name__ == "__main__":
                         default=False,
                         type=bool,
                         help="Run on spark local")
+    parser.add_argument("future_seq_len",
+                        default=1,
+                        help="future sequence length")
     args = parser.parse_args()
 
     if not args.hadoop_conf and not args.spark_local:
@@ -446,6 +475,7 @@ if __name__ == "__main__":
 
     tsp = TimeSequencePredictor(dt_col="datetime",
                                 target_col="value",
+                                future_seq_len=args.future_seq_len,
                                 extra_features_col=None,
                                 )
 
