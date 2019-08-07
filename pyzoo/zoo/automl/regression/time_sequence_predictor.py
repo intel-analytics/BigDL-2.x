@@ -79,20 +79,20 @@ class GridRandomRecipe(Recipe):
 
     @param num_rand_samples: number of hyper-param configurations sampled randomly
     @param look_back: the length to look back, either a tuple with 2 int values,
-          which is in format is [min len, max len], or a single int, which is
+          which is in format is (min len, max len), or a single int, which is
           a fixed length to look back.
     """
 
     def __init__(self, num_rand_samples=1, look_back=1):
         self.num_samples = num_rand_samples
         if isinstance(look_back, tuple) and len(look_back) == 2 and \
-                isinstance(look_back[0]) and isinstance(look_back[1]):
+                isinstance(look_back[0], int) and isinstance(look_back[1], int):
             self.past_seq_config = RandomSample(
-                lambda spec: np.random.uniform(look_back[0], look_back[1]))
+                lambda spec: np.random.randint(look_back[0], look_back[1]+1, size=1)[0])
         elif isinstance(look_back, int):
             self.past_seq_config = look_back
         else:
-            raise ValueError("look_back should be either [min_len,max_len] or fixed_len")
+            raise ValueError("look_back should be either (min_len,max_len) or fixed_len")
 
     def search_space(self, all_available_features):
         return {
@@ -128,14 +128,14 @@ class RandomRecipe(Recipe):
 
     @param num_rand_samples: number of hyper-param configurations sampled randomly
     @param look_back: the length to look back, either a tuple with 2 int values,
-          which is in format is [min len, max len], or a single int, which is
+          which is in format is (min len, max len), or a single int, which is
           a fixed length to look back.
     """
 
     def __init__(self, num_rand_samples=1, look_back=1, reward_metric=-0.05):
         self.num_samples = num_rand_samples
         self.reward_metric = reward_metric
-        if isinstance(look_back, list) and len(look_back) == 2 and \
+        if isinstance(look_back, tuple) and len(look_back) == 2 and \
                 isinstance(look_back[0], int) and isinstance(look_back[1], int):
             self.past_seq_config = \
                 RandomSample(lambda spec:
@@ -482,7 +482,7 @@ if __name__ == "__main__":
     pipeline = tsp.fit(train_df,
                        validation_df=val_df,
                        metric="mean_squared_error",
-                       # recipe=RandomRecipe(look_back=[2, 4]),
+                       # recipe=RandomRecipe(look_back=(2, 4)),
                        distributed=distributed,
                        hdfs_url=hdfs_url)
 

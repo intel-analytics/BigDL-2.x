@@ -332,7 +332,7 @@ class TestTimeSequencePipeline(ZooTestCase):
 
         random_pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df,
                                            recipe=RandomRecipe(
-                                               look_back=[min_past_seq_len, max_past_seq_len]))
+                                               look_back=(min_past_seq_len, max_past_seq_len)))
         y_pred_random_1 = random_pipeline_1.predict(self.test_df)
         assert y_pred_random_1.shape[0] >= self.test_sample_num - max_past_seq_len + 1
         assert y_pred_random_1.shape[0] <= self.test_sample_num - min_past_seq_len + 1
@@ -348,7 +348,7 @@ class TestTimeSequencePipeline(ZooTestCase):
 
         random_pipeline_3 = self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
                                            recipe=RandomRecipe(
-                                               look_back=[min_past_seq_len, max_past_seq_len]))
+                                               look_back=(min_past_seq_len, max_past_seq_len)))
         y_pred_random_3 = random_pipeline_3.predict(self.test_df)
         assert y_pred_random_3.shape[0] >= self.test_sample_num - max_past_seq_len + 1
         assert y_pred_random_3.shape[0] <= self.test_sample_num - min_past_seq_len + 1
