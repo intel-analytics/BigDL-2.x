@@ -62,7 +62,7 @@ class TestSessionRecommender(ZooTestCase):
                        np.random.randint(1, 30, size=(5)),
                        np.random.randint(1, 30)] for i in range(100)]
         samples = [Sample.from_ndarray((input_data[i][0], input_data[i][1]),
-                                      np.array(input_data[i][2])) for i in range(100)]
+                                       np.array(input_data[i][2])) for i in range(100)]
         rdd = self.sc.parallelize(samples)
         results1 = model.predict(rdd).collect()
         print(results1[0])
