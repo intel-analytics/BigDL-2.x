@@ -65,7 +65,38 @@ class TestTimeSequenceFeature(ZooTestCase):
                            past_seq_len,
                            len(config["selected_features"]) + 1)
         assert y.shape == (sample_num-past_seq_len, 1)
+        print(x[0, :, 0])
+        print(y[:, 0])
         assert np.mean(np.concatenate((x[0, :, 0], y[:, 0]), axis=None)) < 1e-5
+
+    def test_fit_transform_df_list(self):
+        sample_num = 8
+        past_seq_len = 2
+        dates = pd.date_range('1/1/2019', periods=sample_num)
+        data = np.random.randn(sample_num, 3)
+        df = pd.DataFrame({"datetime": dates, "values": data[:, 0],
+                           "A": data[:, 1], "B": data[:, 2]})
+        config = {"selected_features": ['IS_AWAKE(datetime)',
+                                        'IS_BUSY_HOURS(datetime)',
+                                        'HOUR(datetime)',
+                                        'A'],
+                  "past_seq_len": past_seq_len}
+        feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
+                                              target_col="values", drop_missing=True)
+
+        df_list = [df]*3
+        x, y = feat.fit_transform(df_list, **config)
+        single_result_len = sample_num - past_seq_len
+        assert x.shape == (single_result_len*3,
+                           past_seq_len,
+                           len(config["selected_features"]) + 1)
+        assert y.shape == (single_result_len*3, 1)
+        assert np.allclose(x[:single_result_len], x[single_result_len: 2*single_result_len])
+        assert np.allclose(x[:single_result_len], x[2*single_result_len:])
+        assert np.allclose(y[:single_result_len], y[single_result_len: 2*single_result_len])
+        assert np.allclose(y[:single_result_len], y[2*single_result_len:])
+
+        assert np.mean(np.concatenate((x[0, :, 0], y[:single_result_len, 0]), axis=None)) < 1e-5
 
     def test_fit_transform_input_datetime(self):
         # if the type of input datetime is not datetime64, raise an error
@@ -183,6 +214,36 @@ class TestTimeSequenceFeature(ZooTestCase):
                                len(config["selected_features"]) + 1)
         assert val_y.shape == (val_df.shape[0] - past_seq_len, 1)
 
+    def test_transform_train_true_df_list(self):
+        num_samples = 16
+        dates = pd.date_range('1/1/2019', periods=num_samples)
+        values = np.random.randn(num_samples, 2)
+        df = pd.DataFrame({"datetime": dates, "values": values[:, 0], "feature_1": values[:, 1]})
+        train_sample_num = 10
+        train_df = df[:train_sample_num]
+        val_df = df[train_sample_num:]
+        past_seq_len = 2
+
+        config = {"selected_features": ['IS_AWAKE(datetime)',
+                                        'IS_BUSY_HOURS(datetime)',
+                                        'HOUR(datetime)',
+                                        "feature_1"],
+                  "past_seq_len": past_seq_len}
+        feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
+                                              target_col="values",
+                                              extra_features_col="feature_1",
+                                              drop_missing=True)
+
+        train_df_list = [train_df] * 3
+        feat.fit_transform(train_df_list, **config)
+        val_df_list = [val_df] * 3
+        val_x, val_y = feat.transform(val_df_list, is_train=True)
+        single_result_len = val_df.shape[0] - past_seq_len
+        assert val_x.shape == (single_result_len * 3,
+                               past_seq_len,
+                               len(config["selected_features"]) + 1)
+        assert val_y.shape == (single_result_len * 3, 1)
+
     def test_transform_train_false(self):
         num_samples = 16
         dates = pd.date_range('1/1/2019', periods=num_samples)
@@ -203,8 +264,35 @@ class TestTimeSequenceFeature(ZooTestCase):
                                               extra_features_col="feature_1",
                                               drop_missing=True)
         feat.fit_transform(train_df, **config)
-        test_x = feat.transform(test_df, is_train=False)
+        test_x, _ = feat.transform(test_df, is_train=False)
         assert test_x.shape == (test_df.shape[0] - past_seq_len + 1,
+                                past_seq_len,
+                                len(config["selected_features"]) + 1)
+
+    def test_transform_train_false_df_list(self):
+        num_samples = 16
+        dates = pd.date_range('1/1/2019', periods=num_samples)
+        values = np.random.randn(num_samples, 2)
+        df = pd.DataFrame({"datetime": dates, "values": values[:, 0], "feature_1": values[:, 1]})
+        train_sample_num = 10
+        train_df = df[:train_sample_num]
+        test_df = df[train_sample_num:]
+        past_seq_len = 2
+
+        config = {"selected_features": ['IS_AWAKE(datetime)',
+                                        'IS_BUSY_HOURS(datetime)',
+                                        'HOUR(datetime)',
+                                        "feature_1"],
+                  "past_seq_len": past_seq_len}
+        feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
+                                              target_col="values",
+                                              extra_features_col="feature_1",
+                                              drop_missing=True)
+        train_df_list = [train_df] * 3
+        feat.fit_transform(train_df_list, **config)
+        test_df_list = [test_df] * 3
+        test_x, _ = feat.transform(test_df_list, is_train=False)
+        assert test_x.shape == ((test_df.shape[0] - past_seq_len + 1) * 3,
                                 past_seq_len,
                                 len(config["selected_features"]) + 1)
 
@@ -241,7 +329,7 @@ class TestTimeSequenceFeature(ZooTestCase):
             assert new_ft.extra_features_col is None
             assert new_ft.drop_missing == drop_missing
 
-            test_x = new_ft.transform(df[:-future_seq_len], is_train=False)
+            test_x, _ = new_ft.transform(df[:-future_seq_len], is_train=False)
 
             assert np.array_equal(test_x, train_x)
 
@@ -272,6 +360,31 @@ class TestTimeSequenceFeature(ZooTestCase):
         assert np.array_equal(y_unscale, y_input), \
             "y_unscale is {}, y_input is {}".format(y_unscale, y_input)
 
+    def test_post_processing_train_df_list(self):
+        dates = pd.date_range('1/1/2019', periods=8)
+        values = np.random.randn(8)
+        dt_col = "datetime"
+        value_col = "values"
+        df = pd.DataFrame({dt_col: dates, value_col: values})
+
+        past_seq_len = 2
+        future_seq_len = 1
+        config = {"selected_features": ['IS_AWAKE(datetime)',
+                                        'IS_BUSY_HOURS(datetime)',
+                                        'HOUR(datetime)'],
+                  "past_seq_len": past_seq_len}
+        feat = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len, dt_col="datetime",
+                                              target_col="values", drop_missing=True)
+        df_list = [df] * 3
+        train_x, train_y = feat.fit_transform(df_list, **config)
+        y_unscale, y_unscale_1 = feat.post_processing(df_list, train_y, is_train=True)
+        y_input = df[past_seq_len:][[value_col]].values
+        target_y = np.concatenate([y_input] * 3)
+        assert np.allclose(y_unscale, y_unscale_1), \
+            "y_unscale is {}, y_unscale_1 is {}".format(y_unscale, y_unscale_1)
+        assert np.array_equal(y_unscale, target_y), \
+            "y_unscale is {}, y_input is {}".format(y_unscale, target_y)
+
     def test_post_processing_test_1(self):
         dates = pd.date_range('1/1/2019', periods=8)
         values = np.random.randn(8)
@@ -299,10 +412,53 @@ class TestTimeSequenceFeature(ZooTestCase):
             test_df = df[:-future_seq_len]
             new_ft.transform(test_df, is_train=False)
             output_value_df = new_ft.post_processing(test_df, train_y, is_train=False)
+
+            # train_y is generated from df[past_seq_len:]
             target_df = df[past_seq_len:].copy().reset_index(drop=True)
 
             assert output_value_df[dt_col].equals(target_df[dt_col])
             assert np.allclose(output_value_df[value_col].values, target_df[value_col].values)
+
+        finally:
+            shutil.rmtree(dirname)
+
+    def test_post_processing_test_df_list(self):
+        dates = pd.date_range('1/1/2019', periods=8)
+        values = np.random.randn(8)
+        dt_col = "datetime"
+        value_col = "values"
+        df = pd.DataFrame({dt_col: dates, value_col: values})
+
+        past_seq_len = 2
+        future_seq_len = 1
+        config = {"selected_features": ['IS_AWAKE(datetime)',
+                                        'IS_BUSY_HOURS(datetime)',
+                                        'HOUR(datetime)'],
+                  "past_seq_len": past_seq_len}
+        feat = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len, dt_col="datetime",
+                                              target_col="values", drop_missing=True)
+        df_list = [df] * 3
+        train_x, train_y = feat.fit_transform(df_list, **config)
+
+        dirname = tempfile.mkdtemp(prefix="automl_test_feature_")
+        try:
+            save(dirname, feature_transformers=feat)
+            new_ft = TimeSequenceFeatureTransformer()
+            restore(dirname, feature_transformers=new_ft, config=config)
+
+            test_df = df[:-future_seq_len]
+            test_df_list = [test_df] * 3
+            new_ft.transform(test_df_list, is_train=False)
+            output_value_df_list = new_ft.post_processing(test_df_list, train_y, is_train=False)
+
+            # train_y is generated from df[past_seq_len:]
+            target_df = df[past_seq_len:].copy().reset_index(drop=True)
+
+            assert output_value_df_list[0].equals(output_value_df_list[1])
+            assert output_value_df_list[0].equals(output_value_df_list[2])
+            assert output_value_df_list[0][dt_col].equals(target_df[dt_col])
+            assert np.allclose(output_value_df_list[0][value_col].values,
+                               target_df[value_col].values)
 
         finally:
             shutil.rmtree(dirname)

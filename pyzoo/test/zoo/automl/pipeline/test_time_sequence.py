@@ -38,7 +38,11 @@ class TestTimeSequencePipeline(ZooTestCase):
         self.train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019',
                                                                 periods=sample_num),
                                      "value": np.random.randn(sample_num)})
-        self.test_sample_num = 64
+        val_sample_num = 16
+        self.validation_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019',
+                                                                     periods=val_sample_num),
+                                           "value": np.random.randn(val_sample_num)})
+        self.test_sample_num = 16
         self.test_df = pd.DataFrame({"datetime": pd.date_range('1/10/2019',
                                                                periods=self.test_sample_num),
                                      "value": np.random.randn(self.test_sample_num)})
@@ -64,23 +68,47 @@ class TestTimeSequencePipeline(ZooTestCase):
         ray.shutdown()
 
     def test_evaluate_1(self):
-        self.pipeline_1 = self.tsp_1.fit(self.train_df)
+        self.pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
         mse, rs = self.pipeline_1.evaluate(self.test_df, metrics=["mean_squared_error", "r_square"])
         assert len(mse) == self.future_seq_len_1
         assert len(rs) == self.future_seq_len_1
         print("Mean square error (future_seq_len=1) is:", mse)
         print("R square (future_seq_len=1) is:", rs)
 
+    def test_evaluate_1_df_list(self):
+        train_df_list = [self.train_df] * 3
+        val_df_list = [self.validation_df] * 3
+        test_df_list = [self.test_df] * 3
+        self.pipeline_1 = self.tsp_1.fit(train_df_list, validation_df=val_df_list)
+        mse, rs = self.pipeline_1.evaluate(test_df_list, metrics=["mean_squared_error", "r_square"])
+        assert len(mse) == self.future_seq_len_1
+        assert len(rs) == self.future_seq_len_1
+        print("Mean square error (future_seq_len=1) is:", mse)
+        print("R square (future_seq_len=1) is:", rs)
+
     def test_evaluate_3(self):
-        self.pipeline_3 = self.tsp_3.fit(self.train_df)
+        self.pipeline_3 = self.tsp_3.fit(self.train_df, validation_df=self.validation_df)
         mse, rs = self.pipeline_3.evaluate(self.test_df, metrics=["mean_squared_error", "r_square"])
         assert len(mse) == self.future_seq_len_3
         assert len(rs) == self.future_seq_len_3
         print("Mean square error (future_seq_len=3) is:", mse)
         print("R square (future_seq_len=3) is:", rs)
 
+    def test_evaluate_3_df_list(self):
+        train_df_list = [self.train_df] * 3
+        val_df_list = [self.validation_df] * 3
+        test_df_list = [self.test_df] * 3
+        self.pipeline_3 = self.tsp_3.fit(train_df_list, validation_df=val_df_list)
+        mse, rs = self.pipeline_3.evaluate(test_df_list, metrics=["mean_squared_error", "r_square"])
+        assert len(mse) == self.future_seq_len_3
+        assert len(rs) == self.future_seq_len_3
+        print("Mean square error (future_seq_len=3) is:", mse)
+        print("R square (future_seq_len=3) is:", rs)
+
     def test_evaluate_RandomRecipe_1(self):
-        self.random_pipeline_1 = self.tsp_1.fit(self.train_df, recipe=RandomRecipe(1))
+        self.random_pipeline_1 = self.tsp_1.fit(self.train_df,
+                                                validation_df=self.validation_df,
+                                                recipe=RandomRecipe(1))
         mse, rs, smape = self.random_pipeline_1.evaluate(self.test_df,
                                                          metrics=["mean_squared_error",
                                                                   "r_square", "sMAPE"])
@@ -102,7 +130,9 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert 0 < smape < 100
 
     def test_evaluate_RandomRecipe_3(self):
-        self.random_pipeline_3 = self.tsp_3.fit(self.train_df, recipe=RandomRecipe(1))
+        self.random_pipeline_3 = self.tsp_3.fit(self.train_df,
+                                                validation_df=self.validation_df,
+                                                recipe=RandomRecipe(1))
         mse, rs, smape = self.random_pipeline_3.evaluate(self.test_df,
                                                          metrics=["mean_squared_error",
                                                                   "r_square", "sMAPE"])
@@ -125,27 +155,53 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert 0 < smape < 100
 
     def test_predict_1(self):
-        self.pipeline_1 = self.tsp_1.fit(self.train_df)
+        self.pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df,)
         # sample_num should > past_seq_len, the default value of which is 50
         y_pred_1 = self.pipeline_1.predict(self.test_df)
         assert y_pred_1.shape == (self.test_sample_num - self.default_past_seq_len + 1,
                                   self.future_seq_len_1 + 1)
 
+    def test_predict_1_df_list(self):
+        train_df_list = [self.train_df] * 3
+        val_df_list = [self.validation_df] * 3
+        test_df_list = [self.test_df] * 3
+        self.pipeline_1 = self.tsp_1.fit(train_df_list, validation_df=val_df_list,)
+        # sample_num should > past_seq_len, the default value of which is 50
+        y_pred_1 = self.pipeline_1.predict(test_df_list)
+        assert len(y_pred_1) == 3
+        assert y_pred_1[0].equals(y_pred_1[1])
+        assert y_pred_1[1].equals(y_pred_1[2])
+        assert y_pred_1[0].shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                                     self.future_seq_len_1 + 1)
+
     def test_predict_3(self):
-        self.pipeline_3 = self.tsp_3.fit(self.train_df)
+        self.pipeline_3 = self.tsp_3.fit(self.train_df, validation_df=self.validation_df)
         y_pred_3 = self.pipeline_3.predict(self.test_df)
         assert y_pred_3.shape == (self.test_sample_num - self.default_past_seq_len + 1,
                                   self.future_seq_len_3 + 1)
 
+    def test_predict_3_df_list(self):
+        train_df_list = [self.train_df] * 3
+        val_df_list = [self.validation_df] * 3
+        test_df_list = [self.test_df] * 3
+        self.pipeline_3 = self.tsp_3.fit(train_df_list, validation_df=val_df_list)
+        y_pred_3 = self.pipeline_3.predict(test_df_list)
+        assert len(y_pred_3) == 3
+        assert y_pred_3[0].equals(y_pred_3[1])
+        assert y_pred_3[0].equals(y_pred_3[2])
+        assert y_pred_3[0].shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                                     self.future_seq_len_3 + 1)
+
     def test_predict_RandomRecipe(self):
-        self.random_pipeline_1 = self.tsp_1.fit(self.train_df, recipe=RandomRecipe(1))
+        self.random_pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df,
+                                                recipe=RandomRecipe(1))
         y_pred_random = self.random_pipeline_1.predict(self.test_df)
         assert y_pred_random.shape == (self.test_sample_num - self.default_past_seq_len + 1, 2)
 
     def test_evaluate_predict_1(self):
         metric = ["mean_squared_error", "r_square"]
         target_col = "value"
-        self.pipeline_1 = self.tsp_1.fit(self.train_df)
+        self.pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
         y_pred_df_1 = self.pipeline_1.predict(self.test_df[:-self.future_seq_len_1])
         y_df_1 = self.test_df[self.default_past_seq_len:]
 
@@ -157,10 +213,33 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert mse_pred_eval_1 == mse_eval_1
         assert rs_pred_eval_1 == rs_eval_1
 
+    def test_evaluate_predict_df_list(self):
+        metric = ["mean_squared_error", "r_square"]
+        target_col = "value"
+        train_df_list = [self.train_df] * 3
+        val_df_list = [self.validation_df] * 3
+        test_df_list = [self.test_df] * 3
+        pred_test_df_list = [self.test_df[:-self.future_seq_len_1]] * 3
+        target_test_value = self.test_df[self.default_past_seq_len:][target_col].values
+        self.pipeline_1 = self.tsp_1.fit(train_df_list, validation_df=val_df_list)
+        y_pred_df_list = self.pipeline_1.predict(pred_test_df_list)
+        y_pred = np.concatenate([df[target_col].values for df in y_pred_df_list])
+        y_target = np.concatenate([target_test_value] * 3)
+
+        print(y_pred.shape)
+        print(y_target.shape)
+        mse_pred_eval_1, rs_pred_eval_1 = [Evaluator.evaluate(m,
+                                                              y_target,
+                                                              y_pred)
+                                           for m in metric]
+        mse_eval_1, rs_eval_1 = self.pipeline_1.evaluate(test_df_list, metric)
+        assert mse_pred_eval_1 == mse_eval_1
+        assert rs_pred_eval_1 == rs_eval_1
+
     def test_evaluate_predict_3(self):
         target_col = "value"
         metric = ["mean_squared_error", "r_square"]
-        self.pipeline_3 = self.tsp_3.fit(self.train_df)
+        self.pipeline_3 = self.tsp_3.fit(self.train_df, validation_df=self.validation_df)
         y_pred_df = self.pipeline_3.predict(self.test_df[:-self.future_seq_len_3])
         columns = ["{}_{}".format(target_col, i) for i in range(self.future_seq_len_3)]
         y_pred_value = y_pred_df[columns].values
@@ -176,7 +255,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert np.array_equal(rs_pred_eval_3, rs_eval_3)
 
     def test_save_restore_1(self):
-        self.pipeline_1 = self.tsp_1.fit(self.train_df)
+        self.pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
         y_pred_1 = self.pipeline_1.predict(self.test_df)
         mse, rs = self.pipeline_1.evaluate(self.test_df,
                                            metrics=["mean_squared_error", "r_square"])
@@ -202,7 +281,7 @@ class TestTimeSequencePipeline(ZooTestCase):
 
     def test_save_restore_3(self):
         target_col = "value"
-        self.pipeline_3 = self.tsp_3.fit(self.train_df)
+        self.pipeline_3 = self.tsp_3.fit(self.train_df, validation_df=self.validation_df)
         y_pred_3 = self.pipeline_3.predict(self.test_df)
         mse, rs = self.pipeline_3.evaluate(self.test_df,
                                            metrics=["mean_squared_error", "r_square"])
@@ -230,7 +309,8 @@ class TestTimeSequencePipeline(ZooTestCase):
               "Mean square error is: {}, R square is: {}.".format(new_mse, new_rs))
 
     def test_save_restore_1_RandomRecipe(self):
-        self.random_pipeline_1 = self.tsp_1.fit(self.train_df, recipe=RandomRecipe(1))
+        self.random_pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df,
+                                                recipe=RandomRecipe(1))
         y_pred_random = self.random_pipeline_1.predict(self.test_df)
 
         dirname = tempfile.mkdtemp(prefix="saved_pipeline")
@@ -250,7 +330,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         max_past_seq_len = 7
         print("=" * 10, "fit in test_look_back_1", "=" * 10)
 
-        random_pipeline_1 = self.tsp_1.fit(self.train_df,
+        random_pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df,
                                            recipe=RandomRecipe(
                                                look_back=[min_past_seq_len, max_past_seq_len]))
         y_pred_random_1 = random_pipeline_1.predict(self.test_df)
@@ -266,7 +346,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         min_past_seq_len = 5
         max_past_seq_len = 7
 
-        random_pipeline_3 = self.tsp_3.fit(self.train_df,
+        random_pipeline_3 = self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
                                            recipe=RandomRecipe(
                                                look_back=[min_past_seq_len, max_past_seq_len]))
         y_pred_random_3 = random_pipeline_3.predict(self.test_df)

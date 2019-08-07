@@ -55,7 +55,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         self.past_seq_len = None
         self.future_seq_len = future_seq_len
 
-    def fit_transform(self, input_df, **config):
+    def _fit_transform(self, input_df):
         """
         Fit data and transform the raw data to features. This is used in training for hyper
         parameter searching.
@@ -64,7 +64,6 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
          datetime   value   "extra feature 1"   "extra feature 2"
          2019-01-01 1.9 1   2
          2019-01-02 2.3 0   2
-        :param config: tunable parameters
         :return: tuple (x,y)
             x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
             in the last dimension, the 1st col is the time index
@@ -74,7 +73,6 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
             if future sequence length > 1, or 1-d numpy array in format (no. of samples, )
             if future sequence length = 1
         """
-        self.config = self._get_feat_config(**config)
         self._check_input(input_df, mode="train")
         # print(input_df.shape)
         feature_data = self._get_features(input_df, self.config)
@@ -87,13 +85,82 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
 
         return x, y
 
-    def transform(self, input_df, is_train=True):
+    def fit_transform(self, input_df, **config):
         """
-        Transform data into features using the preset of configurations from fit_transform
-        :param input_df: The input time series data frame, Example:
+        Fit data and transform the raw data to features. This is used in training for hyper
+        parameter searching.
+        This method will refresh the parameters (e.g. min and max of the MinMaxScaler) if any
+        :param input_df: The input time series data frame, it can be a list of data frame or just
+         one dataframe
+         Example:
          datetime   value   "extra feature 1"   "extra feature 2"
          2019-01-01 1.9 1   2
          2019-01-02 2.3 0   2
+        :return: tuple (x,y)
+            x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
+            in the last dimension, the 1st col is the time index
+            (data type needs to be numpy datetime type, e.g. "datetime64"),
+            the 2nd col is the target value (data type should be numeric)
+            y: y is 2-d numpy array in format (no. of samples, future sequence length)
+            if future sequence length > 1, or 1-d numpy array in format (no. of samples, )
+            if future sequence length = 1
+        """
+        self.config = self._get_feat_config(**config)
+
+        if isinstance(input_df, list):
+            train_x_list = []
+            train_y_list = []
+            for df in input_df:
+                x, y = self._fit_transform(df)
+                train_x_list.append(x)
+                train_y_list.append(y)
+            train_x = np.concatenate(train_x_list, axis=0)
+            train_y = np.concatenate(train_y_list, axis=0)
+        else:
+            train_x, train_y = self._fit_transform(input_df)
+        return train_x, train_y
+
+    def _transform(self, input_df, mode):
+        """
+        Transform data into features using the preset of configurations from fit_transform
+        :param input_df: The input time series data frame.
+         Example:
+         datetime   value   "extra feature 1"   "extra feature 2"
+         2019-01-01  1.9         1                       2
+         2019-01-02  2.3         0                       2
+        :param mode: 'val'/'test'.
+        :return: tuple (x,y)
+            x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
+            in the last dimension, the 1st col is the time index
+            (data type needs to be numpy datetime type, e.g. "datetime64"),
+            the 2nd col is the target value (data type should be numeric)
+            y: y is 2-d numpy array in format (no. of samples, future sequence length)
+            if future sequence length > 1, or 1-d numpy array in format (no. of samples, )
+            if future sequence length = 1
+        """
+        self._check_input(input_df, mode)
+        # generate features
+        feature_data = self._get_features(input_df, self.config)
+        # select and standardize data
+        data_n = self._scale(feature_data)
+        if mode == 'val':
+            (x, y) = self._roll_train(data_n,
+                                      past_seq_len=self.past_seq_len,
+                                      future_seq_len=self.future_seq_len)
+            return x, y
+        else:
+            x = self._roll_test(data_n, past_seq_len=self.past_seq_len)
+            return x, None
+
+    def transform(self, input_df, is_train=True):
+        """
+        Transform data into features using the preset of configurations from fit_transform
+        :param input_df: The input time series data frame, input_df can be a list of data frame or
+                         one data frame.
+         Example:
+         datetime   value   "extra feature 1"   "extra feature 2"
+         2019-01-01  1.9         1                       2
+         2019-01-02  2.3         0                       2
         :param is_train: If the input_df is for training.
         :return: tuple (x,y)
             x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
@@ -107,19 +174,25 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         if self.config is None or self.past_seq_len is None:
             raise Exception("Needs to call fit_transform or restore first before calling transform")
         mode = "val" if is_train else "test"
-        self._check_input(input_df, mode)
-        # generate features
-        feature_data = self._get_features(input_df, self.config)
-        # select and standardize data
-        data_n = self._scale(feature_data)
-        if is_train:
-            (x, y) = self._roll_train(data_n,
-                                      past_seq_len=self.past_seq_len,
-                                      future_seq_len=self.future_seq_len)
-            return x, y
+        if isinstance(input_df, list):
+            output_x_list = []
+            output_y_list = []
+            for df in input_df:
+                if mode == 'val':
+                    x, y = self._transform(df, mode)
+                    output_x_list.append(x)
+                    output_y_list.append(y)
+                else:
+                    x, _ = self._transform(df, mode)
+                    output_x_list.append(x)
+            output_x = np.concatenate(output_x_list, axis=0)
+            if output_y_list:
+                output_y = np.concatenate(output_y_list, axis=0)
+            else:
+                output_y = None
         else:
-            x = self._roll_test(data_n, past_seq_len=self.past_seq_len)
-            return x
+            output_x, output_y = self._transform(input_df, mode)
+        return output_x, output_y
 
     def _unscale(self, y):
         # for standard scalar
@@ -128,28 +201,70 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         y_unscale = y * value_scale + value_mean
         return y_unscale
 
+    def _get_y_pred_df(self, y_pred_dt_df, y_pred_unscale):
+        """
+        get prediction data frame with datetime column and target column.
+        :param input_df:
+        :return : prediction data frame. If future_seq_len is 1, the output data frame columns are
+            datetime | {target_col}. Otherwise, the output data frame columns are
+            datetime | {target_col}_0 | {target_col}_1 | ...
+        """
+        y_pred_df = y_pred_dt_df
+        if self.future_seq_len > 1:
+            columns = ["{}_{}".format(self.target_col, i) for i in range(self.future_seq_len)]
+            y_pred_df[columns] = pd.DataFrame(y_pred_unscale)
+        else:
+            y_pred_df[self.target_col] = y_pred_unscale
+        return y_pred_df
+
     def post_processing(self, input_df, y_pred, is_train):
         """
         Used only in pipeline predict, after calling self.transform(input_df, is_train=False).
-        Post_processing includes converting the predicted array into dataframe and scalar inverse
+        Post_processing includes converting the predicted array into data frame and scalar inverse
         transform.
+        :param input_df: a list of data frames or one data frame.
         :param y_pred: Model prediction result (ndarray).
-        :return: Un_scaled dataframe with datetime.
+        :param is_train: indicate the output is used to evaluation or prediction.
+        :return:
+         In validation mode (is_train=True), return the unscaled y_pred and rolled input_y.
+         In test mode (is_train=False) return unscaled data frame(s) in the format of
+          {datetime_col} | {target_col(s)}.
         """
         y_pred_unscale = self._unscale(y_pred)
         if is_train:
-            _, y_unscale = self._roll_train(input_df[[self.target_col]],
-                                            self.past_seq_len,
-                                            self.future_seq_len)
-            return y_unscale, y_pred_unscale
-        else:
-            y_pred_dt = self._get_y_pred_dt(input_df, self.past_seq_len)
-            if self.future_seq_len > 1:
-                columns = ["{}_{}".format(self.target_col, i) for i in range(self.future_seq_len)]
-                y_pred_dt[columns] = pd.DataFrame(y_pred_unscale)
+            # return unscaled y_pred (ndarray) and y (ndarray).
+            if isinstance(input_df, list):
+                y_unscale_list = []
+                for df in input_df:
+                    _, y_unscale = self._roll_train(df[[self.target_col]],
+                                                    self.past_seq_len,
+                                                    self.future_seq_len)
+                    y_unscale_list.append(y_unscale)
+                output_y_unscale = np.concatenate(y_unscale_list, axis=0)
             else:
-                y_pred_dt[self.target_col] = y_pred_unscale
-            return y_pred_dt
+                _, output_y_unscale = self._roll_train(input_df[[self.target_col]],
+                                                       self.past_seq_len,
+                                                       self.future_seq_len)
+            return output_y_unscale, y_pred_unscale
+
+        else:
+            # return data frame or a list of data frames.
+            if isinstance(input_df, list):
+                y_pred_dt_df_list = self._get_y_pred_dt_df(input_df, self.past_seq_len)
+                y_pred_df_list = []
+                y_pred_st_loc = 0
+                for y_pred_dt_df in y_pred_dt_df_list:
+                    df = self._get_y_pred_df(y_pred_dt_df,
+                                             y_pred_unscale[y_pred_st_loc:
+                                                            y_pred_st_loc + len(y_pred_dt_df)])
+                    y_pred_st_loc = y_pred_st_loc + len(y_pred_dt_df)
+                    y_pred_df_list.append(df)
+                assert y_pred_st_loc == len(y_pred_unscale)
+                return y_pred_df_list
+            else:
+                y_pred_dt_df = self._get_y_pred_dt_df(input_df, self.past_seq_len)
+                y_pred_df = self._get_y_pred_df(y_pred_dt_df, y_pred_unscale)
+                return y_pred_df
 
     def save(self, file_path, replace=False):
         """
@@ -172,7 +287,6 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
     def restore(self, **config):
         """
         Restore variables from file
-        :param file_path: the dumped variables file
         :return:
         """
 #         with open(file_path, 'r') as input_file:
@@ -198,7 +312,10 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         # print(self.scaler.transform(input_data))
 
     def get_feature_list(self, input_df):
-        feature_matrix, feature_defs = self._generate_features(input_df)
+        if isinstance(input_df, list):
+            feature_matrix, feature_defs = self._generate_features(input_df[0])
+        else:
+            feature_matrix, feature_defs = self._generate_features(input_df)
     # return [feat.generate_name() for feat in feature_defs if isinstance(feat, TransformFeature)]
         feature_list = []
         for feat in feature_defs:
@@ -339,19 +456,34 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         mask = (mask_x == 1)
         return output_x[mask]
 
-    def _get_y_pred_dt(self, input_df, past_seq_len):
+    def __get_y_pred_dt_df(self, input_df, past_seq_len):
         """
-        :param dataframe:
-        :return:
+        :param input_df: one data frame
+        :return: a data frame with prediction datetime
         """
         input_df = input_df.reset_index(drop=True)
-        pre_pred_dt = input_df.loc[past_seq_len:, [self.dt_col]].copy()
-        pre_pred_dt = pre_pred_dt.reset_index(drop=True)
-        time_delta = pre_pred_dt.iloc[-1] - pre_pred_dt.iloc[-2]
-        last_time = pre_pred_dt.iloc[-1] + time_delta
+        pre_pred_dt_df = input_df.loc[past_seq_len:, [self.dt_col]].copy()
+        pre_pred_dt_df = pre_pred_dt_df.reset_index(drop=True)
+        time_delta = pre_pred_dt_df.iloc[-1] - pre_pred_dt_df.iloc[-2]
+        last_time = pre_pred_dt_df.iloc[-1] + time_delta
         last_df = pd.DataFrame({self.dt_col: last_time})
-        y_pred_dt = pre_pred_dt.append(last_df, ignore_index=True)
-        return y_pred_dt
+        y_pred_dt_df = pre_pred_dt_df.append(last_df, ignore_index=True)
+        return y_pred_dt_df
+
+    def _get_y_pred_dt_df(self, input_df, past_seq_len):
+        """
+        :param input_df: a data frame or a list of data frame
+        :param past_seq_len:
+        :return:
+        """
+        if isinstance(input_df, list):
+            y_pred_dt_df_list = []
+            for df in input_df:
+                y_pred_dt_df = self.__get_y_pred_dt_df(df, past_seq_len)
+                y_pred_dt_df_list.append(y_pred_dt_df)
+            return y_pred_dt_df_list
+        else:
+            return self.__get_y_pred_dt_df(input_df, past_seq_len)
 
     def _scale(self, data):
         """
