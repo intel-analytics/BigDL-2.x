@@ -1124,8 +1124,8 @@ class BertSpec extends ZooSpecHelper {
   // TODO: uncomment this ut after we have put zoo model in a public place
 //  "Bert with pretrained model " should "be able to work" in {
 //    // TODO: put zoo model in a public place
-//    val layer = BERT[Float]("/tmp/zoo-bert-splitprojection.model", null, inputSeqLen = 11, hiddenPDrop = 0.0,
-//      attnPDrop = 0.0, true)
+//    val layer = BERT[Float]("/tmp/zoo-bert-splitprojection.model", null,
+//      inputSeqLen = 11, hiddenPDrop = 0.0, attnPDrop = 0.0, true)
 //
 //    val inputIds = Tensor[Float](Array[Float](2040f, 2001, 3958, 27227, 1029, 3958, 103,
 //      2001, 1037, 13997, 11510), Array(1, 11))

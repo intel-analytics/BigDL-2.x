@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
 
-object BigDLTensorExtension {
+object TensorOperation {
 
   def subTensor[T: ClassTag](tensor: Tensor[T], tensor2: Tensor[T])
                             (implicit ev: TensorNumeric[T]): Tensor[T] = {

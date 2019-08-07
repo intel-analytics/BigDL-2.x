@@ -16,9 +16,8 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
 
-import com.intel.analytics.bigdl.nn.{BigDLWrapperUtils, Mean, Sum}
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, TensorModule}
-import com.intel.analytics.bigdl.tensor.{BigDLTensorExtension, Tensor}
+import com.intel.analytics.bigdl.nn.abstractnn.TensorModule
+import com.intel.analytics.bigdl.tensor.{TensorOperation, Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
@@ -41,12 +40,12 @@ private[zoo] class InternalLayerNorm[@specialized(Float, Double) T: ClassTag](
     val dim = input.dim()
     val u = input.sum(dim).div(ev.fromType(input.size(dim)))
 
-    divInput1 = BigDLTensorExtension.subTensor(input.clone(), u)
+    divInput1 = TensorOperation.subTensor(input.clone(), u)
     val square = divInput1.clone().square()
     val s = square.sum(square.dim()).div(ev.fromType(square.size(square.dim())))
     sqrtInput = s.add(ev.fromType(eps))
     divInput2 = sqrtInput.clone().sqrt()
-    y = BigDLTensorExtension.divTensor(divInput1.clone(), divInput2)
+    y = TensorOperation.divTensor(divInput1.clone(), divInput2)
     output = y.clone().cmul(weight).add(bias)
     output
   }
