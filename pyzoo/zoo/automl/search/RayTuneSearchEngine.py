@@ -177,6 +177,13 @@ class RayTuneSearchEngine(SearchEngine):
         raise Exception("Didn't call reporter...")
 
     @staticmethod
+    def _is_validation_df_valid(validation_df):
+        df_not_empty = isinstance(validation_df, pd.DataFrame) and not validation_df.empty
+        df_list_not_empty = isinstance(validation_df, list) and validation_df \
+                            and not all([d.empty for d in validation_df])
+        return validation_df is not None and not (df_not_empty or df_list_not_empty)
+
+    @staticmethod
     def _prepare_train_func(input_df,
                             feature_transformers,
                             model,
@@ -196,8 +203,15 @@ class RayTuneSearchEngine(SearchEngine):
         input_df_id = ray.put(input_df)
         ft_id = ray.put(feature_transformers)
         model_id = ray.put(model)
-        if validation_df is not None and not validation_df.empty:
+
+        df_not_empty = isinstance(validation_df, pd.DataFrame) and not validation_df.empty
+        df_list_not_empty = isinstance(validation_df, list) and validation_df \
+                            and not all([d.empty for d in validation_df])
+        if validation_df is not None and not (df_not_empty or df_list_not_empty):
             validation_df_id = ray.put(validation_df)
+            is_val_df_valid = True
+        else:
+            is_val_df_valid = False
 
         def train_func(config, tune_reporter):
             # make a copy from global variables for trial to make changes
@@ -214,7 +228,8 @@ class RayTuneSearchEngine(SearchEngine):
 
             # handling validation data
             validation_data = None
-            if validation_df is not None and not validation_df.empty:
+            if is_val_df_valid:
+            # if validation_df is not None and not validation_df.empty:
                 global_validation_df = ray.get(validation_df_id)
                 trial_validation_df = deepcopy(global_validation_df)
                 validation_data = trial_ft.transform(trial_validation_df)
@@ -271,8 +286,15 @@ class RayTuneSearchEngine(SearchEngine):
         input_df_id = ray.put(input_df)
         ft_id = ray.put(feature_transformers)
         model_id = ray.put(model)
-        if validation_df is not None and not validation_df.empty:
+
+        df_not_empty = isinstance(validation_df, pd.DataFrame) and not validation_df.empty
+        df_list_not_empty = isinstance(validation_df, list) and validation_df \
+                            and not all([d.empty for d in validation_df])
+        if validation_df is not None and not (df_not_empty or df_list_not_empty):
             validation_df_id = ray.put(validation_df)
+            is_val_df_valid = True
+        else:
+            is_val_df_valid = False
 
         class TrainableClass(Trainable):
 
@@ -290,7 +312,7 @@ class RayTuneSearchEngine(SearchEngine):
 
                 # handling validation data
                 self.validation_data = None
-                if validation_df is not None and not validation_df.empty:
+                if is_val_df_valid:
                     global_validation_df = ray.get(validation_df_id)
                     trial_validation_df = deepcopy(global_validation_df)
                     self.validation_data = self.trial_ft.transform(trial_validation_df)

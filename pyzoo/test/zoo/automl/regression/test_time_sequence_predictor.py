@@ -31,10 +31,10 @@ class TestTimeSequencePredictor(ZooTestCase):
         self.train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019',
                                                                 periods=sample_num),
                                       "value": np.random.randn(sample_num)})
-        self.test_sample_num = 64
-        self.test_df = pd.DataFrame({"datetime": pd.date_range('1/10/2019',
-                                                               periods=self.test_sample_num),
-                                     "value": np.random.randn(self.test_sample_num)})
+        val_sample_num = 16
+        self.validation_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019',
+                                                                     periods=val_sample_num),
+                                           "value": np.random.randn(val_sample_num)})
 
         self.future_seq_len_1 = 1
         self.tsp_1 = TimeSequencePredictor(dt_col="datetime",
@@ -57,21 +57,33 @@ class TestTimeSequencePredictor(ZooTestCase):
         ray.shutdown()
 
     def test_fit(self):
-        pipeline_1 = self.tsp_1.fit(self.train_df)
-        pipeline_3 = self.tsp_3.fit(self.train_df)
+        pipeline_1 = self.tsp_1.fit(self.train_df, self.validation_df)
+        pipeline_3 = self.tsp_3.fit(self.train_df, self.validation_df)
         assert isinstance(pipeline_1, TimeSequencePipeline)
         assert isinstance(pipeline_1.feature_transformers, TimeSequenceFeatureTransformer)
         assert isinstance(pipeline_1.model, BaseModel)
         assert pipeline_1.config is not None
 
     def test_fit_RandomRecipe(self):
-        random_pipeline_1 = self.tsp_1.fit(self.train_df, recipe=RandomRecipe(1))
-        random_pipeline_3 = self.tsp_3.fit(self.train_df, recipe=RandomRecipe(1))
+        random_pipeline_1 = self.tsp_1.fit(self.train_df, self.validation_df,
+                                           recipe=RandomRecipe(1))
+        random_pipeline_3 = self.tsp_3.fit(self.train_df, self.validation_df,
+                                           recipe=RandomRecipe(1))
         assert isinstance(random_pipeline_1, TimeSequencePipeline)
         assert isinstance(random_pipeline_1.feature_transformers,
                           TimeSequenceFeatureTransformer)
         assert isinstance(random_pipeline_1.model, BaseModel)
         assert random_pipeline_1.config is not None
+
+    def test_fit_df_list(self):
+        train_df_list = [self.train_df]*3
+        val_df_list = [self.validation_df]*3
+        pipeline_1 = self.tsp_1.fit(train_df_list, val_df_list)
+        pipeline_3 = self.tsp_3.fit(train_df_list, val_df_list)
+        assert isinstance(pipeline_1, TimeSequencePipeline)
+        assert isinstance(pipeline_1.feature_transformers, TimeSequenceFeatureTransformer)
+        assert isinstance(pipeline_1.model, BaseModel)
+        assert pipeline_1.config is not None
 
 
 if __name__ == '__main__':
