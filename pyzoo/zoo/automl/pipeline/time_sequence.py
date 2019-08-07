@@ -86,7 +86,7 @@ class TimeSequencePipeline(Pipeline):
         :param input_df:
         :return:
         """
-        x = self.feature_transformers.transform(input_df, is_train=False)
+        x, _ = self.feature_transformers.transform(input_df, is_train=False)
         y_pred = self.model.predict(x)
         y_output = self.feature_transformers.post_processing(input_df, y_pred, is_train=False)
         return y_output
