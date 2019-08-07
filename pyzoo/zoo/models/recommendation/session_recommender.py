@@ -40,7 +40,7 @@ class SessionRecommender(Recommender):
      history_length: The max number of items in the sequence of historical purchase
      """
     def __init__(self, item_count, item_embed, rnn_hidden_layers, session_length,
-                 include_history = False, mlp_hidden_layers = [10, 5], his_length = 2,
+                 include_history=False, mlp_hidden_layers=[10, 5], his_length=2,
                  bigdl_type="float"):
         self.item_count = int(item_count)
         self.item_embed = int(item_embed)
@@ -74,7 +74,8 @@ class SessionRecommender(Recommender):
         if self.include_history:
             input_mlp = Input(shape=(self.his_length,))
             his_table = Embedding(self.item_count + 1, self.item_embed, init="uniform")(input_mlp)
-            flatten = Flatten()(his_table)
+            embedSum = KerasLayerWrapper(Sum(dimension=2))(his_table)
+            flatten = Flatten()(embedSum)
             mlp = Dense(self.mlp_hidden_layers[0], activation="relu")(flatten)
             for hidden in range(1, len(self.mlp_hidden_layers)):
                 mlp = Dense(self.mlp_hidden_layers[hidden], activation="relu")(mlp)
@@ -96,7 +97,6 @@ class SessionRecommender(Recommender):
     def predict_user_item_pair(self, feature_rdd):
         raise Exception("predict_user_item_pair: Unsupported for SessionRecommender")
 
-
     def recommend_for_session(self, sessions, max_items, zero_based_label):
         """
         recommend for sessions given rdd of samples or list of samples.
@@ -115,10 +115,10 @@ class SessionRecommender(Recommender):
         else:
             raise TypeError("Unsupported training data type: %s" % type(sessions))
         results = callBigDlFunc(self.bigdl_type, "recommendForSession",
-                      self.value,
-                      sessions_rdd,
-                      max_items,
-                      zero_based_label)
+                                self.value,
+                                sessions_rdd,
+                                max_items,
+                                zero_based_label)
 
         if isinstance(sessions, list):
             return results.collect()
