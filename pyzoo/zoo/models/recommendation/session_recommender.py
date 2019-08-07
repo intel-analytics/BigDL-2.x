@@ -31,13 +31,13 @@ class SessionRecommender(Recommender):
     The Session Recommender model used for recommendation.
 
     # Arguments
-     item_ount       The number of distinct items. Positive integer.
-     item_embed       The output size of embedding layer. Positive integer.
-     rnn_hidden_layers Units of hidden layers for the mlp model. Array of positive integers.
-     session_length   The max number of items in the sequence of a session
-     include_history  Whether to include purchase history. Boolean. Default is true.
-     mlp_hidden_layers Units of hidden layers for the mlp model. Array of positive integers.
-     history_length   The max number of items in the sequence of historical purchase
+     item_ount: The number of distinct items. Positive integer.
+     item_embed: The output size of embedding layer. Positive integer.
+     rnn_hidden_layers: Units of hidden layers for the mlp model. Array of positive integers.
+     session_length: The max number of items in the sequence of a session
+     include_history: Whether to include purchase history. Boolean. Default is true.
+     mlp_hidden_layers: Units of hidden layers for the mlp model. Array of positive integers.
+     history_length: The max number of items in the sequence of historical purchase
      """
     def __init__(self, item_count, item_embed, rnn_hidden_layers, session_length,
                  include_history = False, mlp_hidden_layers = [10, 5], his_length = 2,
