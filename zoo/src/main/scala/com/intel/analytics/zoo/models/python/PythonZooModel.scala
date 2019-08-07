@@ -375,8 +375,7 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     val predictionRdd: RDD[Array[(Int, Float)]] = model
       .recommendForSession(toJSample(featureRdd), maxItems, zeroBasedLabel)
 
-    predictionRdd.map(x=> x.toList.map(y=> List(y._1.toFloat, y._2).asJava).asJava).toJavaRDD()
-
+    predictionRdd.map(x => x.toList.map(y => List(y._1.toFloat, y._2).asJava).asJava).toJavaRDD()
   }
 
   def getNegativeSamples(indexed: DataFrame): DataFrame = {
