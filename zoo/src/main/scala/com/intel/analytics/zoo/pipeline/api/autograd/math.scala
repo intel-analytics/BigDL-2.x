@@ -33,16 +33,6 @@ object AutoGrad {
 
   val EPSILON = 10e-8
 
-  def attn[T: ClassTag](
-                         q: Variable[T],
-                         k: Variable[T],
-                         //    v: Variable[T],
-                         //    scale: Boolean = false,
-                         attention_mask: Variable[T])(implicit ev: TensorNumeric[T]): Variable[T] = {
-    val kattn = new KerasLayerWrapper[T](new InternalAttn[T]().asInstanceOf[AbstractModule[Activity, Activity, T]])
-    kattn.from(q, k, attention_mask)
-  }
-
   // TODO: Get the nDim from Variable
   private def normalizeAxis(axis: Int, nDim: Int = -1) = {
     if (axis < 0) {
