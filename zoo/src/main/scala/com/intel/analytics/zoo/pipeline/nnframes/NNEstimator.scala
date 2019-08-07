@@ -521,7 +521,8 @@ object NNEstimator {
    * Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The feature and
    * label data are converted to Tensors with the specified sizes before sending to the model.
    *
-   * This is used for multi-input model
+   * This API is used for multi-input model, where user need to specify the tensor sizes for
+   * each of the model input.
    *
    * @param model BigDL module to be optimized
    * @param criterion  BigDL criterion method
@@ -728,6 +729,27 @@ object NNModel extends MLReadable[NNModel[_]] {
     )(implicit ev: TensorNumeric[T]): NNModel[T] = {
     new NNModel(model)
       .setSamplePreprocessing(SeqToTensor(featureSize) -> TensorToSample())
+  }
+
+
+  /**
+   * Construct a [[NNModel]] with sizes of multiple model inputs. The constructor is useful
+   * when the feature column contains the following data types:
+   * Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The feature
+   * data are converted to Tensors with the specified sizes before sending to the model.
+   *
+   * This API is used for multi-input model, where user need to specify the tensor sizes for
+   * each of the model input.
+   *
+   * @param model model to be used, which should be a multi-input model.
+   * @param featureSize The sizes (Tensor dimensions) of the feature data.
+   */
+  def apply[T: ClassTag](
+      model: Module[T],
+      featureSize : Array[Array[Int]]
+    )(implicit ev: TensorNumeric[T]): NNModel[T] = {
+    new NNModel(model)
+      .setSamplePreprocessing(SeqToMultipleTensors(featureSize) -> MultiTensorsToSample())
   }
 
   /**
