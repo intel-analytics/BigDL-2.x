@@ -19,7 +19,7 @@ import pytest
 import random
 
 from zoo.pipeline.api.keras.layers import *
-from zoo.models.recommendation.session_recommender import SessionRecommender
+from zoo.models.recommendation import SessionRecommender
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
 np.random.seed(1337)  # for reproducibility
