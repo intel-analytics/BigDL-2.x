@@ -17,8 +17,9 @@
 package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
 
 import com.intel.analytics.bigdl.nn.abstractnn.TensorModule
-import com.intel.analytics.bigdl.tensor.{TensorOperation, Tensor}
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.zoo.common.TensorOperation
 
 import scala.reflect.ClassTag
 

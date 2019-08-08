@@ -1121,7 +1121,7 @@ class BertSpec extends ZooSpecHelper {
     }
   }
 
-  // TODO: uncomment this ut after we have put zoo model in a public place
+//   TODO: uncomment this ut after we have put zoo model in a public place
 //  "Bert with pretrained model " should "be able to work" in {
 //    // TODO: put zoo model in a public place
 //    val layer = BERT[Float]("/tmp/zoo-bert-splitprojection.model", null,
