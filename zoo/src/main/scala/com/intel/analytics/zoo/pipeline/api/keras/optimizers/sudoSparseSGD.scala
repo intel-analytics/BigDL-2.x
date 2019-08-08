@@ -19,6 +19,7 @@ import com.intel.analytics.bigdl.optim.SGD.{Default, LearningRateSchedule}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.{SparseTensorUtils, Tensor}
 import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.zoo.pipeline.api.keras.optimizers.SparseOptimMethod
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -34,7 +35,7 @@ class sudoSparseSGD[@specialized(Float, Double) T: ClassTag](
   var learningRates: Tensor[T] = null,
   var weightDecays: Tensor[T] = null
 )(implicit ev: TensorNumeric[T])
-  extends OptimMethod[T] {
+  extends SparseOptimMethod[T] {
 
   override def optimize(feval: (Tensor[T]) => (T, Tensor[T]), x: Tensor[T])
   : (Tensor[T], Array[T]) = {

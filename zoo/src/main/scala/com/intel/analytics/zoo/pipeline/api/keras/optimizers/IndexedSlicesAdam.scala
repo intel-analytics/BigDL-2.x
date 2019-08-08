@@ -40,7 +40,8 @@ class IndexedSlicesAdam[@specialized(Float, Double) T: ClassTag](
   epsilon: Double = 1e-8,
   decay: Double = 0.0,
   schedule: LearningRateSchedule = Default()
-)(implicit ev: TensorNumeric[T]) extends Adam[T](lr, beta_1, beta_2, epsilon, decay, schedule) {
+)(implicit ev: TensorNumeric[T]) extends Adam[T](lr, beta_1, beta_2, epsilon, decay, schedule)
+  with SparseOptimMethod[T] {
 
   @transient
   private var buffer: Tensor[T] = null
@@ -53,8 +54,8 @@ class IndexedSlicesAdam[@specialized(Float, Double) T: ClassTag](
    * @param parameter the initial point
    * @return the new x vector and the function list {fx}, evaluated before the update
    */
-  override def optimize(feval: (Tensor[T]) => (T, Tensor[T]),
-                        parameter: Tensor[T]): (Tensor[T], Array[T]) = {
+  override def optimize2(feval: (Array[Tensor[T]]) => (Array[T], Array[Tensor[T]]), parameter: Array[Tensor[T]])
+  : (Array[Tensor[T]], Array[Array[T]]) = {
     this.updateHyperParameter()
     val lr = this.lr
     val lrd = this.decay
@@ -65,41 +66,52 @@ class IndexedSlicesAdam[@specialized(Float, Double) T: ClassTag](
     val (fx, dfdx) = feval(parameter)
     val state = SGDRef.getstate(this)
     var timestep = state.getOrElse[Int]("neval", 0)
-    val (_s, _r, _denom) =
-      if (state.get[Tensor[T]]("s").isDefined) {
-        (state.get[Tensor[T]]("s").get, state.get[Tensor[T]]("r").get,
-          state.get[Tensor[T]]("denom").get.resizeAs(dfdx))
-      } else {
-//        (SparseTensorUtils.resizeAsIndexedSlicesTensor(dfdx),
-//          SparseTensorUtils.resizeAsIndexedSlicesTensor(dfdx),
-//          SparseTensorUtils.resizeAsIndexedSlicesTensor(dfdx))
-        (IndexedSlicesTensor[T](), IndexedSlicesTensor[T](), IndexedSlicesTensor[T]())
-      }
 
-    val clr = - this.schedule.currentRate
+    var i = 0
+    while (i < parameter.length) {
+      val (_s, _r, _denom) =
+        if (state.get[Tensor[T]]("s").isDefined) {
+          (state.get[Tensor[T]](s"s${i}").get, state.get[Tensor[T]](s"r${i}").get,
+            state.get[Tensor[T]](s"denom${i}").get.resizeAs(dfdx(i)))
+        } else {
+          (IndexedSlicesTensor[T](), IndexedSlicesTensor[T](), IndexedSlicesTensor[T]())
+        }
 
-    /**
-     * m_t = beta_1 * m_t-1 + (1 - beta_1) * g_t
-     * v_t = beta_2 * v_t-1 + (1 - beta_2) * g_t * g_t
-     */
-    _s.mul(ev.fromType[Double](beta1)).add(ev.fromType[Double](1-beta1), dfdx)
-    // buffer = dfdx * dfdx
-    buffer = dfdx.clone().cmul(dfdx)
-    _r.mul(ev.fromType[Double](beta2)).add(ev.fromType[Double](1-beta2), buffer)
-    _denom.sqrt(_r)
+      val clr = - this.schedule.currentRate
 
-    _denom.add(ev.fromType(eps))
+      /**
+       * m_t = beta_1 * m_t-1 + (1 - beta_1) * g_t
+       * v_t = beta_2 * v_t-1 + (1 - beta_2) * g_t * g_t
+       */
+      _s.mul(ev.fromType[Double](beta1))
+      _s.add(ev.fromType[Double](1-beta1), dfdx(i))
+      // buffer = dfdx * dfdx
+      buffer = dfdx(i).clone().cmul(dfdx(i))
+      _r.mul(ev.fromType[Double](beta2)).add(ev.fromType[Double](1-beta2), buffer)
+      _denom.sqrt(_r)
 
-    // efficiency improved upon by changing the order of computation, at expense of clarity
-    val biasCorrection1 = 1 - pow(beta1, timestep)
-    val biasCorrection2 = 1 - pow(beta2, timestep)
-    val stepSize = clr * sqrt(biasCorrection2) / biasCorrection1
-    SparseTensorUtils.addcdivSparseTensor(parameter, ev.fromType[Double](-stepSize), _s, _denom)
+      _denom.add(ev.fromType(eps))
 
-    state("s") = _s // 1st moment variables
-    state("r") = _r // 2nd moment variables
-    state("denom") = _denom // 3nd moment variables
+      // efficiency improved upon by changing the order of computation, at expense of clarity
+      val biasCorrection1 = 1 - pow(beta1, timestep)
+      val biasCorrection2 = 1 - pow(beta2, timestep)
+      val stepSize = clr * sqrt(biasCorrection2) / biasCorrection1
+      SparseTensorUtils.addcdivSparseTensor(parameter(i), ev.fromType[Double](-stepSize), _s, _denom)
+
+      state(s"s${i}") = _s // 1st moment variables
+      state(s"r${i}") = _r // 2nd moment variables
+      state(s"denom${i}") = _denom // 3nd moment variables
+
+      i += 1
+    }
 
     (parameter, Array(fx))
+  }
+
+  override def optimize(feval: (Tensor[T]) => (T, Tensor[T]),
+                        parameter: Tensor[T]): (Tensor[T], Array[T]) = {
+    throw new UnsupportedOperationException("Please use" +
+      "optimize(feval: (Array[Tensor[T]]) => (Array[T], Array[Tensor[T]]), parameter: Array[Tensor[T]])" +
+      "instead")
   }
 }

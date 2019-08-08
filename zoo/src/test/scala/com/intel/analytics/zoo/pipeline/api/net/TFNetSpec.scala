@@ -34,6 +34,8 @@ import scala.util.Random
 class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "TFNet " should "work with different data types" in {
+    val n = Array[Int]()
+      println(n.mkString("_"))
     val path = "/tmp/tmpG4AN73"
     val helper = TFTrainingHelper(path)
 

@@ -20,9 +20,10 @@ import java.util.{List => JList, Map => JMap}
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.{DataSet, Identity => _, _}
+import com.intel.analytics.bigdl.optim._
 
 import scala.collection.JavaConverters._
-import com.intel.analytics.bigdl.optim._
+//import com.intel.analytics.bigdl.optim.{_}
 import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, Sample}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -1371,7 +1372,8 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
                             optimMethod: JMap[String, OptimMethod[T]],
                             endTrigger: Trigger,
                             batchSize: Int,
-                            sparseOptimMethods: OptimMethod[T] = null): Optimizer[T, MiniBatch[T]] = {
+//                            sparseOptimMethods: OptimMethod[T]): Optimizer[T, MiniBatch[T]] = {
+                                    sparseOptimMethods: IndexedSlicesAdam[T]): Optimizer[T, MiniBatch[T]] = {
     val sampleRDD = toJSample(trainingRdd)
 
     val optimizer = new InternalDistriOptimizer[T](
@@ -1392,14 +1394,23 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     optimizer.asInstanceOf[Optimizer[T, MiniBatch[T]]]
   }
 
-  def createZooKerasIndexedSlicesAdam(
-    lr: Double = 1e-3,
-    beta_1: Double = 0.9,
-    beta_2: Double = 0.999,
-    epsilon: Double = 1e-8,
-    decay: Double = 0.0,
-    schedule: SGD.LearningRateSchedule = SGD.Default()
-  ): IndexedSlicesAdam[T] = {
-    new IndexedSlicesAdam[T](lr, beta_1, beta_2, epsilon, decay, schedule)
+//  def createZooKerasIndexedSlicesAdam(
+//    lr: Double = 1e-3,
+//    beta_1: Double = 0.9,
+//    beta_2: Double = 0.999,
+//    epsilon: Double = 1e-8,
+//    decay: Double = 0.0,
+//    schedule: SGD.LearningRateSchedule = SGD.Default()
+//  ): IndexedSlicesAdam[T] = {
+//    new IndexedSlicesAdam[T](lr, beta_1, beta_2, epsilon, decay, schedule)
+//  }
+
+  def createIndexedSlicesAdam(
+                  learningRate: Double = 1e-3,
+                  learningRateDecay: Double = 0.0,
+                  beta1: Double = 0.9,
+                  beta2: Double = 0.999,
+                  Epsilon: Double = 1e-8): IndexedSlicesAdam[T] = {
+    new IndexedSlicesAdam[T](learningRate, learningRateDecay, beta1, beta2, Epsilon)
   }
 }

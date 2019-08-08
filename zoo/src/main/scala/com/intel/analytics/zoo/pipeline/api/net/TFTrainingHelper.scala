@@ -29,6 +29,7 @@ import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.feature.image.ImageProcessing
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.{Accuracy, BinaryAccuracy, CategoricalAccuracy, SparseCategoricalAccuracy}
 import com.intel.analytics.zoo.pipeline.api.keras.models.InternalDistriOptimizer
+import com.intel.analytics.zoo.pipeline.api.keras.optimizers.SparseOptimMethod
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.tensorflow.{Session, Tensor => TTensor}
@@ -171,18 +172,18 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
         i = 0
         while (i < sparseVariables.length) {
           import com.intel.analytics.bigdl.tensor.IndexedSlicesTensor
-          val indices = sparseSplitGradWeight(i).storage().array().map(_.asInstanceOf[Float].toInt)
+          val indices = sparseSplitGradWeight(i * 3).storage().array().map(_.asInstanceOf[Float].toInt)
           var j = 0
           val values = new Array[Array[Float]](indices.length)
           while (j < indices.length) {
-            values(j) = sparseSplitGradWeight(i + 1).select(1, j + 1).storage().array()
+            values(j) = sparseSplitGradWeight(i * 3 + 1).select(1, j + 1).storage().array()
               .asInstanceOf[Array[Float]]
             j += 1
           }
-          val shape = sparseSplitGradWeight(i + 2).storage().array().map(_.asInstanceOf[Float].toInt)
+          val shape = sparseSplitGradWeight(i * 3 + 2).storage().array().map(_.asInstanceOf[Float].toInt)
           val g = IndexedSlicesTensor(indices, values, shape)
           sparseGradWeight(i) = g
-          i += 3
+          i += 1
         }
       }
     }
@@ -348,7 +349,7 @@ class TFOptimizer(modelPath: String,
                   optimMethod: OptimMethod[Float],
                   x: RDD[Sample[Float]],
                   batchSize: Int = 32,
-                  sparseOptimMethod: OptimMethod[Float] = null) {
+                  sparseOptimMethod: SparseOptimMethod[Float] = null) {
   private val trainer: TFTrainingHelper = TFTrainingHelper(modelPath)
   private val optimizer: Optimizer[Float, MiniBatch[Float]] = {
 //    val optimizer = Optimizer[Float](trainer, x, new IdentityCriterion(), batchSize)

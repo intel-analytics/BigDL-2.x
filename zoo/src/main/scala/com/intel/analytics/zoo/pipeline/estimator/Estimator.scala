@@ -22,6 +22,7 @@ import com.intel.analytics.bigdl.parameters.SparseParameterProcessor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet}
 import com.intel.analytics.zoo.pipeline.api.keras.models.InternalDistriOptimizer
+import com.intel.analytics.zoo.pipeline.api.keras.optimizers.SparseOptimMethod
 import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
@@ -128,7 +129,7 @@ class Estimator[T: ClassTag] private[zoo](
           val optimizer = new InternalDistriOptimizer[T](model, null, criterion)
             .setCheckpointDir(modelDir)
           val _opti = if (optimMethods.contains("sparse")) {
-            val sparseOptimMethod = optimMethods("sparse")
+            val sparseOptimMethod = optimMethods("sparse").asInstanceOf[SparseOptimMethod[T]]
             optimizer.setSparseParameterProcessor(sparseOptimMethod)
             optimMethods - "sparse"
           } else optimMethods

@@ -208,7 +208,8 @@ with variable_creator_scope():
                                               IdentityCriterion(),
                                               batch_size=batch_size,
                                               optim_method=self.optim_method,
-                                              sparse_optim_method=self.sparse_optim_method)
+                                              sparse_optim_method=self.sparse_optim_method.value)
+                                                 # sparse_optim_method=self.optim_method.value)
             self.optimizer.set_validation(self.dataset.batch_size,
                                           val_rdd,
                                           EveryEpoch(),

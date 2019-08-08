@@ -19,6 +19,7 @@ package com.intel.analytics.bigdl.optim
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.{SparseTensorUtils, Tensor}
 import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.zoo.pipeline.api.keras.optimizers.SparseOptimMethod
 
 import scala.reflect.ClassTag
 
@@ -32,7 +33,8 @@ import scala.reflect.ClassTag
 class SparseAdagrad[T: ClassTag](
   learningRate: Double = 1e-3,
   learningRateDecay: Double = 0.0
-)(implicit ev: TensorNumeric[T]) extends Adagrad[T](learningRate, learningRateDecay) {
+)(implicit ev: TensorNumeric[T]) extends Adagrad[T](learningRate, learningRateDecay)
+  with SparseOptimMethod[T] {
 
   /**
    * Sparse implementation for Adagrad

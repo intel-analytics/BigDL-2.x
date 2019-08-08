@@ -54,9 +54,9 @@ import scala.reflect.ClassTag
   */
 // indices is zero based.
 class IndexedSlicesTensor[@specialized(Float, Double) T: ClassTag](
-   private[tensor] var _indices : Array[Int],
-   private[tensor] var _values : Array[Array[T]],
-   private[tensor] var _shape : Array[Int],
+   var _indices : Array[Int],
+   var _values : Array[Array[T]],
+   var _shape : Array[Int],
    var nDimension: Int)
  (implicit ev: TensorNumeric[T]) extends Tensor[T] {
 

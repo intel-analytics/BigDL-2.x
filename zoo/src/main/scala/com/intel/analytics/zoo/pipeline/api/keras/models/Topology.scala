@@ -43,6 +43,7 @@ import com.intel.analytics.zoo.pipeline.api.autograd.{Lambda, Variable}
 import com.intel.analytics.zoo.pipeline.api.autograd._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Input
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils._
+import com.intel.analytics.zoo.pipeline.api.keras.optimizers.SparseOptimMethod
 import com.intel.analytics.zoo.pipeline.api.net.NetUtils
 import com.intel.analytics.zoo.pipeline.estimator.{AbstractEstimator, ConstantClipping, GradientClipping, L2NormClipping}
 import org.apache.hadoop.conf.Configuration
@@ -962,7 +963,7 @@ class InternalDistriOptimizer[T: ClassTag] (
 
   var sparseParameterProcessor: SparseParameterProcessor[T] = null
 
-  def setSparseParameterProcessor(optimMethods: OptimMethod[T]): this.type = {
+  def setSparseParameterProcessor(optimMethods: SparseOptimMethod[T]): this.type = {
     sparseParameterProcessor = new SparseParameterProcessor[T](optimMethods)
     parameterProcessors.append(sparseParameterProcessor)
     this

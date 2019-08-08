@@ -4,17 +4,18 @@ import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.nn.abstractnn.SparseAbstractModule
 import com.intel.analytics.bigdl.optim.DistriOptimizer.Cache
 import com.intel.analytics.bigdl.optim.{Metrics, OptimMethod}
-import com.intel.analytics.bigdl.tensor.{SparseTensorUtils, Tensor}
+import com.intel.analytics.bigdl.tensor.{IndexedSlicesTensor, SparseTensorUtils, Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.zoo.pipeline.api.keras.optimizers.SparseOptimMethod
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
 
 // U is walk around for collectGlobalData[T] is not ClassTag
-class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implicit ev: TensorNumeric[U])
-  extends ParameterProcessor {
+class SparseParameterProcessor[U: ClassTag](optimMethods: SparseOptimMethod[U])
+  (implicit ev: TensorNumeric[U]) extends ParameterProcessor {
   var globalSparseG: Array[Tensor[U]] = null
   var globalW: Array[Tensor[U]] = null
   var bcGlobalW: Broadcast[Array[Tensor[U]]] = null
@@ -25,9 +26,9 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implic
                                     state: Table)(implicit ev2: TensorNumeric[T]) : Unit = {
     // 1. aggregate sparseG first in each node
     // 2. aggregate sparseG on driver side
-    println("sparseparameterprocess.collectglobaldata")
     globalSparseG = models.mapPartitions(modelIter => {
       val cached = modelIter.next()
+
       val sparseG = cached.localModels.map(
         _.asInstanceOf[SparseAbstractModule[U]].sparseParameters()._2)
 
@@ -61,8 +62,10 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implic
     }
 //    globalW = optimMethods.optimize(_ => (ev.fromType(1.0f), globalSparseG), globalW)._1
 
-    globalW = globalW.zip(globalSparseG).map { case(w, g) =>
-      optimMethods.optimize(_ => (ev.fromType(1.0f), g), w)._1}
+//    globalW = globalW.zip(globalSparseG).map { case(w, g) =>
+//      optimMethods.optimize(_ => (ev.fromType(1.0f), g), w)._1}
+    val value = Array.fill(globalW.length)(ev.fromType((1.0f)))
+    globalW = optimMethods.optimize2(_ => (value, globalSparseG), globalW)._1
 
     // update weight in the cluster
     val sc = models.sparkContext
@@ -78,7 +81,6 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: OptimMethod[U])(implic
   override def processParameters[T](parameters: AllReduceParameter[T],
                                     modelCache: Cache[T],
                                     state: Table)(implicit ev: TensorNumeric[T]): Unit = {
-    println("sparseparameterprocess.processParameters")
       modelCache.localModels.head
         .asInstanceOf[SparseAbstractModule[U]].sparseParameters()._1.zip(bcGlobalW.value)
         .foreach {case (w, bw) => w.copy(bw)}
