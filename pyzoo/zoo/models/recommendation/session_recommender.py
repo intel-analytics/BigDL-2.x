@@ -39,16 +39,19 @@ class SessionRecommender(Recommender):
      mlp_hidden_layers: Units of hidden layers for the mlp model. Array of positive integers.
      history_length: The max number of items in the sequence of historical purchase
      """
-    def __init__(self, item_count, item_embed, rnn_hidden_layers, session_length,
-                 include_history=False, mlp_hidden_layers=[10, 5], his_length=2,
+    def __init__(self, item_count, item_embed, rnn_hidden_layers=[40, 20], session_length=0,
+                 include_history=False, mlp_hidden_layers=[40, 20], history_length=0,
                  bigdl_type="float"):
+        assert session_length > 0, "session_length should align with input features"
+        if include_history:
+            assert history_length > 0, "history_length should align with input features"
         self.item_count = int(item_count)
         self.item_embed = int(item_embed)
         self.mlp_hidden_layers = [int(unit) for unit in mlp_hidden_layers]
         self.rnn_hidden_layers = [int(unit) for unit in rnn_hidden_layers]
         self.include_history = include_history
         self.session_length = int(session_length)
-        self.his_length = int(his_length)
+        self.history_length = int(history_length)
         self.bigdl_type = bigdl_type
         self.model = self.build_model()
         super(SessionRecommender, self).__init__(None, self.bigdl_type,
@@ -58,7 +61,7 @@ class SessionRecommender(Recommender):
                                                  self.session_length,
                                                  self.include_history,
                                                  self.mlp_hidden_layers,
-                                                 self.his_length,
+                                                 self.history_length,
                                                  self.model)
 
     def build_model(self):
@@ -72,7 +75,7 @@ class SessionRecommender(Recommender):
         rnn = Dense(self.item_count)(gru_last)
 
         if self.include_history:
-            input_mlp = Input(shape=(self.his_length,))
+            input_mlp = Input(shape=(self.history_length,))
             his_table = Embedding(self.item_count + 1, self.item_embed, init="uniform")(input_mlp)
             embedSum = KerasLayerWrapper(Sum(dimension=2))(his_table)
             flatten = Flatten()(embedSum)
