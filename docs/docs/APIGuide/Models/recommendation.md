@@ -76,7 +76,7 @@ See [here](https://github.com/intel-analytics/analytics-zoo/blob/master/apps/rec
 
 ---
 ## Session Recommender
-Session Recommender[Hidasi, 2015](https://arxiv.org/pdf/1511.06939.pdf) uses an RNN-based approach for session-based recommendations. The model is enhanced in NetEase [Wu, 2016](https://ieeexplore.ieee.org/document/7498326) by adding multiple layers to model users' purchase history. In Analytics Zoo, `includeHistory`(Boolean) is provided for users to build a `SessionRecommender` model with or without history. 
+Session Recommender ([Hidasi, 2015](https://arxiv.org/pdf/1511.06939.pdf)) uses an RNN-based approach for session-based recommendations. The model is enhanced in NetEase ([Wu, 2016](https://ieeexplore.ieee.org/document/7498326)) by adding multiple layers to model users' purchase history. In Analytics Zoo, `includeHistory`(Boolean) is provided for users to build a `SessionRecommender` model with or without history. 
 
 After training the model, users can use the model to [do prediction and recommendation](#prediction-and-recommendation).
 

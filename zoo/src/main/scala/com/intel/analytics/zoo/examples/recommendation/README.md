@@ -9,6 +9,7 @@ In NeuralCFexample and WideAndDeepExample, we demostrate how to use Analyticd Zo
    The dataset we used for NCF is ([movielens-1M](https://grouplens.org/datasets/movielens/1m/)). Ratings.dat contains 1 million ratings from 6000 users on 4000 movies, 5 levels of rating are considered as 5 classes. Users.dat includes UserID, gender, age, occupation and zip-code. movies.dat includes movieID, title and genres. Please refer to ([readme](http://files.grouplens.org/datasets/movielens/ml-1m-README.txt)) for more details.  
    The datasets we used for WND are [movielens-1M](https://grouplens.org/datasets/movielens/1m/) and [Census Income Dataset](https://archive.ics.uci.edu/ml/datasets/Census+Income).  
    If you run the example with movielens-1M dataset, download the data ([movielens-1M](https://grouplens.org/datasets/movielens/1m/)), unzip it and put into `./data/ml-1m/`. If you run the example with Census Income Dataset, download `adult.data` and `adult.test` to `./data/census`
+   
    The dataset we used for SessionRecommender is ecommerce data provided by OfficeDepot.The dataset (atcHistory) describes agent’s purchase history and session add-to-cart items in sequence from OfficeDepot website (www.officedepot.com). It contains 406896 agents and 27482 items. These data were sampled and encoded for information security purposes. you can download the data and and put it into `./data/ecommerce/`
 
 ## Download Analytics Zoo
@@ -61,7 +62,7 @@ In NeuralCFexample and WideAndDeepExample, we demostrate how to use Analyticd Zo
 
 
 ## Session Recommender
-   Session Recommender[Hidasi, 2015](https://arxiv.org/pdf/1511.06939.pdf) uses an RNN-based approach for session-based recommendations. The model is enhanced in NetEase [Wu, 2016](https://ieeexplore.ieee.org/document/7498326) by adding multiple layers to model users' purchase history. In Analytics Zoo, `includeHistory`(Boolean) is provided for users to build a `SessionRecommender` model with or without history. 
+   Session Recommender ([Hidasi, 2015](https://arxiv.org/pdf/1511.06939.pdf)) uses an RNN-based approach for session-based recommendations. The model is enhanced in NetEase ([Wu, 2016](https://ieeexplore.ieee.org/document/7498326)) by adding multiple layers to model users' purchase history. In Analytics Zoo, `includeHistory`(Boolean) is provided for users to build a `SessionRecommender` model with or without history. 
 ### Run the Session Recommender example
 ``` bash
    export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
@@ -75,8 +76,8 @@ In NeuralCFexample and WideAndDeepExample, we demostrate how to use Analyticd Zo
    --outputDir ./output/
 ```
 ## References: 
-* A Keras implementation of Movie Recommendation([notebook](https://github.com/ririw/ririw.github.io/blob/master/assets/Recommending%20movies.ipynb)) from the [blog](http://blog.richardweiss.org/2016/09/25/movie-embeddings.html).
-* Nerual Collaborative filtering ([He, 2015](https://www.comp.nus.edu.sg/~xiangnan/papers/ncf.pdf))
-* Wide and deep Learning Model ([Google, 2016](https://arxiv.org/pdf/1606.07792.pdf))
-* Session-based recommendations with recurrent neura networks. [Hidasi, 2015](https://arxiv.org/pdf/1511.06939.pdf) 
-* Personal recommendation using deep recurrent neural networks in netEase, [Wu, 2016](https://ieeexplore.ieee.org/document/7498326) 
+* A Keras implementation of Movie Recommendation, ([notebook](https://github.com/ririw/ririw.github.io/blob/master/assets/Recommending%20movies.ipynb)) from the [blog](http://blog.richardweiss.org/2016/09/25/movie-embeddings.html).
+* Nerual Collaborative filtering, ([He, 2015](https://www.comp.nus.edu.sg/~xiangnan/papers/ncf.pdf))
+* Wide and deep Learning Model, ([Google, 2016](https://arxiv.org/pdf/1606.07792.pdf))
+* Session-based recommendations with recurrent neura networks, ([Hidasi, 2015](https://arxiv.org/pdf/1511.06939.pdf))
+* Personal recommendation using deep recurrent neural networks in netEase, ([Wu, 2016](https://ieeexplore.ieee.org/document/7498326))
