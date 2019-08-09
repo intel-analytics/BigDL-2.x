@@ -18,6 +18,7 @@ import os
 import tempfile
 import shutil
 import numpy as np
+import sys
 
 from pyspark import RDD
 from bigdl.nn.layer import Layer
@@ -25,6 +26,10 @@ from zoo import getOrCreateSparkContext
 from zoo.feature.image import ImageSet
 from bigdl.util.common import callBigDlFunc
 from zoo.pipeline.api.net.tfnet import to_sample_rdd
+
+if sys.version >= '3':
+    long = int
+    unicode = str
 
 
 class TorchNet(Layer):
@@ -38,16 +43,23 @@ class TorchNet(Layer):
         super(TorchNet, self).__init__(None, bigdl_type, path)
 
     @staticmethod
-    def from_pytorch(module, input_shape):
+    def from_pytorch(module, input_shape=None, sample_input=None):
         """
-        Create a TorchNet directly from PyTorch model, e.g. model in torchvision.models
+        Create a TorchNet directly from PyTorch model, e.g. model in torchvision.models.
+        Users need to specify sample_input or input_shape.
         :param module: a PyTorch model
-        :param input_shape: list of integers. E.g. for ResNet, this may be [1, 3, 224, 224]
+        :param input_shape: list of integers, or tuple of list for multiple inputs models. E.g.
+                            for ResNet, this may be [1, 3, 224, 224]
+        :param sample_input. A sample of Torch Tensor or tuple to trace the model.
         """
+        if not input_shape and not sample_input:
+            raise Exception("please specify input_shape or sample_input")
+
+        sample = TorchNet.get_sample_input(input_shape, sample_input)
         temp = tempfile.mkdtemp()
 
         # save model
-        traced_script_module = torch.jit.trace(module, torch.rand(input_shape))
+        traced_script_module = torch.jit.trace(module, sample)
         path = os.path.join(temp, "model.pt")
         traced_script_module.save(path)
 
@@ -55,6 +67,17 @@ class TorchNet(Layer):
         shutil.rmtree(temp)
 
         return net
+
+    @staticmethod
+    def get_sample_input(shape, sample):
+        if sample:
+            return sample
+        elif isinstance(shape, list):
+            return torch.rand(shape)
+        elif isinstance(shape, tuple):
+            return tuple(map(lambda s: torch.rand(s), shape))
+        else:
+            raise Exception("please specify shape as list of ints or tuples of int lists")
 
     def predict(self, x, batch_per_thread=1, distributed=True):
         """
