@@ -61,6 +61,7 @@ Similar to TorchNet, we also need users to provide sample input shape or sample 
 to trace the operations in the loss functions. The created TorchCriterion extends BigDL
 criterion, and can be used similarly as other criterions.
 
+# Examples
 Here we provide a simple end to end example.
 ```python
 import torch
@@ -134,4 +135,7 @@ and we expects to see the output like:
 ```
 
 More Pytorch examples (ResNet, Lenet etc.) are available [here](../../../pyzoo/zoo/examples/pytorch).
+
+
+
 
