@@ -243,8 +243,8 @@ object NNClassifierModel extends MLReadable[NNClassifierModel[_]] {
   }
 
   /**
-   * Construct a [[NNClassifierModel]] with sizes of multiple model inputs. The constructor is useful
-   * when the feature column contains the following data types:
+   * Construct a [[NNClassifierModel]] with sizes of multiple model inputs. The constructor is
+   * useful when the feature column contains the following data types:
    * Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The feature
    * data are converted to Tensors with the specified sizes before sending to the model.
    *
