@@ -15,10 +15,16 @@
 #
 import torch
 import torch.nn as nn
+import sys
 import os
 import tempfile
 import shutil
 from bigdl.nn.criterion import Criterion
+from .torch_net import TorchNet
+
+if sys.version >= '3':
+    long = int
+    unicode = str
 
 
 class LossWrapperModule(nn.Module):
@@ -44,9 +50,13 @@ class TorchCriterion(Criterion):
         super(TorchCriterion, self).__init__(None, bigdl_type, path)
 
     @staticmethod
-    def from_pytorch(loss, input_shape, label_shape=None, sample_input=None, sample_label=None):
+    def from_pytorch(loss, input_shape=None, label_shape=None,
+                     sample_input=None, sample_label=None):
         """
-        Create a TorchCriterion directly from PyTorch function
+        Create a TorchCriterion directly from PyTorch function. We need user to provide a sample
+        input and label to trace the loss function. User may just specify the input and label shape.
+        For specific data type or multiple input models, users can send sample_input and
+        sample_label.
         :param loss: this can be a torch loss (e.g. nn.MSELoss()) or
                      a function that take two Tensor parameters: input and label. E.g.
                      def lossFunc(input, target):
@@ -57,14 +67,18 @@ class TorchCriterion(Criterion):
         :param sample_input: a sample of input.
         :param sample_label: a sample of label.
         """
+        if not input_shape and not label_shape and not sample_input and not sample_label:
+            raise Exception("please specify input_shape and label_shape, or sample_input"
+                            " and sample_label")
+
         temp = tempfile.mkdtemp()
 
         # use input_shape as label shape when label_shape is not specified
         if not label_shape:
             label_shape = input_shape
 
-        sample_input = sample_input if sample_input else torch.rand(input_shape)
-        sample_label = sample_label if sample_label else torch.rand(label_shape)
+        sample_input = TorchNet.get_sample_input(input_shape, sample_input)
+        sample_label = TorchNet.get_sample_input(label_shape, sample_label)
 
         traced_script_loss = torch.jit.trace(LossWrapperModule(loss),
                                              (sample_input, sample_label))
