@@ -29,8 +29,6 @@ import com.intel.analytics.zoo.models.image.common.ImageConfigure
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.apache.commons.io.FileUtils
-import org.apache.spark.{SparkConf, SparkContext}
-import org.scalatest.{FlatSpec, Matchers}
 
 import scala.language.postfixOps
 import sys.process._
@@ -38,7 +36,7 @@ import sys.process._
 class ImageClassificationSpec extends ZooSpecHelper {
   val resource = getClass.getClassLoader.getResource("imagenet/n04370456/")
 
-  def predictLocal(url: String, publisher: String): Unit = {
+  def predictLocal(url: String, publisher: String, path: String): Unit = {
     val tmpFile = Files.createTempDir()
     val dir = new File(tmpFile.toString + "/models")
     val dirName = dir.getCanonicalPath
@@ -50,7 +48,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
     System.setProperty("bigdl.localMode", "true")
     Engine.init
 
-    val image = ImageSet.read(resource.getFile)
+    val image = ImageSet.read(path)
     val model = ImageClassifier.loadModel[Float](dirName + "/" + modelFileName)
     model.saveModel("./imc.model", overWrite = true)
     var result = null.asInstanceOf[ImageSet]
@@ -65,7 +63,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
     }
     val predicted = result.toLocal().array.map(_ (ImageFeature.predict).toString)
 
-    val image2 = ImageSet.read(resource.getFile)
+    val image2 = ImageSet.read(path)
     val model2 = ImageClassifier.loadModel[Float]("./imc.model")
     var result2 = null.asInstanceOf[ImageSet]
     if (!publisher.equalsIgnoreCase("analytics-zoo")) {
@@ -85,7 +83,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
     "rm -rf ./imc.model" !!
   }
 
-  def predict(url: String, publisher: String): Unit = {
+  def predict(url: String, publisher: String, path: String): Unit = {
     val tmpFile = Files.createTempDir()
     val dir = new File(tmpFile.toString + "/models")
     val dirName = dir.getCanonicalPath
@@ -99,7 +97,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
 
     val model = ImageClassifier.loadModel[Float](dirName + "/" + modelFileName)
     model.saveModel("./imc.model", overWrite = true)
-    val image = ImageSet.read(resource.getFile, sc)
+    val image = ImageSet.read(path, sc)
     var result = null.asInstanceOf[ImageSet]
     var config = null.asInstanceOf[ImageConfigure[Float]]
     if (!publisher.equalsIgnoreCase("analytics-zoo")) {
@@ -113,7 +111,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
     val predicted = result.toDistributed().rdd.collect()
 
     val model2 = ImageClassifier.loadModel[Float]("./imc.model")
-    val image2 = ImageSet.read(resource.getFile, sc)
+    val image2 = ImageSet.read(path, sc)
     var result2 = null.asInstanceOf[ImageSet]
     if (!publisher.equalsIgnoreCase("analytics-zoo"))
     {
@@ -138,22 +136,47 @@ class ImageClassificationSpec extends ZooSpecHelper {
   "ImageClassifier" should "predict inception-v1-quantize locally" in {
     predictLocal("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/" +
       "imageclassification/imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model",
-      "analytics-zoo")
+      "analytics-zoo", resource.getFile)
   }
 
   "ImageClassifier" should "predict inception-v1-quantize" in {
     predict("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/" +
-      "imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model", "analytics-zoo")
+      "imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model", "analytics-zoo",
+      resource.getFile)
   }
 
   "ImageClassifier" should "predict bigdl inception-v1-quantize locally" in {
     predictLocal("https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/" +
-      "imagenet/bigdl_inception-v1-quantize_imagenet_0.4.0.model", "bigdl")
+      "imagenet/bigdl_inception-v1-quantize_imagenet_0.4.0.model", "bigdl", resource.getFile)
   }
 
   "ImageClassifier" should "predict bigdl inception-v1-quantize" in {
     predict("https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/imagenet/" +
-      "bigdl_inception-v1-quantize_imagenet_0.4.0.model", "bigdl")
+      "bigdl_inception-v1-quantize_imagenet_0.4.0.model", "bigdl", resource.getFile)
+  }
+
+  "ImageClassifier" should "throw exception if input is empty locally" in {
+    val tempDir = Files.createTempDir()
+    val thrown = intercept[Exception]{
+      predictLocal("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/" +
+        "imageclassification/imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model",
+        "analytics-zoo", tempDir.getAbsolutePath)
+    }
+    assert("requirement failed: ImageModel.predictImageSet: input is empty, please check your " +
+      "image path." == thrown.getMessage)
+    "rm -rf ./imc.model" !!
+  }
+
+  "ImageClassifier" should "throw exception if input is empty" in {
+    val tempDir = Files.createTempDir()
+    val thrown = intercept[Exception]{
+      predict("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/" +
+        "imageclassification/imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model",
+        "analytics-zoo", tempDir.getAbsolutePath)
+    }
+    assert("requirement failed: ImageModel.predictImageSet: input is empty, please check your " +
+      "image path." == thrown.getMessage)
+    "rm -rf ./imc.model" !!
   }
 }
 

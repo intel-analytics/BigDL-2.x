@@ -101,7 +101,7 @@ object Options {
       .text("min gradient clipping by")
       .action((x, c) => c.copy(gradientMin = Some(x)))
     opt[String]("memoryType")
-      .text("memory type")
+      .text("memory type, DRAM, PMEM or a int number")
       .action((x, c) => c.copy(memoryType = x))
     opt[Unit]("opencv")
       .text("use opencv preprocessing")

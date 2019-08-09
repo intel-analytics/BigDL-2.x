@@ -20,14 +20,15 @@ import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dataset.{DataSet, Sample, SampleToMiniBatch,
 MiniBatch, DistributedDataSet}
 import com.intel.analytics.bigdl.dataset.{Sample, SampleToMiniBatch}
-import com.intel.analytics.bigdl.nn.{ClassNLLCriterion}
+import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.utils.{RandomGenerator, T}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.common.{NNContext}
-import com.intel.analytics.zoo.common.NNContext
+import com.intel.analytics.zoo.common.{EveryEpoch, MaxEpoch, NNContext}
 import com.intel.analytics.zoo.feature.FeatureSet
+import com.intel.analytics.zoo.feature.pmem.{DISK_AND_DRAM, MemoryType}
 import com.intel.analytics.zoo.models.recommendation._
 import com.intel.analytics.zoo.pipeline.estimator.Estimator
 import org.apache.log4j.{Level, Logger}
@@ -139,10 +140,12 @@ object CensusWideAndDeep {
       throw new IllegalArgumentException(s"Unkown modelType ${modelType}")
     }
 
+    val memoryType = MemoryType.fromString(params.memoryType)
+
     val sample2batch = SampleToMiniBatch(batchSize)
-    val trainRdds = FeatureSet.rdd(trainpairFeatureRdds.map(x => x.sample).cache()) ->
+    val trainRdds = FeatureSet.rdd(trainpairFeatureRdds.map(x => x.sample), memoryType) ->
       sample2batch
-    val validationRdds = FeatureSet.rdd(validationpairFeatureRdds.map(x => x.sample).cache()) ->
+    val validationRdds = FeatureSet.rdd(validationpairFeatureRdds.map(x => x.sample)) ->
       sample2batch
 
 //    val optimizer2 = Optimizer(
@@ -174,8 +177,8 @@ object CensusWideAndDeep {
       Estimator[Float](wideAndDeep, optimMethods)
     }
 
-    val (checkpointTrigger, testTrigger, endTrigger) =
-      (Trigger.everyEpoch, Trigger.everyEpoch, Trigger.maxEpoch(maxEpoch))
+    val (checkpointTrigger, endTrigger) =
+      (EveryEpoch(), MaxEpoch(maxEpoch))
 
     estimator.train(trainRdds, ClassNLLCriterion[Float](),
       Some(endTrigger),

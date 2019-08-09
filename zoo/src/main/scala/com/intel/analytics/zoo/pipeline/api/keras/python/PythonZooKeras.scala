@@ -24,6 +24,11 @@ import com.intel.analytics.bigdl.optim._
 
 import scala.collection.JavaConverters._
 //import com.intel.analytics.bigdl.optim.{_}
+import com.intel.analytics.bigdl.{Criterion, DataSet, Module}
+import com.intel.analytics.bigdl.dataset.{Identity => DIdentity, Sample => JSample, _}
+
+import scala.collection.JavaConverters._
+import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, Sample}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -1366,51 +1371,78 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     new SparseAdagrad[T](learningRate, lrDecay)
   }
 
+  def batchingWithPaddingStrategy(dataset: DataSet[JSample[T]], batchSize: Int, featureSize: Int)
+  : DataSet[MiniBatch[T]] = {
+    println("Using Feature Padding Strategy")
+    val paddingTensor = Tensor[T](1).fill(ev.fromType(-1.0))
+    val widePaddingTensor = Tensor[T](1).fill(ev.fromType(0.0))
+    val paddingArray = Array.fill[Tensor[T]](featureSize-1)(paddingTensor) ++ Array(widePaddingTensor)
+    val featurePaddingParam = PaddingParam[T](Some(paddingArray))
+    dataset.transform(SampleToMiniBatch(
+      batchSize = batchSize, featurePaddingParam = Some(featurePaddingParam)))
+  }
+
   def createInternalDistriOptimizer(model: AbstractModule[Activity, Activity, T],
                             trainingRdd: JavaRDD[Sample],
                             criterion: Criterion[T],
                             optimMethod: JMap[String, OptimMethod[T]],
                             endTrigger: Trigger,
                             batchSize: Int,
-//                            sparseOptimMethods: OptimMethod[T]): Optimizer[T, MiniBatch[T]] = {
-                                    sparseOptimMethods: IndexedSlicesAdam[T]): Optimizer[T, MiniBatch[T]] = {
+    sparseOptimMethods: IndexedSlicesAdam[T]): Optimizer[T, MiniBatch[T]] = {
     val sampleRDD = toJSample(trainingRdd)
+    val featureSize = sampleRDD.first().numFeature()
 
-    val optimizer = new InternalDistriOptimizer[T](
+    val optimizer = new InternalDistriOptimizer(
       _model = model,
-      _dataset = batching(DataSet.rdd(sampleRDD), batchSize)
+      _dataset = batchingWithPaddingStrategy(DataSet.rdd(sampleRDD), batchSize, featureSize)
         .asInstanceOf[DistributedDataSet[MiniBatch[T]]],
       _criterion = criterion
     )
 
-    optimizer.setEndWhen(endTrigger)
-
-    optimizer.setOptimMethods(optimMethod.asScala.toMap)
-
-    if (sparseOptimMethods != null) {
-      optimizer.setSparseParameterProcessor(sparseOptimMethods)
-    }
-
+      optimizer.setOptimMethods(optimMethod.asScala.toMap)
+      optimizer.setEndWhen(endTrigger)
+      if (sparseOptimMethods != null) {
+        optimizer.setSparseParameterProcessor(sparseOptimMethods)
+      }
     optimizer.asInstanceOf[Optimizer[T, MiniBatch[T]]]
   }
 
-//  def createZooKerasIndexedSlicesAdam(
-//    lr: Double = 1e-3,
-//    beta_1: Double = 0.9,
-//    beta_2: Double = 0.999,
-//    epsilon: Double = 1e-8,
-//    decay: Double = 0.0,
-//    schedule: SGD.LearningRateSchedule = SGD.Default()
-//  ): IndexedSlicesAdam[T] = {
-//    new IndexedSlicesAdam[T](lr, beta_1, beta_2, epsilon, decay, schedule)
-//  }
-
   def createIndexedSlicesAdam(
-                  learningRate: Double = 1e-3,
-                  learningRateDecay: Double = 0.0,
-                  beta1: Double = 0.9,
-                  beta2: Double = 0.999,
-                  Epsilon: Double = 1e-8): IndexedSlicesAdam[T] = {
+                               learningRate: Double = 1e-3,
+                               learningRateDecay: Double = 0.0,
+                               beta1: Double = 0.9,
+                               beta2: Double = 0.999,
+                               Epsilon: Double = 1e-8): IndexedSlicesAdam[T] = {
     new IndexedSlicesAdam[T](learningRate, learningRateDecay, beta1, beta2, Epsilon)
+  }
+
+  private def enrichOptimizer[T](
+    optimizer: Optimizer[T, MiniBatch[T]],
+    endTrigger: Trigger,
+    optimMethod: Map[String, OptimMethod[T]]): Optimizer[T, MiniBatch[T]] = {
+    optimizer.setEndWhen(endTrigger)
+
+    optimizer.setOptimMethods(optimMethod)
+
+    // TODO: remove this
+    optimizer.disableCheckSingleton()
+
+    optimizer
+  }
+
+  def setValidationWithPaddingStrategy(optimizer: Optimizer[T, MiniBatch[T]],
+                    batchSize: Int,
+                    trigger: Trigger,
+                    valRdd: JavaRDD[Sample],
+                    vMethods: JList[ValidationMethod[T]]): Unit = {
+    val sampleRDD = toJSample(valRdd)
+    val featureSize = sampleRDD.first().numFeature()
+    optimizer.setValidation(trigger,
+      batchingWithPaddingStrategy(DataSet.rdd(sampleRDD), batchSize, featureSize),
+      vMethods.asScala.toArray)
+  }
+
+  def createEpochStep(stepSize: Int, gamma: Double): SGD.EpochStep = {
+    SGD.EpochStep(stepSize, gamma)
   }
 }

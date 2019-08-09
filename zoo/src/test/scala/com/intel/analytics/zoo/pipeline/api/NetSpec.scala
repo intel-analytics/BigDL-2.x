@@ -20,16 +20,38 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.{CAddTable, SpatialCrossMapLRN}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{Shape, T}
+import com.intel.analytics.bigdl.utils.caffe.{CaffeLoader => BigDLCaffeLoader}
 import com.intel.analytics.zoo.pipeline.api.autograd.Variable
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Input, KerasLayerWrapper}
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model => ZModel}
 
+import scala.util.Random
+
 class NetSpec extends ZooSpecHelper{
 
   "invokeMethod set inputShape" should "work properly" in {
     KerasUtils.invokeMethod(Dense[Float](3), "_inputShapeValue_$eq", Shape(2, 3))
+  }
+
+  "Zoo CaffeLoader and BigDL CaffeLoader" should "have the same result" in {
+
+    val resource = getClass().getClassLoader().getResource("models")
+    val path = resource.getPath + "/" + "caffe"
+    val ww = s"$path/test_persist.caffemodel"
+    val dd = s"$path/test_persist.prototxt"
+    // val ww = "/home/litchy/bvlc.caffemodel"
+    // val dd = "/home/litchy/deploy_overlap.prototxt"
+
+    val bigDlModel = BigDLCaffeLoader.loadCaffe[Float](dd, ww)._1
+
+    val zooModel = Net.loadCaffe[Float](dd, ww)
+
+    val inputTensor = Tensor[Float](1, 3, 224, 224).apply1(e => Random.nextFloat())
+    val zooResult = zooModel.forward(inputTensor)
+    val bigDlResult = bigDlModel.forward(inputTensor)
+    zooResult should be (bigDlResult)
   }
 
   "Load Caffe model" should "work properly" in {

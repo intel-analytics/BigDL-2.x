@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.dataset.MiniBatch
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.parameters.SparseParameterProcessor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.feature.{DistributedFeatureSet, FeatureSet}
+import com.intel.analytics.zoo.feature.{DiskFeatureSet, DistributedFeatureSet, FeatureSet}
 import com.intel.analytics.zoo.pipeline.api.keras.models.InternalDistriOptimizer
 import com.intel.analytics.zoo.pipeline.api.keras.optimizers.SparseOptimMethod
 import org.apache.log4j.Logger
@@ -44,6 +44,7 @@ trait AbstractEstimator[T]{
                validationMethod: Array[ValidationMethod[T]]
               ): Map[ValidationMethod[T], ValidationResult]
 
+  def close(): Unit
 }
 
 private[estimator] trait GradientClipping
@@ -134,6 +135,7 @@ class Estimator[T: ClassTag] private[zoo](
             optimMethods - "sparse"
           } else optimMethods
           optimizer.setOptimMethods(_opti)
+            .setNumOfSlice(d.numOfSlice)
           optimizer
         case _ => throw new IllegalArgumentException("Unsupported FeatureSet type.")
       }
@@ -180,6 +182,12 @@ class Estimator[T: ClassTag] private[zoo](
       }
     }
     internalEstimator.evaluate(validationSet, validationMethod)
+  }
+
+  override def close(): Unit = {
+    if (internalEstimator != null) {
+      internalEstimator.close()
+    }
   }
 }
 
@@ -260,5 +268,6 @@ object Estimator {
         model: Module[T])(implicit ev: TensorNumeric[T]): Estimator[T] = {
     new Estimator[T](model, Map())
   }
+
 
 }

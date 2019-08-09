@@ -265,3 +265,21 @@ class InternalDistriOptimizer(ZooOptimizer):
             JavaValue.__init__(self, None, bigdl_type, model.value,
                                training_rdd, criterion,
                                optim_methods, end_trigger, batch_size, sparse_optim_method)
+
+    def set_validation(self, batch_size, val_rdd, trigger, val_method=None):
+        """
+        Configure validation settings.
+
+
+        :param batch_size: validation batch size
+        :param val_rdd: validation dataset
+        :param trigger: validation interval
+        :param val_method: the ValidationMethod to use,e.g. "Top1Accuracy", "Top5Accuracy", "Loss"
+        """
+        callBigDlFunc(self.bigdl_type, "setValidationWithPaddingStrategy", self.value, batch_size,
+                      trigger, val_rdd, to_list(val_method))
+
+
+class EpochStep(JavaValue):
+    def __init__(self, step_size, gamma, bigdl_type="float"):
+            JavaValue.__init__(self, None, bigdl_type, step_size, float(gamma))

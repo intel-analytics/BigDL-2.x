@@ -24,7 +24,7 @@
         <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>2.2.4</scalatest.version>
         <spark.version>2.1.0</spark.version>
-        <bigdl.version>0.8.0</bigdl.version>
+        <bigdl.version>0.9.0</bigdl.version>
         <core.artifactId>zoo-core-dist-all</core.artifactId>
         <core.dependencyType>pom</core.dependencyType>
         <data-store-url>http://download.tensorflow.org</data-store-url>
@@ -120,6 +120,11 @@
                 <dependency>
                     <groupId>com.intel.analytics.zoo</groupId>
                     <artifactId>zoo-core-openvino-java-linux</artifactId>
+                    <version>0.6.0-SNAPSHOT</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.intel.analytics.zoo</groupId>
+                    <artifactId>zoo-core-mkl-linux</artifactId>
                     <version>0.6.0-SNAPSHOT</version>
                 </dependency>
                 <dependency>
@@ -324,6 +329,18 @@
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
                 <filtering>true</filtering>
+                <includes>
+                    <include>*.txt</include>
+                    <include>*.conf</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>*.txt</exclude>
+                    <exclude>*.conf</exclude>
+                </excludes>
             </resource>
             <resource>
                 <!-- Include the properties file to provide the build information. -->
@@ -435,18 +452,6 @@
                     <createDependencyReducedPom>true</createDependencyReducedPom>
                     <shadedArtifactAttached>false</shadedArtifactAttached>
                     <filters>
-                        <filter>
-                            <!-->
-                            To work around https://github.com/intel-analytics/BigDL/issues/2734,
-                            we use shade to inplace BigDL's ZippedPartitionsWithLocalityRDD.
-                            <-->
-                            <artifact>com.intel.analytics.bigdl.spark-version:*</artifact>
-                            <excludes>
-                                <execlude>
-                                    org/apache/spark/rdd/ZippedPartitionsWithLocalityRDD*
-                                </execlude>
-                            </excludes>
-                        </filter>
                         <filter>
                             <artifact>com.google.protobuf</artifact>
                             <excludes>

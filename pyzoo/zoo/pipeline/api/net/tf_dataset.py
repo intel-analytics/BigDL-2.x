@@ -40,7 +40,7 @@ def _to_tensor_structure(tensors):
     elif isinstance(tensors, dict):
         tensor_structure = {}
         for key, value in tensors.items():
-            tensor_structure[key] = TensorMeta(dtype=value[0], shape=value[1], name=key)
+            tensor_structure[key] = TensorMeta(dtype=value[0], shape=value[1], name="input_"+key)
     else:
         raise ValueError("In TFDataset.from_rdd, features and labels should be a tuple, "
                          "a list of tuples or a dict of tuples")

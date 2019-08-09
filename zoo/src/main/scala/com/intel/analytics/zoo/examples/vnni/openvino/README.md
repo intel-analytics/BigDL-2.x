@@ -56,7 +56,7 @@ resnet_v1_50_inference_graph.xml
 
 Amount them, `resnet_v1_50_inference_graph.xml` and `resnet_v1_50_inference_graph.bin` are OpenVINO optimized ResNet_v1_50 model and weight, `resnet_v1_50_inference_graph-calibrated.xml` and `resnet_v1_50_inference_graph-calibrated.bin` are OpenVINO int8 optimized ResNet_v1_50 model and weight. Both of them can be loaded by OpenVINO or Zoo.
 
-__Note that int8 optimized model promises better performance (~2X) with slightly lower accuracy. When using int8 optimized model in `Perf` `ImageNetEvaluation` and `Predict`, pls add `--isInt8 true` at the end of the running command.__
+__Note that int8 optimized model promises better performance (~2X) with slightly lower accuracy. When using int8 optimized model in `Perf` `ImageNetEvaluation` and `Predict`.__
 
 
 ## Examples
@@ -75,8 +75,8 @@ export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics 
 export ANALYTICS_ZOO_JAR=export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
 
 MASTER=...
-modelPath=path of the downloaded int8 model
-weightPath=path of the downloaded int8 model weight
+modelPath=path of OpenVINO optimized model or int8 optimized model
+weightPath=path of OpenVINO optimized model weight or int8 optimized model weight
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh  \
     --master ${MASTER} --driver-memory 2g \
@@ -85,8 +85,8 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh  \
 ```
 
 __Options:__
-- `-m` `--model`: The path to the downloaded int8 model.
-- `-w` `--weight`: The path to the downloaded int8 model weight.
+- `-m` `--model`: The path to OpenVINO optimized model or int8 optimized model.
+- `-w` `--weight`: The path to OpenVINO optimized model weight or int8 optimized model weight.
 - `-b` `--batchSize`: The batch size of input data. Default is 4.
 - `-i` `--iteration`: The number of iterations to run the performance test. Default is 1.
 
@@ -115,8 +115,8 @@ export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 MASTER=...
 imagePath=folder path that contains sequence files of ImageNet no-resize validation images.
-modelPath=the path of downloaded int8 model
-weightPath=the path of downloaded int8 model weight
+modelPath=the path of OpenVINO optimized model or int8 optimized model
+weightPath=the path of OpenVINO optimized model weight or int8 optimized model weight
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --master ${MASTER} --driver-memory 100g \
@@ -125,8 +125,8 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 ```
 
 __Options:__
-- `-m` `--model`: The path to the downloaded int8 model.
-- `-w` `--weight`: The path to the downloaded int8 model weight.
+- `-m` `--model`: The path to OpenVINO optimized model or int8 optimized model.
+- `-w` `--weight`: The path to OpenVINO optimized model weight or int8 optimized model weight.
 - `-b` `--batchSize`: The batch size of input data. Default is 4.
 - `-f` `--folder`: The folder path that contains sequence files of ImageNet no-resize validation images.
 - `--partitionNum`: The partition number of the dataset. Default is 32.
@@ -147,8 +147,8 @@ export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 MASTER=...
 imagePath=folder path that contains image files of ImageNet
-modelPath=the path of downloaded int8 model
-weightPath=the path of downloaded int8 model weight
+modelPath=the path of OpenVINO optimized model or int8 optimized model
+weightPath=the path of OpenVINO optimized model weight or int8 optimized model weight
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --master ${MASTER} --driver-memory 10g \
@@ -157,8 +157,8 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 ```
 
 __Options:__
-- `-m` `--model`: The path to the downloaded int8 model.
-- `-w` `--weight`: The path to the downloaded int8 model weight.
+- `-m` `--model`: The path to OpenVINO optimized model or int8 optimized model.
+- `-w` `--weight`: The path to OpenVINO optimized model weight or int8 optimized model weight.
 - `-b` `--batchSize`: The batch size of input data. Default is 4.
 - `-f` `--folder`: The folder path that contains sequence files of ImageNet no-resize validation images.
 
