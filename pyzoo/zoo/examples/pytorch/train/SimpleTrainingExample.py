@@ -59,7 +59,7 @@ if __name__ == '__main__':
                                                input_shape=[1, 1],
                                                label_shape=[1, 1])
 
-    classifier = NNClassifier(az_model, az_criterion, SeqToTensor([2])) \
+    classifier = NNClassifier(az_model, az_criterion) \
         .setBatchSize(4) \
         .setOptimMethod(Adam()) \
         .setLearningRate(0.01) \
