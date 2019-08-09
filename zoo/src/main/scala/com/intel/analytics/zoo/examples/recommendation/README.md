@@ -78,3 +78,5 @@ In NeuralCFexample and WideAndDeepExample, we demostrate how to use Analyticd Zo
 * A Keras implementation of Movie Recommendation([notebook](https://github.com/ririw/ririw.github.io/blob/master/assets/Recommending%20movies.ipynb)) from the [blog](http://blog.richardweiss.org/2016/09/25/movie-embeddings.html).
 * Nerual Collaborative filtering ([He, 2015](https://www.comp.nus.edu.sg/~xiangnan/papers/ncf.pdf))
 * Wide and deep Learning Model ([Google, 2016](https://arxiv.org/pdf/1606.07792.pdf))
+* Session-based recommendations with recurrent neura networks. [Hidasi, 2015](https://arxiv.org/pdf/1511.06939.pdf) 
+* Personal recommendation using deep recurrent neural networks in netEase, [Wu, 2016](https://ieeexplore.ieee.org/document/7498326) 
