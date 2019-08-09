@@ -95,8 +95,8 @@ ncf=NeuralCF(user_count, item_count, class_num, user_embed=20, item_embed=20, hi
 Compile and train a NCF model
 ```python
 ncf.compile(optimizer= Adam(learningrate = 1e-3, learningrate_decay=1e-6),
-    loss= "sparse_categorical_crossentropy",
-    metrics=['accuracy'])
+            loss= "sparse_categorical_crossentropy",
+            metrics=['accuracy'])
 ncf.fit(train_rdd, nb_epoch, batch_size, val_rdd)
 ```
 Predict and recommend items(users) for users(items) with given features.
@@ -126,7 +126,7 @@ sessionRecommender.fit(trainRdds, batchSize, nbEpoch, validationRdds)
 Predict and recommend items(users) for users(items) with given features.
 ```scala
 val results = sessionRecommender.predict(testRdd)
-val recommendations = model.recommendForSession(validationpairFeatureRdds, 3)
+val recommendations = model.recommendForSession(testRdd, 3, false)
 ``` 
 See more details in our[Recommender API](../APIGuide/Models/recommendation.md) and [Scala example](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/recommendation/SessionRecExp.scala)
 
