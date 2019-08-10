@@ -30,7 +30,7 @@ import scala.reflect.ClassTag
  * where shift = max_i(x_i).
  * Currently only support apply softmax normalization to the last dim.
  */
-private[zoo] class InternalSoftMax[@specialized(Float, Double) T: ClassTag]()
+private[zoo] class InternalSoftMax[T: ClassTag]()
    (implicit ev: TensorNumeric[T]) extends TensorModule[T] {
 
   override def updateOutput(input: Tensor[T]): Tensor[T] = {
@@ -56,7 +56,7 @@ private[zoo] class InternalSoftMax[@specialized(Float, Double) T: ClassTag]()
 }
 
 private[zoo] object InternalSoftMax{
-  def apply[@specialized(Float, Double) T: ClassTag]()
+  def apply[T: ClassTag]()
     (implicit ev: TensorNumeric[T]) : InternalSoftMax[T] = {
     new InternalSoftMax[T]()
   }

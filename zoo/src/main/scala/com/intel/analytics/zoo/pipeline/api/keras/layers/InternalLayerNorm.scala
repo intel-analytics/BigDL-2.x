@@ -23,7 +23,7 @@ import com.intel.analytics.zoo.common.TensorOperation
 
 import scala.reflect.ClassTag
 
-private[zoo] class InternalLayerNorm[@specialized(Float, Double) T: ClassTag](
+private[zoo] class InternalLayerNorm[T: ClassTag](
   val nOutput: Int = 768, val eps: Double = 1e-5)
   (implicit ev: TensorNumeric[T]) extends TensorModule[T]{
   val weight = Tensor.ones[T](nOutput).view(1, nOutput)
