@@ -1,0 +1,62 @@
+FROM ubuntu:18.04
+
+MAINTAINER The Analytics-Zoo Authors https://github.com/intel-analytics/analytics-zoo
+
+WORKDIR /opt/work
+
+ARG ANALYTICS_ZOO_VERSION=0.5.1
+ARG BIGDL_VERSION=0.8.0
+ARG SPARK_VERSION=2.4.0 
+
+ENV ANALYTICS_ZOO_VERSION 	$ANALYTICS_ZOO_VERSION
+ENV SPARK_VERSION		$SPARK_VERSION
+ENV BIGDL_VERSION		$BIGDL_VERSION
+ENV SOURCE_QUEUE		source
+ENV TARGET_QUEUE		target
+ENV MODEL_PATH			resources/deploy_overlap.prototxt
+ENV WEIGHT_PATH			resources/bvlc.caffemodel
+
+ENV SPARK_OPTS			"--master local[*]"
+ENV REDIS_HOST			loaclhost
+ENV REDIS_PORT			6379
+
+ENV SPARK_HOME			/opt/work/spark-${SPARK_VERSION}
+ENV ANALYTICS_ZOO_HOME		/opt/work/analytics-zoo-${ANALYTICS_ZOO_VERSION}
+ENV JAVA_HOME			/opt/jdk
+ENV CONDA_HOME			/opt/work/conda
+ENV PATH			${JAVA_HOME}/bin:${CONDA_HOME}/bin:${PATH}
+
+RUN apt-get update && \
+    apt-get install -y apt-utils vim curl nano wget unzip maven git && \
+    apt-get install -y gcc g++ make
+
+#java
+RUN wget https://build.funtoo.org/distfiles/oracle-java/jdk-8u152-linux-x64.tar.gz && \
+    gunzip jdk-8u152-linux-x64.tar.gz && \
+    tar -xf jdk-8u152-linux-x64.tar -C /opt && \
+    rm jdk-8u152-linux-x64.tar && \
+    ln -s /opt/jdk1.8.0_152 /opt/jdk
+
+#spark
+RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
+    tar -zxvf spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
+    mv spark-${SPARK_VERSION}-bin-hadoop2.7 spark-${SPARK_VERSION} && \
+    rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz
+
+
+#redis
+RUN wget http://download.redis.io/releases/redis-5.0.5.tar.gz && \
+    tar xzf redis-5.0.5.tar.gz && \
+    rm redis-5.0.5.tar.gz && \
+    cd redis-5.0.5 && \
+    make && \
+    cd ..
+    
+ADD ./docker/packages packages
+
+ADD ./start.sh /opt/work
+RUN chmod a+x /opt/work/start.sh
+
+CMD ["/opt/work/start.sh"]
+
+
