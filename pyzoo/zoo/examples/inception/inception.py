@@ -180,7 +180,7 @@ if __name__ == "__main__":
     val_transformer = ChainedPreprocessing([ImagePixelBytesToMat(),
                                             ImageCenterCrop(image_size, image_size),
                                             ImageChannelNormalize(123.0, 117.0, 104.0),
-                                            ImageMatToTensor(format="NCHW", to_RGB=True),
+                                            ImageMatToTensor(format="NCHW", to_RGB=False),
                                             ImageSetToSample(input_keys=["imageTensor"], target_keys=["label"])
                                             ])
 
