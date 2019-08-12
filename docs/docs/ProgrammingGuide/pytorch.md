@@ -1,6 +1,6 @@
-Analytics-Zoo supports distributed Pytorch training and inference. User can define their
-model and loss function with Pytorch API, and run it distributedly with the wrapper layers
-provided by Analytics Zoo.
+Analytics-Zoo supports distributed Pytorch training and inferenceon on Apache Spark. User can
+define their model and loss function with Pytorch API, and run it distributedly with the
+wrapper layers provided by Analytics Zoo.
 
 # System Requirement
 Pytorch version: 1.1.0
@@ -14,22 +14,22 @@ if any error is found.
 
 # Pytorch API
 
-Two thin wrappers are defined in Analytics Zoo:
+Two wrappers are defined in Analytics Zoo for Pytorch:
 
 1. TorchNet: TorchNet is a wrapper class for Pytorch model.
-Typically, user may create a TorchNet by providing a Pytorch model and sample input shape.
+User may create a TorchNet by providing a Pytorch model and sample input shape, e.g.
 ```python
     from zoo.pipeline.api.net.torch_net import TorchNet
     TorchNet.from_pytorch(torchvision.models.resnet18(pretrained=True).eval(), [1, 3, 224, 224])
 ```
-The above line creates TorchNet wrapping a ResNet model, and users can further use the TorchNet for
-training or inference distributedly with Analytics Zoo. Internally, we create a sample input
+The above line creates TorchNet wrapping a ResNet model, and user can use the TorchNet for
+training or inference with Analytics Zoo. Internally, we create a sample input
 from the input_shape provided, and use torch script module to trace the tensor operations
 performed on the input sample. The result TorchNet extends from BigDL module, and can be used
 with local or distributed data (RDD or DataFrame) just like other layers.
 
 2. TorchCriterion: TorchCriterion is a wrapper for loss functions defined by Pytorch.
-Typically, user may create a TorchCriterion from a Pytorch Criterion, 
+User may create a TorchCriterion from a Pytorch Criterion, 
 ```python
     from torch import nn
     from zoo.pipeline.api.net.torch_criterion import TorchCriterion
@@ -62,7 +62,8 @@ to trace the operations in the loss functions. The created TorchCriterion extend
 criterion, and can be used similarly as other criterions.
 
 # Examples
-Here we provide a simple end to end example.
+Here we provide a simple end to end example, where we use TorchNet and TorchCriterion to
+train a simple model with Spark DataFrame.
 ```python
 import torch
 import torch.nn as nn
@@ -135,7 +136,4 @@ and we expects to see the output like:
 ```
 
 More Pytorch examples (ResNet, Lenet etc.) are available [here](../../../pyzoo/zoo/examples/pytorch).
-
-
-
 
