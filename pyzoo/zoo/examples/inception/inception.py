@@ -178,8 +178,7 @@ if __name__ == "__main__":
     train_data = FeatureSet.image_frame(raw_train_data).transform(train_transformer)
 
     val_transformer = ChainedPreprocessing([ImagePixelBytesToMat(),
-                                            ImageRandomCrop(image_size, image_size),
-                                            ImageRandomPreprocessing(ImageHFlip(), 0.5),
+                                            ImageCenterCrop(image_size, image_size),
                                             ImageChannelNormalize(123.0, 117.0, 104.0),
                                             ImageMatToTensor(format="NCHW", to_RGB=True),
                                             ImageSetToSample(input_keys=["imageTensor"], target_keys=["label"])
