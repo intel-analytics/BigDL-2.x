@@ -23,13 +23,6 @@ cd "`dirname $0`"
 export PYSPARK_PYTHON=python
 export PYSPARK_DRIVER_PYTHON=python
 
-python -m pytest -v --doctest-modules ../zoo/ray/
-exit_status_1=$?
-if [ $exit_status_1 -ne 0 ];
-then
-    exit $exit_status_1
-fi
-
 python -m pytest -v ../test/zoo/ray/ \
        --ignore=../test/zoo/ray/integration/
 exit_status_2=$?
