@@ -60,7 +60,7 @@ class ParameterServer(object):
 @ray.remote
 def worker_task(ps, worker_index, batch_size=50):
     # Download MNIST.
-    print("Worker "+ str(worker_index))
+    print("Worker " + str(worker_index))
     mnist = model.download_mnist_retry(seed=worker_index)
 
     # Initialize the model.
