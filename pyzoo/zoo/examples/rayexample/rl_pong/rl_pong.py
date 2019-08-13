@@ -208,7 +208,7 @@ if __name__ == "__main__":
         ray_ctx = RayContext(sc=sc, object_store_memory="25g")
     else:
         sc = init_spark_on_local(cores=4)
-        ray_ctx = RayContext(sc=sc,object_store_memory="4g")
+        ray_ctx = RayContext(sc=sc, object_store_memory="4g")
     ray_ctx.init()
 
     batch_size = args.batch_size
