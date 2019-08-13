@@ -38,6 +38,15 @@ class TestTF(ZooTestCase):
                                [-0.03913354128599167, 0.11446280777454376, -1.7967549562454224,
                                 -1.2342952489852905, -0.819004476070404]))
 
+    def test_torch_net_constructor(self):
+        input = [[0.5, 1.], [-0.3, 1.2]]
+        torch_input = torch.tensor(input)
+        model = nn.Linear(2, 1)
+
+        # AZ part
+        net1 = TorchNet.from_pytorch(model, torch_input)
+        net2 = TorchNet.from_pytorch(model, [1, 2])
+
     def test_linear_gradient_match(self):
         input = [[0.5, 1.], [-0.3, 1.2]]
         label = [[0.6], [-0.9]]
@@ -284,6 +293,7 @@ class TestTF(ZooTestCase):
         assert np.allclose(torch_grad, az_grad.tolist())
 
     def test_torchnet_constructor(self):
+        # two inputs test
         class TwoInputModel(nn.Module):
             def __init__(self):
                 super(TwoInputModel, self).__init__()
@@ -295,9 +305,15 @@ class TestTF(ZooTestCase):
                 x2 = self.dense2(x2)
                 return x1, x2
 
-        az_net = TorchNet.from_pytorch(
-            TwoInputModel(), sample_input=(torch.ones(2, 2), torch.ones(2, 3)))
-        az_net = TorchNet.from_pytorch(TwoInputModel(), ([2, 2], [2, 3]))
+        TorchNet.from_pytorch(TwoInputModel(), sample_input=(torch.ones(2, 2), torch.ones(2, 3)))
+        TorchNet.from_pytorch(TwoInputModel(), ([2, 2], [2, 3]))
+
+        # sample input
+        input = [[0.5, 1.], [-0.3, 1.2]]
+        torch_input = torch.tensor(input)
+        model = nn.Linear(2, 1)
+        TorchNet.from_pytorch(model, torch_input)
+        TorchNet.from_pytorch(model, [1, 2])
 
     def test_torchcriterion_constructor(self):
         criterion = nn.MSELoss()
@@ -308,11 +324,15 @@ class TestTF(ZooTestCase):
             loss = loss1 + 0.4 * loss2
             return loss
 
-        az_criterion = TorchCriterion.from_pytorch(
+        TorchCriterion.from_pytorch(
             lossFunc,
             sample_input=(torch.ones(2, 2), torch.ones(2, 3)),
             sample_label=(torch.ones(2, 2), torch.ones(2, 3)))
-        az_criterion = TorchCriterion.from_pytorch(lossFunc, ([2, 2], [2, 3]), ([2, 2], [2, 3]))
+        TorchCriterion.from_pytorch(lossFunc, ([2, 2], [2, 3]), ([2, 2], [2, 3]))
+        TorchCriterion.from_pytorch(criterion, input_shape=[2, 1], label_shape=[2, 1])
+        TorchCriterion.from_pytorch(criterion,
+                                    sample_input=torch.ones(2, 2),
+                                    sample_label=torch.ones(2, 2))
 
     def test_model_train_with_multiple_input(self):
         class TwoInputModel(nn.Module):
