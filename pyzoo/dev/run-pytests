@@ -22,48 +22,13 @@ cd "`dirname $0`"
 
 export PYSPARK_PYTHON=python
 export PYSPARK_DRIVER_PYTHON=python
-
 py_version="$(python -V 2>&1)"
-spark_version="$(pyspark --version 2>&1)"
 
-exit_status_0=$?
-if [ $exit_status_0 -eq 127 ];
-then
-    temp=$SPARK_HOME/bin/pyspark
-    spark_version="$($temp --version 2>&1)"
-fi
-temp="${spark_version% /_/*}"
-spark_version="${temp##*\\}"
-
-echo "pyspark version is "$spark_version
-echo "spark home is "$SPARK_HOME
-
-#check version whether it's support ray
-if [[ $py_version == *"Python 3.5"* || $py_version == *"Python 3.6"* ]]; then
-    if [[ $spark_version == *"version 2.4.3"* || $spark_version == *"version 2.4.0"* ]]; then
-        python -m pytest -v --doctest-modules ../zoo \
-            --ignore=../zoo/pipeline/api/keras2 \
-            --ignore=../zoo/tfpark/text \
-            --ignore=../zoo/examples
-    else
-        echo "current spark version is not support ray."
-        echo "Skipping ray. Please check your spark version or check SPARK_HOME."
-        python -m pytest -v --doctest-modules ../zoo \
-            --ignore=../zoo/pipeline/api/keras2 \
-            --ignore=../zoo/tfpark/text \
-            --ignore=../zoo/examples \
-            --ignore=../zoo/ray/
-    fi
-else
-    echo "current python version is not support ray."
-    echo "Skipping ray. Please check your pyhton version."
-    python -m pytest -v --doctest-modules ../zoo \
-        --ignore=../zoo/pipeline/api/keras2 \
-        --ignore=../zoo/tfpark/text \
-        --ignore=../zoo/examples \
-        --ignore=../zoo/ray/
-fi
-
+python -m pytest -v --doctest-modules ../zoo \
+    --ignore=../zoo/pipeline/api/keras2 \
+    --ignore=../zoo/tfpark/text \
+    --ignore=../zoo/examples \
+    --ignore=../zoo/ray/
 exit_status_1=$?
 if [ $exit_status_1 -ne 0 ];
 then
