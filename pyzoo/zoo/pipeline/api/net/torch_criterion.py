@@ -67,7 +67,8 @@ class TorchCriterion(Criterion):
         :param sample_input: a sample of input.
         :param sample_label: a sample of label.
         """
-        if (not input_shape and sample_input is None) or (not label_shape and sample_label is None):
+        if (input_shape is None and sample_input is None) or \
+                (label_shape is None and sample_label is None):
             raise Exception("please specify input_shape and label_shape, or sample_input"
                             " and sample_label")
 
