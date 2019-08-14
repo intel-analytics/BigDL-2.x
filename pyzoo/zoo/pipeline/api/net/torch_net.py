@@ -43,19 +43,22 @@ class TorchNet(Layer):
         super(TorchNet, self).__init__(None, bigdl_type, path)
 
     @staticmethod
-    def from_pytorch(module, input_shape=None, sample_input=None):
+    def from_pytorch(module, input):
         """
         Create a TorchNet directly from PyTorch model, e.g. model in torchvision.models.
-        Users need to specify sample_input or input_shape.
+        Users need to provide an example input or the input tensor shape.
         :param module: a PyTorch model
-        :param input_shape: list of integers, or tuple of list for multiple inputs models. E.g.
-                            for ResNet, this may be [1, 3, 224, 224]
-        :param sample_input. A sample of Torch Tensor or tuple to trace the model.
+        :param input: To trace the tensor operations, torch jit trace requires users to
+                      provide an example input. Here the input parameter can be:
+                        1. a torch tensor, or tuple of torch tensors for multi-input models
+                        2. list of integers, or tuple of int list for multi-input models. E.g. For
+                           ResNet, this can be [1, 3, 224, 224]. A random tensor with the
+                           specified size will be used as the example input.
         """
-        if input_shape is None and sample_input is None:
-            raise Exception("please specify input_shape or sample_input")
+        if input is None:
+            raise Exception("please provide an example input or input Tensor size")
 
-        sample = TorchNet.get_sample_input(input_shape, sample_input)
+        sample = TorchNet.get_sample_input(input)
         temp = tempfile.mkdtemp()
 
         # save model
@@ -69,15 +72,20 @@ class TorchNet(Layer):
         return net
 
     @staticmethod
-    def get_sample_input(shape, sample):
-        if sample is not None:
-            return sample
-        elif isinstance(shape, list):
-            return torch.rand(shape)
-        elif isinstance(shape, tuple):
-            return tuple(map(lambda s: torch.rand(s), shape))
-        else:
-            raise Exception("please specify shape as list of ints or tuples of int lists")
+    def get_sample_input(input):
+        if isinstance(input, torch.Tensor):
+            return input
+
+        elif isinstance(input, (list, tuple)) and len(input) > 0:
+            if all(isinstance(x, torch.Tensor) for x in input):  # tensors
+                return tuple(input)
+            elif all(isinstance(x, int) for x in input):  # ints
+                return torch.rand(input)
+            elif all(isinstance(x, (list, tuple)) for x in input) and \
+                    all(isinstance(y, int) for x in input for y in x):  # nested int list (tuple)
+                return tuple(map(lambda size: torch.rand(size), input))
+
+        raise Exception("Unsupported input type: " + str(input))
 
     def predict(self, x, batch_per_thread=1, distributed=True):
         """

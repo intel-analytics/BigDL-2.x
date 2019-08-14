@@ -60,8 +60,7 @@ if __name__ == '__main__':
     def lossFunc(input, target):
         return nn.CrossEntropyLoss().forward(input, target.flatten().long())
 
-    torchcriterion = TorchCriterion.from_pytorch(loss=lossFunc, input_shape=[1, 2],
-                                                 sample_label=torch.LongTensor([1]))
+    torchcriterion = TorchCriterion.from_pytorch(lossFunc, [1, 2], torch.LongTensor([1]))
 
     # prepare training data as Spark DataFrame
     image_path = sys.argv[1]

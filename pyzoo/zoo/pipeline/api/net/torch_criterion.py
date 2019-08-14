@@ -50,36 +50,37 @@ class TorchCriterion(Criterion):
         super(TorchCriterion, self).__init__(None, bigdl_type, path)
 
     @staticmethod
-    def from_pytorch(loss, input_shape=None, label_shape=None,
-                     sample_input=None, sample_label=None):
+    def from_pytorch(loss, input, label=None):
         """
-        Create a TorchCriterion directly from PyTorch function. We need user to provide a sample
-        input and label to trace the loss function. User may just specify the input and label shape.
-        For specific data type or multiple input models, users can send sample_input and
-        sample_label.
+        Create a TorchCriterion directly from PyTorch function. We need users to provide example
+        input and label (or just their sizes) to trace the loss function.
+
         :param loss: this can be a torch loss (e.g. nn.MSELoss()) or
-                     a function that take two Tensor parameters: input and label. E.g.
+                     a function that takes two Tensor parameters: input and label. E.g.
                      def lossFunc(input, target):
                          return nn.CrossEntropyLoss().forward(input, target.flatten().long())
-
-        :param input_shape: list of integers.
-        :param label_shape: list of integers. If not specified, it will be set equal to input_shape
-        :param sample_input: a sample of input.
-        :param sample_label: a sample of label.
+        :param input: example input. It can be:
+                        1. a torch tensor, or tuple of torch tensors for multi-input models
+                        2. list of integers, or tuple of int list for multi-input models. E.g. For
+                           ResNet, this can be [1, 3, 224, 224]. A random tensor with the
+                           specified size will be used as the example input.
+        :param label: example label. It can be:
+                        1. a torch tensor, or tuple of torch tensors for multi-input models
+                        2. list of integers, or tuple of int list for multi-input models. E.g. For
+                           ResNet, this can be [1, 3, 224, 224]. A random tensor with the
+                           specified size will be used as the example input.
+                      When label is None, input will also be used as label.
         """
-        if (input_shape is None and sample_input is None) or \
-                (label_shape is None and sample_label is None):
-            raise Exception("please specify input_shape and label_shape, or sample_input"
-                            " and sample_label")
+        if input is None:
+            raise Exception("please specify input and label")
 
         temp = tempfile.mkdtemp()
-
         # use input_shape as label shape when label_shape is not specified
-        if not label_shape:
-            label_shape = input_shape
+        if label is None:
+            label = input
 
-        sample_input = TorchNet.get_sample_input(input_shape, sample_input)
-        sample_label = TorchNet.get_sample_input(label_shape, sample_label)
+        sample_input = TorchNet.get_sample_input(input)
+        sample_label = TorchNet.get_sample_input(label)
 
         traced_script_loss = torch.jit.trace(LossWrapperModule(loss),
                                              (sample_input, sample_label))

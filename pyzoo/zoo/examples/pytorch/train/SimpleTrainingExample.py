@@ -54,10 +54,8 @@ if __name__ == '__main__':
     torch_model = SimpleTorchModel()
     torch_criterion = nn.MSELoss()
 
-    az_model = TorchNet.from_pytorch(module=torch_model, input_shape=[1, 2])
-    az_criterion = TorchCriterion.from_pytorch(loss=torch_criterion.forward,
-                                               input_shape=[1, 1],
-                                               label_shape=[1, 1])
+    az_model = TorchNet.from_pytorch(torch_model, [1, 2])
+    az_criterion = TorchCriterion.from_pytorch(torch_criterion, [1, 1], [1, 1])
 
     classifier = NNClassifier(az_model, az_criterion) \
         .setBatchSize(4) \

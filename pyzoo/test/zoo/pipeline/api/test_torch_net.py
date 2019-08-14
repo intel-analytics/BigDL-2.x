@@ -27,6 +27,55 @@ from zoo.pipeline.api.net.torch_criterion import TorchCriterion
 
 
 class TestTF(ZooTestCase):
+
+    def test_torchnet_constructor(self):
+        # two inputs test
+        class TwoInputModel(nn.Module):
+            def __init__(self):
+                super(TwoInputModel, self).__init__()
+                self.dense1 = nn.Linear(2, 2)
+                self.dense2 = nn.Linear(3, 1)
+
+            def forward(self, x1, x2):
+                x1 = self.dense1(x1)
+                x2 = self.dense2(x2)
+                return x1, x2
+
+        TorchNet.from_pytorch(TwoInputModel(), (torch.ones(2, 2), torch.ones(2, 3)))
+        TorchNet.from_pytorch(TwoInputModel(), ([2, 2], [2, 3]))
+        TorchNet.from_pytorch(TwoInputModel(), [torch.ones(2, 2), torch.ones(2, 3)])
+        TorchNet.from_pytorch(TwoInputModel(), [[2, 2], [2, 3]])
+
+        # one input
+        input = [[0.5, 1.], [-0.3, 1.2]]
+        torch_input = torch.tensor(input)
+        model = nn.Linear(2, 1)
+        TorchNet.from_pytorch(model, torch_input)
+        TorchNet.from_pytorch(model, [1, 2])
+
+    def test_torchcriterion_constructor(self):
+        # two inputs test
+        criterion = nn.MSELoss()
+
+        def lossFunc(input, label):
+            loss1 = criterion(input[0], label[0])
+            loss2 = criterion(input[1], label[1])
+            loss = loss1 + 0.4 * loss2
+            return loss
+
+        TorchCriterion.from_pytorch(lossFunc,
+                                    (torch.ones(2, 2), torch.ones(2, 3)),
+                                    (torch.ones(2, 2), torch.ones(2, 3)))
+        TorchCriterion.from_pytorch(lossFunc, ([2, 2], [2, 3]), ([2, 2], [2, 3]))
+        TorchCriterion.from_pytorch(lossFunc,
+                                    [torch.ones(2, 2), torch.ones(2, 3)],
+                                    [torch.ones(2, 2), torch.ones(2, 3)])
+        TorchCriterion.from_pytorch(lossFunc, [[2, 2], [2, 3]], [[2, 2], [2, 3]])
+
+        # one inputs test
+        TorchCriterion.from_pytorch(criterion, [2, 1], [2, 1])
+        TorchCriterion.from_pytorch(criterion, torch.ones(2, 2), torch.ones(2, 2))
+
     def test_torch_net_predict_resnet(self):
         model = torchvision.models.resnet18(pretrained=True).eval()
         net = TorchNet.from_pytorch(model, [1, 3, 224, 224])
@@ -37,15 +86,6 @@ class TestTF(ZooTestCase):
                            np.asarray(
                                [-0.03913354128599167, 0.11446280777454376, -1.7967549562454224,
                                 -1.2342952489852905, -0.819004476070404]))
-
-    def test_torch_net_constructor(self):
-        input = [[0.5, 1.], [-0.3, 1.2]]
-        torch_input = torch.tensor(input)
-        model = nn.Linear(2, 1)
-
-        # AZ part
-        net1 = TorchNet.from_pytorch(model, torch_input)
-        net2 = TorchNet.from_pytorch(model, [1, 2])
 
     def test_linear_gradient_match(self):
         input = [[0.5, 1.], [-0.3, 1.2]]
@@ -63,8 +103,7 @@ class TestTF(ZooTestCase):
 
         # AZ part
         az_net = TorchNet.from_pytorch(model, [1, 2])
-        az_criterion = TorchCriterion.from_pytorch(loss=criterion, input_shape=[1, 1],
-                                                   label_shape=[1, 1])
+        az_criterion = TorchCriterion.from_pytorch(criterion, [1, 1], [1, 1])
 
         az_input = np.array(input)
         az_label = np.array(label)
@@ -116,9 +155,7 @@ class TestTF(ZooTestCase):
 
         # AZ part
         az_net = TorchNet.from_pytorch(torch_model, [1, 2])
-        az_criterion = TorchCriterion.from_pytorch(loss=torch_criterion.forward,
-                                                   input_shape=[1, 1],
-                                                   label_shape=[1, 1])
+        az_criterion = TorchCriterion.from_pytorch(torch_criterion.forward, [1, 1], [1, 1])
 
         az_input = np.array(input)
         az_label = np.array(label)
@@ -151,8 +188,7 @@ class TestTF(ZooTestCase):
 
         # AZ part
         az_net = TorchNet.from_pytorch(model, [1, 2])
-        az_criterion = TorchCriterion.from_pytorch(loss=lossFunc, input_shape=[1, 10],
-                                                   label_shape=[1, 1])
+        az_criterion = TorchCriterion.from_pytorch(lossFunc, [1, 10], [1, 1])
 
         az_input = np.array(input)
         az_label = np.array(label)
@@ -207,13 +243,12 @@ class TestTF(ZooTestCase):
             torch_model.fc2.bias.grad.flatten().tolist()
 
         # AZ part
-        az_net = TorchNet.from_pytorch(torch_model, input_shape=[1, 1, 28, 28])
+        az_net = TorchNet.from_pytorch(torch_model, [1, 1, 28, 28])
 
         def lossFunc(input, target):
             return torch_criterion.forward(input, target.flatten().long())
 
-        az_criterion = TorchCriterion.from_pytorch(loss=lossFunc, input_shape=[1, 10],
-                                                   label_shape=[1, 1])
+        az_criterion = TorchCriterion.from_pytorch(lossFunc, [1, 10], [1, 1])
 
         az_input = np.array(input)
         az_label = np.array(label)
@@ -276,9 +311,9 @@ class TestTF(ZooTestCase):
 
         az_net = TorchNet.from_pytorch(model, [1, 2])
         az_criterion = TorchCriterion.from_pytorch(
-            loss=lossFunc,
-            sample_input=(torch.ones(2, 2), torch.ones(2, 1)),
-            sample_label=(torch.ones(2, 2), torch.ones(2, 1)))
+            lossFunc,
+            (torch.ones(2, 2), torch.ones(2, 1)),
+            (torch.ones(2, 2), torch.ones(2, 1)))
 
         az_input = np.array(input)
         az_label = [np.ones([2, 2]), np.ones([2, 1])]
@@ -291,48 +326,6 @@ class TestTF(ZooTestCase):
 
         assert np.allclose(torch_loss.tolist(), az_loss_output)
         assert np.allclose(torch_grad, az_grad.tolist())
-
-    def test_torchnet_constructor(self):
-        # two inputs test
-        class TwoInputModel(nn.Module):
-            def __init__(self):
-                super(TwoInputModel, self).__init__()
-                self.dense1 = nn.Linear(2, 2)
-                self.dense2 = nn.Linear(3, 1)
-
-            def forward(self, x1, x2):
-                x1 = self.dense1(x1)
-                x2 = self.dense2(x2)
-                return x1, x2
-
-        TorchNet.from_pytorch(TwoInputModel(), sample_input=(torch.ones(2, 2), torch.ones(2, 3)))
-        TorchNet.from_pytorch(TwoInputModel(), ([2, 2], [2, 3]))
-
-        # sample input
-        input = [[0.5, 1.], [-0.3, 1.2]]
-        torch_input = torch.tensor(input)
-        model = nn.Linear(2, 1)
-        TorchNet.from_pytorch(model, torch_input)
-        TorchNet.from_pytorch(model, [1, 2])
-
-    def test_torchcriterion_constructor(self):
-        criterion = nn.MSELoss()
-
-        def lossFunc(input, label):
-            loss1 = criterion(input[0], label[0])
-            loss2 = criterion(input[1], label[1])
-            loss = loss1 + 0.4 * loss2
-            return loss
-
-        TorchCriterion.from_pytorch(
-            lossFunc,
-            sample_input=(torch.ones(2, 2), torch.ones(2, 3)),
-            sample_label=(torch.ones(2, 2), torch.ones(2, 3)))
-        TorchCriterion.from_pytorch(lossFunc, ([2, 2], [2, 3]), ([2, 2], [2, 3]))
-        TorchCriterion.from_pytorch(criterion, input_shape=[2, 1], label_shape=[2, 1])
-        TorchCriterion.from_pytorch(criterion,
-                                    sample_input=torch.ones(2, 2),
-                                    sample_label=torch.ones(2, 2))
 
     def test_model_train_with_multiple_input(self):
         class TwoInputModel(nn.Module):
@@ -369,11 +362,11 @@ class TestTF(ZooTestCase):
             model.dense2.weight.grad.tolist()[0] + \
             model.dense2.bias.grad.tolist()
 
-        az_net = TorchNet.from_pytorch(model, sample_input=(torch.ones(2, 2), torch.ones(2, 2)))
+        az_net = TorchNet.from_pytorch(model, (torch.ones(2, 2), torch.ones(2, 2)))
         az_criterion = TorchCriterion.from_pytorch(
-            loss=lossFunc,
-            sample_input=(torch.ones(2, 2), torch.ones(2, 1)),
-            sample_label=(torch.ones(2, 2), torch.ones(2, 1)))
+            lossFunc,
+            (torch.ones(2, 2), torch.ones(2, 1)),
+            (torch.ones(2, 2), torch.ones(2, 1)))
 
         az_input = [np.array(input), np.array(input)]
         az_label = [np.ones([2, 2]), np.ones([2, 1])]
