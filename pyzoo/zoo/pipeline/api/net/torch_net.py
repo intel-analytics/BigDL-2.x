@@ -43,7 +43,7 @@ class TorchNet(Layer):
         super(TorchNet, self).__init__(None, bigdl_type, path)
 
     @staticmethod
-    def from_pytorch(module, input):
+    def from_pytorch(module, input, check_trace=True):
         """
         Create a TorchNet directly from PyTorch model, e.g. model in torchvision.models.
         Users need to provide an example input or the input tensor shape.
@@ -54,6 +54,11 @@ class TorchNet(Layer):
                         2. list of integers, or tuple of int list for multi-input models. E.g. For
                            ResNet, this can be [1, 3, 224, 224]. A random tensor with the
                            specified size will be used as the example input.
+        :param check_trace: boolean value, optional. check if the same inputs run through
+                            traced module produce the same outputs. Default: ``True``. You
+                            might want to disable this if, for example, your network contains
+                            non-deterministic ops or if you are sure that the network is
+                            correct despite a checker failure.
         """
         if input is None:
             raise Exception("please provide an example input or input Tensor size")
@@ -62,7 +67,7 @@ class TorchNet(Layer):
         temp = tempfile.mkdtemp()
 
         # save model
-        traced_script_module = torch.jit.trace(module, sample)
+        traced_script_module = torch.jit.trace(module, sample, check_trace=check_trace)
         path = os.path.join(temp, "model.pt")
         traced_script_module.save(path)
 
