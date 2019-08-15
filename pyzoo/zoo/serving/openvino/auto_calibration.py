@@ -1,5 +1,20 @@
-#!/usr/bin/env python3
-import sys
+#
+# Copyright 2018 Analytics Zoo Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+
 import os
 import argparse
 import subprocess
@@ -8,9 +23,8 @@ import shutil
 import imghdr
 import xml.etree.ElementTree as ET
 
-
+# OpenVINO 2018 only supports ssd calibration
 OBJECT_DETECTION = ["fastrcnn",
-                    "rfcn",
                     "ssd",
                     "maskrcnn",
                     "yolo"]
@@ -100,15 +114,41 @@ def object_detection_val_prepare(image_path):
         curr_path = os.path.join(image_path, f)
         if os.path.isdir(curr_path):
             continue
-        # Move *.xml to anno
+        # Move *.xml to anno dir
         if curr_path.endswith("xml"):
             shutil.copy(curr_path, val_anno_path)
-        # Move images to image
+        # Move images to image dir
         elif imghdr.what(curr_path) is not None:
             shutil.copy(curr_path, val_image_path)
         elif curr_path.endswith("txt"):
             val_txt = curr_path
-    return (new_image_path, val_anno_path, val_txt)
+    return new_image_path, val_anno_path, val_txt
+
+
+def auto_calibration(args):
+    # Find calibration_tool abs path
+    tool_path = get_calibration_tool_path()
+    # Check model type (parser from file path)
+    model_type = "C"
+    if args.type is None:
+        model_type = get_model_type(args.model)
+    cmd_string = "%s -m %s -t %s" % (tool_path,
+                                     args.model, model_type)
+    # Handle validation dataset
+    if model_type == "OD":
+        # TODO
+        cmd_string += " -i %s -ODa %s -ODc %s" % object_detection_val_prepare(args.input)
+    else:
+        cmd_string += " -i %s" % image_classification_val_prepare(args.input)
+    # Threshold
+    if args.threshold != 1 and args.threshold > 0:
+        cmd_string += " -threshold %d" % args.threshold
+    # Subset
+    if args.subset != 1 and args.subset > 0:
+        cmd_string += " -subset %d" % args.subset
+    print(cmd_string)
+    # run command
+    subprocess.call(cmd_string, shell=True)
 
 
 if __name__ == '__main__':
@@ -133,27 +173,5 @@ if __name__ == '__main__':
             Default value is 1, which stands for accepted accuracy drop in 1%", default=1)
 
     args = parser.parse_args()
+    auto_calibration(args)
 
-    # Find calibration_tool abs path
-    tool_path = get_calibration_tool_path()
-    # Check model type (parser from file path)
-    model_type = "C"
-    if args.type is None:
-        model_type = get_model_type(args.model)
-    cmd_string = "%s -m %s -t %s" % (tool_path,
-                                     args.model, model_type)
-    # Handle validation dataset
-    if model_type == "OD":
-        # TODO
-        cmd_string += " -i %s -ODa %s -ODc %s" % object_detection_val_prepare(args.input)
-    else:
-        cmd_string += " -i %s" % image_classification_val_prepare(args.input)
-    # Thredshold
-    if args.threshold != 1 and args.threshold > 0:
-        cmd_string += " -threshold %d" % args.threshold
-    # Subset
-    if args.subset != 1 and args.subset > 0:
-        cmd_string += " -subset %d" % args.subset
-    print(cmd_string)
-    # run command
-    subprocess.call(cmd_string, shell=True)
