@@ -1,0 +1,52 @@
+## Analytics-zoo Cluster Serving
+
+model:
+	# if not set, would be inferred automatically	
+	type:
+
+	# model path must be set
+	path: resources
+data:
+	# default, image
+	type:
+
+	# default, redis-stream
+	input:
+
+	# default, redis-table
+	output:	
+
+	# default, 6379
+	port:
+
+spark:
+	# default, local[*]
+	master:
+
+	# default, 4g
+	driver_memory:
+
+	# default, 1g
+	executor_memory:
+
+	# default, 1
+	num_executors:
+
+	# default, 4
+	executor_cores:
+	
+params:
+	# default, 4
+	batch_size:
+	
+	# default, 4
+	mkl_threads:
+
+	# default, mkldnn
+	engine_type:
+	
+	
+
+	
+
+
