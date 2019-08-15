@@ -39,6 +39,8 @@ object ZooServing {
 
   def main(args: Array[String]): Unit = {
 
+//    val param = parser.parse(args, RedisParams()).get
+
     val loader = new Loader()
     loader.init(args)
     val cachedModel = loader.loadModel[Float]()
@@ -68,10 +70,9 @@ object ZooServing {
     val query = images
       .writeStream
       .foreachBatch { (batchDF: DataFrame, batchId: Long) => {
-        // uncomment this line if you want action on DataFrame
-        // otherwise you should not do any action on batchDF
-        // if you do action on it, it would become empty
-        // batchDF.persist(MEMORY_ONLY)
+//        batchDF.persist(MEMORY_ONLY)
+//        println(batchDF.count())
+//        println(batchDF.count())
 
         logger.info(s"Get batch $batchId")
 
@@ -101,10 +102,12 @@ object ZooServing {
             (0 until size).toParArray.foreach { i =>
               inputTensor.select(1, i + 1).copy(batch(i)._2)
             }
-
+//            logger.info(s"Copy elapsed ${(System.nanoTime() - startCopy) / 1e9} s")
             val start = System.nanoTime()
             val output = localModel.forward(inputTensor).toTensor[Float]
             val end = System.nanoTime()
+//            logger.info(s"elapsed ${(end - start) / 1e9} s")
+
 
             (0 until size).map { i => {
               var value: String = ""
@@ -118,6 +121,7 @@ object ZooServing {
           }
         }
 
+//        if (!result.isEmpty) {
         val resDf = spark.createDataFrame(result)
         resDf.write
           .format("org.apache.spark.sql.redis")

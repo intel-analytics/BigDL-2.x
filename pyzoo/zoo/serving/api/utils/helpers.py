@@ -3,7 +3,6 @@ import base64
 import sys
 import cv2
 import time
-from utils import settings
 
 
 def base64_encode_image(image_array):
@@ -21,7 +20,7 @@ def base64_decode_image(image_array, dtype):
     # type and target shape
     image_array = np.frombuffer(base64.decodestring(image_array), dtype=dtype)
     image_array = cv2.imdecode(image_array, -1)
-    image_array = image_preprocess(image_array, settings.IMAGE_WIDTH, settings.IMAGE_HEIGHT)
+    image_array = image_preprocess(image_array, "image_width", "image_height")
     # return the decoded image
     return image_array
 
@@ -55,7 +54,7 @@ def central_crop(image, crop_height, crop_width):
 
 def image_preprocess(image, output_width, output_height):
     start_time = time.time()
-    image = aspect_preserving_resize(image, settings.RESIZE_MIN)
+    image = aspect_preserving_resize(image, "resize_min")
     image = central_crop(image, output_height, output_width)
     print("Pre-processing %d ms" % int(round((time.time() - start_time) * 1000)))
     # NHWC -> NCWH
