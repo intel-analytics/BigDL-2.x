@@ -288,7 +288,6 @@ class KerasNet(ZooKerasLayer):
         Use a model to do prediction.
 
         # Arguments
-        # Arguments
         x: Prediction data. A Numpy array or RDD of Sample or ImageSet.
         batch_per_thread:
           The default value is 4.
