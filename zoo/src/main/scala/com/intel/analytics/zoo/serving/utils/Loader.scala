@@ -33,9 +33,7 @@ import org.apache.spark.sql.SparkSession
 
 import scala.reflect.ClassTag
 
-case class LoaderParams(modelType: String = "",
-                        weightPath: String = "",
-                        defPath: String = "",
+case class LoaderParams(modelFolder: String = null,
                         batchSize: Int = 4,
                         isInt8: Boolean = false,
                         topN: Int = 1,
@@ -48,17 +46,17 @@ class Loader {
 
   val parser = new OptionParser[LoaderParams]("Zoo Serving") {
 
-    opt[String]('t', "modelType")
-      .text("Model type, could be caffe, keras")
-      .action((x, c) => c.copy(modelType = x))
-      .required()
-    opt[String]('w', "weightPath")
+    //    opt[String]('t', "modelType")
+    //      .text("Model type, could be caffe, keras")
+    //      .action((x, c) => c.copy(modelType = x))
+    //      .required()
+    opt[String]('f', "modelFolder")
       .text("weight file path")
-      .action((x, p) => p.copy(weightPath = x))
+      .action((x, p) => p.copy(modelFolder = x))
       .required()
-    opt[String]('d', "defPath")
-      .text("prototxt file path if caffe model")
-      .action((x, c) => c.copy(defPath = x))
+    //    opt[String]('d', "defPath")
+    //      .text("prototxt file path if caffe model")
+    //      .action((x, c) => c.copy(defPath = x))
     opt[String]('r', "redis")
       .text("redis url")
       .action((x, c) => c.copy(redis = x))
@@ -85,7 +83,8 @@ class Loader {
 
   var weightPath: String = null
   var defPath: String = null
-//  var modelType: String = null
+  var dirPath: String = null
+  //  var modelType: String = null
 
   def init(args: Array[String]) = {
     params = parser.parse(args, LoaderParams()).get
@@ -104,17 +103,17 @@ class Loader {
   }
 
   def loadModel[T: ClassTag]()
-    (implicit ev: TensorNumeric[T]) = {
+                            (implicit ev: TensorNumeric[T]) = {
 
-//    val model = if (modelType == "caffe") {
-//      val loadedModel = Module.loadCaffeModel[Float](params.defPath, params.weightPath)
-//      ModelConvertor.convert[Float](
-//        ModelConvertor.caffe2zoo(loadedModel), Boolean.box(false)).evaluate()
-//    } else {
-//      val loadedModel = Module.loadModule[Float](params.weightPath).quantize()
-//      loadedModel.evaluate()
-//    }
-    val model = parseModelLocation(params.weightPath)
+    //    val model = if (modelType == "caffe") {
+    //      val loadedModel = Module.loadCaffeModel[Float](params.defPath, params.weightPath)
+    //      ModelConvertor.convert[Float](
+    //        ModelConvertor.caffe2zoo(loadedModel), Boolean.box(false)).evaluate()
+    //    } else {
+    //      val loadedModel = Module.loadModule[Float](params.weightPath).quantize()
+    //      loadedModel.evaluate()
+    //    }
+    val model = parseModelLocation(params.modelFolder)
 
     val sc = NNContext.initNNContext()
     val bcModel = ModelBroadcast[Float]().broadcast(sc, model)
@@ -133,7 +132,7 @@ class Loader {
       .getOrCreate()
   }
   def parseModelLocation(location: String):
-      AbstractModule[Activity, Activity, Float] = {
+  AbstractModule[Activity, Activity, Float] = {
 
     import java.io.File
     val f = new File(location)
@@ -150,9 +149,32 @@ class Loader {
       else if (fName.endsWith("prototxt")) {
         defPath = fPath
       }
-
+      else if (fName.endsWith("pb")) {
+        weightPath = location
+        modelType = "tensorflow"
+      }
+      else if (fName.endsWith("t7")) {
+        weightPath = fPath
+        modelType = "torch"
+      }
+      else if (fName.endsWith("model")) {
+        weightPath = fPath
+        modelType = "bigdl"
+      }
+      else if (fName.endsWith("keras")) {
+        weightPath = fPath
+        modelType = "keras"
+      }
     }
-    model
+    if (modelType == null) throw new RuntimeException("can not detect model type")
+    model = modelType match {
+      case "caffe" => Net.loadCaffe[Float](defPath, weightPath)
+      case "tensorflow" => Net.loadTF[Float](weightPath)
+      case "torch" => Net.loadTorch[Float](weightPath)
+      case "bigdl" => Net.loadBigDL[Float](weightPath)
+      case "keras" => Net.load[Float](weightPath)
+    }
+    model.evaluate()
   }
 
 }
