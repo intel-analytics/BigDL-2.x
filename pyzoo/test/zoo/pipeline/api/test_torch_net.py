@@ -14,6 +14,9 @@
 # limitations under the License.
 #
 
+import shutil
+import errno
+
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -426,24 +429,27 @@ class TestPytorch(ZooTestCase):
 
         az_model = TorchNet.from_pytorch(torch_model, [1, 2])
         az_criterion = TorchCriterion.from_pytorch(torch_criterion, [1, 1], [1, 1])
-
         estimator = NNEstimator(az_model, az_criterion) \
             .setBatchSize(4) \
             .setLearningRate(0.01) \
             .setMaxEpoch(10)
 
         nnModel = estimator.fit(df)
-
-        print("After training: ")
         res = nnModel.transform(df)
-        res.show(10, False)
 
-        # res = NNModel(az_model).transform(df)
-
-        az_model.savePytorch("/home/yuhao/PycharmProjects/pytorch_test/models/SimpleTorchModel")
-        loaded = TorchNet("/home/yuhao/PycharmProjects/pytorch_test/models/SimpleTorchModel")
-        resDF = NNModel(loaded).setPredictionCol("loaded").transform(res)
-        assert resDF.filter("prediction==loaded").count() == resDF.count()
+        try:
+            tmp_dir = tempfile.mkdtemp()
+            modelPath = os.path.join(tmp_dir, "model")
+            az_model.savePytorch(modelPath)
+            loaded = TorchNet(modelPath)
+            resDF = NNModel(loaded).setPredictionCol("loaded").transform(res)
+            assert resDF.filter("prediction==loaded").count() == resDF.count()
+        finally:
+            try:
+                shutil.rmtree(tmp_dir)  # delete directory
+            except OSError as exc:
+                if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
+                    raise  # re-raise exception
 
 if __name__ == "__main__":
     pytest.main([__file__])
