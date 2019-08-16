@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.models.image.imageclassification
 
 import java.io.File
 
-import com.google.common.io.Files
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -37,7 +36,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
   val resource = getClass.getClassLoader.getResource("imagenet/n04370456/")
 
   def predictLocal(url: String, publisher: String, path: String): Unit = {
-    val tmpFile = Files.createTempDir()
+    val tmpFile = createTmpDir()
     val dir = new File(tmpFile.toString + "/models")
     val dirName = dir.getCanonicalPath
     val modelFileName = url.split("/").last
@@ -84,7 +83,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
   }
 
   def predict(url: String, publisher: String, path: String): Unit = {
-    val tmpFile = Files.createTempDir()
+    val tmpFile = createTmpDir()
     val dir = new File(tmpFile.toString + "/models")
     val dirName = dir.getCanonicalPath
     val modelFileName = url.split("/").last
@@ -156,7 +155,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
   }
 
   "ImageClassifier" should "throw exception if input is empty locally" in {
-    val tempDir = Files.createTempDir()
+    val tempDir = createTmpDir()
     val thrown = intercept[Exception]{
       predictLocal("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/" +
         "imageclassification/imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model",
@@ -168,7 +167,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
   }
 
   "ImageClassifier" should "throw exception if input is empty" in {
-    val tempDir = Files.createTempDir()
+    val tempDir = createTmpDir()
     val thrown = intercept[Exception]{
       predict("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/" +
         "imageclassification/imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model",
@@ -182,7 +181,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
 
 class ImageClassifierSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    val tmpFile = Files.createTempDir()
+    val tmpFile = createTmpDir()
     val dir = new File(tmpFile.toString + "/models")
     val dirName = dir.getCanonicalPath
     val url = "https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/" +

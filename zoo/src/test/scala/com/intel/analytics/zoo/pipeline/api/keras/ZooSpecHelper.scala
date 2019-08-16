@@ -16,10 +16,13 @@
 package com.intel.analytics.zoo.pipeline.api.keras
 
 import java.io.{File => JFile}
+import java.nio.file.attribute.PosixFilePermissions
+import java.nio.file.Files
 
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{RandomGenerator, Table}
+import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.models.common.ZooModel
 import org.apache.log4j.Logger
 import org.scalactic.TolerantNumerics
@@ -36,13 +39,20 @@ abstract class ZooSpecHelper extends FlatSpec with Matchers with BeforeAndAfter 
 
   implicit val floatEq = TolerantNumerics.tolerantFloatEquality(epsilon)
 
-  private val tmpFiles : ArrayBuffer[JFile] = new ArrayBuffer[JFile]()
-
-  def createTmpFile(): JFile = {
-    val file = java.io.File.createTempFile("UnitTest", "AnalyticsZooSpecBase")
+  def createTmpFile(permissions: String = "rw-------"): JFile = {
+    val file = Files.createTempFile("UnitTest", "AnalyticsZooSpecBase",
+      PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString(permissions)))
+      .toFile
     logger.info(s"created file $file")
-    tmpFiles.append(file)
+    file.deleteOnExit()
     file
+  }
+
+  def createTmpDir(permissions: String = "rwx------"): JFile = {
+    val dir = Utils.createTmpDir("ZooUT", permissions).toFile()
+    logger.info(s"created directory $dir")
+    dir.deleteOnExit()
+    dir
   }
 
   protected def getFileFolder(path: String): String = {
@@ -63,13 +73,6 @@ abstract class ZooSpecHelper extends FlatSpec with Matchers with BeforeAndAfter 
 
   after {
     doAfter()
-    tmpFiles.foreach(f => {
-      if (f.exists()) {
-        require(f.isFile, "cannot clean folder")
-        f.delete()
-        logger.info(s"deleted file $f")
-      }
-    })
   }
 
   def compareOutputAndGradInput(model1: AbstractModule[Tensor[Float], Tensor[Float], Float],

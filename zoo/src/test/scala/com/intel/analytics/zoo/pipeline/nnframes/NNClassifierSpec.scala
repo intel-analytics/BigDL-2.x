@@ -29,6 +29,7 @@ import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.feature.common._
 import com.intel.analytics.zoo.feature.image._
+import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.feature.MinMaxScaler
@@ -37,13 +38,12 @@ import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SQLContext}
-import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.io.Path
 import scala.util.Random
 
-class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
+class NNClassifierSpec extends ZooSpecHelper {
   var sc : SparkContext = _
   var sqlContext : SQLContext = _
   var smallData: Seq[(Array[Double], Double)] = _
@@ -187,7 +187,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val data = sc.parallelize(smallData)
     val df = sqlContext.createDataFrame(data).toDF("features", "label")
 
-    val logdir = com.google.common.io.Files.createTempDir()
+    val logdir = createTmpDir()
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     val classifier = NNClassifier(model, criterion, Array(6))

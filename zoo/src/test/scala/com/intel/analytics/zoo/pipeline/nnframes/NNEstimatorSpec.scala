@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.pipeline.nnframes
 
 import java.io.File
 
-import com.google.common.io.Files
 import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.models.inception.Inception_v1
 import com.intel.analytics.bigdl.nn._
@@ -34,18 +33,18 @@ import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Merge.merge
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Input, Dense}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
+import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.feature.MinMaxScaler
 import org.apache.spark.ml.param.{ParamMap, Params}
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.sql.{DataFrame, Row, SQLContext}
-import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scala.reflect.io.Path
 import scala.util.Random
 
-class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
+class NNEstimatorSpec extends ZooSpecHelper {
   var sc : SparkContext = _
   var sqlContext : SQLContext = _
   var smallData: Seq[(Array[Double], Double)] = _
@@ -320,7 +319,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "An NNEstimator" should "supports training summary" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
-    val logdir = com.google.common.io.Files.createTempDir()
+    val logdir = createTmpDir()
     val estimator = NNEstimator(model, criterion, Array(6), Array(1))
       .setBatchSize(50)
       .setMaxEpoch(2)
@@ -339,7 +338,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "An NNEstimator" should "supports validation data and summary" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
-    val logdir = com.google.common.io.Files.createTempDir()
+    val logdir = createTmpDir()
     val data = sc.parallelize(smallData)
     val df = sqlContext.createDataFrame(data).toDF("features", "label")
     val estimator = NNEstimator(model, criterion, Array(6), Array(1))
@@ -359,7 +358,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "An NNEstimator" should "throw exception when EndWhen and MaxEpoch are set" in {
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
-    val logdir = com.google.common.io.Files.createTempDir()
+    val logdir = createTmpDir()
 
     val data = sc.parallelize(smallData)
     val df = sqlContext.createDataFrame(data).toDF("features", "label")
@@ -574,7 +573,7 @@ class NNEstimatorSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "An NNEstimator" should "support checkpoint" in {
-    val tmpFile = Files.createTempDir().getPath
+    val tmpFile = createTmpDir().getPath
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     val estimator = NNEstimator(model, criterion, Array(6), Array(1))

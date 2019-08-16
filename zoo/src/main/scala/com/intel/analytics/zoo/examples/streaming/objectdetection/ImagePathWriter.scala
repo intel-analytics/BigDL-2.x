@@ -16,7 +16,6 @@
 
 package com.intel.analytics.zoo.examples.streaming.objectdetection
 
-import com.google.common.io.Files
 import com.intel.analytics.zoo.common.Utils
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.{Level, Logger}
@@ -37,7 +36,7 @@ object ImagePathWriter {
       val lists = Utils.listPaths(params.imageSourcePath, false)
       // Local file system requires create and move
       var isLocal = false
-      val tmpStreamingPath = Files.createTempDir().toString
+      val tmpStreamingPath = Utils.createTmpDir().toString
       if (fs.getScheme.equals("file")) {
         logger.info("Tmp dir at" + tmpStreamingPath)
         isLocal = true

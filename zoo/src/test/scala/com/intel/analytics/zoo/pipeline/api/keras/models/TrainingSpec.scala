@@ -16,7 +16,6 @@
 
 package com.intel.analytics.zoo.pipeline.api.keras.models
 
-import com.google.common.io.Files
 import com.intel.analytics.bigdl.dataset.{LocalDataSet, MiniBatch, Sample}
 import com.intel.analytics.bigdl.nn.MSECriterion
 import com.intel.analytics.bigdl.optim.{SGD, Top1Accuracy}
@@ -30,6 +29,7 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.pipeline.api.autograd.{Variable, AutoGrad => A}
+import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.python.PythonZooKeras
 import org.apache.spark.{SparkConf, SparkContext}
@@ -39,7 +39,7 @@ import org.apache.commons.io.FileUtils
 
 import scala.reflect.ClassTag
 
-class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter {
+class TrainingSpec extends ZooSpecHelper {
 
   private var sc: SparkContext = _
 
@@ -108,8 +108,8 @@ class TrainingSpec extends FlatSpec with Matchers with BeforeAndAfter {
     model.add(Dense[Float](2, activation = "softmax"))
     model.compile(optimizer = "sgd", loss = "sparse_categorical_crossentropy",
       metrics = List("accuracy"))
-    val tmpLogDir = Files.createTempDir()
-    val tmpCheckpointDir = Files.createTempDir()
+    val tmpLogDir = createTmpDir()
+    val tmpCheckpointDir = createTmpDir()
     model.setTensorBoard(tmpLogDir.getAbsolutePath, "TrainingSpec")
     model.setCheckpoint(tmpCheckpointDir.getAbsolutePath)
     model.setGradientClippingByL2Norm(0.2f)
