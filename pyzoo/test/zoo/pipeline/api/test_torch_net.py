@@ -26,7 +26,27 @@ from zoo.pipeline.api.net.torch_net import TorchNet
 from zoo.pipeline.api.net.torch_criterion import TorchCriterion
 
 
-class TestTF(ZooTestCase):
+class TestPytorch(ZooTestCase):
+
+    def setup_method(self, method):
+        """ setup any state tied to the execution of the given method in a
+        class.  setup_method is invoked for every test method of a class.
+        """
+        sparkConf = init_spark_conf().setMaster("local[1]").setAppName("TestPytorch")
+        self.sc = init_nncontext(sparkConf)
+        self.sqlContext = SQLContext(self.sc)
+        assert(self.sc.appName == "TestPytorch")
+        if self.sc.version.startswith("2"):
+            from pyspark.sql import SparkSession
+            spark = SparkSession \
+                .builder \
+                .getOrCreate()
+
+    def teardown_method(self, method):
+        """ teardown any state that was previously setup with a setup_method
+        call.
+        """
+        self.sc.stop()
 
     def test_torchnet_constructor(self):
         # two inputs test
@@ -382,6 +402,48 @@ class TestTF(ZooTestCase):
         assert np.allclose(az_model_backward[0], torch_input1.grad)
         assert np.allclose(az_model_backward[1], torch_input2.grad)
 
+    def test_model_save_load(self):
+        class SimpleTorchModel(nn.Module):
+            def __init__(self):
+                super(SimpleTorchModel, self).__init__()
+                self.dense1 = nn.Linear(2, 4)
+                self.dense2 = nn.Linear(4, 1)
+
+            def forward(self, x):
+                x = self.dense1(x)
+                x = torch.sigmoid(self.dense2(x))
+                return x
+
+        df = spark.createDataFrame(
+            [(Vectors.dense([2.0, 1.0]), 1.0),
+             (Vectors.dense([1.0, 2.0]), 0.0),
+             (Vectors.dense([2.0, 1.0]), 1.0),
+             (Vectors.dense([1.0, 2.0]), 0.0)],
+            ["features", "label"])
+
+        torch_model = SimpleTorchModel()
+        torch_criterion = nn.MSELoss()
+
+        az_model = TorchNet.from_pytorch(torch_model, [1, 2])
+        az_criterion = TorchCriterion.from_pytorch(torch_criterion, [1, 1], [1, 1])
+
+        estimator = NNEstimator(az_model, az_criterion) \
+            .setBatchSize(4) \
+            .setLearningRate(0.01) \
+            .setMaxEpoch(10)
+
+        nnModel = estimator.fit(df)
+
+        print("After training: ")
+        res = nnModel.transform(df)
+        res.show(10, False)
+
+        # res = NNModel(az_model).transform(df)
+
+        az_model.savePytorch("/home/yuhao/PycharmProjects/pytorch_test/models/SimpleTorchModel")
+        loaded = TorchNet("/home/yuhao/PycharmProjects/pytorch_test/models/SimpleTorchModel")
+        resDF = NNModel(loaded).setPredictionCol("loaded").transform(res)
+        assert resDF.filter("prediction==loaded").count() == resDF.count()
 
 if __name__ == "__main__":
     pytest.main([__file__])

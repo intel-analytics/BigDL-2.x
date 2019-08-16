@@ -149,6 +149,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
    * export the model to path as a torch script module.
    */
   def savePytorch(path : String, overWrite: Boolean = false): Unit = {
+    PytorchModel.updateWeightNative(this.nativeRef, weights.storage().array())
     PytorchModel.saveModelNative(nativeRef, path)
   }
 }
