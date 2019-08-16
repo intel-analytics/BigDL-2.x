@@ -50,7 +50,7 @@ class NNClassifierSpec extends ZooSpecHelper {
   val nRecords = 100
   val maxEpoch = 20
 
-  before {
+  override def doBefore(): Unit = {
     val conf = Engine.createSparkConf().setAppName("Test NNClassifier").setMaster("local[1]")
     sc = SparkContext.getOrCreate(conf)
     sqlContext = new SQLContext(sc)
@@ -62,7 +62,7 @@ class NNClassifierSpec extends ZooSpecHelper {
     Engine.init
   }
 
-  after{
+  override def doAfter(): Unit = {
     if (sc != null) {
       sc.stop()
     }
@@ -334,6 +334,7 @@ class NNClassifierSpec extends ZooSpecHelper {
     val data = sc.parallelize(
       smallData.map(p => (org.apache.spark.mllib.linalg.Vectors.dense(p._1), p._2)))
     val df: DataFrame = sqlContext.createDataFrame(data).toDF("features", "label")
+    val appName = System.nanoTime().toString
     val classifier = NNClassifier(model, criterion)
       .setBatchSize(31)
       .setOptimMethod(new LBFGS[Float]())
@@ -341,8 +342,8 @@ class NNClassifierSpec extends ZooSpecHelper {
       .setLearningRateDecay(0.432)
       .setMaxEpoch(13)
       .setFeaturesCol("abc")
-      .setTrainSummary(new TrainSummary("/tmp", "1"))
-      .setValidationSummary(new ValidationSummary("/tmp", "2"))
+      .setTrainSummary(new TrainSummary("/tmp", appName))
+      .setValidationSummary(new ValidationSummary("/tmp", appName))
       .setValidation(Trigger.maxIteration(3), df, Array(new Loss[Float]()), 2)
     val copied = classifier.copy(ParamMap.empty)
     assert(classifier.model ne copied.model)

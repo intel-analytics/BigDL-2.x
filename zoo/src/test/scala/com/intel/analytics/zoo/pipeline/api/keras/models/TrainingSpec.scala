@@ -43,6 +43,18 @@ class TrainingSpec extends ZooSpecHelper {
 
   private var sc: SparkContext = _
 
+  override def doBefore() = {
+    val conf = new SparkConf()
+      .setMaster("local[4]")
+    sc = NNContext.initNNContext(conf, appName = "TrainingSpec")
+  }
+
+  override def doAfter() = {
+    if (sc != null) {
+      sc.stop()
+    }
+  }
+
   def generateData(featureShape: Array[Int], labelSize: Int, dataSize: Int): RDD[Sample[Float]] = {
     sc.range(0, dataSize, 1).map { _ =>
       val featureTensor = Tensor[Float](featureShape)
@@ -50,18 +62,6 @@ class TrainingSpec extends ZooSpecHelper {
       val labelTensor = Tensor[Float](labelSize)
       labelTensor(Array(labelSize)) = Math.round(scala.util.Random.nextFloat())
       Sample[Float](featureTensor, labelTensor)
-    }
-  }
-
-  before {
-    val conf = new SparkConf()
-      .setMaster("local[4]")
-    sc = NNContext.initNNContext(conf, appName = "TrainingSpec")
-  }
-
-  after {
-    if (sc != null) {
-      sc.stop()
     }
   }
 

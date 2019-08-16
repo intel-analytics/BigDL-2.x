@@ -24,6 +24,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{RandomGenerator, Table}
 import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.models.common.ZooModel
+import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.scalactic.TolerantNumerics
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
@@ -39,6 +40,8 @@ abstract class ZooSpecHelper extends FlatSpec with Matchers with BeforeAndAfter 
 
   implicit val floatEq = TolerantNumerics.tolerantFloatEquality(epsilon)
 
+  private val tmpDirs : ArrayBuffer[JFile] = new ArrayBuffer[JFile]()
+
   def createTmpFile(permissions: String = "rw-------"): JFile = {
     val file = Files.createTempFile("UnitTest", "AnalyticsZooSpecBase",
       PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString(permissions)))
@@ -51,7 +54,7 @@ abstract class ZooSpecHelper extends FlatSpec with Matchers with BeforeAndAfter 
   def createTmpDir(permissions: String = "rwx------"): JFile = {
     val dir = Utils.createTmpDir("ZooUT", permissions).toFile()
     logger.info(s"created directory $dir")
-    dir.deleteOnExit()
+    tmpDirs.append(dir)
     dir
   }
 
@@ -73,6 +76,12 @@ abstract class ZooSpecHelper extends FlatSpec with Matchers with BeforeAndAfter 
 
   after {
     doAfter()
+    tmpDirs.foreach(dir => {
+      if (dir.exists() && dir.isDirectory()) {
+        FileUtils.deleteDirectory(dir)
+        logger.info(s"deleted directory $dir")
+      }
+    })
   }
 
   def compareOutputAndGradInput(model1: AbstractModule[Tensor[Float], Tensor[Float], Float],

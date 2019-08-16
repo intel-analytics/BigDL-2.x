@@ -76,7 +76,6 @@ class ImageClassificationSpec extends ZooSpecHelper {
     assert(predicted.length == predicted2.length)
     require(predicted.head
       .equals(predicted2.head) == true)
-    if (tmpFile.exists()) FileUtils.deleteDirectory(tmpFile)
     System.clearProperty("bigdl.localMode")
 
     "rm -rf ./imc.model" !!
@@ -123,7 +122,6 @@ class ImageClassificationSpec extends ZooSpecHelper {
     assert(predicted.length == predicted2.length)
     require(predicted.head.predict(ImageFeature.predict)
       .equals(predicted2.head.predict(ImageFeature.predict)) == true)
-    if (tmpFile.exists()) FileUtils.deleteDirectory(tmpFile)
 
     if (sc != null) {
       sc.stop()

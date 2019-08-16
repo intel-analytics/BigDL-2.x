@@ -51,7 +51,7 @@ class NNEstimatorSpec extends ZooSpecHelper {
   val nRecords = 100
   val maxEpoch = 20
 
-  before {
+  override def doBefore():Unit = {
     Random.setSeed(42)
     RNG.setSeed(42)
     val conf = Engine.createSparkConf().setAppName("Test NNEstimator").setMaster("local[2]")
@@ -61,7 +61,7 @@ class NNEstimatorSpec extends ZooSpecHelper {
       nRecords, Array(1.0, 2.0, 3.0, 4.0, 5.0, 6.0), -1.0, 42L)
   }
 
-  after{
+  override def doAfter(): Unit = {
     if (sc != null) {
       sc.stop()
     }
@@ -497,6 +497,7 @@ class NNEstimatorSpec extends ZooSpecHelper {
     val data = sc.parallelize(
       smallData.map(p => (org.apache.spark.mllib.linalg.Vectors.dense(p._1), p._2)))
     val df: DataFrame = sqlContext.createDataFrame(data).toDF("features", "label")
+    val appName = System.nanoTime().toString
     val estimator = NNEstimator(model, criterion, Array(6), Array(1))
       .setBatchSize(31)
       .setOptimMethod(new LBFGS[Float]())
@@ -504,8 +505,8 @@ class NNEstimatorSpec extends ZooSpecHelper {
       .setLearningRateDecay(0.432)
       .setMaxEpoch(2)
       .setFeaturesCol("abc")
-      .setTrainSummary(new TrainSummary("/tmp", "1"))
-      .setValidationSummary(new ValidationSummary("/tmp", "2"))
+      .setTrainSummary(new TrainSummary("/tmp", appName))
+      .setValidationSummary(new ValidationSummary("/tmp", appName))
       .setValidation(Trigger.maxIteration(3), df, Array(new Loss[Float]()), 2)
     val copied = estimator.copy(ParamMap.empty)
     assert(estimator.model ne copied.model)
