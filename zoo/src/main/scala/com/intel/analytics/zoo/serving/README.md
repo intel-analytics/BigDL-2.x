@@ -19,29 +19,6 @@ To run with docker, what you need is
 
 2) run `bash docker-run.sh`
 
-### Run with spark-submit 
-
-#### Prerequisites
-To run with spark-submit, what you need is
-
-* Spark 2.4.0 +
-* Analytics Zoo 0.6.0 +
-* Redis
-* your model
-
-#### Steps to run
-1) modify the environment variables in `start.sh` according to your environments and requirements.
-
-* SPARK_HOME: String, directory of your spark
-
-* ModelType: String, The type of your model, currently supported value: caffe
-* WeightPath: String, The path of file storing your model weight
-* DefPath: String, The path of file storing your model definition (for caffe), if not `ModelType=caffe`, you could ignore this
-* topN: Int, The number N of topN results you want to push into queue, default: 1
-* redisPath: String, the url of your queue including host and port, default: `localhost:6379`
-
-2) `sh start.sh` to start the service
-
 ## Data I/O
 
 ### Push data into queue
