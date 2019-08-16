@@ -23,7 +23,6 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
-import com.intel.analytics.zoo.utils.ModelConvertor
 import com.intel.analytics.zoo.pipeline.api.Net
 import scopt.OptionParser
 import org.apache.log4j.Logger
