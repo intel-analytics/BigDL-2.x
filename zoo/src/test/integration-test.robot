@@ -27,7 +27,7 @@ Build SparkJar
 Run Spark Test
    [Arguments]                      ${submit}                   ${spark_master}
    Create Directory                 /tmp/objectdetection/output
-   Log To Console                   begin text classification
+   //Log To Console                   begin text classification
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 2g --executor-memory 2g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.textclassification.TextClassification ${jar_path} --batchSize 128 --dataPath ${integration_data_dir}/text_data/20news-18828 --embeddingPath ${integration_data_dir}/text_data/glove.6B --partitionNum 32 --nbEpoch 2
    Log To Console                   begin image classification
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 10g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.imageclassification.Predict ${jar_path} -f ${public_hdfs_master}:9000/kaggle/train_100 --topN 1 --model ${integration_data_dir}/models/analytics-zoo_squeezenet-quantize_imagenet_0.1.0.model --partition 32
