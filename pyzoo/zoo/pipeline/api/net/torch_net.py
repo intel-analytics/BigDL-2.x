@@ -92,6 +92,14 @@ class TorchNet(Layer):
 
         raise Exception("Unsupported input type: " + str(input))
 
+    def savePytorch(self, path):
+        '''
+        save the model as a torch script module
+        '''
+        pythonBigDL_method_name = "TorchNetSavePytorch"
+        callBigDlFunc(self.bigdl_type, pythonBigDL_method_name, self.value, path)
+        return
+
     def predict(self, x, batch_per_thread=1, distributed=True):
         """
         Use a model to do prediction.

@@ -144,6 +144,13 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     super.finalize()
     PytorchModel.releaseModelNative(nativeRef)
   }
+
+  /**
+   * export the model to path as a torch script module.
+   */
+  def savePytorch(path : String, overWrite: Boolean = false): Unit = {
+    PytorchModel.saveModelNative(nativeRef, path)
+  }
 }
 
 object TorchNet {

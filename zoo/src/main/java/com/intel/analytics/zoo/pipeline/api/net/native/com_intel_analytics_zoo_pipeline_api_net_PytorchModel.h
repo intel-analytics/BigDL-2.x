@@ -17,6 +17,14 @@ JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchMod
 
 /*
  * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
+ * Method:    saveModelNative
+ * Signature: (JLjava/lang/String;)J
+ */
+JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_saveModelNative
+  (JNIEnv *, jclass, jlong, jstring);
+
+/*
+ * Class:     com_intel_analytics_zoo_pipeline_api_net_PytorchModel
  * Method:    loadLossNative
  * Signature: (Ljava/lang/String;)J
  */

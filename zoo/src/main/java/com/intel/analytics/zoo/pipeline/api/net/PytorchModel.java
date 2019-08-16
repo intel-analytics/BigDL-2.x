@@ -90,6 +90,8 @@ class PytorchModel {
 
     static native long loadModelNative(String modelPath);
 
+    static native long saveModelNative(long nativeRef, String modelPath);
+
     static native long loadLossNative(String lossPath);
 
     static native JTensor[] modelForwardNative(

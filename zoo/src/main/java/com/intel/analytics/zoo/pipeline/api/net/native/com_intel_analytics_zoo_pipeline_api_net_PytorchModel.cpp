@@ -166,6 +166,14 @@ JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchMod
     return id;
   }
 
+JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_saveModelNative
+  (JNIEnv * jenv, jclass jobj, jlong nativeRef, jstring jmodel_path) {
+    const char* p_model_path = jenv->GetStringUTFChars(jmodel_path, NULL);
+    std::shared_ptr<torch::jit::script::Module> model_ptr = modelHandles[nativeRef];
+    model_ptr -> save(p_model_path);
+    jenv->ReleaseStringUTFChars(jmodel_path, p_model_path);
+    return nativeRef;
+  }
 
 JNIEXPORT jlong JNICALL Java_com_intel_analytics_zoo_pipeline_api_net_PytorchModel_loadLossNative
   (JNIEnv *jenv, jclass jobj, jstring jloss_path) {
