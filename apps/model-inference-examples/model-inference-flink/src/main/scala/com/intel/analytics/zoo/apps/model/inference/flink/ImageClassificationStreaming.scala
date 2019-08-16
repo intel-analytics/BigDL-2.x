@@ -29,7 +29,7 @@ object ImageClassificationStreaming {
 
   def main(args: Array[String]) : Unit = {
     var modelType = "resnet_v1_50"
-    var checkpointPathcheckpointPath: String = "/opt/work/client/zhengle/models/resnet_v1_50.ckpt"
+    var checkpointPathcheckpointPath: String = "/path/to/models/resnet_v1_50.ckpt"
     var ifReverseInputChannels = true
     var inputShape = Array(1, 224, 224, 3)
     var meanValues = Array(123.68f, 116.78f, 103.94f)
@@ -60,7 +60,6 @@ object ImageClassificationStreaming {
 
     println("start ImageClassificationStreaming job...")
     println("params resolved", modelType, checkpointPathcheckpointPath, inputShape.mkString(","), ifReverseInputChannels, meanValues.mkString(","), scale)
-
 
     val classLoader = this.getClass.getClassLoader
     val indata1 = Source.fromInputStream(classLoader.getResourceAsStream("ic_input_65")).getLines().map(_.toFloat).toArray
