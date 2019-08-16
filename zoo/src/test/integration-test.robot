@@ -27,6 +27,8 @@ Build SparkJar
 Run Spark Test
    [Arguments]                      ${submit}                   ${spark_master}
    Create Directory                 /tmp/objectdetection/output
+   Log To Console                   begin session recommender
+   Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 10g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.SessionRecExp ${jar_path} --input ${public_hdfs_master}:9000/ecommerce --outputDir ./output/
    Log To Console                   begin text classification
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 2g --executor-memory 2g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.textclassification.TextClassification ${jar_path} --batchSize 128 --dataPath ${integration_data_dir}/text_data/20news-18828 --embeddingPath ${integration_data_dir}/text_data/glove.6B --partitionNum 32 --nbEpoch 2
    Log To Console                   begin image classification
@@ -41,8 +43,6 @@ Run Spark Test
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 5g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m --batchSize 8000
    Log To Console                   begin anomalydetection AnomalyDetection
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 10g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.anomalydetection.AnomalyDetection ${jar_path} --inputDir ${public_hdfs_master}:9000/NAB/nyc_taxi
-   Log To Console                   begin session recommender
-   Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 10g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.recommendation.SessionRecExp ${jar_path} --input ${public_hdfs_master}:9000/ecommerce --outputDir ./output/
    Log To Console                   begin finetune
    Run Shell                        ${submit} --master ${spark_master} --driver-memory 5g --executor-memory 10g --total-executor-cores 32 --executor-cores 8 --class com.intel.analytics.zoo.examples.nnframes.finetune.ImageFinetune ${jar_path} --modelPath ${integration_data_dir}/models/analytics-zoo_inception-v1_imagenet_0.1.0.model --batchSize 32 --imagePath ${public_hdfs_master}:9000/dogs_cats/samples --nEpochs 2
    Log To Console                   begin imageInference
@@ -73,6 +73,8 @@ Yarn Test Suite
    Set Environment Variable         http_proxy               ${http_proxy}
    Set Environment Variable         https_proxy              ${https_proxy}
    ${submit}=                       Catenate                 SEPARATOR=/    /opt/work/spark-2.1.0-bin-hadoop2.7/bin    spark-submit
+   Log To Console                   begin session recommender
+   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.recommendation.SessionRecExp ${jar_path} --input ${public_hdfs_master}:9000/ecommerce --outputDir ./output/
    Log To Console                   begin text classification
    Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.textclassification.TextClassification ${jar_path} --batchSize 128 --dataPath ${integration_data_dir}/text_data/20news-18828 --embeddingPath ${integration_data_dir}/text_data/glove.6B --partitionNum 8 --nbEpoch 2
    Log To Console                   begin image classification
@@ -87,8 +89,6 @@ Yarn Test Suite
    Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample ${jar_path} --inputDir ${public_hdfs_master}:9000/ml-1m --batchSize 8000
    Log To Console                   begin anomalydetection AnomalyDetection
    Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.anomalydetection.AnomalyDetection ${jar_path} --inputDir ${public_hdfs_master}:9000/NAB/nyc_taxi
-   Log To Console                   begin session recommender
-   Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.recommendation.SessionRecExp ${jar_path} --input ${public_hdfs_master}:9000/ecommerce --outputDir ./output/
    Log To Console                   begin finetune
    Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --conf spark.yarn.executor.memoryOverhead=40000 --executor-cores 8 --num-executors 4 --driver-memory 5g --executor-memory 10g --class com.intel.analytics.zoo.examples.nnframes.finetune.ImageFinetune ${jar_path} --modelPath ${integration_data_dir}/models/analytics-zoo_inception-v1_imagenet_0.1.0.model --batchSize 32 --imagePath ${public_hdfs_master}:9000/dogs_cats/samples --nEpochs 2
    Log To Console                   begin imageInference
