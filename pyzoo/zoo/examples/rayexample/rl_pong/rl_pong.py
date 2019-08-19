@@ -192,23 +192,32 @@ if __name__ == "__main__":
         type=int,
         help="The number of model updates to perform. By "
         "default, training will not terminate.")
+    parser.add_argument("--conda_name", type=str, default="ray36")
+    parser.add_argument("--slave_num", type=int, default=2)
+    parser.add_argument("--executor_cores", type=int, default=8)
+    parser.add_argument("--executor_memory", type=str, default="10g")
+    parser.add_argument("--driver_memory", type=str, default="2g")
+    parser.add_argument("--driver_cores", type=int, default=8)
+    parser.add_argument("--extra_executor_memory_for_ray", type=str, default="20g")
+    parser.add_argument("--object_store_memory", type=str, default="4g")
 
     args = parser.parse_args()
     if args.hadoop_conf:
-        slave_num = 2
         sc = init_spark_on_yarn(
             hadoop_conf=args.hadoop_conf,
-            conda_name="ray36",
-            num_executor=slave_num,
-            executor_cores=28,
-            executor_memory="10g",
-            driver_memory="2g",
-            driver_cores=4,
-            extra_executor_memory_for_ray="30g")
-        ray_ctx = RayContext(sc=sc, object_store_memory="25g")
+            conda_name=args.conda_name,
+            num_executor=args.slave_num,
+            executor_cores=args.executor_cores,
+            executor_memory=args.executor_memory,
+            driver_memory=args.driver_memory,
+            driver_cores=args.driver_cores,
+            extra_executor_memory_for_ray=args.extra_executor_memory_for_ray)
+        ray_ctx = RayContext(
+            sc=sc,
+            object_store_memory=args.object_store_memory)
     else:
         sc = init_spark_on_local(cores=4)
-        ray_ctx = RayContext(sc=sc, object_store_memory="4g")
+        ray_ctx = RayContext(sc=sc, object_store_memory=args.object_store_memory)
     ray_ctx.init()
 
     batch_size = args.batch_size
