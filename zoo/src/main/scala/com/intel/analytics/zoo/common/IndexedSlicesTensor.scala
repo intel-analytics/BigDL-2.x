@@ -521,7 +521,7 @@ class IndexedSlicesTensor[@specialized(Float, Double) T: ClassTag](
           indices.append(_indices(i))
           values.append(_values(i))
           i += 1
-        } else if (_indices(i) < yIndices(j)) {
+        } else if (_indices(i) > yIndices(j)) {
           indices.append(yIndices(j))
           values.append(yValues(j))
           j += 1
@@ -674,7 +674,15 @@ class IndexedSlicesTensor[@specialized(Float, Double) T: ClassTag](
 
   override def mul(value: T): Tensor[T] = {
     if (!isEmpty) {
-      _values = _values.map(_.map(ev.times(_, value)))
+      var i = 0
+      var j = 0
+      while (i < _values.length) {
+        while (j < _values(i).length) {
+          _values(i)(j) = ev.times(_values(i)(j), value)
+          j += 1
+        }
+        i += 1
+      }
     }
     this
   }

@@ -170,6 +170,8 @@ class TFOptimizer:
         self.assign = assign
         try:
             self.training_helper_layer = TFTrainingHelper(self.export_dir, session_config)
+            print("export dir")
+            print(self.export_dir)
         except Py4JJavaError as e:
             if "expects to be colocated with unknown node" in str(e):
                 raise Exception("""
@@ -204,13 +206,20 @@ with variable_creator_scope():
                 raise ValueError("Validation data is not specified. Please set " +
                                  "val rdd in TFDataset, or set val_split larger than zero")
 
-            self.optimizer = ZooOptimizer.create(self.training_helper_layer,
-                                              training_rdd,
-                                              IdentityCriterion(),
-                                              batch_size=batch_size,
-                                              optim_method=self.optim_method,
-                                              sparse_optim_method=self.sparse_optim_method.value)
-                                                 # sparse_optim_method=self.optim_method.value)
+            if self.sparse_optim_method is not None:
+                self.optimizer = ZooOptimizer.create(self.training_helper_layer,
+                                                  training_rdd,
+                                                  IdentityCriterion(),
+                                                  batch_size=batch_size,
+                                                  optim_method=self.optim_method,
+                                                  sparse_optim_method=self.sparse_optim_method.value)
+            else:
+                self.optimizer = ZooOptimizer.create(self.training_helper_layer,
+                                                  training_rdd,
+                                                  IdentityCriterion(),
+                                                  batch_size=batch_size,
+                                                  optim_method=self.optim_method)
+
             self.optimizer.set_validation(self.dataset.batch_size,
                                           val_rdd,
                                           SeveralIteration(50),

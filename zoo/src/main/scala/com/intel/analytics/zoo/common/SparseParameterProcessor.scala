@@ -37,6 +37,7 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: SparseOptimMethod[U])
         var aggregatedG = sparseG.head
         var i = 1
         while (i < sparseG.length) {
+
           aggregatedG = SparseTensorUtils.addSparseTensor[U](aggregatedG, sparseG(i))
           i += 1
         }
@@ -44,9 +45,9 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: SparseOptimMethod[U])
       } else Iterator(sparseG.head)
     }).reduce(SparseTensorUtils.addSparseTensor[U](_, _))
 
-    globalSparseG.foreach(x =>
+    globalSparseG.foreach {x =>
       SparseTensorUtils.dotSparseTensorValueByConstant[U](x,
-        ev.fromType(1.0 / state[Int]("numFinishedModel"))))
+        ev.fromType(1.0 / state[Int]("numFinishedModel")))}
 
 //    val t = Array[Float](0.0025634766f,0.0053710938f,0.0067443848f,10.9375f,22.875f,28.875f,
 //      0.020019531f,0.041748047f,0.052734375f,0.008361816f,0.017456055f,0.021972656f,-10.9375f,

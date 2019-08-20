@@ -172,7 +172,10 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
         i = 0
         while (i < sparseVariables.length) {
           import com.intel.analytics.bigdl.tensor.IndexedSlicesTensor
-          val indices = sparseSplitGradWeight(i * 3).storage().array().map(_.asInstanceOf[Float].toInt)
+          // TODO: check if sort indices need adjust values sort
+          val indices = sparseSplitGradWeight(i * 3).storage().array().map(_.asInstanceOf[Float].toInt).sorted.distinct
+
+          // TODO: check how to update values based on indices.distinct
           var j = 0
           val values = new Array[Array[Float]](indices.length)
           while (j < indices.length) {
@@ -180,6 +183,7 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
               .asInstanceOf[Array[Float]]
             j += 1
           }
+
           val shape = sparseSplitGradWeight(i * 3 + 2).storage().array().map(_.asInstanceOf[Float].toInt)
           val g = IndexedSlicesTensor(indices, values, shape)
           sparseGradWeight(i) = g

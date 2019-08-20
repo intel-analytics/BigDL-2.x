@@ -249,8 +249,9 @@ if __name__ == '__main__':
     loss = model.loss
     #from zoo.pipeline.api.keras.optimizers import Adam
     #optim_method = Adam(FLAGS.Adam_learning_rate/0.75, schedule=EpochStep(1, 0.75))
-    from bigdl.optim.optimizer import Adam
+    from bigdl.optim.optimizer import Adam, Ftrl
     optim_method = Adam(FLAGS.Adam_learning_rate)
+    # optim_method = {"deep/": Adam(FLAGS.Adam_learning_rate), "wide/": Ftrl(FLAGS.FTRL_learning_rate, l1_regularization_strength=FLAGS.FTRL_l1_rate)}
 
     from zoo.pipeline.api.keras.optimizers import IndexedSlicesAdam
     sparse_optim_method = IndexedSlicesAdam(FLAGS.Adam_learning_rate)
