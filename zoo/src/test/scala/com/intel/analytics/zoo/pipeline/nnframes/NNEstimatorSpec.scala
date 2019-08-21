@@ -51,7 +51,7 @@ class NNEstimatorSpec extends ZooSpecHelper {
   val nRecords = 100
   val maxEpoch = 20
 
-  override def doBefore():Unit = {
+  override def doBefore(): Unit = {
     Random.setSeed(42)
     RNG.setSeed(42)
     val conf = Engine.createSparkConf().setAppName("Test NNEstimator").setMaster("local[2]")

@@ -43,13 +43,13 @@ class TrainingSpec extends ZooSpecHelper {
 
   private var sc: SparkContext = _
 
-  override def doBefore() = {
+  override def doBefore(): Unit = {
     val conf = new SparkConf()
       .setMaster("local[4]")
     sc = NNContext.initNNContext(conf, appName = "TrainingSpec")
   }
 
-  override def doAfter() = {
+  override def doAfter(): Unit = {
     if (sc != null) {
       sc.stop()
     }
