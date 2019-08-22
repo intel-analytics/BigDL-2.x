@@ -1,12 +1,9 @@
-import sys
 from optparse import OptionParser
-import numpy as np
 
 from zoo.pipeline.inference import InferenceModel
 from zoo.common.nncontext import init_nncontext
 from zoo.feature.image import *
 from zoo.pipeline.nnframes import *
-
 
 
 def predict(model_path, img_path, partition_num):
@@ -15,16 +12,16 @@ def predict(model_path, img_path, partition_num):
                         weight_path=model_path[:model_path.rindex(".")] + ".bin")
     sc = init_nncontext("OpenVINO Object Detection Inference Example")
     infer_transformer = ChainedPreprocessing([ImageBytesToMat(),
-                                             ImageResize(256,256),
-                                             ImageCenterCrop(224,224),
-                                             ImageMatToTensor(format="NHWC", to_RGB=True)
-                                             ])
-    image_set = ImageSet.read(img_path, sc, partition_num).transform(infer_transformer).get_image().collect()
+                                             ImageResize(256, 256),
+                                             ImageCenterCrop(224, 224),
+                                             ImageMatToTensor(format="NHWC", to_RGB=True)])
+    image_set = ImageSet.read(img_path, sc, partition_num).\
+        transform(infer_transformer).get_image().collect()
     image_set = np.expand_dims(image_set, axis=1)
 
     predictions = model.predict(image_set)
 
-    result = np.swapaxes(predictions,0,1)[0]
+    result = np.swapaxes(predictions, 0, 1)[0]
 
     for r in result:
         output = {}
