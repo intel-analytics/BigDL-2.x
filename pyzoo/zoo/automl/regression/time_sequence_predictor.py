@@ -34,13 +34,24 @@ from abc import ABC, abstractmethod
 
 
 class Recipe(ABC):
-
     @abstractmethod
     def search_space(self, all_available_features):
         pass
 
     @abstractmethod
     def runtime_params(self):
+        pass
+
+    def fixed_params(self):
+        return None
+
+    def search_algorithm_params(self):
+        return None
+
+    def search_algorithm(self):
+        return None
+
+    def scheduler_params(self):
         pass
 
 
@@ -180,6 +191,78 @@ class RandomRecipe(Recipe):
         }
 
 
+class BayesRecipe(Recipe):
+    """
+    A Bayes search Recipe.
+       tsp = TimeSequencePredictor(...,recipe = BayesRecipe(5))
+
+    @param num_rand_samples: number of hyper-param configurations sampled randomly
+    @param look_back: the length to look back, either a tuple with 2 int values,
+          which is in format is (min len, max len), or a single int, which is
+          a fixed length to look back.
+    """
+    def __init__(self, num_rand_samples=1, look_back=1, reward_metric=-0.05):
+        self.num_samples = num_rand_samples
+        self.reward_metric = reward_metric
+        if isinstance(look_back, tuple) and len(look_back) == 2 and \
+                isinstance(look_back[0], int) and isinstance(look_back[1], int):
+            self.bayes_past_seq_config = {"past_seq_len_float": look_back}
+            self.fixed_past_seq_config = {}
+        elif isinstance(look_back, int):
+            self.bayes_past_seq_config = {}
+            self.fixed_past_seq_config = {"past_seq_len": look_back}
+        else:
+            raise ValueError("look back is {}.\n "
+                             "look_back should be either [min_len,max_len] or fixed_len"
+                             .format(look_back))
+
+    def search_space(self, all_available_features):
+        feature_space = {"bayes_feature_{}".format(feature): (0.3, 1)
+                         for feature in all_available_features}
+        other_space = {
+            # --------- model parameters
+            "lstm_1_units_float": (8, 128),
+            "dropout_1": (0.2, 0.5),
+            "lstm_2_units_float": (8, 128),
+            "dropout_2": (0.2, 0.5),
+
+            # ----------- optimization parameters
+            "lr": (0.001, 0.01),
+            "batch_size_log": (5, 10),
+        }
+        total_space = other_space.copy()
+        total_space.update(feature_space)
+        total_space.update(self.bayes_past_seq_config)
+        return total_space
+
+    def fixed_params(self):
+        total_fixed_params = {
+            "epochs": 5,
+            # "batch_size": 1024,
+        }
+        total_fixed_params.update(self.fixed_past_seq_config)
+        return total_fixed_params
+
+    def runtime_params(self):
+        return {
+            "reward_metric": self.reward_metric,
+            "training_iteration": 5,
+            "num_samples": self.num_samples,
+        }
+
+    def search_algorithm_params(self):
+        return {
+            "utility_kwargs": {
+                "kind": "ucb",
+                "kappa": 2.5,
+                "xi": 0.0
+            }
+        }
+
+    def search_algorithm(self):
+        return 'BayesOpt'
+
+
 class TimeSequencePredictor(object):
     """
     Trains a model that predicts future time sequence from past sequence.
@@ -225,6 +308,7 @@ class TimeSequencePredictor(object):
             validation_df=None,
             metric="mean_squared_error",
             recipe=SmokeRecipe(),
+            resources_per_trial={"cpu": 2},
             distributed=False,
             hdfs_url=None
             ):
@@ -240,6 +324,8 @@ class TimeSequencePredictor(object):
                        "mean_squared_error" or "r_square"
         :param recipe: a Recipe object. Various recipes covers different search space and stopping
                       criteria. Default is SmokeRecipe().
+        :param resources_per_trial: Machine resources to allocate per trial,
+            e.g. ``{"cpu": 64, "gpu": 8}`
         :param distributed: bool. Indicate if running in distributed mode. If true, we will upload
                             models to HDFS.
         :param hdfs_url: the hdfs url used to save file in distributed model. If None, the default
@@ -263,6 +349,7 @@ class TimeSequencePredictor(object):
                                         validation_df=validation_df,
                                         metric=metric,
                                         recipe=recipe,
+                                        resources_per_trial=resources_per_trial,
                                         remote_dir=remote_dir)
         return self.pipeline
 
@@ -309,7 +396,7 @@ class TimeSequencePredictor(object):
             input_is_list = False
             return input_is_list
         else:
-            raise ValueError("input_df should be a dataframe or a list of dataframes")
+            raise ValueError("input_df should be a data frame or a list of data frames")
 
     def _check_missing_col(self, input_df):
         cols_list = [self.dt_col, self.target_col]
@@ -320,7 +407,7 @@ class TimeSequencePredictor(object):
 
         missing_cols = set(cols_list) - set(input_df.columns)
         if len(missing_cols) != 0:
-            raise ValueError("Missing Columns in the input dataframe:" +
+            raise ValueError("Missing Columns in the input data frame:" +
                              ','.join(list(missing_cols)))
 
     def _check_input(self, input_df, validation_df, metric):
@@ -344,6 +431,7 @@ class TimeSequencePredictor(object):
                    validation_df,
                    metric,
                    recipe,
+                   resources_per_trial,
                    remote_dir):
 
         ft = TimeSequenceFeatureTransformer(self.future_seq_len,
@@ -364,17 +452,22 @@ class TimeSequencePredictor(object):
         runtime_params = recipe.runtime_params()
         num_samples = runtime_params['num_samples']
         stop = dict(runtime_params)
+        search_algorithm_params = recipe.search_algorithm_params()
+        search_algorithm = recipe.search_algorithm()
+        fixed_params = recipe.fixed_params()
         del stop['num_samples']
 
         searcher = RayTuneSearchEngine(logs_dir=self.logs_dir,
-                                       ray_num_cpus=6,
-                                       resources_per_trial={"cpu": 2},
+                                       resources_per_trial=resources_per_trial,
                                        name=self.name,
                                        remote_dir=remote_dir,
                                        )
         searcher.compile(input_df,
                          search_space=search_space,
                          stop=stop,
+                         search_algorithm_params=search_algorithm_params,
+                         search_algorithm=search_algorithm,
+                         fixed_params=fixed_params,
                          # feature_transformers=TimeSequenceFeatures,
                          feature_transformers=ft,  # use dummy features for testing the rest
                          model=model,
@@ -398,26 +491,33 @@ class TimeSequencePredictor(object):
 
     def _make_pipeline(self, trial, feature_transformers, model, remote_dir):
         isinstance(trial, TrialOutput)
-        self._print_config(trial.config)
+        config = convert_bayes_configs(trial.config).copy()
+        self._print_config(config)
         if remote_dir is not None:
             all_config = restore_hdfs(trial.model_path,
                                       remote_dir,
                                       feature_transformers,
                                       model,
-                                      trial.config)
+                                      config)
         else:
             all_config = restore_zip(trial.model_path,
                                      feature_transformers,
                                      model,
-                                     trial.config)
+                                     config)
         return TimeSequencePipeline(feature_transformers=feature_transformers,
                                     model=model,
                                     config=all_config)
 
 
 if __name__ == "__main__":
-    dataset_path = os.getenv("ANALYTICS_ZOO_HOME") + "/bin/data/NAB/nyc_taxi/nyc_taxi.csv"
-    df = pd.read_csv(dataset_path)
+    try:
+        dataset_path = os.getenv("ANALYTICS_ZOO_HOME") + "/bin/data/NAB/nyc_taxi/nyc_taxi.csv"
+        df = pd.read_csv(dataset_path)
+    except Exception as e:
+        print("nyc_taxi.csv doesn't exist")
+        print("you can run $ANALYTICS_ZOO_HOME/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh"
+              " to download nyc_taxi.csv")
+    # %% md
     from zoo.automl.common.util import split_input_df
 
     train_df, val_df, test_df = split_input_df(df, val_split_ratio=0.1, test_split_ratio=0.1)
@@ -434,8 +534,9 @@ if __name__ == "__main__":
                         default=False,
                         type=bool,
                         help="Run on spark local")
-    parser.add_argument("future_seq_len",
+    parser.add_argument("--future_seq_len",
                         default=1,
+                        type=int,
                         help="future sequence length")
     args = parser.parse_args()
 
@@ -482,6 +583,7 @@ if __name__ == "__main__":
     pipeline = tsp.fit(train_df,
                        validation_df=val_df,
                        metric="mean_squared_error",
+                       recipe=BayesRecipe(num_rand_samples=2, look_back=(2, 4)),
                        # recipe=RandomRecipe(look_back=(2, 4)),
                        distributed=distributed,
                        hdfs_url=hdfs_url)
