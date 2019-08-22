@@ -161,7 +161,7 @@ if __name__ == "__main__":
     train_transformer = ChainedPreprocessing([ImagePixelBytesToMat(),
                                               ImageResize(256, 256),
                                               ImageRandomCrop(image_size, image_size),
-                                              ImageRandomPreprocessing(ImageHFlip(), 0.5),
+                                              ImageRandomPreprocessing(ImageMirror(), 0.5),
                                               ImageChannelNormalize(123.0, 117.0, 104.0),
                                               ImageMatToTensor(format="NCHW", to_RGB=False),
                                               ImageSetToSample(input_keys=["imageTensor"], target_keys=["label"])

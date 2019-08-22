@@ -356,6 +356,10 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
     ImageHFlip()
   }
 
+  def createImageMirror(): ImageMirror = {
+    ImageMirror()
+  }
+
   def createImageSetToSample(inputKeys: JList[String],
                              targetKeys: JList[String],
                              sampleKey: String): ImageSetToSample[T] = {

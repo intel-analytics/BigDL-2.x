@@ -339,6 +339,12 @@ class ImageHFlip(ImagePreprocessing):
         super(ImageHFlip, self).__init__(bigdl_type)
 
 
+class ImageMirror(ImagePreprocessing):
+
+    def __init__(self, bigdl_type="float"):
+        super(ImageMirror, self).__init__(bigdl_type)
+
+
 class ImageFeatureToTensor(Preprocessing):
     """
     a Transformer that convert ImageFeature to a Tensor.
