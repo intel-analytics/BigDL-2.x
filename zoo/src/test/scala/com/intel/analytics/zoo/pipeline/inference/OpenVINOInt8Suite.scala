@@ -220,8 +220,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
   test("openvino remove normalization for predict(float)") {
     val model = new InferenceModel(3)
     model.doLoadTF(s"${resnet_v1_50_path}.xml",
-      s"${resnet_v1_50_path}.bin",
-      )
+      s"${resnet_v1_50_path}.bin")
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
 
