@@ -24,41 +24,46 @@ from zoo.pipeline.nnframes import *
 
 import tensorflow as tf
 
-sparkConf = init_spark_conf().setAppName("testNNClassifer").setMaster('local[1]')
-sc = init_nncontext(sparkConf)
-spark = SparkSession \
-    .builder \
-    .getOrCreate()
+# This is a simple example, showing how to train and inference a TensorFlow model with NNFrames
+# on Spark DataFrame. It can also be used as a part of Spark ML Pipeline.
 
-with tf.Graph().as_default():
-    input1 = tf.placeholder(dtype=tf.float32, shape=(None, 2))
-    hidden = tf.layers.dense(input1, 4)
-    output = tf.sigmoid(tf.layers.dense(hidden, 1))
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        net = TFNet.from_session(sess, [input1], [output], generate_backward=True)
+if __name__ == '__main__':
 
-df = spark.createDataFrame(
-    [(Vectors.dense([2.0, 1.0]), 1.0),
-     (Vectors.dense([1.0, 2.0]), 0.0),
-     (Vectors.dense([2.0, 1.0]), 1.0),
-     (Vectors.dense([1.0, 2.0]), 0.0)],
-    ["features", "label"])
+    sparkConf = init_spark_conf().setAppName("testNNClassifer").setMaster('local[1]')
+    sc = init_nncontext(sparkConf)
+    spark = SparkSession \
+        .builder \
+        .getOrCreate()
 
-print("before training:")
-NNModel(net).transform(df).show()
+    with tf.Graph().as_default():
+        input1 = tf.placeholder(dtype=tf.float32, shape=(None, 2))
+        hidden = tf.layers.dense(input1, 4)
+        output = tf.sigmoid(tf.layers.dense(hidden, 1))
+        with tf.Session() as sess:
+            sess.run(tf.global_variables_initializer())
+            net = TFNet.from_session(sess, [input1], [output], generate_backward=True)
 
-classifier = NNClassifier(net, MSECriterion()) \
-    .setBatchSize(4) \
-    .setOptimMethod(Adam()) \
-    .setLearningRate(0.1) \
-    .setMaxEpoch(10)
+    df = spark.createDataFrame(
+        [(Vectors.dense([2.0, 1.0]), 1.0),
+         (Vectors.dense([1.0, 2.0]), 0.0),
+         (Vectors.dense([2.0, 1.0]), 1.0),
+         (Vectors.dense([1.0, 2.0]), 0.0)],
+        ["features", "label"])
 
-nnClassifierModel = classifier.fit(df)
+    print("before training:")
+    NNModel(net).transform(df).show()
 
-print("After training: ")
-res = nnClassifierModel.transform(df)
-res.show(10, False)
+    classifier = NNClassifier(net, MSECriterion()) \
+        .setBatchSize(4) \
+        .setOptimMethod(Adam()) \
+        .setLearningRate(0.1) \
+        .setMaxEpoch(10)
+
+    nnClassifierModel = classifier.fit(df)
+
+    print("After training: ")
+    res = nnClassifierModel.transform(df)
+    res.show(10, False)
 
 # expected output:
 #
