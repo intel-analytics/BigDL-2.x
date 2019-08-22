@@ -14,18 +14,14 @@
 # limitations under the License.
 #
 
-import os
-import numpy as np
 import ray
-import tempfile
-import zipfile
-import shutil
 from ray import tune
 from copy import copy, deepcopy
 
 from zoo.automl.search.abstract import *
 from zoo.automl.common.util import *
 from ray.tune import Trainable
+from ray.tune.suggest.bayesopt import BayesOptSearch
 
 
 class RayTuneSearchEngine(SearchEngine):
@@ -35,14 +31,12 @@ class RayTuneSearchEngine(SearchEngine):
 
     def __init__(self,
                  logs_dir="",
-                 ray_num_cpus=6,
                  resources_per_trial=None,
                  name="",
                  remote_dir=None,
                  ):
         """
         Constructor
-        :param ray_num_cpus: the total number of cpus for ray
         :param resources_per_trial: resources for each trial
         """
         self.pipeline = None
@@ -52,19 +46,15 @@ class RayTuneSearchEngine(SearchEngine):
         self.trials = None
         self.remote_dir = remote_dir
         self.name = name
-        # if ray_ctx is not None:
-        #     ray_ctx.init()
-        # # TODO change to rayOnSpark style
-        # if redis_address:
-        #     ray.init(redis_address=redis_address)
-        # elif not ray.is_initialized():
-        #     ray.init(num_cpus=ray_num_cpus, include_webui=False, ignore_reinit_error=True)
 
     def compile(self,
                 input_df,
                 search_space,
                 num_samples=1,
                 stop=None,
+                search_algorithm=None,
+                search_algorithm_params=None,
+                fixed_params=None,
                 feature_transformers=None,
                 model=None,
                 validation_df=None,
@@ -75,6 +65,9 @@ class RayTuneSearchEngine(SearchEngine):
         :param search_space:
         :param num_samples:
         :param stop:
+        :param search_algorithm:
+        :param search_algorithm_params:
+        :param fixed_params:
         :param feature_transformers:
         :param model:
         :param validation_df:
@@ -84,11 +77,38 @@ class RayTuneSearchEngine(SearchEngine):
         self.search_space = self._prepare_tune_config(search_space)
         self.stop_criteria = stop
         self.num_samples = num_samples
+        if metric == "mean_squared_error":
+            # mode = "min"
+            metric_op = -1
+        elif metric == "r_square":
+            # mode = "max"
+            metric_op = 1
+        else:
+            raise ValueError("metric can only be \"mean_squared_error\" or \"r_square\"")
+
+        if search_algorithm == 'BayesOpt':
+            # ray version 0.7.0
+            self.search_algorithm = BayesOptSearch(
+                self.search_space,
+                reward_attr="reward_metric",
+                utility_kwargs=search_algorithm_params["utility_kwargs"]
+            )
+            # ray version 0.7.3
+            # self.search_algorithm = BayesOptSearch(
+            #     self.search_space,
+            #     metric="reward_metric",
+            #     mode=mode,
+            #     utility_kwargs=search_algorithm_params["utility_kwargs"]
+            # )
+        else:
+            self.search_algorithm = None
+        self.fixed_params = fixed_params
+
         self.train_func = self._prepare_train_func(input_df,
                                                    feature_transformers,
                                                    model,
                                                    validation_df,
-                                                   metric,
+                                                   metric_op,
                                                    self.remote_dir)
         self.trainable_class = self._prepare_trainable_class(input_df,
                                                              feature_transformers,
@@ -103,16 +123,29 @@ class RayTuneSearchEngine(SearchEngine):
         :return: trials result
         """
         # function based
-        trials = tune.run(
-            self.train_func,
-            name=self.name,
-            stop=self.stop_criteria,
-            config=self.search_space,
-            num_samples=self.num_samples,
-            resources_per_trial=self.resources_per_trail,
-            verbose=1,
-            reuse_actors=True
-        )
+        if not self.search_algorithm:
+            trials = tune.run(
+                self.train_func,
+                name=self.name,
+                stop=self.stop_criteria,
+                config=self.search_space,
+                num_samples=self.num_samples,
+                resources_per_trial=self.resources_per_trail,
+                verbose=1,
+                reuse_actors=True
+            )
+        else:
+            trials = tune.run(
+                self.train_func,
+                name=self.name,
+                config=self.fixed_params,
+                stop=self.stop_criteria,
+                search_alg=self.search_algorithm,
+                num_samples=self.num_samples,
+                resources_per_trial=self.resources_per_trail,
+                verbose=1,
+                reuse_actors=True
+            )
         # class based
         # trials = tune.run(
         #     self.trainable_class,
@@ -188,7 +221,7 @@ class RayTuneSearchEngine(SearchEngine):
                             feature_transformers,
                             model,
                             validation_df=None,
-                            metric="mean_squared_error",
+                            metric_op=1,
                             remote_dir=None
                             ):
         """
@@ -197,7 +230,7 @@ class RayTuneSearchEngine(SearchEngine):
         :param feature_transformers: feature transformers
         :param model: model or model selector
         :param validation_df: validation dataframe
-        :param metric: the rewarding metric
+        :param metric_op: the rewarding metric operation.
         :return: the train function
         """
         input_df_id = ray.put(input_df)
@@ -207,7 +240,7 @@ class RayTuneSearchEngine(SearchEngine):
         df_not_empty = isinstance(validation_df, pd.DataFrame) and not validation_df.empty
         df_list_not_empty = isinstance(validation_df, list) and validation_df \
                             and not all([d.empty for d in validation_df])
-        if validation_df is not None and not (df_not_empty or df_list_not_empty):
+        if validation_df is not None and (df_not_empty or df_list_not_empty):
             validation_df_id = ray.put(validation_df)
             is_val_df_valid = True
         else:
@@ -223,6 +256,8 @@ class RayTuneSearchEngine(SearchEngine):
             # handling input
             global_input_df = ray.get(input_df_id)
             trial_input_df = deepcopy(global_input_df)
+            config = convert_bayes_configs(config).copy()
+            # print("config is ", config)
             (x_train, y_train) = trial_ft.fit_transform(trial_input_df, **config)
             # trial_ft.fit(trial_input_df, **config)
 
@@ -243,14 +278,16 @@ class RayTuneSearchEngine(SearchEngine):
                 result = trial_model.fit_eval(x_train,
                                               y_train,
                                               validation_data=validation_data,
+                                              verbose=1,
                                               **config)
-                if metric == "mean_squared_error":
-                    reward_m = (-1) * result
-                    # print("running iteration: ",i)
-                elif metric == "r_square":
-                    reward_m = result
-                else:
-                    raise ValueError("metric can only be \"mean_squared_error\" or \"r_square\"")
+                reward_m = metric_op * result
+                # if metric == "mean_squared_error":
+                #     reward_m = (-1) * result
+                #     # print("running iteration: ",i)
+                # elif metric == "r_square":
+                #     reward_m = result
+                # else:
+                #     raise ValueError("metric can only be \"mean_squared_error\" or \"r_square\"")
                 ckpt_name = "best.ckpt"
                 if reward_m > best_reward_m:
                     best_reward_m = reward_m
