@@ -428,6 +428,26 @@ class TFDataset(object):
     @staticmethod
     def from_tfrecord(file_path, parse_fn, batch_size=-1, batch_per_thread=-1,
                       hard_code_batch_size=False, validation_file_path=None):
+        """
+        Create a TFDataset from tfrecord files.
+        :param file_path: comma seperated tfrecord file(s) path
+        :param parse_fn: a TensorFlow function that takes a serialized example string to a nested
+        structure of tensors. Follows the signature:
+            * Args:
+                * `example`: a string TensorFlow tensor representing a single record
+            * Returns:
+                a tuple or dictionary of output tensors and the output tensors must be
+                of numeric type
+        :param batch_size: the batch size, used for training, should be a multiple of
+        total core num
+        :param batch_per_thread: the batch size for each thread, used for inference or evaluation
+        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
+        if True, the static size of the first dimension of the resulting tensors is
+        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
+        it is None.
+        :param validation_file_path: The tfrecord files used for validation
+        :return:
+        """
 
         return TFRecordDataset(file_path, parse_fn, batch_size, batch_per_thread,
                                hard_code_batch_size, validation_file_path)

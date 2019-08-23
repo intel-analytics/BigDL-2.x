@@ -25,7 +25,7 @@ import os
 
 from zoo.tfpark import KerasModel, TFDataset
 
-
+resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
 class TestTFParkModel(ZooTestCase):
 
     def create_model(self):
@@ -478,6 +478,48 @@ class TestTFParkModel(ZooTestCase):
         current_weight = model.get_weights()
 
         np.all(np.abs((current_weight[0] - pre_weights[0])) < 1e-7)
+
+    def test_tfdataset_with_tfrecord(self):
+
+        model = tf.keras.Sequential(
+            [tf.keras.layers.Flatten(input_shape=(28, 28, 1)),
+             tf.keras.layers.Dense(64, activation='relu'),
+             tf.keras.layers.Dense(64, activation='relu'),
+             tf.keras.layers.Dense(10, activation='softmax'),
+             ]
+        )
+
+        model.compile(optimizer='rmsprop',
+                      loss='sparse_categorical_crossentropy',
+                      metrics=['accuracy'])
+
+        keras_model = KerasModel(model)
+
+        def parse_fn(example):
+            keys_to_features = {
+                'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),
+                'image/format': tf.FixedLenFeature((), tf.string, default_value='raw'),
+                'image/class/label': tf.FixedLenFeature(
+                    [1], tf.int64, default_value=tf.zeros([1], dtype=tf.int64)),
+            }
+
+            items_to_handlers = {
+                'image': tf.contrib.slim.tfexample_decoder.Image(shape=[28, 28, 1], channels=1),
+                'label': tf.contrib.slim.tfexample_decoder.Tensor('image/class/label', shape=[]),
+            }
+
+            decoder = tf.contrib.slim.tfexample_decoder.TFExampleDecoder(
+                keys_to_features, items_to_handlers)
+            results = decoder.decode(example)
+
+            return results[0], results[1]
+
+        dataset = TFDataset.from_tfrecord(os.path.join(resource_path, "tfrecord/mnist_train.tfrecord"),
+                                          parse_fn=parse_fn, batch_size=8,
+                                          validation_file_path=
+                                          os.path.join(resource_path, "tfrecord/mnist_test.tfrecord"))
+
+        keras_model.fit(dataset)
 
     def test_tf_dataset_with_list_feature(self):
         np.random.seed(20)
