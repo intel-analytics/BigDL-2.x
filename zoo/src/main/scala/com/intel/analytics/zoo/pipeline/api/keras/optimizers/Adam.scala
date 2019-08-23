@@ -124,6 +124,14 @@ class Adam[@specialized(Float, Double) T: ClassTag](
 }
 
 
+/**
+ * A learning rate decay policy, where the effective learning rate
+ * follows a polynomial decay, to be zero by the max_epochs.
+ * Calculation: init_lr * (1 - epoch/max_iteration) ^ (power)
+ *
+ * @param power The coefficient of decay.
+ * @param maxEpochs The maximum number of epochs when lr becomes zero.
+ */
 case class PolyEpochDecay(power: Double, maxEpochs: Int) extends LearningRateSchedule {
   override def updateHyperParameter[T](optimMethod: SGD[T]): Unit = {
     val state = SGDRef.getstate(optimMethod)
