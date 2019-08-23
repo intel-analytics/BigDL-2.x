@@ -583,7 +583,7 @@ if __name__ == "__main__":
     pipeline = tsp.fit(train_df,
                        validation_df=val_df,
                        metric="mean_squared_error",
-                       recipe=BayesRecipe(num_rand_samples=2, look_back=(2, 4)),
+                       # recipe=BayesRecipe(num_rand_samples=2, look_back=(2, 4)),
                        # recipe=RandomRecipe(look_back=(2, 4)),
                        distributed=distributed,
                        hdfs_url=hdfs_url)
