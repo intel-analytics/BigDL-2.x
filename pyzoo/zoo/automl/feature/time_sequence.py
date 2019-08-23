@@ -320,10 +320,11 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         feature_list = []
         for feat in feature_defs:
             feature_name = feat.generate_name()
+            print(feature_name)
             # todo: need to change if more than one target cols are supported
             if isinstance(feat, TransformFeature) \
-                    or (self.extra_features_col and feat in self.extra_features_col):
-            # if feature_name != self.target_col:
+                    or (self.extra_features_col and feature_name in self.extra_features_col):
+                # if feature_name != self.target_col:
                 feature_list.append(feature_name)
         return feature_list
 

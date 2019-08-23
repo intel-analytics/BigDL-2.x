@@ -213,7 +213,7 @@ class RayTuneSearchEngine(SearchEngine):
     def _is_validation_df_valid(validation_df):
         df_not_empty = isinstance(validation_df, pd.DataFrame) and not validation_df.empty
         df_list_not_empty = isinstance(validation_df, list) and validation_df \
-                            and not all([d.empty for d in validation_df])
+            and not all([d.empty for d in validation_df])
         return validation_df is not None and not (df_not_empty or df_list_not_empty)
 
     @staticmethod
@@ -239,7 +239,7 @@ class RayTuneSearchEngine(SearchEngine):
 
         df_not_empty = isinstance(validation_df, pd.DataFrame) and not validation_df.empty
         df_list_not_empty = isinstance(validation_df, list) and validation_df \
-                            and not all([d.empty for d in validation_df])
+            and not all([d.empty for d in validation_df])
         if validation_df is not None and (df_not_empty or df_list_not_empty):
             validation_df_id = ray.put(validation_df)
             is_val_df_valid = True
@@ -264,7 +264,6 @@ class RayTuneSearchEngine(SearchEngine):
             # handling validation data
             validation_data = None
             if is_val_df_valid:
-            # if validation_df is not None and not validation_df.empty:
                 global_validation_df = ray.get(validation_df_id)
                 trial_validation_df = deepcopy(global_validation_df)
                 validation_data = trial_ft.transform(trial_validation_df)
@@ -326,7 +325,7 @@ class RayTuneSearchEngine(SearchEngine):
 
         df_not_empty = isinstance(validation_df, pd.DataFrame) and not validation_df.empty
         df_list_not_empty = isinstance(validation_df, list) and validation_df \
-                            and not all([d.empty for d in validation_df])
+            and not all([d.empty for d in validation_df])
         if validation_df is not None and not (df_not_empty or df_list_not_empty):
             validation_df_id = ray.put(validation_df)
             is_val_df_valid = True
