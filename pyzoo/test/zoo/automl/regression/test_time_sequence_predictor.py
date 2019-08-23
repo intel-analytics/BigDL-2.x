@@ -75,6 +75,44 @@ class TestTimeSequencePredictor(ZooTestCase):
         assert isinstance(random_pipeline_1.model, BaseModel)
         assert random_pipeline_1.config is not None
 
+    def test_fit_RandomRecipe_look_back(self):
+        pipeline_look_back_tuple = self.tsp_1.fit(self.train_df, self.validation_df,
+                                                  recipe=RandomRecipe(1, look_back=(2, 4)))
+        assert 'past_seq_len' in pipeline_look_back_tuple.config
+        assert 2 <= pipeline_look_back_tuple.config["past_seq_len"] <= 4
+
+        pipeline_look_back_int = self.tsp_1.fit(self.train_df, self.validation_df,
+                                                recipe=RandomRecipe(1, look_back=3))
+        assert 'past_seq_len' in pipeline_look_back_int.config
+        assert pipeline_look_back_int.config["past_seq_len"] == 3
+
+    def test_fit_BayesRecipe(self):
+        bayes_pipeline_1 = self.tsp_1.fit(self.train_df, self.validation_df,
+                                          recipe=BayesRecipe(1))
+        bayes_pipeline_3 = self.tsp_3.fit(self.train_df, self.validation_df,
+                                          recipe=BayesRecipe(1))
+        assert isinstance(bayes_pipeline_1, TimeSequencePipeline)
+        assert isinstance(bayes_pipeline_1.feature_transformers,
+                          TimeSequenceFeatureTransformer)
+        assert isinstance(bayes_pipeline_1.model, BaseModel)
+        assert bayes_pipeline_1.config is not None
+        assert "epochs" in bayes_pipeline_1.config
+        assert [config_name for config_name in bayes_pipeline_1.config
+                if config_name.startswith('bayes_feature')] == []
+        assert [config_name for config_name in bayes_pipeline_1.config
+                if config_name.endswith('float')] == []
+
+    def test_fit_BayesRecipe_look_back(self):
+        pipeline_look_back_tuple = self.tsp_1.fit(self.train_df, self.validation_df,
+                                                  recipe=BayesRecipe(1, look_back=(2, 4)))
+        assert 'past_seq_len' in pipeline_look_back_tuple.config
+        assert 2 <= pipeline_look_back_tuple.config["past_seq_len"] <= 4
+
+        pipeline_look_back_int = self.tsp_1.fit(self.train_df, self.validation_df,
+                                                recipe=BayesRecipe(1, look_back=3))
+        assert 'past_seq_len' in pipeline_look_back_int.config
+        assert pipeline_look_back_int.config["past_seq_len"] == 3
+
     def test_fit_df_list(self):
         train_df_list = [self.train_df]*3
         val_df_list = [self.validation_df]*3

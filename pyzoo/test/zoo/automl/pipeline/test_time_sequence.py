@@ -198,6 +198,12 @@ class TestTimeSequencePipeline(ZooTestCase):
         y_pred_random = self.random_pipeline_1.predict(self.test_df)
         assert y_pred_random.shape == (self.test_sample_num - self.default_past_seq_len + 1, 2)
 
+    def test_predict_BayesRecipe(self):
+        self.bayes_pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df,
+                                               recipe=BayesRecipe(1))
+        y_pred_bayes = self.bayes_pipeline_1.predict(self.test_df)
+        assert y_pred_bayes.shape == (self.test_sample_num - self.default_past_seq_len + 1, 2)
+
     def test_evaluate_predict_1(self):
         metric = ["mean_squared_error", "r_square"]
         target_col = "value"
@@ -322,6 +328,23 @@ class TestTimeSequencePipeline(ZooTestCase):
 
             new_pred = new_pipeline.predict(self.test_df)
             np.testing.assert_allclose(y_pred_random["value"].values, new_pred["value"].values)
+        finally:
+            shutil.rmtree(dirname)
+
+    def test_save_restore_1_bayesRecipe(self):
+        self.bayes_pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df,
+                                               recipe=BayesRecipe(1))
+        y_pred_bayes = self.bayes_pipeline_1.predict(self.test_df)
+
+        dirname = tempfile.mkdtemp(prefix="saved_pipeline")
+        try:
+            save_pipeline_file = os.path.join(dirname, "my.ppl")
+            self.bayes_pipeline_1.save(save_pipeline_file)
+            assert os.path.isfile(save_pipeline_file)
+            new_pipeline = load_ts_pipeline(save_pipeline_file)
+
+            new_pred = new_pipeline.predict(self.test_df)
+            np.testing.assert_allclose(y_pred_bayes["value"].values, new_pred["value"].values)
         finally:
             shutil.rmtree(dirname)
 
