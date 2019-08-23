@@ -267,7 +267,7 @@ with variable_creator_scope():
                    clip_value=clip_value, **kwargs)
 
     @classmethod
-    def from_keras(cls, keras_model, dataset, val_spilt=0.0, **kwargs):
+    def from_keras(cls, keras_model, dataset, optim_method=None, val_spilt=0.0, **kwargs):
         import tensorflow.keras.backend as K
         loss = keras_model.total_loss
         inputs = keras_model.inputs + keras_model.targets
@@ -290,7 +290,9 @@ with variable_creator_scope():
             clip_value = (-keras_optimizer.clipvalue, keras_optimizer.clipvalue)
 
         sess = K.get_session()
-        optim_method = TFOptimizer.to_bigdl_optim_method(keras_optimizer)
+        if optim_method is None:
+            optim_method = keras_optimizer
+        optim_method = TFOptimizer.to_bigdl_optim_method(optim_method)
 
         if keras_model.metrics and (dataset.get_validation_data() is not None or val_spilt != 0.0):
             if isinstance(keras_model.metrics, dict):
