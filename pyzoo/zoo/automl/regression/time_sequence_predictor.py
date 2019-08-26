@@ -470,7 +470,8 @@ class TimeSequencePredictor(object):
                          fixed_params=fixed_params,
                          # feature_transformers=TimeSequenceFeatures,
                          feature_transformers=ft,  # use dummy features for testing the rest
-                         model=model,
+                         # model=model,
+                         future_seq_len=self.future_seq_len,
                          validation_df=validation_df,
                          metric=metric,
                          num_samples=num_samples)
@@ -498,12 +499,14 @@ class TimeSequencePredictor(object):
                                       remote_dir,
                                       feature_transformers,
                                       model,
-                                      config)
+                                      # config)
+                                      )
         else:
             all_config = restore_zip(trial.model_path,
                                      feature_transformers,
                                      model,
-                                     config)
+                                     # config)
+                                     )
         return TimeSequencePipeline(feature_transformers=feature_transformers,
                                     model=model,
                                     config=all_config)
