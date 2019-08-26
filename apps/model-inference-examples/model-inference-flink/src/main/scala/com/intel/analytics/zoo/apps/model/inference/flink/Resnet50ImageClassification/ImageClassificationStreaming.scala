@@ -50,7 +50,7 @@ object ImageClassificationStreaming {
 
     val classLoader = this.getClass.getClassLoader
 
-    val imagePath: String = "/home/joy/analytics-zoo/zoo/src/test/resources/imagenet/n02110063/n02110063_11239.JPEG"
+    val imagePath: String = "/path/to/image"
     val imageProcess = new imagePrepare(imagePath,224,224)
     val res = imageProcess.preProcess(imagePath,224,224)
     val input = new Array[Float](res.nElement())
@@ -80,20 +80,16 @@ object ImageClassificationStreaming {
     println(" Printing result to stdout.")
     results.foreach(println)
   }
-
 }
 
 class ModelPredictionMapFunction(modelType: String, modelBytes: Array[Byte], inputShape: Array[Int], ifReverseInputChannels: Boolean, meanValues: Array[Float], scale: Float) extends RichMapFunction[JList[JList[JTensor]], JList[JList[JTensor]]] {
   var resnet50InferenceModel: Resnet50InferenceModel = _
-
   override def open(parameters: Configuration): Unit = {
     resnet50InferenceModel = new Resnet50InferenceModel(1, modelType, modelBytes, inputShape, ifReverseInputChannels, meanValues, scale)
   }
-
   override def close(): Unit = {
     resnet50InferenceModel.doRelease()
   }
-
   override def map(in: JList[JList[JTensor]]): JList[JList[JTensor]] = {
     resnet50InferenceModel.doPredict(in)
   }
