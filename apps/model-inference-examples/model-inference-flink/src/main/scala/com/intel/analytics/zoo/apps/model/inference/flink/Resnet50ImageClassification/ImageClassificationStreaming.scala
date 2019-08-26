@@ -1,28 +1,15 @@
-package com.intel.analytics.zoo.apps.model.inference.flink
+package com.intel.analytics.zoo.apps.model.inference.flink.Resnet50ImageClassification
 
-import java.io.{ByteArrayInputStream, File, FileOutputStream}
-import java.nio.channels.Channels
-import java.util.{List => JList}
-import java.util.Arrays
-import java.util.concurrent.TimeUnit
+import java.io.{File, FileInputStream}
+import java.util.{Arrays, List => JList}
 
-import com.google.common.io.Files
-import com.intel.analytics.zoo.apps.model.inference.flink.Resnet50InferenceModelTests.fromHWC2CHW
 import com.intel.analytics.zoo.pipeline.inference.JTensor
 import org.apache.flink.api.common.functions.RichMapFunction
-import org.apache.flink.api.common.state.MapStateDescriptor
-import org.apache.flink.api.common.typeinfo.{BasicTypeInfo, TypeHint, TypeInformation}
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.datastream.DataStreamUtils
-import org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction
-import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
-import org.apache.flink.streaming.api.scala._
-import org.apache.flink.streaming.api.scala.async.{AsyncFunction, ResultFuture}
-import org.apache.flink.util.Collector
-import org.apache.spark.api.java.function.FlatMapFunction
+import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 
-import scala.io.Source
 import scala.collection.JavaConverters._
 
 object ImageClassificationStreaming {
@@ -62,10 +49,12 @@ object ImageClassificationStreaming {
     println("params resolved", modelType, checkpointPathcheckpointPath, inputShape.mkString(","), ifReverseInputChannels, meanValues.mkString(","), scale)
 
     val classLoader = this.getClass.getClassLoader
-    val indata1 = Source.fromInputStream(classLoader.getResourceAsStream("ic_input_65")).getLines().map(_.toFloat).toArray
-    println("data readed", indata1)
-    val data1: Array[Float] = indata1
-    val inputs = List.fill(100)(data1)
+
+    val imagePath: String = "/home/joy/analytics-zoo/zoo/src/test/resources/imagenet/n02110063/n02110063_11239.JPEG"
+    val imageProcess = new imagePrepare(imagePath,224,224)
+    val res = imageProcess.preProcess(imagePath,224,224)
+    val input = new Array[Float](res.nElement())
+    val inputs = List.fill(100)(input)
 
     val fileSize = new File(checkpointPathcheckpointPath).length()
     val inputStream = new FileInputStream(checkpointPathcheckpointPath)
@@ -88,7 +77,7 @@ object ImageClassificationStreaming {
 
     val results = DataStreamUtils.collect(resultStream.javaStream).asScala
 
-    println("############ Printing result to stdout.")
+    println(" Printing result to stdout.")
     results.foreach(println)
   }
 
@@ -102,7 +91,7 @@ class ModelPredictionMapFunction(modelType: String, modelBytes: Array[Byte], inp
   }
 
   override def close(): Unit = {
-    resnet50InferenceModel.release()
+    resnet50InferenceModel.doRelease()
   }
 
   override def map(in: JList[JList[JTensor]]): JList[JList[JTensor]] = {
@@ -110,3 +99,13 @@ class ModelPredictionMapFunction(modelType: String, modelBytes: Array[Byte], inp
   }
 }
 
+class imagePrepare(imagePath: String, cropWidth: Int, cropHeight: Int) extends ImageProcessing{
+  def preProcess(imagePath: String, cropWidth: Int, cropHeight: Int) = {
+    val path = read(imagePath)
+    println("data readed", path)
+    val imageMat= byteArrayToMat(path)
+    val imageCent=centerCrop(imageMat,cropWidth,cropHeight)
+    val imageTensor = matToNCHWAndRGBTensor(imageCent)
+    imageTensor
+ }
+}
