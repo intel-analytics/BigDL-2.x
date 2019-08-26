@@ -521,7 +521,7 @@ class TFRecordDataset(TFDataset):
             flattened = nest.flatten(results)
             output_names = [tf.cast(t, dtype=tf.float32).name for t in flattened]
 
-            serialized_graph = bytes(tf.get_default_graph().as_graph_def().SerializeToString())
+            serialized_graph = bytearray(tf.get_default_graph().as_graph_def().SerializeToString())
 
             sc = getOrCreateSparkContext()
             train_rdd = callBigDlFunc("float", "createRDDFromTFRecords",
