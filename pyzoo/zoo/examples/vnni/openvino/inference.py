@@ -7,6 +7,7 @@ from zoo.pipeline.nnframes import *
 
 batch_size = 4
 
+
 def predict(model_path, img_path, partition_num):
     model = InferenceModel()
     model.load_openvino(model_path,
