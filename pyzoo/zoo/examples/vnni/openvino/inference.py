@@ -5,11 +5,14 @@ from zoo.common.nncontext import init_nncontext
 from zoo.feature.image import *
 from zoo.pipeline.nnframes import *
 
+batch_size = 4
+
 
 def predict(model_path, img_path, partition_num):
     model = InferenceModel()
     model.load_openvino(model_path,
-                        weight_path=model_path[:model_path.rindex(".")] + ".bin")
+                        weight_path=model_path[:model_path.rindex(".")] + ".bin",
+                        batch_size=batch_size)
     sc = init_nncontext("OpenVINO Object Detection Inference Example")
     infer_transformer = ChainedPreprocessing([ImageBytesToMat(),
                                              ImageResize(256, 256),
@@ -19,15 +22,29 @@ def predict(model_path, img_path, partition_num):
         transform(infer_transformer).get_image().collect()
     image_set = np.expand_dims(image_set, axis=1)
 
-    predictions = model.predict(image_set)
+    if len(image_set) % batch_size == 0:
+        a = 0
+        size = batch_size
+    else:
+        a = 1
+        size = len(image_set) % batch_size
+    for i in range(len(image_set) // batch_size + a):
+        index = i * batch_size
+        batch = image_set[index]
+        for j in range(index + 1, index + size):
+            batch = np.vstack((batch, image_set[j]))
+        batch = np.expand_dims(batch, axis=0)
 
-    result = np.swapaxes(predictions, 0, 1)[0]
+        predictions = model.predict(batch)
 
-    for r in result:
-        output = {}
-        max_index = np.argmax(r)
-        output["Top-1"] = str(max_index)
-        print("* Predict result " + str(output))
+        result = predictions[0]
+
+        print("batch_" + str(i))
+        for r in result:
+            output = {}
+            max_index = np.argmax(r)
+            output["Top-1"] = str(max_index)
+            print("* Predict result " + str(output))
 
 
 if __name__ == "__main__":
