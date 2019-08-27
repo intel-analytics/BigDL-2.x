@@ -75,18 +75,18 @@ object InferenceModelFactory extends InferenceSupportive {
                              imageClassificationModelType: String,
                              checkpointBytes: Array[Byte],
                              inputShape: Array[Int],
-                             ifReverseInputChannels: Boolean,
-                             meanValues: Array[Float],
-                             scale: Float): OpenVINOModel = {
+                             ifReverseInputChannels: Boolean = true,
+                             meanValues: Array[Float] = null,
+                             scale: Float = 1.0f): OpenVINOModel = {
     OpenVinoInferenceSupportive.loadTensorflowModel(modelBytes, imageClassificationModelType,
       checkpointBytes, inputShape, ifReverseInputChannels, meanValues, scale)
   }
 
   def loadOpenVINOModelForTF(savedModelDir: String,
                              inputShape: Array[Int],
-                             ifReverseInputChannels: Boolean,
-                             meanValues: Array[Float],
-                             scale: Float,
+                             ifReverseInputChannels: Boolean = true,
+                             meanValues: Array[Float] = null,
+                             scale: Float = 1.0f,
                              input: String): OpenVINOModel = {
     OpenVinoInferenceSupportive.loadTensorflowModel(savedModelDir,
       inputShape, ifReverseInputChannels, meanValues, scale, input)
@@ -94,9 +94,9 @@ object InferenceModelFactory extends InferenceSupportive {
 
   def loadOpenVINOModelForTF(savedModelBytes: Array[Byte],
                              inputShape: Array[Int],
-                             ifReverseInputChannels: Boolean,
-                             meanValues: Array[Float],
-                             scale: Float,
+                             ifReverseInputChannels: Boolean = true,
+                             meanValues: Array[Float] = null,
+                             scale: Float = 1.0f,
                              input: String): OpenVINOModel = {
     OpenVinoInferenceSupportive.loadTensorflowModel(savedModelBytes,
       inputShape, ifReverseInputChannels, meanValues, scale, input)
@@ -109,9 +109,9 @@ object InferenceModelFactory extends InferenceSupportive {
                                        ifReverseInputChannels: Boolean = true,
                                        meanValues: Array[Float] = null,
                                        scale: Float = 1.0f,
-                                       networkType: String,
+                                       networkType: String = "C",
                                        validationFilePath: String,
-                                       subset: Int,
+                                       subset: Int = 0,
                                        opencvLibPath: String): OpenVINOModel = {
     OpenVinoInferenceSupportive.loadTensorflowModelAsCalibrated(
       modelPath, modelType, checkpointPath,

@@ -92,8 +92,6 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
                                    scale: Double
                                   ): Unit = {
     require(inputShape != null, "inputShape can not be null")
-    require(meanValues != null, "meanValues can not be null")
-    require(scale != null, "scale can not be null")
     model.doLoadTF(modelPath, imageClassificationModelType,
       checkpointPath, inputShape.asScala.toArray,
       ifReverseInputChannels, meanValues.asScala.toArray.map(_.toFloat), scale.toFloat)
@@ -112,8 +110,6 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
                                                        subset: Int,
                                                        opencvLibPath: String): Unit = {
     require(inputShape != null, "inputShape can not be null")
-    require(meanValues != null, "meanValues can not be null")
-    require(scale != null, "scale can not be null")
     model.doLoadTFAsCalibratedOpenVINO(modelPath, modelType,
       checkpointPath, inputShape.asScala.toArray,
       ifReverseInputChannels, meanValues.asScala.toArray.map(_.toFloat), scale.toFloat,

@@ -220,9 +220,9 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                imageClassificationModelType: String,
                checkpointBytes: Array[Byte],
                inputShape: Array[Int],
-               ifReverseInputChannels: Boolean,
-               meanValues: Array[Float],
-               scale: Float): Unit = {
+               ifReverseInputChannels: Boolean = true,
+               meanValues: Array[Float] = null,
+               scale: Float = 1.0f): Unit = {
     doLoadTensorflowModelAsOpenVINO(
       modelBytes, imageClassificationModelType, checkpointBytes,
       inputShape, ifReverseInputChannels, meanValues, scale)
@@ -242,9 +242,9 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    */
   def doLoadTF(savedModelDir: String,
                inputShape: Array[Int],
-               ifReverseInputChannels: Boolean,
-               meanValues: Array[Float],
-               scale: Float,
+               ifReverseInputChannels: Boolean = true,
+               meanValues: Array[Float] = null,
+               scale: Float = 1.0f,
                input: String): Unit = {
     doLoadTensorflowModelAsOpenVINO(savedModelDir, inputShape,
       ifReverseInputChannels, meanValues, scale, input)
@@ -264,9 +264,9 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    */
   def doLoadTF(savedModelBytes: Array[Byte],
                inputShape: Array[Int],
-               ifReverseInputChannels: Boolean,
-               meanValues: Array[Float],
-               scale: Float,
+               ifReverseInputChannels: Boolean = true,
+               meanValues: Array[Float] = null,
+               scale: Float = 1.0f,
                input: String): Unit = {
     doLoadTensorflowModelAsOpenVINO(savedModelBytes, inputShape,
       ifReverseInputChannels, meanValues, scale, input)
@@ -303,9 +303,9 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                                    ifReverseInputChannels: Boolean = true,
                                    meanValues: Array[Float] = null,
                                    scale: Float = 1.0f,
-                                   networkType: String,
+                                   networkType: String = "C",
                                    validationFilePath: String,
-                                   subset: Int,
+                                   subset: Int = 0,
                                    opencvLibPath: String): Unit = {
     doLoadTensorflowModelAsCalibratedOpenVINO(
       modelPath, modelType, checkpointPath,
@@ -398,9 +398,9 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                                               imageClassificationModelType: String,
                                               checkpointBytes: Array[Byte],
                                               inputShape: Array[Int],
-                                              ifReverseInputChannels: Boolean,
-                                              meanValues: Array[Float],
-                                              scale: Float): Unit = {
+                                              ifReverseInputChannels: Boolean = true,
+                                              meanValues: Array[Float] = null,
+                                              scale: Float = 1.0f): Unit = {
     if (concurrentNum > 1) {
       InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
         s"openvino model does not support shared weights model copies")
@@ -415,8 +415,8 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   private def doLoadTensorflowModelAsOpenVINO(savedModelDir: String,
                                               inputShape: Array[Int],
                                               ifReverseInputChannels: Boolean,
-                                              meanValues: Array[Float],
-                                              scale: Float,
+                                              meanValues: Array[Float] = null,
+                                              scale: Float = 1.0f,
                                               input: String): Unit = {
     if (concurrentNum > 1) {
       InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
@@ -430,9 +430,9 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
 
   private def doLoadTensorflowModelAsOpenVINO(savedModelBytes: Array[Byte],
                                               inputShape: Array[Int],
-                                              ifReverseInputChannels: Boolean,
-                                              meanValues: Array[Float],
-                                              scale: Float,
+                                              ifReverseInputChannels: Boolean = true,
+                                              meanValues: Array[Float] = null,
+                                              scale: Float = 1.0f,
                                               input: String): Unit = {
     if (concurrentNum > 1) {
       InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
@@ -452,9 +452,9 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                                                         meanValues: Array[Float]
                                                           = null,
                                                         scale: Float = 1.0f,
-                                                        networkType: String,
+                                                        networkType: String = "C",
                                                         validationFilePath: String,
-                                                        subset: Int,
+                                                        subset: Int = 0,
                                                         opencvLibPath: String): Unit = {
     if (concurrentNum > 1) {
       InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
@@ -679,9 +679,9 @@ object InferenceModel {
    * @param outputDir            the output directory
    */
   def doCalibrateTF(modelPath: String,
-                    networkType: String,
+                    networkType: String = "C",
                     validationFilePath: String,
-                    subset: Int,
+                    subset: Int = 0,
                     opencvLibPath: String,
                     outputDir: String): Unit = {
     OpenVinoInferenceSupportive.calibrateTensorflowModel(
