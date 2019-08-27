@@ -22,16 +22,10 @@ def predict(model_path, img_path, partition_num):
         transform(infer_transformer).get_image().collect()
     image_set = np.expand_dims(image_set, axis=1)
 
-    if len(image_set) % batch_size == 0:
-        a = 0
-        size = batch_size
-    else:
-        a = 1
-        size = len(image_set) % batch_size
-    for i in range(len(image_set) // batch_size + a):
+    for i in range(len(image_set) // batch_size + 1):
         index = i * batch_size
         batch = image_set[index]
-        for j in range(index + 1, index + size):
+        for j in range(index + 1, min(index + batch_size, len(image_set))):
             batch = np.vstack((batch, image_set[j]))
         batch = np.expand_dims(batch, axis=0)
 
