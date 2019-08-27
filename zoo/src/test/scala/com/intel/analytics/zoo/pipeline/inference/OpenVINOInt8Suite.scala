@@ -217,42 +217,6 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     println(model2)
   }
 
-  test("openvino remove normalization for predict(float)") {
-    val model = new InferenceModel(3)
-    model.doLoadTF(s"${resnet_v1_50_path}.xml",
-      s"${resnet_v1_50_path}.bin")
-    println(s"resnet_v1_50_model from tf loaded as $model")
-    model shouldNot be(null)
-
-    val indata1 = fromHWC2CHW(Source.fromFile(image_input_65_filePath)
-      .getLines().map(_.toFloat).toArray)
-    val indata2 = fromHWC2CHW(Source.fromFile(image_input_970_filePath)
-      .getLines().map(_.toFloat).toArray)
-    val labels = Array(65f, 795f)
-    val data = indata1 ++ indata2 ++ indata1 ++ indata2
-    val input1 = new JTensor(data, resnet_v1_50_shape)
-    val input2 = new JTensor(data, resnet_v1_50_shape)
-    val inputs = Arrays.asList(
-      Arrays.asList({
-        input1
-      }),
-      Arrays.asList({
-        input2
-      }))
-    val results: util.List[util.List[JTensor]] = model.doPredict(inputs)
-    val classes = results.toArray().map(list => {
-      val inner = list.asInstanceOf[util.List[JTensor]].get(0)
-      val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
-      val class2 = inner.getData.slice(1000, 2000).zipWithIndex.maxBy(_._1)._2
-      println(s"(${class1}, ${class2})")
-      Array(class1.toFloat, class2.toFloat)
-    })
-    classes.foreach { output =>
-      assert(almostEqual(output, labels, 0.1f))
-    }
-  }
-
-
   test("openvino doLoadOpenVINO(float) and predict(float)") {
     val model = new InferenceModel(3)
     model.doLoadOpenVINO(s"${resnet_v1_50_path}.xml",
