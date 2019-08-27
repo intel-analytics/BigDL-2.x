@@ -1,7 +1,5 @@
 package com.intel.analytics.zoo.apps.model.inference.flink.Resnet50ImageClassification
 
-import java.io.File
-
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.transform.vision.image.util.BoundingBox
@@ -10,14 +8,9 @@ import org.apache.commons.io.FileUtils
 import org.opencv.core.Rect
 import org.opencv.imgcodecs.Imgcodecs
 import org.slf4j.LoggerFactory
-import com.intel.analytics.zoo.pipeline.inference.JTensor
 
 trait ImageProcessing {
   val logger = LoggerFactory.getLogger(getClass)
-
-  def read(imagePath: String): Array[Byte] = {
-    FileUtils.readFileToByteArray(new File(imagePath))
-  }
 
   def byteArrayToMat(bytes: Array[Byte], imageCodec: Int = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED): OpenCVMat = {
     OpenCVMethod.fromImageBytes(bytes, imageCodec)

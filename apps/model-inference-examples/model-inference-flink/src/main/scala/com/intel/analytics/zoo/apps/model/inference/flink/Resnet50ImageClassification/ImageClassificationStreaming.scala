@@ -14,7 +14,7 @@ import scala.collection.JavaConverters._
 
 object ImageClassificationStreaming {
 
-  def main(args: Array[String]) : Unit = {
+  def main(args: Array[String]): Unit = {
     var modelType = "resnet_v1_50"
     var checkpointPathcheckpointPath: String = "/path/to/models/resnet_v1_50.ckpt"
     var ifReverseInputChannels = true
@@ -26,16 +26,16 @@ object ImageClassificationStreaming {
       val params = ParameterTool.fromArgs(args)
       modelType = params.get("modelType")
       checkpointPathcheckpointPath = params.get("checkpointPathcheckpointPath")
-      inputShape = if(params.has("inputShape")) {
+      inputShape = if (params.has("inputShape")) {
         val inputShapeStr = params.get("inputShape")
         inputShapeStr.split(",").map(_.toInt).toArray
       } else Array(1, 224, 224, 3)
-      ifReverseInputChannels = if(params.has("ifReverseInputChannels")) params.getBoolean("ifReverseInputChannels") else true
-      meanValues = if(params.has("meanValues")) {
+      ifReverseInputChannels = if (params.has("ifReverseInputChannels")) params.getBoolean("ifReverseInputChannels") else true
+      meanValues = if (params.has("meanValues")) {
         val meanValuesStr = params.get("meanValues")
         meanValuesStr.split(",").map(_.toFloat).toArray
       } else Array(123.68f, 116.78f, 103.94f)
-      scale = if(params.has("scale")) params.getFloat("scale") else 1.0f
+      scale = if (params.has("scale")) params.getFloat("scale") else 1.0f
     } catch {
       case e: Exception => {
         System.err.println("Please run 'ImageClassificationStreaming --modelType <modelType> --checkpointPathcheckpointPath <checkpointPathcheckpointPath> " +
@@ -49,10 +49,10 @@ object ImageClassificationStreaming {
     println("params resolved", modelType, checkpointPathcheckpointPath, inputShape.mkString(","), ifReverseInputChannels, meanValues.mkString(","), scale)
 
     val classLoader = this.getClass.getClassLoader
-
-    val imagePath: String = "/path/to/image"
-    val imageProcess = new imagePrepare(imagePath,224,224)
-    val res = imageProcess.preProcess(imagePath,224,224)
+    val content = classLoader.getResourceAsStream("n02110063_11239.JPEG")
+    val imageBytes = Stream.continually(content.read).takeWhile(_ != -1).map(_.toByte).toArray
+    val imageProcess = new ImageProcesser(imageBytes, 224, 224)
+    val res = imageProcess.preProcess(imageBytes, 224, 224)
     val input = new Array[Float](res.nElement())
     val inputs = List.fill(100)(input)
 
@@ -64,7 +64,7 @@ object ImageClassificationStreaming {
     val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
     println(env.getConfig)
 
-    val dataStream: DataStream[Array[Float]] =  env.fromCollection(inputs)
+    val dataStream: DataStream[Array[Float]] = env.fromCollection(inputs)
     val tensorStream: DataStream[JList[JList[JTensor]]] = dataStream.map(value => {
       val input = new JTensor(value, Array(1, 224, 224, 3))
       val data = Arrays.asList(input)
@@ -93,15 +93,4 @@ class ModelPredictionMapFunction(modelType: String, modelBytes: Array[Byte], inp
   override def map(in: JList[JList[JTensor]]): JList[JList[JTensor]] = {
     resnet50InferenceModel.doPredict(in)
   }
-}
-
-class imagePrepare(imagePath: String, cropWidth: Int, cropHeight: Int) extends ImageProcessing{
-  def preProcess(imagePath: String, cropWidth: Int, cropHeight: Int) = {
-    val path = read(imagePath)
-    println("data readed", path)
-    val imageMat= byteArrayToMat(path)
-    val imageCent=centerCrop(imageMat,cropWidth,cropHeight)
-    val imageTensor = matToNCHWAndRGBTensor(imageCent)
-    imageTensor
- }
 }
