@@ -160,19 +160,19 @@ if __name__ == "__main__":
     image_size = 224  # create dataset
     train_transformer = ChainedPreprocessing([ImagePixelBytesToMat(),
                                               ImageResize(256, 256),
-                                              ImageRandomCrop(image_size, image_size),
-                                              ImageRandomPreprocessing(ImageMirror(), 0.5),
+                                              ImageRandomCropper(image_size, image_size, True,
+                                                                 "Random", 3),
                                               ImageChannelNormalize(123.0, 117.0, 104.0),
                                               ImageMatToTensor(format="NCHW", to_RGB=False),
                                               ImageSetToSample(input_keys=["imageTensor"], target_keys=["label"])
                                               ])
-    # train_transformer = Pipeline([PixelBytesToMat(),
-    #                               Resize(256, 256),
-    #                               RandomCropper(image_size, image_size, True, "Random", 3),
-    #                               ChannelNormalize(123.0, 117.0, 104.0),
-    #                               MatToTensor(to_rgb=False),
-    #                               ImageFrameToSample(input_keys=["imageTensor"], target_keys=["label"])
-    #                               ])
+    train_transformer = Pipeline([PixelBytesToMat(),
+                                  Resize(256, 256),
+                                  RandomCropper(image_size, image_size, True, "Random", 3),
+                                  ChannelNormalize(123.0, 117.0, 104.0),
+                                  MatToTensor(to_rgb=False),
+                                  ImageFrameToSample(input_keys=["imageTensor"], target_keys=["label"])
+                                  ])
 
     raw_train_data = get_inception_data(options.folder, sc, "train")
     train_data = FeatureSet.image_frame(raw_train_data).transform(train_transformer)

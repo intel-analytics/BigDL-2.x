@@ -249,6 +249,25 @@ class ImagePixelNormalize(ImagePreprocessing):
 
     def __init__(self, means, bigdl_type="float"):
         super(ImagePixelNormalize, self).__init__(bigdl_type, means)
+        # cropWidth: Int, cropHeight: Int,
+        # mirror: Boolean, cropperMethod: String,
+        # channels: Int)
+
+
+class ImageRandomCropper(ImagePreprocessing):
+    """
+    Random cropper on uniform distribution with fixed height & width
+    :param crop_w  width cropped to
+    :param crop_h height cropped to
+    :param mirror   whether mirror
+    :param cropper_method crop method
+    :param channels total channels
+    """
+
+    def __init__(self, crop_width, crop_height, mirror, cropper_method, channels,
+                 bigdl_type="float"):
+        super(ImageRandomCropper, self).__init__(bigdl_type, crop_width, crop_height, mirror,
+                                                 cropper_method, channels)
 
 
 class ImageRandomCrop(ImagePreprocessing):
