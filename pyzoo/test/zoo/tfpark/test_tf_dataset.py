@@ -259,12 +259,11 @@ class TestTFParkModel(ZooTestCase):
 
             return results[0], results[1]
 
-        dataset = TFDataset.from_tfrecord(os.path.join(resource_path,
-                                                       "tfrecord/mnist_train.tfrecord"),
+        train_path = os.path.join(resource_path, "tfrecord/mnist_train.tfrecord")
+        test_path = os.path.join(resource_path, "tfrecord/mnist_test.tfrecord")
+        dataset = TFDataset.from_tfrecord(train_path,
                                           parse_fn=parse_fn, batch_size=8,
-                                          validation_file_path=
-                                          os.path.join(resource_path,
-                                                       "tfrecord/mnist_test.tfrecord"))
+                                          validation_file_path=test_path)
 
         keras_model.fit(dataset)
 
