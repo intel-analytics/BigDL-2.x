@@ -35,7 +35,7 @@ import org.apache.spark.SparkConf
 
 object TrainImageNet {
   LoggerFilter.redirectSparkInfoLogs()
-  Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.DEBUG)
+  Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.INFO)
   val logger = Logger.getLogger(getClass)
 
   def imageNetDecay(epoch: Int): Double = {
