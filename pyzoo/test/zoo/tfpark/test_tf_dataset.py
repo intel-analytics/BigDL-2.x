@@ -225,6 +225,49 @@ class TestTFParkModel(ZooTestCase):
         for idx, tensor in enumerate(dataset.feature_tensors):
             assert tensor.name == "list_input_" + str(idx) + ":0"
 
+    def test_tfdataset_with_tfrecord(self):
+        model = tf.keras.Sequential(
+            [tf.keras.layers.Flatten(input_shape=(28, 28, 1)),
+             tf.keras.layers.Dense(64, activation='relu'),
+             tf.keras.layers.Dense(64, activation='relu'),
+             tf.keras.layers.Dense(10, activation='softmax'),
+             ]
+        )
+
+        model.compile(optimizer='rmsprop',
+                      loss='sparse_categorical_crossentropy',
+                      metrics=['accuracy'])
+
+        keras_model = KerasModel(model)
+
+        def parse_fn(example):
+            keys_to_features = {
+                'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),
+                'image/format': tf.FixedLenFeature((), tf.string, default_value='raw'),
+                'image/class/label': tf.FixedLenFeature(
+                    [1], tf.int64, default_value=tf.zeros([1], dtype=tf.int64)),
+            }
+
+            items_to_handlers = {
+                'image': tf.contrib.slim.tfexample_decoder.Image(shape=[28, 28, 1], channels=1),
+                'label': tf.contrib.slim.tfexample_decoder.Tensor('image/class/label', shape=[]),
+            }
+
+            decoder = tf.contrib.slim.tfexample_decoder.TFExampleDecoder(
+                keys_to_features, items_to_handlers)
+            results = decoder.decode(example)
+
+            return results[0], results[1]
+
+        dataset = TFDataset.from_tfrecord(os.path.join(resource_path,
+                                                       "tfrecord/mnist_train.tfrecord"),
+                                          parse_fn=parse_fn, batch_size=8,
+                                          validation_file_path=
+                                          os.path.join(resource_path,
+                                                       "tfrecord/mnist_test.tfrecord"))
+
+        keras_model.fit(dataset)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
