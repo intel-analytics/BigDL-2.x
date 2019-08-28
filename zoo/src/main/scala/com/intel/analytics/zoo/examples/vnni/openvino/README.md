@@ -8,7 +8,7 @@ We hereby illustrate the support of [VNNI](https://en.wikichip.org/wiki/x86/avx5
 * [Analytics Zoo](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/)
 
 Environment Setting:
-- Set `ZOO_NUM_THREADS` to determine cores used by OpenVINO, e.g, `export ZOO_NUM_THREADS=10`. If it is set to `all`, e.g., `export ZOO_NUM_THREADS=all`, then OpenVINO will utilize all physical cores for Prediction.
+- Set `ZOO_NUM_MKLTHREADS` to determine cores used by OpenVINO, e.g, `export ZOO_NUM_MKLTHREADS=10`. If it is set to `all`, e.g., `export ZOO_NUM_MKLTHREADS=all`, then OpenVINO will utilize all physical cores for Prediction.
 - Set `KMP_BLOCKTIME=200`, i.e., `export KMP_BLOCKTIME=200`
 
 ## Datasets and pre-trained models
