@@ -25,6 +25,7 @@ import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.transform.vision.image.augmentation.RandomAlterAspect
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.feature.FeatureSet
+import com.intel.analytics.zoo.feature.common.MTSampleToMiniBatch
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.feature.pmem.{DRAM, MemoryType}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
@@ -163,9 +164,9 @@ object Utils {
       ImageMatToTensor[Float](toRGB = false) ->
       ImageSetToSample[Float](inputKeys = Array(ImageFeature.imageTensor),
         targetKeys = Array(ImageFeature.label)) ->
-      ImageFeatureToSample[Float]() ->
-      SampleToMiniBatch[Float](batchSize)
-    featureSet.transform(transformer)
+      ImageFeatureToSample[Float]()
+    val toMiniBatch = MTSampleToMiniBatch[ImageFeature, Float](batchSize, transformer)
+    featureSet -> toMiniBatch
   }
 
   def loadImageNetValDataSet(path: String, sc: SparkContext, imageSize: Int, batchSize: Int,
@@ -183,9 +184,9 @@ object Utils {
       ImageMatToTensor[Float](toRGB = false) ->
       ImageSetToSample[Float](inputKeys = Array(ImageFeature.imageTensor),
         targetKeys = Array(ImageFeature.label)) ->
-      ImageFeatureToSample[Float]() ->
-      SampleToMiniBatch[Float](batchSize)
-    featureSet.transform(transformer)
+      ImageFeatureToSample[Float]()
+    val toMiniBatch = MTSampleToMiniBatch[ImageFeature, Float](batchSize, transformer)
+    featureSet -> toMiniBatch
   }
 
 }
