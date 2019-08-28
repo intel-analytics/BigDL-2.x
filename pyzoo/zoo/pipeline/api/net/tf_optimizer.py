@@ -46,39 +46,23 @@ class TFValidationMethod(JavaValue):
 
 
 class TFTrainingHelper(Layer):
-    def __init__(self, path, configProto):
+    def __init__(self, path, configProto, assign, variable_placeholders):
         if configProto is not None:
             byte_arr = bytearray(configProto.SerializeToString())
         else:
             byte_arr = None
+        self.assign = assign
+        self.variable_placeholders = variable_placeholders
         super(TFTrainingHelper, self).__init__(None, "float", path, byte_arr)
 
 
-class TFOptimizer:
-    def __init__(self, loss, optim_method, sess=None, dataset=None, inputs=None,
-                 grads=None, variables=None, graph=None,
-                 val_outputs=None, val_labels=None, val_method=None, val_split=0.0,
-                 tensors_with_value=None, session_config=None,
-                 clip_norm=None, clip_value=None):
-        '''
-        TFOptimizer is used for distributed training of TensorFlow
-        on Spark/BigDL.
-
-        :param loss: The loss tensor of the TensorFlow model, should be a scalar
-        :param optim_method: the optimization method to be used, such as bigdl.optim.optimizer.Adam
-        :param sess: the current TensorFlow Session, if you want to used a pre-trained model, you
-        should use the Session to load the pre-trained variables and pass it to TFOptimizer.
-        '''
+    @staticmethod
+    def create(loss, sess, inputs, grads, variables, graph,
+               val_outputs, val_labels, val_method,
+               tensors_with_value, session_config, metrics):
 
         import tensorflow as tf
         from zoo.util.tf import export_tf
-
-        if dataset is None:
-            args = TFOptimizer._get_arguments_from_loss(loss, optim_method, sess,
-                                                        val_outputs, val_labels, val_method)
-            loss, optim_method, sess, dataset, inputs = args[:5]
-            grads, variables, graph, val_outputs, val_labels, val_method = args[5:]
-
         additional_inputs = []
         additional_values = []
         all_required_inputs = _find_placeholders([loss])
@@ -92,43 +76,29 @@ class TFOptimizer:
         if not isinstance(inputs, list):
             inputs = nest.flatten(inputs)
 
-        self.optim_method = optim_method
-        self.sess = sess
-        self.dataset = dataset
-        self.inputs = inputs + additional_inputs
-        self.graph = graph
+        inputs = inputs + additional_inputs
+
         if session_config is not None:
             import tensorflow as tf
             assert isinstance(session_config, tf.ConfigProto),\
                 "session_config should be a tf.ConfigProto"
             session_config.use_per_session_threads = True
-        self.session_config = session_config
-
-        self.clip_norm = clip_norm
-        if clip_value is not None and not isinstance(clip_value, tuple):
-            raise ValueError("The clip_value argument should be a tuple (min_value, max_value)")
-        self.clip_constant = clip_value
+        session_config = session_config
 
         from zoo.util.tf import process_grad
         grads = [process_grad(grad) for grad in grads]
 
-        if self.dataset.batch_size <= 0:
-            raise ValueError("You should set batch_size instead of batch_per_thread for training")
-
         if val_outputs is not None and val_labels is not None:
-            with self.graph.as_default():
+            with graph.as_default():
                 val_labels = [tf.identity(v) for v in val_labels]
             outputs = val_outputs + val_labels + [loss]
         else:
             outputs = [loss]
 
-        self.grads = grads
-        self.outputs = outputs
-
-        self.export_dir = tempfile.mkdtemp()
-        export_tf(self.sess, self.export_dir,
-                  inputs=self.inputs,
-                  outputs=self.grads + self.outputs)
+        export_dir = tempfile.mkdtemp()
+        export_tf(sess, export_dir,
+                  inputs=inputs,
+                  outputs=grads + outputs)
 
         variable_names = [v.name for v in variables]
         grad_names = [g.name for g in grads]
@@ -138,42 +108,70 @@ class TFOptimizer:
             return [float(v) for v in vs]
 
         meta = {
-            "input_names": [i.name for i in self.inputs],
+            "input_names": [i.name for i in inputs],
             "output_names": output_names,
             "variables": variable_names,
             "grad_variables": grad_names,
             "default_tensor_values": [to_floats(v) for v in additional_values]
         }
 
-        with open(os.path.join(self.export_dir, "training_meta.json"), "w") as f:
+        with open(os.path.join(export_dir, "training_meta.json"), "w") as f:
             f.write(json.dumps(meta))
 
-        self.variable_placeholders = []
-        with self.graph.as_default():
-            assigns = []
-            for v in variables:
-                p = tf.placeholder(dtype=tf.float32, shape=v.shape)
-                a = tf.assign(v, p)
-                self.variable_placeholders.append(p)
-                assigns.append(a)
-            assign = tf.group(*assigns)
-        self.assign = assign
-        try:
-            self.training_helper_layer = TFTrainingHelper(self.export_dir, session_config)
-        except Py4JJavaError as e:
-            if "expects to be colocated with unknown node" in str(e):
-                raise Exception("""
-If you are using the embedding layer in tf.keras, then this is a
-known issue of TensorFlow, see https://github.com/tensorflow/tensorflow/issues/21889.
-Please add zoo.util.tf.variable_creator_scope before model construction.
-For example:
-from zoo.util.tf import variable_creator_scope
-with variable_creator_scope():
-    model = tf.keras.models.Sequential([
-    tf.keras.layers.Embedding(1, 1, input_length=1)])
-                """)
-            else:
-                raise e
+            variable_placeholders = []
+            with graph.as_default():
+                assigns = []
+                for v in variables:
+                    p = tf.placeholder(dtype=tf.float32, shape=v.shape)
+                    a = tf.assign(v, p)
+                    variable_placeholders.append(p)
+                    assigns.append(a)
+                assign = tf.group(*assigns)
+            assign = assign
+            training_helper_layer = TFTrainingHelper(export_dir, session_config, assign, variable_placeholders)
+        return training_helper_layer
+
+
+class TFOptimizer:
+    def __init__(self, loss, optim_method, sess=None, dataset=None, inputs=None,
+                 grads=None, variables=None, graph=None,
+                 val_outputs=None, val_labels=None, val_method=None, val_split=0.0,
+                 tensors_with_value=None, session_config=None,
+                 clip_norm=None, clip_value=None, metrics=None):
+        '''
+        TFOptimizer is used for distributed training of TensorFlow
+        on Spark/BigDL.
+
+        :param loss: The loss tensor of the TensorFlow model, should be a scalar
+        :param optim_method: the optimization method to be used, such as bigdl.optim.optimizer.Adam
+        :param sess: the current TensorFlow Session, if you want to used a pre-trained model, you
+        should use the Session to load the pre-trained variables and pass it to TFOptimizer.
+        '''
+
+        if dataset is None:
+            args = TFOptimizer._get_arguments_from_loss(loss, optim_method, sess,
+                                                        val_outputs, val_labels, val_method)
+            loss, optim_method, sess, dataset, inputs = args[:5]
+            grads, variables, graph, val_outputs, val_labels, val_method = args[5:]
+
+        self.optim_method = optim_method
+        self.sess = sess
+        self.dataset = dataset
+        self.graph = graph
+
+        self.clip_norm = clip_norm
+        if clip_value is not None and not isinstance(clip_value, tuple):
+            raise ValueError("The clip_value argument should be a tuple (min_value, max_value)")
+        self.clip_constant = clip_value
+
+        if self.dataset.batch_size <= 0:
+            raise ValueError("You should set batch_size instead of batch_per_thread for training")
+
+        self.training_helper_layer = TFTrainingHelper.create(loss,
+                                                             sess, inputs, grads, variables, graph,
+                                                             val_outputs, val_labels, val_method,
+                                                             tensors_with_value, session_config,
+                                                             metrics)
 
         batch_size = self.dataset.batch_size
 
@@ -246,7 +244,7 @@ with variable_creator_scope():
     @classmethod
     def from_loss(cls, loss, optim_method, session=None, val_outputs=None,
                   val_labels=None, val_method=None, val_split=0.0,
-                  clip_norm=None, clip_value=None, **kwargs):
+                  clip_norm=None, clip_value=None, metrics=None, **kwargs):
         args = TFOptimizer._get_arguments_from_loss(loss, optim_method,
                                                     session, val_outputs,
                                                     val_labels, val_method)
@@ -458,5 +456,5 @@ with variable_creator_scope():
 
         variables = self.training_helper_layer.get_weights()
 
-        feed_dict = dict(zip(self.variable_placeholders, variables))
-        self.sess.run(self.assign, feed_dict=feed_dict)
+        feed_dict = dict(zip(self.training_helper_layer.variable_placeholders, variables))
+        self.sess.run(self.training_helper_layer.assign, feed_dict=feed_dict)
