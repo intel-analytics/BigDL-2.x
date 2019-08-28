@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018 Analytics Zoo Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intel.analytics.zoo.feature.common
 
 import com.intel.analytics.bigdl.dataset._
@@ -92,12 +107,12 @@ object MTSampleToMiniBatch {
    * @return
    */
   def apply[A: ClassTag, T: ClassTag](
-                            batchSize : Int,
-                            transformer: Transformer[A, Sample[T]],
-                            featurePaddingParam: Option[PaddingParam[T]] = None,
-                            labelPaddingParam: Option[PaddingParam[T]] = None,
-                            partitionNum: Option[Int] = None
-                        )(implicit ev: TensorNumeric[T]): MTSampleToMiniBatch[A, T] = {
+         batchSize : Int,
+         transformer: Transformer[A, Sample[T]],
+         featurePaddingParam: Option[PaddingParam[T]] = None,
+         labelPaddingParam: Option[PaddingParam[T]] = None,
+         partitionNum: Option[Int] = None
+         )(implicit ev: TensorNumeric[T]): MTSampleToMiniBatch[A, T] = {
     new MTSampleToMiniBatch[A, T](batchSize,
       transformer,
       None, featurePaddingParam, labelPaddingParam, partitionNum)
@@ -112,10 +127,11 @@ object MTSampleToMiniBatch {
    * @return
    */
   def apply[A: ClassTag, T: ClassTag](
-                            miniBatch: MiniBatch[T],
-                            batchSize : Int,
-                            transformer: Transformer[A, Sample[T]],
-                            partitionNum: Option[Int])(implicit ev: TensorNumeric[T]): MTSampleToMiniBatch[A, T] = {
+        miniBatch: MiniBatch[T],
+        batchSize : Int,
+        transformer: Transformer[A, Sample[T]],
+        partitionNum: Option[Int])
+        (implicit ev: TensorNumeric[T]): MTSampleToMiniBatch[A, T] = {
     new MTSampleToMiniBatch[A, T](batchSize,
       transformer,
       Some(miniBatch), partitionNum = partitionNum)
