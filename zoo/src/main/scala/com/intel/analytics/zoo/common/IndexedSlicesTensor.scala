@@ -1094,6 +1094,19 @@ object IndexedSlicesTensor {
     new IndexedSlicesTensor(indices, values, shape, shape.length)
   }
 
+  def apply[T: ClassTag](
+    indices : Tensor[Int],
+    values : Tensor[T],
+    shape : Array[Int])(
+    implicit ev: TensorNumeric[T]): IndexedSlicesTensor[T] = {
+    require(indices.nElement() == values.size(2), "indices length should be the same with values size(2)")
+    val data = new Array[Array[T]](indices.nElement())
+    for (i <- 1 to data.length) {
+      data(i) = values.select(2, i).toArray()
+    }
+    IndexedSlicesTensor[T](indices.toArray(), data, shape)
+  }
+
   def apply[T: ClassTag]()(implicit ev: TensorNumeric[T]): IndexedSlicesTensor[T] = {
     new IndexedSlicesTensor[T](Array[Int](), Array[Array[T]](), Array[Int](), 1)
   }

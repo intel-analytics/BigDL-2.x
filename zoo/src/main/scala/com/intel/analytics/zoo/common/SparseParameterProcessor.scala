@@ -16,9 +16,9 @@ import scala.reflect.ClassTag
 // U is walk around for collectGlobalData[T] is not ClassTag
 class SparseParameterProcessor[U: ClassTag](optimMethods: SparseOptimMethod[U])
   (implicit ev: TensorNumeric[U]) extends ParameterProcessor {
-  var globalSparseG: Array[Tensor[U]] = null
-  var globalW: Array[Tensor[U]] = null
-  var bcGlobalW: Broadcast[Array[Tensor[U]]] = null
+//  var globalSparseG: Array[Tensor[U]] = null
+//  var globalW: Array[Tensor[U]] = null
+//  var bcGlobalW: Broadcast[Array[Tensor[U]]] = null
 
   override def collectGlobalData[T](models: RDD[Cache[T]],
                                     parameters: AllReduceParameter[T],
@@ -26,7 +26,7 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: SparseOptimMethod[U])
                                     state: Table)(implicit ev2: TensorNumeric[T]) : Unit = {
     // 1. aggregate sparseG first in each node
     // 2. aggregate sparseG on driver side
-    globalSparseG = models.mapPartitions(modelIter => {
+    val globalSparseG = models.mapPartitions(modelIter => {
       val cached = modelIter.next()
 
       val sparseG = cached.localModels.map(
@@ -57,10 +57,11 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: SparseOptimMethod[U])
     //TODO: support cliping sparseG
 
     // update weight with global gradients in driver
-    if (globalW == null) {
-      globalW = models.take(1).head.localModels.head
+    var globalW =
+//    if (bcGlobalW == null) {
+      models.take(1).head.localModels.head
         .asInstanceOf[SparseAbstractModule[U]].sparseParameters()._1
-    }
+//    } else bcGlobalW.value
 //    globalW = optimMethods.optimize(_ => (ev.fromType(1.0f), globalSparseG), globalW)._1
 
 //    globalW = globalW.zip(globalSparseG).map { case(w, g) =>
@@ -70,21 +71,22 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: SparseOptimMethod[U])
 
     // update weight in the cluster
     val sc = models.sparkContext
-    bcGlobalW = sc.broadcast(globalW)
-//    models.mapPartitions(modelIter => {
-//      val modelCache = modelIter.next()
-//      modelCache.localModels.head
-//        .asInstanceOf[sudoLookupTableSparse[U]].setSparseParameters(broadcastW.value, null)
-//      Iterator.empty
-//    }).count()
+    val bcGlobalW = sc.broadcast(globalW)
+    models.mapPartitions(modelIter => {
+      val modelCache = modelIter.next()
+      modelCache.localModels.head
+        .asInstanceOf[SparseAbstractModule[U]].sparseParameters()._1.zip(bcGlobalW.value)
+        .foreach { case (w, bw) => w.copy(bw)}
+      Iterator.empty
+    }).count()
   }
 
   override def processParameters[T](parameters: AllReduceParameter[T],
                                     modelCache: Cache[T],
                                     state: Table)(implicit ev: TensorNumeric[T]): Unit = {
-      modelCache.localModels.head
-        .asInstanceOf[SparseAbstractModule[U]].sparseParameters()._1.zip(bcGlobalW.value)
-        .foreach {case (w, bw) => w.copy(bw)}
+//      modelCache.localModels.head
+//        .asInstanceOf[SparseAbstractModule[U]].sparseParameters()._1.zip(bcGlobalW.value)
+//        .foreach {case (w, bw) => w.copy(bw)}
   }
 
   // TODO: support sparseG for local mode
@@ -93,6 +95,7 @@ class SparseParameterProcessor[U: ClassTag](optimMethods: SparseOptimMethod[U])
   }
 
   def getSparseParameters(model: Module[U]): Unit = {
-    model.asInstanceOf[SparseAbstractModule[U]].setSparseParameters(globalW, globalSparseG)
+    // TODO: get sparseG and w
+    model.asInstanceOf[SparseAbstractModule[U]].setSparseParameters(null, null)
   }
 }
