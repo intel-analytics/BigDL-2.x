@@ -514,24 +514,25 @@ class TFRecordDataset(TFDataset):
     def __init__(self, file_path, parse_fn, batch_size,
                  batch_per_thread, hard_code_batch_size=False, validation_file_path=None):
         import tensorflow as tf
-        with tf.Graph().as_default():
+        g = tf.Graph()
+        with g.as_default():
             serialized_example = tf.placeholder(dtype=tf.string, shape=[])
             results = parse_fn(serialized_example)
 
             flattened = nest.flatten(results)
             output_names = [tf.cast(t, dtype=tf.float32).name for t in flattened]
 
-            serialized_graph = bytearray(tf.get_default_graph().as_graph_def().SerializeToString())
+        serialized_graph = bytearray(g.as_graph_def().SerializeToString())
 
-            sc = getOrCreateSparkContext()
-            train_rdd = callBigDlFunc("float", "createRDDFromTFRecords",
-                                      file_path, sc, serialized_graph,
-                                      serialized_example.name, output_names)
-            validation_rdd = None
-            if validation_file_path is not None:
-                validation_rdd = callBigDlFunc("float", "createRDDFromTFRecords",
-                                               validation_file_path, sc, serialized_graph,
-                                               serialized_example.name, output_names)
+        sc = getOrCreateSparkContext()
+        train_rdd = callBigDlFunc("float", "createRDDFromTFRecords",
+                                  file_path, sc, serialized_graph,
+                                  serialized_example.name, output_names)
+        validation_rdd = None
+        if validation_file_path is not None:
+            validation_rdd = callBigDlFunc("float", "createRDDFromTFRecords",
+                                           validation_file_path, sc, serialized_graph,
+                                           serialized_example.name, output_names)
 
         tensor_structure = nest.pack_sequence_as(results,
                                                  [TensorMeta(tf.as_dtype(t.dtype),
