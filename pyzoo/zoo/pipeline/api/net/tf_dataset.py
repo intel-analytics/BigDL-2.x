@@ -555,9 +555,7 @@ class TFRecordDataset(TFDataset):
         return self.train_rdd
 
     def get_validation_data(self):
-        if self.validation_rdd is not None:
-            return self.validation_rdd
-        return None
+        return self.validation_rdd
 
 
 class TFTextDataset(TFDataset):
