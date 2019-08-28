@@ -136,18 +136,8 @@ object TrainImageNet {
 
       estimator.train(trainDataSet, new CrossEntropyCriterion[Float](),
         endTrigger = Some(Trigger.maxEpoch(param.nepochs)),
-        checkPointTrigger = Some(Trigger.severalIteration(200)),
+        checkPointTrigger = Some(Trigger.everyEpoch),
         validateDataSet, Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))
-      val data = trainDataSet.toDistributed().data(true)
-      while(true) {
-        data.mapPartitions { d =>
-          if (d.hasNext) {
-            d.next()
-          }
-          Iterator.single(1)
-        }.count()
-      }
-
 
       sc.stop()
     })
