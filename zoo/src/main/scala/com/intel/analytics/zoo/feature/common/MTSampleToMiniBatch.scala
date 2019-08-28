@@ -84,6 +84,7 @@ object MTSampleToMiniBatch {
    * Apply an MTSampleToMiniBatch transformer.
    *
    * @param batchSize           total batch size
+   * @param transformer         transformer who rawData to Sample
    * @param featurePaddingParam feature padding strategy, see
    *                            [[com.intel.analytics.bigdl.dataset.PaddingParam]] for details.
    * @param labelPaddingParam   label padding strategy, see
@@ -107,6 +108,7 @@ object MTSampleToMiniBatch {
    *
    * @param batchSize total batch size
    * @param miniBatch An User-Defined MiniBatch to construct a mini batch.
+   * @param transformer transformer who rawData to Sample
    * @return
    */
   def apply[A: ClassTag, T: ClassTag](
