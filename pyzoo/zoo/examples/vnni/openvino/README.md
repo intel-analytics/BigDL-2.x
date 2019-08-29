@@ -5,14 +5,11 @@ This example illustrates how to use a pre-trained OpenVINO optimized model to ma
 * Apache Spark (This version needs to be same with the version you use to build Analytics Zoo)
 * [Analytics Zoo](https://analytics-zoo.github.io/master/#PythonUserGuide/install/)
 
-Environment Setting:
 - Set `ZOO_NUM_MKLTHREADS` to determine cores used by OpenVINO, e.g, `export ZOO_NUM_MKLTHREADS=10`. If it is set to `all`, e.g., `export ZOO_NUM_MKLTHREADS=all`, then OpenVINO will utilize all physical cores for Prediction.
 - Set `KMP_BLOCKTIME=200`, i.e., `export KMP_BLOCKTIME=200`
 
-
 ## PrepareOpenVINOResNet
 TensorFlow models cannot be directly loaded by OpenVINO. It should be converted to OpenVINO optimized model and int8 optimized model first. You can use [PrepareOpenVINOResNet](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/vnni/openvino) or [OpenVINO toolkit](https://docs.openvinotoolkit.org/2018_R5/_docs_MO_DG_prepare_model_convert_model_Convert_Model_From_TensorFlow.html) to finish this job.
-
 
 __Sample Result files in MODEL_PATH__:
 ```
@@ -40,13 +37,6 @@ python inference.py --image ${image} --model ${model}
 We print the inference result of each batch.
 ```
 [ INFO ] Start inference (1 iterations)
-
-Total inference time: 82.6972 ms
-Average running time of one iteration: 82.6972 ms
-Throughput: 48.3692 FPS
-
-JNI Total predict time: 84.3951 ms
-JNI Throughput: 47.3961 FPS
 
 batch_0
 * Predict result {'Top-1': '67'}
