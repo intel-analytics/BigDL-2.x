@@ -19,7 +19,7 @@ import sys
 
 from bigdl.dataset.dataset import DataSet
 from bigdl.transform.vision.image import FeatureTransformer
-from bigdl.util.common import get_node_and_core_number
+from bigdl.util.common import get_node_and_core_number, callBigDlFunc
 from zoo.common import Sample, JTensor
 from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.feature.image import ImagePreprocessing
@@ -426,6 +426,33 @@ class TFDataset(object):
                              validation_image_set)
 
     @staticmethod
+    def from_tfrecord(file_path, parse_fn, batch_size=-1, batch_per_thread=-1,
+                      hard_code_batch_size=False, validation_file_path=None):
+        """
+        Create a TFDataset from tfrecord files.
+        :param file_path: comma seperated tfrecord file(s) path
+        :param parse_fn: a TensorFlow function that takes a serialized example string to a nested
+        structure of tensors. Follows the signature:
+            * Args:
+                * `example`: a string TensorFlow tensor representing a single record
+            * Returns:
+                a tuple or dictionary of output tensors and the output tensors must be
+                of numeric type
+        :param batch_size: the batch size, used for training, should be a multiple of
+        total core num
+        :param batch_per_thread: the batch size for each thread, used for inference or evaluation
+        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
+        if True, the static size of the first dimension of the resulting tensors is
+        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
+        it is None.
+        :param validation_file_path: The tfrecord files used for validation
+        :return:
+        """
+
+        return TFRecordDataset(file_path, parse_fn, batch_size, batch_per_thread,
+                               hard_code_batch_size, validation_file_path)
+
+    @staticmethod
     def from_feature_set(dataset, features, labels=None, batch_size=-1, batch_per_thread=-1,
                          hard_code_batch_size=False, validation_dataset=None):
         """
@@ -477,6 +504,59 @@ class TFFeatureDataset(TFDataset):
             return self.validation_dataset.transform(
                 MergeFeatureLabelFeatureTransformer()).to_dataset()
         return None
+
+
+class TFRecordDataset(TFDataset):
+
+    def get_num_partitions(self):
+        self.train_rdd.getNumPartitions()
+
+    def __init__(self, file_path, parse_fn, batch_size,
+                 batch_per_thread, hard_code_batch_size=False, validation_file_path=None):
+        import tensorflow as tf
+        g = tf.Graph()
+        with g.as_default():
+            serialized_example = tf.placeholder(dtype=tf.string, shape=[])
+            results = parse_fn(serialized_example)
+
+            flattened = nest.flatten(results)
+            output_names = [tf.cast(t, dtype=tf.float32).name for t in flattened]
+
+        serialized_graph = bytearray(g.as_graph_def().SerializeToString())
+
+        sc = getOrCreateSparkContext()
+        train_rdd = callBigDlFunc("float", "createRDDFromTFRecords",
+                                  file_path, sc, serialized_graph,
+                                  serialized_example.name, output_names)
+        validation_rdd = None
+        if validation_file_path is not None:
+            validation_rdd = callBigDlFunc("float", "createRDDFromTFRecords",
+                                           validation_file_path, sc, serialized_graph,
+                                           serialized_example.name, output_names)
+
+        tensor_structure = nest.pack_sequence_as(results,
+                                                 [TensorMeta(tf.as_dtype(t.dtype),
+                                                  shape=t.shape,
+                                                  name="data_%s" % i)
+                                                  for i, t in enumerate(nest.flatten(results))])
+
+        super(TFRecordDataset, self).__init__(tensor_structure, batch_size,
+                                              batch_per_thread, hard_code_batch_size)
+
+        self.train_rdd = train_rdd
+        self.validation_rdd = validation_rdd
+
+    def get_prediction_data(self):
+        return self.train_rdd
+
+    def get_evaluation_data(self):
+        return self.train_rdd
+
+    def get_training_data(self):
+        return self.train_rdd
+
+    def get_validation_data(self):
+        return self.validation_rdd
 
 
 class TFTextDataset(TFDataset):
