@@ -17,8 +17,8 @@ _TimeSequencePredictor_ can be used to train a model on historical time sequence
   * Current implementation only supports univariant prediction, which means target value should only be a scalar on each data point of the sequence. Input features can be multivariant.  
   * We require input time series data to be uniformly sampled in timeline. Missing data points will lead to errors or unreliable prediction result. 
 
-   1. Before training, init RayOnSpark.
-     * run ray on spark local mode, Example
+   1. Before training, init RayOnSpark.   
+  * Run ray on spark local mode, Example
 ```python
 from zoo import init_spark_on_local
 from zoo.ray.util.raycontext import RayContext
@@ -26,7 +26,7 @@ sc = init_spark_on_local(cores=4)
 ray_ctx = RayContext(sc=sc)
 ray_ctx.init()
 ```
-     * run ray on yarn cluster, Example
+  * run ray on yarn cluster, Example  
 ```python
 from zoo import init_spark_on_yarn
 from zoo.ray.util.raycontext import RayContext
