@@ -113,13 +113,13 @@ class RayTuneSearchEngine(SearchEngine):
                                                    validation_df,
                                                    metric_op,
                                                    self.remote_dir)
-        self.trainable_class = self._prepare_trainable_class(input_df,
-                                                             feature_transformers,
-                                                             # model,
-                                                             future_seq_len,
-                                                             validation_df,
-                                                             metric_op,
-                                                             self.remote_dir)
+        # self.trainable_class = self._prepare_trainable_class(input_df,
+        #                                                      feature_transformers,
+        #                                                      # model,
+        #                                                      future_seq_len,
+        #                                                      validation_df,
+        #                                                      metric_op,
+        #                                                      self.remote_dir)
 
     def run(self):
         """
@@ -127,39 +127,12 @@ class RayTuneSearchEngine(SearchEngine):
         :return: trials result
         """
         # function based
-        # if not self.search_algorithm:
-        #     trials = tune.run(
-        #         self.train_func,
-        #         name=self.name,
-        #         stop=self.stop_criteria,
-        #         config=self.search_space,
-        #         num_samples=self.num_samples,
-        #         resources_per_trial=self.resources_per_trail,
-        #         verbose=1,
-        #         reuse_actors=True
-        #     )
-        # else:
-        #     trials = tune.run(
-        #         self.train_func,
-        #         name=self.name,
-        #         config=self.fixed_params,
-        #         stop=self.stop_criteria,
-        #         search_alg=self.search_algorithm,
-        #         num_samples=self.num_samples,
-        #         resources_per_trial=self.resources_per_trail,
-        #         verbose=1,
-        #         reuse_actors=True
-        #     )
-        # class based
         if not self.search_algorithm:
             trials = tune.run(
-                self.trainable_class,
+                self.train_func,
                 name=self.name,
                 stop=self.stop_criteria,
                 config=self.search_space,
-                checkpoint_freq=1,
-                checkpoint_at_end=True,
-                resume="prompt",
                 num_samples=self.num_samples,
                 resources_per_trial=self.resources_per_trail,
                 verbose=1,
@@ -167,19 +140,46 @@ class RayTuneSearchEngine(SearchEngine):
             )
         else:
             trials = tune.run(
-                self.trainable_class,
+                self.train_func,
                 name=self.name,
                 config=self.fixed_params,
                 stop=self.stop_criteria,
                 search_alg=self.search_algorithm,
-                checkpoint_freq=1,
-                checkpoint_at_end=True,
-                resume="prompt",
                 num_samples=self.num_samples,
                 resources_per_trial=self.resources_per_trail,
                 verbose=1,
                 reuse_actors=True
-                )
+            )
+        # class based
+        # if not self.search_algorithm:
+        #     trials = tune.run(
+        #         self.trainable_class,
+        #         name=self.name,
+        #         stop=self.stop_criteria,
+        #         config=self.search_space,
+        #         checkpoint_freq=1,
+        #         checkpoint_at_end=True,
+        #         resume="prompt",
+        #         num_samples=self.num_samples,
+        #         resources_per_trial=self.resources_per_trail,
+        #         verbose=1,
+        #         reuse_actors=True
+        #     )
+        # else:
+        #     trials = tune.run(
+        #         self.trainable_class,
+        #         name=self.name,
+        #         config=self.fixed_params,
+        #         stop=self.stop_criteria,
+        #         search_alg=self.search_algorithm,
+        #         checkpoint_freq=1,
+        #         checkpoint_at_end=True,
+        #         resume="prompt",
+        #         num_samples=self.num_samples,
+        #         resources_per_trial=self.resources_per_trail,
+        #         verbose=1,
+        #         reuse_actors=True
+        #         )
         self.trials = trials
         return self
 
