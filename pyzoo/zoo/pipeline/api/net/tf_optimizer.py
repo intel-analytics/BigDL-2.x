@@ -217,10 +217,12 @@ class TFOptimizer:
             raise ValueError("You should set batch_size instead of batch_per_thread for training")
 
         if val_method is not None:
-            if metrics is not None:
-                metrics['bigdl_metric'] = BigDLMetric(val_method, val_outputs, val_labels)
-            else:
-                metrics = {'bigdl_metric': BigDLMetric(val_method, val_outputs, val_labels)}
+            val_methods = to_list(val_method)
+            if metrics is None:
+                metrics = {}
+
+            for i, method in enumerate(val_methods):
+                metrics['bigdl_metirc_' + str(i)]= BigDLMetric(method, val_outputs, val_labels)
 
         self.tf_model = TFModel.create(loss,
                                        sess, inputs, grads, variables, graph,
