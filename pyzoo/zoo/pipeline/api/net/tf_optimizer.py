@@ -40,9 +40,21 @@ class IdentityCriterion(Criterion):
 
 
 class TFValidationMethod(JavaValue):
-    def __init__(self, val_method, output_length, target_length):
+    def __init__(self, val_method, name, output_indices, label_indices):
         JavaValue.__init__(self, None, "float",
-                           val_method, output_length, target_length)
+                           val_method, name, output_indices, label_indices)
+
+class StatelessMetric(JavaValue):
+
+    def __init__(self, metric_name, idx):
+        JavaValue.__init__(self, None, "float", metric_name, idx)
+
+class BigDLMetric(object):
+
+    def __init__(self, val_method, outputs, labels):
+        self.val_method = val_method
+        self.outputs = outputs
+        self.labels = labels
 
 
 class TFTrainingHelper(Layer):
@@ -56,9 +68,16 @@ class TFTrainingHelper(Layer):
         super(TFTrainingHelper, self).__init__(None, "float", path, byte_arr)
 
 
+class TFModel(object):
+
+    def __init__(self, training_helper_layer, criterion, val_methods):
+
+        self.training_helper_layer = training_helper_layer
+        self.criterion = criterion
+        self.val_methods = val_methods
+
     @staticmethod
     def create(loss, sess, inputs, grads, variables, graph,
-               val_outputs, val_labels, val_method,
                tensors_with_value, session_config, metrics):
 
         import tensorflow as tf
@@ -88,14 +107,38 @@ class TFTrainingHelper(Layer):
         from zoo.util.tf import process_grad
         grads = [process_grad(grad) for grad in grads]
 
-        if val_outputs is not None and val_labels is not None:
+        outputs = []
+        val_methods = None
+        if metrics is not None:
+            idx = 0
+            val_methods = []
+            for metric_name in metrics:
+                metric = metrics[metric_name]
+                if tf.is_numeric_tensor(metric):
+                    outputs.append(metric)
+                    val_methods.append(StatelessMetric(metric_name, idx))
+                    idx += 1
+                else:
+                    outputs += metric.outputs
+                    with graph.as_default():
+                        val_labels = [tf.identity(v) for v in metric.labels]
+                    outputs += val_labels
+                    method = TFValidationMethod(metric.val_method,
+                                                metric_name,
+                                                list(range(idx, idx + len(metric.outputs))),
+                                                list(range(idx + len(metric.outputs),
+                                                           idx + len(metric.outputs)
+                                                           + len(val_labels))))
+                    val_methods.append(method)
+                    idx += len(metric.outputs) + len(val_labels)
             with graph.as_default():
-                val_labels = [tf.identity(v) for v in val_labels]
-            outputs = val_outputs + val_labels + [loss]
-        else:
-            outputs = [loss]
+                real_batch_size = tf.shape(inputs[0])[0]
+            outputs.append(real_batch_size)
+
+        outputs.append(loss)
 
         export_dir = tempfile.mkdtemp()
+        # export_dir = "/tmp/training_helper"
         export_tf(sess, export_dir,
                   inputs=inputs,
                   outputs=grads + outputs)
@@ -117,19 +160,21 @@ class TFTrainingHelper(Layer):
 
         with open(os.path.join(export_dir, "training_meta.json"), "w") as f:
             f.write(json.dumps(meta))
+        variable_placeholders = []
+        with graph.as_default():
+            assigns = []
+            for v in variables:
+                p = tf.placeholder(dtype=tf.float32, shape=v.shape)
+                a = tf.assign(v, p)
+                variable_placeholders.append(p)
+                assigns.append(a)
+            assign = tf.group(*assigns)
+        assign = assign
+        training_helper_layer = TFTrainingHelper(export_dir, session_config, assign, variable_placeholders)
 
-            variable_placeholders = []
-            with graph.as_default():
-                assigns = []
-                for v in variables:
-                    p = tf.placeholder(dtype=tf.float32, shape=v.shape)
-                    a = tf.assign(v, p)
-                    variable_placeholders.append(p)
-                    assigns.append(a)
-                assign = tf.group(*assigns)
-            assign = assign
-            training_helper_layer = TFTrainingHelper(export_dir, session_config, assign, variable_placeholders)
-        return training_helper_layer
+        criterion = IdentityCriterion()
+
+        return TFModel(training_helper_layer, criterion, val_methods)
 
 
 class TFOptimizer:
@@ -167,32 +212,30 @@ class TFOptimizer:
         if self.dataset.batch_size <= 0:
             raise ValueError("You should set batch_size instead of batch_per_thread for training")
 
-        self.training_helper_layer = TFTrainingHelper.create(loss,
-                                                             sess, inputs, grads, variables, graph,
-                                                             val_outputs, val_labels, val_method,
-                                                             tensors_with_value, session_config,
-                                                             metrics)
+        if val_method is not None:
+            if metrics is not None:
+                metrics['bigdl_metric'] = BigDLMetric(val_method, val_outputs, val_labels)
+            else:
+                metrics = {'bigdl_metric': BigDLMetric(val_method, val_outputs, val_labels)}
+
+        self.tf_model = TFModel.create(loss,
+                                       sess, inputs, grads, variables, graph,
+                                       tensors_with_value, session_config,
+                                       metrics)
 
         batch_size = self.dataset.batch_size
 
         sample_rdd = self.dataset.get_training_data()
 
-        if val_outputs is not None and val_labels is not None:
+        if val_split != 0.0:
+            training_rdd, val_rdd = sample_rdd.randomSplit([1 - val_split, val_split])
+        else:
+            training_rdd = sample_rdd
             val_rdd = self.dataset.get_validation_data()
-            if val_rdd is not None:
-                val_method = [TFValidationMethod(m, len(val_outputs), len(val_labels))
-                              for m in to_list(val_method)]
-                training_rdd = sample_rdd
 
-            elif val_split != 0.0:
-                training_rdd, val_rdd = sample_rdd.randomSplit([1 - val_split, val_split])
-                val_method = [TFValidationMethod(m, len(val_outputs), len(val_labels))
-                              for m in to_list(val_method)]
-            else:
-                raise ValueError("Validation data is not specified. Please set " +
-                                 "val rdd in TFDataset, or set val_split larger than zero")
+        if self.tf_model.val_methods is not None and val_rdd is not None:
 
-            self.optimizer = Optimizer.create(self.training_helper_layer,
+            self.optimizer = Optimizer.create(self.tf_model.training_helper_layer,
                                               training_rdd,
                                               IdentityCriterion(),
                                               batch_size=batch_size,
@@ -200,10 +243,9 @@ class TFOptimizer:
             self.optimizer.set_validation(self.dataset.batch_size,
                                           val_rdd,
                                           EveryEpoch(),
-                                          val_method)
+                                          self.tf_model.val_methods)
         else:
-            training_rdd = sample_rdd
-            self.optimizer = Optimizer.create(self.training_helper_layer,
+            self.optimizer = Optimizer.create(self.tf_model.training_helper_layer,
                                               training_rdd,
                                               IdentityCriterion(),
                                               batch_size=batch_size,
@@ -262,7 +304,7 @@ class TFOptimizer:
 
         return cls(*(args + [val_split]),
                    clip_norm=clip_norm,
-                   clip_value=clip_value, **kwargs)
+                   clip_value=clip_value, metrics=metrics, **kwargs)
 
     @classmethod
     def from_keras(cls, keras_model, dataset, optim_method=None, val_spilt=0.0, **kwargs):
@@ -454,7 +496,7 @@ class TFOptimizer:
 
         self.optimizer.optimize()
 
-        variables = self.training_helper_layer.get_weights()
+        variables = self.tf_model.training_helper_layer.get_weights()
 
-        feed_dict = dict(zip(self.training_helper_layer.variable_placeholders, variables))
-        self.sess.run(self.training_helper_layer.assign, feed_dict=feed_dict)
+        feed_dict = dict(zip(self.tf_model.training_helper_layer.variable_placeholders, variables))
+        self.sess.run(self.tf_model.training_helper_layer.assign, feed_dict=feed_dict)
