@@ -60,7 +60,7 @@ class TimeSequencePipeline(Pipeline):
         """
         evdev/run-pytestsaluate the pipeline
         :param input_df:
-        :param metrics:
+        :param metrics: subset of ['mean_squared_error', 'r_square', 'sMAPE']
         :param multioutput: string in ['raw_values', 'uniform_average']
                 'raw_values' :
                     Returns a full set of errors in case of multioutput input.
@@ -68,8 +68,10 @@ class TimeSequencePipeline(Pipeline):
                     Errors of all outputs are averaged with uniform weight.
         :return:
         """
-        if not isinstance(metrics, list):
-            raise ValueError("Expected metrics to be a list!")
+        if isinstance(metrics, str):
+            metrics = [metrics]
+        # if not isinstance(metrics, list):
+        #    raise ValueError("Expected metrics to be a list!")
 
         x, y = self.feature_transformers.transform(input_df, is_train=True)
         y_pred = self.model.predict(x)
