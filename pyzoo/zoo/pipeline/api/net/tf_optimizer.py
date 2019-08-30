@@ -44,10 +44,12 @@ class TFValidationMethod(JavaValue):
         JavaValue.__init__(self, None, "float",
                            val_method, name, output_indices, label_indices)
 
+
 class StatelessMetric(JavaValue):
 
     def __init__(self, metric_name, idx):
         JavaValue.__init__(self, None, "float", metric_name, idx)
+
 
 class BigDLMetric(object):
 
@@ -138,7 +140,6 @@ class TFModel(object):
         outputs.append(loss)
 
         export_dir = tempfile.mkdtemp()
-        # export_dir = "/tmp/training_helper"
         export_tf(sess, export_dir,
                   inputs=inputs,
                   outputs=grads + outputs)
@@ -170,7 +171,10 @@ class TFModel(object):
                 assigns.append(a)
             assign = tf.group(*assigns)
         assign = assign
-        training_helper_layer = TFTrainingHelper(export_dir, session_config, assign, variable_placeholders)
+        training_helper_layer = TFTrainingHelper(export_dir,
+                                                 session_config,
+                                                 assign,
+                                                 variable_placeholders)
 
         criterion = IdentityCriterion()
 
