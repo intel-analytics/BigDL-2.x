@@ -160,8 +160,8 @@ if __name__ == "__main__":
     image_size = 224  # create dataset
     train_transformer = ChainedPreprocessing([ImagePixelBytesToMat(),
                                               ImageResize(256, 256),
-                                              ImageRandomCropper(image_size, image_size, True,
-                                                                 "Random", 3),
+                                              ImageRandomCrop(image_size, image_size),
+                                              ImageRandomPreprocessing(ImageHFlip(), 0.5),
                                               ImageChannelNormalize(123.0, 117.0, 104.0),
                                               ImageMatToTensor(format="NCHW", to_RGB=False),
                                               ImageSetToSample(input_keys=["imageTensor"], target_keys=["label"])
