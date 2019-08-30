@@ -39,6 +39,18 @@ tsp = TimeSequencePredictor(dt_col="datetime", target_col="value", extra_feature
 pipeline = tsp.fit(train_df, metric="mean_squared_error", recipe=RandomRecipe(num_samples=1))
 ```
 
+### Saving and Loading a _TimeSequencePipeline_
+ * Save the _Pipeline_ object to a file
+ ```python
+ pipeline.save("/tmp/saved_pipeline/my.ppl")
+ ```
+ * Load the _Pipeline_ object from a file
+ ```python
+ from zoo.automl.pipeline.time_sequence import load_ts_pipeline
+ 
+ pipeline = load_ts_pipeline("/tmp/saved_pipeline/my.ppl")
+ ```
+ 
 ### Prediction and Evaluation using _TimeSequencePipeline_ 
 A _TimeSequencePipeline_ contains a chain of feature transformers and models, which does end-to-end time sequence prediction on input data. _TimeSequencePipeline_ can be saved and loaded for future deployment.      
  
@@ -55,24 +67,30 @@ Output dataframe look likes below (assume predict n values forward). col `dateti
  
  * Evaluation using _Pipeline_ object
  ```python
+  #evaluate with MSE and R2 metrics
  mse, rs = pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"])
  ```
 
-### Saving and Loading a _TimeSequencePipeline_
- * Save the _Pipeline_ object to a file
+ * Incremental training using _Pipeline_ object
  ```python
- pipeline.save("/tmp/saved_pipeline/my.ppl")
- ```
- * Load the _Pipeline_ object from a file
- ```python
- from zoo.automl.pipeline.time_sequence import load_ts_pipeline
- 
- pipeline = load_ts_pipeline("/tmp/saved_pipeline/my.ppl")
+ #fit with new data and train for 5 epochs
+ pipeline.fit(newtrain_df,epoch_num=5)
  ```
 
 ## 2 AutoML Framework Overview
 
-FeatureTransformers (implementations of _BaseFeatureTransformer_) and Models (implementations of _BaseModel_) are basic components of AutoML framework, each of which bears a set of hyper paramters that can be automatically configured using hyper parameter search engine (_SearchEngine_). Once the best configuration is found after several trials, such configuration is used to configure feature transformers and models, which are in turn used to compose a pipeline (implementation of _Pipeline_). Pipeline can be saved to file and loaded later for inference.    
+There are four essential components in the AutoML framework, i.e. FeatureTransformer, Model, SearchEngine, and Pipeline. 
+
+A FeatureTransformer (inherited from _BaseFeatureTransformer_ class) defines the feature engineering process, which usually includes a chain of operations like feature generation, feature transformations and selection. A Model (inherited from _BaseModel_ class) usually defines an optimizable model (e.g. AlexNet or LeNet), and a fitting function using an optimization algorithm (e.g. SGD, Adam, etc.). A Model may also include the procedure of model/algorithm selection. 
+
+During training, a SearchEngine (inherited from _SearchEngine_ class) searches for the best set of hyper parameters for both FeatureTransformer and Model and control the actual model fitting process. A Pipeline (inherited from _Pipeline_ class) is a convenient utility that integrates FeatureTransformer and Model into an end2end data processing pipeline. A Pipeline can be easily saved to file and loaded for reuse later elsewhere. 
+
+A typical training workflow with AutoML looks like below: 
+
+1.	A FeatureTransformer and A Model are instantiated. A SearchEngine is then instantiated and configured with the FeatureTransformer and Model, along with search presets, specifying how parameters are searched, the reward metric, and etc. 
+2.	The SearchEngine runs the search procedure. It will generate several trials at a time and distribute the trials in a cluster. Each trail runs feature engineering and the model fitting process with a different combination of hyper parameters and obtain the target metric. It may take a while if the search presets generate many trails or model fitting takes a long time.
+3.	After all trials completed, the best configuration and fitted model are retrieved according to the target metric. They are used to generate the result FeatureTransformer and Model, which are in turn used to compose a Pipeline.  The Pipeline can then be saved to file and loaded later for inference and resume/incremental training. 
+
 
 * _zoo.automl.feature.abstract.BaseFeatureTransformer_ - abstract interface of feature transformer
 * _zoo.automl.model.abstract.BaseModel_ - abstract interface of model
