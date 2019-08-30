@@ -26,7 +26,7 @@ Among them, `resnet_v1_50_inference_graph.xml` and `resnet_v1_50_inference_graph
 ## Image Classification with ResNet_v1_50
 
 ```
-python inference.py --image ${image} --model ${model}
+python predict.py --image ${image} --model ${model}
 ```
 
 ### Options
