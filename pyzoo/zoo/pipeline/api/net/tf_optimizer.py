@@ -222,7 +222,7 @@ class TFOptimizer:
                 metrics = {}
 
             for i, method in enumerate(val_methods):
-                metrics['bigdl_metirc_' + str(i)]= BigDLMetric(method, val_outputs, val_labels)
+                metrics['bigdl_metirc_' + str(i)] = BigDLMetric(method, val_outputs, val_labels)
 
         self.tf_model = TFModel.create(loss,
                                        sess, inputs, grads, variables, graph,
