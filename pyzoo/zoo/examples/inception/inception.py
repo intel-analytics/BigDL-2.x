@@ -178,6 +178,7 @@ if __name__ == "__main__":
     train_data = FeatureSet.image_frame(raw_train_data).transform(train_transformer)
 
     val_transformer = ChainedPreprocessing([ImagePixelBytesToMat(),
+                                            ImageResize(256, 256),
                                             ImageCenterCrop(image_size, image_size),
                                             ImageChannelNormalize(123.0, 117.0, 104.0),
                                             ImageMatToTensor(format="NCHW", to_RGB=False),
