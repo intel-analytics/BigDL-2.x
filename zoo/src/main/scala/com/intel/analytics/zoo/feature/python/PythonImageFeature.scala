@@ -19,7 +19,6 @@ package com.intel.analytics.zoo.feature.python
 import java.util
 import java.util.{List => JList}
 
-import com.intel.analytics.bigdl.dataset.image.{CropCenter, CropRandom}
 import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
 import com.intel.analytics.bigdl.python.api.JTensor
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
@@ -326,17 +325,6 @@ class PythonImageFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyt
       prob: Double
     ): ImageRandomPreprocessing = {
     ImageRandomPreprocessing(preprocessing, prob)
-  }
-
-  def createImageRandomCropper(cropWidth: Int, cropHeight: Int, mirror: Boolean,
-                               cropperMethod: String, channels: Int): ImageRandomCropper = {
-    if (cropperMethod == "Random") {
-      ImageRandomCropper(cropWidth, cropHeight, mirror,
-        CropRandom, channels)
-    } else {
-      ImageRandomCropper(cropWidth, cropHeight, mirror,
-        CropCenter, channels)
-    }
   }
 
   def createImageRandomCrop(cropWidth: Int, cropHeight: Int, isClip: Boolean): ImageRandomCrop = {

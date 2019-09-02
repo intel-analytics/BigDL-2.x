@@ -427,10 +427,6 @@ with variable_creator_scope():
     def set_val_summary(self, summary):
         self.optimizer.set_val_summary(summary)
 
-    def set_checkpoint(self, checkpointDir, overwrite):
-        self.checkPointDir = checkpointDir
-        self.isOverwrite = overwrite
-
     def set_constant_gradient_clipping(self, min_value, max_value):
         """
         Configure constant clipping settings.
@@ -450,14 +446,12 @@ with variable_creator_scope():
         """
         self.optimizer.set_gradclip_l2norm(clip_norm)
 
-    def optimize(self, end_trigger=None, checkpoint_trigger=None):
+    def optimize(self, end_trigger=None):
         if end_trigger is None:
             end_trigger = MaxEpoch(1)
 
         self.optimizer.set_end_when(end_trigger)
-        if self.checkPointDir and checkpoint_trigger:
-            self.optimizer.set_checkpoint(checkpoint_trigger, checkpoint_path=self.checkPointDir,\
-            isOverWrite=self.isOverwrite)
+
         self.optimizer.optimize()
 
         variables = self.training_helper_layer.get_weights()
