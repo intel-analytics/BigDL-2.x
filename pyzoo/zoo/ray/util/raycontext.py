@@ -235,6 +235,7 @@ class RayContext(object):
         self.redis_password = password
         self.object_store_memory = object_store_memory
         self.redis_port = self._new_port() if not redis_port else redis_port
+        self.stopped = False
         self.ray_service = RayServiceFuncGenerator(
             python_loc=self.python_loc,
             redis_port=self.redis_port,
