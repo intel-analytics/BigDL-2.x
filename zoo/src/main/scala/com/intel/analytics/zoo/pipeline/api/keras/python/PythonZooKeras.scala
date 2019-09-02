@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.bigdl.dataset.{DataSet, LocalDataSet, MiniBatch}
 
 import scala.collection.JavaConverters._
-import com.intel.analytics.bigdl.optim.{_}
+import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, Sample}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -38,10 +38,9 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.{KerasLayerWrapper, _}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.keras.objectives._
-import com.intel.analytics.zoo.pipeline.api.keras.optimizers.{Adam, AdamWeightDecay}
+import com.intel.analytics.zoo.pipeline.api.keras.optimizers.{Adam, AdamWeightDecay, PolyEpochDecay}
 import org.apache.spark.api.java.JavaRDD
 import com.intel.analytics.zoo.common.PythonZoo
-import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.feature.text.TextSet
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.seq2seq.{Bridge, RNNDecoder, RNNEncoder}
@@ -121,15 +120,6 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       batchSize: Int,
       nbEpoch: Int,
       validationData: TextSet): Unit = {
-    module.fit(x, batchSize, nbEpoch, validationData)
-  }
-
-  def zooFit[D: ClassTag](
-      module: KerasNet[T],
-      x: FeatureSet[D],
-      batchSize: Int,
-      nbEpoch: Int,
-      validationData: FeatureSet[D]): Unit = {
     module.fit(x, batchSize, nbEpoch, validationData)
   }
 
@@ -1364,5 +1354,9 @@ class PythonZooKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     weightDecay: Double = 0.01): AdamWeightDecay[T] = {
     new AdamWeightDecay[T](learningRate, warmupPortion, total, schedule, beta1, beta2,
       epsilon, weightDecay)
+  }
+
+  def createZooKerasPolyEpochDecay(power: Double, maxEpochs: Int): PolyEpochDecay = {
+    PolyEpochDecay(power, maxEpochs)
   }
 }

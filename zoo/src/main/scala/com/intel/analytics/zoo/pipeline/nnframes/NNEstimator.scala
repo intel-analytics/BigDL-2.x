@@ -16,18 +16,15 @@
 
 package com.intel.analytics.zoo.pipeline.nnframes
 
-import java.io.{FileInputStream, FileOutputStream, ObjectInputStream, ObjectOutputStream}
-
 import com.intel.analytics.bigdl.dataset.{SampleToMiniBatch, _}
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.{Tensor, DoubleType => TensorDouble, FloatType => TensorFloat}
-import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
+import com.intel.analytics.bigdl.utils.{File, T}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.bigdl.{Criterion, DataSet, Module}
-import com.intel.analytics.zoo.common.CheckedObjectInputStream
 import com.intel.analytics.zoo.feature.common.{Preprocessing, _}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
@@ -519,6 +516,35 @@ object NNEstimator {
   }
 
   /**
+   * Construct a [[NNEstimator]] with a feature size and label size. The constructor is useful
+   * when the feature column and label column contains the following data types:
+   * Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The feature and
+   * label data are converted to Tensors with the specified sizes before sending to the model.
+   *
+   * This API is used for multi-input model, where user need to specify the tensor sizes for
+   * each of the model input.
+   *
+   * @param model BigDL module to be optimized
+   * @param criterion  BigDL criterion method
+   * @param featureSize The sizes (Tensor dimensions) of the feature data. e.g. an image may be with
+   *                    width * height = 28 * 28, featureSize = Array(28, 28).
+   * @param labelSize The size (Tensor dimensions) of the label data.
+   */
+  def apply[T: ClassTag](
+      model: Module[T],
+      criterion: Criterion[T],
+      featureSize : Array[Array[Int]],
+      labelSize : Array[Int]
+    )(implicit ev: TensorNumeric[T]): NNEstimator[T] = {
+    new NNEstimator(model, criterion)
+      .setSamplePreprocessing(FeatureLabelPreprocessing(
+        SeqToMultipleTensors(featureSize),
+        SeqToTensor(labelSize)
+      )
+    )
+  }
+
+  /**
    * Construct a [[NNEstimator]] with a feature Preprocessing and label Preprocessing.
    *
    * @param model BigDL module to be optimized
@@ -705,6 +731,27 @@ object NNModel extends MLReadable[NNModel[_]] {
       .setSamplePreprocessing(SeqToTensor(featureSize) -> TensorToSample())
   }
 
+
+  /**
+   * Construct a [[NNModel]] with sizes of multiple model inputs. The constructor is useful
+   * when the feature column contains the following data types:
+   * Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The feature
+   * data are converted to Tensors with the specified sizes before sending to the model.
+   *
+   * This API is used for multi-input model, where user need to specify the tensor sizes for
+   * each of the model input.
+   *
+   * @param model model to be used, which should be a multi-input model.
+   * @param featureSize The sizes (Tensor dimensions) of the feature data.
+   */
+  def apply[T: ClassTag](
+      model: Module[T],
+      featureSize : Array[Array[Int]]
+    )(implicit ev: TensorNumeric[T]): NNModel[T] = {
+    new NNModel(model)
+      .setSamplePreprocessing(SeqToMultipleTensors(featureSize) -> MultiTensorsToSample())
+  }
+
   /**
    * Construct a [[NNModel]] with a feature Preprocessing.
    *
@@ -756,13 +803,8 @@ object NNModel extends MLReadable[NNModel[_]] {
         throw new Exception("Only support float and double for now")
     }
 
-    val ois = new CheckedObjectInputStream(classOf[Preprocessing[Any, Any]],
-      new FileInputStream(new Path(path, "samplePreprocessing").toString))
-    val featurePreprocessing = try {
-      ois.readObject.asInstanceOf[Preprocessing[Any, Any]]
-    } finally {
-      ois.close()
-    }
+    val featurePreprocessing =
+      File.load[Preprocessing[Any, Any]](new Path(path, "samplePreprocessing").toString)
 
     (meta, model, typeTag, featurePreprocessing)
   }
@@ -806,13 +848,8 @@ object NNModel extends MLReadable[NNModel[_]] {
     val (modulePath, weightPath) =
       new Path(path, "module").toString -> new Path(path, "weight").toString
     module.saveModule(modulePath, weightPath, isOverWrite)
-    val fos = new FileOutputStream(new Path(path, "samplePreprocessing").toString)
-    val oos = new ObjectOutputStream(fos)
-    try {
-      oos.writeObject(spCache)
-    } finally {
-      oos.close()
-    }
+
+    File.save(spCache, new Path(path, "samplePreprocessing").toString, isOverWrite)
   }
 
   override def read: MLReader[NNModel[_]] = new NNModelReader

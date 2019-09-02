@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.nn.{MklInt8Convertible, Module, SpatialConvolut
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.optim.{ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.feature.image.{DistributedImageSet, ImageSet}
+import com.intel.analytics.zoo.feature.image.{DistributedImageSet, ImageSet, LocalImageSet}
 import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
 import com.intel.analytics.zoo.models.image.objectdetection.ObjectDetector
@@ -46,6 +46,16 @@ abstract class ImageModel[T: ClassTag]()(implicit ev: TensorNumeric[T])
    */
   def predictImageSet(image: ImageSet, configure: ImageConfigure[T] = null):
   ImageSet = {
+    val dataLength = image match {
+      case distributedImageSet: DistributedImageSet =>
+        distributedImageSet.toDistributed().rdd.partitions.length
+      case localImageSet: LocalImageSet =>
+        localImageSet.toLocal().array.length
+    }
+
+    require(dataLength > 0,
+      s"ImageModel.predictImageSet: input is empty, please check your image path.")
+
     val predictConfig = if (null == configure) config else configure
 
     val result = if (predictConfig == null) {

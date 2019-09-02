@@ -46,10 +46,10 @@ class SessionRecommender[T: ClassTag](
       val itemCount: Int,
       val itemEmbed: Int = 100,
       val rnnHiddenLayers: Array[Int] = Array(40, 20),
-      val sessionLength: Int = 5,
-      val includeHistory: Boolean = true,
+      val sessionLength: Int = 0,
+      val includeHistory: Boolean = false,
       val mlpHiddenLayers: Array[Int] = Array(40, 20),
-      val historyLength: Int = 10)(implicit ev: TensorNumeric[T]) extends Recommender[T] {
+      val historyLength: Int = 0)(implicit ev: TensorNumeric[T]) extends Recommender[T] {
 
   override def buildModel(): AbstractModule[Tensor[T], Tensor[T], T] = {
     val inputRnn: ModuleNode[T] = Input(inputShape = Shape(sessionLength))
@@ -72,15 +72,17 @@ class SessionRecommender[T: ClassTag](
       val hisTable = Embedding[T](itemCount + 1, itemEmbed, inputLength = historyLength)
         .inputs(inputMlp)
       val sum = new KerasLayerWrapper[T](Sum[T](2)).inputs(hisTable)
-      var mlp = Dense(mlpHiddenLayers(0), activation = "relu").inputs(sum)
+      val flatten = Flatten().inputs(sum)
+
+      var mlp = Dense(mlpHiddenLayers(0), activation = "relu").inputs(flatten)
       for (i <- 1 until mlpHiddenLayers.length) {
         mlp = Dense(mlpHiddenLayers(i), activation = "relu").inputs(mlp)
       }
       val mlpLast = Dense(itemCount).inputs(mlp)
       // combine rnn and mlp
-      val merged = Merge.merge[T](List(mlpLast, rnn), "sum")
+      val merged = Merge.merge[T](List(rnn, mlpLast), "sum")
       val out = Activation("softmax").inputs(merged)
-      Model(Array(inputMlp, inputRnn), out).asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
+      Model(Array(inputRnn, inputMlp), out).asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
     }
     else {
       val out = Activation("softmax").inputs(rnn)
@@ -103,6 +105,15 @@ class SessionRecommender[T: ClassTag](
     recommends.toArray
   }
 
+  /**
+   * recommend for sessions given rdd of samples
+   *
+   * @param sessions: rdd of samples
+   * @param maxItems: Number of items to be recommended to each user. Positive integer.
+   * @param zeroBasedLabel: True if data starts from 0, False if data starts from 1
+   * @return rdd of array of (item, probability)
+   *
+   */
   def recommendForSession(sessions: RDD[Sample[T]],
                           maxItems: Int,
                           zeroBasedLabel: Boolean): RDD[Array[(Int, Float)]] = {
@@ -110,6 +121,15 @@ class SessionRecommender[T: ClassTag](
     raw.map(x => topk(x.toTensor[T], maxItems, zeroBasedLabel))
   }
 
+  /**
+   * recommend for sessions given array of samples
+   *
+   * @param sessions: array of samples
+   * @param maxItems: Number of items to be recommended to each user. Positive integer.
+   * @param zeroBasedLabel: True if data starts from 0, False if data starts from 1
+   * @return array of array of (item, probability)
+   *
+   */
   def recommendForSession(sessions: Array[Sample[T]],
                           maxItems: Int,
                           zeroBasedLabel: Boolean): Array[Array[(Int, Float)]] = {
@@ -151,10 +171,15 @@ object SessionRecommender {
       itemCount: Int,
       itemEmbed: Int = 100,
       rnnHiddenLayers: Array[Int] = Array(40, 20),
-      sessionLength: Int = 5,
-      includeHistory: Boolean = true,
+      sessionLength: Int = 0,
+      includeHistory: Boolean = false,
       mlpHiddenLayers: Array[Int] = Array(40, 20),
-      historyLength: Int = 10)(implicit ev: TensorNumeric[T]): SessionRecommender[T] = {
+      historyLength: Int = 0)(implicit ev: TensorNumeric[T]): SessionRecommender[T] = {
+    require(sessionLength > 0, s"sessionLength should align with input features")
+    if (includeHistory) {
+      require(historyLength > 0, s"historyLength should align with input features")
+    }
+
     new SessionRecommender[T](
       itemCount,
       itemEmbed,

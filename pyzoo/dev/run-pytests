@@ -22,7 +22,6 @@ cd "`dirname $0`"
 
 export PYSPARK_PYTHON=python
 export PYSPARK_DRIVER_PYTHON=python
-
 py_version="$(python -V 2>&1)"
 
 python -m pytest -v --doctest-modules ../zoo \
@@ -30,7 +29,6 @@ python -m pytest -v --doctest-modules ../zoo \
     --ignore=../zoo/tfpark/text \
     --ignore=../zoo/examples \
     --ignore=../zoo/ray/
-
 exit_status_1=$?
 if [ $exit_status_1 -ne 0 ];
 then
