@@ -33,13 +33,10 @@ class TestEstimator(ZooTestCase):
         """ setup any state tied to the execution of the given method in a
         class.  setup_method is invoked for every test method of a class.
         """
-        # sparkConf = init_spark_conf().setMaster("local[1]").setAppName("testEstimator")
-        # self.sc = init_nncontext(sparkConf)
-        # self.sqlContext = SQLContext(self.sc)
-        # assert(self.sc.appName == "testEstimator")
-        sparkConf = init_spark_conf().setMaster("local[4]").setAppName("test feature set")
+        sparkConf = init_spark_conf().setMaster("local[1]").setAppName("testEstimator")
         self.sc = init_nncontext(sparkConf)
-
+        self.sqlContext = SQLContext(self.sc)
+        assert(self.sc.appName == "testEstimator")
 
     def teardown_method(self, method):
         """ teardown any state that was previously setup with a setup_method
@@ -82,28 +79,6 @@ class TestEstimator(ZooTestCase):
                                         validation_method=[Top1Accuracy()], batch_size=batch_size)
         predict_result = model.predict_image(image_frame.transform(transformer))
         assert(predict_result.get_predict().count(), 8)
-
-    # def test_estimator_train_rdd(self):
-    #     dim = 2
-    #     data_len = 100
-    #
-    #     def gen_rand_sample():
-    #         features = np.random.uniform(0, 1, dim)
-    #         label = np.array((2 * features).sum() + 0.4)
-    #         return Sample.from_ndarray(features, label)
-    #
-    #     data_set = FeatureSet.rdd(self.sc.parallelize(range(0, data_len)).map(lambda i:
-    #                                                                           gen_rand_sample()))
-    #
-    #     model = Sequential().set_name("mse")
-    #     model.add(Linear(4, 4).set_name(("fc_1")))
-    #     model.add(Sigmoid())
-    #     model.add(Linear(4, 1).set_name("fc_2"))
-    #     model.add(Sigmoid())
-    #
-    #     optim_method = SGD(learningrate=0.01)
-    #
-    #     estimator = Estimator()
 
 
 if __name__ == "__main__":
