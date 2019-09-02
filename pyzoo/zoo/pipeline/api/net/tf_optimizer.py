@@ -19,7 +19,6 @@ import warnings
 import os
 import json
 import sys
-from py4j.protocol import Py4JJavaError
 
 from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Layer
@@ -70,6 +69,25 @@ class TFTrainingHelper(Layer):
         super(TFTrainingHelper, self).__init__(None, "float", path, byte_arr)
 
 
+class TFTrainingHelper2(Layer):
+    def __init__(self, path, configProto, saver, meta):
+        self.saver = saver
+        self.meta = meta
+        if configProto is not None:
+            byte_arr = bytearray(configProto.SerializeToString())
+        else:
+            byte_arr = None
+        super(TFTrainingHelper2, self).__init__(None, "float", path, byte_arr)
+
+
+def _to_operation_name(name):
+    return name.split(":")[0]
+
+
+def _to_floats(vs):
+    return [float(v) for v in vs]
+
+
 class TFModel(object):
 
     def __init__(self, training_helper_layer, criterion, val_methods):
@@ -79,11 +97,7 @@ class TFModel(object):
         self.val_methods = val_methods
 
     @staticmethod
-    def create(loss, sess, inputs, grads, variables, graph,
-               tensors_with_value, session_config, metrics):
-
-        import tensorflow as tf
-        from zoo.util.tf import export_tf
+    def _expand_inputs(inputs, tensors_with_value, loss):
         additional_inputs = []
         additional_values = []
         all_required_inputs = _find_placeholders([loss])
@@ -99,16 +113,28 @@ class TFModel(object):
 
         inputs = inputs + additional_inputs
 
+        return inputs, additional_values
+
+    @staticmethod
+    def _process_session_config(session_config):
         if session_config is not None:
             import tensorflow as tf
             assert isinstance(session_config, tf.ConfigProto),\
                 "session_config should be a tf.ConfigProto"
             session_config.use_per_session_threads = True
-        session_config = session_config
+        return session_config
 
-        from zoo.util.tf import process_grad
-        grads = [process_grad(grad) for grad in grads]
+    @staticmethod
+    def _process_grads(graph, grads):
 
+        with graph.as_default():
+            from zoo.util.tf import process_grad
+            grads = [process_grad(grad) for grad in grads]
+        return grads
+
+    @staticmethod
+    def _process_metrics(graph, metrics, loss, inputs):
+        import tensorflow as tf
         outputs = []
         val_methods = None
         if metrics is not None:
@@ -138,6 +164,137 @@ class TFModel(object):
             outputs.append(real_batch_size)
 
         outputs.append(loss)
+        return outputs, val_methods
+
+    @staticmethod
+    def _process_variables(graph, variables):
+        import tensorflow as tf
+        variable_placeholders = []
+        with graph.as_default():
+            assigns = []
+            for v in variables:
+                p = tf.placeholder(dtype=tf.float32, shape=v.shape)
+                a = tf.assign(v, p)
+                variable_placeholders.append(p)
+                assigns.append(a)
+            assign = tf.group(*assigns)
+        return assign, variable_placeholders
+
+    @staticmethod
+    def _process_variables_for_unfreeze(graph, variables, updates):
+        import tensorflow as tf
+
+        all_trainable_variables = variables
+
+        name2idx = dict([(v.name, idx) for idx, v in enumerate(all_trainable_variables)])
+
+        all_variables = graph.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
+
+        update_ops = graph.get_collection(tf.GraphKeys.UPDATE_OPS)
+
+        if updates is not None:
+            update_ops += updates
+
+        trainable_variables = []
+        trainable_assigns = []
+        trainable_variable_placeholders = []
+        extra_variables = []
+        extra_variable_assigns = []
+        extra_variable_assign_placeholders = []
+        for v in all_variables:
+            p = tf.placeholder(dtype=v.dtype, shape=v.shape)
+            a = tf.assign(v, p)
+
+            # special treatment for ResourceVariable
+            if v.op.type == "VarHandleOp":
+                v_float_value = tf.to_float(v.read_value())
+            else:
+                v_float_value = tf.to_float(v)
+
+            if v.name in name2idx:
+                trainable_variables.append(v_float_value)
+                trainable_assigns.append(a)
+                trainable_variable_placeholders.append(p)
+            else:
+                extra_variables.append(v_float_value)
+                extra_variable_assigns.append(a)
+                extra_variable_assign_placeholders.append(p)
+
+        extra_variable_assign = tf.group(*extra_variable_assigns)
+        trainable_assign = tf.group(*trainable_assigns)
+        update_op = tf.group(update_ops)
+
+        return trainable_variables, trainable_variable_placeholders, trainable_assign, \
+            extra_variables, extra_variable_assign_placeholders, \
+            extra_variable_assign, update_op
+
+    @staticmethod
+    def _save_to_dir_for_unfreeze(folder, sess, graph,
+                                  outputs, inputs,
+                                  trainable_variables,
+                                  trainable_variable_placeholders,
+                                  trainable_assign,
+                                  extra_variables,
+                                  extra_variable_assign_placeholders,
+                                  extra_variable_assign,
+                                  grads, update_op, additional_values):
+
+        import tensorflow as tf
+        from tensorflow import gfile
+        saver = tf.train.Saver()
+        if not os.path.isdir(folder):
+            os.makedirs(folder)
+        saver.save(sess, os.path.join(folder, "model"), write_meta_graph=False)
+
+        output_names = [o.name for o in outputs]
+        input_names = [i.name for i in inputs]
+
+        meta = {
+            "inputs": input_names,
+            "input_types": [i.dtype.as_datatype_enum for i in inputs],
+            "outputs": output_names,
+            "variables": [v.name for v in trainable_variables],
+            "variable_types": [v.dtype.as_datatype_enum for v in trainable_variable_placeholders],
+            "variable_assign_placeholders": [v.name for v in trainable_variable_placeholders],
+            "assign_variable_op": trainable_assign.name,
+            "extra_variables": [v.name for v in extra_variables],
+            "extra_variable_types": [v.dtype.as_datatype_enum for v
+                                     in extra_variable_assign_placeholders],
+            "extra_variable_assign_placeholders": [p.name for p in
+                                                   extra_variable_assign_placeholders],
+            "assign_extra_variable_op": extra_variable_assign.name,
+            "grad_variables": [g.name for g in grads],
+            "update_op": update_op.name,
+            "restore_op": saver.saver_def.restore_op_name,
+            "restore_path_placeholder": saver.saver_def.filename_tensor_name,
+            "save_op": _to_operation_name(saver.saver_def.save_tensor_name),
+            "save_path_placeholder": saver.saver_def.filename_tensor_name,
+            "default_tensor_value": [_to_floats(v) for v in additional_values]
+        }
+
+        with open(os.path.join(folder, "training_meta.json"), "w") as f:
+            f.write(json.dumps(meta))
+
+        with gfile.GFile(os.path.join(folder, "model.meta"), "wb") as f:
+            f.write(graph.as_graph_def().SerializeToString())
+
+        return meta, saver
+
+
+    @staticmethod
+    def create(loss, sess, inputs, grads, variables, graph,
+               tensors_with_value, session_config, metrics):
+
+        import tensorflow as tf
+        from zoo.util.tf import export_tf
+
+        inputs, additional_values = TFModel._expand_inputs(inputs, tensors_with_value, loss)
+        session_config = TFModel._process_session_config(session_config)
+        grads = TFModel._process_grads(graph, grads)
+
+        outputs, val_methods = TFModel._process_metrics(graph, metrics, loss, inputs)
+
+        assign, variable_placeholders = TFModel._process_variables(graph, variables)
 
         export_dir = tempfile.mkdtemp()
         export_tf(sess, export_dir,
@@ -161,20 +318,45 @@ class TFModel(object):
 
         with open(os.path.join(export_dir, "training_meta.json"), "w") as f:
             f.write(json.dumps(meta))
-        variable_placeholders = []
-        with graph.as_default():
-            assigns = []
-            for v in variables:
-                p = tf.placeholder(dtype=tf.float32, shape=v.shape)
-                a = tf.assign(v, p)
-                variable_placeholders.append(p)
-                assigns.append(a)
-            assign = tf.group(*assigns)
-        assign = assign
+
         training_helper_layer = TFTrainingHelper(export_dir,
                                                  session_config,
                                                  assign,
                                                  variable_placeholders)
+
+        criterion = IdentityCriterion()
+
+        return TFModel(training_helper_layer, criterion, val_methods)
+
+    @staticmethod
+    def create_for_unfreeze(loss, sess, inputs, grads, variables, graph,
+                            tensors_with_value, session_config, metrics, updates):
+
+        inputs, additional_values = TFModel._expand_inputs(inputs, tensors_with_value, loss)
+        session_config = TFModel._process_session_config(session_config)
+        grads = TFModel._process_grads(graph, grads)
+
+        outputs, val_methods = TFModel._process_metrics(graph, metrics, loss, inputs)
+
+        trainable_variables, trainable_variable_placeholders, trainable_assign, \
+            extra_variables, extra_variable_assign_placeholders, \
+            extra_variable_assign, update_op = \
+            TFModel._process_variables_for_unfreeze(graph, variables, updates)
+
+        folder = tempfile.mkdtemp()
+        meta, saver = \
+            TFModel._save_to_dir_for_unfreeze(folder, sess, graph,
+                                              outputs, inputs,
+                                              trainable_variables,
+                                              trainable_variable_placeholders,
+                                              trainable_assign,
+                                              extra_variables,
+                                              extra_variable_assign_placeholders,
+                                              extra_variable_assign,
+                                              grads, update_op, additional_values)
+
+        training_helper_layer = TFTrainingHelper2(folder,
+                                                  session_config, meta, saver)
 
         criterion = IdentityCriterion()
 
