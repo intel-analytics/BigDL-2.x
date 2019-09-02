@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.python.api.{PythonBigDLKeras, Sample => JSample}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.feature.image.ImageProcessing
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.{Accuracy, BinaryAccuracy, CategoricalAccuracy, SparseCategoricalAccuracy}
 import org.apache.spark.api.java.JavaRDD
@@ -200,8 +200,37 @@ class IdentityCriterion extends AbstractCriterion[Activity, Activity, Float]() {
 }
 
 class TFValidationMethod(val valMethod: ValidationMethod[Float],
-                         outputLength: Int,
-                         targetLength: Int) extends ValidationMethod[Float] {
+                         name: String,
+                         outputIndices: java.util.List[Int],
+                         labelIndices: java.util.List[Int]) extends ValidationMethod[Float] {
+
+  private def toActivity(indices: java.util.List[Int], table: Table) = {
+    if (indices.size() == 1) {
+      table[Tensor[Float]](indices.get(0) + 1)
+    } else {
+      var i = 0
+      val outputs = T()
+      while (i < indices.size()) {
+        outputs.insert(table(indices.get(i) + 1))
+        i += 1
+      }
+      outputs
+    }
+  }
+
+  private def oneBasedLabel(activity: Activity) = {
+    if (activity.isTensor) {
+      activity.toTensor[Float].add(1.0f)
+    } else {
+      val t = activity.toTable
+      var i = 0
+      while (i < t.length()) {
+        t[Tensor[Float]](i + 1).add(1.0f)
+        i += 1
+      }
+    }
+  }
+
   override def apply(output: Activity, target: Activity): ValidationResult = {
     // the output layout [grads..., outputs..., labels..., loss]
     val outputT = output.toTable
@@ -210,17 +239,9 @@ class TFValidationMethod(val valMethod: ValidationMethod[Float],
       val loss = outputT[Tensor[Float]](outputT.length()).value()
       return new LossResult(loss, 1)
     }
-    val outputActivity: Activity = if (outputLength == 1) {
-      outputT[Tensor[Float]](outputT.length() - outputLength - targetLength)
-    } else {
-      var i = outputT.length() - outputLength - targetLength
-      val outputs = T()
-      while (i < outputLength - targetLength) {
-        outputs.insert(outputT(i))
-          i += 1
-      }
-      outputs
-    }
+
+    val outputActivity: Activity = toActivity(outputIndices, outputT)
+    val targetActivity: Activity = toActivity(labelIndices, outputT)
 
     val to1basedLabel = valMethod match {
       case _: SparseCategoricalAccuracy[Float] => false
@@ -233,27 +254,31 @@ class TFValidationMethod(val valMethod: ValidationMethod[Float],
       case _ => false
     }
 
-    val targetActivity = if (targetLength == 1) {
-      val t = outputT[Tensor[Float]](outputT.length() - targetLength)
-      if (to1basedLabel) t.add(1.0f)
-      t
-    } else {
-      var i = outputT.length() - targetLength
-      val targets = T()
-      while (i < outputLength) {
-        val t = outputT[Tensor[Float]](i)
-        if (to1basedLabel) t.add(1.0f)
-        targets.insert(t)
-        i += 1
-      }
-      targets
+    if (to1basedLabel) {
+      oneBasedLabel(targetActivity)
     }
 
     valMethod.apply(outputActivity, targetActivity)
   }
 
   override protected def format(): String = {
-    valMethod.toString()
+    (name + " " + valMethod.toString()).trim
+  }
+}
+
+class StatelessMetric(name: String, idx: Int) extends ValidationMethod[Float] {
+  override def apply(output: Activity, target: Activity): ValidationResult = {
+    // the output layout [grads..., metrics]
+    val outputT = output.toTable
+
+    val value = outputT[Tensor[Float]](idx + 1).value()
+    val count = outputT[Tensor[Float]](outputT.length() - 1).value().toInt
+
+    new ContiguousResult(value * count, count, name)
+  }
+
+  override protected def format(): String = {
+    name
   }
 }
 
