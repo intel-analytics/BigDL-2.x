@@ -44,9 +44,9 @@ class TestUtil(TestCase):
         actors = [TestRay.remote() for i in range(0, node_num)]
         print([ray.get(actor.hostname.remote()) for actor in actors])
         ray_ctx.stop()
-        sc.stop()
+        # sc.stop()
         # repeat
-        sc = init_spark_on_local(cores=node_num)
+        # sc = init_spark_on_local(cores=node_num)
         ray_ctx = RayContext(sc=sc, object_store_memory="1g")
         ray_ctx.init()
         actors = [TestRay.remote() for i in range(0, node_num)]
