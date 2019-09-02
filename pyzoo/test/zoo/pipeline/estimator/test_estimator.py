@@ -16,7 +16,6 @@
 
 import pytest
 from pyspark.ml import Pipeline
-
 from zoo.pipeline.estimator import *
 
 from bigdl.nn.layer import *
