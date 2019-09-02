@@ -39,6 +39,157 @@ def process_grad(grad):
     return grad
 
 
+def _find_placeholders(grads):
+    '''
+    find all the tensors that are used for computing grads and has been
+    computed during forward
+    :param grads:
+    :param forward_ops:
+    :return:
+    '''
+    from collections import deque
+    queue = deque([])
+    for grad in grads:
+        queue.append(grad)
+
+    placeholders = set()
+    visited = set()
+    while len(queue) > 0:
+        tensor = queue.popleft()
+        # this is necessary, because input may not be differentiable
+        if tensor is None:
+            continue
+        else:
+            visited.add(tensor.name)
+            if tensor.op.type.startswith("Placeholder"):
+                placeholders.add(tensor)
+                continue
+            for input_tensor in tensor.op.inputs:
+                # this is necessary because there may be a cycle in the graph such as tf.while_loop
+                if input_tensor.name not in visited:
+                    queue.append(input_tensor)
+    return list(placeholders)
+
+
+def _to_operation_name(name):
+    return name.split(":")[0]
+
+
+def export_tf_for_train(sess,
+                        folder,
+                        inputs,
+                        loss,
+                        variables,
+                        grad_variables,
+                        val_outputs,
+                        val_labels,
+                        tensors_with_value,
+                        updates=None):
+
+    graph = sess.graph
+
+    additional_inputs = []
+    additional_values = []
+    all_required_inputs = _find_placeholders([loss])
+    all_required_inputs_names = [v.name for v in all_required_inputs]
+    if tensors_with_value:
+        for t, v in tensors_with_value.items():
+            if t.name in all_required_inputs_names:
+                additional_inputs.append(t)
+                additional_values.append(v)
+
+    all_trainable_variables = variables
+
+    all_variables = graph.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
+
+    update_ops = graph.get_collection(tf.GraphKeys.UPDATE_OPS)
+
+    if updates is not None:
+        update_ops += updates
+
+    name2idx = dict([(v.name, idx) for idx, v in enumerate(all_trainable_variables)])
+
+    with graph.as_default():
+
+        if val_outputs is not None and val_labels is not None:
+            val_labels = [tf.to_float(tf.identity(v)) for v in val_labels]
+            outputs = val_outputs + val_labels + [loss]
+        else:
+            outputs = [loss]
+
+        grads = [process_grad(grad) for grad in grad_variables]
+
+        trainable_variables = []
+        trainable_assigns = []
+        trainable_variable_placeholders = []
+        extra_variables = []
+        extra_variable_assigns = []
+        extra_variable_assign_placeholders = []
+        for v in all_variables:
+            p = tf.placeholder(dtype=v.dtype, shape=v.shape)
+            a = tf.assign(v, p)
+
+            # special treatment for ResourceVariable
+            if v.op.type == "VarHandleOp":
+                v_float_value = tf.to_float(v.read_value())
+            else:
+                v_float_value = tf.to_float(v)
+
+            if v.name in name2idx:
+                trainable_variables.append(v_float_value)
+                trainable_assigns.append(a)
+                trainable_variable_placeholders.append(p)
+            else:
+                extra_variables.append(v_float_value)
+                extra_variable_assigns.append(a)
+                extra_variable_assign_placeholders.append(p)
+
+        extra_variable_assign = tf.group(*extra_variable_assigns)
+        trainable_assign = tf.group(*trainable_assigns)
+        update_op = tf.group(update_ops)
+
+        saver = tf.train.Saver()
+        if not os.path.isdir(folder):
+            os.makedirs(folder)
+        saver.save(sess, os.path.join(folder, "model"), write_meta_graph=False)
+    inputs = inputs + additional_inputs
+    output_names = [o.name for o in outputs]
+    input_names = [i.name for i in inputs]
+
+    meta = {
+        "inputs": input_names,
+        "input_types": [i.dtype.as_datatype_enum for i in inputs],
+        "outputs": output_names,
+        "variables": [v.name for v in trainable_variables],
+        "variable_types": [v.dtype.as_datatype_enum for v in trainable_variable_placeholders],
+        "variable_assign_placeholders": [v.name for v in trainable_variable_placeholders],
+        "assign_variable_op": trainable_assign.name,
+        "extra_variables": [v.name for v in extra_variables],
+        "extra_variable_types": [v.dtype.as_datatype_enum for v in extra_variable_assign_placeholders],
+        "extra_variable_assign_placeholders": [p.name for p in extra_variable_assign_placeholders],
+        "assign_extra_variable_op": extra_variable_assign.name,
+        "grad_variables": [g.name for g in grads],
+        "update_op": update_op.name,
+        "restore_op": saver.saver_def.restore_op_name,
+        "restore_path_placeholder": saver.saver_def.filename_tensor_name,
+        "save_op": _to_operation_name(saver.saver_def.save_tensor_name),  # to work around a bug in TF Java
+        "save_path_placeholder": saver.saver_def.filename_tensor_name,
+        "default_tensor_value": [_to_floats(v) for v in additional_values]
+    }
+
+    with open(os.path.join(folder, "training_meta.json"), "w") as f:
+        f.write(json.dumps(meta))
+
+    with gfile.GFile(os.path.join(folder, "model.meta"), "wb") as f:
+            f.write(graph.as_graph_def().SerializeToString())
+
+    return meta, saver
+
+
+def _to_floats(vs):
+    return [float(v) for v in vs]
+
+
 def export_tf(sess, folder, inputs, outputs,
               generate_backward=False, allow_non_differentiable_input=True):
     """

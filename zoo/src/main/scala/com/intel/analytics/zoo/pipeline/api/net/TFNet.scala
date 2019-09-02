@@ -618,13 +618,9 @@ object TFNet {
       }
       val len = graphDef.length
       out.writeString(id)
-      if (inDriver) {
-        out.writeInt(len)
-        timing(s"writing ${len / 1024 / 1024}Mb graph def to stream") {
-          out.write(graphDef)
-        }
-      } else {
-        out.writeInt(0)
+      out.writeInt(len)
+      timing(s"writing ${len / 1024 / 1024}Mb graph def to stream") {
+        out.write(graphDef)
       }
     }
 
