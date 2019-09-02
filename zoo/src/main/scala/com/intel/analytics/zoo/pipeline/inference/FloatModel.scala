@@ -51,10 +51,6 @@ class FloatModel(var model: AbstractModule[Activity, Activity, Float],
     outputs
   }
 
-  override def predict(inputs: JList[JList[JTensor]], nireq: Int): JList[JList[JTensor]] = {
-    throw new RuntimeException(s"$model does not support predict with nireq")
-  }
-
   override def predict(inputActivity: Activity): Activity = {
     model.forward(inputActivity)
   }

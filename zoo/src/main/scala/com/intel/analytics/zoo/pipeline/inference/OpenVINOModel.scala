@@ -23,7 +23,8 @@ import scala.collection.JavaConverters._
 
 class OpenVINOModel(var executableNetworkReference: Long = -1,
                     var supportive: OpenVinoInferenceSupportive,
-                    var isInt8: Boolean = false)
+                    var isInt8: Boolean = false,
+                    var nIReq: Int = 1)
   extends AbstractModel with InferenceSupportive with Serializable {
 
   override def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
@@ -32,10 +33,10 @@ class OpenVINOModel(var executableNetworkReference: Long = -1,
       val tensor = input.get(0)
       val output = if (isInt8) {
         supportive.predictInt8(executableNetworkReference,
-          tensor.getData, tensor.getShape)
+          tensor.getData, tensor.getShape, nIReq)
       } else {
         supportive.predict(executableNetworkReference,
-          tensor.getData, tensor.getShape)
+          tensor.getData, tensor.getShape, nIReq)
       }
       outputs.add(Arrays.asList({
         output
@@ -43,25 +44,6 @@ class OpenVINOModel(var executableNetworkReference: Long = -1,
     })
     outputs
   }
-
-  override def predict(inputs: JList[JList[JTensor]], nireq: Int): JList[JList[JTensor]] = {
-    val outputs = new ArrayList[JList[JTensor]]()
-    inputs.asScala.map(input => {
-      val tensor = input.get(0)
-      val output = if (isInt8) {
-        supportive.predictAsyncInt8(executableNetworkReference,
-          tensor.getData, tensor.getShape, nireq)
-      } else {
-        supportive.predictAsync(executableNetworkReference,
-          tensor.getData, tensor.getShape, nireq)
-      }
-      outputs.add(Arrays.asList({
-        output
-      }))
-    })
-    outputs
-  }
-
 
   override def predict(inputActivity: Activity): Activity = {
     val (inputList, batchSize) = inputActivity.isTable match {
