@@ -125,7 +125,9 @@ class ProcessMonitor:
     def clean_fn(self):
         import ray
         ray.shutdown()
-        if not is_local(self.sc):
+        if not self.sc:
+            print("WARNING: SparkContext has been stopped before cleaning the Ray resources")
+        if self.sc and (not is_local(self.sc)):
             self.ray_rdd.map(gen_shutdown_per_node(self.pgids, self.node_ips)).collect()
         else:
             gen_shutdown_per_node(self.pgids, self.node_ips)([])
