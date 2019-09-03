@@ -340,7 +340,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param batchSize   the batchsize of openvino ir
    */
   def doLoadOpenVINO(modelBytes: Array[Byte], weightBytes: Array[Byte],
-                     batchSize: Int = 0, isAsync: Boolean = false): Unit = {
+                     batchSize: Int, isAsync: Boolean): Unit = {
     if (concurrentNum > 1) {
       InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
         s"openvino model does not support shared weights model copies")

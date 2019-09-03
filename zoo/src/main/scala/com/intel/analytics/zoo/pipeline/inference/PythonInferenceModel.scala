@@ -50,12 +50,12 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
     model.doLoadCaffe(modelPath, weightPath)
   }
 
-  def inferenceModelLoadOpenVINO(
-      model: InferenceModel,
-      modelPath: String,
-      weightPath: String,
-      batchSize: Int = 0): Unit = {
-    model.doLoadOpenVINO(modelPath, weightPath, batchSize)
+  def inferenceModelLoadOpenVINO(model: InferenceModel,
+                                 modelPath: String,
+                                 weightPath: String,
+                                 batchSize: Int = 0,
+                                 isAsync: Boolean): Unit = {
+    model.doLoadOpenVINO(modelPath, weightPath, batchSize, isAsync)
   }
 
   def inferenceModelOpenVINOLoadTF(
