@@ -34,28 +34,28 @@ class OpenVinoInferenceSupportive extends InferenceSupportive with Serializable 
                              weightFilePath: String,
                              deviceTypeValue: Int,
                              batchSize: Int,
-                             nIReq: Int): Long
+                             isAsync: Boolean): Long
 
   @native def loadOpenVinoIRInt8(modelFilePath: String,
                                  weightFilePath: String,
                                  deviceTypeValue: Int,
                                  batchSize: Int,
-                                 nIReq: Int): Long
+                                 isAsync: Boolean): Long
 
   @native def predict(executableNetworkReference: Long,
                       data: Array[Float],
                       shape: Array[Int],
-                      nIReq: Int): JTensor
+                      isAsync: Boolean): JTensor
 
   @native def predictInt8(executableNetworkReference: Long,
                           data: Array[Float],
                           shape: Array[Int],
-                          nIReq: Int): JTensor
+                          isAsync: Boolean): JTensor
 
   @native def predictInt8(executableNetworkReference: Long,
                           data: Array[Byte],
                           shape: Array[Int],
-                          nIReq: Int): JTensor
+                          isAsync: Boolean): JTensor
 
   @native def releaseOpenVINOIR(executableNetworkReference: Long): Unit
 }
@@ -529,7 +529,8 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
       val mappingFile = new File(mappingFilePath)
       val model = (modelFile.exists(), weightFile.exists(), mappingFile.exists()) match {
         case (true, true, _) =>
-          loadOpenVinoIR(modelFilePath, weightFilePath, DeviceType.CPU)
+          loadOpenVinoIR(modelFilePath, weightFilePath, DeviceType.CPU,
+            batchSize = 0, isAsync = false)
         case (_, _, _) => throw
           new InferenceRuntimeException("Openvino optimize tf model error")
       }
@@ -576,7 +577,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
                      weightFilePath: String,
                      deviceType: DeviceTypeEnumVal,
                      batchSize: Int,
-                     nIReq: Int): OpenVINOModel = {
+                     isAsync: Boolean): OpenVINOModel = {
     timing("load openvino IR") {
       val buffer = Source.fromFile(modelFilePath)
       val isInt8 = buffer.getLines().count(_ matches ".*statistics.*")
@@ -586,12 +587,13 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
       val executableNetworkReference: Long = if (isInt8 > 0) {
         logger.info(s"Load int8 model")
         supportive.loadOpenVinoIRInt8(modelFilePath, weightFilePath,
-          deviceType.value, batchSize, nIReq)
+          deviceType.value, batchSize, isAsync)
       } else {
         supportive.loadOpenVinoIR(modelFilePath, weightFilePath,
-          deviceType.value, batchSize, nIReq)
+          deviceType.value, batchSize, isAsync)
       }
-      new OpenVINOModel(executableNetworkReference, supportive, isInt8 > 0)
+      new OpenVINOModel(executableNetworkReference, supportive,
+        isInt8 > 0, isAsync)
     }
   }
 
@@ -599,7 +601,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
                      weightBytes: Array[Byte],
                      deviceType: DeviceTypeEnumVal,
                      batchSize: Int,
-                     nIReq: Int): OpenVINOModel = {
+                     isAsync: Boolean): OpenVINOModel = {
     timing("load openvino IR") {
       val tmpDir = Utils.createTmpDir("ZooVino").toFile()
       val modelFilePath = (modelBytes == null) match {
@@ -634,12 +636,13 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
       val executableNetworkReference: Long = if (isInt8 > 0) {
         logger.info(s"Load int8 model")
         supportive.loadOpenVinoIRInt8(modelFilePath, weightFilePath,
-          deviceType.value, batchSize, nIReq)
+          deviceType.value, batchSize, isAsync)
       } else {
         supportive.loadOpenVinoIR(modelFilePath, weightFilePath,
-          deviceType.value, batchSize, nIReq)
+          deviceType.value, batchSize, isAsync)
       }
-      val model = new OpenVINOModel(executableNetworkReference, supportive, isInt8 > 0)
+      val model = new OpenVINOModel(executableNetworkReference, supportive,
+        isInt8 > 0, isAsync)
       s"rm -rf $tmpDir" !;
       model
     }

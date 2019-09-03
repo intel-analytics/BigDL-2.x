@@ -24,7 +24,7 @@ import scala.collection.JavaConverters._
 class OpenVINOModel(var executableNetworkReference: Long = -1,
                     var supportive: OpenVinoInferenceSupportive,
                     var isInt8: Boolean = false,
-                    var nIReq: Int = 1)
+                    var isAsync: Boolean = false)
   extends AbstractModel with InferenceSupportive with Serializable {
 
   override def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
@@ -33,10 +33,10 @@ class OpenVINOModel(var executableNetworkReference: Long = -1,
       val tensor = input.get(0)
       val output = if (isInt8) {
         supportive.predictInt8(executableNetworkReference,
-          tensor.getData, tensor.getShape, nIReq)
+          tensor.getData, tensor.getShape, isAsync)
       } else {
         supportive.predict(executableNetworkReference,
-          tensor.getData, tensor.getShape, nIReq)
+          tensor.getData, tensor.getShape, isAsync)
       }
       outputs.add(Arrays.asList({
         output

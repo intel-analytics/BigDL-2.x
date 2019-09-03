@@ -320,7 +320,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param weightPath the path of openvino ir bin file
    */
   def doLoadOpenVINO(modelPath: String, weightPath: String,
-                     batchSize: Int = 0, nIReq: Int = 1): Unit = {
+                     batchSize: Int = 0, isAsync: Boolean = false): Unit = {
     if (concurrentNum > 1) {
       InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
         s"openvino model does not support shared weights model copies")
@@ -328,7 +328,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     clearModelQueue()
     this.originalModel =
       InferenceModelFactory.loadOpenVINOModelForIR(modelPath, weightPath,
-        DeviceType.CPU, batchSize, nIReq)
+        DeviceType.CPU, batchSize, isAsync)
     offerModelQueue()
   }
 
@@ -340,7 +340,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param batchSize   the batchsize of openvino ir
    */
   def doLoadOpenVINO(modelBytes: Array[Byte], weightBytes: Array[Byte],
-                     batchSize: Int, nIReq: Int = 1): Unit = {
+                     batchSize: Int = 0, isAsync: Boolean = false): Unit = {
     if (concurrentNum > 1) {
       InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
         s"openvino model does not support shared weights model copies")
@@ -348,7 +348,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     clearModelQueue()
     this.originalModel =
       InferenceModelFactory.loadOpenVINOModelForIR(modelBytes, weightBytes,
-        DeviceType.CPU, batchSize, nIReq)
+        DeviceType.CPU, batchSize, isAsync)
     offerModelQueue()
   }
 
