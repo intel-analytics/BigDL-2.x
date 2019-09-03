@@ -22,7 +22,7 @@ import sys
 
 from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Layer
-from bigdl.util.common import to_list, JavaValue
+from bigdl.util.common import to_list, JavaValue, callBigDlFunc
 from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer
 from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric
 from zoo.pipeline.api.net.utils import _find_placeholders, _check_the_same
@@ -59,25 +59,42 @@ class BigDLMetric(object):
 
 
 class TFTrainingHelper(Layer):
-    def __init__(self, path, configProto, assign, variable_placeholders):
+    def __init__(self, path, configProto, assign, variable_placeholders, sess):
         if configProto is not None:
             byte_arr = bytearray(configProto.SerializeToString())
         else:
             byte_arr = None
+        self.sess = sess
         self.assign = assign
         self.variable_placeholders = variable_placeholders
         super(TFTrainingHelper, self).__init__(None, "float", path, byte_arr)
 
+    def get_weights_to_python(self):
+        variables = self.get_weights()
+
+        feed_dict = dict(zip(self.variable_placeholders, variables))
+        self.sess.run(self.assign, feed_dict=feed_dict)
+
 
 class TFTrainingHelper2(Layer):
-    def __init__(self, path, configProto, saver, meta):
+    def __init__(self, path, config_proto, saver, meta, export_dir, sess):
         self.saver = saver
         self.meta = meta
-        if configProto is not None:
-            byte_arr = bytearray(configProto.SerializeToString())
+        self.export_dir = export_dir
+        self.sess = sess
+        if config_proto is not None:
+            byte_arr = bytearray(config_proto.SerializeToString())
         else:
             byte_arr = None
         super(TFTrainingHelper2, self).__init__(None, "float", path, byte_arr)
+
+    def save_checkpoint(self):
+        callBigDlFunc(self.bigdl_type, "saveCheckpoint",
+                      self.value)
+
+    def get_weights_to_python(self):
+        self.save_checkpoint()
+        self.saver.restore(self.sess, os.path.join(self.export_dir, "model"))
 
 
 def _to_operation_name(name):
@@ -283,7 +300,7 @@ class TFModel(object):
 
     @staticmethod
     def create(loss, sess, inputs, grads, variables, graph,
-               tensors_with_value, session_config, metrics):
+               tensors_with_value, session_config, metrics, updates):
 
         import tensorflow as tf
         from zoo.util.tf import export_tf
@@ -322,7 +339,7 @@ class TFModel(object):
         training_helper_layer = TFTrainingHelper(export_dir,
                                                  session_config,
                                                  assign,
-                                                 variable_placeholders)
+                                                 variable_placeholders, sess)
 
         criterion = IdentityCriterion()
 
@@ -356,7 +373,7 @@ class TFModel(object):
                                               grads, update_op, additional_values)
 
         training_helper_layer = TFTrainingHelper2(folder,
-                                                  session_config, meta, saver)
+                                                  session_config, meta, saver, sess)
 
         criterion = IdentityCriterion()
 
@@ -368,7 +385,7 @@ class TFOptimizer:
                  grads=None, variables=None, graph=None,
                  val_outputs=None, val_labels=None, val_method=None, val_split=0.0,
                  tensors_with_value=None, session_config=None,
-                 clip_norm=None, clip_value=None, metrics=None):
+                 clip_norm=None, clip_value=None, metrics=None, updates=None):
         '''
         TFOptimizer is used for distributed training of TensorFlow
         on Spark/BigDL.
@@ -409,7 +426,7 @@ class TFOptimizer:
         self.tf_model = TFModel.create(loss,
                                        sess, inputs, grads, variables, graph,
                                        tensors_with_value, session_config,
-                                       metrics)
+                                       metrics, [])
 
         batch_size = self.dataset.batch_size
 
@@ -543,12 +560,14 @@ class TFOptimizer:
             K.learning_phase(): [True, False]
         }
 
+        updates = keras_model.updates
+
         return cls(loss, optim_method, sess, dataset, inputs,
                    grads, variables, loss.graph, val_outputs, val_labels,
                    bigdl_val_methods, val_spilt,
                    tensors_with_value=tensor_with_value,
                    clip_norm=clip_norm,
-                   clip_value=clip_value, **kwargs)
+                   clip_value=clip_value, updates=updates, **kwargs)
 
     @staticmethod
     def to_bigdl_optim_method(koptim_method):
@@ -684,7 +703,6 @@ class TFOptimizer:
 
         self.optimizer.optimize()
 
-        variables = self.tf_model.training_helper_layer.get_weights()
+        self.tf_model.training_helper_layer.get_weights_to_python()
 
-        feed_dict = dict(zip(self.tf_model.training_helper_layer.variable_placeholders, variables))
-        self.sess.run(self.tf_model.training_helper_layer.assign, feed_dict=feed_dict)
+
