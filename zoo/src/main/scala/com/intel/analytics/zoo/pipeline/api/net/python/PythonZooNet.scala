@@ -131,7 +131,7 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
     TFTrainingHelper(modelPath, config)
   }
 
-  def saveCheckpoint(model: TFTrainingHelper): Unit = {
+  def saveCheckpoint(model: TFTrainingHelper2): Unit = {
     model.saveCheckpoint()
   }
 
