@@ -88,9 +88,11 @@ def session_execute(command, env=None, tag=None, fail_fast=False, timeout=120):
 
 
 class ProcessMonitor:
-    def __init__(self, process_infos, sc, ray_rdd, verbose=False):
+    def __init__(self, process_infos, sc, ray_rdd, raycontext, verbose=False):
         self.sc = sc
+        self.raycontext = raycontext
         self.verbose = verbose
+        self.stopped = raycontext.stopped
         self.ray_rdd = ray_rdd
         self.master = []
         self.slaves = []
@@ -123,6 +125,8 @@ class ProcessMonitor:
                 print(slave)
 
     def clean_fn(self):
+        if self.stopped:
+            return
         import ray
         ray.shutdown()
         if not self.sc:
