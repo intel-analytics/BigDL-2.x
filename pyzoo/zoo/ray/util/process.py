@@ -92,7 +92,6 @@ class ProcessMonitor:
         self.sc = sc
         self.raycontext = raycontext
         self.verbose = verbose
-        self.stopped = raycontext.stopped
         self.ray_rdd = ray_rdd
         self.master = []
         self.slaves = []
@@ -125,7 +124,7 @@ class ProcessMonitor:
                 print(slave)
 
     def clean_fn(self):
-        if self.stopped:
+        if self.raycontext.stopped:
             return
         import ray
         ray.shutdown()

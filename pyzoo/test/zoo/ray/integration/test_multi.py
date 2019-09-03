@@ -66,7 +66,7 @@ actors = [TestRay.remote() for i in range(0, node_num)]
 print([ray.get(actor.hostname.remote()) for actor in actors])
 ray_ctx.stop()
 
-#sc.stop()
+sc.stop()
 time.sleep(3)
 for process_info in ray_ctx.ray_processesMonitor.process_infos:
     for pid in process_info.pids:
