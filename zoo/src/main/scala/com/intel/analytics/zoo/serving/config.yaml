@@ -42,9 +42,9 @@ params:
   # default, 4
   batch_size:
 
-  # default, 4
+  # default, 4, recommanded to set the same value as executor_cores
   mkl_threads:
 
-  # default, mkldnn
+  # default, mklblas
   engine_type:
 

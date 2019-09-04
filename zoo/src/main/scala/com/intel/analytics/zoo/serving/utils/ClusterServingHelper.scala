@@ -32,7 +32,8 @@ import org.apache.spark.sql.SparkSession
 
 import scala.reflect.ClassTag
 
-case class LoaderParams(modelFolder: String = null,
+case class LoaderParams(modelType: String = null,
+                        modelFolder: String = null,
                         batchSize: Int = 4,
                         isInt8: Boolean = false,
                         topN: Int = 1,
@@ -45,17 +46,15 @@ class ClusterServingHelper {
 
   val parser = new OptionParser[LoaderParams]("Zoo Serving") {
 
-    //    opt[String]('t', "modelType")
-    //      .text("Model type, could be caffe, keras")
-    //      .action((x, c) => c.copy(modelType = x))
-    //      .required()
+    opt[String]('t', "modelType")
+      .text("Model type, could be caffe, keras")
+      .action((x, c) => c.copy(modelType = x))
+
     opt[String]('f', "modelFolder")
       .text("weight file path")
       .action((x, p) => p.copy(modelFolder = x))
       .required()
-    //    opt[String]('d', "defPath")
-    //      .text("prototxt file path if caffe model")
-    //      .action((x, c) => c.copy(defPath = x))
+
     opt[String]('r', "redis")
       .text("redis url")
       .action((x, c) => c.copy(redis = x))
@@ -137,34 +136,46 @@ class ClusterServingHelper {
     val fileList = f.listFiles
     var modelType: String = null
     var model: AbstractModule[Activity, Activity, Float] = null
-    for (file <- fileList) {
-      val fName = file.getName
-      val fPath = new File(location, fName).toString
-      if (fName.endsWith("caffemodel")) {
-        weightPath = fPath
-        modelType = "caffe"
+    if (params.modelType == null) {
+
+
+      for (file <- fileList) {
+        val fName = file.getName
+        val fPath = new File(location, fName).toString
+        if (fName.endsWith("caffemodel")) {
+          weightPath = fPath
+          modelType = "caffe"
+        }
+        else if (fName.endsWith("prototxt")) {
+          defPath = fPath
+        }
+        else if (fName.endsWith("pb")) {
+          weightPath = location
+          modelType = "tensorflow"
+        }
+        else if (fName.endsWith("t7")) {
+          weightPath = fPath
+          modelType = "torch"
+        }
+        else if (fName.endsWith("model")) {
+          weightPath = fPath
+          modelType = "bigdl"
+        }
+        else if (fName.endsWith("keras")) {
+          weightPath = fPath
+          modelType = "keras"
+        }
       }
-      else if (fName.endsWith("prototxt")) {
-        defPath = fPath
-      }
-      else if (fName.endsWith("pb")) {
-        weightPath = location
-        modelType = "tensorflow"
-      }
-      else if (fName.endsWith("t7")) {
-        weightPath = fPath
-        modelType = "torch"
-      }
-      else if (fName.endsWith("model")) {
-        weightPath = fPath
-        modelType = "bigdl"
-      }
-      else if (fName.endsWith("keras")) {
-        weightPath = fPath
-        modelType = "keras"
-      }
+      if (modelType == null) throw new Error("You did not specify modelType before running" +
+        " and the model type could not be inferred from the path" +
+        "Note that you should put only one model in your model directory" +
+        "And if you do not specify the modelType, it will be inferred " +
+        "according to your model file extension name")
     }
-    if (modelType == null) throw new RuntimeException("can not detect model type")
+    else {
+      modelType = params.modelType
+    }
+
     model = modelType match {
       case "caffe" => Net.loadCaffe[Float](defPath, weightPath)
       case "tensorflow" => Net.loadTF[Float](weightPath)
