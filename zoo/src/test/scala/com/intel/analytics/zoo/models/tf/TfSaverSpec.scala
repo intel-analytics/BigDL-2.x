@@ -45,7 +45,7 @@ class TfSaverSpec extends ZooSpecHelper{
 //    modelGraph.add(dropout.setName("dropout"))
     modelGraph.add(denseLayer.setName("output"))
     Net.saveToKeras2(modelGraph, "/tmp/my.h5", "/opt/anaconda3/envs/py36/bin/python")
-    Net.saveToKeras2(modelGraph, "/tmp/my.h5")
+    Net.saveToTf(modelGraph, "/tmp/mytf", "/opt/anaconda3/envs/py36/bin/python")
 //    val a = modelGraph.toModel().modules(0).asInstanceOf[Graph[Float]]
 //    a.evaluate()
 

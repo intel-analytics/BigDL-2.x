@@ -221,6 +221,11 @@ object Net {
     NetSaver.saveToKeras2(model.asInstanceOf[Module[T]], filePath, python)
   }
 
+  def saveToTf[T: ClassTag](model: Net, dir: String, python: String = "python")
+                               (implicit ev: TensorNumeric[T]): Unit= {
+    NetSaver.saveToTf(model.asInstanceOf[Module[T]], dir, python)
+  }
+
   private[zoo] def getName(name: String): String = {
     name.split("\\.").last
   }
@@ -279,9 +284,19 @@ object Net {
         |    return r.to_ndarray()
       """.stripMargin + "\n"
 
+    protected val tfHeader =
+      """
+        |from zoo.util.tf import export_tf
+        |from keras import backend as K
+        |import tensorflow as tf
+      """.stripMargin + "\n"
 
-    def saveToKeras2[T: ClassTag](m: Module[T], path: String, python: String)
-                      (implicit ev: TensorNumeric[T]): Unit = {
+    def save[T: ClassTag](
+          m: Module[T],
+          path: String,
+          python: String,
+          saveCommand: String)
+          (implicit ev: TensorNumeric[T]): Unit = {
       val tmpDir = Utils.createTmpDir("ZooKeras")
       logger.info(s"Write to ${tmpDir}")
       val modelFile = tmpDir.toString + s"/${m.getName()}.py"
@@ -291,10 +306,27 @@ object Net {
         export(m.asInstanceOf[Sequential[T]], tmpDir.toString, bw)
       }
       bw.write(saveWeights(m, tmpDir.toString))
-      bw.write(s"model.save('$path')\n")
+      bw.write(saveCommand)
       bw.flush()
       bw.close()
-      val proc = Runtime.getRuntime().exec(s"${python} ${modelFile}")
+      execCommand(s"${python} ${modelFile}")
+      FileUtils.deleteDirectory(tmpDir.toFile())
+    }
+
+    def saveToTf[T: ClassTag](m: Module[T], path: String, python: String)
+                                 (implicit ev: TensorNumeric[T]): Unit = {
+      val saveCommand = tfHeader +
+        s"export_tf(K.get_session(), '${path}', model.inputs, model.outputs)\n"
+      save(m, path, python, saveCommand)
+    }
+
+    def saveToKeras2[T: ClassTag](m: Module[T], path: String, python: String)
+                      (implicit ev: TensorNumeric[T]): Unit = {
+      save(m, path, python, s"model.save('$path')\n")
+    }
+
+    def execCommand(command: String): Unit = {
+      val proc = Runtime.getRuntime().exec(command)
       proc.waitFor()
       if (proc.exitValue() != 0) {
         val error = new BufferedReader(new InputStreamReader(proc.getErrorStream()))
@@ -306,7 +338,7 @@ object Net {
         }
         throw new RuntimeException(s"Export Keras2 model failed:\n" + errorMsg.toString())
       }
-      FileUtils.deleteDirectory(tmpDir.toFile())
+
     }
 
     def export[T: ClassTag](

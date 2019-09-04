@@ -141,10 +141,10 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val inputs = "reshape_input:0"
     val outputs = "output/Softmax:0"
 
-    val model = TFNet("/home/xin/IdeaProjects/uber/model/tf_model.pb", Array(inputs), Array(outputs))
-    model.forward(Tensor[Float].range(0, 676 * 2 - 1).resize(2, 676))
+    val model = TFNet("/tmp/mytf/frozen_inference_graph.pb", Array(inputs), Array(outputs))
+    model.forward(Tensor[Float].range(0, 676 * 2 - 1).resize(2, 676).div(1000))
 
-    println(model)
+    println(model.output)
   }
 
 }
