@@ -896,7 +896,6 @@ class Sequential[T: ClassTag] private ()
   override private[zoo] def getKerasWeights(): Array[Tensor[Float]] = {
     val weights = new ArrayBuffer[Tensor[Float]]()
     modules(0).asInstanceOf[TSequential[T]].modules.foreach(m => {
-      println(m.isInstanceOf[Net])
       val params = m.asInstanceOf[Net].getKerasWeights()
       if (params != null) {
         params.foreach{p =>

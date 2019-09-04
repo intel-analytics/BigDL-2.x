@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.api
 
-import java.io.{BufferedWriter, FileOutputStream, FileWriter, File => JFile}
+import java.io.{BufferedReader, BufferedWriter, FileOutputStream, FileWriter, InputStreamReader, File => JFile}
 import java.nio.ByteOrder
 import java.util
 
@@ -39,6 +39,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.{KerasLayerWrapper, Wor
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.net.{GraphNet, NetUtils}
+import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.spark.bigdl.api.python.BigDLSerDe
 import org.apache.zookeeper.KeeperException.UnimplementedException
@@ -66,7 +67,7 @@ trait Net {
   }
 
   private[zoo] def toKeras2(dir: String): String = {
-    Net.getName(this.getClass.getName)
+    throw new UnimplementedException()
   }
 
   /**
@@ -215,9 +216,9 @@ object Net {
     TensorflowLoader.checkpoints(graphFile, binFile, byteOrder)
   }
 
-  def saveToKeras2[T: ClassTag](model: Net, filePath: String)
+  def saveToKeras2[T: ClassTag](model: Net, filePath: String, python: String = "python")
       (implicit ev: TensorNumeric[T]): Unit= {
-    NetSaver.saveToKeras2(model.asInstanceOf[Module[T]], filePath)
+    NetSaver.saveToKeras2(model.asInstanceOf[Module[T]], filePath, python)
   }
 
   private[zoo] def getName(name: String): String = {
@@ -279,7 +280,7 @@ object Net {
       """.stripMargin + "\n"
 
 
-    def saveToKeras2[T: ClassTag](m: Module[T], path: String)
+    def saveToKeras2[T: ClassTag](m: Module[T], path: String, python: String)
                       (implicit ev: TensorNumeric[T]): Unit = {
       val tmpDir = Utils.createTmpDir("ZooKeras")
       logger.info(s"Write to ${tmpDir}")
@@ -290,15 +291,30 @@ object Net {
         export(m.asInstanceOf[Sequential[T]], tmpDir.toString, bw)
       }
       bw.write(saveWeights(m, tmpDir.toString))
+      bw.write(s"model.save('$path')\n")
       bw.flush()
       bw.close()
+      val proc = Runtime.getRuntime().exec(s"${python} ${modelFile}")
+      proc.waitFor()
+      if (proc.exitValue() != 0) {
+        val error = new BufferedReader(new InputStreamReader(proc.getErrorStream()))
+        val errorMsg = new StringBuilder()
+        var line = error.readLine()
+        while(line != null) {
+          errorMsg.append(line + "\n")
+          line = error.readLine()
+        }
+        throw new RuntimeException(s"Export Keras2 model failed:\n" + errorMsg.toString())
+      }
+      FileUtils.deleteDirectory(tmpDir.toFile())
     }
 
     def export[T: ClassTag](
-                               sequential: Sequential[T],
-                               path: String,
-                               writer: BufferedWriter): Unit = {
-      writer.write(s"${sequential.getName()} = Sequential()\n")
+          sequential: Sequential[T],
+          path: String,
+          writer: BufferedWriter): Unit = {
+      writer.write(s"${sequential.getName()} = " +
+        s"Sequential(name='${(sequential.getName())}')\n")
       val modules = sequential.modules(0).asInstanceOf[TSequential[T]].modules
       modules.foreach{ module =>
         if (module.isInstanceOf[Sequential[T]]) {
@@ -329,7 +345,7 @@ object Net {
       val loadWeights = wStrings.map(_._1).mkString("\n")
       val weightsList = wStrings.map(_._2).mkString(",")
       loadWeights + "\n" +
-        s"${moduleName}.set_weights([${weightsList}])"
+        s"${moduleName}.set_weights([${weightsList}])\n"
     }
 
     private def getUniqueFile(path: String): JFile = {
