@@ -54,9 +54,9 @@ RUN wget http://download.redis.io/releases/redis-5.0.5.tar.gz && \
     
 ADD ./docker/packages packages
 
-ADD ./start.sh /opt/work
-RUN chmod a+x /opt/work/start.sh
+ADD ./zoo-cluster-serving.sh /opt/work
+RUN chmod a+x /opt/work/zoo-cluster-serving.sh
 
-CMD ["/opt/work/start.sh"]
+CMD ["/opt/work/zoo-cluster-serving.sh"]
 
 
