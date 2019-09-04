@@ -22,6 +22,7 @@ import com.intel.analytics.bigdl.optim.Regularizer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.zoo.models.tf.TfSaver
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 
@@ -59,6 +60,27 @@ class Dense[T: ClassTag](
   override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends BigDLDense[T](outputDim, init, activation, wRegularizer, bRegularizer, bias,
     inputShape) with Net {
+
+  override private[zoo] def toKeras2(dir: String): String = {
+    val inputString = Net.inputShapeToString(inputShape)
+    val act = Net.activationToString(activation)
+    val kname = Net.nameToString(getName())
+    s"${Net.getName(this.getClass.getName)}" +
+      s"(units=$outputDim" +
+      s"$inputString" +
+      s", use_bias=${if(bias) "True" else "False"}" +
+      s"${kname}" +
+      s"$act)\n"
+  }
+
+  override private[zoo] def getKerasWeights(): Array[Tensor[Float]] = {
+    val weights = this.parameters()._1
+    val kWeights = Array.tabulate(weights.length)(_ => Tensor[Float]())
+    weights(0) = weights(0).t().contiguous()
+    weights(0).cast[Float](kWeights(0).resizeAs(weights(0)))
+    weights(1).cast[Float](kWeights(1).resizeAs(weights(1)))
+    kWeights
+  }
 }
 
 object Dense {

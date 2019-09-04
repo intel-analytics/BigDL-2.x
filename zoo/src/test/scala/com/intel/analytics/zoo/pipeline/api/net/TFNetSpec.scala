@@ -137,4 +137,14 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     gradInput.size() should be (input.size())
   }
 
+  "TFNet" should "load keras" in {
+    val inputs = "reshape_input:0"
+    val outputs = "output/Softmax:0"
+
+    val model = TFNet("/home/xin/IdeaProjects/uber/model/tf_model.pb", Array(inputs), Array(outputs))
+    model.forward(Tensor[Float].range(0, 676 * 2 - 1).resize(2, 676))
+
+    println(model)
+  }
+
 }

@@ -40,6 +40,15 @@ class Permute[T: ClassTag](
     override val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
   extends BigDLPermute[T](
     dims, inputShape) with Net {
+
+  override private[zoo] def toKeras2(dir: String): String = {
+    val inputString = Net.inputShapeToString(inputShape)
+    val kname = Net.nameToString(getName())
+    s"${Net.getName(this.getClass.getName)}" +
+      s"(dims=${Net.arrayToString(dims)}" +
+      s"${kname}" +
+      s"${inputString})"
+  }
 }
 
 object Permute {

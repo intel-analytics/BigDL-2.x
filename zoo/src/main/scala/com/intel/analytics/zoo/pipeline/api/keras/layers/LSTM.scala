@@ -78,6 +78,47 @@ class LSTM[T: ClassTag](
       uRegularizer = uRegularizer,
       bRegularizer = bRegularizer)
   }
+
+  override private[zoo] def toKeras2(dir: String): String = {
+    val inputString = Net.inputShapeToString(inputShape)
+    val act = Net.activationToString(activation)
+    val inAct = Net.activationToString(innerActivation, "recurrent_activation")
+    val rseq = Net.booleanToString(returnSeq, "return_sequences")
+    val kname = Net.nameToString(getName())
+
+    s"${Net.getName(this.getClass.getName)}" +
+      s"(units=${outputDimension}" +
+      s"$inputString" +
+      s"${rseq}" +
+      s"$act" +
+      s"${kname}" +
+      s"$inAct)"
+  }
+
+  override private[zoo] def getKerasWeights(): Array[Tensor[Float]] = {
+    val weights = this.parameters()._1
+    val kWeights = Array.tabulate(weights.length)(_ => Tensor[Float]())
+    weights(0) = weights(0).t().contiguous()
+    weights(2) = weights(2).t().contiguous()
+    weights(0).cast[Float](kWeights(0).resizeAs(weights(0)))
+    weights(2).cast[Float](kWeights(1).resizeAs(weights(2)))
+    weights(1).cast[Float](kWeights(2).resizeAs(weights(1)))
+    // map to keras's weight
+    switch(kWeights(0), 2)
+    switch(kWeights(1), 2)
+    switch(kWeights(2), 1)
+
+    kWeights
+  }
+
+  private def switch(t: Tensor[Float], dim: Int): Unit = {
+    val tmpWeight = t.narrow(dim, 1, outputDimension).clone()
+    tmpWeight.copy(t.narrow(dim, 1 + outputDimension, outputDimension))
+    t.narrow(dim, 1 + outputDimension, outputDimension)
+      .copy(t.narrow(dim, 2 * outputDimension + 1, outputDimension))
+    t.narrow(dim, 2 * outputDimension + 1, outputDimension).copy(tmpWeight)
+  }
+
 }
 
 object LSTM {

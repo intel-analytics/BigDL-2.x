@@ -16,21 +16,32 @@
 
 package com.intel.analytics.zoo.pipeline.api
 
+import java.io.{BufferedWriter, FileOutputStream, FileWriter, File => JFile}
 import java.nio.ByteOrder
+import java.util
 
+import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.Graph._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, Initializable}
-import com.intel.analytics.bigdl.nn.keras.KerasLayer
+import com.intel.analytics.bigdl.nn.keras.{KerasIdentityWrapper, KerasLayer}
 import com.intel.analytics.bigdl.nn.{Container, Graph, InitializationMethod}
+import com.intel.analytics.bigdl.nn.{Sequential => TSequential}
+import com.intel.analytics.bigdl.python.api.PythonBigDL
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.File
+import com.intel.analytics.bigdl.utils.{File, Shape}
 import com.intel.analytics.zoo.models.caffe.CaffeLoader
 import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.bigdl.utils.tf.{Session, TensorflowLoader}
+import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.pipeline.api.autograd.Variable
-import com.intel.analytics.zoo.pipeline.api.keras.layers.WordEmbedding
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{KerasLayerWrapper, WordEmbedding}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.net.{GraphNet, NetUtils}
+import org.apache.log4j.Logger
+import org.apache.spark.bigdl.api.python.BigDLSerDe
+import org.apache.zookeeper.KeeperException.UnimplementedException
 
 import scala.reflect.ClassTag
 
@@ -52,6 +63,23 @@ trait Net {
   def from[T: ClassTag](vars : Variable[T]*)(implicit ev: TensorNumeric[T]): Variable[T] = {
     new Variable(
       this.asInstanceOf[AbstractModule[Activity, Activity, T]].inputs(vars.map(_.node): _*))
+  }
+
+  private[zoo] def toKeras2(dir: String): String = {
+    Net.getName(this.getClass.getName)
+  }
+
+  /**
+   * Get keras-like weights.
+   * @tparam T
+   * @return
+   */
+  private[zoo] def getKerasWeights(): Array[Tensor[Float]] = {
+    if (this.asInstanceOf[AbstractModule[_, _, _]].parameters()._1.length != 0) {
+      throw new UnimplementedException()
+    } else {
+      Array()
+    }
   }
 }
 
@@ -185,5 +213,146 @@ object Net {
       byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN)(
       implicit ev: TensorNumeric[T]): Session[T] = {
     TensorflowLoader.checkpoints(graphFile, binFile, byteOrder)
+  }
+
+  def saveToKeras2[T: ClassTag](model: Net, filePath: String)
+      (implicit ev: TensorNumeric[T]): Unit= {
+    NetSaver.saveToKeras2(model.asInstanceOf[Module[T]], filePath)
+  }
+
+  private[zoo] def getName(name: String): String = {
+    name.split("\\.").last
+  }
+
+  private[zoo] def arrayToString(array: Seq[Int]): String = {
+    s"(${array.mkString(", ")})"
+  }
+
+  private[zoo] def inputShapeToString(inputShape: Shape): String = {
+    if (inputShape != null) {
+      s", input_shape=(${inputShape.toSingle().mkString(", ")},)"
+    } else {
+      ""
+    }
+  }
+
+  private[zoo] def activationToString(activation: AbstractModule[_, _, _],
+                                      paramName: String = "activation"): String = {
+    val trueActivation = if (activation.isInstanceOf[KerasIdentityWrapper[_]]) {
+      activation.asInstanceOf[KerasIdentityWrapper[_]].layer
+    } else {
+      activation
+    }
+    if (activation != null) {
+      s", $paramName='${KerasUtils.getActivationName(trueActivation)}'"
+    } else {
+      ""
+    }
+
+  }
+
+  private[zoo] def booleanToString(boolean: Boolean,
+                                   booleanName: String): String = {
+    s", $booleanName=${if(boolean) "True" else "False"}"
+  }
+
+  private[zoo] def nameToString(name: String): String = {
+    s", name='$name'"
+  }
+
+
+  object NetSaver {
+    private val logger = Logger.getLogger(getClass)
+
+    protected val header =
+      """
+        |from keras.models import Sequential
+        |from keras.layers import *
+        |from pyspark.serializers import PickleSerializer
+        |
+        |def load_to_numpy(file):
+        |    in_file = open(file, "rb")
+        |    data = in_file.read()
+        |    in_file.close()
+        |    r=PickleSerializer().loads(data, encoding="bytes")
+        |    return r.to_ndarray()
+      """.stripMargin + "\n"
+
+
+    def saveToKeras2[T: ClassTag](m: Module[T], path: String)
+                      (implicit ev: TensorNumeric[T]): Unit = {
+      val tmpDir = Utils.createTmpDir("ZooKeras")
+      logger.info(s"Write to ${tmpDir}")
+      val modelFile = tmpDir.toString + s"/${m.getName()}.py"
+      val bw = new BufferedWriter(new FileWriter(modelFile))
+      bw.write(header)
+      if (m.isInstanceOf[Sequential[T]]) {
+        export(m.asInstanceOf[Sequential[T]], tmpDir.toString, bw)
+      }
+      bw.write(saveWeights(m, tmpDir.toString))
+      bw.flush()
+      bw.close()
+    }
+
+    def export[T: ClassTag](
+                               sequential: Sequential[T],
+                               path: String,
+                               writer: BufferedWriter): Unit = {
+      writer.write(s"${sequential.getName()} = Sequential()\n")
+      val modules = sequential.modules(0).asInstanceOf[TSequential[T]].modules
+      modules.foreach{ module =>
+        if (module.isInstanceOf[Sequential[T]]) {
+          export(module.asInstanceOf[Sequential[T]], path, writer)
+          writer.write(s"${sequential.getName()}.add(${module.getName})\n")
+        } else if (module.isInstanceOf[Net]){
+          writer.write(s"${module.getName()} = ${module.asInstanceOf[Net].toKeras2(path)}\n")
+          writer.write(s"${sequential.getName()}.add(${module.getName})\n")
+        } else {
+          throw new IllegalArgumentException(s"unkown type ${this.getClass.getName}")
+        }
+      }
+    }
+
+    private[zoo] def saveWeights[T: ClassTag](
+                                                 module: AbstractModule[_, _, T], path: String)
+                                             (implicit ev: TensorNumeric[T]): String = {
+      val moduleName = module.getName()
+      var i = 0
+      val wStrings = module.asInstanceOf[Net].getKerasWeights().map{p =>
+        val pName = s"${moduleName}_p${i}"
+        val pPath = getUniqueFile(s"${path}/${pName}")
+        saveToJTensor(p, pPath)
+        i += 1
+        (s"${pName} = load_to_numpy('${pPath}')",
+          pName)
+      }
+      val loadWeights = wStrings.map(_._1).mkString("\n")
+      val weightsList = wStrings.map(_._2).mkString(",")
+      loadWeights + "\n" +
+        s"${moduleName}.set_weights([${weightsList}])"
+    }
+
+    private def getUniqueFile(path: String): JFile = {
+      var file = new JFile(path)
+      var i = 0
+      while(file.exists()) {
+        file = new JFile(path+s".$i")
+        i += 1
+      }
+      file
+    }
+
+    private def saveToJTensor[T: ClassTag](
+                                              tensor: Tensor[T], file: JFile)
+                                          (implicit ev: TensorNumeric[T]): Unit = {
+      val pythonBigDL = new PythonBigDL[T]()
+      val jt = pythonBigDL.toJTensor(tensor)
+      val bytes = BigDLSerDe.dumps(jt)
+      val fio = new FileOutputStream(file)
+      fio.write(bytes)
+      fio.flush()
+      fio.close()
+    }
+
   }
 }
