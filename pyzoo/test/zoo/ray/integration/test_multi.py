@@ -25,6 +25,8 @@ from zoo import init_spark_on_yarn
 from zoo.ray.util.raycontext import RayContext
 
 np.random.seed(1337)  # for reproducibility
+
+
 @ray.remote
 class TestRay():
     def hostname(self):
@@ -43,8 +45,8 @@ sc = init_spark_on_yarn(
     driver_cores=4,
     extra_executor_memory_for_ray="30g")
 ray_ctx = RayContext(sc=sc, object_store_memory="2g")
-#sc = init_spark_on_local(cores=node_num)
-#ray_ctx = RayContext(sc=sc, object_store_memory="1g")
+# sc = init_spark_on_local(cores=node_num)
+# ray_ctx = RayContext(sc=sc, object_store_memory="1g")
 ray_ctx.init()
 actors = [TestRay.remote() for i in range(0, node_num)]
 print([ray.get(actor.hostname.remote()) for actor in actors])
@@ -53,13 +55,6 @@ ray_ctx.stop()
 print("------------------------first time done!--------------------")
 
 # repeat
-ray_ctx = RayContext(sc=sc, object_store_memory="1g")
-ray_ctx.init()
-actors = [TestRay.remote() for i in range(0, node_num)]
-print([ray.get(actor.hostname.remote()) for actor in actors])
-ray_ctx.stop()
-print("________________________second time done!________________")
-time.sleep(2)
 ray_ctx = RayContext(sc=sc, object_store_memory="1g")
 ray_ctx.init()
 actors = [TestRay.remote() for i in range(0, node_num)]
