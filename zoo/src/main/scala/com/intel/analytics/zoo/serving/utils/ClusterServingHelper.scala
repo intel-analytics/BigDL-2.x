@@ -41,7 +41,7 @@ case class LoaderParams(modelFolder: String = null,
 
 
 
-class Loader {
+class ClusterServingHelper {
 
   val parser = new OptionParser[LoaderParams]("Zoo Serving") {
 
@@ -114,7 +114,6 @@ class Loader {
     //    }
     val model = parseModelLocation(params.modelFolder)
 
-    val sc = NNContext.initNNContext()
     val bcModel = ModelBroadcast[Float]().broadcast(sc, model)
     val cachedModel = sc.range(1, 100, EngineRef.getNodeNumber())
       .coalesce(EngineRef.getNodeNumber())
@@ -122,7 +121,7 @@ class Loader {
     cachedModel
   }
 
-  def loadSparkSession(args: Array[String]) = {
+  def loadSparkSession() = {
     SparkSession
       .builder
       .master(sc.master)

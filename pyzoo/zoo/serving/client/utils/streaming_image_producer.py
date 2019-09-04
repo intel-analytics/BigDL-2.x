@@ -1,5 +1,5 @@
 import redis
-from utils import helpers
+from client.utils import helpers
 import argparse
 import uuid
 import time

@@ -26,7 +26,7 @@ import org.apache.spark.rdd.ZippedPartitionsWithLocalityRDD
 import com.intel.analytics.zoo.utils._
 
 
-object ZooServing {
+object ClusterServing {
   case class Result(id: String, value: String)
 
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -41,13 +41,13 @@ object ZooServing {
 
 //    val param = parser.parse(args, RedisParams()).get
 
-    val loader = new Loader()
+    val loader = new ClusterServingHelper()
     loader.init(args)
     val cachedModel = loader.loadModel[Float]()
 
     val coreNumber = EngineRef.getCoreNumber()
 
-    val spark = loader.loadSparkSession(args)
+    val spark = loader.loadSparkSession()
 
     logger.info(s"connected to redis ${spark.conf.get("spark.redis.host")}:${spark.conf.get("spark.redis.port")}")
     val batchSize = loader.batchSize
@@ -64,7 +64,7 @@ object ZooServing {
         StructField("path", StringType),
         StructField("image", StringType)
       )))
-      .load().limit(5)
+      .load()
 
     import org.apache.spark.storage.StorageLevel._
     val query = images
