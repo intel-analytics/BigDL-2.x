@@ -136,7 +136,7 @@ var meanValues = Array(123.68f, 116.78f, 103.94f)
 var scale = 1.0f
 
 # To obtain model bytes, there are several steps
-# abstract path name of the model
+# abstract path name of the model checkpoint file
 var checkpointPath: String = "/path/to/models/resnet_v1_50.ckpt"
 
 # length of the file in bytes
@@ -156,6 +156,7 @@ Let's define a `Resnet50InferenceModel` class to extend analytics-zoo `Inference
 class Resnet50InferenceModel(var concurrentNum: Int = 1, modelType: String, modelBytes: Array[Byte], inputShape: Array[Int], ifReverseInputChannels: Boolean, meanValues: Array[Float], scale: Float)
 extends InferenceModel(concurrentNum) with Serializable {
 
+  # load the TF model as OpenVINO IR
   doLoadTF(null, modelType, modelBytes, inputShape, ifReverseInputChannels, meanValues, scale)
   
   }
@@ -212,14 +213,17 @@ class ModelPredictionMapFunction(modelType: String, modelBytes: Array[Byte], inp
 extends RichMapFunction[JList[JList[JTensor]], JList[JList[JTensor]]] {
   var resnet50InferenceModel: Resnet50InferenceModel = _
   
+  # open
   override def open(parameters: Configuration): Unit = {
     resnet50InferenceModel = new Resnet50InferenceModel(1, modelType, modelBytes, inputShape, ifReverseInputChannels, meanValues, scale)
   }
   
+  # close
   override def close(): Unit = {
     resnet50InferenceModel.release()
   }
   
+  # map
   override def map(in: JList[JList[JTensor]]): JList[JList[JTensor]] = {
     resnet50InferenceModel.doPredict(in)
   }
@@ -244,6 +248,12 @@ The program is actually executed only when calling `execute()` on the `StreamExe
 
 ```
 env.execute()
+```
+
+Out:
+
+```
+org.apache.flink.api.common.ExecutionConfig@62f33899
 ```
 
 #### 5. Collect final results
@@ -319,6 +329,7 @@ Job Runtime: 14830 ms
 
 #### Wrapping up
 
-we have reached the end of the tutorial. In this tutorial, you have learned how to create the Analytics-Zoo `InferenceModel` class for loading and prediction with a deep learning model. With that, you defined your own `RichMapFunction` and started with the Flink streaming. 
+we have reached the end of the tutorial. In this tutorial, you have learned how to create the Analytics-Zoo `InferenceModel` class for loading and prediction with a deep learning model. With that, you defined your own `RichMapFunction` and started with the prediction on Flink streaming.  
 
 What go for next? You could take a practice. Load the data and model you need to see what speedup you get.
+
