@@ -6,7 +6,7 @@ Now, we will use an example to introduce how to use Analytics-Zoo Inference Mode
 
 ### Data
 
-In this tutorial, we will use the **ImageNet** dataset.  For fun, we extract just one image and save it in `resources` folder. Later, we will create a list to hold one hundred repeated inputs to simulate the prediction of one hundred images. Certainly, you are encouraged to extract as many various images as you need for practicing.
+In this tutorial, we will use the **ImageNet** dataset.  For fun, we extract just one image and save it in `resources` folder. Later, we will create a list to hold one hundred repeated inputs to simulate the prediction of one hundred images. Certainly, you are encouraged to extract as many various images as you need for practice.
 
 The dataset will be loaded directly from `resources`  folder. The program directory structure and image path should be:
 
@@ -106,7 +106,7 @@ List([F@194bcebf, [F@194bcebf, [F@194bcebf, [F@194bcebf, [F@194bcebf, ... [F@194
 
 Define a class extended analytics-zoo `InferenceModel`. As we use OpenVINO backend in this example, it allows passing and loading parameters to convert to OpenVINO model. The pre-trained model ResNet50 can be obtained from [here](http://download.tensorflow.org/models/resnet_v1_50_2016_08_28.tar.gz).
 
-Let's define the input parameters of the class:
+Before that, let's define the input parameters of the class:
 
 - **concurrentNum**-the number of requests a model can accept concurrently.
 - **modelType**-the pre-trained model type.
