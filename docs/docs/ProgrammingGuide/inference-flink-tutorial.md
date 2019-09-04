@@ -172,7 +172,7 @@ We will do the following steps in order:
 3. Specify Transformation Functions
 4. Trigger the program execution
 5. Collect final results
-6. Running the example on a local machine or a cluster
+6. Run the example on a local machine or a cluster
 
 #### 1. Obtain an execution environment
 
@@ -196,6 +196,7 @@ val tensorStream: DataStream[JList[JList[JTensor]]] = dataStream.map(value => {
   val data = Arrays.asList(input)
   List(data).asJava
 })
+println("tensorStream", tensorStream)
 ```
 
 Out:
@@ -234,6 +235,7 @@ Pass the `RichMapFunctionn` function to a `map` transformation.
 
 ```
 val resultStream = tensorStream.map(new ModelPredictionMapFunction(modelType, modelBytes, inputShape, ifReverseInputChannels, meanValues, scale))
+println("resultStream", resultStream)
 ```
 
 Out:
@@ -317,7 +319,7 @@ The output of that command should look similar to this, if everything went accor
 Starting execution of program
 start ImageClassificationStreaming job...
 (params,resnet_v1_50,/path/to/models/resnet_v1_50.ckpt,1,224,224,3,true,123.68,116.78,103.94,1.0)
-org.apache.flink.api.common.ExecutionConfig@86941f8b
+org.apache.flink.api.common.ExecutionConfig@62f33899
 Printing result to stdout. Since we play with one hundred repeated inputs, there are the same number of equal results.
 [[JTensor{data=[6.978136E-5, 9.844725E-4, 2.3672989E-4, 2.969411E-4, 4.7597036E-4, 1.715969E-4, 1.1608376E-4, 1.8288662E-4, 7.620713E-5, ...], shape=[1, 1000]}]]
 [[JTensor{data=[6.978136E-5, 9.844725E-4, 2.3672989E-4, 2.969411E-4, 4.7597036E-4, 1.715969E-4, 1.1608376E-4, 1.8288662E-4, 7.620713E-5, ...], shape=[1, 1000]}]]
