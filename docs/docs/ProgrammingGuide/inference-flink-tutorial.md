@@ -8,7 +8,7 @@ Now, we will use an example to introduce how to use Analytics-Zoo Inference Mode
 
 In this tutorial, we will use the **ImageNet** dataset.  For fun, we extract just one image and save it in `resources` folder. Later, we will create a list to hold one hundred repeated inputs to simulate the prediction of one hundred images. Certainly, you are encouraged to extract as many various images as you need for practice.
 
-The dataset will be loaded directly from `resources`  folder. The program directory structure and image path should be:
+The dataset will be loaded directly from the `resources`  folder. The program directory structure and image path should be:
 
 ```
 /path/to/model-inference-flink
@@ -20,7 +20,7 @@ The dataset will be loaded directly from `resources`  folder. The program direct
 │       └── scala
 ```
 
-Next, get image from `resources` folder, and return an input stream.
+Next, get image from the `resources` folder, and return an input stream.
 
 ```
 # Load data from relative path of the resources folder
@@ -104,7 +104,7 @@ List([F@194bcebf, [F@194bcebf, [F@194bcebf, [F@194bcebf, [F@194bcebf, ... [F@194
 
 ### Defining an InferenceModel
 
-Define a class extended analytics-zoo `InferenceModel`. As we use OpenVINO backend in this example, it allows passing and loading parameters to convert to OpenVINO model. The pre-trained model ResNet50 can be obtained from [here](http://download.tensorflow.org/models/resnet_v1_50_2016_08_28.tar.gz).
+Define a class extended analytics-zoo `InferenceModel`. As we use OpenVINO backend in this example, it allows passing and loading parameters to convert to the OpenVINO model. The pre-trained model ResNet50 can be obtained from [here](http://download.tensorflow.org/models/resnet_v1_50_2016_08_28.tar.gz).
 
 Before that, let's define the input parameters of the class:
 
@@ -268,7 +268,7 @@ val results = DataStreamUtils.collect(resultStream.javaStream).asScala
 
 At this step, we complete the whole program. Let's start how to run the example. 
 
-#### 6. Running the example on a local machine or a cluster
+#### 6. Run the example on a local machine or a cluster
 
 - ##### Build the project
 
@@ -300,6 +300,14 @@ To stop Flink when you're done type:
   - Run `export FLINK_HOME=the root directory of flink`.
   - Download [resnet_v1_50 model](http://download.tensorflow.org/models/resnet_v1_50_2016_08_28.tar.gz). Run `export MODEL_PATH = path to the downloaded model`.
   - Edit flink-conf.yaml to set heap size or the number of task slots as you need, ie, `jobmanager.heap.size: 10g`
+  - Additionally, make sure python requirements for each flink node.
+
+```
+sudo apt install python3-pip
+pip3 install numpy
+pip3 install networkx
+pip3 install tensorflow
+```
 
 All are ready! Let's run the following command with arguments to submit the Flink program. Change parameter settings as you need.
 
@@ -320,7 +328,7 @@ Starting execution of program
 start ImageClassificationStreaming job...
 (params,resnet_v1_50,/path/to/models/resnet_v1_50.ckpt,1,224,224,3,true,123.68,116.78,103.94,1.0)
 org.apache.flink.api.common.ExecutionConfig@62f33899
-Printing result to stdout. Since we play with one hundred repeated inputs, there are the same number of equal results.
+Printing result to stdout. Since we play with one hundred repeated inputs, there will be the same number of equal results.
 [[JTensor{data=[6.978136E-5, 9.844725E-4, 2.3672989E-4, 2.969411E-4, 4.7597036E-4, 1.715969E-4, 1.1608376E-4, 1.8288662E-4, 7.620713E-5, ...], shape=[1, 1000]}]]
 [[JTensor{data=[6.978136E-5, 9.844725E-4, 2.3672989E-4, 2.969411E-4, 4.7597036E-4, 1.715969E-4, 1.1608376E-4, 1.8288662E-4, 7.620713E-5, ...], shape=[1, 1000]}]]
 ...
@@ -333,5 +341,5 @@ Job Runtime: 14830 ms
 
 we have reached the end of the tutorial. In this tutorial, you have learned how to create the Analytics-Zoo `InferenceModel` class for loading and prediction with a deep learning model. With that, you defined your own `RichMapFunction` and started with the prediction on Flink streaming.  
 
-What go for next? You could take a practice. Load the data and model you need to see what speedup you get.
+What goes for next? You could take practice. Load the data and model you need to see what speedup you get.
 
