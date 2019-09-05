@@ -18,14 +18,16 @@ package com.intel.analytics.zoo.pipeline.api
 
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.{CAddTable, SpatialCrossMapLRN}
+import com.intel.analytics.bigdl.optim.L2Regularizer
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{Shape, T}
 import com.intel.analytics.bigdl.utils.caffe.{CaffeLoader => BigDLCaffeLoader}
 import com.intel.analytics.zoo.pipeline.api.autograd.Variable
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Input, KerasLayerWrapper}
-import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model => ZModel}
+import com.intel.analytics.zoo.pipeline.api.keras.layers._
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential, Model => ZModel}
+import com.intel.analytics.zoo.pipeline.api.net.TFNet
 
 import scala.util.Random
 
@@ -155,4 +157,50 @@ class NetSpec extends ZooSpecHelper{
     val result = model.forward(Tensor[Float](2, 4).rand())
     result.toTensor[Float].size() should be (Array(2, 2))
   }
+
+  "Save to tensorflow" should "works" taggedAs(Keras2Test) in {
+    val tmpDir = createTmpDir()
+    val modelGraph = Sequential[Float]().setName("model")
+    // get 13 * 52 input matrix
+    val reshape = Reshape[Float](Array(13, 52), inputShape = Shape(676))
+    // get 52 * 13 input matrix
+    val transpose = Permute[Float](Array(2, 1))
+    val layer1 = LSTM[Float](outputDim = 100, returnSequences = true, wRegularizer = L2Regularizer(0.001))
+    val layer2 = LSTM[Float](outputDim = 100, returnSequences = false, wRegularizer = L2Regularizer(0.001))
+    val denseLayer = Dense[Float](2, activation = "softmax", wRegularizer = L2Regularizer(0.001))
+    modelGraph.add(reshape.setName("reshape"))
+    modelGraph.add(transpose.setName("transpose"))
+    modelGraph.add(layer1.setName("lstm1"))
+    modelGraph.add(layer2.setName("lstm2"))
+    modelGraph.add(denseLayer.setName("output"))
+    Net.saveToTf(modelGraph, tmpDir.getAbsolutePath, "/opt/anaconda3/envs/py36/bin/python")
+
+    val input = Tensor[Float].range(0, 676*2 - 1).resize(2, 676).div(1000)
+    val o = modelGraph.forward(input)
+    val inputs = "reshape_input:0"
+    val outputs = "output/Softmax:0"
+    val tfModel = TFNet(tmpDir + "/frozen_inference_graph.pb", Array(inputs), Array(outputs))
+    val tfOutput = tfModel.forward(input)
+
+    o should be (tfOutput)
+  }
+
+  "Save to keras2" should "works" taggedAs(Keras2Test)  in {
+    val tmpDir = createTmpDir()
+    val modelGraph = Sequential[Float]().setName("model")
+    // get 13 * 52 input matrix
+    val reshape = Reshape[Float](Array(13, 52), inputShape = Shape(676))
+    // get 52 * 13 input matrix
+    val transpose = Permute[Float](Array(2, 1))
+    val layer1 = LSTM[Float](outputDim = 100, returnSequences = true, wRegularizer = L2Regularizer(0.001))
+    val layer2 = LSTM[Float](outputDim = 100, returnSequences = false, wRegularizer = L2Regularizer(0.001))
+    val denseLayer = Dense[Float](2, activation = "softmax", wRegularizer = L2Regularizer(0.001))
+    modelGraph.add(reshape.setName("reshape"))
+    modelGraph.add(transpose.setName("transpose"))
+    modelGraph.add(layer1.setName("lstm1"))
+    modelGraph.add(layer2.setName("lstm2"))
+    modelGraph.add(denseLayer.setName("output"))
+    Net.saveToKeras2(modelGraph, "/tmp/my.h5")
+  }
+
 }

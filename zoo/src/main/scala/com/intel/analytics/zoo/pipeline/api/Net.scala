@@ -267,7 +267,7 @@ object Net {
   }
 
 
-  object NetSaver {
+  protected object NetSaver {
     private val logger = Logger.getLogger(getClass)
 
     protected val header =
