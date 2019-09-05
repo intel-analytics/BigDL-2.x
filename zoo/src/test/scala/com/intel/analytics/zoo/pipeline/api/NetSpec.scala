@@ -173,7 +173,7 @@ class NetSpec extends ZooSpecHelper{
     modelGraph.add(layer1.setName("lstm1"))
     modelGraph.add(layer2.setName("lstm2"))
     modelGraph.add(denseLayer.setName("output"))
-    Net.saveToTf(modelGraph, tmpDir.getAbsolutePath, "/opt/anaconda3/envs/py36/bin/python")
+    Net.saveToTf[Float](modelGraph, tmpDir.getAbsolutePath)
 
     val input = Tensor[Float].range(0, 676*2 - 1).resize(2, 676).div(1000)
     val o = modelGraph.forward(input)
@@ -200,7 +200,7 @@ class NetSpec extends ZooSpecHelper{
     modelGraph.add(layer1.setName("lstm1"))
     modelGraph.add(layer2.setName("lstm2"))
     modelGraph.add(denseLayer.setName("output"))
-    Net.saveToKeras2(modelGraph, "/tmp/my.h5")
+    Net.saveToKeras2[Float](modelGraph, tmpDir + "/model.h5")
   }
 
 }
