@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.{CAddTable, SpatialCrossMapLRN}
 import com.intel.analytics.bigdl.optim.L2Regularizer
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Shape, T}
+import com.intel.analytics.bigdl.utils.{RandomGenerator, Shape, T}
 import com.intel.analytics.bigdl.utils.caffe.{CaffeLoader => BigDLCaffeLoader}
 import com.intel.analytics.zoo.pipeline.api.autograd.Variable
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
@@ -159,15 +159,16 @@ class NetSpec extends ZooSpecHelper{
   }
 
   "Save to tensorflow" should "works" taggedAs(Keras2Test) in {
+    RandomGenerator.RNG.setSeed(10)
     val tmpDir = createTmpDir()
     val modelGraph = Sequential[Float]().setName("model")
     // get 13 * 52 input matrix
     val reshape = Reshape[Float](Array(13, 52), inputShape = Shape(676))
     // get 52 * 13 input matrix
     val transpose = Permute[Float](Array(2, 1))
-    val layer1 = LSTM[Float](outputDim = 100, returnSequences = true, wRegularizer = L2Regularizer(0.001))
-    val layer2 = LSTM[Float](outputDim = 100, returnSequences = false, wRegularizer = L2Regularizer(0.001))
-    val denseLayer = Dense[Float](2, activation = "softmax", wRegularizer = L2Regularizer(0.001))
+    val layer1 = LSTM[Float](outputDim = 100, returnSequences = true)
+    val layer2 = LSTM[Float](outputDim = 100, returnSequences = false)
+    val denseLayer = Dense[Float](2, activation = "softmax")
     modelGraph.add(reshape.setName("reshape"))
     modelGraph.add(transpose.setName("transpose"))
     modelGraph.add(layer1.setName("lstm1"))
@@ -175,11 +176,12 @@ class NetSpec extends ZooSpecHelper{
     modelGraph.add(denseLayer.setName("output"))
     Net.saveToTf[Float](modelGraph, tmpDir.getAbsolutePath)
 
-    val input = Tensor[Float].range(0, 676*2 - 1).resize(2, 676).div(1000)
+    val input = Tensor[Float](2, 676).rand()
     val o = modelGraph.forward(input)
     val inputs = "reshape_input:0"
     val outputs = "output/Softmax:0"
-    val tfModel = TFNet(tmpDir + "/frozen_inference_graph.pb", Array(inputs), Array(outputs))
+    val tfModel = TFNet(tmpDir + "/frozen_inference_graph.pb",
+      Array(inputs), Array(outputs))
     val tfOutput = tfModel.forward(input)
 
     o should be (tfOutput)
@@ -192,10 +194,10 @@ class NetSpec extends ZooSpecHelper{
     val reshape = Reshape[Float](Array(13, 52), inputShape = Shape(676))
     // get 52 * 13 input matrix
     val transpose = Permute[Float](Array(2, 1))
-    val layer1 = LSTM[Float](outputDim = 100, returnSequences = true, wRegularizer = L2Regularizer(0.001))
-    val layer2 = LSTM[Float](outputDim = 100, returnSequences = false, wRegularizer = L2Regularizer(0.001))
+    val layer1 = LSTM[Float](outputDim = 100, returnSequences = true)
+    val layer2 = LSTM[Float](outputDim = 100, returnSequences = false)
     val dropout = Dropout[Float](0.5)
-    val denseLayer = Dense[Float](2, activation = "softmax", wRegularizer = L2Regularizer(0.001))
+    val denseLayer = Dense[Float](2, activation = "softmax")
     modelGraph.add(reshape.setName("reshape"))
     modelGraph.add(transpose.setName("transpose"))
     modelGraph.add(layer1.setName("lstm1"))

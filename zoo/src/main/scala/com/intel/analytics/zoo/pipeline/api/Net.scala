@@ -216,13 +216,17 @@ object Net {
     TensorflowLoader.checkpoints(graphFile, binFile, byteOrder)
   }
 
-  private[zoo] def saveToKeras2[T: ClassTag](model: Net, filePath: String, python: String = "python")
-      (implicit ev: TensorNumeric[T]): Unit= {
+  private[zoo] def saveToKeras2[T: ClassTag](
+        model: Net,
+        filePath: String,
+        python: String = "python")(implicit ev: TensorNumeric[T]): Unit = {
     NetSaver.saveToKeras2(model.asInstanceOf[Module[T]], filePath, python)
   }
 
-  private[zoo] def saveToTf[T: ClassTag](model: Net, dir: String, python: String = "python")
-                               (implicit ev: TensorNumeric[T]): Unit= {
+  private[zoo] def saveToTf[T: ClassTag](
+        model: Net,
+        dir: String,
+        python: String = "python")(implicit ev: TensorNumeric[T]): Unit = {
     NetSaver.saveToTf(model.asInstanceOf[Module[T]], dir, python)
   }
 
@@ -263,7 +267,7 @@ object Net {
   private[zoo] def param(
         boolean: Boolean,
         paramName: String): Map[String, String] = {
-    Map(paramName -> s"${if(boolean) "True" else "False"}")
+    Map(paramName -> s"${if (boolean) "True" else "False"}")
   }
 
   private[zoo] def param(
@@ -284,8 +288,9 @@ object Net {
     Map(paramName -> s"'$name'")
   }
 
-  private[zoo] def kerasDef(module: Module[_],
-                            params: Map[String, String]): String = {
+  private[zoo] def kerasDef(
+        module: Module[_],
+        params: Map[String, String]): String = {
     s"${Net.getName(module.getClass.getName)}(" +
       params.map(v => s"${v._1}=${v._2}").mkString(", ") + ")"
   }
@@ -374,7 +379,7 @@ object Net {
         s"Sequential(name='${(sequential.getName())}')\n")
       val modules = sequential.modules(0).asInstanceOf[TSequential[T]].modules
       modules.foreach{ module =>
-        if (module.isInstanceOf[Sequential[T]]) {
+        if (module.isInstanceOf[Sequential[T]]){
           export(module.asInstanceOf[Sequential[T]], path, writer)
           writer.write(s"${sequential.getName()}.add(${module.getName})\n")
         } else if (module.isInstanceOf[Net]){
@@ -409,7 +414,7 @@ object Net {
       var file = new JFile(path)
       var i = 0
       while(file.exists()) {
-        file = new JFile(path+s".$i")
+        file = new JFile(path + s".$i")
         i += 1
       }
       file

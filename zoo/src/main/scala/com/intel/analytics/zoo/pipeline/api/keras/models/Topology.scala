@@ -555,7 +555,7 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
    */
   def saveToKeras2[T: ClassTag](
         filePath: String,
-        python: String = "python")(implicit ev: TensorNumeric[T]): Unit= {
+        python: String = "python")(implicit ev: TensorNumeric[T]): Unit = {
     Net.saveToKeras2[T](this, filePath, python)
   }
 
@@ -566,7 +566,7 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
    */
   def saveToTf[T: ClassTag](
         dir: String,
-        python: String = "python")(implicit ev: TensorNumeric[T]): Unit= {
+        python: String = "python")(implicit ev: TensorNumeric[T]): Unit = {
     Net.saveToTf[T](this, dir, python)
   }
 
