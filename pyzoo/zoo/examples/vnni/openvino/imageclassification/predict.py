@@ -31,7 +31,7 @@ def predict(model_path, img_path):
                         batch_size=BATCH_SIZE)
     sc = init_nncontext("OpenVINO Python resnet_v1_50 Inference Example")
     # pre-processing
-    infer_transformer = ChainedPreprocessing([ImageBytesToMat(),
+    infer_transformer = ChainedPreprocessing([ImageBytesToMat(image_codec=1),
                                              ImageResize(256, 256),
                                              ImageCenterCrop(224, 224),
                                              ImageMatToTensor(format="NHWC", to_RGB=True)])
