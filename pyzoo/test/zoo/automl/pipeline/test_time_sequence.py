@@ -58,7 +58,7 @@ class TestTimeSequencePipeline(ZooTestCase):
                                            target_col="value",
                                            future_seq_len=self.future_seq_len_3,
                                            extra_features_col=None, )
-        self.default_past_seq_len = 1
+        self.default_past_seq_len = 2
 
     def teardown_method(self, method):
         """
@@ -380,6 +380,49 @@ class TestTimeSequencePipeline(ZooTestCase):
                                              metrics=["mean_squared_error", "r_square"])
         assert len(mse) == self.future_seq_len_3
         assert len(rs) == self.future_seq_len_3
+
+    def test_look_back_value(self):
+        # test min_past_seq_len < 2
+        self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                       recipe=RandomRecipe(look_back=(1, 2)))
+        # test max_past_seq_len < 2
+        with pytest.raises(ValueError, match=r".*max look back value*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back=(0, 1)))
+        # test look_back value < 2
+        with pytest.raises(ValueError, match=r".*look back value should not be smaller than 2*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back=1))
+
+        # test look back is None
+        with pytest.raises(ValueError, match=r".*look_back should be either*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back=None))
+        # test look back is str
+        with pytest.raises(ValueError, match=r".*look_back should be either*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back="a"))
+        # test look back is float
+        with pytest.raises(ValueError, match=r".*look_back should be either*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back=2.5))
+        # test look back range is float
+        with pytest.raises(ValueError, match=r".*look_back should be either*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back=(2.5, 3)))
+
+    def test_look_back_value_bayes_recipe(self):
+        # test min_past_seq_len < 2
+        self.tsp_1.fit(self.train_df, validation_df=self.validation_df,
+                       recipe=BayesRecipe(look_back=(1, 2)))
+        # test max_past_seq_len < 2
+        with pytest.raises(ValueError, match=r".*max look back value*."):
+            self.tsp_1.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=BayesRecipe(look_back=(0, 1)))
+        # test look_back value < 2
+        with pytest.raises(ValueError, match=r".*look back value should not be smaller than 2*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=BayesRecipe(look_back=1))
 
 
 if __name__ == '__main__':
