@@ -379,10 +379,10 @@ object Net {
         s"Sequential(name='${(sequential.getName())}')\n")
       val modules = sequential.modules(0).asInstanceOf[TSequential[T]].modules
       modules.foreach{ module =>
-        if (module.isInstanceOf[Sequential[T]]){
+        if (module.isInstanceOf[Sequential[T]]) {
           export(module.asInstanceOf[Sequential[T]], path, writer)
           writer.write(s"${sequential.getName()}.add(${module.getName})\n")
-        } else if (module.isInstanceOf[Net]){
+        } else if (module.isInstanceOf[Net]) {
           writer.write(s"${module.getName()} = ${module.asInstanceOf[Net].toKeras2(path)}\n")
           writer.write(s"${sequential.getName()}.add(${module.getName})\n")
         } else {
