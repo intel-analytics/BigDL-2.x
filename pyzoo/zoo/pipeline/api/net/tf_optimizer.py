@@ -77,10 +77,10 @@ class TFTrainingHelper(Layer):
 
 
 class TFTrainingHelper2(Layer):
-    def __init__(self, path, config_proto, saver, meta, export_dir, sess):
+    def __init__(self, path, config_proto, saver, meta, sess):
         self.saver = saver
         self.meta = meta
-        self.export_dir = export_dir
+        self.export_dir = path
         self.sess = sess
         if config_proto is not None:
             byte_arr = bytearray(config_proto.SerializeToString())
@@ -180,6 +180,9 @@ class TFModel(object):
                 real_batch_size = tf.shape(inputs[0])[0]
             outputs.append(real_batch_size)
 
+        with graph.as_default():
+           outputs = [tf.to_float(output) for output in outputs]
+
         outputs.append(loss)
         return outputs, val_methods
 
@@ -212,9 +215,9 @@ class TFModel(object):
         if updates is not None:
             update_ops += updates
 
-        trainable_variables = []
-        trainable_assigns = []
-        trainable_variable_placeholders = []
+        trainable_variables = [0] * len(all_trainable_variables)
+        trainable_assigns = [0] * len(all_trainable_variables)
+        trainable_variable_placeholders = [0] * len(all_trainable_variables)
         extra_variables = []
         extra_variable_assigns = []
         extra_variable_assign_placeholders = []
@@ -229,9 +232,9 @@ class TFModel(object):
                 v_float_value = tf.to_float(v)
 
             if v.name in name2idx:
-                trainable_variables.append(v_float_value)
-                trainable_assigns.append(a)
-                trainable_variable_placeholders.append(p)
+                trainable_variables[name2idx[v.name]] = v_float_value
+                trainable_assigns[name2idx[v.name]] = a
+                trainable_variable_placeholders[name2idx[v.name]] = p
             else:
                 extra_variables.append(v_float_value)
                 extra_variable_assigns.append(a)
@@ -296,7 +299,6 @@ class TFModel(object):
             f.write(graph.as_graph_def().SerializeToString())
 
         return meta, saver
-
 
     @staticmethod
     def create(loss, sess, inputs, grads, variables, graph,
@@ -373,7 +375,7 @@ class TFModel(object):
                                               grads, update_op, additional_values)
 
         training_helper_layer = TFTrainingHelper2(folder,
-                                                  session_config, meta, saver, sess)
+                                                  session_config, saver, meta, sess)
 
         criterion = IdentityCriterion()
 
@@ -385,7 +387,7 @@ class TFOptimizer:
                  grads=None, variables=None, graph=None,
                  val_outputs=None, val_labels=None, val_method=None, val_split=0.0,
                  tensors_with_value=None, session_config=None,
-                 clip_norm=None, clip_value=None, metrics=None, updates=None):
+                 clip_norm=None, clip_value=None, metrics=None, updates=None, freeze=False):
         '''
         TFOptimizer is used for distributed training of TensorFlow
         on Spark/BigDL.
@@ -423,10 +425,15 @@ class TFOptimizer:
             for i, method in enumerate(val_methods):
                 metrics['bigdl_metirc_' + str(i)] = BigDLMetric(method, val_outputs, val_labels)
 
-        self.tf_model = TFModel.create(loss,
-                                       sess, inputs, grads, variables, graph,
-                                       tensors_with_value, session_config,
-                                       metrics, [])
+        if freeze:
+            self.tf_model = TFModel.create(loss,
+                                           sess, inputs, grads, variables, graph,
+                                           tensors_with_value, session_config,
+                                           metrics, updates)
+        else:
+            self.tf_model = TFModel.create_for_unfreeze(loss, sess, inputs, grads,
+                                                        variables, graph, tensors_with_value,
+                                                        session_config, metrics, updates)
 
         batch_size = self.dataset.batch_size
 
@@ -704,5 +711,3 @@ class TFOptimizer:
         self.optimizer.optimize()
 
         self.tf_model.training_helper_layer.get_weights_to_python()
-
-

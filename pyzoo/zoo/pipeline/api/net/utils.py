@@ -32,7 +32,7 @@ def _find_placeholders(grads):
     from collections import deque
     queue = deque([])
     for grad in grads:
-        queue.put(grad)
+        queue.append(grad)
 
     placeholders = set()
     visited = set()

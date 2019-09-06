@@ -16,18 +16,11 @@
 
 package com.intel.analytics.zoo.pipeline.api.net
 
-import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample}
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, AbstractModule, Activity}
-import com.intel.analytics.bigdl.optim._
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.zoo.feature.image.ImageProcessing
-import com.intel.analytics.zoo.pipeline.api.keras.metrics.{Accuracy, BinaryAccuracy, CategoricalAccuracy, SparseCategoricalAccuracy}
-import com.intel.analytics.zoo.pipeline.api.net.TFNet.{ClosableGraph, TFGraphHolder}
-import org.apache.spark.rdd.RDD
 import org.slf4j.LoggerFactory
-import org.tensorflow.{DataType, Graph}
+import org.tensorflow.DataType
 
 import scala.io.Source
 import scala.reflect.io.Path
@@ -276,7 +269,7 @@ object TFTrainingHelper2 {
     import org.json4s.jackson.JsonMethods._
     implicit val formats = DefaultFormats
 
-    val trainingMeta = parse(jsonStr).camelizeKeys.extract[TrainMeta]
+    val trainingMeta = parse(jsonStr).camelizeKeys.extract[TrainMeta2]
 
     val graphDef = TFNet.parseGraph(graphDefPath.toString())
     val config = if (sessionConfig != null) {
@@ -315,7 +308,7 @@ object TFTrainingHelper2 {
   }
 }
 
-case class TrainMeta(inputs: Array[String],
+case class TrainMeta2(inputs: Array[String],
                      inputTypes: Array[Int],
                      outputs: Array[String],
                      variables: Array[String],
