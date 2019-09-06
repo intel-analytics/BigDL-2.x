@@ -187,7 +187,7 @@ class NetSpec extends ZooSpecHelper{
     o should be (tfOutput)
   }
 
-  "Save to keras2" should "works" taggedAs(Keras2Test)  in {
+  "Save to keras2" should "work" taggedAs(Keras2Test)  in {
     val tmpDir = createTmpDir()
     val modelGraph = Sequential[Float]().setName("model")
     // get 13 * 52 input matrix
