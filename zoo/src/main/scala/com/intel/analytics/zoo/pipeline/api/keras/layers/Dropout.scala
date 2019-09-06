@@ -39,12 +39,10 @@ class Dropout[T: ClassTag](
   extends com.intel.analytics.bigdl.nn.keras.Dropout[T](p, inputShape) with Net {
 
   override private[zoo] def toKeras2(dir: String): String = {
-    val inputString = Net.inputShapeToString(inputShape)
-    val kname = Net.nameToString(getName())
-    s"${Net.getName(this.getClass.getName)}" +
-      s"(rate=${p}" +
-      s"${kname}" +
-      s"${inputString})"
+    val params = Net.inputShapeToString(inputShape) ++
+      Net.param(getName()) ++
+      Net.param(p, "rate")
+    Net.kerasDef(this, params)
   }
 
 }

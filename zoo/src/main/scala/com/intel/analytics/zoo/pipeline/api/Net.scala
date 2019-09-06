@@ -216,12 +216,12 @@ object Net {
     TensorflowLoader.checkpoints(graphFile, binFile, byteOrder)
   }
 
-  def saveToKeras2[T: ClassTag](model: Net, filePath: String, python: String = "python")
+  private[zoo] def saveToKeras2[T: ClassTag](model: Net, filePath: String, python: String = "python")
       (implicit ev: TensorNumeric[T]): Unit= {
     NetSaver.saveToKeras2(model.asInstanceOf[Module[T]], filePath, python)
   }
 
-  def saveToTf[T: ClassTag](model: Net, dir: String, python: String = "python")
+  private[zoo] def saveToTf[T: ClassTag](model: Net, dir: String, python: String = "python")
                                (implicit ev: TensorNumeric[T]): Unit= {
     NetSaver.saveToTf(model.asInstanceOf[Module[T]], dir, python)
   }
@@ -230,50 +230,73 @@ object Net {
     name.split("\\.").last
   }
 
-  private[zoo] def arrayToString(array: Seq[Int]): String = {
-    s"(${array.mkString(", ")})"
-  }
-
-  private[zoo] def inputShapeToString(inputShape: Shape): String = {
+  private[zoo] def inputShapeToString(
+        inputShape: Shape,
+        paramName: String = "inputShape"): Map[String, String] = {
     if (inputShape != null) {
-      s", input_shape=(${inputShape.toSingle().mkString(", ")},)"
+      Map("input_shape" -> s"(${inputShape.toSingle().mkString(", ")},)")
     } else {
-      ""
+      Map()
     }
   }
 
-  private[zoo] def activationToString(activation: AbstractModule[_, _, _],
-                                      paramName: String = "activation"): String = {
+  private[zoo] def arrayToString(array: Seq[Int], name: String): Map[String, String] = {
+    Map(name -> s"(${array.mkString(", ")})")
+  }
+
+  private[zoo] def activationToString(
+        activation: AbstractModule[_, _, _],
+        paramName: String = "activation"): Map[String, String] = {
     val trueActivation = if (activation.isInstanceOf[KerasIdentityWrapper[_]]) {
       activation.asInstanceOf[KerasIdentityWrapper[_]].layer
     } else {
       activation
     }
     if (activation != null) {
-      s", $paramName='${KerasUtils.getActivationName(trueActivation)}'"
+      Map(paramName -> s"'${KerasUtils.getActivationName(trueActivation)}'")
     } else {
-      ""
+      Map()
     }
 
   }
 
-  private[zoo] def booleanToString(boolean: Boolean,
-                                   booleanName: String): String = {
-    s", $booleanName=${if(boolean) "True" else "False"}"
+  private[zoo] def param(
+        boolean: Boolean,
+        paramName: String): Map[String, String] = {
+    Map(paramName -> s"${if(boolean) "True" else "False"}")
   }
 
-  private[zoo] def nameToString(name: String): String = {
-    s", name='$name'"
+  private[zoo] def param(
+        integer: Int,
+        paramName: String): Map[String, String] = {
+    Map(paramName -> integer.toString)
   }
 
+  private[zoo] def param(
+        double: Double,
+        paramName: String): Map[String, String] = {
+    Map(paramName -> double.toString)
+  }
+
+  private[zoo] def param(
+        name: String,
+        paramName: String = "name"): Map[String, String] = {
+    Map(paramName -> s"'$name'")
+  }
+
+  private[zoo] def kerasDef(module: Module[_],
+                            params: Map[String, String]): String = {
+    s"${Net.getName(module.getClass.getName)}(" +
+      params.map(v => s"${v._1}=${v._2}").mkString(", ") + ")"
+  }
 
   protected object NetSaver {
     private val logger = Logger.getLogger(getClass)
 
     protected val header =
       """
-        |from keras.models import Sequential
-        |from keras.layers import *
+        |from tensorflow.keras.models import Sequential
+        |from tensorflow.keras.layers import *
         |from pyspark.serializers import PickleSerializer
         |
         |def load_to_numpy(file):
@@ -287,7 +310,7 @@ object Net {
     protected val tfHeader =
       """
         |from zoo.util.tf import export_tf
-        |from keras import backend as K
+        |from tensorflow.keras import backend as K
         |import tensorflow as tf
       """.stripMargin + "\n"
 
@@ -298,12 +321,14 @@ object Net {
           saveCommand: String)
           (implicit ev: TensorNumeric[T]): Unit = {
       val tmpDir = Utils.createTmpDir("ZooKeras")
-      logger.info(s"Write to ${tmpDir}")
+      logger.info(s"Write model's temp file to ${tmpDir}")
       val modelFile = tmpDir.toString + s"/${m.getName()}.py"
       val bw = new BufferedWriter(new FileWriter(modelFile))
       bw.write(header)
       if (m.isInstanceOf[Sequential[T]]) {
         export(m.asInstanceOf[Sequential[T]], tmpDir.toString, bw)
+      } else {
+        throw new IllegalArgumentException(s"${m.getClass.getName} is not supported.")
       }
       bw.write(saveWeights(m, tmpDir.toString))
       bw.write(saveCommand)

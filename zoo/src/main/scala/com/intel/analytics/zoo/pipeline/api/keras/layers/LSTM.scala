@@ -80,19 +80,13 @@ class LSTM[T: ClassTag](
   }
 
   override private[zoo] def toKeras2(dir: String): String = {
-    val inputString = Net.inputShapeToString(inputShape)
-    val act = Net.activationToString(activation)
-    val inAct = Net.activationToString(innerActivation, "recurrent_activation")
-    val rseq = Net.booleanToString(returnSeq, "return_sequences")
-    val kname = Net.nameToString(getName())
-
-    s"${Net.getName(this.getClass.getName)}" +
-      s"(units=${outputDimension}" +
-      s"$inputString" +
-      s"${rseq}" +
-      s"$act" +
-      s"${kname}" +
-      s"$inAct)"
+    val params = Net.inputShapeToString(inputShape) ++
+      Net.activationToString(activation) ++
+      Net.activationToString(innerActivation, "recurrent_activation") ++
+      Net.param(returnSeq, "return_sequences") ++
+      Net.param(outputDimension, "units")
+      Net.param(getName())
+    Net.kerasDef(this, params)
   }
 
   override private[zoo] def getKerasWeights(): Array[Tensor[Float]] = {

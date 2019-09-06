@@ -61,15 +61,12 @@ class Dense[T: ClassTag](
     inputShape) with Net {
 
   override private[zoo] def toKeras2(dir: String): String = {
-    val inputString = Net.inputShapeToString(inputShape)
-    val act = Net.activationToString(activation)
-    val kname = Net.nameToString(getName())
-    s"${Net.getName(this.getClass.getName)}" +
-      s"(units=$outputDim" +
-      s"$inputString" +
-      s", use_bias=${if(bias) "True" else "False"}" +
-      s"${kname}" +
-      s"$act)\n"
+    val params = Net.inputShapeToString(inputShape) ++
+      Net.activationToString(activation) ++
+      Net.param(getName()) ++
+      Net.param(bias, "use_bias") ++
+      Net.param(outputDim, "units")
+    Net.kerasDef(this, params)
   }
 
   override private[zoo] def getKerasWeights(): Array[Tensor[Float]] = {

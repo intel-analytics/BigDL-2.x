@@ -100,12 +100,10 @@ class Reshape[T: ClassTag](
   }
 
   override private[zoo] def toKeras2(dir: String): String = {
-    val inputString = Net.inputShapeToString(inputShape)
-    val kname = Net.nameToString(getName())
-    s"${Net.getName(this.getClass.getName)}" +
-      s"(target_shape=${Net.arrayToString(targetShape)}" +
-      s"${kname}" +
-      s"${inputString})"
+    val params = Net.inputShapeToString(inputShape) ++
+      Net.param(getName()) ++
+      Net.arrayToString(targetShape, "target_shape")
+    Net.kerasDef(this, params)
   }
 }
 

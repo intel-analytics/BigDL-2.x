@@ -42,12 +42,10 @@ class Permute[T: ClassTag](
     dims, inputShape) with Net {
 
   override private[zoo] def toKeras2(dir: String): String = {
-    val inputString = Net.inputShapeToString(inputShape)
-    val kname = Net.nameToString(getName())
-    s"${Net.getName(this.getClass.getName)}" +
-      s"(dims=${Net.arrayToString(dims)}" +
-      s"${kname}" +
-      s"${inputString})"
+    val params = Net.inputShapeToString(inputShape) ++
+      Net.param(getName()) ++
+      Net.arrayToString(dims, "dims")
+    Net.kerasDef(this, params)
   }
 }
 

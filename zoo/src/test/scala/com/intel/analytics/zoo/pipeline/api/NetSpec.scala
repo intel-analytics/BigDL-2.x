@@ -194,11 +194,13 @@ class NetSpec extends ZooSpecHelper{
     val transpose = Permute[Float](Array(2, 1))
     val layer1 = LSTM[Float](outputDim = 100, returnSequences = true, wRegularizer = L2Regularizer(0.001))
     val layer2 = LSTM[Float](outputDim = 100, returnSequences = false, wRegularizer = L2Regularizer(0.001))
+    val dropout = Dropout[Float](0.5)
     val denseLayer = Dense[Float](2, activation = "softmax", wRegularizer = L2Regularizer(0.001))
     modelGraph.add(reshape.setName("reshape"))
     modelGraph.add(transpose.setName("transpose"))
     modelGraph.add(layer1.setName("lstm1"))
     modelGraph.add(layer2.setName("lstm2"))
+    modelGraph.add(dropout.setName("dropout"))
     modelGraph.add(denseLayer.setName("output"))
     Net.saveToKeras2[Float](modelGraph, tmpDir + "/model.h5")
   }
