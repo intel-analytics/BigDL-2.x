@@ -20,7 +20,6 @@ from zoo.pipeline.inference import InferenceModel
 from zoo.common.nncontext import init_nncontext
 from zoo.feature.image import *
 from zoo.pipeline.nnframes import *
-from zoo.models.image.objectdetection import *
 
 BATCH_SIZE = 1
 
