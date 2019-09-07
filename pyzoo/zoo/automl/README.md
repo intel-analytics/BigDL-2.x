@@ -11,7 +11,7 @@ This library provides a framework and implementations for automatic feature engi
 
 
 
-### Training a model using _TimeSeuqencePredictor_
+### Training a model using _TimeSequencePredictor_
 
 _TimeSequencePredictor_ can be used to train a model on historical time sequence data and predict future sequences. Note that: 
   * Current implementation only supports univariant prediction, which means target value should only be a scalar on each data point of the sequence. Input features can be multivariant.  
