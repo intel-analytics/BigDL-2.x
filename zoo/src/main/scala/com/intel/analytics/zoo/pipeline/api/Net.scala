@@ -24,9 +24,9 @@ import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.Graph._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, Initializable}
 import com.intel.analytics.bigdl.nn.keras.{KerasIdentityWrapper, KerasLayer}
-import com.intel.analytics.bigdl.nn.{Container, Graph, InitializationMethod}
-import com.intel.analytics.bigdl.nn.{Sequential => TSequential}
+import com.intel.analytics.bigdl.nn.{Container, Graph, InitializationMethod, Identity => BIdentity, Sequential => TSequential}
 import com.intel.analytics.bigdl.python.api.PythonBigDL
+import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{File, Shape}
@@ -35,7 +35,7 @@ import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.bigdl.utils.tf.{Session, TensorflowLoader}
 import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.pipeline.api.autograd.Variable
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{KerasLayerWrapper, WordEmbedding}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.{KerasLayerWrapper, Merge, WordEmbedding}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.net.{GraphNet, NetUtils}
@@ -66,7 +66,9 @@ trait Net {
       this.asInstanceOf[AbstractModule[Activity, Activity, T]].inputs(vars.map(_.node): _*))
   }
 
-  private[zoo] def toKeras2(dir: String): String = {
+  private[zoo] def toKeras2(): String = {
+//    val build = new BigDLModule.Builder()
+//    this.asInstanceOf[KerasLayer[Activity, Activity, _]].se
     throw new UnimplementedException()
   }
 
@@ -236,9 +238,9 @@ object Net {
 
   private[zoo] def inputShapeToString(
         inputShape: Shape,
-        paramName: String = "inputShape"): Map[String, String] = {
+        paramName: String = "input_shape"): Map[String, String] = {
     if (inputShape != null) {
-      Map("input_shape" -> s"(${inputShape.toSingle().mkString(", ")},)")
+      Map(paramName -> s"(${inputShape.toSingle().mkString(", ")},)")
     } else {
       Map()
     }
@@ -295,12 +297,19 @@ object Net {
       params.map(v => s"${v._1}=${v._2}").mkString(", ") + ")"
   }
 
+  private[zoo] def kerasDef(
+       moduleType: String,
+       params: Map[String, String]): String = {
+    s"${moduleType}(" +
+      params.map(v => s"${v._1}=${v._2}").mkString(", ") + ")"
+  }
+
   protected object NetSaver {
     private val logger = Logger.getLogger(getClass)
 
     protected val header =
       """
-        |from tensorflow.keras.models import Sequential
+        |from tensorflow.keras.models import Sequential, Model
         |from tensorflow.keras.layers import *
         |from pyspark.serializers import PickleSerializer
         |
@@ -331,7 +340,9 @@ object Net {
       val bw = new BufferedWriter(new FileWriter(modelFile))
       bw.write(header)
       if (m.isInstanceOf[Sequential[T]]) {
-        export(m.asInstanceOf[Sequential[T]], tmpDir.toString, bw)
+        export(m.asInstanceOf[Sequential[T]], bw)
+      } else if (m.isInstanceOf[Model[T]]) {
+        export(m.asInstanceOf[Model[T]], bw)
       } else {
         throw new IllegalArgumentException(s"${m.getClass.getName} is not supported.")
       }
@@ -372,18 +383,81 @@ object Net {
     }
 
     def export[T: ClassTag](
+          model: Model[T],
+          writer: BufferedWriter): Unit = {
+      val inputs = model._inputs
+      val outputs = model._outputs
+      var tOutput: Seq[ModuleNode[T]] = inputs.flatMap{ input =>
+        export(input, writer)
+      }.distinct
+      while (tOutput.forall(!_.element.isInstanceOf[BIdentity[T]])) {
+        tOutput = tOutput.flatMap{ input =>
+          export(input, writer)
+        }.distinct.flatMap(exportMerge(_, writer))
+      }
+      val inputsName = inputs.map(_.element.getName).mkString(", ")
+      val outputsName = outputs.map(_.element.getName).mkString(", ")
+      writer.write(s"${model.getName()} = Model(inputs=[${inputsName}]," +
+        s" outputs=[${outputsName}])\n")
+    }
+
+    def exportMerge[T: ClassTag](
+          node: ModuleNode[T],
+          writer: BufferedWriter): Seq[ModuleNode[T]] = {
+      val element = node.element
+      if (element.isInstanceOf[Merge[T]]) {
+        val pre = if (node.prevNodes.length != 0) {
+          s"([${node.prevNodes.map(_.element.getName).mkString(", ")}])"
+        } else {
+          ""
+        }
+        writer.write(s"${element.getName()} = ${element.asInstanceOf[Net].toKeras2()}${pre}\n")
+        writer.flush()
+        node.nextNodes
+      } else {
+        Seq(node)
+      }
+    }
+
+    def export[T: ClassTag](
+        node: ModuleNode[T],
+        writer: BufferedWriter): Seq[ModuleNode[T]] = {
+      val element = node.element
+      if (!element.isInstanceOf[Net]) {
+        if (element.isInstanceOf[BIdentity[T]] && node.nextNodes.length == 0) {
+          // Do nothing, BigDL put a Identity to the leaf node in the graph
+          Seq(node)
+        } else {
+          throw new IllegalArgumentException(s"Unsupported layer ${element.getName()}")
+        }
+      } else {
+        if (element.isInstanceOf[Merge[T]]) {
+          Seq(node)
+        } else {
+          val pre = if (node.prevNodes.length != 0) {
+            s"(${node.prevNodes.map(_.element.getName).mkString(", ")})"
+          } else {
+            ""
+          }
+          writer.write(s"${element.getName()} = ${element.asInstanceOf[Net].toKeras2()}${pre}\n")
+          writer.flush()
+          node.nextNodes.flatMap(export(_, writer))
+        }
+      }
+    }
+
+    def export[T: ClassTag](
           sequential: Sequential[T],
-          path: String,
           writer: BufferedWriter): Unit = {
       writer.write(s"${sequential.getName()} = " +
         s"Sequential(name='${(sequential.getName())}')\n")
       val modules = sequential.modules(0).asInstanceOf[TSequential[T]].modules
       modules.foreach{ module =>
         if (module.isInstanceOf[Sequential[T]]) {
-          export(module.asInstanceOf[Sequential[T]], path, writer)
+          export(module.asInstanceOf[Sequential[T]], writer)
           writer.write(s"${sequential.getName()}.add(${module.getName})\n")
         } else if (module.isInstanceOf[Net]) {
-          writer.write(s"${module.getName()} = ${module.asInstanceOf[Net].toKeras2(path)}\n")
+          writer.write(s"${module.getName()} = ${module.asInstanceOf[Net].toKeras2()}\n")
           writer.write(s"${sequential.getName()}.add(${module.getName})\n")
         } else {
           throw new IllegalArgumentException(s"unkown type ${this.getClass.getName}")

@@ -598,8 +598,8 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
       positions: Array[Double] = Array(.33, .55, .67, 1)): Unit
 }
 
-class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
-    private val _outputs : Seq[ModuleNode[T]])(implicit ev: TensorNumeric[T])
+class Model[T: ClassTag] private (private[zoo] val _inputs : Seq[ModuleNode[T]],
+    private[zoo] val _outputs : Seq[ModuleNode[T]])(implicit ev: TensorNumeric[T])
   extends KerasNet[T] with NetUtils[T, Model[T]] {
   this.labor = doBuild(null)
   KerasLayerRef(this).excludeInvalidLayers(this.labor.asInstanceOf[StaticGraph[T]].
@@ -663,6 +663,18 @@ class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
   override def toModel(): Model[T] = this
 
   override def toKeras(): Model[T] = this
+
+  override private[zoo] def getKerasWeights(): Array[Tensor[Float]] = {
+    val weights = new ArrayBuffer[Tensor[Float]]()
+    modules(0).asInstanceOf[StaticGraph[T]].modules.foreach(m => {
+      val params = m.asInstanceOf[Net].getKerasWeights()
+      if (params != null) {
+        params.foreach(weights += _)
+      }
+    })
+    weights.toArray
+  }
+
 
   override def summary(
       lineLength: Int = 120,

@@ -55,12 +55,13 @@ class NeuralCF[T: ClassTag](
 
   override def buildModel(): AbstractModule[Tensor[T], Tensor[T], T] = {
     val input = Input[T](inputShape = Shape(2))
+    val input2 = Input[T](inputShape = Shape(2))
 
-    val userSelect = Select[T](1, 0).inputs(input)
-    val itemSelect = Select[T](1, 1).inputs(input)
+//    val userSelect = Select[T](1, 0).inputs(input)
+//    val itemSelect = Select[T](1, 1).inputs(input)
 
-    val userFlat = Flatten().inputs(userSelect)
-    val itemFlat = Flatten().inputs(itemSelect)
+    val userFlat = Flatten().inputs(input)
+    val itemFlat = Flatten().inputs(input2)
 
     val mlpUserTable = Embedding[T](userCount + 1, userEmbed, init = "normal")
     val mlpItemTable = Embedding[T](itemCount + 1, itemEmbed, init = "normal")
@@ -96,7 +97,7 @@ class NeuralCF[T: ClassTag](
       Dense(numClasses, activation = "softmax").inputs(mlpLinear)
     }
 
-    val model = Model[T](input, linearLast)
+    val model = Model[T](Array(input, input2), linearLast)
 
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
