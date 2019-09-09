@@ -31,7 +31,7 @@ class Mirror() extends FeatureTransformer {
 object Mirror {
   def apply(): Mirror = new Mirror()
 
-  def transform(input: OpenCVMat, output: OpenCVMat): OpenCVMat ={
+  def transform(input: OpenCVMat, output: OpenCVMat): OpenCVMat = {
     Core.flip(input, output, -1)
     output
   }

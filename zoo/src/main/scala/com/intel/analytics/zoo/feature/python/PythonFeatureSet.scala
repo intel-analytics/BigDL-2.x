@@ -49,7 +49,7 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
     FeatureSet.rdd(data, MemoryType.fromString(memoryType))
   }
 
-  def createSampleFeatureSetFromRDD(data: JavaRDD[Sample], memoryType:String)
+  def createSampleFeatureSetFromRDD(data: JavaRDD[Sample], memoryType: String)
   : FeatureSet[JSample[T]] = {
     FeatureSet.rdd(toJSample(data), MemoryType.fromString(memoryType))
   }

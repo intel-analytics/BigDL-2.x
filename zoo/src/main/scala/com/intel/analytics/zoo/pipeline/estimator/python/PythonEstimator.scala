@@ -57,8 +57,10 @@ class PythonEstimator[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
     estimator.evaluate(validationMiniBatch, validationMethod)
   }
 
-  def estimatorEvaluateImageFeature(estimator: Estimator[T], validationSet: FeatureSet[ImageFeature],
-                                    validationMethod: Array[ValidationMethod[T]], batchSize: Int
+  def estimatorEvaluateImageFeature(estimator: Estimator[T],
+                                    validationSet: FeatureSet[ImageFeature],
+                                    validationMethod: Array[ValidationMethod[T]],
+                                    batchSize: Int
                                    ): Map[ValidationMethod[T], ValidationResult] = {
     val imageFeature2batch = ImageFeatureToMiniBatch(batchSize)
     val validationMiniBatch = validationSet -> imageFeature2batch
@@ -85,12 +87,14 @@ class PythonEstimator[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       validationMiniBatch, validationMethod)
   }
 
-  def estimatorTrainImageFeature(estimator: Estimator[T], trainSet: FeatureSet[ImageFeature],
+  def estimatorTrainImageFeature(estimator: Estimator[T],
+                                 trainSet: FeatureSet[ImageFeature],
                                  criterion: Criterion[T],
                                  endTrigger: Trigger = null,
                                  checkPointTrigger: Trigger = null,
                                  validationSet: FeatureSet[ImageFeature] = null,
-                                 validationMethod: JList[ValidationMethod[T]] = null, batchSize: Int)
+                                 validationMethod: JList[ValidationMethod[T]] = null,
+                                 batchSize: Int)
   : estimator.type = {
     val imageFeature2batch = ImageFeatureToMiniBatch(batchSize)
     val trainMiniBatch = trainSet -> imageFeature2batch
