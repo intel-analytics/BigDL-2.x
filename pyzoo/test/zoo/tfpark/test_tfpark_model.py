@@ -30,6 +30,10 @@ resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
 
 class TestTFParkModel(ZooTestCase):
 
+    def setup_method(self, method):
+        tf.keras.backend.clear_session()
+        super(TestTFParkModel, self).setup_method(method)
+
     def create_model(self):
         data = tf.keras.layers.Input(shape=[10])
 
