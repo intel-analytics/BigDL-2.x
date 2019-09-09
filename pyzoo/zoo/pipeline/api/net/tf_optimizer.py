@@ -181,7 +181,7 @@ class TFModel(object):
             outputs.append(real_batch_size)
 
         with graph.as_default():
-           outputs = [tf.to_float(output) for output in outputs]
+            outputs = [tf.to_float(output) for output in outputs]
 
         outputs.append(loss)
         return outputs, val_methods
