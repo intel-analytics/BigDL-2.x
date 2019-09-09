@@ -219,17 +219,16 @@ class NetSpec extends ZooSpecHelper{
     val mfEmbed = 20
     val hiddenLayers: Array[Int] = Array(40, 20, 10)
 
-    val inputUser = Input[Float](inputShape = Shape(2), name = "inputUser")
-    val inputItem = Input[Float](inputShape = Shape(2), name = "inputItem")
+    val inputUser = Input[Float](inputShape = Shape(1), name = "inputUser")
+    val inputItem = Input[Float](inputShape = Shape(1), name = "inputItem")
 
-    val userFlat = Flatten[Float]().setName("userFlat").inputs(inputUser)
-    val itemFlat = Flatten[Float]().setName("itemFlat").inputs(inputItem)
+    val mlpUserTable = Embedding[Float](userCount + 1, userEmbed, init = "normal")
+      .setName("mlpUserTable").inputs(inputUser)
+    val mlpItemTable = Embedding[Float](itemCount + 1, itemEmbed, init = "normal")
+      .setName("mlpItemTable").inputs(inputItem)
 
-    val mlpUserTable = Embedding[Float](userCount + 1, userEmbed, init = "normal").setName("mlpUserTable")
-    val mlpItemTable = Embedding[Float](itemCount + 1, itemEmbed, init = "normal").setName("mlpItemTable")
-
-    val mlpUserLatent = Flatten[Float]().setName("mlpUserLatent").inputs(mlpUserTable.inputs(userFlat))
-    val mlpItemLatent = Flatten[Float]().setName("mlpItemLatent").inputs(mlpItemTable.inputs(itemFlat))
+    val mlpUserLatent = Flatten[Float]().setName("mlpUserLatent").inputs(mlpUserTable)
+    val mlpItemLatent = Flatten[Float]().setName("mlpItemLatent").inputs(mlpItemTable)
 
     val mlpEmbeddedLayer = Merge.merge[Float](List(mlpUserLatent, mlpItemLatent),
       "concat", 1, name = "mergeMlp")
@@ -243,11 +242,13 @@ class NetSpec extends ZooSpecHelper{
       mlpLinear = linearMid
     }
 
-    val mfUserTable = Embedding[Float](userCount + 1, mfEmbed, init = "normal").setName("mfUserTable")
-    val mfItemTable = Embedding[Float](itemCount + 1, mfEmbed, init = "normal").setName("mfItemTable")
+    val mfUserTable = Embedding[Float](userCount + 1, mfEmbed, init = "normal")
+      .setName("mfUserTable").inputs(inputUser)
+    val mfItemTable = Embedding[Float](itemCount + 1, mfEmbed, init = "normal")
+      .setName("mfItemTable").inputs(inputItem)
 
-    val mfUserLatent = Flatten[Float]().setName("mfUserLatent").inputs(mfUserTable.inputs(userFlat))
-    val mfItemLatent = Flatten[Float]().setName("mfItemLatent").inputs(mfItemTable.inputs(itemFlat))
+    val mfUserLatent = Flatten[Float]().setName("mfUserLatent").inputs(mfUserTable)
+    val mfItemLatent = Flatten[Float]().setName("mfItemLatent").inputs(mfItemTable)
 
     val mfEmbeddedLayer = Merge.merge[Float](List(mfUserLatent, mfItemLatent),
       "mul", 1, name = "mfEmbeddedLayer")
@@ -261,7 +262,15 @@ class NetSpec extends ZooSpecHelper{
     val model = ZModel[Float](Array(inputUser, inputItem), linearLast).setName("model")
     model.asInstanceOf[ZModel[Float]].saveToTf[Float](tmpDir.toString)
 
-    val input = T(Tensor[Int](10, 2).rand(), Tensor[Int](10, 2).rand())
+    val a = Tensor[Float](10, 1).rand()
+    val b = Tensor[Float](10, 1).randn()
+
+    val input = T(
+      Tensor[Float](10, 1).randn()
+        .apply1(v => math.abs(math.round(v * userCount)) % userCount),
+      Tensor[Float](10, 1).randn()
+        .apply1(v => math.abs(math.round(v * itemCount)) % itemCount))
+
     val o = model.forward(input)
     val inputs = Array("inputUser:0", "inputItem:0")
     val outputs = "output/Softmax:0"
