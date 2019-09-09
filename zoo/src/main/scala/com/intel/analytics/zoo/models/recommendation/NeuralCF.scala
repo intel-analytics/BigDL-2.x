@@ -96,7 +96,7 @@ class NeuralCF[T: ClassTag](
       Dense(numClasses, activation = "softmax").inputs(mlpLinear)
     }
 
-    val model = Model[T](Array(input, input2), linearLast)
+    val model = Model[T](input, linearLast)
 
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
