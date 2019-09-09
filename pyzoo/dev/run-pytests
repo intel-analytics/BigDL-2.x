@@ -39,7 +39,7 @@ if [[ $py_version == *"Python 2.7"* ]]; then
     echo "Running Python 2.7"
     echo "Skipping OpenVINO tests"
     echo "Skipping nlp-architect tests"
-    python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py \
+    python -m pytest -v ../test/zoo/pipeline/api/test_tf.py -v ../test/zoo/tfpark --ignore=../test/zoo/pipeline/utils/test_utils.py \
        --ignore=../test/zoo/pipeline/api/keras2/ \
        --ignore=../test/zoo/pipeline/autograd/ \
        --ignore=../test/zoo/pipeline/inference/ \
@@ -52,7 +52,7 @@ if [[ $py_version == *"Python 2.7"* ]]; then
     fi
 else
     echo "Running Python 3"
-    python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py \
+    python -m pytest -v  ../test/zoo/pipeline/api/test_tf.py -v ../test/zoo/tfpark --ignore=../test/zoo/pipeline/utils/test_utils.py \
        --ignore=../test/zoo/pipeline/api/keras2/ \
        --ignore=../test/zoo/pipeline/autograd/ \
        --ignore=../test/zoo/ray/integration/ \
