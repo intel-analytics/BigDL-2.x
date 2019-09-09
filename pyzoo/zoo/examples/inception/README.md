@@ -67,7 +67,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
 ```
 
 * Spark yarn client mode, example command
-```
+```bash
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project
 

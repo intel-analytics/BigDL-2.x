@@ -357,7 +357,7 @@ class ImageFeatureToTensor(Preprocessing):
 
 class ImageFeatureToSample(Preprocessing):
     """
-    a Transformer that get Sample from ImageFeature.
+    A transformer that get Sample from ImageFeature.
     """
     def __init__(self, bigdl_type="float"):
         super(ImageFeatureToSample, self).__init__(bigdl_type)
