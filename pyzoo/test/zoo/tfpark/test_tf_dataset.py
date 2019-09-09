@@ -27,7 +27,7 @@ from zoo.tfpark import KerasModel, TFDataset
 resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
 
 
-class TestTFParkModel(ZooTestCase):
+class TestTFDataset(ZooTestCase):
 
     def create_model(self):
         data = tf.keras.layers.Input(shape=[10])

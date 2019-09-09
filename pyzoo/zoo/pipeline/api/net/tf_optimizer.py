@@ -490,8 +490,6 @@ class TFOptimizer:
 
         inputs = nest.flatten(dataset._original_tensors)
 
-        _check_the_same(all_required_inputs, inputs)
-
         return [loss, optim_method, sess, dataset, inputs,
                 grads, variables, loss.graph, val_outputs, val_labels, val_method]
 
