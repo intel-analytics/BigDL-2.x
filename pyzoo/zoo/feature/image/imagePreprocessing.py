@@ -40,6 +40,7 @@ class ImageBytesToMat(ImagePreprocessing):
     def __init__(self, byte_key="bytes", image_codec=-1, bigdl_type="float"):
         super(ImageBytesToMat, self).__init__(bigdl_type, byte_key, image_codec)
 
+
 class ImagePixelBytesToMat(ImagePreprocessing):
     """
     Transform byte array(pixels in byte) to OpenCVMat

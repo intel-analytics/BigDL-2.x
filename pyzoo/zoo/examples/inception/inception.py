@@ -34,24 +34,33 @@ def config_option_parser():
                       help="url of hdf+s folder store the hadoop sequence files")
     parser.add_option("--model", type=str, dest="model", default="", help="model snapshot location")
     parser.add_option("--state", type=str, dest="state", default="", help="state snapshot location")
-    parser.add_option("--checkpoint", type=str, dest="checkpoint", default="", help="where to cache the model")
+    parser.add_option("--checkpoint", type=str, dest="checkpoint", default="",
+                      help="where to cache the model")
     parser.add_option("-o", "--overwrite", action="store_true", dest="overwrite", default=False,
                       help="overwrite checkpoint files")
-    parser.add_option("-e", "--maxEpoch", type=int, dest="maxEpoch", default=0, help="epoch numbers")
-    parser.add_option("-i", "--maxIteration", type=int, dest="maxIteration", default=3100, help="iteration numbers")
-    parser.add_option("-l", "--learningRate", type=float, dest="learningRate", default=0.01, help="learning rate")
-    parser.add_option("--warmupEpoch", type=int, dest="warmupEpoch", default=0, help="warm up epoch numbers")
+    parser.add_option("-e", "--maxEpoch", type=int, dest="maxEpoch", default=0,
+                      help="epoch numbers")
+    parser.add_option("-i", "--maxIteration", type=int, dest="maxIteration", default=3100,
+                      help="iteration numbers")
+    parser.add_option("-l", "--learningRate", type=float, dest="learningRate", default=0.01,
+                      help="learning rate")
+    parser.add_option("--warmupEpoch", type=int, dest="warmupEpoch", default=0,
+                      help="warm up epoch numbers")
     parser.add_option("--maxLr", type=float, dest="maxLr", default=0.0, help="max Lr after warm up")
     parser.add_option("-b", "--batchSize", type=int, dest="batchSize", help="batch size")
     parser.add_option("--classNum", type=int, dest="classNum", default=1000, help="class number")
-    parser.add_option("--weightDecay", type=float, dest="weightDecay", default=0.0001, help="weight decay")
+    parser.add_option("--weightDecay", type=float, dest="weightDecay", default=0.0001,
+                      help="weight decay")
     parser.add_option("--checkpointIteration", type=int, dest="checkpointIteration", default=620,
                       help="checkpoint interval of iterations")
-    parser.add_option("--gradientMin", type=float, dest="gradientMin", default=0.0, help="min gradient clipping by")
-    parser.add_option("--gradientMax", type=float, dest="gradientMax", default=0.0, help="max gradient clipping by")
-    parser.add_option("--gradientL2NormThreshold", type=float, dest="gradientL2NormThreshold", default=0.0,
-                      help="gradient L2-Norm threshold")
-    parser.add_option("--memoryType", type=str, dest="memoryType", default="DRAM", help="memory storage type, DRAM or PMEM")
+    parser.add_option("--gradientMin", type=float, dest="gradientMin", default=0.0,
+                      help="min gradient clipping by")
+    parser.add_option("--gradientMax", type=float, dest="gradientMax", default=0.0,
+                      help="max gradient clipping by")
+    parser.add_option("--gradientL2NormThreshold", type=float, dest="gradientL2NormThreshold",
+                      default=0.0, help="gradient L2-Norm threshold")
+    parser.add_option("--memoryType", type=str, dest="memoryType", default="DRAM",
+                      help="memory storage type, DRAM or PMEM")
 
     return parser
 
@@ -75,7 +84,7 @@ def inception_layer_v1(input_size, config, name_prefix=""):
     concat = Concat(2)
     conv1 = Sequential()
     conv1.add(SpatialConvolution(input_size, config[1][1], 1, 1, 1, 1)
-              .set_init_method(weight_init_method=Xavier(),bias_init_method=ConstInitMethod(0.1))
+              .set_init_method(weight_init_method=Xavier(), bias_init_method=ConstInitMethod(0.1))
               .set_name(name_prefix + "1x1"))
     conv1.add(ReLU(True).set_name(name_prefix + "relu_1x1"))
     concat.add(conv1)
@@ -179,7 +188,8 @@ if __name__ == "__main__":
                                               ImageRandomPreprocessing(ImageHFlip(), 0.5),
                                               ImageChannelNormalize(123.0, 117.0, 104.0),
                                               ImageMatToTensor(format="NCHW", to_RGB=False),
-                                              ImageSetToSample(input_keys=["imageTensor"], target_keys=["label"])
+                                              ImageSetToSample(input_keys=["imageTensor"],
+                                                               target_keys=["label"])
                                               ])
 
     raw_train_data = get_inception_data(options.folder, sc, "train")
@@ -190,7 +200,8 @@ if __name__ == "__main__":
                                             ImageCenterCrop(image_size, image_size),
                                             ImageChannelNormalize(123.0, 117.0, 104.0),
                                             ImageMatToTensor(format="NCHW", to_RGB=False),
-                                            ImageSetToSample(input_keys=["imageTensor"], target_keys=["label"])
+                                            ImageSetToSample(input_keys=["imageTensor"],
+                                                             target_keys=["label"])
                                             ])
 
     raw_val_data = get_inception_data(options.folder, sc, "val")
@@ -226,7 +237,8 @@ if __name__ == "__main__":
         lrSchedule = SequentialSchedule(iterationPerEpoch)
         lrSchedule.add(Warmup(warmupDelta), warmup_iteration)
         lrSchedule.add(Poly(0.5, maxIteration), polyIteration)
-        optim = SGD(learningrate=options.learningRate, learningrate_decay=0.0, weightdecay=options.weightDecay,
+        optim = SGD(learningrate=options.learningRate, learningrate_decay=0.0,
+                    weightdecay=options.weightDecay,
                     momentum=0.9, dampening=0.0, nesterov=False,
                     leaningrate_schedule=lrSchedule)
 

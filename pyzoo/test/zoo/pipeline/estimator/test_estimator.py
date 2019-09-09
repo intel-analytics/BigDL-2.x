@@ -72,10 +72,11 @@ class TestEstimator(ZooTestCase):
         estimator = Estimator(model, optim_method, "")
         estimator.set_constant_gradient_clipping(0.1, 1.2)
         estimator.train_imagefeature(train_set=data_set, criterion=ClassNLLCriterion(),
-                                        end_trigger=MaxEpoch(epoch_num),
-                                        checkpoint_trigger=EveryEpoch(),
-                                        validation_set=data_set,
-                                        validation_method=[Top1Accuracy()], batch_size=batch_size)
+                                     end_trigger=MaxEpoch(epoch_num),
+                                     checkpoint_trigger=EveryEpoch(),
+                                     validation_set=data_set,
+                                     validation_method=[Top1Accuracy()],
+                                     batch_size=batch_size)
         predict_result = model.predict_image(image_frame.transform(transformer))
         assert(predict_result.get_predict().count(), 8)
 
