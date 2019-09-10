@@ -39,7 +39,17 @@ if [[ $py_version == *"Python 2.7"* ]]; then
     echo "Running Python 2.7"
     echo "Skipping OpenVINO tests"
     echo "Skipping nlp-architect tests"
+    echo "Running TFPark tests"
+    python -m pytest -v ../test/zoo/tfpark/
+    exit_status_2=$?
+    if [ $exit_status_2 -ne 0 ];
+    then
+        exit $exit_status_2
+    fi
+    
+    echo "Running other tests"
     python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py \
+       --ignore-../test/zoo/tfpark/ \
        --ignore=../test/zoo/pipeline/api/keras2/ \
        --ignore=../test/zoo/pipeline/autograd/ \
        --ignore=../test/zoo/pipeline/inference/ \
@@ -52,7 +62,18 @@ if [[ $py_version == *"Python 2.7"* ]]; then
     fi
 else
     echo "Running Python 3"
-    python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py \
+    
+    echo "Running TFPark tests"
+    python -m pytest -v ../test/zoo/tfpark/
+    exit_status_3=$?
+    if [ $exit_status_3 -ne 0 ];
+    then
+        exit $exit_status_3
+    fi
+
+    echo "Running other tests"
+    python -m pytest -v ../test/ --ignore=../test/zoo/pipeline/utils/test_utils.py \
+       --ignore=../test/zoo/tfpark/ \
        --ignore=../test/zoo/pipeline/api/keras2/ \
        --ignore=../test/zoo/pipeline/autograd/ \
        --ignore=../test/zoo/ray/integration/ \
