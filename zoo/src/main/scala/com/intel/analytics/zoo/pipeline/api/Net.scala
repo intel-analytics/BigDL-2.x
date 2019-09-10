@@ -26,7 +26,6 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, Initia
 import com.intel.analytics.bigdl.nn.keras.{KerasIdentityWrapper, KerasLayer}
 import com.intel.analytics.bigdl.nn.{Container, Graph, InitializationMethod, Identity => BIdentity, Sequential => TSequential}
 import com.intel.analytics.bigdl.python.api.PythonBigDL
-import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{File, Shape}
@@ -67,19 +66,21 @@ trait Net {
   }
 
   private[zoo] def toKeras2(): String = {
-//    val build = new BigDLModule.Builder()
-//    this.asInstanceOf[KerasLayer[Activity, Activity, _]].se
     throw new UnimplementedException()
   }
 
   /**
    * Get keras-like weights.
-   * @tparam T
-   * @return
+   * Need to override this when this default weights doesn't match the weights in Keras.
+   * @return keras-like weights.
    */
   private[zoo] def getKerasWeights(): Array[Tensor[Float]] = {
     if (this.asInstanceOf[AbstractModule[_, _, _]].parameters()._1.length != 0) {
-      throw new UnimplementedException()
+      val weights = this.asInstanceOf[AbstractModule[_, _, _]].parameters()._1
+      val kWeights = Array.tabulate(weights.length)(_ => Tensor[Float]())
+      (0 until weights.length).foreach(i =>
+        weights(i).cast[Float](kWeights(i).resizeAs(weights(i))))
+      kWeights
     } else {
       Array()
     }
@@ -379,7 +380,6 @@ object Net {
         }
         throw new RuntimeException(s"Export Keras2 model failed:\n" + errorMsg.toString())
       }
-
     }
 
     def export[T: ClassTag](

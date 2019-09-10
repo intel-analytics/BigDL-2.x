@@ -101,13 +101,6 @@ class Embedding[T: ClassTag](
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 
-  override private[zoo] def getKerasWeights(): Array[Tensor[Float]] = {
-    val weights = this.parameters()._1
-    val kWeights = Array.tabulate(weights.length)(_ => Tensor[Float]())
-    weights(0).cast[Float](kWeights(0).resizeAs(weights(0)))
-    kWeights
-  }
-
   override private[zoo] def toKeras2(): String = {
     val params = Net.inputShapeToString(inputShape) ++
       Net.param(getName()) ++
