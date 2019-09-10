@@ -384,8 +384,8 @@ object Net {
     def export[T: ClassTag](
           model: Model[T],
           writer: BufferedWriter): Unit = {
-      val inputs = model._inputs
-      val outputs = model._outputs
+      val inputs = model.getInputs()
+      val outputs = model.getOutputs()
       val nodes = model.labor.asInstanceOf[StaticGraph[T]].getSortedForwardExecutions()
       nodes.foreach(export(_, writer))
       val inputsName = inputs.map(_.element.getName).mkString(", ")

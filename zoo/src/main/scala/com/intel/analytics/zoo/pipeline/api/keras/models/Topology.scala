@@ -609,6 +609,10 @@ class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
 
   KerasLayerRef(this).setOutShape(Shape(_outputs.map{_.element.getOutputShape()}.toList))
 
+  private[zoo] def getInputs(): Seq[ModuleNode[T]] = _inputs
+
+  private[zoo] def getOutputs(): Seq[ModuleNode[T]] = _outputs
+
   override def isKerasStyle(): Boolean = true
 
   override def computeOutputShape(inputShape: Shape): Shape = {
