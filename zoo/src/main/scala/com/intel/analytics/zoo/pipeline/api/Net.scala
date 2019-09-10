@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.Graph._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, Initializable}
 import com.intel.analytics.bigdl.nn.keras.{KerasIdentityWrapper, KerasLayer}
-import com.intel.analytics.bigdl.nn.{Container, Graph, InitializationMethod, Identity => BIdentity, Sequential => TSequential}
+import com.intel.analytics.bigdl.nn.{Container, Graph, InitializationMethod, StaticGraph, Identity => BIdentity, Sequential => TSequential}
 import com.intel.analytics.bigdl.python.api.PythonBigDL
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -330,24 +330,23 @@ object Net {
       """.stripMargin + "\n"
 
     def save[T: ClassTag](
-          m: Module[T],
+          module: Module[T],
           path: String,
           python: String,
           saveCommand: String)
           (implicit ev: TensorNumeric[T]): Unit = {
       val tmpDir = Utils.createTmpDir("ZooKeras")
       logger.info(s"Write model's temp file to ${tmpDir}")
-      val modelFile = tmpDir.toString + s"/${m.getName()}.py"
+      val modelFile = tmpDir.toString + s"/${module.getName()}.py"
       val bw = new BufferedWriter(new FileWriter(modelFile))
       bw.write(header)
-      if (m.isInstanceOf[Sequential[T]]) {
-        export(m.asInstanceOf[Sequential[T]], bw)
-      } else if (m.isInstanceOf[Model[T]]) {
-        export(m.asInstanceOf[Model[T]], bw)
-      } else {
-        throw new IllegalArgumentException(s"${m.getClass.getName} is not supported.")
+      module match {
+        case s: Sequential[T] => export(s, bw)
+        case m: Model[T] => export(m, bw)
+        case _ =>
+          throw new IllegalArgumentException(s"${module.getClass.getName} is not supported.")
       }
-      bw.write(saveWeights(m, tmpDir.toString))
+      bw.write(saveWeights(module, tmpDir.toString))
       bw.write(saveCommand)
       bw.flush()
       bw.close()
@@ -387,62 +386,30 @@ object Net {
           writer: BufferedWriter): Unit = {
       val inputs = model._inputs
       val outputs = model._outputs
-      var tOutput: Seq[ModuleNode[T]] = inputs.flatMap{ input =>
-        export(input, writer)
-      }.distinct
-      while (tOutput.forall(!_.element.isInstanceOf[BIdentity[T]])) {
-        tOutput = tOutput.flatMap{ input =>
-          export(input, writer)
-        }.distinct.flatMap(exportMerge(_, writer))
-      }
+      val nodes = model.labor.asInstanceOf[StaticGraph[T]].getSortedForwardExecutions()
+      nodes.foreach(export(_, writer))
       val inputsName = inputs.map(_.element.getName).mkString(", ")
       val outputsName = outputs.map(_.element.getName).mkString(", ")
       writer.write(s"${model.getName()} = Model(inputs=[${inputsName}]," +
         s" outputs=[${outputsName}])\n")
     }
 
-    def exportMerge[T: ClassTag](
+    def export[T: ClassTag](
           node: ModuleNode[T],
-          writer: BufferedWriter): Seq[ModuleNode[T]] = {
+          writer: BufferedWriter): Unit = {
       val element = node.element
-      if (element.isInstanceOf[Merge[T]]) {
-        val pre = if (node.prevNodes.length != 0) {
+      if (!element.isInstanceOf[Net]) {
+        throw new IllegalArgumentException(s"Unsupported layer ${element.getName()}")
+      } else {
+        val pre = if (node.prevNodes.length == 1) {
+          s"(${node.prevNodes(0).element.getName})"
+        } else if (node.prevNodes.length > 1) {
           s"([${node.prevNodes.map(_.element.getName).mkString(", ")}])"
         } else {
           ""
         }
         writer.write(s"${element.getName()} = ${element.asInstanceOf[Net].toKeras2()}${pre}\n")
         writer.flush()
-        node.nextNodes
-      } else {
-        Seq(node)
-      }
-    }
-
-    def export[T: ClassTag](
-        node: ModuleNode[T],
-        writer: BufferedWriter): Seq[ModuleNode[T]] = {
-      val element = node.element
-      if (!element.isInstanceOf[Net]) {
-        if (element.isInstanceOf[BIdentity[T]] && node.nextNodes.length == 0) {
-          // Do nothing, BigDL put a Identity to the leaf node in the graph
-          Seq(node)
-        } else {
-          throw new IllegalArgumentException(s"Unsupported layer ${element.getName()}")
-        }
-      } else {
-        if (element.isInstanceOf[Merge[T]]) {
-          Seq(node)
-        } else {
-          val pre = if (node.prevNodes.length != 0) {
-            s"(${node.prevNodes.map(_.element.getName).mkString(", ")})"
-          } else {
-            ""
-          }
-          writer.write(s"${element.getName()} = ${element.asInstanceOf[Net].toKeras2()}${pre}\n")
-          writer.flush()
-          node.nextNodes.flatMap(export(_, writer))
-        }
       }
     }
 
