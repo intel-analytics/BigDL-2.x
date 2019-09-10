@@ -15,7 +15,7 @@
  */
 
 
-package com.intel.analytics.zoo.utils
+package com.intel.analytics.zoo.serving.utils
 
 import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
@@ -24,11 +24,12 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.api.Net
+import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import scopt.OptionParser
 import org.apache.log4j.Logger
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.SparkSession
-
 
 import scala.reflect.ClassTag
 
@@ -40,9 +41,9 @@ case class LoaderParams(modelType: String = null,
                         redis: String = "localhost:6379",
                         outputPath: String = "")
 
+case class Result(id: String, value: String)
 
-
-class ClusterServingHelper {
+class ClusterServingHelper extends Serializable {
 
   val parser = new OptionParser[LoaderParams]("Zoo Serving") {
 
@@ -71,7 +72,7 @@ class ClusterServingHelper {
 
 
   }
-  val logger = Logger.getLogger(getClass)
+
   var sc: SparkContext = null
   var params: LoaderParams = null
   var redisHost: String = null
@@ -79,6 +80,7 @@ class ClusterServingHelper {
   var batchSize: Int = 4
   var topN: Int = 1
 
+  var modelType: String = null
   var weightPath: String = null
   var defPath: String = null
   var dirPath: String = null
@@ -98,6 +100,7 @@ class ClusterServingHelper {
 
     sc = NNContext.initNNContext(conf)
 
+    parseModelLocation(params.modelFolder)
   }
 
   def loadModel[T: ClassTag]()
@@ -111,13 +114,37 @@ class ClusterServingHelper {
     //      val loadedModel = Module.loadModule[Float](params.weightPath).quantize()
     //      loadedModel.evaluate()
     //    }
-    val model = parseModelLocation(params.modelFolder)
+
+
+    var model: AbstractModule[Activity, Activity, Float] = null
+    model = modelType match {
+      case "caffe" => Net.loadCaffe[Float](defPath, weightPath)
+      case "tensorflow" => Net.loadTF[Float](weightPath)
+      case "torch" => Net.loadTorch[Float](weightPath)
+      case "bigdl" => Net.loadBigDL[Float](weightPath)
+      case "keras" => Net.load[Float](weightPath)
+    }
+    model.evaluate()
 
     val bcModel = ModelBroadcast[Float]().broadcast(sc, model)
     val cachedModel = sc.range(1, 100, EngineRef.getNodeNumber())
       .coalesce(EngineRef.getNodeNumber())
       .mapPartitions(v => Iterator.single(bcModel.value(false, true))).cache()
     cachedModel
+  }
+
+  def loadInferenceModel(): Broadcast[InferenceModel] = {
+    val model = new InferenceModel(1)
+    modelType match {
+      case "caffe" => model.doLoadCaffe(defPath, weightPath)
+      case "tensorflow" => model.doLoadTF(weightPath)
+      case "torch" => throw new Error("torch not supported in inference model")
+      case "bigdl" => throw new Error("bigdl not supported in inference model")
+      case "keras" => throw new Error("keras not supported in inference model")
+      case "openvino" => model.doLoadOpenVINO(defPath, weightPath)
+    }
+    sc.broadcast(model)
+
   }
 
   def loadSparkSession() = {
@@ -128,14 +155,13 @@ class ClusterServingHelper {
       .config("spark.redis.port", redisPort)
       .getOrCreate()
   }
-  def parseModelLocation(location: String):
-  AbstractModule[Activity, Activity, Float] = {
+  def parseModelLocation(location: String) = {
 
     import java.io.File
     val f = new File(location)
     val fileList = f.listFiles
-    var modelType: String = null
-    var model: AbstractModule[Activity, Activity, Float] = null
+
+
     if (params.modelType == null) {
 
 
@@ -176,14 +202,6 @@ class ClusterServingHelper {
       modelType = params.modelType
     }
 
-    model = modelType match {
-      case "caffe" => Net.loadCaffe[Float](defPath, weightPath)
-      case "tensorflow" => Net.loadTF[Float](weightPath)
-      case "torch" => Net.loadTorch[Float](weightPath)
-      case "bigdl" => Net.loadBigDL[Float](weightPath)
-      case "keras" => Net.load[Float](weightPath)
-    }
-    model.evaluate()
   }
 
 }
