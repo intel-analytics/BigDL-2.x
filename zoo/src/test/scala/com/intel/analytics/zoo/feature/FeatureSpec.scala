@@ -36,6 +36,7 @@ import scala.reflect.ClassTag
 
 class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
   val resource = getClass.getClassLoader.getResource("imagenet/n04370456/")
+  val imagenet = getClass.getClassLoader.getResource("imagenet")
   val gray = getClass.getClassLoader.getResource("gray")
   var sc : SparkContext = _
 
@@ -99,13 +100,21 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
     images.toDistributed().rdd.collect()
   }
 
-  "Local ImageSet" should "read relative path" in {
-    val image = ImageSet.read("./zoo/src/test/resources/imagenet", sc, withLabel = true)
-    image.toDistributed().rdd.collect()
+  private def getRelativePath(path: String) = {
+    val fileUri = new java.io.File(path).toURI
+    val currentUri = new java.io.File("").toURI
+    currentUri.relativize(fileUri).getRawPath
   }
 
   "Distributed ImageSet" should "read relative path" in {
-    val image = ImageSet.read("./zoo/src/test/resources/imagenet", withLabel = true)
+    val relativePath = getRelativePath(imagenet.getFile)
+    val image = ImageSet.read(relativePath, sc, withLabel = true)
+    image.toDistributed().rdd.collect()
+  }
+
+  "Local ImageSet" should "read relative path" in {
+    val relativePath = getRelativePath(imagenet.getFile)
+    val image = ImageSet.read(relativePath, withLabel = true)
     image.toLocal().array
   }
 
