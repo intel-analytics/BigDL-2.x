@@ -99,6 +99,16 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
     images.toDistributed().rdd.collect()
   }
 
+  "Local ImageSet" should "read relative path" in {
+    val image = ImageSet.read("./zoo/src/test/resources/imagenet", sc, withLabel = true)
+    image.toDistributed().rdd.collect()
+  }
+
+  "Distributed ImageSet" should "read relative path" in {
+    val image = ImageSet.read("./zoo/src/test/resources/imagenet", withLabel = true)
+    image.toLocal().array
+  }
+
   "ImageBytesToMat" should "work with png and jpg" in {
     val path = getClass.getClassLoader.getResource("png").getFile
     val image = ImageSet.read(path, sc)
