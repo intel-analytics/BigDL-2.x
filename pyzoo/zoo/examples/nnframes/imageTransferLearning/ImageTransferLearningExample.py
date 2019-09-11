@@ -63,6 +63,7 @@ if __name__ == "__main__":
         .setBatchSize(32) \
         .setMaxEpoch(20) \
         .setFeaturesCol("embedding") \
+        .setDataCacheLevel("DISK_AND_DRAM", 4) \
         .setCachingSample(False) \
 
     pipeline = Pipeline(stages=[preTrainedNNModel, classifier])
