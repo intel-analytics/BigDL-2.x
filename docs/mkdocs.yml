@@ -33,6 +33,7 @@ pages:
     - Autograd: ProgrammingGuide/autograd.md
     - Transfer Learning: ProgrammingGuide/transferlearning.md
     - Model Serving: ProgrammingGuide/inference.md
+    - Pytorch: ProgrammingGuide/pytorch.md
   - TFPark API:
     - TFPark: ProgrammingGuide/tensorflow.md
     - Text Models: ProgrammingGuide/text-models.md
