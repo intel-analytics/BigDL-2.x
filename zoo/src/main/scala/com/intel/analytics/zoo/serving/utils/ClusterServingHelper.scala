@@ -139,7 +139,7 @@ class ClusterServingHelper extends Serializable {
       case "caffe" => model.doLoadCaffe(defPath, weightPath)
       case "tensorflow" => model.doLoadTF(weightPath)
       case "torch" => throw new Error("torch not supported in inference model")
-      case "bigdl" => throw new Error("bigdl not supported in inference model")
+      case "bigdl" => model.doLoad(weightPath)
       case "keras" => throw new Error("keras not supported in inference model")
       case "openvino" => model.doLoadOpenVINO(defPath, weightPath)
     }
@@ -175,6 +175,7 @@ class ClusterServingHelper extends Serializable {
         else if (fName.endsWith("prototxt")) {
           defPath = fPath
         }
+        // ckpt seems not supported
         else if (fName.endsWith("pb")) {
           weightPath = location
           modelType = "tensorflow"
@@ -191,6 +192,14 @@ class ClusterServingHelper extends Serializable {
           weightPath = fPath
           modelType = "keras"
         }
+        else if (fName.endsWith("bin")) {
+          weightPath = fPath
+          modelType = "openvino"
+        }
+        else if (fName.endsWith("xml")) {
+          defPath = fPath
+        }
+
       }
       if (modelType == null) throw new Error("You did not specify modelType before running" +
         " and the model type could not be inferred from the path" +
@@ -201,7 +210,7 @@ class ClusterServingHelper extends Serializable {
     else {
       modelType = params.modelType
     }
-
+    println("model type is ", modelType, defPath, weightPath)
   }
 
 }

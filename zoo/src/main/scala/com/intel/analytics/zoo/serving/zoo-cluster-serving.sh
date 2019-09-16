@@ -51,7 +51,7 @@ if [ -z "${params_batch_size}" ]; then
     params_batch_size=4
 fi
 if [ -z "${params_mkl_threads}" ]; then    
-    params_mkl_threads=4
+    params_mkl_threads=${spark_executor_cores}
 fi
 if [ -z "${params_engine_type}" ]; then    
     params_engine_type=mklblas

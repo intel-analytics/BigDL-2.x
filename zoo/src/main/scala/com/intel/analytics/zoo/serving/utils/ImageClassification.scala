@@ -16,9 +16,15 @@ object ImageClassification {
 
     val batch = img.toDataSet() -> SampleToMiniBatch(loader.batchSize)
 
+    val modelType = loader.modelType
     val predicts = batch.toDistributed().data(false).flatMap { miniBatch =>
-      val predict = model.doPredict(miniBatch
-        .getInput.toTensor)
+      val batchTensor = if (modelType == "openvino") {
+        miniBatch.getInput.toTensor.addSingletonDimension()
+      }
+      else {
+        miniBatch.getInput.toTensor
+      }
+      val predict = model.doPredict(batchTensor)
 
       predict.toTensor.squeeze.split(1).asInstanceOf[Array[Activity]]
     }
@@ -26,7 +32,7 @@ object ImageClassification {
     if (img.isDistributed()) {
 
       val zipped = img.toDistributed().rdd.zip(predicts)
-      val zk = zipped.collect()
+//      val zk = zipped.collect()
       zipped.map(tuple => {
         tuple._1(ImageFeature.predict) = tuple._2
       }).collect()
