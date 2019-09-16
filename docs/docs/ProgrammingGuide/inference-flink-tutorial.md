@@ -6,9 +6,9 @@ There are three main sections in this tutorial.
 
 [Data](#data)
 
-[Defining an Analytics Zoo InferenceModel](#Defining an Analytics Zoo InferenceModel)
+[Defining an Analytics Zoo InferenceModel](#Defining-an-Analytics-Zoo-InferenceModel)
 
-[Getting started the Flink program](#Getting started the Flink program)
+[Getting started the Flink program](#Getting-started-the-Flink-program)
 
 ### Data
 
@@ -132,12 +132,12 @@ extends InferenceModel(concurrentNum) with Serializable {
 
 We will do the following steps in order:
 
-1. [Obtain an execution environment](#Obtain an execution environment)
-2. [Create and transform DataStreams](#Create and transform DataStreams)
-3. [Specify Transformation Functions](#Specify Transformation Functions)
-4. [Trigger the program execution](#Trigger the program execution)
-5. [Collect final results](#Collect final results)
-6. [Run the example on a local machine or a cluster](#Run the example on a local machine or a cluster)
+1. [Obtain an execution environment](#Obtain-an-execution-environment)
+2. [Create and transform DataStreams](#Create-and-transform-DataStreams)
+3. [Specify Transformation Functions](#Specify-Transformation-Functions)
+4. [Trigger the program execution](#Trigger-the-program-execution)
+5. [Collect final results](#Collect-final-results)
+6. [Run the example on a local machine or a cluster](#Run-the-example-on-a-local-machine-or-a-cluster)
 
 #### 1. Obtain an execution environment
 
