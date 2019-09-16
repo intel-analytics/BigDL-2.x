@@ -60,6 +60,7 @@ class RayTuneSearchEngine(SearchEngine):
                 # model=None,
                 future_seq_len=1,
                 validation_df=None,
+                mc=False,
                 metric="mean_squared_error"):
         """
         Do necessary preparations for the engine
@@ -112,6 +113,7 @@ class RayTuneSearchEngine(SearchEngine):
                                                    future_seq_len,
                                                    validation_df,
                                                    metric_op,
+                                                   mc,
                                                    self.remote_dir)
         # self.trainable_class = self._prepare_trainable_class(input_df,
         #                                                      feature_transformers,
@@ -255,6 +257,7 @@ class RayTuneSearchEngine(SearchEngine):
                             future_seq_len,
                             validation_df=None,
                             metric_op=1,
+                            mc=False,
                             remote_dir=None
                             ):
         """
@@ -312,6 +315,7 @@ class RayTuneSearchEngine(SearchEngine):
                 result = trial_model.fit_eval(x_train,
                                               y_train,
                                               validation_data=validation_data,
+                                              mc=mc,
                                               # verbose=1,
                                               **config)
                 reward_m = metric_op * result
