@@ -1,5 +1,7 @@
 package com.intel.analytics.zoo.apps.model.inference.flink.Resnet50ImageClassification
 
+import java.io.File
+
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.transform.vision.image.util.BoundingBox

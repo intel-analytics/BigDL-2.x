@@ -39,7 +39,7 @@ ${FLINK_HOME}/bin/flink run \
     -m localhost:8081 -p ${task_slot_num} \
     -c com.intel.analytics.zoo.apps.model.inference.flink.Resnet50ImageClassification.ImageClassificationStreaming  \
     ${ANALYTICS_ZOO_HOME}/apps/model-inference-examples/model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar  \
-    --modelType resnet_v1_50 --checkpointPathcheckpointPath ${MODEL_PATH}  \
+    --modelType resnet_v1_50 --checkpointPath ${MODEL_PATH}  \
     --inputShape "1,224,224,3" --ifReverseInputChannels true --meanValues "123.68,116.78,103.94" --scale 1
 ```
 
