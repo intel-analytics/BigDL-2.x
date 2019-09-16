@@ -55,9 +55,9 @@ if __name__ == "__main__":
         feature_size = len(["value", "hours", "awake"])
         return AnomalyDetector.standardScale(dfspark), feature_size
 
-    dfscaled, feature_size = load_and_scale(options.input_dir)
-    datardd = dfscaled.rdd.map(lambda row: [x for x in row])
-    unrolled = AnomalyDetector.unroll(datardd, int(options.unroll_len), predict_step=1)
+    df_scaled, feature_size = load_and_scale(options.input_dir)
+    data_rdd = df_scaled.rdd.map(lambda row: [x for x in row])
+    unrolled = AnomalyDetector.unroll(data_rdd, int(options.unroll_len), predict_step=1)
     [train, test] = AnomalyDetector.train_test_split(unrolled, 1000)
 
     model = AnomalyDetector(feature_shape=(int(options.unroll_len), feature_size),
@@ -65,7 +65,8 @@ if __name__ == "__main__":
     model.compile(loss='mse', optimizer='rmsprop', metrics=['mae'])
     model.fit(train, batch_size=int(options.batch_size), nb_epoch=int(options.nb_epoch))
     test.cache()
-    y_predict = model.predict(test, batch_per_thread=int(options.batch_size)).map(lambda x: float(x[0]))
+    y_predict = model.predict(test, batch_per_thread=int(options.batch_size))\
+        .map(lambda x: float(x[0]))
     y_truth = test.map(lambda x: float(x.label.to_ndarray()[0]))
     anomalies = AnomalyDetector.detect_anomalies(y_predict, y_truth, 50)
 
