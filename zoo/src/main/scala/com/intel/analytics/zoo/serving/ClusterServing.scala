@@ -48,17 +48,17 @@ object ClusterServing {
 
 //    val param = parser.parse(args, RedisParams()).get
 
-    val loader = new ClusterServingHelper()
-    loader.init(args)
-    val model = loader.loadInferenceModel()
+    val helper = new ClusterServingHelper()
+    helper.init(args)
+    val model = helper.loadInferenceModel()
 
     val coreNumber = EngineRef.getCoreNumber()
 
-    val spark = loader.loadSparkSession()
+    val spark = helper.loadSparkSession()
 
     logger.info(s"connected to redis ${spark.conf.get("spark.redis.host")}:${spark.conf.get("spark.redis.port")}")
-    val batchSize = loader.batchSize
-    val topN = loader.topN
+    val batchSize = helper.batchSize
+    val topN = helper.topN
 
     val images = spark
       .readStream
@@ -96,7 +96,7 @@ object ClusterServing {
         val start = System.nanoTime()
 
         val bcModel = model.value
-        val result = ImageClassification.getResult(inputs, bcModel, loader)
+        val result = ImageClassification.getResult(inputs, bcModel, helper)
 
 
         // Output results
