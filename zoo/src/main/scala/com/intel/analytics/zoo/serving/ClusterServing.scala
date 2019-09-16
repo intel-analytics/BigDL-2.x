@@ -101,7 +101,7 @@ object ClusterServing {
 
         // Output results
         val resDf = spark.createDataFrame(result)
-        val ck = resDf.collect()
+//        val ck = resDf.collect()
         resDf.write
           .format("org.apache.spark.sql.redis")
           .option("table", "result")
