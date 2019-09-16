@@ -28,3 +28,11 @@ Once the data is inqueued, Analytics Zoo Cluster Serving would dequeue the data 
 
 ### Get data from queue
 You can also get the result by calling methods in `pyzoo/zoo/serving/api` to get result.
+
+## Model Supported
+Currently Analytics Zoo Cluster Serving supports following model types
+
+* Caffe
+* TensorFlow
+* BigDL
+* OpenVINO
