@@ -206,7 +206,7 @@ class LSTMSeq2Seq(BaseModel):
             validation_data = ([val_x, val_decoder_input], val_y)
         return x, y, decoder_input_data, validation_data
 
-    def fit_eval(self, x, y, validation_data=None, verbose=0, **config):
+    def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, **config):
         """
         fit for one iteration
         :param x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
@@ -273,6 +273,16 @@ class LSTMSeq2Seq(BaseModel):
         y_pred = self._decode_sequence(x)
         y_pred = np.squeeze(y_pred, axis=2)
         return y_pred
+
+    def predict_with_uncertainty(self, x, n_iter=100):
+        result = np.zeros((n_iter,) + (x.shape[0], self.future_seq_len))
+
+        for i in range(n_iter):
+            result[i, :, :] = self.predict(x)
+
+        prediction = result.mean(axis=0)
+        uncertainty = result.std(axis=0)
+        return prediction, uncertainty
 
     def save(self, model_path, config_path):
         """

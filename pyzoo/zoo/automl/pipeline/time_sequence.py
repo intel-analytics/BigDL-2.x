@@ -95,6 +95,12 @@ class TimeSequencePipeline(Pipeline):
         y_output = self.feature_transformers.post_processing(input_df, y_pred, is_train=False)
         return y_output
 
+    def predict_with_uncertainty(self, input_df, n_iter=100):
+        x, _ = self.feature_transformers.transform(input_df, is_train=False)
+        y_pred, y_pred_uncertainty = self.model.predict_with_uncertainty(x=x, n_iter=n_iter)
+        y_output = self.feature_transformers.post_processing(input_df, y_pred, is_train=False)
+        return y_output, y_pred_uncertainty
+
     def save(self, file):
         """
         save pipeline to file, contains feature transformer, model, trial config.
