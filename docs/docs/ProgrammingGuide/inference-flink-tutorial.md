@@ -6,9 +6,9 @@ There are three main sections in this tutorial.
 
 [Data](#data)
 
-[Defining an Analytics Zoo InferenceModel](#Defining an Analytics Zoo InferenceModel)
+[Defining an Analytics Zoo InferenceModel](#Defining-an-Analytics-Zoo-InferenceModel)
 
-[Getting started the Flink program](#Getting started the Flink program)
+[Getting started the Flink program](#Getting-started-the-Flink-program)
 
 ### Data
 
@@ -23,7 +23,7 @@ Let us extract image from the image folder.
 val imageFolder = new File("/path/to/imageFolder")
 ```
 
-Then, you may pre-process data as you need. In this sample, `trait ImageProcessing`  is prepared to provide approaches to convert format, resize and normalize. The methods are defined [here](https://github.com/Le-Zheng/analytics-zoo/blob/test/apps/model-inference-examples/model-inference-flink/src/main/scala/com/intel/analytics/zoo/apps/model/inference/flink/Resnet50ImageClassification/ImageProcessing.scala).
+Then, you may pre-process data as you need. In this sample, `trait ImageProcessing`  is prepared to provide approaches to convert format, resize and normalize. The methods are defined [here](https://github.com/intel-analytics/analytics-zoo/blob/master/apps/model-inference-examples/model-inference-flink/src/main/scala/com/intel/analytics/zoo/apps/model/inference/flink/Resnet50ImageClassification/ImageProcessing.scala).
 
 The input image is supposed to be converted as below, and we use a `List` to iterate and hold all the input image:
 
@@ -128,12 +128,12 @@ extends InferenceModel(concurrentNum) with Serializable {
 
 We will do the following steps in order:
 
-1. [Obtain an execution environment](#Obtain an execution environment)
-2. [Create and transform DataStreams](#Create and transform DataStreams)
-3. [Specify Transformation Functions](#Specify Transformation Functions)
-4. [Trigger the program execution](#Trigger the program execution)
-5. [Collect final results](#Collect final results)
-6. [Run the example on a local machine or a cluster](#Run the example on a local machine or a cluster)
+1. [Obtain an execution environment](#Obtain-an-execution-environment)
+2. [Create and transform DataStreams](#Create-and-transform-DataStreams)
+3. [Specify Transformation Functions](#Specify-Transformation-Functions)
+4. [Trigger the program execution](#Trigger-the-program-execution)
+5. [Collect final results](#Collect-final-results)
+6. [Run the example on a local machine or a cluster](#Run-the-example-on-a-local-machine-or-a-cluster)
 
 #### 1. Obtain an execution environment
 
