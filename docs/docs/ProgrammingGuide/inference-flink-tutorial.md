@@ -6,9 +6,9 @@ There are three main sections in this tutorial.
 
 [Data](#data)
 
-[Defining an Analytics Zoo InferenceModel](#Defining-an-Analytics-Zoo-InferenceModel)
+[Defining an Analytics Zoo InferenceModel](#Defining an Analytics Zoo InferenceModel)
 
-[Getting started the Flink program](#Getting-started-the-Flink-program)
+[Getting started the Flink program](#Getting started the Flink program)
 
 ### Data
 
@@ -19,55 +19,51 @@ In this tutorial, we will use the **ImageNet** dataset. It has 1000 classes. The
 Let us extract image from the image folder.
 
 ```
-# Load image 
+# Load images 
 val imageFolder = new File("/path/to/imageFolder")
 ```
 
-Then, you may pre-process data as you need. In this sample, `trait ImageProcessing`  is prepared to provide approaches to convert format, resize and normalize.
+Then, you may pre-process data as you need. In this sample, `trait ImageProcessing`  is prepared to provide approaches to convert format, resize and normalize. The methods are defined [here](https://github.com/Le-Zheng/analytics-zoo/blob/test/apps/model-inference-examples/model-inference-flink/src/main/scala/com/intel/analytics/zoo/apps/model/inference/flink/Resnet50ImageClassification/ImageProcessing.scala).
 
-- `trait ImageProcessing` :
-  - `byteArrayToMat(Array[Byte])`: convert `Array[byte]` to `OpenCVMat`
-  - `centerCrop(mat,W,H,normalized,isClip) `: do a center crop by resizing a square. `normalized`and `isclip` are optional.
-  - `matToNCHWAndRGBTensor(mat)`: convert `OpenCVMat` to `Tensor[Float]`
-  - `channelScaledNormalize(tensor, meanR, meanG, meanB, scale)`: normalize with the input RGB mean and scale
-
-The input image is supposed to be converted as below:
+The input image is supposed to be converted as below, and we use a `List` to iterate and hold all the input image:
 
 ```
-# Read image to Array[byte]
-val imageBytes = FileUtils.readFileToByteArray(image)
-
-# apply methods from trait ImageProcessing
-val imageMat = byteArrayToMat(imageBytes)
-val imageCent = centerCrop(imageMat, 224, 224)
-val imageTensor = matToNCHWAndRGBTensor(imageCent)
-val tensorNormalized = channelScaledNormalize(imageTensor, 123, 116, 103, 1)
-println(tensorNormalized)
-```
-
-We use a `List` to iterate and hold all the input image `Array[Float]`
-
-```
-# Convert tensor to Array[Float]
-val input = new Array[Float](imageTensor.nElement())
-
 # Create data list containing all image Array
 var inputs = new ListBuffer[Array[Float]]()
+
+ for (image <- imageFolder.listFiles.toList) {
+ 	# Three steps. The first step is read each image. The second is preprocessing image. 
+ 	# At last, add image array to list iterately.
+	# Read image to Array[byte]
+	val imageBytes = FileUtils.readFileToByteArray(image)
+
+	# apply methods from trait ImageProcessing
+	# byteArrayToMat(Array[Byte]): convert Array[byte] to OpenCVMat
+	val imageMat = byteArrayToMat(imageBytes)
+	
+	# centerCrop(mat,W,H,normalized,isClip): do a center crop by resizing a square. normalized and isclip are optional.
+	# Size(224,224) is available for Resnet50 model. 
+	val imageCent = centerCrop(imageMat, 224, 224)    
+	
+	# matToNCHWAndRGBTensor(mat): convert OpenCVMat to Tensor[Float]
+	val imageTensor = matToNCHWAndRGBTensor(imageCent)
+	
+	# An alternative way to add each image array to ListBuffer.
+	# Convert tensor to Array[Float].
+	val input = new Array[Float](imageTensor.nElement())
+	inputs += input
+}	
+
+# Convert ListBuffer to list
 val inputsList = inputs.toList
 println(inputs)
 ```
 
-Out:
-
-```
-List([F@6404f418, [F@729d991e, [F@32502377, [F@66f57048, [F@36916eb0, ... [F@194bcebf)
-```
-
 ### Defining an Analytics Zoo InferenceModel
 
-Analytics-Zoo provides Inference Model package for speeding up prediction with deep learning models of Analytics Zoo, Caffe, Tensorflow and OpenVINO Intermediate Representation(IR). 
+Analytics Zoo provides Inference Model package for speeding up prediction with deep learning models of Analytics Zoo, Caffe, Tensorflow and OpenVINO Intermediate Representation(IR). 
 
-Define a class extended analytics-zoo `InferenceModel`.  It can load the pre-trained model easily. The pre-trained model ResNet50 can be obtained from [here](http://download.tensorflow.org/models/resnet_v1_50_2016_08_28.tar.gz). 
+Define a class extended Analytics Zoo `InferenceModel`. We use the pre-trained model ResNet50 in this example,  which can be obtained from [here](http://download.tensorflow.org/models/resnet_v1_50_2016_08_28.tar.gz). 
 
 Before that, let's define the input parameters of the class:
 
@@ -76,10 +72,10 @@ Before that, let's define the input parameters of the class:
 - **modelBytes**-the bytes of the model.
 - **inputShape**-array which contains the dimensions of the tensor. It should be fed to an input node(s) of the model.
 - **ifReverseInputChannels**-the boolean value of if need reverse input channels. Switch the input channels order from RGB to BGR (or vice versa).
-- **meanValues(optional)**- mean values only required when converting models.  All input values coming from original network inputs will be divided by this value. 
-- **scale(optional)**-to be used for the input image per channel.
+- **meanValues**- All input values coming from original network inputs will be divided by this value. The TensorFlow*-Slim Models were trained with normalized input data. Inference Engine classification sample does not perform  normalization. It is necessary to pass mean and scale values to the Model Optimizer so they are embedded into the generated IR in order to get correct classification results.
+- **scale**-to be used for the input image per channel.
 
-Additionally, we prepare to use OpenVINO backend for speeding up in this example, it allows converting by loading `scale` and `meanValues` parameters. Certainly, using OpenVINO is optional. You may practice in a simple way. 
+Additionally, we prepare to use OpenVINO backend for speeding up in this example, it allows converting by loading the related `scale` and `meanValues` parameters. You can look up values [here](https://docs.openvinotoolkit.org/latest/_docs_MO_DG_prepare_model_convert_model_Convert_Model_From_TensorFlow.html).
 
 ```
 # concurrentNum
@@ -132,12 +128,12 @@ extends InferenceModel(concurrentNum) with Serializable {
 
 We will do the following steps in order:
 
-1. [Obtain an execution environment](#Obtain-an-execution-environment)
-2. [Create and transform DataStreams](#Create-and-transform-DataStreams)
-3. [Specify Transformation Functions](#Specify-Transformation-Functions)
-4. [Trigger the program execution](#Trigger-the-program-execution)
-5. [Collect final results](#Collect-final-results)
-6. [Run the example on a local machine or a cluster](#Run-the-example-on-a-local-machine-or-a-cluster)
+1. [Obtain an execution environment](#Obtain an execution environment)
+2. [Create and transform DataStreams](#Create and transform DataStreams)
+3. [Specify Transformation Functions](#Specify Transformation Functions)
+4. [Trigger the program execution](#Trigger the program execution)
+5. [Collect final results](#Collect final results)
+6. [Run the example on a local machine or a cluster](#Run the example on a local machine or a cluster)
 
 #### 1. Obtain an execution environment
 
@@ -169,7 +165,7 @@ Define a class extends `RichMapFunction`. Three main methods of rich function in
 
 ```
 class ModelPredictionMapFunction(modelType: String, modelBytes: Array[Byte], inputShape: Array[Int], ifReverseInputChannels: Boolean, meanValues: Array[Float], scale: Float)
-extends RichMapFunction[JList[JList[JTensor]], JList[JList[JTensor]]] {
+extends RichMapFunction[JList[JList[JTensor]], String] {
   var resnet50InferenceModel: Resnet50InferenceModel = _
 
   # open
@@ -183,8 +179,11 @@ extends RichMapFunction[JList[JList[JTensor]], JList[JList[JTensor]]] {
   }
 
   # map
-  override def map(in: JList[JList[JTensor]]): JList[JList[JTensor]] = {
-    resnet50InferenceModel.doPredict(in)
+    override def map(in: JList[JList[JTensor]]): (String) = {
+    val outputData = resnet50InferenceModel.doPredict(in).get(0).get(0).getData
+    val index = outputData.indexOf(outputData.max)
+    val label = labels(index)
+    (label)
   }
 }
 ```
@@ -222,7 +221,12 @@ results.foreach(println)
 Out:
 
 ```
-[[JTensor{data=[6.978136E-5, 9.844725E-4, 2.3672989E-4, 2.969411E-4, 4.7597036E-4, 1.715969E-4, 1.1608376E-4, 1.8288662E-4, 7.620713E-5, ...], shape=[1, 1000]}]]
+window shade
+pug, pug-dog
+flamingo
+Tibetan terrier, chrysanthemum dog
+fly
+matchstick
 ...
 ```
 
@@ -280,12 +284,17 @@ ${FLINK_HOME}/bin/flink run \
     --inputShape "1,224,224,3" --ifReverseInputChannels true --meanValues "123.68,116.78,103.94" --scale 1
 ```
 
-The output of that command should look similar to this, if everything went according to plan. `JTensor` value shows the prediction of an image in 1000 categories.  And we can see how it accelerates prediction from job runtime here. 
+The output of that command should look similar to this, if everything went according to plan. `JTensor` value shows the prediction of an image in 1000 categories.  And we can see how it accelerates prediction here.
 
 ```bash
 org.apache.flink.api.common.ExecutionConfig@62f33899
-[[JTensor{data=[6.978136E-5, 9.844725E-4, 2.3672989E-4, 2.969411E-4, 4.7597036E-4, 1.715969E-4, 1.1608376E-4, 1.8288662E-4, 7.620713E-5, ...], shape=[1, 1000]}]]
-[[JTensor{data=[4.973883E-5, 3.720686E-4, 1.5099304E-5, 2.262065E-5, 1.2184962E-4, 1.618636E-4, 2.8170096E-5, 4.0111943E-5, 6.963265E-4, ...], shape=[1, 1000]}]]
+window shade
+pug, pug-dog
+flamingo
+Tibetan terrier, chrysanthemum dog
+fly
+matchstick
+pillow
 ...
 Program execution finished
 Job with JobID f0bedd54bd81db640833c283a9283289 has finished.
@@ -294,6 +303,6 @@ Job Runtime: 14830 ms
 
 #### Wrapping up
 
-we have reached the end of the tutorial. In this tutorial, you have learned how to use Analytics zoo and Flink for image classification on streaming. You also know about creating  the `InferenceModel` class for loading and prediction with a deep learning model. With that, you defined your own `RichMapFunction` and started with the prediction on Flink streaming.
+we have reached the end of the tutorial. In this tutorial, you have learned how to use Analytics Zoo and Flink for image classification on streaming. You also know about creating  the `InferenceModel` class for loading and prediction with a deep learning model. With that, you defined your own `RichMapFunction` and started with the prediction on Flink streaming.
 
 What goes for next? You could take practice. Load the data and model you need to see what speedup you get.
