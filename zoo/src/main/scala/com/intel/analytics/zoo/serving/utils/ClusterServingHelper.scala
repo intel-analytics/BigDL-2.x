@@ -100,7 +100,7 @@ class ClusterServingHelper extends Serializable {
 
     sc = NNContext.initNNContext(conf)
 
-    parseModelLocation(params.modelFolder)
+    parseModelType(params.modelFolder)
   }
 
   def loadModel[T: ClassTag]()
@@ -147,7 +147,7 @@ class ClusterServingHelper extends Serializable {
 
   }
 
-  def loadSparkSession() = {
+  def getSparkSession() = {
     SparkSession
       .builder
       .master(sc.master)
@@ -155,7 +155,7 @@ class ClusterServingHelper extends Serializable {
       .config("spark.redis.port", redisPort)
       .getOrCreate()
   }
-  def parseModelLocation(location: String) = {
+  def parseModelType(location: String) = {
 
     import java.io.File
     val f = new File(location)

@@ -54,7 +54,7 @@ object ClusterServing {
 
     val coreNumber = EngineRef.getCoreNumber()
 
-    val spark = helper.loadSparkSession()
+    val spark = helper.getSparkSession()
 
     logger.info(s"connected to redis ${spark.conf.get("spark.redis.host")}:${spark.conf.get("spark.redis.port")}")
     val batchSize = helper.batchSize
@@ -75,11 +75,12 @@ object ClusterServing {
     val query = images
       .writeStream
       .foreachBatch { (batchDF: DataFrame, batchId: Long) => {
+        logger.info("getting batch")
         val batchImage = batchDF.rdd.map { image =>
           val bytes = java.util
             .Base64.getDecoder.decode(image.getAs[String]("image"))
           val path = image.getAs[String]("path")
-          logger.info(s"image: $path")
+
           ImageFeature.apply(bytes, null, path)
         }
         val imageSet = ImageSet.rdd(batchImage)
@@ -88,20 +89,21 @@ object ClusterServing {
 
         val inputs = imageSet ->
           ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
-          ImageResize(256, 256) ->
-          ImageCenterCrop(224, 224) ->
+//          ImageResize(256, 256) ->
+//          ImageCenterCrop(224, 224) ->
           ImageMatToTensor(shareBuffer = false) ->
           ImageSetToSample()
 
         val start = System.nanoTime()
 
         val bcModel = model.value
+
+        // switch mission here, e.g. image classification, object detection
         val result = ImageClassification.getResult(inputs, bcModel, helper)
 
 
         // Output results
         val resDf = spark.createDataFrame(result)
-//        val ck = resDf.collect()
         resDf.write
           .format("org.apache.spark.sql.redis")
           .option("table", "result")
