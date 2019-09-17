@@ -380,7 +380,7 @@ class NNEstimator[T: ClassTag] private[zoo] (
 
   private def getDataSet(
       dataFrame: DataFrame,
-      batchSize: Int): DistributedDataSet[MiniBatch[T]] = {
+      batchSize: Int): FeatureSet[MiniBatch[T]] = {
 
     val sp = $(samplePreprocessing).asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]]
     val featureColIndex = dataFrame.schema.fieldIndex($(featuresCol))
@@ -407,13 +407,13 @@ class NNEstimator[T: ClassTag] private[zoo] (
       FeatureSet.rdd(featureAndLabel, memoryType = $(dataCacheLevel)).transform(sp)
     }
 
-    initialDataSet.transform(SampleToMiniBatch[T](batchSize)).toDistributed()
+    initialDataSet.transform(SampleToMiniBatch[T](batchSize))
   }
 
   protected override def internalFit(dataFrame: DataFrame): NNModel[T] = {
     val trainingDataSet = getDataSet(dataFrame, $(batchSize))
     val endTrigger = if (isSet(endWhen)) $(endWhen) else Trigger.maxEpoch($(maxEpoch))
-    val optimizer = new InternalDistriOptimizer(model, trainingDataSet, criterion)
+    val optimizer = new InternalDistriOptimizer(model, null, criterion)
       .setOptimMethod($(optimMethod))
       .setEndWhen(endTrigger)
 
@@ -439,11 +439,16 @@ class NNEstimator[T: ClassTag] private[zoo] (
       optimizer.setConstantGradientClipping(constantClippingValues._1, constantClippingValues._2)
     }
 
+    val validationFeatureset = if (validationTrigger.isDefined) {
+      getDataSet(validationDF, validationBatchSize)
+    } else {
+      null
+    }
+
     if (validationTrigger.isDefined) {
-      val validationSamples = getDataSet(validationDF, validationBatchSize)
       optimizer.setValidation(
         validationTrigger.get,
-        validationSamples,
+        validationFeatureset,
         validationMethods)
       if (this.validationSummary.isDefined) {
         optimizer.setValidationSummary(this.validationSummary.get)
@@ -461,8 +466,15 @@ class NNEstimator[T: ClassTag] private[zoo] (
       }
     }
 
-    val optimizedModel = optimizer.optimize()
-    wrapBigDLModel(optimizedModel)
+    optimizer.train(
+      trainingDataSet,
+      criterion,
+      Some(endTrigger),
+      if (isSet(this.checkpointPath)) Some($(checkpointTrigger)) else None,
+      validationFeatureset,
+      validationMethods
+    )
+    wrapBigDLModel(model)
   }
 
   /**
