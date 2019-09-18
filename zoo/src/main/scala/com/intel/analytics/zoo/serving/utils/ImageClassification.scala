@@ -21,16 +21,24 @@ object ImageClassification {
       val batchTensor = if (modelType == "openvino") {
         miniBatch.getInput.toTensor.addSingletonDimension()
       }
+      else if (modelType == "tensorflow") {
+        miniBatch.getInput.toTensor.transpose(2,3)
+            .transpose(3,4).contiguous()
+      }
       else {
         miniBatch.getInput.toTensor
       }
+      // this is hard code to test TensorFLow, NHWC
+
+//      batchTensor.resize(4, 224,224,3)
       val predict = model.doPredict(batchTensor)
 
       predict.toTensor.squeeze.split(1).asInstanceOf[Array[Activity]]
     }
 
     if (img.isDistributed()) {
-
+      println(img.toDistributed().rdd.getNumPartitions)
+      println(predicts.getNumPartitions)
       val zipped = img.toDistributed().rdd.zip(predicts)
 //      val zk = zipped.collect()
       zipped.map(tuple => {
@@ -38,7 +46,7 @@ object ImageClassification {
       }).collect()
     }
 
-
+//
     // Transform prediction into Labels and probs
     val labelOutput = LabelOutput(LabelReader.apply("IMAGENET"))
     //        print(labelOutput(imageSet).isInstanceOf[DistributedImageSet])

@@ -50,9 +50,11 @@ object ClusterServing {
 
     val helper = new ClusterServingHelper()
     helper.init(args)
-    val model = helper.loadInferenceModel()
 
     val coreNumber = EngineRef.getCoreNumber()
+    val model = helper.loadInferenceModel(coreNumber)
+
+
 
     val spark = helper.getSparkSession()
 
@@ -97,7 +99,7 @@ object ClusterServing {
         val start = System.nanoTime()
 
         val bcModel = model.value
-
+        logger.info("start predict")
         // switch mission here, e.g. image classification, object detection
         val result = ImageClassification.getResult(inputs, bcModel, helper)
 

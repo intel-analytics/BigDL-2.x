@@ -48,7 +48,7 @@ object ClusterServingOld {
 
     val coreNumber = EngineRef.getCoreNumber()
 
-    val spark = loader.loadSparkSession()
+    val spark = loader.getSparkSession()
 
     logger.info(s"connected to redis ${spark.conf.get("spark.redis.host")}:${spark.conf.get("spark.redis.port")}")
     val batchSize = loader.batchSize
