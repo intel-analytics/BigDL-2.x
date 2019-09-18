@@ -39,7 +39,8 @@ case class LoaderParams(modelType: String = null,
                         isInt8: Boolean = false,
                         topN: Int = 1,
                         redis: String = "localhost:6379",
-                        outputPath: String = "")
+                        outputPath: String = "",
+                        task: String = "")
 
 case class Result(id: String, value: String)
 
@@ -69,7 +70,9 @@ class ClusterServingHelper extends Serializable {
     opt[Int]('n', "topN")
       .text("number of return in classification task")
       .action((x, c) => c.copy(topN = x))
-
+    opt[String]('m', "task")
+      .text("task name, e.g. image classification")
+      .action((x, c) => c.copy(task = x))
 
   }
 
@@ -94,7 +97,7 @@ class ClusterServingHelper extends Serializable {
     batchSize = params.batchSize
     topN = params.topN
 
-    val conf = NNContext.createSparkConf().setAppName("Redis Streaming Test")
+    val conf = NNContext.createSparkConf().setAppName("Cluster Serving")
       .set("spark.redis.host", redisHost)
       .set("spark.redis.port", redisPort)
 

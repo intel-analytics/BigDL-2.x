@@ -25,6 +25,11 @@ function parse_yaml {
 parse_yaml config.yaml
 eval $(parse_yaml config.yaml)
 
+if [ -z "${data_task}" ]; then
+    echo "You have not specify your task, will run as image-classification"
+    data_task=image-classification
+fi
+
 
 if [ -z "${spark_master}" ]; then
     echo "master of spark cluster not set, using default value local[*]"
@@ -73,6 +78,6 @@ if [ -z "${ANALYTICS_ZOO_HOME}" ]; then
 fi
 export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
 
-${SPARK_HOME}/bin/spark-submit --master ${spark_master} --driver-memory ${spark_driver_memory} --executor-memory ${spark_executor_memory} --num-executors ${spark_num_executors} --executor-cores ${spark_executor_cores} --conf "spark.driver.extraJavaOptions=-Dbigdl.engineType=${params_engine_type} -Dbigdl.mklNumThreads=${params_mkl_threads}"  --jars ./packages/spark-redis-2.4.0-SNAPSHOT-jar-with-dependencies.jar --class com.intel.analytics.zoo.serving.ClusterServing ${ANALYTICS_ZOO_JAR} -f ${ModelFolder} -b ${params_batch_size}
+${SPARK_HOME}/bin/spark-submit --master ${spark_master} --driver-memory ${spark_driver_memory} --executor-memory ${spark_executor_memory} --num-executors ${spark_num_executors} --executor-cores ${spark_executor_cores} --conf "spark.driver.extraJavaOptions=-Dbigdl.engineType=${params_engine_type} -Dbigdl.mklNumThreads=${params_mkl_threads}"  --jars ./packages/spark-redis-2.4.0-SNAPSHOT-jar-with-dependencies.jar --class com.intel.analytics.zoo.serving.ClusterServing ${ANALYTICS_ZOO_JAR} -f ${ModelFolder} -b ${params_batch_size} -m ${data_task}
 
 

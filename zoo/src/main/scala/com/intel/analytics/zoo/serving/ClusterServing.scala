@@ -24,10 +24,11 @@ import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.models.image.imageclassification.{LabelOutput, LabelReader}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
+import com.intel.analytics.zoo.serving.utils.Result
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ImageClassification, ObjectDetection}
 import com.intel.analytics.zoo.utils._
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.rdd.ZippedPartitionsWithLocalityRDD
+import org.apache.spark.rdd.{RDD, ZippedPartitionsWithLocalityRDD}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, SaveMode}
 import org.opencv.imgcodecs.Imgcodecs
@@ -101,8 +102,13 @@ object ClusterServing {
         val bcModel = model.value
         logger.info("start predict")
         // switch mission here, e.g. image classification, object detection
-        val result = ImageClassification.getResult(inputs, bcModel, helper)
-
+        var result: RDD[Result] = null
+        if (helper.params.task == "image-classification") {
+          result = ImageClassification.getResult(inputs, bcModel, helper)
+        } else {
+          throw new Error("Your task specified is " + helper.params.task +
+          "Currently Cluster Serving only support image-classification")
+        }
 
         // Output results
         val resDf = spark.createDataFrame(result)
