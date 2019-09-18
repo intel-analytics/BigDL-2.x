@@ -169,7 +169,10 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     estimator.setEndWhen(trigger)
   }
 
-  def setDataCacheLevel(estimator: NNEstimator[T], level: String, numSlice: Int = 4): NNEstimator[T] = {
+  def setDataCacheLevel(
+      estimator: NNEstimator[T],
+      level: String,
+      numSlice: Int = 4): NNEstimator[T] = {
     val memType = level.trim.toUpperCase match {
       case "DRAM" => DRAM
       case "PMEM" => PMEM
