@@ -11,6 +11,8 @@ if [[ -z "${SPARK_HOME}" ]]; then
     exit 1
 fi
 
-export SPARK_CMD=spark-shell
+export SPARK_CMD=pyspark
 
-bash ${ANALYTICS_ZOO_HOME}/bin/analytics-zoo-bash.sh $*
+bash ${ANALYTICS_ZOO_HOME}/bin/analytics-zoo-base.sh \
+    --py-files ${ANALYTICS_ZOO_PY_ZIP} \
+    $*
