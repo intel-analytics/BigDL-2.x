@@ -5,8 +5,6 @@ if [[ -z "${SPARK_CMD}" ]]; then
     exit 1
 fi
 
-source ${ANALYTICS_ZOO_HOME}/bin/analytics-zoo-env.sh
-
 # Check files
 if [[ ! -f ${ANALYTICS_ZOO_CONF} ]]; then
     echo "Cannot find ${ANALYTICS_ZOO_CONF}"

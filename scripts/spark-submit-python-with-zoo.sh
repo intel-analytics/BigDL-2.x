@@ -11,6 +11,8 @@ if [[ -z "${SPARK_HOME}" ]]; then
     exit 1
 fi
 
+source ${ANALYTICS_ZOO_HOME}/bin/analytics-zoo-env.sh
+
 export SPARK_CMD=spark-submit
 
 bash ${ANALYTICS_ZOO_HOME}/bin/analytics-zoo-base.sh \

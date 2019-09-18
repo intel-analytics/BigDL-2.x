@@ -15,6 +15,8 @@ fi
 export PYSPARK_DRIVER_PYTHON=jupyter
 export PYSPARK_DRIVER_PYTHON_OPTS="notebook --notebook-dir=./ --ip=0.0.0.0 --no-browser --allow-root --NotebookApp.token=''"
 
+source ${ANALYTICS_ZOO_HOME}/bin/analytics-zoo-env.sh
+
 export SPARK_CMD=pyspark
 
 bash ${ANALYTICS_ZOO_HOME}/bin/analytics-zoo-base.sh \
