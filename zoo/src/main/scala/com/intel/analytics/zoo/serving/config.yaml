@@ -10,17 +10,8 @@ data:
   # default, image
   type:
 
-  # default, redis-stream
-  input:
-
-  # default, redis-table
-  output:
-
-  # default, localhost
-  host:
-
-  # default, 6379
-  port:
+  # default, image-classification
+  task: 
 
 spark:
   # default, local[*]
