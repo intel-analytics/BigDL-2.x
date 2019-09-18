@@ -133,8 +133,8 @@ class ClusterServingHelper extends Serializable {
     cachedModel
   }
 
-  def loadInferenceModel(): Broadcast[InferenceModel] = {
-    val model = new InferenceModel(1)
+  def loadInferenceModel(concurrentNum: Int): Broadcast[InferenceModel] = {
+    val model = new InferenceModel(concurrentNum)
     modelType match {
       case "caffe" => model.doLoadCaffe(defPath, weightPath)
       case "tensorflow" => model.doLoadTF(weightPath)
