@@ -1,7 +1,8 @@
 package com.intel.analytics.zoo.apps.model.inference.flink.Resnet50ImageClassification
 
 import java.io.{File, FileInputStream}
-import java.util.{Arrays, List => JList}
+import java.util
+import java.util.{List => JList}
 
 import com.intel.analytics.zoo.pipeline.inference.JTensor
 import org.apache.commons.io.FileUtils
@@ -12,8 +13,6 @@ import org.apache.flink.streaming.api.datastream.DataStreamUtils
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.ListBuffer
-
 import scala.io.Source
 
 object ImageClassificationStreaming {
@@ -25,8 +24,6 @@ object ImageClassificationStreaming {
     var inputShape = Array(1, 224, 224, 3)
     var meanValues = Array(123.68f, 116.78f, 103.94f)
     var scale = 1.0f
-//    val lines=Source.fromFile("/home/joy/Data/classes.txt" ).getLines.toList
-//    println(lines)
 
     try {
       val params = ParameterTool.fromArgs(args)
@@ -54,50 +51,35 @@ object ImageClassificationStreaming {
     println("start ImageClassificationStreaming job...")
     println("params resolved", modelType, checkpointPath, inputShape.mkString(","), ifReverseInputChannels, meanValues.mkString(","), scale)
 
-    val classLoader = this.getClass.getClassLoader
-
     val fileSize = new File(checkpointPath).length()
     val inputStream = new FileInputStream(checkpointPath)
     val modelBytes = new Array[Byte](fileSize.toInt)
     inputStream.read(modelBytes)
 
-    val imageFolder = new File("/home/joy/Data/image2")
+    val imageFolder = new File("/home/joy/Data/pic")
     val fileList = imageFolder.listFiles.toList
 
     println("fileList", fileList)
 
-    var inputs = new ListBuffer[Array[Float]]()
-    for (file <- fileList) {
+    val inputs = fileList.map(file => {
       val imageBytes = FileUtils.readFileToByteArray(file)
-      val imageProcess = new ImageProcesser(imageBytes, 224, 224, 123, 116, 103, 1.0)
+      val imageProcess = new ImageProcessor
       val res = imageProcess.preProcess(imageBytes, 224, 224, 123, 116, 103, 1.0)
-      println("imageTensor",res)
-      val inputImage = new Array[Float](res.nElement())
-      println(inputImage)
-      inputs += inputImage
-    }
-
-    val inputsList = inputs.toList
-    println("inputsList", inputsList)
-
-    val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
-    println(env.getConfig)
-
-    val dataStream: DataStream[Array[Float]] = env.fromCollection(inputsList)
-    val tensorStream: DataStream[JList[JList[JTensor]]] = dataStream.map(value => {
-      val input = new JTensor(value, Array(1, 224, 224, 3))
-      println(input)
-      val data = Arrays.asList(input)
-      List(data).asJava
+      val input = new JTensor(res, Array(1, 224, 224, 3))
+      List(util.Arrays.asList(input)).asJava
     })
 
-    val resultStream = tensorStream.map(new ModelPredictionMapFunction(modelType, modelBytes, inputShape, ifReverseInputChannels, meanValues, scale))
+    val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
+
+    val dataStream: DataStream[JList[JList[JTensor]]] = env.fromCollection(inputs)
+
+    val resultStream = dataStream.map(new ModelPredictionMapFunction(modelType, modelBytes, inputShape, ifReverseInputChannels, meanValues, scale))
 
     env.execute("ImageClassificationStreaming")
 
     val results = DataStreamUtils.collect(resultStream.javaStream).asScala
 
-    println(" Printing result ...")
+    println("Printing result ...")
     results.foreach(println)
   }
 
@@ -115,11 +97,17 @@ class ModelPredictionMapFunction(modelType: String, modelBytes: Array[Byte], inp
   }
 
   override def map(in: JList[JList[JTensor]]): (String) = {
-    val lines=Source.fromFile("/home/joy/analytics-zoo/zoo/src/main/resources/imagenet_classname.txt" ).getLines.toList
+    val lines = Source.fromFile("/home/joy/analytics-zoo/zoo/src/main/resources/imagenet_classname.txt").getLines.toList
     val outputData = resnet50InferenceModel.doPredict(in).get(0).get(0).getData
     val max: Float = outputData.max
     val index = outputData.indexOf(max)
-    val label = lines(index+1)
+    val label = lines(index)
     (label)
+    //(index)
   }
 }
+
+
+
+
+
