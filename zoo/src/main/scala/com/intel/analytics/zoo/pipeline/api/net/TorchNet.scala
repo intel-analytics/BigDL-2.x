@@ -58,6 +58,8 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     if (weights == null) {
       val w = PytorchModel.getWeightNative(ref).clone()
       weights = Tensor(w, Array(w.length))
+    } else if (weights.nElement() > 0) {
+      PytorchModel.updateWeightNative(ref, weights.storage().array())
     }
 
     if (gradients == null) {
