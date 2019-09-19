@@ -192,7 +192,20 @@ class TestNNClassifer():
             .setBatchSize(1).setLearningRate(0.2).setMaxEpoch(2) \
             .setDataCacheLevel("DISK_AND_DRAM", 2)
 
-        df = self.get_estimator_df()
+        data = self.sc.parallelize([
+            ((2.0, 1.0), (1.0, 2.0)),
+            ((1.0, 2.0), (2.0, 1.0)),
+            ((2.0, 1.0), (1.0, 2.0)),
+            ((1.0, 2.0), (2.0, 1.0)),
+            ((2.0, 1.0), (1.0, 2.0)),
+            ((1.0, 2.0), (2.0, 1.0)),
+            ((2.0, 1.0), (1.0, 2.0)),
+            ((1.0, 2.0), (2.0, 1.0))])
+
+        schema = StructType([
+            StructField("features", ArrayType(DoubleType(), False), False),
+            StructField("label", ArrayType(DoubleType(), False), False)])
+        df = self.sqlContext.createDataFrame(data, schema)
         estimator.fit(df)
 
     def test_nnEstimator_fit_with_non_default_featureCol(self):
