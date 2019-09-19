@@ -54,7 +54,7 @@ MASTER=...
 news20_path=the directory containing News20 dataset
 glove_path=the directory containing GloVe embeddings
 
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 2g \
     --executor-memory 2g \

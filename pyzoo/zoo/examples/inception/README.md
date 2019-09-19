@@ -50,7 +50,7 @@ It will generate the hadoop sequence files in the output folder.
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project
 
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
 --master spark://xxx.xxx.xxx.xxx:xxxx \  
 --executor-cores 32 \  
 --num-executors 16 \  
@@ -71,7 +71,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project
 
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
 --master yarn \
 --deploy-mode client \
 --executor-cores 32 \

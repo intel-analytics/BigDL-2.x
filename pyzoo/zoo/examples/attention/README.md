@@ -18,7 +18,7 @@ export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 export VENV_HOME=the parent directory of venv.zip and venv folder
 
-PYSPARK_DRIVER_PYTHON=${VENV_HOME}/venv/bin/python PYSPARK_PYTHON=venv.zip/venv/bin/python ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
+PYSPARK_DRIVER_PYTHON=${VENV_HOME}/venv/bin/python PYSPARK_PYTHON=venv.zip/venv/bin/python ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --conf spark.executor.extraJavaOptions="-Xss512m" \
     --conf spark.driver.extraJavaOptions="-Xss512m" \
     --master yarn-client \

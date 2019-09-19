@@ -48,7 +48,7 @@ MASTER=...
 data_dir=the directory that contains corpus and relations csv files listed above
 glove_path=the file path to GloVe embeddings
 
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 3g \
     --executor-memory 3g \
