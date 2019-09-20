@@ -13,11 +13,11 @@ import scala.io.Source
 object Tests extends App with InferenceSupportive {
 
   ////////////loading and processing images
-  val imageFolder = new File("/home/joy/Data/pic")
-  val fileList = imageFolder.listFiles.toList
-  fileList.foreach(println)
+  val imageFolder = new File("/home/joy/Data/pic").listFiles.toList
+  //val fileList = imageFolder.listFiles.toList
+  imageFolder.foreach(println)
 
-  val inputs =  fileList.map(file => {
+  val inputs = imageFolder.map(file => {
     val imageBytes = FileUtils.readFileToByteArray(file)
     val imageProcess = new ImageProcessor
     val res = imageProcess.preProcess(imageBytes, 224, 224, 123, 116, 103, 1.0)
@@ -48,7 +48,7 @@ object Tests extends App with InferenceSupportive {
     val max: Float = data.max
     val index = data.indexOf(max)
     val label = labels(index)
-    println(index+label)
+    println(index + label)
   })
 }
 
