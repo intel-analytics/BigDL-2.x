@@ -19,7 +19,7 @@ object ImageClassificationStreaming {
 
   def main(args: Array[String]): Unit = {
     var modelType = "resnet_v1_50"
-    var checkpointPath: String = "/home/joy/models/resnet_v1_50.ckpt"
+    var checkpointPath: String = "/path/to/model"
     var ifReverseInputChannels = true
     var inputShape = Array(1, 224, 224, 3)
     var meanValues = Array(123.68f, 116.78f, 103.94f)
@@ -56,7 +56,7 @@ object ImageClassificationStreaming {
     val modelBytes = new Array[Byte](fileSize.toInt)
     inputStream.read(modelBytes)
 
-    val imageFolder = new File("/home/joy/Data/pic")
+    val imageFolder = new File("/path/to/your/images")
     val fileList = imageFolder.listFiles.toList
 
     println("fileList", fileList)
@@ -80,8 +80,8 @@ object ImageClassificationStreaming {
     val results = DataStreamUtils.collect(resultStream.javaStream).asScala
 
     println("Printing result ...")
-    val lines = Source.fromFile("/home/joy/analytics-zoo/zoo/src/main/resources/imagenet_classname.txt").getLines.toList
-    results.foreach((i)=> println(lines(i)))
+    val lines = Source.fromFile("/path/to/your/labels").getLines.toList
+    results.foreach((i) => println(lines(i)))
   }
 
 }
@@ -98,12 +98,9 @@ class ModelPredictionMapFunction(modelType: String, modelBytes: Array[Byte], inp
   }
 
   override def map(in: JList[JList[JTensor]]): (Int) = {
-    //val lines = Source.fromFile("/home/joy/analytics-zoo/zoo/src/main/resources/imagenet_classname.txt").getLines.toList
     val outputData = resnet50InferenceModel.doPredict(in).get(0).get(0).getData
     val max: Float = outputData.max
     val index = outputData.indexOf(max)
-    //val label = lines(index)
-    //(label)
     (index)
   }
 }
