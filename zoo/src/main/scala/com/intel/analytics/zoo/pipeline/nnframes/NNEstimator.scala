@@ -475,8 +475,6 @@ class NNEstimator[T: ClassTag] private[zoo] (
       validationMethods
     )
     wrapBigDLModel(model)
-    model.parameters()._1.foreach(println)
-    wrapBigDLModel(optimizedModel)
   }
 
   /**
