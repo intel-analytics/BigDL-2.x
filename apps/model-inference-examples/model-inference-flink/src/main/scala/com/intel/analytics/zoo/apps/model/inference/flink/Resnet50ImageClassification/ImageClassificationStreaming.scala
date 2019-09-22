@@ -104,8 +104,3 @@ class ModelPredictionMapFunction(modelType: String, modelBytes: Array[Byte], inp
     (index)
   }
 }
-
-
-
-
-
