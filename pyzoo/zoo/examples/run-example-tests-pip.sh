@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 clear_up () {
     echo "Clearing up environment. Uninstalling analytics-zoo"
     pip uninstall -y analytics-zoo
@@ -374,7 +373,6 @@ unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time9=$((now-start))
 echo "qaranker time used:$time9 seconds"
-
 
 # This should be done at the very end after all tests finish.
 clear_up

@@ -41,7 +41,7 @@ See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-afte
 ```bash
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --master local[4] \
     --driver-memory 10g \
     --executor-memory 10g \

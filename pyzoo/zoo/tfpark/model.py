@@ -35,8 +35,8 @@ class KerasModel(object):
         :param model: a compiled keras model
         """
         self.model = model
-        self.tf_optimizer = None
-        self.tf_optimizer_done_epochs = 0
+        self.train_summary = None
+        self.val_summary = None
 
     @property
     def metrics_names(self):
@@ -71,6 +71,22 @@ class KerasModel(object):
         :return: KerasModel.
         """
         return KerasModel(models.load_model(path))
+
+    def set_train_summary(self, summary):
+        """
+        Set training summary for visualization.
+
+        :param summary: bigdl.optim.optimizer.TrainSummary
+        """
+        self.train_summary = summary
+
+    def set_val_summary(self, summary):
+        """
+        Set validation summary for visualization.
+
+        :param summary: bigdl.optim.optimizer.ValidationSummary
+        """
+        self.val_summary = summary
 
     def fit(self,
             x=None,
@@ -128,7 +144,8 @@ class KerasModel(object):
             self._fit_distributed(x, validation_split, epochs, **kwargs)
 
         elif distributed:
-            dataset = TFDataset.from_ndarrays((x, y), val_tensors=validation_data)
+            dataset = TFDataset.from_ndarrays((x, y), val_tensors=validation_data,
+                                              batch_size=batch_size)
             self._fit_distributed(dataset, validation_split, epochs, **kwargs)
 
         else:
@@ -142,15 +159,16 @@ class KerasModel(object):
                            )
 
     def _fit_distributed(self, dataset, validation_split, epochs, **kwargs):
-        if not self.tf_optimizer:
-            self.tf_optimizer = TFOptimizer.from_keras(self.model, dataset,
-                                                       val_spilt=validation_split, **kwargs)
-        else:
-            self.tf_optimizer.refresh_weights()
+        self.tf_optimizer = TFOptimizer.from_keras(self.model, dataset,
+                                                   val_spilt=validation_split, **kwargs)
 
-        end_epoch = self.tf_optimizer_done_epochs + epochs
-        self.tf_optimizer.optimize(MaxEpoch(end_epoch))
-        self.tf_optimizer_done_epochs = end_epoch
+        if self.train_summary is not None:
+            self.tf_optimizer.set_train_summary(self.train_summary)
+
+        if self.val_summary is not None:
+            self.tf_optimizer.set_val_summary(self.val_summary)
+
+        self.tf_optimizer.optimize(MaxEpoch(epochs))
 
     def evaluate(self,
                  x=None,

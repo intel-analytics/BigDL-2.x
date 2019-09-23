@@ -310,6 +310,26 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     WideAndDeep.loadModel(path, weightPath)
   }
 
+  def createZooSessionRecommender(
+      itemCount: Int,
+      itemEmbed: Int,
+      rnnHiddenLayers: JList[Int],
+      sessionLength: Int,
+      includeHistory: Boolean,
+      mlpHiddenLayers: JList[Int],
+      historyLength: Int,
+      model: AbstractModule[Activity, Activity, T]): SessionRecommender[T] = {
+    new SessionRecommender[T](itemCount, itemEmbed, rnnHiddenLayers.asScala.toArray, sessionLength,
+      includeHistory, mlpHiddenLayers.asScala.toArray, historyLength)
+      .addModel(model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]])
+  }
+
+  def loadSessionRecommender(
+      path: String,
+      weightPath: String = null): SessionRecommender[T] = {
+    SessionRecommender.loadModel(path, weightPath)
+  }
+
   def toUserItemFeatureRdd(featureRdd: JavaRDD[Array[Object]]): RDD[UserItemFeature[T]] = {
     featureRdd.rdd.foreach(x =>
       require(x.length == 3, "UserItemFeature should consist of userId, itemId and sample"))
@@ -345,6 +365,17 @@ class PythonZooModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       maxUsers: Int): JavaRDD[JList[Double]] = {
     val predictionRdd = model.recommendForItem(toUserItemFeatureRdd(featureRdd), maxUsers)
     toPredictionJavaRdd(predictionRdd)
+  }
+
+  def recommendForSession(
+      model: SessionRecommender[T],
+      featureRdd: JavaRDD[Sample],
+      maxItems: Int,
+      zeroBasedLabel: Boolean): JavaRDD[JList[JList[Float]]] = {
+    val predictionRdd: RDD[Array[(Int, Float)]] = model
+      .recommendForSession(toJSample(featureRdd), maxItems, zeroBasedLabel)
+
+    predictionRdd.map(x => x.toList.map(y => List(y._1.toFloat, y._2).asJava).asJava).toJavaRDD()
   }
 
   def getNegativeSamples(indexed: DataFrame): DataFrame = {

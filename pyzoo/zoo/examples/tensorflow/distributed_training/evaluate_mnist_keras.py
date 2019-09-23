@@ -16,7 +16,7 @@
 
 import tensorflow as tf
 from zoo import init_nncontext
-from zoo.pipeline.api.net import TFDataset, TFPredictor
+from zoo.tfpark import TFDataset, TFPredictor
 import numpy as np
 import sys
 from tensorflow.keras.models import Model

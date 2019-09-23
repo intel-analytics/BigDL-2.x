@@ -38,6 +38,7 @@ trait ImageProcessing {
     cropedMat
   }
 
+
   def matToNCHWAndArray(mat: OpenCVMat) = {
     val (height, width, channel) = (mat.height(), mat.width(), mat.channels())
     val data = new Array[Float](height * width * channel)

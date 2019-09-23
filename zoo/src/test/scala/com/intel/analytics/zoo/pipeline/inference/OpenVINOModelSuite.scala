@@ -20,7 +20,7 @@ import java.io.File
 import java.util
 import java.util.{Arrays, Properties}
 
-import com.google.common.io.Files
+import com.intel.analytics.zoo.common.Utils
 import org.codehaus.plexus.util.FileUtils
 import org.scalatest._
 import org.slf4j.LoggerFactory
@@ -67,7 +67,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
 
 
   override def beforeAll() {
-    tmpDir = Files.createTempDir()
+    tmpDir = Utils.createTmpDir("ZooVino").toFile()
     val dir = new File(s"${tmpDir.getAbsolutePath}/OpenVinoInferenceModelSpec").getCanonicalPath
 
     s"wget -P $dir $url_ov_fasterrcnn_tests_inputdata1" !;
@@ -157,7 +157,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     threads2.foreach(_.join())
 
     fasterrcnnModel.release()
-    fasterrcnnInferenceModel.release()
+    fasterrcnnInferenceModel.doRelease()
   }
 
   def almostEqual(x: Float, y: Float, precision: Float): Boolean = {

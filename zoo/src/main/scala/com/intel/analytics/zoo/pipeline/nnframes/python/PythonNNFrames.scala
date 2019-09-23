@@ -27,6 +27,7 @@ import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.common._
 import com.intel.analytics.zoo.feature.image.RowToImageFeature
+import com.intel.analytics.zoo.feature.pmem._
 import com.intel.analytics.zoo.pipeline.nnframes._
 import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.sql.DataFrame
@@ -106,6 +107,10 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     SeqToTensor(size.asScala.toArray)
   }
 
+  def createSeqToMultipleTensors(size: JArrayList[JArrayList[Int]]): SeqToMultipleTensors[T] = {
+    SeqToMultipleTensors(size.asScala.map(x => x.asScala.toArray).toArray)
+  }
+
   def createArrayToTensor(size: JArrayList[Int]): ArrayToTensor[T] = {
     ArrayToTensor(size.asScala.toArray)
   }
@@ -121,9 +126,9 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   def createFeatureLabelPreprocessing(
       featureTransfomer: Preprocessing[Any, Tensor[T]],
       labelTransformer: Preprocessing[Any, Tensor[T]]
-    ): FeatureLabelPreprocessing[Any, Any, Sample[T]] = {
+    ): FeatureLabelPreprocessing[Any, Any, Any, Sample[T]] = {
     FeatureLabelPreprocessing(featureTransfomer, labelTransformer)
-      .asInstanceOf[FeatureLabelPreprocessing[Any, Any, Sample[T]]]
+      .asInstanceOf[FeatureLabelPreprocessing[Any, Any, Any, Sample[T]]]
   }
 
   def createChainedPreprocessing(list: JList[Preprocessing[Any, Any]]): Preprocessing[Any, Any] = {
@@ -162,6 +167,20 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def setEndWhen(estimator: NNEstimator[T], trigger: Trigger): NNEstimator[T] = {
     estimator.setEndWhen(trigger)
+  }
+
+  def setDataCacheLevel(
+      estimator: NNEstimator[T],
+      level: String,
+      numSlice: Int = 4): NNEstimator[T] = {
+    val memType = level.trim.toUpperCase match {
+      case "DRAM" => DRAM
+      case "PMEM" => PMEM
+      case "DISK_AND_DRAM" => DISK_AND_DRAM(numSlice)
+      case "DIRECT" => DIRECT
+      case _ => throw new IllegalArgumentException(s"$level is not supported.")
+    }
+    estimator.setDataCacheLevel(memType)
   }
 
   def setCheckpoint(
