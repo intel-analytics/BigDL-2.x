@@ -48,11 +48,17 @@ object ClusterServing {
   def main(args: Array[String]): Unit = {
 
 //    val param = parser.parse(args, RedisParams()).get
+    println("v4")
+
 
     val helper = new ClusterServingHelper()
     helper.init(args)
-
     val coreNumber = EngineRef.getCoreNumber()
+    val eType = EngineRef.getEngineType()
+    logger.info("Engine Type is " + eType)
+    logger.info("Core number is running at " + coreNumber.toString)
+
+
     val model = helper.loadInferenceModel(coreNumber)
 
 
@@ -88,7 +94,8 @@ object ClusterServing {
         }
         val imageSet = ImageSet.rdd(batchImage)
         imageSet.rdd.persist()
-        val st = imageSet.rdd.collect()
+        logger.info("Micro batch size " + imageSet.rdd.count().toString)
+//        val st = imageSet.rdd.collect()
 
         val inputs = imageSet ->
           ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
@@ -115,6 +122,7 @@ object ClusterServing {
         resDf.write
           .format("org.apache.spark.sql.redis")
           .option("table", "result")
+
           .mode(SaveMode.Append).save()
 
         val latency = System.nanoTime() - start

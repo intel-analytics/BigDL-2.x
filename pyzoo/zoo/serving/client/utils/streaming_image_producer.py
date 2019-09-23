@@ -1,5 +1,5 @@
 import redis
-from client.utils import helpers
+from zoo.serving.client.utils import helpers
 import argparse
 import uuid
 import time
