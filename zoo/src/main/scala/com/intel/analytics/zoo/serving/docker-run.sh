@@ -24,4 +24,4 @@ if [ -z "${model_path}" ]; then
 fi
 
 
-docker run --net=host -v $(pwd)/${model_path}:/opt/work/resources -e ModelFolder="resources"  intelanalytics/analytics-zoo-serving-pub-sub:0.5.1-spark_2.4.0
+docker run --net=host -v $(pwd)/${model_path}:/opt/work/resources -v $(pwd)/config.yaml:/opt/work/config.yaml -e ModelFolder="resources"  intelanalytics/analytics-zoo-serving-pub-sub:0.5.1-spark_2.4.0

@@ -39,7 +39,7 @@ object ClusterServingOld {
   val logger: Logger = Logger.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
-
+    System.setProperty("bigdl.engineType", "mkldnn")
 //    val param = parser.parse(args, RedisParams()).get
 
     val loader = new ClusterServingHelper()
@@ -71,8 +71,8 @@ object ClusterServingOld {
     val query = images
       .writeStream
       .foreachBatch { (batchDF: DataFrame, batchId: Long) => {
-//        batchDF.persist(MEMORY_ONLY)
-//        println(batchDF.count())
+        batchDF.persist(MEMORY_ONLY)
+        println(batchDF.count())
 //        println(batchDF.count())
 
         logger.info(s"Get batch $batchId")
@@ -122,14 +122,15 @@ object ClusterServingOld {
 
             }}
           }
-        }
+        }.collect()
+
 
 //        if (!result.isEmpty) {
-        val resDf = spark.createDataFrame(result)
-        resDf.write
-          .format("org.apache.spark.sql.redis")
-          .option("table", "result")
-          .mode(SaveMode.Append).save()
+//        val resDf = spark.createDataFrame(result)
+//        resDf.write
+//          .format("org.apache.spark.sql.redis")
+//          .option("table", "result")
+//          .mode(SaveMode.Append).save()
 
         logger.info("Predict end")
       }

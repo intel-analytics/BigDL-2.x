@@ -76,7 +76,9 @@ if [ -z "${ANALYTICS_ZOO_HOME}" ]; then
     echo "Please set ANALYTICS_ZOO_HOME environment variable"
     exit 1
 fi
-export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
+#export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
+export ANALYTICS_ZOO_JAR=`find ./packages -type f -name "analytics-zoo*jar-with-dependencies.jar"`
+echo "Analytics Zoo jar location is "${ANALYTICS_ZOO_JAR}
 
 ${SPARK_HOME}/bin/spark-submit --master ${spark_master} --driver-memory ${spark_driver_memory} --executor-memory ${spark_executor_memory} --num-executors ${spark_num_executors} --executor-cores ${spark_executor_cores} --conf "spark.driver.extraJavaOptions=-Dbigdl.engineType=${params_engine_type} -Dbigdl.mklNumThreads=${params_mkl_threads}"  --jars ./packages/spark-redis-2.4.0-SNAPSHOT-jar-with-dependencies.jar --class com.intel.analytics.zoo.serving.ClusterServing ${ANALYTICS_ZOO_JAR} -f ${ModelFolder} -b ${params_batch_size} -m ${data_task}
 

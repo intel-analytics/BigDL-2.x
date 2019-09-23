@@ -40,13 +40,13 @@ case class LoaderParams(modelType: String = null,
                         topN: Int = 1,
                         redis: String = "localhost:6379",
                         outputPath: String = "",
-                        task: String = "")
+                        task: String = "image-classification")
 
 case class Result(id: String, value: String)
 
 class ClusterServingHelper extends Serializable {
 
-  val parser = new OptionParser[LoaderParams]("Zoo Serving") {
+  val parser = new OptionParser[LoaderParams]("Cluster Serving") {
 
     opt[String]('t', "modelType")
       .text("Model type, could be caffe, keras")
@@ -54,7 +54,7 @@ class ClusterServingHelper extends Serializable {
 
     opt[String]('f', "modelFolder")
       .text("weight file path")
-      .action((x, p) => p.copy(modelFolder = x))
+      .action((x, c) => c.copy(modelFolder = x))
       .required()
 
     opt[String]('r', "redis")
@@ -71,7 +71,7 @@ class ClusterServingHelper extends Serializable {
       .text("number of return in classification task")
       .action((x, c) => c.copy(topN = x))
     opt[String]('m', "task")
-      .text("task name, e.g. image classification")
+      .text("task name, e.g. image-classification")
       .action((x, c) => c.copy(task = x))
 
   }
@@ -119,15 +119,16 @@ class ClusterServingHelper extends Serializable {
     //    }
 
 
-    var model: AbstractModule[Activity, Activity, Float] = null
-    model = modelType match {
+//    var model: AbstractModule[Activity, Activity, Float] = null
+    val rmodel = modelType match {
       case "caffe" => Net.loadCaffe[Float](defPath, weightPath)
       case "tensorflow" => Net.loadTF[Float](weightPath)
       case "torch" => Net.loadTorch[Float](weightPath)
       case "bigdl" => Net.loadBigDL[Float](weightPath)
       case "keras" => Net.load[Float](weightPath)
     }
-    model.evaluate()
+    val model = rmodel.quantize().evaluate()
+
 
     val bcModel = ModelBroadcast[Float]().broadcast(sc, model)
     val cachedModel = sc.range(1, 100, EngineRef.getNodeNumber())
