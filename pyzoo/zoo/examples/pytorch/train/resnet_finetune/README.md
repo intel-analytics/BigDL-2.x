@@ -44,18 +44,11 @@ You can easily use the following commands to run this example:
     python resnet_finetune.py /tmp/zoo/dogs_cats/samples
     ```
 
-- Run with Yarn Client mode
-If you want to run on a yarn cluster(yarn-client mode only), upload data to hdfs first:
+- Run with Yarn Client mode, upload data to hdfs first, export env `HADOOP_CONF_DIR` and `ZOO_CONDA_NAME`:  
     ```bash
     hdfs dfs -put /tmp/zoo/dogs_cats dogs_cats 
-    ```
-then, export env `HADOOP_CONF_DIR` and `ZOO_CONDA_NAME`:
-    ```bash
     export HADOOP_CONF_DIR=[path to your hadoop conf directory]
     export ZOO_CONDA_NAME=[conda environment name you just prepared above]
-    ```
-run the following command: 
-    ```bash
     python resnet_finetune.py dogs_cats/samples
     ```
 
