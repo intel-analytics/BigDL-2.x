@@ -60,7 +60,7 @@ if __name__ == '__main__':
             conda_name=os.environ["ZOO_CONDA_NAME"],  # The name of the created conda-env
             num_executor=num_executors,
             executor_cores=num_cores_per_executor,
-            executor_memory="10g",
+            executor_memory="8g",
             driver_memory="2g",
             driver_cores=1)
     else:
@@ -92,13 +92,12 @@ if __name__ == '__main__':
 
     classifier = NNClassifier(torchnet, torchcriterion, featureTransformer) \
         .setLearningRate(0.001) \
-        .setBatchSize(64) \
-        .setEndWhen(MaxIteration(10)) \
+        .setBatchSize(16) \
+        .setMaxEpoch(1) \
         .setFeaturesCol("image") \
         .setCachingSample(False) \
-        .setValidation(SeveralIteration(5), validationDF, [Accuracy()], 64)
+        .setValidation(EveryEpoch(), validationDF, [Accuracy()], 16)
 
-    # .setMaxEpoch(1) \
     catdogModel = classifier.fit(trainingDF)
 
     shift = udf(lambda p: p - 1, DoubleType())
@@ -111,5 +110,4 @@ if __name__ == '__main__':
     accuracy = correct * 1.0 / overall
 
     # expecting: accuracy > 96%
-    print(str(overall) + " " + str(correct) + "\n")
     print("Validation accuracy = %g " % accuracy)
