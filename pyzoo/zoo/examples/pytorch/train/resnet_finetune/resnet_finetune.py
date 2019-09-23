@@ -68,17 +68,10 @@ if __name__ == '__main__':
         num_cores_per_executor = 4
         sc = init_spark_on_local(cores=4, conf={"spark.driver.memory": "10g"})
 
-    # sparkConf = init_spark_conf().setAppName("resnet").setMaster("local[2]") \
-    #     .set('spark.driver.memory', '10g')
-    # sc = init_nncontext(sparkConf)
-    # spark = SparkSession.builder.config(conf=sparkConf).getOrCreate()
-
-    print('------------------------------------')
-
     torchnet = TorchNet.from_pytorch(CatDogModel(), [4, 3, 224, 224])
 
     def lossFunc(input, target):
-        return nn.CrossEntropyLoss().forward(input, target.flatten().long())
+        return nn.NLLLoss().forward(input, target.flatten().long())
 
     torchcriterion = TorchCriterion.from_pytorch(lossFunc, [1, 2], torch.LongTensor([1]))
 
@@ -99,12 +92,13 @@ if __name__ == '__main__':
 
     classifier = NNClassifier(torchnet, torchcriterion, featureTransformer) \
         .setLearningRate(0.001) \
-        .setBatchSize(8) \
-        .setMaxEpoch(2) \
+        .setBatchSize(64) \
+        .setEndWhen(MaxIteration(10)) \
         .setFeaturesCol("image") \
         .setCachingSample(False) \
-        .setValidation(EveryEpoch(), validationDF, [Accuracy()], 8)
+        .setValidation(SeveralIteration(5), validationDF, [Accuracy()], 64)
 
+    # .setMaxEpoch(1) \
     catdogModel = classifier.fit(trainingDF)
 
     shift = udf(lambda p: p - 1, DoubleType())
@@ -117,4 +111,5 @@ if __name__ == '__main__':
     accuracy = correct * 1.0 / overall
 
     # expecting: accuracy > 96%
+    print(str(overall) + " " + str(correct) + "\n")
     print("Validation accuracy = %g " % accuracy)
