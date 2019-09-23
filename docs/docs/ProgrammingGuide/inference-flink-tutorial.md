@@ -4,21 +4,17 @@ Now, we will use an example to introduce how to use Analytics Zoo with Resnet50 
 
 There are three main sections in this tutorial.
 
-[Data](https://github.com/Le-Zheng/analytics-zoo/blob/flink_modinf/docs/docs/ProgrammingGuide/inference-flink-tutorial.md#data)
+[Data](#data)
 
-[Defining an Analytics Zoo InferenceModel](https://github.com/Le-Zheng/analytics-zoo/blob/flink_modinf/docs/docs/ProgrammingGuide/inference-flink-tutorial.md#Defining-an-Analytics-Zoo-InferenceModel)
+[Defining an Analytics Zoo InferenceModel](#Defining-an-Analytics-Zoo-InferenceModel)
 
-[Getting started the Flink program](https://github.com/Le-Zheng/analytics-zoo/blob/flink_modinf/docs/docs/ProgrammingGuide/inference-flink-tutorial.md#Getting-started-the-Flink-program)
+[Getting started the Flink program](#Getting-started-the-Flink-program)
 
 ### Data
 
 In this tutorial, we will use the **ImageNet** dataset. It has 1000 classes. The images in ImageNet are various sizes. Let us show some of the predicting images.
 
-
-
-![img](https://i.loli.net/2019/09/19/v4QyX3YxpBImLqJ.png)
-
-
+![img](https://i.loli.net/2019/09/21/Q9gCTVjzv3m5sFI.png)
 
 Let us load images from the image folder.
 
@@ -36,7 +32,7 @@ val inputs = fileList.map(file => {
 	# Three steps. The first step is reading each image. The second is preprocessing image. 
  	# At last, convert data to the required format.
 	# Read image to Array[byte]
-    val imageBytes = FileUtils.readFileToByteArray(file)
+	val imageBytes = FileUtils.readFileToByteArray(file)
 
 	# Apply methods from trait ImageProcessing.
 	# byteArrayToMat(Array[Byte]): convert Array[byte] to OpenCVMat.
@@ -51,7 +47,7 @@ val inputs = fileList.map(file => {
 	
 	# Converet Aarry to [JList[JList[JTensor]]]
 	val input = new JTensor(imageArray, Array(1, 224, 224, 3))
-    List(util.Arrays.asList(input)).asJava
+	List(util.Arrays.asList(input)).asJava
     })
 ```
 
@@ -123,10 +119,15 @@ extends InferenceModel(concurrentNum) with Serializable {
 We will do the following steps in order:
 
 1. Obtain an execution environment
+
 2. Create and transform DataStreams
+
 3. Specify Transformation Functions
+
 4. Trigger the program execution
+
 5. Collect final results
+
 6. Run the example on a local machine or a cluster
 
 #### 1. Obtain an execution environment
@@ -200,20 +201,24 @@ results.foreach((i) => println(labels(i)))
 Out:
 
 ```
-safe
 matchstick
 typewriter keyboard
 malamute, malemute, Alaskan malamute
+daisy
+espresso maker
 whiskey jug
+cardoon
+seat belt, seatbelt
+lens cap, lens cover
 ```
 
-At this step, we complete the whole program. Let's start how to run the whole example.
+At this step, we complete the whole program. Let's start how to run the example on a cluster.
 
 #### 6. Run the example on a local machine or a cluster
 
 - ##### Build the project
 
-Build the project using Maven because we need the jar file for running on the cluster. Go to the root directory of your model inference flink project and execute the mvn clean package command, which prepares the jar file for your model inference flink program:
+Build the project using Maven because we need the jar file for running on the cluster. Go to the root directory of your inference flink project and execute the mvn clean package command, which prepares the jar file for your model inference flink program:
 
 ```
 mvn clean package
@@ -247,20 +252,24 @@ pip3 install numpy networkx tensorflow
 All are ready! Let's run the following command with arguments to submit the Flink program. Change parameter settings as you need.
 
 ```
-/path/to/your/FLINK_HOME/bin/flink run \
+/path/to/FLINK_HOME/bin/flink run \
     -m localhost:8081 -p 2 \
     -c YourImageClassificationStreaming  \
-    /path/to/your/model-inference-flink-project/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar  
+    /path/to/your-inference-flink-project/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar  
 ```
 
 The output of that command should look similar to this, if everything went according to plan.  It shows the prediction result.
 
 ```
-safe
 matchstick
 typewriter keyboard
 malamute, malemute, Alaskan malamute
+daisy
+espresso maker
 whiskey jug
+cardoon
+seat belt, seatbelt
+lens cap, lens cover
 Program execution finished
 Job with JobID f0bedd54bd81db640833c283a9283289 has finished.
 Job Runtime: 10830 ms
