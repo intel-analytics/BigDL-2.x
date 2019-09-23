@@ -59,28 +59,28 @@ After training, you should see something like this in the console:
 +--------------------+------------+-----+----------+
 |               image|        name|label|prediction|
 +--------------------+------------+-----+----------+
-|[file:/tmp/zoo/do...|cat.7028.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7208.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7244.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7329.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7434.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...| cat.744.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7489.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7511.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7653.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7770.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...|cat.7946.jpg|  1.0|       1.0|
-|[file:/tmp/zoo/do...| dog.706.jpg|  2.0|       2.0|
-|[file:/tmp/zoo/do...|dog.7239.jpg|  2.0|       2.0|
-|[file:/tmp/zoo/do...|dog.7318.jpg|  2.0|       2.0|
-|[file:/tmp/zoo/do...|dog.7386.jpg|  2.0|       2.0|
-|[file:/tmp/zoo/do...|dog.7412.jpg|  2.0|       2.0|
-|[file:/tmp/zoo/do...|dog.7742.jpg|  2.0|       2.0|
-|[file:/tmp/zoo/do...|dog.7761.jpg|  2.0|       2.0|
-|[file:/tmp/zoo/do...|dog.7842.jpg|  2.0|       2.0|
-|[file:/tmp/zoo/do...|dog.7866.jpg|  2.0|       2.0|
+|[hdfs://localhost...|cat.7122.jpg|  1.0|       1.0|
+|[hdfs://localhost...| cat.723.jpg|  1.0|       1.0|
+|[hdfs://localhost...|cat.7311.jpg|  1.0|       1.0|
+|[hdfs://localhost...|cat.7357.jpg|  1.0|       1.0|
+|[hdfs://localhost...|cat.7379.jpg|  1.0|       1.0|
+|[hdfs://localhost...|cat.7382.jpg|  1.0|       0.0|
+|[hdfs://localhost...|cat.7484.jpg|  1.0|       1.0|
+|[hdfs://localhost...|cat.7564.jpg|  1.0|       1.0|
+|[hdfs://localhost...|cat.7577.jpg|  1.0|       1.0|
+|[hdfs://localhost...|cat.7612.jpg|  1.0|       1.0|
+|[hdfs://localhost...|cat.7664.jpg|  1.0|       1.0|
+|[hdfs://localhost...|cat.7683.jpg|  1.0|       1.0|
+|[hdfs://localhost...|cat.7728.jpg|  1.0|       1.0|
+|[hdfs://localhost...|cat.7952.jpg|  1.0|       1.0|
+|[hdfs://localhost...|cat.7985.jpg|  1.0|       1.0|
+|[hdfs://localhost...|dog.7061.jpg|  0.0|       0.0|
+|[hdfs://localhost...|dog.7254.jpg|  0.0|       0.0|
+|[hdfs://localhost...|dog.7259.jpg|  0.0|       0.0|
+|[hdfs://localhost...| dog.730.jpg|  0.0|       0.0|
+|[hdfs://localhost...|dog.7391.jpg|  0.0|       0.0|
 +--------------------+------------+-----+----------+
 only showing top 20 rows
 
-
+Validation accuracy = 0.962441 
 ```
