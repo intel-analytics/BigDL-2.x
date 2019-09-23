@@ -80,8 +80,8 @@ object ImageClassificationStreaming {
     val results = DataStreamUtils.collect(resultStream.javaStream).asScala
 
     println("Printing result ...")
-    val lines = Source.fromFile("/path/to/your/labels").getLines.toList
-    results.foreach((i) => println(lines(i)))
+    val labels = Source.fromFile("/path/to/your/labels").getLines.toList
+    results.foreach((i) => println(labels(i)))
   }
 
 }
