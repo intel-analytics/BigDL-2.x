@@ -402,7 +402,7 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
    * which is cached when toDataSet() method is called and rdd is cached
    * TODO: modify this when BigDL fix this issue
    *
-   * @param dataSet Target DataSet to release
+   * @param dataSets Target DataSet to release
    */
   def releaseDataSets(dataSets: Array[DataSet[MiniBatch[T]]]): Unit = {
     for (ds <- dataSets) {
@@ -573,11 +573,11 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
   }
 
   /**
-    * Evaluate a model on FeatureSet.
-    *
-    * @param x Evaluation FeatureSet.
-    *
-    */
+   * Evaluate a model on FeatureSet.
+   *
+   * @param x Evaluation FeatureSet.
+   *
+   */
   def evaluate(x: FeatureSet[MiniBatch[T]]): Array[(ValidationResult, ValidationMethod[T])] = {
     require(this.vMethods != null, "Evaluation metrics haven't been set yet")
     x match {
@@ -596,6 +596,28 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
 
 
   def toModel(): Model[T]
+
+  /**
+    * Save model to keras2 h5 file. Only for inference
+    * @param filePath path to save model.
+    * @param python python path, need analytics-zoo and tensorflow installed.
+    */
+  def saveToKeras2[T: ClassTag](
+                                 filePath: String,
+                                 python: String = "python")(implicit ev: TensorNumeric[T]): Unit = {
+    Net.saveToKeras2[T](this, filePath, python)
+  }
+
+  /**
+    * Save model to tensorflow protobuf. Only for inference.
+    * @param dir directory to save model.
+    * @param python python path, need analytics-zoo and tensorflow installed.
+    */
+  def saveToTf[T: ClassTag](
+                             dir: String,
+                             python: String = "python")(implicit ev: TensorNumeric[T]): Unit = {
+    Net.saveToTf[T](this, dir, python)
+  }
 
   /**
    * Print out the summary information of an Analytics Zoo Keras Model.
