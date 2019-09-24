@@ -46,9 +46,10 @@ trait Ranker[T] {
     val result = x match {
       case distributed: DistributedTextSet =>
         val rdd = distributed.rdd
-        val modelBroad = ModelBroadcast[T]().broadcast(rdd.sparkContext, model.evaluate())
+        val modelBroad = ModelBroadcast[T]().broadcast(rdd.sparkContext, model)
         rdd.mapPartitions(partition => {
           val localModel = modelBroad.value()
+          localModel.evaluate()
           partition.map(feature => {
             val input = feature.getSample.feature()
             val output = localModel.forward(input).toTensor[T]
