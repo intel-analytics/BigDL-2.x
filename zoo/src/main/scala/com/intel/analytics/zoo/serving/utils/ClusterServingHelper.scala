@@ -109,16 +109,6 @@ class ClusterServingHelper extends Serializable {
   def loadModel[T: ClassTag]()
                             (implicit ev: TensorNumeric[T]) = {
 
-    //    val model = if (modelType == "caffe") {
-    //      val loadedModel = Module.loadCaffeModel[Float](params.defPath, params.weightPath)
-    //      ModelConvertor.convert[Float](
-    //        ModelConvertor.caffe2zoo(loadedModel), Boolean.box(false)).evaluate()
-    //    } else {
-    //      val loadedModel = Module.loadModule[Float](params.weightPath).quantize()
-    //      loadedModel.evaluate()
-    //    }
-
-
 //    var model: AbstractModule[Activity, Activity, Float] = null
     val rmodel = modelType match {
       case "caffe" => Net.loadCaffe[Float](defPath, weightPath)
@@ -159,48 +149,72 @@ class ClusterServingHelper extends Serializable {
       .config("spark.redis.port", redisPort)
       .getOrCreate()
   }
+
+  /**
+   * To check if there already exists detected defPath or weightPath
+   * @param defPath Boolean, true means need to check if it is not null
+   * @param weightPath Boolean, true means need to check if it is not null
+   */
+  def throwOneModelError(modelType: Boolean,
+                         defPath: Boolean, weightPath: Boolean) = {
+
+    if ((defPath && this.defPath != null) ||
+        weightPath && this.weightPath != null) {
+      throw new Error("Only one model is allowed to exist in " +
+        "model folder, please check your model folder to keep just" +
+        "one model in the directory")
+
+    }
+  }
+
   def parseModelType(location: String) = {
 
     import java.io.File
     val f = new File(location)
     val fileList = f.listFiles
 
-
     if (params.modelType == null) {
-
 
       for (file <- fileList) {
         val fName = file.getName
         val fPath = new File(location, fName).toString
         if (fName.endsWith("caffemodel")) {
+          throwOneModelError(true, false, true)
           weightPath = fPath
           modelType = "caffe"
         }
         else if (fName.endsWith("prototxt")) {
+          throwOneModelError(false, true, false)
           defPath = fPath
         }
         // ckpt seems not supported
         else if (fName.endsWith("pb")) {
+          throwOneModelError(true, false, true)
           weightPath = location
           modelType = "tensorflow"
         }
         else if (fName.endsWith("t7")) {
+          throwOneModelError(true, false, true)
           weightPath = fPath
           modelType = "torch"
         }
         else if (fName.endsWith("model")) {
+          throwOneModelError(true, false, true)
           weightPath = fPath
           modelType = "bigdl"
         }
         else if (fName.endsWith("keras")) {
+          throwOneModelError(true, false, true)
           weightPath = fPath
           modelType = "keras"
         }
         else if (fName.endsWith("bin")) {
+          throwOneModelError(true, false, true)
           weightPath = fPath
           modelType = "openvino"
         }
         else if (fName.endsWith("xml")) {
+          throwOneModelError(false, true, false)
           defPath = fPath
         }
 
