@@ -52,6 +52,9 @@ class GraphNet[T](graph: Graph[T])(implicit val tag: ClassTag[T], implicit val e
   // need to refer this object to make the register effective
   GraphNet
 
+  def getGraph(startNodes: ModuleNode[T]*): Graph[T] = {
+    labor
+  }
   private val labor = graph
   modules.append(labor)
 
