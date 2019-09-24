@@ -29,6 +29,8 @@ from zoo.pipeline.api.net.torch_net import TorchNet
 from zoo.pipeline.api.net.torch_criterion import TorchCriterion
 from zoo.common.nncontext import *
 
+from pyspark.ml.linalg import Vectors
+
 
 class TestPytorch(ZooTestCase):
 
@@ -418,7 +420,7 @@ class TestPytorch(ZooTestCase):
                 x = torch.sigmoid(self.dense2(x))
                 return x
 
-        df = spark.createDataFrame(
+        df = self.sqlContext.createDataFrame(
             [(Vectors.dense([2.0, 1.0]), 1.0),
              (Vectors.dense([1.0, 2.0]), 0.0),
              (Vectors.dense([2.0, 1.0]), 1.0),

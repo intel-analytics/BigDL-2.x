@@ -69,6 +69,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
   }
 
   override def evaluate(): this.type = {
+    nativeRef
     super.evaluate()
     if (!weights.isEmpty) {
       PytorchModel.updateWeightNative(nativeRef, weights.storage().array())
