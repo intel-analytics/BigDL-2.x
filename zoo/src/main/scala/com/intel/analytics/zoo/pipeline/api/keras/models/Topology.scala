@@ -333,6 +333,13 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
   }
 
   /**
+    * Convert FeatureSet to DataSet of MiniBatch.
+    */
+  private def toDataSet(x: FeatureSet[MiniBatch[T]]): DataSet[MiniBatch[T]] = {
+    if (x != null) x.toDataSet  else null
+  }
+
+  /**
    * Train a model for a fixed number of epochs on a DataSet.
    *
    * @param x Training dataset. If x is an instance of LocalDataSet, train in local mode.
@@ -487,6 +494,26 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
   }
 
   /**
+    * Train a model for a fixed number of epochs on FeatureSet.
+    *
+    * @param x Training FeatureSet.
+    * @param nbEpoch Number of epochs to train.
+    * @param validationData Validation FeatureSet, or null if validation is not configured.
+    */
+  def fit( x: FeatureSet[MiniBatch[T]],
+           nbEpoch: Int,
+           validationData: FeatureSet[MiniBatch[T]])(implicit ev: TensorNumeric[T]): Unit = {
+    val dataset = x.toDataSet
+    this.fit(dataset, nbEpoch, toDataSet(validationData))
+    dataset.toDistributed().unpersist()
+  }
+
+  def fit( x: FeatureSet[MiniBatch[T]],
+           nbEpoch: Int)(implicit ev: TensorNumeric[T]): Unit = {
+    this.fit(x, nbEpoch, null)
+  }
+
+  /**
    * Evaluate a model on given RDD.
    *
    * @param x Evaluation dataset, RDD of Sample.
@@ -545,30 +572,30 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
     }
   }
 
+  /**
+    * Evaluate a model on FeatureSet.
+    *
+    * @param x Evaluation FeatureSet.
+    *
+    */
+  def evaluate(x: FeatureSet[MiniBatch[T]]): Array[(ValidationResult, ValidationMethod[T])] = {
+    require(this.vMethods != null, "Evaluation metrics haven't been set yet")
+    x match {
+      case distributed: DistributedFeatureSet[MiniBatch[T]] =>
+        require(this.internalOptimizer != null &&
+          this.internalOptimizer.isInstanceOf[InternalDistriOptimizer[T]],
+          "internal distributed optimizer should exist")
+        val optimizer = this.internalOptimizer.asInstanceOf[InternalDistriOptimizer[T]]
+        val validationMap = optimizer.evaluate(distributed, this.vMethods)
+        val reverseValidationMap = for ((k,v) <- validationMap) yield (v, k)
+        reverseValidationMap.toArray
+      case _ => throw new IllegalArgumentException("Unsupported FeatureSet type.")
+        }
+
+    }
+
+
   def toModel(): Model[T]
-
-
-  /**
-   * Save model to keras2 h5 file. Only for inference
-   * @param filePath path to save model.
-   * @param python python path, need analytics-zoo and tensorflow installed.
-   */
-  def saveToKeras2[T: ClassTag](
-        filePath: String,
-        python: String = "python")(implicit ev: TensorNumeric[T]): Unit = {
-    Net.saveToKeras2[T](this, filePath, python)
-  }
-
-  /**
-   * Save model to tensorflow protobuf. Only for inference.
-   * @param dir directory to save model.
-   * @param python python path, need analytics-zoo and tensorflow installed.
-   */
-  def saveToTf[T: ClassTag](
-        dir: String,
-        python: String = "python")(implicit ev: TensorNumeric[T]): Unit = {
-    Net.saveToTf[T](this, dir, python)
-  }
 
   /**
    * Print out the summary information of an Analytics Zoo Keras Model.
@@ -914,19 +941,6 @@ class Sequential[T: ClassTag] private ()
       positions: Array[Double] = Array(.33, .55, .67, 1)): Unit = {
     val graph = this.toModel()
     graph.summary(lineLength, positions)
-  }
-
-  override private[zoo] def getKerasWeights(): Array[Tensor[Float]] = {
-    val weights = new ArrayBuffer[Tensor[Float]]()
-    modules(0).asInstanceOf[TSequential[T]].modules.foreach(m => {
-      val params = m.asInstanceOf[Net].getKerasWeights()
-      if (params != null) {
-        params.foreach{p =>
-          weights += p
-        }
-      }
-    })
-    weights.toArray
   }
 }
 
