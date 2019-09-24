@@ -58,7 +58,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     if (weights == null) {
       val w = PytorchModel.getWeightNative(ref).clone()
       weights = Tensor(w, Array(w.length))
-    } else {
+    } else if (!weights.isEmpty) {
       PytorchModel.updateWeightNative(ref, weights.storage().array())
     }
 
@@ -66,6 +66,14 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
       gradients = Tensor()
     }
     ref
+  }
+
+  override def evaluate(): this.type = {
+    super.evaluate()
+    if (!weights.isEmpty) {
+      PytorchModel.updateWeightNative(nativeRef, weights.storage().array())
+    }
+    this
   }
 
   override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
