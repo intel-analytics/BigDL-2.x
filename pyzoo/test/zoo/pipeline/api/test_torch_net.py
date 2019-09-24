@@ -27,6 +27,7 @@ import pytest
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.pipeline.api.net.torch_net import TorchNet
 from zoo.pipeline.api.net.torch_criterion import TorchCriterion
+from zoo.common.nncontext import *
 
 
 class TestPytorch(ZooTestCase):
