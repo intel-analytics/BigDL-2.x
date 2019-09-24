@@ -23,7 +23,7 @@ MASTER=...
 model=... // model path. Local file system/HDFS/Amazon S3 are supported
 index_path=... // word index path. Local file system/HDFS/Amazon S3 are supported
 port=... // The same port with nc command
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 2g \
     --executor-memory 5g \

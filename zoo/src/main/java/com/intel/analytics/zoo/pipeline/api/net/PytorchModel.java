@@ -92,16 +92,17 @@ class PytorchModel {
 
     static native long loadLossNative(String lossPath);
 
-    static native JTensor modelForwardNative(
-            long nativeRef, boolean isTraining, float[] storage, int offset, int[] shape);
+    static native JTensor[] modelForwardNative(
+            long nativeRef, boolean isTraining, float[][] storage, int[] offset, int[][] shape);
 
-    static native JTensor modelBackwardNative(long nativeRef, float[] storage, int offset, int[] shape);
+    static native JTensor[] modelBackwardNative(
+            long nativeRef, float[][] storage, int[] offset, int[][] shape);
 
     static native JTensor lossForwardNative(
-            long nativeRef, float[] input_storage, int input_offset, int[] input_shape,
-            float[] label_storage, int label_offset, int[] label_shape);
+            long nativeRef, float[][] input_storage, int[] input_offset, int[][] input_shape,
+            float[][] label_storage, int[] label_offset, int[][] label_shape);
 
-    static native JTensor lossBackwardNative(long nativeRef);
+    static native JTensor[] lossBackwardNative(long nativeRef);
 
     static native float[] getGradientNative(long nativeRef);
 
