@@ -91,7 +91,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
       PytorchModel.updateWeightNative(this.nativeRef, weights.storage().array())
     }
 
-    val result = PytorchModel.modelForwardNative(nativeRef, this.isTraining(), sto1, off1, shape1)
+    val result = PytorchModelWrapper.modelForwardNative(nativeRef, this.isTraining(), sto1, off1, shape1)
     if (result.length == 1) {
       val resultTensor = Tensor(result(0).getData, result(0).getShape)
       if (output == null) {
@@ -115,7 +115,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
 
     val (sto1, off1, shape1) = TorchCriterion.extract(gradOutputTable)
 
-    val result = PytorchModel.modelBackwardNative(nativeRef, sto1, off1, shape1)
+    val result = PytorchModelWrapper.modelBackwardNative(nativeRef, sto1, off1, shape1)
     // update gradients
     gradients.resizeAs(weights)
     val g = PytorchModel.getGradientNative(this.nativeRef)
