@@ -96,7 +96,7 @@ class TorchNet(Layer):
         '''
         save the model as a torch script module
         '''
-        pythonBigDL_method_name = "TorchNetSavePytorch"
+        pythonBigDL_method_name = "torchNetSavePytorch"
         callBigDlFunc(self.bigdl_type, pythonBigDL_method_name, self.value, path)
         return
 
