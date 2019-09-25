@@ -69,6 +69,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
   }
 
   override def evaluate(): this.type = {
+    nativeRef
     super.evaluate()
     if (!weights.isEmpty) {
       PytorchModel.updateWeightNative(nativeRef, weights.storage().array())
@@ -143,6 +144,14 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
   override def finalize(): Unit = {
     super.finalize()
     PytorchModel.releaseModelNative(nativeRef)
+  }
+
+  /**
+   * export the model to path as a torch script module.
+   */
+  def savePytorch(path : String, overWrite: Boolean = false): Unit = {
+    PytorchModel.updateWeightNative(this.nativeRef, weights.storage().array())
+    PytorchModel.saveModelNative(nativeRef, path)
   }
 }
 
