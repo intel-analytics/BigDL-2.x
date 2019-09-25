@@ -52,7 +52,8 @@ class TorchCriterion private(private val lossHolder: TorchModelHolder)
     val (sto1, off1, shape1) = TorchCriterion.extract(inputTabel)
     val (sto2, off2, shape2) = TorchCriterion.extract(targetTable)
 
-    val result = PytorchModelWrapper.lossForwardNative(nativeRef, sto1, off1, shape1, sto2, off2, shape2)
+    val result = PytorchModelWrapper.lossForwardNative(nativeRef, sto1, off1,
+      shape1, sto2, off2, shape2)
     Tensor(result.getData, result.getShape).mean()
   }
 

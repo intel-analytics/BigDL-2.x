@@ -91,7 +91,8 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
       PytorchModel.updateWeightNative(this.nativeRef, weights.storage().array())
     }
 
-    val result = PytorchModelWrapper.modelForwardNative(nativeRef, this.isTraining(), sto1, off1, shape1)
+    val result = PytorchModelWrapper.modelForwardNative(nativeRef,
+      this.isTraining(), sto1, off1, shape1)
     if (result.length == 1) {
       val resultTensor = Tensor(result(0).getData, result(0).getShape)
       if (output == null) {
