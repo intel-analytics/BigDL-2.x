@@ -156,15 +156,10 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
 }
 
 object TorchNet {
-
-  PytorchModel.isLoaded
-  loadPytorchNatives() // load once per JVM
-
   private val modelBytesRegistry = new RegistryMap[Array[Byte]]()
 
   @transient
   private lazy val inDriver = NetUtils.isDriver
-
 
   class TorchModelHolder(@transient var torchBytes: Array[Byte], private var id: String)
     extends SerializationHolder {
@@ -216,27 +211,6 @@ object TorchNet {
     // TODO: add support for HDFS path
     val modelbytes = Files.readAllBytes(Paths.get(modelPath))
     new TorchNet(new TorchModelHolder(modelbytes, modelPath))
-  }
-
-  // extract libs from zoo jar file
-  private def loadPytorchNatives(): Unit = {
-    loadNativelib("pytorch/libpytorch-engine.so")
-  }
-
-  private def loadNativelib(path: String): Unit = {
-    val inputStream = TorchNet.getClass.getResourceAsStream(s"/${path}")
-    val file = File.createTempFile("PytorchLoader", "tmp")
-    val src = Channels.newChannel(inputStream)
-    val dest = new FileOutputStream(file).getChannel
-    dest.transferFrom(src, 0, Long.MaxValue)
-    dest.close()
-    src.close()
-    val filePath = file.getAbsolutePath
-    try {
-      System.load(filePath)
-    } finally {
-      file.delete()
-    }
   }
 
   private[net] def loadPytorchModel(bytes: Array[Byte]): Long = {
