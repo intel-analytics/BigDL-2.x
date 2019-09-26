@@ -5,9 +5,10 @@ Analytics Zoo Cluster Serving is an easy to run service which you can leverage A
 Currently the queue we support includes: Redis
 
 ## Start the Serving
+
+Currently ClusterServing supports running with docker.
 ### Run with docker
 
-We suggest you to run Analytics Zoo Cluster Serving with Docker, it is the simplest way to run.
 #### Prerequisites
 To run with docker, what you need is
 
@@ -15,14 +16,16 @@ To run with docker, what you need is
 * your model (stored in `model:path:` in `config.yaml`)
 
 #### Steps to run
-1) open `config.yaml`, set `model:path:` to `/path/to/your/model/directory` (make sure there is only one model in your directory to avoid ambiguity), and set other parameters according to the instructions if you need.
+1) Open `config.yaml`, set `model:path:` to `/path/to/your/model/directory` (make sure there is only one model in your directory to avoid ambiguity), and set other parameters according to the instructions if you need.
 
-2) run `bash docker-run.sh`.
+2) Run `bash docker-build.sh` to build docker image to local (Or get pre-built docker image from our support).
+
+3) Run `bash docker-run.sh`.
 
 ## Data I/O
 
 ### Push and Get data to/from queue
-You can call methods in `pyzoo/zoo/serving/api` to put the data into queue
+You can call methods in `pyzoo/zoo/serving/api` to put the data into queue.
 
 Once the data is inqueued, Analytics Zoo Cluster Serving would dequeue the data from queue automatically, and do inference based on your model, and write result according to your config.
 
@@ -41,4 +44,4 @@ Currently Analytics Zoo Cluster Serving supports following model types, followin
 ## FAQ
 * Java heap space - If Cluster Serving ends by raising error `Java heap space`, try increase spark driver memory in `spark:driver_memory` of `config.yaml`.
 * OutOfMemory (TensorFlow model) - If Cluster Serving (when running TensorFlow model) ends by raising error `OutOfMemory`, try reduce core number in `spark:master:local[core_number]` (in local mode) and `spark:executor_cores` (in distributed mode). The reason why TensorFlow needs different configuration is that the model preparing step is different from others.
-* core dumped (OpenVINO model) - If Cluster Serving (when running OpenVINO model) ends by `core dumped`, try another machine may help (The error cause has not been confirmed yet)
+* core dumped (OpenVINO model) - If Cluster Serving (when running OpenVINO model) ends by `core dumped`, try another machine may help (The error cause has not been confirmed yet).
