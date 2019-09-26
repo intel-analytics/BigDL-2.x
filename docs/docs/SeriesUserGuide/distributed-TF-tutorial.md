@@ -2,7 +2,18 @@
 
 <img src="https://pytorch.org/tutorials/_static/images/pytorch-colab.svg" width="28" height="28" alt="图片名称" align=center>[Run in Google Colab](https://colab.research.google.com/drive/1fcxowPoT25-zP6bD34wVjzBNxm2GIu5G)        <img src="https://pytorch.org/tutorials/_static/images/pytorch-github.svg" width="28" height="28" alt="图片名称" align=center> [View source on Github](https://github.com/intel-analytics/zoo-tutorials/blob/master/tensorflow/notebooks/basic_classification.ipynb)
 
-[TOC]
+- [1. Load and Preprocess the data](#1-load-and-preprocess-the-data)
+      - [Import the Fashion MNIST dataset](#import-the-fashion-mnist-dataset)
+      - [Explore the data](#explore-the-data)
+      - [Preprocess the data](#preprocess-the-data)
+- [2. Build the model](#2-build-the-model)
+      - [Setup the layers](#setup-the-layers)
+      - [Compile the model](#compile-the-model)
+- [3. Train the model](#3-train-the-model)
+- [4. Evaluate accuracy](#4-evaluate-accuracy)
+- [5. Make predictions](#5-make-predictions)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
 This guide trains a neural network model to classify images of clothing, like sneakers and shirts. It's okay if you don't understand all the details, this is a fast-paced overview of a complete TensorFlow program with the details explained as we go.
 
