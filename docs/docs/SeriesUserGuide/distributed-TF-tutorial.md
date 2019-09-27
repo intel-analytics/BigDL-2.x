@@ -1,27 +1,27 @@
 # Train your first neural network: basic classification with `tf.keras` and TFPark
 
-<img src="https://pytorch.org/tutorials/_static/images/pytorch-colab.svg" width="28" height="28" alt="图片名称" align=center>[Run in Google Colab](https://colab.research.google.com/drive/1fcxowPoT25-zP6bD34wVjzBNxm2GIu5G)        <img src="https://pytorch.org/tutorials/_static/images/pytorch-github.svg" width="28" height="28" alt="图片名称" align=center> [View source on Github](https://github.com/intel-analytics/zoo-tutorials/blob/master/tensorflow/notebooks/basic_classification.ipynb)
+<img src="https://pytorch.org/tutorials/_static/images/pytorch-colab.svg" width="28" height="28" alt="" align=center>[Run in Google Colab](https://colab.research.google.com/drive/1fcxowPoT25-zP6bD34wVjzBNxm2GIu5G)                  <img src="https://pytorch.org/tutorials/_static/images/pytorch-github.svg" width="28" height="28" alt="" align=center> [View source on Github](https://github.com/intel-analytics/zoo-tutorials/blob/master/tensorflow/notebooks/basic_classification.ipynb)
 
-- [1. Load and Preprocess the data](#1-load-and-preprocess-the-data)
-      - [Import the Fashion MNIST dataset](#import-the-fashion-mnist-dataset)
-      - [Explore the data](#explore-the-data)
-      - [Preprocess the data](#preprocess-the-data)
-- [2. Build the model](#2-build-the-model)
-      - [Setup the layers](#setup-the-layers)
-      - [Compile the model](#compile-the-model)
-- [3. Train the model](#3-train-the-model)
-- [4. Evaluate accuracy](#4-evaluate-accuracy)
-- [5. Make predictions](#5-make-predictions)
+### Overview
 
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+- [Load and Preprocess the data](#load-and-preprocess-the-data)
+  - [Import the Fashion MNIST dataset](#import-the-fashion-mnist-dataset)
+  - [Explore the data](#explore-the-data)
+  - [Preprocess the data](#preprocess-the-data)
+- [Build the model](#build-the-model)
+  - [Setup the layers](#setup-the-layers)
+  - [Compile the model](#compile-the-model)
+- [Train the model](#train-the-model)
+- [Evaluate accuracy](#evaluate-accuracy)
+- [Make predictions](#make-predictions)
 
 This guide trains a neural network model to classify images of clothing, like sneakers and shirts. It's okay if you don't understand all the details, this is a fast-paced overview of a complete TensorFlow program with the details explained as we go.
 
 This guide uses [tf.keras](https://www.tensorflow.org/guide/keras), a high-level API to build and train models in TensorFlow.
 
-## 1. Load and Preprocess the data
+## Load and Preprocess the data
 
-##### Import the Fashion MNIST dataset
+### _Import the Fashion MNIST dataset_
 
 This guide uses the [Fashion MNIST](https://github.com/zalandoresearch/fashion-mnist) dataset which contains 70,000 grayscale images in 10 categories. The images show individual articles of clothing at low resolution (28 by 28 pixels), as seen here:
 
@@ -65,7 +65,7 @@ Loading the dataset returns four NumPy arrays:
 The images are 28x28 NumPy arrays, with pixel values ranging between 0 and 255. The *labels* are an array of integers, ranging from 0 to 9. These correspond to the *class* of clothing the image represents:
 
 | Label | Class       |
-| ----- | ----------- |
+| :---- | ----------- |
 | 0     | T-shirt/top |
 | 1     | Trouser     |
 | 2     | Pullover    |
@@ -84,7 +84,7 @@ class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
                'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
 ```
 
-##### Explore the data
+### _Explore the data_
 
 Let's explore the format of the dataset before training the model. The following shows there are 60,000 images in the training set, with each image represented as 28 x 28 pixels:
 
@@ -124,7 +124,7 @@ Out:
 (10000, 28, 28)
 ```
 
-##### Preprocess the data
+### _Preprocess the data_
 
 The data must be preprocessed before training the network. If you inspect the first image in the training set, you will see that the pixel values fall in the range of 0 to 255:
 
@@ -166,7 +166,7 @@ plt.show()
 
 Building the neural network requires configuring the layers of the model, then compiling the model.
 
-##### Setup the layers
+### _Setup the layers_
 
 The basic building block of a neural network is the *layer*. Layers extract representations from the data fed into them. And, hopefully, these representations are more meaningful for the problem at hand.
 
@@ -184,7 +184,7 @@ The first layer in this network, `tf.keras.layers.Flatten`, transforms the forma
 
 After the pixels are flattened, the network consists of a sequence of two `tf.keras.layers.Dense` layers. These are densely-connected, or fully-connected, neural layers. The first `Dense` layer has 128 nodes (or neurons). The second (and last) layer is a 10-node *softmax* layer—this returns an array of 10 probability scores that sum to 1. Each node contains a score that indicates the probability that the current image belongs to one of the 10 classes.
 
-##### Compile the model
+### _Compile the model_
 
 Before the model is ready for training, it needs a few more settings. These are added during the model's *compile* step:
 
@@ -498,5 +498,3 @@ Out:
 ```
 
 And, as before, the model predicts a label of 9.
-
-
