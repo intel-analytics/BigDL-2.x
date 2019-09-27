@@ -455,5 +455,50 @@ class TestPytorch(ZooTestCase):
                 if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
                     raise  # re-raise exception
 
+    def test_model_save_load_nnframe(self):
+        class SimpleTorchModel(nn.Module):
+            def __init__(self):
+                super(SimpleTorchModel, self).__init__()
+                self.dense1 = nn.Linear(2, 4)
+                self.dense2 = nn.Linear(4, 1)
+
+            def forward(self, x):
+                x = self.dense1(x)
+                x = torch.sigmoid(self.dense2(x))
+                return x
+
+        df = self.sqlContext.createDataFrame(
+            [(Vectors.dense([2.0, 1.0]), 1.0),
+             (Vectors.dense([1.0, 2.0]), 0.0),
+             (Vectors.dense([2.0, 1.0]), 1.0),
+             (Vectors.dense([1.0, 2.0]), 0.0)],
+            ["features", "label"])
+
+        torch_model = SimpleTorchModel()
+        torch_criterion = nn.MSELoss()
+
+        az_model = TorchNet.from_pytorch(torch_model, [1, 2])
+        az_criterion = TorchCriterion.from_pytorch(torch_criterion, [1, 1], [1, 1])
+        estimator = NNEstimator(az_model, az_criterion) \
+            .setBatchSize(4) \
+            .setLearningRate(0.01) \
+            .setMaxEpoch(10)
+
+        nnModel = estimator.fit(df)
+        res = nnModel.transform(df)
+        try:
+            tmp_dir = tempfile.mkdtemp()
+            modelPath = os.path.join(tmp_dir, "model")
+            nnModel.save(modelPath)
+            loaded = NNModel.load(modelPath)
+            resDF = loaded.transform(res)
+            assert resDF.filter("prediction==loaded").count() == resDF.count()
+        finally:
+            try:
+                shutil.rmtree(tmp_dir)  # delete directory
+            except OSError as exc:
+                if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
+                    raise  # re-raise exception
+
 if __name__ == "__main__":
     pytest.main([__file__])
