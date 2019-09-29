@@ -52,13 +52,14 @@ class TorchCriterion private(private val lossHolder: TorchModelHolder)
     val (sto1, off1, shape1) = TorchCriterion.extract(inputTabel)
     val (sto2, off2, shape2) = TorchCriterion.extract(targetTable)
 
-    val result = PytorchModel.lossForwardNative(nativeRef, sto1, off1, shape1, sto2, off2, shape2)
+    val result = PytorchModelWrapper.lossForwardNative(nativeRef, sto1, off1,
+      shape1, sto2, off2, shape2)
     Tensor(result.getData, result.getShape).mean()
   }
 
   override def updateGradInput(input: Activity, target: Activity): Activity = {
 
-    val result = PytorchModel.lossBackwardNative(nativeRef)
+    val result = PytorchModelWrapper.lossBackwardNative(nativeRef)
     if (result.length == 1) {
       val resultTensor = Tensor(result(0).getData, result(0).getShape)
       if (gradInput == null) {
