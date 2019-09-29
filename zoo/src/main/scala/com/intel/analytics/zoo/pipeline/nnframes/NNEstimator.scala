@@ -851,6 +851,8 @@ object NNModel extends MLReadable[NNModel[_]] {
           case _ =>
             throw new Exception("Only support float and double for now")
         }
+      case _ =>
+        throw new IllegalArgumentException(s"unsupported modelType: $modelType")
     }
 
     val featurePreprocessing =

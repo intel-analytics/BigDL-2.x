@@ -485,14 +485,12 @@ class TestPytorch(ZooTestCase):
             .setMaxEpoch(10)
 
         nnModel = estimator.fit(df)
-        res = nnModel.transform(df)
         try:
             tmp_dir = tempfile.mkdtemp()
             modelPath = os.path.join(tmp_dir, "model")
             nnModel.save(modelPath)
             loaded = NNModel.load(modelPath)
-            resDF = loaded.transform(res)
-            assert resDF.filter("prediction==loaded").count() == resDF.count()
+            resDF = loaded.transform(df)
         finally:
             try:
                 shutil.rmtree(tmp_dir)  # delete directory
