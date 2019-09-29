@@ -1,6 +1,6 @@
 # Train your first neural network: basic classification with `tf.keras` and TFPark
 
-<img src="https://i.loli.net/2019/09/29/YLn5EVvemRHSaUZ.jpg" width="39" height="20" alt="" align=center>[Run in Google Colab](https://colab.research.google.com/drive/1fcxowPoT25-zP6bD34wVjzBNxm2GIu5G)                  <img src="https://i.loli.net/2019/09/29/bzk5NrSERhpsXQi.png" width="34" height="23" alt="" align=center> [View source on Github](https://github.com/intel-analytics/zoo-tutorials/blob/master/tensorflow/notebooks/basic_classification.ipynb)
+<img src="https://i.loli.net/2019/09/29/YLn5EVvemRHSaUZ.jpg" width="34" height="19" alt="" align=center>[Run in Google Colab](https://colab.research.google.com/drive/1fcxowPoT25-zP6bD34wVjzBNxm2GIu5G)                  <img src="https://i.loli.net/2019/09/29/bzk5NrSERhpsXQi.png" width="29" height="24" alt="" align=center> [View source on Github](https://github.com/intel-analytics/zoo-tutorials/blob/master/tensorflow/notebooks/basic_classification.ipynb)
 
 ### Overview
 
