@@ -1,6 +1,6 @@
 # Train your first neural network: basic classification with `tf.keras` and TFPark
 
-<img src="https://pytorch.org/tutorials/_static/images/pytorch-colab.svg" width="28" height="28" alt="" align=center>[Run in Google Colab](https://colab.research.google.com/drive/1fcxowPoT25-zP6bD34wVjzBNxm2GIu5G)                  <img src="https://pytorch.org/tutorials/_static/images/pytorch-github.svg" width="28" height="28" alt="" align=center> [View source on Github](https://github.com/intel-analytics/zoo-tutorials/blob/master/tensorflow/notebooks/basic_classification.ipynb)
+<img src="https://i.loli.net/2019/09/29/YLn5EVvemRHSaUZ.jpg" width="39" height="20" alt="" align=center>[Run in Google Colab](https://colab.research.google.com/drive/1fcxowPoT25-zP6bD34wVjzBNxm2GIu5G)                  <img src="https://i.loli.net/2019/09/29/bzk5NrSERhpsXQi.png" width="34" height="23" alt="" align=center> [View source on Github](https://github.com/intel-analytics/zoo-tutorials/blob/master/tensorflow/notebooks/basic_classification.ipynb)
 
 ### Overview
 
@@ -35,7 +35,7 @@ This guide uses Fashion MNIST for variety, and because it's a slightly more chal
 
 We will use 60,000 images to train the network and 10,000 images to evaluate how accurately the network learned to classify images. You can access the Fashion MNIST directly from TensorFlow, just import and load the data:
 
-```
+```python
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # TensorFlow and tf.keras
@@ -51,7 +51,7 @@ import matplotlib.pyplot as plt
 # print(tf.__version__)
 ```
 
-```
+```python
 fashion_mnist = keras.datasets.fashion_mnist
 
 (train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
@@ -79,7 +79,7 @@ The images are 28x28 NumPy arrays, with pixel values ranging between 0 and 255. 
 
 Each image is mapped to a single label. Since the *class names* are not included with the dataset, store them here to use later when plotting the images:
 
-```
+```python
 class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
                'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
 ```
@@ -88,7 +88,7 @@ class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
 
 Let's explore the format of the dataset before training the model. The following shows there are 60,000 images in the training set, with each image represented as 28 x 28 pixels:
 
-```
+```python
 train_images.shape
 ```
 
@@ -100,7 +100,7 @@ Out:
 
 Likewise, there are 60,000 labels in the training set, and each label is an integer between 0 and 9:
 
-```
+```python
 print(len(train_labels))
 print(train_labels)
 ```
@@ -114,7 +114,7 @@ Out:
 
 There are 10,000 images in the test set. Again, each image is represented as 28 x 28 pixels:
 
-```
+```python
 test_images.shape
 ```
 
@@ -128,7 +128,7 @@ Out:
 
 The data must be preprocessed before training the network. If you inspect the first image in the training set, you will see that the pixel values fall in the range of 0 to 255:
 
-```
+```python
 plt.figure()
 plt.imshow(train_images[0])
 plt.colorbar()
@@ -140,7 +140,7 @@ plt.show()
 
 We scale these values to a range of 0 to 1 before feeding to the neural network model. For this, we divide the values by 255. It's important that the *training set* and the *testing set* are preprocessed in the same way:
 
-```
+```python
 train_images = train_images / 255.0
 
 test_images = test_images / 255.0
@@ -148,7 +148,7 @@ test_images = test_images / 255.0
 
 Display the first 25 images from the *training set* and display the class name below each image. Verify that the data is in the correct format and we're ready to build and train the network.
 
-```
+```python
 plt.figure(figsize=(10,10))
 for i in range(25):
     plt.subplot(5,5,i+1)
@@ -172,7 +172,7 @@ The basic building block of a neural network is the *layer*. Layers extract repr
 
 Most of deep learning consists of chaining together simple layers. Most layers, like `tf.keras.layers.Dense`, have parameters that are learned during training.
 
-```
+```python
 model = keras.Sequential([
     keras.layers.Flatten(input_shape=(28, 28)),
     keras.layers.Dense(128, activation=tf.nn.relu),
@@ -192,7 +192,7 @@ Before the model is ready for training, it needs a few more settings. These are 
 - *Optimizer* —This is how the model is updated based on the data it sees and its loss function.
 - *Metrics* —Used to monitor the training and testing steps. The following example uses *accuracy*, the fraction of the images that are correctly classified.
 
-```
+```python
 model.compile(optimizer='adam',
               loss='sparse_categorical_crossentropy',
               metrics=['accuracy'])
@@ -202,14 +202,14 @@ Now to support distributed training, evaluation and prediction, we need to wrap 
 
 Prepare environment:
 
-```
+```python
 # set Spark diver memory
 %env SPARK_DRIVER_MEMORY=4g
 
 # Install jdk8
 !apt-get install openjdk-8-jdk-headless -qq > /dev/null
 
-# Set jdk environment path which enables you to run Pyspark in your Colab environment. 
+# Set jdk environment path which enables you to run Pyspark in your Colab environment.
 import os
 os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-8-openjdk-amd64"
 
@@ -217,7 +217,7 @@ os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-8-openjdk-amd64"
 !pip install analytics-zoo==0.6.0.dev6
 ```
 
-```
+```python
 from zoo.tfpark import KerasModel, TFDataset
 from zoo import init_nncontext
 # set up enviroment
@@ -244,7 +244,7 @@ Training the neural network model requires the following steps:
 
 To start training, call the `model.fit` method—the model is "fit" to the training data:
 
-```
+```python
 dataset = TFDataset.from_ndarrays((train_images, train_labels),
                                  batch_size=160,
                                  val_tensors=(test_images, test_labels))
@@ -282,7 +282,7 @@ As the model trains, the loss and accuracy metrics are displayed. This model rea
 
 Next, compare how the model performs on the test dataset:
 
-```
+```python
 test_loss, test_acc = model.evaluate(test_images, test_labels, batch_per_thread=280, distributed=True)
 
 print('Test accuracy:', test_acc)
@@ -304,7 +304,7 @@ Test accuracy: 0.8608999848365784
 
 With the model trained, we can use it to make predictions about some images.
 
-```
+```python
 predictions = model.predict(test_images, batch_per_thread=280, distributed=True)
 ```
 
@@ -318,7 +318,7 @@ creating: createTFNet
 
 Here, the model has predicted the label for each image in the testing set. Let's take a look at the first prediction:
 
-```
+```python
 predictions[0]
 ```
 
@@ -332,7 +332,7 @@ array([5.0464441e-06, 2.8245449e-08, 3.7241246e-06, 1.3102062e-06,
 
 A prediction is an array of 10 numbers. These describe the "confidence" of the model that the image corresponds to each of the 10 different articles of clothing. We can see which label has the highest confidence value:
 
-```
+```python
 np.argmax(predictions[0])
 ```
 
@@ -344,7 +344,7 @@ Out:
 
 So the model is most confident that this image is an ankle boot, or `class_names[9]`. And we can check the test label to see this is correct:
 
-```
+```python
 test_labels[0]
 ```
 
@@ -356,21 +356,21 @@ Out:
 
 We can graph this to look at the full set of 10 class predictions
 
-```
+```python
 def plot_image(i, predictions_array, true_label, img):
   predictions_array, true_label, img = predictions_array[i], true_label[i], img[i]
   plt.grid(False)
   plt.xticks([])
   plt.yticks([])
-  
+
   plt.imshow(img, cmap=plt.cm.binary)
-  
+
   predicted_label = np.argmax(predictions_array)
   if predicted_label == true_label:
     color = 'blue'
   else:
     color = 'red'
-  
+
   plt.xlabel("{} {:2.0f}% ({})".format(class_names[predicted_label],
                                 100*np.max(predictions_array),
                                 class_names[true_label]),
@@ -384,14 +384,14 @@ def plot_value_array(i, predictions_array, true_label):
   thisplot = plt.bar(range(10), predictions_array, color="#777777")
   plt.ylim([0, 1])
   predicted_label = np.argmax(predictions_array)
-  
+
   thisplot[predicted_label].set_color('red')
   thisplot[true_label].set_color('blue')
 ```
 
 Let's look at the 0th image, predictions, and prediction array.
 
-```
+```python
 i = 0
 plt.figure(figsize=(6,3))
 plt.subplot(1,2,1)
@@ -405,7 +405,7 @@ plt.show()
 
 Let's look at the 12th image, predictions, and prediction array.
 
-```
+```python
 i = 12
 plt.figure(figsize=(6,3))
 plt.subplot(1,2,1)
@@ -419,7 +419,7 @@ plt.show()
 
 Let's plot several images with their predictions. Correct prediction labels are blue and incorrect prediction labels are red. The number gives the percent (out of 100) for the predicted label. Note that it can be wrong even when very confident.
 
-```
+```python
 # Plot the first X test images, their predicted label, and the true label
 # Color correct predictions in blue, incorrect predictions in red
 num_rows = 5
@@ -438,7 +438,7 @@ plt.show()
 
 Finally, use the trained model to make a prediction about a single image.
 
-```
+```python
 # Grab an image from the test dataset
 img = test_images[0]
 print(img.shape)
@@ -452,7 +452,7 @@ Out:
 
 `tf.keras` models are optimized to make predictions on a *batch*, or collection, of examples at once. So even though we're using a single image, we need to add it to a list:
 
-```
+```python
 # Add the image to a batch where it's the only member.
 img = (np.expand_dims(img,0))
 print(img.shape)
@@ -466,7 +466,7 @@ Out:
 
 Now predict the image:
 
-```
+```python
 predictions_single = model.predict(img)
 print(predictions_single)
 
@@ -486,7 +486,7 @@ Out:
 
 `model.predict` returns a list of lists, one for each image in the batch of data. Grab the predictions for our (only) image in the batch:
 
-```
+```python
 prediction_result = np.argmax(predictions_single[0])
 print(prediction_result)
 ```
