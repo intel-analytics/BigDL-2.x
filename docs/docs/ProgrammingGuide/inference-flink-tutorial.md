@@ -4,13 +4,13 @@ Now, we will use an example to introduce how to use Analytics Zoo with Resnet50 
 
 There are three main sections in this tutorial.
 
-[Data](#data)
+- [Loading data](#Loading-data)  
 
-[Defining an Analytics Zoo InferenceModel](#Defining-an-Analytics-Zoo-InferenceModel)
+- [Defining an Analytics Zoo InferenceModel](#Defining-an-Analytics-Zoo-InferenceModel)  
 
-[Getting started the Flink program](#Getting-started-the-Flink-program)
+- [Getting started the Flink program](#Getting-started-the-Flink-program)  
 
-### Data
+## Loading data
 
 In this tutorial, we will use the **ImageNet** dataset. It has 1000 classes. The images in ImageNet are various sizes. Let us show some of the predicting images.
 
@@ -18,7 +18,7 @@ In this tutorial, we will use the **ImageNet** dataset. It has 1000 classes. The
 
 Let us load images from the image folder.
 
-```
+```scala
 # Load images from folder, and hold images as a list
 val fileList = new File("/path/to/imageFolder").listFiles.toList
 ```
@@ -27,7 +27,7 @@ Then, you may pre-process data as you need. In this sample, `trait ImageProcessi
 
 The input image is supposed to be converted as below:
 
-```
+```scala
 val inputs = fileList.map(file => {
 	# Three steps. The first step is reading each image. The second is preprocessing image. 
  	# At last, convert data to the required format.
@@ -51,7 +51,7 @@ val inputs = fileList.map(file => {
     })
 ```
 
-### Defining an Analytics Zoo InferenceModel
+## Defining an Analytics Zoo InferenceModel
 
 Analytics Zoo provides Inference Model package for speeding up prediction with deep learning models of Analytics Zoo, Caffe, Tensorflow and OpenVINO Intermediate Representation(IR). You may see [here](https://github.com/intel-analytics/analytics-zoo/blob/b98d97a7eb2f8c88bcaa34ee135077da0aac091d/zoo/src/main/scala/com/intel/analytics/zoo/pipeline/inference/InferenceModel.scala) for more details of Inference Model APIs.
 
@@ -67,7 +67,7 @@ Before that, let's define the input parameters of the class:
 - **meanValues**- All input values coming from original network inputs will be divided by this value. The TensorFlow*-Slim Models were trained with normalized input data. Inference Engine classification sample does not perform normalization. It is necessary to pass mean and scale values to the Model Optimizer so they are embedded into the generated IR in order to get correct classification results.
 - **scale**-to be used for the input image per channel.
 
-```
+```scala
 # concurrentNum
 var concurrentNum = 1
 
@@ -103,7 +103,7 @@ inputStream.read(modelBytes)
 
 Let's define a `Resnet50InferenceModel` class to extend analytics zoo `InferenceModel`.
 
-```
+```scala
 class Resnet50InferenceModel(var concurrentNum: Int = 1, modelType: String, modelBytes: Array[Byte], inputShape: Array[Int], ifReverseInputChannels: Boolean, meanValues: Array[Float], scale: Float)
 extends InferenceModel(concurrentNum) with Serializable {
 
@@ -114,44 +114,39 @@ extends InferenceModel(concurrentNum) with Serializable {
 }
 ```
 
-### Getting started the Flink program
+## Getting started the Flink program
 
 We will do the following steps in order:
 
-1. Obtain an execution environment
+[1. Obtain an execution environment](#1-obtain-an-execution-environment)  
+[2. Create and transform DataStreams](#2-create-and-transform-datastreams)  
+[3. Specify transformation functions](#3-specify-transformation-functions)  
+[4. Trigger the program execution](#4-trigger-the-program-execution)    
+[5. Collect final results](#5-collect-final-results)   
+[6. Run the example on a local machine or a cluster](#6-run-the-example-on-a-local-machine-or-a-cluster)
 
-2. Create and transform DataStreams
-
-3. Specify Transformation Functions
-
-4. Trigger the program execution
-
-5. Collect final results
-
-6. Run the example on a local machine or a cluster
-
-#### 1. Obtain an execution environment
+### 1. Obtain an execution environment
 
 The first step is to create an execution environment. The `StreamExecutionEnvironment` is the context in which a streaming program is executed. `getExecutionEnvironment` is the typical function creating an environment to execute your program when the program is invoked on your local machine or a cluster.
 
-```
+```scala
 val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
 ```
 
-#### 2. Create and transform DataStreams
+### 2. Create and transform DataStreams
 
 `StreamExecutionEnvironment` provides several stream sources function. As we use `List` to hold the inputs, we can create a DataStream from a collection using `fromCollection()` method.
 
-```
+```scala
 # dataStream
-val dataStream: DataStream[Array[Float]] = env.fromCollection(inputs)
+val dataStream: DataStream[JList[JList[JTensor]]] = env.fromCollection(inputs)
 ```
 
-#### 3. Specify transformation functions
+### 3. Specify transformation functions
 
 Define a class extends `RichMapFunction`. Three main methods of rich function in this example are open, close and map. `open()` is initialization method. `close()` is called after the last call to the main working methods. `map()` is the user-defined function, mapping an element from the input data set and to one exact element, ie, `JList[JList[JTensor]]`.
 
-```
+```scala
 class ModelPredictionMapFunction(modelType: String, modelBytes: Array[Byte], inputShape: Array[Int], ifReverseInputChannels: Boolean, meanValues: Array[Float], scale: Float)
 extends RichMapFunction[JList[JList[JTensor]], Int] {
   var resnet50InferenceModel: Resnet50InferenceModel = _
@@ -177,23 +172,23 @@ extends RichMapFunction[JList[JList[JTensor]], Int] {
 
 Pass the `RichMapFunctionn` function to a `map` transformation.
 
-```
+```scala
 val resultStream = dataStream.map(new ModelPredictionMapFunction(modelType, modelBytes, inputShape, ifReverseInputChannels, meanValues, scale))
 ```
 
-#### 4. Trigger the program execution
+### 4. Trigger the program execution
 
 The program is actually executed only when calling `execute()` on the `StreamExecutionEnvironment`. Whether the program is executed locally or submitted on a cluster depends on the type of execution environment.
 
-```
+```scala
 env.execute()
 ```
 
-#### 5. Collect final results
+### 5. Collect final results
 
 Finally, create an iterator to iterate over the elements of the DataStream.
 
-```
+```scala
 val results = DataStreamUtils.collect(resultStream.javaStream).asScala
 results.foreach((i) => println(labels(i)))
 ```
@@ -214,13 +209,13 @@ lens cap, lens cover
 
 At this step, we complete the whole program. Let's start how to run the example on a cluster.
 
-#### 6. Run the example on a local machine or a cluster
+### 6. Run the example on a local machine or a cluster
 
 - ##### Build the project
 
 Build the project using Maven because we need the jar file for running on the cluster. Go to the root directory of your inference flink project and execute the mvn clean package command, which prepares the jar file for your model inference flink program:
 
-```
+```scala
 mvn clean package
 ```
 
@@ -230,13 +225,13 @@ The resulting jar file will be in the target subfolder: target/model-inference-f
 
 You may start a flink cluster if there is no running one. Go to the location where you installed fink :
 
-```
+```scala
 ./bin/start-cluster.sh
 ```
 
 Check the Dispatcher's web frontend at [http://localhost:8081](http://localhost:8081/) and make sure everything is up and running. To stop Flink when you're done type:
 
-```
+```scala
 ./bin/stop-cluster.sh
 ```
 
@@ -244,14 +239,14 @@ Check the Dispatcher's web frontend at [http://localhost:8081](http://localhost:
 
 Additionally, in this example, make sure the python requirements of OpenVINO for each flink node.
 
-```
+```shell
 sudo apt install python3-pip
 pip3 install numpy networkx tensorflow
 ```
 
 All are ready! Let's run the following command with arguments to submit the Flink program. Change parameter settings as you need.
 
-```
+```shell
 /path/to/FLINK_HOME/bin/flink run \
     -m localhost:8081 -p 2 \
     -c YourImageClassificationStreaming  \
