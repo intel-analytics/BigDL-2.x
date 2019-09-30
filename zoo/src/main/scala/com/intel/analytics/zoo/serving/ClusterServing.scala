@@ -23,20 +23,19 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.models.image.imageclassification.{LabelOutput, LabelReader}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{EngineRef, KerasUtils}
 import com.intel.analytics.zoo.serving.utils.Result
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ImageClassification, ObjectDetection}
 import com.intel.analytics.zoo.utils._
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.rdd.{RDD, ZippedPartitionsWithLocalityRDD}
+import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
-import org.apache.spark.sql.{DataFrame, SaveMode}
+import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import org.opencv.imgcodecs.Imgcodecs
 
 
 object ClusterServing {
-
-
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("akka").setLevel(Level.ERROR)
   Logger.getLogger("breeze").setLevel(Level.ERROR)
@@ -81,9 +80,8 @@ object ClusterServing {
         StructField("image", StringType)
       )))
       .load()
-    val query = images
-      .writeStream
-      .foreachBatch { (batchDF: DataFrame, batchId: Long) => {
+    val query = KerasUtils.invokeMethod(images.writeStream, "foreachBatch",
+      (batchDF: DataFrame, batchId: Long) => {
         logger.info("getting batch")
         val batchImage = batchDF.rdd.map { image =>
           val bytes = java.util
@@ -128,7 +126,7 @@ object ClusterServing {
         val latency = System.nanoTime() - start
         logger.info(s"Predict latency is ${latency / 1e6} ms")
       }
-    }.start()
+    ).asInstanceOf[DataStreamWriter[Row]].start()
     query.awaitTermination()
   }
 }
