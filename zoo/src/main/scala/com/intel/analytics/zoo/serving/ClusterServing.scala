@@ -16,16 +16,14 @@
 
 package com.intel.analytics.zoo.serving
 
-import com.intel.analytics.bigdl.dataset.SampleToMiniBatch
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.models.image.imageclassification.{LabelOutput, LabelReader}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{EngineRef, KerasUtils}
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.serving.utils.Result
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ImageClassification, ObjectDetection}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ImageClassification}
 
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.rdd.RDD
@@ -45,7 +43,7 @@ object ClusterServing {
   val logger: Logger = Logger.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
-
+    System.setProperty("bigdl.engineType", "mkldnn")
     val helper = new ClusterServingHelper()
     helper.init(args)
     val coreNumber = EngineRef.getCoreNumber()
