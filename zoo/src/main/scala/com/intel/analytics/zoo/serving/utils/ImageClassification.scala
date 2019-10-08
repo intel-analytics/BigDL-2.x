@@ -7,7 +7,6 @@ import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.feature.image.{DistributedImageSet, ImageSet}
 import com.intel.analytics.zoo.models.image.imageclassification.{LabelOutput, LabelReader}
 import com.intel.analytics.zoo.pipeline.inference.{FloatModel, InferenceModel}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Result}
 
 
 object ImageClassification {
