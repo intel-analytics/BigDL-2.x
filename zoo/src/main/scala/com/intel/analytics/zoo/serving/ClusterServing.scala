@@ -56,7 +56,8 @@ object ClusterServing {
 
     val spark = helper.getSparkSession()
 
-    logger.info(s"connected to redis ${spark.conf.get("spark.redis.host")}:${spark.conf.get("spark.redis.port")}")
+    logger.info(s"connected to redis " +
+      s"${spark.conf.get("spark.redis.host")}:${spark.conf.get("spark.redis.port")}")
     val batchSize = helper.batchSize
     val topN = helper.topN
 
