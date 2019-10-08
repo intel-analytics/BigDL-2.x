@@ -11,15 +11,13 @@ import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Result}
 
 
 object ImageClassification {
-  def getResult(img: ImageSet, model: InferenceModel, loader: ClusterServingHelper) = {
+  def getResult(img: ImageSet, model: InferenceModel, helper: ClusterServingHelper) = {
     implicit val ev = TensorNumeric.NumericFloat
 
-    val batch = img.toDataSet() -> SampleToMiniBatch(loader.batchSize)
+    val batch = img.toDataSet() -> SampleToMiniBatch(helper.batchSize)
 
-    val modelType = loader.modelType
+    val modelType = helper.modelType
 
-    val t = batch.toDistributed().data(false).collect()
-    val c = batch.toDistributed().data(false).count()
     val predicts = batch.toDistributed().data(false).flatMap { miniBatch =>
       val batchTensor = if (modelType == "openvino") {
         miniBatch.getInput.toTensor.addSingletonDimension()
@@ -36,12 +34,9 @@ object ImageClassification {
 //      batchTensor.resize(4, 224,224,3)
 
 //      val predict = model.getOriginalModel.asInstanceOf[FloatModel].model.forward(batchTensor)
+
       val predict = model.doPredict(batchTensor)
 
-      val cc = predict.toTensor
-//      predict
-//      val aa = predict.toTensor.squeeze
-//      val a = predict.toTensor.squeeze.split(1).asInstanceOf[Array[Activity]]
       if (predict.toTensor.dim == 1) {
         Array(predict.toTensor.asInstanceOf[Activity])
       }
@@ -49,34 +44,22 @@ object ImageClassification {
         predict.toTensor.squeeze.split(1).asInstanceOf[Array[Activity]]
       }
     }
-//    predicts.count()
+
     if (img.isDistributed()) {
-//      println("img rdd is " + img.toDistributed().rdd.count())
-//      println("predict rdd is " + predicts.count())
-//      val a = img.toDistributed().rdd.collect()
-//      val b = predicts.collect()
       val zipped = img.toDistributed().rdd.zip(predicts)
-//      val zk = zipped.collect()
+
       zipped.map(tuple => {
         tuple._1(ImageFeature.predict) = tuple._2
       }).collect()
     }
 
-//
     // Transform prediction into Labels and probs
-    var dummyMap: Map[Int, String] = Map()
-    for (i <- 0 to 5000) {
-      dummyMap += (i -> ("Class No." + i.toString))
-    }
+    val dummyMap = helper.getDummyMap()
 
 
-//    val labelOutput = LabelOutput(LabelReader.apply("IMAGENET"))
     val labelOutput = LabelOutput(dummyMap)
 
-    //        print(labelOutput(imageSet).isInstanceOf[DistributedImageSet])
-    //        print(labelOutput(imageSet).isInstanceOf[LocalImageSet])
-
-    val topN = loader.topN
+    val topN = helper.topN
 
     val result = labelOutput(img).toDistributed().rdd.map { f =>
       val probs = f("probs").asInstanceOf[Array[Float]]
@@ -87,7 +70,6 @@ object ImageClassification {
         value = value + probs(i).toString + ","
       }
       value = value + cls(topN - 1) + ": " + probs(topN - 1) + "}}"
-      println(value)
       // remember use case class here
       // this is the only key-value pair support
       // if you use tuple, you will get key of null

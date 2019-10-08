@@ -26,9 +26,9 @@ import com.intel.analytics.zoo.models.image.imageclassification.{LabelOutput, La
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{EngineRef, KerasUtils}
 import com.intel.analytics.zoo.serving.utils.Result
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ImageClassification, ObjectDetection}
-import com.intel.analytics.zoo.utils._
+
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.rdd.{RDD, ZippedPartitionsWithLocalityRDD}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
@@ -46,10 +46,6 @@ object ClusterServing {
 
   def main(args: Array[String]): Unit = {
 
-//    val param = parser.parse(args, RedisParams()).get
-    println("v4")
-
-
     val helper = new ClusterServingHelper()
     helper.init(args)
     val coreNumber = EngineRef.getCoreNumber()
@@ -59,8 +55,6 @@ object ClusterServing {
 
 
     val model = helper.loadInferenceModel(coreNumber)
-
-
 
     val spark = helper.getSparkSession()
 
@@ -80,7 +74,10 @@ object ClusterServing {
         StructField("image", StringType)
       )))
       .load()
-    val query = KerasUtils.invokeMethod(images.writeStream, "foreachBatch",
+    val foreachBatchMethod = images.writeStream.getClass()
+      .getMethods().filter(_.getName() == "foreachBatch")
+        .filter(_.getParameterTypes()(0).getName() == "scala.Function2")(0)
+    val query = foreachBatchMethod.invoke(images.writeStream,
       (batchDF: DataFrame, batchId: Long) => {
         logger.info("getting batch")
         val batchImage = batchDF.rdd.map { image =>
@@ -93,7 +90,6 @@ object ClusterServing {
         val imageSet = ImageSet.rdd(batchImage)
         imageSet.rdd.persist()
         logger.info("Micro batch size " + imageSet.rdd.count().toString)
-//        val st = imageSet.rdd.collect()
 
         val inputs = imageSet ->
           ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
@@ -125,6 +121,7 @@ object ClusterServing {
 
         val latency = System.nanoTime() - start
         logger.info(s"Predict latency is ${latency / 1e6} ms")
+        imageSet.rdd.unpersist()
       }
     ).asInstanceOf[DataStreamWriter[Row]].start()
     query.awaitTermination()

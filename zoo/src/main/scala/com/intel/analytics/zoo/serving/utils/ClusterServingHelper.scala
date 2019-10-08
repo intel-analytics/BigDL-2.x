@@ -40,7 +40,8 @@ case class LoaderParams(modelType: String = null,
                         topN: Int = 1,
                         redis: String = "localhost:6379",
                         outputPath: String = "",
-                        task: String = "image-classification")
+                        task: String = "image-classification",
+                        classNum: Int = 5000)
 
 case class Result(id: String, value: String)
 
@@ -73,6 +74,9 @@ class ClusterServingHelper extends Serializable {
     opt[String]('m', "task")
       .text("task name, e.g. image-classification")
       .action((x, c) => c.copy(task = x))
+    opt[Int]('c', "classNum")
+      .text("number of predicting classes")
+      .action((x, c) => c.copy(classNum = x))
 
   }
 
@@ -87,11 +91,13 @@ class ClusterServingHelper extends Serializable {
   var weightPath: String = null
   var defPath: String = null
   var dirPath: String = null
-  //  var modelType: String = null
+  var dummyMap: Map[Int, String] = Map()
 
   def init(args: Array[String]) = {
     params = parser.parse(args, LoaderParams()).get
 
+    require(params.redis.split(":").length == 2, "Your redis host " +
+      "and port are not valid, please check.")
     redisHost = params.redis.split(":").head.trim
     redisPort = params.redis.split(":").last.trim
     batchSize = params.batchSize
@@ -104,12 +110,22 @@ class ClusterServingHelper extends Serializable {
     sc = NNContext.initNNContext(conf)
 
     parseModelType(params.modelFolder)
+
+    for (i <- 0 to params.classNum) {
+      dummyMap += (i -> ("Class No." + i.toString))
+    }
   }
 
+  /**
+   * Inference Model do not use this method for model loading
+   * This method is kept for future, not used now
+   * @param ev
+   * @tparam T
+   * @return
+   */
   def loadModel[T: ClassTag]()
                             (implicit ev: TensorNumeric[T]) = {
 
-//    var model: AbstractModule[Activity, Activity, Float] = null
     val rmodel = modelType match {
       case "caffe" => Net.loadCaffe[Float](defPath, weightPath)
       case "tensorflow" => Net.loadTF[Float](weightPath)
@@ -136,6 +152,7 @@ class ClusterServingHelper extends Serializable {
       case "bigdl" => model.doLoad(weightPath)
       case "keras" => throw new Error("keras not supported in inference model")
       case "openvino" => model.doLoadOpenVINO(defPath, weightPath)
+      case _ => throw new Error("Invalid model type, please check your model directory")
     }
     sc.broadcast(model)
 
@@ -158,8 +175,9 @@ class ClusterServingHelper extends Serializable {
   def throwOneModelError(modelType: Boolean,
                          defPath: Boolean, weightPath: Boolean) = {
 
-    if ((defPath && this.defPath != null) ||
-        weightPath && this.weightPath != null) {
+    if ((modelType && this.modelType != null) ||
+        (defPath && this.defPath != null) ||
+        (weightPath && this.weightPath != null)) {
       throw new Error("Only one model is allowed to exist in " +
         "model folder, please check your model folder to keep just" +
         "one model in the directory")
@@ -226,9 +244,12 @@ class ClusterServingHelper extends Serializable {
         "according to your model file extension name")
     }
     else {
-      modelType = params.modelType
+      modelType = params.modelType.toLowerCase
     }
     println("model type is ", modelType, defPath, weightPath)
+  }
+  def getDummyMap(): Map[Int, String] = {
+    return dummyMap
   }
 
 }
