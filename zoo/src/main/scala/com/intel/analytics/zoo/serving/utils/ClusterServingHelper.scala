@@ -17,7 +17,7 @@
 
 package com.intel.analytics.zoo.serving.utils
 
-import com.intel.analytics.bigdl.nn.Module
+import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -28,6 +28,7 @@ import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import scopt.OptionParser
 import org.apache.log4j.Logger
 import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.SparkSession
 
@@ -45,7 +46,7 @@ case class LoaderParams(modelType: String = null,
 
 case class Result(id: String, value: String)
 
-class ClusterServingHelper extends Serializable {
+class ClusterServingHelper {
 
   val parser = new OptionParser[LoaderParams]("Cluster Serving") {
 
@@ -93,7 +94,7 @@ class ClusterServingHelper extends Serializable {
   var dirPath: String = null
   var dummyMap: Map[Int, String] = Map()
 
-  def init(args: Array[String]) = {
+  def init(args: Array[String]): Unit = {
     params = parser.parse(args, LoaderParams()).get
 
     require(params.redis.split(":").length == 2, "Your redis host " +
@@ -124,7 +125,7 @@ class ClusterServingHelper extends Serializable {
    * @return
    */
   def loadModel[T: ClassTag]()
-                            (implicit ev: TensorNumeric[T]) = {
+                            (implicit ev: TensorNumeric[T]): RDD[Module[Float]] = {
 
     val rmodel = modelType match {
       case "caffe" => Net.loadCaffe[Float](defPath, weightPath)
@@ -158,7 +159,7 @@ class ClusterServingHelper extends Serializable {
 
   }
 
-  def getSparkSession() = {
+  def getSparkSession(): SparkSession = {
     SparkSession
       .builder
       .master(sc.master)
@@ -173,7 +174,7 @@ class ClusterServingHelper extends Serializable {
    * @param weightPath Boolean, true means need to check if it is not null
    */
   def throwOneModelError(modelType: Boolean,
-                         defPath: Boolean, weightPath: Boolean) = {
+                         defPath: Boolean, weightPath: Boolean): Unit = {
 
     if ((modelType && this.modelType != null) ||
         (defPath && this.defPath != null) ||
@@ -185,7 +186,7 @@ class ClusterServingHelper extends Serializable {
     }
   }
 
-  def parseModelType(location: String) = {
+  def parseModelType(location: String): Unit = {
 
     import java.io.File
     val f = new File(location)
