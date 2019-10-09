@@ -58,6 +58,15 @@ class TestTextSet:
         distributed_set = DistributedTextSet(self.sc.parallelize(self.texts))
         assert distributed_set.get_labels().collect() == [-1, -1, -1]
 
+    def test_textset_from_textfeatures(self):
+        features = []
+        for i in range(10):
+            features.append(TextFeature(label=1, indices=[0, 1, 2]))
+        features = self.sc.parallelize(features)
+        text_set = TextSet.rdd(features).generate_sample()
+        samples = text_set.get_samples().collect()
+        sample = samples[0]
+
     def test_textset_convertion(self):
         local_set = LocalTextSet(self.texts, self.labels)
         local1 = local_set.to_local()

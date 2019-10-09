@@ -30,7 +30,7 @@ class TextFeature(JavaValue):
     e.g. original text content, uri, category label, tokens, index representation
     of tokens, BigDL Sample representation, prediction result and so on.
     """
-    def __init__(self, text=None, label=None, uri=None, jvalue=None, bigdl_type="float"):
+    def __init__(self, text=None, label=None, uri=None, indices=None, jvalue=None, bigdl_type="float"):
         if text is not None:
             assert isinstance(text, six.string_types), "text of a TextFeature should be a string"
         if uri is not None:
@@ -39,6 +39,10 @@ class TextFeature(JavaValue):
             super(TextFeature, self).__init__(jvalue, bigdl_type, text, int(label), uri)
         else:
             super(TextFeature, self).__init__(jvalue, bigdl_type, text, uri)
+        if indices is not None:
+            assert isinstance(indices, list), "indices of a TextFeature should be a list of float"
+            indices = [int(i) for i in indices]
+            self.value = callBigDlFunc(self.bigdl_type, "textFeatureSetIndices", self.value, indices)
 
     def get_text(self):
         """
@@ -109,3 +113,6 @@ class TextFeature(JavaValue):
         :return: List of String
         """
         return callBigDlFunc(self.bigdl_type, "textFeatureGetKeys", self.value)
+
+    def __reduce__(self):
+        return TextFeature, (self.value, self.bigdl_type)

@@ -70,6 +70,10 @@ class TestTextFeature(ZooTestCase):
         assert feature.get_text() is None
         assert feature.get_uri() == "A1"
 
+    def test_text_feature_with_indices(self):
+        feature = TextFeature(indices=[1, 3, 0, 4])
+        assert "indexedTokens" in feature.keys()
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

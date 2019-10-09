@@ -26,6 +26,16 @@ class TextSet(JavaValue):
     def __init__(self, jvalue, bigdl_type="float", *args):
         super(TextSet, self).__init__(jvalue, bigdl_type, *args)
 
+    @classmethod
+    def from_list(cls, features):
+        assert isinstance(features, list), "features must be a list of TextFeature"
+        return cls(None, "float", features)
+
+    @classmethod
+    def rdd(cls, features, memory_type="DRAM"):
+        assert isinstance(features, RDD)
+        return cls(None, "float", features, memory_type)
+
     def is_local(self):
         """
         Whether it is a LocalTextSet.
@@ -363,7 +373,7 @@ class TextSet(JavaValue):
         return DistributedTextSet(jvalue=jvalue)
 
     @classmethod
-    def from_relation_pairs(cls, relations, corpus1, corpus2, bigdl_type="float"):
+    def from_relation_pairs(cls, relations, corpus1, corpus2, memory_type="DRAM", bigdl_type="float"):
         """
         Used to generate a TextSet for pairwise training.
 
@@ -387,11 +397,12 @@ class TextSet(JavaValue):
         """
         if isinstance(relations, RDD):
             relations = relations.map(lambda x: x.to_tuple())
+            jvalue = callBigDlFunc(bigdl_type, "textSetFromRelationPairs", relations, corpus1, corpus2, memory_type)
         elif isinstance(relations, list):
             relations = [relation.to_tuple() for relation in relations]
+            jvalue = callBigDlFunc(bigdl_type, "textSetFromRelationPairs", relations, corpus1, corpus2, memory_type)
         else:
             raise TypeError("relations should be RDD or list of Relation")
-        jvalue = callBigDlFunc(bigdl_type, "textSetFromRelationPairs", relations, corpus1, corpus2)
         return TextSet(jvalue=jvalue)
 
     @classmethod
@@ -453,7 +464,7 @@ class DistributedTextSet(TextSet):
     """
     DistributedTextSet is comprised of RDDs.
     """
-    def __init__(self, texts=None, labels=None, jvalue=None, bigdl_type="float"):
+    def __init__(self, texts=None, labels=None, memory_type="DRAM", jvalue=None, bigdl_type="float"):
         """
         Create a DistributedTextSet using texts and labels.
 
@@ -466,7 +477,7 @@ class DistributedTextSet(TextSet):
         if labels is not None:
             assert isinstance(labels, RDD), "labels for DistributedTextSet should be RDD of int"
             labels = labels.map(lambda x: int(x))
-        super(DistributedTextSet, self).__init__(jvalue, bigdl_type, texts, labels)
+        super(DistributedTextSet, self).__init__(jvalue, bigdl_type, texts, labels, memory_type)
 
 
 def _process_predict_result(predict):

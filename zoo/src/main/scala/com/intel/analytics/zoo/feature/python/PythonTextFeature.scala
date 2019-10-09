@@ -24,6 +24,7 @@ import com.intel.analytics.bigdl.dataset.{Sample => JSample}
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.feature.common.{Preprocessing, Relation, Relations}
+import com.intel.analytics.zoo.feature.pmem.MemoryType
 import com.intel.analytics.zoo.feature.text.TruncMode.TruncMode
 import com.intel.analytics.zoo.feature.text.{DistributedTextSet, _}
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
@@ -84,6 +85,12 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
     if (sample != null) toPySample(sample.asInstanceOf[JSample[T]]) else null
   }
 
+  def textFeatureSetIndices(feature: TextFeature, indices: JList[Int]): TextFeature = {
+    require(indices != null, "indices of a TextFeature can't be null")
+    feature(TextFeature.indexedTokens) = indices.asScala.toArray.map(_.toFloat)
+    feature
+  }
+
   def transformTextFeature(
       transformer: TextTransformer,
       feature: TextFeature): TextFeature = {
@@ -137,9 +144,20 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
     TextSet.array(features)
   }
 
+  def createTextSet(features: JList[TextFeature]): LocalTextSet = {
+    require(features != null, "TextFeatures of a TextSet can't be null")
+    TextSet.array(features.asScala.toArray)
+  }
+
+  def createTextSet(features: JavaRDD[TextFeature], memoryType: String): DistributedTextSet = {
+    require(features != null, "TextFeatures of a TextSet can't be null")
+    TextSet.rdd(features.rdd, MemoryType.fromString(memoryType))
+  }
+
   def createDistributedTextSet(
       texts: JavaRDD[String],
-      labels: JavaRDD[Int]): DistributedTextSet = {
+      labels: JavaRDD[Int],
+      memoryType: String): DistributedTextSet = {
     require(texts != null, "texts of a TextSet can't be null")
     val features = if (labels != null) {
       texts.rdd.zip(labels.rdd).map{feature =>
@@ -149,7 +167,7 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
     else {
       texts.rdd.map(text => createTextFeature(text, null))
     }
-    TextSet.rdd(features)
+    TextSet.rdd(features, MemoryType.fromString(memoryType))
   }
 
   def readTextSet(path: String, sc: JavaSparkContext, minPartitions: Int): TextSet = {
@@ -358,8 +376,9 @@ class PythonTextFeature[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pyth
   def textSetFromRelationPairs(
       relations: JavaRDD[Array[Object]],
       corpus1: TextSet,
-      corpus2: TextSet): DistributedTextSet = {
-    TextSet.fromRelationPairs(toScalaRelations(relations), corpus1, corpus2)
+      corpus2: TextSet,
+      memoryType: String): DistributedTextSet = {
+    TextSet.fromRelationPairs(toScalaRelations(relations), corpus1, corpus2, MemoryType.fromString(memoryType))
   }
 
   def textSetFromRelationPairs(
