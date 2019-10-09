@@ -39,8 +39,8 @@ object ImageClassification {
       val batchTensor = if (modelType == "openvino") {
         miniBatch.getInput.toTensor.addSingletonDimension()
       } else if (modelType == "tensorflow") {
-        miniBatch.getInput.toTensor.transpose(2,3)
-            .transpose(3,4).contiguous()
+        miniBatch.getInput.toTensor.transpose(2, 3)
+            .transpose(3, 4).contiguous()
       } else {
         miniBatch.getInput.toTensor
       }
