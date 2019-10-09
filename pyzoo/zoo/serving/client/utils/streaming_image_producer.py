@@ -43,4 +43,3 @@ def image_enqueue(fname, img, db):
     d = {"id": str(k), "path": fname, "image": img_encoded}
     db.xadd("image_stream", d)
     print("Push to redis %d micros" % int(round((time.time() - start_time) * 1000000)))
-

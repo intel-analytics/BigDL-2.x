@@ -60,6 +60,3 @@ if __name__ == "__main__":
     #     res_value = res_dict[b'value'].decode('utf-8')
     #     print('data:', res_id,
     #           ' result:', res_value)
-
-
-

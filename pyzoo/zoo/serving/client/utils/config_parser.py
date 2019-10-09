@@ -31,4 +31,3 @@ class Config:
             config['data']['port'] = "6379"
         self.db = redis.StrictRedis(host=config['data']['host'],
                                     port=config['data']['port'], db=0)
-
