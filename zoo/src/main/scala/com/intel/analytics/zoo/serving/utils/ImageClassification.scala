@@ -23,10 +23,12 @@ import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.feature.image.{DistributedImageSet, ImageSet}
 import com.intel.analytics.zoo.models.image.imageclassification.{LabelOutput, LabelReader}
 import com.intel.analytics.zoo.pipeline.inference.{FloatModel, InferenceModel}
+import org.apache.spark.rdd.RDD
 
 
 object ImageClassification {
-  def getResult(img: ImageSet, model: InferenceModel, helper: ClusterServingHelper) = {
+  def getResult(img: ImageSet, model: InferenceModel,
+                helper: ClusterServingHelper): RDD[Result] = {
     implicit val ev = TensorNumeric.NumericFloat
 
     val batch = img.toDataSet() -> SampleToMiniBatch(helper.batchSize)
@@ -36,12 +38,10 @@ object ImageClassification {
     val predicts = batch.toDistributed().data(false).flatMap { miniBatch =>
       val batchTensor = if (modelType == "openvino") {
         miniBatch.getInput.toTensor.addSingletonDimension()
-      }
-      else if (modelType == "tensorflow") {
+      } else if (modelType == "tensorflow") {
         miniBatch.getInput.toTensor.transpose(2,3)
             .transpose(3,4).contiguous()
-      }
-      else {
+      } else {
         miniBatch.getInput.toTensor
       }
       // this is hard code to test TensorFLow, NHWC
