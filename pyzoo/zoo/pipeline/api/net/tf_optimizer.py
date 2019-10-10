@@ -506,8 +506,8 @@ class TFOptimizer:
         :param optim_method: the optimization method to be used, such as bigdl.optim.optimizer.Adam
         :param session: the current TensorFlow Session, if you want to used a pre-trained model,
         you should use the Session to load the pre-trained variables and pass it to TFOptimizer.
-        :param val_outputs: the validation output TensorFlow tensor to be used be val_methods
-        :param val_labels: the validation label TensorFlow tensor to be used be val_methods
+        :param val_outputs: the validation output TensorFlow tensor to be used by val_methods
+        :param val_labels: the validation label TensorFlow tensor to be used by val_methods
         :param val_method: the BigDL val_method(s) to be used.
         :param val_split: Float between 0 and 1. Fraction of the training data to be used as
         validation data. 
@@ -521,7 +521,6 @@ class TFOptimizer:
         placeholder, the value of the dictionary is a tuple of two elements. The first one of
         the tuple is the value to feed to the tensor in training phase and the second one
         is the value to feed to the tensor in validation phase.
-        :param kwargs: used for backward compatibility
         :return: a TFOptimizer
         """
         args = TFOptimizer._get_arguments_from_loss(loss, optim_method,
@@ -553,7 +552,6 @@ class TFOptimizer:
         :param optim_method: the optimization method to be used, such as bigdl.optim.optimizer.Adam
         :param val_spilt: Float between 0 and 1. Fraction of the training data to be used as
         validation data. 
-        :param kwargs: used for backward compatibility
         :return: 
         """
         import tensorflow.keras.backend as K
