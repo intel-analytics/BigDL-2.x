@@ -23,8 +23,6 @@ import java.nio.file.{Path => JPath}
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataInputStream, FSDataOutputStream, FileSystem, Path}
-
-
 import org.apache.hadoop.io.IOUtils
 import org.apache.log4j.Logger
 
