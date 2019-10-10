@@ -19,6 +19,7 @@ import random
 from time import sleep
 from os import listdir, rename, mkdir, remove
 from os.path import isfile, join
+import shutil
 
 
 def package_path_to_text(streaming_path, file_path, batch=10, delay=3):
@@ -49,8 +50,8 @@ def package_path_to_text(streaming_path, file_path, batch=10, delay=3):
         with open(join(tmpDir, str(index) + ".txt"), "w") as text_file:
             text_file.writelines(files[curr:last])
         # Move to streaming location
-        rename(text_file.name,
-               batch_file_name)
+        shutil.move(text_file.name,
+                    batch_file_name)
         print("Writing to " + batch_file_name)
         index += 1
         curr = last
