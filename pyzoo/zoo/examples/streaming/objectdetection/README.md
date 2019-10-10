@@ -15,6 +15,8 @@ So, there are two applications in this example: image_path_writer and streaming_
 ## Run this example
 Make sure all nodes can access image files, model and text files. Local file system/HDFS/Amazon S3 are supported.
 
+Pls ensure all paths exist and accessible, and `streaming_path` is empty. Note that `streaming_object_detection` and `image_path_writer` should use the same `streaming_path`.
+
 1. Start streaming_object_detection
 ```
 MASTER=...
