@@ -181,48 +181,4 @@ RUN git config --global url.https://github.com/.insteadOf git://github.com/ && \
     luarocks make rocks/rnn-scm-1.rockspec && \
     cd /opt/work
 
-#Caffe prepare
-RUN apt update && apt-get upgrade -y && \
-    apt-get install -y libprotobuf-dev libleveldb-dev libsnappy-dev libhdf5-serial-dev protobuf-compiler && \
-    apt-get install -y libopencv-dev libopencv-contrib-dev && \
-    apt-get install -y --no-install-recommends libboost-all-dev && \
-    apt-get install -y libatlas-base-dev && \
-    apt-get install -y python-dev python-pip gfortran && \
-    apt-get install -y libgflags-dev libgoogle-glog-dev liblmdb-dev && \
-    apt-get install -y --no-install-recommends build-essential tcl tk gettext autoconf zlib1g-dev gcc && \
-    apt-get install -y --no-install-recommends python-dev python3-dev libcurl4-openssl-dev
-
-#Caffe
-RUN git clone https://github.com/BVLC/caffe.git && \
-    cd /opt/work/caffe && \
-    cp /opt/work/caffe/Makefile.config.example Makefile.config && \
-    echo "CPU_ONLY := 1" >> Makefile.config && \
-    export ANACONDA_HOME=/opt/work/conda/envs/py35 && \
-    sed -i '71s/^[^#]/#&/' Makefile.config && \
-    sed -i '76s/^#//' Makefile.config && \
-    sed -i 's/# $(ANA/$(ANA/g' Makefile.config && \
-    sed -i '86s/^[^#]/#&/' Makefile.config && \
-    sed -i '87s/^#//' Makefile.config && \
-    sed -i 's/2.7/3.5/g' Makefile.config && \
-    sed -i 's#include/python3.5#include/python3.5m#g' Makefile.config && \
-    sed -i 's/LIBRARIES += opencv_core opencv_highgui opencv_imgproc/LIBRARIES += opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs/g' Makefile && \
-    apt-get install -y software-properties-common && \
-    add-apt-repository ppa:ubuntu-toolchain-r/test && \
-    apt update && \
-    apt install g++-7 -y && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 60 \
-                         --slave /usr/bin/g++ g++ /usr/bin/g++-7 && \
-    update-alternatives --config gcc && \
-    /bin/bash -c "source activate py35 && \
-        easy_install -U pytest && \
-        pip install -r /opt/work/caffe/python/requirements.txt && \
-        ln -s /opt/work/conda/envs/py35/lib/python3.5 /usr/local/include/python3.5 && \
-        ln -s /opt/work/conda/envs/py35/lib/python3.5/site-packages/numpy/core/include/numpy /usr/local/include/python3.5/numpy && \
-        make all -j4 && make pycaffe && make distribute && \
-        make test && \
-        cd /opt/work && \
-        export PYTHONPATH=${CAFFE_HOME}/python:${CAFFE_HOME}/distribute/python:${PYTHONPATH} && \
-        ln /dev/null /dev/raw1394 && \
-        source deactivate"
-
 CMD ["/opt/work/jenkins/run-slave.sh"]
