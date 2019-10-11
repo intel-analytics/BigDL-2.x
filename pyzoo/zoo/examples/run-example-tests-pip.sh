@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 clear_up () {
     echo "Clearing up environment. Uninstalling analytics-zoo"
     pip uninstall -y analytics-zoo
@@ -262,7 +261,7 @@ else
 fi
 
 export SPARK_DRIVER_MEMORY=20g
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_lenet.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/tf_optimizer/train_lenet.py
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
@@ -271,7 +270,7 @@ then
     exit $exit_status
 fi
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/evaluate_lenet.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/tf_optimizer/evaluate_lenet.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
@@ -281,7 +280,7 @@ then
     exit $exit_status
 fi
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/train_mnist_keras.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/tf_optimizer/train_mnist_keras.py
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
@@ -290,7 +289,7 @@ then
     exit $exit_status
 fi
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/distributed_training/evaluate_mnist_keras.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/tf_optimizer/evaluate_mnist_keras.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
@@ -374,7 +373,6 @@ unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time9=$((now-start))
 echo "qaranker time used:$time9 seconds"
-
 
 # This should be done at the very end after all tests finish.
 clear_up

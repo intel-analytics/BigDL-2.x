@@ -17,8 +17,10 @@
 import sys
 
 from bigdl.nn.layer import Model as BModel
-from bigdl.util.common import to_list, callBigDlFunc
-from zoo.pipeline.api.keras.engine.topology import ZooKerasLayer
+from zoo.feature.image import ImageSet
+from zoo.feature.text import TextSet
+from zoo.pipeline.api.keras.base import ZooKerasLayer
+from zoo.pipeline.api.keras.utils import *
 from bigdl.nn.layer import Layer
 
 if sys.version >= '3':
@@ -33,6 +35,47 @@ class GraphNet(BModel):
                                      to_list(output),
                                      bigdl_type,
                                      **kwargs)
+
+    def predict(self, x, batch_per_thread=4, distributed=True):
+        """
+        Use a model to do prediction.
+
+        # Arguments
+        x: Prediction data. A Numpy array or RDD of Sample or ImageSet.
+        batch_per_thread:
+          The default value is 4.
+          When distributed is True,the total batch size is batch_per_thread * rdd.getNumPartitions.
+          When distributed is False the total batch size is batch_per_thread * numOfCores.
+        distributed: Boolean. Whether to do prediction in distributed mode or local mode.
+                     Default is True. In local mode, x must be a Numpy array.
+        """
+        if isinstance(x, ImageSet) or isinstance(x, TextSet):
+            results = callBigDlFunc(self.bigdl_type, "zooPredict",
+                                    self.value,
+                                    x,
+                                    batch_per_thread)
+            return ImageSet(results) if isinstance(x, ImageSet) else TextSet(results)
+        if distributed:
+            if isinstance(x, np.ndarray):
+                data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]))
+            elif isinstance(x, RDD):
+                data_rdd = x
+            else:
+                raise TypeError("Unsupported prediction data type: %s" % type(x))
+            results = callBigDlFunc(self.bigdl_type, "zooPredict",
+                                    self.value,
+                                    data_rdd,
+                                    batch_per_thread)
+            return results.map(lambda result: Layer.convert_output(result))
+        else:
+            if isinstance(x, np.ndarray) or isinstance(x, list):
+                results = callBigDlFunc(self.bigdl_type, "zooPredict",
+                                        self.value,
+                                        self._to_jtensors(x),
+                                        batch_per_thread)
+                return [Layer.convert_output(result) for result in results]
+            else:
+                raise TypeError("Unsupported prediction data type: %s" % type(x))
 
     def flattened_layers(self, include_container=False):
         jlayers = callBigDlFunc(self.bigdl_type, "getFlattenSubModules", self, include_container)

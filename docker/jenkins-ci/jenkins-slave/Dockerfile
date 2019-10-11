@@ -53,6 +53,7 @@ RUN wget https://build.funtoo.org/distfiles/oracle-java/jdk-8u152-linux-x64.tar.
     chmod a+x /opt/work/jenkins/slave.groovy && \
     wget http://repo.jenkins-ci.org/releases/org/jenkins-ci/main/remoting/3.14/remoting-3.14.jar && \
     mv remoting-3.14.jar ${JENKINS_HOME} && \
+
 #spark 2.1.3 2.2.2 2.3.2 2.4.3
     wget http://archive.apache.org/dist/spark/spark-2.1.3/spark-2.1.3-bin-hadoop2.7.tgz && \
     tar -xf spark-2.1.3-bin-hadoop2.7.tgz -C /opt/work && \

@@ -29,6 +29,7 @@ import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.feature.common._
 import com.intel.analytics.zoo.feature.image._
+import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.feature.MinMaxScaler
@@ -37,20 +38,19 @@ import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SQLContext}
-import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.io.Path
 import scala.util.Random
 
-class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
+class NNClassifierSpec extends ZooSpecHelper {
   var sc : SparkContext = _
   var sqlContext : SQLContext = _
   var smallData: Seq[(Array[Double], Double)] = _
   val nRecords = 100
   val maxEpoch = 20
 
-  before {
+  override def doBefore(): Unit = {
     val conf = Engine.createSparkConf().setAppName("Test NNClassifier").setMaster("local[1]")
     sc = SparkContext.getOrCreate(conf)
     sqlContext = new SQLContext(sc)
@@ -62,7 +62,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     Engine.init
   }
 
-  after{
+  override def doAfter(): Unit = {
     if (sc != null) {
       sc.stop()
     }
@@ -187,7 +187,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val data = sc.parallelize(smallData)
     val df = sqlContext.createDataFrame(data).toDF("features", "label")
 
-    val logdir = com.google.common.io.Files.createTempDir()
+    val logdir = createTmpDir()
     val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
     val criterion = ClassNLLCriterion[Float]()
     val classifier = NNClassifier(model, criterion, Array(6))
@@ -271,6 +271,23 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     estimator.fit(imageDF)
   }
 
+  "NNClasifierModel" should "has default batchperthread as 4" in {
+    val model = new Sequential().add(Linear[Float](6, 2)).add(LogSoftMax[Float])
+    val criterion = ClassNLLCriterion[Float]()
+    Seq(new LBFGS[Float], new Adam[Float]).foreach { optimMethod =>
+      val classifier = NNClassifier(model, criterion, Array(6))
+        .setBatchSize(nRecords)
+        .setMaxEpoch(2)
+        .setOptimMethod(optimMethod)
+        .setLearningRate(0.1)
+      val data = sc.parallelize(smallData)
+      val df = sqlContext.createDataFrame(data).toDF("features", "label")
+      val nnModel = classifier.fit(df)
+      nnModel.isInstanceOf[NNClassifierModel[_]] should be(true)
+      nnModel.getBatchSize should be(4)
+    }
+  }
+
   "NNClasifierModel" should "return same results after saving and loading" in {
     val data = sqlContext.createDataFrame(smallData).toDF("features", "label")
     val module = new Sequential[Double]().add(Linear[Double](6, 2)).add(LogSoftMax[Double])
@@ -305,7 +322,10 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
       NNClassifierModel(model),
       NNClassifierModel(model, Array(6)),
       NNClassifierModel(model, SeqToTensor(Array(6)))
-    ).foreach(e => e.transform(df).count())
+    ).foreach { e =>
+      e.transform(df).count()
+      assert(e.getBatchSize == 4)
+    }
   }
 
   "NNClassifier" should "supports deep copy" in {
@@ -314,6 +334,7 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val data = sc.parallelize(
       smallData.map(p => (org.apache.spark.mllib.linalg.Vectors.dense(p._1), p._2)))
     val df: DataFrame = sqlContext.createDataFrame(data).toDF("features", "label")
+    val appName = System.nanoTime().toString
     val classifier = NNClassifier(model, criterion)
       .setBatchSize(31)
       .setOptimMethod(new LBFGS[Float]())
@@ -321,8 +342,8 @@ class NNClassifierSpec extends FlatSpec with Matchers with BeforeAndAfter {
       .setLearningRateDecay(0.432)
       .setMaxEpoch(13)
       .setFeaturesCol("abc")
-      .setTrainSummary(new TrainSummary("/tmp", "1"))
-      .setValidationSummary(new ValidationSummary("/tmp", "2"))
+      .setTrainSummary(new TrainSummary("/tmp", appName))
+      .setValidationSummary(new ValidationSummary("/tmp", appName))
       .setValidation(Trigger.maxIteration(3), df, Array(new Loss[Float]()), 2)
     val copied = classifier.copy(ParamMap.empty)
     assert(classifier.model ne copied.model)

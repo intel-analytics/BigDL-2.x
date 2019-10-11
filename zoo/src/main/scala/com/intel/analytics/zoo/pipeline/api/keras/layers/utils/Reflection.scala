@@ -20,6 +20,7 @@ import com.intel.analytics.bigdl.nn.{Graph, MklInt8Convertible}
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
+import com.intel.analytics.bigdl.optim.SGD
 import com.intel.analytics.bigdl.utils.{Engine, EngineType, Shape, Table}
 import com.intel.analytics.zoo.pipeline.api.keras.optimizers.{Adam, AdamWeightDecay}
 
@@ -88,6 +89,12 @@ object EngineRef {
   def getEngineType(): EngineType = {
     KerasUtils.invokeMethod(Engine, "getEngineType").asInstanceOf[EngineType]
   }
+
+  def setCoreNumber(num: Int): Unit = {
+    val field = Engine.getClass.getDeclaredField("physicalCoreNumber")
+    field.setAccessible(true)
+    field.setInt(Engine, num)
+  }
 }
 
 object SGDRef {
@@ -96,6 +103,10 @@ object SGDRef {
   }
 
   def getstate[T: ClassTag](instance: AdamWeightDecay[T]): Table = {
+    KerasUtils.invokeMethod(instance, "state").asInstanceOf[Table]
+  }
+
+  def getstate[T](instance: SGD[T]): Table = {
     KerasUtils.invokeMethod(instance, "state").asInstanceOf[Table]
   }
 }

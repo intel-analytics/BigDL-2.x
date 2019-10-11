@@ -43,7 +43,7 @@ export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics 
 MASTER=...
 nyc_path=the directory containing containing NBA nyc_taxi.csv data
 
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 4g \
     --executor-memory 4g \
