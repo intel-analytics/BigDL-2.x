@@ -1,12 +1,13 @@
 ## **TransformerLayer**
 A network architecture based solely on attention mechanisms, dispensing with recurrence and convolutions
-entirely. Refer https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf
+entirely. Refer to this [paper](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf) for more details.
 
 Input is a Table which consists of 2 tensors.
+
 1. Token id tensor: shape (batch, seqLen) with the word token indices in the vocabulary
 2. Position id tensor: shape (batch, seqLen) with positions in the sentence.
 
-Output is a Tensor which output the states of Transformer layer
+Output are the states of Transformer layer and the pooled result of the first token.
 
 **With Default Embedding:**
 
@@ -33,6 +34,7 @@ TransformerLayer.init(vocab=40990, seq_len=77, n_block=12, hidden_drop=0.1,
 ```
 
 Parameters:
+
 * `vocab`: vocabulary size of training data, default is 40990
 * `seqLen`: max sequence length of training data, default is 77
 * `nBlock`: block number, default is 12
@@ -74,6 +76,7 @@ TransformerLayer(n_block=12,
 ```
 
 Parameters:
+
 * `nBlock`: block number
 * `residPdrop`: drop probability of projection
 * `attnPdrop`: drop probability of attention
@@ -232,6 +235,7 @@ Output is
 Bidirectional Encoder Representations from Transformers. Refer https://arxiv.org/pdf/1810.04805.pdf
 
 Input is a Table which consists of 4 tensors.
+
 1. Token id tensor: shape (batch, seqLen) with the word token indices in the vocabulary
 2. Token type id tensor: shape (batch, seqLen) with the token types in (0, 1).
    0 means `sentence A` and 1 means a `sentence B` (see BERT paper for more details).
@@ -239,7 +243,7 @@ Input is a Table which consists of 4 tensors.
 4. Attention_mask tensor: shape (batch, seqLen) with indices in (0, 1).
   It's a mask to be used if the input sequence length is smaller than seqLen in the current batch.
 
-Output is an Activity which output the states of BERT layer
+Output are the states of BERT layer and the pooled result of the first token.
 
 **With Default Embedding:**
 
@@ -273,6 +277,7 @@ BERT.init(vocab=40990,
 ```
 
 Parameters:
+
 * `vocab`: vocabulary size of training data, default is 40990
 * `hiddenSize`: size of the encoder layers, default is 768
 * `nBlock`: block number, default is 12
@@ -280,7 +285,7 @@ Parameters:
 * `maxPositionLen`: sequence length, default is 512
 * `intermediateSize`: The size of the "intermediate" (i.e., feed-forward), default is 3072
 * `hiddenPDrop`: The dropout probability for all fully connected layers, default is 0.1
-* `attnPdrop`: drop probability of attention, default is 0.1
+* `attnPDrop`: drop probability of attention, default is 0.1
 * `initializerRange`: weight initialization range, default is 0.02
 * `outputAllBlock`: whether output all blocks' output, default is false
 * `inputSeqLen`: sequence length of input, default is -1 which means the same with maxPositionLen
@@ -313,6 +318,7 @@ BERT(n_block=12,
 ```
 
 Parameters:
+
 * `nBlock`: block number
 * `nHead`: head number
 * `intermediateSize`: The size of the "intermediate" (i.e., feed-forward)
@@ -345,6 +351,7 @@ output_all_block=True)
 ```
 
 Parameters:
+
 * `path`: The path for the pre-defined model. Local file system, HDFS and Amazon S3 are supported. Amazon S3 path should be like "s3a://bucket/xxx".
 * `weightPath`: The path for pre-trained weights if any
 * `inputSeqLen`: sequence length of input, will be ignored if existing model is built with customized embedding
