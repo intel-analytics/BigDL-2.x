@@ -510,7 +510,7 @@ class TFOptimizer:
         :param val_labels: the validation label TensorFlow tensor to be used by val_methods
         :param val_method: the BigDL val_method(s) to be used.
         :param val_split: Float between 0 and 1. Fraction of the training data to be used as
-        validation data. 
+        validation data.
         :param clip_norm: float >= 0. Gradients will be clipped when their L2 norm exceeds
         this value.
         :param clip_value: float >= 0. Gradients will be clipped when their absolute value
@@ -551,8 +551,8 @@ class TFOptimizer:
         :param dataset: a TFDataset
         :param optim_method: the optimization method to be used, such as bigdl.optim.optimizer.Adam
         :param val_spilt: Float between 0 and 1. Fraction of the training data to be used as
-        validation data. 
-        :return: 
+        validation data.
+        :return:
         """
         import tensorflow.keras.backend as K
         loss = keras_model.total_loss
@@ -735,7 +735,7 @@ class TFOptimizer:
     def set_constant_gradient_clipping(self, min_value, max_value):
         """
         Configure constant clipping settings.
-        
+
         :param min_value: the minimum value to clip by
         :param max_value: the maxmimum value to clip by
         """
