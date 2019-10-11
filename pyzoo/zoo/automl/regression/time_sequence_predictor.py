@@ -546,7 +546,8 @@ class TimeSequencePredictor(object):
                                      model,
                                      # config)
                                      )
-        return TimeSequencePipeline(feature_transformers=feature_transformers,
+        return TimeSequencePipeline(name=self.name,
+                                    feature_transformers=feature_transformers,
                                     model=model,
                                     config=all_config)
 
