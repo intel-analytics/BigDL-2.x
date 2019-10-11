@@ -14,6 +14,8 @@ So, there are two applications in this example: ImagePathWriter and StreamingObj
 ## Run this example
 Make sure all nodes can access image files, model and text files. Local file system/HDFS/Amazon S3 are supported.
 
+Pls ensure all paths exist and accessible, and `streamingPath` is empty. Note that `StreamingObjectDetection` and `ImagePathWriter` should use the same `streamingPath`.
+
 1. Start StreamingObjectDetection
 ```
 MASTER=...
