@@ -388,7 +388,7 @@ class TFOptimizer:
                  val_outputs=None, val_labels=None, val_method=None, val_split=0.0,
                  tensors_with_value=None, session_config=None,
                  clip_norm=None, clip_value=None, metrics=None, updates=None, freeze=False):
-        '''
+        """
         TFOptimizer is used for distributed training of TensorFlow
         on Spark/BigDL.
 
@@ -396,7 +396,7 @@ class TFOptimizer:
         :param optim_method: the optimization method to be used, such as bigdl.optim.optimizer.Adam
         :param sess: the current TensorFlow Session, if you want to used a pre-trained model, you
         should use the Session to load the pre-trained variables and pass it to TFOptimizer.
-        '''
+        """
 
         if dataset is None:
             args = TFOptimizer._get_arguments_from_loss(loss, optim_method, sess,
@@ -496,7 +496,33 @@ class TFOptimizer:
     @classmethod
     def from_loss(cls, loss, optim_method, session=None, val_outputs=None,
                   val_labels=None, val_method=None, val_split=0.0,
-                  clip_norm=None, clip_value=None, metrics=None, **kwargs):
+                  clip_norm=None, clip_value=None, metrics=None,
+                  tensor_with_value=None, **kwargs):
+        """
+        Create a TFOptimizer from a TensorFlow loss tensor.
+        The loss tensor must come from a TensorFlow graph that only takes TFDataset.tensors and
+        the tensors in `tensor_with_value` as inputs.
+        :param loss: The loss tensor of the TensorFlow model, should be a scalar
+        :param optim_method: the optimization method to be used, such as bigdl.optim.optimizer.Adam
+        :param session: the current TensorFlow Session, if you want to used a pre-trained model,
+        you should use the Session to load the pre-trained variables and pass it to TFOptimizer.
+        :param val_outputs: the validation output TensorFlow tensor to be used by val_methods
+        :param val_labels: the validation label TensorFlow tensor to be used by val_methods
+        :param val_method: the BigDL val_method(s) to be used.
+        :param val_split: Float between 0 and 1. Fraction of the training data to be used as
+        validation data.
+        :param clip_norm: float >= 0. Gradients will be clipped when their L2 norm exceeds
+        this value.
+        :param clip_value: float >= 0. Gradients will be clipped when their absolute value
+        exceeds this value.
+        :param metrics: a dictionary. The key should be a string representing the metric's name
+        and the value should be the corresponding TensorFlow tensor, which should be a scalar.
+        :param tensor_with_value: a dictionary. The key is TensorFlow tensor, usually a
+        placeholder, the value of the dictionary is a tuple of two elements. The first one of
+        the tuple is the value to feed to the tensor in training phase and the second one
+        is the value to feed to the tensor in validation phase.
+        :return: a TFOptimizer
+        """
         args = TFOptimizer._get_arguments_from_loss(loss, optim_method,
                                                     session, val_outputs,
                                                     val_labels, val_method)
@@ -513,11 +539,21 @@ class TFOptimizer:
                                  "or a tuple which clips to (min_value, max_value)")
 
         return cls(*(args + [val_split]),
+                   tensors_with_value=tensor_with_value,
                    clip_norm=clip_norm,
                    clip_value=clip_value, metrics=metrics, **kwargs)
 
     @classmethod
     def from_keras(cls, keras_model, dataset, optim_method=None, val_spilt=0.0, **kwargs):
+        """
+        Create a TFOptimizer from a tensorflow.keras model. The model must be compiled.
+        :param keras_model: the tensorflow.keras model, which must be compiled.
+        :param dataset: a TFDataset
+        :param optim_method: the optimization method to be used, such as bigdl.optim.optimizer.Adam
+        :param val_spilt: Float between 0 and 1. Fraction of the training data to be used as
+        validation data.
+        :return:
+        """
         import tensorflow.keras.backend as K
         loss = keras_model.total_loss
         inputs = keras_model.inputs + keras_model.targets
@@ -676,15 +712,29 @@ class TFOptimizer:
         raise ValueError("We don't support %s for now" % koptim_method)
 
     def set_train_summary(self, summary):
+        """
+        Set train summary. A TrainSummary object contains information
+        necessary for the optimizer to know how often the logs are recorded,
+        where to store the logs and how to retrieve them, etc. For details,
+        refer to the docs of TrainSummary.
+        :param summary: a TrainSummary object
+        """
         self.optimizer.set_train_summary(summary)
 
     def set_val_summary(self, summary):
+        """
+        Set validation summary. A ValidationSummary object contains information
+        necessary for the optimizer to know how often the logs are recorded,
+        where to store the logs and how to retrieve them, etc. For details,
+        refer to the docs of ValidationSummary.
+
+        :param summary: a ValidationSummary object
+        """
         self.optimizer.set_val_summary(summary)
 
     def set_constant_gradient_clipping(self, min_value, max_value):
         """
         Configure constant clipping settings.
-
 
         :param min_value: the minimum value to clip by
         :param max_value: the maxmimum value to clip by
@@ -694,13 +744,15 @@ class TFOptimizer:
     def set_gradient_clipping_by_l2_norm(self, clip_norm):
         """
         Configure L2 norm clipping settings.
-
-
         :param clip_norm: gradient L2-Norm threshold
         """
         self.optimizer.set_gradclip_l2norm(clip_norm)
 
     def optimize(self, end_trigger=None):
+        """
+        Run the training loop of the this optimizer
+        :param end_trigger: BigDL's Trigger to indicate when to stop the training.
+        """
         if end_trigger is None:
             end_trigger = MaxEpoch(1)
 
