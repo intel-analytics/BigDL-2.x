@@ -26,13 +26,13 @@ Using TFDataset as data input
 
 ```bash
 export MASTER=local[4]
-python keras_dataset.py
+python keras/keras_dataset.py
 ```
 
 Using numpy.ndarray as data input
 ```bash
 export MASTER=local[4]
-python keras_ndarray.py
+python keras/keras_ndarray.py
 ```
 
 ## Run the KerasModel example with prebuilt package
