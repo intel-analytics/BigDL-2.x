@@ -43,7 +43,7 @@ Using TFDataset as data input
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-sh $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] keras/keras_dataset.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] keras/keras_dataset.py
 ```
 
 Using numpy.ndarray as data input
@@ -51,7 +51,7 @@ Using numpy.ndarray as data input
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-sh $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] keras/keras_ndarray.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] keras/keras_ndarray.py
 ```
 
 ## Run the TFEstimator example after pip install
@@ -89,7 +89,7 @@ Using TFDataset as data input
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-sh $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] estimator/estimator_dataset.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] estimator/estimator_dataset.py
 ```
 
 Using FeatureSet as data input
@@ -113,7 +113,7 @@ IMAGE_PATH=... # file://... for local files and hdfs:// for hdfs files
 NUM_CLASSES=..
 
 
-sh $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] estimator/estimator_inception.py --image-path $IMAGE_PATH --num-classes $NUM_CLASSES
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] estimator/estimator_inception.py --image-path $IMAGE_PATH --num-classes $NUM_CLASSES
 ```
 
 ## Run the Training Example using TFOptimizer after pip install
@@ -134,7 +134,7 @@ python tf_optimizer/train_mnist_keras.py
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-sh $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] tf_optimizer/train_lenet.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] tf_optimizer/train_lenet.py
 ```
 
 For Keras users:
@@ -143,7 +143,7 @@ For Keras users:
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-sh $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] tf_optimizer/train_mnist_keras.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] tf_optimizer/train_mnist_keras.py
 ```
 
 ## Run the Evaluation Example using TFPredictor after pip install
@@ -164,7 +164,7 @@ python tf_optimizer/evaluate_mnist_keras.py
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-sh $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] tf_optimizer/evaluate_lenet.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] tf_optimizer/evaluate_lenet.py
 ```
 
 For Keras users:
@@ -173,5 +173,5 @@ For Keras users:
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-sh $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] tf_optimizer/evaluate_mnist_keras.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] tf_optimizer/evaluate_mnist_keras.py
 ```
