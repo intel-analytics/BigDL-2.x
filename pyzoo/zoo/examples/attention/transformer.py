@@ -69,7 +69,7 @@ token_input = Input(shape=token_shape)
 position_input = Input(shape=position_shape)
 O_seq = TransformerLayer.init(
     vocab=max_features, hidden_size=128, n_head=8, seq_len=max_len)([token_input, position_input])
-# Select the first output of the Transformer. The second is the pooler output.
+# Select the first output of the Transformer. The second is the pooled output.
 O_seq = SelectTable(0)(O_seq)
 O_seq = GlobalAveragePooling1D()(O_seq)
 O_seq = Dropout(0.2)(O_seq)
