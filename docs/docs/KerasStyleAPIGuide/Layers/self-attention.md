@@ -7,7 +7,11 @@ Input is a Table which consists of 2 tensors.
 1. Token id tensor: shape (batch, seqLen) with the word token indices in the vocabulary
 2. Position id tensor: shape (batch, seqLen) with positions in the sentence.
 
-Output are the states of Transformer layer and the pooled result of the first token.
+Output is a Table as well.
+
+1. The states of Transformer layer.
+2. The pooled output which processes the hidden state of the last layer with regard to the first token of the sequence. This would be useful for segment-level tasks.
+
 
 **With Default Embedding:**
 
@@ -28,9 +32,9 @@ TransformerLayer[Float](vocab = 40990,
 **Python:**
 ```python
 TransformerLayer.init(vocab=40990, seq_len=77, n_block=12, hidden_drop=0.1,
-             attn_drop=0.1, n_head=12, hidden_size=768,
-             embedding_drop=0.1, initializer_range=0.02,
-             bidirectional=False, output_all_block=False)
+    attn_drop=0.1, n_head=12, hidden_size=768,
+    embedding_drop=0.1, initializer_range=0.02,
+    bidirectional=False, output_all_block=False)
 ```
 
 Parameters:
@@ -51,28 +55,28 @@ Parameters:
 
 **Scala:**
 ```scala
-TransformerLayer[Float](nBlock = 3,
-  residPdrop = 0.1,
-  attnPdrop = 0.1,
-  nHead = 12,
-  bidirectional = false,
-  initializerRange = 0.02,
-  outputAllBlock = true,
-  embeddingLayer = embedding.asInstanceOf[KerasLayer[Activity, Tensor[Float], Float]])
+TransformerLayer[Float](nBlock = 12,
+    residPdrop = 0.1,
+    attnPdrop = 0.1,
+    nHead = 12,
+    bidirectional = false,
+    initializerRange = 0.02,
+    outputAllBlock = true,
+    embeddingLayer = embedding.asInstanceOf[KerasLayer[Activity, Tensor[Float], Float]])
 ```
 
 **Python:**
 ```python
 TransformerLayer(n_block=12,
-  hidden_drop=0.1,
-  attn_drop=0.1,
-  n_head=12,
-  initializer_range=0.02,
-  bidirectional=False,
-  output_all_block=False,
-  embedding_layer=embedding,
-  input_shape=((seq_len,), (seq_len,)),
-  intermediate_size=0)
+    hidden_drop=0.1,
+    attn_drop=0.1,
+    n_head=12,
+    initializer_range=0.02,
+    bidirectional=False,
+    output_all_block=False,
+    embedding_layer=embedding,
+    input_shape=((seq_len,), (seq_len,)),
+    intermediate_size=0)
 ```
 
 Parameters:
@@ -243,37 +247,40 @@ Input is a Table which consists of 4 tensors.
 4. Attention_mask tensor: shape (batch, seqLen) with indices in (0, 1).
   It's a mask to be used if the input sequence length is smaller than seqLen in the current batch.
 
-Output are the states of BERT layer and the pooled result of the first token.
+Output is a Table as well.
+
+1. The states of BERT layer.
+2. The pooled output which processes the hidden state of the last layer with regard to the first token of the sequence. This would be useful for segment-level tasks.
+
 
 **With Default Embedding:**
 
 **Scala:**
 ```scala
 BERT[Float](vocab: Int = 40990,
-hiddenSize: Int = 768,
-nBlock: Int = 12,
-nHead: Int = 12,
-maxPositionLen: Int = 512,
-intermediateSize: Int = 3072,
-hiddenPDrop: Double = 0.1,
-attnPDrop: Double = 0.1,
-initializerRange: Double = 0.02,
-outputAllBlock: Boolean = true,
-inputSeqLen: Int = -1
-)
+    hiddenSize: Int = 768,
+    nBlock: Int = 12,
+    nHead: Int = 12,
+    maxPositionLen: Int = 512,
+    intermediateSize: Int = 3072,
+    hiddenPDrop: Double = 0.1,
+    attnPDrop: Double = 0.1,
+    initializerRange: Double = 0.02,
+    outputAllBlock: Boolean = true,
+    inputSeqLen: Int = -1)
 ```
 **Python:**
 ```python
 BERT.init(vocab=40990,
- hidden_size=768,
- n_block=12,
- n_head=12,
- seq_len=512,
- intermediate_size=3072,
- hidden_drop=0.1,
- attn_drop=0.1,
- initializer_range=0.02,
- output_all_block=True)
+    hidden_size=768,
+    n_block=12,
+    n_head=12,
+    seq_len=512,
+    intermediate_size=3072,
+    hidden_drop=0.1,
+    attn_drop=0.1,
+    initializer_range=0.02,
+    output_all_block=True)
 ```
 
 Parameters:
@@ -295,26 +302,26 @@ Parameters:
 **Scala:**
 ```scala
 BERT[Float](nBlock = 12,
-nHead = 12,
-intermediateSize = 3072,
-hiddenPDrop = 0.1,
-attnPDrop = 0.1,
-initializerRange = 0.02,
-outputAllBlock = true,
-embeddingLayer = embedding)
+    nHead = 12,
+    intermediateSize = 3072,
+    hiddenPDrop = 0.1,
+    attnPDrop = 0.1,
+    initializerRange = 0.02,
+    outputAllBlock = true,
+    embeddingLayer = embedding)
 ```
 
 **Python:**
 ```python
 BERT(n_block=12,
- n_head=12,
- intermediate_size=3072,
- hidden_drop=0.1,
- attn_drop=0.1,
- initializer_range=0.02,
- output_all_block=True,
- embedding_layer=embedding,
- input_shape=((seq_len,), (seq_len,), (seq_len,), (1, 1, seq_len)))
+    n_head=12,
+    intermediate_size=3072,
+    hidden_drop=0.1,
+    attn_drop=0.1,
+    initializer_range=0.02,
+    output_all_block=True,
+    embedding_layer=embedding,
+    input_shape=((seq_len,), (seq_len,), (seq_len,), (1, 1, seq_len)))
 ```
 
 Parameters:
@@ -333,21 +340,21 @@ Parameters:
 **Scala:**
 ```scala
 BERT[Float](path = "",
-weightPath = null,
-inputSeqLen = 11,
-hiddenPDrop = 0.1,
-attnPDrop = 0.1,
-outputAllBlock = true)
+    weightPath = null,
+    inputSeqLen = 11,
+    hiddenPDrop = 0.1,
+    attnPDrop = 0.1,
+    outputAllBlock = true)
 ```
 
 **Python:**
 ```python
 BERT.init_from_existing_model(path="",
-weight_path=None,
-input_seq_len=-1.0,
-hidden_drop=-1.0,
-attn_drop=-1.0,
-output_all_block=True)
+    weight_path=None,
+    input_seq_len=-1.0,
+    hidden_drop=-1.0,
+    attn_drop=-1.0,
+    output_all_block=True)
 ```
 
 Parameters:
@@ -361,15 +368,15 @@ Parameters:
 **Scala example:**
 ```scala
 val layer = BERT[Float](vocab = 100,
-hiddenSize = 10,
-nBlock = 3,
-nHead = 2,
-intermediateSize = 64,
-hiddenPDrop = 0.1,
-attnPDrop = 0.1,
-maxPositionLen = 10,
-outputAllBlock = false,
-inputSeqLen = 10)
+    hiddenSize = 10,
+    nBlock = 3,
+    nHead = 2,
+    intermediateSize = 64,
+    hiddenPDrop = 0.1,
+    attnPDrop = 0.1,
+    maxPositionLen = 10,
+    outputAllBlock = false,
+    inputSeqLen = 10)
 
 val shape = Shape(List(Shape(1, 10), Shape(1, 10), Shape(1, 10), Shape(1, 1, 1, 10)))
 layer.build(shape)

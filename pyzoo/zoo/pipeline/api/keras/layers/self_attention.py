@@ -47,6 +47,14 @@ class TransformerLayer(ZooKerasLayer):
     """
     A self attention layer
 
+    Input is a list which consists of 2 ndarrays.
+    1. Token id ndarray: shape [batch, seqLen] with the word token indices in the vocabulary
+    2. Position id ndarray: shape [batch, seqLen] with positions in the sentence.
+    Output is a list which contains:
+    1. The states of Transformer layer.
+    2. The pooled output which processes the hidden state of the last layer with regard to the first
+    token of the sequence. This would be useful for segment-level tasks.
+
     # Arguments
     nBlock: block number
     hidden_drop: drop probability off projection
@@ -226,7 +234,7 @@ class TransformerLayer(ZooKerasLayer):
 class BERT(TransformerLayer):
     """
     A self attention layer.
-    Input is a List which consists of 4 ndarrays.
+    Input is a list which consists of 4 ndarrays.
     1. Token id ndarray: shape [batch, seqLen] with the word token indices in the vocabulary
     2. Token type id ndarray: shape [batch, seqLen] with the token types in [0, 1].
        0 means `sentence A` and 1 means a `sentence B` (see BERT paper for more details).
@@ -234,7 +242,10 @@ class BERT(TransformerLayer):
     4. Attention_mask ndarray: shape [batch, seqLen] with indices in [0, 1].
        It's a mask to be used if the input sequence length is smaller than seqLen in
        the current batch.
-    Output is a list which output the states of BERT layer
+    Output is a list which contains:
+    1. The states of BERT layer.
+    2. The pooled output which processes the hidden state of the last layer with regard to the first
+    token of the sequence. This would be useful for segment-level tasks.
 
     # Arguments
     n_block: block number
