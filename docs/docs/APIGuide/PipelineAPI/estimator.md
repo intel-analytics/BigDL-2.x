@@ -18,6 +18,11 @@ val estimator = Estimator[T: ClassTag](
       modelDir: Option[String] = None)
 ```
 
+`T`: the numeric type(Float/Double).  
+`model`: the model will be optimized.  
+`optimMethods`: the methods to optimize the model. Submodule names and optimMethod pairs.  
+`modelDir`(Optional): model checkpoint directory, and related summary directory.
+
 ```scala
 val estimator = Estimator[T: ClassTag](
       model: Module[T],
@@ -26,10 +31,9 @@ val estimator = Estimator[T: ClassTag](
 
 ```
 
-`T`: the numeric type(Float/Double).<br>
-`model`: the model will be optimized.<br>
-`optimMethods`: the methods to optimize the model. Submodule names and optimMethod pairs.<br>
-`optimMethod`: the method to optimize the model.<br>
+`T`: the numeric type(Float/Double).  
+`model`: the model will be optimized.  
+`optimMethod`: the method to optimize the model.  
 `modelDir`(Optional): model checkpoint directory, and related summary directory.
 
 **Python:**
@@ -39,9 +43,9 @@ estimator = Estimator(model, optim_methods, model_dir)
 
 ```
 
-`model`: the model will be optimized.<br>
+`model`: the model will be optimized.  
 `optim_methods`: the methods to optimize the model. Both single optimMethod and Dict(submodule 
-name, optimMethod) are supported.<br>
+name, optimMethod) are supported.  
 `model_dir`(Optional): model checkpoint directory, and related summary directory.
 
 ### Training
@@ -58,11 +62,11 @@ estimator.train(trainSet: FeatureSet[MiniBatch[T]],
             validationMethod: Array[ValidationMethod[T]] = null)
 ```
 
-`trainSet`: training dataset in type of FeatureSet[MiniBatch].<br>
-`criterion`: loss function.<br>
-`endTrigger`: when to finish the training.<br>
-`checkPointTrigger`: how often to save a checkpoint and evaluate the model.<br>
-`validationSet`: validation dataset in type of FeatureSet[MiniBatch].<br>
+`trainSet`: training dataset in type of FeatureSet[MiniBatch].  
+`criterion`: loss function.  
+`endTrigger`: when to finish the training.  
+`checkPointTrigger`: how often to save a checkpoint and evaluate the model.  
+`validationSet`: validation dataset in type of FeatureSet[MiniBatch].  
 `validationMethod`: a set of validationMethod.
 
 **Python:**
@@ -71,12 +75,12 @@ estimator.train(trainSet: FeatureSet[MiniBatch[T]],
 estimator.train(train_set, criterion, end_trigger, checkpoint_trigger,
               validation_set, validation_method, batch_size)
 ```
-`train_set`: training dataset in type of FeatureSet[Sample[T]].<br>
-`criterion`: loss function.<br>
-`end_trigger`: when to finish the training.<br>
-`checkpoint_trigger`: how often to save a checkpoint and evaluate the model.<br>
-`validation_set`: validation dataset in type of FeatureSet[Sample[T]].<br>
-`validation_method`: a set of validationMethod.<br>
+`train_set`: training dataset in type of FeatureSet[Sample[T]].  
+`criterion`: loss function.  
+`end_trigger`: when to finish the training.  
+`checkpoint_trigger`: how often to save a checkpoint and evaluate the model.  
+`validation_set`: validation dataset in type of FeatureSet[Sample[T]].  
+`validation_method`: a set of validationMethod.  
 `batch_size`: mini batch size.
 
 
@@ -85,12 +89,12 @@ estimator.train(train_set, criterion, end_trigger, checkpoint_trigger,
 estimator.train_imagefeature(self, train_set, criterion, end_trigger, checkpoint_trigger,
                            validation_set, validation_method, batch_size)
 ```
-`train_set`: training dataset in type of FeatureSet[ImageFeature].<br>
-`criterion`: loss function.<br>
-`end_trigger`: when to finish the training.<br>
-`checkpoint_trigger`: how often to save a checkpoint and evaluate the model.<br>
-`validation_set`: validation dataset in type of FeatureSet[ImageFeature].<br>
-`validation_method`: a set of validationMethod.<br>
+`train_set`: training dataset in type of FeatureSet[ImageFeature].  
+`criterion`: loss function.  
+`end_trigger`: when to finish the training.  
+`checkpoint_trigger`: how often to save a checkpoint and evaluate the model.  
+`validation_set`: validation dataset in type of FeatureSet[ImageFeature].  
+`validation_method`: a set of validationMethod.  
 `batch_size`: mini batch size.
 
 
@@ -102,7 +106,7 @@ Evaluate the model on the validationSet with the validationMethods.
 estimator.evaluate(validationSet: FeatureSet[MiniBatch[T]],
                    validationMethod: Array[ValidationMethod[T]])
 ```
-`validationSet`: validation dataset in type of FeatureSet.<br>
+`validationSet`: validation dataset in type of FeatureSet.  
 `validationMethod`: a set of validationMethod.
 
 **Python:**
@@ -110,16 +114,16 @@ estimator.evaluate(validationSet: FeatureSet[MiniBatch[T]],
 ```python
 estimator.evaluate(validation_set, validation_method, batch_size)
 ```
-`validation_set`: validation dataset in type of FeatureSet[Sample[T]].<br>
-`validation_method`: a set of validationMethod.<br>
+`validation_set`: validation dataset in type of FeatureSet[Sample[T]].  
+`validation_method`: a set of validationMethod.  
 `batch_size`: mini batch size.
 
 ##### Train ImageFeatures
 ```python
 estimator.evaluate_imagefeature(validation_set, validation_method, batch_size)
 ```
-`validation_set`: validation dataset in type of FeatureSet[ImageFeature].<br>
-`validation_method`: a set of validationMethod.<br>
+`validation_set`: validation dataset in type of FeatureSet[ImageFeature].  
+`validation_method`: a set of validationMethod.  
 `batch_size`: mini batch size.
 
 ### Other Important API
@@ -132,12 +136,14 @@ be called before fit.
 ```scala
 estimator.setConstantGradientClipping(min: Double, max: Double)
 ```
+`min`: The minimum value to clip by. Double.  
+`max`: The maximum value to clip by. Double.
 
 **Python:**
 ```python
 estimator.set_constant_gradient_clipping(min, max)
 ```
-`min`: The minimum value to clip by. Double.<br>
+`min`: The minimum value to clip by. Double.  
 `max`: The maximum value to clip by. Double.
 
 #### setGradientClippingByL2Norm
@@ -148,12 +154,13 @@ needs to be called before fit.
 ```scala
 estimator.setGradientClippingByL2Norm(clipNorm: Double)
 ```
+`clipNorm`: Gradient L2-Norm threshold. Double.
 
 **Python:**
 ```python
 estimator.set_l2_norm_gradient_clipping(clip_norm)
 ```
-`clipNorm`: Gradient L2-Norm threshold. Double.
+`clip_norm`: Gradient L2-Norm threshold. Double.
 
 #### clearGradientClipping 
 Clear gradient clipping parameters. In this case, gradient clipping will not be applied. In order
