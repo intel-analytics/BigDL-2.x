@@ -16,6 +16,8 @@ Environment Setting:
 * Pre-trained model: [TensorFlow ResNet50_v1](http://download.tensorflow.org/models/resnet_v1_50_2016_08_28.tar.gz)
 * Optimized Pre-trained model with [PrepareOpenVINOResNet](#prepareopenvinoresnet)
 
+Note that all paths used in this example should be full path, e.g., `/root/model`.
+
 ---
 ### PrepareOpenVINOResNet
 TensorFlow models cannot be directly loaded by OpenVINO. It should be converted to OpenVINO optimized model and int8 optimized model first. You can use PrepareOpenVINOResNet or [OpenVINO toolkit](https://docs.openvinotoolkit.org/2018_R5/_docs_MO_DG_prepare_model_convert_model_Convert_Model_From_TensorFlow.html) to finish this job. Herein, we focus on PrepareOpenVINOResNet.
