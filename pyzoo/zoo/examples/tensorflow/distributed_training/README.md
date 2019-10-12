@@ -30,7 +30,7 @@ python train_mnist_keras.py
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-sh $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] train_lenet.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] train_lenet.py
 ```
 
 For Keras users:
@@ -39,7 +39,7 @@ For Keras users:
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-sh $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] train_mnist_keras.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] train_mnist_keras.py
 ```
 
 ## Run the Evaluation Example after pip install
@@ -60,7 +60,7 @@ python evaluate_mnist_keras.py
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-sh $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] evaluate_lenet.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] evaluate_lenet.py
 ```
 
 For Keras users:
@@ -69,7 +69,7 @@ For Keras users:
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-sh $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] evaluate_mnist_keras.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] evaluate_mnist_keras.py
 ```
 
 
