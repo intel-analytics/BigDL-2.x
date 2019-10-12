@@ -1,7 +1,7 @@
 ## Estimator
 
 
-`Estimator` supports the training and evaluation of BigDL models. It wraps a model, and provide a uniform training, evaluation, or prediction operation on both localhost and distributed spark environment.
+`Estimator` supports the training and evaluation of BigDL models, Keras-like models and PyTorch models. It wraps a model, and provide a uniform training, evaluation, or prediction operation on both localhost and distributed spark environment.
 
 
 ### Creating an Estimator
@@ -16,7 +16,9 @@ val estimator = Estimator[T: ClassTag](
       model: Module[T], 
       optimMethods: Map[String, OptimMethod[T]] = Map(), 
       modelDir: Option[String] = None)
+```
 
+```scala
 val estimator = Estimator[T: ClassTag](
       model: Module[T],
       optimMethod: OptimMethod[T],
@@ -24,10 +26,10 @@ val estimator = Estimator[T: ClassTag](
 
 ```
 
-`T`: the numeric type(Float/Double).\
-`model`: the model will be optimized.\
-`optimMethods`: the methods to optimize the model. Submodule names and optimMethod pairs.\
-`optimMethod`: the method to optimize the model.\
+`T`: the numeric type(Float/Double).<br>
+`model`: the model will be optimized.<br>
+`optimMethods`: the methods to optimize the model. Submodule names and optimMethod pairs.<br>
+`optimMethod`: the method to optimize the model.<br>
 `modelDir`(Optional): model checkpoint directory, and related summary directory.
 
 **Python:**
@@ -37,9 +39,9 @@ estimator = Estimator(model, optim_methods, model_dir)
 
 ```
 
-`model`: the model will be optimized.\
+`model`: the model will be optimized.<br>
 `optim_methods`: the methods to optimize the model. Both single optimMethod and Dict(submodule 
-name, optimMethod) are supported.\
+name, optimMethod) are supported.<br>
 `model_dir`(Optional): model checkpoint directory, and related summary directory.
 
 ### Training
@@ -56,11 +58,11 @@ estimator.train(trainSet: FeatureSet[MiniBatch[T]],
             validationMethod: Array[ValidationMethod[T]] = null)
 ```
 
-`trainSet`: training dataset in type of FeatureSet[MiniBatch].\
-`criterion`: loss function.\
-`endTrigger`: when to finish the training.\
-`checkPointTrigger`: how often to save a checkpoint and evaluate the model.\
-`validationSet`: validation dataset in type of FeatureSet[MiniBatch].\
+`trainSet`: training dataset in type of FeatureSet[MiniBatch].<br>
+`criterion`: loss function.<br>
+`endTrigger`: when to finish the training.<br>
+`checkPointTrigger`: how often to save a checkpoint and evaluate the model.<br>
+`validationSet`: validation dataset in type of FeatureSet[MiniBatch].<br>
 `validationMethod`: a set of validationMethod.
 
 **Python:**
@@ -69,12 +71,12 @@ estimator.train(trainSet: FeatureSet[MiniBatch[T]],
 estimator.train(train_set, criterion, end_trigger, checkpoint_trigger,
               validation_set, validation_method, batch_size)
 ```
-`train_set`: training dataset in type of FeatureSet[Sample[T]].\
-`criterion`: loss function.\
-`end_trigger`: when to finish the training.\
-`checkpoint_trigger`: how often to save a checkpoint and evaluate the model.\
-`validation_set`: validation dataset in type of FeatureSet[Sample[T]].\
-`validation_method`: a set of validationMethod.
+`train_set`: training dataset in type of FeatureSet[Sample[T]].<br>
+`criterion`: loss function.<br>
+`end_trigger`: when to finish the training.<br>
+`checkpoint_trigger`: how often to save a checkpoint and evaluate the model.<br>
+`validation_set`: validation dataset in type of FeatureSet[Sample[T]].<br>
+`validation_method`: a set of validationMethod.<br>
 `batch_size`: mini batch size.
 
 
@@ -83,12 +85,12 @@ estimator.train(train_set, criterion, end_trigger, checkpoint_trigger,
 estimator.train_imagefeature(self, train_set, criterion, end_trigger, checkpoint_trigger,
                            validation_set, validation_method, batch_size)
 ```
-`train_set`: training dataset in type of FeatureSet[ImageFeature].\
-`criterion`: loss function.\
-`end_trigger`: when to finish the training.\
-`checkpoint_trigger`: how often to save a checkpoint and evaluate the model.\
-`validation_set`: validation dataset in type of FeatureSet[ImageFeature].\
-`validation_method`: a set of validationMethod.
+`train_set`: training dataset in type of FeatureSet[ImageFeature].<br>
+`criterion`: loss function.<br>
+`end_trigger`: when to finish the training.<br>
+`checkpoint_trigger`: how often to save a checkpoint and evaluate the model.<br>
+`validation_set`: validation dataset in type of FeatureSet[ImageFeature].<br>
+`validation_method`: a set of validationMethod.<br>
 `batch_size`: mini batch size.
 
 
@@ -100,7 +102,7 @@ Evaluate the model on the validationSet with the validationMethods.
 estimator.evaluate(validationSet: FeatureSet[MiniBatch[T]],
                    validationMethod: Array[ValidationMethod[T]])
 ```
-`validationSet`: validation dataset in type of FeatureSet.\
+`validationSet`: validation dataset in type of FeatureSet.<br>
 `validationMethod`: a set of validationMethod.
 
 **Python:**
@@ -108,16 +110,16 @@ estimator.evaluate(validationSet: FeatureSet[MiniBatch[T]],
 ```python
 estimator.evaluate(validation_set, validation_method, batch_size)
 ```
-`validation_set`: validation dataset in type of FeatureSet[Sample[T]].\
-`validation_method`: a set of validationMethod.\
+`validation_set`: validation dataset in type of FeatureSet[Sample[T]].<br>
+`validation_method`: a set of validationMethod.<br>
 `batch_size`: mini batch size.
 
 ##### Train ImageFeatures
 ```python
 estimator.evaluate_imagefeature(validation_set, validation_method, batch_size)
 ```
-`validation_set`: validation dataset in type of FeatureSet[ImageFeature].\
-`validation_method`: a set of validationMethod.\
+`validation_set`: validation dataset in type of FeatureSet[ImageFeature].<br>
+`validation_method`: a set of validationMethod.<br>
 `batch_size`: mini batch size.
 
 ### Other Important API
@@ -135,7 +137,7 @@ estimator.setConstantGradientClipping(min: Double, max: Double)
 ```python
 estimator.set_constant_gradient_clipping(min, max)
 ```
-`min`: The minimum value to clip by. Double.
+`min`: The minimum value to clip by. Double.<br>
 `max`: The maximum value to clip by. Double.
 
 #### setGradientClippingByL2Norm
