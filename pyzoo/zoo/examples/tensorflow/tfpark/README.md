@@ -25,11 +25,13 @@ export PYTHONPATH=$PWD/models/research/slim:$PYTHONPATH
 Using TFDataset as data input
 
 ```bash
+export MASTER=local[4]
 python keras_dataset.py
 ```
 
 Using numpy.ndarray as data input
 ```bash
+export MASTER=local[4]
 python keras_ndarray.py
 ```
 
@@ -41,7 +43,7 @@ Using TFDataset as data input
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-sh $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] keras_dataset.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] keras_dataset.py
 ```
 
 Using numpy.ndarray as data input
@@ -49,13 +51,14 @@ Using numpy.ndarray as data input
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-sh $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] keras_ndarray.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] keras_ndarray.py
 ```
 
 ## Run the TFEstimator example after pip install
 
 Using TFDataset as data input
 ```bash
+export MASTER=local[4]
 python estimator_dataset.py
 ```
 
@@ -65,17 +68,17 @@ Using FeatureSet as data input
 # the directory to the training data, the sub-directory of IMAGE_PATH should be
 # different classes each containing the images of that class.
 # e.g.
-# IMAGE_PATH=/cat_dog
+# IMAGE_PATH=file:///cat_dog
 # NUM_CLASSES=2
 # /cat_dog
 #    /cats
 #       cat.001.jpg
 #    /dogs
 #       dog.001.jpg
-IMAGE_PATH=...
+IMAGE_PATH=... # file://... for local files and hdfs:// for hdfs files
 NUM_CLASSES=..
 
-
+export MASTER=local[4]
 python estimator_inception.py --image-path $IMAGE_PATH --num-classes $NUM_CLASSES
 ```
 
@@ -86,7 +89,7 @@ Using TFDataset as data input
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-sh $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] estimator_dataset.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] estimator_dataset.py
 ```
 
 Using FeatureSet as data input
@@ -99,16 +102,16 @@ export SPARK_HOME=... # the root directory of Spark
 # the directory to the training data, the sub-directory of IMAGE_PATH should be
 # different classes each containing the images of that class.
 # e.g.
-# IMAGE_PATH=/cat_dog
+# IMAGE_PATH=file:///cat_dog
 # NUM_CLASSES=2
 # /cat_dog
 #    /cats
 #       cat.001.jpg
 #    /dogs
 #       dog.001.jpg
-IMAGE_PATH=...
+IMAGE_PATH=... # file://... for local files and hdfs:// for hdfs files
 NUM_CLASSES=..
 
 
-sh $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] estimator_inception.py --image-path $IMAGE_PATH --num-classes $NUM_CLASSES
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] estimator_inception.py --image-path $IMAGE_PATH --num-classes $NUM_CLASSES
 ```
