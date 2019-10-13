@@ -120,12 +120,12 @@
                 <dependency>
                     <groupId>com.intel.analytics.zoo</groupId>
                     <artifactId>zoo-core-mkl-linux</artifactId>
-                    <version>0.6.0-SNAPSHOT</version>
+                    <version>0.6.0</version>
                 </dependency>
                 <dependency>
                     <groupId>com.intel.analytics.zoo</groupId>
                     <artifactId>zoo-core-pmem-java-linux</artifactId>
-                    <version>0.6.0-SNAPSHOT</version>
+                    <version>0.6.0</version>
                 </dependency>
             </dependencies>
 
@@ -142,12 +142,12 @@
                 <dependency>
                     <groupId>com.intel.analytics.zoo</groupId>
                     <artifactId>zoo-core-openvino-java-linux</artifactId>
-                    <version>0.6.0-SNAPSHOT</version>
+                    <version>0.6.0</version>
                 </dependency>
                 <dependency>
                     <groupId>com.intel.analytics.zoo</groupId>
                     <artifactId>zoo-core-pmem-java-linux</artifactId>
-                    <version>0.6.0-SNAPSHOT</version>
+                    <version>0.6.0</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -337,7 +337,7 @@
         <dependency>
             <groupId>com.intel.analytics.zoo</groupId>
             <artifactId>${core.artifactId}</artifactId>
-            <version>0.6.0-SNAPSHOT</version>
+            <version>0.6.0</version>
             <type>${core.dependencyType}</type>
         </dependency>
     </dependencies>
