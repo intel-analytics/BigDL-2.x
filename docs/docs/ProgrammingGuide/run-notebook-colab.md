@@ -35,8 +35,8 @@ If you would like to open the Notebook in a GitHub repo directly, the only thing
 
 - Open the Notebook file on GitHub in a browser (So the URL ends in *.ipynb*).
 
-- Change the URL from https://github.com/full_path_to_your_notebook to https://colab.research.google.com/github/full_path_to_your_notebook
+- Change the URL from https://github.com/full_path_to_the_notebook to https://colab.research.google.com/github/full_path_to_the_notebook
 
   For example, change URL of tutorial https://github.com/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb to https://colab.research.google.com/github/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb 
 
-Then, prepare environment of Java8 and Analytics Zoo as instructs above. If the notebook is not authored, you may could make a copy and run it within the instructions.
+Then, prepare environment of Java8 and Analytics Zoo as instructions above. If the notebook is not authored, you could make a copy and run it within the instructions.
