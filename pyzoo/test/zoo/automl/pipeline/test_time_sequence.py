@@ -476,6 +476,21 @@ class TestTimeSequencePipeline(ZooTestCase):
         mse, rs = ppl.evaluate(self.test_df, metrics=["mean_squared_error", "r_square"])
         print(mse, rs)
 
+    def test_load_ts_pipeline_describe(self):
+        pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
+        dirname = tempfile.mkdtemp(prefix="saved_pipeline")
+        try:
+            save_pipeline_file = os.path.join(dirname, "my.ppl")
+            pipeline_1.save(save_pipeline_file)
+            assert os.path.isfile(save_pipeline_file)
+            new_pipeline = load_ts_pipeline(save_pipeline_file)
+            assert new_pipeline.config is not None
+            assert isinstance(new_pipeline.feature_transformers, TimeSequenceFeatureTransformer)
+            assert isinstance(new_pipeline.model, TimeSequenceModel)
+            new_pipeline.describe()
+        finally:
+            shutil.rmtree(dirname)
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

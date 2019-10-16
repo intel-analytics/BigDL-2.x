@@ -27,7 +27,7 @@ from zoo.automl.common.parameters import *
 
 class TimeSequencePipeline(Pipeline):
 
-    def __init__(self, feature_transformers=None, model=None, name=None, config=None):
+    def __init__(self, feature_transformers=None, model=None, config=None, name=None):
         """
         initialize a pipeline
         :param model: the internal model
@@ -189,6 +189,8 @@ def load_ts_pipeline(file):
     model = TimeSequenceModel(check_optional_config=False)
 
     all_config = restore_zip(file, feature_transformers, model)
-    ts_pipeline = TimeSequencePipeline(feature_transformers, model, all_config)
+    ts_pipeline = TimeSequencePipeline(feature_transformers=feature_transformers,
+                                       model=model,
+                                       config=all_config)
     print("Restore pipeline from", file)
     return ts_pipeline
