@@ -29,8 +29,19 @@ import scala.reflect.ClassTag
 class CategoricalCrossEntropy[@specialized(Float, Double) T: ClassTag]()
   (implicit ev: TensorNumeric[T]) extends TensorLossFunction[T] {
 
+  protected val eps = ev.fromType(1e-8)
+
+  protected val oneMinusEps = ev.minus(ev.one, eps)
+
   override val loss: AbstractCriterion[Tensor[T], Tensor[T], T] =
     com.intel.analytics.bigdl.nn.CategoricalCrossEntropy[T]()
+
+  override def updateOutput(input: Tensor[T], target: Tensor[T]): T = {
+    // avoid NaN when compute input's log in BigDL's CategoricalCrossEntropy
+    input.apply1(ev.clip(_, eps, oneMinusEps))
+    output = loss.updateOutput(input, target)
+    output
+  }
 }
 
 object CategoricalCrossEntropy {
