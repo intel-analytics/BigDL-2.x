@@ -37,7 +37,7 @@ class CategoricalCrossEntropySpec extends KerasBaseSpec {
     checkOutputAndGradForLoss(c, kerasCode)
   }
 
-  "CategoricalCrossEntropy loss d" should "be ok" in {
+  "CategoricalCrossEntropy loss forward negative input" should "be ok" in {
     val input = Tensor[Float](2, 3).rand(-1, 1)
     val target = Tensor[Float](2, 3)
     target.setValue(1, 1, 1)
@@ -45,7 +45,5 @@ class CategoricalCrossEntropySpec extends KerasBaseSpec {
     val c = CategoricalCrossEntropy[Float]()
     val o = c.forward(input, target)
     java.lang.Float.isNaN(o) should be (false)
-    println(o)
-
   }
 }
