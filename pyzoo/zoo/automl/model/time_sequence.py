@@ -16,22 +16,27 @@
 from .abstract import BaseModel
 from .VanillaLSTM import VanillaLSTM
 from .Seq2Seq import LSTMSeq2Seq
+from .MTNet import MTNet
 
 
 class TimeSequenceModel(BaseModel):
     """
     Time Sequence Model is used to do model selection.
     """
-    def __init__(self, check_optional_config=False, future_seq_len=None):
+    def __init__(self, check_optional_config=False, future_seq_len=None ):
         """
         Contructor of time sequence model
         :param check_optional_config:
         :param future_seq_len:
         """
         if future_seq_len:
-            self._model_selection(future_seq_len, check_optional_config)
+            self._model_selection(future_seq_len, check_optional_config )
 
-    def _model_selection(self, future_seq_len, check_optional_config=False, verbose=1):
+    def _model_selection(self, future_seq_len, check_optional_config=False, verbose=1 ):
+        self.model = MTNet(check_optional_config=check_optional_config,future_seq_len=future_seq_len)
+        if verbose == 1:
+            print("Model selection: MTNet model is selected")
+        '''
         if future_seq_len == 1:
             self.model = VanillaLSTM(check_optional_config=check_optional_config,
                                      future_seq_len=future_seq_len)
@@ -42,7 +47,7 @@ class TimeSequenceModel(BaseModel):
                                      future_seq_len=future_seq_len)
             if verbose == 1:
                 print("Model selection: LSTM Seq2Seq model is selected.")
-
+        '''
     def fit_eval(self, x, y, validation_data=None, verbose=0, **config):
         """
         fit for one iteration

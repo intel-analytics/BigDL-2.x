@@ -82,6 +82,31 @@ class SmokeRecipe(Recipe):
             "num_samples": 1,
         }
 
+class MTNetSmokeRecipe(Recipe):
+    """
+    A very simple Recipe for smoke test that runs one epoch and one iteration on MTNet
+    with only 1 random sample.
+    """
+    def __init__(self):
+        pass
+
+    def search_space(self, all_available_features):
+        return {
+            "selected_features": all_available_features,
+            "n": RandomSample(lambda spec: np.random.choice([3, 4], size=1)[0]),
+            "highway_window": RandomSample(lambda spec: np.random.choice([2, 3], size=1)[0]),
+            "lr": 0.001,
+            "batch_size": 100,
+            "epochs": 1,
+            "past_seq_len": 3,
+        }
+
+    def runtime_params(self):
+        return {
+            "training_iteration": 1,
+            "num_samples": 1,
+        }
+
 
 class GridRandomRecipe(Recipe):
     """

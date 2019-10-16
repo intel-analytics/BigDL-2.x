@@ -5,6 +5,7 @@ from zoo.automl.common.metrics import Evaluator
 import os
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # suppress some warnings
 import tensorflow as tf
+from zoo.automl.common.util import *
 
 class MTNet(BaseModel):
     ''' source code from https://github.com/Maple728/MTNet'''
@@ -253,7 +254,7 @@ class MTNet(BaseModel):
         self.y_pred = y_pred
         self.loss = loss
         self.train_op = train_op
-
+        self.built = 1
         # self.reset_statistics_vars = statistics_vars_initializer
 
     def _get_feed_dict(self, one_batch, is_train):
@@ -316,7 +317,6 @@ class MTNet(BaseModel):
             result.append(data[index: index + sequence_length])
         return np.asarray(result)
 
-
     def _prepare_batches(self, x, y=None, fill_last_batch=False):
         '''
         prepare historical data for train/validation/testing
@@ -359,7 +359,7 @@ class MTNet(BaseModel):
             batch_data.append((X_last_batch, q_last_batch, None))
         return batch_data
 
-    def _set_config(self, **config):
+    def _set_config(self, store=False, **config):
         ''' 
         read out configurations, used at the beginning of self.fit_eval()
         :config:
@@ -373,9 +373,10 @@ class MTNet(BaseModel):
         self.en_rnn_hidden_sizes = config.get('en_rnn_hidden_sizes', [16, 16])
         self.input_keep_prob_value = config.get('input_keep_prob', 0.8)
         self.output_keep_prob_value = config.get('output_keep_prob', 1.0)
-        assert(self.highway_window < self.T), "Invalid value. highway_window must not exceed past_seq_len"
-        # self.D = config.get('D', 3)  # input's variable dimension (convolution filter width)
-        # self.K = config.get('K', 1) # output's variable dimension
+        assert(self.highway_window <= self.T), "Invalid value. highway_window must not exceed past_seq_len"
+        if store: # when storing
+            self.D = config.get('D')  # input's variable dimension (convolution filter width)
+            self.K = config.get('K') # output's variable dimension
 
         self.lr_value = config.get('lr', 0.001)
         self.batch_size = config.get('batch_size', 100)
@@ -507,11 +508,12 @@ class MTNet(BaseModel):
         :param model_path: the model file
         :param config: the trial config
         """
-        sess = self._open_sess()
+        print(config)
         if not self.built:
             # build model
-            self._set_config(**config)
+            self._set_config(True, **config)
             self._build(**config)
+        sess = self._open_sess()
         saver = tf.train.Saver()
         saver.restore(sess, model_path)
                 
@@ -519,7 +521,7 @@ class MTNet(BaseModel):
         return {}
     def _get_optional_parameters(self):
         return {}
-    
+
 if __name__=="__main__":
     from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
     from zoo.automl.common.util import split_input_df
