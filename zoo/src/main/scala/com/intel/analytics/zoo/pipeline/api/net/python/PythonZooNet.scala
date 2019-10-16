@@ -171,8 +171,8 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
 
   def createGanOptimMethod(dOptim: OptimMethod[T],
                            gOptim: OptimMethod[T],
-                           dStep: Int, gStep: Int): OptimMethod[T] = {
-    new GanOptimMethod[T](dOptim, gOptim, dStep, gStep)
+                           dStep: Int, gStep: Int, gParamSize: Int): OptimMethod[T] = {
+    new GanOptimMethod[T](dOptim, gOptim, dStep, gStep, gParamSize)
   }
 
   def createRDDFromTFRecords(path: String,

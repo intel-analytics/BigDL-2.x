@@ -152,10 +152,6 @@ with tf.variable_scope("discriminator"):
 with tf.variable_scope("discriminator", reuse=True):
     real_logits = unconditional_discriminator(real_images)
 
-
-generator_optimizer = tf.train.AdamOptimizer(1e-3, 0.5),
-discriminator_optimizer = tf.train.AdamOptimizer(1e-4, 0.5)
-
 generator_loss = wasserstein_generator_loss(fake_logits)
 generator_variables = tf.trainable_variables("generator")
 
@@ -172,9 +168,12 @@ d_grads = tf.cond(is_discriminator_phase, lambda: discriminator_grads, lambda: [
 loss = tf.cond(is_discriminator_phase, lambda: discriminator_loss, lambda: generator_loss)
 
 grads = g_grads + d_grads
+
+g_param_size = sum([np.product(g.shape) for g in g_grads])
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
-    optimizer = TFOptimizer(loss, GanOptimMethod(Adam(1e-4), Adam(1e-3)), sess=sess, dataset=dataset, inputs=[real_images, dummy_labels],
+    optimizer = TFOptimizer(loss, GanOptimMethod(Adam(1e-4, beta1=0.5), Adam(1e-3, beta1=0.5), g_param_size.value), sess=sess,
+                            dataset=dataset, inputs=[real_images, dummy_labels],
                  grads=grads, variables=variables, graph=tf.get_default_graph(), updates=[increase_counter])
 
     optimizer.optimize(MaxIteration(5000))

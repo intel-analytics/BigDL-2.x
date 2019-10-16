@@ -27,17 +27,24 @@ class GanOptimMethod[@specialized(Float, Double) T: ClassTag](
           val dOptim: OptimMethod[T],
           val gOptim: OptimMethod[T],
           val dSteps: Int,
-          val gSteps: Int)(implicit ev: TensorNumeric[T])
+          val gSteps: Int,
+          gParamSize: Int)(implicit ev: TensorNumeric[T])
   extends OptimMethod[T] {
 
   override def optimize(feval: (Tensor[T]) =>
     (T, Tensor[T]), parameter: Tensor[T]): (Tensor[T], Array[T]) = {
     val nevals = state.getOrElse[Int]("evalCounter", 0)
-    if (nevals % (dSteps + gSteps) < dSteps) {
-      dOptim.optimize(feval, parameter)
+    val (fx, dfdx) = feval(parameter)
+    val results = if (nevals % (dSteps + gSteps) < dSteps) {
+      dOptim.optimize(
+        (_) => (fx, dfdx.narrow(1, gParamSize, parameter.nElement() - gParamSize)),
+        parameter.narrow(1, gParamSize, parameter.nElement() - gParamSize))
     } else {
-      gOptim.optimize(feval, parameter)
+      gOptim.optimize((_) => (fx, dfdx.narrow(1, 1, gParamSize)),
+        parameter.narrow(1, 1, gParamSize))
     }
+    state("evalCounter") = nevals + 1
+    (parameter, Array(fx))
   }
 
   override def clearHistory(): Unit = {
