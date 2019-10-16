@@ -491,6 +491,21 @@ class TestTimeSequencePipeline(ZooTestCase):
         finally:
             shutil.rmtree(dirname)
 
+    def test_predict_with_uncertainty(self):
+        self.pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
+        config_file = self.pipeline_1.config_save()
+        assert os.path.isfile(config_file)
+        configs = load_config(config_file)
+        os.remove(config_file)
+        os.rmdir(os.path.dirname(os.path.abspath(config_file)))
+        ppl = TimeSequencePipeline(name='test', config=configs)
+        ppl.fit_with_fixed_configs(self.train_df, self.validation_df, mc=True)
+        y_out, y_pred_uncertainty = ppl.predict_with_uncertainty(self.test_df, n_iter=10)
+        assert y_out.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                               self.future_seq_len_1 + 1)
+        assert y_pred_uncertainty.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                                            self.future_seq_len_1)
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

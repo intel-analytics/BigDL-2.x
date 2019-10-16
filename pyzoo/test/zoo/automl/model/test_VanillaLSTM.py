@@ -57,6 +57,12 @@ class TestVanillaLSTM(ZooTestCase):
                                                self.y_train,
                                                **self.config))
 
+    def test_fit_eval_mc(self):
+        print("fit_eval:", self.model.fit_eval(self.x_train,
+                                               self.y_train,
+                                               mc=True,
+                                               **self.config))
+
     def test_evaluate(self):
         self.model.fit_eval(self.x_train, self.y_train, **self.config)
         mse, rs = self.model.evaluate(self.x_val,
@@ -86,6 +92,12 @@ class TestVanillaLSTM(ZooTestCase):
 
         finally:
             shutil.rmtree(dirname)
+
+    def test_predict_with_uncertainty(self,):
+        self.model.fit_eval(self.x_train, self.y_train, mc=True, **self.config)
+        prediction, uncertainty = self.model.predict_with_uncertainty(self.x_test, n_iter=10)
+        assert prediction.shape == (self.x_test.shape[0], 1)
+        assert uncertainty.shape == (self.x_test.shape[0], 1)
 
 
 if __name__ == '__main__':
