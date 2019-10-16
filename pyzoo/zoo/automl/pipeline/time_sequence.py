@@ -78,7 +78,7 @@ class TimeSequencePipeline(Pipeline):
                 print('Config: \'{}\' is not specified. '
                       'A default value of {} will be used.'.format(config, value))
 
-    def fit_with_fixed_configs(self, input_df, validation_df=None, user_configs=None):
+    def fit_with_fixed_configs(self, input_df, validation_df=None, mc=False, user_configs=None):
         """
         Fit pipeline with fixed configs. The model will be trained from initialization
         with the hyper-parameter specified in configs. The configs contain both identity configs
@@ -109,6 +109,7 @@ class TimeSequencePipeline(Pipeline):
 
         self.model.fit_eval(x_train, y_train,
                             validation_data=validation_data,
+                            mc=mc,
                             verbose=1, **self.config)
 
     def evaluate(self,
