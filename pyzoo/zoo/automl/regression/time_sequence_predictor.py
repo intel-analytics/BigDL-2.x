@@ -511,6 +511,7 @@ class TimeSequencePredictor(object):
                          metric=metric,
                          num_samples=num_samples)
         # searcher.test_run()
+        searcher.run()
 
         best = searcher.get_best_trials(k=1)[0]  # get the best one trial, later could be n
         pipeline = self._make_pipeline(best,

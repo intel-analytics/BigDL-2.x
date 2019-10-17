@@ -70,8 +70,8 @@ class TestTimeSequencePipeline(ZooTestCase):
     def test_evaluate_1(self):
         self.pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
         mse, rs = self.pipeline_1.evaluate(self.test_df, metrics=["mean_squared_error", "r_square"])
-        assert len(mse) == self.future_seq_len_1
-        assert len(rs) == self.future_seq_len_1
+        assert isinstance(mse, np.float)
+        assert isinstance(rs, np.float)
         print("Mean square error (future_seq_len=1) is:", mse)
         print("R square (future_seq_len=1) is:", rs)
 
@@ -81,8 +81,8 @@ class TestTimeSequencePipeline(ZooTestCase):
         test_df_list = [self.test_df] * 3
         self.pipeline_1 = self.tsp_1.fit(train_df_list, validation_df=val_df_list)
         mse, rs = self.pipeline_1.evaluate(test_df_list, metrics=["mean_squared_error", "r_square"])
-        assert len(mse) == self.future_seq_len_1
-        assert len(rs) == self.future_seq_len_1
+        assert isinstance(mse, np.float)
+        assert isinstance(rs, np.float)
         print("Mean square error (future_seq_len=1) is:", mse)
         print("R square (future_seq_len=1) is:", rs)
 
@@ -112,10 +112,10 @@ class TestTimeSequencePipeline(ZooTestCase):
         mse, rs, smape = self.random_pipeline_1.evaluate(self.test_df,
                                                          metrics=["mean_squared_error",
                                                                   "r_square", "sMAPE"])
-        assert len(mse) == self.future_seq_len_1
-        assert len(rs) == self.future_seq_len_1
-        assert len(smape) == self.future_seq_len_1
-        assert all(100 > i > 0 for i in smape)
+        assert isinstance(mse, np.float)
+        assert isinstance(rs, np.float)
+        assert isinstance(smape, np.float)
+        assert 100 > smape > 0
         print("Mean square error (future_seq_len=1) is:", mse)
         print("R square (future_seq_len=1) is:", rs)
         print("sMAPE (future_seq_len=1) is:", smape)
@@ -362,8 +362,8 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert y_pred_random_1.shape[1] == self.future_seq_len_1 + 1
         mse, rs = random_pipeline_1.evaluate(self.test_df,
                                              metrics=["mean_squared_error", "r_square"])
-        assert len(mse) == self.future_seq_len_1
-        assert len(rs) == self.future_seq_len_1
+        assert isinstance(mse, np.float)
+        assert isinstance(rs, np.float)
 
     def test_look_back_3(self):
         min_past_seq_len = 5
