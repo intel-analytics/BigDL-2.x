@@ -101,6 +101,36 @@ def init_spark_on_yarn(hadoop_conf,
     return sc
 
 
+def init_spark_on_standalone(master,
+                             executor_cores,
+                             total_executor_cores,
+                             executor_memory="2g",
+                             driver_memory="1g",
+                             driver_cores=4,
+                             extra_executor_memory_for_ray=None,
+                             extra_python_lib=None,
+                             spark_log_level="WARN",
+                             redirect_spark_log=True,
+                             jars=None,
+                             spark_conf=None):
+
+    from zoo.util.spark import SparkRunner
+    sparkrunner = SparkRunner(spark_log_level=spark_log_level,
+                              redirect_spark_log=redirect_spark_log)
+    sc = sparkrunner.init_spark_on_standalone(
+        master=master,
+        executor_cores=executor_cores,
+        total_executor_cores=total_executor_cores,
+        executor_memory=executor_memory,
+        driver_memory=driver_memory,
+        driver_cores=driver_cores,
+        extra_executor_memory_for_ray=extra_executor_memory_for_ray,
+        extra_python_lib=extra_python_lib,
+        jars=jars,
+        spark_conf=spark_conf)
+    return sc
+
+
 def init_nncontext(conf=None, redirect_spark_log=True):
     """
     Creates or gets a SparkContext with optimized configuration for BigDL performance.
@@ -192,13 +222,13 @@ def init_env():
 
 
 def init_spark_conf():
-    init_env()
+    # init_env()
     zoo_conf = get_analytics_zoo_conf()
     # Set bigDL and TF conf
-    zoo_conf["spark.executorEnv.KMP_AFFINITY"] = os.environ["KMP_AFFINITY"]
-    zoo_conf["spark.executorEnv.KMP_SETTINGS"] = os.environ["KMP_SETTINGS"]
-    zoo_conf["spark.executorEnv.OMP_NUM_THREADS"] = os.environ["OMP_NUM_THREADS"]
-    zoo_conf["spark.executorEnv.KMP_BLOCKTIME"] = os.environ["KMP_BLOCKTIME"]
+    # zoo_conf["spark.executorEnv.KMP_AFFINITY"] = os.environ["KMP_AFFINITY"]
+    # zoo_conf["spark.executorEnv.KMP_SETTINGS"] = os.environ["KMP_SETTINGS"]
+    # zoo_conf["spark.executorEnv.OMP_NUM_THREADS"] = os.environ["OMP_NUM_THREADS"]
+    # zoo_conf["spark.executorEnv.KMP_BLOCKTIME"] = os.environ["KMP_BLOCKTIME"]
 
     sparkConf = SparkConf()
     sparkConf.setAll(zoo_conf.items())
