@@ -230,7 +230,6 @@ class SparkRunner():
                                  extra_python_lib=None,
                                  spark_conf=None,
                                  jars=None):
-        os.environ['PYSPARK_PYTHON'] = "{}/bin/python".format(self.PYTHON_ENV)
 
         def _standalone_opt():
             command = " --total-executor-cores {} " \
