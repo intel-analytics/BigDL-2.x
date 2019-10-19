@@ -88,6 +88,7 @@ object ImageClassification {
       // remember use case class here
       // this is the only key-value pair support
       // if you use tuple, you will get key of null
+      println(value)
       Result(f("uri"), value)
 
     }

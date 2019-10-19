@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
+import java.io.FileWriter
 import java.lang.{Float => JFloat, Integer => JInt}
 import java.util
 import java.util.concurrent.LinkedBlockingQueue
@@ -34,6 +35,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   extends InferenceSupportive with Serializable {
 
   require(concurrentNum > 0, "concurrentNum should > 0")
+
 
   /**
    * default constructor, will create a InferenceModel with auto-scaling enabled.
@@ -564,7 +566,10 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @return the output activity
    */
   def doPredict(inputActivity: Activity): Activity = {
-    timing(s"model predict for activity") {
+    val batchSize = inputActivity.toTensor[Float].size()(0)
+
+
+    timing(s"model predict batch size " + batchSize) {
       predict(inputActivity)
     }
   }

@@ -16,15 +16,17 @@
 
 package com.intel.analytics.zoo.serving
 
+import java.io.FileWriter
+
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.models.image.imageclassification.{LabelOutput, LabelReader}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
+import com.intel.analytics.zoo.pipeline.inference.FloatModel
 import com.intel.analytics.zoo.serving.utils.Result
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ImageClassification}
-
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.streaming.DataStreamWriter
@@ -61,6 +63,9 @@ object ClusterServing {
     val batchSize = helper.batchSize
     val topN = helper.topN
 
+
+    val fw = new FileWriter("/tmp/tp.txt", false)
+
     val images = spark
       .readStream
       .format("redis")
@@ -88,38 +93,47 @@ object ClusterServing {
         }
         val imageSet = ImageSet.rdd(batchImage)
         imageSet.rdd.persist()
-        logger.info("Micro batch size " + imageSet.rdd.count().toString)
+        val microBatchSize = imageSet.rdd.count()
+        logger.info("Micro batch size " + microBatchSize.toString)
+        if (!imageSet.rdd.isEmpty()) {
+          val inputs = imageSet ->
+            ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
+            //          ImageResize(256, 256) ->
+            //          ImageCenterCrop(224, 224) ->
+            ImageMatToTensor(shareBuffer = false) ->
+            ImageSetToSample()
 
-        val inputs = imageSet ->
-          ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR) ->
-//          ImageResize(256, 256) ->
-//          ImageCenterCrop(224, 224) ->
-          ImageMatToTensor(shareBuffer = false) ->
-          ImageSetToSample()
+          val start = System.nanoTime()
 
-        val start = System.nanoTime()
+          val bcModel = model.value
 
-        val bcModel = model.value
-        logger.info("start predict")
-        // switch mission here, e.g. image classification, object detection
-        var result: RDD[Result] = null
-        if (helper.params.task == "image-classification") {
-          result = ImageClassification.getResult(inputs, bcModel, helper)
-        } else {
-          throw new Error("Your task specified is " + helper.params.task +
-          "Currently Cluster Serving only support image-classification")
+          logger.info("start predict")
+          // switch mission here, e.g. image classification, object detection
+          var result: RDD[Result] = null
+          if (helper.params.task == "image-classification") {
+            result = ImageClassification.getResult(inputs, bcModel, helper)
+          } else {
+            throw new Error("Your task specified is " + helper.params.task +
+              "Currently Cluster Serving only support image-classification")
+          }
+          val latency = System.nanoTime() - start
+          logger.info(s"Predict latency is ${latency / 1e6} ms")
+
+
+          val fw = new FileWriter("/tmp/tp.txt", true)
+          val throughput = microBatchSize.toFloat / (latency / 1e9)
+          fw.write(throughput.toString + "\n")
+          fw.close()
+
+
+          // Output results
+          val resDf = spark.createDataFrame(result)
+          resDf.write
+            .format("org.apache.spark.sql.redis")
+            .option("table", "result")
+
+            .mode(SaveMode.Append).save()
         }
-
-        // Output results
-        val resDf = spark.createDataFrame(result)
-        resDf.write
-          .format("org.apache.spark.sql.redis")
-          .option("table", "result")
-
-          .mode(SaveMode.Append).save()
-
-        val latency = System.nanoTime() - start
-        logger.info(s"Predict latency is ${latency / 1e6} ms")
         imageSet.rdd.unpersist()
       }
     ).asInstanceOf[DataStreamWriter[Row]].start()
