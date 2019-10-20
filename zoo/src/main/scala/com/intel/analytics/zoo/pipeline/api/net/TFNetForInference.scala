@@ -107,7 +107,9 @@ private[zoo] class TFNetForInference(graphRunner: GraphRunner,
     output
   }
 
-  override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
+  override def updateGradInput(
+           input: Activity,
+           gradOutput: Activity): Activity = {
     gradInput
   }
 }
@@ -135,20 +137,23 @@ object TFNetForInference {
   /*
   load TensorFlow's saved_model
 
-  TensorFlow's Java API provides a SavedModelBundle function that will return a graph and a session
-  However, we cannot use the graph and session in TFNet as both of them are not serializable, thus
-  cannot be broadcast to executors.
+  TensorFlow's Java API provides a SavedModelBundle function that will
+  return a graph and a session. However, we cannot use the graph and
+  session in TFNet as both of them are not serializable, thus cannot
+  be broadcast to executors.
 
   To solve this problem, the follow approach is implemented:
-  Step 1. Find all the variables in the graph and get those variable values out using the returned session
+  Step 1. Find all the variables in the graph and get those variable
+          values out using the returned session
   Step 2. Pass those variables to TFNet as a model's weights
   Step 3. Export the returned graph as byte array and pass to TFNet
   Step 4. Create a new graph and session on executor
   Step 5. Initialize the variables on executor using model's weights
 
-  For enable reading and re-assigning variables values, additional operations need to be added to the graph.
-  For each variable, a read operation (for resource variable), a assign operation and a placeholder along
-  with the assign operation are added to the graph.
+  For enable reading and re-assigning variables values, additional
+  operations need to be added to the graph. For each variable, a read
+  operation (for resource variable), a assign operation and a placeholder
+  along with the assign operation are added to the graph.
 
    */
   def fromSavedModel(modelPath: String, tag: String,
@@ -195,7 +200,8 @@ object TFNetForInference {
       } else {
         val readVariable = operationOutput
         val floatVariable = ops.cast(readVariable, classOf[java.lang.Float])
-        val placeholder = ops.placeholder(dataTypeClass, Placeholder.shape(operationOutput.shape()))
+        val placeholder = ops.placeholder(dataTypeClass,
+          Placeholder.shape(operationOutput.shape()))
 
         // do it manually to get a reference of the op and get the op name
         val builder = ops.scope().graph().opBuilder("Assign",
@@ -217,7 +223,9 @@ object TFNetForInference {
 
     val graphdef = GraphDef.parseFrom(ops.scope().graph().toGraphDef)
 
-    val graphRunner = new GraphRunner(ops.scope().graph().toGraphDef, null, null, null, null,
+    val graphRunner = new GraphRunner(
+      ops.scope().graph().toGraphDef,
+      null, null, null, null,
       TFNet.defaultSessionConfig.toByteArray())
 
     val session = savedModelBundle.session()
@@ -226,7 +234,7 @@ object TFNetForInference {
     // some of the variable might be not be in the saved_model, thus the variable
     // is not initialized and cannot be fetched. Currently, there is no way to know
     // which one is not initialized until we fetch it and get an exception.
-    val weights = readVariableNames.zip(dataShapes).map { case (name, (shape, orignalName)) =>
+    val weights = readVariableNames.zip(dataShapes).map { case (name, (shape, originalName)) =>
       val runner = session.runner()
       runner.fetch(name)
       try {
@@ -237,7 +245,7 @@ object TFNetForInference {
         bigdlTensor
       } catch {
         case _: Exception =>
-          TFNetForInference.logger.warn(s"Cannot find variable value for <$orignalName>, " +
+          TFNetForInference.logger.warn(s"Cannot find variable value for <$originalName>, " +
             s"using default value zero")
           val shapeArr = new Array[Int](shape.numDimensions())
           var i = 0
