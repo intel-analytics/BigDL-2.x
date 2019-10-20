@@ -222,13 +222,13 @@ class BayesRecipe(Recipe):
     A Bayes search Recipe.
        tsp = TimeSequencePredictor(...,recipe = BayesRecipe(5))
 
-    @param num_rand_samples: number of hyper-param configurations sampled randomly
+    @param num_samples: number of hyper-param configurations sampled
     @param look_back: the length to look back, either a tuple with 2 int values,
           which is in format is (min len, max len), or a single int, which is
           a fixed length to look back.
     """
-    def __init__(self, num_rand_samples=1, look_back=2, reward_metric=-0.05):
-        self.num_samples = num_rand_samples
+    def __init__(self, num_samples=1, look_back=2, reward_metric=-0.05):
+        self.num_samples = num_samples
         self.reward_metric = reward_metric
         if isinstance(look_back, tuple) and len(look_back) == 2 and \
                 isinstance(look_back[0], int) and isinstance(look_back[1], int):
@@ -512,7 +512,6 @@ class TimeSequencePredictor(object):
                          num_samples=num_samples)
         # searcher.test_run()
 
-        trials = searcher.run()
         best = searcher.get_best_trials(k=1)[0]  # get the best one trial, later could be n
         pipeline = self._make_pipeline(best,
                                        feature_transformers=ft,
@@ -621,8 +620,9 @@ if __name__ == "__main__":
     pipeline = tsp.fit(train_df,
                        validation_df=val_df,
                        metric="mean_squared_error",
-                       # recipe=BayesRecipe(num_rand_samples=2, look_back=(2, 4)),
-                       # recipe=RandomRecipe(look_back=(2, 4)),
+                       # recipe=BayesRecipe(num_samples=2, look_back=(2, 4)),
+                       recipe=RandomRecipe(num_rand_samples=4, look_back=(2, 4),
+                                           reward_metric=-0.0001),
                        distributed=distributed,
                        hdfs_url=hdfs_url)
 
