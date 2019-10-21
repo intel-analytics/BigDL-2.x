@@ -86,7 +86,7 @@ def init_spark_on_yarn(hadoop_conf,
     sc = sparkrunner.init_spark_on_yarn(
         hadoop_conf=hadoop_conf,
         conda_name=conda_name,
-        num_executor=num_executor,
+        num_executors=num_executor,
         executor_cores=executor_cores,
         executor_memory=executor_memory,
         driver_memory=driver_memory,
@@ -101,26 +101,28 @@ def init_spark_on_yarn(hadoop_conf,
     return sc
 
 
-def init_spark_on_standalone(master,
-                             executor_cores,
-                             total_executor_cores,
-                             executor_memory="2g",
-                             driver_memory="1g",
-                             driver_cores=4,
-                             extra_executor_memory_for_ray=None,
-                             extra_python_lib=None,
-                             spark_log_level="WARN",
-                             redirect_spark_log=True,
-                             jars=None,
-                             spark_conf=None):
+def init_spark_on_k8s(master,
+                      container_image,
+                      num_executors,
+                      executor_cores,
+                      executor_memory="2g",
+                      driver_memory="1g",
+                      driver_cores=4,
+                      extra_executor_memory_for_ray=None,
+                      extra_python_lib=None,
+                      spark_log_level="WARN",
+                      redirect_spark_log=True,
+                      jars=None,
+                      spark_conf=None):
 
     from zoo.util.spark import SparkRunner
     sparkrunner = SparkRunner(spark_log_level=spark_log_level,
                               redirect_spark_log=redirect_spark_log)
-    sc = sparkrunner.init_spark_on_standalone(
+    sc = sparkrunner.init_spark_on_k8s(
         master=master,
+        container_image=container_image,
+        num_executors=num_executors,
         executor_cores=executor_cores,
-        total_executor_cores=total_executor_cores,
         executor_memory=executor_memory,
         driver_memory=driver_memory,
         driver_cores=driver_cores,

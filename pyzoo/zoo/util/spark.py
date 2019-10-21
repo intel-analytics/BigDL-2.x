@@ -109,32 +109,29 @@ class SparkRunner():
                             "Please set it manually by python_location")
         return out.strip()
 
-    def _get_bigdl_jar_name_on_driver(self):
+    def _get_bigdl_jar_on_driver(self):
         from bigdl.util.engine import get_bigdl_classpath
         bigdl_classpath = get_bigdl_classpath()
         assert bigdl_classpath, "Cannot find bigdl classpath. Please check your bigdl installation"
-        return bigdl_classpath.split("/")[-1]
+        return bigdl_classpath
 
-    def _get_zoo_jar_name_on_driver(self):
+    def _get_zoo_jar_on_driver(self):
         from zoo.util.engine import get_analytics_zoo_classpath
         zoo_classpath = get_analytics_zoo_classpath()
         assert zoo_classpath, "Cannot find analytics-zoo classpath. Please check your analytics-zoo installation"
-        return zoo_classpath.split("/")[-1]
+        return zoo_classpath
 
-    def _assemble_zoo_classpath_for_executor(self, packed_env=True):
+    def _assemble_zoo_classpath_for_executor(self):
         python_env_path = "/".join(self._detect_python_location().split("/")[:-2])
         python_interpreters = glob.glob("{}/lib/python*".format(python_env_path))
         assert len(python_interpreters) == 1, \
             "Conda env should contain a single python, but got: {}:".format(python_interpreters)
-        if packed_env:
-            python_interpreter_name = python_interpreters[0].split("/")[-1]
-            prefix = "{}/lib/{}/site-packages/".format(self.PYTHON_ENV, python_interpreter_name)
-        else:
-            prefix = "{}/site-packages/".format(python_interpreters[0])
+        python_interpreter_name = python_interpreters[0].split("/")[-1]
+        prefix = "{}/lib/{}/site-packages/".format(self.PYTHON_ENV, python_interpreter_name)
         return ["{}/zoo/share/lib/{}".format(prefix,
-                                             self._get_zoo_jar_name_on_driver()),
+                                             self._get_zoo_jar_on_driver().split("/")[-1]),
                 "{}/bigdl/share/lib/{}".format(prefix,
-                                               self._get_bigdl_jar_name_on_driver())
+                                               self._get_bigdl_jar_on_driver().split("/")[-1])
                 ]
 
     def init_spark_on_local(self, cores, conf=None, python_location=None):
@@ -153,7 +150,7 @@ class SparkRunner():
     def init_spark_on_yarn(self,
                            hadoop_conf,
                            conda_name,
-                           num_executor,
+                           num_executors,
                            executor_cores,
                            executor_memory="10g",
                            driver_memory="1g",
@@ -172,7 +169,7 @@ class SparkRunner():
         def _yarn_opt():
             command = " --archives {}#{} --num-executors {} " \
                       " --executor-cores {} --executor-memory {}". \
-                format(penv_archive, self.PYTHON_ENV, num_executor, executor_cores, executor_memory)
+                format(penv_archive, self.PYTHON_ENV, num_executors, executor_cores, executor_memory)
 
             if extra_python_lib:
                 command = command + " --py-files {} ".format(extra_python_lib)
@@ -219,22 +216,24 @@ class SparkRunner():
                 os.remove(penv_archive)
         return sc
 
-    def init_spark_on_standalone(self,
-                                 master,
-                                 executor_cores,
-                                 total_executor_cores,
-                                 executor_memory="10g",
-                                 driver_memory="1g",
-                                 driver_cores=4,
-                                 extra_executor_memory_for_ray=None,
-                                 extra_python_lib=None,
-                                 spark_conf=None,
-                                 jars=None):
+    def init_spark_on_k8s(self,
+                          master,
+                          container_image,
+                          num_executors,
+                          executor_cores,  # Equivalent to spark.executor.instances
+                          executor_memory="10g",
+                          driver_memory="1g",
+                          driver_cores=4,
+                          extra_executor_memory_for_ray=None,
+                          extra_python_lib=None,
+                          spark_conf=None,
+                          jars=None):
+        os.environ['PYSPARK_PYTHON'] = self._detect_python_location()
 
-        def _standalone_opt():
-            command = " --total-executor-cores {} " \
+        def _k8s_opt():
+            command = " --num-executors {} " \
                       " --executor-cores {} --executor-memory {}". \
-                format(total_executor_cores, executor_cores, executor_memory)
+                format(num_executors, executor_cores, executor_memory)
 
             if extra_python_lib:
                 command = command + " --py-files {} ".format(extra_python_lib)
@@ -246,16 +245,18 @@ class SparkRunner():
             conf = {
                 "spark.driver.memory": driver_memory,
                 "spark.driver.cores": driver_cores,
-                "spark.scheduler.minRegisteredResourcesRatio": "1.0"}
+                "spark.scheduler.minRegisteredResourcesRatio": "1.0",
+                "spark.kubernetes.container.image": container_image}
             if extra_executor_memory_for_ray:
                 conf["spark.executor.memoryOverhead"] = extra_executor_memory_for_ray
-            return " --master " + master + _standalone_opt() + ' pyspark-shell ', conf
+            return " --master " + master + " --deploy-mode cluster" + _k8s_opt() + ' pyspark-shell ', conf
 
         submit_args, conf = _submit_opt()
 
         if not spark_conf:
             spark_conf = {}
-        zoo_bigdl_path_on_executor = ":".join(self._assemble_zoo_classpath_for_executor(packed_env=False))
+        # Python environment on driver and executor would be the same
+        zoo_bigdl_path_on_executor = ":".join([self._get_zoo_jar_on_driver(), self._get_bigdl_jar_on_driver()])
 
         if "spark.executor.extraClassPath" in spark_conf:
             spark_conf["spark.executor.extraClassPath"] = "{}:{}".format(
