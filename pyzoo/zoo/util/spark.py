@@ -122,8 +122,8 @@ class SparkRunner():
         return zoo_classpath
 
     def _assemble_zoo_classpath_for_executor(self):
-        python_env_path = "/".join(self._detect_python_location().split("/")[:-2])
-        python_interpreters = glob.glob("{}/lib/python*".format(python_env_path))
+        conda_env_path = "/".join(self._detect_python_location().split("/")[:-2])
+        python_interpreters = glob.glob("{}/lib/python*".format(conda_env_path))
         assert len(python_interpreters) == 1, \
             "Conda env should contain a single python, but got: {}:".format(python_interpreters)
         python_interpreter_name = python_interpreters[0].split("/")[-1]

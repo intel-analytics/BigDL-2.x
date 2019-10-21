@@ -41,7 +41,7 @@ def init_spark_on_local(cores=2, conf=None, python_location=None, spark_log_leve
 
 def init_spark_on_yarn(hadoop_conf,
                        conda_name,
-                       num_executor,
+                       num_executors,
                        executor_cores,
                        executor_memory="2g",
                        driver_memory="1g",
@@ -63,7 +63,7 @@ def init_spark_on_yarn(hadoop_conf,
 
     :param hadoop_conf: path to the yarn configuration folder.
     :param conda_name: Name of the conda env.
-    :param num_executor: Number of the Executors.
+    :param num_executors: Number of the Executors.
     :param executor_cores: Cores for each Executor.
     :param executor_memory: Memory for each Executor.
     :param driver_memory: Memory for the Driver.
@@ -86,7 +86,7 @@ def init_spark_on_yarn(hadoop_conf,
     sc = sparkrunner.init_spark_on_yarn(
         hadoop_conf=hadoop_conf,
         conda_name=conda_name,
-        num_executors=num_executor,
+        num_executors=num_executors,
         executor_cores=executor_cores,
         executor_memory=executor_memory,
         driver_memory=driver_memory,
