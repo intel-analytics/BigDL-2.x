@@ -116,9 +116,6 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
       scale.toFloat, input)
   }
 
-
-
-
   def inferenceModelOpenVINOLoadTFAsCalibratedOpenVINO(model: InferenceModel,
                                                        modelPath: String,
                                                        modelType: String,
