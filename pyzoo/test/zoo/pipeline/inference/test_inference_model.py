@@ -101,6 +101,7 @@ class TestInferenceModel(ZooTestCase):
             scale=1)
         print(model)
         input_data = np.random.random([4, 1, 224, 224, 3])
+        model.predict(input_data)
         s3url = "https://s3-ap-southeast-1.amazonaws.com/"
         var_url = s3url + "analytics-zoo-models/openvino/val_bmp_32.tar"
         lib_url = s3url + "analytics-zoo-models/openvino/opencv_4.0.0_ubuntu_lib.tar"
@@ -131,6 +132,30 @@ class TestInferenceModel(ZooTestCase):
             opencv_lib_path=opencv_lib_path)
         print(model2)
         model2.predict(input_data)
+
+    def test_load_saved_model_tf_openvino_ic(self):
+        local_path = self.create_temp_dir()
+        print(local_path)
+        s3url = "https://s3-ap-southeast-1.amazonaws.com/"
+        saved_model_url = s3url + "analytics-zoo-models/openvino/saved-model.tar"
+        file_abs_path = maybe_download("saved-model.tar", local_path, saved_model_url)
+        tar = tarfile.open(file_abs_path)
+        print("Extracting %s to %s" % (file_abs_path, local_path))
+        tar.extractall(local_path)
+        tar.close()
+        saved_model_dir = os.path.join(local_path, "saved-model")
+        model = InferenceModel(3)
+        model.load_tf_image_classification_as_openvino(
+            saved_model_dir=saved_model_dir,
+            input_shape=[4, 224, 224, 3],
+            if_reverse_input_channels=True,
+            mean_values=[123.68, 116.78, 103.94],
+            scale=1,
+            input="model_input")
+        print(model)
+        input_data = np.random.random([4, 1, 224, 224, 3])
+        model.predict(input_data)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

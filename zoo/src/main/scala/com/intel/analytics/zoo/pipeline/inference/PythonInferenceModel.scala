@@ -99,6 +99,26 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
       ifReverseInputChannels, meanValues.asScala.toArray.map(_.toFloat), scale.toFloat)
   }
 
+  def inferenceModelOpenVINOLoadTF(model: InferenceModel,
+                                   savedModelDir: String,
+                                   inputShape: JList[Int],
+                                   ifReverseInputChannels: Boolean,
+                                   meanValues: JList[Float],
+                                   scale: Float,
+                                   input: String
+                                  ): Unit = {
+    require(savedModelDir != null, "savedModelDir can not be null")
+    require(inputShape != null, "inputShape can not be null")
+    require(meanValues != null, "meanValues can not be null")
+    require(scale != null, "scale can not be null")
+    model.doLoadTF(savedModelDir, inputShape.asScala.toArray,
+      ifReverseInputChannels, meanValues.asScala.toArray.map(_.toFloat),
+      scale.toFloat, input)
+  }
+
+
+
+
   def inferenceModelOpenVINOLoadTFAsCalibratedOpenVINO(model: InferenceModel,
                                                        modelPath: String,
                                                        modelType: String,

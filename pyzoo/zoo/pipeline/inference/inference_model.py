@@ -170,6 +170,36 @@ class InferenceModel(JavaValue):
                       [float(value) for value in mean_values],
                       float(scale))
 
+    def load_tf_image_classification_as_openvino(self,
+                                                 saved_model_dir,
+                                                 input_shape,
+                                                 if_reverse_input_channels,
+                                                 mean_values,
+                                                 scale,
+                                                 input="model_input"):
+        """
+        load image classification TF saved model as OpenVINO IR
+        :param saved_model_dir: String, the path of saved model dir
+        :param input_shape: List of Int,
+                input shape that should be fed to an input node(s) of the model
+        :param if_reverse_input_channels: Boolean,
+                the boolean value of if need reverse input channels.
+        :param mean_values: List of Float, all input values coming from original network inputs
+                            will be divided by this value.
+        :param scale: Float, the scale value, to be used for the input image per channel.
+        :param input: input layer of model
+        :return:
+        """
+        callBigDlFunc(self.bigdl_type,
+                      "inferenceModelOpenVINOLoadTF",
+                      self.value,
+                      saved_model_dir,
+                      input_shape,
+                      if_reverse_input_channels,
+                      [float(value) for value in mean_values],
+                      float(scale),
+                      input)
+
     def load_tf_as_calibrated_openvino(self,
                                        model_path,
                                        model_type,
