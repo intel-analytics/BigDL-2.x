@@ -103,8 +103,8 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
                                    savedModelDir: String,
                                    inputShape: JList[Int],
                                    ifReverseInputChannels: Boolean,
-                                   meanValues: JList[Float],
-                                   scale: Float,
+                                   meanValues: JList[Double],
+                                   scale: Double,
                                    input: String
                                   ): Unit = {
     require(savedModelDir != null, "savedModelDir can not be null")
