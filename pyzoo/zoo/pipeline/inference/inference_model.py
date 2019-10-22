@@ -170,7 +170,7 @@ class InferenceModel(JavaValue):
                       [float(value) for value in mean_values],
                       float(scale))
 
-    def load_tf_image_classification_as_openvino(self,
+    def load_tf_saved_image_classification_as_openvino(self,
                                                  saved_model_dir,
                                                  input_shape,
                                                  if_reverse_input_channels,

@@ -139,13 +139,13 @@ class TestInferenceModel(ZooTestCase):
         s3url = "https://s3-ap-southeast-1.amazonaws.com/"
         saved_model_url = s3url + "analytics-zoo-models/openvino/saved-model.tar"
         file_abs_path = maybe_download("saved-model.tar", local_path, saved_model_url)
-        tar = tarfile.open(file_abs_path)
+        tar = tarfile.open(file_abs_path, "r")
         print("Extracting %s to %s" % (file_abs_path, local_path))
         tar.extractall(local_path)
         tar.close()
         saved_model_dir = os.path.join(local_path, "saved-model")
-        model = InferenceModel(3)
-        model.load_tf_image_classification_as_openvino(
+        model = InferenceModel(1)
+        model.load_tf_saved_image_classification_as_openvino(
             saved_model_dir=saved_model_dir,
             input_shape=[4, 224, 224, 3],
             if_reverse_input_channels=True,
