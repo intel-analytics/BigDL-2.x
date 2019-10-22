@@ -105,7 +105,7 @@ private[zoo] class TFTrainingHelper2(graphRunner: GraphRunner,
   override def evaluate(): TFTrainingHelper2.this.type = {
     super.evaluate()
     setVariableIntoTF(weights, variableAssignPlaceholders,
-      variableTypes.map(TFTrainingHelper2.enum2datatype), assignVariableOp)
+      variableTypes.map(NetUtils.tfenum2datatype), assignVariableOp)
     this
   }
 
@@ -137,9 +137,9 @@ private[zoo] class TFTrainingHelper2(graphRunner: GraphRunner,
 
   def saveCheckpoint(): Unit = {
     setVariableIntoTF(weights, variableAssignPlaceholders,
-      variableTypes.map(TFTrainingHelper2.enum2datatype), assignVariableOp)
+      variableTypes.map(NetUtils.tfenum2datatype), assignVariableOp)
     setVariableIntoTF(extraParameters, extraVariableAssignPlaceholders,
-      extraVariableTypes.map(TFTrainingHelper2.enum2datatype), assignExtraVariableOP)
+      extraVariableTypes.map(NetUtils.tfenum2datatype), assignExtraVariableOP)
     graphRunner.saveToFile(checkpointPath)
   }
 
@@ -165,27 +165,17 @@ private[zoo] class TFTrainingHelper2(graphRunner: GraphRunner,
       if (this.isTraining()) {
         NetUtils.timeIt("setTrainingVariableIntoTF", TFTrainingHelper2.logger) {
           setVariableIntoTF(weights, variableAssignPlaceholders,
-            variableTypes.map(TFTrainingHelper2.enum2datatype), assignVariableOp)
+            variableTypes.map(NetUtils.tfenum2datatype), assignVariableOp)
         }
       }
 
       if (!extraParameterRestored) {
         setVariableIntoTF(extraParameters, extraVariableAssignPlaceholders,
-          extraVariableTypes.map(TFTrainingHelper2.enum2datatype), assignExtraVariableOP)
+          extraVariableTypes.map(NetUtils.tfenum2datatype), assignExtraVariableOP)
         extraParameterRestored = true
       }
 
-      val feeds = Vector.newBuilder[Tensor[Float]]
-      if (input.isTensor) {
-        feeds += input.toTensor[Float]
-      } else {
-        var i = 0
-        while (i < input.toTable.length()) {
-          feeds += input.toTable(i + 1)
-          i += 1
-        }
-
-      }
+      val feeds = NetUtils.activity2VectorBuilder(input)
 
       if (this.isTraining()) {
         var i = 0
@@ -201,7 +191,7 @@ private[zoo] class TFTrainingHelper2(graphRunner: GraphRunner,
         }
       }
 
-      val types = inputTypes.toVector.map(TFTrainingHelper2.enum2datatype)
+      val types = inputTypes.toVector.map(NetUtils.tfenum2datatype)
 
       val (outputNames, outputTensors) = if (isTraining()) {
         (outputs.toVector ++ gradVariables.toVector, graphOutputs)
@@ -242,20 +232,6 @@ private[zoo] class TFTrainingHelper2(graphRunner: GraphRunner,
 object TFTrainingHelper2 {
 
   val logger = LoggerFactory.getLogger(getClass)
-
-  def enum2datatype(enum: Int): DataType = {
-    enum match {
-      case 1 => DataType.FLOAT
-      case 2 => DataType.DOUBLE
-      case 3 => DataType.INT32
-      case 4 => DataType.UINT8
-      case 7 => DataType.STRING
-      case 9 => DataType.INT64
-      case 10 => DataType.BOOL
-      case _ => throw new IllegalArgumentException(s"unsupported tensorflow datatype $enum")
-
-    }
-  }
 
   def apply(modelPath: String, sessionConfig: Array[Byte] = null): TFTrainingHelper2 = {
 

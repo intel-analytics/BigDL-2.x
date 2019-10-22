@@ -165,7 +165,7 @@ class GraphRunner(
         }
 
         outputs.asScala.zipWithIndex.foreach { case (t, idx) =>
-          tf2bigdl(t.asInstanceOf[TTensor[Float]], output(idx))
+          GraphRunner.tf2bigdl(t.asInstanceOf[TTensor[Float]], output(idx))
         }
 
         // outputs is returned by tensorflow and cannot be freed using tensorManager
@@ -229,16 +229,6 @@ class GraphRunner(
 
   }
 
-  private def tf2bigdl(t: TTensor[_], output: Tensor[Float]) = {
-    val shape = t.shape().map(_.toInt)
-    output.resize(shape)
-    val buffer = FloatBuffer.wrap(
-      output.storage().array(),
-      output.storageOffset() - 1,
-      shape.product)
-    t.writeTo(buffer)
-  }
-
   private def tensor2TFTensors(input: Seq[Tensor[Float]], types: Seq[DataType],
                                  tfTensors: Array[TTensor[_]]) = {
     val t = input
@@ -259,6 +249,16 @@ class GraphRunner(
 object GraphRunner {
 
   assert(TFNetNative.isLoaded)
+
+  private[zoo] def tf2bigdl(t: TTensor[_], output: Tensor[Float]) = {
+    val shape = t.shape().map(_.toInt)
+    output.resize(shape)
+    val buffer = FloatBuffer.wrap(
+      output.storage().array(),
+      output.storageOffset() - 1,
+      shape.product)
+    t.writeTo(buffer)
+  }
 
   val logger = LoggerFactory.getLogger(getClass)
 
