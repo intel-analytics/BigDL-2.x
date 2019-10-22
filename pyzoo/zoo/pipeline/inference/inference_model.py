@@ -171,12 +171,12 @@ class InferenceModel(JavaValue):
                       float(scale))
 
     def load_tf_saved_image_classification_as_openvino(self,
-                                                 saved_model_dir,
-                                                 input_shape,
-                                                 if_reverse_input_channels,
-                                                 mean_values,
-                                                 scale,
-                                                 input="model_input"):
+                                                       saved_model_dir,
+                                                       input_shape,
+                                                       if_reverse_input_channels,
+                                                       mean_values,
+                                                       scale,
+                                                       input="model_input"):
         """
         load image classification TF saved model as OpenVINO IR
         :param saved_model_dir: String, the path of saved model dir
