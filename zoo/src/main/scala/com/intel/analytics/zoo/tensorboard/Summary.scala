@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.tensorboard
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import org.tensorflow
+import com.intel.analytics.bigdl.shaded.tensorflow
 
 import scala.reflect.ClassTag
 

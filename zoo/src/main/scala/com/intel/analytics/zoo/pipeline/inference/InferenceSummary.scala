@@ -25,7 +25,7 @@ import com.intel.analytics.zoo.tensorboard.FileReader
 class InferenceSummary(
                         logDir: String,
                         appName: String) extends Summary(logDir, appName) {
-  protected val folder = s"$logDir/$appName/validation"
+  protected val folder = s"$logDir/$appName/inference"
   override val writer = new FileWriter(folder)
 
 
@@ -38,5 +38,11 @@ class InferenceSummary(
    */
   override def readScalar(tag: String): Array[(Long, Float, Double)] = {
     FileReader.readScalar(folder, tag)
+  }
+}
+object InferenceSummary {
+  def apply(logDir: String,
+            appName: String): InferenceSummary = {
+    new InferenceSummary(logDir, appName)
   }
 }
