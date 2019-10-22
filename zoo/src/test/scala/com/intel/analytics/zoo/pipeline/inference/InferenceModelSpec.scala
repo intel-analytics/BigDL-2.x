@@ -103,6 +103,9 @@ class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
     val aModel = new InferenceModel(supportedConcurrentNum)
     val begin1 = System.currentTimeMillis()
     aModel.doLoadCaffe(modelPath, weightPath)
+
+
+
     val end1 = System.currentTimeMillis()
     val time1 = end1 - begin1
 
@@ -145,6 +148,7 @@ class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
     val bis4AModel = new ByteArrayInputStream(bytes4AModel)
     val in4AModel = new ObjectInputStream(bis4AModel)
     val aModel2 = in4AModel.readObject.asInstanceOf[InferenceModel]
+//    aModel2.setInferenceSummary(InferenceSummary("/home/litchy/tmp", "inf-test"))
     in4AModel.close()
 
     val weightsForAModel3 = aModel2.modelQueue.take().asInstanceOf[FloatModel]
