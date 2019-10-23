@@ -246,10 +246,12 @@ class SparkRunner():
                 "spark.driver.memory": driver_memory,
                 "spark.driver.cores": driver_cores,
                 "spark.scheduler.minRegisteredResourcesRatio": "1.0",
-                "spark.kubernetes.container.image": container_image}
+                "spark.executor.instances": num_executors,
+                "spark.kubernetes.container.image": container_image,
+                "spark.cores.max": num_executors * executor_cores}
             if extra_executor_memory_for_ray:
                 conf["spark.executor.memoryOverhead"] = extra_executor_memory_for_ray
-            return " --master " + master + " --deploy-mode cluster" + _k8s_opt() + ' pyspark-shell ', conf
+            return " --master " + master + " --deploy-mode client" + _k8s_opt() + ' pyspark-shell ', conf
 
         submit_args, conf = _submit_opt()
 

@@ -45,7 +45,7 @@ class JVMGuard():
                           pids)
         except Exception as err:
             print(traceback.format_exc())
-            print("Cannot sucessfully register pid into JVMGuard")
+            print("Cannot successfully register pid into JVMGuard")
             for pid in pids:
                 os.kill(pid, signal.SIGKILL)
             raise err
@@ -85,14 +85,14 @@ class RayServiceFuncGenerator(object):
             print("MKL cores is {}".format(cores))
             modified_env.update(self._get_MKL_config(cores))
         if self.verbose:
-            print("Executing with these environment setting:")
+            print("Executing with these environment settings:")
             for pair in modified_env.items():
                 print(pair)
             print("The $PATH is: {}".format(modified_env["PATH"]))
         return modified_env
 
     def __init__(self, python_loc, redis_port, ray_node_cpu_cores, mkl_cores,
-                 password, object_store_memory, waitting_time_sec=6, verbose=False, env=None,
+                 password, object_store_memory, waiting_time_sec=6, verbose=False, env=None,
                  extra_params=None):
         """object_store_memory: integer in bytes"""
         self.env = env
@@ -103,7 +103,7 @@ class RayServiceFuncGenerator(object):
         self.mkl_cores = mkl_cores
         self.ray_exec = self._get_ray_exec()
         self.object_store_memory = object_store_memory
-        self.waiting_time_sec = waitting_time_sec
+        self.waiting_time_sec = waiting_time_sec
         self.extra_params = extra_params
         self.verbose = verbose
         self.labels = """--resources='{"trainer": %s, "ps": %s }' """ % (1, 1)
@@ -241,10 +241,10 @@ class RayContext(object):
             ray_node_cpu_cores=self.ray_node_cpu_cores,
             mkl_cores=self._get_mkl_cores(),
             password=password,
-            object_store_memory=self._enrich_object_sotre_memory(sc, object_store_memory),
+            object_store_memory=self._enrich_object_store_memory(sc, object_store_memory),
             verbose=verbose,
             env=env,
-            waitting_time_sec=waiting_time_sec,
+            waiting_time_sec=waiting_time_sec,
             extra_params=extra_params)
         self._gather_cluster_ips()
         from bigdl.util.common import init_executor_gateway
@@ -255,7 +255,7 @@ class RayContext(object):
     def _new_port(self):
         return random.randint(10000, 65535)
 
-    def _enrich_object_sotre_memory(self, sc, object_store_memory):
+    def _enrich_object_store_memory(self, sc, object_store_memory):
         if is_local(sc):
             if self.object_store_memory is None:
                 self.object_store_memory = self._get_ray_plasma_memory_local()
