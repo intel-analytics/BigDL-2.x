@@ -74,6 +74,8 @@ object Perf {
         val latency = System.nanoTime() - start
         averageLatency += latency
         logger.info(s"Iteration $iteration latency is ${latency / 1e6} ms")
+        val throughPut = "%.2f".format(numBatch.toFloat * batchSize / (latency / 1e9))
+        logger.info(s"Iteration $iteration Throughput is ${throughPut} FPS")
       }
       val totalTimeUsed = System.nanoTime() - predictStart
       val totalThroughput = "%.2f".format(batchSize * iteration
