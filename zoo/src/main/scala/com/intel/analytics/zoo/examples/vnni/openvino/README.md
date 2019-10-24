@@ -27,7 +27,7 @@ Download [TensorFlow ResNet50_v1](http://download.tensorflow.org/models/resnet_v
 ```bash
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
-export ANALYTICS_ZOO_JAR=export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
+export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
 
 MODEL_PATH=dir of resetNet 50 checkpoint, i.e., resnet_v1_50.ckpt
 VALIDATION=dir of validation images and val.txt, i.e., val_bmp_32
@@ -74,7 +74,7 @@ This example runs in local mode and calculates performance data (i.e. throughput
 ```bash
 export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
-export ANALYTICS_ZOO_JAR=export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
+export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
 
 MASTER=...
 modelPath=path of OpenVINO optimized model or int8 optimized model
