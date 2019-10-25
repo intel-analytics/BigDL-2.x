@@ -27,8 +27,8 @@ import org.slf4j.LoggerFactory
 import scopt.OptionParser
 
 case class ResnetLocalEstimatorParams(imageDirPath: String = "./",
-                                     batchSize: Int = 1000,
-                                     epoch: Int = 15,
+                                     batchSize: Int = 3 * 44,
+                                     epoch: Int = 10,
                                      threadNum: Int = 44)
 
 object ResnetLocalEstimator {
