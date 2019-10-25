@@ -227,8 +227,10 @@ class SparkRunner():
                           extra_executor_memory_for_ray=None,
                           extra_python_lib=None,
                           spark_conf=None,
-                          jars=None):
-        os.environ['PYSPARK_PYTHON'] = self._detect_python_location()
+                          jars=None,
+                          python_location=None):
+        os.environ['PYSPARK_PYTHON'] = \
+            python_location if python_location else self._detect_python_location()
 
         def _k8s_opt():
             command = " --num-executors {} " \
