@@ -80,6 +80,12 @@ MASTER=...
 modelPath=path of OpenVINO optimized model or int8 optimized model
 weightPath=path of OpenVINO optimized model weight or int8 optimized model weight
 
+# Pure  JAVA
+java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* \
+    com.intel.analytics.zoo.examples.vnni.openvino.Perf \
+    -m ${modelPath} -w ${weightPath}
+
+# Spark Local
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh  \
     --master ${MASTER} --driver-memory 2g \
     --class com.intel.analytics.zoo.examples.vnni.openvino.Perf \

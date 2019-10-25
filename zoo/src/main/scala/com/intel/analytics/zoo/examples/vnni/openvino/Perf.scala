@@ -31,6 +31,8 @@ case class ResNet50PerfParams(model: String = "",
                               iteration: Int = 1)
 
 object Perf {
+  System.setProperty("bigdl.localMode", "true")
+  System.setProperty("bigdl.engineType", "mkldnn")
 
   val logger: Logger = Logger.getLogger(getClass)
 
