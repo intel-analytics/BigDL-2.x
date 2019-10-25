@@ -245,7 +245,8 @@ case class LocalEstimator(model: Module[Float],
   private def groupDataToMiniBatches[T: ClassTag](data: Array[T],
                                                   transformer: Array[T] => MiniBatch[Float],
                                                   batchSize: Int,
-                                                  ifShuffle: Boolean = false): List[MiniBatch[Float]] = {
+                                                  ifShuffle: Boolean = false)
+  : List[MiniBatch[Float]] = {
     val shuffledData: Array[T] = timing("shuffle data") {
       if (ifShuffle) {
         val randomIndex = Random.nextInt(data.length)
