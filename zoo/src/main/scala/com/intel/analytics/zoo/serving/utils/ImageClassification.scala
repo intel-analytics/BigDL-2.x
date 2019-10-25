@@ -34,7 +34,9 @@ object ImageClassification {
     val batch = img.toDataSet() -> SampleToMiniBatch(helper.batchSize)
 
     val modelType = helper.modelType
-
+    //TODO: Caution! Do not use OpenVINO at this moment
+    // OpenVINO adds a singleton dimension before predict
+    // However, if will always go to later if-else size(dim=1) == 1
     val predicts = batch.toDistributed().data(false).flatMap { miniBatch =>
       val batchTensor = if (modelType == "openvino") {
         miniBatch.getInput.toTensor.addSingletonDimension()
@@ -52,7 +54,7 @@ object ImageClassification {
 
       val predict = model.doPredict(batchTensor)
 
-      if (predict.toTensor.dim == 1) {
+      if (predict.toTensor.size(1) == 1) {
         Array(predict.toTensor.asInstanceOf[Activity])
       }
       else {
@@ -61,6 +63,9 @@ object ImageClassification {
     }
 
     if (img.isDistributed()) {
+      val zz = img.toDistributed().rdd.collect()
+      val xx = predicts.collect()
+
       val zipped = img.toDistributed().rdd.zip(predicts)
 
       zipped.map(tuple => {

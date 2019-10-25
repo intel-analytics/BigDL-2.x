@@ -24,6 +24,7 @@ import java.util.{List => JList}
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
+import com.sun.xml.internal.bind.v2.TODO
 
 import scala.collection.JavaConverters._
 
@@ -584,16 +585,35 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
 
       val result = model.predict(inputActivity)
       val end = System.nanoTime()
-      val batchSize = inputActivity.toTensor[Float].size()(0)
+      val batchSize = result.toTensor[Float].size(1)
       val latency = end - begin
       val name = s"model predict for batch ${batchSize}"
       InferenceSupportive.logger.info(s"$name time elapsed [${latency/1e9} s, ${latency/1e6} ms].")
 
+      val bb = System.nanoTime()
       if (inferenceSummary != null) {
-        val throughput = batchSize / (latency/1e9)
+        val resultTensor = result.toTensor[Float]
+        var zeroCnt: Int = 0
+        // we do not check all values here
+        // we only check the first value of each output
+        // e.g for a 1000-class classification
+        // we only check the number of zeros of first class output cell
+
+        //TODO: this is just for image classification task
+        // for more task, e.g. object detection, check output dim first
+        for (i <- 1 to resultTensor.size(2)) {
+          if (resultTensor.valueAt(1, i) == 0) {
+            zeroCnt += 1
+          }
+        }
+        val throughput = batchSize / (latency / 1e9)
         inferenceSummary.addScalar("Throughput", throughput.toFloat, batchCnt)
+        inferenceSummary.addScalar("Zero Value per Batch", zeroCnt, batchCnt)
         batchCnt += 1
       }
+      val ee = System.nanoTime()
+//      InferenceSupportive.logger.info("Calculating and writing summary seconds"
+//        + ((ee - bb) / 1e9).toString)
       result
     } finally {
       model match {
