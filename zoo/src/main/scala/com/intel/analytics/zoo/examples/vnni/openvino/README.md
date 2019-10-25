@@ -58,6 +58,8 @@ resnet_v1_50_inference_graph.xml
 
 Among them, `resnet_v1_50_inference_graph.xml` and `resnet_v1_50_inference_graph.bin` are OpenVINO optimized ResNet_v1_50 model and weight, `resnet_v1_50_inference_graph-calibrated.xml` and `resnet_v1_50_inference_graph-calibrated.bin` are OpenVINO int8 optimized ResNet_v1_50 model and weight. Both of them can be loaded by OpenVINO or Zoo.
 
+Note that on macOS you won't get `resnet_v1_50_inference_graph-calibrated.bin` and `resnet_v1_50_inference_graph-calibrated.xml`. Because related dependencies are not supported yet.
+
 __Note that int8 optimized model promises better performance (~2X) with slightly lower accuracy. When using int8 optimized model in `Perf` `ImageNetEvaluation` and `Predict`.__
 
 
@@ -87,7 +89,7 @@ java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* \
 
 # Spark Local
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh  \
-    --master ${MASTER} --driver-memory 2g \
+    --master ${MASTER} --driver-memory 4g \
     --class com.intel.analytics.zoo.examples.vnni.openvino.Perf \
     -m ${modelPath} -w ${weightPath}
 ```
