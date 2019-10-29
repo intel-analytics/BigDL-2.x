@@ -17,6 +17,7 @@ package com.intel.analytics.zoo.pipeline.estimator
 
 import com.intel.analytics.bigdl.dataset.MiniBatch
 import com.intel.analytics.bigdl.nn.Module
+import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
@@ -27,7 +28,7 @@ import scala.reflect.ClassTag
 import scala.util.Random
 
 // This is a pojo style local Estimator, will fit, train, evaluate on pojo dataset.
-case class LocalEstimator(model: Module[Float],
+case class LocalEstimator(model: AbstractModule[Activity, Activity, Float],
                           criterion: Criterion[Float],
                           optimzeMethod: OptimMethod[Float],
                           validations: Array[ValidationMethod[Float]],
