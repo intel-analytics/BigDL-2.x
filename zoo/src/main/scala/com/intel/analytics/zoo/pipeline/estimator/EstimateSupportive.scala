@@ -26,10 +26,10 @@ trait EstimateSupportive extends InferenceSupportive {
     val result = f
     val end = System.currentTimeMillis
     val cost = (end - begin)
-    val thoughput = batch.toDouble / cost * 1000
+    val throughput = batch.toDouble / cost * 1000
     EstimateSupportive.logger.info(
       s"$name time elapsed [${cost / 1000} s, ${cost % 1000} ms], " +
-        s"throughput: ${thoughput} records/second.")
+        s"throughput: ${throughput} records/second.")
     result
   }
 
@@ -38,10 +38,10 @@ trait EstimateSupportive extends InferenceSupportive {
     val result = f
     val end = System.currentTimeMillis
     val cost = (end - begin)
-    val thoughput = batch.toDouble / cost * 1000
+    val throughput = batch.toDouble / cost * 1000
     EstimateSupportive.logger.info(
       s"$name time elapsed [${cost / 1000} s, ${cost % 1000} ms], " +
-        s"throughput: ${thoughput} records/second, loss: ${result}.")
+        s"throughput: ${throughput} records/second, loss: ${result}.")
     result
   }
 
