@@ -65,7 +65,8 @@ class GANOptimizer(object):
 
             noise = self._noise_generator(batch_size)
 
-            is_discriminator_phase = tf.equal(tf.mod(counter, 2), 0)
+            is_discriminator_phase = tf.greater_equal(tf.mod(counter, self._generator_steps +
+                                                             self._discriminator_steps), self._discriminator_steps)
 
             with tf.control_dependencies([is_discriminator_phase]):
                 increase_counter = tf.assign_add(counter, 1)
@@ -102,7 +103,8 @@ class GANOptimizer(object):
             g_param_size = sum([np.product(g.shape) for g in g_grads])
             with tf.Session() as sess:
                 sess.run(tf.global_variables_initializer())
-                optimizer = TFOptimizer(loss, GanOptimMethod(self._discriminator_loss_fn, self._generator_optim_method,
+                optimizer = TFOptimizer(loss, GanOptimMethod(self._discriminator_optim_method,
+                                                             self._generator_optim_method,
                                                              g_param_size.value), sess=sess,
                                         dataset=self._dataset, inputs=self._dataset.tensors,
                                         grads=grads, variables=variables, graph=g,
