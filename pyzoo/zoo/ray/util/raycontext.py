@@ -151,7 +151,6 @@ class RayServiceFuncGenerator(object):
 
     def _start_ray_node(self, command, tag, wait_before=5, wait_after=5):
         modified_env = self._prepare_env(self.mkl_cores)
-        print(modified_env)
         print("Starting {} by running: {}".format(tag, command))
         print("Wait for {} sec before launching {}".format(wait_before, tag))
         time.sleep(wait_before)

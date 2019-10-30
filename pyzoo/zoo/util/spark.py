@@ -229,8 +229,11 @@ class SparkRunner():
                           spark_conf=None,
                           jars=None,
                           python_location=None):
-        os.environ['PYSPARK_PYTHON'] = \
-            python_location if python_location else self._detect_python_location()
+        if not os.environ['PYSPARK_PYTHON']:
+            if python_location:
+                os.environ['PYSPARK_PYTHON'] = python_location
+            else:
+                os.environ['PYSPARK_PYTHON'] = "python"
 
         zoo_bigdl_path_on_driver = ",".join([self._get_zoo_jar_on_driver(), self._get_bigdl_jar_on_driver()])
 
@@ -260,8 +263,6 @@ class SparkRunner():
             return " --master " + master + " --deploy-mode client" + _k8s_opt() + ' pyspark-shell ', conf
 
         submit_args, conf = _submit_opt()
-        print(submit_args)
-        print(conf)
 
         if not spark_conf:
             spark_conf = {}
