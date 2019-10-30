@@ -79,14 +79,14 @@ class RayTuneSearchEngine(SearchEngine):
         self.search_space = self._prepare_tune_config(search_space)
         self.stop_criteria = stop
         self.num_samples = num_samples
-        if metric == "mean_squared_error":
+        if metric == "mse":
             # mode = "min"
             metric_op = -1
-        elif metric == "r_square":
+        elif metric == "r2":
             # mode = "max"
             metric_op = 1
         else:
-            raise ValueError("metric can only be \"mean_squared_error\" or \"r_square\"")
+            raise ValueError("metric can only be \"mse\" or \"r2\"")
 
         if search_algorithm == 'BayesOpt':
             # ray version 0.7.0
