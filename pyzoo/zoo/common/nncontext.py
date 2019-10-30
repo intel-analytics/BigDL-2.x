@@ -113,7 +113,8 @@ def init_spark_on_k8s(master,
                       spark_log_level="WARN",
                       redirect_spark_log=True,
                       jars=None,
-                      spark_conf=None):
+                      spark_conf=None,
+                      python_location=None):
 
     from zoo.util.spark import SparkRunner
     sparkrunner = SparkRunner(spark_log_level=spark_log_level,
@@ -129,7 +130,8 @@ def init_spark_on_k8s(master,
         extra_executor_memory_for_ray=extra_executor_memory_for_ray,
         extra_python_lib=extra_python_lib,
         jars=jars,
-        spark_conf=spark_conf)
+        spark_conf=spark_conf,
+        python_location=python_location)
     return sc
 
 

@@ -69,8 +69,8 @@ class RayServiceFuncGenerator(object):
         if self.env:
             modified_env.update(self.env)
         cwd = os.getcwd()
-        modified_env["PATH"] = "{}/{}:{}".format(cwd, "/".join(self.python_loc.split("/")[:-1]),
-                                                 os.environ["PATH"])
+        # modified_env["PATH"] = "{}/{}:{}".format(cwd, "/".join(self.python_loc.split("/")[:-1]),
+        #                                          os.environ["PATH"])
         modified_env.pop("MALLOC_ARENA_MAX", None)
         modified_env.pop("RAY_BACKEND_LOG_LEVEL", None)
         # unset all MKL setting
@@ -151,6 +151,7 @@ class RayServiceFuncGenerator(object):
 
     def _start_ray_node(self, command, tag, wait_before=5, wait_after=5):
         modified_env = self._prepare_env(self.mkl_cores)
+        print(modified_env)
         print("Starting {} by running: {}".format(tag, command))
         print("Wait for {} sec before launching {}".format(wait_before, tag))
         time.sleep(wait_before)
@@ -163,7 +164,7 @@ class RayServiceFuncGenerator(object):
 
     def _get_ray_exec(self):
         python_bin_dir = "/".join(self.python_loc.split("/")[:-1])
-        return "{}/python {}/ray".format(python_bin_dir, python_bin_dir)
+        return "ray"
 
     def gen_ray_start(self):
         def _start_ray_services(iter):

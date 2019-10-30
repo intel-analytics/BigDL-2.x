@@ -232,6 +232,8 @@ class SparkRunner():
         os.environ['PYSPARK_PYTHON'] = \
             python_location if python_location else self._detect_python_location()
 
+        zoo_bigdl_path_on_driver = ",".join([self._get_zoo_jar_on_driver(), self._get_bigdl_jar_on_driver()])
+
         def _k8s_opt():
             command = " --num-executors {} " \
                       " --executor-cores {} --executor-memory {}". \
@@ -240,7 +242,9 @@ class SparkRunner():
             if extra_python_lib:
                 command = command + " --py-files {} ".format(extra_python_lib)
             if jars:
-                command = command + " --jars {}".format(jars)
+                command = command + " --jars {}".format(",".join([zoo_bigdl_path_on_driver, jars]))
+            else:
+                command = command + " --jars {}".format(zoo_bigdl_path_on_driver)
             return command
 
         def _submit_opt():
@@ -256,17 +260,17 @@ class SparkRunner():
             return " --master " + master + " --deploy-mode client" + _k8s_opt() + ' pyspark-shell ', conf
 
         submit_args, conf = _submit_opt()
+        print(submit_args)
+        print(conf)
 
         if not spark_conf:
             spark_conf = {}
-        # Python environment on driver and executor would be the same
-        zoo_bigdl_path_on_executor = ":".join([self._get_zoo_jar_on_driver(), self._get_bigdl_jar_on_driver()])
 
-        if "spark.executor.extraClassPath" in spark_conf:
-            spark_conf["spark.executor.extraClassPath"] = "{}:{}".format(
-                zoo_bigdl_path_on_executor, spark_conf["spark.executor.extraClassPath"])
-        else:
-            spark_conf["spark.executor.extraClassPath"] = zoo_bigdl_path_on_executor
+        # if "spark.executor.extraClassPath" in spark_conf:
+        #     spark_conf["spark.executor.extraClassPath"] = "{}:{}".format(
+        #         zoo_bigdl_path_on_driver, spark_conf["spark.executor.extraClassPath"])
+        # else:
+        #     spark_conf["spark.executor.extraClassPath"] = zoo_bigdl_path_on_driver
 
         for item in spark_conf.items():
             conf[str(item[0])] = str(item[1])
