@@ -28,7 +28,7 @@ with tf.variable_scope("generator"):
 with tf.Session() as sess:
 
     saver = tf.train.Saver()
-    saver.restore(sess, "/tmp/gan_model/model-1000")
+    saver.restore(sess, "/tmp/gan_model/model-5000")
     outputs = sess.run(tiled)
 
     plt.axis('off')

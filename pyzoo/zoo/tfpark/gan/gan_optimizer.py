@@ -65,8 +65,8 @@ class GANOptimizer(object):
 
             noise = self._noise_generator(batch_size)
 
-            is_discriminator_phase = tf.greater_equal(tf.mod(counter, self._generator_steps +
-                                                             self._discriminator_steps), self._discriminator_steps)
+            is_discriminator_phase = tf.less(tf.mod(counter, self._generator_steps +
+                                                    self._discriminator_steps), self._discriminator_steps)
 
             with tf.control_dependencies([is_discriminator_phase]):
                 increase_counter = tf.assign_add(counter, 1)

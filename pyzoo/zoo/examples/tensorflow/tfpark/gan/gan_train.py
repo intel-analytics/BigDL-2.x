@@ -49,8 +49,8 @@ if __name__ == "__main__":
         discriminator_fn=lambda real_data: unconditional_discriminator(real_data),
         generator_loss_fn=generator_loss_fn,
         discriminator_loss_fn=discriminator_loss_fn,
-        generator_optim_method=Adam(1e-3),
-        discriminator_optim_method=Adam(1e-4),
+        generator_optim_method=Adam(1e-3, beta1=0.5),
+        discriminator_optim_method=Adam(1e-4, beta1=0.5),
         dataset=dataset,
         noise_generator=lambda batch_size: tf.random.normal(mean=0.0, stddev=1.0, shape=(batch_size, 10)),
         generator_steps=1,
@@ -58,4 +58,4 @@ if __name__ == "__main__":
         checkpoint_path="/tmp/gan_model/model"
     )
 
-    opt.optimize(MaxIteration(1000))
+    opt.optimize(MaxIteration(5000))
