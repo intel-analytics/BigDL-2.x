@@ -17,7 +17,7 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-from .gan_model import *
+from zoo.examples.tensorflow.tfpark.gan.gan_model import *
 
 noise = tf.random.normal(mean=0.0, stddev=1.0, shape=(20, 10))
 
@@ -28,7 +28,7 @@ with tf.variable_scope("generator"):
 with tf.Session() as sess:
 
     saver = tf.train.Saver()
-    saver.restore(sess, "/tmp/gan_model/model")
+    saver.restore(sess, "/tmp/gan_model/model-1000")
     outputs = sess.run(tiled)
 
     plt.axis('off')

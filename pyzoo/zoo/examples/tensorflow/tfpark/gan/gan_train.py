@@ -22,7 +22,7 @@ from bigdl.optim.optimizer import *
 import numpy as np
 
 from bigdl.dataset import mnist
-from .gan_model import *
+from zoo.examples.tensorflow.tfpark.gan.gan_model import *
 
 
 def get_data_rdd(dataset):
@@ -34,26 +34,28 @@ def get_data_rdd(dataset):
                                 np.array(rec_tuple[1])])
     return rdd
 
-sc = init_nncontext()
-training_rdd = get_data_rdd("train")
-dataset = TFDataset.from_rdd(training_rdd,
-                             names=["features", "labels"],
-                             shapes=[[28, 28, 1], []],
-                             types=[tf.float32, tf.int32],
-                             batch_size=32)
 
-opt = GANOptimizer(
-    generator_fn=lambda noise: unconditional_generator(noise),
-    discriminator_fn=lambda real_data: unconditional_discriminator(real_data),
-    generator_loss_fn=generator_loss_fn,
-    discriminator_loss_fn=discriminator_loss_fn,
-    generator_optim_method=Adam(1e-3, beta1=0.5),
-    discriminator_optim_method=Adam(1e-4, beta1=0.5),
-    dataset=dataset,
-    noise_generator=lambda batch_size: tf.random.normal(mean=0.0, stddev=1.0, shape=(batch_size, 10)),
-    generator_steps=1,
-    discriminator_steps=1,
-    checkpoint_path="/tmp/gan_model/model"
-)
+if __name__ == "__main__":
+    sc = init_nncontext()
+    training_rdd = get_data_rdd("train")
+    dataset = TFDataset.from_rdd(training_rdd,
+                                 names=["features", "labels"],
+                                 shapes=[[28, 28, 1], []],
+                                 types=[tf.float32, tf.int32],
+                                 batch_size=32)
 
-opt.optimize(MaxIteration(5000))
+    opt = GANOptimizer(
+        generator_fn=lambda noise: unconditional_generator(noise),
+        discriminator_fn=lambda real_data: unconditional_discriminator(real_data),
+        generator_loss_fn=generator_loss_fn,
+        discriminator_loss_fn=discriminator_loss_fn,
+        generator_optim_method=Adam(1e-3),
+        discriminator_optim_method=Adam(1e-4),
+        dataset=dataset,
+        noise_generator=lambda batch_size: tf.random.normal(mean=0.0, stddev=1.0, shape=(batch_size, 10)),
+        generator_steps=1,
+        discriminator_steps=1,
+        checkpoint_path="/tmp/gan_model/model"
+    )
+
+    opt.optimize(MaxIteration(1000))
