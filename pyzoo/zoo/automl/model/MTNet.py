@@ -14,9 +14,9 @@ class MTNet(BaseModel):
         Constructer, setting up necessary parameters
         '''
         # [[[WIP]]] currently  future_seq_len is implemented only for 1
-        if future_seq_len!=1:
-            raise ValueError("Invalid future_seq_len. Only future_seq_len=1 is implemented currently")
-        
+        #if future_seq_len!=1:
+        #    raise ValueError("Invalid future_seq_len. Only future_seq_len=1 is implemented currently")
+        self.K = future_seq_len  # this configuration is previously used as output dimension in source code, curretnly change to be output's future_seq_length
         # config parameter
         self.T = None # timestep
         self.W = None # convolution window size (convolution filter height)` ?
@@ -24,7 +24,6 @@ class MTNet(BaseModel):
         self.highway_window = None  # the window size of ar model
 
         self.D = None # input's variable dimension (convolution filter width)
-        self.K = None # output's variable dimension
 
         self.en_conv_hidden_size = None
         self.en_rnn_hidden_sizes = None  # last size is equal to en_conv_hidden_size, should be a list
@@ -286,7 +285,7 @@ class MTNet(BaseModel):
         '''
         # set data length
         self.D = x_train.shape[-1]
-        self.K = y_train.shape[-1]
+        # self.K = y_train.shape[-1]
         # preprocess training
         batch_data_train = self._prepare_batches(x_train, y_train)
         # preprocess validation
@@ -366,14 +365,15 @@ class MTNet(BaseModel):
         '''
         super()._check_config(**config)
         self.T = config.get("past_seq_len", 1)
-        self.W = config.get('W', 2)
+        self.W = config.get('W', 1)
         self.n = config.get('n', 7)
         self.highway_window = config.get('highway_window', 1)
         self.en_conv_hidden_size = config.get('en_conv_hidden_size', 16)
         self.en_rnn_hidden_sizes = config.get('en_rnn_hidden_sizes', [16, 16])
         self.input_keep_prob_value = config.get('input_keep_prob', 0.8)
         self.output_keep_prob_value = config.get('output_keep_prob', 1.0)
-        assert(self.highway_window <= self.T), "Invalid value. highway_window must not exceed past_seq_len"
+        assert(self.highway_window <= self.T), "Invalid configuration value. 'highway_window' must not exceed 'past_seq_len'"
+        assert(self.W <= self.T), "invalid configuration value. 'W' must not exceed 'past_seq_len'"
         if store: # when storing
             self.D = config.get('D')  # input's variable dimension (convolution filter width)
             self.K = config.get('K') # output's variable dimension
@@ -415,15 +415,18 @@ class MTNet(BaseModel):
         :return: the resulting metric 
         '''
         self._set_config(**config)
-        print("preprocessing")
+        if verbose > 1:
+            print("preprocessing")
         batches_data = self._preprocessing(x, y, validation_data)
-        print("building")
+        if verbose > 1:
+            print("building")
         self._build(**config)
         sess = self._open_sess()
         sess.run(tf.global_variables_initializer())
         epochs = config.get('epochs', 10)
         for i in range(epochs):
-            print("start epoch {}".format(i) )
+            if verbose > 1:
+                print("start epoch {}".format(i) )
             # sess.run(model.reset_statistics_vars) # reset statistics variables
             for ds in batches_data[0]:
                 # print("\tstart new batch")
@@ -526,9 +529,9 @@ if __name__=="__main__":
     from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
     from zoo.automl.common.util import split_input_df
     df = pd.read_csv('automl/data/nyc_taxi.csv')
-    model = MTNet(check_optional_config=False)
+    model = MTNet(check_optional_config=False, future_seq_len=2)
     train_df, val_df, test_df = split_input_df(df, val_split_ratio=0.1, test_split_ratio=0.1)
-    feature_transformer = TimeSequenceFeatureTransformer()
+    feature_transformer = TimeSequenceFeatureTransformer( future_seq_len=2 )
     config = {
         # 'input_shape_x': x_train.shape[1],
         # 'input_shape_y': x_train.shape[-1],
@@ -542,7 +545,8 @@ if __name__=="__main__":
     }
     x_train, y_train = feature_transformer.fit_transform(train_df, **config)
     x_test, y_test = feature_transformer.transform(test_df, is_train=True)
-
+    # y_train = np.c_[y_train, y_train/2]
+    # y_test = np.c_[y_test, y_test/2]
     print("fit_eval:", model.fit_eval(x_train, y_train, validation_data=(x_test, y_test), **config) )
     print("evaluate:", model.evaluate(x_test, y_test))
     y_pred = model.predict(x_test)
