@@ -28,6 +28,7 @@ import ray
 
 
 class TestTimeSequencePipeline(ZooTestCase):
+
     def setup_method(self, method):
         super().setup_method(method)
         ray.init()
@@ -204,7 +205,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert y_pred_bayes.shape == (self.test_sample_num - self.default_past_seq_len + 1, 2)
 
     def test_evaluate_predict_1(self):
-        metric = ["mean_squared_error", "r_square"]
+        metric = ["mse", "r2"]
         target_col = "value"
         self.pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
         y_pred_df_1 = self.pipeline_1.predict(self.test_df[:-self.future_seq_len_1])
@@ -219,7 +220,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert rs_pred_eval_1 == rs_eval_1
 
     def test_evaluate_predict_df_list(self):
-        metric = ["mean_squared_error", "r_square"]
+        metric = ["mse", "r2"]
         target_col = "value"
         train_df_list = [self.train_df] * 3
         val_df_list = [self.validation_df] * 3
@@ -243,7 +244,7 @@ class TestTimeSequencePipeline(ZooTestCase):
 
     def test_evaluate_predict_3(self):
         target_col = "value"
-        metric = ["mean_squared_error", "r_square"]
+        metric = ["mse", "r2"]
         self.pipeline_3 = self.tsp_3.fit(self.train_df, validation_df=self.validation_df)
         y_pred_df = self.pipeline_3.predict(self.test_df[:-self.future_seq_len_3])
         columns = ["{}_{}".format(target_col, i) for i in range(self.future_seq_len_3)]
