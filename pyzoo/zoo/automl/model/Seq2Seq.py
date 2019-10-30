@@ -252,7 +252,7 @@ class LSTMSeq2Seq(BaseModel):
             result = hist.history.get('val_' + str(self.metric))[-1]
         return result
 
-    def evaluate(self, x, y, metric=['mean_squared_error']):
+    def evaluate(self, x, y, metric=['mse']):
         """
         Evaluate on x, y
         :param x: input

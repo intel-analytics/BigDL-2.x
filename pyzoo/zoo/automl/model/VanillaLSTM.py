@@ -101,7 +101,7 @@ class VanillaLSTM(BaseModel):
             result = hist.history.get('val_' + str(self.metric))[0]
         return result
 
-    def evaluate(self, x, y, metric=['mean_squared_error']):
+    def evaluate(self, x, y, metric=['mse']):
         """
         Evaluate on x, y
         :param x: input

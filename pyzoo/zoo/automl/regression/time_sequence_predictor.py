@@ -306,7 +306,7 @@ class TimeSequencePredictor(object):
     def fit(self,
             input_df,
             validation_df=None,
-            metric="mean_squared_error",
+            metric="mse",
             recipe=SmokeRecipe(),
             resources_per_trial={"cpu": 2},
             distributed=False,
@@ -585,13 +585,13 @@ if __name__ == "__main__":
 
     pipeline = tsp.fit(train_df,
                        validation_df=val_df,
-                       metric="mean_squared_error",
+                       metric="mse",
                        # recipe=BayesRecipe(num_rand_samples=2, look_back=(2, 4)),
                        # recipe=RandomRecipe(look_back=(2, 4)),
                        distributed=distributed,
                        hdfs_url=hdfs_url)
 
-    print("evaluate:", pipeline.evaluate(test_df, metrics=["mean_squared_error", "r_square"]))
+    print("evaluate:", pipeline.evaluate(test_df, metrics=["mse", "r2"]))
     pred = pipeline.predict(test_df)
     print("predict:", pred.shape)
 
@@ -602,14 +602,14 @@ if __name__ == "__main__":
     os.remove(save_pipeline_file)
 
     new_pipeline.describe()
-    print("evaluate:", new_pipeline.evaluate(test_df, metrics=["mean_squared_error", "r_square"]))
+    print("evaluate:", new_pipeline.evaluate(test_df, metrics=["mse", "r2"]))
 
     new_pred = new_pipeline.predict(test_df)
     print("predict:", pred.shape)
     np.testing.assert_allclose(pred["value"].values, new_pred["value"].values)
 
     new_pipeline.fit(train_df, val_df, epoch_num=5)
-    print("evaluate:", new_pipeline.evaluate(test_df, metrics=["mean_squared_error", "r_square"]))
+    print("evaluate:", new_pipeline.evaluate(test_df, metrics=["mse", "r2"]))
 
     if args.hadoop_conf or args.spark_local:
         ray_ctx.stop()

@@ -61,7 +61,7 @@ class TimeSequenceModel(BaseModel):
         """
         return self.model.fit_eval(x, y, validation_data=validation_data, verbose=verbose, **config)
 
-    def evaluate(self, x, y, metric=['mean_squared_error']):
+    def evaluate(self, x, y, metric=['mse']):
         """
         Evaluate on x, y
         :param x: input

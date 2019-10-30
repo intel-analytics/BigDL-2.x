@@ -61,7 +61,7 @@ class TestVanillaLSTM(ZooTestCase):
         self.model.fit_eval(self.x_train, self.y_train, **self.config)
         mse, rs = self.model.evaluate(self.x_val,
                                       self.y_val,
-                                      metric=['mean_squared_error', 'r_square'])
+                                      metric=['mse', 'r2'])
         print("Mean squared error is:", mse)
         print("R square is:", rs)
 
