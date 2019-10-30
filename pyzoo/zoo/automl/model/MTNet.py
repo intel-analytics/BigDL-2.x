@@ -418,11 +418,14 @@ class MTNet(BaseModel):
         if verbose > 1:
             print("preprocessing")
         batches_data = self._preprocessing(x, y, validation_data)
-        if verbose > 1:
-            print("building")
-        self._build(**config)
-        sess = self._open_sess()
-        sess.run(tf.global_variables_initializer())
+        if not self.train_op:
+            if verbose > 1:
+                print("building")
+            self._build(**config)
+            sess = self._open_sess()
+            sess.run(tf.global_variables_initializer())
+        else:
+            sess = self._open_sess()
         epochs = config.get('epochs', 10)
         for i in range(epochs):
             if verbose > 1:
