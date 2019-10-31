@@ -75,17 +75,20 @@ object Perf {
         model.doPredict(batchInput)
         val latency = System.nanoTime() - start
         averageLatency += latency
-        logger.info(s"Iteration $iteration latency is ${latency / 1e6} ms")
+        logger.info(s"Iteration latency is ${latency / 1e6} ms")
         val throughPut = "%.2f".format(numBatch.toFloat * batchSize / (latency / 1e9))
-        logger.info(s"Iteration $iteration Throughput is ${throughPut} FPS")
+        logger.info(s"Iteration throughput is ${throughPut} FPS")
         logger.info(s"*****************************************************")
       }
       val totalTimeUsed = System.nanoTime() - predictStart
       val totalThroughput = "%.2f".format(batchSize * iteration
         * numBatch.toFloat / (totalTimeUsed / 1e9))
-      logger.info(s"Average latency for iteration is " +
+      logger.info(s"Average latency of $iteration iteration is " +
         s"${averageLatency / iteration / 1e6} ms")
-      logger.info(s"Takes $totalTimeUsed ns, throughput is $totalThroughput FPS")
+      logger.info(s"Average latency per image is " +
+        s"${averageLatency / iteration / batchSize / 1e6} ms")
+      logger.info(s"Average throughput of $iteration iteration is " +
+        s"$totalThroughput FPS")
     }
   }
 }

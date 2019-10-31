@@ -135,11 +135,9 @@ trait InferenceSupportive {
   }
 
   def transferTensorToJTensor(input: Tensor[Float]): JTensor = {
-    val storageOffset = input.storageOffset - 1
-    val res = new Array[Float](input.nElement())
-    System.arraycopy(input.storage().array(), storageOffset, res, 0, res.length)
     val outputShape = input.size()
-    new JTensor(res, outputShape, false)
+    // Share Tensor Storage
+    new JTensor(input.storage().array(), outputShape, false)
   }
 
   def transferListOfActivityToActivityOfBatch(inputs: JList[JList[JTensor]], batchSize: Int)
