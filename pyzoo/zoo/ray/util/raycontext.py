@@ -313,7 +313,7 @@ class RayContext(object):
         if "local" in self.sc.master:
             return 1
         else:
-            return int(self.sc.getConf("spark.executor.cores"))
+            return int(self.sc.getConf().get("spark.executor.cores"))
 
     def _get_ray_node_cpu_cores(self):
         if "local" in self.sc.master:
@@ -323,7 +323,7 @@ class RayContext(object):
                     self._get_spark_local_cores(), self.local_ray_node_num)
             return int(self._get_spark_local_cores() / self.local_ray_node_num)
         else:
-            return self.sc.getConf("spark.executor.cores")
+            return self.sc.getConf().get("spark.executor.cores")
 
     def _get_ray_driver_memory(self):
         """
@@ -335,7 +335,7 @@ class RayContext(object):
             total_mem = virtual_memory().total
             return int(total_mem)
         else:
-            return resourceToBytes(self.sc.getConf("spark.driver.memory"))
+            return resourceToBytes(self.sc.getConf().get("spark.driver.memory"))
 
     def _get_ray_plasma_memory_local(self):
         return "{}b".format(int(self._get_ray_driver_memory() / self._get_num_ray_nodes() * 0.4))
@@ -351,7 +351,7 @@ class RayContext(object):
         if "local" in self.sc.master:
             return int(self.local_ray_node_num)
         else:
-            return int(self.sc.getConf("spark.executor.instances"))
+            return int(self.sc.getConf().get("spark.executor.instances"))
 
     def init(self, object_store_memory=None,
              num_cores=0,
