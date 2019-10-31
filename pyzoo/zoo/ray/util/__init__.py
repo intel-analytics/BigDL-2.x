@@ -42,5 +42,10 @@ def gen_shutdown_per_node(pgids, node_ips=None):
 
 
 def is_local(sc):
-    master = sc._conf.get("spark.master")
+    master = sc.getConf("spark.master")
     return master == "local" or master.startswith("local[")
+
+
+def is_yarn(sc):
+    master = sc.getConf("spark.master")
+    return master == "yarn"

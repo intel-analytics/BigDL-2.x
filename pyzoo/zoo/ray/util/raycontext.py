@@ -23,7 +23,7 @@ import multiprocessing
 
 from pyspark import BarrierTaskContext
 
-from zoo.ray.util import is_local
+from zoo.ray.util import is_local, is_yarn
 from zoo.ray.util.process import session_execute, ProcessMonitor
 from zoo.ray.util.utils import resourceToBytes
 import ray.services as rservices
@@ -68,9 +68,10 @@ class RayServiceFuncGenerator(object):
         modified_env = os.environ.copy()
         if self.env:
             modified_env.update(self.env)
-        cwd = os.getcwd()
-        # modified_env["PATH"] = "{}/{}:{}".format(cwd, "/".join(self.python_loc.split("/")[:-1]),
-        #                                          os.environ["PATH"])
+        if self.python_loc:
+            cwd = os.getcwd()
+            modified_env["PATH"] = "{}/{}:{}".format(cwd, "/".join(self.python_loc.split("/")[:-1]),
+                                                     os.environ["PATH"])
         modified_env.pop("MALLOC_ARENA_MAX", None)
         modified_env.pop("RAY_BACKEND_LOG_LEVEL", None)
         # unset all MKL setting
@@ -162,8 +163,11 @@ class RayServiceFuncGenerator(object):
         return process_info
 
     def _get_ray_exec(self):
-        python_bin_dir = "/".join(self.python_loc.split("/")[:-1])
-        return "ray"
+        if self.python_loc:
+            python_bin_dir = "/".join(self.python_loc.split("/")[:-1])
+            return "{}/python {}/ray".format(python_bin_dir, python_bin_dir)
+        else:
+            return "ray"
 
     def gen_ray_start(self):
         def _start_ray_services(iter):
@@ -229,7 +233,8 @@ class RayContext(object):
         self.local_ray_node_num = local_ray_node_num
         self.ray_node_cpu_cores = self._get_ray_node_cpu_cores()
         self.num_ray_nodes = self._get_num_ray_nodes()
-        self.python_loc = os.environ['PYSPARK_PYTHON']
+        # python_loc is only needed for yarn python environment
+        self.python_loc = os.environ['PYSPARK_PYTHON'] if is_yarn(sc) else None
         self.ray_processesMonitor = None
         self.verbose = verbose
         self.redis_password = password
