@@ -71,6 +71,20 @@ private[zoo] class TFNetForInference(graphRunner: GraphRunner,
     }
   }
 
+  gradInput = {
+    if (inputs.length == 1) {
+      Tensor[Float]()
+    } else {
+      val t = T()
+      var i = 0
+      while (i < inputs.length) {
+        t.insert(Tensor[Float]())
+        i = i + 1
+      }
+      t
+    }
+  }
+
   private def setVariableIntoTF(weights: Array[Tensor[Float]],
                                 inputNames: Array[String],
                                 variableTypes: Array[DataType],
@@ -85,10 +99,18 @@ private[zoo] class TFNetForInference(graphRunner: GraphRunner,
     )
   }
 
-  setVariableIntoTF(weights, variableAssignPlaceholders,
-    variableTypes.map(NetUtils.tfenum2datatype), assignVariableOps)
+
+  @transient
+  private lazy val initializedVariables = {
+    setVariableIntoTF(weights, variableAssignPlaceholders,
+      variableTypes.map(NetUtils.tfenum2datatype), assignVariableOps)
+    true
+  }
+
 
   override def updateOutput(input: Activity): Activity = {
+
+    assert(initializedVariables)
     NetUtils.timeIt("updateOutput", TFNetForInference.logger) {
 
       val feeds = NetUtils.activity2VectorBuilder(input)
@@ -110,6 +132,17 @@ private[zoo] class TFNetForInference(graphRunner: GraphRunner,
   override def updateGradInput(
            input: Activity,
            gradOutput: Activity): Activity = {
+    if (gradInput.isTable) {
+      var i = 0
+      while (i < gradInput.toTable.length()) {
+        gradInput.toTable[Tensor[Float]](i + 1)
+          .resizeAs(input.toTable[Tensor[Float]](i + 1))
+        i = i + 1
+      }
+    } else {
+      gradInput.toTensor[Float]
+        .resizeAs(input.toTensor[Float])
+    }
     gradInput
   }
 }
