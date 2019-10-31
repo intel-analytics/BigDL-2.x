@@ -18,22 +18,19 @@ import os
 import glob
 
 from pyspark import SparkContext
-
 from zoo.common.nncontext import init_spark_conf
-
 from zoo import init_nncontext
 
 
-class SparkRunner():
+class SparkRunner:
     def __init__(self,
                  spark_log_level="WARN",
                  redirect_spark_log=True):
         self.spark_log_level = spark_log_level
         self.redirect_spark_log = redirect_spark_log
-        self.PYTHON_ENV = "python_env"
         with SparkContext._lock:
             if SparkContext._active_spark_context:
-                raise Exception("There's existing SparkContext. Please close it first.")
+                raise Exception("There's an existing SparkContext. Please close it first.")
         import pyspark
         print("Current pyspark location is : {}".format(pyspark.__file__))
 
@@ -125,7 +122,7 @@ class SparkRunner():
         assert zoo_classpath, "Cannot find analytics-zoo classpath. Please check your analytics-zoo installation"
         return zoo_classpath
 
-    def _assemble_zoo_classpath_for_executor(self):
+    def _conda_assemble_executor_zoo_classpath(self):
         conda_env_path = "/".join(self._detect_python_location().split("/")[:-2])
         python_interpreters = glob.glob("{}/lib/python*".format(conda_env_path))
         assert len(python_interpreters) == 1, \
@@ -166,6 +163,7 @@ class SparkRunner():
                            spark_yarn_archive=None,
                            spark_conf=None,
                            jars=None):
+        self.PYTHON_ENV = "python_env"
         os.environ["HADOOP_CONF_DIR"] = hadoop_conf
         os.environ['HADOOP_USER_NAME'] = hadoop_user_name
         os.environ['PYSPARK_PYTHON'] = "{}/bin/python".format(self.PYTHON_ENV)
@@ -204,7 +202,7 @@ class SparkRunner():
 
             if not spark_conf:
                 spark_conf = {}
-            zoo_bigdl_path_on_executor = ":".join(self._assemble_zoo_classpath_for_executor())
+            zoo_bigdl_path_on_executor = ":".join(self._conda_assemble_executor_zoo_classpath())
 
             if "spark.executor.extraClassPath" in spark_conf:
                 spark_conf["spark.executor.extraClassPath"] = "{}:{}".format(
