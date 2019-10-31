@@ -35,20 +35,27 @@ sc = init_nncontext()
 
 You only need to following these steps on your driver node and we only support yarn-client mode for now.
 
-1) Install [Conda](https://docs.conda.io/projects/conda/en/latest/commands/install.html) and create a conda-env (i.e in the name of "zoo").
+1) Install [Conda](https://docs.conda.io/projects/conda/en/latest/commands/install.html) in your environment.
 
-2) Install Analytics-Zoo into the created conda-env.
+2) Create a new conda environment (with name "zoo" for example):
+```
+conda create -n zoo python=3.6
+source activate zoo
+```
+
+3) Install Analytics-Zoo into the created conda-env.
 
 ```
-source activate zoo
 pip install analytics-zoo
 ```
-3) Download JDK8 and set the environment variable: JAVA_HOME (recommended).
 
-   - You can also install JDK via conda without setting the JAVA_HOME manually:
-   `conda install -c anaconda openjdk=8.0.152`
+4) Download JDK8 and set the environment variable: JAVA_HOME (recommended).
 
-4) Start python and then execute the following code to create a SparkContext on Yarn for verification.
+You can also install JDK via conda without setting the JAVA_HOME manually:
+
+`conda install -c anaconda openjdk=8.0.152`
+
+5) Start `python` and then execute the following code to create a SparkContext on Yarn for verification:
 
 ``` python
 from zoo import init_spark_on_yarn
