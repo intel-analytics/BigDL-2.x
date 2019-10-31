@@ -56,7 +56,8 @@ class RayServiceFuncGenerator(object):
     This should be a pickable class.
     """
 
-    def _get_MKL_config(self, cores):
+    @staticmethod
+    def _get_mkl_config(cores):
         return {"intra_op_parallelism_threads": str(cores),
                 "inter_op_parallelism_threads": str(cores),
                 "OMP_NUM_THREADS": str(cores),
@@ -84,7 +85,7 @@ class RayServiceFuncGenerator(object):
         if cores:
             cores = int(cores)
             print("MKL cores is {}".format(cores))
-            modified_env.update(self._get_MKL_config(cores))
+            modified_env.update(self._get_mkl_config(cores))
         if self.verbose:
             print("Executing with these environment settings:")
             for pair in modified_env.items():
@@ -257,7 +258,8 @@ class RayContext(object):
         init_executor_gateway(sc)
         print("JVM guarding process has been successfully launched")
 
-    def _new_port(self):
+    @staticmethod
+    def _new_port():
         return random.randint(10000, 65535)
 
     def _enrich_object_store_memory(self, sc, object_store_memory):
@@ -311,7 +313,7 @@ class RayContext(object):
         if "local" in self.sc.master:
             return 1
         else:
-            return int(self.sc._conf.get("spark.executor.cores"))
+            return int(self.sc.getConf("spark.executor.cores"))
 
     def _get_ray_node_cpu_cores(self):
         if "local" in self.sc.master:
@@ -321,7 +323,7 @@ class RayContext(object):
                     self._get_spark_local_cores(), self.local_ray_node_num)
             return int(self._get_spark_local_cores() / self.local_ray_node_num)
         else:
-            return self.sc._conf.get("spark.executor.cores")
+            return self.sc.getConf("spark.executor.cores")
 
     def _get_ray_driver_memory(self):
         """
@@ -333,7 +335,7 @@ class RayContext(object):
             total_mem = virtual_memory().total
             return int(total_mem)
         else:
-            return resourceToBytes(self.sc._conf.get("spark.driver.memory"))
+            return resourceToBytes(self.sc.getConf("spark.driver.memory"))
 
     def _get_ray_plasma_memory_local(self):
         return "{}b".format(int(self._get_ray_driver_memory() / self._get_num_ray_nodes() * 0.4))
@@ -349,7 +351,7 @@ class RayContext(object):
         if "local" in self.sc.master:
             return int(self.local_ray_node_num)
         else:
-            return int(self.sc._conf.get("spark.executor.instances"))
+            return int(self.sc.getConf("spark.executor.instances"))
 
     def init(self, object_store_memory=None,
              num_cores=0,

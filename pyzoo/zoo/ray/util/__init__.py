@@ -47,5 +47,4 @@ def is_local(sc):
 
 
 def is_yarn(sc):
-    master = sc.getConf("spark.master")
-    return master == "yarn"
+    return sc.getConf("spark.master") == "yarn"

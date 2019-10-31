@@ -38,7 +38,8 @@ class SparkRunner():
         print("Current pyspark location is : {}".format(pyspark.__file__))
 
     # This is adopted from conda-pack.
-    def _pack_conda_main(self, args):
+    @staticmethod
+    def _pack_conda_main(args):
         import sys
         import traceback
         from conda_pack.cli import fail, PARSER, context
@@ -92,7 +93,8 @@ class SparkRunner():
 
         return sc
 
-    def _detect_python_location(self):
+    @staticmethod
+    def _detect_python_location():
         import subprocess
         pro = subprocess.Popen(
             "command -v python",
@@ -109,13 +111,15 @@ class SparkRunner():
                             "Please set it manually by python_location")
         return out.strip()
 
-    def _get_bigdl_jar_on_driver(self):
+    @staticmethod
+    def _get_bigdl_jar_on_driver():
         from bigdl.util.engine import get_bigdl_classpath
         bigdl_classpath = get_bigdl_classpath()
         assert bigdl_classpath, "Cannot find bigdl classpath. Please check your bigdl installation"
         return bigdl_classpath
 
-    def _get_zoo_jar_on_driver(self):
+    @staticmethod
+    def _get_zoo_jar_on_driver():
         from zoo.util.engine import get_analytics_zoo_classpath
         zoo_classpath = get_analytics_zoo_classpath()
         assert zoo_classpath, "Cannot find analytics-zoo classpath. Please check your analytics-zoo installation"
@@ -136,8 +140,8 @@ class SparkRunner():
 
     def init_spark_on_local(self, cores, conf=None, python_location=None):
         print("Start to getOrCreate SparkContext")
-        os.environ['PYSPARK_PYTHON'] = \
-            python_location if python_location else self._detect_python_location()
+        if python_location:
+            os.environ['PYSPARK_PYTHON'] = python_location
         master = "local[{}]".format(cores)
         zoo_conf = init_spark_conf().setMaster(master)
         if conf:
@@ -229,21 +233,22 @@ class SparkRunner():
                           spark_conf=None,
                           jars=None,
                           python_location=None):
-        if not os.environ['PYSPARK_PYTHON']:
-            if python_location:
-                os.environ['PYSPARK_PYTHON'] = python_location
-            else:
-                os.environ['PYSPARK_PYTHON'] = "python"
-
-        zoo_bigdl_path_on_driver = ",".join([self._get_zoo_jar_on_driver(), self._get_bigdl_jar_on_driver()])
+        if python_location:
+            os.environ['PYSPARK_PYTHON'] = python_location
 
         def _k8s_opt():
             command = " --num-executors {} " \
                       " --executor-cores {} --executor-memory {}". \
                 format(num_executors, executor_cores, executor_memory)
 
+            zoo_bigdl_path_on_driver = ",".join([self._get_zoo_jar_on_driver(),
+                                                 self._get_bigdl_jar_on_driver()])
+
             if extra_python_lib:
                 command = command + " --py-files {} ".format(extra_python_lib)
+            # Remark: driver and executor python environments may vary. Thus may not be able to find
+            # zoo and bigdl jar on executor directly. Instead of specifying spark.executor.extraClassPath,
+            # here we submit the jars on driver via --jars.
             if jars:
                 command = command + " --jars {}".format(",".join([zoo_bigdl_path_on_driver, jars]))
             else:
@@ -266,12 +271,6 @@ class SparkRunner():
 
         if not spark_conf:
             spark_conf = {}
-
-        # if "spark.executor.extraClassPath" in spark_conf:
-        #     spark_conf["spark.executor.extraClassPath"] = "{}:{}".format(
-        #         zoo_bigdl_path_on_driver, spark_conf["spark.executor.extraClassPath"])
-        # else:
-        #     spark_conf["spark.executor.extraClassPath"] = zoo_bigdl_path_on_driver
 
         for item in spark_conf.items():
             conf[str(item[0])] = str(item[1])
