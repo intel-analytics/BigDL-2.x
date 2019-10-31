@@ -119,7 +119,8 @@ class SparkRunner:
     def _get_zoo_jar_on_driver():
         from zoo.util.engine import get_analytics_zoo_classpath
         zoo_classpath = get_analytics_zoo_classpath()
-        assert zoo_classpath, "Cannot find analytics-zoo classpath. Please check your analytics-zoo installation"
+        assert zoo_classpath, \
+            "Cannot find analytics-zoo classpath. Please check your analytics-zoo installation"
         return zoo_classpath
 
     def _conda_assemble_executor_zoo_classpath(self):
@@ -171,7 +172,8 @@ class SparkRunner:
         def _yarn_opt():
             command = " --archives {}#{} --num-executors {} " \
                       " --executor-cores {} --executor-memory {}". \
-                format(penv_archive, self.PYTHON_ENV, num_executors, executor_cores, executor_memory)
+                format(penv_archive, self.PYTHON_ENV, num_executors,
+                       executor_cores, executor_memory)
 
             if extra_python_lib:
                 command = command + " --py-files {} ".format(extra_python_lib)
@@ -245,8 +247,8 @@ class SparkRunner:
             if extra_python_lib:
                 command = command + " --py-files {} ".format(extra_python_lib)
             # Remark: driver and executor python environments may vary. Thus may not be able to find
-            # zoo and bigdl jar on executor directly. Instead of specifying spark.executor.extraClassPath,
-            # here we submit the jars on driver via --jars.
+            # zoo and bigdl jar on executor directly.
+            # Instead of specifying executor extraClassPath, submit the jars on driver via --jars.
             if jars:
                 command = command + " --jars {}".format(",".join([zoo_bigdl_path_on_driver, jars]))
             else:
@@ -263,7 +265,8 @@ class SparkRunner:
                 "spark.cores.max": num_executors * executor_cores}
             if extra_executor_memory_for_ray:
                 conf["spark.executor.memoryOverhead"] = extra_executor_memory_for_ray
-            return " --master " + master + " --deploy-mode client" + _k8s_opt() + ' pyspark-shell ', conf
+            return " --master " + master + " --deploy-mode client" +\
+                   _k8s_opt() + ' pyspark-shell ', conf
 
         submit_args, conf = _submit_opt()
 
