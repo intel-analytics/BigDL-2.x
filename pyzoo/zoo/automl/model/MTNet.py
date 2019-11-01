@@ -281,42 +281,27 @@ class MTNet(BaseModel):
         prepare historical data, pack into packages for training and validation data
         :x_train:
         :y_train:
-        :validataion_data:
+        :validation_data:
+        :return: (batches_data_train, batches_data_val), y_train
         '''
         # set data length
         self.D = x_train.shape[-1]
         # self.K = y_train.shape[-1]
         # preprocess training
-        batch_data_train = self._prepare_batches(x_train, y_train)
+        batch_data_train = self._prepare_batches(x_train, y_train, fill_with_samples=True)
+        # for training, fill y_train with additional samples
+        batch_size = self.batch_size
+        total_length = x_train.shape[0] // batch_size
+        y_train = np.r_[ y_train[:total_length*batch_size ], batch_data_train[-1][-1] ]
         # preprocess validation
         if validation_data is not None:
             x_val, y_val = validation_data
-            batch_data_val = self._prepare_batches(x_val, y_val, True)
-            return (batch_data_train, batch_data_val)
+            batch_data_val = self._prepare_batches(x_val, y_val)
+            return (batch_data_train, batch_data_val), y_train
         else:
-            return (batch_data_train)
-    
-    def _historical(self, q_train, idx, unroll_length=48, history_length=7):
-        ''' 
-        prepare historical data X for a single data point, used in preprocessing 
-        :q_train:
-        :idx: the data point to prepare historical data
-        :unroll_length: config.T
-        :history_length: config.n
-        '''
-        assert(history_length*unroll_length < idx), "Invalid index. Not enough historical data, please try larger index number. "
-        result = []
-        for i in range(history_length,0,-1):
-            result.append(q_train[idx-unroll_length*i])
-        return np.asarray(result)
-    
-    def _unroll(self, data,sequence_length=24):
-        result = []
-        for index in range(len(data) - sequence_length):
-            result.append(data[index: index + sequence_length])
-        return np.asarray(result)
+            return (batch_data_train, ), y_train
 
-    def _prepare_batches(self, x, y=None, fill_last_batch=False):
+    def _prepare_batches(self, x, y=None, fill_with_samples=False):
         '''
         prepare historical data for train/validation/testing
         :x:
@@ -324,35 +309,32 @@ class MTNet(BaseModel):
         :return: [ (X_batch[0], q_batch[0], y_batch[0]),  (X_batch[1], q_batch[1], y_batch[1]), ... ] for y not None
                          [ (X_batch[0], q_batch[0], None]),  (X_batch[1], q_batch[1],None), ... ] for y is None
         '''
-        # x = x.reshape(x.shape[0], x.shape[-1])
         unroll_length = self.T
         history_length = self.n
-        #generate input data
-        # base_x = np.array(x)
-        # generate q
-        # q = self._unroll(base_x,unroll_length)
-        q = x
-        #generate Xi
-        result = []
-        start_cut = (history_length+1) * unroll_length + 1
-        for i in range(start_cut,q.shape[0]):
-            result.append(self._historical(q, i, unroll_length, history_length))
-        X = np.asarray(result)
-        q = q[start_cut:]
-        # generate y
-        if y is not None:
-            y = y[start_cut:]
+        # generate q and X
+        q = x[:, unroll_length*history_length:]
+        X = x[:, :unroll_length*history_length]
+        X = X.reshape(-1, history_length, unroll_length, self.D)
+        # pack into batches
         batch_size = self.batch_size
         total_length = q.shape[0] // batch_size
         if y is not None:
             batch_data = [ (X[batch_size*i:batch_size*(i+1)], q[batch_size*i:batch_size*(i+1)], y[batch_size*i:batch_size*(i+1)]) for i in range(0, total_length) ]
         else:
             batch_data = [ (X[batch_size*i:batch_size*(i+1)], q[batch_size*i:batch_size*(i+1)], None) for i in range(0, total_length) ]
-        # fill last_batch for vaidation/testing
-        if fill_last_batch:
-            last_piece_idx = total_length*batch_size
-            fill_length = batch_size - (len(q) - last_piece_idx)
-            X_last_piece, q_last_piece = X[last_piece_idx:], q[last_piece_idx:] # if last_piece_idx is used it does not care about y, no need to get y
+        
+        # fill last_batch according to input parameter
+        last_piece_idx = total_length*batch_size
+        fill_length = batch_size - (len(q) - last_piece_idx)
+        X_last_piece, q_last_piece = X[last_piece_idx:], q[last_piece_idx:] 
+        if fill_with_samples: # when in training, fill with samples 
+            y_last_batch = y[last_piece_idx:]
+            samples_idx = np.random.permutation(q.shape[0])[:fill_length]
+            X_last_batch = np.r_[X_last_piece, X[samples_idx] ]
+            q_last_batch = np.r_[q_last_piece, q[samples_idx] ]
+            y_last_batch = np.r_[y_last_batch, y[samples_idx] ]
+            batch_data.append((X_last_batch, q_last_batch, y_last_batch))
+        else: # when not training, fill with zero and get afterwards, don't care about y
             X_last_batch = np.pad(X_last_piece, ( (0,fill_length),(0,0),(0,0),(0,0) ), mode='constant', constant_values=0)
             q_last_batch = np.pad(q_last_piece, ( (0,fill_length),(0,0),(0,0) ), mode='constant', constant_values=0)
             batch_data.append((X_last_batch, q_last_batch, None))
@@ -364,16 +346,34 @@ class MTNet(BaseModel):
         :config:
         '''
         super()._check_config(**config)
-        self.T = config.get("past_seq_len", 1)
+        self.past_seq_len = config.get("past_seq_len", 2)
+        assert(self.past_seq_len >= 2), "Invalid configuration value. `past_seq_len` must be greater that 2 in order to have historical data."
         self.W = config.get('W', 1)
-        self.n = config.get('n', 7)
+        # check consistency if  past_seq_len==(n+1)*T
+        self.n = config.get('n', None)
+        self.T = config.get('T', None)
+        if self.n is None and self.T is None: # if both are not specified, set up default value
+            self.n = 1 
+        if self.n is not None: # for n is specified or both are not specified 
+            if self.past_seq_len % (self.n+1) == 0:
+                T = self.past_seq_len // (self.n+1) 
+                if self.T is not None: # T is also specifed, check consistency
+                    if self.T != T:
+                        raise ValueError("input `past_seq_len`, `T`, `n` does not satisfy past_seq_len=T*(n+1). Please check the consistency of configuration.")
+                else:
+                    self.T = T
+            else:
+                raise ValueError("input `past_seq_len` is not divisable by `n+1`, this will cause error in MTNet. Please change check the configuration.")
+        else: # only T is specified
+            if self.past_seq_len % self.T == 0:
+                self.n = self.past_seq_len // self.T - 1
         self.highway_window = config.get('highway_window', 1)
         self.en_conv_hidden_size = config.get('en_conv_hidden_size', 16)
         self.en_rnn_hidden_sizes = config.get('en_rnn_hidden_sizes', [16, 16])
         self.input_keep_prob_value = config.get('input_keep_prob', 0.8)
         self.output_keep_prob_value = config.get('output_keep_prob', 1.0)
-        assert(self.highway_window <= self.T), "Invalid configuration value. 'highway_window' must not exceed 'past_seq_len'"
-        assert(self.W <= self.T), "invalid configuration value. 'W' must not exceed 'past_seq_len'"
+        assert(self.highway_window <= self.T), "Invalid configuration value. `highway_window` must not exceed `T` "
+        assert(self.W <= self.T), "Invalid configuration value. `W` must not exceed `T` "
         if store: # when storing
             self.D = config.get('D')  # input's variable dimension (convolution filter width)
             self.K = config.get('K') # output's variable dimension
@@ -415,11 +415,11 @@ class MTNet(BaseModel):
         :return: the resulting metric 
         '''
         self._set_config(**config)
-        if verbose > 1:
+        if verbose > 0:
             print("preprocessing")
-        batches_data = self._preprocessing(x, y, validation_data)
+        batches_data, y_train = self._preprocessing(x, y, validation_data)
         if not self.train_op:
-            if verbose > 1:
+            if verbose > 0:
                 print("building")
             self._build(**config)
             sess = self._open_sess()
@@ -428,23 +428,23 @@ class MTNet(BaseModel):
             sess = self._open_sess()
         epochs = config.get('epochs', 10)
         for i in range(epochs):
-            if verbose > 1:
+            if verbose > 0:
                 print("start epoch {}".format(i) )
             # sess.run(model.reset_statistics_vars) # reset statistics variables
             for ds in batches_data[0]:
                 # print("\tstart new batch")
                 fd = self._get_feed_dict(ds, True)
                 _, loss, pred = self.sess.run([self.train_op, self.loss, self.y_pred], feed_dict = fd)
-        if validation_data is not None:
+        if validation_data is None:
             # evaluate on training set
-            y_pred = self._predict_batches(batches_data[1], sess)
-            y = y[:len(y_pred)] # actual training data is a subset of all tranining data 
-            metric_result = Evaluator.evaluate(self.metric, y, y_pred) # expected to be an array
+            y_pred = self._predict_batches(batches_data[0], sess)
+            metric_result = Evaluator.evaluate(self.metric, y_train, y_pred) # expected to be an array
         else:
             # evaluate on validation set
-            y_pred = self._predict_batches(batches_data[0], sess)
-            y_pred = y_pred[:len(y)] # actual validation data is padded actual validation data 
-            metric_result = Evaluator.evaluate(self.metric, y, y_pred) # expected to be an array
+            y_pred = self._predict_batches(batches_data[1], sess)
+            y_val = validation_data[1]
+            y_pred = y_pred[:len(y_val)] # predicted validation data is padded actual validation data 
+            metric_result = Evaluator.evaluate(self.metric, y_val, y_pred) # expected to be an array
         return np.mean(metric_result)
 
     def _predict_batches(self, batch_data, sess):
@@ -466,7 +466,7 @@ class MTNet(BaseModel):
         :param x: input
         :return: predicted y (expected dimension = 2)
         """
-        batch_data = self._prepare_batches(x, fill_last_batch=True)
+        batch_data = self._prepare_batches(x)
         y_pred = self._predict_batches(batch_data, self._open_sess())
         return  y_pred[:len(x)]
 
@@ -532,9 +532,10 @@ if __name__=="__main__":
     from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
     from zoo.automl.common.util import split_input_df
     df = pd.read_csv('automl/data/nyc_taxi.csv')
-    model = MTNet(check_optional_config=False, future_seq_len=2)
+    future_seq_len = 2
+    model = MTNet(check_optional_config=False, future_seq_len=future_seq_len)
     train_df, val_df, test_df = split_input_df(df, val_split_ratio=0.1, test_split_ratio=0.1)
-    feature_transformer = TimeSequenceFeatureTransformer( future_seq_len=2 )
+    feature_transformer = TimeSequenceFeatureTransformer( future_seq_len=future_seq_len)
     config = {
         # 'input_shape_x': x_train.shape[1],
         # 'input_shape_y': x_train.shape[-1],
@@ -542,15 +543,15 @@ if __name__=="__main__":
                               'HOUR(datetime)'],
         'batch_size': 100,
         'epochs': 2,
-        "past_seq_len": 3,
-        "n": 3,
-        "highway_window":2 
+        "past_seq_len": 6,
+        "T": 2,
+        #"n":2,
+        "highway_window": 2
     }
     x_train, y_train = feature_transformer.fit_transform(train_df, **config)
     x_test, y_test = feature_transformer.transform(test_df, is_train=True)
-    # y_train = np.c_[y_train, y_train/2]
-    # y_test = np.c_[y_test, y_test/2]
     print("fit_eval:", model.fit_eval(x_train, y_train, validation_data=(x_test, y_test), **config) )
+    #print("fit_eval:", model.fit_eval(x_train, y_train, None, **config) )
     print("evaluate:", model.evaluate(x_test, y_test))
     y_pred = model.predict(x_test)
     print(y_pred.shape)
