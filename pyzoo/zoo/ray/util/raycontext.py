@@ -29,13 +29,13 @@ from zoo.ray.util.utils import resourceToBytes
 import ray.services as rservices
 
 
-class JVMGuard():
+class JVMGuard:
     """
     The registered pids would be put into the killing list of Spark Executor.
     """
 
     @staticmethod
-    def registerPids(pids):
+    def register_pids(pids):
         import traceback
         try:
             from bigdl.util.common import callBigDlFunc
@@ -157,7 +157,7 @@ class RayServiceFuncGenerator(object):
         print("Wait for {} sec before launching {}".format(wait_before, tag))
         time.sleep(wait_before)
         process_info = session_execute(command=command, env=modified_env, tag=tag)
-        JVMGuard.registerPids(process_info.pids)
+        JVMGuard.register_pids(process_info.pids)
         process_info.node_ip = rservices.get_node_ip_address()
         print("Wait for {} sec before return process info for {}".format(wait_after, tag))
         time.sleep(wait_after)
@@ -356,7 +356,7 @@ class RayContext(object):
     def init(self, object_store_memory=None,
              num_cores=0,
              labels="",
-             extra_params={}):
+             extra_params=None):
         """
         :param object_store_memory: Memory size of object_store for local driver. e.g 10g
         :param num_cores set the cpu cores for local driver which 0 by default.
@@ -388,7 +388,7 @@ class RayContext(object):
                                  object_store_memory,
                                  num_cores=0,
                                  labels="",
-                                 extra_params={}):
+                                 extra_params=None):
         command = RayServiceFuncGenerator._get_raylet_command(
             redis_address=self.redis_address,
             ray_exec="ray ",
@@ -405,7 +405,7 @@ class RayContext(object):
                       object_store_memory,
                       num_cores=0,
                       labels="",
-                      extra_params={}):
+                      extra_params=None):
         print("Start to launch ray on local")
         import ray
         if not self.is_local:
