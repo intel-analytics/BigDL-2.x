@@ -576,7 +576,7 @@ class TFNet(private val graphDef: TFGraphHolder,
 
 object TFNet {
 
-  assert(TFNetNative.isLoaded)
+   assert(TFNetNative.isLoaded)
 
   @transient
   private lazy val inDriver = NetUtils.isDriver

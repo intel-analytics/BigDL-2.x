@@ -304,17 +304,22 @@
         <dependency>
             <groupId>org.tensorflow</groupId>
             <artifactId>libtensorflow</artifactId>
-            <version>1.13.1</version>
+            <version>1.15.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.tensorflow</groupId>
+            <artifactId>libtensorflow_jni</artifactId>
+            <version>1.15.0</version>
         </dependency>
         <dependency>
             <groupId>org.tensorflow</groupId>
             <artifactId>proto</artifactId>
-            <version>1.13.1</version>
+            <version>1.15.0</version>
         </dependency>
         <dependency>
             <groupId>org.tensorflow</groupId>
             <artifactId>tensorflow-hadoop</artifactId>
-            <version>1.13.1</version>
+            <version>1.15.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.hadoop</groupId>
