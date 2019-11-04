@@ -1,16 +1,16 @@
 # Multi agent training example
 There are two examples to demonstrate how to use Analytics-Zoo API to run Ray examples: 
-[multiagent_two_trainers]("https://github.com/ray-project/ray/blob/master/rllib/examples/multiagent_two_trainers.py")
+[multiagent_two_trainers](https://github.com/ray-project/ray/blob/master/rllib/examples/multiagent_two_trainers.py)
 
 ## Install or download Analytics Zoo
-Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.
+Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__.
 
 ## Requirements 
 - Python 3.5 or 3.6
 - JDK 1.8
 - Apache Spark 2.4.3 ( ≥ 2.4.0 )
-- Analytics-Zoo 0.6.0dev and above
-- Ray 0.7.2 and above
+- Analytics-Zoo 0.6.0
+- Ray 0.7.2 and above(If you use ray0.6.6, you may change the code about some APIs since ray changed.)
 - TensorFlow
 
 ## Prepare environments
@@ -22,7 +22,6 @@ pip install ray
 pip install psutil aiohttp pandas gym opencv-python
 ```
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install) for more running guidance after pip install.   
-And we didn't support prebuilt version for ray examples.
 Use pip install is highly recommend.
 
 ## Run after pip install 
@@ -45,8 +44,7 @@ More optional configs see [here](#options)
 ## Optional config for all
 - `--object_store_memory`, default="4g", store memory
 
-## options
-Some optional config settings for yarn.
+## options for yarn.
 - `--conda_name`, default="ray36", your conda environment's name
 - `--slave_num`, default=2, the number of slave nodes
 - `--executor_cores`, default=8, slave(executor)'s cpu cores

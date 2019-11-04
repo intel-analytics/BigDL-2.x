@@ -32,15 +32,15 @@ from zoo.ray.util.raycontext import RayContext
 os.environ["LANG"] = "C.UTF-8"
 parser = argparse.ArgumentParser(description="Run the asynchronous parameter "
                                              "server example.")
-parser.add_argument("--num-workers", default=4, type=int,
+parser.add_argument("--num_workers", default=4, type=int,
                     help="The number of workers to use.")
 parser.add_argument("--iterations", default=10, type=int,
                     help="Iteration time.")
 parser.add_argument("--hadoop_conf", type=str,
                     help="turn on yarn mode by passing the path to the hadoop"
                     "Configuration folder. Otherwise, turn on local mode.")
+
 parser.add_argument("--conda_name", type=str, default="ray36")
-parser.add_argument("--slave_num", type=int, default=2)
 parser.add_argument("--executor_cores", type=int, default=8)
 parser.add_argument("--executor_memory", type=str, default="10g")
 parser.add_argument("--driver_memory", type=str, default="2g")
@@ -89,7 +89,7 @@ if __name__ == "__main__":
         sc = init_spark_on_yarn(
             hadoop_conf=args.hadoop_conf,
             conda_name=args.conda_name,
-            num_executor=args.slave_num,
+            num_executor=args.num_workers,
             executor_cores=args.executor_cores,
             executor_memory=args.executor_memory,
             driver_memory=args.driver_memory,
