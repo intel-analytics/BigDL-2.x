@@ -22,4 +22,4 @@ export SPARK_CMD=pyspark
 bash ${ANALYTICS_ZOO_HOME}/bin/analytics-zoo-base.sh \
     --conf spark.sql.catalogImplementation='in-memory' \
     --py-files ${ANALYTICS_ZOO_PY_ZIP} \
-    $*
+    "$@"
