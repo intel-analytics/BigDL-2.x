@@ -334,7 +334,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --driver-memory 20g \
     --executor-memory 20g \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/estimator/estimator_inception.py \
-        --image-path analytics-zoo-data/data/dogs-vs-cats/samples --num-classes 2
+        --image-path analytics-zoo-data/data/dogs-vs-cats/demo --num-classes 2
 
     
 now=$(date "+%s")
