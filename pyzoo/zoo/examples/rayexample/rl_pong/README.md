@@ -18,40 +18,37 @@ We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux)
 ```shell script
 conda create -n zoo python=3.6 #zoo is conda enviroment name, you can set another name you like.
 source activate zoo
+pip install analytics-zoo
 pip install ray
 pip install psutil aiohttp gym gym[atari]
 ```
-See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install) for more running guidance after pip install.   
+More install instructions see [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/).
 
-Use pip install is highly recommend.
+More running guidance after pip install see [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install).
 
-## Run after pip install 
-You can install Analytics-Zoo directly by `pip install analytics-zoo==0.6.0dev`.
-### Run on local after pip install
+## Run on local after pip install
 ```
 python rl_pong --iterations -1
 ```
-`--iterations` default set is 10, if you set -1 (<0 or too large),
-it will not stop until you shut down.you can change them depend on what you need
+Optional configs see [here](#Options)
 
-
-### Run on yarn cluster after pip install 
+## Run on yarn cluster after pip install 
 ```
 export YARN_CONF=... # path to your hadoop/yarn directory
 python rl_pong.py --hadoop_conf $YARN_CONF --conda_name ... #your conda name
 ```
-- options   
-`--iterations` can set in same way.   
-More optional configs see [here](#options)
+Optional configs see [here](#Options)
 
-## options for yarn.
-- `--conda_name`, default="ray36", your conda environment's name
-- `--slave_num`, default=2, the number of slave nodes
-- `--executor_cores`, default=8, slave(executor)'s cpu cores
-- `--executor_memory`, default="10g", slave(executor)'s memory you want to use
-- `--driver_memory`, default="2g", driver's memory you want to use
-- `--driver_cores`, default=8, driver's cpu cores
-- `--extra_executor_memory_for_ray`, default="20g", slave(executor)'s extra memory
-
-## Optional config for all
-- `--object_store_memory`, default="4g", store memory
+## Options
+- `--object_store_memory` This option can be used on local mode. The store memory you need to use on local. Default is 4g.
+- `--driver_cores` This option can be set in both mode. The number of driver's or local's cpu cores you want to use. Default is 8.
+##### Options only for yarn
+- `--hadoop_conf` This option is **required** when you want to run on yarn. The path to your configuration folder of hadoop.
+- `--conda_name` This option is **required** when you want to run on yarn. Your conda environment's name.
+- `--interations` The number of iterations to train the model. Default is -1. And by default, the training would not stop.
+- `--batch_size` The number of roll-outs to do per batch. Default is 10.
+- `--slave_num` The number of slave node you want to to use. Default is 2.
+- `--executor_cores` The number of slave(executor)'s cpu cores you want to use. Default is 8.
+- `--executor_memory` The size of slave(executor)'s memory you want to use. Default is 10g.
+- `--driver_memory` The size of driver's memory you want to use. Default is 2g
+- `--extra_executor_memory_for_ray` The size of slave(executor)'s extra memory to store data. Default is 20g.
