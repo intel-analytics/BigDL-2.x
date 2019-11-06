@@ -80,7 +80,7 @@ class MTNet(BaseModel):
                 # <batch_size_new, Tc, 1, en_conv_hidden_size>
                 h_conv1 = activation_func(tf.nn.conv2d(input_x, w_conv1, strides, padding = padding) + b_conv1)
                 if self.input_keep_prob_value < 1:
-                    h_conv1 = tf.nn.dropout(h_conv1, self.input_keep_prob_value)
+                    h_conv1 = tf.nn.dropout(h_conv1, self.input_keep_prob)
 
 
             # tmporal attention layer and gru layer
@@ -89,8 +89,8 @@ class MTNet(BaseModel):
             # dropout
             if self.input_keep_prob_value < 1 or self.output_keep_prob_value < 1:
                 rnns = [tf.nn.rnn_cell.DropoutWrapper(rnn,
-                                                      input_keep_prob = self.input_keep_prob_value,
-                                                      output_keep_prob = self.output_keep_prob_value)
+                                                      input_keep_prob = self.input_keep_prob,
+                                                      output_keep_prob = self.output_keep_prob)
                         for rnn in rnns]
 
             if len(rnns) > 1:
@@ -164,20 +164,20 @@ class MTNet(BaseModel):
         tf.compat.v1.logging.set_verbosity( tf.compat.v1.logging.ERROR) # suppress warnings during building  SO ANNOYING!
         with tf.variable_scope(scope, reuse = False):
             # placeholders
-            X = tf.placeholder(tf.float32, shape = [None, self.n, self.T, self.D])
-            Q = tf.placeholder(tf.float32, shape = [None, self.T, self.D])
-            Y = tf.placeholder(tf.float32, shape = [None, self.K])
-            lr = tf.placeholder(tf.float32)
-            input_keep_prob = tf.placeholder(tf.float32)
-            output_keep_prob = tf.placeholder(tf.float32)
+            self.X = tf.placeholder(tf.float32, shape = [None, self.n, self.T, self.D])
+            self.Q = tf.placeholder(tf.float32, shape = [None, self.T, self.D])
+            self.Y = tf.placeholder(tf.float32, shape = [None, self.K])
+            self.lr = tf.placeholder(tf.float32)
+            self.input_keep_prob = tf.placeholder(tf.float32)
+            self.output_keep_prob = tf.placeholder(tf.float32)
 
             # ------- no-linear component----------------
             last_rnn_hid_size = self.en_rnn_hidden_sizes[-1]
             # <batch_size, n, en_rnn_hidden_sizes>u
-            m_is = self.__encoder(X, self.n, scope = 'm')
-            c_is = self.__encoder(X, self.n, scope = 'c')
+            m_is = self.__encoder(self.X, self.n, scope = 'm')
+            c_is = self.__encoder(self.X, self.n, scope = 'c')
             # <batch_size, 1, en_rnn_hidden_sizes>
-            u = self.__encoder(tf.reshape(Q, shape = [-1, 1, self.T, self.D]), 1, scope = 'in')
+            u = self.__encoder(tf.reshape(self.Q, shape = [-1, 1, self.T, self.D]), 1, scope = 'in')
 
             p_is = tf.matmul(m_is, tf.transpose(u, perm = [0, 2, 1]))
 
@@ -219,7 +219,7 @@ class MTNet(BaseModel):
                     highway_b = tf.get_variable('highway_b', shape = [self.K], dtype = tf.float32,
                                                 initializer = tf.constant_initializer(0.1))
 
-                    highway_x = tf.reshape(Q[:, -self.highway_window:], shape = [-1, self.highway_window * self.D])
+                    highway_x = tf.reshape(self.Q[:, -self.highway_window:], shape = [-1, self.highway_window * self.D])
                     y_pred_l = tf.matmul(highway_x, highway_ws) + highway_b
 
                     # y_pred_l = tf.matmul(Q[:, -1], highway_ws[0]) + highway_b
@@ -239,17 +239,11 @@ class MTNet(BaseModel):
         # statistics_vars = tf.get_collection(tf.GraphKeys.METRIC_VARIABLES)
         # statistics_vars_initializer = tf.variables_initializer(var_list = statistics_vars)
 
-        loss = tf.losses.absolute_difference(Y, y_pred)
+        loss = tf.losses.absolute_difference(self.Y, y_pred)
         with tf.name_scope('Train'):
-            train_op = tf.train.AdamOptimizer(lr).minimize(loss)
+            train_op = tf.train.AdamOptimizer(self.lr).minimize(loss)
 
         # assignment
-        self.X = X
-        self.Q = Q
-        self.Y = Y
-        self.input_keep_prob = input_keep_prob
-        self.output_keep_prob = output_keep_prob
-        self.lr = lr
         self.y_pred = y_pred
         self.loss = loss
         self.train_op = train_op
@@ -497,8 +491,8 @@ class MTNet(BaseModel):
         config_to_save = {"en_conv_hidden_size": self.en_conv_hidden_size,
                           "en_rnn_hidden_sizes": self.en_rnn_hidden_sizes,
                           "highway_window": self.highway_window,
-                          "input_keep_prob_value": self.input_keep_prob_value,
-                          "output_keep_prob_value": self.output_keep_prob_value,
+                          "input_keep_prob": self.input_keep_prob_value,
+                          "output_keep_prob": self.output_keep_prob_value,
                           "D": self.D,
                           "K": self.K,
                           "T": self.T,
