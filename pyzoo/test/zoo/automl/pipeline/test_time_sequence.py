@@ -58,7 +58,7 @@ class TestTimeSequencePipeline(ZooTestCase):
                                            target_col="value",
                                            future_seq_len=self.future_seq_len_3,
                                            extra_features_col=None, )
-        self.default_past_seq_len = 1
+        self.default_past_seq_len = 2
 
     def teardown_method(self, method):
         """
@@ -70,8 +70,8 @@ class TestTimeSequencePipeline(ZooTestCase):
     def test_evaluate_1(self):
         self.pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
         mse, rs = self.pipeline_1.evaluate(self.test_df, metrics=["mean_squared_error", "r_square"])
-        assert len(mse) == self.future_seq_len_1
-        assert len(rs) == self.future_seq_len_1
+        assert isinstance(mse, np.float)
+        assert isinstance(rs, np.float)
         print("Mean square error (future_seq_len=1) is:", mse)
         print("R square (future_seq_len=1) is:", rs)
 
@@ -81,8 +81,8 @@ class TestTimeSequencePipeline(ZooTestCase):
         test_df_list = [self.test_df] * 3
         self.pipeline_1 = self.tsp_1.fit(train_df_list, validation_df=val_df_list)
         mse, rs = self.pipeline_1.evaluate(test_df_list, metrics=["mean_squared_error", "r_square"])
-        assert len(mse) == self.future_seq_len_1
-        assert len(rs) == self.future_seq_len_1
+        assert isinstance(mse, np.float)
+        assert isinstance(rs, np.float)
         print("Mean square error (future_seq_len=1) is:", mse)
         print("R square (future_seq_len=1) is:", rs)
 
@@ -112,10 +112,10 @@ class TestTimeSequencePipeline(ZooTestCase):
         mse, rs, smape = self.random_pipeline_1.evaluate(self.test_df,
                                                          metrics=["mean_squared_error",
                                                                   "r_square", "sMAPE"])
-        assert len(mse) == self.future_seq_len_1
-        assert len(rs) == self.future_seq_len_1
-        assert len(smape) == self.future_seq_len_1
-        assert all(100 > i > 0 for i in smape)
+        assert isinstance(mse, np.float)
+        assert isinstance(rs, np.float)
+        assert isinstance(smape, np.float)
+        assert 100 > smape > 0
         print("Mean square error (future_seq_len=1) is:", mse)
         print("R square (future_seq_len=1) is:", rs)
         print("sMAPE (future_seq_len=1) is:", smape)
@@ -362,8 +362,8 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert y_pred_random_1.shape[1] == self.future_seq_len_1 + 1
         mse, rs = random_pipeline_1.evaluate(self.test_df,
                                              metrics=["mean_squared_error", "r_square"])
-        assert len(mse) == self.future_seq_len_1
-        assert len(rs) == self.future_seq_len_1
+        assert isinstance(mse, np.float)
+        assert isinstance(rs, np.float)
 
     def test_look_back_3(self):
         min_past_seq_len = 5
@@ -380,6 +380,49 @@ class TestTimeSequencePipeline(ZooTestCase):
                                              metrics=["mean_squared_error", "r_square"])
         assert len(mse) == self.future_seq_len_3
         assert len(rs) == self.future_seq_len_3
+
+    def test_look_back_value(self):
+        # test min_past_seq_len < 2
+        self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                       recipe=RandomRecipe(look_back=(1, 2)))
+        # test max_past_seq_len < 2
+        with pytest.raises(ValueError, match=r".*max look back value*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back=(0, 1)))
+        # test look_back value < 2
+        with pytest.raises(ValueError, match=r".*look back value should not be smaller than 2*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back=1))
+
+        # test look back is None
+        with pytest.raises(ValueError, match=r".*look_back should be either*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back=None))
+        # test look back is str
+        with pytest.raises(ValueError, match=r".*look_back should be either*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back="a"))
+        # test look back is float
+        with pytest.raises(ValueError, match=r".*look_back should be either*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back=2.5))
+        # test look back range is float
+        with pytest.raises(ValueError, match=r".*look_back should be either*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back=(2.5, 3)))
+
+    def test_look_back_value_bayes_recipe(self):
+        # test min_past_seq_len < 2
+        self.tsp_1.fit(self.train_df, validation_df=self.validation_df,
+                       recipe=BayesRecipe(look_back=(1, 2)))
+        # test max_past_seq_len < 2
+        with pytest.raises(ValueError, match=r".*max look back value*."):
+            self.tsp_1.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=BayesRecipe(look_back=(0, 1)))
+        # test look_back value < 2
+        with pytest.raises(ValueError, match=r".*look back value should not be smaller than 2*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=BayesRecipe(look_back=1))
 
 
 if __name__ == '__main__':

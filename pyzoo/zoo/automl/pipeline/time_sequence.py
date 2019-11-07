@@ -75,6 +75,8 @@ class TimeSequencePipeline(Pipeline):
 
         x, y = self.feature_transformers.transform(input_df, is_train=True)
         y_pred = self.model.predict(x)
+        if y_pred.shape[1] == 1:
+            multioutput = 'uniform_average'
         y_unscale, y_pred_unscale = self.feature_transformers.post_processing(input_df,
                                                                               y_pred,
                                                                               is_train=True)

@@ -9,7 +9,8 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either exp'
+# ress or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
@@ -73,7 +74,7 @@ class SmokeRecipe(Recipe):
             "lr": 0.001,
             "batch_size": 1024,
             "epochs": 1,
-            "past_seq_len": 1,
+            "past_seq_len": 2,
         }
 
     def runtime_params(self):
@@ -94,16 +95,27 @@ class GridRandomRecipe(Recipe):
           a fixed length to look back.
     """
 
-    def __init__(self, num_rand_samples=1, look_back=1):
+    def __init__(self, num_rand_samples=1, look_back=2):
         self.num_samples = num_rand_samples
         if isinstance(look_back, tuple) and len(look_back) == 2 and \
                 isinstance(look_back[0], int) and isinstance(look_back[1], int):
+            if look_back[1] < 2:
+                raise ValueError("The max look back value should be at least 2")
+            if look_back[0] < 2:
+                print("The input min look back value is smaller than 2. "
+                      "We sample from range (2, {}) instead.".format(look_back[1]))
             self.past_seq_config = RandomSample(
                 lambda spec: np.random.randint(look_back[0], look_back[1]+1, size=1)[0])
         elif isinstance(look_back, int):
+            if look_back < 2:
+                raise ValueError("look back value should not be smaller than 2. "
+                                 "Current value is ", look_back)
             self.past_seq_config = look_back
         else:
-            raise ValueError("look_back should be either (min_len,max_len) or fixed_len")
+            raise ValueError("look back is {}.\n "
+                             "look_back should be either a tuple with 2 int values:"
+                             " (min_len, max_len) or a single int"
+                             .format(look_back))
 
     def search_space(self, all_available_features):
         return {
@@ -143,19 +155,28 @@ class RandomRecipe(Recipe):
           a fixed length to look back.
     """
 
-    def __init__(self, num_rand_samples=1, look_back=1, reward_metric=-0.05):
+    def __init__(self, num_rand_samples=1, look_back=2, reward_metric=-0.05):
         self.num_samples = num_rand_samples
         self.reward_metric = reward_metric
         if isinstance(look_back, tuple) and len(look_back) == 2 and \
                 isinstance(look_back[0], int) and isinstance(look_back[1], int):
+            if look_back[1] < 2:
+                raise ValueError("The max look back value should be at least 2")
+            if look_back[0] < 2:
+                print("The input min look back value is smaller than 2. "
+                      "We sample from range (2, {}) instead.".format(look_back[1]))
             self.past_seq_config = \
                 RandomSample(lambda spec:
                              np.random.randint(look_back[0], look_back[1]+1, size=1)[0])
         elif isinstance(look_back, int):
+            if look_back < 2:
+                raise ValueError("look back value should not be smaller than 2. "
+                                 "Current value is ", look_back)
             self.past_seq_config = look_back
         else:
             raise ValueError("look back is {}.\n "
-                             "look_back should be either [min_len,max_len] or fixed_len"
+                             "look_back should be either a tuple with 2 int values:"
+                             " (min_len, max_len) or a single int"
                              .format(look_back))
 
     def search_space(self, all_available_features):
@@ -167,13 +188,18 @@ class RandomRecipe(Recipe):
                     size=np.random.randint(low=3, high=len(all_available_features), size=1))
             ),
 
-            # --------- model parameters
+            # --------- Vanilla LSTM model parameters
             "lstm_1_units": RandomSample(lambda spec:
                                          np.random.choice([8, 16, 32, 64, 128], size=1)[0]),
             "dropout_1": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
             "lstm_2_units": RandomSample(lambda spec:
                                          np.random.choice([8, 16, 32, 64, 128], size=1)[0]),
             "dropout_2": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
+
+            # ----------- Seq2Seq model parameters
+            "latent_dim": RandomSample(lambda spec:
+                                       np.random.choice([32, 64, 128, 256], size=1)[0]),
+            "dropout": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
 
             # ----------- optimization parameters
             "lr": RandomSample(lambda spec: np.random.uniform(0.001, 0.01)),
@@ -196,24 +222,33 @@ class BayesRecipe(Recipe):
     A Bayes search Recipe.
        tsp = TimeSequencePredictor(...,recipe = BayesRecipe(5))
 
-    @param num_rand_samples: number of hyper-param configurations sampled randomly
+    @param num_samples: number of hyper-param configurations sampled
     @param look_back: the length to look back, either a tuple with 2 int values,
           which is in format is (min len, max len), or a single int, which is
           a fixed length to look back.
     """
-    def __init__(self, num_rand_samples=1, look_back=1, reward_metric=-0.05):
-        self.num_samples = num_rand_samples
+    def __init__(self, num_samples=1, look_back=2, reward_metric=-0.05):
+        self.num_samples = num_samples
         self.reward_metric = reward_metric
         if isinstance(look_back, tuple) and len(look_back) == 2 and \
                 isinstance(look_back[0], int) and isinstance(look_back[1], int):
+            if look_back[1] < 2:
+                raise ValueError("The max look back value should be at least 2")
+            if look_back[0] < 2:
+                print("The input min look back value is smaller than 2. "
+                      "We sample from range (2, {}) instead.".format(look_back[1]))
             self.bayes_past_seq_config = {"past_seq_len_float": look_back}
             self.fixed_past_seq_config = {}
         elif isinstance(look_back, int):
+            if look_back < 2:
+                raise ValueError("look back value should not be smaller than 2. "
+                                 "Current value is ", look_back)
             self.bayes_past_seq_config = {}
             self.fixed_past_seq_config = {"past_seq_len": look_back}
         else:
             raise ValueError("look back is {}.\n "
-                             "look_back should be either [min_len,max_len] or fixed_len"
+                             "look_back should be either a tuple with 2 int values:"
+                             " (min_len, max_len) or a single int"
                              .format(look_back))
 
     def search_space(self, all_available_features):
@@ -476,8 +511,8 @@ class TimeSequencePredictor(object):
                          metric=metric,
                          num_samples=num_samples)
         # searcher.test_run()
+        searcher.run()
 
-        trials = searcher.run()
         best = searcher.get_best_trials(k=1)[0]  # get the best one trial, later could be n
         pipeline = self._make_pipeline(best,
                                        feature_transformers=ft,
@@ -586,8 +621,9 @@ if __name__ == "__main__":
     pipeline = tsp.fit(train_df,
                        validation_df=val_df,
                        metric="mean_squared_error",
-                       # recipe=BayesRecipe(num_rand_samples=2, look_back=(2, 4)),
-                       # recipe=RandomRecipe(look_back=(2, 4)),
+                       # recipe=BayesRecipe(num_samples=2, look_back=(2, 4)),
+                       recipe=RandomRecipe(num_rand_samples=4, look_back=(2, 4),
+                                           reward_metric=-0.0001),
                        distributed=distributed,
                        hdfs_url=hdfs_url)
 
