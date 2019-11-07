@@ -270,7 +270,7 @@ class CachedDistributedFeatureSet[T: ClassTag]
 
         override def next(): T = {
           val i = _offset.getAndIncrement()
-          if (i >= localData.length) {
+          if (_train && i >= localData.length) {
             this.synchronized {
               val value = _offset.get()
               if (value >= localData.length) {
