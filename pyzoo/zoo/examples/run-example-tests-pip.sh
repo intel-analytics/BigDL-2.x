@@ -159,6 +159,11 @@ else
    mkdir -p analytics-zoo-data/data/dogs-vs-cats/samples
    cp analytics-zoo-data/data/dogs-vs-cats/train/cat.7* analytics-zoo-data/data/dogs-vs-cats/samples
    cp analytics-zoo-data/data/dogs-vs-cats/train/dog.7* analytics-zoo-data/data/dogs-vs-cats/samples
+
+   mkdir -p analytics-zoo-data/data/dogs-vs-cats/demo/cats
+   mkdir -p analytics-zoo-data/data/dogs-vs-cats/demo/dogs
+   cp analytics-zoo-data/data/dogs-vs-cats/train/cat.71* analytics-zoo-data/data/dogs-vs-cats/demo/cats
+   cp analytics-zoo-data/data/dogs-vs-cats/train/dog.71* analytics-zoo-data/data/dogs-vs-cats/demo/dogs
    # echo "Finished downloading images"
 fi
 
@@ -296,6 +301,47 @@ if [ $exit_status -ne 0 ];
 then
     clear_up
     echo "tensorflow distributed_training evaluate_mnist_keras failed"
+    exit $exit_status
+fi
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/keras/keras_dataset.py 1
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "TFPark keras keras_dataset failed"
+    exit $exit_status
+fi
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/keras/keras_ndarray.py 1
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "TFPark keras keras_ndarray failed"
+    exit $exit_status
+fi
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/estimator/estimator_dataset.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "TFPark estimator estimator_dataset  failed"
+    exit $exit_status
+fi
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/estimator/estimator_inception.py \
+    --image-path analytics-zoo-data/data/dogs-vs-cats/demo --num-classes 2
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "TFPark estimator estimator_inception failed"
     exit $exit_status
 fi
 

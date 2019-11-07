@@ -99,19 +99,17 @@ private[zoo] class TFNetForInference(graphRunner: GraphRunner,
     )
   }
 
-
   @transient
-  private lazy val initializedVariables = {
+  private lazy val variableInited = {
     setVariableIntoTF(weights, variableAssignPlaceholders,
       variableTypes.map(NetUtils.tfenum2datatype), assignVariableOps)
     true
   }
 
-
   override def updateOutput(input: Activity): Activity = {
-
-    assert(initializedVariables)
     NetUtils.timeIt("updateOutput", TFNetForInference.logger) {
+
+      assert(variableInited)
 
       val feeds = NetUtils.activity2VectorBuilder(input)
 
@@ -132,17 +130,7 @@ private[zoo] class TFNetForInference(graphRunner: GraphRunner,
   override def updateGradInput(
            input: Activity,
            gradOutput: Activity): Activity = {
-    if (gradInput.isTable) {
-      var i = 0
-      while (i < gradInput.toTable.length()) {
-        gradInput.toTable[Tensor[Float]](i + 1)
-          .resizeAs(input.toTable[Tensor[Float]](i + 1))
-        i = i + 1
-      }
-    } else {
-      gradInput.toTensor[Float]
-        .resizeAs(input.toTensor[Float])
-    }
+    NetUtils.generateZeroGrad(input, gradInput)
     gradInput
   }
 }
