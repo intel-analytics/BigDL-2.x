@@ -47,6 +47,7 @@ class FeatureSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     }
 
     assert(seq == (0 until 10))
+    fs.unpersist()
   }
 
 
@@ -67,5 +68,6 @@ class FeatureSetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
     assert(firstRound != (0 until 10))
     assert(set.isEmpty)
+    fs.unpersist()
   }
 }
