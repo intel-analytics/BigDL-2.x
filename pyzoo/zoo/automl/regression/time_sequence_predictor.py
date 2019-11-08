@@ -343,6 +343,7 @@ class TimeSequencePredictor(object):
             validation_df=None,
             metric="mean_squared_error",
             recipe=SmokeRecipe(),
+            mc=False,
             resources_per_trial={"cpu": 2},
             distributed=False,
             hdfs_url=None
@@ -384,6 +385,7 @@ class TimeSequencePredictor(object):
                                         validation_df=validation_df,
                                         metric=metric,
                                         recipe=recipe,
+                                        mc=mc,
                                         resources_per_trial=resources_per_trial,
                                         remote_dir=remote_dir)
         return self.pipeline
@@ -466,6 +468,7 @@ class TimeSequencePredictor(object):
                    validation_df,
                    metric,
                    recipe,
+                   mc,
                    resources_per_trial,
                    remote_dir):
 
@@ -509,6 +512,7 @@ class TimeSequencePredictor(object):
                          future_seq_len=self.future_seq_len,
                          validation_df=validation_df,
                          metric=metric,
+                         mc=mc,
                          num_samples=num_samples)
         # searcher.test_run()
         searcher.run()
@@ -622,14 +626,19 @@ if __name__ == "__main__":
                        validation_df=val_df,
                        metric="mean_squared_error",
                        # recipe=BayesRecipe(num_samples=2, look_back=(2, 4)),
-                       recipe=RandomRecipe(num_rand_samples=4, look_back=(2, 4),
-                                           reward_metric=-0.0001),
+                       # recipe=RandomRecipe(num_rand_samples=4, look_back=(2, 4),
+                       #                     reward_metric=-0.0001),
+                       recipe=SmokeRecipe(num_samples=1),
+                       # mc=True,
                        distributed=distributed,
                        hdfs_url=hdfs_url)
 
     print("evaluate:", pipeline.evaluate(test_df, metrics=["mean_squared_error", "r_square"]))
     pred = pipeline.predict(test_df)
-    print("predict:", pred.shape)
+    y_pred, y_uncertainty = pipeline.predict_with_uncertainty(test_df)
+    print("shape of prediction:", pred.shape)
+    print("shape of output of uncertain predict:", y_pred.shape, y_uncertainty.shape)
+    print(y_uncertainty[:5])
 
     save_pipeline_file = "tmp.ppl"
     pipeline.save(save_pipeline_file)
@@ -641,8 +650,12 @@ if __name__ == "__main__":
     print("evaluate:", new_pipeline.evaluate(test_df, metrics=["mean_squared_error", "r_square"]))
 
     new_pred = new_pipeline.predict(test_df)
-    print("predict:", pred.shape)
-    np.testing.assert_allclose(pred["value"].values, new_pred["value"].values)
+    new_y_pred, new_y_uncertainty = new_pipeline.predict_with_uncertainty(test_df)
+    print("shape of prediction:", new_pred.shape)
+    print("shape of output of uncertain predict:", new_y_pred.shape, new_y_uncertainty.shape)
+    print(new_y_uncertainty[:5])
+
+    # np.testing.assert_allclose(pred["value"].values, new_pred["value"].values)
 
     new_pipeline.fit(train_df, val_df, epoch_num=5)
     print("evaluate:", new_pipeline.evaluate(test_df, metrics=["mean_squared_error", "r_square"]))
