@@ -16,8 +16,6 @@
 
 import pytest
 from pyspark.ml import Pipeline
-import numpy as np
-
 
 from zoo.pipeline.estimator import *
 
