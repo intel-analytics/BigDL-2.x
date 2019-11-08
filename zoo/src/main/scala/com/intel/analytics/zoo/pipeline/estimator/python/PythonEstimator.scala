@@ -85,7 +85,7 @@ class PythonEstimator[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
 
     estimator.train(trainMiniBatch, criterion,
       Some(endTrigger), Some(checkPointTrigger),
-      validationMiniBatch, validationMethod.asScala.toArray)
+      validationMiniBatch, Option(validationMethod).map(_.asScala.toArray).orNull)
   }
 
   def estimatorTrainImageFeature(estimator: Estimator[T],
