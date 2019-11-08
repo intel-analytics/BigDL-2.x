@@ -110,11 +110,21 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 def save_config(file_path, config, replace=False):
+    """
+    :param file_path: the file path of config to be saved.
+    :param config: dict. The config to be saved
+    :param replace: whether to replace if the config file already existed.
+    :return:
+    """
     if os.path.isfile(file_path) and not replace:
         with open(file_path, "r") as input_file:
             old_config = json.load(input_file)
         old_config.update(config)
         config = old_config.copy()
+
+    file_dirname = os.path.dirname(os.path.abspath(file_path))
+    if file_dirname and not os.path.exists(file_dirname):
+        os.makedirs(file_dirname)
 
     with open(file_path, "w") as output_file:
         json.dump(config, output_file, cls=NumpyEncoder)
@@ -142,7 +152,7 @@ def save(file_path, feature_transformers=None, model=None, config=None):
 def save_zip(file, feature_transformers=None, model=None, config=None):
     file_dirname = os.path.dirname(os.path.abspath(file))
     if file_dirname and not os.path.exists(file_dirname):
-        os.mkdir(file_dirname)
+        os.makedirs(file_dirname)
 
     dirname = tempfile.mkdtemp(prefix="automl_save_")
     try:
