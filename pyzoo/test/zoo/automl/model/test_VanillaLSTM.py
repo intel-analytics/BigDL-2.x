@@ -98,6 +98,19 @@ class TestVanillaLSTM(ZooTestCase):
         prediction, uncertainty = self.model.predict_with_uncertainty(self.x_test, n_iter=10)
         assert prediction.shape == (self.x_test.shape[0], 1)
         assert uncertainty.shape == (self.x_test.shape[0], 1)
+        assert np.any(uncertainty)
+
+        new_model = VanillaLSTM(check_optional_config=False)
+        dirname = tempfile.mkdtemp(prefix="automl_test_feature")
+        try:
+            save(dirname, model=self.model)
+            restore(dirname, model=new_model, config=self.config)
+            prediction, uncertainty = new_model.predict_with_uncertainty(self.x_test, n_iter=2)
+            assert prediction.shape == (self.x_test.shape[0], 1)
+            assert uncertainty.shape == (self.x_test.shape[0], 1)
+            assert np.any(uncertainty)
+        finally:
+            shutil.rmtree(dirname)
 
 
 if __name__ == '__main__':

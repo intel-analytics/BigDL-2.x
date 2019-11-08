@@ -26,7 +26,7 @@ class BaseModel(ABC):
     future_seq_len = None
 
     @abstractmethod
-    def fit_eval(self, x, y, validation_data=None, verbose=0, **config):
+    def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, **config):
         """
         optimize and evaluate for one iteration for tuning
         :param config: tunable parameters for optimization
@@ -46,7 +46,7 @@ class BaseModel(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def predict(self, x):
+    def predict(self, x, mc=False):
         """
         Prediction.
         :param x: input
