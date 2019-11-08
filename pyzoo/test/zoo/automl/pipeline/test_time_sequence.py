@@ -25,6 +25,7 @@ from zoo.automl.regression.time_sequence_predictor import *
 import numpy as np
 import pandas as pd
 import ray
+from pandas.util.testing import assert_frame_equal
 
 
 class TestTimeSequencePipeline(ZooTestCase):
@@ -169,8 +170,8 @@ class TestTimeSequencePipeline(ZooTestCase):
         # sample_num should > past_seq_len, the default value of which is 50
         y_pred_1 = self.pipeline_1.predict(test_df_list)
         assert len(y_pred_1) == 3
-        assert y_pred_1[0].equals(y_pred_1[1])
-        assert y_pred_1[1].equals(y_pred_1[2])
+        assert_frame_equal(y_pred_1[0], y_pred_1[1])
+        assert_frame_equal(y_pred_1[1], y_pred_1[2])
         assert y_pred_1[0].shape == (self.test_sample_num - self.default_past_seq_len + 1,
                                      self.future_seq_len_1 + 1)
 
@@ -187,8 +188,8 @@ class TestTimeSequencePipeline(ZooTestCase):
         self.pipeline_3 = self.tsp_3.fit(train_df_list, validation_df=val_df_list)
         y_pred_3 = self.pipeline_3.predict(test_df_list)
         assert len(y_pred_3) == 3
-        assert y_pred_3[0].equals(y_pred_3[1])
-        assert y_pred_3[0].equals(y_pred_3[2])
+        assert_frame_equal(y_pred_3[0], y_pred_3[1])
+        assert_frame_equal(y_pred_3[1], y_pred_3[2])
         assert y_pred_3[0].shape == (self.test_sample_num - self.default_past_seq_len + 1,
                                      self.future_seq_len_3 + 1)
 
@@ -490,6 +491,83 @@ class TestTimeSequencePipeline(ZooTestCase):
             new_pipeline.describe()
         finally:
             shutil.rmtree(dirname)
+
+    def test_predict_with_uncertainty(self):
+        # test future_seq_len = 1
+        self.pipeline_1 = self.tsp_1.fit(self.train_df, mc=True, validation_df=self.validation_df)
+        y_out, y_pred_uncertainty = self.pipeline_1.predict_with_uncertainty(self.test_df,
+                                                                             n_iter=2)
+        assert y_out.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                               self.future_seq_len_1 + 1)
+        assert y_pred_uncertainty.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                                            self.future_seq_len_1)
+        assert np.any(y_pred_uncertainty)
+
+        # test future_seq_len = 3
+        self.pipeline_3 = self.tsp_3.fit(self.train_df, mc=True, validation_df=self.validation_df)
+        y_out, y_pred_uncertainty = self.pipeline_3.predict_with_uncertainty(self.test_df,
+                                                                             n_iter=2)
+        assert y_out.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                               self.future_seq_len_3 + 1)
+        assert y_pred_uncertainty.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                                            self.future_seq_len_3)
+        assert np.any(y_pred_uncertainty)
+
+    def test_fit_predict_with_uncertainty(self):
+        # test future_seq_len = 1
+        self.pipeline_1 = self.tsp_1.fit(self.train_df, mc=True, validation_df=self.validation_df)
+        self.pipeline_1.fit(self.validation_df, mc=True, epoch_num=1)
+        y_out, y_pred_uncertainty = self.pipeline_1.predict_with_uncertainty(self.test_df,
+                                                                             n_iter=2)
+        assert y_out.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                               self.future_seq_len_1 + 1)
+        assert y_pred_uncertainty.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                                            self.future_seq_len_1)
+        assert np.any(y_pred_uncertainty)
+
+        # test future_seq_len = 3
+        self.pipeline_3 = self.tsp_3.fit(self.train_df, mc=True, validation_df=self.validation_df)
+        self.pipeline_3.fit(self.validation_df, mc=True, epoch_num=1)
+        y_out, y_pred_uncertainty = self.pipeline_3.predict_with_uncertainty(self.test_df,
+                                                                             n_iter=2)
+        assert y_out.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                               self.future_seq_len_3 + 1)
+        assert y_pred_uncertainty.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                                            self.future_seq_len_3)
+        assert np.any(y_pred_uncertainty)
+
+    def test_fit_fixed_configs_predict_with_uncertainty(self):
+        # test future_seq_len = 1
+        self.pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
+        config_file = self.pipeline_1.config_save()
+        assert os.path.isfile(config_file)
+        configs = load_config(config_file)
+        os.remove(config_file)
+        os.rmdir(os.path.dirname(os.path.abspath(config_file)))
+        ppl = TimeSequencePipeline(name='test', config=configs)
+        ppl.fit_with_fixed_configs(self.train_df, self.validation_df, mc=True)
+        y_out, y_pred_uncertainty = ppl.predict_with_uncertainty(self.test_df, n_iter=2)
+        assert y_out.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                               self.future_seq_len_1 + 1)
+        assert y_pred_uncertainty.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                                            self.future_seq_len_1)
+        assert np.any(y_pred_uncertainty)
+
+        # test future_seq_len = 3
+        self.pipeline_3 = self.tsp_3.fit(self.train_df, validation_df=self.validation_df)
+        config_file = self.pipeline_3.config_save()
+        assert os.path.isfile(config_file)
+        configs = load_config(config_file)
+        os.remove(config_file)
+        os.rmdir(os.path.dirname(os.path.abspath(config_file)))
+        ppl = TimeSequencePipeline(name='test', config=configs)
+        ppl.fit_with_fixed_configs(self.train_df, self.validation_df, mc=True)
+        y_out, y_pred_uncertainty = ppl.predict_with_uncertainty(self.test_df, n_iter=2)
+        assert y_out.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                               self.future_seq_len_3 + 1)
+        assert y_pred_uncertainty.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                                            self.future_seq_len_3)
+        assert np.any(y_pred_uncertainty)
 
 
 if __name__ == '__main__':
