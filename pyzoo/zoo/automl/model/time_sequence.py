@@ -43,7 +43,7 @@ class TimeSequenceModel(BaseModel):
             if verbose == 1:
                 print("Model selection: LSTM Seq2Seq model is selected.")
 
-    def fit_eval(self, x, y, validation_data=None, verbose=0, **config):
+    def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, **config):
         """
         fit for one iteration
         :param x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
@@ -59,7 +59,11 @@ class TimeSequenceModel(BaseModel):
         :param config: optimization hyper parameters
         :return: the resulting metric
         """
-        return self.model.fit_eval(x, y, validation_data=validation_data, verbose=verbose, **config)
+        return self.model.fit_eval(x, y,
+                                   validation_data=validation_data,
+                                   mc=mc,
+                                   verbose=verbose,
+                                   **config)
 
     def evaluate(self, x, y, metric=['mean_squared_error']):
         """
@@ -78,6 +82,9 @@ class TimeSequenceModel(BaseModel):
         :return: predicted y
         """
         return self.model.predict(x)
+
+    def predict_with_uncertainty(self, x, n_iter=100):
+        return self.model.predict_with_uncertainty(x, n_iter)
 
     def save(self, model_path, config_path):
         """
