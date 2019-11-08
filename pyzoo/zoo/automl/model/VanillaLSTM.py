@@ -14,14 +14,21 @@
 # limitations under the License.
 #
 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, LSTM, Dropout
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import Input, Dense, LSTM, Dropout
 import tensorflow.keras as keras
 import os
 
 from zoo.automl.model.abstract import BaseModel
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
+
+
+def get_dropout(input_tensor, p=0.5, mc=False):
+    if mc:
+        return Dropout(p)(input_tensor, training=True)
+    else:
+        return Dropout(p)(input_tensor)
 
 
 class VanillaLSTM(BaseModel):
@@ -33,10 +40,11 @@ class VanillaLSTM(BaseModel):
         self.model = None
         self.check_optional_config = check_optional_config
         self.future_seq_len = future_seq_len
+        self.feature_num = None
         self.metric = None
         self.batch_size = None
 
-    def _build(self, **config):
+    def _build(self, mc=False, **config):
         """
         build vanilla LSTM model
         :param config: model hyper parameters
@@ -46,26 +54,40 @@ class VanillaLSTM(BaseModel):
         self.metric = config.get('metric', 'mean_squared_error')
         self.batch_size = config.get('batch_size', 1024)
 
-        self.model = Sequential()
-        self.model.add(LSTM(
-            # input_shape=(config.get('input_shape_x', 20),
-            #             config.get('input_shape_y', 20)),
-            units=config.get('lstm_1_units', 20),
-            return_sequences=True))
-        self.model.add(Dropout(config.get('dropout_1', 0.2)))
+        inp = Input(shape=(None, self.feature_num))
+        lstm_1 = LSTM(units=config.get('lstm_1_units', 20),
+                      return_sequences=True)(inp)
+        dropout_1 = get_dropout(lstm_1,
+                                p=config.get('dropout_1', 0.2),
+                                mc=mc)
+        lstm_2 = LSTM(units=config.get('lstm_2_units', 10),
+                      return_sequences=False)(dropout_1)
+        dropout_2 = get_dropout(lstm_2,
+                                p=config.get('dropout_2', 0.2),
+                                mc=mc)
+        out = Dense(self.future_seq_len)(dropout_2)
+        self.model = Model(inputs=inp, outputs=out)
 
-        self.model.add(LSTM(
-            units=config.get('lstm_2_units', 10),
-            return_sequences=False))
-        self.model.add(Dropout(config.get('dropout_2', 0.2)))
+        # self.model = Sequential()
+        # self.model.add(LSTM(
+        #     # input_shape=(config.get('input_shape_x', 20),
+        #     #             config.get('input_shape_y', 20)),
+        #     units=config.get('lstm_1_units', 20),
+        #     return_sequences=True))
+        # self.model.add(Dropout(config.get('dropout_1', 0.2)))
+        #
+        # self.model.add(LSTM(
+        #     units=config.get('lstm_2_units', 10),
+        #     return_sequences=False))
+        # self.model.add(Dropout(config.get('dropout_2', 0.2)))
 
-        self.model.add(Dense(self.future_seq_len))
+        # self.model.add(Dense(self.future_seq_len))
         self.model.compile(loss='mse',
                            metrics=[self.metric],
                            optimizer=keras.optimizers.RMSprop(lr=config.get('lr', 0.001)))
         return self.model
 
-    def fit_eval(self, x, y, validation_data=None, verbose=0, **config):
+    def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, **config):
         """
         fit for one iteration
         :param x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
@@ -81,9 +103,10 @@ class VanillaLSTM(BaseModel):
         :param config: optimization hyper parameters
         :return: the resulting metric
         """
+        self.feature_num = x.shape[2]
         # if model is not initialized, __build the model
         if self.model is None:
-            self._build(**config)
+            self._build(mc=mc, **config)
 
         hist = self.model.fit(x, y,
                               validation_data=validation_data,
@@ -119,6 +142,16 @@ class VanillaLSTM(BaseModel):
         :return: predicted y
         """
         return self.model.predict(x)
+
+    def predict_with_uncertainty(self, x, n_iter=100):
+        result = np.zeros((n_iter,) + (x.shape[0], self.future_seq_len))
+
+        for i in range(n_iter):
+            result[i, :, :] = self.predict(x)
+
+        prediction = result.mean(axis=0)
+        uncertainty = result.std(axis=0)
+        return prediction, uncertainty
 
     def save(self, model_path, config_path):
         """
