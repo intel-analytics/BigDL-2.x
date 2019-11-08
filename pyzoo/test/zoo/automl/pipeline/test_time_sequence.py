@@ -424,6 +424,73 @@ class TestTimeSequencePipeline(ZooTestCase):
             self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
                            recipe=BayesRecipe(look_back=1))
 
+    def test_fit_with_fixed_configs(self):
+        configs = {'dt_col': 'datetime',
+                   'target_col': 'value',
+                   'extra_features_col': None,
+                   'drop_missing': True,
+                   'past_seq_len': 10,
+                   'future_seq_len': 2,
+                   'batch_size': 16,
+                   'selected_features': ['IS_WEEKEND(datetime)',
+                                        'IS_BUSY_HOURS(datetime)',
+                                        'IS_BUSY_HOURS(datetime)',
+                                        'HOUR(datetime)']
+                   }
+        # test input configs without required configs
+        configs_without_future_seq_len = configs.copy()
+        del configs_without_future_seq_len['future_seq_len']
+        ppl_without_fsl = TimeSequencePipeline(name='test_wrong', config=configs_without_future_seq_len)
+        with pytest.raises(ValueError, match=r".*Missing required parameters"):
+            ppl_without_fsl.fit_with_fixed_configs(self.train_df, self.validation_df)
+
+        # test normal function
+        ppl = TimeSequencePipeline(name='test', config=configs)
+        ppl.fit_with_fixed_configs(self.train_df, self.validation_df)
+        mse, rs = ppl.evaluate(self.test_df, metrics=["mean_squared_error", "r_square"])
+        assert len(mse) == 2
+        assert len(rs) == 2
+        y_pred = ppl.predict(self.test_df)
+        ppl_file = ppl.save()
+        reload_ppl = load_ts_pipeline(ppl_file)
+        os.remove(ppl_file)
+        os.rmdir(os.path.dirname(os.path.abspath(ppl_file)))
+        reload_y_pred = reload_ppl.predict(self.test_df)
+        assert y_pred.equals(reload_y_pred)
+
+        # test fit with user configs
+        ppl = TimeSequencePipeline(name='test', config=configs)
+        ppl.fit_with_fixed_configs(self.train_df, self.validation_df, user_configs={"epochs": 5})
+
+    def test_save_configs(self):
+        self.pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
+        mse, rs = self.pipeline_1.evaluate(self.test_df, metrics=["mean_squared_error", "r_square"])
+        print(mse, rs)
+        config_file = self.pipeline_1.config_save()
+        assert os.path.isfile(config_file)
+        configs = load_config(config_file)
+        os.remove(config_file)
+        os.rmdir(os.path.dirname(os.path.abspath(config_file)))
+        ppl = TimeSequencePipeline(name='test', config=configs)
+        ppl.fit_with_fixed_configs(self.train_df, self.validation_df)
+        mse, rs = ppl.evaluate(self.test_df, metrics=["mean_squared_error", "r_square"])
+        print(mse, rs)
+
+    def test_load_ts_pipeline_describe(self):
+        pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
+        dirname = tempfile.mkdtemp(prefix="saved_pipeline")
+        try:
+            save_pipeline_file = os.path.join(dirname, "my.ppl")
+            pipeline_1.save(save_pipeline_file)
+            assert os.path.isfile(save_pipeline_file)
+            new_pipeline = load_ts_pipeline(save_pipeline_file)
+            assert new_pipeline.config is not None
+            assert isinstance(new_pipeline.feature_transformers, TimeSequenceFeatureTransformer)
+            assert isinstance(new_pipeline.model, TimeSequenceModel)
+            new_pipeline.describe()
+        finally:
+            shutil.rmtree(dirname)
+
 
 if __name__ == '__main__':
     pytest.main([__file__])
