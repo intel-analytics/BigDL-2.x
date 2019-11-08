@@ -46,14 +46,14 @@ class TimeSequencePipeline(Pipeline):
             print(info + ":", self.config[info])
         print("")
 
-    def fit(self, input_df, validation_df=None, epoch_num=20):
+    def fit(self, input_df, validation_df=None, mc=False, epoch_num=20):
         x, y = self.feature_transformers.transform(input_df, is_train=True)
         if validation_df is not None and not validation_df.empty:
             validation_data = self.feature_transformers.transform(validation_df)
         else:
             validation_data = None
         new_config = {'epochs': epoch_num}
-        self.model.fit_eval(x, y, validation_data, verbose=1, **new_config)
+        self.model.fit_eval(x, y, validation_data, mc=mc, verbose=1, **new_config)
         print('Fit done!')
 
     def _is_val_df_valid(self, validation_df):
@@ -159,7 +159,8 @@ class TimeSequencePipeline(Pipeline):
         x, _ = self.feature_transformers.transform(input_df, is_train=False)
         y_pred, y_pred_uncertainty = self.model.predict_with_uncertainty(x=x, n_iter=n_iter)
         y_output = self.feature_transformers.post_processing(input_df, y_pred, is_train=False)
-        return y_output, y_pred_uncertainty
+        y_uncertainty = self.feature_transformers.unscale_uncertainty(y_pred_uncertainty)
+        return y_output, y_uncertainty
 
     def save(self, ppl_file=None):
         """

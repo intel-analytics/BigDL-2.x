@@ -24,13 +24,6 @@ from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
 
 
-def get_dropout(input_tensor, p=0.5, mc=False):
-    if mc:
-        return Dropout(p)(input_tensor, training=True)
-    else:
-        return Dropout(p)(input_tensor)
-
-
 class VanillaLSTM(BaseModel):
 
     def __init__(self, check_optional_config=True, future_seq_len=1):
@@ -43,6 +36,12 @@ class VanillaLSTM(BaseModel):
         self.feature_num = None
         self.metric = None
         self.batch_size = None
+
+    def _get_dropout(self, input_tensor, p=0.5, mc=False):
+        if mc:
+            return Dropout(p)(input_tensor, training=True)
+        else:
+            return Dropout(p)(input_tensor)
 
     def _build(self, mc=False, **config):
         """
@@ -57,14 +56,14 @@ class VanillaLSTM(BaseModel):
         inp = Input(shape=(None, self.feature_num))
         lstm_1 = LSTM(units=config.get('lstm_1_units', 20),
                       return_sequences=True)(inp)
-        dropout_1 = get_dropout(lstm_1,
-                                p=config.get('dropout_1', 0.2),
-                                mc=mc)
+        dropout_1 = self._get_dropout(lstm_1,
+                                      p=config.get('dropout_1', 0.2),
+                                      mc=mc)
         lstm_2 = LSTM(units=config.get('lstm_2_units', 10),
                       return_sequences=False)(dropout_1)
-        dropout_2 = get_dropout(lstm_2,
-                                p=config.get('dropout_2', 0.2),
-                                mc=mc)
+        dropout_2 = self._get_dropout(lstm_2,
+                                      p=config.get('dropout_2', 0.2),
+                                      mc=mc)
         out = Dense(self.future_seq_len)(dropout_2)
         self.model = Model(inputs=inp, outputs=out)
 
@@ -135,7 +134,7 @@ class VanillaLSTM(BaseModel):
         y_pred = self.predict(x)
         return [Evaluator.evaluate(m, y, y_pred) for m in metric]
 
-    def predict(self, x):
+    def predict(self, x, mc=False):
         """
         Prediction on x.
         :param x: input
