@@ -75,7 +75,7 @@ class TimeSequenceModel(BaseModel):
         """
         return self.model.evaluate(x, y, metric)
 
-    def predict(self, x):
+    def predict(self, x, mc=False):
         """
         Prediction on x.
         :param x: input

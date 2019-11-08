@@ -201,6 +201,12 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         y_unscale = y * value_scale + value_mean
         return y_unscale
 
+    def unscale_uncertainty(self, y_uncertainty):
+        value_scale = self.scaler.scale_[0]
+        # print(value_scale)
+        y_uncertainty_unscle = y_uncertainty * value_scale
+        return y_uncertainty_unscle
+
     def _get_y_pred_df(self, y_pred_dt_df, y_pred_unscale):
         """
         get prediction data frame with datetime column and target column.
