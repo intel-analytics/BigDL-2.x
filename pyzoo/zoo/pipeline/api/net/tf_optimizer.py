@@ -243,8 +243,8 @@ class TFModel(object):
         update_op = tf.group(update_ops)
 
         return trainable_variables, trainable_variable_placeholders, trainable_assign, \
-               extra_variables, extra_variable_assign_placeholders, \
-               extra_variable_assign, update_op
+            extra_variables, extra_variable_assign_placeholders, \
+            extra_variable_assign, update_op
 
     @staticmethod
     def _save_to_dir_for_unfreeze(folder, sess, graph,
@@ -354,8 +354,8 @@ class TFModel(object):
         outputs, val_methods = TFModel._process_metrics(graph, metrics, loss, inputs)
 
         trainable_variables, trainable_variable_placeholders, trainable_assign, \
-        extra_variables, extra_variable_assign_placeholders, \
-        extra_variable_assign, update_op = \
+            extra_variables, extra_variable_assign_placeholders, \
+            extra_variable_assign, update_op = \
             TFModel._process_variables_for_unfreeze(graph, variables, updates)
 
         meta, saver = \
@@ -438,7 +438,8 @@ class TFOptimizer:
         else:
             self.tf_model = TFModel.create_for_unfreeze(loss, sess, inputs, grads,
                                                         variables, graph, tensors_with_value,
-                                                        session_config, metrics, updates, model_dir)
+                                                        session_config, metrics, updates,
+                                                        model_dir)
 
         batch_size = self.dataset.batch_size
 
@@ -454,7 +455,8 @@ class TFOptimizer:
         self.val_rdd = val_rdd
         self.batch_size = batch_size
 
-        self.estimator = Estimator(self.tf_model.training_helper_layer, self.optim_method, model_dir)
+        self.estimator = Estimator(self.tf_model.training_helper_layer, self.optim_method,
+                                   model_dir)
 
         if self.clip_norm:
             self.estimator.set_l2_norm_gradient_clipping(self.clip_norm)
@@ -621,7 +623,7 @@ class TFOptimizer:
 
     def optimize(self, end_trigger=None, checkpoint_trigger=None):
         """
-        Run the training loop of the this optimizer 
+        Run the training loop of the this optimizer
         :param end_trigger: BigDL's Trigger to indicate when to stop the training.
         :param checkpoint_trigger: When to save a checkpoint and evaluate model.
         """
