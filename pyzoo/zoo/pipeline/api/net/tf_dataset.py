@@ -342,6 +342,10 @@ class TFDataset(object):
         batch_size/total_core_num (training) or batch_per_thread for inference; if False,
         it is None.
         :param val_rdd: validation data with the same structure of rdd
+        :param sequential_order: whether to iterate the elements in the Dataset
+                                 in sequential order when training.
+        :param shuffle: whether to shuffle the elements in each partition before each epoch
+                        when training
         :return: a TFDataset
         """
         return TFNdarrayDataset.from_rdd(*args, **kwargs)
@@ -365,6 +369,10 @@ class TFDataset(object):
         batch_size/total_core_num (training) or batch_per_thread for inference; if False,
         it is None.
         :param val_tensors: the numpy ndarrays used for validation during training
+        :param sequential_order: whether to iterate the elements in the Dataset
+                                 in sequential order when training.
+        :param shuffle: whether to shuffle the elements in each partition before each epoch
+                        when training
         :return:
         """
         return TFNdarrayDataset.from_ndarrays(*args, **kwargs)
@@ -393,6 +401,10 @@ class TFDataset(object):
         batch_size/total_core_num (training) or batch_per_thread for inference; if False,
         it is None.
         :param validation_image_set: the ImageSet used for validation during training
+        :param sequential_order: whether to iterate the elements in the Dataset
+                                 in sequential order when training.
+        :param shuffle: whether to shuffle the elements in each partition before each epoch
+                        when training
         :return:
         """
         tensor_structure = TFDataset._to_tensor_structure(image, label)
@@ -424,6 +436,10 @@ class TFDataset(object):
         batch_size/total_core_num (training) or batch_per_thread for inference; if False,
         it is None.
         :param validation_image_set: The TextSet used for validation during training
+        :param sequential_order: whether to iterate the elements in the Dataset
+                                 in sequential order when training.
+        :param shuffle: whether to shuffle the elements in each partition before each epoch
+                        when training
         :return:
         """
         tensor_structure = TFDataset._to_tensor_structure(text, label)
@@ -454,6 +470,10 @@ class TFDataset(object):
         batch_size/total_core_num (training) or batch_per_thread for inference; if False,
         it is None.
         :param validation_file_path: The tfrecord files used for validation
+            :param sequential_order: whether to iterate the elements in the Dataset
+                                 in sequential order when training.
+        :param shuffle: whether to shuffle the elements in each partition before each epoch
+                        when training
         :return:
         """
 
@@ -466,7 +486,7 @@ class TFDataset(object):
                          hard_code_batch_size=False, validation_dataset=None):
         """
         Create a TFDataset from a FeatureSet. Currently, the element in this Feature set must be a
-        ImageFeature that has a sample field, i.e. the result of ImageSetToSample transformer
+        Sample, i.e. the result of ImageFeatureToSample transformer
         :param dataset: the feature set used to create this TFDataset
         :param features: a tuple of two, the first element is the type of this input feature,
         the second element is the shape of this element, i.e. (tf.float32, [224, 224, 3])).
@@ -639,9 +659,10 @@ class TFImageDataset(TFDataset):
     def get_training_data(self):
         fs = FeatureSet.image_set(self.image_set,
                                   sequential_order=self.sequential_order,
-                                  shuffle=self.shuffle).transform(
-            [MergeFeatureLabelImagePreprocessing(),
-             ImageFeatureToSample()])
+                                  shuffle=self.shuffle)
+        fs = fs.transform(MergeFeatureLabelImagePreprocessing())
+        fs = fs.transform(ImageFeatureToSample())
+
         return fs
 
     def get_validation_data(self):
