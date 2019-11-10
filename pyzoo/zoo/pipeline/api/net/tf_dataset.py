@@ -694,7 +694,7 @@ class TFNdarrayDataset(TFDataset):
     def get_validation_data(self):
         if self.val_rdd is not None:
             sample_rdd = self.val_rdd.map(
-                lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0]))),
+                lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
             return FeatureSet.sample_rdd(sample_rdd,
                                          sequential_order=self.sequential_order,
                                          shuffle=self.shuffle)
