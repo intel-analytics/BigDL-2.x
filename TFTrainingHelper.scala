@@ -25,6 +25,7 @@ import com.intel.analytics.bigdl.python.api.{PythonBigDLKeras, Sample => JSample
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
 import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image.ImageProcessing
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.{Accuracy, BinaryAccuracy, CategoricalAccuracy, SparseCategoricalAccuracy}
 import org.apache.spark.api.java.JavaRDD
@@ -284,13 +285,37 @@ class StatelessMetric(name: String, idx: Int) extends ValidationMethod[Float] {
 
 class MergeFeatureLabel() extends ImageProcessing {
 
+  def createNewMergedSample(sample: Sample[Float]): Sample[Float] = {
+    val newSize = sample.getFeatureSize() ++ sample.getLabelSize()
+    Sample(sample.getData(), newSize, null)
+  }
+
   override def transform(feature: ImageFeature): ImageFeature = {
     val oldSample = feature[Sample[Float]](ImageFeature.sample)
-    val newSize = oldSample.getFeatureSize() ++ oldSample.getLabelSize()
-    val newSample = Sample(oldSample.getData(), newSize, null)
+    val newSample = createNewMergedSample(oldSample)
     val newFeature = new ImageFeature()
     newFeature(ImageFeature.sample) = newSample
     newFeature
+  }
+}
+
+class MergeFeatureLabelFeatureTransformer() extends Preprocessing[Any, Any] {
+
+  private val mergeFun = new MergeFeatureLabel()
+  override def apply(prev: Iterator[Any]): Iterator[Any] = {
+    prev.map(transform)
+  }
+
+  private def transform(element: Any): Any = {
+    element match {
+      case feature: ImageFeature =>
+        mergeFun.transform(feature)
+      case sample: Sample[Float] =>
+        mergeFun.createNewMergedSample(sample)
+      case _ => throw new IllegalArgumentException(
+        s"Element type ImageFeaute and Sample[Float] is supported. " +
+          s"Element type ${element.getClass} is not supported.")
+    }
   }
 }
 
