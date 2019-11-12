@@ -227,7 +227,7 @@ case class LocalEstimator(model: AbstractModule[Activity, Activity, Float],
     (Module.flatten[Float](weightParameters), Module.flatten[Float](gradParameters))
   }
 
-  private def initGradWeightBias[Float](broadcastWeightBias: Array[Tensor[Float]],
+  private def initGradWeightBias(broadcastWeightBias: Array[Tensor[Float]],
                                         localModel: Module[Float]): Unit = {
     val (localWeightBias, localGradWeightBias) = localModel.parameters()
     val size = localGradWeightBias.map(_.nElement()).sum
