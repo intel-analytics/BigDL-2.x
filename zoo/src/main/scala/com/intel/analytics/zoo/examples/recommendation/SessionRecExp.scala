@@ -91,9 +91,9 @@ object SessionRecExp {
     val model = SessionRecommender[Float](
       itemCount = itemCount,
       itemEmbed = params.embedOutDim,
-      mlpHiddenLayers = Array(20, 10),
       sessionLength = params.sessionLength,
       includeHistory = true,
+      mlpHiddenLayers = Array(20, 10),
       historyLength = params.historyLength)
 
     val optimMethod = new RMSprop[Float](
@@ -178,7 +178,7 @@ object SessionRecExp {
 
     // dataFrame to rdd of sample
     val samples = paddedDF.rdd.map(r => {
-      rows2sample(r, sessionLength, true, historyLength)
+      row2sampleSession(r, sessionLength, true, historyLength)
     })
     samples
   }

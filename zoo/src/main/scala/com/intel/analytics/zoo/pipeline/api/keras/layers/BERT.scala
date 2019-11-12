@@ -26,11 +26,10 @@ import com.intel.analytics.bigdl.utils.serializer._
 import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
 import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
 import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Parameter, Variable}
+import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{GraphRef, KerasUtils}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model.{apply => _, _}
-
 import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
@@ -38,16 +37,22 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime._
 
 /**
- * [[BERT]] A self attention keras like layer.
+ * [[BERT]] A self attention Keras-style layer.
+ *
  * Input is a Table which consists of 4 tensors.
  * 1. Token id tensor: shape [batch, seqLen] with the word token indices in the vocabulary
  * 2. Token type id tensor: shape [batch, seqLen] with the token types in [0, 1].
- *    0 means `sentence A` and 1 means a `sentence B` (see BERT paper for more details).
+ * 0 means `sentence A` and 1 means a `sentence B` (see BERT paper for more details).
  * 3. Position id tensor: shape [batch, seqLen] with positions in the sentence.
  * 4. Attention_mask tensor: shape [batch, seqLen] with indices in [0, 1].
- *   It's a mask to be used if the input sequence length is smaller than seqLen in
- *   the current batch.
- * Output is an Activity which output the states of BERT layer
+ * It's a mask to be used if the input sequence length is smaller than seqLen in
+ * the current batch.
+ *
+ * Output is a Table as well.
+ * 1. The states of BERT layer.
+ * 2. The pooled output which processes the hidden state of the last layer with regard to the first
+ * token of the sequence. This would be useful for segment-level tasks.
+ *
  * @param nBlock block number
  * @param nHead head number
  * @param intermediateSize The size of the "intermediate" (i.e., feed-forward)
@@ -155,11 +160,7 @@ object BERT extends KerasLayerSerializable {
       initWeights = initTokenEmbeddingW).from(tokenTypeInput)
 
     val embeddings = wordEmbeddings + positionEmbeddings + tokenTypeEmbeddings
-    val w = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor.ones[T](hiddenSize).view(1, hiddenSize))
-    val b = Parameter[T](Shape(1, hiddenSize),
-      initWeight = Tensor[T](hiddenSize).view(1, hiddenSize))
-    val afterNorm = TransformerLayer.layerNorm(embeddings, 1e-12, weight = w, bias = b)
+    val afterNorm = LayerNorm[T](nOutput = hiddenSize, eps = 1e-12).from(embeddings)
     val h = Dropout(hiddenPDrop).from(afterNorm)
 
     val embeddingLayer = Model(Array(wordInput, tokenTypeInput, positionInput), h)
@@ -307,7 +308,7 @@ object BERT extends KerasLayerSerializable {
     val maxPositionLen =
       DataConverter.getAttributeValue(context, maxPositionLenAttr).asInstanceOf[Int]
 
-    val bert = new BERT(nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop,
+    val bert = new BERT[T](nBlock, nHead, intermediateSize, hiddenPDrop, attnPDrop,
       initializerRange, outputAllBlock,
       embeddingLayer.asInstanceOf[KerasLayer[Activity, Tensor[T], T]], null)
     val tGraph2 = subModules(1).asInstanceOf[StaticGraph[T]]

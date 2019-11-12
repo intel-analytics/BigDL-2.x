@@ -20,8 +20,9 @@ MAINTAINER The Analytics-Zoo Authors https://github.com/intel-analytics/analytic
 
 WORKDIR /opt/work
 
-ARG ANALYTICS_ZOO_VERSION=0.6.0-SNAPSHOT
-ARG BIGDL_VERSION=0.8.0
+ARG PY_VERSION_3
+ARG ANALYTICS_ZOO_VERSION=0.7.0-SNAPSHOT
+ARG BIGDL_VERSION=0.9.1
 ARG SPARK_VERSION=2.4.3
 ARG RUNTIME_SPARK_MASTER=local[4]
 ARG RUNTIME_DRIVER_CORES=4
@@ -44,7 +45,8 @@ ENV JAVA_HOME                       /opt/jdk
 ENV PATH                            ${JAVA_HOME}/bin:${PATH}
 
 RUN apt-get update && \
-    apt-get install -y apt-utils vim curl nano wget unzip maven git
+    apt-get install -y apt-utils vim curl nano wget unzip maven git && \
+    apt-get install -y libsm6
 
 #java
 RUN wget https://build.funtoo.org/distfiles/oracle-java/jdk-8u152-linux-x64.tar.gz && \

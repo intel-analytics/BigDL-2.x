@@ -52,6 +52,21 @@ object InferenceModelFactory extends InferenceSupportive {
     new FloatModel(model, metaModel, true)
   }
 
+  def loadFloatModelForTFSavedModel(modelPath: String,
+                                    inputs: Array[String],
+                                    outputs: Array[String],
+                                    intraOpParallelismThreads: Int = 1,
+                                    interOpParallelismThreads: Int = 1,
+                                    usePerSessionThreads: Boolean = true): FloatModel = {
+    val sessionConfig = TFNet.SessionConfig(intraOpParallelismThreads,
+      interOpParallelismThreads, usePerSessionThreads)
+    val model = ModelLoader.loadFloatModelForTFSavedModel(modelPath, inputs, outputs, sessionConfig)
+    model.evaluate()
+    val metaModel = makeMetaModel(model)
+    new FloatModel(model, metaModel, true)
+  }
+
+
   def loadOpenVINOModelForTF(modelPath: String,
                              modelType: String,
                              pipelineConfigPath: String,
@@ -69,6 +84,37 @@ object InferenceModelFactory extends InferenceSupportive {
                              scale: Float): OpenVINOModel = {
     OpenVinoInferenceSupportive.loadTensorflowModel(modelPath, imageClassificationModelType,
       checkpointPath, inputShape, ifReverseInputChannels, meanValues, scale)
+  }
+
+  def loadOpenVINOModelForTF(modelBytes: Array[Byte],
+                             imageClassificationModelType: String,
+                             checkpointBytes: Array[Byte],
+                             inputShape: Array[Int],
+                             ifReverseInputChannels: Boolean,
+                             meanValues: Array[Float],
+                             scale: Float): OpenVINOModel = {
+    OpenVinoInferenceSupportive.loadTensorflowModel(modelBytes, imageClassificationModelType,
+      checkpointBytes, inputShape, ifReverseInputChannels, meanValues, scale)
+  }
+
+  def loadOpenVINOModelForTF(savedModelDir: String,
+                             inputShape: Array[Int],
+                             ifReverseInputChannels: Boolean,
+                             meanValues: Array[Float],
+                             scale: Float,
+                             input: String): OpenVINOModel = {
+    OpenVinoInferenceSupportive.loadTensorflowModel(savedModelDir,
+      inputShape, ifReverseInputChannels, meanValues, scale, input)
+  }
+
+  def loadOpenVINOModelForTF(savedModelBytes: Array[Byte],
+                             inputShape: Array[Int],
+                             ifReverseInputChannels: Boolean,
+                             meanValues: Array[Float],
+                             scale: Float,
+                             input: String): OpenVINOModel = {
+    OpenVinoInferenceSupportive.loadTensorflowModel(savedModelBytes,
+      inputShape, ifReverseInputChannels, meanValues, scale, input)
   }
 
   def loadCalibratedOpenVINOModelForTF(modelPath: String,
@@ -90,15 +136,17 @@ object InferenceModelFactory extends InferenceSupportive {
 
   def loadOpenVINOModelForIR(modelFilePath: String,
                              weightFilePath: String,
-                             deviceType: DeviceTypeEnumVal): OpenVINOModel = {
-    OpenVinoInferenceSupportive.loadOpenVinoIR(modelFilePath, weightFilePath, deviceType)
+                             deviceType: DeviceTypeEnumVal,
+                             batchSize: Int = 0): OpenVINOModel = {
+    OpenVinoInferenceSupportive.loadOpenVinoIR(modelFilePath, weightFilePath,
+      deviceType, batchSize)
   }
 
-  def loadOpenVINOModelForIRInt8(modelFilePath: String,
-                                 weightFilePath: String,
-                                 deviceType: DeviceTypeEnumVal,
-                                 batchSize: Int): OpenVINOModel = {
-    OpenVinoInferenceSupportive.loadOpenVinoIRInt8(modelFilePath, weightFilePath,
+  def loadOpenVINOModelForIR(modelBytes: Array[Byte],
+                             weightBytes: Array[Byte],
+                             deviceType: DeviceTypeEnumVal,
+                             batchSize: Int): OpenVINOModel = {
+    OpenVinoInferenceSupportive.loadOpenVinoIR(modelBytes, weightBytes,
       deviceType, batchSize)
   }
 }

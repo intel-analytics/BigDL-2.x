@@ -48,7 +48,8 @@ class NNClassifier[T: ClassTag] private[zoo]  (
 
   override protected def wrapBigDLModel(m: Module[T]): NNClassifierModel[T] = {
     val classifierModel = new NNClassifierModel[T](m)
-    copyValues(classifierModel.setParent(this))
+    val originBatchsize = classifierModel.getBatchSize
+    copyValues(classifierModel.setParent(this)).setBatchSize(originBatchsize)
     val clonedTransformer = ToTuple() -> $(samplePreprocessing)
       .asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]].clonePreprocessing()
     classifierModel.setSamplePreprocessing(clonedTransformer)
@@ -111,6 +112,32 @@ object NNClassifier {
     new NNClassifier(model, criterion)
         .setSamplePreprocessing(
           FeatureLabelPreprocessing(SeqToTensor(featureSize), ScalarToTensor()))
+  }
+
+
+  /**
+   * Construct a [[NNClassifier]] with multiple input sizes. The constructor is useful
+   * when the feature column and label column contains the following data types:
+   * Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The feature
+   * data are converted to Tensors with the specified sizes before sending to the model.
+   *
+   * This API is used for multi-input model, where user need to specify the tensor sizes for
+   * each of the model input.
+   *
+   * @param model module to be optimized
+   * @param criterion  criterion method
+   * @param featureSize The sizes (Tensor dimensions) of the feature data.
+   */
+  def apply[T: ClassTag](
+      model: Module[T],
+      criterion: Criterion[T],
+      featureSize : Array[Array[Int]]
+    )(implicit ev: TensorNumeric[T]): NNClassifier[T] = {
+    new NNClassifier(model, criterion)
+      .setSamplePreprocessing(FeatureLabelPreprocessing(
+        SeqToMultipleTensors(featureSize), ScalarToTensor()
+      )
+    )
   }
 
   /**
@@ -213,6 +240,26 @@ object NNClassifierModel extends MLReadable[NNClassifierModel[_]] {
     )(implicit ev: TensorNumeric[T]): NNClassifierModel[T] = {
     new NNClassifierModel(model)
       .setSamplePreprocessing(SeqToTensor(featureSize) -> TensorToSample())
+  }
+
+  /**
+   * Construct a [[NNClassifierModel]] with sizes of multiple model inputs. The constructor is
+   * useful when the feature column contains the following data types:
+   * Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The feature
+   * data are converted to Tensors with the specified sizes before sending to the model.
+   *
+   * This API is used for multi-input model, where user need to specify the tensor sizes for
+   * each of the model input.
+   *
+   * @param model model to be used, which should be a multi-input model.
+   * @param featureSize The sizes (Tensor dimensions) of the feature data.
+   */
+  def apply[T: ClassTag](
+      model: Module[T],
+      featureSize : Array[Array[Int]]
+    )(implicit ev: TensorNumeric[T]): NNClassifierModel[T] = {
+    new NNClassifierModel(model)
+      .setSamplePreprocessing(SeqToMultipleTensors(featureSize) -> MultiTensorsToSample())
   }
 
   /**

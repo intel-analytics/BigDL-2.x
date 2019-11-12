@@ -1,13 +1,13 @@
 # <font size="6">Analytics Zoo</font>
-*A unified analytics + AI platform for __distributed TensorFlow, Keras and BigDL on Apache Spark__*
+*A unified analytics + AI platform for __distributed TensorFlow, Keras, PyTorch and BigDL on Apache Spark__*
 
 ---
 
 ## What is Analytics Zoo?
-**Analytics Zoo** provides a unified analytics + AI platform that seamlessly unites *__Spark, TensorFlow, Keras and BigDL__* programs into an integrated pipeline; the entire pipeline can then transparently scale out to a large Hadoop/Spark cluster for distributed training or inference. 
+**Analytics Zoo** provides a unified analytics + AI platform that seamlessly unites *__Spark, TensorFlow, Keras, PyTorch and BigDL__* programs into an integrated pipeline; the entire pipeline can then transparently scale out to a large Hadoop/Spark cluster for distributed training or inference. 
 
  - *Data wrangling and analysis using PySpark*
- - _Deep learning model development using TensorFlow or Keras_
+ - _Deep learning model development using TensorFlow, Keras or PyTorch_
  - _Distributed training/inference on Spark and BigDL_
  - _All within a single unified pipeline and in a user-transparent fashion!_
 
@@ -104,7 +104,7 @@ To make it easy to build and productionize the deep learning applications for Bi
 3.Distributed training on Spark and BigDL
 
 ```python
-   from zoo.pipeline.api.net import TFOptimizer
+   from zoo.tfpark import TFOptimizer
    from bigdl.optim.optimizer import MaxIteration, Adam, MaxEpoch, TrainSummary
 
    optimizer = TFOptimizer.from_loss(loss, Adam(1e-3))

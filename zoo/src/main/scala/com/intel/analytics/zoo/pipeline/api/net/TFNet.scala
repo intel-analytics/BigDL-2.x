@@ -223,6 +223,7 @@ class TFNet(private val graphDef: TFGraphHolder,
 
   override def updateOutput(input: Activity): Activity = {
     try {
+      val start = System.nanoTime()
       val runner = sess.runner()
 
       require(activityLength(input) == inputTypes.length,
@@ -297,6 +298,9 @@ class TFNet(private val graphDef: TFGraphHolder,
         // tempTensors will be cleaned up after backward
       }
 
+      val end = System.nanoTime()
+      TFNet.logger.debug(s"TFNet forward time ${(end - start)/1e9} " )
+
     } catch {
       case ex: Throwable =>
         tensorManager.destructTFTensors()
@@ -327,7 +331,7 @@ class TFNet(private val graphDef: TFGraphHolder,
   override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
     try {
       if (graphMeta.variables.isEmpty) {
-        generateZeroGrad(input)
+        NetUtils.generateZeroGrad(input, gradInput)
       } else {
 
         val runner = sess.runner()
@@ -564,20 +568,6 @@ class TFNet(private val graphDef: TFGraphHolder,
     }
   }
 
-  private def generateZeroGrad(input: Activity) = {
-    if (gradInput.isTable) {
-      var i = 0
-      while (i < gradInput.toTable.length()) {
-        gradInput.toTable[Tensor[Float]](i + 1)
-          .resizeAs(input.toTable[Tensor[Float]](i + 1))
-        i = i + 1
-      }
-    } else {
-      gradInput.toTensor[Float]
-        .resizeAs(input.toTensor[Float])
-    }
-  }
-
   private def addGrad(name: String) = {
     val parts = name.split(":")
     parts(0) + "_grad:" + parts(1)
@@ -775,9 +765,16 @@ object TFNet {
             inputNames: Array[String],
             outputNames: Array[String],
             config: SessionConfig): TFNet = {
+    TFNet(path, inputNames, outputNames, config.toByteArray())
+  }
+
+  def apply(path: String,
+            inputNames: Array[String],
+            outputNames: Array[String],
+            config: Array[Byte]): TFNet = {
     val graphDef = parseGraph(path)
     val graphMeta = Meta(inputNames = inputNames, outputNames = outputNames)
-    TFNet(graphDef, path, graphMeta, config.toByteArray())
+    TFNet(graphDef, path, graphMeta, config)
   }
 
   /**
@@ -795,9 +792,42 @@ object TFNet {
 
 
   def apply(folder: String, config: SessionConfig = TFNet.SessionConfig()): TFNet = {
+    TFNet(folder, config.toByteArray())
+  }
+
+  def apply(folder: String, config: Array[Byte]): TFNet = {
     val (model, meta) = NetUtils.processTFFolder(folder)
     val graphDef = parseGraph(model)
-    TFNet(graphDef, model, meta, config.toByteArray())
+    TFNet(graphDef, model, meta, config)
+  }
+
+  def fromSavedModel(modelPath: String, tag: String,
+                     inputs: Array[String],
+                     outputs: Array[String],
+                     sessionConfig: SessionConfig): AbstractModule[Activity, Activity, Float] = {
+    TFNetForInference.fromSavedModel(modelPath, tag, inputs, outputs, sessionConfig.toByteArray())
+  }
+
+  def fromSavedModel(modelPath: String,
+                     inputs: Array[String],
+                     outputs: Array[String],
+                     sessionConfig: SessionConfig): AbstractModule[Activity, Activity, Float] = {
+    TFNetForInference.fromSavedModel(modelPath, "serve", inputs, outputs,
+      sessionConfig.toByteArray())
+  }
+
+  def fromSavedModel(modelPath: String, tag: String,
+                     inputs: Array[String],
+                     outputs: Array[String]): AbstractModule[Activity, Activity, Float] = {
+    TFNetForInference.fromSavedModel(modelPath, "serve", inputs, outputs,
+      TFNet.defaultSessionConfig.toByteArray())
+  }
+
+  def fromSavedModel(modelPath: String,
+                     inputs: Array[String],
+                     outputs: Array[String]): AbstractModule[Activity, Activity, Float] = {
+    TFNetForInference.fromSavedModel(modelPath, "serve", inputs, outputs,
+      defaultSessionConfig.toByteArray())
   }
 
   private[zoo] def parseGraph(graphProtoTxt: String) : GraphDef = {

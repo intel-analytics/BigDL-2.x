@@ -39,7 +39,7 @@ analytics-zoo
 ## Run Scripts
 After setting the necessary environment variables above, you can run those scripts. One example is shown as following.
 ```bash
-spark-submit-with-zoo.sh \
+spark-submit-python-with-zoo.sh \
     --master your_master_of_spark \
     --driver-cores cores_number_of_driver  \
     --driver-memory memory_size_of_driver  \

@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.pipeline.inference
 
 import com.intel.analytics.bigdl.nn.Graph
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.utils.caffe.CaffeLoader
 import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.zoo.pipeline.api.keras.layers.WordEmbedding
@@ -33,12 +32,6 @@ object ModelLoader extends InferenceSupportive {
   Sequential
   GraphNet
   WordEmbedding
-
-  timing("bigdl init engine") {
-    System.setProperty("bigdl.localMode", System.getProperty("bigdl.localMode", "true"))
-    System.setProperty("bigdl.coreNumber", System.getProperty("bigdl.coreNumber", "1"))
-    Engine.init
-  }
 
   def loadFloatModel(modelPath: String, weightPath: String)
     : AbstractModule[Activity, Activity, Float] = {
@@ -66,6 +59,19 @@ object ModelLoader extends InferenceSupportive {
     timing("load model") {
       logger.info(s"load model from $modelPath")
       val model = TFNet(modelPath, config)
+      logger.info(s"loaded model as $model")
+      model
+    }
+  }
+
+  def loadFloatModelForTFSavedModel(modelPath: String,
+                                    inputs: Array[String],
+                                    outputs: Array[String],
+                                    config: TFNet.SessionConfig = TFNet.defaultSessionConfig)
+  : AbstractModule[Activity, Activity, Float] = {
+    timing("load model") {
+      logger.info(s"load model from $modelPath")
+      val model = TFNet.fromSavedModel(modelPath, inputs, outputs)
       logger.info(s"loaded model as $model")
       model
     }

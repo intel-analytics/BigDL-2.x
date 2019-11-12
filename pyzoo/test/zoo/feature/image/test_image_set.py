@@ -174,6 +174,17 @@ class Test_Image_Set():
         for label in image_set.get_label().collect():
             assert label > 0.0 and label <= 4.0
 
+    def test_distributed_image_set_from_rdds(self):
+        image_rdd = self.sc.parallelize(np.zeros((4, 32, 32, 3)))
+        label_rdd = self.sc.parallelize(np.random.randint(0, 4, size=(4, 1)))
+        image_set = ImageSet.from_rdds(image_rdd, label_rdd)
+
+        for image in image_set.get_image().collect():
+            assert image.sum() == 0.0
+
+        for label in image_set.get_label().collect():
+            assert label >= 0.0 and label < 4.0
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

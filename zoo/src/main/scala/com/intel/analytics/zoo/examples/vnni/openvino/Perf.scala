@@ -28,10 +28,11 @@ case class ResNet50PerfParams(model: String = "",
                               weight: String = "",
                               batchSize: Int = 4,
                               numBatch: Int = 1,
-                              iteration: Int = 1,
-                              isInt8: Boolean = false)
+                              iteration: Int = 1)
 
 object Perf {
+  System.setProperty("bigdl.localMode", "true")
+  System.setProperty("bigdl.engineType", "mkldnn")
 
   val logger: Logger = Logger.getLogger(getClass)
 
@@ -54,9 +55,6 @@ object Perf {
       opt[Int]('i', "iteration")
         .text("Iteration of perf test. The result will be average of each iteration time cost")
         .action((v, p) => p.copy(iteration = v))
-      opt[Boolean]("isInt8")
-        .text("Is Int8 optimized model?")
-        .action((x, c) => c.copy(isInt8 = x))
     }
 
     parser.parse(args, ResNet50PerfParams()).foreach { param =>
@@ -68,11 +66,7 @@ object Perf {
 
       val model = new InferenceModel(1)
 
-      if (param.isInt8) {
-        model.doLoadOpenVINOInt8(param.model, param.weight, param.batchSize)
-      } else {
-        model.doLoadOpenVINO(param.model, param.weight)
-      }
+      model.doLoadOpenVINO(param.model, param.weight, param.batchSize)
 
       val predictStart = System.nanoTime()
       var averageLatency = 0L
@@ -81,14 +75,20 @@ object Perf {
         model.doPredict(batchInput)
         val latency = System.nanoTime() - start
         averageLatency += latency
-        logger.info(s"Iteration $iteration latency is ${latency / 1e6} ms")
+        logger.info(s"Iteration latency is ${latency / 1e6} ms")
+        val throughPut = "%.2f".format(numBatch.toFloat * batchSize / (latency / 1e9))
+        logger.info(s"Iteration throughput is ${throughPut} FPS")
+        logger.info(s"*****************************************************")
       }
       val totalTimeUsed = System.nanoTime() - predictStart
       val totalThroughput = "%.2f".format(batchSize * iteration
         * numBatch.toFloat / (totalTimeUsed / 1e9))
-      logger.info(s"Average latency for iteration is " +
-        s"${averageLatency / iteration / 1e6} FPS (imgs/sec)")
-      logger.info(s"Takes $totalTimeUsed ns, throughput is $totalThroughput FPS (imgs/sec)")
+      logger.info(s"Average latency of $iteration iteration is " +
+        s"${averageLatency / iteration / 1e6} ms")
+      logger.info(s"Average latency per image is " +
+        s"${averageLatency / iteration / batchSize / 1e6} ms")
+      logger.info(s"Average throughput of $iteration iteration is " +
+        s"$totalThroughput FPS")
     }
   }
 }

@@ -25,6 +25,7 @@ import com.intel.analytics.zoo.feature.common.{ArrayLike, ArrayLikeWrapper}
 import com.intel.analytics.zoo.feature.pmem._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.reflect.ClassTag
@@ -36,9 +37,6 @@ import scala.reflect.ClassTag
  * User can use the data() method to get the data sequence.
  *
  * The sequence of the data is not fixed. It can be changed by the shuffle() method.
- *
- * User can create a dataset from a RDD, an array and a folder, etc. The DataSet object provides
- * many factory methods.
  *
  * @tparam D Data type
  * @tparam DataSequence Represent a sequence of data
@@ -101,6 +99,7 @@ trait AbstractFeatureSet[D, DataSequence] extends AbstractDataSet[D, DataSequenc
  * @tparam T
  */
 trait DistributedFeatureSet[T] extends AbstractFeatureSet[T, RDD[T]] {
+  def numOfSlice: Int = 1
 
   override def transform[C: ClassTag](transformer: Transformer[T, C]): DistributedFeatureSet[C] = {
     val preFeatureSet = this
@@ -110,9 +109,13 @@ trait DistributedFeatureSet[T] extends AbstractFeatureSet[T, RDD[T]] {
     val cachedTransformer =
       preFeatureSet.originRDD().mapPartitions(_ => Iterator
         .single(broadcast.value.cloneTransformer())
-      ).setName("Cached Transformer").persist()
+      ).setName(s"Cached Transformer of ${preFeatureSet.originRDD().name}").persist()
 
     new DistributedFeatureSet[C] {
+      originFeatureSet = preFeatureSet.originFeatureSet
+
+      override def numOfSlice: Int = originFeatureSet.numOfSlice
+
       override def size(): Long = preFeatureSet.size()
 
       override def shuffle(): Unit = preFeatureSet.shuffle()
@@ -167,6 +170,9 @@ trait DistributedFeatureSet[T] extends AbstractFeatureSet[T, RDD[T]] {
     }
   }
 
+  protected var originFeatureSet: DistributedFeatureSet[Any] =
+    this.asInstanceOf[DistributedFeatureSet[Any]]
+
   /**
    * Check if rdd is cached.
    */
@@ -214,7 +220,9 @@ private[zoo] class DistributedDataSetWrapper[T: ClassTag](featureSet: Distribute
  */
 // T is the returning value type. like ByteRecord
 class CachedDistributedFeatureSet[T: ClassTag]
-(buffer: RDD[ArrayLike[T]])
+(buffer: RDD[ArrayLike[T]],
+ sequentialOrder: Boolean = false,
+ shouldShuffle: Boolean = true)
   extends DistributedFeatureSet[T]{
 
   protected lazy val count: Long = buffer.mapPartitions(iter => {
@@ -224,24 +232,37 @@ class CachedDistributedFeatureSet[T: ClassTag]
     Iterator.single(array.length)
   }).reduce(_ + _)
 
-  protected var indexes: RDD[Array[Int]] = buffer.mapPartitions(iter => {
-    Iterator.single[Array[Int]]((0 until iter.next().length).toArray[Int])
-  }).setName("original index").cache()
+  protected var indexes: RDD[(Array[Int], AtomicInteger)] = buffer.mapPartitions(iter => {
+    Iterator.single[(Array[Int], AtomicInteger)](((0 until iter.next().length).toArray[Int],
+      new AtomicInteger(0)))
+  }).setName(s"origin index of ${buffer.name}").cache()
+
+
+  protected var offsets: RDD[AtomicInteger] = buffer.mapPartitions(iter => {
+    Iterator.single[AtomicInteger](new AtomicInteger(0))
+  }).setName(s"offsets of ${buffer.name}")
 
 
   override def data(train: Boolean): RDD[T] = {
     val _train = train
+    val _seq = sequentialOrder
     buffer.zipPartitions(indexes)((dataIter, indexIter) => {
-      val indexes = indexIter.next()
-      val indexOffset = math.max(1, indexes.length)
+      val (indexes, seqOffset) = indexIter.next()
+
+
+      val maxOffset = math.max(1, indexes.length)
       val localData = dataIter.next()
-      val offset = if (_train) {
-        RandomGenerator.RNG.uniform(0, indexOffset).toInt
+      val offset = if (_train && !_seq) {
+        RandomGenerator.RNG.uniform(0, maxOffset).toInt
+      } else if (_train && _seq) {
+        seqOffset.get()
       } else {
         0
       }
+      seqOffset.set(offset)
+
       new Iterator[T] {
-        private val _offset = new AtomicInteger(offset)
+        private val _offset = seqOffset
 
         override def hasNext: Boolean = {
           if (_train) true else _offset.get() < localData.length
@@ -249,6 +270,14 @@ class CachedDistributedFeatureSet[T: ClassTag]
 
         override def next(): T = {
           val i = _offset.getAndIncrement()
+          if (_train && i >= localData.length) {
+            this.synchronized {
+              val value = _offset.get()
+              if (value >= localData.length) {
+                _offset.set(value % localData.length)
+              }
+            }
+          }
           if (_train) {
             // indexes is an Array, we should improve this
             // as the maximum length is limited by Int.max
@@ -268,17 +297,20 @@ class CachedDistributedFeatureSet[T: ClassTag]
   override def size(): Long = count
 
   override def shuffle(): Unit = {
-    indexes.unpersist()
-    indexes = buffer.mapPartitions(iter => {
-      Iterator.single(RandomGenerator.shuffle((0 until iter.next().length).toArray))
-    }).setName("shuffled index").cache()
+    if (shouldShuffle) {
+      indexes.unpersist()
+      indexes = buffer.mapPartitions(iter => {
+        Iterator.single((RandomGenerator.shuffle((0 until iter.next().length).toArray),
+          new AtomicInteger(0)))
+      }).setName(s"shuffled index of ${buffer.name}").cache()
+    }
   }
 
   override def originRDD(): RDD[_] = buffer
 
   override def cache(): Unit = {
-    buffer.count()
-    indexes.count()
+    buffer.cache().count()
+    indexes.cache().count()
     isCached = true
   }
 
@@ -295,13 +327,102 @@ class CachedDistributedFeatureSet[T: ClassTag]
   }
 }
 
+/**
+ * Wrap a RDD as a FeatureSet. RDD will be persist on local disk, and will load
+ * one slice of the data to memory for the training.
+ * @param origin cached rdd
+ * @param numSlice number of RDD slice. During the training, only 1/numSlice of
+ *                 originRDD is loaded into memory.
+ */
+// T is the returning value type. like ByteRecord
+class DiskFeatureSet[T: ClassTag]
+(origin: RDD[T], val numSlice: Int)
+  extends DistributedFeatureSet[T]{
+  require(numSlice != 1,
+    s"Detected numSlice = 1, Please use MemoryType DRAM to " +
+      s"cache all data into memory.")
+
+  require(numSlice == 0 || numSlice >= 2,
+    s"excepted numSlice == 0 or >= 2, but got $numSlice")
+
+  override def numOfSlice: Int = numSlice
+
+  protected val buffer = origin.coalesce(EngineRef.getNodeNumber(), true)
+    .persist(StorageLevel.DISK_ONLY)
+    .setName("Origin Data Cached on Disk")
+  protected lazy val count: Long = buffer.count()
+
+  protected var currentSlice: RDD[T] = null
+  protected var currentFeatureSet: DistributedFeatureSet[T] = null
+  protected var trained: Boolean = false
+  if (numSlice != 0) {
+    newSample()
+  }
+
+  private def newSample() = {
+    currentSlice = buffer.sample(false, 1.0 / numSlice)
+      .setName(s"1/${numSlice} of ${origin.name}")
+    currentFeatureSet = DRAMFeatureSet.rdd(currentSlice)
+    trained = false
+  }
+
+  override def data(train: Boolean): RDD[T] = {
+    if (numSlice == 0) {
+      if (train) {
+        throw new IllegalArgumentException("No training data in memory," +
+          "because numSlice is zero. numSlice should >= 2 " +
+          "in a training FeatureSet.")
+      } else {
+        buffer
+      }
+    } else {
+      if (train) {
+        if (trained) {
+          if (currentFeatureSet != null) {
+            currentFeatureSet.unpersist()
+          }
+          newSample()
+        }
+        currentFeatureSet.shuffle()
+        trained = true
+        currentFeatureSet.data(train)
+      } else {
+        trained = false
+        currentFeatureSet.data(train)
+      }
+    }
+  }
+
+  override def size(): Long = count
+
+  override def shuffle(): Unit = {
+  }
+
+  override def originRDD(): RDD[_] = buffer
+
+  override def cache(): Unit = {
+    buffer.persist(StorageLevel.DISK_ONLY)
+    buffer.count()
+  }
+
+  override def unpersist(): Unit = {
+    buffer.unpersist()
+  }
+
+  override def toDistributed(): DistributedDataSet[T] = {
+    new DistributedDataSetWrapper[T](this)
+  }
+}
+
 object DRAMFeatureSet {
-  def rdd[T: ClassTag](data: RDD[T]): DistributedFeatureSet[T] = {
+  def rdd[T: ClassTag](data: RDD[T],
+                       sequentialOrder: Boolean = false,
+                       shuffle: Boolean = true): DistributedFeatureSet[T] = {
     val arrayLikeRDD = data.mapPartitions(iter => {
       Iterator.single(new ArrayLikeWrapper(iter.toArray))
     }).setName(s"cached feature set: ${data.name} in DRAM" )
       .cache().asInstanceOf[RDD[ArrayLike[T]]]
-    new CachedDistributedFeatureSet[T](arrayLikeRDD)
+    new CachedDistributedFeatureSet[T](arrayLikeRDD, sequentialOrder, shuffle)
   }
 }
 
@@ -310,26 +431,42 @@ object FeatureSet {
   def rdd[T: ClassTag](
        data: RDD[T],
        memoryType: MemoryType = DRAM,
-       dataStrategy: DataStrategy = PARTITIONED): DistributedFeatureSet[T] = {
-    if (dataStrategy == PARTITIONED) {
-      val nodeNumber = EngineRef.getNodeNumber()
-      val repartitionedData = data.coalesce(nodeNumber, true).setName(data.name)
-      memoryType match {
-        case DRAM =>
-          DRAMFeatureSet.rdd(repartitionedData)
-        case PMEM =>
-          logger.info("~~~~~~~ Caching with AEP ~~~~~~~")
-          PmemFeatureSet.rdd(repartitionedData, PMEM)
-        case DIRECT =>
-          logger.info("~~~~~~~ Caching with DIRECT ~~~~~~~")
-          PmemFeatureSet.rdd[T](repartitionedData, DIRECT)
-        case _ =>
-          throw new IllegalArgumentException(
-            s"MemoryType: ${memoryType} is not supported at the moment")
-      }
-    } else {
-      throw new IllegalArgumentException(
-        s"DataStrategy ${dataStrategy} is not supported at the moment")
+       dataStrategy: DataStrategy = PARTITIONED,
+       sequentialOrder: Boolean = false,
+       shuffle: Boolean = true): DistributedFeatureSet[T] = {
+    dataStrategy match {
+      case PARTITIONED =>
+        val nodeNumber = EngineRef.getNodeNumber()
+        val repartitionedData = data.coalesce(nodeNumber, true).setName(data.name)
+        memoryType match {
+          case DRAM =>
+            DRAMFeatureSet.rdd(repartitionedData, sequentialOrder, shuffle)
+          case PMEM =>
+            logger.info("~~~~~~~ Caching with AEP ~~~~~~~")
+            PmemFeatureSet.rdd(repartitionedData, PMEM, sequentialOrder, shuffle)
+          case DIRECT =>
+            logger.info("~~~~~~~ Caching with DIRECT ~~~~~~~")
+            PmemFeatureSet.rdd[T](repartitionedData, DIRECT, sequentialOrder, shuffle)
+          case diskM: DISK_AND_DRAM =>
+            logger.info(s"~~~~~~~ Caching with DISK_AND_DRAM(${diskM.numSlice}) ~~~~~~~")
+            if (sequentialOrder) {
+              throw new IllegalArgumentException("DiskFeatureSet does not support" +
+                " sequentialOrder.")
+            }
+
+            if (!shuffle) {
+              throw new IllegalArgumentException("DiskFeatureSet must use shuffle.")
+            }
+            new DiskFeatureSet[T](data, diskM.numSlice)
+          case _ =>
+            throw new IllegalArgumentException(
+              s"MemoryType: ${memoryType} is not supported at the moment")
+        }
+
+      case _ =>
+        throw new IllegalArgumentException(
+          s"DataStrategy ${dataStrategy} is not supported at the moment")
+
     }
   }
 }
