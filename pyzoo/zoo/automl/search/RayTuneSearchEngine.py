@@ -60,6 +60,7 @@ class RayTuneSearchEngine(SearchEngine):
                 # model=None,
                 future_seq_len=1,
                 validation_df=None,
+                mc=False,
                 metric="mean_squared_error"):
         """
         Do necessary preparations for the engine
@@ -112,6 +113,7 @@ class RayTuneSearchEngine(SearchEngine):
                                                    future_seq_len,
                                                    validation_df,
                                                    metric_op,
+                                                   mc,
                                                    self.remote_dir)
         # self.trainable_class = self._prepare_trainable_class(input_df,
         #                                                      feature_transformers,
@@ -160,6 +162,12 @@ class RayTuneSearchEngine(SearchEngine):
         #         checkpoint_freq=1,
         #         checkpoint_at_end=True,
         #         resume="prompt",
+        #         # upload_dir="hdfs://172.16.0.103:9000/yushan",
+        #         # sync_function="source_path={source};"
+        #         #               "target_path={target};"
+        #         #               "if [[ $source_path == hdfs:* ]]; "
+        #         #               "then echo \"hadoop fs -get $source_path $target_path\"; "
+        #         #               "else echo \"hadoop fs -put $target_path $source_path\"; fi",
         #         num_samples=self.num_samples,
         #         resources_per_trial=self.resources_per_trail,
         #         verbose=1,
@@ -175,6 +183,12 @@ class RayTuneSearchEngine(SearchEngine):
         #         checkpoint_freq=1,
         #         checkpoint_at_end=True,
         #         resume="prompt",
+        #         # upload_dir="hdfs://172.16.0.103:9000/yushan",
+        #         # sync_function="source_path={source};"
+        #         #               "target_path={target};"
+        #         #               "if [[ $source_path == hdfs:* ]]; "
+        #         #               "then echo \"hadoop fs -get $source_path $target_path\"; "
+        #         #               "else echo \"hadoop fs -put $target_path $source_path\"; fi",
         #         num_samples=self.num_samples,
         #         resources_per_trial=self.resources_per_trail,
         #         verbose=1,
@@ -243,6 +257,7 @@ class RayTuneSearchEngine(SearchEngine):
                             future_seq_len,
                             validation_df=None,
                             metric_op=1,
+                            mc=False,
                             remote_dir=None
                             ):
         """
@@ -300,6 +315,7 @@ class RayTuneSearchEngine(SearchEngine):
                 result = trial_model.fit_eval(x_train,
                                               y_train,
                                               validation_data=validation_data,
+                                              mc=mc,
                                               # verbose=1,
                                               **config)
                 reward_m = metric_op * result
@@ -406,9 +422,12 @@ class RayTuneSearchEngine(SearchEngine):
                 return {"reward_metric": self.reward_m, "checkpoint": self.ckpt_name}
 
             def _save(self, checkpoint_dir):
+                # print("checkpoint dir is ", checkpoint_dir)
                 ckpt_name = self.ckpt_name
                 # save in the working dir (without "checkpoint_{}".format(training_iteration))
                 path = os.path.join(checkpoint_dir, "..", ckpt_name)
+                # path = os.path.join(checkpoint_dir, ckpt_name)
+                # print("checkpoint save path is ", checkpoint_dir)
                 if self.reward_m > self.best_reward_m:
                     self.best_reward_m = self.reward_m
                     print("****this reward is", self.reward_m)
@@ -419,6 +438,7 @@ class RayTuneSearchEngine(SearchEngine):
                 return path
 
             def _restore(self, checkpoint_path):
+                # print("checkpoint path in restore is ", checkpoint_path)
                 if remote_dir is not None:
                     restore_hdfs(checkpoint_path, remote_dir, self.trial_ft, self.trial_model)
                 else:

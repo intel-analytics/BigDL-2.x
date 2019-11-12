@@ -154,15 +154,19 @@ class TestTimeSequenceFeature(ZooTestCase):
         feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
                                               target_col="values", drop_missing=True)
         with pytest.raises(ValueError, match=r".*past sequence length.*"):
-            feat.fit_transform(train_df[:10], **config)
+            feat.fit_transform(train_df[:20], **config)
 
+        feat.fit_transform(train_df, **config)
         with pytest.raises(ValueError, match=r".*past sequence length.*"):
-            feat.fit_transform(train_df, **config)
             feat.transform(val_df, is_train=True)
 
         with pytest.raises(ValueError, match=r".*past sequence length.*"):
-            feat.fit_transform(train_df, **config)
             feat.transform(test_df[:-1], is_train=False)
+        out_x, out_y = feat.transform(test_df, is_train=False)
+        assert len(out_x) == 1
+        assert out_y is None
+
+        # test
 
     def test_fit_transform_input_data(self):
         # if there is NaN in data other than datetime, drop the training sample.

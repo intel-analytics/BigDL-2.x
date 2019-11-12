@@ -45,7 +45,7 @@ class LSTMSeq2Seq(BaseModel):
         self.batch_size = None
         self.check_optional_config = check_optional_config
 
-    def _build_train(self, **config):
+    def _build_train(self, mc=False, **config):
         """
         build LSTM Seq2Seq model
         :param config:
@@ -58,6 +58,7 @@ class LSTMSeq2Seq(BaseModel):
         self.lr = config.get('lr', 0.001)
         # for restore in continuous training
         self.batch_size = config.get('batch_size', 64)
+        training = True if mc else None
 
         # Define an input sequence and process it.
         self.encoder_inputs = Input(shape=(None, self.feature_num), name="encoder_inputs")
@@ -65,7 +66,7 @@ class LSTMSeq2Seq(BaseModel):
                        dropout=self.dropout,
                        return_state=True,
                        name="encoder_lstm")
-        encoder_outputs, state_h, state_c = encoder(self.encoder_inputs)
+        encoder_outputs, state_h, state_c = encoder(self.encoder_inputs, training=training)
         # We discard `encoder_outputs` and only keep the states.
         self.encoder_states = [state_h, state_c]
 
@@ -80,6 +81,7 @@ class LSTMSeq2Seq(BaseModel):
                                  return_state=True,
                                  name="decoder_lstm")
         decoder_outputs, _, _ = self.decoder_lstm(self.decoder_inputs,
+                                                  training=training,
                                                   initial_state=self.encoder_states)
 
         self.decoder_dense = Dense(self.target_col_num, name="decoder_dense")
@@ -103,7 +105,8 @@ class LSTMSeq2Seq(BaseModel):
 
         self.decoder_dense = self.model.layers[4]
 
-    def _build_inference(self):
+    def _build_inference(self, mc=False):
+        training = True if mc else None
         # from our previous model - mapping encoder sequence to state vectors
         encoder_model = Model(self.encoder_inputs, self.encoder_states)
 
@@ -115,6 +118,7 @@ class LSTMSeq2Seq(BaseModel):
         decoder_states_inputs = [decoder_state_input_h, decoder_state_input_c]
 
         decoder_outputs, state_h, state_c = self.decoder_lstm(self.decoder_inputs,
+                                                              training=training,
                                                               initial_state=decoder_states_inputs)
         decoder_states = [state_h, state_c]
 
@@ -123,8 +127,8 @@ class LSTMSeq2Seq(BaseModel):
                               [decoder_outputs] + decoder_states)
         return encoder_model, decoder_model
 
-    def _decode_sequence(self, input_seq):
-        encoder_model, decoder_model = self._build_inference()
+    def _decode_sequence(self, input_seq, mc=False):
+        encoder_model, decoder_model = self._build_inference(mc=mc)
         # Encode the input as state vectors.
         states_value = encoder_model.predict(input_seq)
 
@@ -206,7 +210,7 @@ class LSTMSeq2Seq(BaseModel):
             validation_data = ([val_x, val_decoder_input], val_y)
         return x, y, decoder_input_data, validation_data
 
-    def fit_eval(self, x, y, validation_data=None, verbose=0, **config):
+    def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, **config):
         """
         fit for one iteration
         :param x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
@@ -226,7 +230,7 @@ class LSTMSeq2Seq(BaseModel):
 
         # if model is not initialized, __build the model
         if self.model is None:
-            self._build_train(**config)
+            self._build_train(mc=mc, **config)
 
         # batch_size = config.get('batch_size', 64)
         epochs = config.get('epochs', 10)
@@ -264,15 +268,25 @@ class LSTMSeq2Seq(BaseModel):
         # y = np.squeeze(y, axis=2)
         return [Evaluator.evaluate(m, y, y_pred) for m in metric]
 
-    def predict(self, x):
+    def predict(self, x, mc=False):
         """
         Prediction on x.
         :param x: input
         :return: predicted y (expected dimension = 2)
         """
-        y_pred = self._decode_sequence(x)
+        y_pred = self._decode_sequence(x, mc=mc)
         y_pred = np.squeeze(y_pred, axis=2)
         return y_pred
+
+    def predict_with_uncertainty(self, x, n_iter=100):
+        result = np.zeros((n_iter,) + (x.shape[0], self.future_seq_len))
+
+        for i in range(n_iter):
+            result[i, :, :] = self.predict(x, mc=True)
+
+        prediction = result.mean(axis=0)
+        uncertainty = result.std(axis=0)
+        return prediction, uncertainty
 
     def save(self, model_path, config_path):
         """
@@ -333,9 +347,14 @@ class LSTMSeq2Seq(BaseModel):
 
 
 if __name__ == "__main__":
-    model = LSTMSeq2Seq(check_optional_config=False)
-    train_df, val_df, test_df = load_nytaxi_data_df()
-    feature_transformer = TimeSequenceFeatureTransformer()
+    dataset_path = os.getenv("ANALYTICS_ZOO_HOME") + "/bin/data/NAB/nyc_taxi/nyc_taxi.csv"
+    df = pd.read_csv(dataset_path)
+    from zoo.automl.common.util import split_input_df
+    train_df, val_df, test_df = split_input_df(df, val_split_ratio=0.1, test_split_ratio=0.1)
+    future_seq_len = 2
+    feature_transformer = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len)
+    model = LSTMSeq2Seq(check_optional_config=False, future_seq_len=future_seq_len)
+
     config = {
         # 'input_shape_x': x_train.shape[1],
         # 'input_shape_y': x_train.shape[-1],
@@ -347,30 +366,43 @@ if __name__ == "__main__":
     x_train, y_train = feature_transformer.fit_transform(train_df, **config)
     x_test, y_test = feature_transformer.transform(test_df, is_train=True)
 
-    print("fit_eval:", model.fit_eval(x_train, y_train, validation_data=(x_test, y_test), **config))
+    print("fit_eval:", model.fit_eval(x_train, y_train, validation_data=(x_test, y_test),
+                                      mc=True, **config))
     print("evaluate:", model.evaluate(x_test, y_test))
     y_pred = model.predict(x_test)
     print(y_pred.shape)
+    y_pred, y_uncertainty = model.predict_with_uncertainty(x_test, n_iter=3)
+    print("shape of output of uncertain predict:", y_pred.shape, y_uncertainty.shape)
+    print(y_uncertainty[:5])
 
-    from matplotlib import pyplot as plt
+    dirname = 'tmp'
+    save(dirname, model=model)
+    restore(dirname, model=model, config=config)
+    y_pred, y_uncertainty = model.predict_with_uncertainty(x_test, n_iter=3)
+    print("shape of output of uncertain predict:", y_pred.shape, y_uncertainty.shape)
+    print(y_uncertainty[:5])
 
-    y_test = np.squeeze(y_test)
-    y_pred = np.squeeze(y_pred)
-
-    def plot_result(y_test, y_pred):
-        # target column of dataframe is "value"
-        # past sequence length is 50
-        # pred_value = pred_df["value"].values
-        # true_value = test_df["value"].values[50:]
-        fig, axs = plt.subplots()
-
-        axs.plot(y_pred, color='red', label='predicted values')
-        axs.plot(y_test, color='blue', label='actual values')
-        axs.set_title('the predicted values and actual values (for the test data)')
-
-        plt.xlabel('test data index')
-        plt.ylabel('number of taxi passengers')
-        plt.legend(loc='upper left')
-        plt.savefig("seq2seq_result.png")
-
-    plot_result(y_test, y_pred)
+    import shutil
+    shutil.rmtree(dirname)
+    # from matplotlib import pyplot as plt
+    #
+    # y_test = np.squeeze(y_test)
+    # y_pred = np.squeeze(y_pred)
+    #
+    # def plot_result(y_test, y_pred):
+    #     # target column of dataframe is "value"
+    #     # past sequence length is 50
+    #     # pred_value = pred_df["value"].values
+    #     # true_value = test_df["value"].values[50:]
+    #     fig, axs = plt.subplots()
+    #
+    #     axs.plot(y_pred, color='red', label='predicted values')
+    #     axs.plot(y_test, color='blue', label='actual values')
+    #     axs.set_title('the predicted values and actual values (for the test data)')
+    #
+    #     plt.xlabel('test data index')
+    #     plt.ylabel('number of taxi passengers')
+    #     plt.legend(loc='upper left')
+    #     plt.savefig("seq2seq_result.png")
+    #
+    # plot_result(y_test, y_pred)

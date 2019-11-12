@@ -201,6 +201,12 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         y_unscale = y * value_scale + value_mean
         return y_unscale
 
+    def unscale_uncertainty(self, y_uncertainty):
+        value_scale = self.scaler.scale_[0]
+        # print(value_scale)
+        y_uncertainty_unscle = y_uncertainty * value_scale
+        return y_uncertainty_unscle
+
     def _get_y_pred_df(self, y_pred_dt_df, y_pred_unscale):
         """
         get prediction data frame with datetime column and target column.
@@ -380,7 +386,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         if last_datetime > current_time:
             raise ValueError("Last date time is bigger than current time!")
 
-        # check the length of input data is smaller than requested.
+        # check if the length of input data is smaller than requested.
         if mode == "test":
             min_input_len = self.past_seq_len
             error_msg = "Length of {} data should be larger than " \
@@ -471,6 +477,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         last_time = pre_pred_dt_df.iloc[-1] + time_delta
         last_df = pd.DataFrame({self.dt_col: last_time})
         y_pred_dt_df = pre_pred_dt_df.append(last_df, ignore_index=True)
+        # print(y_pred_dt_df)
         return y_pred_dt_df
 
     def _get_y_pred_dt_df(self, input_df, past_seq_len):

@@ -172,6 +172,29 @@ class TestSeq2Seq(ZooTestCase):
         finally:
             shutil.rmtree(dirname)
 
+    def test_predict_with_uncertainty(self,):
+        x_train_2, y_train_2 = self.feat._roll_train(self.train_data,
+                                                     past_seq_len=self.past_seq_len,
+                                                     future_seq_len=self.future_seq_len_2)
+        x_test_2 = self.feat._roll_test(self.test_data, past_seq_len=self.past_seq_len)
+        self.model_2.fit_eval(x_train_2, y_train_2, mc=True, **self.config)
+        prediction, uncertainty = self.model_2.predict_with_uncertainty(x_test_2, n_iter=2)
+        assert prediction.shape == (x_test_2.shape[0], self.future_seq_len_2)
+        assert uncertainty.shape == (x_test_2.shape[0], self.future_seq_len_2)
+        assert np.any(uncertainty)
+
+        new_model_2 = LSTMSeq2Seq(check_optional_config=False)
+        dirname = tempfile.mkdtemp(prefix="automl_test_feature")
+        try:
+            save(dirname, model=self.model_2)
+            restore(dirname, model=new_model_2, config=self.config)
+            prediction, uncertainty = new_model_2.predict_with_uncertainty(x_test_2, n_iter=2)
+            assert prediction.shape == (x_test_2.shape[0], self.future_seq_len_2)
+            assert uncertainty.shape == (x_test_2.shape[0], self.future_seq_len_2)
+            assert np.any(uncertainty)
+        finally:
+            shutil.rmtree(dirname)
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

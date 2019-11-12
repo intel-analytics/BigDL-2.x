@@ -25,6 +25,7 @@ from zoo.automl.regression.time_sequence_predictor import *
 import numpy as np
 import pandas as pd
 import ray
+from pandas.util.testing import assert_frame_equal
 
 
 class TestTimeSequencePipeline(ZooTestCase):
@@ -58,7 +59,7 @@ class TestTimeSequencePipeline(ZooTestCase):
                                            target_col="value",
                                            future_seq_len=self.future_seq_len_3,
                                            extra_features_col=None, )
-        self.default_past_seq_len = 1
+        self.default_past_seq_len = 2
 
     def teardown_method(self, method):
         """
@@ -72,6 +73,8 @@ class TestTimeSequencePipeline(ZooTestCase):
         mse, rs = self.pipeline_1.evaluate(self.test_df, metrics=["mse", "r2"])
         assert len(mse) == self.future_seq_len_1
         assert len(rs) == self.future_seq_len_1
+        assert isinstance(mse, np.float)
+        assert isinstance(rs, np.float)
         print("Mean square error (future_seq_len=1) is:", mse)
         print("R square (future_seq_len=1) is:", rs)
 
@@ -83,6 +86,8 @@ class TestTimeSequencePipeline(ZooTestCase):
         mse, rs = self.pipeline_1.evaluate(test_df_list, metrics=["mse", "r2"])
         assert len(mse) == self.future_seq_len_1
         assert len(rs) == self.future_seq_len_1
+        assert isinstance(mse, np.float)
+        assert isinstance(rs, np.float)
         print("Mean square error (future_seq_len=1) is:", mse)
         print("R square (future_seq_len=1) is:", rs)
 
@@ -116,6 +121,11 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert len(rs) == self.future_seq_len_1
         assert len(smape) == self.future_seq_len_1
         assert all(100 > i > 0 for i in smape)
+        assert isinstance(mse, np.float)
+        assert isinstance(rs, np.float)
+        assert isinstance(smape, np.float)
+        assert 100 > smape > 0
+        
         print("Mean square error (future_seq_len=1) is:", mse)
         print("R square (future_seq_len=1) is:", rs)
         print("sMAPE (future_seq_len=1) is:", smape)
@@ -169,8 +179,8 @@ class TestTimeSequencePipeline(ZooTestCase):
         # sample_num should > past_seq_len, the default value of which is 50
         y_pred_1 = self.pipeline_1.predict(test_df_list)
         assert len(y_pred_1) == 3
-        assert y_pred_1[0].equals(y_pred_1[1])
-        assert y_pred_1[1].equals(y_pred_1[2])
+        assert_frame_equal(y_pred_1[0], y_pred_1[1])
+        assert_frame_equal(y_pred_1[1], y_pred_1[2])
         assert y_pred_1[0].shape == (self.test_sample_num - self.default_past_seq_len + 1,
                                      self.future_seq_len_1 + 1)
 
@@ -187,8 +197,8 @@ class TestTimeSequencePipeline(ZooTestCase):
         self.pipeline_3 = self.tsp_3.fit(train_df_list, validation_df=val_df_list)
         y_pred_3 = self.pipeline_3.predict(test_df_list)
         assert len(y_pred_3) == 3
-        assert y_pred_3[0].equals(y_pred_3[1])
-        assert y_pred_3[0].equals(y_pred_3[2])
+        assert_frame_equal(y_pred_3[0], y_pred_3[1])
+        assert_frame_equal(y_pred_3[1], y_pred_3[2])
         assert y_pred_3[0].shape == (self.test_sample_num - self.default_past_seq_len + 1,
                                      self.future_seq_len_3 + 1)
 
@@ -360,10 +370,11 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert y_pred_random_1.shape[0] >= self.test_sample_num - max_past_seq_len + 1
         assert y_pred_random_1.shape[0] <= self.test_sample_num - min_past_seq_len + 1
         assert y_pred_random_1.shape[1] == self.future_seq_len_1 + 1
-        mse, rs = random_pipeline_1.evaluate(self.test_df,
-                                             metrics=["mse", "r2"])
+        mse, rs = random_pipeline_1.evaluate(self.test_df, metrics=["mse", "r2"])
         assert len(mse) == self.future_seq_len_1
         assert len(rs) == self.future_seq_len_1
+        assert isinstance(mse, np.float)
+        assert isinstance(rs, np.float)
 
     def test_look_back_3(self):
         min_past_seq_len = 5
@@ -380,6 +391,193 @@ class TestTimeSequencePipeline(ZooTestCase):
                                              metrics=["mse", "r2"])
         assert len(mse) == self.future_seq_len_3
         assert len(rs) == self.future_seq_len_3
+
+    def test_look_back_value(self):
+        # test min_past_seq_len < 2
+        self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                       recipe=RandomRecipe(look_back=(1, 2)))
+        # test max_past_seq_len < 2
+        with pytest.raises(ValueError, match=r".*max look back value*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back=(0, 1)))
+        # test look_back value < 2
+        with pytest.raises(ValueError, match=r".*look back value should not be smaller than 2*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back=1))
+
+        # test look back is None
+        with pytest.raises(ValueError, match=r".*look_back should be either*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back=None))
+        # test look back is str
+        with pytest.raises(ValueError, match=r".*look_back should be either*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back="a"))
+        # test look back is float
+        with pytest.raises(ValueError, match=r".*look_back should be either*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back=2.5))
+        # test look back range is float
+        with pytest.raises(ValueError, match=r".*look_back should be either*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=RandomRecipe(look_back=(2.5, 3)))
+
+    def test_look_back_value_bayes_recipe(self):
+        # test min_past_seq_len < 2
+        self.tsp_1.fit(self.train_df, validation_df=self.validation_df,
+                       recipe=BayesRecipe(look_back=(1, 2)))
+        # test max_past_seq_len < 2
+        with pytest.raises(ValueError, match=r".*max look back value*."):
+            self.tsp_1.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=BayesRecipe(look_back=(0, 1)))
+        # test look_back value < 2
+        with pytest.raises(ValueError, match=r".*look back value should not be smaller than 2*."):
+            self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                           recipe=BayesRecipe(look_back=1))
+
+    def test_fit_with_fixed_configs(self):
+        configs = {'dt_col': 'datetime',
+                   'target_col': 'value',
+                   'extra_features_col': None,
+                   'drop_missing': True,
+                   'past_seq_len': 10,
+                   'future_seq_len': 2,
+                   'batch_size': 16,
+                   'selected_features': ['IS_WEEKEND(datetime)',
+                                        'IS_BUSY_HOURS(datetime)',
+                                        'IS_BUSY_HOURS(datetime)',
+                                        'HOUR(datetime)']
+                   }
+        # test input configs without required configs
+        configs_without_future_seq_len = configs.copy()
+        del configs_without_future_seq_len['future_seq_len']
+        ppl_without_fsl = TimeSequencePipeline(name='test_wrong', config=configs_without_future_seq_len)
+        with pytest.raises(ValueError, match=r".*Missing required parameters"):
+            ppl_without_fsl.fit_with_fixed_configs(self.train_df, self.validation_df)
+
+        # test normal function
+        ppl = TimeSequencePipeline(name='test', config=configs)
+        ppl.fit_with_fixed_configs(self.train_df, self.validation_df)
+        mse, rs = ppl.evaluate(self.test_df, metrics=["mean_squared_error", "r_square"])
+        assert len(mse) == 2
+        assert len(rs) == 2
+        y_pred = ppl.predict(self.test_df)
+        ppl_file = ppl.save()
+        reload_ppl = load_ts_pipeline(ppl_file)
+        os.remove(ppl_file)
+        os.rmdir(os.path.dirname(os.path.abspath(ppl_file)))
+        reload_y_pred = reload_ppl.predict(self.test_df)
+        assert y_pred.equals(reload_y_pred)
+
+        # test fit with user configs
+        ppl = TimeSequencePipeline(name='test', config=configs)
+        ppl.fit_with_fixed_configs(self.train_df, self.validation_df, user_configs={"epochs": 5})
+
+    def test_save_configs(self):
+        self.pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
+        mse, rs = self.pipeline_1.evaluate(self.test_df, metrics=["mean_squared_error", "r_square"])
+        print(mse, rs)
+        config_file = self.pipeline_1.config_save()
+        assert os.path.isfile(config_file)
+        configs = load_config(config_file)
+        os.remove(config_file)
+        os.rmdir(os.path.dirname(os.path.abspath(config_file)))
+        ppl = TimeSequencePipeline(name='test', config=configs)
+        ppl.fit_with_fixed_configs(self.train_df, self.validation_df)
+        mse, rs = ppl.evaluate(self.test_df, metrics=["mean_squared_error", "r_square"])
+        print(mse, rs)
+
+    def test_load_ts_pipeline_describe(self):
+        pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
+        dirname = tempfile.mkdtemp(prefix="saved_pipeline")
+        try:
+            save_pipeline_file = os.path.join(dirname, "my.ppl")
+            pipeline_1.save(save_pipeline_file)
+            assert os.path.isfile(save_pipeline_file)
+            new_pipeline = load_ts_pipeline(save_pipeline_file)
+            assert new_pipeline.config is not None
+            assert isinstance(new_pipeline.feature_transformers, TimeSequenceFeatureTransformer)
+            assert isinstance(new_pipeline.model, TimeSequenceModel)
+            new_pipeline.describe()
+        finally:
+            shutil.rmtree(dirname)
+
+    def test_predict_with_uncertainty(self):
+        # test future_seq_len = 1
+        self.pipeline_1 = self.tsp_1.fit(self.train_df, mc=True, validation_df=self.validation_df)
+        y_out, y_pred_uncertainty = self.pipeline_1.predict_with_uncertainty(self.test_df,
+                                                                             n_iter=2)
+        assert y_out.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                               self.future_seq_len_1 + 1)
+        assert y_pred_uncertainty.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                                            self.future_seq_len_1)
+        assert np.any(y_pred_uncertainty)
+
+        # test future_seq_len = 3
+        self.pipeline_3 = self.tsp_3.fit(self.train_df, mc=True, validation_df=self.validation_df)
+        y_out, y_pred_uncertainty = self.pipeline_3.predict_with_uncertainty(self.test_df,
+                                                                             n_iter=2)
+        assert y_out.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                               self.future_seq_len_3 + 1)
+        assert y_pred_uncertainty.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                                            self.future_seq_len_3)
+        assert np.any(y_pred_uncertainty)
+
+    def test_fit_predict_with_uncertainty(self):
+        # test future_seq_len = 1
+        self.pipeline_1 = self.tsp_1.fit(self.train_df, mc=True, validation_df=self.validation_df)
+        self.pipeline_1.fit(self.validation_df, mc=True, epoch_num=1)
+        y_out, y_pred_uncertainty = self.pipeline_1.predict_with_uncertainty(self.test_df,
+                                                                             n_iter=2)
+        assert y_out.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                               self.future_seq_len_1 + 1)
+        assert y_pred_uncertainty.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                                            self.future_seq_len_1)
+        assert np.any(y_pred_uncertainty)
+
+        # test future_seq_len = 3
+        self.pipeline_3 = self.tsp_3.fit(self.train_df, mc=True, validation_df=self.validation_df)
+        self.pipeline_3.fit(self.validation_df, mc=True, epoch_num=1)
+        y_out, y_pred_uncertainty = self.pipeline_3.predict_with_uncertainty(self.test_df,
+                                                                             n_iter=2)
+        assert y_out.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                               self.future_seq_len_3 + 1)
+        assert y_pred_uncertainty.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                                            self.future_seq_len_3)
+        assert np.any(y_pred_uncertainty)
+
+    def test_fit_fixed_configs_predict_with_uncertainty(self):
+        # test future_seq_len = 1
+        self.pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
+        config_file = self.pipeline_1.config_save()
+        assert os.path.isfile(config_file)
+        configs = load_config(config_file)
+        os.remove(config_file)
+        os.rmdir(os.path.dirname(os.path.abspath(config_file)))
+        ppl = TimeSequencePipeline(name='test', config=configs)
+        ppl.fit_with_fixed_configs(self.train_df, self.validation_df, mc=True)
+        y_out, y_pred_uncertainty = ppl.predict_with_uncertainty(self.test_df, n_iter=2)
+        assert y_out.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                               self.future_seq_len_1 + 1)
+        assert y_pred_uncertainty.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                                            self.future_seq_len_1)
+        assert np.any(y_pred_uncertainty)
+
+        # test future_seq_len = 3
+        self.pipeline_3 = self.tsp_3.fit(self.train_df, validation_df=self.validation_df)
+        config_file = self.pipeline_3.config_save()
+        assert os.path.isfile(config_file)
+        configs = load_config(config_file)
+        os.remove(config_file)
+        os.rmdir(os.path.dirname(os.path.abspath(config_file)))
+        ppl = TimeSequencePipeline(name='test', config=configs)
+        ppl.fit_with_fixed_configs(self.train_df, self.validation_df, mc=True)
+        y_out, y_pred_uncertainty = ppl.predict_with_uncertainty(self.test_df, n_iter=2)
+        assert y_out.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                               self.future_seq_len_3 + 1)
+        assert y_pred_uncertainty.shape == (self.test_sample_num - self.default_past_seq_len + 1,
+                                            self.future_seq_len_3)
+        assert np.any(y_pred_uncertainty)
 
 
 if __name__ == '__main__':
