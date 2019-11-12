@@ -83,9 +83,9 @@ object MnistDataLoader extends ImageProcessing with EstimateSupportive {
     }
     val labelMagicNumber = labelBuffer.getInt()
 
-    require(labelMagicNumber == 2049)
+    require(labelMagicNumber == 2049, "labelMagicNumber should be 2049")
     val featureMagicNumber = featureBuffer.getInt()
-    require(featureMagicNumber == 2051)
+    require(featureMagicNumber == 2051, "featureMagicNumber should be 2051")
 
     val labelCount = labelBuffer.getInt()
     val featureCount = featureBuffer.getInt()

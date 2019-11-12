@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.examples.localEstimator
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.models.lenet.LeNet5
 import com.intel.analytics.bigdl.nn.ClassNLLCriterion
-import com.intel.analytics.bigdl.optim.{Adam, Loss, Top1Accuracy, Top5Accuracy}
+import com.intel.analytics.bigdl.optim.{Adam, Loss, Top1Accuracy}
 import com.intel.analytics.zoo.pipeline.estimator.LocalEstimator
 import org.slf4j.LoggerFactory
 import scopt.OptionParser
@@ -64,7 +64,7 @@ object LenetLocalEstimator {
       val model: Module[Float] = LeNet5(10)
       val criterion = ClassNLLCriterion[Float]()
       val adam = new Adam[Float]()
-      val validations = Array(new Top1Accuracy[Float], new Top5Accuracy[Float], new Loss[Float])
+      val validations = Array(new Top1Accuracy[Float], new Loss[Float])
       val localEstimator = LocalEstimator(model, criterion, adam, validations, threadNum)
       logger.info(s"LocalEstimator loaded as $localEstimator")
 
