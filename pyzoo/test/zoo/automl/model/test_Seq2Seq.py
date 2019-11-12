@@ -86,8 +86,8 @@ class TestSeq2Seq(ZooTestCase):
 
         print("evaluate_future_seq_len_1:", self.model_1.evaluate(x_val_1,
                                                                   y_val_1,
-                                                                  metric=['mean_squared_error',
-                                                                          'r_square']))
+                                                                  metric=['mse',
+                                                                          'r2']))
 
     def test_evaluate_2(self):
         x_train_2, y_train_2 = self.feat._roll_train(self.train_data,
@@ -101,8 +101,8 @@ class TestSeq2Seq(ZooTestCase):
 
         print("evaluate_future_seq_len_2:", self.model_2.evaluate(x_val_2,
                                                                   y_val_2,
-                                                                  metric=['mean_squared_error',
-                                                                          'r_square']))
+                                                                  metric=['mse',
+                                                                          'r2']))
 
     def test_predict_1(self):
         x_train_1, y_train_1 = self.feat._roll_train(self.train_data,

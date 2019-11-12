@@ -114,7 +114,7 @@ class TimeSequencePipeline(Pipeline):
 
     def evaluate(self,
                  input_df,
-                 metrics=["mean_squared_error"],
+                 metrics=["mse"],
                  multioutput='raw_values'
                  ):
         """

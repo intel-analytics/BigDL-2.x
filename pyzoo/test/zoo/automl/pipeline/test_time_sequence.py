@@ -70,7 +70,9 @@ class TestTimeSequencePipeline(ZooTestCase):
 
     def test_evaluate_1(self):
         self.pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
-        mse, rs = self.pipeline_1.evaluate(self.test_df, metrics=["mean_squared_error", "r_square"])
+        mse, rs = self.pipeline_1.evaluate(self.test_df, metrics=["mse", "r2"])
+        assert len(mse) == self.future_seq_len_1
+        assert len(rs) == self.future_seq_len_1
         assert isinstance(mse, np.float)
         assert isinstance(rs, np.float)
         print("Mean square error (future_seq_len=1) is:", mse)
@@ -81,7 +83,9 @@ class TestTimeSequencePipeline(ZooTestCase):
         val_df_list = [self.validation_df] * 3
         test_df_list = [self.test_df] * 3
         self.pipeline_1 = self.tsp_1.fit(train_df_list, validation_df=val_df_list)
-        mse, rs = self.pipeline_1.evaluate(test_df_list, metrics=["mean_squared_error", "r_square"])
+        mse, rs = self.pipeline_1.evaluate(test_df_list, metrics=["mse", "r2"])
+        assert len(mse) == self.future_seq_len_1
+        assert len(rs) == self.future_seq_len_1
         assert isinstance(mse, np.float)
         assert isinstance(rs, np.float)
         print("Mean square error (future_seq_len=1) is:", mse)
@@ -89,7 +93,7 @@ class TestTimeSequencePipeline(ZooTestCase):
 
     def test_evaluate_3(self):
         self.pipeline_3 = self.tsp_3.fit(self.train_df, validation_df=self.validation_df)
-        mse, rs = self.pipeline_3.evaluate(self.test_df, metrics=["mean_squared_error", "r_square"])
+        mse, rs = self.pipeline_3.evaluate(self.test_df, metrics=["mse", "r2"])
         assert len(mse) == self.future_seq_len_3
         assert len(rs) == self.future_seq_len_3
         print("Mean square error (future_seq_len=3) is:", mse)
@@ -100,7 +104,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         val_df_list = [self.validation_df] * 3
         test_df_list = [self.test_df] * 3
         self.pipeline_3 = self.tsp_3.fit(train_df_list, validation_df=val_df_list)
-        mse, rs = self.pipeline_3.evaluate(test_df_list, metrics=["mean_squared_error", "r_square"])
+        mse, rs = self.pipeline_3.evaluate(test_df_list, metrics=["mse", "r2"])
         assert len(mse) == self.future_seq_len_3
         assert len(rs) == self.future_seq_len_3
         print("Mean square error (future_seq_len=3) is:", mse)
@@ -111,19 +115,24 @@ class TestTimeSequencePipeline(ZooTestCase):
                                                 validation_df=self.validation_df,
                                                 recipe=RandomRecipe(1))
         mse, rs, smape = self.random_pipeline_1.evaluate(self.test_df,
-                                                         metrics=["mean_squared_error",
-                                                                  "r_square", "sMAPE"])
+                                                         metrics=["mse",
+                                                                  "r2", "smape"])
+        assert len(mse) == self.future_seq_len_1
+        assert len(rs) == self.future_seq_len_1
+        assert len(smape) == self.future_seq_len_1
+        assert all(100 > i > 0 for i in smape)
         assert isinstance(mse, np.float)
         assert isinstance(rs, np.float)
         assert isinstance(smape, np.float)
         assert 100 > smape > 0
+        
         print("Mean square error (future_seq_len=1) is:", mse)
         print("R square (future_seq_len=1) is:", rs)
         print("sMAPE (future_seq_len=1) is:", smape)
 
         mse, rs, smape = self.random_pipeline_1.evaluate(self.test_df,
-                                                         metrics=["mean_squared_error",
-                                                                  "r_square", "sMAPE"],
+                                                         metrics=["mse",
+                                                                  "r2", "smape"],
                                                          multioutput='uniform_average')
         assert isinstance(mse, np.float)
         assert isinstance(rs, np.float)
@@ -135,8 +144,8 @@ class TestTimeSequencePipeline(ZooTestCase):
                                                 validation_df=self.validation_df,
                                                 recipe=RandomRecipe(1))
         mse, rs, smape = self.random_pipeline_3.evaluate(self.test_df,
-                                                         metrics=["mean_squared_error",
-                                                                  "r_square", "sMAPE"])
+                                                         metrics=["mse",
+                                                                  "r2", "smape"])
         assert len(mse) == self.future_seq_len_3
         assert len(rs) == self.future_seq_len_3
         assert len(smape) == self.future_seq_len_3
@@ -147,8 +156,8 @@ class TestTimeSequencePipeline(ZooTestCase):
         print("sMAPE (future_seq_len=1) is:", smape)
 
         mse, rs, smape = self.random_pipeline_3.evaluate(self.test_df,
-                                                         metrics=["mean_squared_error",
-                                                                  "r_square", "sMAPE"],
+                                                         metrics=["mse",
+                                                                  "r2", "smape"],
                                                          multioutput='uniform_average')
         assert isinstance(mse, np.float)
         assert isinstance(rs, np.float)
@@ -206,7 +215,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert y_pred_bayes.shape == (self.test_sample_num - self.default_past_seq_len + 1, 2)
 
     def test_evaluate_predict_1(self):
-        metric = ["mean_squared_error", "r_square"]
+        metric = ["mse", "r2"]
         target_col = "value"
         self.pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
         y_pred_df_1 = self.pipeline_1.predict(self.test_df[:-self.future_seq_len_1])
@@ -221,7 +230,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert rs_pred_eval_1 == rs_eval_1
 
     def test_evaluate_predict_df_list(self):
-        metric = ["mean_squared_error", "r_square"]
+        metric = ["mse", "r2"]
         target_col = "value"
         train_df_list = [self.train_df] * 3
         val_df_list = [self.validation_df] * 3
@@ -245,7 +254,7 @@ class TestTimeSequencePipeline(ZooTestCase):
 
     def test_evaluate_predict_3(self):
         target_col = "value"
-        metric = ["mean_squared_error", "r_square"]
+        metric = ["mse", "r2"]
         self.pipeline_3 = self.tsp_3.fit(self.train_df, validation_df=self.validation_df)
         y_pred_df = self.pipeline_3.predict(self.test_df[:-self.future_seq_len_3])
         columns = ["{}_{}".format(target_col, i) for i in range(self.future_seq_len_3)]
@@ -265,7 +274,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         self.pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
         y_pred_1 = self.pipeline_1.predict(self.test_df)
         mse, rs = self.pipeline_1.evaluate(self.test_df,
-                                           metrics=["mean_squared_error", "r_square"])
+                                           metrics=["mse", "r2"])
         print("Evaluation result: Mean square error is: {}, R square is: {}.".format(mse, rs))
 
         dirname = tempfile.mkdtemp(prefix="saved_pipeline")
@@ -282,7 +291,7 @@ class TestTimeSequencePipeline(ZooTestCase):
 
         new_pipeline.fit(self.train_df, epoch_num=1)
         new_mse, new_rs = new_pipeline.evaluate(self.test_df,
-                                                metrics=["mean_squared_error", "r_square"])
+                                                metrics=["mse", "r2"])
         print("Evaluation result after restore and fit: "
               "Mean square error is: {}, R square is: {}.".format(new_mse, new_rs))
 
@@ -291,7 +300,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         self.pipeline_3 = self.tsp_3.fit(self.train_df, validation_df=self.validation_df)
         y_pred_3 = self.pipeline_3.predict(self.test_df)
         mse, rs = self.pipeline_3.evaluate(self.test_df,
-                                           metrics=["mean_squared_error", "r_square"])
+                                           metrics=["mse", "r2"])
         print("Evaluation result: Mean square error is: {}, R square is: {}.".format(mse, rs))
 
         dirname = tempfile.mkdtemp(prefix="saved_pipeline")
@@ -311,7 +320,7 @@ class TestTimeSequencePipeline(ZooTestCase):
 
         new_pipeline.fit(self.train_df, epoch_num=10)
         new_mse, new_rs = new_pipeline.evaluate(self.test_df,
-                                                metrics=["mean_squared_error", "r_square"])
+                                                metrics=["mse", "r2"])
         print("Evaluation result after restore and fit: "
               "Mean square error is: {}, R square is: {}.".format(new_mse, new_rs))
 
@@ -361,8 +370,9 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert y_pred_random_1.shape[0] >= self.test_sample_num - max_past_seq_len + 1
         assert y_pred_random_1.shape[0] <= self.test_sample_num - min_past_seq_len + 1
         assert y_pred_random_1.shape[1] == self.future_seq_len_1 + 1
-        mse, rs = random_pipeline_1.evaluate(self.test_df,
-                                             metrics=["mean_squared_error", "r_square"])
+        mse, rs = random_pipeline_1.evaluate(self.test_df, metrics=["mse", "r2"])
+        assert len(mse) == self.future_seq_len_1
+        assert len(rs) == self.future_seq_len_1
         assert isinstance(mse, np.float)
         assert isinstance(rs, np.float)
 
@@ -378,7 +388,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert y_pred_random_3.shape[0] <= self.test_sample_num - min_past_seq_len + 1
         assert y_pred_random_3.shape[1] == self.future_seq_len_3 + 1
         mse, rs = random_pipeline_3.evaluate(self.test_df,
-                                             metrics=["mean_squared_error", "r_square"])
+                                             metrics=["mse", "r2"])
         assert len(mse) == self.future_seq_len_3
         assert len(rs) == self.future_seq_len_3
 

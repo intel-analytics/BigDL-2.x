@@ -14,9 +14,14 @@
 # limitations under the License.
 #
 
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import r2_score
+from sklearn.metrics import mean_squared_error as MSE
+from sklearn.metrics import r2_score as R2
+from sklearn.metrics import mean_absolute_error as MAE
+from sklearn.metrics import mean_squared_log_error as MSLE
 import numpy as np
+
+
+EPSILON = 1e-10
 
 
 def check_input(y_true, y_pred, multioutput):
@@ -55,6 +60,7 @@ def check_input(y_true, y_pred, multioutput):
 def sMAPE(y_true, y_pred, multioutput='raw_values'):
     """
     calculate Symmetric mean absolute percentage error (sMAPE).
+    <math> \text{SMAPE} = \frac{100\%}{n} \sum_{t=1}^n \frac{|F_t-A_t|}{|A_t|+|F_t|}</math>
     :param y_true: array-like of shape = (n_samples) or (n_samples, n_outputs)
         Ground truth (correct) target values.
     :param y_pred: array-like of shape = (n_samples) or (n_samples, n_outputs)
@@ -65,11 +71,142 @@ def sMAPE(y_true, y_pred, multioutput='raw_values'):
         array of floating point values, one for each individual target.
     """
     y_true, y_pred = check_input(y_true, y_pred, multioutput)
-    output_errors = np.mean(100 * np.abs(y_true - y_pred) / (np.abs(y_true) + np.abs(y_pred)),
-                            axis=0,)
+    output_errors = np.mean(100 * np.abs(y_true - y_pred) / (np.abs(y_true) + np.abs(y_pred) + EPSILON), axis=0,)
     if multioutput == 'raw_values':
         return output_errors
     return np.mean(output_errors)
+
+
+def MPE(y_true, y_pred, multioutput='raw_values'):
+    """
+    calculate mean percentage error (MPE).
+    <math> \text{MPE} = \frac{100\%}{n}\sum_{t=1}^n \frac{a_t-f_t}{a_t} </math>
+    :param y_true: array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+    :param y_pred: array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Estimated target values.
+    :param multioutput: string in ['raw_values', 'uniform_average']
+    :return:float or ndarray of floats
+        A non-negative floating point value (the best value is 0.0), or an
+        array of floating point values, one for each individual target.
+    """
+    y_true, y_pred = check_input(y_true, y_pred, multioutput)
+    output_errors = np.mean(100 * (y_true - y_pred) / (y_true + EPSILON), axis=0,)
+    if multioutput == 'raw_values':
+        return output_errors
+    return np.mean(output_errors)
+
+
+def MAPE(y_true, y_pred, multioutput='raw_values'):
+    """
+    calculate mean absolute percentage error (MAPE).
+    <math>\mbox{M} = \frac{100\%}{n}\sum_{t=1}^n  \left|\frac{A_t-F_t}{A_t}\right|, </math>
+    :param y_true: array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+    :param y_pred: array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Estimated target values.
+    :param multioutput: string in ['raw_values', 'uniform_average']
+    :return:float or ndarray of floats
+        A non-negative floating point value (the best value is 0.0), or an
+        array of floating point values, one for each individual target.
+    """
+    y_true, y_pred = check_input(y_true, y_pred, multioutput)
+    output_errors = np.mean(100 * np.abs((y_true - y_pred) / (y_true + EPSILON)), axis=0,)
+    if multioutput == 'raw_values':
+        return output_errors
+    return np.mean(output_errors)
+
+
+def MDAPE(y_true, y_pred, multioutput='raw_values'):
+    """
+    calculate Median Absolute Percentage Error (MDAPE).
+    :param y_true: array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+    :param y_pred: array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Estimated target values.
+    :param multioutput: string in ['raw_values', 'uniform_average']
+    :return:float or ndarray of floats
+        A non-negative floating point value (the best value is 0.0), or an
+        array of floating point values, one for each individual target.
+    """
+    y_true, y_pred = check_input(y_true, y_pred, multioutput)
+    output_errors = np.median(100 * np.abs((y_true - y_pred) / (y_true + EPSILON)), axis=0,)
+    if multioutput == 'raw_values':
+        return output_errors
+    return np.mean(output_errors)
+
+
+def sMDAPE(y_true, y_pred, multioutput='raw_values'):
+    """
+    calculate Symmetric Median Absolute Percentage Error (sMDAPE).
+    :param y_true: array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+    :param y_pred: array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Estimated target values.
+    :param multioutput: string in ['raw_values', 'uniform_average']
+    :return:float or ndarray of floats
+        A non-negative floating point value (the best value is 0.0), or an
+        array of floating point values, one for each individual target.
+    """
+    y_true, y_pred = check_input(y_true, y_pred, multioutput)
+    output_errors = np.median(100 * np.abs(y_true - y_pred) / (np.abs(y_true) + np.abs(y_pred) + EPSILON), axis=0, )
+    if multioutput == 'raw_values':
+        return output_errors
+    return np.mean(output_errors)
+
+
+def ME(y_true, y_pred, multioutput='raw_values'):
+    """
+    calculate Mean Error (ME).
+    :param y_true: array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+    :param y_pred: array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Estimated target values.
+    :param multioutput: string in ['raw_values', 'uniform_average']
+    :return:float or ndarray of floats
+        A non-negative floating point value (the best value is 0.0), or an
+        array of floating point values, one for each individual target.
+    """
+    y_true, y_pred = check_input(y_true, y_pred, multioutput)
+    output_errors = np.mean(y_true - y_pred, axis=0,)
+    if multioutput == 'raw_values':
+        return output_errors
+    return np.mean(output_errors)
+
+
+def MSPE(y_true, y_pred, multioutput='raw_values'):
+    """
+    calculate mean squared percentage error (MSPE).
+    <math>\operatorname{MSPE}(L)=\operatorname{E}\left[\left( g(x_i)-\widehat{g}(x_i)\right)^2\right].</math>
+    :param y_true: array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+    :param y_pred: array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Estimated target values.
+    :param multioutput: string in ['raw_values', 'uniform_average']
+    :return:float or ndarray of floats
+        A non-negative floating point value (the best value is 0.0), or an
+        array of floating point values, one for each individual target.
+    """
+    y_true, y_pred = check_input(y_true, y_pred, multioutput)
+    output_errors = np.mean(np.square(y_true - y_pred), axis=0,)
+    if multioutput == 'raw_values':
+        return output_errors
+    return np.mean(output_errors)
+
+
+def RMSE(y_true, y_pred, multioutput='raw_values'):
+    """
+    calculate square root of the mean squared error (RMSE).
+    :param y_true: array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+    :param y_pred: array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Estimated target values.
+    :param multioutput: string in ['raw_values', 'uniform_average']
+    :return:float or ndarray of floats
+        A non-negative floating point value (the best value is 0.0), or an
+        array of floating point values, one for each individual target.
+    """
+    return np.sqrt(MSE(y_true, y_pred, multioutput=multioutput))
 
 
 class Evaluator(object):
@@ -78,9 +215,20 @@ class Evaluator(object):
     """
 
     metrics_func = {
-        'mean_squared_error': mean_squared_error,
-        'r_square': r2_score,
-        'sMAPE': sMAPE
+        # Absolute
+        'me': ME,
+        'mae': MAE,
+        'mse': MSE,
+        'rmse': RMSE,
+        'msle': MSLE,
+        'r2': R2,
+        # Relative
+        'mpe': MPE,
+        'mape': MAPE,
+        'mspe': MSPE,
+        'smape': sMAPE,
+        'mdape': MDAPE,
+        'smdape': sMDAPE,
     }
 
     @staticmethod
