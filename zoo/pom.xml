@@ -24,7 +24,7 @@
         <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>2.2.4</scalatest.version>
         <spark.version>2.1.0</spark.version>
-        <bigdl.version>0.9.1</bigdl.version>
+        <bigdl.version>0.10.0</bigdl.version>
         <core.artifactId>zoo-core-dist-all</core.artifactId>
         <core.dependencyType>pom</core.dependencyType>
         <data-store-url>http://download.tensorflow.org</data-store-url>
