@@ -27,10 +27,18 @@ import org.slf4j.LoggerFactory
 import scala.reflect.ClassTag
 import scala.util.Random
 
-// This is a pojo style local Estimator, will fit, train, evaluate on pojo dataset.
+/**
+ * This is a pojo style local Estimator, will fit, train, evaluate on pojo data set.
+ *
+ * @param model         the model defined as AbstractModule
+ * @param criterion     the criterion for loss
+ * @param optmizeMethod the optimize method
+ * @param validations   the validation metrics
+ * @param threadNum     the number of threads
+ */
 case class LocalEstimator(model: AbstractModule[Activity, Activity, Float],
                           criterion: Criterion[Float],
-                          optimzeMethod: OptimMethod[Float],
+                          optmizeMethod: OptimMethod[Float],
                           validations: Array[ValidationMethod[Float]],
                           threadNum: Int) extends EstimateSupportive {
 
@@ -68,6 +76,16 @@ case class LocalEstimator(model: AbstractModule[Activity, Activity, Float],
   val workingModelsWAndG = workingModels.map(retrieveParameters(_))
   val workingCriterions = (1 to threadNum).map(_ => criterion.cloneCriterion())
 
+  /**
+   * fit with pojo train data
+   *
+   * @param trainData     the array of train data
+   * @param testData      the array of test data
+   * @param transformer   the transformer to transfer data array to mini-batch
+   * @param batchSize     the batch size for training
+   * @param epoch         the epoch for training
+   * @tparam T            the type of the data
+   */
   def fit[T: ClassTag](trainData: Array[T],
                        testData: Array[T],
                        transformer: Array[T] => MiniBatch[Float],
@@ -85,6 +103,13 @@ case class LocalEstimator(model: AbstractModule[Activity, Activity, Float],
     })
   }
 
+  /**
+   * train with mini-batches
+   *
+   * @param epoch            the epoch number
+   * @param trainMiniBatches the train data in mini-batches
+   * @param testMiniBatches  the test data in mini-batches
+   */
   def train(epoch: Int,
             trainMiniBatches: Seq[MiniBatch[Float]],
             testMiniBatches: Seq[MiniBatch[Float]]): Unit = {
@@ -102,6 +127,13 @@ case class LocalEstimator(model: AbstractModule[Activity, Activity, Float],
     }
   }
 
+  /**
+   * fit with data in mini-batches
+   *
+   * @param trainMiniBatches      the train data in mini-batches
+   * @param miniBatchNumPerEpoch  the number of the mini-batches per epoch
+   * @param testMiniBatches       the test data in mini-batches
+   */
   def fit(trainMiniBatches: Seq[MiniBatch[Float]],
           miniBatchNumPerEpoch: Int,
           testMiniBatches: Seq[MiniBatch[Float]]): Unit = {
@@ -123,6 +155,12 @@ case class LocalEstimator(model: AbstractModule[Activity, Activity, Float],
     })
   }
 
+  /**
+   * optimize the model with mini-batch
+   *
+   * @param miniBatch the train data in mini-batch
+   * @return  the loss after this iteration training
+   */
   def optimize(miniBatch: MiniBatch[Float]): Float = {
     var b = 0
     val stackSize = miniBatch.size() / threadNum
@@ -173,10 +211,15 @@ case class LocalEstimator(model: AbstractModule[Activity, Activity, Float],
     val loss = lossSum / parallelism
     grad.div(parallelism)
 
-    optimzeMethod.optimize(_ => (loss, grad), weight)
+    optmizeMethod.optimize(_ => (loss, grad), weight)
     loss
   }
 
+  /**
+   * validate the model with the mini-batch
+   *
+   * @param miniBatches the validation data in mini-batch
+   */
   def validate(miniBatches: Seq[MiniBatch[Float]]): Unit = {
     val results: Seq[Seq[ValidationResult]] =
       miniBatches.map(miniBatch => {
