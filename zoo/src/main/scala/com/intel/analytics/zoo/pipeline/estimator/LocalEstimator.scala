@@ -231,8 +231,7 @@ case class LocalEstimator(model: AbstractModule[Activity, Activity, Float],
                                         localModel: Module[Float]): Unit = {
     val (localWeightBias, localGradWeightBias) = localModel.parameters()
     val size = localGradWeightBias.map(_.nElement()).sum
-    implicit var ev = scala.reflect.ClassTag.Float
-    val storage = Storage(size)(ev).asInstanceOf[Storage[Float]]
+    val storage = Storage[Float](size)
     var i = 0
     while (i < localWeightBias.length) {
       if (localWeightBias(i) != null) {
