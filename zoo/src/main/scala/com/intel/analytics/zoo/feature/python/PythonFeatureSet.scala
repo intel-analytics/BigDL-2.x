@@ -17,7 +17,8 @@
 package com.intel.analytics.zoo.feature.python
 
 import com.intel.analytics.bigdl.DataSet
-import com.intel.analytics.bigdl.dataset.Transformer
+import com.intel.analytics.bigdl.dataset.{Transformer, Sample => JSample}
+import com.intel.analytics.bigdl.python.api.Sample
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image._
 import com.intel.analytics.zoo.common.PythonZoo
@@ -37,15 +38,31 @@ object PythonFeatureSet {
 class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo[T] {
   def createFeatureSetFromImageFrame(
         imageFrame: ImageFrame,
-        memoryType: String): FeatureSet[ImageFeature] = {
+        memoryType: String,
+        sequentialOrder: Boolean, shuffle: Boolean): FeatureSet[ImageFeature] = {
     require(imageFrame.isDistributed(), "Only support distributed ImageFrame")
-    FeatureSet.rdd(imageFrame.toDistributed().rdd, MemoryType.fromString(memoryType))
+    FeatureSet.rdd(imageFrame.toDistributed().rdd, MemoryType.fromString(memoryType),
+      sequentialOrder = sequentialOrder, shuffle = shuffle)
   }
 
   def createFeatureSetFromRDD(
         data: JavaRDD[Any],
-        memoryType: String): FeatureSet[Any] = {
-    FeatureSet.rdd(data, MemoryType.fromString(memoryType))
+        memoryType: String,
+        sequentialOrder: Boolean,
+        shuffle: Boolean): FeatureSet[Any] = {
+    FeatureSet.rdd(data, MemoryType.fromString(memoryType),
+      sequentialOrder = sequentialOrder, shuffle = shuffle)
+  }
+
+  def createSampleFeatureSetFromRDD(data: JavaRDD[Sample],
+                                    memoryType: String,
+                                    sequentialOrder: Boolean,
+                                    shuffle: Boolean)
+  : FeatureSet[JSample[T]] = {
+    FeatureSet.rdd(toJSample(data),
+      MemoryType.fromString(memoryType),
+      sequentialOrder = sequentialOrder,
+      shuffle = shuffle)
   }
 
   def transformFeatureSet(featureSet: FeatureSet[Any],

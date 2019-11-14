@@ -22,6 +22,7 @@ import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.pipeline.api.net.TorchNet.TorchModelHolder
 import org.apache.commons.io.FileUtils
 
@@ -32,7 +33,6 @@ class TorchCriterion private(private val lossHolder: TorchModelHolder)
 
   implicit val ev = TensorNumeric.NumericFloat
   implicit val tag: ClassTag[Float] = ClassTag.Float
-  gradInput = Activity.allocate[Tensor[Float], Float]().toTensor
 
   /**
    * sequential id in cpp: std::vector<std::shared_ptr<torch::jit::script::Module>> handles;
@@ -46,35 +46,35 @@ class TorchCriterion private(private val lossHolder: TorchModelHolder)
   }
 
   override def updateOutput(input: Activity, target: Activity): Float = {
-    if (input.isTable || target.isTable) {
-      throw new UnsupportedOperationException()
-    }
-    val inputTensor = input.toTensor
-    val targetTensor = target.toTensor
+    val inputTabel = if (input.isTensor) T(input.toTensor) else input.toTable
+    val targetTable = if (target.isTensor) T(target.toTensor) else target.toTable
 
-    require(inputTensor.isContiguous())
-    require(targetTensor.isContiguous())
+    val (sto1, off1, shape1) = TorchCriterion.extract(inputTabel)
+    val (sto2, off2, shape2) = TorchCriterion.extract(targetTable)
 
-    val result = PytorchModel.lossForwardNative(nativeRef,
-      inputTensor.storage().array(),
-      inputTensor.storageOffset() - 1,
-      inputTensor.size(),
-      targetTensor.storage().array(),
-      targetTensor.storageOffset() - 1,
-      targetTensor.size()
-    )
+    val result = PytorchModelWrapper.lossForwardNative(nativeRef, sto1, off1,
+      shape1, sto2, off2, shape2)
     Tensor(result.getData, result.getShape).mean()
   }
 
   override def updateGradInput(input: Activity, target: Activity): Activity = {
-    if (input.isTable || target.isTable) {
-      throw new UnsupportedOperationException()
-    }
 
-    gradInput.asInstanceOf[Tensor[Float]].resizeAs(input.toTensor)
-    val result = PytorchModel.lossBackwardNative(nativeRef)
-    val resultTensor = Tensor(result.getData, result.getShape)
-    gradInput.toTensor.set(resultTensor)
+    val result = PytorchModelWrapper.lossBackwardNative(nativeRef)
+    if (result.length == 1) {
+      val resultTensor = Tensor(result(0).getData, result(0).getShape)
+      if (gradInput == null) {
+        gradInput = Tensor()
+      }
+      gradInput.toTensor.set(resultTensor)
+    } else {
+      if (gradInput == null) {
+        gradInput = T()
+      }
+      gradInput.toTable.clear()
+      result.foreach { t =>
+        gradInput.toTable.insert(Tensor(t.getData, t.getShape))
+      }
+    }
     gradInput
   }
 
@@ -111,6 +111,20 @@ object TorchCriterion {
         throw io
     }
     nativeRef
+  }
+
+
+  private[net] def extract(t: Table): (Array[Array[Float]], Array[Int], Array[Array[Int]]) = {
+    val tensors = t.toSeq[Tensor[Float]]
+
+    val tuples = tensors.map { t =>
+      require(t.isContiguous())
+      (t.storage(), t.storageOffset() - 1, t.size())
+    }
+    val storages = tuples.map(_._1.array()).toArray
+    val offsets = tuples.map(_._2).toArray
+    val shapes = tuples.map(_._3).toArray
+    (storages, offsets, shapes)
   }
 
 }

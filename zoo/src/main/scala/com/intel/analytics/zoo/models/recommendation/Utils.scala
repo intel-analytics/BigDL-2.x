@@ -270,10 +270,10 @@ object Utils {
     deepTensor
   }
 
-  def rows2sample(r: Row,
-                  sessionLength: Int,
-                  includeHistory: Boolean,
-                  historyLength: Int): Sample[Float] = {
+  def row2sampleSession(r: Row,
+                        sessionLength: Int,
+                        includeHistory: Boolean,
+                        historyLength: Int): Sample[Float] = {
     val label = Tensor[Float](T(r.getAs[Float]("label")))
     val rnnFeature: Array[Float] = r
       .getAs[mutable.WrappedArray[java.lang.Float]]("session").array.map(_.toFloat)
@@ -283,7 +283,7 @@ object Utils {
       val mlpFeature: Array[Float] = r
         .getAs[mutable.WrappedArray[java.lang.Float]]("purchase_history").array.map(_.toFloat)
       val mlpTensor = Tensor(mlpFeature, Array(historyLength))
-      Sample[Float](Array(mlpTensor, rnnTensor), Array(label))
+      Sample[Float](Array(rnnTensor, mlpTensor), Array(label))
     }
     else {
       Sample[Float](Array(rnnTensor), Array(label))

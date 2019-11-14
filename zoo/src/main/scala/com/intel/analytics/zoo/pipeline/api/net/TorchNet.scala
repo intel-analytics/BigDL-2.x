@@ -24,9 +24,11 @@ import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.pipeline.api.Predictable
 import com.intel.analytics.zoo.pipeline.api.net.TorchNet.TorchModelHolder
 import org.apache.commons.io.FileUtils
+import org.slf4j.LoggerFactory
 
 import scala.reflect.ClassTag
 
@@ -34,11 +36,12 @@ import scala.reflect.ClassTag
  * [[TorchNet]] wraps a TorchScript model as a single layer.
  */
 class TorchNet private(private val modelHolder: TorchModelHolder)
-    extends AbstractModule[Tensor[Float], Tensor[Float], Float] with Predictable[Float] {
+    extends AbstractModule[Activity, Activity, Float] with Predictable[Float] {
 
   protected val module: Module[Float] = this
   implicit val ev = TensorNumeric.NumericFloat
   implicit val tag: ClassTag[Float] = ClassTag.Float
+  val logger = LoggerFactory.getLogger(getClass)
 
   var weights: Tensor[Float] = _
   var gradients: Tensor[Float] = _
@@ -55,7 +58,7 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     if (weights == null) {
       val w = PytorchModel.getWeightNative(ref).clone()
       weights = Tensor(w, Array(w.length))
-    } else {
+    } else if (!weights.isEmpty) {
       PytorchModel.updateWeightNative(ref, weights.storage().array())
     }
 
@@ -65,36 +68,77 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     ref
   }
 
+  override def evaluate(): this.type = {
+    nativeRef
+    super.evaluate()
+    if (!weights.isEmpty) {
+      PytorchModel.updateWeightNative(nativeRef, weights.storage().array())
+    }
+    this
+  }
+
   override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
     nativeRef
     (Array(weights), Array(gradients))
   }
 
-  override def updateOutput(input: Tensor[Float]): Tensor[Float] = {
+  override def updateOutput(input: Activity): Activity = {
+    val inputTable = if (input.isTensor) T(input.toTensor) else input.toTable
+
+    val (sto1, off1, shape1) = TorchCriterion.extract(inputTable)
+
     if (this.isTraining()) {
       PytorchModel.updateWeightNative(this.nativeRef, weights.storage().array())
     }
 
-    require(input.isContiguous())
-    val data = input.storage().array()
-    val size = input.size()
-    val offset = input.storageOffset() - 1
-    val result = PytorchModel.modelForwardNative(nativeRef, this.isTraining(), data, offset, size)
-    val resultTensor = Tensor(result.getData, result.getShape)
-    output.set(resultTensor)
+    val result = PytorchModelWrapper.modelForwardNative(nativeRef,
+      this.isTraining(), sto1, off1, shape1)
+    if (result.length == 1) {
+      val resultTensor = Tensor(result(0).getData, result(0).getShape)
+      if (output == null) {
+        output = Tensor()
+      }
+      output.toTensor.set(resultTensor)
+    } else {
+      if (output == null) {
+        output = T()
+      }
+      output.toTable.clear()
+      result.foreach { t =>
+        output.toTable.insert(Tensor(t.getData, t.getShape))
+      }
+    }
+    output
   }
 
-  override def updateGradInput(input: Tensor[Float], gradOutput: Tensor[Float]): Tensor[Float] = {
-    val data = gradOutput.storage().array()
-    val size = gradOutput.size()
-    val offset = gradOutput.storageOffset() - 1
-    val result = PytorchModel.modelBackwardNative(nativeRef, data, offset, size)
-    val resultTensor = Tensor(result.getData, result.getShape)
+  override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
+    val gradOutputTable = if (gradOutput.isTensor) T(gradOutput.toTensor) else gradOutput.toTable
 
+    val (sto1, off1, shape1) = TorchCriterion.extract(gradOutputTable)
+
+    val result = PytorchModelWrapper.modelBackwardNative(nativeRef, sto1, off1, shape1)
+    // update gradients
     gradients.resizeAs(weights)
     val g = PytorchModel.getGradientNative(this.nativeRef)
     System.arraycopy(g, 0, gradients.storage().array(), 0, g.length)
-    gradInput.set(resultTensor)
+
+    // update gradinput
+    if (result.length == 1) {
+      val resultTensor = Tensor(result(0).getData, result(0).getShape)
+      if (gradInput == null) {
+        gradInput = Tensor()
+      }
+      gradInput.toTensor.set(resultTensor)
+    } else {
+      if (gradInput == null) {
+        gradInput = T()
+      }
+      gradInput.toTable.clear()
+      result.foreach { t =>
+        gradInput.toTable.insert(Tensor(t.getData, t.getShape))
+      }
+    }
+    gradInput
   }
 
   // TODO: use release if possible. now for larger model it's causing early release
@@ -102,18 +146,21 @@ class TorchNet private(private val modelHolder: TorchModelHolder)
     super.finalize()
     PytorchModel.releaseModelNative(nativeRef)
   }
+
+  /**
+   * export the model to path as a torch script module.
+   */
+  def savePytorch(path : String, overWrite: Boolean = false): Unit = {
+    PytorchModel.updateWeightNative(this.nativeRef, weights.storage().array())
+    PytorchModel.saveModelNative(nativeRef, path)
+  }
 }
 
 object TorchNet {
-
-  PytorchModel.isLoaded
-  loadPytorchNatives() // load once per JVM
-
   private val modelBytesRegistry = new RegistryMap[Array[Byte]]()
 
   @transient
   private lazy val inDriver = NetUtils.isDriver
-
 
   class TorchModelHolder(@transient var torchBytes: Array[Byte], private var id: String)
     extends SerializationHolder {
@@ -166,28 +213,6 @@ object TorchNet {
     val modelbytes = Files.readAllBytes(Paths.get(modelPath))
     new TorchNet(new TorchModelHolder(modelbytes, modelPath))
   }
-
-  // extract libs from zoo jar file
-  private def loadPytorchNatives(): Unit = {
-    loadNativelib("pytorch/libpytorch-engine.so")
-  }
-
-  private def loadNativelib(path: String): Unit = {
-    val inputStream = TorchNet.getClass.getResourceAsStream(s"/${path}")
-    val file = File.createTempFile("PytorchLoader", "tmp")
-    val src = Channels.newChannel(inputStream)
-    val dest = new FileOutputStream(file).getChannel
-    dest.transferFrom(src, 0, Long.MaxValue)
-    dest.close()
-    src.close()
-    val filePath = file.getAbsolutePath
-    try {
-      System.load(filePath)
-    } finally {
-      file.delete()
-    }
-  }
-
 
   private[net] def loadPytorchModel(bytes: Array[Byte]): Long = {
     var nativeRef = -1L

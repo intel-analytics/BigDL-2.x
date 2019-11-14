@@ -24,7 +24,7 @@ master=... // spark master
 modelPath=... // model path.
 imagePath=... // image path.
 
-sh ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+bash ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master $master \
 --conf spark.executor.cores=1 \
 --total-executor-cores 4 \

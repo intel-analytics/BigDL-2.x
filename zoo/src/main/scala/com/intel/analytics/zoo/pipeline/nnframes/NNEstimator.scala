@@ -25,9 +25,13 @@ import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.bigdl.utils.{File, T}
 import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.bigdl.{Criterion, DataSet, Module}
+import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.feature.common.{Preprocessing, _}
+import com.intel.analytics.zoo.feature.pmem.{DRAM, MemoryType}
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
+import com.intel.analytics.zoo.pipeline.api.keras.models.InternalDistriOptimizer
+import com.intel.analytics.zoo.pipeline.api.net.TorchNet
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
@@ -134,6 +138,20 @@ private[nnframes] trait TrainingParams[@specialized(Float, Double) T] extends Pa
    * Get check point path.
    */
   def getCheckpointPath: String = $(checkpointPath)
+
+  /**
+   * How to cache the training data, options are defined in com.intel.analytics.zoo.feature.pmem.
+   * If it's DRAM, will cache dataset into dynamic random-access memory
+   * If it's PMEM, will cache dataset into Intel Optane DC Persistent Memory
+   * If it's DISK_AND_DRAM(numSlice: Int), will cache dataset into disk, and only hold 1/n
+   *      of the data into memory during the training. After going through the 1/n, we will
+   *      release the current cache, and load another 1/n into memory.
+   * By default, DRAM is used.
+   */
+  final val dataCacheLevel = new Param[MemoryType](
+    this, "dataCacheLevel", "cache the data in memory, disk, ")
+
+  def getDataCacheLevel: MemoryType = $(dataCacheLevel)
 }
 
 /**
@@ -235,6 +253,11 @@ class NNEstimator[T: ClassTag] private[zoo] (
     set(cachingSample, value)
   }
   setDefault(cachingSample, true)
+
+  def setDataCacheLevel(value: MemoryType): this.type = {
+    set(dataCacheLevel, value)
+  }
+  setDefault(dataCacheLevel, DRAM)
 
   /**
    * Clear clipping params, in this case, clipping will not be applied.
@@ -358,7 +381,7 @@ class NNEstimator[T: ClassTag] private[zoo] (
 
   private def getDataSet(
       dataFrame: DataFrame,
-      batchSize: Int): DataSet[MiniBatch[T]] = {
+      batchSize: Int): FeatureSet[MiniBatch[T]] = {
 
     val sp = $(samplePreprocessing).asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]]
     val featureColIndex = dataFrame.schema.fieldIndex($(featuresCol))
@@ -378,10 +401,11 @@ class NNEstimator[T: ClassTag] private[zoo] (
       val labels = labelFunc(row)
       (features, labels)
     }
+
     val initialDataSet = if ($(cachingSample)) {
-      DataSet.rdd(sp.apply(featureAndLabel))
+      FeatureSet.rdd(sp.apply(featureAndLabel), memoryType = $(dataCacheLevel))
     } else {
-      DataSet.rdd(featureAndLabel).transform(sp)
+      FeatureSet.rdd(featureAndLabel, memoryType = $(dataCacheLevel)).transform(sp)
     }
 
     initialDataSet.transform(SampleToMiniBatch[T](batchSize))
@@ -390,7 +414,7 @@ class NNEstimator[T: ClassTag] private[zoo] (
   protected override def internalFit(dataFrame: DataFrame): NNModel[T] = {
     val trainingDataSet = getDataSet(dataFrame, $(batchSize))
     val endTrigger = if (isSet(endWhen)) $(endWhen) else Trigger.maxEpoch($(maxEpoch))
-    val optimizer = Optimizer(model, trainingDataSet, criterion)
+    val optimizer = new InternalDistriOptimizer(model, null, criterion)
       .setOptimMethod($(optimMethod))
       .setEndWhen(endTrigger)
 
@@ -416,11 +440,16 @@ class NNEstimator[T: ClassTag] private[zoo] (
       optimizer.setConstantGradientClipping(constantClippingValues._1, constantClippingValues._2)
     }
 
+    val validationFeatureset = if (validationTrigger.isDefined) {
+      getDataSet(validationDF, validationBatchSize)
+    } else {
+      null
+    }
+
     if (validationTrigger.isDefined) {
-      val validationSamples = getDataSet(validationDF, validationBatchSize)
       optimizer.setValidation(
         validationTrigger.get,
-        validationSamples,
+        validationFeatureset,
         validationMethods)
       if (this.validationSummary.isDefined) {
         optimizer.setValidationSummary(this.validationSummary.get)
@@ -438,8 +467,15 @@ class NNEstimator[T: ClassTag] private[zoo] (
       }
     }
 
-    val optimizedModel = optimizer.optimize()
-    wrapBigDLModel(optimizedModel)
+    optimizer.train(
+      trainingDataSet,
+      criterion,
+      Some(endTrigger),
+      if (isSet(this.checkpointPath)) Some($(checkpointTrigger)) else None,
+      validationFeatureset,
+      validationMethods
+    )
+    wrapBigDLModel(model)
   }
 
   /**
@@ -512,6 +548,35 @@ object NNEstimator {
     new NNEstimator(model, criterion)
       .setSamplePreprocessing(FeatureLabelPreprocessing(
         SeqToTensor(featureSize), SeqToTensor(labelSize))
+    )
+  }
+
+  /**
+   * Construct a [[NNEstimator]] with a feature size and label size. The constructor is useful
+   * when the feature column and label column contains the following data types:
+   * Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The feature and
+   * label data are converted to Tensors with the specified sizes before sending to the model.
+   *
+   * This API is used for multi-input model, where user need to specify the tensor sizes for
+   * each of the model input.
+   *
+   * @param model BigDL module to be optimized
+   * @param criterion  BigDL criterion method
+   * @param featureSize The sizes (Tensor dimensions) of the feature data. e.g. an image may be with
+   *                    width * height = 28 * 28, featureSize = Array(28, 28).
+   * @param labelSize The size (Tensor dimensions) of the label data.
+   */
+  def apply[T: ClassTag](
+      model: Module[T],
+      criterion: Criterion[T],
+      featureSize : Array[Array[Int]],
+      labelSize : Array[Int]
+    )(implicit ev: TensorNumeric[T]): NNEstimator[T] = {
+    new NNEstimator(model, criterion)
+      .setSamplePreprocessing(FeatureLabelPreprocessing(
+        SeqToMultipleTensors(featureSize),
+        SeqToTensor(labelSize)
+      )
     )
   }
 
@@ -625,6 +690,7 @@ class NNModel[T: ClassTag] private[zoo] (
     // concat the prediction and other columns in DF. avoid zip between RDD
     val resultRDD = dataFrame.rdd.mapPartitions { rowIter =>
       val localModel = modelBroadCast.value()
+      localModel.evaluate()
       val featureSteps = featureTransformersBC.value.cloneTransformer()
       val toBatch = toBatchBC.value.cloneTransformer()
 
@@ -702,6 +768,27 @@ object NNModel extends MLReadable[NNModel[_]] {
       .setSamplePreprocessing(SeqToTensor(featureSize) -> TensorToSample())
   }
 
+
+  /**
+   * Construct a [[NNModel]] with sizes of multiple model inputs. The constructor is useful
+   * when the feature column contains the following data types:
+   * Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The feature
+   * data are converted to Tensors with the specified sizes before sending to the model.
+   *
+   * This API is used for multi-input model, where user need to specify the tensor sizes for
+   * each of the model input.
+   *
+   * @param model model to be used, which should be a multi-input model.
+   * @param featureSize The sizes (Tensor dimensions) of the feature data.
+   */
+  def apply[T: ClassTag](
+      model: Module[T],
+      featureSize : Array[Array[Int]]
+    )(implicit ev: TensorNumeric[T]): NNModel[T] = {
+    new NNModel(model)
+      .setSamplePreprocessing(SeqToMultipleTensors(featureSize) -> MultiTensorsToSample())
+  }
+
   /**
    * Construct a [[NNModel]] with a feature Preprocessing.
    *
@@ -741,22 +828,38 @@ object NNModel extends MLReadable[NNModel[_]] {
   private[nnframes] def getMetaAndModel(path: String, sc: SparkContext) = {
     Net // this is necessary to load Net and register the serializer
     val meta = DefaultParamsWriterWrapper.loadMetadata(path, sc)
-    val (modulePath, weightPath) =
-      new Path(path, "module").toString -> new Path(path, "weight").toString
     val typeTag = (meta.metadata \ "tensorDataType").extract[String]
-    val model = typeTag match {
-      case "TensorDouble" =>
-        ModuleLoader.loadFromFile[Double](modulePath, weightPath)
-      case "TensorFloat" =>
-        ModuleLoader.loadFromFile[Float](modulePath, weightPath)
+    val modelType = try {
+      (meta.metadata \ "modelType").extract[String]
+    } catch {
+      // for compatibility with previous AZ versions
+      case _: Throwable => "default"
+    }
+
+    val model = modelType match {
+      case "TorchNet" =>
+        val torchPath = new Path(path, "torchscript.pt").toString
+        TorchNet(torchPath)
+      case "default" =>
+        val (modulePath, weightPath) =
+          new Path(path, "module").toString -> new Path(path, "weight").toString
+        typeTag match {
+          case "TensorDouble" =>
+            ModuleLoader.loadFromFile[Double](modulePath, weightPath)
+          case "TensorFloat" =>
+            ModuleLoader.loadFromFile[Float](modulePath, weightPath)
+          case _ =>
+            throw new Exception("Only support float and double for now")
+        }
       case _ =>
-        throw new Exception("Only support float and double for now")
+        throw new IllegalArgumentException(s"unsupported modelType: $modelType")
     }
 
     val featurePreprocessing =
       File.load[Preprocessing[Any, Any]](new Path(path, "samplePreprocessing").toString)
 
     (meta, model, typeTag, featurePreprocessing)
+
   }
 
   class NNModelWriter[@specialized(Float, Double) T: ClassTag](
@@ -783,23 +886,35 @@ object NNModel extends MLReadable[NNModel[_]] {
       sc: SparkContext,
       isOverWrite: Boolean = false,
       extraMetadata: Option[JObject] = None)(implicit ev: TensorNumeric[T]): Unit = {
+
     val tensorDataType = ev.getType() match {
       case TensorDouble => "TensorDouble"
       case TensorFloat => "TensorFloat"
       case _ => throw new Exception("Only support Double and Float for now")
     }
 
-    val extra = extraMetadata.getOrElse(JObject()) ~ ("tensorDataType" -> tensorDataType)
-    // bypass the default save for samplePreprocessing
     val spCache = instance.getSamplePreprocessing
+    File.save(spCache, new Path(path, "samplePreprocessing").toString, isOverWrite)
+
+    val modelType = module match {
+      case torchnet: TorchNet =>
+        val modulePath = new Path(path, "torchscript.pt").toString
+        torchnet.savePytorch(modulePath, isOverWrite)
+        "TorchNet"
+      case _ =>
+        val (modulePath, weightPath) =
+          new Path(path, "module").toString -> new Path(path, "weight").toString
+        module.saveModule(modulePath, weightPath, isOverWrite)
+        "default"
+    }
+
+    val extra = extraMetadata.getOrElse(JObject()) ~ ("tensorDataType" -> tensorDataType) ~ (
+      "modelType" -> modelType)
+
+    // bypass the default save for samplePreprocessing
     instance.clear(instance.samplePreprocessing)
     DefaultParamsWriterWrapper.saveMetadata(instance, path, sc, Option(extra))
     instance.setSamplePreprocessing(spCache)
-    val (modulePath, weightPath) =
-      new Path(path, "module").toString -> new Path(path, "weight").toString
-    module.saveModule(modulePath, weightPath, isOverWrite)
-
-    File.save(spCache, new Path(path, "samplePreprocessing").toString, isOverWrite)
   }
 
   override def read: MLReader[NNModel[_]] = new NNModelReader

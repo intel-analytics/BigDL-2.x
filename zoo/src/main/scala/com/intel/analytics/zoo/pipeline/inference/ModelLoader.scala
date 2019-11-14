@@ -34,19 +34,13 @@ object ModelLoader extends InferenceSupportive {
   GraphNet
   WordEmbedding
 
-  timing("bigdl init engine") {
-    System.setProperty("bigdl.localMode", System.getProperty("bigdl.localMode", "true"))
-    System.setProperty("bigdl.coreNumber", System.getProperty("bigdl.coreNumber", "1"))
-    Engine.init
-  }
-
   def loadFloatModel(modelPath: String, weightPath: String)
     : AbstractModule[Activity, Activity, Float] = {
     timing(s"load model") {
       logger.info(s"load model from $modelPath and $weightPath")
       val model = ModuleLoader.loadFromFile[Float](modelPath, weightPath)
       logger.info(s"loaded model as $model")
-      model
+      model.quantize()
     }
   }
 
@@ -56,7 +50,7 @@ object ModelLoader extends InferenceSupportive {
       logger.info(s"load model from $modelPath and $weightPath")
       val model = CaffeLoader.loadCaffe[Float](modelPath, weightPath)._1.asInstanceOf[Graph[Float]]
       logger.info(s"loaded model as $model")
-      model
+      model.quantize()
     }
   }
 
@@ -66,6 +60,19 @@ object ModelLoader extends InferenceSupportive {
     timing("load model") {
       logger.info(s"load model from $modelPath")
       val model = TFNet(modelPath, config)
+      logger.info(s"loaded model as $model")
+      model
+    }
+  }
+
+  def loadFloatModelForTFSavedModel(modelPath: String,
+                                    inputs: Array[String],
+                                    outputs: Array[String],
+                                    config: TFNet.SessionConfig = TFNet.defaultSessionConfig)
+  : AbstractModule[Activity, Activity, Float] = {
+    timing("load model") {
+      logger.info(s"load model from $modelPath")
+      val model = TFNet.fromSavedModel(modelPath, inputs, outputs)
       logger.info(s"loaded model as $model")
       model
     }

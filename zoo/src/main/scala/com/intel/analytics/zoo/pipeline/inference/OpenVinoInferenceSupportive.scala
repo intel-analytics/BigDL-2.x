@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.pipeline.inference
 import java.io.{ByteArrayInputStream, File, FileOutputStream, InputStream}
 import java.nio.channels.Channels
 
-import com.google.common.io.Files
+import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 import com.intel.analytics.zoo.core.openvino.OpenvinoNativeLoader
 import org.slf4j.LoggerFactory
@@ -77,7 +77,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
   var calibrationLibPath: String = _
 
   timing("prepare openvino scripts") {
-    val ovtmpDir = Files.createTempDir()
+    val ovtmpDir = Utils.createTmpDir("ZooVino").toFile()
     openvinoTempDirPath = ovtmpDir.getCanonicalPath
     optimizeObjectDetectionSHPath = s"$openvinoTempDirPath$optimizeObjectDetectionRelativePath"
     optimizeImageClassificationSHPath =
@@ -109,26 +109,41 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
     writeFile(calibrateTFInputStream, openvinoTempDirPath, calibrateTFPath)
 
     val moTarPath = "/model-optimizer.tar.gz"
-    val moTarInputStream = OpenvinoNativeLoaderClass.getResourceAsStream(moTarPath)
+
+    val moTarInputStream = scala.util.Properties.isMac match {
+      case true => OpenvinoNativeLoaderClass
+        .getResourceAsStream("/darwin-x86_64" + moTarPath)
+      case false => OpenvinoNativeLoaderClass
+        .getResourceAsStream(moTarPath)
+    }
     val moTarFile = writeFile(moTarInputStream, openvinoTempDirPath, moTarPath)
-    s"tar -xzvf ${moTarFile.getAbsolutePath} -C $openvinoTempDirPath" !;
+    logger.info("Extracting model-optimizer.tar.gz")
+    s"tar -xzf ${moTarFile.getAbsolutePath} -C $openvinoTempDirPath" !;
 
     val ieTarPath = "/inference-engine-bin.tar.gz"
-    val ieTarInputStream = OpenvinoNativeLoaderClass.getResourceAsStream(ieTarPath)
+    val ieTarInputStream = scala.util.Properties.isMac match {
+      case true => OpenvinoNativeLoaderClass
+        .getResourceAsStream("/darwin-x86_64" + ieTarPath)
+      case false => OpenvinoNativeLoaderClass
+        .getResourceAsStream(ieTarPath)
+    }
     val ieTarFile = writeFile(ieTarInputStream, openvinoTempDirPath, ieTarPath)
-    s"tar -xzvf ${ieTarFile.getAbsolutePath} -C $openvinoTempDirPath" !;
+    logger.info("Extracting inference-engine-bin.tar.gz")
+    s"tar -xzf ${ieTarFile.getAbsolutePath} -C $openvinoTempDirPath" !;
 
     val igTarPath = "/inference-graphs.tar.gz"
     val igTarInputStream = OpenvinoNativeLoaderClass.getResourceAsStream(igTarPath)
     val igTarFile = writeFile(igTarInputStream, openvinoTempDirPath, igTarPath)
-    s"tar -xzvf ${igTarFile.getAbsolutePath} -C $openvinoTempDirPath" !;
+    logger.info("Extracting inference-graphs.tar.gz")
+    s"tar -xzf ${igTarFile.getAbsolutePath} -C $openvinoTempDirPath" !;
 
     val pcTarPath = "/pipeline-configs.tar.gz"
     val pcTarInputStream = OpenvinoNativeLoaderClass.getResourceAsStream(pcTarPath)
     val pcTarFile = writeFile(pcTarInputStream, openvinoTempDirPath, pcTarPath)
-    s"tar -xzvf ${pcTarFile.getAbsolutePath} -C $openvinoTempDirPath" !;
+    logger.info("Extracting pipeline-configs.tar.gz")
+    s"tar -xzf ${pcTarFile.getAbsolutePath} -C $openvinoTempDirPath" !;
 
-    s"ls -alh $openvinoTempDirPath" !;
+    // s"ls -alh $openvinoTempDirPath" !;
   }
 
   def optimizeTFImageClassificationModel(modelPath: String,
@@ -370,7 +385,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
                           modelType: String,
                           pipelineConfigPath: String,
                           extensionsConfigPath: String): OpenVINOModel = {
-    val tmpDir = Files.createTempDir()
+    val tmpDir = Utils.createTmpDir("ZooVino").toFile()
     val outputPath: String = tmpDir.getCanonicalPath
 
     optimizeTFObjectDetectionModel(modelPath, modelType,
@@ -387,7 +402,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
                           ifReverseInputChannels: Boolean,
                           meanValues: Array[Float],
                           scale: Float): OpenVINOModel = {
-    val tmpDir = Files.createTempDir()
+    val tmpDir = Utils.createTmpDir("ZooVino").toFile()
     val outputPath: String = tmpDir.getCanonicalPath
 
     optimizeTFImageClassificationModel(modelPath, modelType,
@@ -405,7 +420,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
                           ifReverseInputChannels: Boolean,
                           meanValues: Array[Float],
                           scale: Float): OpenVINOModel = {
-    val tmpDir = Files.createTempDir()
+    val tmpDir = Utils.createTmpDir("ZooVino").toFile()
     val outputPath: String = tmpDir.getCanonicalPath
     val modelPath = (modelBytes == null) match {
       case true => null
@@ -442,7 +457,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
                           meanValues: Array[Float],
                           scale: Float,
                           input: String): OpenVINOModel = {
-    val tmpDir = Files.createTempDir()
+    val tmpDir = Utils.createTmpDir("ZooVino").toFile
     val outputPath: String = tmpDir.getCanonicalPath
 
     optimizeTFImageClassificationModel(savedModelDir, inputShape, ifReverseInputChannels,
@@ -459,7 +474,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
                           meanValues: Array[Float],
                           scale: Float,
                           input: String): OpenVINOModel = {
-    val tmpDir = Files.createTempDir()
+    val tmpDir = Utils.createTmpDir("ZooVino").toFile()
     val outputPath: String = tmpDir.getCanonicalPath
 
     val tarFilePath = (savedModelBytes == null) match {
@@ -475,7 +490,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
         tarFile.getAbsolutePath
     }
     s"mkdir -p $tmpDir/saved-model" !;
-    s"tar xvf $tarFilePath -C $tmpDir/saved-model" !;
+    s"tar xf $tarFilePath -C $tmpDir/saved-model" !;
     s"ls $tmpDir/saved-model" !;
     val savedModelDir = new File(s"$tmpDir/saved-model").listFiles()(0).getAbsolutePath
 
@@ -498,7 +513,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
                                       validationFilePath: String,
                                       subset: Int,
                                       opencvLibPath: String): OpenVINOModel = {
-    val tmpDir = Files.createTempDir()
+    val tmpDir = Utils.createTmpDir("ZooVino").toFile()
     val outputPath: String = tmpDir.getCanonicalPath
 
     optimizeTFImageClassificationModel(modelPath, modelType,
@@ -594,7 +609,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
                      deviceType: DeviceTypeEnumVal,
                      batchSize: Int): OpenVINOModel = {
     timing("load openvino IR") {
-      val tmpDir = Files.createTempDir()
+      val tmpDir = Utils.createTmpDir("ZooVino").toFile()
       val modelFilePath = (modelBytes == null) match {
         case true => null
         case false => val modelFileName = "model.xml"

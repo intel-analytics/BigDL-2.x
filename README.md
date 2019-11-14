@@ -2,16 +2,16 @@
    <p align="center"> <img src="https://github.com/analytics-zoo/analytics-zoo.github.io/blob/master/img/logo.jpg" height=240px； weight=320px；"><br></p>
 </div>
       
-_A unified analytics + AI platform for **distributed TensorFlow, Keras and BigDL on Apache Spark**_
+_A unified analytics + AI platform for **distributed TensorFlow, Keras, PyTorch and BigDL on Apache Spark**_
 
 
 
 ---
 
 ## What is Analytics Zoo?
-__Analytics Zoo__ provides a unified analytics + AI platform that seamlessly unites *__Spark, TensorFlow, Keras and BigDL__* programs into an integrated pipeline; the entire pipeline can then transparently scale out to a large Hadoop/Spark cluster for distributed training or inference. 
+__Analytics Zoo__ provides a unified analytics + AI platform that seamlessly unites *__Spark, TensorFlow, Keras, PyTorch and BigDL__* programs into an integrated pipeline; the entire pipeline can then transparently scale out to a large Hadoop/Spark cluster for distributed training or inference. 
 - _Data wrangling and analysis using PySpark_
-- _Deep learning model development using TensorFlow or Keras_
+- _Deep learning model development using TensorFlow, Keras or PyTorch_
 - _Distributed training/inference on Spark and BigDL_
 - _All within a single unified pipeline and in a user-transparent fashion!_
 
@@ -49,7 +49,7 @@ In addition, Analytics Zoo also provides a rich set of analytics and AI support 
   - [Object detection API](#object-detection-api): high-level API and pretrained models (e.g., SSD and Faster-RCNN) for *object detection*
   - [Image classification API](#image-classification-api): high-level API and pretrained models (e.g., VGG, Inception, ResNet, MobileNet, etc.) for *image classification*
   - [Text classification API](#text-classification-api): high-level API and pre-defined models (using CNN, LSTM, etc.) for *text classification*
-  - [Recommendation API](#recommendation-api): high-level API and pre-defined models (e.g., Neural Collaborative Filtering, Wide and Deep Learning, etc.) for *recommendation*
+  - [Recommendation API](#recommendation-api): high-level API and pre-defined models (e.g., Neural Collaborative Filtering, Wide and Deep Learning, Session Recommender, etc.) for *recommendation*
   - [Anomaly detection API](#anomaly-detection-api): high-level API and pre-defined models based on LSTM for *anomaly detection*
   - [Text matching API](#text-matching-api): high-level API and pre-defined KNRM model for *text matching*
   - [Sequence to sequence API](#sequence-to-sequence-api): high-level API and pre-defined models for *sequence to sequence*
@@ -294,7 +294,7 @@ Using *Analytics Zoo Image Classification API* (including a set of pretrained de
 *Analytics Zoo Text Classification API* provides a set of pre-defined models (using CNN, LSTM, etc.) for text classifications. (See more details [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/text-classification/))
 
 ### _Recommendation API_
-*Analytics Zoo Recommendation API* provides a set of pre-defined models (such as Neural Collaborative Filtering, Wide and Deep Learning, etc.) for recommendations. (See more details [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/recommendation/))
+*Analytics Zoo Recommendation API* provides a set of pre-defined models (such as Neural Collaborative Filtering, Wide and Deep Learning, Session Recommender etc.) for recommendations. (See more details [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/recommendation/))
 
 ### _Anomaly detection API_
 *Analytics Zoo Anomaly Detection API* provides a set of pre-defined models based on LSTM to detect anomalies for time series data. (See more details [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/anomaly-detection/))

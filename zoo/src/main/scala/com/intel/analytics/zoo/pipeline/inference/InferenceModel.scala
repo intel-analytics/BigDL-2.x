@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
+import java.io.FileWriter
 import java.lang.{Float => JFloat, Integer => JInt}
 import java.util
 import java.util.concurrent.LinkedBlockingQueue
@@ -23,6 +24,7 @@ import java.util.{List => JList}
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
+import com.sun.xml.internal.bind.v2.TODO
 
 import scala.collection.JavaConverters._
 
@@ -35,6 +37,8 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
 
   require(concurrentNum > 0, "concurrentNum should > 0")
 
+  private var batchCnt: Int = 0
+  @transient private var inferenceSummary: InferenceSummary = null
   /**
    * default constructor, will create a InferenceModel with auto-scaling enabled.
    *
@@ -93,18 +97,18 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   }
 
   /**
-   * loads a TF model as TFNet
+   * loads a TF frozen model as TFNet
    *
-   * @param modelPath the path of the tensorflow model file
+   * @param modelPath the path of the tensorflow frozen model file
    */
   def doLoadTF(modelPath: String): Unit = {
     doLoadTensorflowModel(modelPath, 1, 1, true)
   }
 
   /**
-   * loads a TF model as TFNet
+   * loads a TF frozen model as TFNet
    *
-   * @param modelPath                 the path of the tensorflow model
+   * @param modelPath                 the path of the tensorflow frozen model
    * @param intraOpParallelismThreads the num of intraOpParallelismThreads
    * @param interOpParallelismThreads the num of interOpParallelismThreads
    * @param usePerSessionThreads      whether to perSessionThreads
@@ -115,6 +119,42 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                usePerSessionThreads: Boolean): Unit = {
     doLoadTensorflowModel(
       modelPath,
+      intraOpParallelismThreads,
+      interOpParallelismThreads,
+      usePerSessionThreads)
+  }
+
+  /**
+   * loads a TF saved model as TFNet
+   *
+   * @param modelPath  the path of the tensorflow saved model dir
+   * @param inputs     the inputs of the model
+   * @param outputs    the outputs of the model
+   */
+  def doLoadTF(modelPath: String, inputs: Array[String], outputs: Array[String]): Unit = {
+    doLoadTensorflowSavedModel(modelPath, inputs, outputs, 1, 1, true)
+  }
+
+  /**
+   * loads a TF saved model as TFNet
+   *
+   * @param modelPath                  the path of the tensorflow saved model dir
+   * @param inputs                     the inputs of the model
+   * @param outputs                    the outputs of the model
+   * @param intraOpParallelismThreads  the num of intraOpParallelismThreads
+   * @param interOpParallelismThreads  the num of interOpParallelismThreads
+   * @param usePerSessionThreads       whether to perSessionThreads
+   */
+  def doLoadTF(modelPath: String,
+               inputs: Array[String],
+               outputs: Array[String],
+               intraOpParallelismThreads: Int,
+               interOpParallelismThreads: Int,
+               usePerSessionThreads: Boolean): Unit = {
+    doLoadTensorflowSavedModel(
+      modelPath,
+      inputs,
+      outputs,
       intraOpParallelismThreads,
       interOpParallelismThreads,
       usePerSessionThreads)
@@ -362,6 +402,19 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     offerModelQueue()
   }
 
+  private def doLoadTensorflowSavedModel(modelPath: String,
+                                         inputs: Array[String],
+                                         outputs: Array[String],
+                                         intraOpParallelismThreads: Int,
+                                         interOpParallelismThreads: Int,
+                                         usePerSessionThreads: Boolean): Unit = {
+    clearModelQueue()
+    this.originalModel =
+      InferenceModelFactory.loadFloatModelForTFSavedModel(modelPath,
+        inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads)
+    offerModelQueue()
+  }
+
   private def doLoadTensorflowModelAsOpenVINO(modelPath: String,
                                               modelType: String,
                                               pipelineConfigPath: String,
@@ -501,9 +554,9 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @return the output tensor with batch
    */
   def doPredict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
-    timing(s"model predict for batch ${inputs.size()}") {
-      val batchSize = inputs.size()
-      require(batchSize > 0, "inputs size should > 0")
+    val batchSize = inputs.size()
+    require(batchSize > 0, "inputs size should > 0")
+    timing(s"model predict batch size " + batchSize) {
       predict(inputs)
     }
   }
@@ -515,22 +568,53 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @return the output activity
    */
   def doPredict(inputActivity: Activity): Activity = {
-    timing(s"model predict for activity") {
-      predict(inputActivity)
-    }
+    predict(inputActivity)
   }
 
   /**
    * release original model and all the cloned ones in the queue
    */
-  def release(): Unit = {
+  def doRelease(): Unit = {
     clearModelQueue()
   }
 
   private def predict(inputActivity: Activity): Activity = {
     val model: AbstractModel = retrieveModel()
     try {
-      model.predict(inputActivity)
+      val begin = System.nanoTime()
+
+      val result = model.predict(inputActivity)
+      val end = System.nanoTime()
+      val batchSize = result.toTensor[Float].size(1)
+      val latency = end - begin
+      val name = s"model predict for batch ${batchSize}"
+      InferenceSupportive.logger.info(s"$name time elapsed [${latency/1e9} s, ${latency/1e6} ms].")
+
+      val bb = System.nanoTime()
+      if (inferenceSummary != null) {
+        val resultTensor = result.toTensor[Float]
+        var zeroCnt: Int = 0
+        // we do not check all values here
+        // we only check the first value of each output
+        // e.g for a 1000-class classification
+        // we only check the number of zeros of first class output cell
+
+        //TODO: this is just for image classification task
+        // for more task, e.g. object detection, check output dim first
+        for (i <- 1 to resultTensor.size(2)) {
+          if (resultTensor.valueAt(1, i) == 0) {
+            zeroCnt += 1
+          }
+        }
+        val throughput = batchSize / (latency / 1e9)
+        inferenceSummary.addScalar("Throughput", throughput.toFloat, batchCnt)
+        inferenceSummary.addScalar("Zero Value per Batch", zeroCnt, batchCnt)
+        batchCnt += 1
+      }
+      val ee = System.nanoTime()
+//      InferenceSupportive.logger.info("Calculating and writing summary seconds"
+//        + ((ee - bb) / 1e9).toString)
+      result
     } finally {
       model match {
         case null =>
@@ -606,11 +690,18 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
         models.map(this.modelQueue.offer(_))
     }
   }
+  def setInferenceSummary(value: InferenceSummary): this.type = {
+    this.inferenceSummary = value
+    this
+  }
+
 
   def getOriginalModel: AbstractModel = originalModel
 
   override def toString: String =
     s"InferenceModel($autoScalingEnabled, $concurrentNum, $originalModel, $modelQueue)"
+
+
 
 }
 

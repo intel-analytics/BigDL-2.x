@@ -18,14 +18,17 @@ package com.intel.analytics.zoo.pipeline.api
 
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.nn.{CAddTable, SpatialCrossMapLRN}
+import com.intel.analytics.bigdl.optim.L2Regularizer
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Shape, T}
+import com.intel.analytics.bigdl.utils.{RandomGenerator, Shape, T}
 import com.intel.analytics.bigdl.utils.caffe.{CaffeLoader => BigDLCaffeLoader}
+import com.intel.analytics.zoo.models.recommendation.NeuralCF
 import com.intel.analytics.zoo.pipeline.api.autograd.Variable
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Input, KerasLayerWrapper}
-import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model => ZModel}
+import com.intel.analytics.zoo.pipeline.api.keras.layers._
+import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential, Model => ZModel}
+import com.intel.analytics.zoo.pipeline.api.net.TFNet
 
 import scala.util.Random
 
@@ -155,4 +158,128 @@ class NetSpec extends ZooSpecHelper{
     val result = model.forward(Tensor[Float](2, 4).rand())
     result.toTensor[Float].size() should be (Array(2, 2))
   }
+
+  "Save to tensorflow" should "works" taggedAs(Keras2Test) in {
+    RandomGenerator.RNG.setSeed(10)
+    val tmpDir = createTmpDir()
+    val modelGraph = Sequential[Float]().setName("model")
+    // get 13 * 52 input matrix
+    val reshape = Reshape[Float](Array(13, 52), inputShape = Shape(676))
+    // get 52 * 13 input matrix
+    val transpose = Permute[Float](Array(2, 1))
+    val layer1 = LSTM[Float](outputDim = 100, returnSequences = true)
+    val layer2 = LSTM[Float](outputDim = 100, returnSequences = false)
+    val denseLayer = Dense[Float](2, activation = "softmax")
+    modelGraph.add(reshape.setName("reshape"))
+    modelGraph.add(transpose.setName("transpose"))
+    modelGraph.add(layer1.setName("lstm1"))
+    modelGraph.add(layer2.setName("lstm2"))
+    modelGraph.add(denseLayer.setName("output"))
+    Net.saveToTf[Float](modelGraph, tmpDir.getAbsolutePath)
+
+    val input = Tensor[Float](2, 676).rand()
+    val o = modelGraph.forward(input)
+    val inputs = "reshape_input:0"
+    val outputs = "output/Softmax:0"
+    val tfModel = TFNet(tmpDir + "/frozen_inference_graph.pb",
+      Array(inputs), Array(outputs))
+    val tfOutput = tfModel.forward(input)
+
+    o should be (tfOutput)
+  }
+
+  "Save to keras2" should "work" taggedAs(Keras2Test)  in {
+    val tmpDir = createTmpDir()
+    val modelGraph = Sequential[Float]().setName("model")
+    // get 13 * 52 input matrix
+    val reshape = Reshape[Float](Array(13, 52), inputShape = Shape(676))
+    // get 52 * 13 input matrix
+    val transpose = Permute[Float](Array(2, 1))
+    val layer1 = LSTM[Float](outputDim = 100, returnSequences = true)
+    val layer2 = LSTM[Float](outputDim = 100, returnSequences = false)
+    val dropout = Dropout[Float](0.5)
+    val denseLayer = Dense[Float](2, activation = "softmax")
+    modelGraph.add(reshape.setName("reshape"))
+    modelGraph.add(transpose.setName("transpose"))
+    modelGraph.add(layer1.setName("lstm1"))
+    modelGraph.add(layer2.setName("lstm2"))
+    modelGraph.add(dropout.setName("dropout"))
+    modelGraph.add(denseLayer.setName("output"))
+    Net.saveToKeras2[Float](modelGraph, tmpDir + "/model.h5")
+  }
+
+  "graph definition" should "work" taggedAs(Keras2Test) in {
+    val tmpDir = createTmpDir()
+
+    val userEmbed = 20
+    val itemEmbed = 20
+    val userCount = 200
+    val itemCount = 100
+    val numClasses = 10
+    val mfEmbed = 20
+    val hiddenLayers: Array[Int] = Array(40, 20, 10)
+
+    val inputUser = Input[Float](inputShape = Shape(1), name = "inputUser")
+    val inputItem = Input[Float](inputShape = Shape(1), name = "inputItem")
+
+    val mlpUserTable = Embedding[Float](userCount + 1, userEmbed, init = "normal")
+      .setName("mlpUserTable").inputs(inputUser)
+    val mlpItemTable = Embedding[Float](itemCount + 1, itemEmbed, init = "normal")
+      .setName("mlpItemTable").inputs(inputItem)
+
+    val mlpUserLatent = Flatten[Float]().setName("mlpUserLatent").inputs(mlpUserTable)
+    val mlpItemLatent = Flatten[Float]().setName("mlpItemLatent").inputs(mlpItemTable)
+
+    val mlpEmbeddedLayer = Merge.merge[Float](List(mlpUserLatent, mlpItemLatent),
+      "concat", 1, name = "mergeMlp")
+
+    val linear1 = Dense[Float](hiddenLayers(0), activation = "relu")
+      .setName("linear1").inputs(mlpEmbeddedLayer)
+    var mlpLinear = linear1
+    for (i <- 1 to hiddenLayers.length - 1) {
+      val linearMid = Dense[Float](hiddenLayers(i), activation = "relu")
+        .setName(s"hiddenLinear$i").inputs(mlpLinear)
+      mlpLinear = linearMid
+    }
+
+    val mfUserTable = Embedding[Float](userCount + 1, mfEmbed, init = "normal")
+      .setName("mfUserTable").inputs(inputUser)
+    val mfItemTable = Embedding[Float](itemCount + 1, mfEmbed, init = "normal")
+      .setName("mfItemTable").inputs(inputItem)
+
+    val mfUserLatent = Flatten[Float]().setName("mfUserLatent").inputs(mfUserTable)
+    val mfItemLatent = Flatten[Float]().setName("mfItemLatent").inputs(mfItemTable)
+
+    val mfEmbeddedLayer = Merge.merge[Float](List(mfUserLatent, mfItemLatent),
+      "mul", 1, name = "mfEmbeddedLayer")
+
+    val concatedModel = Merge.merge[Float](List(mlpLinear, mfEmbeddedLayer),
+      "concat", 1, name = "concatedModel")
+
+    val linearLast = Dense[Float](numClasses, activation = "softmax")
+      .setName("output").inputs(concatedModel)
+
+    val model = ZModel[Float](Array(inputUser, inputItem), linearLast).setName("model")
+    model.asInstanceOf[ZModel[Float]].saveToTf[Float](tmpDir.toString)
+
+    val a = Tensor[Float](10, 1).rand()
+    val b = Tensor[Float](10, 1).randn()
+
+    val input = T(
+      Tensor[Float](10, 1).randn()
+        .apply1(v => math.abs(math.round(v * userCount)) % userCount),
+      Tensor[Float](10, 1).randn()
+        .apply1(v => math.abs(math.round(v * itemCount)) % itemCount))
+
+    val o = model.forward(input)
+    val inputs = Array("inputUser:0", "inputItem:0")
+    val outputs = "output/Softmax:0"
+    val tfModel = TFNet(tmpDir + "/frozen_inference_graph.pb",
+      inputs, Array(outputs))
+    val tfOutput = tfModel.forward(input)
+
+    o should be (tfOutput)
+
+  }
+
 }

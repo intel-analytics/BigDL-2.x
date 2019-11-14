@@ -42,7 +42,9 @@ case class LoaderParams(modelType: String = null,
                         redis: String = "localhost:6379",
                         outputPath: String = "",
                         task: String = "image-classification",
-                        classNum: Int = 5000)
+                        classNum: Int = 5000,
+                        nodeNum: Int = 1)
+
 
 case class Result(id: String, value: String)
 
@@ -78,6 +80,10 @@ class ClusterServingHelper {
     opt[Int]('c', "classNum")
       .text("number of predicting classes")
       .action((x, c) => c.copy(classNum = x))
+    opt[Int]('n', "nodeNum")
+      .text("node number")
+      .action((x, c) => c.copy(nodeNum = x))
+
 
   }
 
@@ -87,14 +93,20 @@ class ClusterServingHelper {
   var redisPort: String = null
   var batchSize: Int = 4
   var topN: Int = 1
+  var nodeNum: Int = 1
+  var coreNum: Int = 1
+  var blasFlag: Boolean = false
+
 
   var modelType: String = null
   var weightPath: String = null
   var defPath: String = null
   var dirPath: String = null
+
+
   var dummyMap: Map[Int, String] = Map()
 
-  def init(args: Array[String]): Unit = {
+  def initArgs(args: Array[String]): LoaderParams = {
     params = parser.parse(args, LoaderParams()).get
 
     require(params.redis.split(":").length == 2, "Your redis host " +
@@ -104,17 +116,28 @@ class ClusterServingHelper {
     batchSize = params.batchSize
     topN = params.topN
 
-    val conf = NNContext.createSparkConf().setAppName("Cluster Serving")
-      .set("spark.redis.host", redisHost)
-      .set("spark.redis.port", redisPort)
-
-    sc = NNContext.initNNContext(conf)
-
     parseModelType(params.modelFolder)
+    if (modelType == "caffe" || modelType == "bigdl") {
+      if (System.getProperty("bigdl.engineType", "mklblas")
+        .toLowerCase() == "mklblas") {
+        blasFlag = true
+      }
+    }
 
     for (i <- 0 to params.classNum) {
       dummyMap += (i -> ("Class No." + i.toString))
     }
+    params
+  }
+
+  def initContext(): Unit = {
+    val conf = NNContext.createSparkConf().setAppName("Cluster Serving")
+      .set("spark.redis.host", redisHost)
+      .set("spark.redis.port", redisPort)
+    sc = NNContext.initNNContext(conf)
+    nodeNum = EngineRef.getNodeNumber()
+    coreNum = EngineRef.getCoreNumber()
+
   }
 
   /**
@@ -126,7 +149,7 @@ class ClusterServingHelper {
    */
   def loadModel[T: ClassTag]()
                             (implicit ev: TensorNumeric[T]): RDD[Module[Float]] = {
-
+    // deprecated
     val rmodel = modelType match {
       case "caffe" => Net.loadCaffe[Float](defPath, weightPath)
       case "tensorflow" => Net.loadTF[Float](weightPath)
@@ -144,8 +167,10 @@ class ClusterServingHelper {
     cachedModel
   }
 
-  def loadInferenceModel(concurrentNum: Int): Broadcast[InferenceModel] = {
-    val model = new InferenceModel(concurrentNum)
+
+  def loadInferenceModel(): Broadcast[InferenceModel] = {
+    val model = new InferenceModel(1)
+
     modelType match {
       case "caffe" => model.doLoadCaffe(defPath, weightPath)
       case "tensorflow" => model.doLoadTF(weightPath)

@@ -190,8 +190,10 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
             label_preprocessing = SeqToTensor()
 
         if type(feature_preprocessing) is list:
-            assert(all(isinstance(x, int) for x in feature_preprocessing))
-            feature_preprocessing = SeqToTensor(feature_preprocessing)
+            if type(feature_preprocessing[0]) is list:
+                feature_preprocessing = SeqToMultipleTensors(feature_preprocessing)
+            elif isinstance(feature_preprocessing[0], int):
+                feature_preprocessing = SeqToTensor(feature_preprocessing)
 
         if type(label_preprocessing) is list:
             assert(all(isinstance(x, int) for x in label_preprocessing))
@@ -216,6 +218,7 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         self.checkpoint_config = None
         self.validation_summary = None
         self.endWhen = None
+        self.dataCacheLevel = "DRAM"
 
     def setSamplePreprocessing(self, val):
         """
@@ -252,6 +255,24 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         Gets the value of endWhen or its default value.
         """
         return self.endWhen
+
+    def setDataCacheLevel(self, level, numSlice=None):
+        """
+        :param level: string, "DRAM", "PMEM" or "DISK_AND_DRAM".
+                If it's DRAM, will cache dataset into dynamic random-access memory
+                If it's PMEM, will cache dataset into Intel Optane DC Persistent Memory
+                If it's DISK_AND_DRAM, will cache dataset into disk, and only hold 1/numSlice
+                  of the data into memory during the training. After going through the
+                  1/numSlice, we will release the current cache, and load another slice into
+                  memory.
+        """
+        pythonBigDL_method_name = "setDataCacheLevel"
+        callBigDlFunc(self.bigdl_type, pythonBigDL_method_name, self.value, level, numSlice)
+        self.dataCacheLevel = level if numSlice is None else (level, numSlice)
+        return self
+
+    def getDataCacheLevel(self):
+        return self.dataCacheLevel
 
     def setLearningRate(self, val):
         """
@@ -461,8 +482,10 @@ class NNModel(JavaTransformer, HasFeaturesCol, HasPredictionCol, HasBatchSize,
                 feature_preprocessing = SeqToTensor()
 
             if type(feature_preprocessing) is list:
-                assert(all(isinstance(x, int) for x in feature_preprocessing))
-                feature_preprocessing = SeqToTensor(feature_preprocessing)
+                if type(feature_preprocessing[0]) is list:
+                    feature_preprocessing = SeqToMultipleTensors(feature_preprocessing)
+                elif isinstance(feature_preprocessing[0], int):
+                    feature_preprocessing = SeqToTensor(feature_preprocessing)
 
             sample_preprocessing = ChainedPreprocessing([feature_preprocessing, TensorToSample()])
             self.value = callBigDlFunc(

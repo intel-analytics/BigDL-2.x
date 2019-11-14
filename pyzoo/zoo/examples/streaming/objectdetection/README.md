@@ -15,13 +15,15 @@ So, there are two applications in this example: image_path_writer and streaming_
 ## Run this example
 Make sure all nodes can access image files, model and text files. Local file system/HDFS/Amazon S3 are supported.
 
+Pls ensure all paths exist and accessible, and `streaming_path` is empty. Note that `streaming_object_detection` and `image_path_writer` should use the same `streaming_path`.
+
 1. Start streaming_object_detection
 ```
 MASTER=...
 model=... // model path. Local file system/HDFS/Amazon S3 are supported
 streaming_path=... // text files location. Only local file system is supported
 output_path=... // output path of prediction result. Only local file system is supported
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 5g \
     --executor-memory 5g \
@@ -34,7 +36,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
 MASTER=...
 img_path=... // image path. Only local file system is supported
 streaming_path=... // text files. Only local file system is supported
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-with-zoo.sh \
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 5g \
     image_path_writer.py \

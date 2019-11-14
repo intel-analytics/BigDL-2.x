@@ -20,7 +20,6 @@ from keras.datasets import imdb
 from keras.preprocessing import sequence
 from zoo.pipeline.api.keras.models import Model
 from zoo.pipeline.api.keras.layers import *
-from zoo.pipeline.api.autograd import *
 from zoo.common.nncontext import init_spark_conf
 from zoo.common.nncontext import init_nncontext
 
@@ -57,10 +56,12 @@ def build_sample(token_id, position_id, label):
         sample = Sample.from_ndarray([token_id[i], position_id[i]], np.array(label[i]))
         samples.append(sample)
     return samples
+
+
 train_samples = build_sample(x_train, train_pos, y_train)
-xmb = sc.parallelize(train_samples)
+train_rdd = sc.parallelize(train_samples)
 val_samples = build_sample(x_test, val_pos, y_test)
-xmb_val = sc.parallelize(val_samples)
+val_rdd = sc.parallelize(val_samples)
 
 token_shape = (max_len,)
 position_shape = (max_len,)
@@ -68,6 +69,8 @@ token_input = Input(shape=token_shape)
 position_input = Input(shape=position_shape)
 O_seq = TransformerLayer.init(
     vocab=max_features, hidden_size=128, n_head=8, seq_len=max_len)([token_input, position_input])
+# Select the first output of the Transformer. The second is the pooled output.
+O_seq = SelectTable(0)(O_seq)
 O_seq = GlobalAveragePooling1D()(O_seq)
 O_seq = Dropout(0.2)(O_seq)
 outputs = Dense(2, activation='softmax')(O_seq)
@@ -81,11 +84,11 @@ model.compile(optimizer=Adam(),
 
 batch_size = 160
 print('Train...')
-model.fit(xmb,
+model.fit(train_rdd,
           batch_size=batch_size,
           nb_epoch=1)
 print("Train finished.")
 
 print('Evaluating...')
-score = model.evaluate(xmb_val, batch_size=160)[0]
+score = model.evaluate(val_rdd, batch_size=160)[0]
 print(score)

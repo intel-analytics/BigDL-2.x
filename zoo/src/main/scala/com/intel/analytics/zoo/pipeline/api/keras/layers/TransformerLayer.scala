@@ -31,11 +31,17 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
 import scala.reflect.ClassTag
 
 /**
- * [[TransformerLayer]] A self attention keras like layer
+ * [[TransformerLayer]] A self attention Keras-style layer.
+ *
  * Input is a Table which consists of 2 tensors.
  * 1. Token id tensor: shape [batch, seqLen] with the word token indices in the vocabulary
  * 2. Position id tensor: shape [batch, seqLen] with positions in the sentence.
- * Output is a Tensor which output the states of Transformer layer
+ *
+ * Output is a Table as well.
+ * 1. The states of Transformer layer.
+ * 2. The pooled output which processes the hidden state of the last layer with regard to the first
+ * token of the sequence. This would be useful for segment-level tasks.
+ *
  * @param nBlock block number
  * @param hiddenPDrop drop probability of projection
  * @param attnPDrop drop probability of attention
@@ -130,10 +136,14 @@ private[layers] class TransformerLayer[T: ClassTag](
 
   def multiHeadSelfAttention(x: Variable[T], hiddenSize: Int,
     attention_mask: Variable[T] = null): Variable[T] = {
-    val c = projectionLayer(hiddenSize * 3).from(x)
-    val query = c.slice(2, 0, hiddenSize)
-    val key = c.slice(2, hiddenSize, hiddenSize)
-    val value = c.slice(2, hiddenSize * 2, hiddenSize)
+//    val c = projectionLayer(hiddenSize * 3).from(x)
+//    val query = c.slice(2, 0, hiddenSize)
+//    val key = c.slice(2, hiddenSize, hiddenSize)
+//    val value = c.slice(2, hiddenSize * 2, hiddenSize)
+    val query = projectionLayer(hiddenSize).from(x)
+    val key = projectionLayer(hiddenSize).from(x)
+    val value = projectionLayer(hiddenSize).from(x)
+
     val q = splitHeads(query, nHead)
     val k = splitHeads(key, nHead, k = true)
     val v = splitHeads(value, nHead)

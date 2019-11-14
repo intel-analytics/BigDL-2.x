@@ -15,7 +15,7 @@
  */
 package com.intel.analytics.zoo.pipeline.api.net.python
 
-import java.nio.ByteOrder
+import java.nio.{ByteOrder, FloatBuffer}
 import java.util.{List => JList}
 
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
@@ -28,7 +28,7 @@ import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.net._
 import com.intel.analytics.bigdl.dataset.{Sample => JSample}
-import org.apache.spark.api.java.JavaRDD
+import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
 import org.apache.spark.rdd.RDD
 
 import scala.collection.JavaConverters._
@@ -39,7 +39,9 @@ import scala.collection.mutable.ListBuffer
 import java.util.ArrayList
 import java.util.concurrent.{CopyOnWriteArrayList, TimeUnit}
 
+import com.intel.analytics.bigdl.Module
 import org.apache.log4j.{Level, Logger}
+import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
 
 object PythonZooNet {
 
@@ -125,8 +127,16 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
     TFNet(path, config)
   }
 
-  def createTFTrainingHelper(modelPath: String, config: Array[Byte] = null): TFTrainingHelper = {
+  def createTFTrainingHelper(modelPath: String, config: Array[Byte] = null): Module[Float] = {
     TFTrainingHelper(modelPath, config)
+  }
+
+  def createTFTrainingHelper2(modelPath: String, config: Array[Byte] = null): Module[Float] = {
+    TFTrainingHelper2(modelPath, config)
+  }
+
+  def saveCheckpoint(model: TFTrainingHelper2): Unit = {
+    model.saveCheckpoint()
   }
 
   def createIdentityCriterion(): IdentityCriterion = {
@@ -137,13 +147,18 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
     new MergeFeatureLabel()
   }
 
-  def createMergeFeatureLabelFeatureTransformer(): MergeFeatureLabel = {
-    new MergeFeatureLabel()
+  def createMergeFeatureLabelFeatureTransformer(): MergeFeatureLabelFeatureTransformer = {
+    new MergeFeatureLabelFeatureTransformer()
   }
 
-  def createTFValidationMethod(validationMethod: ValidationMethod[Float],
-                               outputLength: Int, targetLength: Int): TFValidationMethod = {
-    new TFValidationMethod(validationMethod, outputLength, targetLength)
+  def createTFValidationMethod(valMethod: ValidationMethod[Float], name: String,
+                               outputIndices: java.util.List[Int],
+                               labelIndices: java.util.List[Int]): TFValidationMethod = {
+    new TFValidationMethod(valMethod, name, outputIndices, labelIndices)
+  }
+
+  def createStatelessMetric(name: String, idx: Int): StatelessMetric = {
+    new StatelessMetric(name, idx)
   }
 
   def createTFOptimizer(modelPath: String,
@@ -152,6 +167,91 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
                         batchSize: Int = 32): TFOptimizer = {
     new TFOptimizer(modelPath, optimMethod,
       toJSample(x).asInstanceOf[RDD[JSample[Float]]], batchSize)
+  }
+
+  def createRDDFromTFRecords(path: String,
+                             jsc: JavaSparkContext,
+                             serializedParseGraph: Array[Byte],
+                             inputName: String,
+                             outputNames: JList[String]): RDD[Sample] = {
+    val sc = jsc.sc
+
+    val bserializedParseGraph = sc.broadcast(serializedParseGraph)
+    val sampleRdd = sc.newAPIHadoopFile[org.apache.hadoop.io.BytesWritable,
+      org.apache.hadoop.io.NullWritable,
+      org.tensorflow.hadoop.io.TFRecordFileInputFormat](path).map { KV =>
+      KV._1.copyBytes()
+    }.mapPartitions { iter =>
+      val graphDef = bserializedParseGraph.value
+      val g = new Graph()
+      g.importGraphDef(graphDef)
+      val sess = new Session(g)
+
+      def addFetches(names: JList[String], runner: Session#Runner) = {
+        var j = 0
+        while (j < names.size()) {
+          runner.fetch(names.get(j))
+          j += 1
+        }
+      }
+
+      def getFetches(results: JList[TTensor[_]]) = {
+        val tensors = new java.util.ArrayList[JTensor](results.size())
+        var j = 0
+        while (j < results.size()) {
+          val t = results.get(j)
+          tensors.add(tfTensor2JTensor(t))
+          j += 1
+        }
+        tensors
+      }
+
+
+      val records = iter.toArray
+      val samples = new Array[Sample](records.length)
+      var i = 0
+
+      while (i < records.length) {
+
+        val bytes = records(i)
+        val input = TTensor.create(bytes)
+        val runner = sess.runner()
+        runner.feed(inputName, input)
+        addFetches(outputNames, runner)
+        val results = runner.run()
+        val outputTensors = getFetches(results)
+
+        input.close()
+        var j = 0
+        while (j < results.size()) {
+          results.get(j).close()
+          j += 1
+        }
+
+        samples(i) = Sample(outputTensors, new java.util.ArrayList[JTensor], "float")
+
+        i += 1
+      }
+
+      sess.close()
+      g.close()
+
+      samples.toIterator
+    }
+
+    sampleRdd
+  }
+
+  private def tfTensor2JTensor(t: TTensor[_]): JTensor = {
+    val shape = t.shape().map(_.toInt)
+    val length = shape.product
+    val data = new Array[Float](length)
+    val buffer = FloatBuffer.wrap(
+      data,
+      0,
+      length)
+    t.writeTo(buffer)
+    JTensor(data, shape, "float")
   }
 
   val processToBeKill = new CopyOnWriteArrayList[String]()
@@ -199,6 +299,10 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
 
   def createTorchCriterion(lossPath: String): TorchCriterion = {
     TorchCriterion(lossPath)
+  }
+
+  def torchNetSavePytorch(torchnet: TorchNet, path: String): Unit = {
+    torchnet.savePytorch(path)
   }
 
 }
