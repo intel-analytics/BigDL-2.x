@@ -75,7 +75,7 @@ object ClusterServing {
       .readStream
       .format("redis")
       .option("stream.keys", "image_stream")
-      .option("stream.read.batch.size", 500)
+      .option("stream.read.batch.size", 512)
       .option("stream.parallelism", EngineRef.getNodeNumber())
       .schema(StructType(Array(
         StructField("id", StringType),
@@ -108,7 +108,7 @@ object ClusterServing {
           result
         })
 
-      }).collect()
+      }).count()
       logger.info("Micro batch predict ended")
     }.start()
 //    val foreachBatchMethod = images.writeStream.getClass()

@@ -134,7 +134,7 @@ class ClusterServingHelper {
    */
   def loadModel[T: ClassTag]()
                             (implicit ev: TensorNumeric[T]): RDD[Module[Float]] = {
-
+    // deprecated
     val rmodel = modelType match {
       case "caffe" => Net.loadCaffe[Float](defPath, weightPath)
       case "tensorflow" => Net.loadTF[Float](weightPath)

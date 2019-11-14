@@ -40,7 +40,7 @@ object ModelLoader extends InferenceSupportive {
       logger.info(s"load model from $modelPath and $weightPath")
       val model = ModuleLoader.loadFromFile[Float](modelPath, weightPath)
       logger.info(s"loaded model as $model")
-      model
+      model.quantize()
     }
   }
 
@@ -50,7 +50,7 @@ object ModelLoader extends InferenceSupportive {
       logger.info(s"load model from $modelPath and $weightPath")
       val model = CaffeLoader.loadCaffe[Float](modelPath, weightPath)._1.asInstanceOf[Graph[Float]]
       logger.info(s"loaded model as $model")
-      model
+      model.quantize()
     }
   }
 
