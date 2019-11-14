@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.serving
 
+
 import java.io.FileWriter
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -40,6 +41,7 @@ object ClusterServing {
   val logger: Logger = Logger.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
+
 //    System.setProperty("bigdl.engineType", "mkldnn")
     val helper = new ClusterServingHelper()
     helper.initArgs(args)
@@ -47,14 +49,13 @@ object ClusterServing {
 
     val model = helper.loadInferenceModel()
 
+
     val spark = helper.getSparkSession()
 
     logger.info(s"connected to redis " +
       s"${spark.conf.get("spark.redis.host")}:${spark.conf.get("spark.redis.port")}")
     val batchSize = helper.batchSize
     val topN = helper.topN
-
-//    val fw = new FileWriter("/tmp/tp.txt", false)
 
     val images = spark
       .readStream
@@ -68,6 +69,7 @@ object ClusterServing {
         StructField("image", StringType)
       )))
       .load()
+
     val query = images.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
       batchDF.persist()
       val microBatchSize = batchDF.count()
@@ -179,6 +181,7 @@ object ClusterServing {
 //        imageSet.rdd.unpersist()
 //      }
 //    ).asInstanceOf[DataStreamWriter[Row]].start()
+
     query.awaitTermination()
   }
 }

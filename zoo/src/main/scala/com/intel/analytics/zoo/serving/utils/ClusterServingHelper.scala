@@ -45,6 +45,7 @@ case class LoaderParams(modelType: String = null,
                         classNum: Int = 5000,
                         nodeNum: Int = 1)
 
+
 case class Result(id: String, value: String)
 
 class ClusterServingHelper {
@@ -83,6 +84,7 @@ class ClusterServingHelper {
       .text("node number")
       .action((x, c) => c.copy(nodeNum = x))
 
+
   }
 
   var sc: SparkContext = null
@@ -95,15 +97,18 @@ class ClusterServingHelper {
   var coreNum: Int = 1
   var blasFlag: Boolean = false
 
+
   var modelType: String = null
   var weightPath: String = null
   var defPath: String = null
   var dirPath: String = null
 
+
   var dummyMap: Map[Int, String] = Map()
 
   def initArgs(args: Array[String]): LoaderParams = {
     params = parser.parse(args, LoaderParams()).get
+
     require(params.redis.split(":").length == 2, "Your redis host " +
       "and port are not valid, please check.")
     redisHost = params.redis.split(":").head.trim
@@ -162,8 +167,10 @@ class ClusterServingHelper {
     cachedModel
   }
 
+
   def loadInferenceModel(): Broadcast[InferenceModel] = {
     val model = new InferenceModel(1)
+
     modelType match {
       case "caffe" => model.doLoadCaffe(defPath, weightPath)
       case "tensorflow" => model.doLoadTF(weightPath)
