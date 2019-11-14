@@ -153,10 +153,6 @@ __Ubuntu 16.04 or later__ and __macOS 10.12.6 or later__.
   be found [here](https://github.com/tensorflow/tensorflow/tree/v1.10.0/tensorflow/java).
 
 
-To run on other system may require you to manually compile the TensorFlow source code. Instructions can
-be found [here](https://github.com/tensorflow/tensorflow/tree/v1.10.0/tensorflow/java).
-
-
 ### Export TensorFlow model to frozen inference graph
 
 Analytics-zoo provides a useful utility function, `export_tf`, to export a TensorFlow model
