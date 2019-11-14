@@ -17,23 +17,17 @@
 package com.intel.analytics.zoo.serving
 
 import java.io.FileWriter
-
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.feature.image._
-import com.intel.analytics.zoo.models.image.imageclassification.{LabelOutput, LabelReader}
+
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
-import com.intel.analytics.zoo.pipeline.inference.FloatModel
-import com.intel.analytics.zoo.serving.utils.Result
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ImageClassification}
 import com.intel.analytics.zoo.utils.ImageProcessing
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.streaming.DataStreamWriter
+
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
-import org.opencv.imgcodecs.Imgcodecs
+
 
 
 object ClusterServing {
@@ -46,18 +40,10 @@ object ClusterServing {
   val logger: Logger = Logger.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
-    System.setProperty("bigdl.engineType", "mkldnn")
+//    System.setProperty("bigdl.engineType", "mkldnn")
     val helper = new ClusterServingHelper()
     helper.initArgs(args)
-    System.setProperty("bigdl.localMode", "false")
-    System.setProperty("bigdl.coreNumber", helper.nodeNum.toString)
-
     helper.initContext()
-    val coreNumber = EngineRef.getCoreNumber()
-    val eType = EngineRef.getEngineType()
-    logger.info("Engine Type is " + eType)
-    logger.info("Core number is running at " + coreNumber.toString)
-
 
     val model = helper.loadInferenceModel()
 
@@ -67,7 +53,6 @@ object ClusterServing {
       s"${spark.conf.get("spark.redis.host")}:${spark.conf.get("spark.redis.port")}")
     val batchSize = helper.batchSize
     val topN = helper.topN
-
 
 //    val fw = new FileWriter("/tmp/tp.txt", false)
 
@@ -87,7 +72,7 @@ object ClusterServing {
       batchDF.persist()
       val microBatchSize = batchDF.count()
       logger.info("Micro batch size " + microBatchSize.toString)
-      val pathBytesRDD = batchDF.rdd.map { image =>
+      val pathBytesRDDChunk = batchDF.rdd.map { image =>
         // single thread preprocessing here
         val bytes = ImageProcessing.bytesToBGRTensor(java.util
           .Base64.getDecoder.decode(image.getAs[String]("image")))
@@ -95,12 +80,30 @@ object ClusterServing {
 
         (path, bytes)
       }
+      val pathBytesRDD = if (helper.blasFlag == true) {
+        pathBytesRDDChunk.repartition(helper.nodeNum * helper.coreNum)
+      } else {
+        pathBytesRDDChunk
+      }
+
+      // variables needed to be serialized listed below
+      val modelType = helper.modelType
+
       val res = pathBytesRDD.mapPartitions(pathBytes => {
         val localModel = model.value
         pathBytes.grouped(batchSize).map(pathByteBatch => {
-          val x = Tensor[Float](batchSize, 3, 224, 224)
           val thisBatchSize = pathByteBatch.size
-          (0 until thisBatchSize).foreach(i => x.select(1, i + 1).copy(pathByteBatch(i)._2))
+          val t = Tensor[Float](batchSize, 3, 224, 224)
+
+          (0 until thisBatchSize).foreach(i => t.select(1, i + 1).copy(pathByteBatch(i)._2))
+
+          val x = if (modelType == "tensorflow") {
+            t.transpose(2, 3)
+              .transpose(3, 4).contiguous()
+          } else {
+            t
+          }
+
           val start = System.nanoTime()
           val result = localModel.doPredict(x)
           val end = System.nanoTime()

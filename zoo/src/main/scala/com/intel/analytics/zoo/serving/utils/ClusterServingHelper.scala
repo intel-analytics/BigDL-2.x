@@ -92,11 +92,14 @@ class ClusterServingHelper {
   var batchSize: Int = 4
   var topN: Int = 1
   var nodeNum: Int = 1
+  var coreNum: Int = 1
+  var blasFlag: Boolean = false
 
   var modelType: String = null
   var weightPath: String = null
   var defPath: String = null
   var dirPath: String = null
+
   var dummyMap: Map[Int, String] = Map()
 
   def initArgs(args: Array[String]): LoaderParams = {
@@ -107,9 +110,14 @@ class ClusterServingHelper {
     redisPort = params.redis.split(":").last.trim
     batchSize = params.batchSize
     topN = params.topN
-    nodeNum = params.nodeNum
 
     parseModelType(params.modelFolder)
+    if (modelType == "caffe" || modelType == "bigdl") {
+      if (System.getProperty("bigdl.engineType", "mklblas")
+        .toLowerCase() == "mklblas") {
+        blasFlag = true
+      }
+    }
 
     for (i <- 0 to params.classNum) {
       dummyMap += (i -> ("Class No." + i.toString))
@@ -122,6 +130,8 @@ class ClusterServingHelper {
       .set("spark.redis.host", redisHost)
       .set("spark.redis.port", redisPort)
     sc = NNContext.initNNContext(conf)
+    nodeNum = EngineRef.getNodeNumber()
+    coreNum = EngineRef.getCoreNumber()
 
   }
 
