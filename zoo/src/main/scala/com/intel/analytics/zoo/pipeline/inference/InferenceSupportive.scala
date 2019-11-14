@@ -42,7 +42,7 @@ trait InferenceSupportive {
     val result = f
     val end = System.currentTimeMillis
     val cost = (end - begin)
-    InferenceSupportive.logger.info(s"$name time elapsed [${cost / 1000} s, ${cost % 1000} ms].")
+    println(s"$name time elapsed [${cost / 1000} s, ${cost % 1000} ms].")
     result
   }
 
