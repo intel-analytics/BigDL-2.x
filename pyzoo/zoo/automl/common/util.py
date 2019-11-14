@@ -109,29 +109,29 @@ class NumpyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def save_config(file_path, config, replace=False):
+def save_config(file, config, replace=False):
     """
-    :param file_path: the file path of config to be saved.
+    :param file: the file path of config to be saved.
     :param config: dict. The config to be saved
     :param replace: whether to replace if the config file already existed.
     :return:
     """
-    if os.path.isfile(file_path) and not replace:
-        with open(file_path, "r") as input_file:
+    if os.path.isfile(file) and not replace:
+        with open(file, "r") as input_file:
             old_config = json.load(input_file)
         old_config.update(config)
         config = old_config.copy()
 
-    file_dirname = os.path.dirname(os.path.abspath(file_path))
+    file_dirname = os.path.dirname(os.path.abspath(file))
     if file_dirname and not os.path.exists(file_dirname):
         os.makedirs(file_dirname)
 
-    with open(file_path, "w") as output_file:
+    with open(file, "w") as output_file:
         json.dump(config, output_file, cls=NumpyEncoder)
 
 
-def load_config(file_path):
-    with open(file_path, "r") as input_file:
+def load_config(file):
+    with open(file, "r") as input_file:
         data = json.load(input_file)
     return data
 
