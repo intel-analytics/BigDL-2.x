@@ -132,27 +132,6 @@
         </profile>
 
         <profile>
-            <id>windows</id>
-            <properties>
-                <core.artifactId>zoo-core-dist-windows</core.artifactId>
-                <core.dependencyType>pom</core.dependencyType>
-            </properties>
-            <!--these are not supported right now, added to make the project compiles-->
-            <dependencies>
-                <dependency>
-                    <groupId>com.intel.analytics.zoo</groupId>
-                    <artifactId>zoo-core-openvino-java-linux</artifactId>
-                    <version>0.7.0-SNAPSHOT</version>
-                </dependency>
-                <dependency>
-                    <groupId>com.intel.analytics.zoo</groupId>
-                    <artifactId>zoo-core-pmem-java-linux</artifactId>
-                    <version>0.7.0-SNAPSHOT</version>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <profile>
             <id>sign</id>
             <build>
                 <plugins>
