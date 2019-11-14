@@ -14,17 +14,17 @@
 # limitations under the License.
 #
 
-from zoo.models.image.imageclassification import ImageClassifier, sys
-from bigdl.util.common import JTensor
+import sys
+from zoo.models.image.imageclassification import ImageClassifier
 from bigdl.util.common import init_engine
 from optparse import OptionParser
 import numpy as np
 import time
 
 
-def perf(model_path, bsize, iteration):
-    batchInput = JTensor.from_ndarray(np.random.rand(bsize, 3, 224, 224))
-    singleInput = JTensor.from_ndarray(np.random.rand(1, 3, 224, 224))
+def perf(model_path, batch_size, iteration):
+    batch_input = np.random.rand(batch_size, 3, 224, 224)
+    single_input = np.random.rand(1, 3, 224, 224)
     init_engine()
 
     model = ImageClassifier.load_model(model_path)
@@ -32,20 +32,22 @@ def perf(model_path, bsize, iteration):
 
     for i in range(iteration):
         start = time.time_ns()
-        model.forward(batchInput)
-        timeused = time.time_ns() - start
-        throughput = bsize / (timeused / 10 ** 9)
+        model.forward(batch_input)
+        time_used = time.time_ns() - start
+        throughput = round(batch_size / (time_used / 10 ** 9), 2)
         print("Iteration:" + str(i) +
-              ", batch" + str(bsize) +
-              ", takes" + str(timeused) + "ns" +
-              ", throughput is" + str(throughput) + "imgs/sec")
+              ", batch " + str(batch_size) +
+              ", takes " + str(time_used) + " ns" +
+              ", throughput is " + str(throughput) + " imgs/sec")
 
+    # mkldnn model would forward a fixed batch size.
+    # Thus need a new model to test for latency.
     model2 = ImageClassifier.load_model(model_path)
     model2.set_evaluate_status()
 
     for i in range(iteration):
         start = time.time_ns()
-        model.forward(singleInput)
+        model.forward(single_input)
         latency = time.time_ns() - start
         print("Iteration:" + str(i) +
               ", latency for a single image is" + str(latency / 10 ** 6) + "ms")
@@ -62,5 +64,4 @@ if __name__ == "__main__":
                            "The result should be the average of each iteration time cost")
 
     (options, args) = parser.parse_args(sys.argv)
-    print(options.model_path)
     perf(options.model_path, options.batchSize, options.iteration)
