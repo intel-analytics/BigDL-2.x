@@ -16,12 +16,19 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
+import java.io.File
+import java.nio.file.{Files, Paths}
 import java.util.{ArrayList, Arrays, List => JList}
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.zoo.pipeline.api.net.{NetUtils, SerializationHolder}
+import com.intel.analytics.zoo.pipeline.inference.OpenVINOModel.OpenVINOModelHolder
+import org.apache.commons.io.FileUtils
+
 import scala.collection.JavaConverters._
 
-class OpenVINOModel(var executableNetworkReference: Long = -1,
+class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
+                    var executableNetworkReference: Long = -1,
                     var supportive: OpenVinoInferenceSupportive,
                     var isInt8: Boolean = false)
   extends AbstractModel with InferenceSupportive with Serializable {
@@ -76,4 +83,66 @@ class OpenVINOModel(var executableNetworkReference: Long = -1,
 
   override def toString: String = s"OpenVinoInferenceModel with " +
     s"executableNetworkReference: $executableNetworkReference, supportive: $supportive"
+}
+
+object OpenVINOModel {
+
+  @transient
+  private lazy val inDriver = NetUtils.isDriver
+
+  class OpenVINOModelHolder(@transient var modelBytes: Array[Byte],
+                            @transient var weightBytes: Array[Byte])
+    extends SerializationHolder {
+
+    override def writeInternal(out: CommonOutputStream): Unit = {
+      if (inDriver) {
+        out.writeInt(modelBytes.length)
+        timing(s"writing ${modelBytes.length / 1024 / 1024}Mb openvino model to stream") {
+          out.write(modelBytes)
+        }
+        out.writeInt(weightBytes.length)
+        timing(s"writing ${weightBytes.length / 1024 / 1024}Mb openvino weight to stream") {
+          out.write(weightBytes)
+        }
+      } else {
+        out.writeInt(0)
+      }
+    }
+
+    override def readInternal(in: CommonInputStream): Unit = {
+      val modelLen = in.readInt()
+      assert(modelLen >= 0, "OpenVINO model length should be an non-negative integer")
+      modelBytes = new Array[Byte](modelLen)
+      timing("reading OpenVINO model from stream") {
+        var numOfBytes = 0
+        while (numOfBytes < modelLen) {
+          val read = in.read(modelBytes, numOfBytes, modelLen - numOfBytes)
+          numOfBytes += read
+        }
+      }
+      val weightLen = in.readInt()
+      assert(weightLen >= 0, "OpenVINO weight length should be an non-negative integer")
+      weightBytes = new Array[Byte](weightLen)
+      timing("reading OpenVINO weight from stream") {
+        var numOfBytes = 0
+        while (numOfBytes < weightLen) {
+          val read = in.read(weightBytes, numOfBytes, weightLen - numOfBytes)
+          numOfBytes += read
+        }
+      }
+    }
+  }
+
+  /**
+   * Create a TorchNet from a saved TorchScript Model
+   * @param modelPath Path to the TorchScript Model.
+   * @return
+   */
+  def apply(modelPath: String, weightPath: String): OpenVINOModel = {
+    // TODO: add support for HDFS path
+    val modelbytes = Files.readAllBytes(Paths.get(modelPath))
+    val weightbytes = Files.readAllBytes(Paths.get(weightPath))
+
+    new OpenVINOModel(new OpenVINOModelHolder(modelbytes, weightbytes))
+  }
 }
