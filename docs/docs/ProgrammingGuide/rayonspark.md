@@ -38,7 +38,7 @@ You can also install JDK via conda without setting the JAVA_HOME manually:
 
 5) Start `python` and then execute the following example.
 
-- Create SparkContext on yarn for __yarn-client mode__:
+- Create SparkContext on yarn, only __yarn-client mode__ is supported for now:
 
 ```python
 from zoo import init_spark_on_yarn
