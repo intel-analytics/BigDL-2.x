@@ -16,7 +16,8 @@
 
 import sys
 from zoo.models.image.imageclassification import ImageClassifier
-from zoo.pipeline.api.keras.layers import Activation, Sequential
+from zoo.pipeline.api.keras.layers import Activation
+from zoo.pipeline.api.keras.models import Sequential
 from zoo.feature.image import ImageSet
 from zoo.common.nncontext import init_nncontext
 from optparse import OptionParser
@@ -28,10 +29,12 @@ def predict(model_path, image_path, top_n):
     model = ImageClassifier.load_model(model_path)
     output = model.predict_image_set(images)
     label_map = model.get_config().label_map()
+
+    # list of images composing uri and results in tuple format
     predicts = output.get_predict().collect()
 
     sequential = Sequential()
-    sequential.add(Activation("softmax", predicts[0][1][0].shape))
+    sequential.add(Activation("softmax", input_shape=predicts[0][1][0].shape))
     for pre in predicts:
         (uri, probs) = pre
         out = sequential.forward(probs[0])

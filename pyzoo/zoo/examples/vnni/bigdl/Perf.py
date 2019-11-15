@@ -50,18 +50,18 @@ def perf(model_path, batch_size, iteration):
         model.forward(single_input)
         latency = time.time_ns() - start
         print("Iteration:" + str(i) +
-              ", latency for a single image is" + str(latency / 10 ** 6) + "ms")
+              ", latency for a single image is " + str(latency / 10 ** 6) + " ms")
 
 
 if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("--model", type=str, dest="model_path",
                       help="The path to the downloaded int8 model snapshot")
-    parser.add_option("--batchSize", type=int, dest="batchSize", default=32,
+    parser.add_option("--batch_size", type=int, dest="batch_size", default=32,
                       help="The batch size of input data")
-    parser.add_option("--iteration", type=int, dest="iteration", default=1000,
+    parser.add_option("--iteration", type=int, dest="iteration", default=100,
                       help="The number of iterations to run the performance test. "
                            "The result should be the average of each iteration time cost")
 
     (options, args) = parser.parse_args(sys.argv)
-    perf(options.model_path, options.batchSize, options.iteration)
+    perf(options.model_path, options.batch_size, options.iteration)
