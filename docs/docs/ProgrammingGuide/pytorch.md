@@ -153,3 +153,5 @@ and we expects to see the output like:
 
 More Pytorch examples (ResNet, Lenet etc.) are available [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/pytorch).
 
+# Training Best Practise
+To reach the best performance, we recommand to use Estimator API.
