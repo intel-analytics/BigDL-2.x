@@ -16,19 +16,13 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
-import java.io.File
-import java.nio.file.{Files, Paths}
 import java.util.{ArrayList, Arrays, List => JList}
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.pipeline.api.net.{NetUtils, SerializationHolder}
-import com.intel.analytics.zoo.pipeline.inference.OpenVINOModel.OpenVINOModelHolder
-import org.apache.commons.io.FileUtils
-
 import scala.collection.JavaConverters._
 
-class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
-                    var executableNetworkReference: Long = -1,
+class OpenVINOModel(var executableNetworkReference: Long = -1,
                     var supportive: OpenVinoInferenceSupportive,
                     var isInt8: Boolean = false)
   extends AbstractModel with InferenceSupportive with Serializable {
@@ -94,6 +88,14 @@ object OpenVINOModel {
                             @transient var weightBytes: Array[Byte])
     extends SerializationHolder {
 
+    def getModelBytes(): Array[Byte] = {
+      modelBytes
+    }
+
+    def getWeightBytes(): Array[Byte] = {
+      weightBytes
+    }
+
     override def writeInternal(out: CommonOutputStream): Unit = {
       if (inDriver) {
         out.writeInt(modelBytes.length)
@@ -133,16 +135,13 @@ object OpenVINOModel {
     }
   }
 
-  /**
-   * Create a TorchNet from a saved TorchScript Model
-   * @param modelPath Path to the TorchScript Model.
-   * @return
-   */
-  def apply(modelPath: String, weightPath: String): OpenVINOModel = {
-    // TODO: add support for HDFS path
-    val modelbytes = Files.readAllBytes(Paths.get(modelPath))
-    val weightbytes = Files.readAllBytes(Paths.get(weightPath))
+  def apply(modelBytes: Array[Byte], weightBytes: Array[Byte], batchSize: Int): OpenVINOModel = {
+    OpenVinoInferenceSupportive.loadOpenVinoIR(modelBytes, weightBytes, DeviceType.CPU, batchSize)
+  }
 
-    new OpenVINOModel(new OpenVINOModelHolder(modelbytes, weightbytes))
+  def apply(modelHolder: OpenVINOModelHolder, batchSize: Int): OpenVINOModel = {
+    OpenVinoInferenceSupportive.loadOpenVinoIR(modelHolder.getModelBytes(),
+      modelHolder.getWeightBytes(),
+      DeviceType.CPU, batchSize)
   }
 }
