@@ -46,7 +46,7 @@ import com.intel.analytics.zoo.pipeline.api.autograd.{Lambda, Variable}
 import com.intel.analytics.zoo.pipeline.api.autograd._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Input
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils._
-import com.intel.analytics.zoo.pipeline.api.net.NetUtils
+import com.intel.analytics.zoo.pipeline.api.net.{NetUtils, TorchNet}
 import com.intel.analytics.zoo.pipeline.estimator.{AbstractEstimator, ConstantClipping, GradientClipping, L2NormClipping}
 import org.apache.commons.lang.exception.ExceptionUtils
 import org.apache.hadoop.conf.Configuration
@@ -1083,7 +1083,23 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     state("isLayerwiseScaled") = com.intel.analytics.bigdl.nn.Utils.isLayerwiseScaled(_model)
 
     val nodeNumber = EngineRef.getNodeNumber()
-    val coresPerNode = EngineRef.getCoreNumber()
+
+    /**
+     * The best practice of torchnet's training is single model in each executor.
+     * And use multi OMP threads to speedup the single model's training.
+     * Currently, we only provide single model + multi OMP threads for torchnet model.
+     */
+    val torchNetOptimize = model.isInstanceOf[TorchNet] &&
+      (System.getenv("OMP_NUM_THREADS") != null)
+    val modelPerExecutor = if (torchNetOptimize) {
+      val numOmpThread = System.getenv("OMP_NUM_THREADS").toInt
+      require(EngineRef.getEngineType() != MklDnn, "torchnet shouldn't use MKLDNN engine.")
+      logger.info(s"torchnet will use ${numOmpThread} OMP threads.")
+      val coreNum = EngineRef.getCoreNumber()
+      math.floor(coreNum / numOmpThread).toInt
+    } else {
+      EngineRef.getCoreNumber()
+    }
 
     val partitionNum = distDataset.originRDD().partitions.length
     val modelParameters = InternalOptimizerUtil.getParametersFromModel(trainingModel)
@@ -1125,9 +1141,16 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
 
       val modelsAndBroadcast = InternalOptimizerUtil.initThreadModels[T](
         trainingModel, distDataset, criterion, state,
-        Int.box(nodeNumber), Int.box(coresPerNode), Boolean.box(checkSingleton),
+        Int.box(nodeNumber), Int.box(modelPerExecutor), Boolean.box(checkSingleton),
         allReduceParameter, parameterSplits, validationMethods, optimMethods, parameterProcessors)
       cachedModels = modelsAndBroadcast._1
+      if (torchNetOptimize) {
+        val numOmpThread = System.getenv("OMP_NUM_THREADS").toInt
+        cachedModels.map{_ =>
+          EngineRef.getDefaultThreadPool().setPoolSize(numOmpThread)
+          1
+        }.count()
+      }
       modelBroadcast = modelsAndBroadcast._2
     }
 
@@ -1151,7 +1174,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
         InternalOptimizerUtil.optimizeModels[T](
           trainingModel,
           distDataset,
-          Int.box(coresPerNode),
+          Int.box(modelPerExecutor),
           state,
           endWhen,
           metrics,
@@ -1215,7 +1238,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
             }
             val modelsAndBroadcast = InternalOptimizerUtil.initThreadModels[T](
               newModel, distDataset, criterion, state,
-              Int.box(nodeNumber), Int.box(coresPerNode), Boolean.box(checkSingleton),
+              Int.box(nodeNumber), Int.box(modelPerExecutor), Boolean.box(checkSingleton),
               allReduceParameter, parameterSplits, validationMethods, optimMethods)
             cachedModels = modelsAndBroadcast._1
             modelBroadcast = modelsAndBroadcast._2
