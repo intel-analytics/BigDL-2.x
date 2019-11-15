@@ -24,7 +24,7 @@ from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Layer
 from bigdl.util.common import to_list, JavaValue, callBigDlFunc
 from bigdl.optim.optimizer import MaxEpoch, EveryEpoch
-from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric
+from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss
 from zoo.pipeline.api.net.utils import _find_placeholders, to_bigdl_optim_method
 from zoo.pipeline.estimator import Estimator
 from zoo.util import nest
@@ -551,7 +551,14 @@ class TFOptimizer:
         """
         import tensorflow.keras.backend as K
         loss = keras_model.total_loss
-        inputs = keras_model.inputs + keras_model.targets
+
+        model_inputs = keras_model.inputs
+        if hasattr(keras_model, "targets"):
+            model_targets = keras_model.targets
+        else:
+            model_targets = keras_model._targets
+
+        inputs = model_inputs + model_targets
 
         variables = keras_model._collected_trainable_weights
         keras_optimizer = keras_model.optimizer
@@ -583,10 +590,19 @@ class TFOptimizer:
             if dataset.get_validation_data() is None and val_spilt == 0.0:
                 raise ValueError("Validation data is not specified. Please set " +
                                  "val_rdd in TFDataset, or set val_split larger than zero")
-            bigdl_val_methods = \
-                [to_bigdl_metric(m, keras_model.loss) for m in keras_model.metrics_names]
-            val_outputs = keras_model.outputs
-            val_labels = keras_model.targets
+
+            if len(keras_model.outputs) > 1:
+                if not all([name.endswith("loss") for name in keras_model.metrics_names]):
+                    raise ValueError("metrics (except loss) for multi-head model is not supported")
+                else:
+                    bigdl_val_methods = [Loss()]
+                    val_outputs = keras_model.outputs
+                    val_labels = model_targets
+            else:
+                bigdl_val_methods = \
+                    [to_bigdl_metric(m, keras_model.loss) for m in keras_model.metrics_names]
+                val_outputs = keras_model.outputs
+                val_labels = model_targets
         else:
             val_outputs = None
             val_labels = None
