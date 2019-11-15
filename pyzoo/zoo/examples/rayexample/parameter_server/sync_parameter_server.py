@@ -38,26 +38,26 @@ parser.add_argument("--iterations", default=50, type=int,
 parser.add_argument("--hadoop_conf", type=str,
                     help="turn on yarn mode by passing the path to the hadoop"
                     "configuration folder. Otherwise, turn on local mode.")
-parser.add_argument("--conda_name", type=str, required=True,
-                    help="The conda name the environment are set.")
+parser.add_argument("--conda_name", type=str,
+                    help="The conda name the environment sets.")
 parser.add_argument("--executor_cores", type=int, default=8,
                     help="The number of driver's cpu cores you want to use."
-                    "You can change it depend on your own cluster setting.")
+                    "You can change it depending on your own cluster setting.")
 parser.add_argument("--executor_memory", type=str, default="10g",
                     help="The size of slave(executor)'s memory you want to use."
-                    "You can change it depend on your own cluster setting.")
+                    "You can change it depending on your own cluster setting.")
 parser.add_argument("--driver_memory", type=str, default="2g",
                     help="The size of driver's memory you want to use."
-                    "You can change it depend on your own cluster setting.")
+                    "You can change it depending on your own cluster setting.")
 parser.add_argument("--driver_cores", type=int, default=8,
                     help="The number of driver's cpu cores you want to use."
-                    "You can change it depend on your own cluster setting.")
+                    "You can change it depending on your own cluster setting.")
 parser.add_argument("--extra_executor_memory_for_ray", type=str, default="20g",
                     help="The extra executor memory to store some data."
-                    "You can change it depend on your own cluster setting.")
+                    "You can change it depending on your own cluster setting.")
 parser.add_argument("--object_store_memory", type=str, default="4g",
                     help="The memory to store data on local."
-                    "You can change it depend on your own cluster setting.")
+                    "You can change it depending on your own cluster setting.")
 
 
 @ray.remote

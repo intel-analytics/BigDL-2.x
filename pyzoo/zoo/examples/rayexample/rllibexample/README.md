@@ -1,32 +1,29 @@
 # Multi agent training example
-There are two examples to demonstrate how to use Analytics-Zoo API to run Ray examples: 
+There are two examples to demonstrate how to use Analytics Zoo API to run [Ray](https://github.com/ray-project/ray) examples: 
 [multiagent_two_trainers](https://github.com/ray-project/ray/blob/master/rllib/examples/multiagent_two_trainers.py)
 
-## Requirements 
-- Python 3.5 or 3.6
-- JDK 1.8
-- Apache Spark 2.4.3 ( ≥ 2.4.0 )
-- Analytics-Zoo 0.6.0
-- Ray 0.7.2 and above(If you use ray0.6.6, you may change the code about some APIs since ray changed.)
-- TensorFlow
 
 ## Prepare environments
-We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the enviroments, especially if you want to run on a yarn cluster(yarn-client mode only). 
-And follow the instruction [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/#steps-to-run-rayonspark) to prepare environment.
+We recommend you to use [**Anaconda**](https://www.anaconda.com/distribution/#linux) to prepare the environments.
+And follow step 1 to 4 [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/#steps-to-run-rayonspark) to prepare environment.
 
-Some packages are also needed:
+You also need to install **TensorFlow** in your conda environment and make sure your pyspark version is above 2.4.0,
+or if you use spark instead of pyspark, please set the environment arg **SPARK_HOME**
 ```shell script
-pip install psutil aiohttp pandas gym opencv-python
-```
-More install instructions see [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/).
+export SPARK_HOME = PATH TO YOUR SPARK FLOD  # if you use pyspark, unset this)
 
-More running guidance after pip install see [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install).
+pip install ray>=0.7.2 # If you use ray0.6.6, you may change the code about some APIs since ray changed.)
+pip install tensorflow
+```
+
+See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install)
+for more running guidance after pip install. 
 
 ## Run on local after pip install
 ```
 python multiagent_two_trainers.py --num-iters 10
 ```
-More optional configs see [here](#Options)
+See [here](#Options) for more configurable options for this example.
 
 ## Run on yarn cluster after pip install 
 ```
@@ -35,16 +32,16 @@ export YARN_CONF=... # path to your hadoop/yarn directory
 python multiagent_two_trainers.py --hadoop_conf $YARN_CONF --conda_name ... #your conda name
 ```
  
-More optional configs see [here](#Options)
+See [here](#Options) for more configurable options for this example.
 
 ## Options
-- `--object_store_memory` This option can be used on local mode. The store memory you need to use on local. Default is 4g.
-- `--driver_cores` This option can be set in both mode. The number of driver's or local's cpu cores you want to use. Default is 8.
-- `--num-iters` This option can be set in both mode. The number of iterations to train the model. Default is 20.
-#### Options only for yarn
+- `--object_store_memory` The store memory you need to use on local. Default is 4g.
+- `--driver_cores` The number of driver's or local's cpu cores you want to use. Default is 8.
+- `--num-iters` The number of iterations to train the model. Default is 20.
+**Options only for yarn**
 - `--hadoop_conf` This option is **required** when you want to run on yarn. The path to your configuration folder of hadoop.
 - `--conda_name` This option is **required** when you want to run on yarn. Your conda environment's name.
-- `--slave_num` The number of slave node you want to to use. Default is 2.
+- `--slave_num` The number of slave nodes you want to to use. Default is 2.
 - `--executor_cores` The number of slave(executor)'s cpu cores you want to use. Default is 8.
 - `--executor_memory` The size of slave(executor)'s memory you want to use. Default is 10g.
 - `--driver_memory` The size of driver's memory you want to use. Default is 2g
