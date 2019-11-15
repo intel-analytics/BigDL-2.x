@@ -154,4 +154,6 @@ and we expects to see the output like:
 More Pytorch examples (ResNet, Lenet etc.) are available [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/pytorch).
 
 # Training Best Practise
-To reach the best performance, we recommand to use Estimator API.
+As pytorch's `backward()` is serialized per device, see [pytorch issue #18333](https://github.com/pytorch/pytorch/issues/18333) and [pytorch issue #17566](https://github.com/pytorch/pytorch/issues/17566) for detail, the performance of default distributed training mode(multi models on each executor) will be very bad. So to reach the best performance, torchnet's training should only create one model in each executor, and use multi OMP threads to speedup the single model's training.
+
+We recommend to use [Estimator API](../APIGuide/PipelineAPI/estimator.md) for pytorch model training, and `export OMP_NUM_THREADS=4`.
