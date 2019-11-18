@@ -41,7 +41,6 @@ resnet_finetune.py takes 1 parameter: Path to the images.
 - Run with Spark Local mode
 You can easily use the following commands to run this example:
     ```bash
-    export OMP_NUM_THREADS=4
     python resnet_finetune.py /tmp/zoo/dogs_cats/samples
     ```
 
@@ -50,7 +49,6 @@ You can easily use the following commands to run this example:
     hdfs dfs -put /tmp/zoo/dogs_cats dogs_cats 
     export HADOOP_CONF_DIR=[path to your hadoop conf directory]
     export ZOO_CONDA_NAME=[conda environment name you just prepared above]
-    export OMP_NUM_THREADS=4
     python resnet_finetune.py dogs_cats/samples
     ```
 
