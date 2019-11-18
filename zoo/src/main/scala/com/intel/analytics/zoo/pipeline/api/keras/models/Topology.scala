@@ -1089,14 +1089,11 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
      * And use multi OMP threads to speedup the single model's training.
      * Currently, we only provide single model + multi OMP threads for torchnet model.
      */
-    val torchNetOptimize = model.isInstanceOf[TorchNet] &&
-      (System.getenv("OMP_NUM_THREADS") != null)
+    val torchNetOptimize = model.isInstanceOf[TorchNet]
     val modelPerExecutor = if (torchNetOptimize) {
-      val numOmpThread = System.getenv("OMP_NUM_THREADS").toInt
       require(EngineRef.getEngineType() != MklDnn, "torchnet shouldn't use MKLDNN engine.")
-      logger.info(s"torchnet will use ${numOmpThread} OMP threads.")
-      val coreNum = EngineRef.getCoreNumber()
-      math.floor(coreNum / numOmpThread).toInt
+      logger.info(s"torchnet will use ${EngineRef.getCoreNumber()} OMP threads.")
+      1
     } else {
       EngineRef.getCoreNumber()
     }
@@ -1145,7 +1142,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
         allReduceParameter, parameterSplits, validationMethods, optimMethods, parameterProcessors)
       cachedModels = modelsAndBroadcast._1
       if (torchNetOptimize) {
-        val numOmpThread = System.getenv("OMP_NUM_THREADS").toInt
+        val numOmpThread = EngineRef.getCoreNumber()
         cachedModels.map{_ =>
           EngineRef.getDefaultThreadPool().setPoolSize(numOmpThread)
           1
