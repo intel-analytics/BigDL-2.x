@@ -72,26 +72,46 @@ class TimeSequencePipeline(Pipeline):
                              "Required parameters are: " + str(required_configs))
         default_config = {'dt_col': 'datetime', 'target_col': 'value', 'extra_features_col': None,
                           'drop_missing': True, 'past_seq_len': 2, 'batch_size': 64, 'lr': 0.001,
-                          'dropout': 0.2, 'epochs': 10, 'metric': 'mean_squared_error'}
+                          'dropout': 0.2, 'epochs': 10, 'metric': 'mse'}
         for config, value in default_config.items():
             if config not in self.config:
                 print('Config: \'{}\' is not specified. '
                       'A default value of {} will be used.'.format(config, value))
 
-    def fit_with_fixed_configs(self, input_df, validation_df=None, mc=False, user_configs=None):
+    def get_default_configs(self):
+        default_configs = {'dt_col': 'datetime',
+                           'target_col': 'value',
+                           'extra_features_col': None,
+                           'drop_missing': True,
+                           'future_seq_len': 1,
+                           'past_seq_len': 2,
+                           'batch_size': 64,
+                           'lr': 0.001,
+                           'dropout': 0.2,
+                           'epochs': 10,
+                           'metric': 'mean_squared_error'}
+        print("**** default config: ****")
+        for config in default_configs:
+            print(config + ":", default_configs[config])
+        print("You can change any fields in the default configs by passing into "
+              "fit_with_fixed_configs(). Otherwise, the default values will be used.")
+        return default_configs
+
+    def fit_with_fixed_configs(self, input_df, validation_df=None, mc=False, **user_configs):
         """
         Fit pipeline with fixed configs. The model will be trained from initialization
         with the hyper-parameter specified in configs. The configs contain both identity configs
         (Eg. "future_seq_len", "dt_col", "target_col", "metric") and automl tunable configs
         (Eg. "past_seq_len", "batch_size").
-        The required config set is ['future_seq_len', 'selected_features']. Other configuration will
-        use its default value if not provided.
+        We recommend calling get_default_configs to see the name and default values of configs you
+        you can specify.
         :param input_df: one data frame or a list of data frames
         :param validation_df: one data frame or a list of data frames
         :param user_configs: you can overwrite or add more configs with user_configs. Eg. "epochs"
         :return:
         """
-        self._check_configs()
+        # self._check_configs()
+        self.config = self.get_default_configs()
         if user_configs is not None:
             self.config.update(user_configs)
         ft_id_config_set = {'future_seq_len', 'dt_col', 'target_col',
@@ -101,6 +121,8 @@ class TimeSequencePipeline(Pipeline):
         model_id_config_set = {'future_seq_len'}
         ft_id_configs = {a: self.config[a] for a in model_id_config_set}
         self.model = TimeSequenceModel(check_optional_config=False, **ft_id_configs)
+        all_available_features = self.feature_transformers.get_feature_list(input_df)
+        self.config.update({"selected_features": all_available_features})
         (x_train, y_train) = self.feature_transformers.fit_transform(input_df, **self.config)
         if self._is_val_df_valid(validation_df):
             validation_data = self.feature_transformers.transform(validation_df)
