@@ -14,13 +14,10 @@ See [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/)
 
 ## Prepare environments
 We recommend you to use [**Anaconda**](https://www.anaconda.com/distribution/#linux) to prepare the environments.
-And follow step 1 to 4 [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/#steps-to-run-rayonspark) to prepare environment.
+Follow steps 1 to 4 [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/#steps-to-run-rayonspark) to prepare environment.
 
-You also need to install **Gym** in your conda environment and make sure your pyspark version is above 2.4.0,
-or if you use spark instead of pyspark, please set the environment arg **SPARK_HOME**
+You also need to install **Gym** in your conda environment and make sure your pyspark version is above 2.4.0.
 ```shell script
-export SPARK_HOME = PATH TO YOUR SPARK FLOD ( if you use pyspark, unset this)
-
 pip install gym gym[atari]
 ```
 
@@ -35,8 +32,7 @@ See [here](#Options) for more configurable options for this example.
 
 ## Run on yarn cluster after pip install 
 ```
-export YARN_CONF=... # path to your hadoop/yarn directory
-python rl_pong.py --hadoop_conf $YARN_CONF --conda_name ... #your conda name
+python rl_pong.py --hadoop_conf ... # path to your hadoop/yarn directory --conda_name ... #your conda name
 ```
 See [here](#Options) for more configurable options for this example.
 
@@ -46,7 +42,7 @@ See [here](#Options) for more configurable options for this example.
 - `--interations` The number of iterations to train the model. Default is -1. And by default, the training would not stop.
 - `--batch_size` The number of roll-outs to do per batch. Default is 10.
 
-**Options only for yarn**
+**Options for yarn only**
 - `--hadoop_conf` This option is **required** when you want to run on yarn. The path to your configuration folder of hadoop.
 - `--conda_name` This option is **required** when you want to run on yarn. Your conda environment's name.
 - `--slave_num` The number of slave nodes you want to to use. Default is 2.
