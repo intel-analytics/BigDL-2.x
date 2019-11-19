@@ -36,11 +36,11 @@ See [here](#Options) for more configurable options for this example.
 - `--object_store_memory` The store memory you need to use on local. Default is 4g.
 - `--driver_cores` The number of driver's or local's cpu cores you want to use. Default is 8.
 - `--iterations` The number of iterations to train the model. Default in both examples is 50.
+- `--num_workers` The number of workers. Default is 4.
 
 **Options for yarn only**
 - `--hadoop_conf` This option is **required** when you want to run on yarn. The path to your configuration folder of hadoop.
 - `--conda_name` This option is **required** when you want to run on yarn. Your conda environment's name.
-- `--num_workers` The number of slave nodes you want to to use. Default is 4.
 - `--executor_cores` The number of slave(executor)'s cpu cores you want to use. Default is 8.
 - `--executor_memory` The size of slave(executor)'s memory you want to use. Default is 10g.
 - `--driver_memory` The size of driver's memory you want to use. Default is 2g.
