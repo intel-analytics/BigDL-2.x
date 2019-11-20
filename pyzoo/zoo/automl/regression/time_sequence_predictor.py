@@ -67,6 +67,7 @@ class SmokeRecipe(Recipe):
     def search_space(self, all_available_features):
         return {
             "selected_features": all_available_features,
+            "model": RandomSample(lambda spec: np.random.choice(["LSTM", "Seq2seq"], size=1)[0]),
             "lstm_1_units": RandomSample(lambda spec: np.random.choice([32, 64], size=1)[0]),
             "dropout_1": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
             "lstm_2_units": RandomSample(lambda spec: np.random.choice([32, 64], size=1)[0]),
@@ -127,6 +128,7 @@ class GridRandomRecipe(Recipe):
                     replace=False)),
 
             # --------- model related parameters
+            "model": GridSearch(["LSTM", "Seq2seq"]),
             "lr": 0.001,
             "lstm_1_units": GridSearch([16, 32]),
             "dropout_1": 0.2,
@@ -188,6 +190,7 @@ class RandomRecipe(Recipe):
                     size=np.random.randint(low=3, high=len(all_available_features), size=1))
             ),
 
+            "model": RandomSample(lambda spec: np.random.choice(["LSTM", "Seq2seq"], size=1)[0]),
             # --------- Vanilla LSTM model parameters
             "lstm_1_units": RandomSample(lambda spec:
                                          np.random.choice([8, 16, 32, 64, 128], size=1)[0]),
@@ -617,28 +620,31 @@ if __name__ == "__main__":
 
     hdfs_url = "hdfs://172.16.0.103:9000"
 
+    future_seq_len = args.future_seq_len
     tsp = TimeSequencePredictor(dt_col="datetime",
                                 target_col="value",
-                                future_seq_len=args.future_seq_len,
+                                future_seq_len=future_seq_len,
                                 extra_features_col=None,
                                 )
 
+    mc = False
     pipeline = tsp.fit(train_df,
                        validation_df=val_df,
                        metric="mse",
                        # recipe=BayesRecipe(num_rand_samples=2, look_back=(2, 4)),
                        # recipe=RandomRecipe(look_back=(2, 4)),
-                       recipe=SmokeRecipe(num_samples=1),
-                       # mc=True,
+                       recipe=SmokeRecipe(),
+                       mc=mc,
                        distributed=distributed,
                        hdfs_url=hdfs_url)
 
     print("evaluate:", pipeline.evaluate(test_df, metrics=["mse", "r2"]))
     pred = pipeline.predict(test_df)
-    y_pred, y_uncertainty = pipeline.predict_with_uncertainty(test_df)
     print("shape of prediction:", pred.shape)
-    print("shape of output of uncertain predict:", y_pred.shape, y_uncertainty.shape)
-    print(y_uncertainty[:5])
+    if mc:
+        y_pred, y_uncertainty = pipeline.predict_with_uncertainty(test_df)
+        print("shape of output of uncertain predict:", y_pred.shape, y_uncertainty.shape)
+        print(y_uncertainty[:5])
 
     save_pipeline_file = "tmp.ppl"
     pipeline.save(save_pipeline_file)
@@ -650,12 +656,17 @@ if __name__ == "__main__":
     print("evaluate:", new_pipeline.evaluate(test_df, metrics=["mse", "r2"]))
 
     new_pred = new_pipeline.predict(test_df)
-    new_y_pred, new_y_uncertainty = new_pipeline.predict_with_uncertainty(test_df)
     print("shape of prediction:", new_pred.shape)
-    print("shape of output of uncertain predict:", new_y_pred.shape, new_y_uncertainty.shape)
-    print(new_y_uncertainty[:5])
-
-    # np.testing.assert_allclose(pred["value"].values, new_pred["value"].values)
+    if mc:
+        new_y_pred, new_y_uncertainty = new_pipeline.predict_with_uncertainty(test_df)
+        print("shape of output of uncertain predict:", new_y_pred.shape, new_y_uncertainty.shape)
+        print(new_y_uncertainty[:5])
+    else:
+        if future_seq_len > 1:
+            columns = ["{}_{}".format("value", i) for i in range(future_seq_len)]
+            np.testing.assert_allclose(pred[columns].values, new_pred[columns].values)
+        else:
+            np.testing.assert_allclose(pred["value"].values, new_pred["value"].values)
 
     new_pipeline.fit(train_df, val_df, epoch_num=5)
     print("evaluate:", new_pipeline.evaluate(test_df, metrics=["mse", "r2"]))

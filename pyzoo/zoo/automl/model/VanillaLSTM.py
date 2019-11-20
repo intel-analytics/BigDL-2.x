@@ -163,7 +163,7 @@ class VanillaLSTM(BaseModel):
         # os.rename("vanilla_lstm_tmp.h5", model_path)
 
         config_to_save = {
-            "future_seq_len": self.future_seq_len,
+            # "future_seq_len": self.future_seq_len,
             "metric": self.metric,
             "batch_size": self.batch_size
         }
@@ -181,7 +181,7 @@ class VanillaLSTM(BaseModel):
         self.model = keras.models.load_model(model_path)
         # self.model.load_weights(file_path)
 
-        self.future_seq_len = config["future_seq_len"]
+        # self.future_seq_len = config["future_seq_len"]
         # for continuous training
         self.metric = config["metric"]
         self.batch_size = config["batch_size"]
