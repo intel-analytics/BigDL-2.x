@@ -45,12 +45,6 @@ fi
 if [ -z "${OMP_NUM_THREADS}" ]; then
     if [ -z "${ZOO_NUM_MKLTHREADS}" ]; then
         export OMP_NUM_THREADS=1
-    else
-        if [ `echo $ZOO_NUM_MKLTHREADS | tr '[A-Z]' '[a-z]'` == "all" ]; then
-            export OMP_NUM_THREADS=`nproc`
-        else
-            export OMP_NUM_THREADS=${ZOO_NUM_MKLTHREADS}
-        fi
     fi
 fi
 
