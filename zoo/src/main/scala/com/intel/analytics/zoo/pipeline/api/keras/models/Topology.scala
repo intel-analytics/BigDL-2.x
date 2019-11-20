@@ -1142,10 +1142,10 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
         allReduceParameter, parameterSplits, validationMethods, optimMethods, parameterProcessors)
       cachedModels = modelsAndBroadcast._1
       if (torchNetOptimize) {
-        val numOmpThread = EngineRef.getCoreNumber()
-        cachedModels.map{_ =>
-          EngineRef.getDefaultThreadPool().setPoolSize(numOmpThread)
-          1
+        val numCores = EngineRef.getCoreNumber()
+        cachedModels.mapPartitions{_ =>
+          EngineRef.getDefaultThreadPool().setMKLThread(numCores)
+          Iterator.single(1)
         }.count()
       }
       modelBroadcast = modelsAndBroadcast._2

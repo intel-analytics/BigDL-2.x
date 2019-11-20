@@ -159,7 +159,7 @@ def get_analytics_zoo_conf():
     return {}
 
 
-def init_env():
+def init_env(conf):
     # Default env
     kmp_affinity = "granularity=fine,compact,1,0"
     kmp_settings = "1"
@@ -178,7 +178,7 @@ def init_env():
         omp_num_threads = os.environ["OMP_NUM_THREADS"]
     elif "ZOO_NUM_MKLTHREADS" in os.environ:
         if os.environ["ZOO_NUM_MKLTHREADS"].lower() == "all":
-            omp_num_threads = multiprocessing.cpu_count()
+            omp_num_threads = conf.get('spark.executor.cores', str(multiprocessing.cpu_count()))
         else:
             omp_num_threads = os.environ["ZOO_NUM_MKLTHREADS"]
     if "KMP_BLOCKTIME" in os.environ:
@@ -191,8 +191,11 @@ def init_env():
     os.environ["KMP_BLOCKTIME"] = kmp_blocktime
 
 
-def init_spark_conf():
-    init_env()
+def init_spark_conf(conf=None):
+    spark_conf = SparkConf()
+    if conf:
+        spark_conf.setAll(conf.items())
+    init_env(spark_conf)
     zoo_conf = get_analytics_zoo_conf()
     # Set bigDL and TF conf
     zoo_conf["spark.executorEnv.KMP_AFFINITY"] = os.environ["KMP_AFFINITY"]
@@ -200,24 +203,23 @@ def init_spark_conf():
     zoo_conf["spark.executorEnv.OMP_NUM_THREADS"] = os.environ["OMP_NUM_THREADS"]
     zoo_conf["spark.executorEnv.KMP_BLOCKTIME"] = os.environ["KMP_BLOCKTIME"]
 
-    sparkConf = SparkConf()
-    sparkConf.setAll(zoo_conf.items())
+    spark_conf.setAll(zoo_conf.items())
     if os.environ.get("BIGDL_JARS", None) and not is_spark_below_2_2():
         for jar in os.environ["BIGDL_JARS"].split(":"):
-            extend_spark_driver_cp(sparkConf, jar)
+            extend_spark_driver_cp(spark_conf, jar)
 
     # add content in PYSPARK_FILES in spark.submit.pyFiles
     # This is a workaround for current Spark on k8s
     python_lib = os.environ.get('PYSPARK_FILES', None)
     if python_lib:
-        existing_py_files = sparkConf.get("spark.submit.pyFiles")
+        existing_py_files = spark_conf.get("spark.submit.pyFiles")
         if existing_py_files:
-            sparkConf.set(key="spark.submit.pyFiles",
+            spark_conf.set(key="spark.submit.pyFiles",
                           value="%s,%s" % (python_lib, existing_py_files))
         else:
-            sparkConf.set(key="spark.submit.pyFiles", value=python_lib)
+            spark_conf.set(key="spark.submit.pyFiles", value=python_lib)
 
-    return sparkConf
+    return spark_conf
 
 
 def check_version():
