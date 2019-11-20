@@ -46,8 +46,6 @@ if __name__ == "__main__":
         generator_optim_method=Adam(1e-3, beta1=0.5),
         discriminator_optim_method=Adam(1e-4, beta1=0.5),
         noise_generator=lambda batch_size: tf.random.normal(mean=0.0, stddev=1.0, shape=(batch_size, 10)),
-        generator_steps=1,
-        discriminator_steps=1,
         checkpoint_path="/tmp/gan_model/model"
     )
 
