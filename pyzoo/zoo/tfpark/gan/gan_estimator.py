@@ -18,11 +18,11 @@ import os
 import tensorflow as tf
 import numpy as np
 
-from zoo.pipeline.api.net import TFOptimizer
-from zoo.pipeline.api.net.tf_optimizer import GanOptimMethod
+from zoo.tfpark import TFOptimizer
+from zoo.tfpark.gan.common import GanOptimMethod
 
 
-class GANOptimizer(object):
+class GANEstimator(object):
 
     def __init__(self,
                  generator_fn,
@@ -31,7 +31,6 @@ class GANOptimizer(object):
                  discriminator_loss_fn,
                  generator_optim_method,
                  discriminator_optim_method,
-                 dataset,
                  noise_generator,
                  generator_steps=1,
                  discriminator_steps=1,
@@ -45,7 +44,6 @@ class GANOptimizer(object):
         self._discriminator_steps = discriminator_steps
         self._generator_optim_method = generator_optim_method
         self._discriminator_optim_method = discriminator_optim_method
-        self._dataset = dataset
         self._noise_generator = noise_generator
 
         if checkpoint_path is None:
@@ -54,11 +52,11 @@ class GANOptimizer(object):
         else:
             self.checkpoint_path = checkpoint_path
 
-    def optimize(self, end_trigger):
+    def train(self, dataset, end_trigger):
 
         with tf.Graph().as_default() as g:
 
-            real_images = self._dataset.tensors[0]
+            real_images = dataset.tensors[0]
             counter = tf.Variable(0, dtype=tf.int32)
 
             batch_size = tf.shape(real_images)[0]
@@ -106,9 +104,10 @@ class GANOptimizer(object):
                 optimizer = TFOptimizer(loss, GanOptimMethod(self._discriminator_optim_method,
                                                              self._generator_optim_method,
                                                              g_param_size.value), sess=sess,
-                                        dataset=self._dataset, inputs=self._dataset.tensors,
+                                        dataset=dataset, inputs=dataset.tensors,
                                         grads=grads, variables=variables, graph=g,
-                                        updates=[increase_counter])
+                                        updates=[increase_counter],
+                                        model_dir=self.checkpoint_path)
                 optimizer.optimize(end_trigger)
                 steps = sess.run(counter)
                 saver = tf.train.Saver()

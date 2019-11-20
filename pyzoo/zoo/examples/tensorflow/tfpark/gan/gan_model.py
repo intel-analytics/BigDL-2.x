@@ -15,13 +15,14 @@
 #
 
 import tensorflow as tf
-from tensorflow.contrib.gan.python.losses.python.losses_impl import wasserstein_discriminator_loss, \
+
+from tensorflow_gan.python.losses.losses_impl import wasserstein_discriminator_loss, \
     wasserstein_generator_loss
+
+import tensorflow_gan as tfgan
 
 ds = tf.contrib.distributions
 layers = tf.contrib.layers
-tfgan = tf.contrib.gan
-
 
 def discriminator_loss_fn(real_outputs, gen_outputs):
     return wasserstein_discriminator_loss(real_outputs, gen_outputs)
