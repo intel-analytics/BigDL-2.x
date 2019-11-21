@@ -35,16 +35,16 @@ class TestTimeSequencePipeline(ZooTestCase):
         ray.init()
 
         # sample_num should > past_seq_len, the default value of which is 1
-        sample_num = 100
-        self.train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019',
+        sample_num = 500
+        self.train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2000',
                                                                 periods=sample_num),
                                      "value": np.random.randn(sample_num)})
-        val_sample_num = 16
-        self.validation_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019',
+        val_sample_num = 64
+        self.validation_df = pd.DataFrame({"datetime": pd.date_range('1/2/2000',
                                                                      periods=val_sample_num),
                                            "value": np.random.randn(val_sample_num)})
-        self.test_sample_num = 16
-        self.test_df = pd.DataFrame({"datetime": pd.date_range('1/10/2019',
+        self.test_sample_num = 64
+        self.test_df = pd.DataFrame({"datetime": pd.date_range('1/3/2000',
                                                                periods=self.test_sample_num),
                                      "value": np.random.randn(self.test_sample_num)})
 
@@ -551,6 +551,51 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert y_pred_uncertainty.shape == (self.test_sample_num - self.default_past_seq_len + 1,
                                             self.future_seq_len_3)
         assert np.any(y_pred_uncertainty)
+
+    def test_mtnet_1(self):
+        mtnet_ppl_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df,
+                                     recipe=MTNetSmokeRecipe())
+        mse, rs = mtnet_ppl_1.evaluate(self.test_df, metrics=["mse", "r2"])
+        assert isinstance(mse, np.float)
+        assert isinstance(rs, np.float)
+        y_pred_1 = mtnet_ppl_1.predict(self.test_df)
+        assert y_pred_1.shape == (self.test_sample_num - mtnet_ppl_1.config["past_seq_len"] + 1,
+                                  self.future_seq_len_1 + 1)
+
+        dirname = tempfile.mkdtemp(prefix="saved_pipeline")
+        try:
+            save_pipeline_file = os.path.join(dirname, "my.ppl")
+            mtnet_ppl_1.save(save_pipeline_file)
+            assert os.path.isfile(save_pipeline_file)
+            new_pipeline = load_ts_pipeline(save_pipeline_file)
+
+            new_pred = new_pipeline.predict(self.test_df)
+            np.testing.assert_allclose(y_pred_1["value"].values, new_pred["value"].values)
+        finally:
+            shutil.rmtree(dirname)
+
+    def test_mtnet_3(self):
+        mtnet_ppl_3 = self.tsp_3.fit(self.train_df, validation_df=self.validation_df,
+                                     recipe=MTNetSmokeRecipe())
+        mse, rs = mtnet_ppl_3.evaluate(self.test_df, metrics=["mse", "r2"])
+        assert len(mse) == self.future_seq_len_3
+        assert len(rs) == self.future_seq_len_3
+        y_pred_3 = mtnet_ppl_3.predict(self.test_df)
+        assert y_pred_3.shape == (self.test_sample_num - mtnet_ppl_3.config["past_seq_len"] + 1,
+                                  self.future_seq_len_3 + 1)
+
+        dirname = tempfile.mkdtemp(prefix="saved_pipeline")
+        try:
+            save_pipeline_file = os.path.join(dirname, "my.ppl")
+            mtnet_ppl_3.save(save_pipeline_file)
+            assert os.path.isfile(save_pipeline_file)
+            new_pipeline = load_ts_pipeline(save_pipeline_file)
+
+            new_pred = new_pipeline.predict(self.test_df)
+            columns = ["{}_{}".format("value", i) for i in range(self.future_seq_len_3)]
+            np.testing.assert_allclose(y_pred_3[columns].values, new_pred[columns].values)
+        finally:
+            shutil.rmtree(dirname)
 
 
 if __name__ == '__main__':

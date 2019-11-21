@@ -16,10 +16,12 @@
 from .abstract import BaseModel
 from .VanillaLSTM import VanillaLSTM
 from .Seq2Seq import LSTMSeq2Seq
+from .MTNet import MTNet
 from zoo.automl.common.util import *
 
 MODEL_MAP = {"LSTM": VanillaLSTM,
              "Seq2seq": LSTMSeq2Seq,
+             "MTNet": MTNet
              }
 
 

@@ -85,6 +85,39 @@ class SmokeRecipe(Recipe):
         }
 
 
+class MTNetSmokeRecipe(Recipe):
+    """
+    A very simple Recipe for smoke test that runs one epoch and one iteration on MTNet
+    with only 1 random sample.
+    """
+    def __init__(self):
+        pass
+
+    def search_space(self, all_available_features):
+        return {
+            "selected_features": all_available_features,
+            "model": "MTNet",
+            "lr": 0.001,
+            "batch_size": 16,
+            "epochs": 1,
+            "n": RandomSample(lambda spec: np.random.choice([3, 4], size=1)[0]),
+            "highway_window": RandomSample(lambda spec: np.random.choice([2, 3], size=1)[0]),
+            "T": RandomSample(lambda spec: np.random.choice([3, 4], size=1)[0]),
+            # W <= T
+            "W": 2,
+            'metric': 'smape',
+            # can not merge into basic recipes since the definition of past_seq_len varies.
+            "past_seq_len": RandomSample(lambda spec: (spec.config.n + 1) * spec.config.T),
+
+        }
+
+    def runtime_params(self):
+        return {
+            "training_iteration": 1,
+            "num_samples": 5,
+        }
+
+
 class GridRandomRecipe(Recipe):
     """
     A recipe involves both grid search and random search.
