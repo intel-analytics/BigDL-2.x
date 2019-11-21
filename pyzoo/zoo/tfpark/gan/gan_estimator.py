@@ -13,13 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import inspect
 import tempfile
 import os
 import tensorflow as tf
 import numpy as np
+from tensorflow.python.util import function_utils
 
 from zoo.tfpark import TFOptimizer
 from zoo.tfpark.gan.common import GanOptimMethod
+
+# todo make it inherit Estimator
+from zoo.util import nest
 
 
 class GANEstimator(object):
@@ -29,12 +34,11 @@ class GANEstimator(object):
                  discriminator_fn,
                  generator_loss_fn,
                  discriminator_loss_fn,
-                 generator_optim_method,
-                 discriminator_optim_method,
-                 noise_generator,
+                 generator_optimizer,
+                 discriminator_optimizer,
                  generator_steps=1,
                  discriminator_steps=1,
-                 checkpoint_path=None,
+                 model_dir=None,
                  ):
         self._generator_fn = generator_fn
         self._discriminator_fn = discriminator_fn
@@ -42,47 +46,60 @@ class GANEstimator(object):
         self._discriminator_loss_fn = discriminator_loss_fn
         self._generator_steps = generator_steps
         self._discriminator_steps = discriminator_steps
-        self._generator_optim_method = generator_optim_method
-        self._discriminator_optim_method = discriminator_optim_method
-        self._noise_generator = noise_generator
+        self._generator_optim_method = generator_optimizer
+        self._discriminator_optim_method = discriminator_optimizer
 
-        if checkpoint_path is None:
+        if model_dir is None:
             folder = tempfile.mkdtemp()
             self.checkpoint_path = os.path.join(folder, "gan_model")
         else:
-            self.checkpoint_path = checkpoint_path
+            self.checkpoint_path = model_dir
+
+    @staticmethod
+    def _call_fn_maybe_with_counter(fn, counter, *args):
+        fn_args = inspect.getargspec(fn).args
+        if "counter" in fn_args:
+            return fn(*args, counter=counter)
+        else:
+            return fn(*args)
 
     def train(self, dataset, end_trigger):
 
         with tf.Graph().as_default() as g:
 
-            real_images = dataset.tensors[0]
+            generator_inputs = dataset.feature_tensors
+            real_data = dataset.label_tensors
+
             counter = tf.Variable(0, dtype=tf.int32)
 
-            batch_size = tf.shape(real_images)[0]
+            period = self._discriminator_steps + self._generator_steps
 
-            noise = self._noise_generator(batch_size)
-
-            is_discriminator_phase = tf.less(tf.mod(counter, self._generator_steps +
-                                                    self._discriminator_steps), self._discriminator_steps)
-
-            with tf.control_dependencies([is_discriminator_phase]):
-                increase_counter = tf.assign_add(counter, 1)
+            is_discriminator_phase = tf.less(tf.mod(counter, period), self._discriminator_steps)
 
             with tf.variable_scope("generator"):
-                fake_img = self._generator_fn(noise)
+                gen_data = self._call_fn_maybe_with_counter(self._generator_fn, counter,
+                                                            generator_inputs)
 
             with tf.variable_scope("discriminator"):
-                fake_logits = self._discriminator_fn(fake_img)
+                fake_d_outputs = self._call_fn_maybe_with_counter(self._discriminator_fn,
+                                                                  counter,
+                                                                  gen_data, generator_inputs)
 
             with tf.variable_scope("discriminator", reuse=True):
-                real_logits = self._discriminator_fn(real_images)
+                real_d_outputs = self._call_fn_maybe_with_counter(self._discriminator_fn,
+                                                                  counter,
+                                                                  real_data, generator_inputs)
 
             with tf.name_scope("generator_loss"):
-                generator_loss = self._generator_loss_fn(fake_logits)
+                generator_loss = self._call_fn_maybe_with_counter(self._generator_loss_fn,
+                                                                  counter,
+                                                                  fake_d_outputs)
 
             with tf.name_scope("discriminator_loss"):
-                discriminator_loss = self._discriminator_loss_fn(real_logits, fake_logits)
+                discriminator_loss = self._call_fn_maybe_with_counter(self._discriminator_loss_fn,
+                                                                      counter,
+                                                                      real_d_outputs,
+                                                                      fake_d_outputs)
 
             generator_variables = tf.trainable_variables("generator")
             generator_grads = tf.gradients(generator_loss, generator_variables)
@@ -90,13 +107,22 @@ class GANEstimator(object):
             discriminator_grads = tf.gradients(discriminator_loss, discriminator_variables)
 
             variables = generator_variables + discriminator_variables
-            g_grads = tf.cond(is_discriminator_phase, lambda: [tf.zeros_like(grad) for grad in generator_grads],
-                              lambda: generator_grads)
+
+            def true_fn():
+                return [tf.zeros_like(grad) for grad in generator_grads]
+
+            def false_fn():
+                return generator_grads
+
+            g_grads = tf.cond(is_discriminator_phase, true_fn=true_fn, false_fn=false_fn)
             d_grads = tf.cond(is_discriminator_phase, lambda: discriminator_grads,
                               lambda: [tf.zeros_like(grad) for grad in discriminator_grads])
             loss = tf.cond(is_discriminator_phase, lambda: discriminator_loss, lambda: generator_loss)
 
             grads = g_grads + d_grads
+
+            with tf.control_dependencies(grads):
+                increase_counter = tf.assign_add(counter, 1)
 
             g_param_size = sum([np.product(g.shape) for g in g_grads])
             with tf.Session() as sess:
@@ -104,7 +130,7 @@ class GANEstimator(object):
                 optimizer = TFOptimizer(loss, GanOptimMethod(self._discriminator_optim_method,
                                                              self._generator_optim_method,
                                                              g_param_size.value), sess=sess,
-                                        dataset=dataset, inputs=dataset.tensors,
+                                        dataset=dataset, inputs=dataset._original_tensors,
                                         grads=grads, variables=variables, graph=g,
                                         updates=[increase_counter],
                                         model_dir=self.checkpoint_path)
@@ -112,8 +138,4 @@ class GANEstimator(object):
                 steps = sess.run(counter)
                 saver = tf.train.Saver()
                 saver.save(optimizer.sess, self.checkpoint_path, global_step=steps)
-
-
-
-
 

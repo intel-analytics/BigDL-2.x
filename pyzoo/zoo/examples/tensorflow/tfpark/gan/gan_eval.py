@@ -17,7 +17,7 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-from zoo.examples.tensorflow.tfpark.gan.gan_model import *
+from tensorflow_gan.examples.mnist.networks import *
 
 noise = tf.random.normal(mean=0.0, stddev=1.0, shape=(20, 10))
 

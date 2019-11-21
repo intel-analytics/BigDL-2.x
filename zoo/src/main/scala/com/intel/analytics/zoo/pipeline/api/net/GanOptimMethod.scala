@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.optim
+package com.intel.analytics.zoo.pipeline.api.net
 
 import com.intel.analytics.bigdl.optim.OptimMethod
 import com.intel.analytics.bigdl.optim.SGD.{Default, LearningRateSchedule}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil
 
 import scala.reflect.ClassTag
 
@@ -33,9 +34,12 @@ class GanOptimMethod[@specialized(Float, Double) T: ClassTag](
 
   override def optimize(feval: (Tensor[T]) =>
     (T, Tensor[T]), parameter: Tensor[T]): (Tensor[T], Array[T]) = {
+    // todo try to determine state from parameter Tensor, maybe
+    // define the last float to be the counter, and do not update it.
+    val state = InternalOptimizerUtil.getStateFromOptiMethod(this)
     val nevals = state.getOrElse[Int]("evalCounter", 0)
     val (fx, dfdx) = feval(parameter)
-    val results = if (nevals % (dSteps + gSteps) < dSteps) {
+    if (nevals % (dSteps + gSteps) < dSteps) {
       dOptim.optimize(
         (_) => (fx, dfdx.narrow(1, gParamSize, parameter.nElement() - gParamSize)),
         parameter.narrow(1, gParamSize, parameter.nElement() - gParamSize))

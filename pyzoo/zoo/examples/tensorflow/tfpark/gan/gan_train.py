@@ -22,7 +22,8 @@ from bigdl.optim.optimizer import *
 import numpy as np
 
 from bigdl.dataset import mnist
-from zoo.examples.tensorflow.tfpark.gan.gan_model import *
+from tensorflow_gan.examples.mnist.networks import *
+from tensorflow_gan.python.losses.losses_impl import *
 
 
 def get_data_rdd(dataset):
@@ -38,15 +39,19 @@ if __name__ == "__main__":
                                  features=(tf.float32, (28, 28, 1)),
                                  batch_size=32)
 
+    def noise_fn(batch_size):
+        return tf.random.normal(mean=0.0, stddev=1.0, shape=(batch_size, 10))
+
+    dataset = dataset.map(lambda tensors: (noise_fn(tf.shape(tensors[0])[0]), tensors[0]))
+
     opt = GANEstimator(
-        generator_fn=lambda noise: unconditional_generator(noise),
-        discriminator_fn=lambda real_data: unconditional_discriminator(real_data),
-        generator_loss_fn=generator_loss_fn,
-        discriminator_loss_fn=discriminator_loss_fn,
-        generator_optim_method=Adam(1e-3, beta1=0.5),
-        discriminator_optim_method=Adam(1e-4, beta1=0.5),
-        noise_generator=lambda batch_size: tf.random.normal(mean=0.0, stddev=1.0, shape=(batch_size, 10)),
-        checkpoint_path="/tmp/gan_model/model"
+        generator_fn=unconditional_generator,
+        discriminator_fn=unconditional_discriminator,
+        generator_loss_fn=wasserstein_generator_loss,
+        discriminator_loss_fn=wasserstein_discriminator_loss,
+        generator_optimizer=Adam(1e-3, beta1=0.5),
+        discriminator_optimizer=Adam(1e-4, beta1=0.5),
+        model_dir="/tmp/gan_model/model"
     )
 
     opt.train(dataset, MaxIteration(5000))
