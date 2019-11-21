@@ -216,14 +216,14 @@ object NNContext {
       val kmpAffinity = env.getOrElse("KMP_AFFINITY", "granularity=fine,compact,1,0")
       val kmpBlockTime = env.getOrElse("KMP_BLOCKTIME", "0")
       val kmpSettings = env.getOrElse("KMP_SETTINGS", "1")
-      val ompNumThreads = if (env.contains("OMP_NUM_THREADS")) {
-        env("OMP_NUM_THREADS")
-      } else if (env.contains("ZOO_NUM_MKLTHREADS")) {
+      val ompNumThreads = if (env.contains("ZOO_NUM_MKLTHREADS")) {
         if (env("ZOO_NUM_MKLTHREADS").equalsIgnoreCase("all")) {
           zooConf.get("spark.executor.cores", Runtime.getRuntime.availableProcessors().toString)
         } else {
           env("ZOO_NUM_MKLTHREADS")
         }
+      } else if (env.contains("OMP_NUM_THREADS")) {
+        env("OMP_NUM_THREADS")
       } else {
         "1"
       }

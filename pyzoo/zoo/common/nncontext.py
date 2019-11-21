@@ -174,21 +174,21 @@ def init_env(conf):
         kmp_affinity = os.environ["KMP_AFFINITY"]
     if "KMP_SETTINGS" in os.environ:
         kmp_settings = os.environ["KMP_SETTINGS"]
-    if "OMP_NUM_THREADS" in os.environ:
-        omp_num_threads = os.environ["OMP_NUM_THREADS"]
-    elif "ZOO_NUM_MKLTHREADS" in os.environ:
+    if "ZOO_NUM_MKLTHREADS" in os.environ:
         if os.environ["ZOO_NUM_MKLTHREADS"].lower() == "all":
             omp_num_threads = conf.get('spark.executor.cores', str(multiprocessing.cpu_count()))
         else:
             omp_num_threads = os.environ["ZOO_NUM_MKLTHREADS"]
+    elif "OMP_NUM_THREADS" in os.environ:
+        omp_num_threads = os.environ["OMP_NUM_THREADS"]
     if "KMP_BLOCKTIME" in os.environ:
         kmp_blocktime = os.environ["KMP_BLOCKTIME"]
 
     # Set env
-    os.environ["KMP_AFFINITY"] = kmp_affinity
-    os.environ["KMP_SETTINGS"] = kmp_settings
-    os.environ["OMP_NUM_THREADS"] = omp_num_threads
-    os.environ["KMP_BLOCKTIME"] = kmp_blocktime
+    conf.set("spark.executorEnv.KMP_AFFINITY", kmp_affinity)
+    conf.set("spark.executorEnv.KMP_SETTINGS", kmp_settings)
+    conf.set("spark.executorEnv.KMP_BLOCKTIME", kmp_blocktime)
+    conf.set("spark.executorEnv.OMP_NUM_THREADS", omp_num_threads)
 
 
 def init_spark_conf(conf=None):
@@ -198,10 +198,6 @@ def init_spark_conf(conf=None):
     init_env(spark_conf)
     zoo_conf = get_analytics_zoo_conf()
     # Set bigDL and TF conf
-    zoo_conf["spark.executorEnv.KMP_AFFINITY"] = os.environ["KMP_AFFINITY"]
-    zoo_conf["spark.executorEnv.KMP_SETTINGS"] = os.environ["KMP_SETTINGS"]
-    zoo_conf["spark.executorEnv.OMP_NUM_THREADS"] = os.environ["OMP_NUM_THREADS"]
-    zoo_conf["spark.executorEnv.KMP_BLOCKTIME"] = os.environ["KMP_BLOCKTIME"]
 
     spark_conf.setAll(zoo_conf.items())
     if os.environ.get("BIGDL_JARS", None) and not is_spark_below_2_2():
