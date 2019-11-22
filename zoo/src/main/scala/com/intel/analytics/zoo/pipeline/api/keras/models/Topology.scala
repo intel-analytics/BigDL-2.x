@@ -52,6 +52,7 @@ import org.apache.commons.lang.exception.ExceptionUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.Logger
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.{RDD, ZippedPartitionsWithLocalityRDD}
 
 import scala.collection.JavaConverters._
@@ -1092,8 +1093,10 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     val torchNetOptimize = model.isInstanceOf[TorchNet]
     val modelPerExecutor = if (torchNetOptimize) {
       require(EngineRef.getEngineType() != MklDnn, "torchnet shouldn't use MKLDNN engine.")
-      logger.info(s"torchnet will use ${EngineRef.getCoreNumber()} OMP threads.")
-      1
+      val numOmpThread = distDataset.originRDD().sparkContext
+        .getConf.get("spark.executorEnv.OMP_NUM_THREADS").toInt
+      logger.info(s"torchnet will use ${numOmpThread} OMP threads.")
+      math.floor(EngineRef.getCoreNumber() / numOmpThread).toInt
     } else {
       EngineRef.getCoreNumber()
     }
@@ -1142,8 +1145,9 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
         allReduceParameter, parameterSplits, validationMethods, optimMethods, parameterProcessors)
       cachedModels = modelsAndBroadcast._1
       if (torchNetOptimize) {
-        val numCores = EngineRef.getCoreNumber()
+        //val numCores = EngineRef.getCoreNumber()
         cachedModels.mapPartitions{_ =>
+          val numCores = scala.sys.env("OMP_NUM_THREADS").toInt
           EngineRef.getDefaultThreadPool().setMKLThread(numCores)
           Iterator.single(1)
         }.count()
