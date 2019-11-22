@@ -41,7 +41,7 @@ resnet_finetune.py takes 1 parameter: Path to the images.
 - Run with Spark Local mode
 You can easily use the following commands to run this example:
     ```bash
-    export ZOO_NUM_MKLTHREADS=all
+    export ZOO_NUM_MKLTHREADS=4
     python resnet_finetune.py /tmp/zoo/dogs_cats/samples
     ```
 
