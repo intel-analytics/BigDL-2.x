@@ -159,7 +159,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   /**
    * load a Torch model as TorchNet
    *
-   * @param modelPath the path of the torch model
+   * @param modelPath the path of the torch script
    */
   def doLoadPyTorch(modelPath: String): Unit = {
     doLoadPyTorchModel(modelPath)
@@ -168,7 +168,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   /**
    * load a Torch model as TorchNet
    *
-   * @param modelBytes the bytes of the torch model
+   * @param modelBytes the bytes of the torch script
    */
   def doLoadPyTorch(modelBytes: Array[Byte]): Unit = {
     doLoadPyTorchModel(modelBytes)
