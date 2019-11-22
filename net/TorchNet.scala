@@ -19,6 +19,7 @@ package com.intel.analytics.zoo.pipeline.api.net
 import java.io._
 import java.nio.channels.Channels
 import java.nio.file.{Files, Paths}
+import java.util.UUID
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
@@ -212,6 +213,10 @@ object TorchNet {
     // TODO: add support for HDFS path
     val modelbytes = Files.readAllBytes(Paths.get(modelPath))
     new TorchNet(new TorchModelHolder(modelbytes, modelPath))
+  }
+
+  def apply(modelBytes: Array[Byte]): TorchNet = {
+    new TorchNet(new TorchModelHolder(modelBytes, UUID.randomUUID().toString))
   }
 
   private[net] def loadPytorchModel(bytes: Array[Byte]): Long = {
