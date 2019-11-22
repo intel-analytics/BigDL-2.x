@@ -28,9 +28,8 @@ import scala.reflect.ClassTag
  * @param logDir
  * @param appName
  */
-abstract class Summary(
-                        logDir: String,
-                        appName: String) {
+abstract class Summary(logDir: String,
+                       appName: String) {
   protected val writer: FileWriter
 
   /**
@@ -40,10 +39,9 @@ abstract class Summary(
    * @param step current step.
    * @return this
    */
-  def addScalar(
-                 tag: String,
-                 value: Float,
-                 step: Long): this.type = {
+  def addScalar(tag: String,
+                value: Float,
+                step: Long): this.type = {
     writer.addSummary(
       Summary.scalar(tag, value), step
     )
@@ -57,10 +55,9 @@ abstract class Summary(
    * @param step current step.
    * @return this
    */
-  def addHistogram[T: ClassTag](
-                                 tag: String,
-                                 value: Tensor[T],
-                                 step: Long)(implicit ev: TensorNumeric[T]): this.type = {
+  def addHistogram[T: ClassTag](tag: String,
+                                value: Tensor[T],
+                                step: Long)(implicit ev: TensorNumeric[T]): this.type = {
     writer.addSummary(
       Summary.histogram[T](tag, value), step
     )
@@ -104,9 +101,8 @@ object Summary {
    * @param values values.
    * @return
    */
-  def histogram[T: ClassTag](
-                              tag: String,
-                              values: Tensor[T])(implicit ev: TensorNumeric[T]): tensorflow.framework.Summary = {
+  def histogram[T: ClassTag](tag: String,
+                             values: Tensor[T])(implicit ev: TensorNumeric[T]): tensorflow.framework.Summary = {
     val counts = new Array[Int](limits.length)
 
     var squares = 0.0
@@ -140,11 +136,10 @@ object Summary {
   /**
    * Find a bucket for x.
    */
-  private def bisectLeft(
-                          a: Array[Double],
-                          x: Double,
-                          lo: Int = 0,
-                          hi: Int = -1): Int = {
+  private def bisectLeft(a: Array[Double],
+                         x: Double,
+                         lo: Int = 0,
+                         hi: Int = -1): Int = {
     require(lo >= 0)
     var high = if (hi == -1) {
       a.length
