@@ -22,9 +22,14 @@ import com.intel.analytics.zoo.tensorboard.FileReader
 
 
 
+<<<<<<< HEAD
 class InferenceSummary(
                         logDir: String,
                         appName: String) extends Summary(logDir, appName) {
+=======
+class InferenceSummary(logDir: String,
+                       appName: String) extends Summary(logDir, appName) {
+>>>>>>> 504c982fc1f7a3d2ed00681e8677b4b0e03faf5e
   protected val folder = s"$logDir/$appName/inference"
   override val writer = new FileWriter(folder)
 

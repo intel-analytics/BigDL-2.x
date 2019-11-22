@@ -28,9 +28,14 @@ import scala.reflect.ClassTag
  * @param logDir
  * @param appName
  */
+<<<<<<< HEAD
 abstract class Summary(
                         logDir: String,
                         appName: String) {
+=======
+abstract class Summary(logDir: String,
+                       appName: String) {
+>>>>>>> 504c982fc1f7a3d2ed00681e8677b4b0e03faf5e
   protected val writer: FileWriter
 
   /**
@@ -40,10 +45,16 @@ abstract class Summary(
    * @param step current step.
    * @return this
    */
+<<<<<<< HEAD
   def addScalar(
                  tag: String,
                  value: Float,
                  step: Long): this.type = {
+=======
+  def addScalar(tag: String,
+                value: Float,
+                step: Long): this.type = {
+>>>>>>> 504c982fc1f7a3d2ed00681e8677b4b0e03faf5e
     writer.addSummary(
       Summary.scalar(tag, value), step
     )
@@ -57,10 +68,16 @@ abstract class Summary(
    * @param step current step.
    * @return this
    */
+<<<<<<< HEAD
   def addHistogram[T: ClassTag](
                                  tag: String,
                                  value: Tensor[T],
                                  step: Long)(implicit ev: TensorNumeric[T]): this.type = {
+=======
+  def addHistogram[T: ClassTag](tag: String,
+                                value: Tensor[T],
+                                step: Long)(implicit ev: TensorNumeric[T]): this.type = {
+>>>>>>> 504c982fc1f7a3d2ed00681e8677b4b0e03faf5e
     writer.addSummary(
       Summary.histogram[T](tag, value), step
     )
@@ -104,9 +121,14 @@ object Summary {
    * @param values values.
    * @return
    */
+<<<<<<< HEAD
   def histogram[T: ClassTag](
                               tag: String,
                               values: Tensor[T])(implicit ev: TensorNumeric[T]): tensorflow.framework.Summary = {
+=======
+  def histogram[T: ClassTag](tag: String,
+                             values: Tensor[T])(implicit ev: TensorNumeric[T]): tensorflow.framework.Summary = {
+>>>>>>> 504c982fc1f7a3d2ed00681e8677b4b0e03faf5e
     val counts = new Array[Int](limits.length)
 
     var squares = 0.0
@@ -140,11 +162,18 @@ object Summary {
   /**
    * Find a bucket for x.
    */
+<<<<<<< HEAD
   private def bisectLeft(
                           a: Array[Double],
                           x: Double,
                           lo: Int = 0,
                           hi: Int = -1): Int = {
+=======
+  private def bisectLeft(a: Array[Double],
+                         x: Double,
+                         lo: Int = 0,
+                         hi: Int = -1): Int = {
+>>>>>>> 504c982fc1f7a3d2ed00681e8677b4b0e03faf5e
     require(lo >= 0)
     var high = if (hi == -1) {
       a.length
