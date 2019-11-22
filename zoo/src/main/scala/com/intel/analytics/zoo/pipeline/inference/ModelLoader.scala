@@ -18,7 +18,10 @@ package com.intel.analytics.zoo.pipeline.inference
 
 import com.intel.analytics.bigdl.nn.Graph
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.utils.caffe.CaffeLoader
+
+import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.zoo.models.caffe.CaffeLoader
+
 import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.zoo.pipeline.api.keras.layers.WordEmbedding
 import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
@@ -39,7 +42,7 @@ object ModelLoader extends InferenceSupportive {
       logger.info(s"load model from $modelPath and $weightPath")
       val model = ModuleLoader.loadFromFile[Float](modelPath, weightPath)
       logger.info(s"loaded model as $model")
-      model
+      model.quantize()
     }
   }
 
@@ -49,7 +52,7 @@ object ModelLoader extends InferenceSupportive {
       logger.info(s"load model from $modelPath and $weightPath")
       val model = CaffeLoader.loadCaffe[Float](modelPath, weightPath)._1.asInstanceOf[Graph[Float]]
       logger.info(s"loaded model as $model")
-      model
+      model.quantize()
     }
   }
 

@@ -1,0 +1,38 @@
+## Analytics-zoo Cluster Serving
+
+model:
+  # if not set, would be inferred automatically	
+  type:
+
+  # model path must be set
+  path: resources
+data:
+  # default, image
+  type:
+
+  # default, image-classification
+  task: 
+
+spark:
+  # default, local[*]
+  master:
+
+  # default, 4g
+  driver_memory:
+
+  # default, 1g
+  executor_memory:
+
+  # default, 1
+  num_executors:
+
+  # default, 4
+  executor_cores:
+
+params:
+  # default, 4
+  batch_size:
+
+  # default, mklblas
+  engine_type:
+

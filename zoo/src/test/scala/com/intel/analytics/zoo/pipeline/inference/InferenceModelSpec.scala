@@ -148,6 +148,7 @@ class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
     val bis4AModel = new ByteArrayInputStream(bytes4AModel)
     val in4AModel = new ObjectInputStream(bis4AModel)
     val aModel2 = in4AModel.readObject.asInstanceOf[InferenceModel]
+
 //    aModel2.setInferenceSummary(InferenceSummary("/home/litchy/tmp", "inf-test"))
     in4AModel.close()
 
