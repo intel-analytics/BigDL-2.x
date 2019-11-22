@@ -119,7 +119,7 @@ This is classified now haha
 * OutOfMemory (TensorFlow model) - If Cluster Serving (when running TensorFlow model) ends by raising error `OutOfMemory`, try reduce core number in `spark:master:local[core_number]` (in local mode) and `spark:executor_cores` (in distributed mode). The reason why TensorFlow needs different configuration is that the model preparing step is different from others.
 ## Other Notes
 ### System environment variables
-* OMP_NUM_THREADS
+* `OMP_NUM_THREADS`: OpenMP* Threads, affecting the performance of OpenVINO, Pytorch.
 ### Redis config
-* bgsave
-* maximum stream length
+* Data persistence: We disable the Redis data persistence in Docker image in order to save disk, because so far we have not discovered the necessary scenario for persisting data and disabling persistence will get rid of potential mistakes. If you have the requirement to persist the Redis data on disk, please inform us, or run serving without Docker.
+* Maximum stream length: We cut half of the Redis stream if the stream is about to reach the maximum size, if you want to remove this limitation, please inform us.
