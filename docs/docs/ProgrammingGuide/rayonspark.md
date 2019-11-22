@@ -26,7 +26,7 @@ source activate zoo
 pip install analytics-zoo[ray]
 ```
 
-Note that the essential dependencies (including `ray==0.6.6`, `psutil`, `aiohttp`, `setproctitle`) will be installed by specifying the extras key `[ray]` when you pip install `analytics-zoo`.
+Note that the essential dependencies (including `ray==0.6.6`, `psutil`, `aiohttp`, `setproctitle`) will be installed by specifying the extras key `[ray]` when you pip install analytics-zoo.
 
 4) Download JDK8 and set the environment variable: JAVA_HOME (recommended).
 
