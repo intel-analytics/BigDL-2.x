@@ -211,7 +211,7 @@ def init_spark_conf(conf=None):
         existing_py_files = spark_conf.get("spark.submit.pyFiles")
         if existing_py_files:
             spark_conf.set(key="spark.submit.pyFiles",
-                          value="%s,%s" % (python_lib, existing_py_files))
+                           value="%s,%s" % (python_lib, existing_py_files))
         else:
             spark_conf.set(key="spark.submit.pyFiles", value=python_lib)
 

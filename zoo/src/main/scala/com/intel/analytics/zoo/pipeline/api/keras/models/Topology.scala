@@ -1145,7 +1145,6 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
         allReduceParameter, parameterSplits, validationMethods, optimMethods, parameterProcessors)
       cachedModels = modelsAndBroadcast._1
       if (torchNetOptimize) {
-        //val numCores = EngineRef.getCoreNumber()
         cachedModels.mapPartitions{_ =>
           val numCores = scala.sys.env("OMP_NUM_THREADS").toInt
           EngineRef.getDefaultThreadPool().setMKLThread(numCores)
