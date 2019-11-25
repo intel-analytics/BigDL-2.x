@@ -167,7 +167,7 @@ class ClusterServingHelper {
   }
 
   def loadInferenceModel(): InferenceModel = {
-    val parallelNum = if (blasFlag) 4 else 1
+    val parallelNum = if (blasFlag) coreNum else 1
     val model = new InferenceModel(parallelNum)
 
     modelType match {

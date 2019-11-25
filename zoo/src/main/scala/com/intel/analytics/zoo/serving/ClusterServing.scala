@@ -97,7 +97,7 @@ object ClusterServing {
           // BLAS is only valid in BigDL backend
           // Thus no shape specific change is needed
           batchDF.rdd.mapPartitions(pathBytes => {
-            pathBytes.grouped(1).flatMap(pathBytesBatch => {
+            pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
               pathBytesBatch.indices.toParArray.map(i => {
                 val tensors = ImageProcessing.bytesToBGRTensor(java.util
                   .Base64.getDecoder.decode(pathBytesBatch(i).getAs[String]("image")))
