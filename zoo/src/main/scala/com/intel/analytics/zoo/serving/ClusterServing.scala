@@ -26,6 +26,7 @@ import com.intel.analytics.zoo.utils.ImageProcessing
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
+import redis.clients.jedis.Jedis
 
 
 
@@ -84,6 +85,9 @@ object ClusterServing {
 
     var totalCnt: Int = 0
 
+    // redis stream control
+    val redisDB = new Jedis(helper.redisHost, helper.redisPort.toInt)
+
     val query = images.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
       batchDF.persist()
       val microBatchSize = batchDF.count()
@@ -97,7 +101,7 @@ object ClusterServing {
           // BLAS is only valid in BigDL backend
           // Thus no shape specific change is needed
           batchDF.rdd.mapPartitions(pathBytes => {
-            pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
+            pathBytes.grouped(3).flatMap(pathBytesBatch => {
               pathBytesBatch.indices.toParArray.map(i => {
                 val tensors = ImageProcessing.bytesToBGRTensor(java.util
                   .Base64.getDecoder.decode(pathBytesBatch(i).getAs[String]("image")))
@@ -172,62 +176,6 @@ object ClusterServing {
         }
 
 
-
-
-
-//        val resultPartitions = pathBytesChunk.mapPartitions(pathBytes => {
-//          val localModel = bcModel.value
-//          pathBytes.grouped(batchSize).flatMap(pathByteBatch => {
-//            val thisBatchSize = pathByteBatch.size
-//            val t = Tensor[Float](batchSize, C, W, H)
-//
-//            (0 until thisBatchSize).foreach(i => t.select(1, i + 1).copy(pathByteBatch(i)._2))
-//
-//            val x = if (modelType == "tensorflow") {
-//              t.transpose(2, 3)
-//                .transpose(3, 4).contiguous()
-//            } else if (modelType == "openvino") {
-//              t.addSingletonDimension()
-//            } else {
-//              t
-//            }
-//
-//            val result = if (modelType == "openvino") {
-//              localModel.doPredict(x).toTensor.squeeze()
-//            } else {
-//              localModel.doPredict(x).toTensor
-//            }
-//
-//            // result post processing starts here
-//            // move below code into wrapper if new functions
-//            // e.g. object detection is added
-//            val outputSize = if (result.size(2) > topN) {
-//              topN
-//            } else {
-//              result.size(2)
-//            }
-//
-//            (0 until thisBatchSize).map(i => {
-//              val output = TensorUtils.getTopN(outputSize, result.select(1, i + 1))
-//              var value: String = "{"
-//              (0 until outputSize - 1).foreach( j => {
-//                val tmpValue = "\"" + output(j)._1 + "\":\"" +
-//                  output(j)._2.toString + "\","
-//                value += tmpValue
-//              })
-//              value += "\"" + output(outputSize - 1)._1 + "\":\"" +
-//                output(outputSize - 1)._2.toString
-//              value += "\"}"
-//              //            println(pathByteBatch(i)._1 +"  "+ value)
-//              (pathByteBatch(i)._1, value)
-//            })
-//
-//            // sort and get result here
-//          })
-//
-//        })
-
-
         val resDf = spark.createDataFrame(resultPartitions)
         resDf.write
           .format("org.apache.spark.sql.redis")
@@ -249,6 +197,8 @@ object ClusterServing {
         }
 
         logger.info("Micro batch predict ended")
+
+        redisDB.xtrim("image_stream", redisDB.xlen("image_stream"), true)
 
       }
 
