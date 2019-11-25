@@ -88,7 +88,7 @@ if __name__ == "__main__":
             sc=sc,
             object_store_memory=args.object_store_memory)
     else:
-        sc = init_spark_on_local(cores=args.driver_memory)
+        sc = init_spark_on_local(cores=args.driver_cores)
         ray_ctx = RayContext(sc=sc, object_store_memory=args.object_store_memory)
     ray_ctx.init()
 
