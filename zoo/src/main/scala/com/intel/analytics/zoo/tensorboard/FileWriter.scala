@@ -20,9 +20,7 @@ import com.intel.analytics.bigdl.utils.{Engine, ThreadPool}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-//import org.tensorflow
 import com.intel.analytics.bigdl.shaded.tensorflow.framework.GraphDef
-//import org.tensorflow.framework.GraphDef
 import com.intel.analytics.bigdl.shaded.tensorflow
 import org.tensorflow.util.Event
 

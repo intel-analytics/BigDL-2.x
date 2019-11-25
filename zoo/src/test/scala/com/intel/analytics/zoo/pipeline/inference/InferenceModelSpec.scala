@@ -24,6 +24,8 @@ import com.intel.analytics.zoo.common.CheckedObjectInputStream
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
+import scala.reflect.io.Directory
+
 class TestAbstractInferenceModel(supportedConcurrentNum: Integer = 1)
   extends AbstractInferenceModel(supportedConcurrentNum) {
 }
@@ -36,7 +38,7 @@ class TestAutoScalingAbstractInferenceModel2(autoScalingEnabled: Boolean = true,
   extends AbstractInferenceModel(autoScalingEnabled, concurrentNum) {
 }
 
-class InferenceModelSpec extends ZooSpecHelper
+class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
   with InferenceSupportive {
   val resource = getClass().getClassLoader().getResource("models")
   val modelPath = resource.getPath + "/caffe/test_persist.prototxt"
@@ -149,9 +151,6 @@ class InferenceModelSpec extends ZooSpecHelper
     val bis4AModel = new ByteArrayInputStream(bytes4AModel)
     val in4AModel = new ObjectInputStream(bis4AModel)
     val aModel2 = in4AModel.readObject.asInstanceOf[InferenceModel]
-
-    val logdir = createTmpDir()
-    aModel2.setInferenceSummary(InferenceSummary(logdir.getPath, "inf-test"))
 
     in4AModel.close()
 
