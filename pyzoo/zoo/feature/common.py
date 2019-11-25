@@ -15,6 +15,7 @@
 #
 
 from bigdl.util.common import *
+from zoo.common.utils import callZooFunc
 from bigdl.dataset.dataset import DataSet
 import sys
 
@@ -64,10 +65,10 @@ class Relations(object):
                                texts. Only need to specify this when sc is not None. Default is 1.
         """
         if sc:
-            jvalue = callBigDlFunc(bigdl_type, "readRelations", path, sc, min_partitions)
+            jvalue = callZooFunc(bigdl_type, "readRelations", path, sc, min_partitions)
             res = jvalue.map(lambda x: Relation(str(x[0]), str(x[1]), int(x[2])))
         else:
-            jvalue = callBigDlFunc(bigdl_type, "readRelations", path)
+            jvalue = callZooFunc(bigdl_type, "readRelations", path)
             res = [Relation(str(x[0]), str(x[1]), int(x[2])) for x in jvalue]
         return res
 
@@ -82,7 +83,7 @@ class Relations(object):
         :param sc: An instance of SparkContext.
         :return: RDD of Relation.
         """
-        jvalue = callBigDlFunc(bigdl_type, "readRelationsParquet", path, sc)
+        jvalue = callZooFunc(bigdl_type, "readRelationsParquet", path, sc)
         return jvalue.map(lambda x: Relation(str(x[0]), str(x[1]), int(x[2])))
 
 
@@ -93,7 +94,7 @@ class Preprocessing(JavaValue):
     """
     def __init__(self, bigdl_type="float", *args):
         self.bigdl_type = bigdl_type
-        self.value = callBigDlFunc(bigdl_type, JavaValue.jvm_class_constructor(self), *args)
+        self.value = callZooFunc(bigdl_type, JavaValue.jvm_class_constructor(self), *args)
 
     def __call__(self, input):
         """
@@ -106,10 +107,10 @@ class Preprocessing(JavaValue):
             from zoo.feature.text import TextSet
         # if type(input) is ImageSet:
         if isinstance(input, ImageSet):
-            jset = callBigDlFunc(self.bigdl_type, "transformImageSet", self.value, input)
+            jset = callZooFunc(self.bigdl_type, "transformImageSet", self.value, input)
             return ImageSet(jvalue=jset)
         elif isinstance(input, TextSet):
-            jset = callBigDlFunc(self.bigdl_type, "transformTextSet", self.value, input)
+            jset = callZooFunc(self.bigdl_type, "transformTextSet", self.value, input)
             return TextSet(jvalue=jset)
 
 
@@ -244,7 +245,7 @@ class FeatureSet(DataSet):
         :param bigdl_type: numeric type
         :return: A feature set
         """
-        jvalue = callBigDlFunc(bigdl_type, "createFeatureSetFromImageFrame",
+        jvalue = callZooFunc(bigdl_type, "createFeatureSetFromImageFrame",
                                image_frame, memory_type, sequential_order, shuffle)
         return cls(jvalue=jvalue)
 
@@ -269,7 +270,7 @@ class FeatureSet(DataSet):
         :param bigdl_type: numeric type
         :return: A feature set
         """
-        jvalue = callBigDlFunc(bigdl_type, "createFeatureSetFromImageFrame",
+        jvalue = callZooFunc(bigdl_type, "createFeatureSetFromImageFrame",
                                imageset.to_image_frame(), memory_type,
                                sequential_order, shuffle)
         return cls(jvalue=jvalue)
@@ -295,7 +296,7 @@ class FeatureSet(DataSet):
         :param bigdl_type:numeric type
         :return: A feature set
         """
-        jvalue = callBigDlFunc(bigdl_type, "createSampleFeatureSetFromRDD", rdd,
+        jvalue = callZooFunc(bigdl_type, "createSampleFeatureSetFromRDD", rdd,
                                memory_type, sequential_order, shuffle)
         return cls(jvalue=jvalue)
 
@@ -319,7 +320,7 @@ class FeatureSet(DataSet):
         :param bigdl_type:numeric type
         :return: A feature set
         """
-        jvalue = callBigDlFunc(bigdl_type, "createFeatureSetFromRDD", rdd,
+        jvalue = callZooFunc(bigdl_type, "createFeatureSetFromRDD", rdd,
                                memory_type, sequential_order, shuffle)
         return cls(jvalue=jvalue)
 
@@ -329,7 +330,7 @@ class FeatureSet(DataSet):
         :param transformer: the transformers to transform this feature set.
         :return: A feature set
         """
-        jvalue = callBigDlFunc(self.bigdl_type, "transformFeatureSet", self.value, transformer)
+        jvalue = callZooFunc(self.bigdl_type, "transformFeatureSet", self.value, transformer)
         return FeatureSet(jvalue=jvalue)
 
     def to_dataset(self):
@@ -337,5 +338,5 @@ class FeatureSet(DataSet):
         To BigDL compatible DataSet
         :return:
         """
-        jvalue = callBigDlFunc(self.bigdl_type, "featureSetToDataSet", self.value)
+        jvalue = callZooFunc(self.bigdl_type, "featureSetToDataSet", self.value)
         return FeatureSet(jvalue=jvalue)

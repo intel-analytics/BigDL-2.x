@@ -17,6 +17,7 @@
 from bigdl.util.common import *
 from bigdl.optim.optimizer import OptimMethod, Default
 from zoo.pipeline.api.keras.base import ZooKerasCreator
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -51,7 +52,7 @@ class Adam(OptimMethod, ZooKerasCreator):
         # 1. This class need to be a subclass of OptimMethod
         # 2. The constructor of OptimMethod invokes JavaValue.jvm_class_constructor() directly
         #    and does not take the polymorphism.
-        self.value = callBigDlFunc(
+        self.value = callZooFunc(
             bigdl_type, ZooKerasCreator.jvm_class_constructor(self),
             lr,
             beta_1,
@@ -94,7 +95,7 @@ class AdamWeightDecay(OptimMethod, ZooKerasCreator):
         # 1. This class need to be a subclass of OptimMethod
         # 2. The constructor of OptimMethod invokes JavaValue.jvm_class_constructor() directly
         #    and does not take the polymorphism.
-        self.value = callBigDlFunc(
+        self.value = callZooFunc(
             bigdl_type, ZooKerasCreator.jvm_class_constructor(self),
             lr,
             warmup_portion,

@@ -18,7 +18,8 @@ import sys
 
 from zoo.pipeline.api.utils import remove_batch
 from .engine.topology import KerasNet
-from bigdl.util.common import to_list, callBigDlFunc
+from bigdl.util.common import to_list
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -96,20 +97,20 @@ class Model(KerasNet):
         log_path: The path to save the model graph.
         backward: The name of the application.
         """
-        callBigDlFunc(self.bigdl_type, "zooSaveGraphTopology",
+        callZooFunc(self.bigdl_type, "zooSaveGraphTopology",
                       self.value,
                       log_path,
                       backward)
 
     def new_graph(self, outputs):
-        value = callBigDlFunc(self.bigdl_type, "newGraph", self.value, outputs)
+        value = callZooFunc(self.bigdl_type, "newGraph", self.value, outputs)
         return self.from_jvalue(value)
 
     def freeze_up_to(self, names):
-        callBigDlFunc(self.bigdl_type, "freezeUpTo", self.value, names)
+        callZooFunc(self.bigdl_type, "freezeUpTo", self.value, names)
 
     def unfreeze(self, names):
-        callBigDlFunc(self.bigdl_type, "unFreeze", self.value, names)
+        callZooFunc(self.bigdl_type, "unFreeze", self.value, names)
 
     @staticmethod
     def from_jvalue(jvalue, bigdl_type="float"):

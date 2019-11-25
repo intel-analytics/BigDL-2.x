@@ -19,7 +19,7 @@ import sys
 from pyspark import RDD
 
 from zoo.models.common import *
-from bigdl.util.common import callBigDlFunc
+from zoo.common.utils import callZooFunc
 
 
 if sys.version >= '3':
@@ -87,7 +87,7 @@ class Recommender(KerasZooModel):
         feature_rdd: RDD of UserItemFeature.
         :return RDD of UserItemPrediction.
         """
-        result_rdd = callBigDlFunc(self.bigdl_type, "predictUserItemPair",
+        result_rdd = callZooFunc(self.bigdl_type, "predictUserItemPair",
                                    self.value,
                                    self._to_tuple_rdd(feature_rdd))
         return self._to_prediction_rdd(result_rdd)
@@ -101,7 +101,7 @@ class Recommender(KerasZooModel):
         max_items: The number of items to be recommended to each user. Positive int.
         :return RDD of UserItemPrediction.
         """
-        result_rdd = callBigDlFunc(self.bigdl_type, "recommendForUser",
+        result_rdd = callZooFunc(self.bigdl_type, "recommendForUser",
                                    self.value,
                                    self._to_tuple_rdd(feature_rdd),
                                    int(max_items))
@@ -116,7 +116,7 @@ class Recommender(KerasZooModel):
         max_users: The number of users to be recommended to each item. Positive int.
         :return RDD of UserItemPrediction.
         """
-        result_rdd = callBigDlFunc(self.bigdl_type, "recommendForItem",
+        result_rdd = callZooFunc(self.bigdl_type, "recommendForItem",
                                    self.value,
                                    self._to_tuple_rdd(feature_rdd),
                                    int(max_users))

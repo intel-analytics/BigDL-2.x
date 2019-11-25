@@ -21,7 +21,8 @@ from zoo.models.common import ZooModel
 from zoo.models.textmatching import TextMatcher
 from zoo.pipeline.api.keras.layers import Input, Embedding, Dense, Squeeze, prepare_embedding
 from zoo.pipeline.api.keras.models import Model
-from bigdl.util.common import callBigDlFunc, JTensor
+from bigdl.util.common import JTensor
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -131,7 +132,7 @@ class KNRM(TextMatcher):
               Amazon S3 path should be like 's3a://bucket/xxx'.
         weight_path: The path for pre-trained weights if any. Default is None.
         """
-        jmodel = callBigDlFunc(bigdl_type, "loadKNRM", path, weight_path)
+        jmodel = callZooFunc(bigdl_type, "loadKNRM", path, weight_path)
         model = ZooModel._do_load(jmodel, bigdl_type)
         model.__class__ = KNRM
         return model

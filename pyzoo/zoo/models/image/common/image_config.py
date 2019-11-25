@@ -16,7 +16,7 @@
 
 import sys
 from bigdl.util.common import JavaValue
-from bigdl.util.common import callBigDlFunc
+from zoo.common.utils import callZooFunc
 
 from zoo.feature.common import Preprocessing
 
@@ -48,7 +48,7 @@ class ImageConfigure(JavaValue):
             if post_processor:
                 assert issubclass(post_processor.__class__, Preprocessing), \
                     "the post_processor should be subclass of Preprocessing"
-            self.value = callBigDlFunc(
+            self.value = callZooFunc(
                 bigdl_type, JavaValue.jvm_class_constructor(self),
                 pre_processor,
                 post_processor,
@@ -57,11 +57,11 @@ class ImageConfigure(JavaValue):
                 feature_padding_param)
 
     def label_map(self):
-        return callBigDlFunc(self.bigdl_type, "getLabelMap", self.value)
+        return callZooFunc(self.bigdl_type, "getLabelMap", self.value)
 
 
 class PaddingParam(JavaValue):
 
     def __init__(self, bigdl_type="float"):
-        self.value = callBigDlFunc(
+        self.value = callZooFunc(
             bigdl_type, JavaValue.jvm_class_constructor(self))

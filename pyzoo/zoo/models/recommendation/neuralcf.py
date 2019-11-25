@@ -20,6 +20,7 @@ from zoo.models.common import KerasZooModel
 from zoo.models.recommendation import Recommender
 from zoo.pipeline.api.keras.layers import *
 from zoo.pipeline.api.keras.models import *
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -105,7 +106,7 @@ class NeuralCF(Recommender):
               Amazon S3 path should be like 's3a://bucket/xxx'.
         weight_path: The path for pre-trained weights if any. Default is None.
         """
-        jmodel = callBigDlFunc(bigdl_type, "loadNeuralCF", path, weight_path)
+        jmodel = callZooFunc(bigdl_type, "loadNeuralCF", path, weight_path)
         model = KerasZooModel._do_load(jmodel, bigdl_type)
         model.__class__ = NeuralCF
         return model

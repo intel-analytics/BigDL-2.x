@@ -16,8 +16,9 @@
 
 import numpy as np
 
-from bigdl.util.common import JTensor, callBigDlFunc, Sample
+from bigdl.util.common import JTensor, Sample
 
+from zoo.common.utils import callZooFunc
 from zoo.models.recommendation import UserItemFeature
 
 
@@ -43,7 +44,7 @@ def get_boundaries(target, boundaries, default=-1, start=0):
 
 
 def get_negative_samples(indexed):
-    return callBigDlFunc("float", "getNegativeSamples",
+    return callZooFunc("float", "getNegativeSamples",
                          indexed)
 
 

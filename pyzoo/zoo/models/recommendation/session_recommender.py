@@ -20,6 +20,7 @@ from zoo.models.common import KerasZooModel
 from zoo.models.recommendation import Recommender
 from zoo.pipeline.api.keras.layers import *
 from zoo.pipeline.api.keras.models import *
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -117,7 +118,7 @@ class SessionRecommender(Recommender):
                 sessions_rdd = sessions
         else:
             raise TypeError("Unsupported training data type: %s" % type(sessions))
-        results = callBigDlFunc(self.bigdl_type, "recommendForSession",
+        results = callZooFunc(self.bigdl_type, "recommendForSession",
                                 self.value,
                                 sessions_rdd,
                                 max_items,
@@ -140,7 +141,7 @@ class SessionRecommender(Recommender):
               Amazon S3 path should be like 's3a://bucket/xxx'.
         weight_path: The path for pre-trained weights if any. Default is None.
         """
-        jmodel = callBigDlFunc(bigdl_type, "loadSessionRecommender", path, weight_path)
+        jmodel = callZooFunc(bigdl_type, "loadSessionRecommender", path, weight_path)
         model = KerasZooModel._do_load(jmodel, bigdl_type)
         model.__class__ = SessionRecommender
         return model

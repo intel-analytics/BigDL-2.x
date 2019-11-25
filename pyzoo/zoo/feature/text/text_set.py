@@ -15,7 +15,8 @@
 #
 
 import six
-from bigdl.util.common import JavaValue, callBigDlFunc
+from bigdl.util.common import JavaValue
+from zoo.common.utils import callZooFunc
 from pyspark import RDD
 
 
@@ -32,7 +33,7 @@ class TextSet(JavaValue):
 
         :return: Boolean
         """
-        return callBigDlFunc(self.bigdl_type, "textSetIsLocal", self.value)
+        return callZooFunc(self.bigdl_type, "textSetIsLocal", self.value)
 
     def is_distributed(self):
         """
@@ -40,7 +41,7 @@ class TextSet(JavaValue):
 
         :return: Boolean
         """
-        return callBigDlFunc(self.bigdl_type, "textSetIsDistributed", self.value)
+        return callZooFunc(self.bigdl_type, "textSetIsDistributed", self.value)
 
     def to_distributed(self, sc=None, partition_num=4):
         """
@@ -55,7 +56,7 @@ class TextSet(JavaValue):
             jvalue = self.value
         else:
             assert sc, "sc cannot be null to transform a LocalTextSet to a DistributedTextSet"
-            jvalue = callBigDlFunc(self.bigdl_type, "textSetToDistributed", self.value,
+            jvalue = callZooFunc(self.bigdl_type, "textSetToDistributed", self.value,
                                    sc, partition_num)
         return DistributedTextSet(jvalue=jvalue)
 
@@ -68,7 +69,7 @@ class TextSet(JavaValue):
         if self.is_local():
             jvalue = self.value
         else:
-            jvalue = callBigDlFunc(self.bigdl_type, "textSetToLocal", self.value)
+            jvalue = callZooFunc(self.bigdl_type, "textSetToLocal", self.value)
         return LocalTextSet(jvalue=jvalue)
 
     def get_word_index(self):
@@ -78,7 +79,7 @@ class TextSet(JavaValue):
 
         :return: Dictionary {word: id}
         """
-        return callBigDlFunc(self.bigdl_type, "textSetGetWordIndex", self.value)
+        return callZooFunc(self.bigdl_type, "textSetGetWordIndex", self.value)
 
     def save_word_index(self, path):
         """
@@ -90,7 +91,7 @@ class TextSet(JavaValue):
 
         :param path: The path to the text file.
         """
-        callBigDlFunc(self.bigdl_type, "textSetSaveWordIndex", self.value, path)
+        callZooFunc(self.bigdl_type, "textSetSaveWordIndex", self.value, path)
 
     def load_word_index(self, path):
         """
@@ -107,7 +108,7 @@ class TextSet(JavaValue):
 
         :return: TextSet with the loaded word_index.
         """
-        jvalue = callBigDlFunc(self.bigdl_type, "textSetLoadWordIndex", self.value, path)
+        jvalue = callZooFunc(self.bigdl_type, "textSetLoadWordIndex", self.value, path)
         return TextSet(jvalue=jvalue)
 
     def set_word_index(self, vocab):
@@ -118,7 +119,7 @@ class TextSet(JavaValue):
 
         :return: TextSet with the word_index set.
         """
-        jvalue = callBigDlFunc(self.bigdl_type, "textSetSetWordIndex", self.value, vocab)
+        jvalue = callZooFunc(self.bigdl_type, "textSetSetWordIndex", self.value, vocab)
         return TextSet(jvalue=jvalue)
 
     def generate_word_index_map(self, remove_topN=0, max_words_num=-1,
@@ -131,7 +132,7 @@ class TextSet(JavaValue):
 
         :return: Dictionary {word: id}
         """
-        return callBigDlFunc(self.bigdl_type, "textSetGenerateWordIndexMap", self.value,
+        return callZooFunc(self.bigdl_type, "textSetGenerateWordIndexMap", self.value,
                              remove_topN, max_words_num, min_freq, existing_map)
 
     def get_texts(self):
@@ -141,7 +142,7 @@ class TextSet(JavaValue):
         :return: List of String for LocalTextSet.
                  RDD of String for DistributedTextSet.
         """
-        return callBigDlFunc(self.bigdl_type, "textSetGetTexts", self.value)
+        return callZooFunc(self.bigdl_type, "textSetGetTexts", self.value)
 
     def get_uris(self):
         """
@@ -151,7 +152,7 @@ class TextSet(JavaValue):
         :return: List of String for LocalTextSet.
                  RDD of String for DistributedTextSet.
         """
-        return callBigDlFunc(self.bigdl_type, "textSetGetURIs", self.value)
+        return callZooFunc(self.bigdl_type, "textSetGetURIs", self.value)
 
     def get_labels(self):
         """
@@ -161,7 +162,7 @@ class TextSet(JavaValue):
         :return: List of int for LocalTextSet.
                  RDD of int for DistributedTextSet.
         """
-        return callBigDlFunc(self.bigdl_type, "textSetGetLabels", self.value)
+        return callZooFunc(self.bigdl_type, "textSetGetLabels", self.value)
 
     def get_predicts(self):
         """
@@ -171,7 +172,7 @@ class TextSet(JavaValue):
         :return: List of list of numpy array for LocalTextSet.
                  RDD of list of numpy array for DistributedTextSet.
         """
-        predicts = callBigDlFunc(self.bigdl_type, "textSetGetPredicts", self.value)
+        predicts = callZooFunc(self.bigdl_type, "textSetGetPredicts", self.value)
         if isinstance(predicts, RDD):
             return predicts.map(lambda predict: _process_predict_result(predict))
         else:
@@ -185,7 +186,7 @@ class TextSet(JavaValue):
         :return: List of Sample for LocalTextSet.
                  RDD of Sample for DistributedTextSet.
         """
-        return callBigDlFunc(self.bigdl_type, "textSetGetSamples", self.value)
+        return callZooFunc(self.bigdl_type, "textSetGetSamples", self.value)
 
     def random_split(self, weights):
         """
@@ -194,7 +195,7 @@ class TextSet(JavaValue):
 
         :param weights: List of float indicating the split portions.
         """
-        jvalues = callBigDlFunc(self.bigdl_type, "textSetRandomSplit", self.value, weights)
+        jvalues = callZooFunc(self.bigdl_type, "textSetRandomSplit", self.value, weights)
         return [TextSet(jvalue=jvalue) for jvalue in list(jvalues)]
 
     def tokenize(self):
@@ -204,7 +205,7 @@ class TextSet(JavaValue):
 
         :return: TextSet after tokenization.
         """
-        jvalue = callBigDlFunc(self.bigdl_type, "textSetTokenize", self.value)
+        jvalue = callZooFunc(self.bigdl_type, "textSetTokenize", self.value)
         return TextSet(jvalue=jvalue)
 
     def normalize(self):
@@ -215,7 +216,7 @@ class TextSet(JavaValue):
 
         :return: TextSet after normalization.
         """
-        jvalue = callBigDlFunc(self.bigdl_type, "textSetNormalize", self.value)
+        jvalue = callZooFunc(self.bigdl_type, "textSetNormalize", self.value)
         return TextSet(jvalue=jvalue)
 
     def word2idx(self, remove_topN=0, max_words_num=-1, min_freq=1, existing_map=None):
@@ -263,7 +264,7 @@ class TextSet(JavaValue):
 
         :return: TextSet after word2idx.
         """
-        jvalue = callBigDlFunc(self.bigdl_type, "textSetWord2idx", self.value,
+        jvalue = callZooFunc(self.bigdl_type, "textSetWord2idx", self.value,
                                remove_topN, max_words_num, min_freq, existing_map)
         return TextSet(jvalue=jvalue)
 
@@ -276,7 +277,7 @@ class TextSet(JavaValue):
         :return: TextSet after sequence shaping.
         """
         assert isinstance(pad_element, int), "pad_element should be an int"
-        jvalue = callBigDlFunc(self.bigdl_type, "textSetShapeSequence", self.value,
+        jvalue = callZooFunc(self.bigdl_type, "textSetShapeSequence", self.value,
                                len, trunc_mode, pad_element)
         return TextSet(jvalue=jvalue)
 
@@ -288,11 +289,11 @@ class TextSet(JavaValue):
 
         :return: TextSet with Samples.
         """
-        jvalue = callBigDlFunc(self.bigdl_type, "textSetGenerateSample", self.value)
+        jvalue = callZooFunc(self.bigdl_type, "textSetGenerateSample", self.value)
         return TextSet(jvalue=jvalue)
 
     def transform(self, transformer):
-        return TextSet(callBigDlFunc(self.bigdl_type, "transformTextSet",
+        return TextSet(callZooFunc(self.bigdl_type, "transformTextSet",
                                      transformer, self.value), self.bigdl_type)
 
     @classmethod
@@ -322,7 +323,7 @@ class TextSet(JavaValue):
 
         :return: TextSet.
         """
-        jvalue = callBigDlFunc(bigdl_type, "readTextSet", path, sc, min_partitions)
+        jvalue = callZooFunc(bigdl_type, "readTextSet", path, sc, min_partitions)
         return TextSet(jvalue=jvalue)
 
     @classmethod
@@ -344,7 +345,7 @@ class TextSet(JavaValue):
 
         :return: TextSet.
         """
-        jvalue = callBigDlFunc(bigdl_type, "textSetReadCSV", path, sc, min_partitions)
+        jvalue = callZooFunc(bigdl_type, "textSetReadCSV", path, sc, min_partitions)
         return TextSet(jvalue=jvalue)
 
     @classmethod
@@ -359,7 +360,7 @@ class TextSet(JavaValue):
 
         :return: DistributedTextSet.
         """
-        jvalue = callBigDlFunc(bigdl_type, "textSetReadParquet", path, sc)
+        jvalue = callZooFunc(bigdl_type, "textSetReadParquet", path, sc)
         return DistributedTextSet(jvalue=jvalue)
 
     @classmethod
@@ -391,7 +392,7 @@ class TextSet(JavaValue):
             relations = [relation.to_tuple() for relation in relations]
         else:
             raise TypeError("relations should be RDD or list of Relation")
-        jvalue = callBigDlFunc(bigdl_type, "textSetFromRelationPairs", relations, corpus1, corpus2)
+        jvalue = callZooFunc(bigdl_type, "textSetFromRelationPairs", relations, corpus1, corpus2)
         return TextSet(jvalue=jvalue)
 
     @classmethod
@@ -425,7 +426,7 @@ class TextSet(JavaValue):
             relations = [relation.to_tuple() for relation in relations]
         else:
             raise TypeError("relations should be RDD or list of Relation")
-        jvalue = callBigDlFunc(bigdl_type, "textSetFromRelationLists", relations, corpus1, corpus2)
+        jvalue = callZooFunc(bigdl_type, "textSetFromRelationLists", relations, corpus1, corpus2)
         return TextSet(jvalue=jvalue)
 
 

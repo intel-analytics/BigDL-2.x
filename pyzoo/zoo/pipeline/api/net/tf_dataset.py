@@ -19,7 +19,8 @@ import sys
 
 from bigdl.dataset.dataset import DataSet
 from bigdl.transform.vision.image import FeatureTransformer
-from bigdl.util.common import get_node_and_core_number, callBigDlFunc
+from bigdl.util.common import get_node_and_core_number
+from zoo.common.utils import callZooFunc
 from zoo.common import Sample, JTensor
 from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.feature.common import FeatureSet
@@ -556,12 +557,12 @@ class TFRecordDataset(TFDataset):
         serialized_graph = bytearray(g.as_graph_def().SerializeToString())
 
         sc = getOrCreateSparkContext()
-        train_rdd = callBigDlFunc("float", "createRDDFromTFRecords",
+        train_rdd = callZooFunc("float", "createRDDFromTFRecords",
                                   file_path, sc, serialized_graph,
                                   serialized_example.name, output_names)
         validation_rdd = None
         if validation_file_path is not None:
-            validation_rdd = callBigDlFunc("float", "createRDDFromTFRecords",
+            validation_rdd = callZooFunc("float", "createRDDFromTFRecords",
                                            validation_file_path, sc, serialized_graph,
                                            serialized_example.name, output_names)
 

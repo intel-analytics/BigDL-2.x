@@ -17,6 +17,7 @@
 from bigdl.nn.layer import Container, Layer
 from bigdl.util.common import *
 from zoo.pipeline.api.keras.engine.topology import KerasNet
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -50,7 +51,7 @@ class ZooModel(ZooModelCreator, Container):
             data_rdd = x
         else:
             raise TypeError("Unsupported prediction data type: %s" % type(x))
-        return callBigDlFunc(self.bigdl_type, "zooModelPredictClasses",
+        return callZooFunc(self.bigdl_type, "zooModelPredictClasses",
                              self.value,
                              data_rdd,
                              batch_size,
@@ -67,21 +68,21 @@ class ZooModel(ZooModelCreator, Container):
         weight_path: The path to save weights. Default is None.
         over_write: Whether to overwrite the file if it already exists. Default is False.
         """
-        callBigDlFunc(self.bigdl_type, "saveZooModel",
+        callZooFunc(self.bigdl_type, "saveZooModel",
                       self.value, path, weight_path, over_write)
 
     def summary(self):
         """
         Print out the summary of the model.
         """
-        callBigDlFunc(self.bigdl_type, "zooModelSummary",
+        callZooFunc(self.bigdl_type, "zooModelSummary",
                       self.value)
 
     def set_evaluate_status(self):
         """
         Set the model to be in evaluate status, i.e. remove the effect of Dropout, etc.
         """
-        callBigDlFunc(self.bigdl_type, "zooModelSetEvaluateStatus",
+        callZooFunc(self.bigdl_type, "zooModelSetEvaluateStatus",
                       self.value)
         return self
 
@@ -140,6 +141,6 @@ class KerasZooModel(ZooModel):
     @staticmethod
     def _do_load(jmodel, bigdl_type="float"):
         model = ZooModel._do_load(jmodel, bigdl_type)
-        labor_model = callBigDlFunc(bigdl_type, "getModule", jmodel)
+        labor_model = callZooFunc(bigdl_type, "getModule", jmodel)
         model.model = KerasNet(labor_model)
         return model

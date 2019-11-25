@@ -16,7 +16,8 @@
 
 import sys
 
-from bigdl.util.common import callBigDlFunc, JTensor
+from bigdl.util.common import JTensor
+from zoo.common.utils import callZooFunc
 from ..engine.topology import ZooKerasLayer
 
 if sys.version >= '3':
@@ -134,7 +135,7 @@ class WordEmbedding(ZooKerasLayer):
         Dictionary of word (string) and its corresponding index (int) obtained from
         the given embedding file.
         """
-        return callBigDlFunc(bigdl_type, "wordEmbeddingGetWordIndex",
+        return callZooFunc(bigdl_type, "wordEmbeddingGetWordIndex",
                              embedding_file)
 
 
@@ -153,7 +154,7 @@ def prepare_embedding(embedding_file, word_index=None,
     # Return
     Pretrained embedding weights as a numpy array.
     """
-    return callBigDlFunc("float", "prepareEmbedding",
+    return callZooFunc("float", "prepareEmbedding",
                          embedding_file,
                          word_index,
                          randomize_unknown,

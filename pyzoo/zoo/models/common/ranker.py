@@ -16,7 +16,8 @@
 
 import sys
 
-from bigdl.util.common import JavaValue, callBigDlFunc
+from bigdl.util.common import JavaValue
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -41,7 +42,7 @@ class Ranker(JavaValue):
 
         :return: Float. NDCG result.
         """
-        return callBigDlFunc(self.bigdl_type, "evaluateNDCG",
+        return callZooFunc(self.bigdl_type, "evaluateNDCG",
                              self.value, x, k, threshold)
 
     def evaluate_map(self, x, threshold=0.0):
@@ -56,5 +57,5 @@ class Ranker(JavaValue):
 
         :return: Float. MAP result.
         """
-        return callBigDlFunc(self.bigdl_type, "evaluateMAP",
+        return callZooFunc(self.bigdl_type, "evaluateMAP",
                              self.value, x, threshold)

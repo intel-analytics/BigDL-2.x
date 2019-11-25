@@ -17,6 +17,7 @@
 from zoo.models.common import ZooModel
 from zoo.models.image.common.image_config import ImageConfigure
 from zoo.feature.image.imageset import *
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -31,10 +32,10 @@ class ImageModel(ZooModel):
         super(ImageModel, self).__init__(None, bigdl_type)
 
     def predict_image_set(self, image, configure=None):
-        res = callBigDlFunc(self.bigdl_type, "imageModelPredict", self.value,
+        res = callZooFunc(self.bigdl_type, "imageModelPredict", self.value,
                             image, configure)
         return ImageSet(res)
 
     def get_config(self):
-        config = callBigDlFunc(self.bigdl_type, "getImageConfig", self.value)
+        config = callZooFunc(self.bigdl_type, "getImageConfig", self.value)
         return ImageConfigure(jvalue=config)

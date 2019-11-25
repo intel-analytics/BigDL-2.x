@@ -17,7 +17,8 @@
 import sys
 
 from ..engine.topology import ZooKerasLayer
-from bigdl.util.common import callBigDlFunc, JTensor
+from bigdl.util.common import JTensor
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -75,7 +76,7 @@ class BatchNormalization(ZooKerasLayer):
         Set the running mean of the BatchNormalization layer.
         :param running_mean: a Numpy array.
         """
-        callBigDlFunc(self.bigdl_type, "setRunningMean",
+        callZooFunc(self.bigdl_type, "setRunningMean",
                       self.value, JTensor.from_ndarray(running_mean))
         return self
 
@@ -84,7 +85,7 @@ class BatchNormalization(ZooKerasLayer):
         Set the running variance of the BatchNormalization layer.
         :param running_std: a Numpy array.
         """
-        callBigDlFunc(self.bigdl_type, "setRunningStd",
+        callZooFunc(self.bigdl_type, "setRunningStd",
                       self.value, JTensor.from_ndarray(running_std))
         return self
 
@@ -92,12 +93,12 @@ class BatchNormalization(ZooKerasLayer):
         """
         Get the running meaning of the BatchNormalization layer.
         """
-        return callBigDlFunc(self.bigdl_type, "getRunningMean",
+        return callZooFunc(self.bigdl_type, "getRunningMean",
                              self.value).to_ndarray()
 
     def get_running_std(self):
         """
         Get the running variance of the BatchNormalization layer.
         """
-        return callBigDlFunc(self.bigdl_type, "getRunningStd",
+        return callZooFunc(self.bigdl_type, "getRunningStd",
                              self.value).to_ndarray()

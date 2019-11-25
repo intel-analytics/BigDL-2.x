@@ -20,7 +20,7 @@ import math
 
 from bigdl.nn.layer import Sum
 from bigdl.nn.layer import Layer
-from bigdl.util.common import callBigDlFunc
+from zoo.common.utils import callZooFunc
 
 from zoo.models.common import ZooModel
 from zoo.pipeline.api.keras.engine import ZooKerasLayer
@@ -376,7 +376,7 @@ class BERT(TransformerLayer):
               Amazon S3 path should be like 's3a://bucket/xxx'.
         weight_path: The path for pre-trained weights if any. Default is None.
         """
-        jlayer = callBigDlFunc(bigdl_type, "loadBERT", path, weight_path, input_seq_len,
+        jlayer = callZooFunc(bigdl_type, "loadBERT", path, weight_path, input_seq_len,
                                hidden_drop, attn_drop, output_all_block)
 
         model = Layer(jvalue=jlayer, bigdl_type=bigdl_type)

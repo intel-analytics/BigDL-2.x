@@ -17,6 +17,7 @@
 from bigdl.nn.layer import Layer
 from zoo.pipeline.api.keras.layers import *
 from zoo.models.common import ZooModel
+from zoo.common.utils import callZooFunc
 
 from zoo.pipeline.api.keras.engine import ZooKerasLayer
 from zoo.pipeline.api.keras.models import Model
@@ -217,7 +218,7 @@ class Seq2seq(ZooModel):
         return Model([encoder_input, decoder_input], output)
 
     def set_checkpoint(self, path, over_write=True):
-        callBigDlFunc(self.bigdl_type, "seq2seqSetCheckpoint",
+        callZooFunc(self.bigdl_type, "seq2seqSetCheckpoint",
                       self.value,
                       path,
                       over_write)
@@ -234,7 +235,7 @@ class Seq2seq(ZooModel):
               Amazon S3 path should be like 's3a://bucket/xxx'.
         weight_path: The path for pre-trained weights if any. Default is None.
         """
-        jmodel = callBigDlFunc(bigdl_type, "loadSeq2seq", path, weight_path)
+        jmodel = callZooFunc(bigdl_type, "loadSeq2seq", path, weight_path)
         model = ZooModel._do_load(jmodel, bigdl_type)
         model.__class__ = Seq2seq
         return model
@@ -247,14 +248,14 @@ class Seq2seq(ZooModel):
             loss = to_bigdl_criterion(loss)
         if metrics and all(isinstance(metric, six.string_types) for metric in metrics):
             metrics = to_bigdl_metrics(metrics, loss)
-        callBigDlFunc(self.bigdl_type, "seq2seqCompile",
+        callZooFunc(self.bigdl_type, "seq2seqCompile",
                       self.value,
                       optimizer,
                       loss,
                       metrics)
 
     def fit(self, x, batch_size=32, nb_epoch=10, validation_data=None):
-        callBigDlFunc(self.bigdl_type, "seq2seqFit",
+        callZooFunc(self.bigdl_type, "seq2seqFit",
                       self.value,
                       x,
                       batch_size,
@@ -282,7 +283,7 @@ class Seq2seq(ZooModel):
             assert not start_sign_is_table
         else:
             jstop_sign = None
-        results = callBigDlFunc(self.bigdl_type, "seq2seqInfer",
+        results = callZooFunc(self.bigdl_type, "seq2seqInfer",
                                 self.value,
                                 jinput[0],
                                 jstart_sign[0],

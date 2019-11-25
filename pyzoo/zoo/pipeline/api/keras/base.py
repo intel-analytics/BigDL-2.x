@@ -16,6 +16,7 @@
 
 from bigdl.nn.layer import Layer
 from bigdl.util.common import *
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -37,7 +38,7 @@ class ZooCallable(object):
         :return: Variable containing current module
         """
         from zoo.pipeline.api.autograd import Variable
-        return Variable.from_jvalue(callBigDlFunc(self.bigdl_type,
+        return Variable.from_jvalue(callZooFunc(self.bigdl_type,
                                                   "connectInputs",
                                                   self,
                                                   to_list(x)))
@@ -65,7 +66,7 @@ class InferShape(JavaValue):
         Return a list of shape tuples if there are multiple inputs.
         Return one shape tuple otherwise.
         """
-        input = callBigDlFunc(self.bigdl_type, "getInputShape",
+        input = callZooFunc(self.bigdl_type, "getInputShape",
                               self.value)
         return self.__process_shape(input)
 
@@ -74,7 +75,7 @@ class InferShape(JavaValue):
         Return a list of shape tuples if there are multiple outputs.
         Return one shape tuple otherwise.
         """
-        output = callBigDlFunc(self.bigdl_type, "getOutputShape",
+        output = callZooFunc(self.bigdl_type, "getOutputShape",
                                self.value)
         return self.__process_shape(output)
 
@@ -97,7 +98,7 @@ class ZooKerasLayer(ZooKerasCreator, ZooCallable, Layer, InferShape):
         """
         :return: None if without weights
         """
-        jshapes = callBigDlFunc(self.bigdl_type, "zooGetWeightsShape",
+        jshapes = callZooFunc(self.bigdl_type, "zooGetWeightsShape",
                                 self.value)
         return [tuple(jshape) for jshape in jshapes]
 
@@ -114,7 +115,7 @@ class ZooKerasLayer(ZooKerasCreator, ZooCallable, Layer, InferShape):
                 "The shape of parameter should be the same, but got %s, %s" % (w.shape, cws)
 
         tensors = [JTensor.from_ndarray(param, self.bigdl_type) for param in to_list(weights)]
-        callBigDlFunc(self.bigdl_type, "zooSetWeights", self.value, tensors)
+        callZooFunc(self.bigdl_type, "zooSetWeights", self.value, tensors)
 
     @classmethod
     def of(cls, jvalue, bigdl_type="float"):

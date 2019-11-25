@@ -22,7 +22,8 @@ import sys
 
 from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Layer
-from bigdl.util.common import to_list, JavaValue, callBigDlFunc
+from bigdl.util.common import to_list, JavaValue
+from zoo.common.utils import callZooFunc
 from bigdl.optim.optimizer import MaxEpoch, EveryEpoch
 from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss
 from zoo.pipeline.api.net.utils import _find_placeholders, to_bigdl_optim_method
@@ -88,7 +89,7 @@ class TFTrainingHelper2(Layer):
         super(TFTrainingHelper2, self).__init__(None, "float", path, byte_arr)
 
     def save_checkpoint(self):
-        callBigDlFunc(self.bigdl_type, "saveCheckpoint",
+        callZooFunc(self.bigdl_type, "saveCheckpoint",
                       self.value)
 
     def get_weights_to_python(self):

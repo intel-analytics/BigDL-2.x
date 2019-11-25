@@ -19,7 +19,7 @@ import warnings
 from zoo.pipeline.api.keras.models import Sequential
 from zoo.pipeline.api.keras.layers import *
 from zoo.models.common import ZooModel
-from bigdl.util.common import callBigDlFunc
+from zoo.common.utils import callZooFunc
 
 
 if sys.version >= '3':
@@ -109,7 +109,7 @@ class TextClassifier(ZooModel):
               Amazon S3 path should be like 's3a://bucket/xxx'.
         weight_path: The path for pre-trained weights if any. Default is None.
         """
-        jmodel = callBigDlFunc(bigdl_type, "loadTextClassifier", path, weight_path)
+        jmodel = callZooFunc(bigdl_type, "loadTextClassifier", path, weight_path)
         model = ZooModel._do_load(jmodel, bigdl_type)
         model.__class__ = TextClassifier
         return model
@@ -122,20 +122,20 @@ class TextClassifier(ZooModel):
             loss = to_bigdl_criterion(loss)
         if metrics and all(isinstance(metric, six.string_types) for metric in metrics):
             metrics = to_bigdl_metrics(metrics, loss)
-        callBigDlFunc(self.bigdl_type, "textClassifierCompile",
+        callZooFunc(self.bigdl_type, "textClassifierCompile",
                       self.value,
                       optimizer,
                       loss,
                       metrics)
 
     def set_tensorboard(self, log_dir, app_name):
-        callBigDlFunc(self.bigdl_type, "textClassifierSetTensorBoard",
+        callZooFunc(self.bigdl_type, "textClassifierSetTensorBoard",
                       self.value,
                       log_dir,
                       app_name)
 
     def set_checkpoint(self, path, over_write=True):
-        callBigDlFunc(self.bigdl_type, "textClassifierSetCheckpoint",
+        callZooFunc(self.bigdl_type, "textClassifierSetCheckpoint",
                       self.value,
                       path,
                       over_write)
@@ -147,7 +147,7 @@ class TextClassifier(ZooModel):
         assert isinstance(x, TextSet), "x should be a TextSet"
         if validation_data:
             assert isinstance(validation_data, TextSet), "validation_data should be a TextSet"
-        callBigDlFunc(self.bigdl_type, "textClassifierFit",
+        callZooFunc(self.bigdl_type, "textClassifierFit",
                       self.value,
                       x,
                       batch_size,
@@ -159,7 +159,7 @@ class TextClassifier(ZooModel):
         Evaluate on TextSet.
         """
         assert isinstance(x, TextSet), "x should be a TextSet"
-        return callBigDlFunc(self.bigdl_type, "textClassifierEvaluate",
+        return callZooFunc(self.bigdl_type, "textClassifierEvaluate",
                              self.value,
                              x,
                              batch_size)
@@ -169,7 +169,7 @@ class TextClassifier(ZooModel):
         Predict on TextSet.
         """
         assert isinstance(x, TextSet), "x should be a TextSet"
-        results = callBigDlFunc(self.bigdl_type, "textClassifierPredict",
+        results = callZooFunc(self.bigdl_type, "textClassifierPredict",
                                 self.value,
                                 x,
                                 batch_per_thread)

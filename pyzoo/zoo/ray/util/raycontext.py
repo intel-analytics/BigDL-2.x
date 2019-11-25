@@ -38,9 +38,9 @@ class JVMGuard():
     def registerPids(pids):
         import traceback
         try:
-            from bigdl.util.common import callBigDlFunc
+            from zoo.common.utils import callZooFunc
             import zoo
-            callBigDlFunc("float",
+            callZooFunc("float",
                           "jvmGuardRegisterPids",
                           pids)
         except Exception as err:

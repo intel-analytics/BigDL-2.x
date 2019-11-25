@@ -18,7 +18,7 @@ import sys
 import six
 from zoo.feature.common import Preprocessing
 from zoo.feature.text import TextFeature
-from bigdl.util.common import callBigDlFunc
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -36,7 +36,7 @@ class TextTransformer(Preprocessing):
         """
         Transform a TextFeature.
         """
-        res = callBigDlFunc(self.bigdl_type, "transformTextFeature", self.value, text_feature.value)
+        res = callZooFunc(self.bigdl_type, "transformTextFeature", self.value, text_feature.value)
         return TextFeature(jvalue=res)
 
 

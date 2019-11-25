@@ -18,7 +18,7 @@ import sys
 
 from zoo.models.common import *
 from zoo.models.recommendation import Recommender
-from bigdl.util.common import callBigDlFunc
+from zoo.common.utils import callZooFunc
 from zoo.pipeline.api.keras.layers import *
 
 if sys.version >= '3':
@@ -229,7 +229,7 @@ class WideAndDeep(Recommender):
               Amazon S3 path should be like 's3a://bucket/xxx'.
         weight_path: The path for pre-trained weights if any. Default is None.
         """
-        jmodel = callBigDlFunc(bigdl_type, "loadWideAndDeep", path, weight_path)
+        jmodel = callZooFunc(bigdl_type, "loadWideAndDeep", path, weight_path)
         model = ZooModel._do_load(jmodel, bigdl_type)
         labor_model = KerasZooModel._do_load(jmodel, bigdl_type)
         model.model = labor_model
