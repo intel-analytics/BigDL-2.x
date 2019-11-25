@@ -189,6 +189,10 @@ def init_env(conf):
     conf.set("spark.executorEnv.KMP_SETTINGS", kmp_settings)
     conf.set("spark.executorEnv.KMP_BLOCKTIME", kmp_blocktime)
     conf.set("spark.executorEnv.OMP_NUM_THREADS", omp_num_threads)
+    os.environ["KMP_AFFINITY"] = kmp_affinity
+    os.environ["KMP_SETTINGS"] = kmp_settings
+    os.environ["OMP_NUM_THREADS"] = omp_num_threads
+    os.environ["KMP_BLOCKTIME"] = kmp_blocktime
 
 
 def init_spark_conf(conf=None):
