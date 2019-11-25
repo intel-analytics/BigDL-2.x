@@ -17,6 +17,8 @@
 
 package com.intel.analytics.zoo.serving.utils
 
+import java.io.{File, FileInputStream}
+
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -24,12 +26,13 @@ import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import com.intel.analytics.zoo.serving.ClusterServing.getClass
+import java.util.LinkedHashMap
 import org.apache.log4j.Logger
 import scopt.OptionParser
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.SparkSession
+import org.yaml.snakeyaml.Yaml
 
 import scala.reflect.ClassTag
 
@@ -49,7 +52,7 @@ case class LoaderParams(modelFolder: String = null,
 case class Result(id: String, value: String)
 
 class ClusterServingHelper {
-
+  type HM = LinkedHashMap[String, String]
   val parser = new OptionParser[LoaderParams]("Cluster Serving") {
 
     opt[String]('t', "modelType")
@@ -102,32 +105,75 @@ class ClusterServingHelper {
 
   var dummyMap: Map[Int, String] = Map()
 
+
   def initArgs(args: Array[String]): LoaderParams = {
-    params = parser.parse(args, LoaderParams()).get
+//    params = parser.parse(args, LoaderParams()).get
+//
+//    require(params.redis.split(":").length == 2, "Your redis host " +
+//      "and port are not valid, please check.")
+//    redisHost = params.redis.split(":").head.trim
+//    redisPort = params.redis.split(":").last.trim
+//    batchSize = params.batchSize
+//    topN = params.topN
+//
+//    val shapeList = params.dataShape.split(",")
+//    require(shapeList.size == 3, "Your data shape must has dimension as 3")
+//    for (i <- shapeList) {
+//      dataShape = dataShape :+ i.trim.toInt
+//    }
+//
+//    parseModelType(params.modelFolder)
+//    if (modelType == "caffe" || modelType == "bigdl") {
+//      if (System.getProperty("bigdl.engineType", "mklblas")
+//        .toLowerCase() == "mklblas") {
+//        blasFlag = true
+//      }
+//    }
+//
+//    params
 
-    require(params.redis.split(":").length == 2, "Your redis host " +
+
+    val yamlParser = new Yaml()
+    val input = new FileInputStream(new File("zoo/src/" +
+      "main/scala/com/intel/analytics/zoo/serving/config.yaml"))
+    val configList = yamlParser.load(input).asInstanceOf[HM]
+
+    // parse model field
+    val modelConfig = configList.get("model").asInstanceOf[HM]
+    val modelFolder = getYaml(modelConfig, "path", null)
+    parseModelType(modelFolder)
+
+    // parse data field
+    val dataConfig = configList.get("data").asInstanceOf[HM]
+    val redis = getYaml(dataConfig, "src", "localhost:6379")
+    require(redis.split(":").length == 2, "Your redis host " +
       "and port are not valid, please check.")
-    redisHost = params.redis.split(":").head.trim
-    redisPort = params.redis.split(":").last.trim
-    batchSize = params.batchSize
-    topN = params.topN
-
-    val shapeList = params.dataShape.split(",")
+    redisHost = redis.split(":").head.trim
+    redisPort = redis.split(":").last.trim
+    val shape = getYaml(dataConfig, "src", "3,224,224")
+    val shapeList = shape.split(",")
     require(shapeList.size == 3, "Your data shape must has dimension as 3")
     for (i <- shapeList) {
       dataShape = dataShape :+ i.trim.toInt
     }
 
-    parseModelType(params.modelFolder)
-    if (modelType == "caffe" || modelType == "bigdl") {
-      if (System.getProperty("bigdl.engineType", "mklblas")
-        .toLowerCase() == "mklblas") {
-        blasFlag = true
+    val paramsConfig = configList.get("params").asInstanceOf[HM]
+    
+    val l = new LoaderParams
+    l
+  }
+
+  def getYaml(configList: HM, key: String, default: String): String = {
+    val configValue = configList.get(key)
+    if (configValue == null) {
+      if (default == null) throw new Error(configList.toString + key + " must be provided")
+      else {
+        return default
       }
     }
-
-    params
+    else return configValue
   }
+
 
   def initContext(): Unit = {
     val conf = NNContext.createSparkConf().setAppName("Cluster Serving")

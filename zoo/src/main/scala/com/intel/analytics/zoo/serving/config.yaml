@@ -2,7 +2,7 @@
 
 model:
   # model path must be set
-  path: resources
+  path:
 data:
   # default, localhost:6379
   src: 172.168.0.109:6379
