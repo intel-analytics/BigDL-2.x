@@ -426,9 +426,9 @@ class Lambda(kbase.ZooKerasCreator):
             input_shapes = [var.get_output_shape() for var in x]
             layer = self.create(remove_batch(input_shapes))
         return Variable.from_jvalue(callZooFunc(self.bigdl_type,
-                                                  "connectInputs",
-                                                  layer,
-                                                  to_list(x)))
+                                                "connectInputs",
+                                                layer,
+                                                to_list(x)))
 
     # input_shapes should not contain batch dim
     def create(self, input_shapes):
@@ -458,6 +458,7 @@ class Parameter(kbase.ZooKerasLayer, VariableOperator):
     :param init_weight: A ndarray as the init value.
     :param trainable It's true by default, meaning the value would be updated by gradient.
     """
+
     def __init__(self, shape, init_method=None,
                  init_weight=None, trainable=True, **kwargs):
         if not init_method:
@@ -468,7 +469,7 @@ class Parameter(kbase.ZooKerasLayer, VariableOperator):
                                         init_method,
                                         kbase.JTensor.from_ndarray(init_weight),
                                         trainable,
-                                        ** kwargs)
+                                        **kwargs)
 
     @property
     def shape(self):
@@ -479,8 +480,8 @@ class Parameter(kbase.ZooKerasLayer, VariableOperator):
         :return: the ndarray for the current weight
         """
         jtensor = callZooFunc(self.bigdl_type,
-                                "getParameterWeight",
-                                self)
+                              "getParameterWeight",
+                              self)
         return jtensor.to_ndarray()
 
     def set_weight(self, value):
@@ -489,9 +490,9 @@ class Parameter(kbase.ZooKerasLayer, VariableOperator):
         :return:
         """
         callZooFunc(self.bigdl_type,
-                      "setParameterWeight",
-                      self,
-                      kbase.JTensor.from_ndarray(value))
+                    "setParameterWeight",
+                    self,
+                    kbase.JTensor.from_ndarray(value))
 
 
 class Constant(kbase.ZooKerasCreator, VariableOperator):
@@ -500,6 +501,7 @@ class Constant(kbase.ZooKerasCreator, VariableOperator):
     :param data: value of the Variable.
     :param name: Optional. Name of the Variable
     """
+
     def __init__(self, data, name=None, bigdl_type="float"):
         self.data = data
         super(Constant, self).__init__(None, bigdl_type, JTensor.from_ndarray(data), name)
@@ -535,12 +537,12 @@ class CustomLoss(LossFunction):
         jinput, input_is_table = Layer.check_input(input)
         jtarget, target_is_table = Layer.check_input(target)
         output = callZooFunc(self.bigdl_type,
-                               "criterionForward",
-                               self.value,
-                               jinput,
-                               input_is_table,
-                               jtarget,
-                               target_is_table)
+                             "criterionForward",
+                             self.value,
+                             jinput,
+                             input_is_table,
+                             jtarget,
+                             target_is_table)
         return output
 
     def backward(self, y_true, y_pred):
@@ -557,10 +559,10 @@ class CustomLoss(LossFunction):
         jinput, input_is_table = Layer.check_input(input)
         jtarget, target_is_table = Layer.check_input(target)
         output = callZooFunc(self.bigdl_type,
-                               "criterionBackward",
-                               self.value,
-                               jinput,
-                               input_is_table,
-                               jtarget,
-                               target_is_table)
+                             "criterionBackward",
+                             self.value,
+                             jinput,
+                             input_is_table,
+                             jtarget,
+                             target_is_table)
         return Layer.convert_output(output)

@@ -36,6 +36,7 @@ class AnomalyDetector(KerasZooModel):
     hidden_layers: Units of hidden layers of LSTM.
     dropouts:     Fraction of the input units to drop out. Float between 0 and 1.
     """
+
     def __init__(self, feature_shape, hidden_layers=[8, 32, 15],
                  dropouts=[0.2, 0.2, 0.2], **kwargs):
         assert len(hidden_layers) == len(dropouts), \
@@ -95,9 +96,9 @@ class AnomalyDetector(KerasZooModel):
         Precict on RDD[Sample].
         """
         results = callZooFunc(self.bigdl_type, "modelPredictRDD",
-                                self.value,
-                                x,
-                                batch_per_thread)
+                              self.value,
+                              x,
+                              batch_per_thread)
         return results.map(lambda data: data.to_ndarray())
 
     @classmethod
@@ -157,7 +158,7 @@ class AnomalyDetector(KerasZooModel):
             matrix.append(line)
             return matrix
 
-        return unrolled_rdd\
+        return unrolled_rdd \
             .map(lambda y: FeatureLableIndex(row_to_feature(y[0]), float(y[1]), long(y[2])))
 
 

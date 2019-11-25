@@ -31,6 +31,7 @@ class Adam(OptimMethod, ZooKerasCreator):
     creating: createZooKerasAdam
     creating: createDefault
     """
+
     def __init__(self,
                  lr=1e-3,
                  beta_1=0.9,
@@ -69,6 +70,7 @@ class AdamWeightDecay(OptimMethod, ZooKerasCreator):
     >>> adam = AdamWeightDecay()
     creating: createZooKerasAdamWeightDecay
     """
+
     def __init__(self,
                  lr=1e-3,
                  warmup_portion=-1.0,
@@ -121,5 +123,6 @@ class PolyEpochDecay(ZooKerasCreator):
     >>> poly = PolyEpochDecay(0.5, 5)
     creating: createZooKerasPolyEpochDecay
     """
+
     def __init__(self, power, max_epochs, bigdl_type="float"):
-            JavaValue.__init__(self, None, bigdl_type, power, max_epochs)
+        JavaValue.__init__(self, None, bigdl_type, power, max_epochs)

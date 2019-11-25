@@ -49,6 +49,6 @@ class NNImageReader:
                 one image record: Row (uri, height, width, channels, CvType, bytes).
         """
         df = callZooFunc(bigdl_type, "nnReadImage", path, sc, minPartitions, resizeH,
-                           resizeW, image_codec)
+                         resizeW, image_codec)
         df._sc._jsc = sc._jsc
         return df

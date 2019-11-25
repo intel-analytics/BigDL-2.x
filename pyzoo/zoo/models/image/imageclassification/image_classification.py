@@ -19,7 +19,6 @@ from zoo.models.image.common.image_model import ImageModel
 from zoo.feature.image.imageset import *
 from zoo.common.utils import callZooFunc
 
-
 if sys.version >= '3':
     long = int
     unicode = str
@@ -38,6 +37,7 @@ class ImageClassifier(ImageModel):
 
     :param model_path The path containing the pre-trained model
     """
+
     def __init__(self, bigdl_type="float"):
         self.bigdl_type = bigdl_type
         super(ImageClassifier, self).__init__(None, bigdl_type)
@@ -64,6 +64,7 @@ class LabelOutput(FeatureTransformer):
     clses is the key in ImgFeature where you want to store all sorted mapped labels
     probs is the key in ImgFeature where you want to store all the sorted probilities for each class
     """
+
     def __init__(self, label_map, clses, probs, bigdl_type="float"):
         self.value = callZooFunc(
             bigdl_type, JavaValue.jvm_class_constructor(self), label_map, clses, probs)

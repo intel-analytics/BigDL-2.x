@@ -36,6 +36,7 @@ class Sequential(KerasNet):
     >>> sequential = Sequential(name="seq1")
     creating: createZooKerasSequential
     """
+
     def __init__(self, jvalue=None, **kwargs):
         super(Sequential, self).__init__(jvalue, **kwargs)
 
@@ -81,6 +82,7 @@ class Model(KerasNet):
     output: An output node or a list of output nodes.
     name: String to specify the name of the graph model. Default is None.
     """
+
     def __init__(self, input, output, jvalue=None, **kwargs):
         super(Model, self).__init__(jvalue,
                                     to_list(input),
@@ -98,9 +100,9 @@ class Model(KerasNet):
         backward: The name of the application.
         """
         callZooFunc(self.bigdl_type, "zooSaveGraphTopology",
-                      self.value,
-                      log_path,
-                      backward)
+                    self.value,
+                    log_path,
+                    backward)
 
     def new_graph(self, outputs):
         value = callZooFunc(self.bigdl_type, "newGraph", self.value, outputs)

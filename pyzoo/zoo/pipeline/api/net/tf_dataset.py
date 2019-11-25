@@ -558,18 +558,18 @@ class TFRecordDataset(TFDataset):
 
         sc = getOrCreateSparkContext()
         train_rdd = callZooFunc("float", "createRDDFromTFRecords",
-                                  file_path, sc, serialized_graph,
-                                  serialized_example.name, output_names)
+                                file_path, sc, serialized_graph,
+                                serialized_example.name, output_names)
         validation_rdd = None
         if validation_file_path is not None:
             validation_rdd = callZooFunc("float", "createRDDFromTFRecords",
-                                           validation_file_path, sc, serialized_graph,
-                                           serialized_example.name, output_names)
+                                         validation_file_path, sc, serialized_graph,
+                                         serialized_example.name, output_names)
 
         tensor_structure = nest.pack_sequence_as(results,
                                                  [TensorMeta(tf.as_dtype(t.dtype),
-                                                  shape=t.shape,
-                                                  name="data_%s" % i)
+                                                             shape=t.shape,
+                                                             name="data_%s" % i)
                                                   for i, t in enumerate(nest.flatten(results))])
 
         super(TFRecordDataset, self).__init__(tensor_structure, batch_size,

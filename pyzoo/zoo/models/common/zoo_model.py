@@ -35,6 +35,7 @@ class ZooModel(ZooModelCreator, Container):
     """
     The base class for models in Analytics Zoo.
     """
+
     def predict_classes(self, x, batch_size=32, zero_based_label=True):
         """
         Predict for classes. By default, label predictions start from 0.
@@ -52,10 +53,10 @@ class ZooModel(ZooModelCreator, Container):
         else:
             raise TypeError("Unsupported prediction data type: %s" % type(x))
         return callZooFunc(self.bigdl_type, "zooModelPredictClasses",
-                             self.value,
-                             data_rdd,
-                             batch_size,
-                             zero_based_label)
+                           self.value,
+                           data_rdd,
+                           batch_size,
+                           zero_based_label)
 
     def save_model(self, path, weight_path=None, over_write=False):
         """
@@ -69,21 +70,21 @@ class ZooModel(ZooModelCreator, Container):
         over_write: Whether to overwrite the file if it already exists. Default is False.
         """
         callZooFunc(self.bigdl_type, "saveZooModel",
-                      self.value, path, weight_path, over_write)
+                    self.value, path, weight_path, over_write)
 
     def summary(self):
         """
         Print out the summary of the model.
         """
         callZooFunc(self.bigdl_type, "zooModelSummary",
-                      self.value)
+                    self.value)
 
     def set_evaluate_status(self):
         """
         Set the model to be in evaluate status, i.e. remove the effect of Dropout, etc.
         """
         callZooFunc(self.bigdl_type, "zooModelSetEvaluateStatus",
-                      self.value)
+                    self.value)
         return self
 
     @staticmethod
@@ -97,6 +98,7 @@ class KerasZooModel(ZooModel):
     """
     The base class for Keras style models in Analytics Zoo.
     """
+
     # For the following method, please see documentation of KerasNet for details
     def compile(self, optimizer, loss, metrics=None):
         self.model.compile(optimizer, loss, metrics)

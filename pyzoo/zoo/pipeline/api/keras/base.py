@@ -39,9 +39,9 @@ class ZooCallable(object):
         """
         from zoo.pipeline.api.autograd import Variable
         return Variable.from_jvalue(callZooFunc(self.bigdl_type,
-                                                  "connectInputs",
-                                                  self,
-                                                  to_list(x)))
+                                                "connectInputs",
+                                                self,
+                                                to_list(x)))
 
 
 class InferShape(JavaValue):
@@ -67,7 +67,7 @@ class InferShape(JavaValue):
         Return one shape tuple otherwise.
         """
         input = callZooFunc(self.bigdl_type, "getInputShape",
-                              self.value)
+                            self.value)
         return self.__process_shape(input)
 
     def get_output_shape(self):
@@ -76,7 +76,7 @@ class InferShape(JavaValue):
         Return one shape tuple otherwise.
         """
         output = callZooFunc(self.bigdl_type, "getOutputShape",
-                               self.value)
+                             self.value)
         return self.__process_shape(output)
 
 
@@ -99,7 +99,7 @@ class ZooKerasLayer(ZooKerasCreator, ZooCallable, Layer, InferShape):
         :return: None if without weights
         """
         jshapes = callZooFunc(self.bigdl_type, "zooGetWeightsShape",
-                                self.value)
+                              self.value)
         return [tuple(jshape) for jshape in jshapes]
 
     def set_weights(self, weights):

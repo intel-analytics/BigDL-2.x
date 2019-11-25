@@ -29,6 +29,7 @@ class TextTransformer(Preprocessing):
     """
     Base class of Transformers that transform TextFeature.
     """
+
     def __init__(self, bigdl_type="float", *args):
         super(TextTransformer, self).__init__(bigdl_type, *args)
 
@@ -47,6 +48,7 @@ class Tokenizer(TextTransformer):
     >>> tokenizer = Tokenizer()
     creating: createTokenizer
     """
+
     def __init__(self, bigdl_type="float"):
         super(Tokenizer, self).__init__(bigdl_type)
 
@@ -60,6 +62,7 @@ class Normalizer(TextTransformer):
     >>> normalizer = Normalizer()
     creating: createNormalizer
     """
+
     def __init__(self, bigdl_type="float"):
         super(Normalizer, self).__init__(bigdl_type)
 
@@ -76,6 +79,7 @@ class WordIndexer(TextTransformer):
     >>> word_indexer = WordIndexer(map={"it": 1, "me": 2})
     creating: createWordIndexer
     """
+
     def __init__(self, map, bigdl_type="float"):
         super(WordIndexer, self).__init__(bigdl_type, map)
 
@@ -100,6 +104,7 @@ class SequenceShaper(TextTransformer):
     >>> sequence_shaper = SequenceShaper(len=6, trunc_mode="post", pad_element=10000)
     creating: createSequenceShaper
     """
+
     def __init__(self, len, trunc_mode="pre", pad_element=0, bigdl_type="float"):
         assert isinstance(pad_element, int), "pad_element should be an int"
         super(SequenceShaper, self).__init__(bigdl_type, len, trunc_mode, pad_element)
@@ -113,5 +118,6 @@ class TextFeatureToSample(TextTransformer):
     >>> to_sample = TextFeatureToSample()
     creating: createTextFeatureToSample
     """
+
     def __init__(self, bigdl_type="float"):
         super(TextFeatureToSample, self).__init__(bigdl_type)

@@ -108,9 +108,9 @@ class TFNet(Layer):
         """
         if isinstance(x, ImageSet):
             results = callZooFunc(self.bigdl_type, "zooPredict",
-                                    self.value,
-                                    x,
-                                    batch_per_thread)
+                                  self.value,
+                                  x,
+                                  batch_per_thread)
             return ImageSet(results)
         if distributed:
             if isinstance(x, np.ndarray):
@@ -120,9 +120,9 @@ class TFNet(Layer):
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))
             results = callZooFunc(self.bigdl_type, "zooPredict",
-                                    self.value,
-                                    data_rdd,
-                                    batch_per_thread)
+                                  self.value,
+                                  data_rdd,
+                                  batch_per_thread)
             return results.map(lambda result: Layer.convert_output(result))
         else:
             start_idx = 0

@@ -56,6 +56,7 @@ class ColumnFeatureInfo(object):
                      the deep model. List of String. Default is an empty list.
     label: The name of the 'label' column. String. Default is 'label'.
     """
+
     def __init__(self, wide_base_cols=None, wide_base_dims=None, wide_cross_cols=None,
                  wide_cross_dims=None, indicator_cols=None, indicator_dims=None,
                  embed_cols=None, embed_in_dims=None, embed_out_dims=None,
@@ -101,16 +102,17 @@ class WideAndDeep(Recommender):
     hidden_layers: Units of hidden layers for the deep model.
                    Tuple of positive int. Default is (40, 20, 10).
     """
+
     def __init__(self, class_num, column_info, model_type="wide_n_deep",
                  hidden_layers=[40, 20, 10], bigdl_type="float"):
-        assert len(column_info.wide_base_cols) == len(column_info.wide_base_dims),\
+        assert len(column_info.wide_base_cols) == len(column_info.wide_base_dims), \
             "size of wide_base_columns should match"
-        assert len(column_info.wide_cross_cols) == len(column_info.wide_cross_dims),\
+        assert len(column_info.wide_cross_cols) == len(column_info.wide_cross_dims), \
             "size of wide_cross_columns should match"
-        assert len(column_info.indicator_cols) == len(column_info.indicator_dims),\
+        assert len(column_info.indicator_cols) == len(column_info.indicator_dims), \
             "size of wide_indicator_columns should match"
         assert len(column_info.embed_cols) == len(column_info.embed_in_dims) \
-            == len(column_info.embed_out_dims), "size of wide_indicator_columns should match"
+               == len(column_info.embed_out_dims), "size of wide_indicator_columns should match"
 
         self.class_num = int(class_num)
         self.wide_base_dims = column_info.wide_base_dims
@@ -147,12 +149,12 @@ class WideAndDeep(Recommender):
         if (self.model_type == "wide"):
             out = Activation("softmax")(wide_linear)
             model = Model(input_wide, out)
-        elif(self.model_type == "deep"):
+        elif (self.model_type == "deep"):
             (input_deep, merge_list) = self._deep_merge(input_ind, input_emb, input_con)
             deep_linear = self._deep_hidden(merge_list)
             out = Activation("softmax")(deep_linear)
             model = Model(input_deep, out)
-        elif(self.model_type == "wide_n_deep"):
+        elif (self.model_type == "wide_n_deep"):
             (input_deep, merge_list) = self._deep_merge(input_ind, input_emb, input_con)
             deep_linear = self._deep_hidden(merge_list)
             merged = merge([wide_linear, deep_linear], "sum")

@@ -41,6 +41,7 @@ class NeuralCF(Recommender):
     include_mf: Whether to include Matrix Factorization. Boolean. Default is True.
     mf_embed: Units of matrix factorization embedding. Positive int. Default is 20.
     """
+
     def __init__(self, user_count, item_count, class_num, user_embed=20,
                  item_embed=20, hidden_layers=[40, 20, 10], include_mf=True,
                  mf_embed=20, bigdl_type="float"):
@@ -66,7 +67,7 @@ class NeuralCF(Recommender):
                                        self.model)
 
     def build_model(self):
-        input = Input(shape=(2, ))
+        input = Input(shape=(2,))
         user_flat = Flatten()(Select(1, 0)(input))
         item_flat = Flatten()(Select(1, 1)(input))
         mlp_user_embed = Embedding(self.user_count + 1, self.user_embed, init="uniform")(user_flat)
@@ -81,7 +82,7 @@ class NeuralCF(Recommender):
             mlp_linear = linear_mid
 
         if (self.include_mf):
-            assert(self.mf_embed > 0)
+            assert (self.mf_embed > 0)
             mf_user_embed = Embedding(self.user_count + 1, self.mf_embed, init="uniform")(user_flat)
             mf_item_embed = Embedding(self.item_count + 1, self.mf_embed, init="uniform")(item_flat)
             mf_user_flatten = Flatten()(mf_user_embed)

@@ -22,7 +22,6 @@ from zoo.common.utils import callZooFunc
 from zoo.feature.image.imageset import *
 from zoo.feature.image.imagePreprocessing import *
 
-
 if sys.version >= '3':
     long = int
     unicode = str
@@ -48,6 +47,7 @@ class ObjectDetector(ImageModel):
 
     :param model_path The path containing the pre-trained model
     """
+
     def __init__(self, bigdl_type="float"):
         self.bigdl_type = bigdl_type
         super(ObjectDetector, self).__init__(None, bigdl_type)
@@ -73,6 +73,7 @@ class ImInfo(ImagePreprocessing):
     Generate imInfo
     imInfo is a tensor that contains height, width, scaleInHeight, scaleInWidth
     """
+
     def __init__(self, bigdl_type="float"):
         super(ImInfo, self).__init__(bigdl_type)
 
@@ -92,6 +93,7 @@ class DecodeOutput(ImagePreprocessing):
     3, 0.3, 20, 10, 40, 70
     ```
     """
+
     def __init__(self, bigdl_type="float"):
         super(DecodeOutput, self).__init__(bigdl_type)
 
@@ -103,6 +105,7 @@ class ScaleDetection(ImagePreprocessing):
     Note that in this transformer, the tensor from model output will be decoded,
     just like `DecodeOutput`
     """
+
     def __init__(self, bigdl_type="float"):
         super(ScaleDetection, self).__init__(bigdl_type)
 
@@ -113,6 +116,7 @@ class Visualizer(ImagePreprocessing):
     (tensors that encodes label, score, boundingbox)
     You can call image_frame.get_image() to get the visualized results
     """
+
     def __init__(self, label_map, thresh=0.3, encoding="png",
                  bigdl_type="float"):
         self.value = callZooFunc(
@@ -123,5 +127,5 @@ class Visualizer(ImagePreprocessing):
         transform ImageSet
         """
         jset = callZooFunc(bigdl_type,
-                             "transformImageSet", self.value, image_set)
+                           "transformImageSet", self.value, image_set)
         return ImageSet(jvalue=jset)

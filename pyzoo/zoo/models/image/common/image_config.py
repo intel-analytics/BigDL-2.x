@@ -34,6 +34,7 @@ class ImageConfigure(JavaValue):
     :param label_map mapping from prediction result indexes to real dataset labels
     :param feature_padding_param featurePaddingParam if the inputs have variant size
     """
+
     def __init__(self, pre_processor=None,
                  post_processor=None,
                  batch_per_partition=4,

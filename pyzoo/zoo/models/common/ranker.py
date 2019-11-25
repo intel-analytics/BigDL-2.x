@@ -29,6 +29,7 @@ class Ranker(JavaValue):
     Base class for Ranking models (e.g., TextMatcher and Ranker) that
     provides validation methods with different metrics.
     """
+
     def evaluate_ndcg(self, x, k, threshold=0.0):
         """
         Evaluate using normalized discounted cumulative gain on TextSet.
@@ -43,7 +44,7 @@ class Ranker(JavaValue):
         :return: Float. NDCG result.
         """
         return callZooFunc(self.bigdl_type, "evaluateNDCG",
-                             self.value, x, k, threshold)
+                           self.value, x, k, threshold)
 
     def evaluate_map(self, x, threshold=0.0):
         """
@@ -58,4 +59,4 @@ class Ranker(JavaValue):
         :return: Float. MAP result.
         """
         return callZooFunc(self.bigdl_type, "evaluateMAP",
-                             self.value, x, threshold)
+                           self.value, x, threshold)

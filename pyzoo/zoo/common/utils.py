@@ -18,7 +18,6 @@ import numpy as np
 
 
 def to_list_of_numpy(elements):
-
     if isinstance(elements, np.ndarray):
         return [elements]
     elif np.isscalar(elements):

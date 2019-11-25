@@ -90,7 +90,7 @@ class TFTrainingHelper2(Layer):
 
     def save_checkpoint(self):
         callZooFunc(self.bigdl_type, "saveCheckpoint",
-                      self.value)
+                    self.value)
 
     def get_weights_to_python(self):
         self.save_checkpoint()
@@ -244,8 +244,8 @@ class TFModel(object):
         update_op = tf.group(update_ops)
 
         return trainable_variables, trainable_variable_placeholders, trainable_assign, \
-            extra_variables, extra_variable_assign_placeholders, \
-            extra_variable_assign, update_op
+               extra_variables, extra_variable_assign_placeholders, \
+               extra_variable_assign, update_op
 
     @staticmethod
     def _save_to_dir_for_unfreeze(folder, sess, graph,
@@ -355,8 +355,8 @@ class TFModel(object):
         outputs, val_methods = TFModel._process_metrics(graph, metrics, loss, inputs)
 
         trainable_variables, trainable_variable_placeholders, trainable_assign, \
-            extra_variables, extra_variable_assign_placeholders, \
-            extra_variable_assign, update_op = \
+        extra_variables, extra_variable_assign_placeholders, \
+        extra_variable_assign, update_op = \
             TFModel._process_variables_for_unfreeze(graph, variables, updates)
 
         meta, saver = \

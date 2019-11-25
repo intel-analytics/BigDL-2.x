@@ -29,6 +29,7 @@ class InferenceModel(JavaValue):
     # Arguments
     supported_concurrent_num: Int. How many concurrent threads to invoke. Default is 1.
     """
+
     def __init__(self, supported_concurrent_num=1, bigdl_type="float"):
         super(InferenceModel, self).__init__(None, bigdl_type, supported_concurrent_num)
 
@@ -40,7 +41,7 @@ class InferenceModel(JavaValue):
         :param weight_path: String. The file path to the weights if any. Default is None.
         """
         callZooFunc(self.bigdl_type, "inferenceModelLoad",
-                      self.value, model_path, weight_path)
+                    self.value, model_path, weight_path)
 
     def load_caffe(self, model_path, weight_path):
         """
@@ -50,7 +51,7 @@ class InferenceModel(JavaValue):
         :param weight_path: String. The file path to the Caffe model.
         """
         callZooFunc(self.bigdl_type, "inferenceModelLoadCaffe",
-                      self.value, model_path, weight_path)
+                    self.value, model_path, weight_path)
 
     def load_openvino(self, model_path, weight_path, batch_size=0):
         """
@@ -61,7 +62,7 @@ class InferenceModel(JavaValue):
         :param batch_size: Int. Set batch Size, default is 0 (use default batch size).
         """
         callZooFunc(self.bigdl_type, "inferenceModelLoadOpenVINO",
-                      self.value, model_path, weight_path, batch_size)
+                    self.value, model_path, weight_path, batch_size)
 
     def load_tf(self, model_path, backend="tensorflow",
                 intra_op_parallelism_threads=1, inter_op_parallelism_threads=1,
@@ -96,23 +97,23 @@ class InferenceModel(JavaValue):
         backend = backend.lower()
         if backend == "tensorflow" or backend == "tf":
             callZooFunc(self.bigdl_type, "inferenceModelTensorFlowLoadTF",
-                          self.value, model_path, intra_op_parallelism_threads,
-                          inter_op_parallelism_threads, use_per_session_threads)
+                        self.value, model_path, intra_op_parallelism_threads,
+                        inter_op_parallelism_threads, use_per_session_threads)
         elif backend == "openvino" or backend == "ov":
             if model_type:
                 if ov_pipeline_config_path:
                     callZooFunc(self.bigdl_type, "inferenceModelOpenVINOLoadTF",
-                                  self.value, model_path, model_type, ov_pipeline_config_path, None)
+                                self.value, model_path, model_type, ov_pipeline_config_path, None)
                 else:
                     callZooFunc(self.bigdl_type, "inferenceModelOpenVINOLoadTF",
-                                  self.value, model_path, model_type)
+                                self.value, model_path, model_type)
             else:
                 if ov_pipeline_config_path is None and ov_extensions_config_path is None:
                     raise Exception("For openvino backend, you must provide either model_type or "
                                     "both pipeline_config_path and extensions_config_path")
                 callZooFunc(self.bigdl_type, "inferenceModelOpenVINOLoadTF",
-                              self.value, model_path, ov_pipeline_config_path,
-                              ov_extensions_config_path)
+                            self.value, model_path, ov_pipeline_config_path,
+                            ov_extensions_config_path)
         else:
             raise ValueError("Currently only tensorflow and openvino are supported as backend")
 
@@ -131,12 +132,12 @@ class InferenceModel(JavaValue):
         :return:
         """
         callZooFunc(self.bigdl_type,
-                      "inferenceModelOpenVINOLoadTF",
-                      self.value,
-                      model_path,
-                      object_detection_model_type,
-                      pipeline_config_path,
-                      extensions_config_path)
+                    "inferenceModelOpenVINOLoadTF",
+                    self.value,
+                    model_path,
+                    object_detection_model_type,
+                    pipeline_config_path,
+                    extensions_config_path)
 
     def load_tf_image_classification_as_openvino(self,
                                                  model_path,
@@ -161,15 +162,15 @@ class InferenceModel(JavaValue):
         :return:
         """
         callZooFunc(self.bigdl_type,
-                      "inferenceModelOpenVINOLoadTF",
-                      self.value,
-                      model_path,
-                      image_classification_model_type,
-                      checkpoint_path,
-                      input_shape,
-                      if_reverse_input_channels,
-                      [float(value) for value in mean_values],
-                      float(scale))
+                    "inferenceModelOpenVINOLoadTF",
+                    self.value,
+                    model_path,
+                    image_classification_model_type,
+                    checkpoint_path,
+                    input_shape,
+                    if_reverse_input_channels,
+                    [float(value) for value in mean_values],
+                    float(scale))
 
     def load_tf_as_calibrated_openvino(self,
                                        model_path,
@@ -209,19 +210,19 @@ class InferenceModel(JavaValue):
         :return:
         """
         callZooFunc(self.bigdl_type,
-                      "inferenceModelOpenVINOLoadTFAsCalibratedOpenVINO",
-                      self.value,
-                      model_path,
-                      model_type,
-                      checkpoint_path,
-                      input_shape,
-                      if_reverse_input_channels,
-                      [float(value) for value in mean_values],
-                      float(scale),
-                      network_type,
-                      validation_file_path,
-                      subset,
-                      opencv_lib_path)
+                    "inferenceModelOpenVINOLoadTFAsCalibratedOpenVINO",
+                    self.value,
+                    model_path,
+                    model_type,
+                    checkpoint_path,
+                    input_shape,
+                    if_reverse_input_channels,
+                    [float(value) for value in mean_values],
+                    float(scale),
+                    network_type,
+                    validation_file_path,
+                    subset,
+                    opencv_lib_path)
 
     def predict(self, inputs):
         """
@@ -231,8 +232,8 @@ class InferenceModel(JavaValue):
         """
         jinputs, input_is_table = Layer.check_input(inputs)
         output = callZooFunc(self.bigdl_type,
-                               "inferenceModelPredict",
-                               self.value,
-                               jinputs,
-                               input_is_table)
+                             "inferenceModelPredict",
+                             self.value,
+                             jinputs,
+                             input_is_table)
         return KerasNet.convert_output(output)

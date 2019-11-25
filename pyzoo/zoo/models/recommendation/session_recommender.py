@@ -40,6 +40,7 @@ class SessionRecommender(Recommender):
      mlp_hidden_layers: Units of hidden layers for the mlp model. Array of positive integers.
      history_length: The max number of items in the sequence of historical purchase
      """
+
     def __init__(self, item_count, item_embed, rnn_hidden_layers=[40, 20], session_length=0,
                  include_history=False, mlp_hidden_layers=[40, 20], history_length=0,
                  bigdl_type="float"):
@@ -115,14 +116,14 @@ class SessionRecommender(Recommender):
             sc = get_spark_context()
             sessions_rdd = sc.parallelize(sessions)
         elif (isinstance(sessions, RDD)):
-                sessions_rdd = sessions
+            sessions_rdd = sessions
         else:
             raise TypeError("Unsupported training data type: %s" % type(sessions))
         results = callZooFunc(self.bigdl_type, "recommendForSession",
-                                self.value,
-                                sessions_rdd,
-                                max_items,
-                                zero_based_label)
+                              self.value,
+                              sessions_rdd,
+                              max_items,
+                              zero_based_label)
 
         if isinstance(sessions, list):
             return results.collect()

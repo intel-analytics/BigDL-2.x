@@ -79,9 +79,9 @@ class ImageSet(JavaValue):
         :return ImageSet
         """
         return ImageSet(jvalue=callZooFunc(bigdl_type, "readImageSet", path,
-                                             sc, min_partitions, resize_height,
-                                             resize_width, image_codec, with_label,
-                                             one_based_label))
+                                           sc, min_partitions, resize_height,
+                                           resize_width, image_codec, with_label,
+                                           one_based_label))
 
     @classmethod
     def from_image_frame(cls, image_frame, bigdl_type="float"):
@@ -100,14 +100,14 @@ class ImageSet(JavaValue):
         if label_rdd is not None:
             label_rdd = label_rdd.map(lambda x: JTensor.from_ndarray(x))
         return ImageSet(jvalue=callZooFunc(bigdl_type, "createDistributedImageSet",
-                                             image_rdd, label_rdd), bigdl_type=bigdl_type)
+                                           image_rdd, label_rdd), bigdl_type=bigdl_type)
 
     def transform(self, transformer):
         """
         transformImageSet
         """
         return ImageSet(callZooFunc(self.bigdl_type, "transformImageSet",
-                                      transformer, self.value), self.bigdl_type)
+                                    transformer, self.value), self.bigdl_type)
 
     def get_image(self, key="floats", to_chw=True):
         """
@@ -135,6 +135,7 @@ class LocalImageSet(ImageSet):
     """
     LocalImageSet wraps a list of ImageFeature
     """
+
     def __init__(self, image_list=None, label_list=None, jvalue=None, bigdl_type="float"):
         assert jvalue or image_list, "jvalue and image_list cannot be None in the same time"
         if jvalue:
@@ -142,10 +143,10 @@ class LocalImageSet(ImageSet):
         else:
             # init from image ndarray list and label rdd(optional)
             image_tensor_list = list(map(lambda image: JTensor.from_ndarray(image), image_list))
-            label_tensor_list = list(map(lambda label: JTensor.from_ndarray(label), label_list))\
+            label_tensor_list = list(map(lambda label: JTensor.from_ndarray(label), label_list)) \
                 if label_list else None
             self.value = callZooFunc(bigdl_type, JavaValue.jvm_class_constructor(self),
-                                       image_tensor_list, label_tensor_list)
+                                     image_tensor_list, label_tensor_list)
         self.bigdl_type = bigdl_type
 
     def get_image(self, key="floats", to_chw=True):
@@ -153,7 +154,7 @@ class LocalImageSet(ImageSet):
         get image list from ImageSet
         """
         tensors = callZooFunc(self.bigdl_type, "localImageSetToImageTensor",
-                                self.value, key, to_chw)
+                              self.value, key, to_chw)
         return list(map(lambda tensor: tensor.to_ndarray(), tensors))
 
     def get_label(self):
@@ -185,10 +186,10 @@ class DistributedImageSet(ImageSet):
         else:
             # init from image ndarray rdd and label rdd(optional)
             image_tensor_rdd = image_rdd.map(lambda image: JTensor.from_ndarray(image))
-            label_tensor_rdd = label_rdd.map(lambda label: JTensor.from_ndarray(label))\
+            label_tensor_rdd = label_rdd.map(lambda label: JTensor.from_ndarray(label)) \
                 if label_rdd else None
             self.value = callZooFunc(bigdl_type, JavaValue.jvm_class_constructor(self),
-                                       image_tensor_rdd, label_tensor_rdd)
+                                     image_tensor_rdd, label_tensor_rdd)
         self.bigdl_type = bigdl_type
 
     def get_image(self, key="floats", to_chw=True):
@@ -196,7 +197,7 @@ class DistributedImageSet(ImageSet):
         get image rdd from ImageSet
         """
         tensor_rdd = callZooFunc(self.bigdl_type, "distributedImageSetToImageTensorRdd",
-                                   self.value, key, to_chw)
+                                 self.value, key, to_chw)
         return tensor_rdd.map(lambda tensor: tensor.to_ndarray())
 
     def get_label(self):
@@ -204,7 +205,7 @@ class DistributedImageSet(ImageSet):
         get label rdd from ImageSet
         """
         tensor_rdd = callZooFunc(self.bigdl_type, "distributedImageSetToLabelTensorRdd",
-                                   self.value)
+                                 self.value)
         return tensor_rdd.map(lambda tensor: tensor.to_ndarray())
 
     def get_predict(self, key="predict"):

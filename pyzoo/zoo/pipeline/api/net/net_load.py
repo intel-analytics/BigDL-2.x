@@ -22,7 +22,6 @@ from zoo.common.utils import callZooFunc
 from bigdl.nn.layer import Model as BModel
 from zoo.pipeline.api.net.graph_net import GraphNet
 
-
 if sys.version >= '3':
     long = int
     unicode = str
@@ -33,8 +32,8 @@ class JavaToPython:
     def __init__(self, jvalue, bigdl_type="float"):
         self.jvaule = jvalue
         self.jfullname = callZooFunc(bigdl_type,
-                                       "getRealClassNameOfJValue",
-                                       jvalue)
+                                     "getRealClassNameOfJValue",
+                                     jvalue)
 
     def get_python_class(self):
         """
@@ -134,7 +133,7 @@ class Net:
             jmodel = callZooFunc(bigdl_type, "netLoadTF", path)
         else:
             jmodel = callZooFunc(bigdl_type, "netLoadTF", path, inputs, outputs,
-                                   byte_order, bin_file)
+                                 byte_order, bin_file)
         return GraphNet.from_jvalue(jmodel, bigdl_type)
 
     @staticmethod

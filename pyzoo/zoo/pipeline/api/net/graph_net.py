@@ -52,9 +52,9 @@ class GraphNet(BModel):
         """
         if isinstance(x, ImageSet) or isinstance(x, TextSet):
             results = callZooFunc(self.bigdl_type, "zooPredict",
-                                    self.value,
-                                    x,
-                                    batch_per_thread)
+                                  self.value,
+                                  x,
+                                  batch_per_thread)
             return ImageSet(results) if isinstance(x, ImageSet) else TextSet(results)
         if distributed:
             if isinstance(x, np.ndarray):
@@ -64,16 +64,16 @@ class GraphNet(BModel):
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))
             results = callZooFunc(self.bigdl_type, "zooPredict",
-                                    self.value,
-                                    data_rdd,
-                                    batch_per_thread)
+                                  self.value,
+                                  data_rdd,
+                                  batch_per_thread)
             return results.map(lambda result: Layer.convert_output(result))
         else:
             if isinstance(x, np.ndarray) or isinstance(x, list):
                 results = callZooFunc(self.bigdl_type, "zooPredict",
-                                        self.value,
-                                        self._to_jtensors(x),
-                                        batch_per_thread)
+                                      self.value,
+                                      self._to_jtensors(x),
+                                      batch_per_thread)
                 return [Layer.convert_output(result) for result in results]
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))

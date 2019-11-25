@@ -24,6 +24,7 @@ class TextSet(JavaValue):
     """
     TextSet wraps a set of texts with status.
     """
+
     def __init__(self, jvalue, bigdl_type="float", *args):
         super(TextSet, self).__init__(jvalue, bigdl_type, *args)
 
@@ -57,7 +58,7 @@ class TextSet(JavaValue):
         else:
             assert sc, "sc cannot be null to transform a LocalTextSet to a DistributedTextSet"
             jvalue = callZooFunc(self.bigdl_type, "textSetToDistributed", self.value,
-                                   sc, partition_num)
+                                 sc, partition_num)
         return DistributedTextSet(jvalue=jvalue)
 
     def to_local(self):
@@ -133,7 +134,7 @@ class TextSet(JavaValue):
         :return: Dictionary {word: id}
         """
         return callZooFunc(self.bigdl_type, "textSetGenerateWordIndexMap", self.value,
-                             remove_topN, max_words_num, min_freq, existing_map)
+                           remove_topN, max_words_num, min_freq, existing_map)
 
     def get_texts(self):
         """
@@ -265,7 +266,7 @@ class TextSet(JavaValue):
         :return: TextSet after word2idx.
         """
         jvalue = callZooFunc(self.bigdl_type, "textSetWord2idx", self.value,
-                               remove_topN, max_words_num, min_freq, existing_map)
+                             remove_topN, max_words_num, min_freq, existing_map)
         return TextSet(jvalue=jvalue)
 
     def shape_sequence(self, len, trunc_mode="pre", pad_element=0):
@@ -278,7 +279,7 @@ class TextSet(JavaValue):
         """
         assert isinstance(pad_element, int), "pad_element should be an int"
         jvalue = callZooFunc(self.bigdl_type, "textSetShapeSequence", self.value,
-                               len, trunc_mode, pad_element)
+                             len, trunc_mode, pad_element)
         return TextSet(jvalue=jvalue)
 
     def generate_sample(self):
@@ -294,7 +295,7 @@ class TextSet(JavaValue):
 
     def transform(self, transformer):
         return TextSet(callZooFunc(self.bigdl_type, "transformTextSet",
-                                     transformer, self.value), self.bigdl_type)
+                                   transformer, self.value), self.bigdl_type)
 
     @classmethod
     def read(cls, path, sc=None, min_partitions=1, bigdl_type="float"):
@@ -434,6 +435,7 @@ class LocalTextSet(TextSet):
     """
     LocalTextSet is comprised of lists.
     """
+
     def __init__(self, texts=None, labels=None, jvalue=None, bigdl_type="float"):
         """
         Create a LocalTextSet using texts and labels.
@@ -443,7 +445,7 @@ class LocalTextSet(TextSet):
         labels: List of int or None if texts don't have labels.
         """
         if texts is not None:
-            assert all(isinstance(text, six.string_types) for text in texts),\
+            assert all(isinstance(text, six.string_types) for text in texts), \
                 "texts for LocalTextSet should be list of string"
         if labels is not None:
             labels = [int(label) for label in labels]
@@ -454,6 +456,7 @@ class DistributedTextSet(TextSet):
     """
     DistributedTextSet is comprised of RDDs.
     """
+
     def __init__(self, texts=None, labels=None, jvalue=None, bigdl_type="float"):
         """
         Create a DistributedTextSet using texts and labels.

@@ -197,7 +197,7 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
                 feature_preprocessing = SeqToTensor(feature_preprocessing)
 
         if type(label_preprocessing) is list:
-            assert(all(isinstance(x, int) for x in label_preprocessing))
+            assert (all(isinstance(x, int) for x in label_preprocessing))
             label_preprocessing = SeqToTensor(label_preprocessing)
 
         sample_preprocessing = FeatureLabelPreprocessing(feature_preprocessing, label_preprocessing)
@@ -367,7 +367,7 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         """
         pythonBigDL_method_name = "setValidation"
         callZooFunc(self.bigdl_type, pythonBigDL_method_name, self.value,
-                      trigger, val_df, val_method, batch_size)
+                    trigger, val_df, val_method, batch_size)
         self.validation_config = [trigger, val_df, val_method, batch_size]
         return self
 
@@ -385,7 +385,7 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         In order to take effect, it needs to be called before fit.
         """
         callZooFunc(self.bigdl_type, "nnEstimatorClearGradientClipping",
-                      self.value)
+                    self.value)
         return self
 
     def setConstantGradientClipping(self, min, max):
@@ -398,9 +398,9 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         max: The maximum value to clip by. Float.
         """
         callZooFunc(self.bigdl_type, "nnEstimatorSetConstantGradientClipping",
-                      self.value,
-                      float(min),
-                      float(max))
+                    self.value,
+                    float(min),
+                    float(max))
         return self
 
     def setGradientClippingByL2Norm(self, clip_norm):
@@ -412,8 +412,8 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         clip_norm: Gradient L2-Norm threshold. Float.
         """
         callZooFunc(self.bigdl_type, "nnEstimatorSetGradientClippingByL2Norm",
-                      self.value,
-                      float(clip_norm))
+                    self.value,
+                    float(clip_norm))
         return self
 
     def setCheckpoint(self, path, trigger, isOverWrite=True):
@@ -426,7 +426,7 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         """
         pythonBigDL_method_name = "setCheckpoint"
         callZooFunc(self.bigdl_type, pythonBigDL_method_name, self.value,
-                      path, trigger, isOverWrite)
+                    path, trigger, isOverWrite)
         self.checkpoint_config = [path, trigger, isOverWrite]
         return self
 
@@ -461,6 +461,7 @@ class NNModel(JavaTransformer, HasFeaturesCol, HasPredictionCol, HasBatchSize,
     After transform, the prediction column contains the output of the model as Array[T], where
     T (Double or Float) is decided by the model type.
     """
+
     def __init__(self, model, feature_preprocessing=None, jvalue=None, bigdl_type="float"):
         """
         create a NNModel with a BigDL model
@@ -515,6 +516,7 @@ class NNClassifier(NNEstimator):
     classification tasks. It only supports label column of DoubleType, and the fitted
     NNClassifierModel will have the prediction column of DoubleType.
     """
+
     def __init__(self, model, criterion, feature_preprocessing=None,
                  jvalue=None, bigdl_type="float"):
         """
@@ -559,7 +561,8 @@ class NNClassifierModel(NNModel, HasThreshold):
     NNClassifierModel is a specialized [[NNModel]] for classification tasks. The prediction
     column will have the datatype of Double.
     """
-    def __init__(self,  model, feature_preprocessing=None, jvalue=None,
+
+    def __init__(self, model, feature_preprocessing=None, jvalue=None,
                  bigdl_type="float"):
         """
         :param model: trained BigDL model to use in prediction.
