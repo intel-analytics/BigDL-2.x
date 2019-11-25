@@ -960,6 +960,13 @@ object Sequential extends KerasLayerSerializable {
 
 private[zoo] object InternalOptimizerUtil {
 
+  def setExecutorMklThread(cachedModels: RDD[_]): Unit = {
+    cachedModels.mapPartitions{_ =>
+      val numCores = scala.sys.env("OMP_NUM_THREADS").toInt
+      EngineRef.getDefaultThreadPool().setMKLThread(numCores)
+      Iterator.single(1)
+    }.count()
+  }
 
   def getModelCacheFromOptimizer[T: ClassTag](
         optimizer: Optimizer[T, MiniBatch[T]]): RDD[Cache[T]] = {
@@ -1089,14 +1096,15 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
      * The best practice of torchnet's training is single model in each executor.
      * And use multi OMP threads to speedup the single model's training.
      * Currently, we only provide single model + multi OMP threads for torchnet model.
+     * TODO: support tfnet.
      */
-    val torchNetOptimize = model.isInstanceOf[TorchNet]
+    val torchNetOptimize = TorchNet.isTorchNet(model)
     val modelPerExecutor = if (torchNetOptimize) {
       require(EngineRef.getEngineType() != MklDnn, "torchnet shouldn't use MKLDNN engine.")
       val numOmpThread = distDataset.originRDD().sparkContext
         .getConf.get("spark.executorEnv.OMP_NUM_THREADS").toInt
       logger.info(s"torchnet will use ${numOmpThread} OMP threads.")
-      math.floor(EngineRef.getCoreNumber() / numOmpThread).toInt
+      1
     } else {
       EngineRef.getCoreNumber()
     }
@@ -1145,11 +1153,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
         allReduceParameter, parameterSplits, validationMethods, optimMethods, parameterProcessors)
       cachedModels = modelsAndBroadcast._1
       if (torchNetOptimize) {
-        cachedModels.mapPartitions{_ =>
-          val numCores = scala.sys.env("OMP_NUM_THREADS").toInt
-          EngineRef.getDefaultThreadPool().setMKLThread(numCores)
-          Iterator.single(1)
-        }.count()
+        InternalOptimizerUtil.setExecutorMklThread(cachedModels)
       }
       modelBroadcast = modelsAndBroadcast._2
     }
