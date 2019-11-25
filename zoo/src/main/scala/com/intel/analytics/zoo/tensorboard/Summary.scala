@@ -102,7 +102,8 @@ object Summary {
    * @return
    */
   def histogram[T: ClassTag](tag: String,
-                             values: Tensor[T])(implicit ev: TensorNumeric[T]): tensorflow.framework.Summary = {
+                             values: Tensor[T])
+                            (implicit ev: TensorNumeric[T]): tensorflow.framework.Summary = {
     val counts = new Array[Int](limits.length)
 
     var squares = 0.0
