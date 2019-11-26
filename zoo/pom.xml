@@ -99,7 +99,7 @@
             <properties>
                 <java.version>1.8</java.version>
                 <javac.version>1.8</javac.version>
-                <spark-version.project>2.1</spark-version.project>
+                <spark-version.project>2.4</spark-version.project>
                 <spark.version>2.4.0</spark.version>
                 <scala.major.version>2.11</scala.major.version>
                 <scala.version>2.11.8</scala.version>
