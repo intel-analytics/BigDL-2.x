@@ -25,6 +25,7 @@ class Estimator(JavaValue):
     Estimator wraps a model, and provide an uniform training, evaluation or prediction operation on
     both local host and distributed spark environment.
     """
+
     def __init__(self, model, optim_methods=None, model_dir=None, jvalue=None, bigdl_type="float"):
         self.bigdl_type = bigdl_type
         self.value = jvalue if jvalue else callZooFunc(
@@ -75,8 +76,8 @@ class Estimator(JavaValue):
         :return: Estimator
         """
         callZooFunc(self.bigdl_type, "estimatorTrain", self.value, train_set,
-                      criterion, end_trigger, checkpoint_trigger, validation_set,
-                      validation_method, batch_size)
+                    criterion, end_trigger, checkpoint_trigger, validation_set,
+                    validation_method, batch_size)
 
     def train_imagefeature(self, train_set, criterion, end_trigger=None, checkpoint_trigger=None,
                            validation_set=None, validation_method=None, batch_size=32):
@@ -96,8 +97,8 @@ class Estimator(JavaValue):
         :return:
         """
         callZooFunc(self.bigdl_type, "estimatorTrainImageFeature", self.value, train_set,
-                      criterion, end_trigger, checkpoint_trigger, validation_set,
-                      validation_method, batch_size)
+                    criterion, end_trigger, checkpoint_trigger, validation_set,
+                    validation_method, batch_size)
 
     def evaluate(self, validation_set, validation_method, batch_size=32):
         """
@@ -108,7 +109,7 @@ class Estimator(JavaValue):
         :return: validation results
         """
         callZooFunc(self.bigdl_type, "estimatorEvaluate", self.value,
-                      validation_set, validation_method, batch_size)
+                    validation_set, validation_method, batch_size)
 
     def evaluate_imagefeature(self, validation_set, validation_method, batch_size=32):
         """
@@ -119,4 +120,4 @@ class Estimator(JavaValue):
         :return: validation results
         """
         callZooFunc(self.bigdl_type, "estimatorEvaluateImageFeature", self.value,
-                      validation_set, validation_method, batch_size)
+                    validation_set, validation_method, batch_size)

@@ -244,8 +244,8 @@ class TFModel(object):
         update_op = tf.group(update_ops)
 
         return trainable_variables, trainable_variable_placeholders, trainable_assign, \
-               extra_variables, extra_variable_assign_placeholders, \
-               extra_variable_assign, update_op
+            extra_variables, extra_variable_assign_placeholders, \
+            extra_variable_assign, update_op
 
     @staticmethod
     def _save_to_dir_for_unfreeze(folder, sess, graph,

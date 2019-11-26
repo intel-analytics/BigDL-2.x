@@ -112,7 +112,7 @@ class WideAndDeep(Recommender):
         assert len(column_info.indicator_cols) == len(column_info.indicator_dims), \
             "size of wide_indicator_columns should match"
         assert len(column_info.embed_cols) == len(column_info.embed_in_dims) \
-               == len(column_info.embed_out_dims), "size of wide_indicator_columns should match"
+            == len(column_info.embed_out_dims), "size of wide_indicator_columns should match"
 
         self.class_num = int(class_num)
         self.wide_base_dims = column_info.wide_base_dims

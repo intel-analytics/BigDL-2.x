@@ -220,7 +220,7 @@ class TransformerLayer(ZooKerasLayer):
         embedding.add(Merge(layers=[word_input, postion_input], mode='concat')) \
             .add(Reshape([seq_len * 2])) \
             .add(Embedding(vocab, hidden_size, input_length=seq_len * 2,
-                           weights=np.random.normal(0.0, initializer_range, (vocab, hidden_size)))) \
+                           weights=np.random.normal(0.0, initializer_range, (vocab, hidden_size))))\
             .add(Dropout(embedding_drop)) \
             .add(Reshape((seq_len, 2, hidden_size))) \
             .add(KerasLayerWrapper(Sum(dimension=3, squeeze=True)))
