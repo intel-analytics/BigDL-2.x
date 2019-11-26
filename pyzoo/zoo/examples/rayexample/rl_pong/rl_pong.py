@@ -177,12 +177,12 @@ class PongEnv(object):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train an RL agent")
 
-    parser.add_argument("--hadoop_conf",type=str,
+    parser.add_argument("--hadoop_conf", type=str,
                         help="turn on yarn mode by passing the hadoop path"
                         "configuration folder. Otherwise, turn on local mode.")
-    parser.add_argument("--batch_size",default=10, type=int,
+    parser.add_argument("--batch_size", default=10, type=int,
                         help="The number of roll-outs to do per batch.")
-    parser.add_argument("--iterations",default=-1,type=int,
+    parser.add_argument("--iterations", default=-1, type=int,
                         help="The number of model updates to perform. By "
                         "default, training will not terminate.")
 

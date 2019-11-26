@@ -15,27 +15,27 @@ set -e
 
 echo "Start ray exmples tests"
 #start execute
-echo "Start pong example"
+echo "#9 Start pong example"
 start=$(date "+%s")
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/rayexample/rl_pong/rl_pong.py --iterations 10
 now=$(date "+%s")
 time1=$((now-start))
 
-echo "Start async_parameter example"
+echo "#10 Start async_parameter example"
 start=$(date "+%s")
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/rayexample/parameter_server/async_parameter_server.py --iterations 10
 now=$(date "+%s")
 time2=$((now-start))
 
-echo "Start sync_parameter example"
+echo "#11 Start sync_parameter example"
 start=$(date "+%s")
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/rayexample/parameter_server/sync_parameter_server.py --iterations 10
 now=$(date "+%s")
 time3=$((now-start))
 
-echo "Start multiagent example"
+echo "#12 Start multiagent example"
 start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/rayexample/rllibexample/multiagent_two_trainers.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/rayexample/rllibexample/multiagent_two_trainers.py --iterations 5
 now=$(date "+%s")
 time4=$((now-start))
 

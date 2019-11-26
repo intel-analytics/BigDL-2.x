@@ -43,7 +43,7 @@ from zoo.ray.util.raycontext import RayContext
 os.environ["LANG"] = "C.UTF-8"
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--num-iters", type=int, default=20,
+parser.add_argument("--iterations", type=int, def1ault=10,
                     help="The number of iterations to train the model")
 parser.add_argument("--hadoop_conf", type=str,
                     help="turn on yarn mode by passing the path to the hadoop"
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     #   policy_reward_mean:
     #     dqn_policy: X
     #     ppo_policy: Y
-    for i in range(args.num_iters):
+    for i in range(args.iterations):
         print("== Iteration", i, "==")
 
         # improve the DQN policy

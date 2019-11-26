@@ -4,16 +4,7 @@ This is an example to demonstrate how to use Analytics Zoo API to run [Ray](http
 
 See [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/) for more details for RayOnSpark support in Analytics Zoo.
 
-## Requirements 
-- Python 3.5 or 3.6
-- JDK 1.8
-- Apache Spark 2.4.3 ( ≥ 2.4.0 )
-- Analytics-Zoo 0.6.0
-- Ray 0.6.6 and above
-- Gym and gym[atari]
-
 ## Prepare environments
-We recommend you to use [**Anaconda**](https://www.anaconda.com/distribution/#linux) to prepare the environments.
 Follow steps 1 to 4 [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/#steps-to-run-rayonspark) to prepare environment.
 
 You also need to install **Gym** in your conda environment and make sure your pyspark version is above 2.4.0.
@@ -37,9 +28,9 @@ python rl_pong.py --hadoop_conf ... # path to your hadoop/yarn directory --conda
 See [here](#Options) for more configurable options for this example.
 
 ## Options
-- `--object_store_memory`  The store memory you need to use on local. Default is 4g.
+- `--object_store_memory` The store memory you need to use on local. Default is 4g.
 - `--driver_cores` The number of driver's or local's cpu cores you want to use. Default is 8.
-- `--interations` The number of iterations to train the model. Default is -1. And by default, the training would not stop.
+- `--iterations` The number of iterations to train the model. Default is -1. And by default, the training would not stop.
 - `--batch_size` The number of roll-outs to do per batch. Default is 10.
 
 **Options for yarn only**
