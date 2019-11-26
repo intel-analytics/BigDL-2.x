@@ -43,7 +43,7 @@ from zoo.ray.util.raycontext import RayContext
 os.environ["LANG"] = "C.UTF-8"
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--iterations", type=int, def1ault=10,
+parser.add_argument("--iterations", type=int, default=10,
                     help="The number of iterations to train the model")
 parser.add_argument("--hadoop_conf", type=str,
                     help="turn on yarn mode by passing the path to the hadoop"
