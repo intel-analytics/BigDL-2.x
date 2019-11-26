@@ -34,9 +34,9 @@ python ./analytics-zoo/pyzoo/zoo/serving/quick_start.py
 ```
 Then you can see the inference output. 
 ```
-image: , classification-result: class: prob: 
-image: , classification-result: class: prob: 
-image: , classification-result: class: prob: 
+image: fish1.jpeg, classification-result: class: 1's prob: 0.9974158
+image: cat1.jpeg, classification-result: class: 287's prob: 0.52377725
+image: dog1.jpeg, classification-result: class: 207's prob: 0.9226527
 ```
 Wow! You made it!
 

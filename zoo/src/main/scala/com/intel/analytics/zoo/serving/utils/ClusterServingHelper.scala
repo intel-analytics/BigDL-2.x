@@ -169,7 +169,6 @@ class ClusterServingHelper {
       if (System.getProperty("bigdl.engineType", "mklblas")
         .toLowerCase() == "mklblas") {
         blasFlag = true
-        println("blas flag is ", blasFlag)
       }
     }
 

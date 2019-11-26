@@ -1,0 +1,27 @@
+from zoo.serving.client.utils.helpers import RedisQueue
+import os
+import cv2
+import json
+
+
+if __name__ == "__main__":
+    redis_queue = RedisQueue()
+
+    base_path = "/home/litchy/val_img"
+    path = os.listdir(base_path)
+    for p in path:
+        if not p.endswith("jpeg"):
+            continue
+        img = cv2.imread(os.path.join(base_path, p))
+        img = cv2.resize(img, (224, 224))
+        redis_queue.enqueue_image(p, img)
+
+    import time
+    time.sleep(5)
+    result = redis_queue.get_results()
+    for k in result.keys():
+        output = "image: " + k + ", classification-result:"
+        tmp_dict = json.loads(result[k])
+        for class_idx in tmp_dict.keys():
+            output += "class: " + class_idx + "'s prob: " + tmp_dict[class_idx]
+        print (output)

@@ -105,7 +105,6 @@ object Summary {
    * @param values values.
    * @return
    */
-
   def histogram[T: ClassTag](tag: String,
                              values: Tensor[T])
                             (implicit ev: TensorNumeric[T]): tensorflow.framework.Summary = {
