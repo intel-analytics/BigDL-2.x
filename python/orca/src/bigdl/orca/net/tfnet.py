@@ -26,7 +26,7 @@ from pyspark import RDD
 from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.common import JTensor, Sample
 from zoo.feature.image import ImageSet
-from bigdl.util.common import callBigDlFunc
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -107,10 +107,10 @@ class TFNet(Layer):
         Use a model to do prediction.
         """
         if isinstance(x, ImageSet):
-            results = callBigDlFunc(self.bigdl_type, "zooPredict",
-                                    self.value,
-                                    x,
-                                    batch_per_thread)
+            results = callZooFunc(self.bigdl_type, "zooPredict",
+                                  self.value,
+                                  x,
+                                  batch_per_thread)
             return ImageSet(results)
         if distributed:
             if isinstance(x, np.ndarray):
@@ -119,10 +119,10 @@ class TFNet(Layer):
                 data_rdd = x
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))
-            results = callBigDlFunc(self.bigdl_type, "zooPredict",
-                                    self.value,
-                                    data_rdd,
-                                    batch_per_thread)
+            results = callZooFunc(self.bigdl_type, "zooPredict",
+                                  self.value,
+                                  data_rdd,
+                                  batch_per_thread)
             return results.map(lambda result: Layer.convert_output(result))
         else:
             start_idx = 0

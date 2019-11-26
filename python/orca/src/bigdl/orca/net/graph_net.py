@@ -22,6 +22,7 @@ from zoo.feature.text import TextSet
 from zoo.pipeline.api.keras.base import ZooKerasLayer
 from zoo.pipeline.api.keras.utils import *
 from bigdl.nn.layer import Layer
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -50,10 +51,10 @@ class GraphNet(BModel):
                      Default is True. In local mode, x must be a Numpy array.
         """
         if isinstance(x, ImageSet) or isinstance(x, TextSet):
-            results = callBigDlFunc(self.bigdl_type, "zooPredict",
-                                    self.value,
-                                    x,
-                                    batch_per_thread)
+            results = callZooFunc(self.bigdl_type, "zooPredict",
+                                  self.value,
+                                  x,
+                                  batch_per_thread)
             return ImageSet(results) if isinstance(x, ImageSet) else TextSet(results)
         if distributed:
             if isinstance(x, np.ndarray):
@@ -62,29 +63,29 @@ class GraphNet(BModel):
                 data_rdd = x
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))
-            results = callBigDlFunc(self.bigdl_type, "zooPredict",
-                                    self.value,
-                                    data_rdd,
-                                    batch_per_thread)
+            results = callZooFunc(self.bigdl_type, "zooPredict",
+                                  self.value,
+                                  data_rdd,
+                                  batch_per_thread)
             return results.map(lambda result: Layer.convert_output(result))
         else:
             if isinstance(x, np.ndarray) or isinstance(x, list):
-                results = callBigDlFunc(self.bigdl_type, "zooPredict",
-                                        self.value,
-                                        self._to_jtensors(x),
-                                        batch_per_thread)
+                results = callZooFunc(self.bigdl_type, "zooPredict",
+                                      self.value,
+                                      self._to_jtensors(x),
+                                      batch_per_thread)
                 return [Layer.convert_output(result) for result in results]
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))
 
     def flattened_layers(self, include_container=False):
-        jlayers = callBigDlFunc(self.bigdl_type, "getFlattenSubModules", self, include_container)
+        jlayers = callZooFunc(self.bigdl_type, "getFlattenSubModules", self, include_container)
         layers = [Layer.of(jlayer) for jlayer in jlayers]
         return layers
 
     @property
     def layers(self):
-        jlayers = callBigDlFunc(self.bigdl_type, "getSubModules", self)
+        jlayers = callZooFunc(self.bigdl_type, "getSubModules", self)
         layers = [Layer.of(jlayer) for jlayer in jlayers]
         return layers
 
@@ -107,7 +108,7 @@ class GraphNet(BModel):
         :param outputs: A list of nodes specified
         :return: A graph model
         """
-        value = callBigDlFunc(self.bigdl_type, "newGraph", self.value, outputs)
+        value = callZooFunc(self.bigdl_type, "newGraph", self.value, outputs)
         return self.from_jvalue(value, self.bigdl_type)
 
     def freeze_up_to(self, names):
@@ -118,7 +119,7 @@ class GraphNet(BModel):
         :param names: A list of module names to be Freezed
         :return: current graph model
         """
-        callBigDlFunc(self.bigdl_type, "freezeUpTo", self.value, names)
+        callZooFunc(self.bigdl_type, "freezeUpTo", self.value, names)
 
     def unfreeze(self, names=None):
         """
@@ -129,8 +130,8 @@ class GraphNet(BModel):
         :param names: list of module names to be unFreezed. Default is None.
         :return: current graph model
         """
-        callBigDlFunc(self.bigdl_type, "unFreeze", self.value, names)
+        callZooFunc(self.bigdl_type, "unFreeze", self.value, names)
 
     def to_keras(self):
-        value = callBigDlFunc(self.bigdl_type, "netToKeras", self.value)
+        value = callZooFunc(self.bigdl_type, "netToKeras", self.value)
         return ZooKerasLayer.of(value, self.bigdl_type)
