@@ -16,16 +16,68 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
+import java.io.{ByteArrayInputStream, File, FileOutputStream, IOException}
+import java.nio.file.{Files, Paths}
 import java.util.{ArrayList, Arrays, List => JList}
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.pipeline.api.net.{NetUtils, SerializationHolder}
-import scala.collection.JavaConverters._
+import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
+import com.intel.analytics.zoo.pipeline.inference.OpenVINOModel.OpenVINOModelHolder
+import com.intel.analytics.zoo.pipeline.inference.OpenVinoInferenceSupportive.logger
+import org.apache.commons.io.FileUtils
 
-class OpenVINOModel(var executableNetworkReference: Long = -1,
-                    var supportive: OpenVinoInferenceSupportive,
-                    var isInt8: Boolean = false)
+import scala.collection.JavaConverters._
+import scala.io.Source
+
+class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
+                    var batchSize: Int = -1,
+                    var isInt8: Boolean = false,
+                    var deviceType: DeviceTypeEnumVal = DeviceType.CPU)
   extends AbstractModel with InferenceSupportive with Serializable {
+
+  private var isRelease: Boolean = false
+
+  @transient
+  private lazy val supportive: OpenVinoInferenceSupportive = {
+    println("Prepare OpenVINO bin " + this)
+    new OpenVinoInferenceSupportive()
+  }
+
+  @transient
+  private lazy val executableNetworkReference: Long = {
+    println("OpenVINO loading in " + this)
+    var nativeRef = -1L
+    try {
+      val modelFile = File.createTempFile("OpenVINO", "xml")
+      Files.write(Paths.get(modelFile.toURI), modelHolder.modelBytes)
+      val weightFile = File.createTempFile("OpenVINO", "bin")
+      Files.write(Paths.get(modelFile.toURI), modelHolder.weightBytes)
+
+      val buffer = Source.fromFile(modelFile)
+      this.isInt8 = buffer.getLines().count(_ matches ".*statistics.*") > 0
+      buffer.close()
+
+      nativeRef = if (isInt8) {
+        logger.info(s"Load int8 model")
+        supportive.loadOpenVinoIRInt8(modelFile.getAbsolutePath,
+          weightFile.getAbsolutePath,
+          deviceType.value, batchSize)
+      } else {
+        supportive.loadOpenVinoIR(modelFile.getAbsolutePath,
+          weightFile.getAbsolutePath,
+          deviceType.value, batchSize)
+      }
+      FileUtils.deleteQuietly(modelFile)
+      FileUtils.deleteQuietly(weightFile)
+    }
+    catch {
+      case io: IOException =>
+        System.out.println("error during loading OpenVINO model")
+        throw io
+    }
+    nativeRef
+  }
 
   override def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
     val outputs = new ArrayList[JList[JTensor]]()
@@ -67,12 +119,12 @@ class OpenVINOModel(var executableNetworkReference: Long = -1,
       case true =>
       case false =>
         supportive.releaseOpenVINOIR(executableNetworkReference)
-        executableNetworkReference = -1
+        isRelease = true
     }
   }
 
   override def isReleased(): Boolean = {
-    executableNetworkReference == -1
+    isRelease
   }
 
   override def toString: String = s"OpenVinoInferenceModel with " +
@@ -135,6 +187,10 @@ object OpenVINOModel {
     }
   }
 
+  def apply(modelHolder: OpenVINOModelHolder): OpenVINOModel = {
+    new OpenVINOModel(modelHolder)
+  }
+
   def apply(modelBytes: Array[Byte], weightBytes: Array[Byte], batchSize: Int): OpenVINOModel = {
     OpenVinoInferenceSupportive.loadOpenVinoIR(modelBytes, weightBytes, DeviceType.CPU, batchSize)
   }
@@ -143,5 +199,15 @@ object OpenVINOModel {
     OpenVinoInferenceSupportive.loadOpenVinoIR(modelHolder.getModelBytes(),
       modelHolder.getWeightBytes(),
       DeviceType.CPU, batchSize)
+  }
+
+  def apply(modelFilePath: String,
+            weightFilePath: String,
+            deviceType: DeviceTypeEnumVal,
+            batchSize: Int = 0): OpenVINOModel = {
+    OpenVinoInferenceSupportive.loadOpenVinoIR(modelFilePath,
+      weightFilePath,
+      deviceType,
+      batchSize)
   }
 }
