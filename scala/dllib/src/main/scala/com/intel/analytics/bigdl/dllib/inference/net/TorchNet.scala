@@ -235,5 +235,8 @@ object TorchNet {
     nativeRef
   }
 
+  def isTorchNet(module: Module[_]): Boolean = {
+    module.isInstanceOf[TorchNet]
+  }
 }
 
