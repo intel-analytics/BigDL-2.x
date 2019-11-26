@@ -28,10 +28,15 @@ import scala.reflect.ClassTag
  * @param logDir
  * @param appName
  */
+<<<<<<< HEAD
 
 abstract class Summary(logDir: String,
                        appName: String) {
 
+=======
+abstract class Summary(logDir: String,
+                       appName: String) {
+>>>>>>> upstream/master
   protected val writer: FileWriter
 
   /**
@@ -41,7 +46,10 @@ abstract class Summary(logDir: String,
    * @param step current step.
    * @return this
    */
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
   def addScalar(tag: String,
                 value: Float,
                 step: Long): this.type = {
@@ -58,7 +66,10 @@ abstract class Summary(logDir: String,
    * @param step current step.
    * @return this
    */
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
   def addHistogram[T: ClassTag](tag: String,
                                 value: Tensor[T],
                                 step: Long)(implicit ev: TensorNumeric[T]): this.type = {
@@ -105,7 +116,6 @@ object Summary {
    * @param values values.
    * @return
    */
-
   def histogram[T: ClassTag](tag: String,
                              values: Tensor[T])
                             (implicit ev: TensorNumeric[T]): tensorflow.framework.Summary = {
@@ -142,7 +152,10 @@ object Summary {
   /**
    * Find a bucket for x.
    */
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
   private def bisectLeft(a: Array[Double],
                          x: Double,
                          lo: Int = 0,
