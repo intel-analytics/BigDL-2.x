@@ -64,7 +64,7 @@
                         <artifactId>scala-maven-plugin</artifactId>
                         <configuration>
                             <excludes>
-                                <exclude>**src/main/scala/com/intel/analytics/zoo/serving/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/serving/**</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
@@ -85,9 +85,6 @@
 
         <profile>
             <id>spark_2.4+</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <build>
                 <plugins>
                     <plugin>
