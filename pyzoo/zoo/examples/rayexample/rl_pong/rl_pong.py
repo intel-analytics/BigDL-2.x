@@ -188,6 +188,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--conda_name", type=str,
                         help="The conda name the environment sets.")
+    parser.add_argument("--slave_num", type=int, default=2,
+                        help="The number of slave nodes")
     parser.add_argument("--executor_cores", type=int, default=8,
                         help="The number of driver's cpu cores you want to use."
                              "You can change it depending on your own cluster setting.")

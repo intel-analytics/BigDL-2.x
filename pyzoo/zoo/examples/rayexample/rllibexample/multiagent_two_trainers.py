@@ -48,7 +48,7 @@ parser.add_argument("--iterations", type=int, def1ault=10,
 parser.add_argument("--hadoop_conf", type=str,
                     help="turn on yarn mode by passing the path to the hadoop"
                     " configuration folder. Otherwise, turn on local mode.")
-parser.add_argument("--slave_num", tpye=int, default=2,
+parser.add_argument("--slave_num", type=int, default=2,
                     help="The number of slave nodes")
 parser.add_argument("--conda_name", type=str,
                     help="The conda name the environment sets.")
