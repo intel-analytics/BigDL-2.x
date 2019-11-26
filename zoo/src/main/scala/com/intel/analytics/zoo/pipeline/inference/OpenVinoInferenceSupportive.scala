@@ -18,10 +18,12 @@ package com.intel.analytics.zoo.pipeline.inference
 
 import java.io.{ByteArrayInputStream, File, FileOutputStream, InputStream}
 import java.nio.channels.Channels
+import java.nio.file.{Files, Paths}
 
 import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 import com.intel.analytics.zoo.core.openvino.OpenvinoNativeLoader
+import com.intel.analytics.zoo.pipeline.inference.OpenVINOModel.OpenVINOModelHolder
 import org.slf4j.LoggerFactory
 
 import scala.io.Source
@@ -587,10 +589,9 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
                      deviceType: DeviceTypeEnumVal,
                      batchSize: Int = 0): OpenVINOModel = {
     timing("load openvino IR") {
-      val buffer = Source.fromFile(modelFilePath)
+      /* val buffer = Source.fromFile(modelFilePath)
       val isInt8 = buffer.getLines().count(_ matches ".*statistics.*")
       buffer.close()
-
       val supportive: OpenVinoInferenceSupportive = new OpenVinoInferenceSupportive()
       val executableNetworkReference: Long = if (isInt8 > 0) {
         logger.info(s"Load int8 model")
@@ -600,7 +601,10 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
         supportive.loadOpenVinoIR(modelFilePath, weightFilePath,
           deviceType.value, batchSize)
       }
-      new OpenVINOModel(executableNetworkReference, supportive, isInt8 > 0)
+      new OpenVINOModel(executableNetworkReference, supportive, isInt8 > 0) */
+      val modelBytes = Utils.readBytes(modelFilePath)
+      val weightBytes = Utils.readBytes(weightFilePath)
+      new OpenVINOModel(new OpenVINOModelHolder(modelBytes, weightBytes))
     }
   }
 
@@ -609,7 +613,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
                      deviceType: DeviceTypeEnumVal,
                      batchSize: Int): OpenVINOModel = {
     timing("load openvino IR") {
-      val tmpDir = Utils.createTmpDir("ZooVino").toFile()
+      /* val tmpDir = Utils.createTmpDir("ZooVino").toFile()
       val modelFilePath = (modelBytes == null) match {
         case true => null
         case false => val modelFileName = "model.xml"
@@ -636,20 +640,10 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
 
       val buffer = Source.fromFile(modelFilePath)
       val isInt8 = buffer.getLines().count(_ matches ".*statistics.*")
-      buffer.close()
+      buffer.close() */
 
-      val supportive: OpenVinoInferenceSupportive = new OpenVinoInferenceSupportive()
-      val executableNetworkReference: Long = if (isInt8 > 0) {
-        logger.info(s"Load int8 model")
-        supportive.loadOpenVinoIRInt8(modelFilePath, weightFilePath,
-          deviceType.value, batchSize)
-      } else {
-        supportive.loadOpenVinoIR(modelFilePath, weightFilePath,
-          deviceType.value, batchSize)
-      }
-      val model = new OpenVINOModel(executableNetworkReference, supportive, isInt8 > 0)
-      s"rm -rf $tmpDir" !;
-      model
+      new OpenVINOModel(new OpenVINOModelHolder(modelBytes, weightBytes),
+        deviceType = deviceType, batchSize = batchSize)
     }
   }
 
