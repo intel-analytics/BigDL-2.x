@@ -682,7 +682,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
         // e.g for a 1000-class classification
         // we only check the number of zeros of first class output cell
 
-        //TODO: this is just for image classification task
+        // TODO: this is just for image classification task
         // for more task, e.g. object detection, check output dim first
 
         val throughput = batchSize / (latency / 1e9)

@@ -2,16 +2,16 @@
 
 model:
   # model path must be set
-  path:
+  path: /home/litchy/models/caffe_kfbio/
 data:
   # default, localhost:6379
-  src: 172.168.0.109:6379
+  src: localhost:6379
 
   # default, 3, 224, 224
   shape: 3,224,224
 spark:
   # default, local[*]
-  master: spark://aep-008:7077
+  master: local[*]
 
   # default, 4g
   driver_memory: 64g

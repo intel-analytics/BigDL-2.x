@@ -53,45 +53,46 @@ case class Result(id: String, value: String)
 
 class ClusterServingHelper {
   type HM = LinkedHashMap[String, String]
-  val parser = new OptionParser[LoaderParams]("Cluster Serving") {
-
-    opt[String]('t', "modelType")
-      .text("Model type, could be caffe, keras")
-      .action((x, c) => c.copy(modelType = x))
-
-    opt[String]('f', "modelFolder")
-      .text("Weight file path")
-      .action((x, c) => c.copy(modelFolder = x))
-      .required()
-
-    opt[String]('r', "redis")
-      .text("Redis url")
-      .action((x, c) => c.copy(redis = x))
-
-    opt[Int]('b', "batchSize")
-      .text("Inference batch size")
-      .action((x, c) => c.copy(batchSize = x))
-    opt[String]('o', "outputPath")
-      .text("Redis url")
-      .action((x, c) => c.copy(outputPath = x))
-    opt[Int]('n', "top-N")
-      .text("number of return in classification task")
-      .action((x, c) => c.copy(topN = x))
-    opt[String]('s', "shape")
-      .text("Data shape")
-      .action((x, c) => c.copy(dataShape = x))
-
-  }
+//  val parser = new OptionParser[LoaderParams]("Cluster Serving") {
+//
+//    opt[String]('t', "modelType")
+//      .text("Model type, could be caffe, keras")
+//      .action((x, c) => c.copy(modelType = x))
+//
+//    opt[String]('f', "modelFolder")
+//      .text("Weight file path")
+//      .action((x, c) => c.copy(modelFolder = x))
+//      .required()
+//
+//    opt[String]('r', "redis")
+//      .text("Redis url")
+//      .action((x, c) => c.copy(redis = x))
+//
+//    opt[Int]('b', "batchSize")
+//      .text("Inference batch size")
+//      .action((x, c) => c.copy(batchSize = x))
+//    opt[String]('o', "outputPath")
+//      .text("Redis url")
+//      .action((x, c) => c.copy(outputPath = x))
+//    opt[Int]('n', "top-N")
+//      .text("number of return in classification task")
+//      .action((x, c) => c.copy(topN = x))
+//    opt[String]('s', "shape")
+//      .text("Data shape")
+//      .action((x, c) => c.copy(dataShape = x))
+//
+//  }
   val logger: Logger = Logger.getLogger(getClass)
 
   var sc: SparkContext = null
-  var params: LoaderParams = null
+//  var params: LoaderParams = null
   var redisHost: String = null
   var redisPort: String = null
   var batchSize: Int = 4
   var topN: Int = 1
   var nodeNum: Int = 1
   var coreNum: Int = 1
+  var engineType: String = null
   var blasFlag: Boolean = false
 
   var dataShape = Array[Int]()
@@ -105,8 +106,8 @@ class ClusterServingHelper {
 
   var dummyMap: Map[Int, String] = Map()
 
-
-  def initArgs(args: Array[String]): LoaderParams = {
+  def initArgs(): Unit = {
+//  def initArgs(args: Array[String]): LoaderParams = {
 //    params = parser.parse(args, LoaderParams()).get
 //
 //    require(params.redis.split(":").length == 2, "Your redis host " +
@@ -134,8 +135,9 @@ class ClusterServingHelper {
 
 
     val yamlParser = new Yaml()
-    val input = new FileInputStream(new File("zoo/src/" +
-      "main/scala/com/intel/analytics/zoo/serving/config.yaml"))
+//    val input = new FileInputStream(new File("zoo/src/" +
+//      "main/scala/com/intel/analytics/zoo/serving/config.yaml"))
+    val input = new FileInputStream(new File("config.yaml"))
     val configList = yamlParser.load(input).asInstanceOf[HM]
 
     // parse model field
@@ -150,7 +152,7 @@ class ClusterServingHelper {
       "and port are not valid, please check.")
     redisHost = redis.split(":").head.trim
     redisPort = redis.split(":").last.trim
-    val shape = getYaml(dataConfig, "src", "3,224,224")
+    val shape = getYaml(dataConfig, "shape", "3,224,224")
     val shapeList = shape.split(",")
     require(shapeList.size == 3, "Your data shape must has dimension as 3")
     for (i <- shapeList) {
@@ -158,13 +160,29 @@ class ClusterServingHelper {
     }
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
-    
-    val l = new LoaderParams
-    l
+    batchSize = getYaml(paramsConfig, "batch_size", "4").toInt
+    // engine Type need to be used on executor so do not set here
+//    engineType = getYaml(paramsConfig, "engine_type", "mklblas")
+    topN = getYaml(paramsConfig, "top_n", "5").toInt
+
+    if (modelType == "caffe" || modelType == "bigdl") {
+      if (System.getProperty("bigdl.engineType", "mklblas")
+        .toLowerCase() == "mklblas") {
+        blasFlag = true
+        println("blas flag is ", blasFlag)
+      }
+    }
+
   }
 
   def getYaml(configList: HM, key: String, default: String): String = {
-    val configValue = configList.get(key)
+
+    val configValue = if (configList.get(key).isInstanceOf[java.lang.Integer]) {
+      String.valueOf(configList.get(key))
+    } else {
+      configList.get(key)
+    }
+
     if (configValue == null) {
       if (default == null) throw new Error(configList.toString + key + " must be provided")
       else {
@@ -267,7 +285,7 @@ class ClusterServingHelper {
     val f = new File(location)
     val fileList = f.listFiles
 
-    if (params.modelType == null) {
+    if (modelType == null) {
 
       for (file <- fileList) {
         val fName = file.getName
@@ -320,7 +338,7 @@ class ClusterServingHelper {
         "according to your model file extension name")
     }
     else {
-      modelType = params.modelType.toLowerCase
+      modelType = modelType.toLowerCase
     }
 
   }

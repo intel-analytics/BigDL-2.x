@@ -41,10 +41,8 @@ object ClusterServing {
 
   def main(args: Array[String]): Unit = {
 
-//    System.setProperty("bigdl.engineType", "mkldnn")
-
     val helper = new ClusterServingHelper()
-    helper.initArgs(args)
+    helper.initArgs()
     helper.initContext()
 
     val logger = helper.logger
@@ -101,7 +99,7 @@ object ClusterServing {
           // BLAS is only valid in BigDL backend
           // Thus no shape specific change is needed
           batchDF.rdd.mapPartitions(pathBytes => {
-            pathBytes.grouped(3).flatMap(pathBytesBatch => {
+            pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
               pathBytesBatch.indices.toParArray.map(i => {
                 val tensors = ImageProcessing.bytesToBGRTensor(java.util
                   .Base64.getDecoder.decode(pathBytesBatch(i).getAs[String]("image")))
