@@ -19,7 +19,7 @@ import warnings
 from zoo.pipeline.api.keras.models import Sequential
 from zoo.pipeline.api.keras.layers import *
 from zoo.models.common import *
-from bigdl.util.common import callBigDlFunc
+from zoo.common.utils import callZooFunc
 from bigdl.util.common import Sample
 
 if sys.version >= '3':
@@ -36,6 +36,7 @@ class AnomalyDetector(KerasZooModel):
     hidden_layers: Units of hidden layers of LSTM.
     dropouts:     Fraction of the input units to drop out. Float between 0 and 1.
     """
+
     def __init__(self, feature_shape, hidden_layers=[8, 32, 15],
                  dropouts=[0.2, 0.2, 0.2], **kwargs):
         assert len(hidden_layers) == len(dropouts), \
@@ -85,7 +86,7 @@ class AnomalyDetector(KerasZooModel):
               Amazon S3 path should be like 's3a://bucket/xxx'.
         weight_path: The path for pre-trained weights if any. Default is None.
         """
-        jmodel = callBigDlFunc(bigdl_type, "loadAnomalyDetector", path, weight_path)
+        jmodel = callZooFunc(bigdl_type, "loadAnomalyDetector", path, weight_path)
         model = KerasZooModel._do_load(jmodel, bigdl_type)
         model.__class__ = AnomalyDetector
         return model
@@ -94,10 +95,10 @@ class AnomalyDetector(KerasZooModel):
         """
         Precict on RDD[Sample].
         """
-        results = callBigDlFunc(self.bigdl_type, "modelPredictRDD",
-                                self.value,
-                                x,
-                                batch_per_thread)
+        results = callZooFunc(self.bigdl_type, "modelPredictRDD",
+                              self.value,
+                              x,
+                              batch_per_thread)
         return results.map(lambda data: data.to_ndarray())
 
     @classmethod
@@ -118,7 +119,7 @@ class AnomalyDetector(KerasZooModel):
                      (3,4), 5, 2
                      (4,5), 6, 3
         """
-        result = callBigDlFunc("float", "unroll", data_rdd, unroll_length, predict_step)
+        result = callZooFunc("float", "unroll", data_rdd, unroll_length, predict_step)
         return cls._to_indexed_rdd(result)
 
     @classmethod
@@ -130,11 +131,11 @@ class AnomalyDetector(KerasZooModel):
         :param anomaly_size: Int. The size to be considered as anomalies.
         :return: RDD of [ytruth, ypredict, anomaly], anomaly is None or ytruth
         """
-        return callBigDlFunc("float", "detectAnomalies", ytruth, ypredict, anomaly_size)
+        return callZooFunc("float", "detectAnomalies", ytruth, ypredict, anomaly_size)
 
     @staticmethod
     def standardScale(df):
-        return callBigDlFunc("float", "standardScaleDF", df)
+        return callZooFunc("float", "standardScaleDF", df)
 
     @staticmethod
     def train_test_split(unrolled, test_size):
@@ -157,7 +158,7 @@ class AnomalyDetector(KerasZooModel):
             matrix.append(line)
             return matrix
 
-        return unrolled_rdd\
+        return unrolled_rdd \
             .map(lambda y: FeatureLableIndex(row_to_feature(y[0]), float(y[1]), long(y[2])))
 
 

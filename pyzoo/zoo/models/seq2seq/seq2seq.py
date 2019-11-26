@@ -17,10 +17,10 @@
 from bigdl.nn.layer import Layer
 from zoo.pipeline.api.keras.layers import *
 from zoo.models.common import ZooModel
+from zoo.common.utils import callZooFunc
 
 from zoo.pipeline.api.keras.engine import ZooKerasLayer
 from zoo.pipeline.api.keras.models import Model
-
 
 if sys.version >= '3':
     long = int
@@ -60,6 +60,7 @@ class RNNEncoder(ZooKerasLayer):
     >>> encoder = RNNEncoder([lstm], embedding)
     creating: createZooKerasRNNEncoder
     """
+
     def __init__(self, rnns, embedding=None, input_shape=None):
         super(RNNEncoder, self).__init__(None,
                                          rnns,
@@ -99,6 +100,7 @@ class RNNDecoder(ZooKerasLayer):
     >>> encoder = RNNDecoder([lstm], embedding)
     creating: createZooKerasRNNDecoder
     """
+
     def __init__(self, rnns, embedding=None, input_shape=None):
         super(RNNDecoder, self).__init__(None,
                                          rnns,
@@ -133,6 +135,7 @@ class Bridge(ZooKerasLayer):
     >>> bridge = Bridge.initialize_from_keras_layer(dense)
     creating: createZooKerasBridge
     """
+
     def __init__(self, bridge_type, decoder_hidden_size, bridge):
         super(Bridge, self).__init__(None, bridge_type, decoder_hidden_size, bridge)
 
@@ -207,7 +210,7 @@ class Seq2seq(ZooModel):
         encoder_output = self.encoder(encoder_input)
 
         encoder_final_states = SelectTable(1)(encoder_output)
-        decoder_init_states =\
+        decoder_init_states = \
             self.bridge(encoder_final_states) if self.bridge else encoder_final_states
 
         decoder_output = self.decoder([decoder_input, decoder_init_states])
@@ -217,10 +220,10 @@ class Seq2seq(ZooModel):
         return Model([encoder_input, decoder_input], output)
 
     def set_checkpoint(self, path, over_write=True):
-        callBigDlFunc(self.bigdl_type, "seq2seqSetCheckpoint",
-                      self.value,
-                      path,
-                      over_write)
+        callZooFunc(self.bigdl_type, "seq2seqSetCheckpoint",
+                    self.value,
+                    path,
+                    over_write)
 
     @staticmethod
     def load_model(path, weight_path=None, bigdl_type="float"):
@@ -234,7 +237,7 @@ class Seq2seq(ZooModel):
               Amazon S3 path should be like 's3a://bucket/xxx'.
         weight_path: The path for pre-trained weights if any. Default is None.
         """
-        jmodel = callBigDlFunc(bigdl_type, "loadSeq2seq", path, weight_path)
+        jmodel = callZooFunc(bigdl_type, "loadSeq2seq", path, weight_path)
         model = ZooModel._do_load(jmodel, bigdl_type)
         model.__class__ = Seq2seq
         return model
@@ -247,19 +250,19 @@ class Seq2seq(ZooModel):
             loss = to_bigdl_criterion(loss)
         if metrics and all(isinstance(metric, six.string_types) for metric in metrics):
             metrics = to_bigdl_metrics(metrics, loss)
-        callBigDlFunc(self.bigdl_type, "seq2seqCompile",
-                      self.value,
-                      optimizer,
-                      loss,
-                      metrics)
+        callZooFunc(self.bigdl_type, "seq2seqCompile",
+                    self.value,
+                    optimizer,
+                    loss,
+                    metrics)
 
     def fit(self, x, batch_size=32, nb_epoch=10, validation_data=None):
-        callBigDlFunc(self.bigdl_type, "seq2seqFit",
-                      self.value,
-                      x,
-                      batch_size,
-                      nb_epoch,
-                      validation_data)
+        callZooFunc(self.bigdl_type, "seq2seqFit",
+                    self.value,
+                    x,
+                    batch_size,
+                    nb_epoch,
+                    validation_data)
 
     def infer(self, input, start_sign, max_seq_len=30, stop_sign=None, build_output=None):
         """
@@ -282,11 +285,11 @@ class Seq2seq(ZooModel):
             assert not start_sign_is_table
         else:
             jstop_sign = None
-        results = callBigDlFunc(self.bigdl_type, "seq2seqInfer",
-                                self.value,
-                                jinput[0],
-                                jstart_sign[0],
-                                max_seq_len,
-                                jstop_sign[0] if jstop_sign else None,
-                                build_output)
+        results = callZooFunc(self.bigdl_type, "seq2seqInfer",
+                              self.value,
+                              jinput[0],
+                              jstart_sign[0],
+                              max_seq_len,
+                              jstop_sign[0] if jstop_sign else None,
+                              build_output)
         return results
