@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.serving.client.utils.helpers import RedisQueue
+from zoo.serving.client.helpers import RedisQueue
 import os
 import cv2
 import json
