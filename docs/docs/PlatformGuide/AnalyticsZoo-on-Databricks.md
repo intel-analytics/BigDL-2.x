@@ -9,14 +9,14 @@ Databricks is a fast Apache Spark-based big data analysis platform. Analytics Zo
 
 ## Prerequisites
 
-Before you start this guide, a Databricks workspace is ready. When launching the Databricks workspace, the cluster has also been created. 
+Before you start this guide, make sure a Databricks workspace is ready and a cluster is created using the Databricks UI.
 
 1. Create either [AWS Databricks](https://docs.databricks.com/getting-started/try-databricks.html)  workspace or [Azure Databricks](https://docs.microsoft.com/en-us/azure/azure-databricks/) workspace.
-2. Create Databricks [clusters](https://docs.databricks.com/clusters/create.html) with choosing runtime version (spark <= 2.4.3).
+2. Create Databricks [clusters](https://docs.databricks.com/clusters/create.html) using the UI. Choose Databricks runtime with spark 2.4.3 (Analytics Zoo currently supports spark <= 2.4.3).
 
 ## Installing Analytics Zoo libraries  
 
-1. Right-click the Workspace folder. Select **Create > Library**.
+1. Install libraries. Right-click the Workspace folder. Select **Create > Library**.
 
 <img src="../Image/PlatformGuide/create-library.png" >
 
@@ -28,7 +28,7 @@ Before you start this guide, a Databricks workspace is ready. When launching the
 
 <img src="../Image/PlatformGuide/analytics-zoo-jar.PNG" width="600">
 
-4. You may make sure the jar file and analytics-zoo installed using PyPI are installed on all clusters. In **Libraries** tab of your cluster, check installed libraries and click “Install automatically on all clusters” option in **Admin Settings**.
+4. Make sure the jar file and analytics-zoo installed using PyPI are installed on all clusters. In **Libraries** tab of your cluster, check installed libraries and click “Install automatically on all clusters” option in **Admin Settings**.
 
 <img src="../Image/PlatformGuide/install-on-allclusters.PNG" width="380">
 
@@ -38,7 +38,7 @@ On the cluster configuration page, click the **Advanced Options** toggle. Click 
 
 <img src="../Image/PlatformGuide/spark-config-aws.png" >
 
-The is an example of config setting. Here it sets 1 core and 6g memory per executor and driver. You may note it requires to set "spark.cores.max" as "--total-executor-cores" is requested to submit a job to spark here.
+See below for an example of Spark config setting needed by Analytics Zoo. Here it sets 1 core and 6g memory per executor and driver. Note that "spark.cores.max" needs to be properly set below.
 
 ```
 spark.shuffle.reduceLocality.enabled false
@@ -50,7 +50,7 @@ spark.executor.memory 6g
 spark.speculation false
 spark.driver.memory 6g
 spark.scheduler.minRegisteredResourcesRatio 1.0
-spark.cores.max 2
+spark.cores.max 4
 spark.driver.cores 1
 ```
 
@@ -79,4 +79,10 @@ For example, you may import a simple [Analytics Zoo tutorials notebook](https://
 
 <img src="../Image/PlatformGuide/import-zoo-notebook.PNG" width="400">
 
-As the tutorial is showing to run on local default, it is recommended to set `sc` as `sc = init_nncontext()`  for running on the standard clusters.
+Note the above notebook runs on Spark local default; to make it run on Databricks cluster, please change the first Python cell in the notebook to:
+
+```python
+from zoo.common.nncontext import*
+sc = init_nncontext()
+```
+
