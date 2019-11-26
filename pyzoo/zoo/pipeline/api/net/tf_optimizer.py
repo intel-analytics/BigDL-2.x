@@ -355,8 +355,8 @@ class TFModel(object):
         outputs, val_methods = TFModel._process_metrics(graph, metrics, loss, inputs)
 
         trainable_variables, trainable_variable_placeholders, trainable_assign, \
-        extra_variables, extra_variable_assign_placeholders, \
-        extra_variable_assign, update_op = \
+            extra_variables, extra_variable_assign_placeholders, \
+            extra_variable_assign, update_op = \
             TFModel._process_variables_for_unfreeze(graph, variables, updates)
 
         meta, saver = \
