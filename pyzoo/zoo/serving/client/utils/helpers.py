@@ -30,7 +30,7 @@ class RedisQueue:
                 config['data']['host'] = host_port[0]
                 config['data']['port'] = host_port[1]
         else:
-            config = {'data': {'host': "localhost", 'port': "6379", 'shape': [3, 224, 224]}}
+            config = {'data': {'host': "localhost", 'port': "6379", 'shape': "3,224,224"}}
 
         self.db = redis.StrictRedis(host=config['data']['host'],
                                     port=config['data']['port'], db=0)
@@ -55,10 +55,24 @@ class RedisQueue:
         d = {"uri": uri, "image": img_encoded}
         self.db.xadd("image_stream", d)
 
-    def get_results(self, key):
-        return self.db.hgetall(key)
+    # def get_results(self, key):
+    #     return self.db.hgetall(key)
+    def get_results(self):
+        res_list = self.db.keys('result:*')
+        decoded = {}
+        for res in res_list:
+            res_dict = self.db.hgetall(res.decode('utf-8'))
+            res_id = res_dict[b'_1'].decode('utf-8')
+            res_value = res_dict[b'_2'].decode('utf-8')
+            decoded[res_id] = res_value
+        return decoded
+
 
     @staticmethod
     def base64_encode_image(img):
         # base64 encode the input NumPy array
         return base64.b64encode(img).decode("utf-8")
+
+
+
+
