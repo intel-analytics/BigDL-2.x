@@ -673,10 +673,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
       val name = s"model predict for batch ${batchSize}"
       InferenceSupportive.logger.info(s"$name time elapsed [${latency/1e9} s, ${latency/1e6} ms].")
 
-      val bb = System.nanoTime()
       if (inferenceSummary != null) {
-        val resultTensor = result.toTensor[Float]
-
         // we do not check all values here
         // we only check the first value of each output
         // e.g for a 1000-class classification
@@ -690,7 +687,6 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
 
         batchCnt += 1
       }
-      val ee = System.nanoTime()
       result
     } finally {
       model match {
