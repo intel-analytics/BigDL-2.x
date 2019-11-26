@@ -19,24 +19,25 @@ from zoo.serving.client.utils.helpers import RedisQueue
 if __name__ == "__main__":
     # if you do not specify file_path, it will use default config
     # file_path = "/path/to/analytics-zoo-cluster-serving/config.yaml"
-    file_path = None
 
+    """
     redis_queue = RedisQueue(file_path)
     redis_queue.enqueue_image()
     redis_queue.get_results("result:*")
+    """
 
-    '''
+    """
     following lines demonstrate how to push data to redis
-    '''
+    """
     # img_path = "/path/to/image"
     # img = cv2.imread(img_path)
     # img = cv2.resize(img, (224, 224))
 
-    # redis_queue.enqueue_image()
+    # redis_queue.enqueue_image(img_path, img)
 
-    '''
+    """
     following lines demonstrate how to get data from redis
-    '''
+    """
     # res_list = DB.keys('result:*')
     # for res in res_list:
     #
