@@ -62,7 +62,3 @@ class RedisQueue:
     def base64_encode_image(img):
         # base64 encode the input NumPy array
         return base64.b64encode(img).decode("utf-8")
-
-
-
-
