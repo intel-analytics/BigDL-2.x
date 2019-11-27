@@ -41,6 +41,7 @@ class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
   @transient
   private lazy val supportive: OpenVinoInferenceSupportive = {
     OpenVINOModel.logger.info("Prepare OpenVinoInferenceSupportive")
+    OpenVinoInferenceSupportive.forceLoad()
     new OpenVinoInferenceSupportive()
   }
 
@@ -127,9 +128,6 @@ class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
   override def isReleased(): Boolean = {
     isRelease
   }
-
-  override def toString: String = s"OpenVinoInferenceModel with " +
-    s"executableNetworkReference: $executableNetworkReference, supportive: $supportive"
 }
 
 object OpenVINOModel {

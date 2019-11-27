@@ -647,6 +647,10 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
     }
   }
 
+  def forceLoad(): Unit = {
+    logger.info("Force native loader")
+  }
+
   def load(path: String): Unit = {
     logger.info(s"start to load library: $path.")
     val inputStream = OpenVinoInferenceSupportive.getClass.getResourceAsStream(s"/${path}")
@@ -773,7 +777,4 @@ object ModelType {
     }
     s"model-optimizer/extensions/front/tf/${category}_support.json"
   }
-
-
-
 }
