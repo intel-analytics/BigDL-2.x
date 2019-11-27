@@ -519,8 +519,10 @@ class MapDataset(TFDataset):
     def __init__(self, pre_dataset, map_fn):
         self.pre_dataset = pre_dataset
         self.map_fn = map_fn
-        super(MapDataset, self).__init__(self.pre_dataset.tensor_structure, self.pre_dataset.batch_size,
-                                         self.pre_dataset.batch_per_thread, self.pre_dataset.hard_code_batch_size)
+        super(MapDataset, self).__init__(self.pre_dataset.tensor_structure,
+                                         self.pre_dataset.batch_size,
+                                         self.pre_dataset.batch_per_thread,
+                                         self.pre_dataset.hard_code_batch_size)
 
     def _create_placeholders(self):
         self._tensors = self.map_fn(self.pre_dataset.tensors)

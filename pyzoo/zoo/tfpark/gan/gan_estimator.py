@@ -117,7 +117,9 @@ class GANEstimator(object):
             g_grads = tf.cond(is_discriminator_phase, true_fn=true_fn, false_fn=false_fn)
             d_grads = tf.cond(is_discriminator_phase, lambda: discriminator_grads,
                               lambda: [tf.zeros_like(grad) for grad in discriminator_grads])
-            loss = tf.cond(is_discriminator_phase, lambda: discriminator_loss, lambda: generator_loss)
+            loss = tf.cond(is_discriminator_phase,
+                           lambda: discriminator_loss,
+                           lambda: generator_loss)
 
             grads = g_grads + d_grads
 
@@ -138,4 +140,3 @@ class GANEstimator(object):
                 steps = sess.run(counter)
                 saver = tf.train.Saver()
                 saver.save(optimizer.sess, self.checkpoint_path, global_step=steps)
-

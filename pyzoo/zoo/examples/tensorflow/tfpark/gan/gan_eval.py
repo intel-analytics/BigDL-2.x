@@ -23,7 +23,9 @@ noise = tf.random.normal(mean=0.0, stddev=1.0, shape=(20, 10))
 
 with tf.variable_scope("generator"):
     fake_img = unconditional_generator(noise=noise)
-    tiled = tfgan.eval.image_grid(fake_img, grid_shape=(2, 10), image_shape=(28, 28), num_channels=1)
+    tiled = tfgan.eval.image_grid(fake_img, grid_shape=(2, 10),
+                                  image_shape=(28, 28),
+                                  num_channels=1)
 
 with tf.Session() as sess:
 
