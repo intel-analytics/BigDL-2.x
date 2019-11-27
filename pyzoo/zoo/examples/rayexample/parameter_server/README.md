@@ -1,5 +1,5 @@
 # Parameter server example
-There are two examples to demonstrate how to use Analytics Zoo API to run [Ray](https://github.com/ray-project/ray) examples: 
+Here we demonstrate how to use Analytics Zoo API to run [Ray](https://github.com/ray-project/ray) examples:
 [async_parameter_server](https://github.com/ray-project/ray/blob/master/doc/examples/parameter_server/async_parameter_server.py)
 and [sync_parameter_server](https://github.com/ray-project/ray/blob/master/doc/examples/parameter_server/sync_parameter_server.py).
 

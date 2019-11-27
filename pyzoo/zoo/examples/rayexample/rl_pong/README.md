@@ -1,5 +1,5 @@
 # Pong example
-This is an example to demonstrate how to use Analytics Zoo API to run [Ray](https://github.com/ray-project/ray) examples: 
+Here we demonstrate how to use Analytics Zoo API to run [Ray](https://github.com/ray-project/ray) example:
 [pong](https://gist.github.com/karpathy/a4166c7fe253700972fcbc77e4ea32c5)
 
 See [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/) for more details for RayOnSpark support in Analytics Zoo.
@@ -7,7 +7,7 @@ See [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/)
 ## Prepare environments
 Follow steps 1 to 4 [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/#steps-to-run-rayonspark) to prepare environment.
 
-You also need to install **Gym** in your conda environment and make sure your pyspark version is above 2.4.0.
+**You also need to install Gym in your conda environment and make sure your pyspark version is above 2.4.0.**
 ```shell script
 pip install gym gym[atari]
 ```
@@ -17,7 +17,7 @@ for more running guidance after pip install.
 
 ## Run on local after pip install
 ```
-python rl_pong --iterations -1
+python rl_pong
 ```
 See [here](#Options) for more configurable options for this example.
 

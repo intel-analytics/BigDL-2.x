@@ -1,5 +1,5 @@
 # Multi agent training example
-There are two examples to demonstrate how to use Analytics Zoo API to run [Ray](https://github.com/ray-project/ray) examples: 
+Here we demonstrate how to use Analytics Zoo API to run [Ray](https://github.com/ray-project/ray) example:
 [multiagent_two_trainers](https://github.com/ray-project/ray/blob/master/rllib/examples/multiagent_two_trainers.py)
 
 See [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/) for more details for RayOnSpark support in Analytics Zoo.
@@ -7,7 +7,7 @@ See [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/)
 ## Prepare environments
 Follow steps 1 to 4 [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/#steps-to-run-rayonspark) to prepare environment.
 
-You also need to install **TensorFlow** in your conda environment and make sure your pyspark version is above 2.4.0.
+**You also need to install TensorFlow in your conda environment and make sure your pyspark version is above 2.4.0.**
 ```shell script
 pip install ray>=0.7.2 # If you use ray 0.6.6, you may need to make changes to some APIs accordingly.
 pip install tensorflow
@@ -33,6 +33,7 @@ See [here](#Options) for more configurable options for this example.
 - `--object_store_memory`The store memory you need to use on local. Default is 4g.
 - `--driver_cores` The number of driver's or local's cpu cores you want to use. Default is 8.
 - `--iterations` The number of iterations to train the model. Default is 10.
+
 **Options for yarn only**
 - `--hadoop_conf` This option is **required** when you want to run on yarn. The path to your configuration folder of hadoop.
 - `--conda_name` This option is **required** when you want to run on yarn. Your conda environment's name.
