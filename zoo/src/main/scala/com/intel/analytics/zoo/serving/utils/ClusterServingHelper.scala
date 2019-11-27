@@ -236,11 +236,15 @@ class ClusterServingHelper {
     val parallelNum = if (blasFlag) coreNum else 1
     val model = new InferenceModel(parallelNum)
 
+    // quantize model would not bring any drawback here
+    // but some test may fail at this place
+    // perhaps machine not supporting DNN would not accept quantize
     modelType match {
-      case "caffe" => model.doLoadCaffe(defPath, weightPath)
+      case "caffe" => model.doLoadCaffe(defPath, weightPath, blas = blasFlag)
+      case "bigdl" => model.doLoad(weightPath, blas = blasFlag)
+
       case "tensorflow" => model.doLoadTF(weightPath, coreNum, 1, true)
       case "pytorch" => model.doLoadPyTorch(weightPath)
-      case "bigdl" => model.doLoad(weightPath)
       case "keras" => logError("Keras currently not supported in Cluster Serving")
       case "openvino" => model.doLoadOpenVINO(defPath, weightPath, batchSize)
       case _ => logError("Invalid model type, please check your model directory")
