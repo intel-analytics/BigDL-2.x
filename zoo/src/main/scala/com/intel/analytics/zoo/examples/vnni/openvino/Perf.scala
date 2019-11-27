@@ -54,7 +54,7 @@ object Perf {
       opt[Int]('i', "iteration")
         .text("Iteration of perf test. The result will be average of each iteration time cost")
         .action((v, p) => p.copy(iteration = v))
-      opt[Boolean]('s', "onSpark")
+      opt[Unit]("onSpark")
         .text("run with spark or not")
         .action((_, p) => p.copy(onSpark = true))
     }
