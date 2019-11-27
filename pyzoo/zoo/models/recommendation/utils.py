@@ -16,8 +16,9 @@
 
 import numpy as np
 
-from bigdl.util.common import JTensor, callBigDlFunc, Sample
+from bigdl.util.common import JTensor, Sample
 
+from zoo.common.utils import callZooFunc
 from zoo.models.recommendation import UserItemFeature
 
 
@@ -43,8 +44,8 @@ def get_boundaries(target, boundaries, default=-1, start=0):
 
 
 def get_negative_samples(indexed):
-    return callBigDlFunc("float", "getNegativeSamples",
-                         indexed)
+    return callZooFunc("float", "getNegativeSamples",
+                       indexed)
 
 
 def get_wide_tensor(row, column_info):
@@ -66,7 +67,7 @@ def get_wide_tensor(row, column_info):
         if i == 0:
             res = index
         else:
-            acc += wide_dims[i-1]
+            acc += wide_dims[i - 1]
             res = acc + index
         indices.append(res)
     values = np.array([i + 1 for i in indices])
@@ -87,7 +88,7 @@ def get_deep_tensors(row, column_info):
     emb_col = column_info.embed_cols
     cont_col = column_info.continuous_cols
 
-    ind_tensor = np.zeros(sum(column_info.indicator_dims),)
+    ind_tensor = np.zeros(sum(column_info.indicator_dims), )
     # setup indicators
     acc = 0
     for i in range(0, len(ind_col)):
@@ -95,15 +96,15 @@ def get_deep_tensors(row, column_info):
         if i == 0:
             res = index
         else:
-            acc += column_info.indicator_dims[i-1]
+            acc += column_info.indicator_dims[i - 1]
             res = acc + index
         ind_tensor[res] = 1
 
-    emb_tensor = np.zeros(len(emb_col),)
+    emb_tensor = np.zeros(len(emb_col), )
     for i in range(0, len(emb_col)):
         emb_tensor[i] = float(row[emb_col[i]])
 
-    cont_tensor = np.zeros(len(cont_col),)
+    cont_tensor = np.zeros(len(cont_col), )
     for i in range(0, len(cont_col)):
         cont_tensor[i] = float(row[cont_col[i]])
 
