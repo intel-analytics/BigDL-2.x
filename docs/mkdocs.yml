@@ -38,8 +38,7 @@ pages:
     - Text Models: ProgrammingGuide/text-models.md
     - BERT Classifier: ProgrammingGuide/bert-classifier.md
   - PyTorch: ProgrammingGuide/pytorch.md
-  - Ray:
-    - RayOnSpark: ProgrammingGuide/rayonspark.md
+  - RayOnSpark: ProgrammingGuide/rayonspark.md
   - Feature Engineering:
     - Working with Images: ProgrammingGuide/workingwithimages.md
     - Working with Texts: ProgrammingGuide/workingwithtexts.md
@@ -63,6 +62,7 @@ pages:
     - Autograd-Variable: APIGuide/PipelineAPI/variable.md
     - Net: APIGuide/PipelineAPI/net.md
     - Inference: APIGuide/PipelineAPI/inference.md
+    - Estimator: APIGuide/PipelineAPI/estimator.md
   - TFPark API:
     - KerasModel: APIGuide/TFPark/model.md
     - TFEstimator: APIGuide/TFPark/estimator.md

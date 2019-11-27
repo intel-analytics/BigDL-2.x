@@ -15,4 +15,4 @@ source ${ANALYTICS_ZOO_HOME}/bin/analytics-zoo-env.sh
 
 export SPARK_CMD=spark-shell
 
-bash ${ANALYTICS_ZOO_HOME}/bin/analytics-zoo-base.sh $*
+bash ${ANALYTICS_ZOO_HOME}/bin/analytics-zoo-base.sh "$@"

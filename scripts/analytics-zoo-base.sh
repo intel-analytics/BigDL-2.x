@@ -26,4 +26,4 @@ ${SPARK_HOME}/bin/${SPARK_CMD} \
     --jars ${ANALYTICS_ZOO_JAR} \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    $*
+    "$@"

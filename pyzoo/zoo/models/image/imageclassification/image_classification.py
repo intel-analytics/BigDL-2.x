@@ -17,7 +17,7 @@
 from bigdl.transform.vision.image import FeatureTransformer
 from zoo.models.image.common.image_model import ImageModel
 from zoo.feature.image.imageset import *
-
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -28,7 +28,7 @@ def read_imagenet_label_map():
     """
     load imagenet label map
     """
-    return callBigDlFunc("float", "readImagenetLabelMap")
+    return callZooFunc("float", "readImagenetLabelMap")
 
 
 class ImageClassifier(ImageModel):
@@ -37,6 +37,7 @@ class ImageClassifier(ImageModel):
 
     :param model_path The path containing the pre-trained model
     """
+
     def __init__(self, bigdl_type="float"):
         self.bigdl_type = bigdl_type
         super(ImageClassifier, self).__init__(None, bigdl_type)
@@ -51,7 +52,7 @@ class ImageClassifier(ImageModel):
               HDFS path should be like 'hdfs://[host]:[port]/xxx'.
               Amazon S3 path should be like 's3a://bucket/xxx'.
         """
-        jmodel = callBigDlFunc(bigdl_type, "loadImageClassifier", path, weight_path)
+        jmodel = callZooFunc(bigdl_type, "loadImageClassifier", path, weight_path)
         model = ImageModel._do_load(jmodel, bigdl_type)
         model.__class__ = ImageClassifier
         return model
@@ -63,6 +64,7 @@ class LabelOutput(FeatureTransformer):
     clses is the key in ImgFeature where you want to store all sorted mapped labels
     probs is the key in ImgFeature where you want to store all the sorted probilities for each class
     """
+
     def __init__(self, label_map, clses, probs, bigdl_type="float"):
-        self.value = callBigDlFunc(
+        self.value = callZooFunc(
             bigdl_type, JavaValue.jvm_class_constructor(self), label_map, clses, probs)

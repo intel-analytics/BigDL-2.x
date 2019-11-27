@@ -16,12 +16,11 @@
 
 import sys
 from bigdl.util.common import JavaValue
-from bigdl.util.common import callBigDlFunc
 
 from zoo.models.image.common.image_model import ImageModel
+from zoo.common.utils import callZooFunc
 from zoo.feature.image.imageset import *
 from zoo.feature.image.imagePreprocessing import *
-
 
 if sys.version >= '3':
     long = int
@@ -32,14 +31,14 @@ def read_pascal_label_map():
     """
     load pascal label map
     """
-    return callBigDlFunc("float", "readPascalLabelMap")
+    return callZooFunc("float", "readPascalLabelMap")
 
 
 def read_coco_label_map():
     """
     load coco label map
     """
-    return callBigDlFunc("float", "readCocoLabelMap")
+    return callZooFunc("float", "readCocoLabelMap")
 
 
 class ObjectDetector(ImageModel):
@@ -48,6 +47,7 @@ class ObjectDetector(ImageModel):
 
     :param model_path The path containing the pre-trained model
     """
+
     def __init__(self, bigdl_type="float"):
         self.bigdl_type = bigdl_type
         super(ObjectDetector, self).__init__(None, bigdl_type)
@@ -62,7 +62,7 @@ class ObjectDetector(ImageModel):
               HDFS path should be like 'hdfs://[host]:[port]/xxx'.
               Amazon S3 path should be like 's3a://bucket/xxx'.
         """
-        jmodel = callBigDlFunc(bigdl_type, "loadObjectDetector", path, weight_path)
+        jmodel = callZooFunc(bigdl_type, "loadObjectDetector", path, weight_path)
         model = ImageModel._do_load(jmodel, bigdl_type)
         model.__class__ = ObjectDetector
         return model
@@ -73,6 +73,7 @@ class ImInfo(ImagePreprocessing):
     Generate imInfo
     imInfo is a tensor that contains height, width, scaleInHeight, scaleInWidth
     """
+
     def __init__(self, bigdl_type="float"):
         super(ImInfo, self).__init__(bigdl_type)
 
@@ -92,6 +93,7 @@ class DecodeOutput(ImagePreprocessing):
     3, 0.3, 20, 10, 40, 70
     ```
     """
+
     def __init__(self, bigdl_type="float"):
         super(DecodeOutput, self).__init__(bigdl_type)
 
@@ -103,6 +105,7 @@ class ScaleDetection(ImagePreprocessing):
     Note that in this transformer, the tensor from model output will be decoded,
     just like `DecodeOutput`
     """
+
     def __init__(self, bigdl_type="float"):
         super(ScaleDetection, self).__init__(bigdl_type)
 
@@ -113,15 +116,16 @@ class Visualizer(ImagePreprocessing):
     (tensors that encodes label, score, boundingbox)
     You can call image_frame.get_image() to get the visualized results
     """
+
     def __init__(self, label_map, thresh=0.3, encoding="png",
                  bigdl_type="float"):
-        self.value = callBigDlFunc(
+        self.value = callZooFunc(
             bigdl_type, JavaValue.jvm_class_constructor(self), label_map, thresh, encoding)
 
     def __call__(self, image_set, bigdl_type="float"):
         """
         transform ImageSet
         """
-        jset = callBigDlFunc(bigdl_type,
-                             "transformImageSet", self.value, image_set)
+        jset = callZooFunc(bigdl_type,
+                           "transformImageSet", self.value, image_set)
         return ImageSet(jvalue=jset)

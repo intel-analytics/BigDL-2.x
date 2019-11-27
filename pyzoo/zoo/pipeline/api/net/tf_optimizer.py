@@ -22,10 +22,12 @@ import sys
 
 from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Layer
-from bigdl.util.common import to_list, JavaValue, callBigDlFunc
-from bigdl.optim.optimizer import EveryEpoch, MaxEpoch, Optimizer
-from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric
-from zoo.pipeline.api.net.utils import _find_placeholders, _check_the_same
+from bigdl.util.common import to_list, JavaValue
+from zoo.common.utils import callZooFunc
+from bigdl.optim.optimizer import MaxEpoch, EveryEpoch
+from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss
+from zoo.pipeline.api.net.utils import _find_placeholders, to_bigdl_optim_method
+from zoo.pipeline.estimator import Estimator
 from zoo.util import nest
 
 if sys.version >= '3':
@@ -45,13 +47,11 @@ class TFValidationMethod(JavaValue):
 
 
 class StatelessMetric(JavaValue):
-
     def __init__(self, metric_name, idx):
         JavaValue.__init__(self, None, "float", metric_name, idx)
 
 
 class BigDLMetric(object):
-
     def __init__(self, val_method, outputs, labels):
         self.val_method = val_method
         self.outputs = outputs
@@ -89,8 +89,8 @@ class TFTrainingHelper2(Layer):
         super(TFTrainingHelper2, self).__init__(None, "float", path, byte_arr)
 
     def save_checkpoint(self):
-        callBigDlFunc(self.bigdl_type, "saveCheckpoint",
-                      self.value)
+        callZooFunc(self.bigdl_type, "saveCheckpoint",
+                    self.value)
 
     def get_weights_to_python(self):
         self.save_checkpoint()
@@ -106,7 +106,6 @@ def _to_floats(vs):
 
 
 class TFModel(object):
-
     def __init__(self, training_helper_layer, criterion, val_methods):
 
         self.training_helper_layer = training_helper_layer
@@ -136,7 +135,7 @@ class TFModel(object):
     def _process_session_config(session_config):
         if session_config is not None:
             import tensorflow as tf
-            assert isinstance(session_config, tf.ConfigProto),\
+            assert isinstance(session_config, tf.ConfigProto), \
                 "session_config should be a tf.ConfigProto"
             session_config.use_per_session_threads = True
         return session_config
@@ -302,9 +301,8 @@ class TFModel(object):
 
     @staticmethod
     def create(loss, sess, inputs, grads, variables, graph,
-               tensors_with_value, session_config, metrics, updates):
+               tensors_with_value, session_config, metrics, updates, model_dir):
 
-        import tensorflow as tf
         from zoo.util.tf import export_tf
 
         inputs, additional_values = TFModel._expand_inputs(inputs, tensors_with_value, loss)
@@ -315,8 +313,7 @@ class TFModel(object):
 
         assign, variable_placeholders = TFModel._process_variables(graph, variables)
 
-        export_dir = tempfile.mkdtemp()
-        export_tf(sess, export_dir,
+        export_tf(sess, model_dir,
                   inputs=inputs,
                   outputs=grads + outputs)
 
@@ -335,10 +332,10 @@ class TFModel(object):
             "default_tensor_values": [to_floats(v) for v in additional_values]
         }
 
-        with open(os.path.join(export_dir, "training_meta.json"), "w") as f:
+        with open(os.path.join(model_dir, "training_meta.json"), "w") as f:
             f.write(json.dumps(meta))
 
-        training_helper_layer = TFTrainingHelper(export_dir,
+        training_helper_layer = TFTrainingHelper(model_dir,
                                                  session_config,
                                                  assign,
                                                  variable_placeholders, sess)
@@ -349,7 +346,7 @@ class TFModel(object):
 
     @staticmethod
     def create_for_unfreeze(loss, sess, inputs, grads, variables, graph,
-                            tensors_with_value, session_config, metrics, updates):
+                            tensors_with_value, session_config, metrics, updates, model_dir):
 
         inputs, additional_values = TFModel._expand_inputs(inputs, tensors_with_value, loss)
         session_config = TFModel._process_session_config(session_config)
@@ -362,9 +359,8 @@ class TFModel(object):
             extra_variable_assign, update_op = \
             TFModel._process_variables_for_unfreeze(graph, variables, updates)
 
-        folder = tempfile.mkdtemp()
         meta, saver = \
-            TFModel._save_to_dir_for_unfreeze(folder, sess, graph,
+            TFModel._save_to_dir_for_unfreeze(model_dir, sess, graph,
                                               outputs, inputs,
                                               trainable_variables,
                                               trainable_variable_placeholders,
@@ -374,7 +370,7 @@ class TFModel(object):
                                               extra_variable_assign,
                                               grads, update_op, additional_values)
 
-        training_helper_layer = TFTrainingHelper2(folder,
+        training_helper_layer = TFTrainingHelper2(model_dir,
                                                   session_config, saver, meta, sess)
 
         criterion = IdentityCriterion()
@@ -383,11 +379,13 @@ class TFModel(object):
 
 
 class TFOptimizer:
-    def __init__(self, loss, optim_method, sess=None, dataset=None, inputs=None,
+    def __init__(self, loss, optim_method,
+                 sess=None, dataset=None, inputs=None,
                  grads=None, variables=None, graph=None,
-                 val_outputs=None, val_labels=None, val_method=None, val_split=0.0,
-                 tensors_with_value=None, session_config=None,
-                 clip_norm=None, clip_value=None, metrics=None, updates=None, freeze=False):
+                 val_outputs=None, val_labels=None, val_method=None,
+                 val_split=0.0, tensors_with_value=None, session_config=None,
+                 clip_norm=None, clip_value=None, metrics=None,
+                 updates=None, freeze=False, model_dir=None):
         """
         TFOptimizer is used for distributed training of TensorFlow
         on Spark/BigDL.
@@ -425,15 +423,24 @@ class TFOptimizer:
             for i, method in enumerate(val_methods):
                 metrics['bigdl_metirc_' + str(i)] = BigDLMetric(method, val_outputs, val_labels)
 
+        if model_dir is None:
+            model_dir = tempfile.mkdtemp()
+        else:
+            if not os.path.isdir(model_dir):
+                os.makedirs(model_dir)
+
+        self.model_dir = model_dir
+
         if freeze:
             self.tf_model = TFModel.create(loss,
                                            sess, inputs, grads, variables, graph,
                                            tensors_with_value, session_config,
-                                           metrics, updates)
+                                           metrics, updates, model_dir)
         else:
             self.tf_model = TFModel.create_for_unfreeze(loss, sess, inputs, grads,
                                                         variables, graph, tensors_with_value,
-                                                        session_config, metrics, updates)
+                                                        session_config, metrics, updates,
+                                                        model_dir)
 
         batch_size = self.dataset.batch_size
 
@@ -445,29 +452,18 @@ class TFOptimizer:
             training_rdd = sample_rdd
             val_rdd = self.dataset.get_validation_data()
 
-        if self.tf_model.val_methods is not None and val_rdd is not None:
+        self.training_rdd = training_rdd
+        self.val_rdd = val_rdd
+        self.batch_size = batch_size
 
-            self.optimizer = Optimizer.create(self.tf_model.training_helper_layer,
-                                              training_rdd,
-                                              IdentityCriterion(),
-                                              batch_size=batch_size,
-                                              optim_method=self.optim_method)
-            self.optimizer.set_validation(self.dataset.batch_size,
-                                          val_rdd,
-                                          EveryEpoch(),
-                                          self.tf_model.val_methods)
-        else:
-            self.optimizer = Optimizer.create(self.tf_model.training_helper_layer,
-                                              training_rdd,
-                                              IdentityCriterion(),
-                                              batch_size=batch_size,
-                                              optim_method=self.optim_method)
+        self.estimator = Estimator(self.tf_model.training_helper_layer, self.optim_method,
+                                   model_dir)
 
         if self.clip_norm:
-            self.optimizer.set_gradclip_l2norm(self.clip_norm)
+            self.estimator.set_l2_norm_gradient_clipping(self.clip_norm)
         if self.clip_constant:
             min_value, max_value = self.clip_constant
-            self.optimizer.set_gradclip_const(min_value, max_value)
+            self.estimator.set_constant_gradient_clipping(min_value, max_value)
 
     @staticmethod
     def _get_arguments_from_loss(loss, optim_method, session, val_outputs, val_labels, val_method):
@@ -556,7 +552,14 @@ class TFOptimizer:
         """
         import tensorflow.keras.backend as K
         loss = keras_model.total_loss
-        inputs = keras_model.inputs + keras_model.targets
+
+        model_inputs = keras_model.inputs
+        if hasattr(keras_model, "targets"):
+            model_targets = keras_model.targets
+        else:
+            model_targets = keras_model._targets
+
+        inputs = model_inputs + model_targets
 
         variables = keras_model._collected_trainable_weights
         keras_optimizer = keras_model.optimizer
@@ -578,7 +581,7 @@ class TFOptimizer:
         sess = K.get_session()
         if optim_method is None:
             optim_method = keras_optimizer
-        optim_method = TFOptimizer.to_bigdl_optim_method(optim_method)
+        optim_method = to_bigdl_optim_method(optim_method)
 
         if keras_model.metrics and (dataset.get_validation_data() is not None or val_spilt != 0.0):
             if isinstance(keras_model.metrics, dict):
@@ -588,10 +591,19 @@ class TFOptimizer:
             if dataset.get_validation_data() is None and val_spilt == 0.0:
                 raise ValueError("Validation data is not specified. Please set " +
                                  "val_rdd in TFDataset, or set val_split larger than zero")
-            bigdl_val_methods = \
-                [to_bigdl_metric(m, keras_model.loss) for m in keras_model.metrics_names]
-            val_outputs = keras_model.outputs
-            val_labels = keras_model.targets
+
+            if len(keras_model.outputs) > 1:
+                if not all([name.endswith("loss") for name in keras_model.metrics_names]):
+                    raise ValueError("metrics (except loss) for multi-head model is not supported")
+                else:
+                    bigdl_val_methods = [Loss()]
+                    val_outputs = keras_model.outputs
+                    val_labels = model_targets
+            else:
+                bigdl_val_methods = \
+                    [to_bigdl_metric(m, keras_model.loss) for m in keras_model.metrics_names]
+                val_outputs = keras_model.outputs
+                val_labels = model_targets
         else:
             val_outputs = None
             val_labels = None
@@ -610,128 +622,6 @@ class TFOptimizer:
                    clip_norm=clip_norm,
                    clip_value=clip_value, updates=updates, **kwargs)
 
-    @staticmethod
-    def to_bigdl_optim_method(koptim_method):
-        # koptim_method is always an object
-        import tensorflow.keras.backend as K
-        import tensorflow.keras.optimizers as koptimizers
-        import bigdl.optim.optimizer as boptimizer
-        import tensorflow.train as tftrain
-        import tensorflow as tf
-        from tensorflow.python.keras.optimizers import TFOptimizer
-
-        if isinstance(koptim_method, TFOptimizer):
-            koptim_method = koptim_method.optimizer
-
-        if isinstance(koptim_method, boptimizer.OptimMethod):
-            return koptim_method
-        elif isinstance(koptim_method, koptimizers.Optimizer):
-            lr = float(K.eval(koptim_method.lr))
-            decay = float(K.eval(koptim_method.decay))
-            if isinstance(koptim_method, koptimizers.Adagrad):
-                warnings.warn("For Adagrad, we don't support epsilon for now")
-                return boptimizer.Adagrad(learningrate=lr,
-                                          learningrate_decay=decay)
-            elif isinstance(koptim_method, koptimizers.SGD):
-                momentum = float(K.eval(koptim_method.momentum))
-                return boptimizer.SGD(learningrate=lr,
-                                      learningrate_decay=decay,
-                                      momentum=momentum,
-                                      nesterov=koptim_method.nesterov)
-            elif isinstance(koptim_method, koptimizers.Adam):
-                beta1 = float(K.eval(koptim_method.beta_1))
-                beta2 = float(K.eval(koptim_method.beta_2))
-                return boptimizer.Adam(learningrate=lr,
-                                       learningrate_decay=decay,
-                                       beta1=beta1,
-                                       beta2=beta2,
-                                       epsilon=koptim_method.epsilon)
-            elif isinstance(koptim_method, koptimizers.RMSprop):
-                rho = float(K.eval(koptim_method.rho))
-                return boptimizer.RMSprop(learningrate=lr,
-                                          learningrate_decay=decay,
-                                          decayrate=rho,
-                                          epsilon=koptim_method.epsilon)
-            elif isinstance(koptim_method, koptimizers.Adadelta):
-                warnings.warn(
-                    "For Adadelta, we don't support learning rate and learning rate decay for now")
-                return boptimizer.Adadelta(decayrate=koptim_method.rho,
-                                           epsilon=koptim_method.epsilon)
-            elif isinstance(koptim_method, koptimizers.Adamax):
-                beta1 = float(K.eval(koptim_method.beta_1))
-                beta2 = float(K.eval(koptim_method.beta_2))
-                warnings.warn("For Adamax, we don't support learning rate decay for now")
-                return boptimizer.Adamax(learningrate=lr,
-                                         beta1=beta1,
-                                         beta2=beta2,
-                                         epsilon=koptim_method.epsilon)
-        elif isinstance(koptim_method, tftrain.Optimizer):
-            def get_value(v):
-                if isinstance(v, (tf.Tensor, tf.SparseTensor, tf.Variable)):
-                    return float(K.eval(v))
-                else:
-                    return float(v)
-
-            if isinstance(koptim_method, tftrain.GradientDescentOptimizer):
-                lr = get_value(koptim_method._learning_rate)
-                return boptimizer.SGD(learningrate=lr)
-            elif isinstance(koptim_method, tftrain.MomentumOptimizer):
-                lr = get_value(koptim_method._learning_rate)
-                momentum = get_value(koptim_method._momentum)
-                use_nesterov = koptim_method._use_nesterov
-                return boptimizer.SGD(learningrate=lr, momentum=momentum, nesterov=use_nesterov)
-            elif isinstance(koptim_method, tftrain.AdagradOptimizer):
-                lr = get_value(koptim_method._learning_rate)
-                return boptimizer.Adagrad(learningrate=lr)
-            elif isinstance(koptim_method, tftrain.AdamOptimizer):
-                lr = get_value(koptim_method._lr)
-                beta1 = get_value(koptim_method._beta1)
-                beta2 = get_value(koptim_method._beta2)
-                epsilon = get_value(koptim_method._epsilon)
-                return boptimizer.Adam(learningrate=lr, beta1=beta1, beta2=beta2, epsilon=epsilon)
-            elif isinstance(koptim_method, tftrain.RMSPropOptimizer):
-                lr = get_value(koptim_method._learning_rate)
-                decay = get_value(koptim_method._decay)
-                momentum = get_value(koptim_method._momentum)
-                epsilon = get_value(koptim_method._epsilon)
-                centered = get_value(koptim_method._centered)
-                if momentum != 0.0 or centered:
-                    warnings.warn(
-                        "For RMSPropOptimizer, we don't support momentum and centered for now")
-                return boptimizer.RMSprop(learningrate=lr,
-                                          learningrate_decay=decay,
-                                          epsilon=epsilon)
-            elif isinstance(koptim_method, tftrain.AdadeltaOptimizer):
-                lr = get_value(koptim_method._lr)
-                rho = get_value(koptim_method._rho)
-                epsilon = get_value(koptim_method._epsilon)
-                warnings.warn(
-                    "For Adadelta, we don't support learning rate for now")
-                return boptimizer.Adadelta(decayrate=rho, epsilon=epsilon)
-
-        raise ValueError("We don't support %s for now" % koptim_method)
-
-    def set_train_summary(self, summary):
-        """
-        Set train summary. A TrainSummary object contains information
-        necessary for the optimizer to know how often the logs are recorded,
-        where to store the logs and how to retrieve them, etc. For details,
-        refer to the docs of TrainSummary.
-        :param summary: a TrainSummary object
-        """
-        self.optimizer.set_train_summary(summary)
-
-    def set_val_summary(self, summary):
-        """
-        Set validation summary. A ValidationSummary object contains information
-        necessary for the optimizer to know how often the logs are recorded,
-        where to store the logs and how to retrieve them, etc. For details,
-        refer to the docs of ValidationSummary.
-
-        :param summary: a ValidationSummary object
-        """
-        self.optimizer.set_val_summary(summary)
-
     def set_constant_gradient_clipping(self, min_value, max_value):
         """
         Configure constant clipping settings.
@@ -739,25 +629,39 @@ class TFOptimizer:
         :param min_value: the minimum value to clip by
         :param max_value: the maxmimum value to clip by
         """
-        self.optimizer.set_gradclip_const(min_value, max_value)
+        self.estimator.set_constant_gradient_clipping(min_value, max_value)
 
     def set_gradient_clipping_by_l2_norm(self, clip_norm):
         """
         Configure L2 norm clipping settings.
         :param clip_norm: gradient L2-Norm threshold
         """
-        self.optimizer.set_gradclip_l2norm(clip_norm)
+        self.estimator.set_l2_norm_gradient_clipping(clip_norm)
 
-    def optimize(self, end_trigger=None):
+    def optimize(self, end_trigger=None, checkpoint_trigger=None):
         """
         Run the training loop of the this optimizer
         :param end_trigger: BigDL's Trigger to indicate when to stop the training.
+        :param checkpoint_trigger: When to save a checkpoint and evaluate model.
         """
         if end_trigger is None:
             end_trigger = MaxEpoch(1)
 
-        self.optimizer.set_end_when(end_trigger)
+        if checkpoint_trigger is None:
+            checkpoint_trigger = EveryEpoch()
 
-        self.optimizer.optimize()
+        if self.tf_model.val_methods is not None and self.val_rdd is not None:
+            self.estimator.train(train_set=self.training_rdd,
+                                 criterion=IdentityCriterion(),
+                                 end_trigger=end_trigger,
+                                 checkpoint_trigger=checkpoint_trigger,
+                                 validation_set=self.val_rdd,
+                                 validation_method=self.tf_model.val_methods,
+                                 batch_size=self.batch_size)
+        else:
+            self.estimator.train(train_set=self.training_rdd,
+                                 criterion=IdentityCriterion(),
+                                 end_trigger=end_trigger,
+                                 batch_size=self.batch_size)
 
         self.tf_model.training_helper_layer.get_weights_to_python()

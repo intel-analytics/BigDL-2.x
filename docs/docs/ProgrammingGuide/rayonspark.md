@@ -1,46 +1,50 @@
-## Run Ray on Spark
+---
+### **Introduction**
 
-AnalyticsZoo has already provided a mechanism to deploy Python dependencies and Ray services automatically
-across yarn cluster,meaning python user would be able to run `Analytics-Zoo` or `Ray`
-in a pythonic way on yarn without `spark-submit` or installing Analytics-Zoo or Ray across all cluster nodes.
+[Ray](https://github.com/ray-project/ray) is a distributed framework for emerging AI applications open-sourced by [UC Berkeley RISELab](https://rise.cs.berkeley.edu). 
+It implements a unified interface, distributed scheduler, and distributed and fault-tolerant store to address the new and demanding systems requirements for advanced AI technologies. 
 
+Ray allows users to easily and efficiently to run many emerging AI applications, such as deep reinforcement learning using RLlib, scalable hyperparameter search using Ray Tune, automatic program synthesis using AutoPandas, etc.
 
-## Here are the steps to run RayOnSpark:
+Analytics Zoo provides a mechanism to deploy Python dependencies and Ray services automatically
+across yarn cluster, meaning python users would be able to run `analytics-zoo` or `ray`
+in a pythonic way on yarn without `spark-submit` or installing analytics-zoo or ray across all cluster nodes.
 
-1) You should install [Conda](https://docs.conda.io/projects/conda/en/latest/commands/install.html) and create a conda-env named "ray36"
+---
+### **Steps to run RayOnSpark**
 
-2) Install some essential dependencies in the conda env.
+1) Install [Conda](https://docs.conda.io/projects/conda/en/latest/commands/install.html) in your environment.
 
+2) Create a new conda environment (with name "zoo" for example):
 ```
-pip install analytics-zoo
-pip install pyspark==2.4.0 # 2.4.3 is OK as well.
-pip install ray==0.6.6
-pip install conda-pack
-pip install psutil
-pip install aiohttp
-pip install setproctitle
+conda create -n zoo python=3.6
+source activate zoo
 ```
 
-3) Download JDK8 and set the environment variable: JAVA_HOME (recommended).
-   - You can also install JDK via conda without setting the JAVA_HOME manually:
-   `conda install -c anaconda openjdk=8.0.152`
+3) Install analytics-zoo in the created conda environment:
+```
+pip install analytics-zoo[ray]
+```
 
-4) Start python and then execute the following example
+Note that the essential dependencies (including `ray==0.6.6`, `psutil`, `aiohttp`, `setproctitle`) will be installed by specifying the extras key `[ray]` when you pip install analytics-zoo.
 
-- Create a SparkContext on Yarn
+4) Download JDK8 and set the environment variable: JAVA_HOME (recommended).
 
-``` python
-import ray
+You can also install JDK via conda without setting the JAVA_HOME manually:
 
+`conda install -c anaconda openjdk=8.0.152`
+
+5) Start `python` and then execute the following example.
+
+- Create a SparkContext on yarn, only __yarn-client mode__ is supported for now:
+
+```python
 from zoo import init_spark_on_yarn
-from zoo.ray.util.raycontext import RayContext
-
-slave_num = 2
 
 sc = init_spark_on_yarn(
-    hadoop_conf="/opt/work/almaren-yarn-config/",
-    conda_name="ray36",
-    num_executor=slave_num,
+    hadoop_conf="path to the yarn configuration folder",
+    conda_name="zoo", # The name of the created conda-env
+    num_executor=2,
     executor_cores=4,
     executor_memory="8g",
     driver_memory="2g",
@@ -48,38 +52,32 @@ sc = init_spark_on_yarn(
     extra_executor_memory_for_ray="10g")
 ```
 
-- [Optional] If you don't have a yarn cluster, this can also be test locally by creating `SparkContext`
-with `init_spark_on_local`
-
-```Python
-from zoo import init_spark_on_local
-sc = init_spark_on_local(cores=4)
-
-```
-
-
-- Once the SparkContext created, we can write more logic here either training Analytics-Zoo model
-or launching ray on spark.
-
-- The following code would launch a ray cluster on top of the SparkContext configuration and also verify with a simple Ray example.
+- [Optional] If you don't have a yarn cluster, this can also be tested locally by creating a SparkContext
+with `init_spark_on_local`:
 
 ```python
+from zoo import init_spark_on_local
 
-ray_ctx = RayContext(sc=sc,
-                       object_store_memory="5g")
+sc = init_spark_on_local(cores=4)
+```
+
+- Once the SparkContext is created, we can write more logic here such as training an Analytics Zoo model
+or launching ray on Spark.
+
+- Run the following simple example to launch a ray cluster on top of the SparkContext configurations and verify if RayOnSpark can work smoothly.
+
+```python
+import ray
+from zoo.ray.util.raycontext import RayContext
+
+ray_ctx = RayContext(sc=sc, object_store_memory="5g")
 ray_ctx.init()
-
 
 @ray.remote
 class TestRay():
     def hostname(self):
         import socket
         return socket.gethostname()
-
-    def check_cv2(self):
-        # conda install -c conda-forge opencv==3.4.2
-        import cv2
-        return cv2.__version__
 
     def ip(self):
         import ray.services as rservices
@@ -90,9 +88,6 @@ actors = [TestRay.remote() for i in range(0, slave_num)]
 print([ray.get(actor.hostname.remote()) for actor in actors])
 print([ray.get(actor.ip.remote()) for actor in actors])
 ray_ctx.stop()
-
 ```
 
-- NOTE: This was test on Ray 0.6.6. Ideally, we can upgrade to the latest version once the following issue is addressed.(https://github.com/ray-project/ray/issues/5223)
-
-
+- **NOTE:** This has been tested on Ray 0.6.6. Ideally, we can upgrade to the latest version once [this issue](https://github.com/ray-project/ray/issues/5223) is addressed.

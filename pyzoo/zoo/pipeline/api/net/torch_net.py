@@ -24,7 +24,7 @@ from pyspark import RDD
 from bigdl.nn.layer import Layer
 from zoo import getOrCreateSparkContext
 from zoo.feature.image import ImageSet
-from bigdl.util.common import callBigDlFunc
+from zoo.common.utils import callZooFunc
 from zoo.pipeline.api.net.tfnet import to_sample_rdd
 
 if sys.version >= '3':
@@ -97,7 +97,7 @@ class TorchNet(Layer):
         save the model as a torch script module
         '''
         pythonBigDL_method_name = "torchNetSavePytorch"
-        callBigDlFunc(self.bigdl_type, pythonBigDL_method_name, self.value, path)
+        callZooFunc(self.bigdl_type, pythonBigDL_method_name, self.value, path)
         return
 
     def predict(self, x, batch_per_thread=1, distributed=True):
@@ -105,10 +105,10 @@ class TorchNet(Layer):
         Use a model to do prediction.
         """
         if isinstance(x, ImageSet):
-            results = callBigDlFunc(self.bigdl_type, "zooPredict",
-                                    self.value,
-                                    x,
-                                    batch_per_thread)
+            results = callZooFunc(self.bigdl_type, "zooPredict",
+                                  self.value,
+                                  x,
+                                  batch_per_thread)
             return ImageSet(results)
         if distributed:
             if isinstance(x, np.ndarray):
@@ -117,17 +117,17 @@ class TorchNet(Layer):
                 data_rdd = x
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))
-            results = callBigDlFunc(self.bigdl_type, "zooPredict",
-                                    self.value,
-                                    data_rdd,
-                                    batch_per_thread)
+            results = callZooFunc(self.bigdl_type, "zooPredict",
+                                  self.value,
+                                  data_rdd,
+                                  batch_per_thread)
             return results.map(lambda result: Layer.convert_output(result))
         else:
             if isinstance(x, np.ndarray) or isinstance(x, list):
-                results = callBigDlFunc(self.bigdl_type, "zooPredict",
-                                        self.value,
-                                        self._to_jtensors(x),
-                                        batch_per_thread)
+                results = callZooFunc(self.bigdl_type, "zooPredict",
+                                      self.value,
+                                      self._to_jtensors(x),
+                                      batch_per_thread)
                 return [Layer.convert_output(result) for result in results]
             else:
                 raise TypeError("Unsupported prediction data type: %s" % type(x))

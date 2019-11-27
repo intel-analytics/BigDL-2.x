@@ -331,7 +331,7 @@ class TFNet(private val graphDef: TFGraphHolder,
   override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
     try {
       if (graphMeta.variables.isEmpty) {
-        generateZeroGrad(input)
+        NetUtils.generateZeroGrad(input, gradInput)
       } else {
 
         val runner = sess.runner()
@@ -568,20 +568,6 @@ class TFNet(private val graphDef: TFGraphHolder,
     }
   }
 
-  private def generateZeroGrad(input: Activity) = {
-    if (gradInput.isTable) {
-      var i = 0
-      while (i < gradInput.toTable.length()) {
-        gradInput.toTable[Tensor[Float]](i + 1)
-          .resizeAs(input.toTable[Tensor[Float]](i + 1))
-        i = i + 1
-      }
-    } else {
-      gradInput.toTensor[Float]
-        .resizeAs(input.toTensor[Float])
-    }
-  }
-
   private def addGrad(name: String) = {
     val parts = name.split(":")
     parts(0) + "_grad:" + parts(1)
@@ -813,6 +799,35 @@ object TFNet {
     val (model, meta) = NetUtils.processTFFolder(folder)
     val graphDef = parseGraph(model)
     TFNet(graphDef, model, meta, config)
+  }
+
+  def fromSavedModel(modelPath: String, tag: String,
+                     inputs: Array[String],
+                     outputs: Array[String],
+                     sessionConfig: SessionConfig): AbstractModule[Activity, Activity, Float] = {
+    TFNetForInference.fromSavedModel(modelPath, tag, inputs, outputs, sessionConfig.toByteArray())
+  }
+
+  def fromSavedModel(modelPath: String,
+                     inputs: Array[String],
+                     outputs: Array[String],
+                     sessionConfig: SessionConfig): AbstractModule[Activity, Activity, Float] = {
+    TFNetForInference.fromSavedModel(modelPath, "serve", inputs, outputs,
+      sessionConfig.toByteArray())
+  }
+
+  def fromSavedModel(modelPath: String, tag: String,
+                     inputs: Array[String],
+                     outputs: Array[String]): AbstractModule[Activity, Activity, Float] = {
+    TFNetForInference.fromSavedModel(modelPath, "serve", inputs, outputs,
+      TFNet.defaultSessionConfig.toByteArray())
+  }
+
+  def fromSavedModel(modelPath: String,
+                     inputs: Array[String],
+                     outputs: Array[String]): AbstractModule[Activity, Activity, Float] = {
+    TFNetForInference.fromSavedModel(modelPath, "serve", inputs, outputs,
+      defaultSessionConfig.toByteArray())
   }
 
   private[zoo] def parseGraph(graphProtoTxt: String) : GraphDef = {

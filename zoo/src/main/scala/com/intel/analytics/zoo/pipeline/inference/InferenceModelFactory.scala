@@ -52,6 +52,49 @@ object InferenceModelFactory extends InferenceSupportive {
     new FloatModel(model, metaModel, true)
   }
 
+  def loadFloatModelForTFSavedModel(modelPath: String,
+                                    inputs: Array[String],
+                                    outputs: Array[String],
+                                    intraOpParallelismThreads: Int = 1,
+                                    interOpParallelismThreads: Int = 1,
+                                    usePerSessionThreads: Boolean = true): FloatModel = {
+    val sessionConfig = TFNet.SessionConfig(intraOpParallelismThreads,
+      interOpParallelismThreads, usePerSessionThreads)
+    val model = ModelLoader.loadFloatModelForTFSavedModel(modelPath, inputs, outputs, sessionConfig)
+    model.evaluate()
+    val metaModel = makeMetaModel(model)
+    new FloatModel(model, metaModel, true)
+  }
+
+  def loadFloatModelForTFSavedModelBytes(savedModelBytes: Array[Byte],
+                                         inputs: Array[String],
+                                         outputs: Array[String],
+                                         intraOpParallelismThreads: Int = 1,
+                                         interOpParallelismThreads: Int = 1,
+                                         usePerSessionThreads: Boolean = true): FloatModel = {
+    val sessionConfig = TFNet.SessionConfig(intraOpParallelismThreads,
+      interOpParallelismThreads, usePerSessionThreads)
+    val model = ModelLoader.
+      loadFloatModelForTFSavedModelBytes(savedModelBytes, inputs, outputs, sessionConfig)
+    model.evaluate()
+    val metaModel = makeMetaModel(model)
+    new FloatModel(model, metaModel, true)
+  }
+
+  def loadFloatModelForPyTorch(modelPath: String): FloatModel = {
+    val model = ModelLoader.loadFloatModelForPyTorch(modelPath)
+    model.evaluate()
+    val metaModel = makeMetaModel(model)
+    new FloatModel(model, metaModel, true)
+  }
+
+  def loadFloatModelForPyTorch(modelBytes: Array[Byte]): FloatModel = {
+    val model = ModelLoader.loadFloatModelForPyTorch(modelBytes)
+    model.evaluate()
+    val metaModel = makeMetaModel(model)
+    new FloatModel(model, metaModel, true)
+  }
+
   def loadOpenVINOModelForTF(modelPath: String,
                              modelType: String,
                              pipelineConfigPath: String,
