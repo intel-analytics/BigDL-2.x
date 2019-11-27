@@ -153,7 +153,7 @@ object ClusterServing {
               // move below code into wrapper if new functions
               // e.g. object detection is added
 
-              (0 until thisBatchSize).map(i => {
+              (0 until thisBatchSize).toParArray.map(i => {
                 val value = PostProcessing.getInfofromTensor(topN,
                   result.select(1, i + 1).squeeze())
                 (pathByteBatch(i)._1, value)
@@ -184,7 +184,7 @@ object ClusterServing {
             "Total Records Number", totalCnt, batchId)
         }
 
-        logger.info("Micro batch predict ended")
+        logger.info("Micro batch predict ended, time elapsed " + microBatchLatency.toString)
 
         redisDB.xtrim("image_stream", redisDB.xlen("image_stream"), true)
 

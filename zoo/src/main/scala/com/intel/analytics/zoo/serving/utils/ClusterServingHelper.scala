@@ -135,9 +135,9 @@ class ClusterServingHelper {
 
 
     val yamlParser = new Yaml()
-    val input = new FileInputStream(new File("zoo/src/" +
-      "main/scala/com/intel/analytics/zoo/serving/config.yaml"))
-//    val input = new FileInputStream(new File("config.yaml"))
+//    val input = new FileInputStream(new File("zoo/src/" +
+//      "main/scala/com/intel/analytics/zoo/serving/config.yaml"))
+    val input = new FileInputStream(new File("config.yaml"))
     val configList = yamlParser.load(input).asInstanceOf[HM]
 
     // parse model field
