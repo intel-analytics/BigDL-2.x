@@ -28,11 +28,10 @@ case class ResNet50PerfParams(model: String = "",
                               weight: String = "",
                               batchSize: Int = 4,
                               numBatch: Int = 1,
-                              iteration: Int = 1)
+                              iteration: Int = 10,
+                              onSpark: Boolean = false)
 
 object Perf {
-  System.setProperty("bigdl.localMode", "true")
-  System.setProperty("bigdl.engineType", "mkldnn")
 
   val logger: Logger = Logger.getLogger(getClass)
 
@@ -55,9 +54,17 @@ object Perf {
       opt[Int]('i', "iteration")
         .text("Iteration of perf test. The result will be average of each iteration time cost")
         .action((v, p) => p.copy(iteration = v))
+      opt[Boolean]('s', "onSpark")
+        .text("run with spark or not")
+        .action((_, p) => p.copy(onSpark = true))
     }
 
     parser.parse(args, ResNet50PerfParams()).foreach { param =>
+      if (!param.onSpark) {
+        System.setProperty("bigdl.localMode", "true")
+        System.setProperty("bigdl.engineType", "mkldnn")
+      }
+
       val batchSize = param.batchSize
       val numBatch = param.numBatch
       val iteration = param.iteration

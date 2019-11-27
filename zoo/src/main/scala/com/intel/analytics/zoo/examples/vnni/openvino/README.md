@@ -91,7 +91,7 @@ java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* \
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh  \
     --master ${MASTER} --driver-memory 4g \
     --class com.intel.analytics.zoo.examples.vnni.openvino.Perf \
-    -m ${modelPath} -w ${weightPath}
+    -m ${modelPath} -w ${weightPath} --onSpark
 ```
 
 __Options:__
