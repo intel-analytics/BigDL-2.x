@@ -12,7 +12,7 @@ Databricks is a fast Apache Spark-based big data analysis platform. Analytics Zo
 Before you start this guide, make sure a Databricks workspace is ready and a cluster is created using the Databricks UI.
 
 1. Create either [AWS Databricks](https://docs.databricks.com/getting-started/try-databricks.html)  workspace or [Azure Databricks](https://docs.microsoft.com/en-us/azure/azure-databricks/) workspace.
-2. Create Databricks [clusters](https://docs.databricks.com/clusters/create.html) using the UI. Choose Databricks runtime with spark 2.4.3 (Analytics Zoo currently supports spark <= 2.4.3).
+2. Create Databricks [clusters](https://docs.databricks.com/clusters/create.html) using the UI. Choose Databricks runtime with spark 2.4.3 (this guide is tested on Runtime 5.5 LTS(includes Apache Spark 2.4.3, scala 2.11)).
 
 ## Installing Analytics Zoo libraries  
 
