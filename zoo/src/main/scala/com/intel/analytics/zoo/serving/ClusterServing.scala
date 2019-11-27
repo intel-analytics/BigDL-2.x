@@ -108,12 +108,7 @@ object ClusterServing {
                 val localPartitionModel = bcModel.value
                 val result = localPartitionModel.doPredict(tensors.addSingletonDimension()).toTensor
 
-                val outputSize = if (result.size(1) > topN) {
-                  topN
-                } else {
-                  result.size(1)
-                }
-                val value = PostProcessing.getInfofromTensor(outputSize, result)
+                val value = PostProcessing.getInfofromTensor(topN, result)
 
                 (path, value)
               })
@@ -157,15 +152,10 @@ object ClusterServing {
               // result post processing starts here
               // move below code into wrapper if new functions
               // e.g. object detection is added
-              val outputSize = if (result.size(2) > topN) {
-                topN
-              } else {
-                result.size(2)
-              }
 
               (0 until thisBatchSize).map(i => {
-                val value = PostProcessing.getInfofromTensor(outputSize,
-                  result.select(1, i + 1))
+                val value = PostProcessing.getInfofromTensor(topN,
+                  result.select(1, i + 1).squeeze())
                 (pathByteBatch(i)._1, value)
               })
 
@@ -205,4 +195,3 @@ object ClusterServing {
     query.awaitTermination()
   }
 }
-

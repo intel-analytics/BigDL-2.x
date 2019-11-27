@@ -135,9 +135,9 @@ class ClusterServingHelper {
 
 
     val yamlParser = new Yaml()
-//    val input = new FileInputStream(new File("zoo/src/" +
-//      "main/scala/com/intel/analytics/zoo/serving/config.yaml"))
-    val input = new FileInputStream(new File("config.yaml"))
+    val input = new FileInputStream(new File("zoo/src/" +
+      "main/scala/com/intel/analytics/zoo/serving/config.yaml"))
+//    val input = new FileInputStream(new File("config.yaml"))
     val configList = yamlParser.load(input).asInstanceOf[HM]
 
     // parse model field
@@ -238,7 +238,7 @@ class ClusterServingHelper {
       case "tensorflow" => model.doLoadTF(weightPath, coreNum, 1, true)
       case "pytorch" => model.doLoadPyTorch(weightPath)
       case "bigdl" => model.doLoad(weightPath)
-      case "keras" => logError("keras not supported in inference model")
+      case "keras" => logError("Keras currently not supported in Cluster Serving")
       case "openvino" => model.doLoadOpenVINO(defPath, weightPath, batchSize)
       case _ => logError("Invalid model type, please check your model directory")
     }
