@@ -20,6 +20,7 @@ from zoo.models.common import KerasZooModel
 from zoo.models.recommendation import Recommender
 from zoo.pipeline.api.keras.layers import *
 from zoo.pipeline.api.keras.models import *
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -40,6 +41,7 @@ class NeuralCF(Recommender):
     include_mf: Whether to include Matrix Factorization. Boolean. Default is True.
     mf_embed: Units of matrix factorization embedding. Positive int. Default is 20.
     """
+
     def __init__(self, user_count, item_count, class_num, user_embed=20,
                  item_embed=20, hidden_layers=[40, 20, 10], include_mf=True,
                  mf_embed=20, bigdl_type="float"):
@@ -65,7 +67,7 @@ class NeuralCF(Recommender):
                                        self.model)
 
     def build_model(self):
-        input = Input(shape=(2, ))
+        input = Input(shape=(2,))
         user_flat = Flatten()(Select(1, 0)(input))
         item_flat = Flatten()(Select(1, 1)(input))
         mlp_user_embed = Embedding(self.user_count + 1, self.user_embed, init="uniform")(user_flat)
@@ -80,7 +82,7 @@ class NeuralCF(Recommender):
             mlp_linear = linear_mid
 
         if (self.include_mf):
-            assert(self.mf_embed > 0)
+            assert (self.mf_embed > 0)
             mf_user_embed = Embedding(self.user_count + 1, self.mf_embed, init="uniform")(user_flat)
             mf_item_embed = Embedding(self.item_count + 1, self.mf_embed, init="uniform")(item_flat)
             mf_user_flatten = Flatten()(mf_user_embed)
@@ -105,7 +107,7 @@ class NeuralCF(Recommender):
               Amazon S3 path should be like 's3a://bucket/xxx'.
         weight_path: The path for pre-trained weights if any. Default is None.
         """
-        jmodel = callBigDlFunc(bigdl_type, "loadNeuralCF", path, weight_path)
+        jmodel = callZooFunc(bigdl_type, "loadNeuralCF", path, weight_path)
         model = KerasZooModel._do_load(jmodel, bigdl_type)
         model.__class__ = NeuralCF
         return model

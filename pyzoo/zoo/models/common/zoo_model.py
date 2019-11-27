@@ -17,6 +17,7 @@
 from bigdl.nn.layer import Container, Layer
 from bigdl.util.common import *
 from zoo.pipeline.api.keras.engine.topology import KerasNet
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -34,6 +35,7 @@ class ZooModel(ZooModelCreator, Container):
     """
     The base class for models in Analytics Zoo.
     """
+
     def predict_classes(self, x, batch_size=32, zero_based_label=True):
         """
         Predict for classes. By default, label predictions start from 0.
@@ -50,11 +52,11 @@ class ZooModel(ZooModelCreator, Container):
             data_rdd = x
         else:
             raise TypeError("Unsupported prediction data type: %s" % type(x))
-        return callBigDlFunc(self.bigdl_type, "zooModelPredictClasses",
-                             self.value,
-                             data_rdd,
-                             batch_size,
-                             zero_based_label)
+        return callZooFunc(self.bigdl_type, "zooModelPredictClasses",
+                           self.value,
+                           data_rdd,
+                           batch_size,
+                           zero_based_label)
 
     def save_model(self, path, weight_path=None, over_write=False):
         """
@@ -67,22 +69,22 @@ class ZooModel(ZooModelCreator, Container):
         weight_path: The path to save weights. Default is None.
         over_write: Whether to overwrite the file if it already exists. Default is False.
         """
-        callBigDlFunc(self.bigdl_type, "saveZooModel",
-                      self.value, path, weight_path, over_write)
+        callZooFunc(self.bigdl_type, "saveZooModel",
+                    self.value, path, weight_path, over_write)
 
     def summary(self):
         """
         Print out the summary of the model.
         """
-        callBigDlFunc(self.bigdl_type, "zooModelSummary",
-                      self.value)
+        callZooFunc(self.bigdl_type, "zooModelSummary",
+                    self.value)
 
     def set_evaluate_status(self):
         """
         Set the model to be in evaluate status, i.e. remove the effect of Dropout, etc.
         """
-        callBigDlFunc(self.bigdl_type, "zooModelSetEvaluateStatus",
-                      self.value)
+        callZooFunc(self.bigdl_type, "zooModelSetEvaluateStatus",
+                    self.value)
         return self
 
     @staticmethod
@@ -96,6 +98,7 @@ class KerasZooModel(ZooModel):
     """
     The base class for Keras style models in Analytics Zoo.
     """
+
     # For the following method, please see documentation of KerasNet for details
     def compile(self, optimizer, loss, metrics=None):
         self.model.compile(optimizer, loss, metrics)
@@ -140,6 +143,6 @@ class KerasZooModel(ZooModel):
     @staticmethod
     def _do_load(jmodel, bigdl_type="float"):
         model = ZooModel._do_load(jmodel, bigdl_type)
-        labor_model = callBigDlFunc(bigdl_type, "getModule", jmodel)
+        labor_model = callZooFunc(bigdl_type, "getModule", jmodel)
         model.model = KerasNet(labor_model)
         return model

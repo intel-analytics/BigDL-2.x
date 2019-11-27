@@ -19,8 +19,7 @@ import sys
 from pyspark import RDD
 
 from zoo.models.common import *
-from bigdl.util.common import callBigDlFunc
-
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -36,6 +35,7 @@ class UserItemFeature(object):
     item_id: Positive int.
     sample: Sample which consists of feature(s) and label(s).
     """
+
     def __init__(self, user_id, item_id, sample, bigdl_type="float"):
         self.user_id = int(user_id)
         self.item_id = int(item_id)
@@ -60,6 +60,7 @@ class UserItemPrediction(object):
     prediction: The prediction (rating) for the user on the item.
     probability: The probability for the prediction.
     """
+
     def __init__(self, user_id, item_id, prediction, probability, bigdl_type="float"):
         self.user_id = user_id
         self.item_id = item_id
@@ -79,6 +80,7 @@ class Recommender(KerasZooModel):
     """
     The base class for recommendation models in Analytics Zoo.
     """
+
     def predict_user_item_pair(self, feature_rdd):
         """
         Predict for user-item pairs.
@@ -87,9 +89,9 @@ class Recommender(KerasZooModel):
         feature_rdd: RDD of UserItemFeature.
         :return RDD of UserItemPrediction.
         """
-        result_rdd = callBigDlFunc(self.bigdl_type, "predictUserItemPair",
-                                   self.value,
-                                   self._to_tuple_rdd(feature_rdd))
+        result_rdd = callZooFunc(self.bigdl_type, "predictUserItemPair",
+                                 self.value,
+                                 self._to_tuple_rdd(feature_rdd))
         return self._to_prediction_rdd(result_rdd)
 
     def recommend_for_user(self, feature_rdd, max_items):
@@ -101,10 +103,10 @@ class Recommender(KerasZooModel):
         max_items: The number of items to be recommended to each user. Positive int.
         :return RDD of UserItemPrediction.
         """
-        result_rdd = callBigDlFunc(self.bigdl_type, "recommendForUser",
-                                   self.value,
-                                   self._to_tuple_rdd(feature_rdd),
-                                   int(max_items))
+        result_rdd = callZooFunc(self.bigdl_type, "recommendForUser",
+                                 self.value,
+                                 self._to_tuple_rdd(feature_rdd),
+                                 int(max_items))
         return self._to_prediction_rdd(result_rdd)
 
     def recommend_for_item(self, feature_rdd, max_users):
@@ -116,10 +118,10 @@ class Recommender(KerasZooModel):
         max_users: The number of users to be recommended to each item. Positive int.
         :return RDD of UserItemPrediction.
         """
-        result_rdd = callBigDlFunc(self.bigdl_type, "recommendForItem",
-                                   self.value,
-                                   self._to_tuple_rdd(feature_rdd),
-                                   int(max_users))
+        result_rdd = callZooFunc(self.bigdl_type, "recommendForItem",
+                                 self.value,
+                                 self._to_tuple_rdd(feature_rdd),
+                                 int(max_users))
         return self._to_prediction_rdd(result_rdd)
 
     @staticmethod

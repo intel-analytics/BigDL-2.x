@@ -21,7 +21,8 @@ from zoo.models.common import ZooModel
 from zoo.models.textmatching import TextMatcher
 from zoo.pipeline.api.keras.layers import Input, Embedding, Dense, Squeeze, prepare_embedding
 from zoo.pipeline.api.keras.models import Model
-from bigdl.util.common import callBigDlFunc, JTensor
+from bigdl.util.common import JTensor
+from zoo.common.utils import callZooFunc
 
 if sys.version >= '3':
     long = int
@@ -61,6 +62,7 @@ class KNRM(TextMatcher):
                  you are recommended to use 'binary_crossentropy' as loss for binary classification.
                  Default mode is 'ranking'.
     """
+
     def __init__(self, text1_length, text2_length, embedding_file, word_index=None,
                  train_embed=True, kernel_num=21, sigma=0.1, exact_sigma=0.001,
                  target_mode="ranking", bigdl_type="float"):
@@ -91,7 +93,7 @@ class KNRM(TextMatcher):
     def build_model(self):
         # Remark: Share weights for embedding is not supported.
         # Thus here the model takes concatenated input and slice to split the input.
-        input = Input(name='input', shape=(self.text1_length + self.text2_length, ))
+        input = Input(name='input', shape=(self.text1_length + self.text2_length,))
         embedding = Embedding(self.vocab_size, self.embed_size,
                               weights=self.embed_weights, trainable=self.train_embed)(input)
         query_embed = embedding.slice(1, 0, self.text1_length)
@@ -131,7 +133,7 @@ class KNRM(TextMatcher):
               Amazon S3 path should be like 's3a://bucket/xxx'.
         weight_path: The path for pre-trained weights if any. Default is None.
         """
-        jmodel = callBigDlFunc(bigdl_type, "loadKNRM", path, weight_path)
+        jmodel = callZooFunc(bigdl_type, "loadKNRM", path, weight_path)
         model = ZooModel._do_load(jmodel, bigdl_type)
         model.__class__ = KNRM
         return model

@@ -19,7 +19,8 @@ import sys
 
 from bigdl.dataset.dataset import DataSet
 from bigdl.transform.vision.image import FeatureTransformer
-from bigdl.util.common import get_node_and_core_number, callBigDlFunc
+from bigdl.util.common import get_node_and_core_number
+from zoo.common.utils import callZooFunc
 from zoo.common import Sample, JTensor
 from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.feature.common import FeatureSet
@@ -294,6 +295,9 @@ class TFDataset(object):
         """
         raise NotImplementedError
 
+    def map(self, map_fn):
+        return MapDataset(self, map_fn)
+
     @staticmethod
     def from_rdd(*args, **kwargs):
         """
@@ -511,6 +515,56 @@ class TFDataset(object):
                                 validation_dataset)
 
 
+class MapDataset(TFDataset):
+
+    def __init__(self, pre_dataset, map_fn):
+        self.pre_dataset = pre_dataset
+        self.map_fn = map_fn
+        super(MapDataset, self).__init__(self.pre_dataset.tensor_structure,
+                                         self.pre_dataset.batch_size,
+                                         self.pre_dataset.batch_per_thread,
+                                         self.pre_dataset.hard_code_batch_size)
+
+    def _create_placeholders(self):
+        self._tensors = self.map_fn(self.pre_dataset.tensors)
+        self._original_tensors = self.pre_dataset._original_tensors
+        return self._tensors
+
+    def get_prediction_data(self):
+        """
+        :return: an object that can be used for TFNet.predict
+        e.g. an RDD of Sample or a ImageSet
+        """
+        return self.pre_dataset.get_prediction_data()
+
+    def get_evaluation_data(self):
+        """
+        :return: an object that can be used for TFNet.evaluate,
+        e.g. an RDD of Sample or a ImageSet
+        """
+        return self.pre_dataset.get_evaluation_data()
+
+    def get_training_data(self):
+        """
+        :return: an object that can be used to create a BigDL optimizer,
+        e.g. an RDD of Sample or a DataSet
+        """
+        return self.pre_dataset.get_training_data()
+
+    def get_validation_data(self):
+        """
+        :return: an object that can be used to set validation in a BigDL optimizer,
+        e.g. an RDD of Sample or a DataSet
+        """
+        return self.pre_dataset.get_validation_data()
+
+    def get_num_partitions(self):
+        """
+        :return: the num of partitions of the underlying RDD
+        """
+        return self.pre_dataset.get_num_partitions()
+
+
 class TFFeatureDataset(TFDataset):
 
     def __init__(self, dataset, tensor_structure, batch_size,
@@ -556,19 +610,19 @@ class TFRecordDataset(TFDataset):
         serialized_graph = bytearray(g.as_graph_def().SerializeToString())
 
         sc = getOrCreateSparkContext()
-        train_rdd = callBigDlFunc("float", "createRDDFromTFRecords",
-                                  file_path, sc, serialized_graph,
-                                  serialized_example.name, output_names)
+        train_rdd = callZooFunc("float", "createRDDFromTFRecords",
+                                file_path, sc, serialized_graph,
+                                serialized_example.name, output_names)
         validation_rdd = None
         if validation_file_path is not None:
-            validation_rdd = callBigDlFunc("float", "createRDDFromTFRecords",
-                                           validation_file_path, sc, serialized_graph,
-                                           serialized_example.name, output_names)
+            validation_rdd = callZooFunc("float", "createRDDFromTFRecords",
+                                         validation_file_path, sc, serialized_graph,
+                                         serialized_example.name, output_names)
 
         tensor_structure = nest.pack_sequence_as(results,
                                                  [TensorMeta(tf.as_dtype(t.dtype),
-                                                  shape=t.shape,
-                                                  name="data_%s" % i)
+                                                             shape=t.shape,
+                                                             name="data_%s" % i)
                                                   for i, t in enumerate(nest.flatten(results))])
 
         super(TFRecordDataset, self).__init__(tensor_structure, batch_size,

@@ -15,20 +15,18 @@ in a pythonic way on yarn without `spark-submit` or installing analytics-zoo or 
 
 1) Install [Conda](https://docs.conda.io/projects/conda/en/latest/commands/install.html) in your environment.
 
-2) Create a new conda environment (with name "py36" for example):
+2) Create a new conda environment (with name "zoo" for example):
 ```
-conda create -n py36 python=3.6
-source activate py36
+conda create -n zoo python=3.6
+source activate zoo
 ```
 
-3) Install essential dependencies in the created conda environment:
+3) Install analytics-zoo in the created conda environment:
 ```
-pip install analytics-zoo
-pip install ray==0.6.6
-pip install psutil
-pip install aiohttp
-pip install setproctitle
+pip install analytics-zoo[ray]
 ```
+
+Note that the essential dependencies (including `ray==0.6.6`, `psutil`, `aiohttp`, `setproctitle`) will be installed by specifying the extras key `[ray]` when you pip install analytics-zoo.
 
 4) Download JDK8 and set the environment variable: JAVA_HOME (recommended).
 
@@ -38,14 +36,14 @@ You can also install JDK via conda without setting the JAVA_HOME manually:
 
 5) Start `python` and then execute the following example.
 
-- Create a SparkContext on yarn:
+- Create a SparkContext on yarn, only __yarn-client mode__ is supported for now:
 
 ```python
 from zoo import init_spark_on_yarn
 
 sc = init_spark_on_yarn(
     hadoop_conf="path to the yarn configuration folder",
-    conda_name="py36", # The name of the created conda-env
+    conda_name="zoo", # The name of the created conda-env
     num_executor=2,
     executor_cores=4,
     executor_memory="8g",
@@ -54,7 +52,7 @@ sc = init_spark_on_yarn(
     extra_executor_memory_for_ray="10g")
 ```
 
-- [Optional] If you don't have a yarn cluster, this can also be tested locally by creating `SparkContext`
+- [Optional] If you don't have a yarn cluster, this can also be tested locally by creating a SparkContext
 with `init_spark_on_local`:
 
 ```python
