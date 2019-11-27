@@ -295,6 +295,9 @@ class TFDataset(object):
         """
         raise NotImplementedError
 
+    def map(self, map_fn):
+        return MapDataset(self, map_fn)
+
     @staticmethod
     def from_rdd(*args, **kwargs):
         """
@@ -510,6 +513,56 @@ class TFDataset(object):
         return TFFeatureDataset(dataset, tensor_structure, batch_size,
                                 batch_per_thread, hard_code_batch_size,
                                 validation_dataset)
+
+
+class MapDataset(TFDataset):
+
+    def __init__(self, pre_dataset, map_fn):
+        self.pre_dataset = pre_dataset
+        self.map_fn = map_fn
+        super(MapDataset, self).__init__(self.pre_dataset.tensor_structure,
+                                         self.pre_dataset.batch_size,
+                                         self.pre_dataset.batch_per_thread,
+                                         self.pre_dataset.hard_code_batch_size)
+
+    def _create_placeholders(self):
+        self._tensors = self.map_fn(self.pre_dataset.tensors)
+        self._original_tensors = self.pre_dataset._original_tensors
+        return self._tensors
+
+    def get_prediction_data(self):
+        """
+        :return: an object that can be used for TFNet.predict
+        e.g. an RDD of Sample or a ImageSet
+        """
+        return self.pre_dataset.get_prediction_data()
+
+    def get_evaluation_data(self):
+        """
+        :return: an object that can be used for TFNet.evaluate,
+        e.g. an RDD of Sample or a ImageSet
+        """
+        return self.pre_dataset.get_evaluation_data()
+
+    def get_training_data(self):
+        """
+        :return: an object that can be used to create a BigDL optimizer,
+        e.g. an RDD of Sample or a DataSet
+        """
+        return self.pre_dataset.get_training_data()
+
+    def get_validation_data(self):
+        """
+        :return: an object that can be used to set validation in a BigDL optimizer,
+        e.g. an RDD of Sample or a DataSet
+        """
+        return self.pre_dataset.get_validation_data()
+
+    def get_num_partitions(self):
+        """
+        :return: the num of partitions of the underlying RDD
+        """
+        return self.pre_dataset.get_num_partitions()
 
 
 class TFFeatureDataset(TFDataset):
