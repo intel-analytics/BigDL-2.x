@@ -132,7 +132,8 @@ object ClusterServing {
               val thisBatchSize = pathByteBatch.size
               val t = Tensor[Float](batchSize, C, W, H)
 
-              (0 until thisBatchSize).foreach(i => t.select(1, i + 1).copy(pathByteBatch(i)._2))
+              (0 until thisBatchSize).toParArray
+                .foreach(i => t.select(1, i + 1).copy(pathByteBatch(i)._2))
 
               val x = if (modelType == "tensorflow") {
                 t.transpose(2, 3)
