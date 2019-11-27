@@ -138,7 +138,7 @@ class TFEstimator(object):
         estimator = tf.estimator.Estimator(tf_model_fn, model_dir, config, params, warm_start_from)
         self._model_fn = model_fn
         self.optimizer = optimizer
-        self._model_dir = model_dir
+        self._model_dir = estimator.model_dir
         self.estimator = estimator
         self.config = config
         self.params = params
