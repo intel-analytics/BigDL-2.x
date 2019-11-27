@@ -33,9 +33,9 @@ time11=$?
 execute_ray_test multiagent_two_trainers ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/rayexample/rllibexample/multiagent_two_trainers.py
 time12=$?
 
-echo "#9 rl_pong time used:$time9 seconds"
-echo "#10 sync_parameter_server time used:$time10 seconds"
-echo "#11 async_parameter_server time used:$time11 seconds"
-echo "#12 multiagent_two_trainers time used:$time12 seconds"
+echo "#1 rl_pong time used:$time9 seconds"
+echo "#2 sync_parameter_server time used:$time10 seconds"
+echo "#3 async_parameter_server time used:$time11 seconds"
+echo "#4 multiagent_two_trainers time used:$time12 seconds"
 
 clear_up
