@@ -1,6 +1,6 @@
 # Pong example
-Here we demonstrate how to use Analytics Zoo API to run [Ray](https://github.com/ray-project/ray) example:
-[pong](https://gist.github.com/karpathy/a4166c7fe253700972fcbc77e4ea32c5)
+Here we demonstrate how to use Analytics Zoo API to run [pong](https://gist.github.com/karpathy/a4166c7fe253700972fcbc77e4ea32c5) example
+provided by [Ray](https://github.com/ray-project/ray).
 
 See [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/) for more details for RayOnSpark support in Analytics Zoo.
 

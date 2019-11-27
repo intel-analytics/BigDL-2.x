@@ -1,6 +1,7 @@
 # Multi agent training example
-Here we demonstrate how to use Analytics Zoo API to run [Ray](https://github.com/ray-project/ray) example:
-[multiagent_two_trainers](https://github.com/ray-project/ray/blob/master/rllib/examples/multiagent_two_trainers.py)
+Here we demonstrate how to use Analytics Zoo API to run [mutil-agent](https://github.com/ray-project/ray/blob/master/rllib/examples/multiagent_two_trainers.py)
+example provided by [Ray](https://github.com/ray-project/ray).
+
 
 See [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/) for more details for RayOnSpark support in Analytics Zoo.
 
