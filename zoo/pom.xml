@@ -82,9 +82,6 @@
 
         <profile>
             <id>spark_2.4+</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <build>
                 <plugins>
                     <plugin>
