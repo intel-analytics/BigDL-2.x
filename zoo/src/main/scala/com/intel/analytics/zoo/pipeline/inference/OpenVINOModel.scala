@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
-import java.io.{ByteArrayInputStream, File, FileOutputStream, IOException}
+import java.io.{File, IOException}
 import java.nio.file.{Files, Paths}
 import java.util.{ArrayList, Arrays, List => JList}
 
@@ -24,8 +24,8 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.pipeline.api.net.{NetUtils, SerializationHolder}
 import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 import com.intel.analytics.zoo.pipeline.inference.OpenVINOModel.OpenVINOModelHolder
-import com.intel.analytics.zoo.pipeline.inference.OpenVinoInferenceSupportive.logger
 import org.apache.commons.io.FileUtils
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.io.Source
@@ -40,30 +40,31 @@ class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
 
   @transient
   private lazy val supportive: OpenVinoInferenceSupportive = {
-    println("Prepare OpenVINO bin " + this)
+    OpenVINOModel.logger.info("Prepare OpenVinoInferenceSupportive")
     new OpenVinoInferenceSupportive()
   }
 
   @transient
   private lazy val executableNetworkReference: Long = {
-    println("OpenVINO loading in " + this)
+    OpenVINOModel.logger.info("Lazy loading OpenVINO model")
     var nativeRef = -1L
     try {
       val modelFile = File.createTempFile("OpenVINO", "xml")
       Files.write(Paths.get(modelFile.toURI), modelHolder.modelBytes)
       val weightFile = File.createTempFile("OpenVINO", "bin")
-      Files.write(Paths.get(modelFile.toURI), modelHolder.weightBytes)
+      Files.write(Paths.get(weightFile.toURI), modelHolder.weightBytes)
 
       val buffer = Source.fromFile(modelFile)
       this.isInt8 = buffer.getLines().count(_ matches ".*statistics.*") > 0
       buffer.close()
 
       nativeRef = if (isInt8) {
-        logger.info(s"Load int8 model")
+        OpenVINOModel.logger.debug(s"Load int8 model")
         supportive.loadOpenVinoIRInt8(modelFile.getAbsolutePath,
           weightFile.getAbsolutePath,
           deviceType.value, batchSize)
       } else {
+        OpenVINOModel.logger.debug(s"Load fp32 model")
         supportive.loadOpenVinoIR(modelFile.getAbsolutePath,
           weightFile.getAbsolutePath,
           deviceType.value, batchSize)
@@ -73,7 +74,7 @@ class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
     }
     catch {
       case io: IOException =>
-        System.out.println("error during loading OpenVINO model")
+        OpenVINOModel.logger.error("error during loading OpenVINO model")
         throw io
     }
     nativeRef
@@ -133,6 +134,8 @@ class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
 
 object OpenVINOModel {
 
+  val logger = LoggerFactory.getLogger(getClass)
+
   @transient
   private lazy val inDriver = NetUtils.isDriver
 
@@ -149,6 +152,7 @@ object OpenVINOModel {
     }
 
     override def writeInternal(out: CommonOutputStream): Unit = {
+      logger.debug("Write OpenVINO model into stream")
       if (inDriver) {
         out.writeInt(modelBytes.length)
         timing(s"writing ${modelBytes.length / 1024 / 1024}Mb openvino model to stream") {
@@ -165,6 +169,7 @@ object OpenVINOModel {
 
     override def readInternal(in: CommonInputStream): Unit = {
       val modelLen = in.readInt()
+      logger.debug("Read OpenVINO model from stream")
       assert(modelLen >= 0, "OpenVINO model length should be an non-negative integer")
       modelBytes = new Array[Byte](modelLen)
       timing("reading OpenVINO model from stream") {
