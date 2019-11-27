@@ -44,4 +44,4 @@ if __name__ == "__main__":
         tmp_dict = json.loads(result[k])
         for class_idx in tmp_dict.keys():
             output += "class: " + class_idx + "'s prob: " + tmp_dict[class_idx]
-        print (output)
+        print(output)
