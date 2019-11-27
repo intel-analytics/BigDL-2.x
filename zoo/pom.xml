@@ -23,7 +23,7 @@
         <scala.version>2.11.8</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>2.2.4</scalatest.version>
-        <spark.version>2.1.0</spark.version>
+        <spark.version>2.4.0</spark.version>
         <bigdl.version>0.10.0</bigdl.version>
         <core.artifactId>zoo-core-dist-all</core.artifactId>
         <core.dependencyType>pom</core.dependencyType>
@@ -54,14 +54,47 @@
 
         <profile>
             <id>spark_2.x</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/com/intel/analytics/zoo/serving/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
             <properties>
                 <java.version>1.8</java.version>
                 <javac.version>1.8</javac.version>
                 <spark-version.project>2.1</spark-version.project>
                 <spark.version>2.1.0</spark.version>
+                <scala.major.version>2.11</scala.major.version>
+                <scala.version>2.11.8</scala.version>
+                <scala.macros.version>2.1.0</scala.macros.version>
+                <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
+
+            </properties>
+        </profile>
+
+        <profile>
+            <id>spark_2.4+</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+            <properties>
+                <java.version>1.8</java.version>
+                <javac.version>1.8</javac.version>
+                <spark-version.project>2.4</spark-version.project>
+                <spark.version>2.4.0</spark.version>
                 <scala.major.version>2.11</scala.major.version>
                 <scala.version>2.11.8</scala.version>
                 <scala.macros.version>2.1.0</scala.macros.version>
@@ -198,6 +231,11 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
+        <repository>
+            <id>Sonatype-public</id>
+            <name>SnakeYAML repository</name>
+            <url>http://oss.sonatype.org/content/groups/public/</url>
+        </repository>
     </repositories>
 
     <licenses>
@@ -319,6 +357,21 @@
             <version>0.7.0-SNAPSHOT</version>
             <type>${core.dependencyType}</type>
         </dependency>
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>3.1.0-m1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.26-SNAPSHOT</version>
+        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.redislabs</groupId>-->
+            <!--<artifactId>spark-redis</artifactId>-->
+            <!--<version>2.4.0</version>-->
+        <!--</dependency>-->
     </dependencies>
 
     <build>
