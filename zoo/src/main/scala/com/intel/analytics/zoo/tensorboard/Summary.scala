@@ -28,10 +28,8 @@ import scala.reflect.ClassTag
  * @param logDir
  * @param appName
  */
-
 abstract class Summary(logDir: String,
                        appName: String) {
-
   protected val writer: FileWriter
 
   /**
@@ -41,7 +39,6 @@ abstract class Summary(logDir: String,
    * @param step current step.
    * @return this
    */
-
   def addScalar(tag: String,
                 value: Float,
                 step: Long): this.type = {
@@ -58,7 +55,6 @@ abstract class Summary(logDir: String,
    * @param step current step.
    * @return this
    */
-
   def addHistogram[T: ClassTag](tag: String,
                                 value: Tensor[T],
                                 step: Long)(implicit ev: TensorNumeric[T]): this.type = {
@@ -141,7 +137,6 @@ object Summary {
   /**
    * Find a bucket for x.
    */
-
   private def bisectLeft(a: Array[Double],
                          x: Double,
                          lo: Int = 0,

@@ -188,7 +188,10 @@ class ClusterServingHelper {
         return default
       }
     }
-    else return configValue
+    else {
+      logger.info(configList.toString + key + " getted: " + configValue)
+      return configValue
+    }
   }
 
 
