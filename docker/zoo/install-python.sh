@@ -12,7 +12,7 @@ apt-get install -y build-essential ${PYTHON} ${PYTHON}-setuptools ${PYTHON}-dev 
 ${PIP} install --upgrade setuptools
 ${PIP} install numpy scipy
 ${PIP} install --no-binary pandas -I pandas
-${PIP} install scikit-learn matplotlib seaborn jupyter wordcloud moviepy requests h5py opencv-python tensorflow==1.10.0
+${PIP} install scikit-learn matplotlib seaborn jupyter wordcloud moviepy requests h5py opencv-python tensorflow==1.15.0
 
 ln -s /usr/bin/python3 /usr/bin/python
 ln -s /usr/bin/pip3 /usr/local/bin/pip
