@@ -28,11 +28,10 @@ case class ResNet50PerfParams(model: String = "",
                               weight: String = "",
                               batchSize: Int = 4,
                               numBatch: Int = 1,
-                              iteration: Int = 1)
+                              iteration: Int = 10,
+                              onSpark: Boolean = false)
 
 object Perf {
-  System.setProperty("bigdl.localMode", "true")
-  System.setProperty("bigdl.engineType", "mkldnn")
 
   val logger: Logger = Logger.getLogger(getClass)
 
@@ -55,9 +54,17 @@ object Perf {
       opt[Int]('i', "iteration")
         .text("Iteration of perf test. The result will be average of each iteration time cost")
         .action((v, p) => p.copy(iteration = v))
+      opt[Unit]("onSpark")
+        .text("run with spark or not")
+        .action((_, p) => p.copy(onSpark = true))
     }
 
     parser.parse(args, ResNet50PerfParams()).foreach { param =>
+      if (!param.onSpark) {
+        System.setProperty("bigdl.localMode", "true")
+        System.setProperty("bigdl.engineType", "mkldnn")
+      }
+
       val batchSize = param.batchSize
       val numBatch = param.numBatch
       val iteration = param.iteration
@@ -76,6 +83,7 @@ object Perf {
         val latency = System.nanoTime() - start
         averageLatency += latency
         logger.info(s"Iteration latency is ${latency / 1e6} ms")
+        logger.info(s"Latency per image is ${latency / batchSize / 1e6} ms")
         val throughPut = "%.2f".format(numBatch.toFloat * batchSize / (latency / 1e9))
         logger.info(s"Iteration throughput is ${throughPut} FPS")
         logger.info(s"*****************************************************")
