@@ -17,7 +17,7 @@ for more running guidance after pip install.
 
 ## Run on local after pip install
 ```
-python rl_pong
+python rl_pong.py
 ```
 See [here](#Options) for more configurable options for this example.
 

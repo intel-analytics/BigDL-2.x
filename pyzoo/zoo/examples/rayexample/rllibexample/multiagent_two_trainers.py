@@ -51,7 +51,7 @@ parser.add_argument("--hadoop_conf", type=str,
 parser.add_argument("--slave_num", type=int, default=2,
                     help="The number of slave nodes")
 parser.add_argument("--conda_name", type=str,
-                    help="The conda name the environment sets.")
+                    help="The name of conda environment.")
 parser.add_argument("--executor_cores", type=int, default=8,
                     help="The number of driver's cpu cores you want to use."
                     "You can change it depending on your own cluster setting.")
