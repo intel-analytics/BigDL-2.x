@@ -32,11 +32,14 @@ import scala.io.Source
 
 class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
                     var batchSize: Int = -1,
-                    var isInt8: Boolean = false,
                     var deviceType: DeviceTypeEnumVal = DeviceType.CPU)
   extends AbstractModel with InferenceSupportive with Serializable {
 
   private var isRelease: Boolean = false
+  private var isInt8: Boolean = false
+  val buffer = Source.fromBytes(modelHolder.getModelBytes())
+  isInt8 = buffer.getLines().count(_ matches ".*statistics.*") > 0
+  buffer.close()
 
   @transient
   private lazy val supportive: OpenVinoInferenceSupportive = {
@@ -50,22 +53,18 @@ class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
     OpenVINOModel.logger.info("Lazy loading OpenVINO model")
     var nativeRef = -1L
     try {
-      val modelFile = File.createTempFile("OpenVINO", "xml")
+      val modelFile = File.createTempFile("OpenVINO", ".xml")
       Files.write(Paths.get(modelFile.toURI), modelHolder.modelBytes)
-      val weightFile = File.createTempFile("OpenVINO", "bin")
+      val weightFile = File.createTempFile("OpenVINO", ".bin")
       Files.write(Paths.get(weightFile.toURI), modelHolder.weightBytes)
 
-      val buffer = Source.fromFile(modelFile)
-      this.isInt8 = buffer.getLines().count(_ matches ".*statistics.*") > 0
-      buffer.close()
-
       nativeRef = if (isInt8) {
-        OpenVINOModel.logger.debug(s"Load int8 model")
+        OpenVINOModel.logger.info(s"Load int8 model")
         supportive.loadOpenVinoIRInt8(modelFile.getAbsolutePath,
           weightFile.getAbsolutePath,
           deviceType.value, batchSize)
       } else {
-        OpenVINOModel.logger.debug(s"Load fp32 model")
+        OpenVINOModel.logger.info(s"Load fp32 model")
         supportive.loadOpenVinoIR(modelFile.getAbsolutePath,
           weightFile.getAbsolutePath,
           deviceType.value, batchSize)

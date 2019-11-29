@@ -735,7 +735,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
       case null =>
       case _ => this.originalModel.release(); this.originalModel = null
     }
-    List.range(0, this.modelQueue.size()).map(_ => {
+    List.range(0, this.modelQueue.size()).foreach(_ => {
       val model = this.modelQueue.take
       this.modelQueue.remove(model)
       model.release()
