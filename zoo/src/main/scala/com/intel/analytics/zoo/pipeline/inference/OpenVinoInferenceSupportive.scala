@@ -25,6 +25,7 @@ import com.intel.analytics.zoo.core.openvino.OpenvinoNativeLoader
 import com.intel.analytics.zoo.pipeline.inference.OpenVINOModel.OpenVINOModelHolder
 import org.slf4j.LoggerFactory
 
+import scala.io.Source
 import scala.language.postfixOps
 import sys.process._
 
@@ -589,7 +590,11 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
     timing("load openvino IR") {
       val modelBytes = Utils.readBytes(modelFilePath)
       val weightBytes = Utils.readBytes(weightFilePath)
-      new OpenVINOModel(new OpenVINOModelHolder(modelBytes, weightBytes))
+      val buffer = Source.fromBytes(modelBytes)
+      val isInt8 = buffer.getLines().count(_ matches ".*statistics.*") > 0
+      buffer.close()
+      new OpenVINOModel(new OpenVINOModelHolder(modelBytes, weightBytes),
+        isInt8, batchSize, deviceType)
     }
   }
 
@@ -598,8 +603,11 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
                      deviceType: DeviceTypeEnumVal,
                      batchSize: Int): OpenVINOModel = {
     timing("load openvino IR") {
+      val buffer = Source.fromBytes(modelBytes)
+      val isInt8 = buffer.getLines().count(_ matches ".*statistics.*") > 0
+      buffer.close()
       new OpenVINOModel(new OpenVINOModelHolder(modelBytes, weightBytes),
-        deviceType = deviceType, batchSize = batchSize)
+        isInt8, batchSize, deviceType)
     }
   }
 

@@ -31,15 +31,12 @@ import scala.collection.JavaConverters._
 import scala.io.Source
 
 class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
+                    var isInt8: Boolean,
                     var batchSize: Int = -1,
                     var deviceType: DeviceTypeEnumVal = DeviceType.CPU)
   extends AbstractModel with InferenceSupportive with Serializable {
 
   private var isRelease: Boolean = false
-  private var isInt8: Boolean = false
-  val buffer = Source.fromBytes(modelHolder.getModelBytes())
-  isInt8 = buffer.getLines().count(_ matches ".*statistics.*") > 0
-  buffer.close()
 
   @transient
   private lazy val supportive: OpenVinoInferenceSupportive = {
@@ -162,11 +159,13 @@ object OpenVINOModel {
       out.writeString(id)
       if (inDriver) {
         out.writeInt(graphDef._1.length)
-        timing(s"writing ${graphDef._1.length / 1024 / 1024}Mb openvino model to stream") {
+        timing(s"writing " +
+          s"${graphDef._1.length / 1024 / 1024}Mb openvino model to stream") {
           out.write(graphDef._1)
         }
         out.writeInt(graphDef._2.length)
-        timing(s"writing ${graphDef._2.length / 1024 / 1024}Mb openvino weight to stream") {
+        timing(s"writing " +
+          s"${graphDef._2.length / 1024 / 1024}Mb openvino weight to stream") {
           out.write(graphDef._2)
         }
       } else {
@@ -206,27 +205,11 @@ object OpenVINOModel {
     }
   }
 
-  def apply(modelHolder: OpenVINOModelHolder): OpenVINOModel = {
-    new OpenVINOModel(modelHolder)
+  def apply(modelHolder: OpenVINOModelHolder, isInt8: Boolean): OpenVINOModel = {
+    new OpenVINOModel(modelHolder, isInt8)
   }
 
-  def apply(modelBytes: Array[Byte], weightBytes: Array[Byte], batchSize: Int): OpenVINOModel = {
-    OpenVinoInferenceSupportive.loadOpenVinoIR(modelBytes, weightBytes, DeviceType.CPU, batchSize)
-  }
-
-  def apply(modelHolder: OpenVINOModelHolder, batchSize: Int): OpenVINOModel = {
-    OpenVinoInferenceSupportive.loadOpenVinoIR(modelHolder.getModelBytes(),
-      modelHolder.getWeightBytes(),
-      DeviceType.CPU, batchSize)
-  }
-
-  def apply(modelFilePath: String,
-            weightFilePath: String,
-            deviceType: DeviceTypeEnumVal,
-            batchSize: Int = 0): OpenVINOModel = {
-    OpenVinoInferenceSupportive.loadOpenVinoIR(modelFilePath,
-      weightFilePath,
-      deviceType,
-      batchSize)
+  def apply(modelHolder: OpenVINOModelHolder, isInt8: Boolean, batchSize: Int): OpenVINOModel = {
+    new OpenVINOModel(modelHolder, isInt8, batchSize)
   }
 }
