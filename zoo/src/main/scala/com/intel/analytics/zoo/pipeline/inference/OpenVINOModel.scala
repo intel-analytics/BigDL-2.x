@@ -28,7 +28,6 @@ import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import scala.io.Source
 
 class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
                     var isInt8: Boolean,

@@ -23,7 +23,6 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.{List => JList}
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 import com.sun.xml.internal.bind.v2.TODO
 
 import scala.collection.JavaConverters._
