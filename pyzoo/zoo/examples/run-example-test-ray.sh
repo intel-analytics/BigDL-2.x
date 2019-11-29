@@ -13,7 +13,7 @@ export BIGDL_JARS=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*j
 
 set -e
 
-echo "Start ray examples tests"
+echo "Start ray example tests"
 #start execute
 echo "#1 Start pong example"
 start=$(date "+%s")
