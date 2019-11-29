@@ -21,21 +21,21 @@ execute_ray_test(){
     return $((now-start))
 }
 
-execute_ray_test rl_pong ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/rayexample/rl_pong/rl_pong.py  --iterations 10
-time9=$?
+execute_ray_test rl_pong ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py  --iterations 10
+time1=$?
 
-execute_ray_test sync_parameter_server ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/rayexample/parameter_server/sync_parameter_server.py  --iterations 10
-time10=$?
+execute_ray_test sync_parameter_server ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/sync_parameter_server.py  --iterations 10
+time2=$?
 
-execute_ray_test async_parameter_server ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/rayexample/parameter_server/async_parameter_server.py  --iterations 10
-time11=$?
+execute_ray_test async_parameter_server ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/async_parameter_server.py  --iterations 10
+time3=$?
 
-execute_ray_test multiagent_two_trainers ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/rayexample/rllibexample/multiagent_two_trainers.py
-time12=$?
+execute_ray_test multiagent_two_trainers ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py
+time4=$?
 
-echo "#1 rl_pong time used:$time9 seconds"
-echo "#2 sync_parameter_server time used:$time10 seconds"
-echo "#3 async_parameter_server time used:$time11 seconds"
-echo "#4 multiagent_two_trainers time used:$time12 seconds"
+echo "#1 rl_pong time used:$time1 seconds"
+echo "#2 sync_parameter_server time used:$time2 seconds"
+echo "#3 async_parameter_server time used:$time3 seconds"
+echo "#4 multiagent_two_trainers time used:$time4 seconds"
 
 clear_up
