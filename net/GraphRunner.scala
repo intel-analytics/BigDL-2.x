@@ -19,8 +19,6 @@ import java.nio._
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.core.TFNetNative
-import org.tensorflow.framework.GraphDef
-import org.tensorflow.types.UInt8
 import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
 
 import scala.collection.JavaConverters._
@@ -50,61 +48,8 @@ class GraphRunner(
             private val savePathPlaceholder: String,
             private val config: Array[Byte]) extends java.io.Serializable {
 
-  class ResourceManager() extends java.io.Serializable {
-    private val tensorList: mutable.Set[TTensor[_]] = mutable.Set[TTensor[_]]()
-    def createTFTensor(shape: Array[Long], buffer: FloatBuffer): TTensor[_] = {
-      val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
-      tensorList += TFTensor
-      return TFTensor
-    }
-    def createTFTensor(shape: Array[Long], buffer: ByteBuffer): TTensor[_] = {
-      val TFTensor : TTensor[_] = TTensor.create(classOf[UInt8], shape, buffer)
-      tensorList += TFTensor
-      return TFTensor
-    }
-    def createTFTensor(shape: Array[Long], buffer: IntBuffer): TTensor[_] = {
-      val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
-      tensorList += TFTensor
-      return TFTensor
-    }
-    def createTFTensor(shape: Array[Long], buffer: LongBuffer): TTensor[_] = {
-      val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
-      tensorList += TFTensor
-      return TFTensor
-    }
-    def createTFTensor(shape: Array[Long], buffer: DoubleBuffer): TTensor[_] = {
-      val TFTensor : TTensor[_] = TTensor.create(shape, buffer)
-      tensorList += TFTensor
-      return TFTensor
-    }
-
-    def createBoolTFTensor(shape: Array[Long], bytes: ByteBuffer): TTensor[_] = {
-      val TFTensor : TTensor[_] = TTensor.create(classOf[java.lang.Boolean], shape, bytes)
-      tensorList += TFTensor
-      return TFTensor
-    }
-
-    def releaseTensor(t: TTensor[_]): Unit = {
-      t.close()
-      tensorList -= t
-    }
-
-    def isEmpty: Boolean = {
-      tensorList.isEmpty
-    }
-
-    def destructTFTensors(): Unit = {
-      for (tensor <- tensorList) {
-        tensor.close()
-      }
-
-      tensorList.clear()
-    }
-  }
-
-
   @transient
-  private lazy val tensorManager = new ResourceManager()
+  private lazy val tensorManager = new TFResourceManager()
 
   val output = ArrayBuffer[Tensor[Float]]()
 
@@ -134,7 +79,7 @@ class GraphRunner(
     pathTensor.close()
   }
 
-  def run(input: Vector[Tensor[Float]],
+  def run(input: Vector[Tensor[_]],
           inputTypes: Vector[DataType],
           output: Vector[Tensor[Float]],
           inputNames: Vector[String],
@@ -146,7 +91,7 @@ class GraphRunner(
 
         val inputTFTensors = new Array[TTensor[_]](inputNames.length)
 
-        tensor2TFTensors(input, inputTypes, inputTFTensors)
+        tensorManager.tensor2TFTensors(input, inputTypes, inputTFTensors)
 
         // feed inputs
         inputNames.zipWithIndex.foreach { case (name, idx) =>
@@ -194,55 +139,6 @@ class GraphRunner(
 
   def release(): Unit = {
     this.sess.close()
-  }
-
-  private def bigdl2Tf(t: Tensor[Float], dataType: DataType): TTensor[_] = {
-
-    require(t.isContiguous(), "input to tfnet must be contiguous")
-    val shape = t.size().map(_.toLong)
-    val arr = t.storage().array()
-    val offset: Int = t.storageOffset() - 1
-    val length: Int = shape.product.toInt
-
-    if (dataType == DataType.FLOAT) {
-      val buffer = FloatBuffer.wrap(arr, offset, length)
-      tensorManager.createTFTensor(shape, buffer)
-    } else if (dataType == DataType.UINT8) {
-      val buffer = ByteBuffer.wrap(GraphRunner.floatToUint8(arr), offset, length)
-      tensorManager.createTFTensor(shape, buffer)
-    } else if (dataType == DataType.INT32) {
-      val buffer = IntBuffer.wrap(GraphRunner.floatToInt(arr), offset, length)
-      tensorManager.createTFTensor(shape, buffer)
-    } else if (dataType == DataType.INT64) {
-      val buffer = LongBuffer.wrap(GraphRunner.floatToLong(arr), offset, length)
-      tensorManager.createTFTensor(shape, buffer)
-    } else if (dataType == DataType.DOUBLE) {
-      val buffer = DoubleBuffer.wrap(GraphRunner.floatToDouble(arr), offset, length)
-      tensorManager.createTFTensor(shape, buffer)
-    } else if (dataType == DataType.BOOL) {
-      val buffer = ByteBuffer.wrap(GraphRunner.floatToBool(arr), offset, length)
-      tensorManager.createBoolTFTensor(shape, buffer)
-    } else {
-      throw new Exception(s"data type ${dataType} are not supported")
-    }
-
-
-  }
-
-  private def tensor2TFTensors(input: Seq[Tensor[Float]], types: Seq[DataType],
-                                 tfTensors: Array[TTensor[_]]) = {
-    val t = input
-    require(tfTensors.length == t.length, "activity and tfTensors size does not equal," +
-      s" activity length is ${t.length} tfTensors length is ${tfTensors.length}")
-    var i = 0
-    while (i < t.length) {
-      val tfTensor = bigdl2Tf(t(i), types(i))
-      if (tfTensors(i) != null) {
-        tfTensors(i).close()
-      }
-      tfTensors(i) = tfTensor
-      i += 1
-    }
   }
 }
 
@@ -298,55 +194,5 @@ object GraphRunner {
 
       (intraSeq ++ interSeq ++ perSessSeq).map(_.toByte).toArray
     }
-  }
-
-  private def floatToInt(array: Array[Float]): Array[Int] = {
-    val result = new Array[Int](array.length)
-    var i = 0
-    while (i < array.length) {
-      result(i) = array(i).toInt
-      i = i + 1
-    }
-    result
-  }
-
-  private def floatToLong(array: Array[Float]): Array[Long] = {
-    val result = new Array[Long](array.length)
-    var i = 0
-    while (i < array.length) {
-      result(i) = array(i).toLong
-      i = i + 1
-    }
-    result
-  }
-
-  private def floatToDouble(array: Array[Float]): Array[Double] = {
-    val result = new Array[Double](array.length)
-    var i = 0
-    while (i < array.length) {
-      result(i) = array(i).toDouble
-      i = i + 1
-    }
-    result
-  }
-
-  private def floatToUint8(array: Array[Float]): Array[Byte] = {
-    val result = new Array[Byte](array.length)
-    var i = 0
-    while (i < array.length) {
-      result(i) = array(i).toByte
-      i = i + 1
-    }
-    result
-  }
-
-  private def floatToBool(array: Array[Float]): Array[Byte] = {
-    val result = new Array[Byte](array.length)
-    var i = 0
-    while (i < array.length) {
-      result(i) = if (array(i) == 0.0) 0.toByte else 1.toByte
-      i = i + 1
-    }
-    result
   }
 }
