@@ -32,14 +32,18 @@ class GanOptimMethod[@specialized(Float, Double) T: ClassTag](
           gParamSize: Int)(implicit ev: TensorNumeric[T])
   extends OptimMethod[T] {
 
+  private def isInDState(nevals: Int): Boolean = {
+    nevals % (dSteps + gSteps) < dSteps
+  }
+
   override def optimize(feval: (Tensor[T]) =>
     (T, Tensor[T]), parameter: Tensor[T]): (Tensor[T], Array[T]) = {
     // todo try to determine state from parameter Tensor, maybe
     // define the last float to be the counter, and do not update it.
+    val (fx, dfdx) = feval(parameter)
     val state = InternalOptimizerUtil.getStateFromOptiMethod(this)
     val nevals = state.getOrElse[Int]("evalCounter", 0)
-    val (fx, dfdx) = feval(parameter)
-    if (nevals % (dSteps + gSteps) < dSteps) {
+    if (isInDState(nevals)) {
       dOptim.optimize(
         (_) => (fx, dfdx.narrow(1, gParamSize, parameter.nElement() - gParamSize)),
         parameter.narrow(1, gParamSize, parameter.nElement() - gParamSize))
@@ -60,5 +64,15 @@ class GanOptimMethod[@specialized(Float, Double) T: ClassTag](
 
   override def loadFromTable(config: Table): GanOptimMethod.this.type = {
     this
+  }
+
+  override def updateHyperParameter(): Unit = {
+    val state = InternalOptimizerUtil.getStateFromOptiMethod(this)
+    val nevals = state.getOrElse[Int]("evalCounter", 0)
+    if (isInDState(nevals)) {
+      dOptim.updateHyperParameter()
+    } else {
+      gOptim.updateHyperParameter()
+    }
   }
 }
