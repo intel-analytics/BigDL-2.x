@@ -28,6 +28,12 @@ docker load -i ./
 ```
 docker run --name cluster-serving --net=host -v $(pwd)/model:/opt/work/model -v $(pwd)/config.yaml:/opt/work/config.yaml analytics-zoo/cluster-serving:0.7.0-spark_2.4.0
 ```
+As you see 
+```
+INFO  ClusterServingHelper:58 - connected to redis localhost:6379
+```
+It means serving is ready for your data input.
+
 5. In another terminal, push sample image [here]() to queue (in this example is Redis). Note that you need `pip install opencv-python` if your Python does not have it.
 
 ```
