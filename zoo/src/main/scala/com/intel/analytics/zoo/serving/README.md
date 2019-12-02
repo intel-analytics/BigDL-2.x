@@ -22,10 +22,11 @@ git clone https://github.com/intel-analytics/analytics-zoo.git
 ```
 docker load -i ./
 ```
-3. Download pretrained Caffe model [here]() and move them into a directory, `cd analytics-zoo/zoo/serving/`, open `config.yaml`, set `model:path:` to `/path/to/model/directory`
-4. Run the bash in shell to start the serving.
+3. `cd analytics-zoo/docker/cluster-serving` and you can see `config.yaml`. We provide the pretrained Caffe model which you can see [here]() in `model:path:` so that there is no need for you to set any config in this example.
+
+4. Run the `docker-run` command in shell to start the serving.
 ```
-bash docker-run.sh
+docker run --name cluster-serving --net=host -v $(pwd)/model:/opt/work/model -v $(pwd)/config.yaml:/opt/work/config.yaml analytics-zoo/cluster-serving:0.7.0-spark_2.4.0
 ```
 5. In another terminal, push sample image [here]() to queue (in this example is Redis). Note that you need `pip install opencv-python` if your Python does not have it.
 
