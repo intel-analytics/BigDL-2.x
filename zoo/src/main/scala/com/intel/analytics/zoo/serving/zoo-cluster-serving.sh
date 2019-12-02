@@ -3,10 +3,12 @@
 # --------------config
 
 /opt/work/redis-5.0.5/src/redis-server --port $REDIS_PORT > /opt/work/redis.log &
-echo "redis server started, please check log in /opt/work/redis.log"
+echo "redis server started, please check log in /opt/work/redis.log" &
+sleep 1
 
-redis-cli config set stop-writes-on-bgsave-error no
-redis-cli config set save ""
+# sleep for 1 sec to ensure server is ready and client could connect
+/opt/work/redis-5.0.5/src/redis-cli config set stop-writes-on-bgsave-error no
+/opt/work/redis-5.0.5/src/redis-cli config set save ""
 
 function parse_yaml {
    local prefix=$2
