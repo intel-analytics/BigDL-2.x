@@ -38,7 +38,14 @@ image: fish1.jpeg, classification-result: class: 1's prob: 0.9974158
 image: cat1.jpeg, classification-result: class: 287's prob: 0.52377725
 image: dog1.jpeg, classification-result: class: 207's prob: 0.9226527
 ```
-Wow! You made it!
+Wow! You made it! 
+
+To stop the serving and remove the container.
+```
+docker stop cluster-serving
+docker rm cluster-serving
+```
+So far, you have finish a brief end-to-end usage of Analytics Zoo Cluster Serving.
 
 By the way, you could refer to below documents to see more details of Analytics Zoo Cluster Serving.
 ## Configuration
@@ -85,7 +92,7 @@ For more details of these config, please refer to [Spark Official Document](http
 
 ## Start the Serving
 Currently ClusterServing supports running with docker.
-### Run with docker
+### Run with Docker
 
 #### Prerequisites
 To run with docker, what you need are:
@@ -97,6 +104,19 @@ To run with docker, what you need are:
 2) Run `bash docker-build.sh` to build docker image to local (Or get pre-built docker image from our support).
 
 3) Run `bash docker-run.sh`.
+#### Stop the serving and change a model
+To stop the serving in docker
+```
+docker stop cluster-serving
+```
+To remove the container no longer used in order to save disk space
+```
+docker rm cluster-serving
+```
+If you want to change a new model for serving, change the model path config in `config.yaml` and `bash docker-run.sh`.
+#### Run multiple serving
+If you want to run multiple serving on a same machine (not recommended because there would be no performance gain and output data may be in mess if you do not set configuration in the right way), you can modify `docker-run.sh` to set a new name of your serving container to avoid the naming conflict.
+
 ## Data I/O
 ### Push and Get data to/from queue
 We provide Python API to interact with queues. Once the data is inqueued, Analytics Zoo Cluster Serving would dequeue the data from queue automatically, and do inference based on your model, and write result according to your config.
