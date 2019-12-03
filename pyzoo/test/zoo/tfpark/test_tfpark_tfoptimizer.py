@@ -74,7 +74,8 @@ class TestTFParkTFOptimizer(ZooTestCase):
             optimizer = TFOptimizer.from_loss(loss, {"dense/": Adam(1e-3), "dense_1/": SGD(1e-2)},
                                               val_outputs=[output],
                                               val_labels=[label_tensor],
-                                              val_method=Accuracy(), metrics={"loss": loss}, freeze=True)
+                                              val_method=Accuracy(), metrics={"loss": loss},
+                                              freeze=True)
             optimizer.optimize(end_trigger=MaxEpoch(1))
             optimizer.sess.close()
 
