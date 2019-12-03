@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.pipeline.api.net
 
 import java.nio.FloatBuffer
 
-import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample, Transformer}
+import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, AbstractModule, Activity}
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.python.api.{PythonBigDLKeras, Sample => JSample}
@@ -26,13 +26,14 @@ import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
 import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.feature.common.Preprocessing
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.feature.image.ImageProcessing
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.{Accuracy, BinaryAccuracy, CategoricalAccuracy, SparseCategoricalAccuracy}
-import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
-import org.tensorflow.{Session, Tensor => TTensor}
+import org.tensorflow.{Tensor => TTensor}
 
-import scala.collection.Iterator
 import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.reflect.io.Path
@@ -56,6 +57,27 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
       i += 1
     }
     setWeights(ws)
+  }
+
+  private val weightsMap = {
+    val map = collection.mutable.Map[String, Tensor[Float]]()
+    var i = 0
+    while (i < variables.length) {
+      map(variables(i)) = weights(i)
+      i +=1
+    }
+    map
+  }
+
+  override def apply(name: String): Option[AbstractModule[Activity, Activity, Float]] = {
+    val targetVariables = if (name == getName()) variables else variables.filter(_.startsWith(name))
+    if (targetVariables == null) {
+      None
+    }
+    else {
+      val targetWeights = targetVariables.map(weightsMap)
+      Some(new TFSubGraph(targetWeights))
+    }
   }
 
   private val gradWeights = variables.map(_ => Tensor[Float]())
@@ -142,6 +164,21 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
 
   override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
     gradInput
+  }
+}
+
+private class TFSubGraph(
+    weights: Array[Tensor[Float]]) extends AbstractModule[Activity, Activity, Float] {
+  override def updateOutput(input: Activity): Activity = {
+    input
+  }
+
+  override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
+    gradInput
+  }
+
+  override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
+    (weights, weights.map(_ => Tensor[Float]()))
   }
 }
 
