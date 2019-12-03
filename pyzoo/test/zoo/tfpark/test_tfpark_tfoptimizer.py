@@ -15,7 +15,7 @@
 #
 import pytest
 
-from bigdl.optim.optimizer import Adam, MaxEpoch
+from bigdl.optim.optimizer import Adam, SGD, MaxEpoch
 from zoo.pipeline.api.keras.metrics import Accuracy
 from zoo.pipeline.api.net import TFOptimizer
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
@@ -66,14 +66,15 @@ class TestTFParkTFOptimizer(ZooTestCase):
                                               batch_size=4,
                                               val_tensors=(features, labels))
             feature_tensor, label_tensor = dataset.tensors
-            output = tf.layers.dense(feature_tensor, 10)
+            features = tf.layers.dense(feature_tensor, 8)
+            output = tf.layers.dense(features, 10)
             loss = tf.reduce_mean(tf.losses.
                                   sparse_softmax_cross_entropy(logits=output,
                                                                labels=label_tensor))
-            optimizer = TFOptimizer.from_loss(loss, Adam(1e-3),
+            optimizer = TFOptimizer.from_loss(loss, {"dense/": Adam(1e-3), "dense_1/": SGD(1e-2)},
                                               val_outputs=[output],
                                               val_labels=[label_tensor],
-                                              val_method=Accuracy(), metrics={"loss": loss})
+                                              val_method=Accuracy(), metrics={"loss": loss}, freeze=True)
             optimizer.optimize(end_trigger=MaxEpoch(1))
             optimizer.sess.close()
 
