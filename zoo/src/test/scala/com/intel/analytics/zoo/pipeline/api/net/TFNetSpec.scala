@@ -188,7 +188,9 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
       layer,
       dataSet.asInstanceOf[DistributedDataSet[MiniBatch[Float]]],
       new IdentityCriterion())
-      .setOptimMethods( // dense, dense_1, dense_2
+      .setOptimMethods(
+        // ["dense/bias:0", "dense/kernel:0", "dense_1/bias:0", "dense_1/kernel:0",
+        // "dense_2/bias:0", "dense_2/kernel:0"]
         Map("dense/" -> new SGD[Float](), "dense_" -> new Adam[Float]()))
       .setEndWhen(MaxEpoch(2))
     optimizer.optimize()

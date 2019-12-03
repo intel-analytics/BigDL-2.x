@@ -61,7 +61,7 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
     var i = 0
     while (i < variables.length) {
       map(variables(i)) = weights(i)
-      i +=1
+      i += 1
     }
     map
   }

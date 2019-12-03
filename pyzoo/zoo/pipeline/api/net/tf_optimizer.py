@@ -474,6 +474,7 @@ class TFOptimizer:
         else:
             sess = session
         grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
+        grads_vars.sort(key=lambda grad_var: grad_var[1].name)
         variables = []
         grads = []
         for (grad, var) in grads_vars:
@@ -562,6 +563,7 @@ class TFOptimizer:
         inputs = model_inputs + model_targets
 
         variables = keras_model._collected_trainable_weights
+        variables.sort(key=lambda variable: variable.name)
         keras_optimizer = keras_model.optimizer
 
         grads = K.gradients(loss, variables)
