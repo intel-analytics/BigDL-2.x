@@ -218,6 +218,18 @@ then
     exit $exit_status
 fi
 
+echo "start example test for nnframes tensorflow SimpleTraining"
+export MASTER=local[1]
+python   ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/tensorflow/SimpleTraining.py
+exit_status=$?
+unset MASTER
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "nnframes tensorflow SimpleTraining failed"
+    exit $exit_status
+fi
+
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time5=$((now-start))
