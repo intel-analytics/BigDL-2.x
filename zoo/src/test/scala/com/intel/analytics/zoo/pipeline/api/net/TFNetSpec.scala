@@ -19,7 +19,6 @@ package com.intel.analytics.zoo.pipeline.api.net
 import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.optim.{DistriOptimizer, SGD}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{LayerException, T}
 import com.intel.analytics.bigdl.utils.{Engine, LayerException, LoggerFilter, T}
 import com.intel.analytics.zoo.common.MaxEpoch
 import com.intel.analytics.zoo.pipeline.api.keras.optimizers.Adam
