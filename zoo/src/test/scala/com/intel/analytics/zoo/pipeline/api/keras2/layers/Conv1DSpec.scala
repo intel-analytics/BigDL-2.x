@@ -74,7 +74,7 @@ class Conv1DSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = Conv1D[Float](64, 3, inputShape = Shape(12, 20))
     layer.build(Shape(2, 12, 20))
-    val input = Tensor[Float](2, 12, 20).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 12, 20).rand()
     runSerializationTest(layer, input)
   }
 }

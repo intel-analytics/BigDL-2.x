@@ -56,7 +56,7 @@ class ShareConvolution2DSerialTest extends ModuleSerializationTest {
     val layer = ShareConv2D[Float](64, 7, 7, activation = "relu", subsample = (1, 2),
       padH = 3, padW = 2, inputShape = Shape(3, 24, 32))
     layer.build(Shape(2, 3, 24, 32))
-    val input = Tensor[Float](2, 3, 24, 32).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 3, 24, 32).rand()
     runSerializationTest(layer, input)
   }
 }

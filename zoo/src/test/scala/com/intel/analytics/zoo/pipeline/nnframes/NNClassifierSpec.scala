@@ -216,7 +216,7 @@ class NNClassifierSpec extends ZooSpecHelper {
       .setBatchSize(4)
 
     val tensorBuffer = new ArrayBuffer[Data]()
-    val input = Tensor[Float](10, 28, 28).apply1(e => Random.nextFloat())
+    val input = Tensor[Float](10, 28, 28).rand()
     val target = model.forward(input).toTensor[Float]
 
     // test against NNClassifierModel

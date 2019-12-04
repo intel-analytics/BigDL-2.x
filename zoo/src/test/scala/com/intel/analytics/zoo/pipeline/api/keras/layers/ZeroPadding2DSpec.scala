@@ -97,7 +97,7 @@ class ZeroPadding2DSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = ZeroPadding2D[Float](padding = (2, 1), inputShape = Shape(2, 8, 8))
     layer.build(Shape(2, 2, 8, 8))
-    val input = Tensor[Float](2, 2, 8, 8).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 2, 8, 8).rand()
     runSerializationTest(layer, input)
   }
 }

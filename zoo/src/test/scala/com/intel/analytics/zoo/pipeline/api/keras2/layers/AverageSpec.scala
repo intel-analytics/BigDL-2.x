@@ -64,9 +64,9 @@ class AverageSerialTest extends ModuleSerializationTest {
     val layer = Average[Float]().inputs(Array(l1, l2, l3))
     val model = Model[Float](Array(l1, l2, l3), layer)
     model.build(Shape(List(Shape(3, 10), Shape(3, 10), Shape(3, 10))))
-    val input1 = Tensor[Float](3, 10).apply1(e => Random.nextFloat())
-    val input2 = Tensor[Float](3, 10).apply1(e => Random.nextFloat())
-    val input3 = Tensor[Float](3, 10).apply1(e => Random.nextFloat())
+    val input1 = Tensor[Float](3, 10).rand()
+    val input2 = Tensor[Float](3, 10).rand()
+    val input3 = Tensor[Float](3, 10).rand()
     val input = T(1 -> input1, 2 -> input2, 3 -> input3)
     runSerializationTest(model, input)
   }

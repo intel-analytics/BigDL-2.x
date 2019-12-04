@@ -51,7 +51,7 @@ class SoftShrinkSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = SoftShrink[Float](inputShape = Shape(6, 8))
     layer.build(Shape(2, 6, 8))
-    val input = Tensor[Float](2, 6, 8).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 6, 8).rand()
     runSerializationTest(layer, input)
   }
 }

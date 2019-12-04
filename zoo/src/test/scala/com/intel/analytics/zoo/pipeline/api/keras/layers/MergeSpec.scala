@@ -180,8 +180,8 @@ class MergeSerialTest extends ModuleSerializationTest {
     val l2 = InputLayer[Float](inputShape = Shape(4, 8))
     val layer = Merge[Float](layers = List(l1, l2), mode = "sum")
     layer.build(Shape(List(Shape(2, 4, 8), Shape(2, 4, 8))))
-    val input1 = Tensor[Float](2, 4, 8).apply1(e => Random.nextFloat())
-    val input2 = Tensor[Float](2, 4, 8).apply1(e => Random.nextFloat())
+    val input1 = Tensor[Float](2, 4, 8).rand()
+    val input2 = Tensor[Float](2, 4, 8).rand()
     val input = T(1 -> input1, 2 -> input2)
     runSerializationTest(layer, input)
   }

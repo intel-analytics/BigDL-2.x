@@ -69,7 +69,7 @@ class DenseSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = Dense[Float](10, inputShape = Shape(20))
     layer.build(Shape(2, 20))
-    val input = Tensor[Float](2, 20).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 20).rand()
     runSerializationTest(layer, input)
   }
 }

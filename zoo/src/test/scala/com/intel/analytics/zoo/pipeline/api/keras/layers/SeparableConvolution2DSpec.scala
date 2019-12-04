@@ -107,7 +107,7 @@ class SeparableConvolution2DSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = SeparableConvolution2D[Float](1, 2, 2, inputShape = Shape(3, 128, 128))
     layer.build(Shape(2, 3, 128, 128))
-    val input = Tensor[Float](2, 3, 128, 128).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 3, 128, 128).rand()
     runSerializationTest(layer, input)
   }
 }

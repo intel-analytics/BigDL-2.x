@@ -73,7 +73,7 @@ class Deconvolution2DSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = Deconvolution2D[Float](3, 3, 3, inputShape = Shape(3, 24, 24))
     layer.build(Shape(2, 3, 24, 24))
-    val input = Tensor[Float](2, 3, 24, 24).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 3, 24, 24).rand()
     runSerializationTest(layer, input)
   }
 }

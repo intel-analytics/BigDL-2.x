@@ -51,7 +51,7 @@ class ScaleSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = ZScale[Float](Array(2, 1), inputShape = Shape(3))
     layer.build(Shape(2, 3))
-    val input = Tensor[Float](2, 3).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 3).rand()
     runSerializationTest(layer, input)
   }
 }

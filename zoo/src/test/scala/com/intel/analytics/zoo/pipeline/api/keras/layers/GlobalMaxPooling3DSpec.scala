@@ -48,7 +48,7 @@ class GlobalMaxPooling3DSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = GlobalMaxPooling3D[Float](inputShape = Shape(12, 24, 3, 6))
     layer.build(Shape(2, 12, 24, 3, 6))
-    val input = Tensor[Float](2, 12, 24, 3, 6).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 12, 24, 3, 6).rand()
     runSerializationTest(layer, input)
   }
 }

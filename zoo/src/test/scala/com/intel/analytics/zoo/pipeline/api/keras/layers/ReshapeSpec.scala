@@ -64,7 +64,7 @@ class ReshapeSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = Reshape[Float](Array(4, 15), inputShape = Shape(3, 4, 5))
     layer.build(Shape(2, 3, 4, 5))
-    val input = Tensor[Float](2, 3, 4, 5).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 3, 4, 5).rand()
     runSerializationTest(layer, input)
   }
 }

@@ -88,7 +88,7 @@ class Convolution2DSerialTest extends ModuleSerializationTest {
     val layer = Convolution2D[Float](64, 2, 5, inputShape =
       Shape(3, 24, 24))
     layer.build(Shape(2, 3, 24, 24))
-    val input = Tensor[Float](2, 3, 24, 24).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 3, 24, 24).rand()
     runSerializationTest(layer, input)
   }
 }

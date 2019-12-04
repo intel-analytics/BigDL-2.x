@@ -54,7 +54,7 @@ class GraphNetSerialTest extends ModuleSerializationTest {
     val tmpFile = ZooSpecHelper.createTmpFile()
     model.saveModule(tmpFile.getAbsolutePath, overWrite = true)
     val reloadModel = Net.loadBigDL[Float](tmpFile.getAbsolutePath)
-    val inputData = Tensor[Float](2, 1, 28, 28).apply1(_ => Random.nextFloat())
+    val inputData = Tensor[Float](2, 1, 28, 28).rand()
     ZooSpecHelper.compareOutputAndGradInput(
       model.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],
       reloadModel.asInstanceOf[AbstractModule[Tensor[Float], Tensor[Float], Float]],

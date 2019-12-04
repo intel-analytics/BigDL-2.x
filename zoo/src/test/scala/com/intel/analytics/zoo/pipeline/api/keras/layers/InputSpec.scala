@@ -29,7 +29,7 @@ class InputSerialTest extends ModuleSerializationTest {
     val input = InputLayer[Float](inputShape = Shape(20))
     val seq = Sequential[Float]()
     seq.add(input)
-    val inputData = Tensor[Float](2, 20).apply1(_ => Random.nextFloat())
+    val inputData = Tensor[Float](2, 20).rand()
     runSerializationTest(seq, inputData)
   }
 }

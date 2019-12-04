@@ -49,7 +49,7 @@ class GlobalAveragePooling3DSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = GlobalAveragePooling3D[Float](inputShape = Shape(3, 4, 5, 6))
     layer.build(Shape(2, 3, 4, 5, 6))
-    val input = Tensor[Float](2, 3, 4, 5, 6).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 3, 4, 5, 6).rand()
     runSerializationTest(layer, input)
   }
 }

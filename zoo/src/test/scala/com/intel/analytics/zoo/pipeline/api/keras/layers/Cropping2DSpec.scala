@@ -63,7 +63,7 @@ class Cropping2DSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = Cropping2D[Float](inputShape = Shape(3, 8, 12))
     layer.build(Shape(2, 3, 8, 12))
-    val input = Tensor[Float](2, 3, 8, 12).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 3, 8, 12).rand()
     runSerializationTest(layer, input)
   }
 }

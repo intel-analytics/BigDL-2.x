@@ -50,7 +50,7 @@ class LRN2DSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = LRN2D[Float](inputShape = Shape(3, 32, 32))
     layer.build(Shape(2, 3, 32, 32))
-    val input = Tensor[Float](2, 3, 32, 32).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 3, 32, 32).rand()
     runSerializationTest(layer, input)
   }
 }

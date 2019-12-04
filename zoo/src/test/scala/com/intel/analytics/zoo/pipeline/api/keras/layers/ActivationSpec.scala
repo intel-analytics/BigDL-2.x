@@ -213,7 +213,7 @@ class ActivationSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = Activation[Float]("tanh", inputShape = Shape(4, 5))
     layer.build(Shape(2, 4, 5))
-    val input = Tensor[Float](2, 4, 5).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 4, 5).rand()
     runSerializationTest(layer, input)
   }
 }

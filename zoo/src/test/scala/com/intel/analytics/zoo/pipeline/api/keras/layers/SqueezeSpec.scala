@@ -85,7 +85,7 @@ class SqueezeSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val squeeze = ZSqueeze[Float](dim = 2, inputShape = Shape(1, 1, 3))
     squeeze.build(Shape(2, 1, 1, 3))
-    val input = Tensor[Float](2, 1, 1, 3).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 1, 1, 3).rand()
     runSerializationTest(squeeze, input)
   }
 }

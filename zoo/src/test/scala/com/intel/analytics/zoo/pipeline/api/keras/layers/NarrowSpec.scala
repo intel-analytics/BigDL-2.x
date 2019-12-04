@@ -125,7 +125,7 @@ class NarrowSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = ZNarrow[Float](1, 1, inputShape = Shape(5, 6))
     layer.build(Shape(2, 5, 6))
-    val input = Tensor[Float](2, 5, 6).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 5, 6).rand()
     runSerializationTest(layer, input)
   }
 }

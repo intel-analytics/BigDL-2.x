@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.optim.{Adam, Optimizer, Top1Accuracy, Trigger}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.{RandomGenerator, T, Table}
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
@@ -305,8 +305,9 @@ class WideAndDeepSerialTest extends ModuleSerializationTest {
       embedInDims = Array(21, 21),
       embedOutDims = Array(4, 4))
     val model = WideAndDeep[Float]("deep", 5, columnInfo)
+    val rng = RandomGenerator.RNG
     val input = Tensor[Float](Array(100, 2))
-      .fill(new Random(System.nanoTime()).nextInt(20).toFloat + 1)
+      .apply1(_ => rng.uniform(1, 21).toInt)
     ZooSpecHelper.testZooModelLoadSave(model, input, WideAndDeep.loadModel[Float])
   }
 }

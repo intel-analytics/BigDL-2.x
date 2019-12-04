@@ -493,7 +493,7 @@ class InternalRecurrentSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val InternalRecurrent = new InternalRecurrent[Float]().setName("InternalRecurrent")
       .add(RnnCell[Float](5, 4, Tanh[Float]()))
-    val input = Tensor[Float](Array(10, 5, 5)).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](Array(10, 5, 5)).rand()
     runSerializationTest(InternalRecurrent, input)
   }
 }

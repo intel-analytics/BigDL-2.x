@@ -54,7 +54,7 @@ class NegativeSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = Negative[Float](inputShape = Shape(4, 8))
     layer.build(Shape(2, 4, 8))
-    val input = Tensor[Float](2, 4, 8).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 4, 8).rand()
     runSerializationTest(layer, input)
   }
 }

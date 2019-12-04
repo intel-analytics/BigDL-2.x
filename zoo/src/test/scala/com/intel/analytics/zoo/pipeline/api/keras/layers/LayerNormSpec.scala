@@ -26,7 +26,7 @@ class LayerNormSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layerNorm = new LayerNorm[Float](4).setName("layerNorm")
     layerNorm.build(Shape(2, 2, 4))
-    val input = Tensor[Float](2, 2, 4).apply1(e => Random.nextFloat())
+    val input = Tensor[Float](2, 2, 4).rand()
     runSerializationTest(layerNorm, input)
   }
 }

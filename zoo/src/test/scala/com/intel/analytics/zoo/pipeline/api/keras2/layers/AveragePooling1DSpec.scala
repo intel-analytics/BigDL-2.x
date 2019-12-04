@@ -67,7 +67,7 @@ class AveragePooling1DSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = AveragePooling1D[Float](inputShape = Shape(12, 16))
     layer.build(Shape(2, 12, 16))
-    val input = Tensor[Float](2, 12, 16).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 12, 16).rand()
     runSerializationTest(layer, input)
   }
 }

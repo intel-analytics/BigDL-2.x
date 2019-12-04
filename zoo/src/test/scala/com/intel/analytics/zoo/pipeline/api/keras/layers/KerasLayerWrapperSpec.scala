@@ -42,7 +42,7 @@ class KerasLayerWrapperSerialTest extends ModuleSerializationTest {
     val layer = new KerasLayerWrapper[Float](ReLU[Float]()
       .asInstanceOf[AbstractModule[Activity, Activity, Float]], inputShape = Shape(8, 12))
     layer.build(Shape(3, 8, 12))
-    val input = Tensor[Float](3, 8, 12).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](3, 8, 12).rand()
     runSerializationTest(layer, input)
   }
 }

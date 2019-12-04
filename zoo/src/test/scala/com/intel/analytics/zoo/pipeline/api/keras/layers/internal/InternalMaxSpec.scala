@@ -24,7 +24,7 @@ import scala.util.Random
 class InternalMaxSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val max = InternalMax[Float]().setName("max_layer")
-    val input = Tensor[Float](2, 3).apply1(e => Random.nextFloat())
+    val input = Tensor[Float](2, 3).rand()
     runSerializationTest(max, input)
   }
 }

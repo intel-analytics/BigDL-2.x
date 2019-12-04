@@ -54,7 +54,7 @@ class ExpandDimSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val ss = new ExpandDim[Float](inputShape = Shape(3, 2))
     ss.build(Shape(2, 3, 2))
-    val input = Tensor[Float](2, 3, 2).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 3, 2).rand()
     runSerializationTest(ss, input)
   }
 }

@@ -62,7 +62,7 @@ class SReLUSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = SReLU[Float](sharedAxes = Array(1, 2), inputShape = Shape(4, 32))
     layer.build(Shape(2, 4, 32))
-    val input = Tensor[Float](2, 4, 32).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 4, 32).rand()
     runSerializationTest(layer, input)
   }
 }

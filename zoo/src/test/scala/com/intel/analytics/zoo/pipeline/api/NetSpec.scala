@@ -51,7 +51,8 @@ class NetSpec extends ZooSpecHelper{
 
     val zooModel = Net.loadCaffe[Float](dd, ww)
 
-    val inputTensor = Tensor[Float](1, 3, 224, 224).apply1(e => Random.nextFloat())
+    val inputTensor = Tensor[Float](1, 3, 224, 224)
+      .apply1(_ => RandomGenerator.RNG.uniform(0, 1).toFloat)
     val zooResult = zooModel.forward(inputTensor)
     val bigDlResult = bigDlModel.forward(inputTensor)
     zooResult should be (bigDlResult)

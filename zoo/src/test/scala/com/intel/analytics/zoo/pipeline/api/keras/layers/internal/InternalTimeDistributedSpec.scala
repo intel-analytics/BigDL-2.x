@@ -271,7 +271,7 @@ class InternalTimeDistributedSerialTest extends ModuleSerializationTest {
     val InternalTimeDistributed = new InternalTimeDistributed[Float](Linear[Float](5, 5)
       .asInstanceOf[AbstractModule[Activity, Tensor[Float], Float]]).
       setName("InternalTimeDistributed")
-    val input = Tensor[Float](2, 5, 5).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 5, 5).rand()
     runSerializationTest(
       InternalTimeDistributed, input)
   }

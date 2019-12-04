@@ -112,7 +112,7 @@ class InternalLayerNormSpec extends FlatSpec with BeforeAndAfter with Matchers {
 class InternalLayerNormSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layerNorm = new InternalLayerNorm[Float](4).setName("layerNorm")
-    val input = Tensor[Float](2, 2, 4).apply1(e => Random.nextFloat())
+    val input = Tensor[Float](2, 2, 4).rand()
     runSerializationTest(layerNorm, input)
   }
 }
