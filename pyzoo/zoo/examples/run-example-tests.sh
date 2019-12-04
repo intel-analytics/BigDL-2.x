@@ -12,6 +12,55 @@ export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
 
 set -e
 
+
+echo " start example test for customlooss"
+${SPARK_HOME}/bin/spark-submit \
+    --master ${MASTER} \
+    --driver-memory 2g \
+    --executor-memory 2g \
+    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/customloss.py \
+    --jars ${ANALYTICS_ZOO_JAR} \
+    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/customloss.py
+
+echo "#9 start example test for openvino"
+#timer
+start=$(date "+%s")
+if [ -f analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28.tar.gz ]
+then
+   echo "analytics-zoo-models/faster_rcnn_resnet101_coco.model already exists."
+else
+   wget $FTP_URI/analytics-zoo-models/openvino/faster_rcnn_resnet101_coco_2018_01_28.tar.gz \
+    -P analytics-zoo-models
+   tar zxf analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28.tar.gz -C analytics-zoo-models/
+fi
+${SPARK_HOME}/bin/spark-submit \
+    --master ${MASTER} \
+    --driver-memory 10g \
+    --executor-memory 10g \
+    --properties-file ${ANALYTICS_ZOO_CONF} \
+    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
+    --jars ${ANALYTICS_ZOO_JAR} \
+    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
+    --image hdfs://172.168.2.181:9000/kaggle/train_100 \
+    --model analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28
+now=$(date "+%s")
+time9=$((now-start))
+
+echo "#10 start example for attention"
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
+    --master ${MASTER} \
+    --driver-memory 20g \
+    --executor-memory 100g \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/transformer.py
+now=$(date "+%s")
+time10=$((now-start))
+
 echo "#1 start example test for textclassification"
 #timer
 start=$(date "+%s")
@@ -51,14 +100,15 @@ echo "#2 start example test for customized loss and layer (Funtional API)"
 start=$(date "+%s")
 ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
-    --driver-memory 20g \
-    --executor-memory 20g \
+    --driver-memory 2g \
+    --executor-memory 2g \
     --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/custom.py \
     --jars ${ANALYTICS_ZOO_JAR} \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/custom.py \
     --nb_epoch 2
+
 now=$(date "+%s")
 time2=$((now-start))
 
@@ -400,6 +450,7 @@ ${SPARK_HOME}/bin/spark-submit \
 
 now=$(date "+%s")
 time8=$((now-start))
+
 echo "#1 textclassification time used:$time1 seconds"
 echo "#2 customized loss and layer time used:$time2 seconds"
 echo "#3 image-classification time used:$time3 seconds"
@@ -408,3 +459,4 @@ echo "#5 nnframes time used:$time5 seconds"
 echo "#6 tensorflow time used:$time6 seconds"
 echo "#7 anomalydetection time used:$time7 seconds"
 echo "#8 qaranker time used:$time8 seconds"
+echo "#9 openvino time used:$time9 seconds"

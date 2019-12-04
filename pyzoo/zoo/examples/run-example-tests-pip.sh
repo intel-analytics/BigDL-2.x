@@ -6,6 +6,54 @@ clear_up () {
     pip uninstall -y pyspark
 }
 
+echo "start example test for openvino"
+start=$(date "+%s")
+if [ -f analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28.tar.gz ]
+then
+   echo "analytics-zoo-models/faster_rcnn_resnet101_coco.model already exists."
+else
+   wget $FTP_URI/analytics-zoo-models/openvino/faster_rcnn_resnet101_coco_2018_01_28.tar.gz \
+    -P analytics-zoo-models
+   tar zxf analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28.tar.gz -C analytics-zoo-models/
+fi
+
+export SPARK_DRIVER_MEMORY=10g
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
+    --image hdfs://172.168.2.181:9000/kaggle/train_100 \
+    --model analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "openvino failed"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time9=$((now-start))
+echo "openvino time used:$time9 seconds"
+
+echo "start example test for attention"
+start=$(date "+%s")
+
+export SPARK_DRIVER_MEMORY=20g
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/transformer.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "attention failed"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time10=$((now-start))
+echo "attention time used:$time10 seconds"
+
 echo "start example test for textclassification"
 start=$(date "+%s")
 
