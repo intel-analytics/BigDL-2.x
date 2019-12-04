@@ -208,6 +208,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
    --driver-memory 10g \
    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/inception/inception.py \
    --maxIteration 20 \
+   -b 8 \
    -f hdfs://172.168.2.181:9000/imagenet-small
 
 echo "start example test for pytorch SimpleTrainingExample"
