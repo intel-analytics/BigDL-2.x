@@ -47,7 +47,7 @@ ENV PATH			${JAVA_HOME}/bin:${CONDA_HOME}/bin:${PATH}
 
 RUN wget https://oss.sonatype.org/content/repositories/public/com/redislabs/spark-redis/2.4.0/spark-redis-2.4.0-jar-with-dependencies.jar
 
-RUN wget https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo
+RUN wget https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/
 
 ADD ./docker docker
 
