@@ -26,13 +26,11 @@ RUN wget http://download.redis.io/releases/redis-5.0.5.tar.gz && \
     make && \
     cd ..
 
-ARG ANALYTICS_ZOO_VERSION=0.5.1
-ARG BIGDL_VERSION=0.8.0
 ARG SPARK_VERSION=2.4.0 
+ARG BIGDL_VERSION=0.10.0
+ARG ZOO_VERSION=0.7.0
 
-ENV ANALYTICS_ZOO_VERSION 	$ANALYTICS_ZOO_VERSION
 ENV SPARK_VERSION		$SPARK_VERSION
-ENV BIGDL_VERSION		$BIGDL_VERSION
 
 #spark
 RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
@@ -40,21 +38,17 @@ RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SP
     mv spark-${SPARK_VERSION}-bin-hadoop2.7 spark-${SPARK_VERSION} && \
     rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz
 
-ENV SOURCE_QUEUE		source
-ENV TARGET_QUEUE		target
-ENV MODEL_PATH			resources/deploy_overlap.prototxt
-ENV WEIGHT_PATH			resources/bvlc.caffemodel
-
-ENV SPARK_OPTS			"--master local[*]"
-ENV REDIS_HOST			loaclhost
-ENV REDIS_PORT			6379
 
 ENV SPARK_HOME			/opt/work/spark-${SPARK_VERSION}
 ENV ANALYTICS_ZOO_HOME		/opt/work/analytics-zoo-${ANALYTICS_ZOO_VERSION}/dist
 ENV JAVA_HOME			/opt/jdk
-ENV CONDA_HOME			/opt/work/conda
+
 ENV PATH			${JAVA_HOME}/bin:${CONDA_HOME}/bin:${PATH}
-    
+
+RUN wget https://oss.sonatype.org/content/repositories/public/com/redislabs/spark-redis/2.4.0/spark-redis-2.4.0-jar-with-dependencies.jar
+
+RUN wget https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo
+
 ADD ./docker docker
 
 ADD ./zoo-cluster-serving.sh /opt/work
