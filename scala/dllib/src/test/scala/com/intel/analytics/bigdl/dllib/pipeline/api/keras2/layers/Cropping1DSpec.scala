@@ -23,7 +23,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.{Keras2Test, KerasBaseS
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
-import scala.util.Random
 
 class Cropping1DSpec extends KerasBaseSpec {
 
@@ -49,7 +48,7 @@ class Cropping1DSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = Cropping1D[Float](inputShape = Shape(5, 6))
     layer.build(Shape(2, 5, 6))
-    val input = Tensor[Float](2, 5, 6).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 5, 6).rand()
     runSerializationTest(layer, input)
   }
 }

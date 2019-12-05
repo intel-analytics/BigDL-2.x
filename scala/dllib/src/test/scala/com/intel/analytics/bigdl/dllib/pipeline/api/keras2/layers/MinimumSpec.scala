@@ -24,8 +24,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import com.intel.analytics.zoo.pipeline.api.keras2.layers.Minimum.minimum
 
-import scala.util.Random
-
 
 class MinimumSpec extends KerasBaseSpec {
 
@@ -62,8 +60,8 @@ class MinimumSerialTest extends ModuleSerializationTest {
     val layer = Minimum[Float]().inputs(Array(l1, l2))
     val model = Model[Float](Array(l1, l2), layer)
     model.build(Shape(List(Shape(3, 8), Shape(3, 8))))
-    val input1 = Tensor[Float](3, 8).apply1(e => Random.nextFloat())
-    val input2 = Tensor[Float](3, 8).apply1(e => Random.nextFloat())
+    val input1 = Tensor[Float](3, 8).rand()
+    val input2 = Tensor[Float](3, 8).rand()
     val input = T(1 -> input1, 2 -> input2)
     runSerializationTest(model, input)
   }

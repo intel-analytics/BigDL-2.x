@@ -30,7 +30,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential, Model => ZModel}
 import com.intel.analytics.zoo.pipeline.api.net.TFNet
 
-import scala.util.Random
 
 class NetSpec extends ZooSpecHelper{
 
@@ -51,7 +50,7 @@ class NetSpec extends ZooSpecHelper{
 
     val zooModel = Net.loadCaffe[Float](dd, ww)
 
-    val inputTensor = Tensor[Float](1, 3, 224, 224).apply1(e => Random.nextFloat())
+    val inputTensor = Tensor[Float](1, 3, 224, 224).rand()
     val zooResult = zooModel.forward(inputTensor)
     val bigDlResult = bigDlModel.forward(inputTensor)
     zooResult should be (bigDlResult)
