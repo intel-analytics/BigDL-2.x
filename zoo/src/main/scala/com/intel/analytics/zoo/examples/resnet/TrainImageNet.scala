@@ -51,7 +51,6 @@ object TrainImageNet {
   }
 
 
-
   def main(args: Array[String]): Unit = {
     trainParser.parse(args, new TrainParams()).map(param => {
       // initial zoo context

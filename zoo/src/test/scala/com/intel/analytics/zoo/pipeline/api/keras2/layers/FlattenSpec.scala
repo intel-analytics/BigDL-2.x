@@ -23,7 +23,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.{Keras2Test, KerasBaseS
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
-import scala.util.Random
 
 class FlattenSpec extends KerasBaseSpec {
 
@@ -49,7 +48,7 @@ class FlattenSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val layer = Flatten[Float](inputShape = Shape(3, 4, 5))
     layer.build(Shape(2, 3, 4, 5))
-    val input = Tensor[Float](2, 3, 4, 5).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 3, 4, 5).rand()
     runSerializationTest(layer, input)
   }
 }
