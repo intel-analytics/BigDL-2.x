@@ -49,7 +49,7 @@ def to_sample_rdd(x, y, sc, num_slices=None):
 
 class TFNet(Layer):
     def __init__(self, path, input_names=None, output_names=None,
-                 tf_session_config=None, jvalue= None, bigdl_type="float"):
+                 tf_session_config=None, jvalue=None, bigdl_type="float"):
 
         if jvalue is not None:
             super(TFNet, self).__init__(jvalue, bigdl_type)
@@ -162,11 +162,11 @@ class TFNet(Layer):
         Create a TFNet from an TensorFlow saved model
         :param model_path: the path to the SavedModel path
         :param inputs: a list input tensor names of this model, you may want to use TensorFlow's
-                      command line tool to inspect the saved model to find the input tensor names e.g.
-                      `saved_model_cli show --dir {saved_model_path} --all`
+                      command line tool to inspect the saved model to find the input tensor
+                      names e.g. `saved_model_cli show --dir {saved_model_path} --all`
         :param outputs: a list output tensor names of this model, you may want to use TensorFlow's
-                      command line tool to inspect the saved model to find the output tensorf names e.g.
-                      `saved_model_cli show --dir {saved_model_path} --all`
+                      command line tool to inspect the saved model to find the output tensor
+                      names e.g. `saved_model_cli show --dir {saved_model_path} --all`
         :param tag: the tag to load in the saved model, default to "server"
         :param tf_session_config: an optional tf.ConfigProto object to
                        set the session config in java side.
