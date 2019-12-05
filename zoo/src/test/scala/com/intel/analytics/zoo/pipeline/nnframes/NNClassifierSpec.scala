@@ -42,7 +42,6 @@ import org.apache.spark.sql.{DataFrame, SQLContext}
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.io.Path
 
-
 class NNClassifierSpec extends ZooSpecHelper {
   var sc : SparkContext = _
   var sqlContext : SQLContext = _

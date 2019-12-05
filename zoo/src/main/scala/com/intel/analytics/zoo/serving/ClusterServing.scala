@@ -37,7 +37,7 @@ object ClusterServing {
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
 
 
-def main(args: Array[String]): Unit = {
+  def main(args: Array[String]): Unit = {
 
     val helper = new ClusterServingHelper()
     helper.initArgs()
