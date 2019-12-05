@@ -205,7 +205,7 @@ class TestTextSet:
         assert sorted(distributed_set.get_labels().collect()) == [0, 0, 1]
         assert distributed_set.get_samples().collect() == [None, None, None]
         assert distributed_set.get_predicts().collect() ==\
-               [(uri, None) for uri in distributed_set.get_uris().collect()]
+            [(uri, None) for uri in distributed_set.get_uris().collect()]
 
     def test_read_csv_parquet(self):
         text_set = TextSet.read_csv(self.qa_path + "/question_corpus.csv", self.sc)
