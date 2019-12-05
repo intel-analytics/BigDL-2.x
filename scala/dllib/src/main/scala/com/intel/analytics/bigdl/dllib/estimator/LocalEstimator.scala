@@ -21,11 +21,11 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.utils.ThreadPool
+import com.intel.analytics.bigdl.utils.{RandomGenerator, ThreadPool}
 import org.slf4j.LoggerFactory
 
 import scala.reflect.ClassTag
-import scala.util.Random
+
 
 /**
  * This is a pojo style local Estimator, will fit, train, evaluate on pojo data set.
@@ -292,7 +292,7 @@ case class LocalEstimator(model: AbstractModule[Activity, Activity, Float],
   : List[MiniBatch[Float]] = {
     val shuffledData: Array[T] = timing("shuffle data") {
       if (ifShuffle) {
-        val randomIndex = Random.nextInt(data.length)
+        val randomIndex = RandomGenerator.RNG.uniform(0, data.length).toInt
         val (left, right) = data.splitAt(randomIndex)
         right ++ left
       } else {
