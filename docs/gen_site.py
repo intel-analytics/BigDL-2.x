@@ -32,20 +32,15 @@ from subprocess import Popen, PIPE
 import subprocess
 
 
-def run_cmd(cmds, err_msg, s=False):
-    cmd = cmds
-    if s:
-        cmd = ' '.join(cmds)
+def run_process(p, err_msg):
     try:
-        # print cmd
-        p = Popen(cmd, shell=s)
         p.communicate()
         if p.returncode != 0:
-            print err_msg
+            print(err_msg)
             sys.exit(1)
     except OSError as e:
-        print err_msg
-        print e.strerror
+        print(err_msg)
+        print(e.strerror)
         sys.exit(1)
 
 parser = argparse.ArgumentParser(description='Process Analytics Zoo docs.')
@@ -78,75 +73,74 @@ dir_name = os.path.dirname(script_path)
 os.chdir(dir_name)
 
 # check if mkdoc is installed
-run_cmd(['mkdocs', '--version'],
+run_process(Popen(['mkdocs', '--version']),
     'Please install mkdocs and run this script again\n\te.g., pip install mkdocs')
 
 # refresh local docs repo
 if not (local_doc and os.path.isdir("/tmp/zoo-doc")):
-    run_cmd(['rm', '-rf', '/tmp/zoo-doc'],
+    run_process(Popen(['rm', '-rf', '/tmp/zoo-doc']),
         'rm doc repo error')
-    run_cmd(['git', 'clone', 'https://github.com/analytics-zoo/analytics-zoo.github.io.git', '/tmp/zoo-doc'],
+    run_process(Popen(['git', 'clone', 'https://github.com/analytics-zoo/analytics-zoo.github.io.git', '/tmp/zoo-doc']),
         'git clone doc repo error')
 
 # refresh theme folder
-run_cmd(['rm', '-rf', '{}/mkdocs_windmill'.format(dir_name)],
+run_process(Popen(['rm', '-rf', '{}/mkdocs_windmill'.format(dir_name)]),
     'rm theme folder error')
-run_cmd(['cp', '-r', '/tmp/zoo-doc/mkdocs_windmill', dir_name],
+run_process(Popen(['cp', '-r', '/tmp/zoo-doc/mkdocs_windmill', dir_name]),
     'mv theme folder error')
 
 # refresh css file
-run_cmd(['cp', '/tmp/zoo-doc/extra.css', '{}/docs'.format(dir_name)],
+run_process(Popen(['cp', '/tmp/zoo-doc/extra.css', '{}/docs'.format(dir_name)]),
     'mv theme folder error')
 
 # mkdocs build
-run_cmd(['mkdocs', 'build'],
+run_process(Popen(['mkdocs', 'build']),
     'mkdocs build error')
 
 # replace resources folder in site
-run_cmd(['cp', '/tmp/zoo-doc/css/*', '{}/site/css'.format(dir_name)],
-    'mv theme folder error', s=True)
-run_cmd(['cp', '/tmp/zoo-doc/js/*', '{}/site/js'.format(dir_name)],
-    'mv theme folder error', s=True)
-run_cmd(['cp', '/tmp/zoo-doc/fonts/*', '{}/site/fonts'.format(dir_name)],
-    'mv theme folder error', s=True)
-run_cmd(['cp', '/tmp/zoo-doc/img/*', '{}/site/img'.format(dir_name)],
-    'mv theme folder error', s=True)
-run_cmd(['cp', '/tmp/zoo-doc/version-list', '{}/site'.format(dir_name)],
-    'mv theme folder error', s=True)
+run_process(Popen(' '.join(['cp', '/tmp/zoo-doc/css/*', '{}/site/css'.format(dir_name)]), shell=True),
+    'mv theme folder error')
+run_process(Popen(' '.join(['cp', '/tmp/zoo-doc/js/*', '{}/site/js'.format(dir_name)]), shell=True),
+    'mv theme folder error')
+run_process(Popen(' '.join(['cp', '/tmp/zoo-doc/fonts/*', '{}/site/fonts'.format(dir_name)]), shell=True),
+    'mv theme folder error')
+run_process(Popen(' '.join(['cp', '/tmp/zoo-doc/img/*', '{}/site/img'.format(dir_name)]), shell=True),
+    'mv theme folder error')
+run_process(Popen(' '.join(['cp', '/tmp/zoo-doc/version-list', '{}/site'.format(dir_name)]), shell=True),
+    'mv theme folder error')
 
 if scaladocs:
-    print 'build scala doc'
+    print('build scala doc')
     zoo_dir = os.path.dirname(dir_name)
     os.chdir(zoo_dir)
-    run_cmd(['mvn', 'scala:doc'], 'Build scala doc error')
+    run_process(Popen(['mvn', 'scala:doc']), 'Build scala doc error')
     scaladocs_dir = zoo_dir + '/zoo/target/site/scaladocs/'
     target_dir = dir_name + '/site/APIGuide/'
     if (os.path.exists(target_dir) == False):
-        run_cmd(['mkdir', target_dir], 'mkdir APIGuide error')
-    run_cmd(['cp', '-r', scaladocs_dir, target_dir + 'scaladoc/'],
-        'mv scaladocs error', s=True)
+        run_process(Popen(['mkdir', target_dir]), 'mkdir APIGuide error')
+        run_process(Popen(' '.join(['cp', '-r', scaladocs_dir, target_dir + 'scaladoc/']), shell=True),
+        'mv scaladocs error')
 
 if pythondocs:
-    print 'build python'
+    print('build python')
     pyspark_dir = os.path.dirname(dir_name) + '/pyzoo/docs/'
     target_dir = dir_name + '/site/APIGuide/'
     os.chdir(pyspark_dir)
-    run_cmd(['./doc-gen.sh'], 'Build python doc error')
+    run_process(Popen(['./doc-gen.sh']), 'Build python doc error')
     pythondocs_dir = pyspark_dir + '_build/html/'
     if(os.path.exists(target_dir) == False):
-        run_cmd(['mkdir', target_dir], 'mkdir APIGuide error')
-    run_cmd(['cp', '-r', pythondocs_dir, target_dir + 'python-api-doc/'],
-        'mv pythondocs error', s=True)
+        run_process(Popen(['mkdir', target_dir]), 'mkdir APIGuide error')
+    run_process(Popen(' '.join(['cp', '-r', pythondocs_dir, target_dir + 'python-api-doc/']), shell=True),
+                      'mv pythondocs error')
 
 os.chdir(dir_name)
 
 if args.debugport != None:
-    print 'starting mkdoc server in debug mode'
+    print('starting mkdoc server in debug mode')
     addr = '--dev-addr=*:'+str(args.debugport)
-    run_cmd(['mkdocs', 'serve', addr],
-         'mkdocs start serve error')
+    run_process(Popen(['mkdocs', 'serve', addr]), 'mkdocs start serve error')
 
 if args.port != None:
     os.chdir(dir_name + '/site')
-    run_cmd(['python', '-m', 'SimpleHTTPServer', '{}'.format(args.port)],
-        'start http server error')
+    run_process(Popen(['python', '-m', 'SimpleHTTPServer', '{}'.format(args.port)]),
+                'start http server error')
