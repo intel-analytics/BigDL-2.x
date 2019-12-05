@@ -51,7 +51,7 @@ object TrainImageNet {
   }
 
 
-def main(args: Array[String]): Unit = {
+  def main(args: Array[String]): Unit = {
     trainParser.parse(args, new TrainParams()).map(param => {
       // initial zoo context
       val conf = new SparkConf().setAppName("resnet")
