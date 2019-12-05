@@ -176,7 +176,7 @@ class TFNet(Layer):
                             net = TFNet.from_session(sess, inputs, outputs, sess_config)
         :return: a TFNet
         """
-        config_bytes = bytearray([])
+        config_bytes = None
         if tf_session_config is not None:
             import tensorflow as tf
             assert isinstance(tf_session_config, tf.ConfigProto)
