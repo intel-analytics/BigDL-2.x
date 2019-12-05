@@ -55,7 +55,7 @@ class SessionRecommenderSpec extends ZooSpecHelper {
     val ran = RandomGenerator.RNG
     val data = (1 to 100).map { x =>
       val items: Seq[Float] = for (i <- 1 to sessionLength) yield
-        ran.uniform(1, itemCount + 1).toInt.toFloat
+        ran.uniform(1, itemCount).toInt.toFloat
       Tensor(items.toArray, Array(sessionLength)).resize(1, sessionLength)
     }
     data.map { input =>
@@ -73,9 +73,9 @@ class SessionRecommenderSpec extends ZooSpecHelper {
     val ran = RandomGenerator.RNG
     val data = (1 to 100).map { x =>
       val items1: Seq[Float] = for (i <- 1 to sessionLength) yield
-        ran.uniform(1, itemCount + 1).toInt.toFloat
+        ran.uniform(1, itemCount).toInt.toFloat
       val items2: Seq[Float] = for (i <- 1 to historyLength) yield
-        ran.uniform(1, itemCount + 1).toInt.toFloat
+        ran.uniform(1, itemCount).toInt.toFloat
       val input1 = Tensor(items1.toArray, Array(sessionLength)).resize(1, sessionLength)
       val input2 = Tensor(items2.toArray, Array(historyLength)).resize(1, historyLength)
       T(input1, input2)
@@ -96,9 +96,9 @@ class SessionRecommenderSpec extends ZooSpecHelper {
     val data1: Array[Sample[Float]] = (1 to 10)
       .map { x =>
         val items1: Seq[Float] = for (i <- 1 to sessionLength) yield
-          ran.uniform(1, itemCount + 1).toInt.toFloat
+          ran.uniform(1, itemCount).toInt.toFloat
         val items2: Seq[Float] = for (i <- 1 to historyLength) yield
-          ran.uniform(1, itemCount + 1).toInt.toFloat
+          ran.uniform(1, itemCount).toInt.toFloat
         val input1 = Tensor(items1.toArray, Array(sessionLength))
         val input2 = Tensor(items2.toArray, Array(historyLength))
         Sample[Float](Array(input1, input2))
@@ -119,7 +119,6 @@ class SessionRecommenderSpec extends ZooSpecHelper {
   }
 
   "SessionRecommender compile and fit" should "work properly" in {
-
     val itemCount = 100
     val sessionLength = 10
     val historyLength = 5
@@ -129,12 +128,12 @@ class SessionRecommenderSpec extends ZooSpecHelper {
       .map { x =>
         val ran = RandomGenerator.RNG
         val items1: Seq[Float] = for (i <- 1 to sessionLength) yield
-          ran.uniform(1, itemCount + 1).toInt.toFloat
+          ran.uniform(1, itemCount).toInt.toFloat
         val items2: Seq[Float] = for (i <- 1 to historyLength) yield
-          ran.uniform(1, itemCount + 1).toInt.toFloat
+          ran.uniform(1, itemCount).toInt.toFloat
         val input1 = Tensor(items1.toArray, Array(sessionLength))
         val input2 = Tensor(items2.toArray, Array(historyLength))
-        val label = Tensor[Float](1).apply1(_ => ran.uniform(1, itemCount + 1).toInt.toFloat)
+        val label = Tensor[Float](1).apply1(_ => ran.uniform(1, itemCount).toInt.toFloat)
         Sample(Array(input1, input2), Array(label))
       }
     model.compile(optimizer = "rmsprop", loss = "sparse_categorical_crossentropy")
@@ -150,7 +149,7 @@ class SessionRecommenderSerialTest extends ModuleSerializationTest {
     val sessionLength = 10
     val model = SessionRecommender[Float](100, sessionLength = 10)
     val items: Seq[Float] = for (i <- 1 to sessionLength) yield
-      ran.uniform(1, itemCount + 1).toInt.toFloat
+      ran.uniform(1, itemCount).toInt.toFloat
     val data = Tensor(items.toArray, Array(sessionLength)).resize(1, sessionLength)
     ZooSpecHelper.testZooModelLoadSave(model, data, SessionRecommender.loadModel[Float])
   }
