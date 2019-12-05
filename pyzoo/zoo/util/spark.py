@@ -212,5 +212,12 @@ class SparkRunner():
             sc = self._create_sc(submit_args, conf)
         finally:
             if conda_name and penv_archive and pack_env:
-                os.remove(penv_archive)
+
+                def is_safe_path(basedir, path):
+                    return os.path.abspath(path).startswith(basedir)
+
+                import tempfile
+                if is_safe_path(tempfile.gettempdir(), penv_archive):
+                    os.remove(penv_archive)
+                    print("Temp python env archive file removed: {}".format(penv_archive))
         return sc
