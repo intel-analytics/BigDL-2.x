@@ -19,7 +19,7 @@ fi
 
 export SPARK_DRIVER_MEMORY=10g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
-    --image hdfs://172.168.2.181:9000/kaggle/train_100 \
+    --image analytics-zoo-data/miniimageClassification/bathroom/ \
     --model analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28
 
 exit_status=$?

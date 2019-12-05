@@ -12,18 +12,6 @@ export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
 
 set -e
 
-
-echo " start example test for customlooss"
-${SPARK_HOME}/bin/spark-submit \
-    --master ${MASTER} \
-    --driver-memory 2g \
-    --executor-memory 2g \
-    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/customloss.py \
-    --jars ${ANALYTICS_ZOO_JAR} \
-    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/customloss.py
-
 echo "#9 start example test for openvino"
 #timer
 start=$(date "+%s")
@@ -45,7 +33,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
-    --image hdfs://172.168.2.181:9000/kaggle/train_100 \
+    --image analytics-zoo-data/miniimageClassification/bathroom/ \
     --model analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28
 now=$(date "+%s")
 time9=$((now-start))
@@ -108,6 +96,17 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/custom.py \
     --nb_epoch 2
+
+echo " start example test for customloss"
+${SPARK_HOME}/bin/spark-submit \
+    --master ${MASTER} \
+    --driver-memory 2g \
+    --executor-memory 2g \
+    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/customloss.py \
+    --jars ${ANALYTICS_ZOO_JAR} \
+    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/customloss.py
 
 now=$(date "+%s")
 time2=$((now-start))
