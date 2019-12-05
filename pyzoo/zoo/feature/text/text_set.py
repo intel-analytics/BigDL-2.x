@@ -175,9 +175,9 @@ class TextSet(JavaValue):
         """
         predicts = callZooFunc(self.bigdl_type, "textSetGetPredicts", self.value)
         if isinstance(predicts, RDD):
-            return predicts.map(lambda predict: _process_predict_result(predict))
+            return predicts.map(lambda predict: (predict[0], _process_predict_result(predict[1])))
         else:
-            return [_process_predict_result(predict) for predict in predicts]
+            return [(predict[0], _process_predict_result(predict[1])) for predict in predicts]
 
     def get_samples(self):
         """
