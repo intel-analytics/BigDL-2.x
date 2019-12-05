@@ -217,7 +217,6 @@ class ClusterServingHelper {
     // deprecated
     val rmodel = modelType match {
       case "caffe" => Net.loadCaffe[Float](defPath, weightPath)
-      case "tensorflow" => Net.loadTF[Float](weightPath)
       case "torch" => Net.loadTorch[Float](weightPath)
       case "bigdl" => Net.loadBigDL[Float](weightPath)
       case "keras" => Net.load[Float](weightPath)
