@@ -61,6 +61,42 @@ now=$(date "+%s")
 time10=$((now-start))
 echo "attention time used:$time10 seconds"
 
+echo "start example test for vnni/openvino"
+start=$(date "+%s")
+if [ -f analytics-zoo-models/vnni ]
+then
+   echo "analytics-zoo-models/resnet_v1_50.model already exists."
+else
+   wget $FTP_URI/analytics-zoo-models/openvino/vnni \
+    -P analytics-zoo-models
+fi
+if [ -f analytics-zoo-data/data/dogs-vs-cats/minitrain.zip ]
+then
+   echo "analytics-zoo-data/data/dogs-vs-cats/minitrain.zip already exists."
+else
+   # echo "Downloading dogs and cats images"
+   wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/minitrain.zip\
+    -P analytics-zoo-data/data/dogs-vs-cats
+   unzip analytics-zoo-data/data/dogs-vs-cats/minitrain.zip -d analytics-zoo-data/data/dogs-vs-cats
+fi
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/vnni/openvino/predict.py \
+    --model analytics-zoo-models/vnni/resnet_v1_50.xml\
+    --image analytics-zoo-data/data/dogs-vs-cats
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "vnni\openvino failed"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time10=$((now-start))
+echo "vnni\openvino time used:$time11 seconds"
+
 echo "start example test for textclassification"
 start=$(date "+%s")
 

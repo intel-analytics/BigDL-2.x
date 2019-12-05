@@ -31,6 +31,7 @@ else
    wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/minitrain.zip\
     -P analytics-zoo-data/data/dogs-vs-cats
    unzip analytics-zoo-data/data/dogs-vs-cats/minitrain.zip -d analytics-zoo-data/data/dogs-vs-cats
+fi
 ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
     --driver-memory 10g \
@@ -56,6 +57,39 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/transformer.py
 now=$(date "+%s")
 time10=$((now-start))
+
+echo "#11 start example for vnni/openvino"
+#timer
+start=$(date "+%s")
+if [ -f analytics-zoo-models/vnni ]
+then
+   echo "analytics-zoo-models/resnet_v1_50.model already exists."
+else
+   wget $FTP_URI/analytics-zoo-models/openvino/vnni \
+    -P analytics-zoo-models
+fi
+if [ -f analytics-zoo-data/data/dogs-vs-cats/minitrain.zip ]
+then
+   echo "analytics-zoo-data/data/dogs-vs-cats/minitrain.zip already exists."
+else
+   # echo "Downloading dogs and cats images"
+   wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/minitrain.zip\
+    -P analytics-zoo-data/data/dogs-vs-cats
+   unzip analytics-zoo-data/data/dogs-vs-cats/minitrain.zip -d analytics-zoo-data/data/dogs-vs-cats
+fi
+${SPARK_HOME}/bin/spark-submit \
+    --master ${MASTER} \
+    --driver-memory 2g \
+    --executor-memory 2g \
+    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/vnni/openvino/predict.py \
+    --jars ${ANALYTICS_ZOO_JAR} \
+    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/vnni/openvino/predict.py \
+    --model analytics-zoo-models/vnni/resnet_v1_50.xml\
+    --image analytics-zoo-data/data/dogs-vs-cats
+now=$(date "+%s")
+time11=$((now-start))
 
 echo "#1 start example test for textclassification"
 #timer
