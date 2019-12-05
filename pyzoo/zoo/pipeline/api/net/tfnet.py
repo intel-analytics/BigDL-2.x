@@ -49,7 +49,12 @@ def to_sample_rdd(x, y, sc, num_slices=None):
 
 class TFNet(Layer):
     def __init__(self, path, input_names=None, output_names=None,
-                 tf_session_config=None, bigdl_type="float"):
+                 tf_session_config=None, jvalue= None, bigdl_type="float"):
+
+        if jvalue is not None:
+            super(TFNet, self).__init__(jvalue, bigdl_type)
+            return
+
         config_bytes = None
         if tf_session_config is not None:
             import tensorflow as tf
@@ -150,6 +155,36 @@ class TFNet(Layer):
         if not os.path.isdir(folder):
             raise ValueError(folder + " does not exist")
         return TFNet(folder, tf_session_config=tf_session_config)
+
+    @staticmethod
+    def from_saved_model(model_path, inputs, outputs, tag="serve", tf_session_config=None):
+        """
+        Create a TFNet from an TensorFlow saved model
+        :param model_path: the path to the SavedModel path
+        :param inputs: a list input tensor names of this model, you may want to use TensorFlow's
+                      command line tool to inspect the saved model to find the input tensor names e.g.
+                      `saved_model_cli show --dir {saved_model_path} --all`
+        :param outputs: a list output tensor names of this model, you may want to use TensorFlow's
+                      command line tool to inspect the saved model to find the output tensorf names e.g.
+                      `saved_model_cli show --dir {saved_model_path} --all`
+        :param tag: the tag to load in the saved model, default to "server"
+        :param tf_session_config: an optional tf.ConfigProto object to
+                       set the session config in java side.
+                       This config does not necessarily be the same with your current session.
+                       E.g. sess_config = tf.ConfigProto(inter_op_parallelism_threads=1,
+                                                         intra_op_parallelism_threads=1)
+                            net = TFNet.from_session(sess, inputs, outputs, sess_config)
+        :return: a TFNet
+        """
+        config_bytes = bytearray([])
+        if tf_session_config is not None:
+            import tensorflow as tf
+            assert isinstance(tf_session_config, tf.ConfigProto)
+            tf_session_config.use_per_session_threads = True
+            config_bytes = bytearray(tf_session_config.SerializeToString())
+        jvalue = callZooFunc("float", "createTFNetFromSavedModel",
+                             model_path, inputs, outputs, tag, config_bytes)
+        return TFNet(path=None, jvalue=jvalue)
 
     @staticmethod
     def from_session(sess, inputs, outputs,

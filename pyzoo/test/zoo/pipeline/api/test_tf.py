@@ -84,6 +84,12 @@ class TestTF(ZooTestCase):
         self.assert_allclose(output_value, output_value_ref)
         self.assert_allclose(grad_input_value, grad_input_value_ref)
 
+    def test_init_tfnet_from_saved_model(self):
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+        model_path = os.path.join(resource_path, "saved-model-resource")
+        tfnet = TFNet.from_saved_model(model_path, inputs=["flatten_input:0"], outputs=["dense_2/Softmax:0"])
+        tfnet.forward(np.ones(dtype=np.float32, shape=(4, 28, 28, 1)))
+
     def test_tf_net_predict(self):
         resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
         tfnet_path = os.path.join(resource_path, "tfnet")
