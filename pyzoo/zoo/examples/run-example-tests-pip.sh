@@ -6,36 +6,6 @@ clear_up () {
     pip uninstall -y pyspark
 }
 
-echo "start example test for openvino"
-start=$(date "+%s")
-if [ -f analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28.tar.gz ]
-then
-   echo "analytics-zoo-models/faster_rcnn_resnet101_coco.model already exists."
-else
-   wget $FTP_URI/analytics-zoo-models/openvino/faster_rcnn_resnet101_coco_2018_01_28.tar.gz \
-    -P analytics-zoo-models
-   tar zxf analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28.tar.gz -C analytics-zoo-models/
-fi
-if [ -f analytics-zoo-data/data/dogs-vs-cats/minitrain.zip ]
-then
-   echo "analytics-zoo-data/data/dogs-vs-cats/minitrain.zip already exists."
-else
-   # echo "Downloading dogs and cats images"
-   wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/minitrain.zip\
-    -P analytics-zoo-data/data/dogs-vs-cats
-   unzip analytics-zoo-data/data/dogs-vs-cats/minitrain.zip -d analytics-zoo-data/data/dogs-vs-cats
-export SPARK_DRIVER_MEMORY=10g
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
-    --image analytics-zoo-data/data/dogs-vs-cats \
-    --model analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28
-
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "openvino failed"
-    exit $exit_status
-fi
 
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
@@ -79,7 +49,7 @@ else
     -P analytics-zoo-data/data/dogs-vs-cats
    unzip analytics-zoo-data/data/dogs-vs-cats/minitrain.zip -d analytics-zoo-data/data/dogs-vs-cats
 fi
-
+export SPARK_DRIVER_MEMORY=2g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/vnni/openvino/predict.py \
     --model analytics-zoo-models/vnni/resnet_v1_50.xml\
     --image analytics-zoo-data/data/dogs-vs-cats
@@ -92,10 +62,43 @@ then
     exit $exit_status
 fi
 
+
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time10=$((now-start))
 echo "vnni\openvino time used:$time11 seconds"
+
+echo "start example test for openvino"
+start=$(date "+%s")
+if [ -f analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28.tar.gz ]
+then
+   echo "analytics-zoo-models/faster_rcnn_resnet101_coco.model already exists."
+else
+   wget $FTP_URI/analytics-zoo-models/openvino/faster_rcnn_resnet101_coco_2018_01_28.tar.gz \
+    -P analytics-zoo-models
+   tar zxf analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28.tar.gz -C analytics-zoo-models/
+fi
+if [ -f analytics-zoo-data/data/dogs-vs-cats/minitrain.zip ]
+then
+   echo "analytics-zoo-data/data/dogs-vs-cats/minitrain.zip already exists."
+else
+   # echo "Downloading dogs and cats images"
+   wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/minitrain.zip\
+    -P analytics-zoo-data/data/dogs-vs-cats
+   unzip analytics-zoo-data/data/dogs-vs-cats/minitrain.zip -d analytics-zoo-data/data/dogs-vs-cats
+export SPARK_DRIVER_MEMORY=10g
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
+    --image analytics-zoo-data/data/dogs-vs-cats \
+    --model analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "openvino failed"
+    exit $exit_status
+fi
+
 
 echo "start example test for textclassification"
 start=$(date "+%s")
