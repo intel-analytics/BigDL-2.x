@@ -20,7 +20,6 @@ import com.intel.analytics.bigdl.utils.RandomGenerator
 import org.apache.hadoop.fs.Path
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.util.Random
 
 class UtilsSpec extends FlatSpec with Matchers {
   val path: String = getClass.getClassLoader.getResource("qa").getPath

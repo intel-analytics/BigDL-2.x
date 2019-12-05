@@ -37,7 +37,6 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, SQLContext}
 
-import scala.util.Random
 
 class NeuralCFSpec extends ZooSpecHelper {
 
@@ -184,8 +183,7 @@ class NeuralCFSpec extends ZooSpecHelper {
     val trainRdds = data.map(x => x.sample)
 
 
-
-    // Use Estimator API
+// Use Estimator API
     val ncfEst = NeuralCF[Float](100, 100, 5, 5, 5, Array(10, 5), false)
     val ncf = ncfEst.cloneModule()
     val sample2batch = SampleToMiniBatch[Float](458)

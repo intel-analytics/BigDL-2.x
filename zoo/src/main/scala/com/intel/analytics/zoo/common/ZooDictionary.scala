@@ -22,7 +22,7 @@ import org.apache.log4j.Logger
 import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable
-import scala.util.Random
+
 
 class ZooDictionary() extends Dictionary {
   private var _vocabSize: Int = 0

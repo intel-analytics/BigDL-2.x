@@ -20,7 +20,6 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
-import scala.util.Random
 
 class LayerNormSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {

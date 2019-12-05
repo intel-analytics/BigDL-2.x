@@ -22,8 +22,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.models._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Merge.merge
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
-import scala.util.Random
-
 
 class MergeSpec extends KerasBaseSpec {
 

@@ -25,7 +25,7 @@ import com.intel.analytics.bigdl.utils.{RandomGenerator, ThreadPool}
 import org.slf4j.LoggerFactory
 
 import scala.reflect.ClassTag
-import scala.util.Random
+
 
 /**
  * This is a pojo style local Estimator, will fit, train, evaluate on pojo data set.

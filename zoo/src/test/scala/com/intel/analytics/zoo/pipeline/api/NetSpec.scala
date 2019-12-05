@@ -30,7 +30,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential, Model => ZModel}
 import com.intel.analytics.zoo.pipeline.api.net.TFNet
 
-import scala.util.Random
 
 class NetSpec extends ZooSpecHelper{
 

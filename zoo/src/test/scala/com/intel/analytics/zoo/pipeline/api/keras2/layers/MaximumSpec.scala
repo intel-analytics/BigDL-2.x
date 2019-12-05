@@ -24,8 +24,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import com.intel.analytics.zoo.pipeline.api.keras2.layers.Maximum.maximum
 
-import scala.util.Random
-
 
 class MaximumSpec extends KerasBaseSpec {
 

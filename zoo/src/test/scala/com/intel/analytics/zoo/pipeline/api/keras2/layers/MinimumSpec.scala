@@ -24,8 +24,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import com.intel.analytics.zoo.pipeline.api.keras2.layers.Minimum.minimum
 
-import scala.util.Random
-
 
 class MinimumSpec extends KerasBaseSpec {
 

@@ -24,7 +24,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.{Activation, Keras2Test
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
-import scala.util.Random
 
 class ActivationSpec extends KerasBaseSpec {
 

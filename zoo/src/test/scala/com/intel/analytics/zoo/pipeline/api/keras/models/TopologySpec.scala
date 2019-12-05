@@ -26,7 +26,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers._
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
-import scala.util.Random
 
 class ModelSerialTest extends ModuleSerializationTest {
   private def testParameterSerialWithModel(): Unit = {

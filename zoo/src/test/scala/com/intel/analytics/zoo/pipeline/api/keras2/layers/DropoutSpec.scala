@@ -22,7 +22,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.{Keras2Test, KerasBaseS
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
-import scala.util.Random
 
 class DropoutSpec extends KerasBaseSpec {
   "Dropout forward and backward" should "work properly" taggedAs(Keras2Test) in {

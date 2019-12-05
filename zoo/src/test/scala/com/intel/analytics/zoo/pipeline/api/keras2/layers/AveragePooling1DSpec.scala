@@ -24,7 +24,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import com.intel.analytics.zoo.pipeline.api.keras.layers.Keras2Test
 
-import scala.util.Random
 
 class AveragePooling1DSpec extends KerasBaseSpec {
 

@@ -21,7 +21,6 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
-import scala.util.Random
 
 class MaxPooling2DSpec extends KerasBaseSpec {
   "MaxPooling2D NCHW" should "be the same as Keras" in {

@@ -27,7 +27,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerialization
 
 import scala.collection.mutable.ArrayBuffer
 import scala.math._
-import scala.util.Random
+
 
 class InternalRecurrentSpec extends FlatSpec with Matchers {
 

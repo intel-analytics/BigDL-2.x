@@ -21,7 +21,6 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
-import scala.util.Random
 
 class Convolution2DSpec extends KerasBaseSpec {
   def weightConverter(in: Array[Tensor[Float]]): Array[Tensor[Float]] = {

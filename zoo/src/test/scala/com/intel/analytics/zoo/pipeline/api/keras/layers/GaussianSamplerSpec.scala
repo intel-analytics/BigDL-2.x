@@ -24,7 +24,6 @@ import com.intel.analytics.bigdl.utils.{RandomGenerator, Shape, T, Table}
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
-import scala.util.Random
 
 class GaussianSamplerSpec extends ZooSpecHelper {
 

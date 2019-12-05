@@ -23,7 +23,6 @@ import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.util.Random
 
 class InternalTimeDistributedSpec extends FlatSpec with Matchers {
   "A InternalTimeDistributed Module" should "setExtraParam works correctly" in {

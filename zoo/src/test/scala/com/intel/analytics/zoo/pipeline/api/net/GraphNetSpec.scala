@@ -23,7 +23,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
-import scala.util.Random
 
 class GraphNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 

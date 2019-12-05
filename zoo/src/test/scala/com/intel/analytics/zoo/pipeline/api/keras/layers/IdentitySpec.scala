@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Identity => ZIdentity}
 import com.intel.analytics.bigdl.nn.{Module, Identity => BIdentity}
-import scala.util.Random
+
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{RandomGenerator, Shape, T, Table}
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper

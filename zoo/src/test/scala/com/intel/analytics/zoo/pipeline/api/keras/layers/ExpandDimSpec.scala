@@ -22,7 +22,6 @@ import com.intel.analytics.zoo.pipeline.api.autograd.Parameter
 import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 
-import scala.util.Random
 
 class Expand_dimSpec extends KerasBaseSpec {
   //  seq.add(new Expand_dim[Float](dim = 0))

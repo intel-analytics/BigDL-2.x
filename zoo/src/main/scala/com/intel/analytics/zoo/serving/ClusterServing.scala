@@ -29,7 +29,6 @@ import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import redis.clients.jedis.Jedis
 
 
-
 object ClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("akka").setLevel(Level.ERROR)
@@ -38,8 +37,7 @@ object ClusterServing {
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
 
 
-
-  def main(args: Array[String]): Unit = {
+def main(args: Array[String]): Unit = {
 
     val helper = new ClusterServingHelper()
     helper.initArgs()

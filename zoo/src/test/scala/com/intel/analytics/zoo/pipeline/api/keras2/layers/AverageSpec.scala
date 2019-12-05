@@ -23,8 +23,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerialization
 import com.intel.analytics.zoo.pipeline.api.keras2.layers.Average.average
 import com.intel.analytics.zoo.pipeline.api.keras2.layers.Maximum.maximum
 
-import scala.util.Random
-
 
 class AverageSpec extends KerasBaseSpec{
   "Average" should "work properly" taggedAs(Keras2Test) in {

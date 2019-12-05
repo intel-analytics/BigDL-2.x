@@ -34,7 +34,6 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions._
 
-import scala.util.Random
 
 class WideAndDeepSpec extends ZooSpecHelper {
 

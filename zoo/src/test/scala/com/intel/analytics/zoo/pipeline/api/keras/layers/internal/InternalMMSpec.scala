@@ -24,9 +24,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.util.Random
-
-
 
 class InternalMMSpec extends FlatSpec with Matchers {
 

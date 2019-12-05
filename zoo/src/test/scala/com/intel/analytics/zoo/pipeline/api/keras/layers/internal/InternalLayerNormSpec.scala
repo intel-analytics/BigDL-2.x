@@ -20,7 +20,6 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
-import scala.util.Random
 
 class InternalLayerNormSpec extends FlatSpec with BeforeAndAfter with Matchers {
 

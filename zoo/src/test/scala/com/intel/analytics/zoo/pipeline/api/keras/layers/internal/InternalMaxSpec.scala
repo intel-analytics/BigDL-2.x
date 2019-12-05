@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
-import scala.util.Random
 
 
 class InternalMaxSerialTest extends ModuleSerializationTest {
