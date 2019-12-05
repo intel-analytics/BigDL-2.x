@@ -34,13 +34,6 @@ class TestTF(ZooTestCase):
         output = net.forward(np.random.rand(2, 4))
         assert output.shape == (2, 2)
 
-    def test_from_folder_load_tf(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
-        tfnet_path = os.path.join(resource_path, "tfnet")
-        net = Net.load_tf(tfnet_path)
-        output = net.forward(np.random.rand(2, 4))
-        assert output.shape == (2, 2)
-
     def test_for_scalar(self):
         import tensorflow as tf
         with tf.Graph().as_default():
