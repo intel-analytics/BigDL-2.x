@@ -167,11 +167,12 @@ class TextSet(JavaValue):
 
     def get_predicts(self):
         """
-        Get the prediction results of a TextSet (if any).
-        If a text hasn't been predicted by a model, its corresponding position will be None.
+        Get the prediction results (if any) combined with uris (if any) of a TextSet.
+        If a text doesn't have a uri, its corresponding uri will be None.
+        If a text hasn't been predicted by a model, its corresponding prediction will be None.
 
-        :return: List of list of numpy array for LocalTextSet.
-                 RDD of list of numpy array for DistributedTextSet.
+        :return: List of (uri, prediction as a list of numpy array) for LocalTextSet.
+                 RDD of (uri, prediction as a list of numpy array) for DistributedTextSet.
         """
         predicts = callZooFunc(self.bigdl_type, "textSetGetPredicts", self.value)
         if isinstance(predicts, RDD):
