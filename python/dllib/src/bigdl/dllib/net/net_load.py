@@ -112,31 +112,6 @@ class Net:
         return GraphNet.from_jvalue(jmodel, bigdl_type)
 
     @staticmethod
-    def load_tf(path, inputs=None, outputs=None, byte_order="little_endian",
-                bin_file=None, bigdl_type="float"):
-        """
-        Load a pre-trained TensorFlow model.
-        :param path: The path containing the pre-trained model.
-                     OR alternatively, the exported folder path from `export_tf`.
-                     In this case, path should contain 'frozen_inference_graph.pb' and
-                     'graph_meta.json'. You don't need to specify inputs and outputs.
-        :param inputs: The input nodes of this graph.
-        :param outputs: The output nodes of this graph.
-        :param byte_order: Byte_order of the file, `little_endian` or `big_endian`.
-        :param bin_file: Optional bin file produced by bigdl dump_model util function
-                         to store the weights. Default is None.
-        :return: A pre-trained model.
-        """
-        if not inputs and not outputs:  # load_tf from exported folder
-            if not os.path.isdir(path):
-                raise ValueError("load_tf from exported folder requires path to be a folder")
-            jmodel = callZooFunc(bigdl_type, "netLoadTF", path)
-        else:
-            jmodel = callZooFunc(bigdl_type, "netLoadTF", path, inputs, outputs,
-                                 byte_order, bin_file)
-        return GraphNet.from_jvalue(jmodel, bigdl_type)
-
-    @staticmethod
     def load_caffe(def_path, model_path, bigdl_type="float"):
         """
         Load a pre-trained Caffe model.
