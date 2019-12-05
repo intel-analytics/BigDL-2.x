@@ -16,14 +16,10 @@
 package com.intel.analytics.zoo.pipeline.api.net
 
 
-import com.intel.analytics.bigdl.dataset._
-import com.intel.analytics.bigdl.optim.{DistriOptimizer, SGD}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Engine, LayerException, LoggerFilter, T}
-import com.intel.analytics.zoo.common.MaxEpoch
-import com.intel.analytics.zoo.pipeline.api.keras.optimizers.Adam
+import com.intel.analytics.bigdl.utils.{LayerException, T}
 import org.apache.spark.serializer.KryoSerializer
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkConf
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 
@@ -161,39 +157,6 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
     val result = net.forward(stringTensor)
 
     result.toTensor[Float] should be (Tensor[Float](Array(123.0f, 456.0f), Array(2)))
-  }
-
-
-  "TFTraningHelper " should "support training with multiple optimMethods" in {
-    LoggerFilter.redirectSparkInfoLogs()
-    val conf = Engine.createSparkConf()
-      .setAppName("TFTrainingHelper on tf.keras mnist")
-      .setMaster("local[4]")
-    val sc = new SparkContext(conf)
-    Engine.init
-    val resource = getClass.getClassLoader.getResource("mnist_keras")
-    val layer = TFTrainingHelper(resource.getPath)
-    val data = new Array[Sample[Float]](500)
-    var i = 0
-    while (i < data.length) {
-      val input = Tensor[Float](28, 28, 1).rand()
-      val label = Tensor[Float](1).fill(0.0f)
-      data(i) = Sample(Array(input, label), label)
-      i += 1
-    }
-
-    val rdd = sc.parallelize(data)
-    val dataSet = DataSet.rdd(rdd) -> SampleToMiniBatch[Float](128)
-    val optimizer = new DistriOptimizer[Float](
-      layer,
-      dataSet.asInstanceOf[DistributedDataSet[MiniBatch[Float]]],
-      new IdentityCriterion())
-      .setOptimMethods(
-        // ["dense/bias:0", "dense/kernel:0", "dense_1/bias:0", "dense_1/kernel:0",
-        // "dense_2/bias:0", "dense_2/kernel:0"]
-        Map("dense/" -> new SGD[Float](), "dense_" -> new Adam[Float]()))
-      .setEndWhen(MaxEpoch(2))
-    optimizer.optimize()
   }
 
 }

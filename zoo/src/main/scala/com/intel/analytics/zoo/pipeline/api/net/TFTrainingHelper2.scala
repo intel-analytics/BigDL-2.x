@@ -25,6 +25,8 @@ import org.tensorflow.DataType
 import scala.io.Source
 import scala.reflect.io.Path
 
+// variables and gradVariables need to be sorted by name if you want to use multiple
+// optimization methods for a TensorFlow model according to variable names.
 private[zoo] class TFTrainingHelper2(graphRunner: GraphRunner,
                                     checkpointPath: String,
                                     inputs: Array[String],
@@ -54,6 +56,16 @@ private[zoo] class TFTrainingHelper2(graphRunner: GraphRunner,
   private val extraParameters: Array[Tensor[Float]] = initVariables(extraVariables)
 
   private val weights = initVariables(variables)
+
+  private val weightsMap = {
+    val map = collection.mutable.Map[String, Tensor[Float]]()
+    var i = 0
+    while (i < variables.length) {
+      map(variables(i)) = weights(i)
+      i += 1
+    }
+    map
+  }
 
   private def initVariables(variableNames: Array[String]): Array[Tensor[Float]] = {
     val ws = new Array[Tensor[Float]](variableNames.length)
@@ -158,6 +170,17 @@ private[zoo] class TFTrainingHelper2(graphRunner: GraphRunner,
 
     extraParameterRestored = true
 
+  }
+
+  override def apply(name: String): Option[AbstractModule[Activity, Activity, Float]] = {
+    val targetVariables = if (name == getName()) variables else variables.filter(_.startsWith(name))
+    if (targetVariables == null) {
+      None
+    }
+    else {
+      val targetWeights = targetVariables.map(weightsMap)
+      Some(new TFSubGraph(targetWeights))
+    }
   }
 
   override def updateOutput(input: Activity): Activity = {
@@ -304,3 +327,17 @@ case class TrainMeta2(inputs: Array[String],
                      defaultTensorValue: Array[Array[Float]])
 
 
+private class TFSubGraph(
+    weights: Array[Tensor[Float]]) extends AbstractModule[Activity, Activity, Float] {
+  override def updateOutput(input: Activity): Activity = {
+    input
+  }
+
+  override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
+    gradInput
+  }
+
+  override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
+    (weights, weights.map(_ => Tensor[Float]()))
+  }
+}

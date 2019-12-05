@@ -56,27 +56,6 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
     setWeights(ws)
   }
 
-  private val weightsMap = {
-    val map = collection.mutable.Map[String, Tensor[Float]]()
-    var i = 0
-    while (i < variables.length) {
-      map(variables(i)) = weights(i)
-      i += 1
-    }
-    map
-  }
-
-  override def apply(name: String): Option[AbstractModule[Activity, Activity, Float]] = {
-    val targetVariables = if (name == getName()) variables else variables.filter(_.startsWith(name))
-    if (targetVariables == null) {
-      None
-    }
-    else {
-      val targetWeights = targetVariables.map(weightsMap)
-      Some(new TFSubGraph(targetWeights))
-    }
-  }
-
   private val gradWeights = variables.map(_ => Tensor[Float]())
 
 
@@ -161,21 +140,6 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
 
   override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
     gradInput
-  }
-}
-
-private class TFSubGraph(
-    weights: Array[Tensor[Float]]) extends AbstractModule[Activity, Activity, Float] {
-  override def updateOutput(input: Activity): Activity = {
-    input
-  }
-
-  override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
-    gradInput
-  }
-
-  override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
-    (weights, weights.map(_ => Tensor[Float]()))
   }
 }
 
