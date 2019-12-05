@@ -23,6 +23,14 @@ else
     -P analytics-zoo-models
    tar zxf analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28.tar.gz -C analytics-zoo-models/
 fi
+if [ -f analytics-zoo-data/data/dogs-vs-cats/minitrain.zip ]
+then
+   echo "analytics-zoo-data/data/dogs-vs-cats/minitrain.zip already exists."
+else
+   # echo "Downloading dogs and cats images"
+   wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/minitrain.zip\
+    -P analytics-zoo-data/data/dogs-vs-cats
+   unzip analytics-zoo-data/data/dogs-vs-cats/minitrain.zip -d analytics-zoo-data/data/dogs-vs-cats
 ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
     --driver-memory 10g \
@@ -33,7 +41,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
-    --image analytics-zoo-data/miniimageClassification/bathroom/ \
+    --image analytics-zoo-data/data/dogs-vs-cats \
     --model analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28
 now=$(date "+%s")
 time9=$((now-start))
