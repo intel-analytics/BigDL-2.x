@@ -634,7 +634,9 @@ class TFRecordDataset(TFDataset):
         self.shuffle = shuffle
 
     def get_prediction_data(self):
-        return self.train_rdd
+        rdd_wrapper = callZooFunc("float", "zooRDDSampleToMiniBatch",
+                                  self.train_rdd, self.batch_per_thread)
+        return rdd_wrapper.value().toJavaRDD()
 
     def get_evaluation_data(self):
         return self.train_rdd
@@ -663,9 +665,11 @@ class TFTextDataset(TFDataset):
         self.shuffle = shuffle
 
     def get_prediction_data(self):
-        return self.text_set.get_samples().map(
+        rdd = self.text_set.get_samples().map(
             lambda sample: Sample.from_jtensor(features=sample.features,
                                                labels=JTensor.from_ndarray(np.array([0.0]))))
+        rdd_wrapper = callZooFunc("float", "zooRDDSampleToMiniBatch", rdd, self.batch_per_thread)
+        return rdd_wrapper.value().toJavaRDD()
 
     def get_evaluation_data(self):
         return self.text_set.get_samples()
@@ -748,9 +752,10 @@ class TFNdarrayDataset(TFDataset):
         self.shuffle = shuffle
 
     def get_prediction_data(self):
-        data = self.rdd.map(lambda t: Sample.from_ndarray(
+        rdd = self.rdd.map(lambda t: Sample.from_ndarray(
             nest.flatten(t[0] if isinstance(t, tuple) else t), np.array([0.0])))
-        return data
+        rdd_wrapper = callZooFunc("float", "zooRDDSampleToMiniBatch", rdd, self.batch_per_thread)
+        return rdd_wrapper.value().toJavaRDD()
 
     def get_evaluation_data(self):
         if isinstance(self.tensor_structure, tuple):

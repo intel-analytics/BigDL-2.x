@@ -73,5 +73,4 @@ class TFPredictor:
 
     def predict(self):
 
-        return self.tfnet.predict(self.dataset.get_prediction_data(),
-                                  self.dataset.batch_per_thread)
+        return self.tfnet.predict(self.dataset)
