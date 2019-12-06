@@ -634,7 +634,8 @@ class TFRecordDataset(TFDataset):
         self.shuffle = shuffle
 
     def get_prediction_data(self):
-        rdd_wrapper = callZooFunc("float", "zooRDDSampleToMiniBatch", self.train_rdd, self.batch_per_thread)
+        rdd_wrapper = callZooFunc("float", "zooRDDSampleToMiniBatch",
+                                  self.train_rdd, self.batch_per_thread)
         return rdd_wrapper.value().toJavaRDD()
 
     def get_evaluation_data(self):
