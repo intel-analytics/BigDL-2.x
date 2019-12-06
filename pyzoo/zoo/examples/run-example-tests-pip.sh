@@ -271,7 +271,7 @@ then
     exit $exit_status
 fi
 
-echo "start example test for resnet finetune"
+echo "start example test for pytorch resnet finetune"
 export MASTER=local[8]
 export ZOO_NUM_MKLTHREADS=all
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/resnet_finetune/resnet_finetune.py \
@@ -282,7 +282,7 @@ unset ZOO_NUM_MKLTHREADS
 if [ $exit_status -ne 0 ];
 then
     clear_up
-    echo "resnet finetune failed"
+    echo "pytorch resnet finetune failed"
     exit $exit_status
 fi
 
