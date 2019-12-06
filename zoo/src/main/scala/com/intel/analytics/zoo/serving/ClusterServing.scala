@@ -183,7 +183,8 @@ object ClusterServing {
             "Total Records Number", totalCnt, batchId)
         }
 
-        logger.info("Micro batch predict ended, time elapsed " + microBatchLatency.toString)
+        logger.info(microBatchSize +
+          "inputs predict ended, time elapsed " + microBatchLatency.toString)
 
         redisDB.xtrim("image_stream", redisDB.xlen("image_stream"), true)
 
