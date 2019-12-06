@@ -27,7 +27,7 @@ if [ -d analytics-zoo-data/data/object-detection-coco ]
 then
     echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
-    wget $FTP_URI/analytics-zoo-data/data/ -P analytics-zoo-data/data
+    wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
     unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/object-detection-coco
 fi
 ${SPARK_HOME}/bin/spark-submit \
@@ -59,7 +59,7 @@ if [ -d analytics-zoo-data/data/object-detection-coco ]
 then
     echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
-    wget $FTP_URI/analytics-zoo-data/data/ -P analytics-zoo-data/data
+    wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
     unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/object-detection-coco
 fi
 ${SPARK_HOME}/bin/spark-submit \
