@@ -25,6 +25,7 @@ import org.apache.spark.api.java.JavaRDD
 import java.util.{List => JList}
 
 import com.intel.analytics.bigdl.Module
+import com.intel.analytics.bigdl.dataset.MiniBatch
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.optim.LocalPredictor
 import com.intel.analytics.bigdl.utils.Table
@@ -151,6 +152,12 @@ class PythonZoo[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBigDLK
                   x: JavaRDD[Sample],
                   batchPerThread: Int): JavaRDD[JList[Object]] = {
     module.predict(x.rdd.map(toJSample), batchPerThread).map(activityToList).toJavaRDD()
+  }
+
+  def zooPredict(
+                 module: Predictable[T],
+                 x: JavaRDD[MiniBatch[T]]): JavaRDD[JList[Object]] = {
+    module.predictMiniBatch(x.rdd).map(activityToList).toJavaRDD()
   }
 
   def zooForward(model: AbstractModule[Activity, Activity, T],
