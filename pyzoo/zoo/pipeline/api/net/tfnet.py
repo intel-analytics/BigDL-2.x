@@ -27,6 +27,7 @@ from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.common import JTensor, Sample
 from zoo.feature.image import ImageSet
 from zoo.common.utils import callZooFunc
+from zoo.pipeline.api.net.tf_dataset import TFImageDataset, TFDataset
 
 if sys.version >= '3':
     long = int
@@ -117,6 +118,20 @@ class TFNet(Layer):
                                   x,
                                   batch_per_thread)
             return ImageSet(results)
+
+        if isinstance(x, TFImageDataset):
+            results = callZooFunc(self.bigdl_type, "zooPredict",
+                                  self.value,
+                                  x.get_prediction_data(),
+                                  x.batch_per_thread)
+            return ImageSet(results)
+
+        if isinstance(x, TFDataset):
+            results = callZooFunc(self.bigdl_type, "zooPredict",
+                                  self.value,
+                                  x.get_prediction_data())
+            return results.map(lambda result: Layer.convert_output(result))
+
         if distributed:
             if isinstance(x, np.ndarray):
                 data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]), getOrCreateSparkContext())
