@@ -18,21 +18,19 @@ package com.intel.analytics.zoo.pipeline.api.net
 
 import java.nio.FloatBuffer
 
-import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample, Transformer}
+import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, AbstractModule, Activity}
 import com.intel.analytics.bigdl.optim._
-import com.intel.analytics.bigdl.python.api.{PythonBigDLKeras, Sample => JSample}
-import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.transform.vision.image.{FeatureTransformer, ImageFeature}
-import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.Table
 import com.intel.analytics.zoo.feature.common.Preprocessing
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.feature.image.ImageProcessing
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.{Accuracy, BinaryAccuracy, CategoricalAccuracy, SparseCategoricalAccuracy}
-import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
-import org.tensorflow.{Session, Tensor => TTensor}
+import org.tensorflow.{Tensor => TTensor}
 
-import scala.collection.Iterator
 import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.reflect.io.Path

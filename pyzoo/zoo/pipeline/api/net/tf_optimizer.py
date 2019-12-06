@@ -390,6 +390,10 @@ class TFOptimizer:
         TFOptimizer is used for distributed training of TensorFlow
         on Spark/BigDL.
 
+        Note that if grads and variables are not None, then they need to be sorted by name
+        if you want to use multiple optimization methods for a TensorFlow model according to
+        variable names.
+
         :param loss: The loss tensor of the TensorFlow model, should be a scalar
         :param optim_method: the optimization method to be used, such as bigdl.optim.optimizer.Adam
         :param sess: the current TensorFlow Session, if you want to used a pre-trained model, you
@@ -474,6 +478,7 @@ class TFOptimizer:
         else:
             sess = session
         grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
+        grads_vars.sort(key=lambda grad_var: grad_var[1].name)
         variables = []
         grads = []
         for (grad, var) in grads_vars:
@@ -562,6 +567,7 @@ class TFOptimizer:
         inputs = model_inputs + model_targets
 
         variables = keras_model._collected_trainable_weights
+        variables.sort(key=lambda variable: variable.name)
         keras_optimizer = keras_model.optimizer
 
         grads = K.gradients(loss, variables)
