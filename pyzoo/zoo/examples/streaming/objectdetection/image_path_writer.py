@@ -15,9 +15,10 @@
 #
 
 import argparse
-import random
+import uuid
+import sys
 from time import sleep
-from os import listdir, rename, mkdir, remove
+from os import listdir, mkdir, remove, access, R_OK, W_OK
 from os.path import isfile, join
 import shutil
 
@@ -33,21 +34,29 @@ def package_path_to_text(streaming_path, file_path, batch=10, delay=3):
     :return:
     """
     files = []
+
+    if not access(file_path, R_OK):
+        sys.stdout.write('Not allowed!\n')
+        sys.exit()
+
+    if not access(streaming_path, W_OK):
+        sys.stdout.write('Not allowed!\n')
+        sys.exit()
+
     for f in listdir(file_path):
         if isfile(join(file_path, f)):
             files.append(join(file_path, f) + '\n')
     index = 0
     curr = 0
-    tmpDir = join("/tmp", str(random.randint(1, 10000)))
-    mkdir(tmpDir)
-    print("Tmp dir at " + tmpDir)
+    tmp_dir = join("/tmp", str(uuid.uuid4()))
+    mkdir(tmp_dir)
+    print("Tmp dir at " + tmp_dir)
     while curr < len(files):
         last = min(curr + batch, len(files))
         # Because spark textFileStream requires create and move
         # Write to tmp location
-
         batch_file_name = join(streaming_path, str(index))
-        with open(join(tmpDir, str(index) + ".txt"), "w") as text_file:
+        with open(join(tmp_dir, str(index) + ".txt"), "w") as text_file:
             text_file.writelines(files[curr:last])
         # Move to streaming location
         shutil.move(text_file.name,
@@ -56,7 +65,7 @@ def package_path_to_text(streaming_path, file_path, batch=10, delay=3):
         index += 1
         curr = last
         sleep(delay)
-    remove(tmpDir)
+    remove(tmp_dir)
 
 
 if __name__ == "__main__":
