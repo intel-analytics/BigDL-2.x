@@ -28,7 +28,7 @@ then
    echo "analytics-zoo-data/data/dogs-vs-cats/minitrain.zip already exists."
 else
    # echo "Downloading dogs and cats images"
-   wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/minitrain.zip\
+   wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/minitrain.zip \
     -P analytics-zoo-data/data/dogs-vs-cats
    unzip analytics-zoo-data/data/dogs-vs-cats/minitrain.zip -d analytics-zoo-data/data/dogs-vs-cats
 fi
@@ -42,23 +42,12 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
-    --image analytics-zoo-data/data/dogs-vs-cats/minitrain \
+    --image analytics-zoo-data/data/dogs-vs-cats \
     --model analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28
 now=$(date "+%s")
 time9=$((now-start))
 
-echo "#10 start example for attention"
-#timer
-start=$(date "+%s")
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
-    --master ${MASTER} \
-    --driver-memory 20g \
-    --executor-memory 100g \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/transformer.py
-now=$(date "+%s")
-time10=$((now-start))
-
-echo "#11 start example for vnni/openvino"
+echo "#10 start example for vnni/openvino"
 #timer
 start=$(date "+%s")
 if [ -f analytics-zoo-models/vnni ]
@@ -73,7 +62,7 @@ then
    echo "analytics-zoo-data/data/dogs-vs-cats/minitrain.zip already exists."
 else
    # echo "Downloading dogs and cats images"
-   wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/minitrain.zip\
+   wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/minitrain.zip \
     -P analytics-zoo-data/data/dogs-vs-cats
    unzip analytics-zoo-data/data/dogs-vs-cats/minitrain.zip -d analytics-zoo-data/data/dogs-vs-cats
 fi
@@ -86,7 +75,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/vnni/openvino/predict.py \
-    --model analytics-zoo-models/vnni/resnet_v1_50.xml\
+    --model analytics-zoo-models/vnni/resnet_v1_50.xml \
     --image analytics-zoo-data/data/dogs-vs-cats
 now=$(date "+%s")
 time11=$((now-start))

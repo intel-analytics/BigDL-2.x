@@ -26,7 +26,7 @@ else
    unzip analytics-zoo-data/data/dogs-vs-cats/minitrain.zip -d analytics-zoo-data/data/dogs-vs-cats
 export SPARK_DRIVER_MEMORY=10g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
-    --image analytics-zoo-data/data/dogs-vs-cats/minitrain \
+    --image analytics-zoo-data/data/dogs-vs-cats \
     --model analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28
 
 exit_status=$?
@@ -41,25 +41,6 @@ unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time9=$((now-start))
 echo "openvino time used:$time9 seconds"
-
-echo "start example test for attention"
-start=$(date "+%s")
-
-export SPARK_DRIVER_MEMORY=20g
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/transformer.py
-
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "attention failed"
-    exit $exit_status
-fi
-
-unset SPARK_DRIVER_MEMORY
-now=$(date "+%s")
-time10=$((now-start))
-echo "attention time used:$time10 seconds"
 
 echo "start example test for vnni/openvino"
 start=$(date "+%s")
@@ -97,8 +78,6 @@ unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time10=$((now-start))
 echo "vnni\openvino time used:$time11 seconds"
-
-
 
 echo "start example test for textclassification"
 start=$(date "+%s")
