@@ -257,7 +257,7 @@ then
     exit $exit_status
 fi
 
-echo "start example test for mnist traning"
+echo "start example test for pytorch mnist training"
 export SPARK_DRIVER_MEMORY=20g
 export MASTER=local[1]
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/Lenet_mnist.py
@@ -267,19 +267,17 @@ unset SPARK_DRIVER_MEMORY
 if [ $exit_status -ne 0 ];
 then
     clear_up
-    echo "pytorch SimpleTrainingExample failed"
+    echo "pytorch mnist training"
     exit $exit_status
 fi
 
 echo "start example test for resnet finetune"
-export SPARK_DRIVER_MEMORY=20g
 export MASTER=local[8]
 export ZOO_NUM_MKLTHREADS=all
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/resnet_finetune/resnet_finetune.py \
     analytics-zoo-data/data/dogs-vs-cats/samples
 exit_status=$?
 unset MASTER
-unset SPARK_DRIVER_MEMORY
 unset ZOO_NUM_MKLTHREADS
 if [ $exit_status -ne 0 ];
 then
