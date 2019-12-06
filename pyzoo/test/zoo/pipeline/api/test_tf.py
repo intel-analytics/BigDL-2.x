@@ -95,6 +95,15 @@ class TestTF(ZooTestCase):
         output = net.predict(np.random.rand(16, 4), batch_per_thread=5, distributed=False)
         assert output.shape == (16, 2)
 
+    def test_tf_net_predict_dataset(self):
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+        tfnet_path = os.path.join(resource_path, "tfnet")
+        net = TFNet.from_export_folder(tfnet_path)
+        dataset = TFDataset.from_ndarrays((np.random.rand(16, 4),))
+        output = net.predict(dataset)
+        output = np.stack(output.collect())
+        assert output.shape == (16, 2)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
