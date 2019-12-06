@@ -327,6 +327,16 @@ case class TrainMeta2(inputs: Array[String],
                      defaultTensorValue: Array[Array[Float]])
 
 
+/**
+ * TFSubGraph will only be used in DistriOptimizer for the purpose of training a TensorFlow
+ * model using multiple optimization methods based on variable names.
+ * Applying a TFTrainingHelper2 layer by name will get a corresponding instance of TFSubGraph.
+ *
+ * In DistriOptimizer.optimize(), TFSubGraph will only be used to get the sizes and offsets of
+ * each weight portion, slice on the original weights and gradients and apply the optimization
+ * method accordingly.
+ * The gradients of TFSubGraph will never be used and thus a dummy Tensor is put as a placeholder.
+ */
 private class TFSubGraph(
     weights: Array[Tensor[Float]]) extends AbstractModule[Activity, Activity, Float] {
   override def updateOutput(input: Activity): Activity = {
