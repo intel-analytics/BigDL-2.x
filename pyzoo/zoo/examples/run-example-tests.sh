@@ -23,14 +23,12 @@ else
     -P analytics-zoo-models
    tar zxf analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28.tar.gz -C analytics-zoo-models/
 fi
-if [ -f analytics-zoo-data/data/dogs-vs-cats/minitrain.zip ]
+if [ -d analytics-zoo-data/data/object-detection-coco ]
 then
-   echo "analytics-zoo-data/data/dogs-vs-cats/minitrain.zip already exists."
+    echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
-   # echo "Downloading dogs and cats images"
-   wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/minitrain.zip \
-    -P analytics-zoo-data/data/dogs-vs-cats
-   unzip analytics-zoo-data/data/dogs-vs-cats/minitrain.zip -d analytics-zoo-data/data/dogs-vs-cats
+    wget $FTP_URI/analytics-zoo-data/data/ -P analytics-zoo-data/data
+    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/object-detection-coco
 fi
 ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
@@ -42,7 +40,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
-    --image analytics-zoo-data/data/dogs-vs-cats \
+    --image analytics-zoo-data/data/object-detection-coco \
     --model analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28
 now=$(date "+%s")
 time9=$((now-start))
@@ -57,14 +55,12 @@ else
    wget $FTP_URI/analytics-zoo-models/openvino/vnni \
     -P analytics-zoo-models
 fi
-if [ -f analytics-zoo-data/data/dogs-vs-cats/minitrain.zip ]
+if [ -d analytics-zoo-data/data/object-detection-coco ]
 then
-   echo "analytics-zoo-data/data/dogs-vs-cats/minitrain.zip already exists."
+    echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
-   # echo "Downloading dogs and cats images"
-   wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/minitrain.zip \
-    -P analytics-zoo-data/data/dogs-vs-cats
-   unzip analytics-zoo-data/data/dogs-vs-cats/minitrain.zip -d analytics-zoo-data/data/dogs-vs-cats
+    wget $FTP_URI/analytics-zoo-data/data/ -P analytics-zoo-data/data
+    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/object-detection-coco
 fi
 ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
@@ -76,7 +72,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/vnni/openvino/predict.py \
     --model analytics-zoo-models/vnni/resnet_v1_50.xml \
-    --image analytics-zoo-data/data/dogs-vs-cats
+    --image analytics-zoo-data/data/object-detection-coco
 now=$(date "+%s")
 time11=$((now-start))
 
