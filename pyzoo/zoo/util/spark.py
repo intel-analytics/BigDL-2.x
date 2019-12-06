@@ -221,7 +221,6 @@ class SparkRunner():
                 if not is_safe_path(tempfile.gettempdir(), penv_archive):
                     sys.stdout.write('Error when creating python env archive')
                     sys.exit()
-                else:
-                    os.remove(penv_archive)
-                    print("Temp python env archive file removed: {}".format(penv_archive))
+                os.remove(penv_archive)
+                print("Temp python env archive file removed: {}".format(penv_archive))
         return sc
