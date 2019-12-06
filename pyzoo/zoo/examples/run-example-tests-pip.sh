@@ -230,6 +230,64 @@ then
     exit $exit_status
 fi
 
+echo "start example test for inceptionv1 training"
+export MASTER=local[4]
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/inception/inception.py \
+   --maxIteration 20 \
+   -b 8 \
+   -f hdfs://172.168.2.181:9000/imagenet-small
+exit_status=$?
+unset MASTER
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "inceptionv1 training failed"
+    exit $exit_status
+fi
+
+echo "start example test for pytorch SimpleTrainingExample"
+export MASTER=local[1]
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/SimpleTrainingExample.py
+exit_status=$?
+unset MASTER
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "pytorch SimpleTrainingExample failed"
+    exit $exit_status
+fi
+
+echo "start example test for mnist traning"
+export SPARK_DRIVER_MEMORY=20g
+export MASTER=local[1]
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/Lenet_mnist.py
+exit_status=$?
+unset MASTER
+unset SPARK_DRIVER_MEMORY
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "pytorch SimpleTrainingExample failed"
+    exit $exit_status
+fi
+
+echo "start example test for resnet finetune"
+export SPARK_DRIVER_MEMORY=20g
+export MASTER=local[8]
+export ZOO_NUM_MKLTHREADS=all
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/resnet_finetune/resnet_finetune.py \
+    analytics-zoo-data/data/dogs-vs-cats/samples
+exit_status=$?
+unset MASTER
+unset SPARK_DRIVER_MEMORY
+unset ZOO_NUM_MKLTHREADS
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "resnet finetune failed"
+    exit $exit_status
+fi
+
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time5=$((now-start))
