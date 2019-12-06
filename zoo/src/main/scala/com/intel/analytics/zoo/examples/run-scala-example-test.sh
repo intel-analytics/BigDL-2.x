@@ -9,14 +9,13 @@ export ANALYTICS_ZOO_HOME=$ANALYTICS_ZOO_ROOT/dist
 set -e
 
 echo "#1 start example test for tfnet"
-#timer
-start=$(date "+%s")
+
 if [ -d analytics-zoo-data/data/object-detection-coco ]
 then
     echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
-    wget $FTP_URI/analytics-zoo-data/data/ -P analytics-zoo-data/data
-    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/object-detection-coco
+    wget $FTP_URI/analytics-zoo-data/data/ -P analytics-zoo-data/data/object-detection-coco.zip
+    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/
 fi
 
 bash ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
@@ -28,17 +27,14 @@ bash ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --model analytics-zoo-model/tfnet/ \
 --partition 4
 
-now=$(date "+%s")
-time1=$((now-start))
 
 echo "#2 start example test for chatbot"
-#timer
-start=$(date "+%s")
+
 if [ -d analytics-zoo-data/data/chatbot-data ]
 then
-    echo "analytics-zoo-data/data/object-detection-coco.zip already exists"
+    echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
-    wget $FTP_URI/analytics-zoo-data/data/ -P analytics-zoo-data/data
+    wget $FTP_URI/analytics-zoo-data/data/chatbot-data.zip -P analytics-zoo-data/data
     tar -xvzf analytics-zoo-data/data/chatbot-data.tar.gz
 fi
 
@@ -49,9 +45,6 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --class com.intel.analytics.zoo.examples.chatbot.Train \
 -f analytics-zoo-data/data/chatbot-data
 
-now=$(date "+%s")
-time1=$((now-start))
-
 
 echo "#3 start example test for LocalEstimator"
 
@@ -59,8 +52,8 @@ if [ -d analytics-zoo-data/data/mnist ]
 then
     echo "analytics-zoo-data/data/mnist already exists"
 else
-    wget $FTP_URI/analytics-zoo-data/data/ -P analytics-zoo-data/data
-    unzip -q analytics-zoo-data/data/mnist.zip -d analytics-zoo-data/data/mnist
+    wget $FTP_URI/analytics-zoo-data/data/mnist.zip -P analytics-zoo-data/data
+    unzip -q analytics-zoo-data/data/mnist.zip -d analytics-zoo-data/data/
 fi
 
 echo "#3.1 LenetEstimator testing"
@@ -73,9 +66,6 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --executor-memory 20g \
 --class com.intel.analytics.zoo.examples.localEstimator.LenetLocalEstimator \
 -d analytics-zoo-data/data/mnist -b 128 -e 1 -t 4
-
-now=$(date "+%s")
-time1=$((now-start))
 
 echo "#3.2 ResnetEstimator testing"
 
@@ -90,45 +80,42 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 
 echo "#3.3 ResnetEstimator testing"
 
-if [ -d analytics-zoo-data/data/cifar10 ]
-then
+if [ -d analytics-zoo-data/data/cifar10 ];then
     echo "analytics-zoo-data/data/cifar10 already exists"
 else
-    wget $FTP_URI/analytics-zoo-data/data/ -P analytics-zoo-data/data
-    unzip -q analytics-zoo-data/data/cifar10.zip -d analytics-zoo-data/data/cifar10
+    wget $FTP_URI/analytics-zoo-data/data/cifar10.zip -P analytics-zoo-data/data
+    unzip -q analytics-zoo-data/data/cifar10.zip -d analytics-zoo-data/data/
 fi
 
-#timer
-start=$(date "+%s")
+if [ -d analytics-zoo-model/localestimator/saved_model4 ];then
+    echo "analytics-zoo-model/localestimator/saved_model4 already exists"
+else
+    wget $FTP_URI/analytics-zoo-model/localestimator/saved_model4.zip  -P analytics-zoo-model/localestimator
+    unzip -q analytics-zoo-model/localestimator/saved_model4.zip -d analytics-zoo-model/localestimator/
+fi
+
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
 --driver-memory 20g \
 --executor-memory 20g \
 --class com.intel.analytics.zoo.examples.localEstimator.TransferLearning \
 -d analytics-zoo-data/data/cifar10 \
--m analytics-zoo-data/model/saved-model4 \
+-m analytics-zoo-models/localestimator/saved-model4 \
 -i "resnet50_input:0" -o "resnet50/activation_48/Relu:0" -b 132 -e 20 -t 10
 
-
-now=$(date "+%s")
-time1=$((now-start))
-
 echo "#4 start example test for streaming Object Detection"
-#timer
-start=$(date "+%s")
-if [ -d analytics-zoo-data/data/object-detection-coco ]
-then
+
+if [ -d analytics-zoo-data/data/object-detection-coco ];then
     echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
-    wget $FTP_URI/analytics-zoo-data/data/ -P analytics-zoo-data/data
-    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/object-detection-coco
+    wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
+    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/
 fi
 
-if [ -f analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model ]
-then
+if [ -f analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model ];then
     echo "analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model already exists"
 else
-    wget $FTP_URI/analytics-zoo-models/object-detection/ -P analytics-zoo-models/object-detection/
+    wget ${FTP_URI}/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model -P analytics-zoo-models/object-detection/
 fi
 
 mkdir output
@@ -160,27 +147,14 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 rm -r output
 rm -r stream
 
-bash ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
---master $MASTER \
---conf spark.executor.cores=1 \
---total-executor-cores 4 \
---class com.intel.analytics.zoo.examples.tfnet.Predict \
---image analytics-zoo-data/data/object-detection-coco \
---model analytics-zoo-models/object-detections/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model --partition 4
-
-now=$(date "+%s")
-time1=$((now-start))
-
 echo "#4 start example test for streaming Text Classification"
 
-#timer
-start=$(date "+%s")
 if [ -d analytics-zoo-data/data/streaming/text-model ]
 then
     echo "analytics-zoo-data/data/streaming/text-model already exists"
 else
-    wget $FTP_URI/analytics-zoo-data/data/ -P analytics-zoo-data/data
-    unzip -q analytics-zoo-data/data/streaming/text-model.zip -d analytics-zoo-data/data/streaming/text-model
+    wget $FTP_URI/analytics-zoo-data/data/streaming/text-model.zip -P analytics-zoo-data/data/streaming/
+    unzip -q analytics-zoo-data/data/streaming/text-model.zip -d analytics-zoo-data/data/streaming/
 fi
 
 nc -lk 9000 < analytics-zoo-data/data/streaming/text-model/2.log &
@@ -204,10 +178,8 @@ done
 
 rm 1.log
 
-now=$(date "+%s")
-time1=$((now-start))
-
-echo "# Test Apps -- text-classification-training"
+echo "----------------------------------------------"
+echo "# Test Apps -- 1.text-classification-training"
 
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/
 mkdir "models"
@@ -215,10 +187,12 @@ mkdir "models"
 if [ -d analytics-zoo-data/data/ ]
 then
     echo "analytics-zoo-data/data/ already exists"
+    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/
     unzip -q analytics-zoo-data/data/glove/glove.6B.zip -d analytics-zoo-data/data/glove/glove
     tar -xvzf analytics-zoo-data/data/news20/20news-18828.tar.gz
 else
     wget $FTP_URI/analytics-zoo-data/data/ -P analytics-zoo-data/data
+    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/
     unzip -q analytics-zoo-data/data/glove/glove.6B.zip -d analytics-zoo-data/data/glove/glove
     tar -xvzf analytics-zoo-data/data/news20/20news-18828.tar.gz
 fi
@@ -247,7 +221,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 
 mvn clean install
 
-echo "# Test Apps -- text-classification-inference"
+echo "# Test Apps -- 2.text-classification-inference"
 
 #change files
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/text-classification-inference
@@ -265,9 +239,9 @@ com.intel.analytics.zoo.apps.textclassfication.inference.SimpleDriver \
 #java -cp /home/jieru/PycharmProjects/analytics-zoo/apps/model-inference-examples/text-classification-inference/target/text-classification-inference-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
 #com.intel.analytics.zoo.apps.textclassfication.inference.WebServiceDriver
 
-mvn cleam
+mvn clean
 
-echo "# Test Apps -- recommendation-inference"
+echo "# Test Apps -- 3.recommendation-inference"
 #recommendation
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/recommendation-inference
 
@@ -275,22 +249,22 @@ mvn clean
 mvn clean package
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples
 
-if [ -f analytics-zoo-models/models/apps/recommedation/ncf.bigdl ]
+if [ -f analytics-zoo-models/recommedation/ncf.bigdl ]
 then
-    echo "analytics-zoo-models/models/apps/recommedation/ncf.bigdl already exists"
+    echo "analytics-zoo-models/recommedation/ncf.bigdl already exists"
 else
-    wget $FTP_URI/analytics-zoo-models/models/apps/recommedation/ -P analytics-zoo-models/models/apps/recommedation/
+    wget $FTP_URI/analytics-zoo-models/recommedation/ -P analytics-zoo-models/recommedation/
 fi
 
 java -cp ./recommendation-inference/target/recommendation-inference-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
 com.intel.analytics.zoo.apps.recommendation.inference.SimpleScalaDriver \
---MODEL_PATH=./analytics-zoo-models/models/apps/recommedation/ncf.bigdl
+--MODEL_PATH=./analytics-zoo-models/recommedation/ncf.bigdl
 
 java -cp ./recommendation-inference/target/recommendation-inference-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
 com.intel.analytics.zoo.apps.recommendation.inference.SimpleDriver \
 --MODEL_PATH=./analytics-zoo-models/models/apps/recommedation/ncf.bigdl
 
-echo "# Test Apps -- model-inference-flink"
+echo "# Test Apps -- 4.model-inference-flink"
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/model-inference-flink
 
 mvn clean
@@ -298,13 +272,17 @@ mvn clean package
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples
 
 
-if [ -f flink-1.7.2/bin/start-cluster.sh ]
+if [ -f flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/start-cluster.sh ]
 then
     echo "flink-1.7.2/bin/start-cluster.sh already exists"
 else
     wget http://mirrors.tuna.tsinghua.edu.cn/apache/flink/flink-1.7.2/flink-1.7.2-bin-scala_2.11.tgz
     tar zxvf flink-1.7.2-bin-scala_2.11.tgz
 fi
+
+#modify flink conf
+rm ./flink-1.7.2-bin-scala_2.11/flink-1.7.2/conf/flink-conf.yaml
+wget -P ./flink-1.7.2-bin-scala_2.11/flink-1.7.2/conf/ ${FTP_URI}/analytics-zoo-data/apps/flink/flink-conf.yaml
 
 ./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/start-cluster.sh
 
@@ -313,22 +291,42 @@ nc -l 9000 < analytics-zoo-data/data/streaming/text-model/2.log &
 ./model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
 --port 9000 --embeddingFilePath analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
 --modelPath models/text-classification.bigdl \
---parallelism 2 > 1.log &
+--parallelism 2  &
 while :
 do
-if [ -n "$(grep "top-5" 1.log)" ];then
+if [ -n "$(find . -type f -name "flink*taskexecutor*.out" | xargs grep -i "Zoo")" ];then
     echo "----Find-----"
-    kill -9 $(ps -ef | grep StreamingTextClassification | grep -v grep |awk '{print $2}')
-    kill -9 $(ps -ef | grep "nc -lk" | grep -v grep |awk '{print $2}')
+    kill -9 $(ps -ef | grep "nc -l" | grep -v grep |awk '{print $2}')
+    ./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/stop-cluster.sh
     sleep 1s
     break
 fi
 done
 
+./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/stop-cluster.sh
 
-#./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/flink run \
-#    -m localhost:8081 -p 2 \
-#    -c com.intel.analytics.zoo.apps.model.inference.flink.Resnet50ImageClassification.ImageClassificationStreaming  \
-#    ${ANALYTICS_ZOO_HOME}/apps/model-inference-examples/model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar  \
-#    --modelType resnet_v1_50 --checkpointPath ~/download/models  \
-#    --inputShape "1,224,224,3" --ifReverseInputChannels true --meanValues "123.68,116.78,103.94" --scale 1
+wget ${FTP_URL}/analytics-zoo-models/flink-models/resnet_v1_50.ckpt
+./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/start-cluster.sh
+
+./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/flink run \
+-m localhost:8081 -p 2 \
+-c com.intel.analytics.zoo.apps.model.inference.flink.Resnet50ImageClassification.ImageClassificationStreaming  \
+${ANALYTICS_ZOO_HOME}/apps/model-inference-examples/model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar  \
+--modelType resnet_v1_50 --checkpointPath resnet_v1_50.ckpt  \
+--image analytics-zoo-data/data/object-detection-coco \
+--classes ${ANALYTICS_ZOO_ROOT}/zoo/src/main/resource/coco_classname.txt  \
+--inputShape "1,224,224,3" --ifReverseInputChannels true --meanValues "123.68,116.78,103.94" --scale 1 > 1.log &
+while :
+do
+if [ -n "$(grep "********" 1.log)" ];then
+    echo "----Find-----"
+    ./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/stop-cluster.sh
+    rm 1.log
+    sleep 1s
+    break
+fi
+done
+
+./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/stop-cluster.sh
+
+echo "Finish test"
