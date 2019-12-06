@@ -64,6 +64,12 @@ class TFResourceManager() extends java.io.Serializable {
     TFTensor
   }
 
+  def createStringTFTensor(data: Array[Array[Byte]]): TTensor[_] = {
+    val TFTensor : TTensor[_] = TTensor.create(data)
+    tensorList += TFTensor
+    TFTensor
+  }
+
   def releaseTensor(t: TTensor[_]): Unit = {
     t.close()
     tensorList -= t
@@ -116,8 +122,14 @@ class TFResourceManager() extends java.io.Serializable {
       createBoolTFTensor(shape, buffer)
     } else if (dataType == DataType.STRING) {
       require(shape.length <= 1)
-      val strArr = arr.asInstanceOf[Array[String]].slice(offset, offset + length)
-      createStringTFTensor(data = strArr)
+      arr match {
+        case a: Array[String] =>
+          createStringTFTensor(a.slice(offset, offset + length))
+        case a: Array[Array[Byte]] =>
+          createStringTFTensor(a.slice(offset, offset + length))
+        case _ => throw new IllegalArgumentException("Analytics Zoo Tensor type must be" +
+          "String or Array[Byte] to feed a TF String Tensor")
+      }
     } else {
       throw new Exception(s"data type ${dataType} are not supported")
     }
