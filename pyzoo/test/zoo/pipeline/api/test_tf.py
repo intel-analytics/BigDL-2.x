@@ -82,7 +82,8 @@ class TestTF(ZooTestCase):
         model_path = os.path.join(resource_path, "saved-model-resource")
         tfnet = TFNet.from_saved_model(model_path, inputs=["flatten_input:0"],
                                        outputs=["dense_2/Softmax:0"])
-        tfnet.forward(np.ones(dtype=np.float32, shape=(4, 28, 28, 1)))
+        result = tfnet.predict(np.ones(dtype=np.float32, shape=(20, 28, 28, 1)))
+        result.collect()
 
     def test_tf_net_predict(self):
         resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
