@@ -12,8 +12,9 @@ if [ -d analytics-zoo-models/vnni ]
 then
    echo "analytics-zoo-models/resnet_v1_50.model already exists."
 else
-   wget $FTP_URI/analytics-zoo-models/openvino/vnni \
+   wget $FTP_URI/analytics-zoo-models/openvino/vnni/resnet_v1_50.zip \
     -P analytics-zoo-models
+    unzip -q analytics-zoo-models/resnet_v1_50.zip -d analytics-zoo-models/vnni
 fi
 if [ -d analytics-zoo-data/data/object-detection-coco ]
 then
