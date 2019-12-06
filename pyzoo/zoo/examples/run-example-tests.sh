@@ -28,7 +28,7 @@ then
     echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
     wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
-    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/object-detection-coco
+    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data
 fi
 ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
@@ -60,7 +60,7 @@ then
     echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
     wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
-    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/object-detection-coco
+    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data
 fi
 ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \

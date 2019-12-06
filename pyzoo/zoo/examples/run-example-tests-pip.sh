@@ -21,7 +21,7 @@ then
     echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
     wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
-    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/object-detection-coco
+    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data
 fi
 export SPARK_DRIVER_MEMORY=10g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
@@ -55,7 +55,7 @@ then
     echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
     wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
-    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/object-detection-coco
+    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data
 fi
 export SPARK_DRIVER_MEMORY=2g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/vnni/openvino/predict.py \
