@@ -125,11 +125,13 @@ class TestTextSet:
         loaded_predicts = loaded_res_set.get_predicts()
         assert len(predicts) == len(loaded_predicts)
 
-        for i in range(0, len(predicts)):
-            assert len(predicts[i]) == 1
-            assert len(loaded_predicts[i]) == 1
-            assert predicts[i][0].shape == (5, )
-            assert np.allclose(predicts[i][0], loaded_predicts[i][0])
+        for i in range(0, len(predicts)):  # (uri, prediction)
+            assert not predicts[i][0]
+            assert not loaded_predicts[i][0]  # uri is not recorded and thus None
+            assert len(predicts[i][1]) == 1
+            assert len(loaded_predicts[i][1]) == 1
+            assert predicts[i][1][0].shape == (5, )
+            assert np.allclose(predicts[i][1][0], loaded_predicts[i][1][0])
         shutil.rmtree(tmp_log_dir)
         shutil.rmtree(tmp_checkpoint_path)
         os.remove(tmp_path)
@@ -173,9 +175,10 @@ class TestTextSet:
         model.fit(transformed, batch_size=2, nb_epoch=2)
         res_set = model.predict(transformed, batch_per_thread=2)
         predicts = res_set.get_predicts().collect()
-        for predict in predicts:
-            assert len(predict) == 1
-            assert predict[0].shape == (5, )
+        for predict in predicts:  # (uri, prediction)
+            assert not predict[0]  # uri is not recorded and thus None
+            assert len(predict[1]) == 1
+            assert predict[1][0].shape == (5, )
 
         tmp_path = create_tmp_path() + ".bigdl"
         model.save_model(tmp_path, over_write=True)
@@ -192,7 +195,7 @@ class TestTextSet:
         assert len(local_set.get_texts()) == 3
         assert local_set.get_labels() == [0, 0, 1]
         assert local_set.get_samples() == [None, None, None]
-        assert local_set.get_predicts() == [None, None, None]
+        assert local_set.get_predicts() == [(uri, None) for uri in local_set.get_uris()]
 
     def test_read_distributed(self):
         distributed_set = TextSet.read(self.path, self.sc, 4)
@@ -201,7 +204,8 @@ class TestTextSet:
         assert len(distributed_set.get_texts().collect()) == 3
         assert sorted(distributed_set.get_labels().collect()) == [0, 0, 1]
         assert distributed_set.get_samples().collect() == [None, None, None]
-        assert distributed_set.get_predicts().collect() == [None, None, None]
+        assert distributed_set.get_predicts().collect() ==\
+            [(uri, None) for uri in distributed_set.get_uris().collect()]
 
     def test_read_csv_parquet(self):
         text_set = TextSet.read_csv(self.qa_path + "/question_corpus.csv", self.sc)

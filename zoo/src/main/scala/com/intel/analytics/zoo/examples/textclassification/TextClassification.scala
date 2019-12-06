@@ -127,7 +127,10 @@ object TextClassification {
 
       val predictSet = model.predict(valTextSet, batchPerThread = param.partitionNum)
       println("Probability distributions of the first five texts in the validation set:")
-      predictSet.toDistributed().rdd.take(5).map(_.getPredict.toTensor).foreach(println)
+      predictSet.toDistributed().rdd.take(5).foreach(feature => {
+        println("Prediction for " + feature.getURI + ": ")
+        println(feature.getPredict.toTensor)
+      })
       if (param.outputPath.isDefined) {
         val outputPath = param.outputPath.get
         model.saveModel(outputPath + "/text_classifier.model")
