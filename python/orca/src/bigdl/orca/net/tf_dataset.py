@@ -514,6 +514,21 @@ class TFDataset(object):
                                 batch_per_thread, hard_code_batch_size,
                                 validation_dataset)
 
+    @staticmethod
+    def from_string_rdd(string_rdd, batch_size=-1, batch_per_thread=-1,
+                        hard_code_batch_size=False, validation_string_rdd=None):
+        string_rdd = string_rdd.map(lambda x: bytearray(x, "utf-8"))
+        if validation_string_rdd is not None:
+            validation_string_rdd = validation_string_rdd.map(lambda x: bytearray(x, "utf-8"))
+        return TFBytesDataset(string_rdd, batch_size, batch_per_thread,
+                              hard_code_batch_size, validation_string_rdd)
+
+    @staticmethod
+    def from_bytes_rdd(bytes_rdd, batch_size=-1, batch_per_thread=-1,
+                       hard_code_batch_size=False, validation_bytes_rdd=None):
+        return TFBytesDataset(bytes_rdd, batch_size, batch_per_thread,
+                              hard_code_batch_size, validation_bytes_rdd)
+
 
 class MapDataset(TFDataset):
 
@@ -563,6 +578,33 @@ class MapDataset(TFDataset):
         :return: the num of partitions of the underlying RDD
         """
         return self.pre_dataset.get_num_partitions()
+
+
+class TFBytesDataset(TFDataset):
+
+    def get_num_partitions(self):
+        self.train_rdd.getNumPartitions()
+
+    def __init__(self, string_rdd, batch_size,
+                 batch_per_thread, hard_code_batch_size=False,
+                 validation_string_rdd=None, sequential_order=False, shuffle=True):
+        import tensorflow as tf
+        tensor_structure = (TensorMeta(dtype=tf.string, shape=(), name="input"),)
+
+        super(TFBytesDataset, self).__init__(tensor_structure, batch_size,
+                                             batch_per_thread, hard_code_batch_size)
+
+        self.train_rdd = string_rdd
+        self.validation_rdd = validation_string_rdd
+        self.sequential_order = sequential_order
+        self.shuffle = shuffle
+
+    def get_prediction_data(self):
+        jvalue = callZooFunc("float", "createMiniBatchRDDFromStringRDD",
+                             self.train_rdd,
+                             self.batch_per_thread)
+        rdd = jvalue.value().toJavaRDD()
+        return rdd
 
 
 class TFFeatureDataset(TFDataset):
