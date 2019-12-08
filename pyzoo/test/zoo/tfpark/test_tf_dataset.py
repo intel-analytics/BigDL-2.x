@@ -232,7 +232,6 @@ class TestTFDataset(ZooTestCase):
             assert tensor.name == "list_input_" + str(idx) + ":0"
 
     def test_tfdataset_with_string_rdd(self):
-        
         string_rdd = self.sc.parallelize(["123", "456"], 1)
         ds = TFDataset.from_string_rdd(string_rdd, batch_per_thread=1)
         input_tensor = tf.placeholder(dtype=tf.string, shape=(None,))

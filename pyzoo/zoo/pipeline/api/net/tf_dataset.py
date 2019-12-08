@@ -513,6 +513,7 @@ class TFDataset(object):
         return TFFeatureDataset(dataset, tensor_structure, batch_size,
                                 batch_per_thread, hard_code_batch_size,
                                 validation_dataset)
+
     @staticmethod
     def from_string_rdd(string_rdd, batch_size=-1, batch_per_thread=-1,
                         hard_code_batch_size=False, validation_string_rdd=None):
@@ -578,6 +579,7 @@ class MapDataset(TFDataset):
         """
         return self.pre_dataset.get_num_partitions()
 
+
 class TFBytesDataset(TFDataset):
 
     def get_num_partitions(self):
@@ -603,6 +605,7 @@ class TFBytesDataset(TFDataset):
                              self.batch_per_thread)
         rdd = jvalue.value().toJavaRDD()
         return rdd
+
 
 class TFFeatureDataset(TFDataset):
 
