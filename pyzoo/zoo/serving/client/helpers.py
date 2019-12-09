@@ -21,7 +21,12 @@ import yaml
 import redis
 
 
-class RedisQueue:
+class API:
+    """
+    base level of API control
+    select data pipeline here, Redis/Kafka/...
+    interface preserved for API class
+    """
     def __init__(self, file_path=None):
         if file_path:
             with open(file_path) as f:
@@ -39,6 +44,11 @@ class RedisQueue:
         for i in range(len(self.data_shape)):
             self.data_shape[i] = int(self.data_shape[i])
 
+
+class Input(API):
+    def __init__(self):
+        super().__init__()
+
     def enqueue_image(self, uri, img):
         """
         :param id: String you use to identify this record
@@ -55,8 +65,16 @@ class RedisQueue:
         d = {"uri": uri, "image": img_encoded}
         self.db.xadd("image_stream", d)
 
-    # def get_results(self, key):
-    #     return self.db.hgetall(key)
+    @staticmethod
+    def base64_encode_image(img):
+        # base64 encode the input NumPy array
+        return base64.b64encode(img).decode("utf-8")
+
+
+class Output(API):
+    def __init__(self):
+        super().__init__()
+
     def get_results(self):
         res_list = self.db.keys('result:*')
         decoded = {}
@@ -67,7 +85,4 @@ class RedisQueue:
             decoded[res_id] = res_value
         return decoded
 
-    @staticmethod
-    def base64_encode_image(img):
-        # base64 encode the input NumPy array
-        return base64.b64encode(img).decode("utf-8")
+

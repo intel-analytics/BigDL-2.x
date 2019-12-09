@@ -17,7 +17,7 @@
 
 package com.intel.analytics.zoo.serving.utils
 
-import java.io.{File, FileInputStream}
+import java.io.{File, FileWriter, FileInputStream}
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
@@ -27,12 +27,14 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import java.util.LinkedHashMap
+
 import org.apache.log4j.Logger
 import scopt.OptionParser
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.SparkSession
 import org.yaml.snakeyaml.Yaml
+import java.time.LocalDateTime
 
 import scala.reflect.ClassTag
 
@@ -97,6 +99,12 @@ class ClusterServingHelper {
 
   var dataShape = Array[Int]()
 
+  val logFile = {
+    val logF = new File("./" +
+      LocalDateTime.now.toString + "-cluster_serving.log")
+    logF.createNewFile()
+    new FileWriter(logF)
+  }
 
   var modelType: String = null
   var weightPath: String = null
@@ -281,7 +289,7 @@ class ClusterServingHelper {
   }
 
   def logError(msg: String): Unit = {
-    logger.error(msg)
+    logFile.write(msg + "\n")
     throw new Error(msg)
   }
 

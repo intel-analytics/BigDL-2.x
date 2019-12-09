@@ -14,14 +14,14 @@
 # limitations under the License.
 #
 
-from zoo.serving.client.helpers import RedisQueue
+from zoo.serving.client.helpers import Input, Output
 import os
 import cv2
 import json
 
 
 if __name__ == "__main__":
-    redis_queue = RedisQueue()
+    input_api = Input()
 
     base_path = "../../test/zoo/resources/serving_quick_start"
     # base_path = None
@@ -34,11 +34,13 @@ if __name__ == "__main__":
             continue
         img = cv2.imread(os.path.join(base_path, p))
         img = cv2.resize(img, (224, 224))
-        redis_queue.enqueue_image(p, img)
+        input_api.enqueue_image(p, img)
 
     import time
     time.sleep(5)
-    result = redis_queue.get_results()
+
+    output_api = Output()
+    result = output_api.get_results()
     for k in result.keys():
         output = "image: " + k + ", classification-result:"
         tmp_dict = json.loads(result[k])

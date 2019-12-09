@@ -30,7 +30,7 @@ import redis.clients.jedis.Jedis
 
 
 
-object ClusterServing {
+object Benchmark {
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("akka").setLevel(Level.ERROR)
   Logger.getLogger("breeze").setLevel(Level.ERROR)
@@ -83,7 +83,6 @@ object ClusterServing {
     var totalCnt: Int = 0
 
     // redis stream control
-    val redisDB = new Jedis(helper.redisHost, helper.redisPort.toInt)
 
     val query = images.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
       batchDF.persist()
@@ -92,27 +91,33 @@ object ClusterServing {
 
       if (microBatchSize != 0) {
 
-        val microBatchStart = System.nanoTime()
+        var microBatchStart: Long = 0
         val resultPartitions = if (helper.blasFlag) {
           // if backend is raw BLAS, no multi-thread could used for forward
           // BLAS is only valid in BigDL backend
           // Thus no shape specific change is needed
-          batchDF.rdd.mapPartitions(pathBytes => {
+
+          val pathBytesChunk = batchDF.rdd.mapPartitions(pathBytes => {
             pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
               pathBytesBatch.indices.toParArray.map(i => {
                 val tensors = ImageProcessing.bytesToBGRTensor(java.util
                   .Base64.getDecoder.decode(pathBytesBatch(i).getAs[String]("image")))
                 val path = pathBytesBatch(i).getAs[String]("uri")
-
-                val localPartitionModel = bcModel.value
-                val result = localPartitionModel.doPredict(tensors.addSingletonDimension()).toTensor
-
-                val value = PostProcessing.getInfofromTensor(topN, result)
-
-                (path, value)
+                (path, tensors)
               })
             })
           })
+          microBatchStart = System.nanoTime()
+          pathBytesChunk.mapPartitions(pathBytes => {
+            pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
+              pathBytesBatch.indices.toParArray.map(i => {
+                val localPartitionModel = bcModel.value
+                val result = localPartitionModel.doPredict(pathBytesBatch(i)._2)
+                0
+              })
+            })
+          }).count()
+
         } else {
           val pathBytesChunk = batchDF.rdd.mapPartitions(pathBytes => {
             pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
@@ -125,6 +130,7 @@ object ClusterServing {
               })
             })
           })
+          microBatchStart = System.nanoTime()
           pathBytesChunk.mapPartitions(pathBytes => {
             val localModel = bcModel.value
             pathBytes.grouped(batchSize).flatMap(pathByteBatch => {
@@ -153,22 +159,13 @@ object ClusterServing {
               // move below code into wrapper if new functions
               // e.g. object detection is added
 
-              (0 until thisBatchSize).toParArray.map(i => {
-                val value = PostProcessing.getInfofromTensor(topN,
-                  result.select(1, i + 1).squeeze())
-                (pathByteBatch(i)._1, value)
-              })
+              (0 until 1)
 
             })
-          })
+          }).count()
         }
 
 
-        val resDf = spark.createDataFrame(resultPartitions)
-        resDf.write
-          .format("org.apache.spark.sql.redis")
-          .option("table", "result")
-          .mode(SaveMode.Append).save()
 
 
         totalCnt += microBatchSize.toInt
@@ -186,8 +183,6 @@ object ClusterServing {
 
         logger.info(microBatchSize +
           " inputs predict ended, time elapsed " + microBatchLatency.toString)
-
-        redisDB.xtrim("image_stream", redisDB.xlen("image_stream"), true)
 
       }
 
