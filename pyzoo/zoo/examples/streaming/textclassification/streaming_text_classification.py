@@ -82,7 +82,9 @@ if __name__ == "__main__":
         predicts = predict_set.get_predicts().collect()
         print("Probability distributions of top-5:")
         for p in predicts:
-            for k, v in sorted(enumerate(p[0]), key=lambda x: x[1])[:5]:
+            (uri, probs) = p
+            print("Predictions for " + uri + ": ")
+            for k, v in sorted(enumerate(probs[0]), key=lambda x: x[1])[:5]:
                 print(labels[k] + " " + str(v))
 
     lines.foreachRDD(predict)

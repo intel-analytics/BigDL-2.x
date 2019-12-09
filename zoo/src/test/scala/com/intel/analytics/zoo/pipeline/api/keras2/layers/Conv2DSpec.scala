@@ -22,7 +22,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Keras2Test, KerasBaseSpec, Permute}
 
-import scala.util.Random
 
 class Conv2DSpec extends KerasBaseSpec {
   def weightConverterNCHW(in: Array[Tensor[Float]]): Array[Tensor[Float]] = {
@@ -107,7 +106,7 @@ class Conv2DSerialTest extends ModuleSerializationTest {
     val layer = Conv2D[Float](64, Array(2, 5), inputShape =
       Shape(3, 24, 24))
     layer.build(Shape(2, 3, 24, 24))
-    val input = Tensor[Float](2, 3, 24, 24).apply1(_ => Random.nextFloat())
+    val input = Tensor[Float](2, 3, 24, 24).rand()
     runSerializationTest(layer, input)
   }
 }
