@@ -19,8 +19,8 @@ import argparse
 import uuid
 import sys
 from time import sleep
-from os import listdir, mkdir, remove, access, R_OK, W_OK
-from os.path import isfile, join, realpath, abspath
+from os import listdir, mkdir, rmdir, access, R_OK, W_OK
+from os.path import isfile, join
 import shutil
 
 
@@ -71,7 +71,7 @@ def package_path_to_text(streaming_path, file_path, batch=10, delay=3):
         index += 1
         curr = last
         sleep(delay)
-    remove(tmp_dir)
+    rmdir(tmp_dir)
 
 
 if __name__ == "__main__":
