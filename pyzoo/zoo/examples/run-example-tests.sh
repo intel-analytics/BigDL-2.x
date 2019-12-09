@@ -48,16 +48,16 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --driver-memory 2g \
     --executor-memory 2g \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/streaming/objectdetection/streaming_object_detection.py \
-    --streamingPath ./stream \
+    --streaming_path ./stream \
     --model analytics-zoo-models/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model \
-    --output ./output  &
+    --output_path ./output  &
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 2g \
     --executor-memory 2g \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/streaming/objectdetection/image_path_writer.py \
-    --streamingPath ./stream \
-    --imageSourcePath analytics-zoo-data/data/object-detection-coco
+    --streaming_path ./stream \
+    --img_path analytics-zoo-data/data/object-detection-coco
 
 rm -r output
 rm -r stream
@@ -83,7 +83,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --executor-memory 5g \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/streaming/textclassification/streaming_text_classification.py \
     --model analytics-zoo-data/data/streaming/text-model/text_classifier.model \
-    --indexPath word_index.txt --port 9000 >>1.log &
+    --index_path word_index.txt --port 9000 >>1.log &
 while :
 do
 if [ -n "$(grep "top-5" 1.log)" ];then
