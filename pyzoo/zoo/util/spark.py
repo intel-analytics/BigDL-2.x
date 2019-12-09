@@ -145,6 +145,7 @@ class SparkRunner():
         return sc
 
     def init_spark_on_yarn(self,
+                           hadoop_conf,
                            conda_name,
                            num_executor,
                            executor_cores,
@@ -154,68 +155,62 @@ class SparkRunner():
                            extra_executor_memory_for_ray=None,
                            extra_python_lib=None,
                            penv_archive=None,
-                           hadoop_conf=None,
                            hadoop_user_name="root",
                            spark_yarn_archive=None,
                            spark_conf=None,
                            jars=None):
-
-        if "HADOOP_CONF_DIR" not in os.environ:
-            assert hadoop_conf
-            os.environ["HADOOP_CONF_DIR"] = hadoop_conf
-        if "HADOOP_USER_NAME" not in os.environ:
-            os.environ['HADOOP_USER_NAME'] = hadoop_user_name
+        os.environ["HADOOP_CONF_DIR"] = hadoop_conf
+        os.environ['HADOOP_USER_NAME'] = hadoop_user_name
         os.environ['PYSPARK_PYTHON'] = "{}/bin/python".format(self.PYTHON_ENV)
 
-        conf = {
-            "spark.driver.memory": driver_memory,
-            "spark.driver.cores": driver_cores,
-            "spark.executor.cores": executor_cores,
-            "spark.executor.memory": executor_memory,
-            "spark.scheduler.minRegisteredResourcesRatio": "1.0"}
-        if extra_executor_memory_for_ray:
-            conf["spark.executor.memoryOverhead"] = extra_executor_memory_for_ray
-        if spark_yarn_archive:
-            conf["spark.yarn.archive"] = spark_yarn_archive
+        def _yarn_opt(jars):
+            command = " --archives {}#{} --num-executors {} " \
+                      " --executor-cores {} --executor-memory {}". \
+                format(penv_archive, self.PYTHON_ENV, num_executor, executor_cores, executor_memory)
 
-        if not spark_conf:
-            spark_conf = {}
-        zoo_bigdl_path_on_executor = ":".join(self._assemble_zoo_classpath_for_executor())
-        if "spark.executor.extraClassPath" in spark_conf:
-            spark_conf["spark.executor.extraClassPath"] = "{}:{}".format(
-                zoo_bigdl_path_on_executor, spark_conf["spark.executor.extraClassPath"])
-        else:
-            spark_conf["spark.executor.extraClassPath"] = zoo_bigdl_path_on_executor
+            if extra_python_lib:
+                command = command + " --py-files {} ".format(extra_python_lib)
+            if jars:
+                command = command + " --jars {}".format(jars)
+            return command
 
-        for item in spark_conf.items():
-            conf[str(item[0])] = str(item[1])
+        def _submit_opt():
+            conf = {
+                "spark.driver.memory": driver_memory,
+                "spark.driver.cores": driver_cores,
+                "spark.executor.cores": executor_cores,
+                "spark.executor.memory": executor_memory,
+                "spark.scheduler.minRegisterreResourcesRatio": "1.0"}
+            if extra_executor_memory_for_ray:
+                conf["spark.executor.memoryOverhead"] = extra_executor_memory_for_ray
+            if spark_yarn_archive:
+                conf.insert("spark.yarn.archive", spark_yarn_archive)
+            return " --master yarn --deploy-mode client" + _yarn_opt(jars) + ' pyspark-shell ', conf
 
-        command = " --master yarn --deploy-mode client"
-        command += "--num-executors {} --executor-cores {} --executor-memory {}".\
-            format(num_executor, executor_cores, executor_memory)
-        if extra_python_lib:
-            command += " --py-files {} ".format(extra_python_lib)
-        if jars:
-            command += " --jars {}".format(jars)
+        pack_env = False
+        assert penv_archive or conda_name, \
+            "You should either specify penv_archive or conda_name explicitly"
+        try:
+            if not penv_archive:
+                penv_archive = self.pack_penv(conda_name)
+                pack_env = True
 
-        if penv_archive:
-            command += " --archives {}#{}".format(penv_archive, self.PYTHON_ENV)
-            sc = self._create_sc(command, conf)
-            return sc
-        else:
-            assert conda_name, "You should either specify penv_archive or conda_name explicitly"
-            tmp_conda_archive = self.pack_penv(conda_name)
-            command += " --archives {}#{}".format(tmp_conda_archive, self.PYTHON_ENV)
-            sc = self._create_sc(command, conf)
+            submit_args, conf = _submit_opt()
 
-            def is_safe_path(basedir, path):
-                return os.path.abspath(path).startswith(basedir)
+            if not spark_conf:
+                spark_conf = {}
+            zoo_bigdl_path_on_executor = ":".join(self._assemble_zoo_classpath_for_executor())
 
-            import tempfile
-            import sys
-            if not is_safe_path(tempfile.gettempdir(), tmp_conda_archive):
-                sys.stdout.write('Error when creating python env archive')
-                sys.exit()
-            os.remove(tmp_conda_archive)
-            print("Temp python env archive file removed: {}".format(tmp_conda_archive))
-            return sc
+            if "spark.executor.extraClassPath" in spark_conf:
+                spark_conf["spark.executor.extraClassPath"] = "{}:{}".format(
+                    zoo_bigdl_path_on_executor, spark_conf["spark.executor.extraClassPath"])
+            else:
+                spark_conf["spark.executor.extraClassPath"] = zoo_bigdl_path_on_executor
+
+            for item in spark_conf.items():
+                conf[str(item[0])] = str(item[1])
+            sc = self._create_sc(submit_args, conf)
+        finally:
+            if conda_name and penv_archive and pack_env:
+                os.remove(penv_archive)
+        return sc
