@@ -12,38 +12,6 @@ export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
 
 set -e
 
-echo "#10 start example for vnni/openvino"
-#timer
-start=$(date "+%s")
-if [ -d analytics-zoo-models/vnni ]
-then
-   echo "analytics-zoo-models/resnet_v1_50.xml already exists."
-else
-   wget $FTP_URI/analytics-zoo-models/openvino/vnni/resnet_v1_50.zip \
-    -P analytics-zoo-models
-    unzip -q analytics-zoo-models/resnet_v1_50.zip -d analytics-zoo-models/vnni
-fi
-if [ -d analytics-zoo-data/data/object-detection-coco ]
-then
-    echo "analytics-zoo-data/data/object-detection-coco already exists"
-else
-    wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
-    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data
-fi
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
-    --master ${MASTER} \
-    --driver-memory 2g \
-    --executor-memory 2g \
-    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/vnni/openvino/predict.py \
-    --jars ${ANALYTICS_ZOO_JAR} \
-    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/vnni/openvino/predict.py \
-    --model analytics-zoo-models/vnni/resnet_v1_50.xml \
-    --image analytics-zoo-data/data/object-detection-coco
-now=$(date "+%s")
-time11=$((now-start))
-
 echo "#11 start example test for streaming Object Detection"
 #timer
 start=$(date "+%s")
@@ -51,7 +19,7 @@ if [ -d analytics-zoo-data/data/object-detection-coco ]
 then
     echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
-    wget $FTP_URI/analytics-zoo-data/data/ -P analytics-zoo-data/data
+    wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
     unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/
 fi
 
@@ -59,7 +27,7 @@ if [ -f analytics-zoo-models/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model ]
 then
     echo "analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model already exists"
 else
-    wget $FTP_URI/analytics-zoo-models/object-detection/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model \
+    wget $FTP_URI/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model \
      -P analytics-zoo-models
 fi
 
@@ -150,7 +118,7 @@ else
     wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
     unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data
 fi
-${SPARK_HOME}/bin/spark-submit \
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 10g \
     --executor-memory 10g \
@@ -164,6 +132,38 @@ ${SPARK_HOME}/bin/spark-submit \
     --model analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28
 now=$(date "+%s")
 time9=$((now-start))
+
+echo "#10 start example for vnni/openvino"
+#timer
+start=$(date "+%s")
+if [ -d analytics-zoo-models/vnni ]
+then
+   echo "analytics-zoo-models/resnet_v1_50.xml already exists."
+else
+   wget $FTP_URI/analytics-zoo-models/openvino/vnni/resnet_v1_50.zip \
+    -P analytics-zoo-models
+    unzip -q analytics-zoo-models/resnet_v1_50.zip -d analytics-zoo-models/vnni
+fi
+if [ -d analytics-zoo-data/data/object-detection-coco ]
+then
+    echo "analytics-zoo-data/data/object-detection-coco already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
+    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data
+fi
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
+    --master ${MASTER} \
+    --driver-memory 2g \
+    --executor-memory 2g \
+    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/vnni/openvino/predict.py \
+    --jars ${ANALYTICS_ZOO_JAR} \
+    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/vnni/openvino/predict.py \
+    --model analytics-zoo-models/vnni/resnet_v1_50.xml \
+    --image analytics-zoo-data/data/object-detection-coco
+now=$(date "+%s")
+time10=$((now-start))
 
 echo "#1 start example test for textclassification"
 #timer
