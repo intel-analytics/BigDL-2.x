@@ -104,11 +104,11 @@ subprocess.run(['mkdocs', 'build'])
 #     'mv theme folder error', s=True)
 # run_cmd(['cp', '/tmp/zoo-doc/version-list', '{}/site'.format(dir_name)],
 #     'mv theme folder error', s=True)
-subprocess.run(['cp', '/tmp/zoo-doc/css/*', '{}/site/css'.format(dir_name)], shell=True)
-subprocess.run(['cp', '/tmp/zoo-doc/js/*', '{}/site/js'.format(dir_name)], shell=True)
-subprocess.run(['cp', '/tmp/zoo-doc/fonts/*', '{}/site/fonts'.format(dir_name)], shell=True)
-subprocess.run(['cp', '/tmp/zoo-doc/img/*', '{}/site/img'.format(dir_name)], shell=True)
-subprocess.run(['cp', '/tmp/zoo-doc/version-list', '{}/site'.format(dir_name)], shell=True)
+subprocess.run(' '.join(['cp', '/tmp/zoo-doc/css/*', '{}/site/css'.format(dir_name)]), shell=True)
+subprocess.run(' '.join(['cp', '/tmp/zoo-doc/js/*', '{}/site/js'.format(dir_name)]), shell=True)
+subprocess.run(' '.join(['cp', '/tmp/zoo-doc/fonts/*', '{}/site/fonts'.format(dir_name)]), shell=True)
+subprocess.run(' '.join(['cp', '/tmp/zoo-doc/img/*', '{}/site/img'.format(dir_name)]), shell=True)
+subprocess.run(' '.join(['cp', '/tmp/zoo-doc/version-list', '{}/site'.format(dir_name)]), shell=True)
 
 if scaladocs:
     print('build scala doc')
@@ -123,7 +123,7 @@ if scaladocs:
         subprocess.run(['mkdir', target_dir])
     # run_cmd(['cp', '-r', scaladocs_dir, target_dir + 'scaladoc/'],
     #     'mv scaladocs error', s=True)
-    subprocess.run(['cp', '-r', scaladocs_dir, target_dir + 'scaladoc/'], shell=True)
+    subprocess.run(' '.join(['cp', '-r', scaladocs_dir, target_dir + 'scaladoc/']), shell=True)
 
 if pythondocs:
     print('build python')
@@ -138,7 +138,7 @@ if pythondocs:
         subprocess.run(['mkdir', target_dir])
     # run_cmd(['cp', '-r', pythondocs_dir, target_dir + 'python-api-doc/'],
     #     'mv pythondocs error', s=True)
-    subprocess.run(['cp', '-r', pythondocs_dir, target_dir + 'python-api-doc/'], shell=True)
+    subprocess.run(' '.join(['cp', '-r', pythondocs_dir, target_dir + 'python-api-doc/']), shell=True)
 
 os.chdir(dir_name)
 
@@ -153,4 +153,5 @@ if args.port != None:
     os.chdir(dir_name + '/site')
     # run_cmd(['python', '-m', 'SimpleHTTPServer', '{}'.format(args.port)],
     #     'start http server error')
-    subprocess.run(['python', '-m', 'SimpleHTTPServer', '{}'.format(args.port)])
+    from subprocess import Popen
+    Popen(['python', '-m', 'http.server', '{}'.format(args.port)]).communicate()
