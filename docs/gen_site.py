@@ -153,5 +153,4 @@ if args.port != None:
     os.chdir(dir_name + '/site')
     # run_cmd(['python', '-m', 'SimpleHTTPServer', '{}'.format(args.port)],
     #     'start http server error')
-    from subprocess import Popen
-    Popen(['python', '-m', 'http.server', '{}'.format(args.port)]).communicate()
+    subprocess.run(['python', '-m', 'http.server', '{}'.format(args.port)])
