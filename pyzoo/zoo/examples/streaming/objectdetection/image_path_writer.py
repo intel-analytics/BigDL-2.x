@@ -14,12 +14,13 @@
 # limitations under the License.
 #
 
+from zoo.common import convert_to_safe_path
 import argparse
 import uuid
 import sys
 from time import sleep
 from os import listdir, mkdir, remove, access, R_OK, W_OK
-from os.path import isfile, join, realpath
+from os.path import isfile, join, realpath, abspath
 import shutil
 
 
@@ -36,8 +37,8 @@ def package_path_to_text(streaming_path, file_path, batch=10, delay=3):
     files = []
 
     # Convert to abs
-    file_path = realpath(file_path)
-    streaming_path = realpath(streaming_path)
+    file_path = convert_to_safe_path(file_path, False)
+    streaming_path = convert_to_safe_path(streaming_path, False)
 
     # check access
     if not access(file_path, R_OK):
