@@ -76,6 +76,104 @@ now=$(date "+%s")
 time9=$((now-start))
 echo "openvino time used:$time9 seconds"
 
+echo "start example test for streaming Object Detection"
+#timer
+start=$(date "+%s")
+if [ -d analytics-zoo-data/data/object-detection-coco ]
+then
+    echo "analytics-zoo-data/data/object-detection-coco already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
+    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/
+fi
+
+if [ -f analytics-zoo-models/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model ]
+then
+    echo "analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model already exists"
+else
+    wget $FTP_URI/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model \
+     -P analytics-zoo-models
+fi
+
+mkdir output
+mkdir stream
+export SPARK_DRIVER_MEMORY=2g
+while true
+do
+   temp1=$(find analytics-zoo-data/data/object-detection-coco -type f|wc -l)
+   temp2=$(find ./output -type f|wc -l)
+   temp3=$(($temp1+$temp1))
+   if [ $temp3 -eq $temp2 ];then
+       kill -9 $(ps -ef | grep StreamingObjectDetection | grep -v grep |awk '{print $2}')
+   break
+   fi
+done  &
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/streaming/objectdetection/streaming_object_detection.py \
+    --streaming_path ./stream \
+    --model analytics-zoo-models/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model \
+    --output_path ./output  &
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/streaming/objectdetection/image_path_writer.py \
+    --streaming_path ./stream \
+    --img_path analytics-zoo-data/data/object-detection-coco
+
+rm -r output
+rm -r stream
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "streaming Object Detection failed"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time11=$((now-start))
+echo "streaming Object Detection time used:$time11 seconds"
+
+echo "start example test for streaming Text Classification"
+#timer
+start=$(date "+%s")
+if [ -d analytics-zoo-data/data/streaming/text-model ]
+then
+    echo "analytics-zoo-data/data/streaming/text-model already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/text-model.zip -P analytics-zoo-data/data
+    unzip -q analytics-zoo-data/data/streaming/text-model.zip -d analytics-zoo-data/data/streaming/
+fi
+export SPARK_DRIVER_MEMORY=2g
+nc -lk 9000 < analytics-zoo-data/data/streaming/text-model/2.log &
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/streaming/textclassification/streaming_text_classification.py \
+    --model analytics-zoo-data/data/streaming/text-model/text_classifier.model \
+    --index_path word_index.txt --port 9000 >>1.log &
+while :
+do
+if [ -n "$(grep "top-5" 1.log)" ];then
+    echo "----Find-----"
+    kill -9 $(ps -ef | grep StreamingTextClassification | grep -v grep |awk '{print $2}')
+    kill -9 $(ps -ef | grep "nc -lk" | grep -v grep |awk '{print $2}')
+    sleep 1s
+    break
+fi
+done
+
+rm 1.log
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "streaming Text Classification failed"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time12=$((now-start))
+echo "streaming Text Classification time used:$time12 seconds"
+
+
 echo "start example test for textclassification"
 start=$(date "+%s")
 
