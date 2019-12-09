@@ -14,7 +14,7 @@ if [ -d analytics-zoo-data/data/object-detection-coco ]
 then
     echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
-    wget $FTP_URI/analytics-zoo-data/data/ -P analytics-zoo-data/data/object-detection-coco.zip
+    wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data/
     unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/
 fi
 
@@ -135,14 +135,14 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --driver-memory 4g \
 --executor-memory 5g \
 --class com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection \
---streamingPath ./stream --model analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model \
---output ./output  &
+--streamingPath stream --model analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model \
+--output output  &
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
 --driver-memory 2g \
 --executor-memory 5g \
 --class com.intel.analytics.zoo.examples.streaming.objectdetection.ImagePathWriter \
---streamingPath ./stream --imageSourcePath analytics-zoo-data/data/object-detection-coco
+--streamingPath stream --imageSourcePath analytics-zoo-data/data/object-detection-coco
 
 rm -r output
 rm -r stream
