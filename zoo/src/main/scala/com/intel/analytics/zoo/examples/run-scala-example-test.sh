@@ -234,12 +234,9 @@ com.intel.analytics.zoo.apps.textclassfication.inference.SimpleDriver \
 --EMBEDDING_FILE_PATH analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
 --MODEL_PATH models/text-classification.bigdl
 
-unset http_proxy
-unset https_proxy
-
 mvn spring-boot:run -DEMBEDDING_FILE_PATH=analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
 -DMODEL_PATH=models/text-classification.bigdl >1.log &
-curl -d hhh http://localhost:8080/predict &
+curl -d hello -x "" http://localhost:8080/predict &
 while :
 do
 if [ -n "$(grep "class" ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/text-classification-inference/1.log)" ];then
@@ -249,10 +246,6 @@ if [ -n "$(grep "class" ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/text
     break
 fi
 done
-
-export http_proxy=http://child-prc.intel.com:911
-export https_proxy=http://child-prc.intel.com:911
-
 
 mvn clean
 
