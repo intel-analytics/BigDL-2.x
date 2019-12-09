@@ -234,10 +234,25 @@ com.intel.analytics.zoo.apps.textclassfication.inference.SimpleDriver \
 --EMBEDDING_FILE_PATH analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
 --MODEL_PATH models/text-classification.bigdl
 
+unset http_proxy
+unset https_proxy
 
-#WebServiceDriver has some problem!
-#java -cp /home/jieru/PycharmProjects/analytics-zoo/apps/model-inference-examples/text-classification-inference/target/text-classification-inference-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
-#com.intel.analytics.zoo.apps.textclassfication.inference.WebServiceDriver
+mvn spring-boot:run -DEMBEDDING_FILE_PATH=analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
+-DMODEL_PATH=models/text-classification.bigdl >1.log &
+curl -d hhh http://localhost:8080/predict &
+while :
+do
+if [ -n "$(grep "class" ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/text-classification-inference/1.log)" ];then
+    echo "----Find-----"
+    kill -9 $(ps -ef | grep text-classification | grep -v grep |awk '{print $2}')
+    sleep 1s
+    break
+fi
+done
+
+export http_proxy=http://child-prc.intel.com:911
+export https_proxy=http://child-prc.intel.com:911
+
 
 mvn clean
 
@@ -281,8 +296,8 @@ else
 fi
 
 #modify flink conf
-rm ./flink-1.7.2-bin-scala_2.11/flink-1.7.2/conf/flink-conf.yaml
-wget -P ./flink-1.7.2-bin-scala_2.11/flink-1.7.2/conf/ ${FTP_URI}/analytics-zoo-data/apps/flink/flink-conf.yaml
+#rm ./flink-1.7.2-bin-scala_2.11/flink-1.7.2/conf/flink-conf.yaml
+#wget -P ./flink-1.7.2-bin-scala_2.11/flink-1.7.2/conf/ ${FTP_URI}/analytics-zoo-data/apps/flink/flink-conf.yaml
 
 ./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/start-cluster.sh
 
@@ -291,7 +306,7 @@ nc -l 9000 < analytics-zoo-data/data/streaming/text-model/2.log &
 ./model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
 --port 9000 --embeddingFilePath analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
 --modelPath models/text-classification.bigdl \
---parallelism 2  &
+--parallelism 1  &
 while :
 do
 if [ -n "$(find . -type f -name "flink*taskexecutor*.out" | xargs grep -i "Zoo")" ];then
@@ -309,7 +324,7 @@ wget ${FTP_URL}/analytics-zoo-models/flink-models/resnet_v1_50.ckpt
 ./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/start-cluster.sh
 
 ./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/flink run \
--m localhost:8081 -p 2 \
+-m localhost:8081 -p 1 \
 -c com.intel.analytics.zoo.apps.model.inference.flink.Resnet50ImageClassification.ImageClassificationStreaming  \
 ${ANALYTICS_ZOO_HOME}/apps/model-inference-examples/model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar  \
 --modelType resnet_v1_50 --checkpointPath resnet_v1_50.ckpt  \
