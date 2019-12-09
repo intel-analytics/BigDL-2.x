@@ -29,7 +29,6 @@ import argparse
 import sys
 import os
 import subprocess
-import shlex
 
 
 parser = argparse.ArgumentParser(description='Process Analytics Zoo docs.')
