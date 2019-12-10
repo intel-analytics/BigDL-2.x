@@ -66,7 +66,6 @@ class TFPredictor:
     def from_keras(cls, keras_model, dataset):
         import tensorflow.keras.backend as K
         sess = K.get_session()
-
         outputs = keras_model(dataset.tensors)
 
         if not isinstance(outputs, list):
@@ -76,4 +75,4 @@ class TFPredictor:
 
     def predict(self):
 
-        return self.tfnet.predict(self.dataset)
+        return self.tfnet.predict(self.dataset.get_prediction_data(), mini_batch=True)

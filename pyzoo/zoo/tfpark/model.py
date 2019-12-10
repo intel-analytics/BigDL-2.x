@@ -269,15 +269,9 @@ class KerasModel(object):
             return self._predict_distributed(x)
         else:
             if distributed:
-                sc = getOrCreateSparkContext()
-                rdd, types, shapes = _create_rdd_x(x, self.model._feed_input_names, sc)
-
-                dataset = TFDataset.from_rdd(rdd,
-                                             names=self.model._feed_input_names,
-                                             types=types,
-                                             shapes=shapes,
-                                             batch_per_thread=-1 if batch_per_thread is None
-                                             else batch_per_thread)
+                dataset = TFDataset.from_ndarrays(x,
+                                                  batch_per_thread=1 if batch_per_thread is None
+                                                  else batch_per_thread)
                 results = self._predict_distributed(dataset).collect()
                 output_num = len(self.model.outputs)
                 if output_num == 1:
@@ -371,67 +365,5 @@ def _standarize_feature_dataset(dataset, model):
     feature_schema = _reorder(dataset.tensor_structure[0], input_names)
 
     dataset = TFNdarrayDataset(rdd, feature_schema, dataset.batch_size,
-                               -1, dataset.hard_code_batch_size)
+                               dataset.batch_per_thread, dataset.hard_code_batch_size)
     return dataset
-
-
-def _create_rdd_x_y(x, y, input_names, output_names, sc):
-    x = training_utils.standardize_input_data(x, input_names,
-                                              check_batch_axis=False,
-                                              exception_prefix='input')
-    y = training_utils.standardize_input_data(y, output_names,
-                                              shapes=None, check_batch_axis=False,
-                                              exception_prefix='target')
-
-    num_samples = x[0].shape[0]
-    num_inputs = len(x)
-    num_targets = len(y)
-
-    input_data = []
-    for i in range(num_samples):
-        inputs = []
-        for j in range(num_inputs):
-            inputs.append(x[j][i])
-
-        targets = []
-        for j in range(num_targets):
-            if y[j][i].ndim == 0:
-                targets.append(np.expand_dims(y[j][i], axis=1))
-            else:
-                targets.append(y[j][i])
-
-        input_data.append((inputs, targets))
-
-    x_meta = dict([(input_names[i],
-                    (input_data[0][0][i].dtype, input_data[0][0][i].shape))
-                   for i in range(len(input_names))])
-
-    y_meta = dict([(output_names[i],
-                    (input_data[0][1][i].dtype, input_data[0][1][i].shape))
-                   for i in range(len(input_names))])
-
-    rdd = sc.parallelize(input_data)
-    return rdd, x_meta, y_meta
-
-
-def _create_rdd_x(x, input_names, sc):
-    x = training_utils.standardize_input_data(x, input_names,
-                                              check_batch_axis=False,
-                                              exception_prefix='input')
-
-    num_samples = x[0].shape[0]
-    num_inputs = len(x)
-
-    input_data = []
-    for i in range(num_samples):
-        sample = []
-        for j in range(num_inputs):
-            sample.append(x[j][i])
-
-        input_data.append(sample)
-
-    types = [x.dtype for x in input_data[0]]
-    shapes = [x.shape for x in input_data[0]]
-
-    rdd = sc.parallelize(input_data)
-    return rdd, types, shapes

@@ -108,7 +108,7 @@ class TFNet(Layer):
         else:
             return [to_jtensor(input)], False
 
-    def predict(self, x, batch_per_thread=1, distributed=True):
+    def predict(self, x, batch_per_thread=1, distributed=True, mini_batch=False):
         """
         Use a model to do prediction.
         """
@@ -133,6 +133,12 @@ class TFNet(Layer):
             results = callZooFunc(self.bigdl_type, "zooPredict",
                                   self.value,
                                   x.get_prediction_data())
+            return results.map(lambda result: Layer.convert_output(result))
+
+        if mini_batch:
+            results = callZooFunc(self.bigdl_type, "zooPredict",
+                                  self.value,
+                                  x)
             return results.map(lambda result: Layer.convert_output(result))
 
         if distributed:
