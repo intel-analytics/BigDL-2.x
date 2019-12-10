@@ -112,7 +112,7 @@ mkdir stream
 while true
 do
    temp1=$(find analytics-zoo-data/data/object-detection-coco -type f|wc -l)
-   temp2=$(find ./output -type f|wc -l)
+   temp2=$(find output -type f|wc -l)
    temp3=$(($temp1+$temp1))
    if [ $temp3 -eq $temp2 ];then
        kill -9 $(ps -ef | grep StreamingObjectDetection | grep -v grep |awk '{print $2}')
