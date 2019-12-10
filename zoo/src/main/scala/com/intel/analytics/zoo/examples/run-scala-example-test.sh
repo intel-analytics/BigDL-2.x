@@ -32,29 +32,10 @@ bash ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --total-executor-cores 4 \
 --class com.intel.analytics.zoo.examples.tfnet.Predict \
 --image analytics-zoo-data/data/object-detection-coco \
---model analytics-zoo-models/tfnet/ \
+--model analytics-zoo-models/tfnet/frozen_inference_graph.pb \
 --partition 4
 
-
-echo "#2 start example test for chatbot"
-
-if [ -d analytics-zoo-data/data/chatbot-data ]
-then
-    echo "analytics-zoo-data/data/object-detection-coco already exists"
-else
-    wget $FTP_URI/analytics-zoo-data/data/chatbot-data.zip -P analytics-zoo-data/data
-    tar -xvzf analytics-zoo-data/data/chatbot-data.tar.gz
-fi
-
-${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
---master ${MASTER} \
---driver-memory 20g \
---executor-memory 20g \
---class com.intel.analytics.zoo.examples.chatbot.Train \
--f analytics-zoo-data/data/chatbot-data
-
-
-echo "#3 start example test for LocalEstimator"
+echo "#2 start example test for LocalEstimator"
 
 if [ -d analytics-zoo-data/data/mnist ]
 then
@@ -64,7 +45,7 @@ else
     unzip -q analytics-zoo-data/data/mnist.zip -d analytics-zoo-data/data/
 fi
 
-echo "#3.1 LenetEstimator testing"
+echo "##2.1 LenetEstimator testing"
 
 #timer
 start=$(date "+%s")
@@ -75,7 +56,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --class com.intel.analytics.zoo.examples.localEstimator.LenetLocalEstimator \
 -d analytics-zoo-data/data/mnist -b 128 -e 1 -t 4
 
-echo "#3.2 ResnetEstimator testing"
+echo "##2.2 ResnetEstimator testing"
 
 #timer
 start=$(date "+%s")
@@ -86,7 +67,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --class com.intel.analytics.zoo.examples.localEstimator.ResnetLocalEstimator \
 -d analytics-zoo-data/data/mnist -b 128 -e 1 -t 4
 
-echo "#3.3 ResnetEstimator testing"
+echo "##2.3 ResnetEstimator testing"
 
 if [ -d analytics-zoo-data/data/cifar10 ];then
     echo "analytics-zoo-data/data/cifar10 already exists"
@@ -111,7 +92,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 -m analytics-zoo-models/localestimator/saved-model4 \
 -i "resnet50_input:0" -o "resnet50/activation_48/Relu:0" -b 132 -e 20 -t 10
 
-echo "#4 start example test for streaming Object Detection"
+echo "#3 start example test for streaming Object Detection"
 
 if [ -d analytics-zoo-data/data/object-detection-coco ];then
     echo "analytics-zoo-data/data/object-detection-coco already exists"
@@ -155,7 +136,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 rm -r output
 rm -r stream
 
-echo "#4 start example test for streaming Text Classification"
+echo "#5 start example test for streaming Text Classification"
 
 if [ -d analytics-zoo-data/data/streaming/text-model ]
 then
@@ -185,6 +166,24 @@ fi
 done
 
 rm 1.log
+
+echo "#6 start example test for chatbot"
+
+if [ -d analytics-zoo-data/data/chatbot-data ]
+then
+    echo "analytics-zoo-data/data/object-detection-coco already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/chatbot-data.zip -P analytics-zoo-data/data
+    tar -xvzf analytics-zoo-data/data/chatbot-data.tar.gz
+fi
+
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+--master ${MASTER} \
+--driver-memory 20g \
+--executor-memory 20g \
+--class com.intel.analytics.zoo.examples.chatbot.Train \
+-f analytics-zoo-data/data/chatbot-data
+
 
 echo "----------------------------------------------"
 echo "# Test Apps -- 1.text-classification-training"
