@@ -109,6 +109,9 @@ fi
 
 mkdir output
 mkdir stream
+sleep 1s
+
+
 while true
 do
    temp1=$(find analytics-zoo-data/data/object-detection-coco -type f|wc -l)
