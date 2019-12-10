@@ -89,7 +89,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --executor-memory 20g \
 --class com.intel.analytics.zoo.examples.localEstimator.TransferLearning \
 -d analytics-zoo-data/data/cifar10 \
--m analytics-zoo-models/localestimator/saved-model4 \
+-m analytics-zoo-models/localestimator/saved_model4 \
 -i "resnet50_input:0" -o "resnet50/activation_48/Relu:0" -b 132 -e 20 -t 10
 
 echo "#3 start example test for streaming Object Detection"
