@@ -18,13 +18,21 @@ else
     unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/
 fi
 
+if [ -d analytics-zoo-models/tfnet ]
+then
+    echo "analytics-zoo-model/tfnet already exists"
+else
+    wget $FTP_URI/analytics-zoo-models/tfnet/tfnet.zip -P analytics-zoo-models/tfnet/
+    unzip -q analytics-zoo-models/tfnet/tfnet.zip -d analytics-zoo-models/tfnet/
+fi
+
 bash ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master $MASTER \
 --conf spark.executor.cores=1 \
 --total-executor-cores 4 \
 --class com.intel.analytics.zoo.examples.tfnet.Predict \
 --image analytics-zoo-data/data/object-detection-coco \
---model analytics-zoo-model/tfnet/ \
+--model analytics-zoo-models/tfnet/ \
 --partition 4
 
 
@@ -87,11 +95,11 @@ else
     unzip -q analytics-zoo-data/data/cifar10.zip -d analytics-zoo-data/data/
 fi
 
-if [ -d analytics-zoo-model/localestimator/saved_model4 ];then
+if [ -d analytics-zoo-models/localestimator/saved_model4 ];then
     echo "analytics-zoo-model/localestimator/saved_model4 already exists"
 else
-    wget $FTP_URI/analytics-zoo-model/localestimator/saved_model4.zip  -P analytics-zoo-model/localestimator
-    unzip -q analytics-zoo-model/localestimator/saved_model4.zip -d analytics-zoo-model/localestimator/
+    wget $FTP_URI/analytics-zoo-models/localestimator/saved_model4.zip  -P analytics-zoo-model/localestimator
+    unzip -q analytics-zoo-models/localestimator/saved_model4.zip -d analytics-zoo-model/localestimator/
 fi
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
