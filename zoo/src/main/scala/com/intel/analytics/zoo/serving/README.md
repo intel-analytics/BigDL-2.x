@@ -47,6 +47,8 @@ image: dog1.jpeg, classification-result: class: 207's prob: 0.9226527
 ```
 Wow! You made it! 
 
+You could also see the log and performance according to [Log and Visualization]()
+
 To stop the serving and remove the container.
 ```
 docker stop cluster-serving
@@ -128,22 +130,16 @@ If you want to run multiple serving on a same machine (not recommended because t
 ### Push and Get data to/from queue
 We provide Python API to interact with queues. Once the data is inqueued, Analytics Zoo Cluster Serving would dequeue the data from queue automatically, and do inference based on your model, and write result according to your config.
 
-For API documentation of specific queues, please refer to following.
-#### Python API for Redis
+For detail API documentation, see [API Guide]().
+#### Python API
 ```
-redis_queue = RedisQueue()
-redis_queue.enqueue_image(uri, data)
-d = redis_queue.get_result()
+input_api = Input()
+input_api.enqueue_image(uri, data)
+output_api = Output()
+d = output_api.dequeue()
 ```
 where `uri` is String type used as data identifier and `data` is `np.ndarray` type, `d` is a Python dict storing the result, format is in `key: class index, value: class probability`
 
-You can refer to code in `pyzoo/zoo/serving/api` to see more details.
-
-Example code to push and get data is provided in `pyzoo/zoo/serving/api`.
-## Benchmark Test
-We have tested Analytics Zoo Cluster Serving Benchmark on [machine type and specs], with MKL library supported. MKL is a library accelerating computing on Intel processors, for more information, please see [MKL Official](https://software.intel.com/en-us/mkl)
-
-This is classified now haha
 ## FAQ
 * Java heap space - If Cluster Serving ends by raising error `Java heap space`, try increase spark driver memory in `spark:driver_memory` of `config.yaml`.
 * OutOfMemory (TensorFlow model) - If Cluster Serving (when running TensorFlow model) ends by raising error `OutOfMemory`, try reduce core number in `spark:master:local[core_number]` (in local mode) and `spark:executor_cores` (in distributed mode). The reason why TensorFlow needs different configuration is that the model preparing step is different from others.
