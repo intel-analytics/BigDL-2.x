@@ -46,8 +46,8 @@ class API:
 
 
 class Input(API):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, file_path=None):
+        super().__init__(file_path)
 
     def enqueue_image(self, uri, img):
         """
@@ -72,17 +72,21 @@ class Input(API):
 
 
 class Output(API):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, file_path=None):
+        super().__init__(file_path)
 
-    def get_results(self):
+    def dequeue(self):
         res_list = self.db.keys('result:*')
         decoded = {}
         for res in res_list:
             res_dict = self.db.hgetall(res.decode('utf-8'))
-            res_id = res_dict[b'_1'].decode('utf-8')
-            res_value = res_dict[b'_2'].decode('utf-8')
+            res_id = res.decode('utf-8').split(":")[1]
+            res_value = res_dict[b'value'].decode('utf-8')
             decoded[res_id] = res_value
+            self.db.delete(res)
         return decoded
 
+    def query(self, uri):
+        res_dict = self.db.hgetall("result:"+uri)
+        return res_dict[b'value'].decode('utf-8')
 
