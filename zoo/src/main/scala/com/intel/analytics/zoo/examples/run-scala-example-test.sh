@@ -32,7 +32,7 @@ bash ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --total-executor-cores 4 \
 --class com.intel.analytics.zoo.examples.tfnet.Predict \
 --image analytics-zoo-data/data/object-detection-coco \
---model analytics-zoo-models/tfnet/frozen_inference_graph.pb \
+--model analytics-zoo-models/tfnet/tfnet/frozen_inference_graph.pb \
 --partition 4
 
 echo "#2 start example test for LocalEstimator"
