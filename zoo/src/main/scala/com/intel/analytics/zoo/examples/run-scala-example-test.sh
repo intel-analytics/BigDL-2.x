@@ -112,7 +112,7 @@ mkdir stream
 while true
 do
    temp1=$(find analytics-zoo-data/data/object-detection-coco -type f|wc -l)
-   temp2=$(find output -type f|wc -l)
+   temp2=$(find ./output -type f|wc -l)
    temp3=$(($temp1+$temp1))
    if [ $temp3 -eq $temp2 ];then
        kill -9 $(ps -ef | grep StreamingObjectDetection | grep -v grep |awk '{print $2}')
@@ -124,14 +124,14 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --driver-memory 4g \
 --executor-memory 5g \
 --class com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection \
---streamingPath stream --model analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model \
---output output  &
+--streamingPath ./stream --model analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model \
+--output ./output  &
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
 --driver-memory 2g \
 --executor-memory 5g \
 --class com.intel.analytics.zoo.examples.streaming.objectdetection.ImagePathWriter \
---streamingPath stream --imageSourcePath analytics-zoo-data/data/object-detection-coco
+--streamingPath ./stream --imageSourcePath analytics-zoo-data/data/object-detection-coco
 
 rm -r output
 rm -r stream
