@@ -2,7 +2,7 @@
 
 model:
   # model path must be set
-  path: /home/litchy/models/caffe_res50/
+  path: /opt/work/model/
 data:
   # default, localhost:6379
   src: localhost:6379
