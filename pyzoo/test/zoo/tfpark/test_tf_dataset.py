@@ -243,19 +243,8 @@ class TestTFDataset(ZooTestCase):
         assert result[1] == 456
 
     def test_tfdataset_with_tfrecord(self):
-        model = tf.keras.Sequential(
-            [tf.keras.layers.Flatten(input_shape=(28, 28, 1)),
-             tf.keras.layers.Dense(10, activation='softmax'),
-             ]
-        )
 
-        model.compile(optimizer='rmsprop',
-                      loss='sparse_categorical_crossentropy',
-                      metrics=['accuracy'])
-
-        keras_model = KerasModel(model)
-
-        def parse_fn(example):
+        def single_parse_fn(e):
             keys_to_features = {
                 'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),
                 'image/format': tf.FixedLenFeature((), tf.string, default_value='raw'),
@@ -270,7 +259,7 @@ class TestTFDataset(ZooTestCase):
 
             decoder = tf.contrib.slim.tfexample_decoder.TFExampleDecoder(
                 keys_to_features, items_to_handlers)
-            results = decoder.decode(example)
+            results = decoder.decode(e)
 
             if len(results[0].shape) > 0:
                 feature = results[0]
@@ -278,20 +267,34 @@ class TestTFDataset(ZooTestCase):
             else:
                 feature = results[1]
                 label = results[0]
-
             return feature, label
+
+        def parse_fn(example):
+            results = tf.map_fn(single_parse_fn, example, dtype=(tf.uint8, tf.int64))
+            return tf.to_float(results[0]), tf.to_float(results[1])
 
         train_path = os.path.join(resource_path, "tfrecord/mnist_train.tfrecord")
         test_path = os.path.join(resource_path, "tfrecord/mnist_test.tfrecord")
-        dataset = TFDataset.from_tfrecord(train_path,
-                                          parse_fn=parse_fn, batch_size=8,
-                                          validation_file_path=test_path)
+        dataset = TFDataset.from_tfrecord_file(self.sc, train_path,
+                                               batch_size=8,
+                                               validation_file_path=test_path)
+        dataset = dataset.map(lambda x: parse_fn(x[0]))
+
+        model = tf.keras.Sequential(
+            [tf.keras.layers.Flatten(input_shape=(28, 28, 1)),
+             tf.keras.layers.Dense(10, activation='softmax')]
+        )
+
+        model.compile(optimizer='rmsprop',
+                      loss='sparse_categorical_crossentropy',
+                      metrics=['accuracy'])
+
+        keras_model = KerasModel(model)
 
         keras_model.fit(dataset)
 
-        predict_dataset = TFDataset.from_tfrecord(test_path,
-                                                  parse_fn=lambda x: (parse_fn(x)[0],),
-                                                  batch_per_thread=1)
+        predict_dataset = TFDataset.from_tfrecord_file(self.sc, test_path, batch_per_thread=1)
+        predict_dataset = predict_dataset.map(lambda x: parse_fn(x[0])[0])
         result = keras_model.predict(predict_dataset)
         result.collect()
 

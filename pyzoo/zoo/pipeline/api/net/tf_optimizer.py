@@ -26,6 +26,7 @@ from bigdl.util.common import to_list, JavaValue
 from zoo.common.utils import callZooFunc
 from bigdl.optim.optimizer import MaxEpoch, EveryEpoch
 from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss
+from zoo.pipeline.api.net.tf_dataset import MapDataset
 from zoo.pipeline.api.net.utils import _find_placeholders, to_bigdl_optim_method
 from zoo.pipeline.estimator import Estimator
 from zoo.util import nest
@@ -556,7 +557,7 @@ class TFOptimizer:
         :return:
         """
         import tensorflow.keras.backend as K
-        loss = keras_model.total_loss
+        import tensorflow as tf
 
         model_inputs = keras_model.inputs
         if hasattr(keras_model, "targets"):
@@ -566,6 +567,31 @@ class TFOptimizer:
 
         inputs = model_inputs + model_targets
 
+        if isinstance(dataset, MapDataset):
+            # todo handle multiple inputs model
+            if len(dataset.tensors) != 2:
+                raise ValueError("Only support sinlge input keras model with MapDataset")
+            model = tf.keras.Sequential([
+                tf.keras.layers.InputLayer(input_tensor=dataset.feature_tensors),
+                keras_model])
+            model.compile(
+                optimizer=keras_model.optimizer,
+                loss=keras_model.loss,
+                metrics=keras_model._compile_metrics,
+                weighted_metrics=keras_model._compile_weighted_metrics,
+                loss_weights=keras_model.loss_weights,
+                target_tensors=dataset.label_tensors,
+                run_eagerly=keras_model.run_eagerly,
+                cloning=keras_model._cloning)
+            keras_model = model
+            inputs = dataset._original_tensors
+
+            if hasattr(keras_model, "targets"):
+                model_targets = keras_model.targets
+            else:
+                model_targets = keras_model._targets
+
+        loss = keras_model.total_loss
         variables = keras_model._collected_trainable_weights
         variables.sort(key=lambda variable: variable.name)
         keras_optimizer = keras_model.optimizer
@@ -657,17 +683,15 @@ class TFOptimizer:
             checkpoint_trigger = EveryEpoch()
 
         if self.tf_model.val_methods is not None and self.val_rdd is not None:
-            self.estimator.train(train_set=self.training_rdd,
-                                 criterion=IdentityCriterion(),
-                                 end_trigger=end_trigger,
-                                 checkpoint_trigger=checkpoint_trigger,
-                                 validation_set=self.val_rdd,
-                                 validation_method=self.tf_model.val_methods,
-                                 batch_size=self.batch_size)
+            self.estimator.train_minibatch(train_set=self.training_rdd,
+                                           criterion=IdentityCriterion(),
+                                           end_trigger=end_trigger,
+                                           checkpoint_trigger=checkpoint_trigger,
+                                           validation_set=self.val_rdd,
+                                           validation_method=self.tf_model.val_methods)
         else:
-            self.estimator.train(train_set=self.training_rdd,
-                                 criterion=IdentityCriterion(),
-                                 end_trigger=end_trigger,
-                                 batch_size=self.batch_size)
+            self.estimator.train_minibatch(train_set=self.training_rdd,
+                                           criterion=IdentityCriterion(),
+                                           end_trigger=end_trigger)
 
         self.tf_model.training_helper_layer.get_weights_to_python()

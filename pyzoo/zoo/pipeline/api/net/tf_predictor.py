@@ -67,8 +67,11 @@ class TFPredictor:
         import tensorflow.keras.backend as K
         sess = K.get_session()
 
-        outputs = keras_model.outputs
-        inputs = keras_model.inputs
+        outputs = keras_model(dataset.tensors)
+
+        if not isinstance(outputs, list):
+            outputs = [outputs]
+        inputs = dataset._original_tensors
         return cls(sess, outputs, inputs, dataset)
 
     def predict(self):
