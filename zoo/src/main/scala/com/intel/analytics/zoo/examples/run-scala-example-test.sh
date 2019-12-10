@@ -45,6 +45,20 @@ else
     unzip -q analytics-zoo-data/data/mnist.zip -d analytics-zoo-data/data/
 fi
 
+if [ -d analytics-zoo-data/data/cifar10 ];then
+    echo "analytics-zoo-data/data/cifar10 already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/cifar10.zip -P analytics-zoo-data/data
+    unzip -q analytics-zoo-data/data/cifar10.zip -d analytics-zoo-data/data/
+fi
+
+if [ -d analytics-zoo-models/localestimator/saved_model4 ];then
+    echo "analytics-zoo-model/localestimator/saved_model4 already exists"
+else
+    wget $FTP_URI/analytics-zoo-models/localestimator/saved_model4.zip  -P analytics-zoo-model/localestimator
+    unzip -q analytics-zoo-models/localestimator/saved_model4.zip -d analytics-zoo-model/localestimator/
+fi
+
 echo "##2.1 LenetEstimator testing"
 
 #timer
@@ -65,23 +79,9 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --driver-memory 20g \
 --executor-memory 20g \
 --class com.intel.analytics.zoo.examples.localEstimator.ResnetLocalEstimator \
--d analytics-zoo-data/data/mnist -b 128 -e 1 -t 4
+-d analytics-zoo-data/data/cifar10 -b 128 -e 1 -t 4
 
 echo "##2.3 ResnetEstimator testing"
-
-if [ -d analytics-zoo-data/data/cifar10 ];then
-    echo "analytics-zoo-data/data/cifar10 already exists"
-else
-    wget $FTP_URI/analytics-zoo-data/data/cifar10.zip -P analytics-zoo-data/data
-    unzip -q analytics-zoo-data/data/cifar10.zip -d analytics-zoo-data/data/
-fi
-
-if [ -d analytics-zoo-models/localestimator/saved_model4 ];then
-    echo "analytics-zoo-model/localestimator/saved_model4 already exists"
-else
-    wget $FTP_URI/analytics-zoo-models/localestimator/saved_model4.zip  -P analytics-zoo-model/localestimator
-    unzip -q analytics-zoo-models/localestimator/saved_model4.zip -d analytics-zoo-model/localestimator/
-fi
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
