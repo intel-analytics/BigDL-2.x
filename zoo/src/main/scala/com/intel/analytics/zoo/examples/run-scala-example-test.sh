@@ -53,10 +53,10 @@ else
 fi
 
 if [ -d analytics-zoo-models/localestimator/saved_model4 ];then
-    echo "analytics-zoo-model/localestimator/saved_model4 already exists"
+    echo "analytics-zoo-models/localestimator/saved_model4 already exists"
 else
-    wget $FTP_URI/analytics-zoo-models/localestimator/saved_model4.zip  -P analytics-zoo-model/localestimator
-    unzip -q analytics-zoo-models/localestimator/saved_model4.zip -d analytics-zoo-model/localestimator/
+    wget $FTP_URI/analytics-zoo-models/localestimator/saved_model4.zip  -P analytics-zoo-models/localestimator
+    unzip -q analytics-zoo-models/localestimator/saved_model4.zip -d analytics-zoo-models/localestimator/
 fi
 
 echo "##2.1 LenetEstimator testing"
