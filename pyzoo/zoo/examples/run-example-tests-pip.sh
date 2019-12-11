@@ -10,7 +10,7 @@ echo "start example test for vnni/openvino"
 start=$(date "+%s")
 if [ -d analytics-zoo-models/vnni ]
 then
-   echo "analytics-zoo-models/resnet_v1_50.model already exists."
+   echo "analytics-zoo-models/resnet_v1_50.xml already exists."
 else
    wget $FTP_URI/analytics-zoo-models/openvino/vnni/resnet_v1_50.zip \
     -P analytics-zoo-models
@@ -26,7 +26,7 @@ fi
 export SPARK_DRIVER_MEMORY=2g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/vnni/openvino/predict.py \
     --model analytics-zoo-models/vnni/resnet_v1_50.xml \
-    --image analytics-zoo-data/data/dogs-vs-cats
+    --image analytics-zoo-data/data/object-detection-coco
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
@@ -60,7 +60,7 @@ else
 fi
 export SPARK_DRIVER_MEMORY=10g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
-    --image analytics-zoo-data/data/dogs-vs-cats \
+    --image analytics-zoo-data/data/object-detection-coco \
     --model analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28
 
 exit_status=$?
@@ -105,6 +105,8 @@ do
    temp3=$(($temp1+$temp1))
    if [ $temp3 -eq $temp2 ];then
        kill -9 $(ps -ef | grep StreamingObjectDetection | grep -v grep |awk '{print $2}')
+       rm -r output
+       rm -r stream
    break
    fi
 done  &
@@ -115,9 +117,6 @@ python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/streaming/objectdetection/stream
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/streaming/objectdetection/image_path_writer.py \
     --streaming_path ./stream \
     --img_path analytics-zoo-data/data/object-detection-coco
-
-rm -r output
-rm -r stream
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
@@ -139,7 +138,7 @@ if [ -d analytics-zoo-data/data/streaming/text-model ]
 then
     echo "analytics-zoo-data/data/streaming/text-model already exists"
 else
-    wget $FTP_URI/analytics-zoo-data/data/text-model.zip -P analytics-zoo-data/data
+    wget $FTP_URI/analytics-zoo-data/data/streaming/text-model.zip -P analytics-zoo-data/data
     unzip -q analytics-zoo-data/data/streaming/text-model.zip -d analytics-zoo-data/data/streaming/
 fi
 export SPARK_DRIVER_MEMORY=2g

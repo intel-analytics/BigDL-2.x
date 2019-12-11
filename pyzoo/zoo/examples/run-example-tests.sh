@@ -40,6 +40,8 @@ do
    temp3=$(($temp1+$temp1))
    if [ $temp3 -eq $temp2 ];then
        kill -9 $(ps -ef | grep StreamingObjectDetection | grep -v grep |awk '{print $2}')
+       rm -r output
+       rm -r stream
    break
    fi
 done  &
@@ -59,9 +61,6 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --streaming_path ./stream \
     --img_path analytics-zoo-data/data/object-detection-coco
 
-rm -r output
-rm -r stream
-
 now=$(date "+%s")
 time11=$((now-start))
 
@@ -72,7 +71,7 @@ if [ -d analytics-zoo-data/data/streaming/text-model ]
 then
     echo "analytics-zoo-data/data/streaming/text-model already exists"
 else
-    wget $FTP_URI/analytics-zoo-data/data/text-model.zip -P analytics-zoo-data/data
+    wget $FTP_URI/analytics-zoo-data/data/streaming/text-model.zip -P analytics-zoo-data/data
     unzip -q analytics-zoo-data/data/streaming/text-model.zip -d analytics-zoo-data/data/streaming/
 fi
 
