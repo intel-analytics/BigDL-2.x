@@ -129,6 +129,44 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   }
 
   /**
+   * loads a TF frozen model as TFNet
+   *
+   * @param modelPath  the path of the tensorflow frozen model file
+   * @param inputs     the inputs of the model
+   * @param outputs    the outputs of the model
+   */
+  def doLoadTFModel(modelPath: String,
+               inputs: Array[String],
+               outputs: Array[String]): Unit = {
+    doLoadTensorflowModel(modelPath, inputs, outputs, 1, 1, true)
+  }
+
+  /**
+   * loads a TF frozen model as TFNet
+   *
+   * @param modelPath                 the path of the tensorflow frozen model
+   * @param inputs                    the inputs of the model
+   * @param outputs                   the outputs of the model
+   * @param intraOpParallelismThreads the num of intraOpParallelismThreads
+   * @param interOpParallelismThreads the num of interOpParallelismThreads
+   * @param usePerSessionThreads      whether to perSessionThreads
+   */
+  def doLoadTFModel(modelPath: String,
+               inputs: Array[String],
+               outputs: Array[String],
+               intraOpParallelismThreads: Int,
+               interOpParallelismThreads: Int,
+               usePerSessionThreads: Boolean): Unit = {
+    doLoadTensorflowModel(
+      modelPath,
+      inputs,
+      outputs,
+      intraOpParallelismThreads,
+      interOpParallelismThreads,
+      usePerSessionThreads)
+  }
+
+  /**
    * loads a TF saved model as TFNet
    *
    * @param modelPath  the path of the tensorflow saved model dir
@@ -461,6 +499,19 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     this.originalModel =
       InferenceModelFactory.loadFloatModelForTF(modelPath,
         intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads)
+    offerModelQueue()
+  }
+
+  private def doLoadTensorflowModel(modelPath: String,
+                                    inputs: Array[String],
+                                    outputs: Array[String],
+                                    intraOpParallelismThreads: Int,
+                                    interOpParallelismThreads: Int,
+                                    usePerSessionThreads: Boolean): Unit = {
+    clearModelQueue()
+    this.originalModel =
+      InferenceModelFactory.loadFloatModelForTF(modelPath,
+        inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads)
     offerModelQueue()
   }
 
