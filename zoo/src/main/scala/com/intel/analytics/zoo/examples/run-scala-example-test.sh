@@ -61,8 +61,6 @@ fi
 
 echo "##2.1 LenetEstimator testing"
 
-#timer
-start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
 --driver-memory 20g \
@@ -72,8 +70,6 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 
 echo "##2.2 ResnetEstimator testing"
 
-#timer
-start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
 --driver-memory 20g \
@@ -109,7 +105,6 @@ fi
 
 mkdir output
 mkdir stream
-sleep 1s
 
 
 while true
@@ -119,7 +114,9 @@ do
    temp3=$(($temp1+$temp1))
    if [ $temp3 -eq $temp2 ];then
        kill -9 $(ps -ef | grep StreamingObjectDetection | grep -v grep |awk '{print $2}')
-   break
+       rm -r output
+       rm -r stream
+       break
    fi
 done  &
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
@@ -136,10 +133,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --class com.intel.analytics.zoo.examples.streaming.objectdetection.ImagePathWriter \
 --streamingPath ./stream --imageSourcePath analytics-zoo-data/data/object-detection-coco
 
-rm -r output
-rm -r stream
-
-echo "#5 start example test for streaming Text Classification"
+echo "#4 start example test for streaming Text Classification"
 
 if [ -d analytics-zoo-data/data/streaming/text-model ]
 then
@@ -170,7 +164,7 @@ done
 
 rm 1.log
 
-echo "#6 start example test for chatbot"
+echo "#5 start example test for chatbot"
 
 if [ -d analytics-zoo-data/data/chatbot-data ]
 then
@@ -201,9 +195,11 @@ then
     unzip -q analytics-zoo-data/data/glove/glove.6B.zip -d analytics-zoo-data/data/glove/glove
     tar -xvzf analytics-zoo-data/data/news20/20news-18828.tar.gz
 else
-    wget $FTP_URI/analytics-zoo-data/data/ -P analytics-zoo-data/data
+    wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
     unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/
+    wget $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip -P analytics-zoo-data/data
     unzip -q analytics-zoo-data/data/glove/glove.6B.zip -d analytics-zoo-data/data/glove/glove
+    wget $FTP_URI/analytics-zoo-data/data/news20/20news-18828.tar.gz -P analytics-zoo-data/data
     tar -xvzf analytics-zoo-data/data/news20/20news-18828.tar.gz
 fi
 
@@ -214,8 +210,6 @@ mvn clean package
 #return model-inference-examples/
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/
 
-#timer
-start=$(date "+%s")
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
