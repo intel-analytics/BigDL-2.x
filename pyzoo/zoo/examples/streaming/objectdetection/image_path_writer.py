@@ -17,7 +17,7 @@
 import argparse
 import random
 from time import sleep
-from os import listdir, rename, mkdir, remove, rmdir
+from os import listdir, rename, mkdir, remove
 from os.path import isfile, join
 import shutil
 
@@ -56,7 +56,7 @@ def package_path_to_text(streaming_path, file_path, batch=10, delay=3):
         index += 1
         curr = last
         sleep(delay)
-    rmdir(tmpDir)
+    remove(tmpDir)
 
 
 if __name__ == "__main__":

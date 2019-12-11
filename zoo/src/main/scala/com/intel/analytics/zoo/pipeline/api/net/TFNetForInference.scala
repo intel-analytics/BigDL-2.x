@@ -16,14 +16,19 @@
 
 package com.intel.analytics.zoo.pipeline.api.net
 
+import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.zoo.pipeline.api.Predictable
 import org.slf4j.LoggerFactory
-import org.tensorflow.framework.GraphDef
+import org.tensorflow.framework.{GraphDef, MetaGraphDef}
 import org.tensorflow.op.Ops
 import org.tensorflow.op.core.Placeholder
 import org.tensorflow.{DataType, SavedModelBundle}
+
+import scala.reflect.ClassTag
 
 
 private[zoo] class TFNetForInference(graphRunner: GraphRunner,
@@ -34,8 +39,13 @@ private[zoo] class TFNetForInference(graphRunner: GraphRunner,
                                     variableTypes: Array[Int],
                                     variableAssignPlaceholders: Array[String],
                                     assignVariableOps: Array[String],
-                                    initWeights: Array[Tensor[Float]])
-  extends AbstractModule[Activity, Activity, Float] {
+                                    initWeights: Array[Tensor[Float]],
+                                    initOp: Option[String])
+  extends AbstractModule[Activity, Activity, Float] with Predictable[Float] {
+
+  protected val module: Module[Float] = this
+  implicit val ev = TensorNumeric.NumericFloat
+  implicit val tag: ClassTag[Float] = ClassTag.Float
 
   override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
     (weights, gradWeights)
@@ -85,6 +95,17 @@ private[zoo] class TFNetForInference(graphRunner: GraphRunner,
     }
   }
 
+  private def runInitOp(): Unit = {
+    graphRunner.run(
+      input = Vector.empty,
+      inputTypes = Vector.empty,
+      output = Vector.empty,
+      inputNames = Vector.empty,
+      outputNames = Vector.empty,
+      targets = Vector(initOp.get)
+    )
+  }
+
   private def setVariableIntoTF(weights: Array[Tensor[Float]],
                                 inputNames: Array[String],
                                 variableTypes: Array[DataType],
@@ -106,10 +127,19 @@ private[zoo] class TFNetForInference(graphRunner: GraphRunner,
     true
   }
 
+  @transient
+  private lazy val tableInited = {
+    if (initOp.isDefined) {
+      runInitOp()
+    }
+    true
+  }
+
   override def updateOutput(input: Activity): Activity = {
     NetUtils.timeIt("updateOutput", TFNetForInference.logger) {
 
       assert(variableInited)
+      assert(tableInited)
 
       val feeds = NetUtils.activity2VectorBuilder(input)
 
@@ -138,6 +168,13 @@ private[zoo] class TFNetForInference(graphRunner: GraphRunner,
 object TFNetForInference {
 
   TFNet
+
+  private val INIT_OP_SIGNATURE_KEY = "__saved_model_init_op"
+  private val MAIN_OP_KEY = "saved_model_main_op"
+  private val LEGACY_INIT_OP_KEY = "legacy_init_op"
+  private val DEFAULT_TAG = "serve"
+  private val DEFAULT_SIGNATURE = "serving_default"
+
 
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -177,12 +214,34 @@ object TFNetForInference {
   along with the assign operation are added to the graph.
 
    */
-  def fromSavedModel(modelPath: String, tag: String,
-                     inputs: Array[String],
-                     outputs: Array[String],
+  def fromSavedModel(modelPath: String, tag: Option[String],
+                     signature: Option[String],
+                     inputs: Option[Array[String]],
+                     outputs: Option[Array[String]],
                      sessionConfig: Array[Byte]): TFNetForInference = {
 
-    val savedModelBundle = SavedModelBundle.load(modelPath, tag)
+    if (tag.isEmpty) {
+      logger.warn(s"Loading TensorFlow SavedModel: " +
+        s"SavedModel tag is not defined, using <$DEFAULT_TAG>")
+    }
+    val savedModelBundle = SavedModelBundle.load(modelPath, tag.getOrElse(DEFAULT_TAG))
+
+    val metaGraphDef = MetaGraphDef.parseFrom(savedModelBundle.metaGraphDef())
+    val initOp = getInitOp(metaGraphDef)
+
+    val (inputNames, outputNames) = if (!(inputs.isDefined && outputs.isDefined)) {
+      if (signature.isEmpty) {
+        logger.warn("Loading TensorFlow SavedModel: SavedModel signature is not defined," +
+          s"using <$DEFAULT_SIGNATURE>")
+      }
+      getInputOutputNames(metaGraphDef, signature.getOrElse(DEFAULT_SIGNATURE))
+    } else {
+      if (inputs.isEmpty || outputs.isEmpty) {
+        throw new IllegalArgumentException("inputs and outputs tensor names must be defined" +
+          " if signature is not defined")
+      }
+      (inputs.get, outputs.get)
+    }
 
     val graph = savedModelBundle.graph()
     val ops = Ops.create(graph).withSubScope("analytics-zoo")
@@ -278,7 +337,7 @@ object TFNetForInference {
       }
     }.toArray
 
-    val inputTypes = inputs.map { name =>
+    val inputTypes = inputNames.map { name =>
       val opAndPort = name.split(":")
       val op = opAndPort.head
       val port = opAndPort(1)
@@ -289,18 +348,62 @@ object TFNetForInference {
       NetUtils.tfdatatype2enum(opRef.output(port.toInt).dataType())
     }
 
+
+
     // clean up native resources
     savedModelBundle.close()
 
     new TFNetForInference(graphRunner = graphRunner,
-      inputs = inputs,
+      inputs = inputNames,
       inputTypes = inputTypes,
-      outputs = outputs,
+      outputs = outputNames,
       variables = readVariableNames.toArray,
       variableTypes = dataTypes.map(_.getNumber).toArray,
       variableAssignPlaceholders = placeholderNames.toArray,
       assignVariableOps = assign.toArray,
-      initWeights = weights)
+      initWeights = weights, initOp)
+  }
+
+  def getInputOutputNames(metaGraphDef: MetaGraphDef,
+                          signature: String): (Array[String], Array[String]) = {
+    val signatureDef = metaGraphDef.getSignatureDefOrThrow(signature)
+    val inputMap = signatureDef.getInputsMap
+    val sortedInputKeys = inputMap.keySet().asScala.toArray.sorted
+    val inputNames = sortedInputKeys.map(inputMap.get(_).getName)
+    val outputMap = signatureDef.getOutputsMap
+    val sortedOutputKeys = outputMap.keySet().asScala.toArray.sorted
+    val outputNames = sortedOutputKeys.map(outputMap.get(_).getName)
+    (inputNames, outputNames)
+  }
+
+
+  def getOpFromSignatureDef(metaGraphDef: MetaGraphDef, signatureKey: String): Option[String] = {
+    if (metaGraphDef.containsSignatureDef(signatureKey)) {
+      val signatureDef = metaGraphDef.getSignatureDefOrThrow(signatureKey)
+      val tensorInfo = signatureDef.getOutputsOrThrow(signatureKey)
+      Some(tensorInfo.getName)
+    } else {
+      None
+    }
+  }
+
+  def getOpFromCollection(metaGraphDef: MetaGraphDef, opKey: String): Option[String] = {
+    if (metaGraphDef.containsCollectionDef(opKey)) {
+      val collectionDef = metaGraphDef.getCollectionDefOrThrow(opKey)
+      val name = collectionDef.getNodeList.getValue(0)
+      Some(name)
+    } else {
+      None
+    }
+  }
+
+  def getInitOp(metaGraphDef: MetaGraphDef): Option[String] = {
+    val signatureOp = getOpFromSignatureDef(metaGraphDef, INIT_OP_SIGNATURE_KEY)
+    val mainOp = getOpFromCollection(metaGraphDef, MAIN_OP_KEY)
+    val legacyIntOP = getOpFromCollection(metaGraphDef, LEGACY_INIT_OP_KEY)
+
+    val result = List(signatureOp, mainOp, legacyIntOP).flatten
+    result.headOption
   }
 }
 

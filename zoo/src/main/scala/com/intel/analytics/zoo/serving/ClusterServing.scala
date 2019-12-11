@@ -29,14 +29,12 @@ import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import redis.clients.jedis.Jedis
 
 
-
 object ClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("akka").setLevel(Level.ERROR)
   Logger.getLogger("breeze").setLevel(Level.ERROR)
   Logger.getLogger("com.intel.analytics.zoo.feature.image").setLevel(Level.ERROR)
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
-
 
 
   def main(args: Array[String]): Unit = {
@@ -185,7 +183,8 @@ object ClusterServing {
             "Total Records Number", totalCnt, batchId)
         }
 
-        logger.info("Micro batch predict ended, time elapsed " + microBatchLatency.toString)
+        logger.info(microBatchSize +
+          "inputs predict ended, time elapsed " + microBatchLatency.toString)
 
         redisDB.xtrim("image_stream", redisDB.xlen("image_stream"), true)
 

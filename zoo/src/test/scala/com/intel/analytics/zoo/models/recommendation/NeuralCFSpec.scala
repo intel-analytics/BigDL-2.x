@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.dataset.{Sample, SampleToMiniBatch}
 import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, MSECriterion}
 import com.intel.analytics.bigdl.optim.{Adam, LBFGS, Optimizer, Top1Accuracy, Trigger}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.utils.{RandomGenerator, T}
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.models.python.PythonZooModel
@@ -37,7 +37,6 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, SQLContext}
 
-import scala.util.Random
 
 class NeuralCFSpec extends ZooSpecHelper {
 
@@ -67,13 +66,11 @@ class NeuralCFSpec extends ZooSpecHelper {
 
     val model = NeuralCF[Float](userCount, itemCount, 5, 5, 5, Array(10, 5), false)
     model.summary()
-    val ran = new Random(42L)
+    val ran = RandomGenerator.RNG
     val data: Seq[Tensor[Float]] = (1 to 50).map(i => {
-      val uid = Math.abs(ran.nextInt(userCount - 1)).toFloat + 1
-      val iid = Math.abs(ran.nextInt(userCount - 1)).toFloat + 1
+      val uid = Math.floor(ran.uniform(1, userCount + 1)).toFloat
+      val iid = Math.floor(ran.uniform(1, userCount + 1)).toFloat
       val feature: Tensor[Float] = Tensor(T(T(uid, iid)))
-      println(feature.size().toList)
-      val label = Math.abs(ran.nextInt(4)).toFloat + 1
       feature
     })
     data.map { input =>
@@ -84,12 +81,11 @@ class NeuralCFSpec extends ZooSpecHelper {
 
   "NeuralCF with MF forward and backward" should "work properly" in {
     val model = NeuralCF[Float](userCount, itemCount, 5, 5, 5, Array(10, 5), true, 3)
-    val ran = new Random(42L)
+    val ran = RandomGenerator.RNG
     val data: Seq[Tensor[Float]] = (1 to 50).map(i => {
-      val uid = Math.abs(ran.nextInt(userCount - 1)).toFloat + 1
-      val iid = Math.abs(ran.nextInt(userCount - 1)).toFloat + 1
+      val uid = Math.floor(ran.uniform(1, userCount + 1)).toFloat
+      val iid = Math.floor(ran.uniform(1, userCount + 1)).toFloat
       val feature: Tensor[Float] = Tensor(T(T(uid, iid)))
-      val label = Math.abs(ran.nextInt(4)).toFloat + 1
       feature
     })
     data.map { input =>
@@ -187,7 +183,6 @@ class NeuralCFSpec extends ZooSpecHelper {
     val trainRdds = data.map(x => x.sample)
 
 
-
     // Use Estimator API
     val ncfEst = NeuralCF[Float](100, 100, 5, 5, 5, Array(10, 5), false)
     val ncf = ncfEst.cloneModule()
@@ -239,7 +234,7 @@ class NeuralCFSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     val model = NeuralCF[Float](100, 100, 5, 5, 5, Array(10, 5), false)
     val input = Tensor[Float](Array(100, 2))
-      .fill(new Random(System.nanoTime()).nextInt(100 - 1).toFloat + 1)
+      .apply1(_ => RandomGenerator.RNG.uniform(0, 100).toInt)
     ZooSpecHelper.testZooModelLoadSave(model, input, NeuralCF.loadModel[Float])
   }
 }
