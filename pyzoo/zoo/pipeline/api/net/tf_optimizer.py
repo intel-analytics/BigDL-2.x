@@ -557,7 +557,10 @@ class TFOptimizer:
         :return:
         """
         import tensorflow.keras.backend as K
-        import tensorflow as tf
+
+        if isinstance(dataset, MapDataset):
+            raise ValueError("MapDataset is not supported for Keras Model for now, " +
+                             "please warp the map_fn in a Keras layer in your keras model")
 
         model_inputs = keras_model.inputs
         if hasattr(keras_model, "targets"):
@@ -566,30 +569,6 @@ class TFOptimizer:
             model_targets = keras_model._targets
 
         inputs = model_inputs + model_targets
-
-        if isinstance(dataset, MapDataset):
-            # todo handle multiple inputs model
-            if len(dataset.tensors) != 2:
-                raise ValueError("Only support sinlge input keras model with MapDataset")
-            model = tf.keras.Sequential([
-                tf.keras.layers.InputLayer(input_tensor=dataset.feature_tensors),
-                keras_model])
-            model.compile(
-                optimizer=keras_model.optimizer,
-                loss=keras_model.loss,
-                metrics=keras_model._compile_metrics,
-                weighted_metrics=keras_model._compile_weighted_metrics,
-                loss_weights=keras_model.loss_weights,
-                target_tensors=dataset.label_tensors,
-                run_eagerly=keras_model.run_eagerly,
-                cloning=keras_model._cloning)
-            keras_model = model
-            inputs = dataset._original_tensors
-
-            if hasattr(keras_model, "targets"):
-                model_targets = keras_model.targets
-            else:
-                model_targets = keras_model._targets
 
         loss = keras_model.total_loss
         variables = keras_model._collected_trainable_weights
