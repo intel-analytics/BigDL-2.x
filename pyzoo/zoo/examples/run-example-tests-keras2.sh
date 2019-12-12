@@ -25,7 +25,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --executor-memory 100g \
     --properties-file ${ANALYTICS_ZOO_CONF} \
     --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/tmp.py \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/transformer.py
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/tmp.py
 
 now=$(date "+%s")
 time1=$((now-start))
