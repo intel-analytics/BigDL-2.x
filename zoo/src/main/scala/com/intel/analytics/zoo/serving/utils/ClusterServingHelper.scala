@@ -85,6 +85,7 @@ class ClusterServingHelper {
 //
 //  }
   val logger: Logger = Logger.getLogger(getClass)
+  val dateTime = LocalDateTime.now.toString
 
   var sc: SparkContext = null
 //  var params: LoaderParams = null
@@ -99,12 +100,9 @@ class ClusterServingHelper {
 
   var dataShape = Array[Int]()
 
-  val logFile = {
-    val logF = new File("./" +
-      LocalDateTime.now.toString + "-cluster_serving.log")
-    logF.createNewFile()
-    new FileWriter(logF)
-  }
+  var logFile: FileWriter = null
+  var logErrorFlag: Boolean = true
+  var logSummaryFlag: Boolean = false
 
   var modelType: String = null
   var weightPath: String = null
@@ -172,6 +170,20 @@ class ClusterServingHelper {
     // engine Type need to be used on executor so do not set here
 //    engineType = getYaml(paramsConfig, "engine_type", "mklblas")
     topN = getYaml(paramsConfig, "top_n", "5").toInt
+
+    val logConfig = configList.get("log").asInstanceOf[HM]
+    logErrorFlag = if (getYaml(logConfig, "error", "y") ==
+      "y") true else false
+    logSummaryFlag = if (getYaml(logConfig, "summary", "y") ==
+      "y") true else false
+
+    if (logErrorFlag) {
+      logFile = {
+        val logF = new File("./cluster_serving.log")
+        logF.createNewFile()
+        new FileWriter(logF)
+      }
+    }
 
     if (modelType == "caffe" || modelType == "bigdl") {
       if (System.getProperty("bigdl.engineType", "mklblas")
@@ -289,7 +301,8 @@ class ClusterServingHelper {
   }
 
   def logError(msg: String): Unit = {
-    logFile.write(msg + "\n")
+
+    if (logErrorFlag) logFile.write(dateTime + " --- " + msg + "\n")
     throw new Error(msg)
   }
 

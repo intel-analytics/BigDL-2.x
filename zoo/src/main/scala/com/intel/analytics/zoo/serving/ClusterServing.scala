@@ -37,6 +37,7 @@ object ClusterServing {
   Logger.getLogger("com.intel.analytics.zoo.feature.image").setLevel(Level.ERROR)
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
 
+  case class Rec(uri: String, value: String)
 
   def main(args: Array[String]): Unit = {
 
@@ -49,7 +50,9 @@ object ClusterServing {
 
     val model = helper.loadInferenceModel()
     val bcModel = helper.sc.broadcast(model)
-    model.setInferenceSummary(null)
+
+    if (helper.logSummaryFlag) model.setInferenceSummary(
+      InferenceSummary(".", helper.dateTime + "-ClusterServing"))
 
 
     val spark = helper.getSparkSession()
@@ -87,10 +90,14 @@ object ClusterServing {
 
     val query = images.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
       batchDF.persist()
+
+
+
       val microBatchSize = batchDF.count()
       logger.info("Micro batch size " + microBatchSize.toString)
 
       if (microBatchSize != 0) {
+        val previousLen = redisDB.xlen("image_stream")
 
         val microBatchStart = System.nanoTime()
         val resultPartitions = if (helper.blasFlag) {
@@ -109,7 +116,7 @@ object ClusterServing {
 
                 val value = PostProcessing.getInfofromTensor(topN, result)
 
-                (path, value)
+                Rec(path, value)
               })
             })
           })
@@ -156,7 +163,7 @@ object ClusterServing {
               (0 until thisBatchSize).toParArray.map(i => {
                 val value = PostProcessing.getInfofromTensor(topN,
                   result.select(1, i + 1).squeeze())
-                (pathByteBatch(i)._1, value)
+                Rec(pathByteBatch(i)._1, value)
               })
 
             })
@@ -165,16 +172,41 @@ object ClusterServing {
 
 
         val resDf = spark.createDataFrame(resultPartitions)
-        resDf.write
-          .format("org.apache.spark.sql.redis")
-          .option("table", "result")
-          .mode(SaveMode.Append).save()
+
+        var er: Boolean = true
+        while (er) {
+          try {
+            resDf.write
+              .format("org.apache.spark.sql.redis")
+              .option("table", "result")
+              .option("key.column", "uri")
+              .mode(SaveMode.Append).save()
+            println("result saved at " + microBatchSize.toString)
+            redisDB.xtrim("image_stream",
+              redisDB.xlen("image_stream") - previousLen, true)
+            println("Xtrim completed")
+            er = false
+          }
+
+          catch {
+            case e: redis.clients.jedis.exceptions.JedisDataException =>
+              println("not enough space in redis to write !" + e.toString)
+              er = true
+              Thread.sleep(1000)
+            case e: Exception => {
+              er = true
+              println("--!! never seen" + e.toString)
+            }
+
+          }
+        }
+
 
 
         totalCnt += microBatchSize.toInt
         val microBatchEnd = System.nanoTime()
         val microBatchLatency = (microBatchEnd - microBatchStart) / 1e9
-        val microBatchThroughPut = (microBatchLatency / microBatchSize).toFloat
+        val microBatchThroughPut = (microBatchSize / microBatchLatency).toFloat
         if (model.inferenceSummary != null) {
           model.inferenceSummary.addScalar(
             "Micro Batch Throughput", microBatchThroughPut, batchId)
@@ -187,7 +219,8 @@ object ClusterServing {
         logger.info(microBatchSize +
           " inputs predict ended, time elapsed " + microBatchLatency.toString)
 
-        redisDB.xtrim("image_stream", redisDB.xlen("image_stream"), true)
+
+
 
       }
 

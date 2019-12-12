@@ -19,7 +19,7 @@ import base64
 import cv2
 import yaml
 import redis
-
+import datetime
 
 class API:
     """
@@ -28,6 +28,8 @@ class API:
     interface preserved for API class
     """
     def __init__(self, file_path=None):
+        dt = datetime.datetime.now()
+        self.log_file = open("./cluster-serving.log", "w")
         if file_path:
             with open(file_path) as f:
                 config = yaml.load(f)
@@ -63,7 +65,18 @@ class Input(API):
 
         img_encoded = self.base64_encode_image(data)
         d = {"uri": uri, "image": img_encoded}
-        self.db.xadd("image_stream", d)
+
+        inf = self.db.info()
+
+        try:
+            if inf['used_memory'] >= inf['maxmemory'] * 0.6:
+                raise redis.exceptions.ConnectionError
+            self.db.xadd("image_stream", d)
+            print("Write to Redis successful")
+        except redis.exceptions.ConnectionError:
+            print("Redis queue is full, please dequeue or delete.")
+        except redis.exceptions.ResponseError as e:
+            print(e, "Redis queue is full, please dequeue or delete.")
 
     @staticmethod
     def base64_encode_image(img):
@@ -88,5 +101,7 @@ class Output(API):
 
     def query(self, uri):
         res_dict = self.db.hgetall("result:"+uri)
+        if not res_dict:
+            raise EOFError("Record does not exist.")
         return res_dict[b'value'].decode('utf-8')
 

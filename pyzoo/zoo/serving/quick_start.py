@@ -18,7 +18,7 @@ from zoo.serving.client.helpers import Input, Output
 import os
 import cv2
 import json
-
+import time
 
 if __name__ == "__main__":
     input_api = Input()
@@ -34,21 +34,23 @@ if __name__ == "__main__":
             continue
         img = cv2.imread(os.path.join(base_path, p))
         img = cv2.resize(img, (224, 224))
-        input_api.enqueue_image(p, img)
+        while True:
+            for i in range(5000):
+                input_api.enqueue_image(p, img)
+            time.sleep(1)
 
-    import time
-    time.sleep(5)
-
+    time.sleep(2)
+'''
     output_api = Output()
 
     # query result by uri
-    fish1_result = output_api.query("fish1.jpeg")
-    fish1_class_prob_map = json.loads(fish1_result)
+    # fish1_result = output_api.query("fish1.jpeg")
+    # fish1_class_prob_map = json.loads(fish1_result)
 
-    output = "image: fish1.jpeg, classification-result:"
-    for class_idx in fish1_class_prob_map.keys():
-        output += "class: " + class_idx + "'s prob: " + fish1_class_prob_map[class_idx]
-    print(output)
+    # output = "image: fish1.jpeg, classification-result:"
+    # for class_idx in fish1_class_prob_map.keys():
+    #     output += "class: " + class_idx + "'s prob: " + fish1_class_prob_map[class_idx]
+    # print(output)
 
     # get all result and dequeue
     result = output_api.dequeue()
@@ -58,3 +60,6 @@ if __name__ == "__main__":
         for class_idx in tmp_dict.keys():
             output += "class: " + class_idx + "'s prob: " + tmp_dict[class_idx]
         print(output)
+    input_api.db.client_kill("localhost:6379")
+    output_api.db.client_kill("localhost:6379")
+'''
