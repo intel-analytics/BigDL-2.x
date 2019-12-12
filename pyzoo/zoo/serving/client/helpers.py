@@ -20,6 +20,8 @@ import cv2
 import yaml
 import redis
 import datetime
+import time
+
 
 class API:
     """
@@ -64,6 +66,7 @@ class Input(API):
         data = cv2.imencode(".jpg", img)[1]
 
         img_encoded = self.base64_encode_image(data)
+        uri = uri + str(datetime.datetime.now())
         d = {"uri": uri, "image": img_encoded}
 
         inf = self.db.info()
@@ -74,9 +77,13 @@ class Input(API):
             self.db.xadd("image_stream", d)
             print("Write to Redis successful")
         except redis.exceptions.ConnectionError:
-            print("Redis queue is full, please dequeue or delete.")
+            print("Redis queue is full, please wait for inference "
+                  "or delete the unprocessed records.")
+            time.sleep(1)
+
         except redis.exceptions.ResponseError as e:
             print(e, "Redis queue is full, please dequeue or delete.")
+            time.sleep(1)
 
     @staticmethod
     def base64_encode_image(img):
