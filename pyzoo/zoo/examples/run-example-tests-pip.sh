@@ -32,14 +32,14 @@ exit_status=$?
 if [ $exit_status -ne 0 ];
 then
     clear_up
-    echo "vnni\openvino failed"
+    echo "vnni/openvino failed"
     exit $exit_status
 fi
 
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time10=$((now-start))
-echo "vnni\openvino time used:$time11 seconds"
+echo "vnni/openvino time used:$time10 seconds"
 
 echo "start example test for openvino"
 start=$(date "+%s")
@@ -58,7 +58,7 @@ else
     wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
     unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data
 fi
-export SPARK_DRIVER_MEMORY=10g
+export SPARK_DRIVER_MEMORY=20g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
     --image analytics-zoo-data/data/object-detection-coco \
     --model analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28
