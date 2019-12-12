@@ -25,3 +25,11 @@ We use log to save serving information and error, to enable this feature, use fo
 log:
   error: y
 ```
+If you are the only user to run Cluster Serving, the error logs would also print to your interactive shell. Otherwise, you can not see the logs in the terminal. In this ocasion, you have to refer to your log.
+
+To see your log, run 
+```
+./cluster-serving-log.sh
+```
+## Example
+See [example] here to practise how to utilize summary and log of Analytics Zoo Cluster Serving.
