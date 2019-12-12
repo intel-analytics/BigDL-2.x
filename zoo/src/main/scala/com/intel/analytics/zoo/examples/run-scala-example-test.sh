@@ -107,18 +107,6 @@ mkdir output
 mkdir stream
 
 
-while true
-do
-   temp1=$(find analytics-zoo-data/data/object-detection-coco -type f|wc -l)
-   temp2=$(find ./output -type f|wc -l)
-   temp3=$(($temp1+$temp1))
-   if [ $temp3 -eq $temp2 ];then
-       kill -9 $(ps -ef | grep StreamingObjectDetection | grep -v grep |awk '{print $2}')
-       rm -r output
-       rm -r stream
-       break
-   fi
-done  &
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
 --driver-memory 4g \
@@ -131,7 +119,19 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --driver-memory 2g \
 --executor-memory 5g \
 --class com.intel.analytics.zoo.examples.streaming.objectdetection.ImagePathWriter \
---streamingPath ./stream --imageSourcePath analytics-zoo-data/data/object-detection-coco
+--streamingPath ./stream --imageSourcePath analytics-zoo-data/data/object-detection-coco/ &
+while true
+do
+   temp1=$(find analytics-zoo-data/data/object-detection-coco -type f|wc -l)
+   temp2=$(find ./output -type f|wc -l)
+   temp3=$(($temp1+$temp1))
+   if [ $temp3 -eq $temp2 ];then
+       kill -9 $(ps -ef | grep StreamingObjectDetection | grep -v grep |awk '{print $2}')
+       rm -r output
+       rm -r stream
+       break
+   fi
+done
 
 echo "#4 start example test for streaming Text Classification"
 
@@ -143,26 +143,27 @@ else
     unzip -q analytics-zoo-data/data/streaming/text-model.zip -d analytics-zoo-data/data/streaming/
 fi
 
-nc -lk 9000 < analytics-zoo-data/data/streaming/text-model/2.log &
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
 --driver-memory 2g \
 --executor-memory 5g \
 --class com.intel.analytics.zoo.examples.streaming.textclassification.StreamingTextClassification \
 --model analytics-zoo-data/data/streaming/text-model/text_classifier.model \
---indexPath word_index.txt --port 9000 >>1.log &
+--indexPath analytics-zoo-data/data/streaming/text-model/word_index.txt \
+--inputFile analytics-zoo-data/data/streaming/text-model/textfile/ >1.log &
+mv analytics-zoo-data/data/streaming/text-model/2.log analytics-zoo-data/data/streaming/text-model/textfile/ &
 while :
 do
 if [ -n "$(grep "top-5" 1.log)" ];then
     echo "----Find-----"
     kill -9 $(ps -ef | grep StreamingTextClassification | grep -v grep |awk '{print $2}')
     kill -9 $(ps -ef | grep "nc -lk" | grep -v grep |awk '{print $2}')
+    rm 1.log
     sleep 1s
     break
 fi
 done
 
-rm 1.log
 
 echo "#5 start example test for chatbot"
 
@@ -191,22 +192,20 @@ mkdir "models"
 if [ -d analytics-zoo-data/data/ ]
 then
     echo "analytics-zoo-data/data/ already exists"
-    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/
-    unzip -q analytics-zoo-data/data/glove/glove.6B.zip -d analytics-zoo-data/data/glove/glove
-    tar -xvzf analytics-zoo-data/data/news20/20news-18828.tar.gz
 else
     wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
     unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/
-    wget $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip -P analytics-zoo-data/data
+    wget $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip -P analytics-zoo-data/data/glove
     unzip -q analytics-zoo-data/data/glove/glove.6B.zip -d analytics-zoo-data/data/glove/glove
-    wget $FTP_URI/analytics-zoo-data/data/news20/20news-18828.tar.gz -P analytics-zoo-data/data
-    tar -xvzf analytics-zoo-data/data/news20/20news-18828.tar.gz
+    wget $FTP_URI/analytics-zoo-data/data/news20/20news-18828.tar.gz -P analytics-zoo-data/data/news20/
+    tar -zxvf analytics-zoo-data/data/news20/20news-18828.tar.gz -C analytics-zoo-data/data/news20/
 fi
 
 cd text-classification-training
 
 mvn clean
 mvn clean package
+mvn install
 #return model-inference-examples/
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/
 
@@ -223,23 +222,20 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --embeddingFile "analytics-zoo-data/data/glove/glove/glove.6B.300d.txt" \
 --modelSaveDirPath "models/text-classification.bigdl"
 
-mvn clean install
-
 echo "# Test Apps -- 2.text-classification-inference"
 
-#change files
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/text-classification-inference
 mvn clean
 mvn clean package
-cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples
 
-java -cp ./text-classification-inference/target/text-classification-inference-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
-com.intel.analytics.zoo.apps.textclassfication.inference.SimpleDriver \
---EMBEDDING_FILE_PATH analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
---MODEL_PATH models/text-classification.bigdl
+java -cp target/text-classification-inference-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
+-DEMBEDDING_FILE_PATH=../analytics-zoo-data/data/glove/glove.6B.300d.txt \
+-DMODEL_PATH=../models/text-classification.bigdl \
+com.intel.analytics.zoo.apps.textclassfication.inference.SimpleDriver
 
-mvn spring-boot:run -DEMBEDDING_FILE_PATH=analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
--DMODEL_PATH=models/text-classification.bigdl >1.log &
+cd text-classification-inference
+mvn spring-boot:run -DEMBEDDING_FILE_PATH=../analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
+-DMODEL_PATH=../models/text-classification.bigdl >1.log &
 curl -d hello -x "" http://localhost:8080/predict &
 while :
 do
@@ -251,7 +247,6 @@ if [ -n "$(grep "class" ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/text
 fi
 done
 
-mvn clean
 
 echo "# Test Apps -- 3.recommendation-inference"
 #recommendation
@@ -261,84 +256,84 @@ mvn clean
 mvn clean package
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples
 
-if [ -f analytics-zoo-models/recommedation/ncf.bigdl ]
+if [ -f analytics-zoo-models/recommendation/ncf.bigdl ]
 then
     echo "analytics-zoo-models/recommedation/ncf.bigdl already exists"
 else
-    wget $FTP_URI/analytics-zoo-models/recommedation/ -P analytics-zoo-models/recommedation/
+    wget $FTP_URI/analytics-zoo-models/recommendation/ncf.bigdl -P analytics-zoo-models/recommendation/
 fi
 
 java -cp ./recommendation-inference/target/recommendation-inference-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
-com.intel.analytics.zoo.apps.recommendation.inference.SimpleScalaDriver \
---MODEL_PATH=./analytics-zoo-models/recommedation/ncf.bigdl
+-DMODEL_PATH=./analytics-zoo-models/recommendation/ncf.bigdl \
+com.intel.analytics.zoo.apps.recommendation.inference.SimpleScalaDriver
 
 java -cp ./recommendation-inference/target/recommendation-inference-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
-com.intel.analytics.zoo.apps.recommendation.inference.SimpleDriver \
---MODEL_PATH=./analytics-zoo-models/models/apps/recommedation/ncf.bigdl
+-DMODEL_PATH=./analytics-zoo-models/recommendation/ncf.bigdl \
+com.intel.analytics.zoo.apps.recommendation.inference.SimpleDriver
 
 echo "# Test Apps -- 4.model-inference-flink"
-cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/model-inference-flink
 
+cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/model-inference-flink
 mvn clean
 mvn clean package
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples
 
-
-if [ -f flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/start-cluster.sh ]
+if [ -f ./flink-1.7.2/bin/start-cluster.sh ]
 then
     echo "flink-1.7.2/bin/start-cluster.sh already exists"
 else
-    wget http://mirrors.tuna.tsinghua.edu.cn/apache/flink/flink-1.7.2/flink-1.7.2-bin-scala_2.11.tgz
-    tar zxvf flink-1.7.2-bin-scala_2.11.tgz
+    wget $FTP_URI/flink-1.7.2.zip
+    unzip flink-1.7.2.zip
 fi
 
-#modify flink conf
-#rm ./flink-1.7.2-bin-scala_2.11/flink-1.7.2/conf/flink-conf.yaml
-#wget -P ./flink-1.7.2-bin-scala_2.11/flink-1.7.2/conf/ ${FTP_URI}/analytics-zoo-data/apps/flink/flink-conf.yaml
+./flink-1.7.2/bin/start-cluster.sh
 
-./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/start-cluster.sh
-
-nc -l 9000 < analytics-zoo-data/data/streaming/text-model/2.log &
-./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/flink run \
+./flink-1.7.2/bin/flink run \
 ./model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
---port 9000 --embeddingFilePath analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
+--inputFile ../../analytics-zoo-data/data/streaming/text-model/textfile/2.log \
+--embeddingFilePath analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
 --modelPath models/text-classification.bigdl \
 --parallelism 1  &
+mv ../../analytics-zoo-data/data/streaming/text-model/textfile/2.log \
+analytics-zoo-data/data/2.log &
 while :
 do
 if [ -n "$(find . -type f -name "flink*taskexecutor*.out" | xargs grep -i "Zoo")" ];then
     echo "----Find-----"
     kill -9 $(ps -ef | grep "nc -l" | grep -v grep |awk '{print $2}')
-    ./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/stop-cluster.sh
+    ./flink-1.7.2/bin/stop-cluster.sh
     sleep 1s
     break
 fi
 done
 
-./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/stop-cluster.sh
+./flink-1.7.2/bin/stop-cluster.sh
 
-wget ${FTP_URL}/analytics-zoo-models/flink-models/resnet_v1_50.ckpt
-./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/start-cluster.sh
+wget ${FTP_URI}/analytics-zoo-models/flink_model/resnet_v1_50.ckpt
 
-./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/flink run \
+./flink-1.7.2/bin/start-cluster.sh
+
+./flink-1.7.2/bin/flink run \
 -m localhost:8081 -p 1 \
 -c com.intel.analytics.zoo.apps.model.inference.flink.Resnet50ImageClassification.ImageClassificationStreaming  \
-${ANALYTICS_ZOO_HOME}/apps/model-inference-examples/model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar  \
+${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar  \
 --modelType resnet_v1_50 --checkpointPath resnet_v1_50.ckpt  \
---image analytics-zoo-data/data/object-detection-coco \
---classes ${ANALYTICS_ZOO_ROOT}/zoo/src/main/resource/coco_classname.txt  \
+--image ${ANALYTICS_ZOO_ROOT}/zoo/src/test/resources/imagenet/n04370456/ \
+--classes ${ANALYTICS_ZOO_ROOT}/zoo/src/main/resource/imagenet_classname.txt  \
 --inputShape "1,224,224,3" --ifReverseInputChannels true --meanValues "123.68,116.78,103.94" --scale 1 > 1.log &
 while :
 do
 if [ -n "$(grep "********" 1.log)" ];then
     echo "----Find-----"
-    ./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/stop-cluster.sh
+    ./flink-1.7.2/bin/stop-cluster.sh
     rm 1.log
     sleep 1s
     break
 fi
 done
 
-./flink-1.7.2-bin-scala_2.11/flink-1.7.2/bin/stop-cluster.sh
+./flink-1.7.2/bin/stop-cluster.sh
 
 echo "Finish test"
+
+
