@@ -26,6 +26,7 @@ from bigdl.util.common import to_list, JavaValue
 from zoo.common.utils import callZooFunc
 from bigdl.optim.optimizer import MaxEpoch, EveryEpoch
 from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss
+from zoo.pipeline.api.net.tf_dataset import MapDataset
 from zoo.pipeline.api.net.utils import _find_placeholders, to_bigdl_optim_method
 from zoo.pipeline.estimator import Estimator
 from zoo.util import nest
@@ -556,7 +557,10 @@ class TFOptimizer:
         :return:
         """
         import tensorflow.keras.backend as K
-        loss = keras_model.total_loss
+
+        if isinstance(dataset, MapDataset):
+            raise ValueError("MapDataset is not supported for Keras Model for now, " +
+                             "please warp the map_fn in a Keras layer in your keras model")
 
         model_inputs = keras_model.inputs
         if hasattr(keras_model, "targets"):
@@ -566,6 +570,7 @@ class TFOptimizer:
 
         inputs = model_inputs + model_targets
 
+        loss = keras_model.total_loss
         variables = keras_model._collected_trainable_weights
         variables.sort(key=lambda variable: variable.name)
         keras_optimizer = keras_model.optimizer
@@ -657,17 +662,15 @@ class TFOptimizer:
             checkpoint_trigger = EveryEpoch()
 
         if self.tf_model.val_methods is not None and self.val_rdd is not None:
-            self.estimator.train(train_set=self.training_rdd,
-                                 criterion=IdentityCriterion(),
-                                 end_trigger=end_trigger,
-                                 checkpoint_trigger=checkpoint_trigger,
-                                 validation_set=self.val_rdd,
-                                 validation_method=self.tf_model.val_methods,
-                                 batch_size=self.batch_size)
+            self.estimator.train_minibatch(train_set=self.training_rdd,
+                                           criterion=IdentityCriterion(),
+                                           end_trigger=end_trigger,
+                                           checkpoint_trigger=checkpoint_trigger,
+                                           validation_set=self.val_rdd,
+                                           validation_method=self.tf_model.val_methods)
         else:
-            self.estimator.train(train_set=self.training_rdd,
-                                 criterion=IdentityCriterion(),
-                                 end_trigger=end_trigger,
-                                 batch_size=self.batch_size)
+            self.estimator.train_minibatch(train_set=self.training_rdd,
+                                           criterion=IdentityCriterion(),
+                                           end_trigger=end_trigger)
 
         self.tf_model.training_helper_layer.get_weights_to_python()
