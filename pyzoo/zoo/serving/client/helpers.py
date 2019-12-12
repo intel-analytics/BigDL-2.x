@@ -111,4 +111,3 @@ class Output(API):
         if not res_dict:
             raise EOFError("Record does not exist.")
         return res_dict[b'value'].decode('utf-8')
-

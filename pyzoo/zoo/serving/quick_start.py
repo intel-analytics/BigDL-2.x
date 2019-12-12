@@ -34,13 +34,10 @@ if __name__ == "__main__":
             continue
         img = cv2.imread(os.path.join(base_path, p))
         img = cv2.resize(img, (224, 224))
-        while True:
-            for i in range(5000):
-                input_api.enqueue_image(p, img)
-            time.sleep(1)
+        input_api.enqueue_image(p, img)
 
-    time.sleep(2)
-'''
+    time.sleep(5)
+
     output_api = Output()
 
     # query result by uri
@@ -60,6 +57,3 @@ if __name__ == "__main__":
         for class_idx in tmp_dict.keys():
             output += "class: " + class_idx + "'s prob: " + tmp_dict[class_idx]
         print(output)
-    input_api.db.client_kill("localhost:6379")
-    output_api.db.client_kill("localhost:6379")
-'''
