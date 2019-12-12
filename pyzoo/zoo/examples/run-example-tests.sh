@@ -71,7 +71,7 @@ if [ -d analytics-zoo-data/data/streaming/text-model ]
 then
     echo "analytics-zoo-data/data/streaming/text-model already exists"
 else
-    wget $FTP_URI/analytics-zoo-data/data/streaming/text-model.zip -P analytics-zoo-data/data
+    wget $FTP_URI/analytics-zoo-data/data/streaming/text-model.zip -P analytics-zoo-data/data/streaming
     unzip -q analytics-zoo-data/data/streaming/text-model.zip -d analytics-zoo-data/data/streaming/
 fi
 
@@ -123,9 +123,6 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --executor-memory 10g \
     --properties-file ${ANALYTICS_ZOO_CONF} \
     --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
-    --jars ${ANALYTICS_ZOO_JAR} \
-    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
     --image analytics-zoo-data/data/object-detection-coco \
     --model analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28
@@ -155,9 +152,6 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --driver-memory 2g \
     --executor-memory 2g \
     --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/vnni/openvino/predict.py \
-    --jars ${ANALYTICS_ZOO_JAR} \
-    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/vnni/openvino/predict.py \
     --model analytics-zoo-models/vnni/resnet_v1_50.xml \
     --image analytics-zoo-data/data/object-detection-coco
