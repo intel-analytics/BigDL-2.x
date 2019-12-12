@@ -437,7 +437,6 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
 now=$(date "+%s")
 time10=$((now-start))
 
-
 echo "#1 textclassification time used: $time1 seconds"
 echo "#2 customized loss and layer time used: $time2 seconds"
 echo "#3 image-classification time used: $time3 seconds"
