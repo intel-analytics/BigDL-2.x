@@ -12,7 +12,7 @@ export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
 
 set -e
 
-echo "#11 start example test for streaming Object Detection"
+echo "#13 start example test for streaming Object Detection"
 #timer
 start=$(date "+%s")
 if [ -d analytics-zoo-data/data/object-detection-coco ]
@@ -62,9 +62,9 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --img_path analytics-zoo-data/data/object-detection-coco
 
 now=$(date "+%s")
-time11=$((now-start))
+time13=$((now-start))
 
-echo "#12 start example test for streaming Text Classification"
+echo "#14 start example test for streaming Text Classification"
 #timer
 start=$(date "+%s")
 if [ -d analytics-zoo-data/data/streaming/text-model ]
@@ -99,7 +99,7 @@ rm 1.log
 now=$(date "+%s")
 time12=$((now-start))
 
-echo "#9 start example test for openvino"
+echo "#11 start example test for openvino"
 #timer
 start=$(date "+%s")
 if [ -f analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28.tar.gz ]
@@ -127,9 +127,9 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --image analytics-zoo-data/data/object-detection-coco \
     --model analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28
 now=$(date "+%s")
-time9=$((now-start))
+time11=$((now-start))
 
-echo "#10 start example for vnni/openvino"
+echo "#12 start example for vnni/openvino"
 #timer
 start=$(date "+%s")
 if [ -d analytics-zoo-models/vnni ]
@@ -156,7 +156,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --model analytics-zoo-models/vnni/resnet_v1_50.xml \
     --image analytics-zoo-data/data/object-detection-coco
 now=$(date "+%s")
-time10=$((now-start))
+time12=$((now-start))
 
 echo "#1 start example test for textclassification"
 #timer
@@ -605,3 +605,7 @@ echo "#7 anomalydetection time used: $time7 seconds"
 echo "#8 qaranker time used: $time8 seconds"
 echo "#9 inceptionV1 training time used: $time9 seconds"
 echo "#10 pytorch time used: $time10 seconds"
+echo "#11 openvino time used: $time11 seconds"
+echo "#12 vnni/openvino time used: $time12 seconds"
+echo "#13 streaming Object Detection time used: $time13 seconds"
+echo "#14 streaming Text Classification time used: $time14 seconds"
