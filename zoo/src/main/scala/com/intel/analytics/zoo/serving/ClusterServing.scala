@@ -44,6 +44,7 @@ object ClusterServing {
   var coreNum: Int = 1
   var nodeNum: Int = 1
   var modelType: String = null
+  var blasFlag: Boolean = false
 
   var C: Int = 3
   var W: Int = 224
@@ -55,6 +56,7 @@ object ClusterServing {
     coreNum = helper.coreNum
     nodeNum = helper.nodeNum
     modelType = helper.modelType
+    blasFlag = helper.blasFlag
 
     C = helper.dataShape(0)
     W = helper.dataShape(1)
@@ -107,6 +109,7 @@ object ClusterServing {
       if (helper.updateConfig()) {
         loadSerialParams(helper)
         if (bcModel != null) bcModel.destroy()
+        if (model != null) model.doRelease()
         model = helper.loadInferenceModel()
         bcModel = helper.sc.broadcast(model)
         if (helper.logSummaryFlag) model.setInferenceSummary(
@@ -122,7 +125,7 @@ object ClusterServing {
         val previousLen = redisDB.xlen("image_stream")
 
         val microBatchStart = System.nanoTime()
-        val resultPartitions = if (helper.blasFlag) {
+        val resultPartitions = if (blasFlag) {
           // if backend is raw BLAS, no multi-thread could used for forward
           // BLAS is only valid in BigDL backend
           // Thus no shape specific change is needed

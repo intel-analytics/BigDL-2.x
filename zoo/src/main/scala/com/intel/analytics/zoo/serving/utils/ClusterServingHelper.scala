@@ -194,7 +194,9 @@ class ClusterServingHelper {
         .toLowerCase() == "mklblas") {
         blasFlag = true
       }
+      else blasFlag = false
     }
+    else blasFlag = false
 
   }
   def updateConfig(): Boolean = {
