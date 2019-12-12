@@ -18,6 +18,7 @@
 package com.intel.analytics.zoo.serving.utils
 
 import java.io.{File, FileWriter, FileInputStream}
+import java.nio.file.{Files, Paths}
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
@@ -84,6 +85,8 @@ class ClusterServingHelper {
 //      .action((x, c) => c.copy(dataShape = x))
 //
 //  }
+  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
+  var lastModTime: String = null
   val logger: Logger = Logger.getLogger(getClass)
   val dateTime = LocalDateTime.now.toString
 
@@ -141,14 +144,15 @@ class ClusterServingHelper {
 
 
     val yamlParser = new Yaml()
-//    val input = new FileInputStream(new File("zoo/src/" +
-//      "main/scala/com/intel/analytics/zoo/serving/config.yaml"))
-    val input = new FileInputStream(new File("config.yaml"))
+    val input = new FileInputStream(new File(configPath))
+//    val input = new FileInputStream(new File("config.yaml"))
     val configList = yamlParser.load(input).asInstanceOf[HM]
 
     // parse model field
     val modelConfig = configList.get("model").asInstanceOf[HM]
     val modelFolder = getYaml(modelConfig, "path", null)
+
+
     parseModelType(modelFolder)
 
     // parse data field
@@ -193,6 +197,16 @@ class ClusterServingHelper {
     }
 
   }
+  def updateConfig(): Boolean = {
+    val lastModTime = Files.getLastModifiedTime(Paths.get(configPath)).toString
+    if (this.lastModTime != lastModTime){
+      initArgs()
+      this.lastModTime = lastModTime
+      return true
+    }
+    return false
+  }
+
 
   def getYaml(configList: HM, key: String, default: String): String = {
 
@@ -307,7 +321,9 @@ class ClusterServingHelper {
   }
 
   def parseModelType(location: String): Unit = {
-
+    modelType = null
+    weightPath = null
+    defPath = null
     import java.io.File
     val f = new File(location)
     val fileList = f.listFiles

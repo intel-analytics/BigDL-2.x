@@ -20,10 +20,11 @@ package com.intel.analytics.zoo.serving
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
-import com.intel.analytics.zoo.pipeline.inference.InferenceSummary
+import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, PostProcessing, TensorUtils}
 import com.intel.analytics.zoo.utils.ImageProcessing
 import org.apache.log4j.{Level, Logger}
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import redis.clients.jedis.Jedis
@@ -38,6 +39,27 @@ object ClusterServing {
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
 
   case class Rec(uri: String, value: String)
+  var batchSize: Int = 4
+  var topN: Int = 1
+  var coreNum: Int = 1
+  var nodeNum: Int = 1
+  var modelType: String = null
+
+  var C: Int = 3
+  var W: Int = 224
+  var H: Int = 224
+
+  def loadSerialParams(helper: ClusterServingHelper): Unit = {
+    batchSize = helper.batchSize
+    topN = helper.topN
+    coreNum = helper.coreNum
+    nodeNum = helper.nodeNum
+    modelType = helper.modelType
+
+    C = helper.dataShape(0)
+    W = helper.dataShape(1)
+    H = helper.dataShape(2)
+  }
 
   def main(args: Array[String]): Unit = {
 
@@ -48,11 +70,10 @@ object ClusterServing {
     val logger = helper.logger
     logger.info("Engine running at " + EngineRef.getEngineType())
 
-    val model = helper.loadInferenceModel()
-    val bcModel = helper.sc.broadcast(model)
+    var model: InferenceModel = null
+    var bcModel: Broadcast[InferenceModel] = null
 
-    if (helper.logSummaryFlag) model.setInferenceSummary(
-      InferenceSummary(".", helper.dateTime + "-ClusterServing"))
+
 
 
     val spark = helper.getSparkSession()
@@ -61,15 +82,8 @@ object ClusterServing {
       s"${spark.conf.get("spark.redis.host")}:${spark.conf.get("spark.redis.port")}")
 
     // variables needed to be serialized listed below
-    val batchSize = helper.batchSize
-    val topN = helper.topN
-    val coreNum = helper.coreNum
-    val nodeNum = helper.nodeNum
-    val modelType = helper.modelType
 
-    val C = helper.dataShape(0)
-    val W = helper.dataShape(1)
-    val H = helper.dataShape(2)
+    loadSerialParams(helper)
 
     val images = spark
       .readStream
@@ -89,9 +103,17 @@ object ClusterServing {
     val redisDB = new Jedis(helper.redisHost, helper.redisPort.toInt)
 
     val query = images.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
+
+      if (helper.updateConfig()) {
+        loadSerialParams(helper)
+        if (bcModel != null) bcModel.destroy()
+        model = helper.loadInferenceModel()
+        bcModel = helper.sc.broadcast(model)
+        if (helper.logSummaryFlag) model.setInferenceSummary(
+          InferenceSummary(".", helper.dateTime + "-ClusterServing"))
+      }
+
       batchDF.persist()
-
-
 
       val microBatchSize = batchDF.count()
       logger.info("Micro batch size " + microBatchSize.toString)
@@ -173,8 +195,8 @@ object ClusterServing {
 
         val resDf = spark.createDataFrame(resultPartitions)
 
-        var er: Boolean = true
-        while (er) {
+        var errFlag: Boolean = true
+        while (errFlag) {
           try {
             resDf.write
               .format("org.apache.spark.sql.redis")
@@ -185,23 +207,22 @@ object ClusterServing {
             redisDB.xtrim("image_stream",
               redisDB.xlen("image_stream") - previousLen, true)
             println("Xtrim completed")
-            er = false
+            errFlag = false
           }
 
           catch {
             case e: redis.clients.jedis.exceptions.JedisDataException =>
+              errFlag = true
               println("not enough space in redis to write !" + e.toString)
-              er = true
               Thread.sleep(1000)
             case e: Exception => {
-              er = true
+              errFlag = true
               println("--!! never seen" + e.toString)
+              Thread.sleep(1000)
             }
 
           }
         }
-
-
 
         totalCnt += microBatchSize.toInt
         val microBatchEnd = System.nanoTime()
@@ -218,9 +239,6 @@ object ClusterServing {
 
         logger.info(microBatchSize +
           " inputs predict ended, time elapsed " + microBatchLatency.toString)
-
-
-
 
       }
 

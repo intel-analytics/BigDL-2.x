@@ -10,7 +10,7 @@ echo "redis server started, please check log in /opt/work/redis.log" && sleep 1
 /opt/work/redis-5.0.5/src/redis-cli config set save ""
 /opt/work/redis-5.0.5/src/redis-cli config set maxmemory 1GB
 echo "redis config maxmemory set to 10MB"
-/opt/work/redis-5.0.5/src/redis-cli config set maxmemory-policy noeviction
+
 
 tensorboard --logdir . &
 
