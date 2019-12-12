@@ -18,6 +18,7 @@ import pytest
 from zoo.feature.common import ChainedPreprocessing, FeatureSet
 from zoo.feature.image import *
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
+from zoo.pipeline.api.net import TFNet
 import tensorflow as tf
 import numpy as np
 import os
@@ -230,6 +231,17 @@ class TestTFDataset(ZooTestCase):
         for idx, tensor in enumerate(dataset.feature_tensors):
             assert tensor.name == "list_input_" + str(idx) + ":0"
 
+    def test_tfdataset_with_string_rdd(self):
+        string_rdd = self.sc.parallelize(["123", "456"], 1)
+        ds = TFDataset.from_string_rdd(string_rdd, batch_per_thread=1)
+        input_tensor = tf.placeholder(dtype=tf.string, shape=(None,))
+        output_tensor = tf.string_to_number(input_tensor)
+        with tf.Session() as sess:
+            tfnet = TFNet.from_session(sess, inputs=[input_tensor], outputs=[output_tensor])
+        result = tfnet.predict(ds).collect()
+        assert result[0] == 123
+        assert result[1] == 456
+
     def test_tfdataset_with_tfrecord(self):
         model = tf.keras.Sequential(
             [tf.keras.layers.Flatten(input_shape=(28, 28, 1)),
@@ -276,6 +288,12 @@ class TestTFDataset(ZooTestCase):
                                           validation_file_path=test_path)
 
         keras_model.fit(dataset)
+
+        predict_dataset = TFDataset.from_tfrecord(test_path,
+                                                  parse_fn=lambda x: (parse_fn(x)[0],),
+                                                  batch_per_thread=1)
+        result = keras_model.predict(predict_dataset)
+        result.collect()
 
 
 if __name__ == "__main__":

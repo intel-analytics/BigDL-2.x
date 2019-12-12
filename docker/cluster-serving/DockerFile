@@ -23,6 +23,7 @@ RUN wget http://download.redis.io/releases/redis-5.0.5.tar.gz && \
     make && \
     cd ..
 
+
 ARG SPARK_VERSION=2.4.3 
 ARG BIGDL_VERSION=0.10.0
 ARG ZOO_VERSION=0.7.0-SNAPSHOT
@@ -30,7 +31,8 @@ ARG ZOO_VERSION=0.7.0-SNAPSHOT
 ENV SPARK_HOME		/opt/work/spark-${SPARK_VERSION}
 ENV JAVA_HOME		/opt/jdk
 ENV PATH		${JAVA_HOME}/bin:${PATH}
-ENV ZOO_JAR		analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ZOO_VERSION}-jar-with-dependencies.jar			
+
+ENV ZOO_JAR		analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ZOO_VERSION}-jar-with-dependencies.jar
 
 #spark
 RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
@@ -43,9 +45,10 @@ RUN wget https://oss.sonatype.org/content/repositories/public/com/redislabs/spar
 
 ADD ./download-analytics-zoo.sh /opt/work
 RUN chmod a+x /opt/work/download-analytics-zoo.sh
-#RUN /opt/work/download-analytics-zoo.sh
+RUN /opt/work/download-analytics-zoo.sh
 
-ADD ./*.jar /opt/work
+RUN wget https://oss.sonatype.org/content/repositories/public/com/redislabs/spark-redis/2.4.0/spark-redis-${SPARK_VERSION}-jar-with-dependencies.jar
+
 ADD ./zoo-cluster-serving.sh /opt/work
 RUN chmod a+x /opt/work/zoo-cluster-serving.sh
 

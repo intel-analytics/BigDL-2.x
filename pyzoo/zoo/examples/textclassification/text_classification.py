@@ -81,7 +81,9 @@ if __name__ == "__main__":
     predicts = predict_set.get_predicts().take(5)
     print("Probability distributions of the first five texts in the validation set:")
     for predict in predicts:
-        print(predict)
+        (uri, probs) = predict
+        print("Prediction for " + uri + ": ")
+        print(probs)
 
     if options.output_path:
         model.save_model(options.output_path + "/text_classifier.model")

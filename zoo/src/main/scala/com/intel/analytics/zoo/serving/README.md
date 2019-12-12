@@ -47,7 +47,9 @@ image: dog1.jpeg, classification-result: class: 207's prob: 0.9226527
 ```
 Wow! You made it! 
 
+
 You could also see the log and performance according to [Log and Visualization]()
+
 
 To stop the serving and remove the container.
 ```
