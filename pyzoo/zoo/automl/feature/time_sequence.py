@@ -471,11 +471,12 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         :return: a data frame with prediction datetime
         """
         input_df = input_df.reset_index(drop=True)
-        pre_pred_dt_df = input_df.loc[past_seq_len:, [self.dt_col]].copy()
-        pre_pred_dt_df = pre_pred_dt_df.reset_index(drop=True)
-        time_delta = pre_pred_dt_df.iloc[-1] - pre_pred_dt_df.iloc[-2]
-        last_time = pre_pred_dt_df.iloc[-1] + time_delta
+        input_dt_df = input_df.reset_index(drop=True)[[self.dt_col]].copy()
+        time_delta = input_dt_df.iloc[-1] - input_dt_df.iloc[-2]
+        last_time = input_dt_df.iloc[-1] + time_delta
         last_df = pd.DataFrame({self.dt_col: last_time})
+        pre_pred_dt_df = input_dt_df[past_seq_len:].copy()
+        pre_pred_dt_df = pre_pred_dt_df.reset_index(drop=True)
         y_pred_dt_df = pre_pred_dt_df.append(last_df, ignore_index=True)
         # print(y_pred_dt_df)
         return y_pred_dt_df
