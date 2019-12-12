@@ -51,15 +51,32 @@ __init__(config_path)
 sets up a connection with configuration in `config_path`
 
 `config_path`: the file path of your Cluster Serving [configuration file]() `config.yaml`.
+#### query
+[view source]()
 
-#### get_result
+```
+query(uri)
+```
+query result in output Pipeline by key `uri`
 
+_return_: dict(), string type, the output of your prediction, which can be parsed by json.
+
+_Example_
+```
+from zoo.serving.client.helpers import Output
+import json
+output_api = Output()
+d = output_api.query("my-image") 
+json.loads(d)
+```
+
+#### dequeue
 [view source]()
 
 ```
 get_result()
 ```
-gets result of your model prediction from Pipeline
+gets all result of your model prediction and dequeue them from Pipeline
 
 _return_: dict(), with keys the `uri` of your [enqueue], string type, and values the output of your prediction, string type, which can be parsed by json.
 
@@ -68,9 +85,9 @@ _Example_
 from zoo.serving.client.helpers import Output
 import json
 output_api = Output()
-d = output_api.get_result()
+d = output_api.dequeue()
 for k in d.keys():
-  class_prob_map = json.parse.loads(d[k])
+  class_prob_map = json.loads(d[k])
 ```
 
 

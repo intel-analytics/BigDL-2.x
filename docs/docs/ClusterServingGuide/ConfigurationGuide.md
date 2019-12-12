@@ -19,6 +19,11 @@ params:
   top_n: 5  
   # default, mklblas
   engine_type:
+log: 
+  # default, y
+  error:
+  # default, n
+  summary: y
 spark:
   # default, local[*]
   master: local[*]
@@ -76,6 +81,10 @@ If you run Cluster Serving with docker, put your model file into `model` directo
 ## Inference Parameter Configuration
 * batch_size: the batch size you use for model inference
 * top_n: the top-N result you want for output, **note:** if the top-N number is larger than model output size of the the final layer, it would just return all the outputs.
+
+## Log Configuration
+* error: whether to write error to log file, "y" for yes, otherwise no
+* summary: whether to write Cluster Serving summary to Tensorborad, "y" for yes, otherwise no
 
 ## Spark Configuration
 * master: parameter `master` in spark
