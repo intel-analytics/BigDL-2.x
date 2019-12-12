@@ -50,8 +50,8 @@ import scala.reflect.ClassTag
  * @param graphDef serialized representation of a graph
  */
 class TFNet(private val graphDef: TFGraphHolder,
-                    val graphMeta: Meta,
-                    config: Array[Int])
+            val graphMeta: Meta,
+            config: Array[Int])
   extends AbstractModule[Activity, Activity, Float] with Predictable[Float] {
 
   protected val module: Module[Float] = this
@@ -97,11 +97,11 @@ class TFNet(private val graphDef: TFGraphHolder,
 
     if (graphMeta.variables.isDefined) {
       val ws = new Array[Tensor[Float]](graphMeta.variables.get.length)
-        var i = 0
-        while (i < ws.length) {
-          ws(i) = Tensor[Float]()
-          i += 1
-        }
+      var i = 0
+      while (i < ws.length) {
+        ws(i) = Tensor[Float]()
+        i += 1
+      }
       setWeights(ws)
     } else {
       Array[Tensor[Float]]()
@@ -187,7 +187,7 @@ class TFNet(private val graphDef: TFGraphHolder,
 
       // feed new weights if possible
       graphMeta.variables.map { variableNames =>
-        if (! this.isTraining()) {
+        if (!this.isTraining()) {
           var i = 0
           while (i < variableNames.length) {
             if (weightTFTensors(i) == null) {
@@ -247,7 +247,7 @@ class TFNet(private val graphDef: TFGraphHolder,
       }
 
       val end = System.nanoTime()
-      TFNet.logger.debug(s"TFNet forward time ${(end - start)/1e9} " )
+      TFNet.logger.debug(s"TFNet forward time ${(end - start) / 1e9} ")
 
     } catch {
       case ex: Throwable =>
@@ -304,7 +304,7 @@ class TFNet(private val graphDef: TFGraphHolder,
 
         // feed temp tensors fetched during forward
         val tempTensorNames = graphMeta.tempTensors.get
-        tempTensorNames.zipWithIndex.foreach{ case (name, idx) =>
+        tempTensorNames.zipWithIndex.foreach { case (name, idx) =>
           runner.feed(name, tempTFTensors(idx))
         }
 
@@ -426,20 +426,6 @@ class TFNet(private val graphDef: TFGraphHolder,
     if (operation == null) throw new Exception(s"Operation $op not found")
     val output = operation.output(idx.toInt)
     output.dataType()
-  }
-
-  private def getShape(names: Seq[String]) = {
-    val shapes = names.map { name =>
-      val Array(op, idx) = name.split(":")
-      val shape = graph.operation(op).output(idx.toInt).shape()
-      Shape((0 until shape.numDimensions()).map(shape.size(_).toInt).toArray)
-    }
-
-    if (shapes.length == 1) {
-      shapes.head
-    } else {
-      MultiShape(shapes.toList)
-    }
   }
 
   private def tf2bigdl(t: TTensor[_], output: Tensor[Float]) = {
@@ -586,65 +572,15 @@ object TFNet {
     }
   }
 
-
-  private def floatToInt(array: Array[Float]): Array[Int] = {
-    val result = new Array[Int](array.length)
-    var i = 0
-    while (i < array.length) {
-      result(i) = array(i).toInt
-      i = i + 1
-    }
-    result
-  }
-
-  private def floatToLong(array: Array[Float]): Array[Long] = {
-    val result = new Array[Long](array.length)
-    var i = 0
-    while (i < array.length) {
-      result(i) = array(i).toLong
-      i = i + 1
-    }
-    result
-  }
-
-  private def floatToDouble(array: Array[Float]): Array[Double] = {
-    val result = new Array[Double](array.length)
-    var i = 0
-    while (i < array.length) {
-      result(i) = array(i).toDouble
-      i = i + 1
-    }
-    result
-  }
-
-  private def floatToUint8(array: Array[Float]): Array[Byte] = {
-    val result = new Array[Byte](array.length)
-    var i = 0
-    while (i < array.length) {
-      result(i) = array(i).toByte
-      i = i + 1
-    }
-    result
-  }
-
-  private def floatToBool(array: Array[Float]): Array[Byte] = {
-    val result = new Array[Byte](array.length)
-    var i = 0
-    while (i < array.length) {
-      result(i) = if (array(i) == 0.0) 0.toByte else 1.toByte
-      i = i + 1
-    }
-    result
-  }
-
   /**
    * Create a TFNet
+   *
    * @param graphDef the tensorflow GraphDef object
    * @return
    */
   private[zoo] def apply(graphDef: GraphDef, graphId: String,
-                    graphMeta: Meta,
-                    config: Array[Byte]): TFNet = {
+                         graphMeta: Meta,
+                         config: Array[Byte]): TFNet = {
     val graph = new Graph()
     graph.importGraphDef(graphDef.toByteArray)
 
@@ -653,8 +589,9 @@ object TFNet {
 
   /**
    * Create a TFNet
-   * @param path the file path of a graphDef
-   * @param inputNames the input tensor names of this subgraph
+   *
+   * @param path        the file path of a graphDef
+   * @param inputNames  the input tensor names of this subgraph
    * @param outputNames the output tensor names of this subgraph
    * @return
    */
@@ -676,8 +613,9 @@ object TFNet {
 
   /**
    * Create a TFNet
-   * @param path the file path of a graphDef
-   * @param inputNames the input tensor names of this subgraph
+   *
+   * @param path        the file path of a graphDef
+   * @param inputNames  the input tensor names of this subgraph
    * @param outputNames the output tensor names of this subgraph
    * @return
    */
@@ -702,32 +640,53 @@ object TFNet {
                      inputs: Array[String],
                      outputs: Array[String],
                      sessionConfig: SessionConfig): AbstractModule[Activity, Activity, Float] = {
-    TFNetForInference.fromSavedModel(modelPath, tag, inputs, outputs, sessionConfig.toByteArray())
+    TFNetForInference.fromSavedModel(modelPath, Option(tag), None,
+      Option(inputs), Option(outputs), sessionConfig.toByteArray())
   }
 
   def fromSavedModel(modelPath: String,
                      inputs: Array[String],
                      outputs: Array[String],
                      sessionConfig: SessionConfig): AbstractModule[Activity, Activity, Float] = {
-    TFNetForInference.fromSavedModel(modelPath, "serve", inputs, outputs,
+    TFNetForInference.fromSavedModel(modelPath, None, None, Option(inputs), Option(outputs),
       sessionConfig.toByteArray())
   }
 
   def fromSavedModel(modelPath: String, tag: String,
                      inputs: Array[String],
                      outputs: Array[String]): AbstractModule[Activity, Activity, Float] = {
-    TFNetForInference.fromSavedModel(modelPath, "serve", inputs, outputs,
+    TFNetForInference.fromSavedModel(modelPath, None, None, Option(inputs), Option(outputs),
       TFNet.defaultSessionConfig.toByteArray())
   }
 
   def fromSavedModel(modelPath: String,
                      inputs: Array[String],
                      outputs: Array[String]): AbstractModule[Activity, Activity, Float] = {
-    TFNetForInference.fromSavedModel(modelPath, "serve", inputs, outputs,
+    TFNetForInference.fromSavedModel(modelPath, None, None, Option(inputs), Option(outputs),
       defaultSessionConfig.toByteArray())
   }
 
-  private[zoo] def parseGraph(graphProtoTxt: String) : GraphDef = {
+  def fromSavedModel(modelPath: String,
+                     tag: String,
+                     signature: String,
+                     sessionConfig: SessionConfig): AbstractModule[Activity, Activity, Float] = {
+    TFNetForInference.fromSavedModel(modelPath, Option(tag), Option(signature), None, None,
+      sessionConfig.toByteArray())
+  }
+
+  def fromSavedModel(modelPath: String,
+                     tag: String,
+                     signature: String): AbstractModule[Activity, Activity, Float] = {
+    TFNetForInference.fromSavedModel(modelPath, Option(tag), Option(signature), None, None,
+      defaultSessionConfig.toByteArray())
+  }
+
+  def fromSavedModel(modelPath: String): AbstractModule[Activity, Activity, Float] = {
+    TFNetForInference.fromSavedModel(modelPath, None, None, None, None,
+      defaultSessionConfig.toByteArray())
+  }
+
+  private[zoo] def parseGraph(graphProtoTxt: String): GraphDef = {
     var fr: File = null
     var in: InputStream = null
     try {

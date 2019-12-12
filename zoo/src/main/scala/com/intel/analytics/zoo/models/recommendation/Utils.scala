@@ -20,12 +20,11 @@ import java.lang
 
 import com.intel.analytics.bigdl.dataset.{Sample, TensorSample}
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.utils.{RandomGenerator, T}
 import org.apache.spark.sql.functions.{max, udf}
 import org.apache.spark.sql.{DataFrame, Row}
 
 import scala.collection.mutable
-import scala.util.Random
 import scala.collection.JavaConverters._
 
 object Utils {
@@ -51,12 +50,12 @@ object Utils {
 
     import indexed.sqlContext.implicits._
 
-    @transient lazy val ran = new Random(System.nanoTime())
+    @transient lazy val ran = RandomGenerator.RNG
 
     val negative = indexedDF.rdd
       .map(x => {
         val uid = x.getAs[Int](0)
-        val iid = Math.max(ran.nextInt(itemCount), 1)
+        val iid = ran.uniform(0, itemCount).toInt + 1
         (uid, iid)
       })
       .filter(x => !sampleDict.contains(x._1 + "," + x._2)).distinct()

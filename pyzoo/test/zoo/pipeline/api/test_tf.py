@@ -34,13 +34,6 @@ class TestTF(ZooTestCase):
         output = net.forward(np.random.rand(2, 4))
         assert output.shape == (2, 2)
 
-    def test_from_folder_load_tf(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
-        tfnet_path = os.path.join(resource_path, "tfnet")
-        net = Net.load_tf(tfnet_path)
-        output = net.forward(np.random.rand(2, 4))
-        assert output.shape == (2, 2)
-
     def test_for_scalar(self):
         import tensorflow as tf
         with tf.Graph().as_default():
@@ -84,6 +77,14 @@ class TestTF(ZooTestCase):
         self.assert_allclose(output_value, output_value_ref)
         self.assert_allclose(grad_input_value, grad_input_value_ref)
 
+    def test_init_tfnet_from_saved_model(self):
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+        model_path = os.path.join(resource_path, "saved-model-resource")
+        tfnet = TFNet.from_saved_model(model_path, inputs=["flatten_input:0"],
+                                       outputs=["dense_2/Softmax:0"])
+        result = tfnet.predict(np.ones(dtype=np.float32, shape=(20, 28, 28, 1)))
+        result.collect()
+
     def test_tf_net_predict(self):
         resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
         tfnet_path = os.path.join(resource_path, "tfnet")
@@ -92,6 +93,15 @@ class TestTF(ZooTestCase):
                                            intra_op_parallelism_threads=1)
         net = TFNet.from_export_folder(tfnet_path, tf_session_config=tf_session_config)
         output = net.predict(np.random.rand(16, 4), batch_per_thread=5, distributed=False)
+        assert output.shape == (16, 2)
+
+    def test_tf_net_predict_dataset(self):
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+        tfnet_path = os.path.join(resource_path, "tfnet")
+        net = TFNet.from_export_folder(tfnet_path)
+        dataset = TFDataset.from_ndarrays((np.random.rand(16, 4),))
+        output = net.predict(dataset)
+        output = np.stack(output.collect())
         assert output.shape == (16, 2)
 
 

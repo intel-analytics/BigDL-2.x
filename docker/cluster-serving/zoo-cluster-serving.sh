@@ -2,15 +2,16 @@
 
 # --------------config
 
+
 /opt/work/redis-5.0.5/src/redis-server > /opt/work/redis.log &
 echo "redis server started, please check log in /opt/work/redis.log" && sleep 1
 
 # sleep for 1 sec to ensure server is ready and client could connect
 /opt/work/redis-5.0.5/src/redis-cli config set stop-writes-on-bgsave-error no
 /opt/work/redis-5.0.5/src/redis-cli config set save ""
-/opt/work/redis-5.0.5/src/redis-cli config set maxmemory 1GB
-echo "redis config maxmemory set to 10MB"
 
+/opt/work/redis-5.0.5/src/redis-cli config set maxmemory 1GB
+echo "redis config maxmemory set to 1GB"
 
 tensorboard --logdir . &
 
@@ -63,6 +64,6 @@ if [ -z "${params_engine_type}" ]; then
     params_engine_type=mklblas
 fi
 
+${SPARK_HOME}/bin/spark-submit --master ${spark_master} --driver-memory ${spark_driver_memory} --executor-memory ${spark_executor_memory} --num-executors ${spark_num_executors} --executor-cores ${spark_executor_cores} --total-executor-cores ${spark_total_executor_cores} --conf "spark.executor.extraJavaOptions=-Dbigdl.engineType=${params_engine_type}" --conf "spark.driver.extraJavaOptions=-Dbigdl.engineType=${params_engine_type}" --jars ${SPARK_REDIS_JAR} --class com.intel.analytics.zoo.serving.ClusterServing ${ZOO_JAR}
 
-${SPARK_HOME}/bin/spark-submit --master ${spark_master} --driver-memory ${spark_driver_memory} --executor-memory ${spark_executor_memory} --num-executors ${spark_num_executors} --executor-cores ${spark_executor_cores} --total-executor-cores ${spark_total_executor_cores} --conf "spark.executor.extraJavaOptions=-Dbigdl.engineType=${params_engine_type}" --conf "spark.driver.extraJavaOptions=-Dbigdl.engineType=${params_engine_type}" --jars spark-redis-2.4.0-jar-with-dependencies.jar --class com.intel.analytics.zoo.serving.ClusterServing analytics-zoo-bigdl_0.10.0-spark_2.4.0-0.7.0-SNAPSHOT-jar-with-dependencies.jar
 
