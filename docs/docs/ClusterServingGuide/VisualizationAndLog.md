@@ -32,4 +32,4 @@ To see your log, run
 ./cluster-serving-log.sh
 ```
 ## Example
-See [example] here to practise how to utilize summary and log of Analytics Zoo Cluster Serving.
+See [example]() here to practise how to utilize summary and log of Analytics Zoo Cluster Serving.
