@@ -1,6 +1,8 @@
 # Configuraion Guide
 
-Your Cluster Serving configuration can all be set in `config.yaml`, see an example of `config.yaml` below
+Your Cluster Serving configuration can all be set in `config.yaml`.
+
+See an example of `config.yaml` below
 ```
 ## Analytics-zoo Cluster Serving
 
@@ -38,6 +40,12 @@ spark:
   # default, 4
   total_executor_cores: 8
 ```
+## Find Config File
+You may have different approaches to access configuration file of Cluster Serving according to the way you run it. Before you run Cluster Serving, you have to find your config file first according to the instructions below and modify it to what your need.
+### Docker User
+For Docker user, the `config.yaml` is in `analytics-zoo/docker/cluster-serving/config.yaml`
+
+
 ## Model configuration
 ### Model Supported 
 Currently Analytics Zoo Cluster Serving supports models: Tensorflow, Caffe, Pytorch, BigDL, OpenVINO.
@@ -79,7 +87,7 @@ If you run Cluster Serving with docker, put your model file into `model` directo
 * shape: the shape of your input data, e.g. a default config for pretrained imagenet is `3,224,224`.
 
 ## Inference Parameter Configuration
-* batch_size: the batch size you use for model inference
+* batch_size: the batch size you use for model inference, we recommend this value to be not small than 4 and not larger than 512, as batch size increases, you may get some gain in throughput and multiple times slow down in latency (inference time per batch).
 * top_n: the top-N result you want for output, **note:** if the top-N number is larger than model output size of the the final layer, it would just return all the outputs.
 
 ## Log Configuration
