@@ -85,7 +85,8 @@ class ClusterServingHelper {
 //      .action((x, c) => c.copy(dataShape = x))
 //
 //  }
-  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
+//  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
+  val configPath = "config.yaml"
   var lastModTime: String = null
   val logger: Logger = Logger.getLogger(getClass)
   val dateTime = LocalDateTime.now.toString
@@ -184,7 +185,8 @@ class ClusterServingHelper {
     if (logErrorFlag) {
       logFile = {
         val logF = new File("./cluster_serving.log")
-        logF.createNewFile()
+        if (Files.exists(Paths.get("./cluster_serving.log")))
+          logF.createNewFile()
         new FileWriter(logF)
       }
     }
@@ -198,7 +200,17 @@ class ClusterServingHelper {
     }
     else blasFlag = false
 
+    new File("started").createNewFile()
+
   }
+  def checkStop(): Boolean = {
+    if (!Files.exists(Paths.get("started"))) {
+      return true
+    }
+    return false
+
+  }
+
   def updateConfig(): Boolean = {
     val lastModTime = Files.getLastModifiedTime(Paths.get(configPath)).toString
     if (this.lastModTime != lastModTime){

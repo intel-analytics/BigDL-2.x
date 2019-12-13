@@ -26,7 +26,7 @@ import com.intel.analytics.zoo.utils.ImageProcessing
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
-import org.apache.spark.sql.{DataFrame, Row, SaveMode}
+import org.apache.spark.sql.{DataFrame, Row, SaveMode, types}
 import redis.clients.jedis.Jedis
 
 
@@ -38,7 +38,7 @@ object ClusterServing {
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
 
 
-  case class Rec(uri: String, value: String)
+  case class Record(uri: String, value: String)
   var batchSize: Int = 4
   var topN: Int = 1
   var coreNum: Int = 1
@@ -76,8 +76,11 @@ object ClusterServing {
     var model: InferenceModel = null
     var bcModel: Broadcast[InferenceModel] = null
 
-
-
+    loadSerialParams(helper)
+    model = helper.loadInferenceModel()
+    bcModel = helper.sc.broadcast(model)
+    if (helper.logSummaryFlag) model.setInferenceSummary(
+      InferenceSummary(".", helper.dateTime + "-ClusterServing"))
 
     val spark = helper.getSparkSession()
 
@@ -107,15 +110,15 @@ object ClusterServing {
 
     val query = images.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
 
-      if (helper.updateConfig()) {
-        loadSerialParams(helper)
-        if (bcModel != null) bcModel.destroy()
-        if (model != null) model.doRelease()
-        model = helper.loadInferenceModel()
-        bcModel = helper.sc.broadcast(model)
-        if (helper.logSummaryFlag) model.setInferenceSummary(
-          InferenceSummary(".", helper.dateTime + "-ClusterServing"))
-      }
+//      if (helper.updateConfig()) {
+//        loadSerialParams(helper)
+//        if (bcModel != null) bcModel.destroy()
+//        if (model != null) model.doRelease()
+//        model = helper.loadInferenceModel()
+//        bcModel = helper.sc.broadcast(model)
+//        if (helper.logSummaryFlag) model.setInferenceSummary(
+//          InferenceSummary(".", helper.dateTime + "-ClusterServing"))
+//      }
 
       batchDF.persist()
 
@@ -126,6 +129,7 @@ object ClusterServing {
         val previousLen = redisDB.xlen("image_stream")
 
         val microBatchStart = System.nanoTime()
+
         val resultPartitions = if (blasFlag) {
           // if backend is raw BLAS, no multi-thread could used for forward
           // BLAS is only valid in BigDL backend
@@ -133,6 +137,8 @@ object ClusterServing {
           batchDF.rdd.mapPartitions(pathBytes => {
             pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
               pathBytesBatch.indices.toParArray.map(i => {
+//                val raw = pathBytesBatch(i).getString(0)
+//                if(raw != )
                 val tensors = ImageProcessing.bytesToBGRTensor(java.util
                   .Base64.getDecoder.decode(pathBytesBatch(i).getAs[String]("image")))
                 val path = pathBytesBatch(i).getAs[String]("uri")
@@ -142,19 +148,25 @@ object ClusterServing {
 
                 val value = PostProcessing.getInfofromTensor(topN, result)
 
-                Rec(path, value)
+                Record(path, value)
               })
             })
           })
         } else {
-          val pathBytesChunk = batchDF.rdd.mapPartitions(pathBytes => {
+          val pathBytesChunk = batchDF.rdd.filter(_.getAs[String]("uri") != "STOP").mapPartitions(pathBytes => {
             pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
               pathBytesBatch.indices.toParArray.map(i => {
+                val row = pathBytesBatch(i)
+                val path = row.getAs[String]("uri")
                 val tensors = ImageProcessing.bytesToBGRTensor(java.util
-                  .Base64.getDecoder.decode(pathBytesBatch(i).getAs[String]("image")))
-                val path = pathBytesBatch(i).getAs[String]("uri")
-
+                  .Base64.getDecoder.decode(row.getAs[String]("image")))
                 (path, tensors)
+
+//                val tensors = ImageProcessing.bytesToBGRTensor(java.util
+//                  .Base64.getDecoder.decode(pathBytesBatch(i).getAs[String]("image")))
+//                val path = pathBytesBatch(i).getAs[String]("uri")
+
+
               })
             })
           })
@@ -189,7 +201,7 @@ object ClusterServing {
               (0 until thisBatchSize).toParArray.map(i => {
                 val value = PostProcessing.getInfofromTensor(topN,
                   result.select(1, i + 1).squeeze())
-                Rec(pathByteBatch(i)._1, value)
+                Record(pathByteBatch(i)._1, value)
               })
 
             })
@@ -207,7 +219,7 @@ object ClusterServing {
               .option("table", "result")
               .option("key.column", "uri")
               .mode(SaveMode.Append).save()
-            println("result saved at " + microBatchSize.toString)
+            println("result saved at " + resDf.count())
             redisDB.xtrim("image_stream",
               redisDB.xlen("image_stream") - previousLen, true)
             println("Xtrim completed")
@@ -217,12 +229,15 @@ object ClusterServing {
           catch {
             case e: redis.clients.jedis.exceptions.JedisDataException =>
               errFlag = true
-              println("not enough space in redis to write !" + e.toString)
-              Thread.sleep(1000)
+              val errMsg = "not enough space in redis to write: " + e.toString
+              println(errMsg)
+              helper.logFile.write(errMsg)
+              Thread.sleep(3000)
             case e: Exception => {
               errFlag = true
-              println("--!! never seen" + e.toString)
-              Thread.sleep(1000)
+              val errMsg = "unable to handle exception: " + e.toString
+              println(errMsg)
+              Thread.sleep(3000)
             }
 
           }
@@ -245,10 +260,19 @@ object ClusterServing {
 
           " inputs predict ended, time elapsed " + microBatchLatency.toString)
 
+        if (helper.checkStop()) {
+          println("stop signal detected")
+          System.exit(0)
+        }
       }
+    }
 
-    }.start()
+    val s =  query.start()
+    s.awaitTermination()
 
-    query.awaitTermination()
+//    while (true) {
+//      Thread.sleep(1000)
+//      if (helper.checkStop()) query.stop()
+//    }
   }
 }
