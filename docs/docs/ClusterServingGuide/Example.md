@@ -1,5 +1,5 @@
 # Quick Start
-This page provides a quick start example for you to run Analytics Zoo Cluster Serving.
+This page provides a quick start example for you to run Analytics Zoo Cluster Serving. To simplify the examples, we use docker to run Cluster Serving in these examples. If you do not have docker installed, [install docker]() first.
 
 ## Simplest End-to-end Example 
 We use default `config.yaml` configuration, for more details, see [Configuration]()
