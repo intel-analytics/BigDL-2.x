@@ -27,7 +27,7 @@ from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.common import JTensor, Sample
 from zoo.feature.image import ImageSet
 from zoo.common.utils import callZooFunc
-from zoo.pipeline.api.net.tf_dataset import TFImageDataset, TFDataset
+from zoo.pipeline.api.net.tf_dataset import TFImageDataset, TFDataset, MapDataset
 
 if sys.version >= '3':
     long = int
@@ -108,7 +108,7 @@ class TFNet(Layer):
         else:
             return [to_jtensor(input)], False
 
-    def predict(self, x, batch_per_thread=1, distributed=True):
+    def predict(self, x, batch_per_thread=1, distributed=True, mini_batch=False):
         """
         Use a model to do prediction.
         """
@@ -126,10 +126,19 @@ class TFNet(Layer):
                                   x.batch_per_thread)
             return ImageSet(results)
 
+        if isinstance(x, MapDataset):
+            raise ValueError("MapDataset is not supported in TFNet")
+
         if isinstance(x, TFDataset):
             results = callZooFunc(self.bigdl_type, "zooPredict",
                                   self.value,
                                   x.get_prediction_data())
+            return results.map(lambda result: Layer.convert_output(result))
+
+        if mini_batch:
+            results = callZooFunc(self.bigdl_type, "zooPredict",
+                                  self.value,
+                                  x)
             return results.map(lambda result: Layer.convert_output(result))
 
         if distributed:
@@ -172,17 +181,21 @@ class TFNet(Layer):
         return TFNet(folder, tf_session_config=tf_session_config)
 
     @staticmethod
-    def from_saved_model(model_path, inputs, outputs, tag="serve", tf_session_config=None):
+    def from_saved_model(model_path, tag=None, signature=None,
+                         inputs=None, outputs=None, tf_session_config=None):
         """
         Create a TFNet from an TensorFlow saved model
         :param model_path: the path to the SavedModel path
+        :param tag: the tag to load in the saved model, default to "serve"
+        :param signature: The signature of the SignatureDef that defines inputs
+                          and outputs of the graph. TFNet assumes inputs is sorted
+                          by their corresponding key in SignatureDef.
         :param inputs: a list input tensor names of this model, you may want to use TensorFlow's
                       command line tool to inspect the saved model to find the input tensor
                       names e.g. `saved_model_cli show --dir {saved_model_path} --all`
         :param outputs: a list output tensor names of this model, you may want to use TensorFlow's
                       command line tool to inspect the saved model to find the output tensor
                       names e.g. `saved_model_cli show --dir {saved_model_path} --all`
-        :param tag: the tag to load in the saved model, default to "server"
         :param tf_session_config: an optional tf.ConfigProto object to
                        set the session config in java side.
                        This config does not necessarily be the same with your current session.
@@ -197,8 +210,14 @@ class TFNet(Layer):
             assert isinstance(tf_session_config, tf.ConfigProto)
             tf_session_config.use_per_session_threads = True
             config_bytes = bytearray(tf_session_config.SerializeToString())
-        jvalue = callZooFunc("float", "createTFNetFromSavedModel",
-                             model_path, inputs, outputs, tag, config_bytes)
+
+        if inputs is None or outputs is None:
+            jvalue = callZooFunc("float", "createTFNetFromSavedModel",
+                                 model_path, tag, signature, config_bytes)
+        else:
+
+            jvalue = callZooFunc("float", "createTFNetFromSavedModel",
+                                 model_path, tag, inputs, outputs, config_bytes)
         return TFNet(path=None, jvalue=jvalue)
 
     @staticmethod
