@@ -6,7 +6,7 @@ clear_up () {
     pip uninstall -y pyspark
 }
 
-echo "start example test for attention"
+echo "#1 start example test for attention"
 start=$(date "+%s")
 sed "s/max_features = 20000/max_features = 200/g;s/max_len = 200/max_len = 20/g;s/hidden_size=128/hidden_size=8/g" \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/transformer.py \
