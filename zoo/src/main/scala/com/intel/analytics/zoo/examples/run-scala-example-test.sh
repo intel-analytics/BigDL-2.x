@@ -106,20 +106,6 @@ fi
 mkdir output
 mkdir stream
 
-
-${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
---master ${MASTER} \
---driver-memory 4g \
---executor-memory 5g \
---class com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection \
---streamingPath ./stream --model analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model \
---output ./output  &
-${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
---master ${MASTER} \
---driver-memory 2g \
---executor-memory 5g \
---class com.intel.analytics.zoo.examples.streaming.objectdetection.ImagePathWriter \
---streamingPath ./stream --imageSourcePath analytics-zoo-data/data/object-detection-coco/ &
 while true
 do
    temp1=$(find analytics-zoo-data/data/object-detection-coco -type f|wc -l)
@@ -131,7 +117,22 @@ do
        rm -r stream
        break
    fi
-done
+done &
+
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+--master local[1] \
+--driver-memory 2g \
+--executor-memory 5g \
+--class com.intel.analytics.zoo.examples.streaming.objectdetection.ImagePathWriter \
+--imageSourcePath analytics-zoo-data/data/object-detection-coco --streamingPath ./stream
+
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+--master local[20] \
+--driver-memory 4g \
+--executor-memory 5g \
+--class com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection \
+--streamingPath ./stream --model analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model \
+--output ./output
 
 echo "#4 start example test for streaming Text Classification"
 
@@ -150,14 +151,14 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --class com.intel.analytics.zoo.examples.streaming.textclassification.StreamingTextClassification \
 --model analytics-zoo-data/data/streaming/text-model/text_classifier.model \
 --indexPath analytics-zoo-data/data/streaming/text-model/word_index.txt \
---inputFile analytics-zoo-data/data/streaming/text-model/textfile/ >1.log &
-mv analytics-zoo-data/data/streaming/text-model/2.log analytics-zoo-data/data/streaming/text-model/textfile/ &
+--inputFile analytics-zoo-data/data/streaming/text-model/textfile/ > 1.log &
+
 while :
 do
+echo "I am strong and I am smart" > analytics-zoo-data/data/streaming/text-model/textfile/s
 if [ -n "$(grep "top-5" 1.log)" ];then
     echo "----Find-----"
     kill -9 $(ps -ef | grep StreamingTextClassification | grep -v grep |awk '{print $2}')
-    kill -9 $(ps -ef | grep "nc -lk" | grep -v grep |awk '{print $2}')
     rm 1.log
     sleep 1s
     break
@@ -167,12 +168,12 @@ done
 
 echo "#5 start example test for chatbot"
 
-if [ -d analytics-zoo-data/data/chatbot-data ]
+if [ -d analytics-zoo-data/data/chatbot_short ]
 then
     echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
-    wget $FTP_URI/analytics-zoo-data/data/chatbot-data.zip -P analytics-zoo-data/data
-    tar -xvzf analytics-zoo-data/data/chatbot-data.tar.gz
+    wget $FTP_URI/analytics-zoo-data/data/chatbot_short.zip -P analytics-zoo-data/data
+    unzip analytics-zoo-data/data/chatbot_short.zip -d aalytics-zoo-data/data/
 fi
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
@@ -180,7 +181,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --driver-memory 20g \
 --executor-memory 20g \
 --class com.intel.analytics.zoo.examples.chatbot.Train \
--f analytics-zoo-data/data/chatbot-data
+-f analytics-zoo-data/data/chatbot-data/ -b 256 -e 2
 
 
 echo "----------------------------------------------"
@@ -202,7 +203,6 @@ else
 fi
 
 cd text-classification-training
-
 mvn clean
 mvn clean package
 mvn install
@@ -233,7 +233,6 @@ java -cp target/text-classification-inference-0.1.0-SNAPSHOT-jar-with-dependenci
 -DMODEL_PATH=../models/text-classification.bigdl \
 com.intel.analytics.zoo.apps.textclassfication.inference.SimpleDriver
 
-cd text-classification-inference
 mvn spring-boot:run -DEMBEDDING_FILE_PATH=../analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
 -DMODEL_PATH=../models/text-classification.bigdl >1.log &
 curl -d hello -x "" http://localhost:8080/predict &
@@ -249,9 +248,9 @@ done
 
 
 echo "# Test Apps -- 3.recommendation-inference"
+
 #recommendation
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/recommendation-inference
-
 mvn clean
 mvn clean package
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples
