@@ -1,7 +1,7 @@
 # Visualization and Log
 This page shows how to see log and visualization in Analytics Zoo Cluster Serving.
 ## Visualization
-We integrate Tensorboard into Cluster Serving, to enable this feature, use following config in [Configuration](). By default, this feature is disabled.
+We integrate Tensorboard into Cluster Serving, to enable this feature, use following config in [Configuration](). By default, this feature is disabled. By disabling this feature, you could have a slight gain of serving performance since there is some cost to stat the information.
 ```
 log:
   summary: y
@@ -25,3 +25,11 @@ We use log to save serving information and error, to enable this feature, use fo
 log:
   error: y
 ```
+If you are the only user to run Cluster Serving, the error logs would also print to your interactive shell. Otherwise, you can not see the logs in the terminal. In this ocasion, you have to refer to your log.
+
+To see your log, run 
+```
+./cluster-serving-log.sh
+```
+## Example
+See [example]() here to practise how to utilize summary and log of Analytics Zoo Cluster Serving.
