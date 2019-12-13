@@ -106,33 +106,37 @@ fi
 mkdir output
 mkdir stream
 
-while true
-do
-   temp1=$(find analytics-zoo-data/data/object-detection-coco -type f|wc -l)
-   temp2=$(find ./output -type f|wc -l)
-   temp3=$(($temp1+$temp1))
-   if [ $temp3 -eq $temp2 ];then
-       kill -9 $(ps -ef | grep StreamingObjectDetection | grep -v grep |awk '{print $2}')
-       rm -r output
-       rm -r stream
-       break
-   fi
-done &
-
-${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
---master local[1] \
---driver-memory 2g \
---executor-memory 5g \
---class com.intel.analytics.zoo.examples.streaming.objectdetection.ImagePathWriter \
---imageSourcePath analytics-zoo-data/data/object-detection-coco --streamingPath ./stream
-
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master local[20] \
 --driver-memory 4g \
 --executor-memory 5g \
 --class com.intel.analytics.zoo.examples.streaming.objectdetection.StreamingObjectDetection \
 --streamingPath ./stream --model analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model \
---output ./output
+--output ./output > 1.log &
+
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+--master local[2] \
+--driver-memory 2g \
+--executor-memory 5g \
+--class com.intel.analytics.zoo.examples.streaming.objectdetection.ImagePathWriter \
+--imageSourcePath analytics-zoo-data/data/object-detection-coco --streamingPath ./stream
+
+while true
+do
+   cp ./stream/0.txt ./stream/1.txt
+   temp1=$(find analytics-zoo-data/data/object-detection-coco -type f|wc -l)
+   temp2=$(find ./output -type f|wc -l)
+   temp3=$(($temp1+$temp1))
+   if [ $temp3 -le $temp2 ];then
+       kill -9 $(ps -ef | grep StreamingObjectDetection | grep -v grep |awk '{print $2}')
+       rm -r output
+       rm -r stream
+       rm 1.log
+       echo "Finished streaming"
+       break
+   fi
+done
+
 
 echo "#4 start example test for streaming Text Classification"
 
@@ -289,17 +293,14 @@ fi
 
 ./flink-1.7.2/bin/flink run \
 ./model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
---inputFile ../../analytics-zoo-data/data/streaming/text-model/textfile/2.log \
+--inputFile ../../analytics-zoo-data/data/streaming/text-model/2.log \
 --embeddingFilePath analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
 --modelPath models/text-classification.bigdl \
 --parallelism 1  &
-mv ../../analytics-zoo-data/data/streaming/text-model/textfile/2.log \
-analytics-zoo-data/data/2.log &
 while :
 do
-if [ -n "$(find . -type f -name "flink*taskexecutor*.out" | xargs grep -i "Zoo")" ];then
+if [ -n "$(find . -type f -name "flink*taskexecutor*.out" | xargs grep -i "can you see it")" ];then
     echo "----Find-----"
-    kill -9 $(ps -ef | grep "nc -l" | grep -v grep |awk '{print $2}')
     ./flink-1.7.2/bin/stop-cluster.sh
     sleep 1s
     break
@@ -318,11 +319,11 @@ wget ${FTP_URI}/analytics-zoo-models/flink_model/resnet_v1_50.ckpt
 ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar  \
 --modelType resnet_v1_50 --checkpointPath resnet_v1_50.ckpt  \
 --image ${ANALYTICS_ZOO_ROOT}/zoo/src/test/resources/imagenet/n04370456/ \
---classes ${ANALYTICS_ZOO_ROOT}/zoo/src/main/resource/imagenet_classname.txt  \
+--classes ${ANALYTICS_ZOO_ROOT}/zoo/src/main/resources/imagenet_classname.txt  \
 --inputShape "1,224,224,3" --ifReverseInputChannels true --meanValues "123.68,116.78,103.94" --scale 1 > 1.log &
 while :
 do
-if [ -n "$(grep "********" 1.log)" ];then
+if [ -n "$(grep "Printing result" 1.log)" ];then
     echo "----Find-----"
     ./flink-1.7.2/bin/stop-cluster.sh
     rm 1.log
@@ -334,5 +335,6 @@ done
 ./flink-1.7.2/bin/stop-cluster.sh
 
 echo "Finish test"
+
 
 
