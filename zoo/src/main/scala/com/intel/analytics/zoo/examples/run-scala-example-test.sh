@@ -181,7 +181,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --driver-memory 20g \
 --executor-memory 20g \
 --class com.intel.analytics.zoo.examples.chatbot.Train \
--f analytics-zoo-data/data/chatbot-data/ -b 256 -e 2
+-f analytics-zoo-data/data/chatbot_short/ -b 256 -e 2
 
 
 echo "----------------------------------------------"
