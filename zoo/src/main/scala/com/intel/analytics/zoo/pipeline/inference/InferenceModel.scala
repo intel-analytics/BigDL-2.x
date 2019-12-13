@@ -135,7 +135,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param inputs     the inputs of the model
    * @param outputs    the outputs of the model
    */
-  def doLoadTFModel(modelPath: String,
+  def doLoadTF(modelPath: String,
                inputs: Array[String],
                outputs: Array[String]): Unit = {
     doLoadTensorflowModel(modelPath, inputs, outputs, 1, 1, true)
@@ -151,7 +151,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param interOpParallelismThreads the num of interOpParallelismThreads
    * @param usePerSessionThreads      whether to perSessionThreads
    */
-  def doLoadTFModel(modelPath: String,
+  def doLoadTF(modelPath: String,
                inputs: Array[String],
                outputs: Array[String],
                intraOpParallelismThreads: Int,
@@ -173,7 +173,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param inputs     the inputs of the model
    * @param outputs    the outputs of the model
    */
-  def doLoadTF(modelPath: String,
+  def doLoadSavedTF(modelPath: String,
                inputs: Array[String],
                outputs: Array[String]): Unit = {
     doLoadTensorflowSavedModel(modelPath, inputs, outputs, 1, 1, true)
@@ -189,7 +189,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param interOpParallelismThreads  the num of interOpParallelismThreads
    * @param usePerSessionThreads       whether to perSessionThreads
    */
-  def doLoadTF(modelPath: String,
+  def doLoadSavedTF(modelPath: String,
                inputs: Array[String],
                outputs: Array[String],
                intraOpParallelismThreads: Int,
@@ -211,7 +211,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param inputs          the inputs of the model
    * @param outputs         the outputs of the model
    */
-  def doLoadTF(savedModelBytes: Array[Byte],
+  def doLoadSavedTF(savedModelBytes: Array[Byte],
                inputs: Array[String],
                outputs: Array[String]): Unit = {
     doLoadTensorflowSavedModel(savedModelBytes, inputs, outputs, 1, 1, true)
@@ -227,7 +227,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param interOpParallelismThreads the num of interOpParallelismThreads
    * @param usePerSessionThreads      whether to perSessionThreads
    */
-  def doLoadTF(savedModelBytes: Array[Byte],
+  def doLoadSavedTF(savedModelBytes: Array[Byte],
                inputs: Array[String],
                outputs: Array[String],
                intraOpParallelismThreads: Int,
