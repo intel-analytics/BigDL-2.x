@@ -233,12 +233,12 @@ mvn clean
 mvn clean package
 
 java -cp target/text-classification-inference-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
--DEMBEDDING_FILE_PATH=../analytics-zoo-data/data/glove/glove.6B.300d.txt \
--DMODEL_PATH=../models/text-classification.bigdl \
+-DEMBEDDING_FILE_PATH=${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
+-DMODEL_PATH=${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/models/text-classification.bigdl \
 com.intel.analytics.zoo.apps.textclassfication.inference.SimpleDriver
 
-mvn spring-boot:run -DEMBEDDING_FILE_PATH=../analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
--DMODEL_PATH=../models/text-classification.bigdl >1.log &
+mvn spring-boot:run -DEMBEDDING_FILE_PATH=${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
+-DMODEL_PATH=${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/models/text-classification.bigdl >1.log &
 curl -d hello -x "" http://localhost:8080/predict &
 while :
 do
@@ -293,19 +293,10 @@ fi
 
 ./flink-1.7.2/bin/flink run \
 ./model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
---inputFile ../../analytics-zoo-data/data/streaming/text-model/2.log \
+--inputFile ${ANALYTICS_ZOO_ROOT}/analytics-zoo-data/data/streaming/text-model/2.log \
 --embeddingFilePath analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
 --modelPath models/text-classification.bigdl \
---parallelism 1  &
-while :
-do
-if [ -n "$(find . -type f -name "flink*taskexecutor*.out" | xargs grep -i "can you see it")" ];then
-    echo "----Find-----"
-    ./flink-1.7.2/bin/stop-cluster.sh
-    sleep 1s
-    break
-fi
-done
+--parallelism 1
 
 ./flink-1.7.2/bin/stop-cluster.sh
 
@@ -320,17 +311,7 @@ ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/model-inference-flink/target
 --modelType resnet_v1_50 --checkpointPath resnet_v1_50.ckpt  \
 --image ${ANALYTICS_ZOO_ROOT}/zoo/src/test/resources/imagenet/n04370456/ \
 --classes ${ANALYTICS_ZOO_ROOT}/zoo/src/main/resources/imagenet_classname.txt  \
---inputShape "1,224,224,3" --ifReverseInputChannels true --meanValues "123.68,116.78,103.94" --scale 1 > 1.log &
-while :
-do
-if [ -n "$(grep "Printing result" 1.log)" ];then
-    echo "----Find-----"
-    ./flink-1.7.2/bin/stop-cluster.sh
-    rm 1.log
-    sleep 1s
-    break
-fi
-done
+--inputShape "1,224,224,3" --ifReverseInputChannels true --meanValues "123.68,116.78,103.94" --scale 1
 
 ./flink-1.7.2/bin/stop-cluster.sh
 
