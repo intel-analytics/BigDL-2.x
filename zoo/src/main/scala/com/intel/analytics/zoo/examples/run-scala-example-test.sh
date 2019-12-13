@@ -159,7 +159,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 
 while :
 do
-echo "I am strong and I am smart" > analytics-zoo-data/data/streaming/text-model/textfile/s
+echo "I am strong and I am smart" >> analytics-zoo-data/data/streaming/text-model/textfile/s
 if [ -n "$(grep "top-5" 1.log)" ];then
     echo "----Find-----"
     kill -9 $(ps -ef | grep StreamingTextClassification | grep -v grep |awk '{print $2}')
@@ -177,7 +177,7 @@ then
     echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
     wget $FTP_URI/analytics-zoo-data/data/chatbot_short.zip -P analytics-zoo-data/data
-    unzip analytics-zoo-data/data/chatbot_short.zip -d aalytics-zoo-data/data/
+    unzip analytics-zoo-data/data/chatbot_short.zip -d analytics-zoo-data/data/
 fi
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
@@ -185,7 +185,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --driver-memory 20g \
 --executor-memory 20g \
 --class com.intel.analytics.zoo.examples.chatbot.Train \
--f analytics-zoo-data/data/chatbot_short/ -b 256 -e 2
+-f analytics-zoo-data/data/chatbot_short/ -b 32 -e 2
 
 
 echo "----------------------------------------------"
