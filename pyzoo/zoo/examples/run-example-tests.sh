@@ -46,9 +46,10 @@ ${SPARK_HOME}/bin/spark-submit \
 now=$(date "+%s")
 time1=$((now-start))
 
-echo "#2 start example test for customized loss and layer (Funtional API)"
+echo "#2 start example test for autograd"
 #timer
 start=$(date "+%s")
+echo "#2.1 start example test for custom"
 ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
     --driver-memory 2g \
@@ -60,15 +61,12 @@ ${SPARK_HOME}/bin/spark-submit \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/custom.py \
     --nb_epoch 2
 
-echo " start example test for customloss"
-${SPARK_HOME}/bin/spark-submit \
+echo "#2.2 start example test for customloss"
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 2g \
     --executor-memory 2g \
     --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/customloss.py \
-    --jars ${ANALYTICS_ZOO_JAR} \
-    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/customloss.py
 
 now=$(date "+%s")
@@ -562,7 +560,7 @@ time13=$((now-start))
 
 
 echo "#1 textclassification time used: $time1 seconds"
-echo "#2 customized loss and layer time used: $time2 seconds"
+echo "#2 autograd time used: $time2 seconds"
 echo "#3 image-classification time used: $time3 seconds"
 echo "#4 object-detection loss and layer time used: $time4 seconds"
 echo "#5 nnframes time used: $time5 seconds"

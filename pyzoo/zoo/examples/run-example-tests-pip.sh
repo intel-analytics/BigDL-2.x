@@ -490,7 +490,7 @@ unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time10=$((now-start))
 
-echo "#12 start example for vnni/openvino"
+echo "#12 start example test for vnni/openvino"
 start=$(date "+%s")
 if [ -d analytics-zoo-models/vnni ]
 then
