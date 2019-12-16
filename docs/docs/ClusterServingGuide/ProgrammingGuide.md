@@ -11,24 +11,24 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 * [Data Pipeline I/O]()
 * [Logs and Visualization]()
 
-# Quick Start
+## Quick Start
 
-# Configuration
+## Configuration
 
-# Start and Stop Serving
-## Start
+## Start and Stop Serving
+### Start
 `start-cluster-serving.sh`
-## Stop
+### Stop
 `stop-cluster-serving.sh`
-## Restart
+### Restart
 `restart-cluster-serving.sh`
-# Data Pipeline I/O
+## Data Pipeline I/O
 use api guide
-# Logs and Visualization
-## Logs
-### Serving Logs
+## Logs and Visualization
+### Logs
+#### Serving Logs
 `cluster-serving-log.sh`
-### Redis Logs
+#### Redis Logs
 `redis-log.sh`
-## Visualization
+### Visualization
 we use tensorboard
