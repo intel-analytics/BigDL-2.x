@@ -26,6 +26,9 @@ else
     unzip -q analytics-zoo-models/tfnet/tfnet.zip -d analytics-zoo-models/tfnet/
 fi
 
+#timer
+start=$(date "+%s")
+
 bash ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master $MASTER \
 --conf spark.executor.cores=1 \
@@ -34,6 +37,10 @@ bash ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --image analytics-zoo-data/data/object-detection-coco \
 --model analytics-zoo-models/tfnet/tfnet/frozen_inference_graph.pb \
 --partition 4
+
+now=$(date "+%s")
+time1=$((now-start))
+echo "#1 Tfnet time used:$time1 seconds"
 
 echo "#2 start example test for LocalEstimator"
 
@@ -61,6 +68,9 @@ fi
 
 echo "##2.1 LenetEstimator testing"
 
+#timer
+start=$(date "+%s")
+
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
 --driver-memory 20g \
@@ -68,7 +78,14 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --class com.intel.analytics.zoo.examples.localEstimator.LenetLocalEstimator \
 -d analytics-zoo-data/data/mnist -b 128 -e 1 -t 4
 
+now=$(date "+%s")
+time2=$((now-start))
+echo "#2.1 LocalEstimator:LenetEstimator time used:$time2 seconds"
+
 echo "##2.2 ResnetEstimator testing"
+
+#timer
+start=$(date "+%s")
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
@@ -77,7 +94,14 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --class com.intel.analytics.zoo.examples.localEstimator.ResnetLocalEstimator \
 -d analytics-zoo-data/data/cifar10 -b 128 -e 1 -t 4
 
-echo "##2.3 ResnetEstimator testing"
+now=$(date "+%s")
+time3=$((now-start))
+echo "#2.2 LocalEstimator:ResnetEstimator time used:$time3 seconds"
+
+echo "##2.3 TransferLearning testing"
+
+#timer
+start=$(date "+%s")
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
@@ -88,7 +112,12 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 -m analytics-zoo-models/localestimator/saved_model4 \
 -i "resnet50_input:0" -o "resnet50/activation_48/Relu:0" -b 132 -e 20 -t 10
 
-echo "#3 start example test for streaming Object Detection"
+now=$(date "+%s")
+time4=$((now-start))
+echo "#2.3 LocalEstimator:TransferLearning time used:$time4 seconds"
+
+echo "#3 start example test for Streaming Test"
+echo "#3.1 start example test for streaming Object Detection"
 
 if [ -d analytics-zoo-data/data/object-detection-coco ];then
     echo "analytics-zoo-data/data/object-detection-coco already exists"
@@ -105,6 +134,9 @@ fi
 
 mkdir output
 mkdir stream
+
+#timer
+start=$(date "+%s")
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master local[20] \
@@ -137,8 +169,11 @@ do
    fi
 done
 
+now=$(date "+%s")
+time5=$((now-start))
+echo "#3.1 Streaming:Object Detection time used:$time5 seconds"
 
-echo "#4 start example test for streaming Text Classification"
+echo "#3.2 start example test for streaming Text Classification"
 
 if [ -d analytics-zoo-data/data/streaming/text-model ]
 then
@@ -147,6 +182,9 @@ else
     wget $FTP_URI/analytics-zoo-data/data/streaming/text-model.zip -P analytics-zoo-data/data/streaming/
     unzip -q analytics-zoo-data/data/streaming/text-model.zip -d analytics-zoo-data/data/streaming/
 fi
+
+#timer
+start=$(date "+%s")
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
@@ -169,8 +207,11 @@ if [ -n "$(grep "top-5" 1.log)" ];then
 fi
 done
 
+now=$(date "+%s")
+time6=$((now-start))
+echo "#3.2 Streaming:Text Classification time used:$time6 seconds"
 
-echo "#5 start example test for chatbot"
+echo "#4 start example test for chatbot"
 
 if [ -d analytics-zoo-data/data/chatbot_short ]
 then
@@ -180,6 +221,9 @@ else
     unzip analytics-zoo-data/data/chatbot_short.zip -d analytics-zoo-data/data/
 fi
 
+#timer
+start=$(date "+%s")
+
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
 --driver-memory 20g \
@@ -187,9 +231,13 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --class com.intel.analytics.zoo.examples.chatbot.Train \
 -f analytics-zoo-data/data/chatbot_short/ -b 32 -e 2
 
+now=$(date "+%s")
+time7=$((now-start))
+echo "#4 Chatbot time used:$time7 seconds"
 
 echo "----------------------------------------------"
-echo "# Test Apps -- 1.text-classification-training"
+echo "App[Model-inference-example] Test"
+echo "# Test 1 text-classification-training"
 
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/
 mkdir "models"
@@ -213,6 +261,8 @@ mvn install
 #return model-inference-examples/
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/
 
+#timer
+start=$(date "+%s")
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
@@ -226,16 +276,32 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --embeddingFile "analytics-zoo-data/data/glove/glove/glove.6B.300d.txt" \
 --modelSaveDirPath "models/text-classification.bigdl"
 
+now=$(date "+%s")
+time8=$((now-start))
+echo "#App[Model-inference-example] Test 1: text-classification-training time used:$time8 seconds"
+
 echo "# Test Apps -- 2.text-classification-inference"
 
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/text-classification-inference
 mvn clean
 mvn clean package
 
+echo "# Test 2.1 text-classification-inference:SimpleDriver"
+#timer
+start=$(date "+%s")
+
 java -cp target/text-classification-inference-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
 -DEMBEDDING_FILE_PATH=${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
 -DMODEL_PATH=${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/models/text-classification.bigdl \
 com.intel.analytics.zoo.apps.textclassfication.inference.SimpleDriver
+
+now=$(date "+%s")
+time9=$((now-start))
+echo "#App[Model-inference-example] Test 2.1: text-classification-inference:SimpleDriver time used:$time9 seconds"
+
+echo "# Test 2.2 text-classification-inference:WebServiceDriver"
+#timer
+start=$(date "+%s")
 
 mvn spring-boot:run -DEMBEDDING_FILE_PATH=${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
 -DMODEL_PATH=${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/models/text-classification.bigdl >1.log &
@@ -250,8 +316,11 @@ if [ -n "$(grep "class" ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/text
 fi
 done
 
+now=$(date "+%s")
+time10=$((now-start))
+echo "#App[Model-inference-example] Test 2.2: text-classification-inference:WebServiceDriver time used:$time10 seconds"
 
-echo "# Test Apps -- 3.recommendation-inference"
+echo "# Test 3.recommendation-inference"
 
 #recommendation
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/recommendation-inference
@@ -265,16 +334,32 @@ then
 else
     wget $FTP_URI/analytics-zoo-models/recommendation/ncf.bigdl -P analytics-zoo-models/recommendation/
 fi
+echo "# Test 3.1 recommendation-inference:SimpleScalaDriver"
+#timer
+start=$(date "+%s")
 
 java -cp ./recommendation-inference/target/recommendation-inference-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
 -DMODEL_PATH=./analytics-zoo-models/recommendation/ncf.bigdl \
 com.intel.analytics.zoo.apps.recommendation.inference.SimpleScalaDriver
 
+now=$(date "+%s")
+time11=$((now-start))
+echo "#App[Model-inference-example] Test 3.1: recommendation-inference:SimpleScalaDriver time used:$time11 seconds"
+
+echo "# Test 3.2 recommendation-inference:SimpleDriver[Java]"
+#timer
+start=$(date "+%s")
+
 java -cp ./recommendation-inference/target/recommendation-inference-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
 -DMODEL_PATH=./analytics-zoo-models/recommendation/ncf.bigdl \
 com.intel.analytics.zoo.apps.recommendation.inference.SimpleDriver
 
-echo "# Test Apps -- 4.model-inference-flink"
+now=$(date "+%s")
+time12=$((now-start))
+echo "#App[Model-inference-example] Test 3.2: recommendation-inference:SimpleDriver time used:$time12 seconds"
+
+
+echo "# Test 4.model-inference-flink"
 
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/model-inference-flink
 mvn clean
@@ -291,6 +376,10 @@ fi
 
 ./flink-1.7.2/bin/start-cluster.sh
 
+echo "# Test 4.1 model-inference-flink:Text Classification"
+#timer
+start=$(date "+%s")
+
 ./flink-1.7.2/bin/flink run \
 ./model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
 --inputFile ${ANALYTICS_ZOO_ROOT}/analytics-zoo-data/data/streaming/text-model/2.log \
@@ -298,11 +387,19 @@ fi
 --modelPath models/text-classification.bigdl \
 --parallelism 1
 
+now=$(date "+%s")
+time13=$((now-start))
+echo "#App[Model-inference-example] Test 4.1: model-inference-flink:Text Classification time used:$time13 seconds"
+
 ./flink-1.7.2/bin/stop-cluster.sh
 
 wget ${FTP_URI}/analytics-zoo-models/flink_model/resnet_v1_50.ckpt
 
 ./flink-1.7.2/bin/start-cluster.sh
+
+echo "# Test 4.2 model-inference-flink:Resnet50 Image Classification"
+#timer
+start=$(date "+%s")
 
 ./flink-1.7.2/bin/flink run \
 -m localhost:8081 -p 1 \
@@ -313,9 +410,32 @@ ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/model-inference-flink/target
 --classes ${ANALYTICS_ZOO_ROOT}/zoo/src/main/resources/imagenet_classname.txt  \
 --inputShape "1,224,224,3" --ifReverseInputChannels true --meanValues "123.68,116.78,103.94" --scale 1
 
+now=$(date "+%s")
+time14=$((now-start))
+echo "#App[Model-inference-example] Test 4.1: model-inference-flink:Resnet50 Image Classification time used:$time14 seconds"
+
+
 ./flink-1.7.2/bin/stop-cluster.sh
 
-echo "Finish test"
+echo "Finish auto scala example test"
+
+echo "Scala Examples"
+echo "#1 tfnet time used:$time1 seconds"
+echo "#2.1 LocalEstimator:LenetEstimator time used:$time2 seconds"
+echo "#2.2 LocalEstimator:ResnetEstimator time used:$time3 seconds"
+echo "#2.3 LocalEstimator:TransferLearning used:$time4 seconds"
+echo "#3.1 Streaming:Object Detection time used:$time5 seconds"
+echo "#3.2 Streaming:Text Classification time used:$time6 seconds"
+echo "#4 chatbot time used:$time7 seconds"
+echo "App Part"
+echo "#1 text-classification-training time used:$time8 seconds"
+echo "#2.1 text-classification-inference:SimpleDriver time used:$time9 seconds"
+echo "#2.2 text-classification-inference:WebServiceDriver time used:$time10 seconds"
+echo "#3.1 recommendation-inference:SimpleScalaDriver time used:$time11 seconds"
+echo "#3.2 recommendation-inference:SimpleDriver time used:$time12 seconds"
+echo "#4.1 model-inference-flink:Text Classification time used:$time13 seconds"
+echo "#4.2 model-inference-flink:Resnet50 Image Classification time used:$time14 seconds"
+
 
 
 
