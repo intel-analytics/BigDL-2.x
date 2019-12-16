@@ -49,7 +49,7 @@ time1=$((now-start))
 echo "#2 start example test for autograd"
 #timer
 start=$(date "+%s")
-echo "#2.1 start example test for custom"
+echo "#2.1 start example test for custom layer"
 ${SPARK_HOME}/bin/spark-submit \
     --master ${MASTER} \
     --driver-memory 2g \

@@ -250,8 +250,6 @@ unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time6=$((now-start))
 
-
-
 echo "#7 start example test for pytorch"
 #timer
 start=$(date "+%s")
@@ -594,4 +592,3 @@ echo "#9 anomalydetection time used: $time9 seconds"
 echo "#10 qaranker time used: $time10 seconds"
 echo "#12 vnni/openvino time used: $time12 seconds"
 echo "#13 streaming Object Detection time used: $time13 seconds"
-
