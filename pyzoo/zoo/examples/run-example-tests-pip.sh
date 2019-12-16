@@ -6,6 +6,46 @@ clear_up () {
     pip uninstall -y pyspark
 }
 
+echo "#14 start example test for streaming Text Classification"
+#timer
+start=$(date "+%s")
+if [ -d analytics-zoo-data/data/streaming/text-model ]
+then
+    echo "analytics-zoo-data/data/streaming/text-model already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/streaming/text-model.zip -P analytics-zoo-data/data
+    unzip -q analytics-zoo-data/data/streaming/text-model.zip -d analytics-zoo-data/data/streaming/
+fi
+export SPARK_DRIVER_MEMORY=2g
+nc -lk 9000 < analytics-zoo-data/data/streaming/text-model/2.log &
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/streaming/textclassification/streaming_text_classification.py \
+    --model analytics-zoo-data/data/streaming/text-model/text_classifier.model \
+    --index_path word_index.txt --port 9000 >>1.log &
+while :
+do
+if [ -n "$(grep "top-5" 1.log)" ];then
+    echo "----Find-----"
+    kill -9 $(ps -ef | grep StreamingTextClassification | grep -v grep |awk '{print $2}')
+    kill -9 $(ps -ef | grep "nc -lk" | grep -v grep |awk '{print $2}')
+    sleep 1s
+    break
+fi
+done
+
+rm 1.log
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "streaming Text Classification failed"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time14=$((now-start))
+
 echo "#1 start example test for textclassification"
 start=$(date "+%s")
 
@@ -486,40 +526,6 @@ unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time10=$((now-start))
 
-#echo "#11 start example test for openvino"
-#start=$(date "+%s")
-#if [ -f analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28.tar.gz ]
-#then
-#   echo "analytics-zoo-models/faster_rcnn_resnet101_coco.model already exists."
-#else
-#   wget $FTP_URI/analytics-zoo-models/openvino/faster_rcnn_resnet101_coco_2018_01_28.tar.gz \
-#    -P analytics-zoo-models
-#   tar zxf analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28.tar.gz -C analytics-zoo-models/
-#fi
-#if [ -d analytics-zoo-data/data/val_jpeg_4 ]
-#then
-#    echo "analytics-zoo-data/data/val_jpeg_4 already exists"
-#else
-#    wget $FTP_URI/analytics-zoo-data/data/val_jpeg_4.zip -P analytics-zoo-data/data
-#    unzip -q analytics-zoo-data/data/val_jpeg_4.zip -d analytics-zoo-data/data
-#fi
-#export SPARK_DRIVER_MEMORY=10g
-#python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
-#    --image analytics-zoo-data/data/val_jpeg_4 \
-#    --model analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28
-#
-#exit_status=$?
-#if [ $exit_status -ne 0 ];
-#then
-#    clear_up
-#    echo "openvino failed"
-#    exit $exit_status
-#fi
-#
-#unset SPARK_DRIVER_MEMORY
-#now=$(date "+%s")
-#time11=$((now-start))
-
 echo "#12 start example for vnni/openvino"
 start=$(date "+%s")
 if [ -d analytics-zoo-models/vnni ]
@@ -608,45 +614,6 @@ unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time13=$((now-start))
 
-#echo "#14 start example test for streaming Text Classification"
-##timer
-#start=$(date "+%s")
-#if [ -d analytics-zoo-data/data/streaming/text-model ]
-#then
-#    echo "analytics-zoo-data/data/streaming/text-model already exists"
-#else
-#    wget $FTP_URI/analytics-zoo-data/data/streaming/text-model.zip -P analytics-zoo-data/data
-#    unzip -q analytics-zoo-data/data/streaming/text-model.zip -d analytics-zoo-data/data/streaming/
-#fi
-#export SPARK_DRIVER_MEMORY=2g
-#nc -lk 9000 < analytics-zoo-data/data/streaming/text-model/2.log &
-#python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/streaming/textclassification/streaming_text_classification.py \
-#    --model analytics-zoo-data/data/streaming/text-model/text_classifier.model \
-#    --index_path word_index.txt --port 9000 >>1.log &
-#while :
-#do
-#if [ -n "$(grep "top-5" 1.log)" ];then
-#    echo "----Find-----"
-#    kill -9 $(ps -ef | grep StreamingTextClassification | grep -v grep |awk '{print $2}')
-#    kill -9 $(ps -ef | grep "nc -lk" | grep -v grep |awk '{print $2}')
-#    sleep 1s
-#    break
-#fi
-#done
-#
-#rm 1.log
-#
-#exit_status=$?
-#if [ $exit_status -ne 0 ];
-#then
-#    clear_up
-#    echo "streaming Text Classification failed"
-#    exit $exit_status
-#fi
-#
-#unset SPARK_DRIVER_MEMORY
-#now=$(date "+%s")
-#time14=$((now-start))
 
 # This should be done at the very end after all tests finish.
 clear_up
