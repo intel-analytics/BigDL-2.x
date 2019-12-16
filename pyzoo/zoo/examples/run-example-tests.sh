@@ -66,7 +66,6 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 2g \
     --executor-memory 2g \
-    --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/customloss.py \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/autograd/customloss.py
 
 now=$(date "+%s")
