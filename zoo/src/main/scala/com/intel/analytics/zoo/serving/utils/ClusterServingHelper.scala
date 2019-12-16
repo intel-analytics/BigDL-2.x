@@ -85,8 +85,8 @@ class ClusterServingHelper {
 //      .action((x, c) => c.copy(dataShape = x))
 //
 //  }
-//  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
-  val configPath = "config.yaml"
+  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
+//  val configPath = "config.yaml"
   var lastModTime: String = null
   val logger: Logger = Logger.getLogger(getClass)
   val dateTime = LocalDateTime.now.toString
@@ -163,7 +163,7 @@ class ClusterServingHelper {
       "and port are not valid, please check.")
     redisHost = redis.split(":").head.trim
     redisPort = redis.split(":").last.trim
-    val shape = getYaml(dataConfig, "shape", "3,224,224")
+    val shape = getYaml(dataConfig, "image_shape", "3,224,224")
     val shapeList = shape.split(",")
     require(shapeList.size == 3, "Your data shape must has dimension as 3")
     for (i <- shapeList) {
@@ -216,11 +216,11 @@ class ClusterServingHelper {
     }
     else blasFlag = false
 
-    new File("started").createNewFile()
+    new File("running").createNewFile()
 
   }
   def checkStop(): Boolean = {
-    if (!Files.exists(Paths.get("started"))) {
+    if (!Files.exists(Paths.get("running"))) {
       return true
     }
     return false

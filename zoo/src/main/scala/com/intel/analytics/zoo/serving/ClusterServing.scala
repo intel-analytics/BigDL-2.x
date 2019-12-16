@@ -107,6 +107,7 @@ object ClusterServing {
       .load()
 
     var totalCnt: Int = 0
+    var timeStamp: Int = 0
 
     // redis stream control
     val redisDB = new Jedis(helper.redisHost, helper.redisPort.toInt)
@@ -246,20 +247,27 @@ object ClusterServing {
           }
         }
 
-        totalCnt += microBatchSize.toInt
         val microBatchEnd = System.nanoTime()
         val microBatchLatency = (microBatchEnd - microBatchStart) / 1e9
         val microBatchThroughPut = (microBatchSize / microBatchLatency).toFloat
+
+        totalCnt += microBatchSize.toInt
+
         if (model.inferenceSummary != null) {
-          model.inferenceSummary.addScalar(
-            "Micro Batch Throughput", microBatchThroughPut, batchId)
+          (timeStamp until timeStamp + microBatchLatency.toInt).foreach( time => {
+            model.inferenceSummary.addScalar(
+              "Micro Batch Throughput", microBatchThroughPut, time)
+          })
+//          model.inferenceSummary.addScalar(
+//            "Micro Batch Throughput", microBatchThroughPut, batchId)
 
           model.inferenceSummary.addScalar(
             "Total Records Number", totalCnt, batchId)
         }
 
-        logger.info(microBatchSize +
+        timeStamp += microBatchLatency.toInt
 
+        logger.info(microBatchSize +
           " inputs predict ended, time elapsed " + microBatchLatency.toString)
 
         if (helper.checkStop()) {
@@ -269,8 +277,8 @@ object ClusterServing {
       }
     }
 
-    val s =  query.start()
-    s.awaitTermination()
+    val servingQuery =  query.start()
+    servingQuery.awaitTermination()
 
 //    while (true) {
 //      Thread.sleep(1000)
