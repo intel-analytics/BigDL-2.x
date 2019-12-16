@@ -13,6 +13,48 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
 ## Quick Start
 
+This section provides a quick start example for you to run Analytics Zoo Cluster Serving. To simplify the examples, we use docker to run Cluster Serving in these examples. If you do not have docker installed, [install docker]() first.
+
+### Simplest End-to-end Example 
+We use default `config.yaml` configuration, for more details, see [Configuration]()
+```
+model:
+  # model path must be set
+  path: /opt/work/model/
+data:
+  # default, localhost:6379
+  src:
+  # default, 3, 224, 224
+  shape:
+params:
+  # default, 4
+  batch_size:
+  # default, mklblas
+  engine_type:
+  # default, 1
+  top_n:
+log: 
+  # default, y
+  error:
+  # default, n
+  summary:
+spark:
+  # default, local[*]
+  master:
+  # default, 4g
+  driver_memory:
+  # default, 1g
+  executor_memory:
+  # default, 1
+  num_executors:
+  # default, 4
+  executor_cores:
+  # default, 4
+  total_executor_cores:
+```
+
+
+
 ## Configuration
 
 Your Cluster Serving configuration can all be set in `config.yaml`.
@@ -147,7 +189,17 @@ For more details of these config, please refer to [Spark Official Document](http
 ## Data Pipeline I/O
 use api guide
 ## Logs and Visualization
+
 ### Logs
+
+We use log to save serving information and error, to enable this feature, use following config in [Configuration](). By default, this feature is enabled.
+```
+log:
+  error: y
+```
+If you are the only user to run Cluster Serving, the error logs would also print to your interactive shell. Otherwise, you can not see the logs in the terminal. In this ocasion, you have to refer to your log.
+
+To see your log, run 
 
 **Serving Logs**
 
@@ -157,6 +209,27 @@ use api guide
 
 `redis-log.sh`
 
-**Visualization**
+### Visualization
 
 we use tensorboard
+
+We integrate Tensorboard into Cluster Serving. This feature is enabled by default. By disabling this feature, you could have a slight gain of serving performance since there is some cost to stat the information.
+
+```
+log:
+  summary: y
+```
+Tensorboard service is started with Cluster Serving, once your serving is run, you can go to `localhost:6006` to see visualization of your serving.
+
+Analytics Zoo Cluster Serving provides 3 attributes in Tensorboard so far, `Micro Batch Throughput`, `Partition Number`, `Total Records Number`.
+
+* `Micro Batch Throughput`: The overall throughput, including preprocessing and postprocessing of your serving, the line should be relatively stable after first few records. If this number has a drop and remains lower than previous, you might have lost the connection of some nodes in your cluster.
+
+* `Partition Number`: The partition number of your serving, this number should be stable all the time, and note that if you have N nodes in your cluster, you should have this partition number at least N.
+
+* `Total Records Number`: The total number of records that serving gets so far.
+
+**Note**: If you run serving on local mode, you could get another attribute `Throughput`, this is the throughput of prediction only, regardless of preprocessing and post processing. If you run serving on cluster mode, you could only see this attribute on remote nodes.
+
+### Example
+See [Quick Start](##quick-start) here to practise how to utilize summary and log of Analytics Zoo Cluster Serving.
