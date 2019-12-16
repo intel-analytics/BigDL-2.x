@@ -233,10 +233,11 @@ echo "#6 start example test for inceptionv1 training"
 #timer
 start=$(date "+%s")
 export MASTER=local[4]
+export SPARK_DRIVER_MEMORY=20g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/inception/inception.py \
    --maxIteration 20 \
    -b 8 \
-   -f hdfs://172.168.2.181:9000/imagenet-small
+   -f hdfs://172.168.2.181:9000/imagenet-mini
 exit_status=$?
 unset MASTER
 if [ $exit_status -ne 0 ];
@@ -256,9 +257,11 @@ echo "#7 start example test for pytorch"
 start=$(date "+%s")
 echo "start example test for pytorch SimpleTrainingExample"
 export MASTER=local[1]
+export SPARK_DRIVER_MEMORY=5g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/SimpleTrainingExample.py
 exit_status=$?
 unset MASTER
+unset SPARK_DRIVER_MEMORY
 if [ $exit_status -ne 0 ];
 then
     clear_up
@@ -267,7 +270,7 @@ then
 fi
 
 echo "start example test for pytorch mnist training"
-export SPARK_DRIVER_MEMORY=20g
+export SPARK_DRIVER_MEMORY=10g
 export MASTER=local[1]
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/Lenet_mnist.py
 exit_status=$?
@@ -281,7 +284,8 @@ then
 fi
 
 echo "start example test for pytorch resnet finetune"
-export MASTER=local[8]
+export SPARK_DRIVER_MEMORY=20g
+export MASTER=local[4]
 export ZOO_NUM_MKLTHREADS=all
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/resnet_finetune/resnet_finetune.py \
     analytics-zoo-data/data/dogs-vs-cats/samples
