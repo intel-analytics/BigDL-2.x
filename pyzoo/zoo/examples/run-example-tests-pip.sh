@@ -6,27 +6,6 @@ clear_up () {
     pip uninstall -y pyspark
 }
 
-echo "#6 start example test for inceptionv1 training"
-#timer
-start=$(date "+%s")
-export MASTER=local[4]
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/inception/inception.py \
-   --maxIteration 20 \
-   -b 8 \
-   -f hdfs://172.168.2.181:9000/imagenet-small
-exit_status=$?
-unset MASTER
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "inceptionv1 training failed"
-    exit $exit_status
-fi
-unset SPARK_DRIVER_MEMORY
-now=$(date "+%s")
-time6=$((now-start))
-
-
 echo "#1 start example test for textclassification"
 start=$(date "+%s")
 
@@ -249,6 +228,27 @@ fi
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time5=$((now-start))
+
+echo "#6 start example test for inceptionv1 training"
+#timer
+start=$(date "+%s")
+export MASTER=local[4]
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/inception/inception.py \
+   --maxIteration 20 \
+   -b 8 \
+   -f hdfs://172.168.2.181:9000/imagenet-small
+exit_status=$?
+unset MASTER
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "inceptionv1 training failed"
+    exit $exit_status
+fi
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time6=$((now-start))
+
 
 
 echo "#7 start example test for pytorch"
