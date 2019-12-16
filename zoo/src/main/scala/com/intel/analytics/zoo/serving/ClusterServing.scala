@@ -79,7 +79,10 @@ object ClusterServing {
     loadSerialParams(helper)
     model = helper.loadInferenceModel()
     bcModel = helper.sc.broadcast(model)
-    if (helper.logSummaryFlag) model.setInferenceSummary(
+//    if (helper.logSummaryFlag) model.setInferenceSummary(
+//      InferenceSummary(".", helper.dateTime + "-ClusterServing"))
+
+    model.setInferenceSummary(
       InferenceSummary(".", helper.dateTime + "-ClusterServing"))
 
     val spark = helper.getSparkSession()
@@ -250,8 +253,7 @@ object ClusterServing {
         if (model.inferenceSummary != null) {
           model.inferenceSummary.addScalar(
             "Micro Batch Throughput", microBatchThroughPut, batchId)
-          model.inferenceSummary.addScalar(
-            "Partition Number", batchDF.rdd.partitions.size, batchId)
+
           model.inferenceSummary.addScalar(
             "Total Records Number", totalCnt, batchId)
         }

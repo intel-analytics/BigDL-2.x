@@ -172,24 +172,40 @@ class ClusterServingHelper {
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
     batchSize = getYaml(paramsConfig, "batch_size", "4").toInt
+
+    /**
+     * reserved here to change engine type
+     * engine type should be able to change in run time
+     * but BigDL does not support this currently
+     * Once BigDL supports it, engine type could be set here
+     * And also other frameworks supporting multiple engine type
+     */
     // engine Type need to be used on executor so do not set here
 //    engineType = getYaml(paramsConfig, "engine_type", "mklblas")
-    topN = getYaml(paramsConfig, "top_n", "5").toInt
+    topN = getYaml(paramsConfig, "top_n", "1").toInt
 
-    val logConfig = configList.get("log").asInstanceOf[HM]
-    logErrorFlag = if (getYaml(logConfig, "error", "y") ==
-      "y") true else false
-    logSummaryFlag = if (getYaml(logConfig, "summary", "y") ==
-      "y") true else false
+//    val logConfig = configList.get("log").asInstanceOf[HM]
+//    logErrorFlag = if (getYaml(logConfig, "error", "y") ==
+//      "y") true else false
+//    logSummaryFlag = if (getYaml(logConfig, "summary", "y") ==
+//      "y") true else false
+//
+//    if (logErrorFlag) {
+//      logFile = {
+//        val logF = new File("./cluster_serving.log")
+//        if (Files.exists(Paths.get("./cluster_serving.log")))
+//          logF.createNewFile()
+//        new FileWriter(logF)
+//      }
+//    }
 
-    if (logErrorFlag) {
-      logFile = {
-        val logF = new File("./cluster_serving.log")
-        if (Files.exists(Paths.get("./cluster_serving.log")))
-          logF.createNewFile()
-        new FileWriter(logF)
-      }
+    logFile = {
+      val logF = new File("./cluster_serving.log")
+      if (Files.exists(Paths.get("./cluster_serving.log")))
+        logF.createNewFile()
+      new FileWriter(logF)
     }
+
 
     if (modelType == "caffe" || modelType == "bigdl") {
       if (System.getProperty("bigdl.engineType", "mklblas")
