@@ -6,46 +6,6 @@ clear_up () {
     pip uninstall -y pyspark
 }
 
-echo "#14 start example test for streaming Text Classification"
-#timer
-start=$(date "+%s")
-if [ -d analytics-zoo-data/data/streaming/text-model ]
-then
-    echo "analytics-zoo-data/data/streaming/text-model already exists"
-else
-    wget $FTP_URI/analytics-zoo-data/data/streaming/text-model.zip -P analytics-zoo-data/data/streaming
-    unzip -q analytics-zoo-data/data/streaming/text-model.zip -d analytics-zoo-data/data/streaming/
-fi
-export SPARK_DRIVER_MEMORY=2g
-nc -lk 9000 < analytics-zoo-data/data/streaming/text-model/2.log &
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/streaming/textclassification/streaming_text_classification.py \
-    --model analytics-zoo-data/data/streaming/text-model/text_classifier.model \
-    --index_path word_index.txt --port 9000 >>1.log &
-while :
-do
-if [ -n "$(grep "top-5" 1.log)" ];then
-    echo "----Find-----"
-    kill -9 $(ps -ef | grep StreamingTextClassification | grep -v grep |awk '{print $2}')
-    kill -9 $(ps -ef | grep "nc -lk" | grep -v grep |awk '{print $2}')
-    sleep 1s
-    break
-fi
-done
-
-rm 1.log
-
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "streaming Text Classification failed"
-    exit $exit_status
-fi
-
-unset SPARK_DRIVER_MEMORY
-now=$(date "+%s")
-time14=$((now-start))
-
 echo "#1 start example test for textclassification"
 start=$(date "+%s")
 
@@ -628,7 +588,6 @@ echo "#7 pytorch time used: $time7 seconds"
 echo "#8 tensorflow time used: $time8 seconds"
 echo "#9 anomalydetection time used: $time9 seconds"
 echo "#10 qaranker time used: $time10 seconds"
-#echo "#11 openvino time used: $time11 seconds"
 echo "#12 vnni/openvino time used: $time12 seconds"
 echo "#13 streaming Object Detection time used: $time13 seconds"
-#echo "#14 streaming Text Classification time used: $time14 seconds"
+
