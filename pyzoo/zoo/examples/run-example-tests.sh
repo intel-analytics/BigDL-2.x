@@ -469,7 +469,6 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 10g \
     --executor-memory 10g \
-    --properties-file ${ANALYTICS_ZOO_CONF} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/openvino/predict.py \
     --image analytics-zoo-data/data/object-detection-coco \
     --model analytics-zoo-models/faster_rcnn_resnet101_coco_2018_01_28
