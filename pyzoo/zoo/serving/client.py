@@ -36,8 +36,9 @@ class API:
 
         try:
             file_path = "../../../docker/cluster-serving/config.yaml"
-        except:
-            raise EOFError("config file does not exist!")
+        except Exception:
+            raise EOFError("config file does not exist. Please check your config"
+                           "at analytics-zoo/docker/cluster-serving/config.yaml")
         with open(file_path) as f:
             config = yaml.load(f)
             host_port = config['data']['src'].split(":")
@@ -47,7 +48,7 @@ class API:
         self.db = redis.StrictRedis(host=config['data']['host'],
                                     port=config['data']['port'], db=0)
 
-        self.data_shape = config['data']['shape'].split(",")
+        self.data_shape = config['data']['image_shape'].split(",")
         for i in range(len(self.data_shape)):
             self.data_shape[i] = int(self.data_shape[i])
 
@@ -61,7 +62,9 @@ class InputQueue(API):
     def data_shape_check(self):
         for num in self.data_shape:
             if num <= 0:
-                raise Exception("Your image shape config is invalid, please check.")
+                raise Exception("Your image shape config is invalid, "
+                                "your config shape is" + str(self.data_shape)
+                                + "no negative value is allowed.")
             if 0 < num < 5:
                 self.c = num
                 continue
@@ -80,7 +83,8 @@ class InputQueue(API):
         if isinstance(img, str):
             img = cv2.imread(str)
             if not img:
-                print("You have pushed an image with invalid path, skipped.")
+                print("You have pushed an image with path: ",
+                      img, "the path is invalid, skipped.")
                 return
 
         # force resize here to avoid input image shape inconsistent

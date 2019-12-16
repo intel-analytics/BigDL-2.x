@@ -14,20 +14,22 @@
 # limitations under the License.
 #
 
-from zoo.serving.client.helpers import Input, Output
+from zoo.serving.client import InputQueue, OutputQueue
 import os
 import cv2
 import json
 import time
 
+
 if __name__ == "__main__":
-    input_api = Input()
+    input_api = InputQueue()
 
     base_path = "../../test/zoo/resources/serving_quick_start"
-    # base_path = None
+
     if not base_path:
         raise EOFError("You have to set your image path")
-
+    output_api = OutputQueue()
+    output_api.dequeue()
     path = os.listdir(base_path)
     for p in path:
         if not p.endswith("jpeg"):
@@ -37,17 +39,6 @@ if __name__ == "__main__":
         input_api.enqueue_image(p, img)
 
     time.sleep(5)
-
-    output_api = Output()
-
-    # query result by uri
-    # fish1_result = output_api.query("fish1.jpeg")
-    # fish1_class_prob_map = json.loads(fish1_result)
-
-    # output = "image: fish1.jpeg, classification-result:"
-    # for class_idx in fish1_class_prob_map.keys():
-    #     output += "class: " + class_idx + "'s prob: " + fish1_class_prob_map[class_idx]
-    # print(output)
 
     # get all result and dequeue
     result = output_api.dequeue()
