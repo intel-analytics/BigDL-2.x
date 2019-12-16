@@ -237,7 +237,7 @@ export SPARK_DRIVER_MEMORY=20g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/inception/inception.py \
    --maxIteration 20 \
    -b 8 \
-   -f hdfs://172.168.2.181:9000/imagenet-small
+   -f hdfs://172.168.2.181:9000/imagenet-mini
 exit_status=$?
 unset MASTER
 if [ $exit_status -ne 0 ];
