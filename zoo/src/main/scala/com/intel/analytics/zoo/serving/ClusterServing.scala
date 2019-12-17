@@ -19,14 +19,14 @@ package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
+
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ClusterServingListener, PostProcessing, TensorUtils}
+import com.intel.analytics.zoo.serving.utils._
 import com.intel.analytics.zoo.utils.ImageProcessing
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, types}
+import org.apache.spark.sql.{DataFrame, SaveMode}
 import redis.clients.jedis.Jedis
 
 
@@ -50,6 +50,11 @@ object ClusterServing {
   var W: Int = 224
   var H: Int = 224
 
+  /**
+   * Load the parameters needing serialization.
+   * These parameters will be used later in executors
+   * Thus they need to be get from helper in advance
+   */
   def loadSerialParams(helper: ClusterServingHelper): Unit = {
     batchSize = helper.batchSize
     topN = helper.topN
@@ -71,16 +76,12 @@ object ClusterServing {
     helper.initContext()
 
     val logger = helper.logger
-    logger.info("Engine running at " + EngineRef.getEngineType())
 
     var model: InferenceModel = null
     var bcModel: Broadcast[InferenceModel] = null
 
-    loadSerialParams(helper)
     model = helper.loadInferenceModel()
     bcModel = helper.sc.broadcast(model)
-//    if (helper.logSummaryFlag) model.setInferenceSummary(
-//      InferenceSummary(".", helper.dateTime + "-ClusterServing"))
 
     model.setInferenceSummary(
       InferenceSummary(".", helper.dateTime + "-ClusterServing"))
@@ -89,8 +90,6 @@ object ClusterServing {
 
     logger.info(s"connected to redis " +
       s"${spark.conf.get("spark.redis.host")}:${spark.conf.get("spark.redis.port")}")
-
-    // variables needed to be serialized listed below
 
     loadSerialParams(helper)
 
@@ -114,7 +113,10 @@ object ClusterServing {
 
     val query = images.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
 
-//      if (helper.updateConfig()) {
+      /**
+       * This is reserved for future dynamic loading model
+       */
+      //      if (helper.updateConfig()) {
 //        loadSerialParams(helper)
 //        if (bcModel != null) bcModel.destroy()
 //        if (model != null) model.doRelease()
@@ -130,22 +132,33 @@ object ClusterServing {
       logger.info("Micro batch size " + microBatchSize.toString)
 
       if (microBatchSize != 0) {
+        /**
+         * The streaming may be triggered somehow and it is possible
+         * to get an empty batch
+         *
+         * If the batch is not empty, start preprocessing and predict here
+         */
         val previousLen = redisDB.xlen("image_stream")
 
         val microBatchStart = System.nanoTime()
 
+        /**
+         * Engine type controlling, for different engine type,
+         * different partitioning and batching scheduling is used
+         */
         val resultPartitions = if (blasFlag) {
-          // if backend is raw BLAS, no multi-thread could used for forward
-          // BLAS is only valid in BigDL backend
-          // Thus no shape specific change is needed
+          /**
+           * In BLAS mode, every model could predict only using
+           * a single thread, besides, batch size usually is not
+           * over 64 in serving to achieve good latency. Thus, no
+           * batching is required if the machine has over about 30 cores.           *
+           */
           batchDF.rdd.mapPartitions(pathBytes => {
             pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
               pathBytesBatch.indices.toParArray.map(i => {
-//                val raw = pathBytesBatch(i).getString(0)
-//                if(raw != )
+                val path = pathBytesBatch(i).getAs[String]("uri")
                 val tensors = ImageProcessing.bytesToBGRTensor(java.util
                   .Base64.getDecoder.decode(pathBytesBatch(i).getAs[String]("image")))
-                val path = pathBytesBatch(i).getAs[String]("uri")
 
                 val localPartitionModel = bcModel.value
                 val result = localPartitionModel.doPredict(tensors.addSingletonDimension()).toTensor
@@ -157,6 +170,12 @@ object ClusterServing {
             })
           })
         } else {
+          /**
+           * In Normal mode, every model will use multiple thread to
+           * achieve best latency. Thus, we only use a single model to
+           * do sequential predict, maximizing the latency performance
+           * and minimizing the memory usage.
+           */
           val pathBytesChunk = batchDF.rdd.filter(_.getAs[String]("uri") != "STOP").mapPartitions(pathBytes => {
             pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
               pathBytesBatch.indices.toParArray.map(i => {
@@ -166,19 +185,15 @@ object ClusterServing {
                   .Base64.getDecoder.decode(row.getAs[String]("image")))
                 (path, tensors)
 
-//                val tensors = ImageProcessing.bytesToBGRTensor(java.util
-//                  .Base64.getDecoder.decode(pathBytesBatch(i).getAs[String]("image")))
-//                val path = pathBytesBatch(i).getAs[String]("uri")
-
-
               })
             })
           })
           pathBytesChunk.mapPartitions(pathBytes => {
             val localModel = bcModel.value
+            val t = Tensor[Float](batchSize, C, W, H)
             pathBytes.grouped(batchSize).flatMap(pathByteBatch => {
               val thisBatchSize = pathByteBatch.size
-              val t = Tensor[Float](batchSize, C, W, H)
+
 
               (0 until thisBatchSize).toParArray
                 .foreach(i => t.select(1, i + 1).copy(pathByteBatch(i)._2))
@@ -191,16 +206,18 @@ object ClusterServing {
               } else {
                 t
               }
-
+              /**
+               * addSingletonDimension method will modify the
+               * original Tensor, thus if reuse of Tensor is needed,
+               * have to squeeze it back.
+               */
               val result = if (modelType == "openvino") {
-                localModel.doPredict(x).toTensor.squeeze()
+                val res = localModel.doPredict(x).toTensor.squeeze()
+                t.squeeze()
+                res
               } else {
                 localModel.doPredict(x).toTensor
               }
-
-              // result post processing starts here
-              // move below code into wrapper if new functions
-              // e.g. object detection is added
 
               (0 until thisBatchSize).toParArray.map(i => {
                 val value = PostProcessing.getInfofromTensor(topN,
@@ -213,9 +230,20 @@ object ClusterServing {
         }
 
 
+        /**
+         * Predict ends, start writing data to output queue
+         */
         val resDf = spark.createDataFrame(resultPartitions)
 
         var errFlag: Boolean = true
+
+        /**
+         * Block the inference if there is no space to write
+         * Will continuously try write the result, if not, keep blocking
+         * The input stream may accumulate to very large because no records
+         * will be consumed, however the stream size would be controlled
+         * on Cluster Serving API side.
+         */
         while (errFlag) {
           try {
             resDf.write
@@ -224,9 +252,8 @@ object ClusterServing {
               .option("key.column", "uri")
               .mode(SaveMode.Append).save()
             println("result saved at " + resDf.count())
-            redisDB.xtrim("image_stream",
-              redisDB.xlen("image_stream") - previousLen, true)
-            println("Xtrim completed")
+
+
             errFlag = false
           }
 
@@ -235,18 +262,39 @@ object ClusterServing {
               errFlag = true
               val errMsg = "not enough space in redis to write: " + e.toString
               println(errMsg)
-              helper.logFile.write(errMsg)
+              helper.logError(errMsg)
               Thread.sleep(3000)
             case e: Exception => {
               errFlag = true
               val errMsg = "unable to handle exception: " + e.toString
               println(errMsg)
+              helper.logError(errMsg)
               Thread.sleep(3000)
             }
 
           }
         }
 
+        /**
+         * Try to delete processed stream in queue, this may throw exception
+         * if user runs multiple serving because the stream length count could
+         * not be guaranteed in such case, thus, just skip if it fails.
+         */
+        try {
+          redisDB.xtrim("image_stream",
+            redisDB.xlen("image_stream") - previousLen, true)
+          println("Xtrim completed")
+        }
+        catch {
+          case e: Exception => {
+            helper.logError("WARNING: Deleting processed record " +
+              "encounters an error, skipped")
+          }
+        }
+
+        /**
+         * Count the statistical data and write to summary
+         */
         val microBatchEnd = System.nanoTime()
         val microBatchLatency = (microBatchEnd - microBatchStart) / 1e9
         val microBatchThroughPut = (microBatchSize / microBatchLatency).toFloat
@@ -270,23 +318,21 @@ object ClusterServing {
         logger.info(microBatchSize +
           " inputs predict ended, time elapsed " + microBatchLatency.toString)
 
-        if (helper.checkStop()) {
-          println("stop signal detected")
-          System.exit(0)
-        }
       }
     }
 
+    /**
+     * Start the streaming, and listen to stop signal
+     * The stop signal will be listened by another thread
+     * with interval of 1 second.
+     */
     val servingQuery = query.start()
 
-    ClusterServingListener.listenTermination(helper, servingQuery)
+    ClusterServingManager.listenTermination(helper, servingQuery)
+
     servingQuery.awaitTermination()
 
     assert(spark.streams.active.isEmpty)
-
-//    while (true) {
-//      Thread.sleep(1000)
-//      if (helper.checkStop()) query.stop()
-//    }
+    System.exit(0)
   }
 }
