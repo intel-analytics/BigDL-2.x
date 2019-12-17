@@ -29,7 +29,8 @@ object ClusterServingManager {
    * @param query StreamingQeury
    * @return
    */
-  def queryTerminator(helper: ClusterServingHelper, query: StreamingQuery): Runnable = new Runnable {
+  def queryTerminator(helper: ClusterServingHelper,
+                      query: StreamingQuery): Runnable = new Runnable {
     override def run(): Unit = {
       if (helper.checkStop())
         query.stop()
@@ -43,9 +44,11 @@ object ClusterServingManager {
    * @param query StreamingQeury
    * @return
    */
-  def listenTermination(helper: ClusterServingHelper, query: StreamingQuery) = {
+  def listenTermination(helper: ClusterServingHelper,
+                        query: StreamingQuery): Unit = {
     Executors.newSingleThreadScheduledExecutor.scheduleWithFixedDelay(
       queryTerminator(helper, query), 1, 1, SECONDS
     )
+
   }
 }

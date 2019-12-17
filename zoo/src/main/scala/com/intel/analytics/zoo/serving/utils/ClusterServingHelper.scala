@@ -57,8 +57,8 @@ case class Result(id: String, value: String)
 class ClusterServingHelper {
   type HM = LinkedHashMap[String, String]
 
-  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
-//  val configPath = "config.yaml"
+//  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
+  val configPath = "config.yaml"
 
   var lastModTime: String = null
   val logger: Logger = Logger.getLogger(getClass)
@@ -153,8 +153,9 @@ class ClusterServingHelper {
 
     logFile = {
       val logF = new File("./cluster_serving.log")
-      if (Files.exists(Paths.get("./cluster_serving.log")))
+      if (Files.exists(Paths.get("./cluster_serving.log"))) {
         logF.createNewFile()
+      }
       new FileWriter(logF)
     }
 
@@ -190,7 +191,7 @@ class ClusterServingHelper {
    */
   def updateConfig(): Boolean = {
     val lastModTime = Files.getLastModifiedTime(Paths.get(configPath)).toString
-    if (this.lastModTime != lastModTime){
+    if (this.lastModTime != lastModTime) {
       initArgs()
       this.lastModTime = lastModTime
       return true

@@ -264,21 +264,20 @@ object ClusterServing {
               println(errMsg)
 
               Thread.sleep(3000)
-            case e: java.lang.InterruptedException => {
+            case e: java.lang.InterruptedException =>
               /**
                * If been interrupted by stop signal, do nothing
                * End the streaming until this micro batch process ends
                */
               logger.info("Stop signal received, will exit soon.")
-            }
-            case e: Exception => {
+
+            case e: Exception =>
               errFlag = true
               val errMsg = "unable to handle exception: " + e.toString
               logger.info(errMsg)
               println(errMsg)
 
               Thread.sleep(3000)
-            }
 
           }
         }
@@ -294,10 +293,10 @@ object ClusterServing {
           println("Xtrim completed")
         }
         catch {
-          case e: Exception => {
+          case e: Exception =>
             logger.info("WARNING: Deleting processed record " +
               "encounters an error, skipped")
-          }
+
         }
 
         /**
