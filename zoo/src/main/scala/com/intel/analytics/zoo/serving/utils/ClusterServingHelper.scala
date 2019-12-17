@@ -56,43 +56,16 @@ case class Result(id: String, value: String)
 
 class ClusterServingHelper {
   type HM = LinkedHashMap[String, String]
-//  val parser = new OptionParser[LoaderParams]("Cluster Serving") {
-//
-//    opt[String]('t', "modelType")
-//      .text("Model type, could be caffe, keras")
-//      .action((x, c) => c.copy(modelType = x))
-//
-//    opt[String]('f', "modelFolder")
-//      .text("Weight file path")
-//      .action((x, c) => c.copy(modelFolder = x))
-//      .required()
-//
-//    opt[String]('r', "redis")
-//      .text("Redis url")
-//      .action((x, c) => c.copy(redis = x))
-//
-//    opt[Int]('b', "batchSize")
-//      .text("Inference batch size")
-//      .action((x, c) => c.copy(batchSize = x))
-//    opt[String]('o', "outputPath")
-//      .text("Redis url")
-//      .action((x, c) => c.copy(outputPath = x))
-//    opt[Int]('n', "top-N")
-//      .text("number of return in classification task")
-//      .action((x, c) => c.copy(topN = x))
-//    opt[String]('s', "shape")
-//      .text("Data shape")
-//      .action((x, c) => c.copy(dataShape = x))
-//
-//  }
+
   val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
 //  val configPath = "config.yaml"
+
   var lastModTime: String = null
   val logger: Logger = Logger.getLogger(getClass)
   val dateTime = LocalDateTime.now.toString
 
   var sc: SparkContext = null
-//  var params: LoaderParams = null
+
   var redisHost: String = null
   var redisPort: String = null
   var batchSize: Int = 4
@@ -116,37 +89,16 @@ class ClusterServingHelper {
 
   var dummyMap: Map[Int, String] = Map()
 
+  /**
+   * Initialize the parameters by loading config file
+   * create log file, set backend engine type flag
+   * create "running" flag, for listening the stop signal
+   */
   def initArgs(): Unit = {
-//  def initArgs(args: Array[String]): LoaderParams = {
-//    params = parser.parse(args, LoaderParams()).get
-//
-//    require(params.redis.split(":").length == 2, "Your redis host " +
-//      "and port are not valid, please check.")
-//    redisHost = params.redis.split(":").head.trim
-//    redisPort = params.redis.split(":").last.trim
-//    batchSize = params.batchSize
-//    topN = params.topN
-//
-//    val shapeList = params.dataShape.split(",")
-//    require(shapeList.size == 3, "Your data shape must has dimension as 3")
-//    for (i <- shapeList) {
-//      dataShape = dataShape :+ i.trim.toInt
-//    }
-//
-//    parseModelType(params.modelFolder)
-//    if (modelType == "caffe" || modelType == "bigdl") {
-//      if (System.getProperty("bigdl.engineType", "mklblas")
-//        .toLowerCase() == "mklblas") {
-//        blasFlag = true
-//      }
-//    }
-//
-//    params
-
 
     val yamlParser = new Yaml()
     val input = new FileInputStream(new File(configPath))
-//    val input = new FileInputStream(new File("config.yaml"))
+
     val configList = yamlParser.load(input).asInstanceOf[HM]
 
     // parse model field
@@ -219,6 +171,11 @@ class ClusterServingHelper {
     new File("running").createNewFile()
 
   }
+
+  /**
+   * Check stop signal, return true if signal detected
+   * @return
+   */
   def checkStop(): Boolean = {
     if (!Files.exists(Paths.get("running"))) {
       return true
@@ -227,6 +184,10 @@ class ClusterServingHelper {
 
   }
 
+  /**
+   * For dynamically update model, not used currently
+   * @return
+   */
   def updateConfig(): Boolean = {
     val lastModTime = Files.getLastModifiedTime(Paths.get(configPath)).toString
     if (this.lastModTime != lastModTime){
@@ -237,7 +198,13 @@ class ClusterServingHelper {
     return false
   }
 
-
+  /**
+   * The util of getting parameter from yaml
+   * @param configList the hashmap of this field in yaml
+   * @param key the key of target field
+   * @param default default value used when the field is empty
+   * @return
+   */
   def getYaml(configList: HM, key: String, default: String): String = {
 
     val configValue = if (configList.get(key).isInstanceOf[java.lang.Integer]) {
@@ -258,7 +225,9 @@ class ClusterServingHelper {
     }
   }
 
-
+  /**
+   * Initialize the Spark Context
+   */
   def initContext(): Unit = {
     val conf = NNContext.createSparkConf().setAppName("Cluster Serving")
       .set("spark.redis.host", redisHost)
@@ -295,6 +264,12 @@ class ClusterServingHelper {
     cachedModel
   }
 
+  /**
+   * Load inference model
+   * The concurrent number of inference model depends on
+   * backend engine type
+   * @return
+   */
   def loadInferenceModel(): InferenceModel = {
     val parallelNum = if (blasFlag) coreNum else 1
     val model = new InferenceModel(parallelNum)
@@ -316,6 +291,10 @@ class ClusterServingHelper {
 
   }
 
+  /**
+   * Get spark session for structured streaming
+   * @return
+   */
   def getSparkSession(): SparkSession = {
     SparkSession
       .builder
@@ -343,12 +322,23 @@ class ClusterServingHelper {
     }
   }
 
+  /**
+   * Log error message to local log file
+   * @param msg
+   */
   def logError(msg: String): Unit = {
 
     if (logErrorFlag) logFile.write(dateTime + " --- " + msg + "\n")
     throw new Error(msg)
   }
 
+
+  /**
+   * Infer the model type in model directory
+   * Try every file in the directory, infer which are the
+   * model definition file and model weight file
+   * @param location
+   */
   def parseModelType(location: String): Unit = {
     modelType = null
     weightPath = null
@@ -357,6 +347,7 @@ class ClusterServingHelper {
     val f = new File(location)
     val fileList = f.listFiles
 
+    // model type is always null, not support pass model type currently
     if (modelType == null) {
 
       for (file <- fileList) {

@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, PostProcessing, TensorUtils}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ClusterServingListener, PostProcessing, TensorUtils}
 import com.intel.analytics.zoo.utils.ImageProcessing
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.broadcast.Broadcast
@@ -256,7 +256,7 @@ object ClusterServing {
         if (model.inferenceSummary != null) {
           (timeStamp until timeStamp + microBatchLatency.toInt).foreach( time => {
             model.inferenceSummary.addScalar(
-              "Micro Batch Throughput", microBatchThroughPut, time)
+              "Serving Throughput", microBatchThroughPut, time)
           })
 //          model.inferenceSummary.addScalar(
 //            "Micro Batch Throughput", microBatchThroughPut, batchId)
@@ -277,8 +277,12 @@ object ClusterServing {
       }
     }
 
-    val servingQuery =  query.start()
+    val servingQuery = query.start()
+
+    ClusterServingListener.listenTermination(helper, servingQuery)
     servingQuery.awaitTermination()
+
+    assert(spark.streams.active.isEmpty)
 
 //    while (true) {
 //      Thread.sleep(1000)
