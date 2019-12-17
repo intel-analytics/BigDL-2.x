@@ -176,7 +176,7 @@ object ClusterServing {
            * do sequential predict, maximizing the latency performance
            * and minimizing the memory usage.
            */
-          val pathBytesChunk = batchDF.rdd.filter(_.getAs[String]("uri") != "STOP").mapPartitions(pathBytes => {
+          val pathBytesChunk = batchDF.rdd.mapPartitions(pathBytes => {
             pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
               pathBytesBatch.indices.toParArray.map(i => {
                 val row = pathBytesBatch(i)
@@ -253,7 +253,6 @@ object ClusterServing {
               .mode(SaveMode.Append).save()
             println("result saved at " + resDf.count())
 
-
             errFlag = false
           }
 
@@ -261,14 +260,23 @@ object ClusterServing {
             case e: redis.clients.jedis.exceptions.JedisDataException =>
               errFlag = true
               val errMsg = "not enough space in redis to write: " + e.toString
+              logger.info(errMsg)
               println(errMsg)
-              helper.logError(errMsg)
+
               Thread.sleep(3000)
+            case e: java.lang.InterruptedException => {
+              /**
+               * If been interrupted by stop signal, do nothing
+               * End the streaming until this micro batch process ends
+               */
+              logger.info("Stop signal received, will exit soon.")
+            }
             case e: Exception => {
               errFlag = true
               val errMsg = "unable to handle exception: " + e.toString
+              logger.info(errMsg)
               println(errMsg)
-              helper.logError(errMsg)
+
               Thread.sleep(3000)
             }
 
@@ -287,7 +295,7 @@ object ClusterServing {
         }
         catch {
           case e: Exception => {
-            helper.logError("WARNING: Deleting processed record " +
+            logger.info("WARNING: Deleting processed record " +
               "encounters an error, skipped")
           }
         }
