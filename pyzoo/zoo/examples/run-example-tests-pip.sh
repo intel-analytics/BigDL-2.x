@@ -488,6 +488,95 @@ unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time10=$((now-start))
 
+echo "#12 start example test for vnni/openvino"
+start=$(date "+%s")
+if [ -d analytics-zoo-models/vnni ]
+then
+   echo "analytics-zoo-models/resnet_v1_50.xml already exists."
+else
+   wget $FTP_URI/analytics-zoo-models/openvino/vnni/resnet_v1_50.zip \
+    -P analytics-zoo-models
+    unzip -q analytics-zoo-models/resnet_v1_50.zip -d analytics-zoo-models/vnni
+fi
+if [ -d analytics-zoo-data/data/object-detection-coco ]
+then
+    echo "analytics-zoo-data/data/object-detection-coco already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
+    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data
+fi
+export SPARK_DRIVER_MEMORY=2g
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/vnni/openvino/predict.py \
+    --model analytics-zoo-models/vnni/resnet_v1_50.xml \
+    --image analytics-zoo-data/data/object-detection-coco
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "vnni/openvino failed"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time12=$((now-start))
+
+echo "#13 start example test for streaming Object Detection"
+#timer
+start=$(date "+%s")
+if [ -d analytics-zoo-data/data/object-detection-coco ]
+then
+    echo "analytics-zoo-data/data/object-detection-coco already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
+    unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/
+fi
+
+if [ -f analytics-zoo-models/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model ]
+then
+    echo "analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model already exists"
+else
+    wget $FTP_URI/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model \
+     -P analytics-zoo-models
+fi
+
+mkdir output
+mkdir stream
+export SPARK_DRIVER_MEMORY=2g
+while true
+do
+   temp1=$(find analytics-zoo-data/data/object-detection-coco -type f|wc -l)
+   temp2=$(find ./output -type f|wc -l)
+   temp3=$(($temp1+$temp1))
+   if [ $temp3 -eq $temp2 ];then
+       kill -9 $(ps -ef | grep StreamingObjectDetection | grep -v grep |awk '{print $2}')
+       rm -r output
+       rm -r stream
+   break
+   fi
+done  &
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/streaming/objectdetection/streaming_object_detection.py \
+    --streaming_path ./stream \
+    --model analytics-zoo-models/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model \
+    --output_path ./output  &
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/streaming/objectdetection/image_path_writer.py \
+    --streaming_path ./stream \
+    --img_path analytics-zoo-data/data/object-detection-coco
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "streaming Object Detection failed"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time13=$((now-start))
+
+
 # This should be done at the very end after all tests finish.
 clear_up
 
@@ -501,3 +590,5 @@ echo "#7 pytorch time used: $time7 seconds"
 echo "#8 tensorflow time used: $time8 seconds"
 echo "#9 anomalydetection time used: $time9 seconds"
 echo "#10 qaranker time used: $time10 seconds"
+echo "#12 vnni/openvino time used: $time12 seconds"
+echo "#13 streaming Object Detection time used: $time13 seconds"
