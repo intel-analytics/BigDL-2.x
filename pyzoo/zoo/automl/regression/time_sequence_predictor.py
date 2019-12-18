@@ -461,7 +461,7 @@ class TimeSequencePredictor(object):
                     self._check_missing_col(val_d)
 
         if not Evaluator.check_metric(metric):
-            raise ValueError("metric" + metric + "is not supported")
+            raise ValueError("metric " + metric + " is not supported")
 
     def _hp_search(self,
                    input_df,
