@@ -35,7 +35,7 @@ do
 echo "I am strong and I am smart" >> analytics-zoo-data/data/streaming/text-model/textfile/s
 if [ -n "$(grep "top-5" 1.log)" ];then
     echo "----Find-----"
-    kill -9 $(ps -ef | grep StreamingTextClassification | grep -v grep |awk '{print $2}')
+    kill -9 $(ps -ef | grep streaming_text_classification | grep -v grep |awk '{print $2}')
     rm 1.log
     sleep 1s
     break
