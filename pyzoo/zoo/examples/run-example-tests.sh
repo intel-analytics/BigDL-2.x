@@ -12,6 +12,38 @@ export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
 
 set -e
 
+echo "#14 start example test for streaming Text Classification"
+if [ -d analytics-zoo-data/data/streaming/text-model ]
+then
+    echo "analytics-zoo-data/data/streaming/text-model already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/streaming/text-model.zip -P analytics-zoo-data/data/streaming/
+    unzip -q analytics-zoo-data/data/streaming/text-model.zip -d analytics-zoo-data/data/streaming/
+fi
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
+    --master ${MASTER} \
+    --driver-memory 2g \
+    --executor-memory 5g \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/streaming/textclassification/streaming_text_classification.py \
+    --model analytics-zoo-data/data/streaming/text-model/text_classifier.model \
+    --index_path analytics-zoo-data/data/streaming/text-model/word_index.txt \
+    --input_file analytics-zoo-data/data/streaming/text-model/textfile/ > 1.log &
+while :
+do
+echo "I am strong and I am smart" >> analytics-zoo-data/data/streaming/text-model/textfile/s
+if [ -n "$(grep "top-5" 1.log)" ];then
+    echo "----Find-----"
+    kill -9 $(ps -ef | grep StreamingTextClassification | grep -v grep |awk '{print $2}')
+    rm 1.log
+    sleep 1s
+    break
+fi
+done
+now=$(date "+%s")
+time14=$((now-start))
+
 echo "#1 start example test for textclassification"
 #timer
 start=$(date "+%s")
@@ -568,3 +600,4 @@ echo "#10 pytorch time used: $time10 seconds"
 echo "#11 openvino time used: $time11 seconds"
 echo "#12 vnni/openvino time used: $time12 seconds"
 echo "#13 streaming Object Detection time used: $time13 seconds"
+echo "#14 streaming text classification time used: $time14 seconds"
