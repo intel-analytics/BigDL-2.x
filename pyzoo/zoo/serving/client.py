@@ -29,10 +29,7 @@ class API:
     interface preserved for API class
     """
     def __init__(self):
-        dt = datetime.datetime.now()
         self.log_file = open("./cluster-serving.log", "w")
-        import os
-        a = os.listdir("../../..")
 
         try:
             file_path = "../../../docker/cluster-serving/config.yaml"

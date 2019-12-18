@@ -39,34 +39,36 @@ object ClusterServing {
 
 
   case class Record(uri: String, value: String)
-  var batchSize: Int = 4
-  var topN: Int = 1
-  var coreNum: Int = 1
-  var nodeNum: Int = 1
-  var modelType: String = null
-  var blasFlag: Boolean = false
 
-  var C: Int = 3
-  var W: Int = 224
-  var H: Int = 224
+//  var batchSize: Int = 4
+//  var topN: Int = 1
+//  var coreNum: Int = 1
+//  var nodeNum: Int = 1
+//  var modelType: String = null
+//  var blasFlag: Boolean = false
+//
+//  var C: Int = 3
+//  var W: Int = 224
+//  var H: Int = 224
 
   /**
+   * Deprecated: this would only change the variables on driver
    * Load the parameters needing serialization.
    * These parameters will be used later in executors
    * Thus they need to be get from helper in advance
    */
-  def loadSerialParams(helper: ClusterServingHelper): Unit = {
-    batchSize = helper.batchSize
-    topN = helper.topN
-    coreNum = helper.coreNum
-    nodeNum = helper.nodeNum
-    modelType = helper.modelType
-    blasFlag = helper.blasFlag
-
-    C = helper.dataShape(0)
-    W = helper.dataShape(1)
-    H = helper.dataShape(2)
-  }
+//  def loadSerialParams(helper: ClusterServingHelper): Unit = {
+//    batchSize = helper.batchSize
+//    topN = helper.topN
+//    coreNum = helper.coreNum
+//    nodeNum = helper.nodeNum
+//    modelType = helper.modelType
+//    blasFlag = helper.blasFlag
+//
+//    C = helper.dataShape(0)
+//    W = helper.dataShape(1)
+//    H = helper.dataShape(2)
+//  }
 
 
   def main(args: Array[String]): Unit = {
@@ -74,6 +76,21 @@ object ClusterServing {
     val helper = new ClusterServingHelper()
     helper.initArgs()
     helper.initContext()
+
+    /**
+     * Variables need to be serialized are listed below
+     * Take them from helper in advance for later execution
+     */
+    val batchSize = helper.batchSize
+    val topN = helper.topN
+    val coreNum = helper.coreNum
+    val nodeNum = helper.nodeNum
+    val modelType = helper.modelType
+    val blasFlag = helper.blasFlag
+
+    val C = helper.dataShape(0)
+    val W = helper.dataShape(1)
+    val H = helper.dataShape(2)
 
     val logger = helper.logger
 
@@ -91,7 +108,7 @@ object ClusterServing {
     logger.info(s"connected to redis " +
       s"${spark.conf.get("spark.redis.host")}:${spark.conf.get("spark.redis.port")}")
 
-    loadSerialParams(helper)
+//    loadSerialParams(helper)
 
     val images = spark
       .readStream
@@ -125,7 +142,6 @@ object ClusterServing {
 //        if (helper.logSummaryFlag) model.setInferenceSummary(
 //          InferenceSummary(".", helper.dateTime + "-ClusterServing"))
 //      }
-
       batchDF.persist()
 
       val microBatchSize = batchDF.count()
@@ -138,7 +154,7 @@ object ClusterServing {
          *
          * If the batch is not empty, start preprocessing and predict here
          */
-        val previousLen = redisDB.xlen("image_stream")
+
 
         val microBatchStart = System.nanoTime()
 
@@ -251,7 +267,6 @@ object ClusterServing {
               .option("table", "result")
               .option("key.column", "uri")
               .mode(SaveMode.Append).save()
-            println("result saved at " + resDf.count())
 
             errFlag = false
           }
@@ -287,10 +302,14 @@ object ClusterServing {
          * if user runs multiple serving because the stream length count could
          * not be guaranteed in such case, thus, just skip if it fails.
          */
+
+        val newLen = redisDB.xlen("image_stream")
+        val lenRemained = newLen - microBatchSize
         try {
           redisDB.xtrim("image_stream",
-            redisDB.xlen("image_stream") - previousLen, true)
-          println("Xtrim completed")
+            lenRemained, true)
+
+          println("Remained " + lenRemained + " New length " + newLen.toString)
         }
         catch {
           case e: Exception =>
