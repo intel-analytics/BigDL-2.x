@@ -39,7 +39,9 @@ private[zoo] class FileWriter(val logDirectory : String, flushMillis: Int = 1000
 
   private val eventWriter = new EventWriter(logDirectory, flushMillis, fs)
 
-  val threadPool = new ThreadPool(1)
+
+  val threadPool = new ThreadPool(System.getProperty("bigdl.utils.Engine.defaultPoolSize",
+    50.toString).toInt)
 
   threadPool.invoke(() => eventWriter.run())
 

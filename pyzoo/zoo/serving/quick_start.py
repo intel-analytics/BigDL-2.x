@@ -14,31 +14,34 @@
 # limitations under the License.
 #
 
-from zoo.serving.client.helpers import RedisQueue
+from zoo.serving.client import InputQueue, OutputQueue
 import os
 import cv2
 import json
+import time
 
 
 if __name__ == "__main__":
-    redis_queue = RedisQueue()
+    input_api = InputQueue()
 
     base_path = "../../test/zoo/resources/serving_quick_start"
-    # base_path = None
+
     if not base_path:
         raise EOFError("You have to set your image path")
-
+    output_api = OutputQueue()
+    output_api.dequeue()
     path = os.listdir(base_path)
     for p in path:
         if not p.endswith("jpeg"):
             continue
         img = cv2.imread(os.path.join(base_path, p))
         img = cv2.resize(img, (224, 224))
-        redis_queue.enqueue_image(p, img)
+        input_api.enqueue_image(p, img)
 
-    import time
     time.sleep(5)
-    result = redis_queue.get_results()
+
+    # get all result and dequeue
+    result = output_api.dequeue()
     for k in result.keys():
         output = "image: " + k + ", classification-result:"
         tmp_dict = json.loads(result[k])
