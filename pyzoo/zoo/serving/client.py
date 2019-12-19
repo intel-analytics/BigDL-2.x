@@ -37,14 +37,20 @@ class API:
                            "at analytics-zoo/docker/cluster-serving/config.yaml")
         with open(file_path) as f:
             config = yaml.load(f)
-            host_port = config['data']['src'].split(":")
+            if not config['data']['src']:
+                host_port = ["localhost", "6379"]
+            else:
+                host_port = config['data']['src'].split(":")
             config['data']['host'] = host_port[0]
             config['data']['port'] = host_port[1]
 
         self.db = redis.StrictRedis(host=config['data']['host'],
                                     port=config['data']['port'], db=0)
 
-        self.data_shape = config['data']['image_shape'].split(",")
+        if not config['data']['image_shape']:
+            self.data_shape = ["3", "224", "224"]
+        else:
+            self.data_shape = config['data']['image_shape'].split(",")
         for i in range(len(self.data_shape)):
             self.data_shape[i] = int(self.data_shape[i])
 
