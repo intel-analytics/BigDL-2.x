@@ -37,12 +37,15 @@ if __name__ == "__main__":
     parser.add_option("-b", "--batch_size", dest="batch_size",
                       default="128")
     parser.add_option("-m", "--model", dest="model")
+    parser.add_option("--input_file", dest="input_file")
 
     (options, args) = parser.parse_args(sys.argv)
 
     sc = init_nncontext("Text Classification Example")
     ssc = StreamingContext(sc, 3)
-    lines = ssc.socketTextStream(options.host, int(options.port))
+    lines = ssc.textFileStream(options.input_file)
+    if not options.input_file:
+        lines = ssc.socketTextStream(options.host, int(options.port))
 
     model = TextClassifier.load_model(options.model)
 
@@ -82,9 +85,7 @@ if __name__ == "__main__":
         predicts = predict_set.get_predicts().collect()
         print("Probability distributions of top-5:")
         for p in predicts:
-            (uri, probs) = p
-            print("Predictions for " + uri + ": ")
-            for k, v in sorted(enumerate(probs[0]), key=lambda x: x[1])[:5]:
+            for k, v in sorted(enumerate(p[0]), key=lambda x: x[1])[:5]:
                 print(labels[k] + " " + str(v))
 
     lines.foreachRDD(predict)
