@@ -62,6 +62,20 @@ object ClusterServing {
     val W = helper.dataShape(1)
     val H = helper.dataShape(2)
 
+    /**
+     * chwFlag is to set image input of CHW or HWC
+     * if true, the format is CHW
+     * else, the format is HWC
+     *
+     * Note that currently CHW is commonly used
+     * and HWC is often used in Tensorflow models
+     */
+    val chwFlag = if (modelType == "tensorflow") {
+      false
+    } else {
+      true
+    }
+
     val logger = helper.logger
 
     /**
@@ -167,7 +181,7 @@ object ClusterServing {
                 val row = pathBytesBatch(i)
                 val path = row.getAs[String]("uri")
                 val tensors = ImageProcessing.bytesToBGRTensor(java.util
-                  .Base64.getDecoder.decode(row.getAs[String]("image")))
+                  .Base64.getDecoder.decode(row.getAs[String]("image")), chwFlag)
                 (path, tensors)
 
               })
@@ -175,18 +189,18 @@ object ClusterServing {
           })
           pathBytesChunk.mapPartitions(pathBytes => {
             val localModel = bcModel.value
-            val t = Tensor[Float](batchSize, C, W, H)
+            val t = if (chwFlag) {
+              Tensor[Float](batchSize, C, H, W)
+            } else {
+              Tensor[Float](batchSize, H, W, C)
+            }
             pathBytes.grouped(batchSize).flatMap(pathByteBatch => {
               val thisBatchSize = pathByteBatch.size
-
 
               (0 until thisBatchSize).toParArray
                 .foreach(i => t.select(1, i + 1).copy(pathByteBatch(i)._2))
 
-              val x = if (modelType == "tensorflow") {
-                t.transpose(2, 3)
-                  .transpose(3, 4).contiguous()
-              } else if (modelType == "openvino") {
+              val x = if (modelType == "openvino") {
                 t.addSingletonDimension()
               } else {
                 t
