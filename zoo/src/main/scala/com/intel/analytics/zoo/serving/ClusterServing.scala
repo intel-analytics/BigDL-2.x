@@ -40,36 +40,6 @@ object ClusterServing {
 
   case class Record(uri: String, value: String)
 
-//  var batchSize: Int = 4
-//  var topN: Int = 1
-//  var coreNum: Int = 1
-//  var nodeNum: Int = 1
-//  var modelType: String = null
-//  var blasFlag: Boolean = false
-//
-//  var C: Int = 3
-//  var W: Int = 224
-//  var H: Int = 224
-
-  /**
-   * Deprecated: this would only change the variables on driver
-   * Load the parameters needing serialization.
-   * These parameters will be used later in executors
-   * Thus they need to be get from helper in advance
-   */
-//  def loadSerialParams(helper: ClusterServingHelper): Unit = {
-//    batchSize = helper.batchSize
-//    topN = helper.topN
-//    coreNum = helper.coreNum
-//    nodeNum = helper.nodeNum
-//    modelType = helper.modelType
-//    blasFlag = helper.blasFlag
-//
-//    C = helper.dataShape(0)
-//    W = helper.dataShape(1)
-//    H = helper.dataShape(2)
-//  }
-
 
   def main(args: Array[String]): Unit = {
 
@@ -94,6 +64,14 @@ object ClusterServing {
 
     val logger = helper.logger
 
+    /**
+     * For cut input stream, this variable is to avoid
+     * unsafe cut of input stream, if cut current batch
+     * there is an interval between get and cut, this would
+     * affect the result of correctness, some new data might be cut
+     */
+    var lastMicroBatchSize: Long = 0
+
     var model: InferenceModel = null
     var bcModel: Broadcast[InferenceModel] = null
 
@@ -108,7 +86,6 @@ object ClusterServing {
     logger.info(s"connected to redis " +
       s"${spark.conf.get("spark.redis.host")}:${spark.conf.get("spark.redis.port")}")
 
-//    loadSerialParams(helper)
 
     val images = spark
       .readStream
@@ -133,15 +110,7 @@ object ClusterServing {
       /**
        * This is reserved for future dynamic loading model
        */
-      //      if (helper.updateConfig()) {
-//        loadSerialParams(helper)
-//        if (bcModel != null) bcModel.destroy()
-//        if (model != null) model.doRelease()
-//        model = helper.loadInferenceModel()
-//        bcModel = helper.sc.broadcast(model)
-//        if (helper.logSummaryFlag) model.setInferenceSummary(
-//          InferenceSummary(".", helper.dateTime + "-ClusterServing"))
-//      }
+
       batchDF.persist()
 
       val microBatchSize = batchDF.count()
@@ -304,7 +273,7 @@ object ClusterServing {
          */
 
         val newLen = redisDB.xlen("image_stream")
-        val lenRemained = newLen - microBatchSize
+        val lenRemained = newLen - lastMicroBatchSize
         try {
           redisDB.xtrim("image_stream",
             lenRemained, true)
@@ -317,7 +286,7 @@ object ClusterServing {
               "encounters an error, skipped")
 
         }
-
+        lastMicroBatchSize = microBatchSize
         /**
          * Count the statistical data and write to summary
          */
@@ -332,8 +301,6 @@ object ClusterServing {
             model.inferenceSummary.addScalar(
               "Serving Throughput", microBatchThroughPut, time)
           })
-//          model.inferenceSummary.addScalar(
-//            "Micro Batch Throughput", microBatchThroughPut, batchId)
 
           model.inferenceSummary.addScalar(
             "Total Records Number", totalCnt, batchId)

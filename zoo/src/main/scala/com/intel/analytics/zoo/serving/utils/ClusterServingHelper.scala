@@ -153,11 +153,11 @@ class ClusterServingHelper {
 //    }
 
     logFile = {
-      val logF = new File("./cluster_serving.log")
-      if (Files.exists(Paths.get("./cluster_serving.log"))) {
+      val logF = new File("./cluster-serving.log")
+      if (Files.exists(Paths.get("./cluster-serving.log"))) {
         logF.createNewFile()
       }
-      new FileWriter(logF)
+      new FileWriter(logF, true)
     }
 
 
