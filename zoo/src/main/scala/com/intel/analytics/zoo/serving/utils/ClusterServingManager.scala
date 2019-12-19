@@ -32,8 +32,9 @@ object ClusterServingManager {
   def queryTerminator(helper: ClusterServingHelper,
                       query: StreamingQuery): Runnable = new Runnable {
     override def run(): Unit = {
-      if (helper.checkStop())
+      if (helper.checkStop()) {
         query.stop()
+      }
     }
   }
 
