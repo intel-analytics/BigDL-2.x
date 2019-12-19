@@ -198,7 +198,7 @@ object ClusterServing {
                */
               val result = if (modelType == "openvino") {
                 val res = localModel.doPredict(x).toTensor.squeeze()
-                t.squeeze()
+                t.squeeze(1)
                 res
               } else {
                 localModel.doPredict(x).toTensor

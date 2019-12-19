@@ -53,6 +53,10 @@ class InputQueue(API):
     def __init__(self):
         super().__init__()
         self.c, self.h, self.w = None, None, None
+
+        # TODO: these params can be read from config in future
+        self.input_threshold = 0.6
+        self.interval_if_error = 1
         self.data_shape_check()
 
     def data_shape_check(self):
@@ -95,18 +99,18 @@ class InputQueue(API):
         inf = self.db.info()
 
         try:
-            if inf['used_memory'] >= inf['maxmemory'] * 0.6:
+            if inf['used_memory'] >= inf['maxmemory'] * self.input_threshold:
                 raise redis.exceptions.ConnectionError
             self.db.xadd("image_stream", d)
             print("Write to Redis successful")
         except redis.exceptions.ConnectionError:
             print("Redis queue is full, please wait for inference "
                   "or delete the unprocessed records.")
-            time.sleep(1)
+            time.sleep(self.interval_if_error)
 
         except redis.exceptions.ResponseError as e:
             print(e, "Redis memory is full, please dequeue or delete.")
-            time.sleep(1)
+            time.sleep(self.interval_if_error)
 
     @staticmethod
     def base64_encode_image(img):
