@@ -272,11 +272,18 @@ object ClusterServing {
          * not be guaranteed in such case, thus, just skip if it fails.
          */
 
+        /**
+         * To decrease the possibility of loss data
+         * A large batch followed by a small batch will cause
+         * data lost
+         */
+
         val newLen = redisDB.xlen("image_stream")
-        val lenRemained = newLen - lastMicroBatchSize
+        val lenRemained = (newLen - lastMicroBatchSize) * 1.001
+
         try {
           redisDB.xtrim("image_stream",
-            lenRemained, true)
+            lenRemained.toLong, true)
 
           println("Remained " + lenRemained + " New length " + newLen.toString)
         }
@@ -284,9 +291,10 @@ object ClusterServing {
           case e: Exception =>
             logger.info("WARNING: Deleting processed record " +
               "encounters an error, skipped")
-
         }
+
         lastMicroBatchSize = microBatchSize
+
         /**
          * Count the statistical data and write to summary
          */
