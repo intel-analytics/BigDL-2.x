@@ -104,7 +104,14 @@ class TestPytorch(ZooTestCase):
         TorchCriterion.from_pytorch(criterion, torch.ones(2, 2), torch.ones(2, 2))
 
     def test_torch_net_predict_resnet(self):
-        model = torchvision.models.resnet18(pretrained=True).eval()
+        try:
+            model = torchvision.models.resnet18(pretrained=True).eval()
+        except:
+            # try again to work around connection error
+            import time
+            import random
+            time.sleep(random.randint(0, 20))
+            model = torchvision.models.resnet18(pretrained=True).eval()
         net = TorchNet.from_pytorch(model, [1, 3, 224, 224])
 
         dummpy_input = torch.ones(1, 3, 224, 224)
