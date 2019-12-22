@@ -63,16 +63,16 @@ if [[ $py_version == *"Python 2.7"* ]]; then
 else
     echo "Running Python 3"
     
-    # echo "Running TFPark tests"
-    # python -m pytest -v ../test/zoo/tfpark/
-    # exit_status_3=$?
-    # if [ $exit_status_3 -ne 0 ];
-    # then
-    #     exit $exit_status_3
-    # fi
+    echo "Running TFPark tests"
+    python -m pytest -v ../test/zoo/tfpark/
+    exit_status_3=$?
+    if [ $exit_status_3 -ne 0 ];
+    then
+        exit $exit_status_3
+    fi
 
     echo "Running other tests"
-    python -m pytest -v ../test/zoo/pipeline/onnx/ --ignore=../test/zoo/pipeline/utils/test_utils.py \
+    python -m pytest -v ../test/ --ignore=../test/zoo/pipeline/utils/test_utils.py \
        --ignore=../test/zoo/tfpark/ \
        --ignore=../test/zoo/pipeline/api/keras2/ \
        --ignore=../test/zoo/pipeline/autograd/ \
