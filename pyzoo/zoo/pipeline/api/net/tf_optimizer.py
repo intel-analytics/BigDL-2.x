@@ -232,8 +232,7 @@ class TFModel(object):
                                   extra_variable_assign_placeholders,
                                   extra_variable_assign,
                                   grads, update_op,
-                                  additional_values,
-                                  metrics_names=None):
+                                  additional_values):
 
         import tensorflow as tf
         from tensorflow import gfile
@@ -242,17 +241,10 @@ class TFModel(object):
             os.makedirs(folder)
         saver.save(sess, os.path.join(folder, "model"), write_meta_graph=False)
 
-        if metrics_names is not None:
-            assert len(metric_tensors) == len(metrics_names), \
-                "the length of metrics_tensors and metric_names must be the same"
-        else:
-            metrics_names = []
-
         meta = {
             "inputs": [i.name for i in inputs],
             "input_types": [i.dtype.as_datatype_enum for i in inputs],
             "metric_tensors": [t.name for t in metric_tensors],
-            "metrics_names": metrics_names,
             "batch_size_tensor": batch_size_tensor.name,
             "loss_tensor": loss_tensor.name,
             "variables": [v.name for v in trainable_variables],
@@ -299,10 +291,6 @@ class TFModel(object):
             extra_variable_assign, update_op = \
             TFModel._process_variables_for_unfreeze(graph, variables, updates)
 
-        metrics_mapping = {}
-        for metric in metrics:
-            metrics_mapping[metric.idx] = metric.name
-
         meta, saver = \
             TFModel._save_to_dir_for_unfreeze(model_dir, sess, graph,
                                               metric_tensors,
@@ -315,7 +303,7 @@ class TFModel(object):
                                               extra_variable_assign_placeholders,
                                               extra_variable_assign,
                                               grads, update_op,
-                                              additional_values, metrics_mapping)
+                                              additional_values)
         return meta, saver, val_methods
 
     @staticmethod
