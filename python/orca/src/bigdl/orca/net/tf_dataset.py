@@ -377,7 +377,7 @@ class TFDataset(object):
                                  in sequential order when training.
         :param shuffle: whether to shuffle the elements in each partition before each epoch
                         when training
-        :return:
+        :return: a TFDataset
         """
         return TFNdarrayDataset.from_ndarrays(*args, **kwargs)
 
@@ -409,7 +409,7 @@ class TFDataset(object):
                                  in sequential order when training.
         :param shuffle: whether to shuffle the elements in each partition before each epoch
                         when training
-        :return:
+        :return: a TFDataset
         """
         tensor_structure = TFDataset._to_tensor_structure(image, label)
         return TFImageDataset(image_set, tensor_structure, batch_size,
@@ -444,7 +444,7 @@ class TFDataset(object):
                                  in sequential order when training.
         :param shuffle: whether to shuffle the elements in each partition before each epoch
                         when training
-        :return:
+        :return: a TFDataset
         """
         tensor_structure = TFDataset._to_tensor_structure(text, label)
         return TFTextDataset(text_set, tensor_structure, batch_size,
@@ -474,11 +474,11 @@ class TFDataset(object):
         batch_size/total_core_num (training) or batch_per_thread for inference; if False,
         it is None.
         :param validation_file_path: The tfrecord files used for validation
-            :param sequential_order: whether to iterate the elements in the Dataset
+        :param sequential_order: whether to iterate the elements in the Dataset
                                  in sequential order when training.
         :param shuffle: whether to shuffle the elements in each partition before each epoch
                         when training
-        :return:
+        :return: a TFDataset
         """
         input_format_class = "org.tensorflow.hadoop.io.TFRecordFileInputFormat"
         key_class = "org.apache.hadoop.io.BytesWritable"
@@ -520,7 +520,7 @@ class TFDataset(object):
         batch_size/total_core_num (training) or batch_per_thread for inference; if False,
         it is None.
         :param validation_dataset: The FeatureSet used for validation during training
-        :return:
+        :return: a TFDataset
         """
         tensor_structure = TFDataset._to_tensor_structure(features, labels)
 
@@ -531,6 +531,22 @@ class TFDataset(object):
     @staticmethod
     def from_string_rdd(string_rdd, batch_size=-1, batch_per_thread=-1,
                         hard_code_batch_size=False, validation_string_rdd=None):
+        """
+        Create a TFDataset from a RDD of strings. Each element is the RDD should be a single string.
+        The returning TFDataset's feature_tensors has only one Tensor. the type of the Tensor
+        is tf.string, and the shape is (None,). The returning don't have label_tensors. If the
+        dataset is used for training, the label should be encoded in the string.
+        :param string_rdd: the RDD of strings
+        :param batch_size: the batch size, used for training, should be a multiple of
+        total core num
+        :param batch_per_thread: the batch size for each thread, used for inference or evaluation
+        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
+        if True, the static size of the first dimension of the resulting tensors is
+        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
+        it is None.
+        :param validation_string_rdd: the RDD of strings to be used in validation
+        :return: a TFDataset
+        """
         string_rdd = string_rdd.map(lambda x: bytearray(x, "utf-8"))
         if validation_string_rdd is not None:
             validation_string_rdd = validation_string_rdd.map(lambda x: bytearray(x, "utf-8"))
@@ -540,6 +556,22 @@ class TFDataset(object):
     @staticmethod
     def from_bytes_rdd(bytes_rdd, batch_size=-1, batch_per_thread=-1,
                        hard_code_batch_size=False, validation_bytes_rdd=None):
+        """
+        Create a TFDataset from a RDD of bytes. Each element is the RDD should be a bytes object.
+        The returning TFDataset's feature_tensors has only one Tensor. the type of the Tensor
+        is tf.string, and the shape is (None,). The returning don't have label_tensors. If the
+        dataset is used for training, the label should be encoded in the bytes.
+        :param bytes_rdd: the RDD of bytes
+        :param batch_size: the batch size, used for training, should be a multiple of
+        total core num
+        :param batch_per_thread: the batch size for each thread, used for inference or evaluation
+        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
+        if True, the static size of the first dimension of the resulting tensors is
+        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
+        it is None.
+        :param validation_bytes_rdd: the RDD of bytes to be used in validation
+        :return: a TFDataset
+        """
         return TFBytesDataset(bytes_rdd, batch_size, batch_per_thread,
                               hard_code_batch_size, validation_bytes_rdd)
 
