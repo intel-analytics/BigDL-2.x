@@ -20,6 +20,8 @@ import os
 import json
 import sys
 
+import logging
+
 from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Layer
 from bigdl.util.common import to_list, JavaValue
@@ -49,6 +51,8 @@ class TFValidationMethod(JavaValue):
 
 class StatelessMetric(JavaValue):
     def __init__(self, metric_name, idx):
+        self.name = metric_name
+        self.idx = idx
         JavaValue.__init__(self, None, "float", metric_name, idx)
 
 
@@ -60,34 +64,22 @@ class BigDLMetric(object):
 
 
 class TFTrainingHelper(Layer):
-    def __init__(self, path, configProto, assign, variable_placeholders, sess):
-        if configProto is not None:
-            byte_arr = bytearray(configProto.SerializeToString())
-        else:
-            byte_arr = None
-        self.sess = sess
-        self.assign = assign
-        self.variable_placeholders = variable_placeholders
-        super(TFTrainingHelper, self).__init__(None, "float", path, byte_arr)
-
-    def get_weights_to_python(self):
-        variables = self.get_weights()
-
-        feed_dict = dict(zip(self.variable_placeholders, variables))
-        self.sess.run(self.assign, feed_dict=feed_dict)
-
-
-class TFTrainingHelper2(Layer):
     def __init__(self, path, config_proto, saver, meta, sess):
         self.saver = saver
         self.meta = meta
         self.export_dir = path
         self.sess = sess
+
         if config_proto is not None:
+            import tensorflow as tf
+            assert isinstance(config_proto, tf.ConfigProto), \
+                "session_config should be a tf.ConfigProto"
+            config_proto.use_per_session_threads = True
             byte_arr = bytearray(config_proto.SerializeToString())
         else:
             byte_arr = None
-        super(TFTrainingHelper2, self).__init__(None, "float", path, byte_arr)
+
+        super(TFTrainingHelper, self).__init__(None, "float", path, byte_arr)
 
     def save_checkpoint(self):
         callZooFunc(self.bigdl_type, "saveCheckpoint",
@@ -150,7 +142,7 @@ class TFModel(object):
         return grads
 
     @staticmethod
-    def _process_metrics(graph, metrics, loss, inputs):
+    def _process_metrics(graph, metrics):
         import tensorflow as tf
         outputs = []
         val_methods = None
@@ -176,29 +168,9 @@ class TFModel(object):
                                                            + len(val_labels))))
                     val_methods.append(method)
                     idx += len(metric.outputs) + len(val_labels)
-            with graph.as_default():
-                real_batch_size = tf.shape(inputs[0])[0]
-            outputs.append(real_batch_size)
 
-        with graph.as_default():
-            outputs = [tf.to_float(output) for output in outputs]
-
-        outputs.append(loss)
+        outputs = [tf.to_float(output) for output in outputs]
         return outputs, val_methods
-
-    @staticmethod
-    def _process_variables(graph, variables):
-        import tensorflow as tf
-        variable_placeholders = []
-        with graph.as_default():
-            assigns = []
-            for v in variables:
-                p = tf.placeholder(dtype=tf.float32, shape=v.shape)
-                a = tf.assign(v, p)
-                variable_placeholders.append(p)
-                assigns.append(a)
-            assign = tf.group(*assigns)
-        return assign, variable_placeholders
 
     @staticmethod
     def _process_variables_for_unfreeze(graph, variables, updates):
@@ -250,14 +222,18 @@ class TFModel(object):
 
     @staticmethod
     def _save_to_dir_for_unfreeze(folder, sess, graph,
-                                  outputs, inputs,
+                                  metric_tensors,
+                                  batch_size_tensor,
+                                  loss_tensor, inputs,
                                   trainable_variables,
                                   trainable_variable_placeholders,
                                   trainable_assign,
                                   extra_variables,
                                   extra_variable_assign_placeholders,
                                   extra_variable_assign,
-                                  grads, update_op, additional_values):
+                                  grads, update_op,
+                                  additional_values,
+                                  metrics_names=None):
 
         import tensorflow as tf
         from tensorflow import gfile
@@ -266,13 +242,19 @@ class TFModel(object):
             os.makedirs(folder)
         saver.save(sess, os.path.join(folder, "model"), write_meta_graph=False)
 
-        output_names = [o.name for o in outputs]
-        input_names = [i.name for i in inputs]
+        if metrics_names is not None:
+            assert len(metric_tensors) == len(metrics_names), \
+                "the length of metrics_tensors and metric_names must be the same"
+        else:
+            metrics_names = []
 
         meta = {
-            "inputs": input_names,
+            "inputs": [i.name for i in inputs],
             "input_types": [i.dtype.as_datatype_enum for i in inputs],
-            "outputs": output_names,
+            "metric_tensors": [t.name for t in metric_tensors],
+            "metrics_names": metrics_names,
+            "batch_size_tensor": batch_size_tensor.name,
+            "loss_tensor": loss_tensor.name,
             "variables": [v.name for v in trainable_variables],
             "variable_types": [v.dtype.as_datatype_enum for v in trainable_variable_placeholders],
             "variable_assign_placeholders": [v.name for v in trainable_variable_placeholders],
@@ -301,78 +283,57 @@ class TFModel(object):
         return meta, saver
 
     @staticmethod
-    def create(loss, sess, inputs, grads, variables, graph,
-               tensors_with_value, session_config, metrics, updates, model_dir):
+    def export_for_training(model_dir, loss_tensor, sess, inputs, grads, variables, graph,
+                            tensors_with_value, metrics, updates):
+        import tensorflow as tf
 
-        from zoo.util.tf import export_tf
-
-        inputs, additional_values = TFModel._expand_inputs(inputs, tensors_with_value, loss)
-        session_config = TFModel._process_session_config(session_config)
+        inputs, additional_values = TFModel._expand_inputs(inputs, tensors_with_value, loss_tensor)
+        metric_tensors, val_methods = TFModel._process_metrics(graph, metrics)
         grads = TFModel._process_grads(graph, grads)
 
-        outputs, val_methods = TFModel._process_metrics(graph, metrics, loss, inputs)
-
-        assign, variable_placeholders = TFModel._process_variables(graph, variables)
-
-        export_tf(sess, model_dir,
-                  inputs=inputs,
-                  outputs=grads + outputs)
-
-        variable_names = [v.name for v in variables]
-        grad_names = [g.name for g in grads]
-        output_names = [o.name for o in outputs]
-
-        def to_floats(vs):
-            return [float(v) for v in vs]
-
-        meta = {
-            "input_names": [i.name for i in inputs],
-            "output_names": output_names,
-            "variables": variable_names,
-            "grad_variables": grad_names,
-            "default_tensor_values": [to_floats(v) for v in additional_values]
-        }
-
-        with open(os.path.join(model_dir, "training_meta.json"), "w") as f:
-            f.write(json.dumps(meta))
-
-        training_helper_layer = TFTrainingHelper(model_dir,
-                                                 session_config,
-                                                 assign,
-                                                 variable_placeholders, sess)
-
-        criterion = IdentityCriterion()
-
-        return TFModel(training_helper_layer, criterion, val_methods)
-
-    @staticmethod
-    def create_for_unfreeze(loss, sess, inputs, grads, variables, graph,
-                            tensors_with_value, session_config, metrics, updates, model_dir):
-
-        inputs, additional_values = TFModel._expand_inputs(inputs, tensors_with_value, loss)
-        session_config = TFModel._process_session_config(session_config)
-        grads = TFModel._process_grads(graph, grads)
-
-        outputs, val_methods = TFModel._process_metrics(graph, metrics, loss, inputs)
+        with graph.as_default():
+            batch_size_tensor = tf.to_float(tf.shape(inputs[0])[0])
 
         trainable_variables, trainable_variable_placeholders, trainable_assign, \
             extra_variables, extra_variable_assign_placeholders, \
             extra_variable_assign, update_op = \
             TFModel._process_variables_for_unfreeze(graph, variables, updates)
 
+        metrics_mapping = {}
+        for metric in metrics:
+            metrics_mapping[metric.idx] = metric.name
+
         meta, saver = \
             TFModel._save_to_dir_for_unfreeze(model_dir, sess, graph,
-                                              outputs, inputs,
+                                              metric_tensors,
+                                              batch_size_tensor,
+                                              loss_tensor, inputs,
                                               trainable_variables,
                                               trainable_variable_placeholders,
                                               trainable_assign,
                                               extra_variables,
                                               extra_variable_assign_placeholders,
                                               extra_variable_assign,
-                                              grads, update_op, additional_values)
+                                              grads, update_op,
+                                              additional_values, metrics_mapping)
+        return meta, saver, val_methods
 
-        training_helper_layer = TFTrainingHelper2(model_dir,
-                                                  session_config, saver, meta, sess)
+    @staticmethod
+    def create_for_unfreeze(loss_tensor, sess, inputs, grads, variables, graph,
+                            tensors_with_value, session_config, metrics, updates, model_dir):
+
+        if model_dir is None:
+            model_dir = tempfile.mkdtemp()
+        else:
+            if not os.path.isdir(model_dir):
+                os.makedirs(model_dir)
+
+        meta, saver, val_methods = TFModel.export_for_training(model_dir, loss_tensor, sess,
+                                                               inputs, grads, variables, graph,
+                                                               tensors_with_value, metrics, updates)
+
+        training_helper_layer = TFTrainingHelper(model_dir,
+                                                 session_config, saver, meta, sess)
 
         criterion = IdentityCriterion()
 
@@ -380,13 +341,11 @@ class TFModel(object):
 
 
 class TFOptimizer:
-    def __init__(self, loss, optim_method,
-                 sess=None, dataset=None, inputs=None,
-                 grads=None, variables=None, graph=None,
-                 val_outputs=None, val_labels=None, val_method=None,
-                 val_split=0.0, tensors_with_value=None, session_config=None,
-                 clip_norm=None, clip_value=None, metrics=None,
-                 updates=None, freeze=False, model_dir=None):
+    def __init__(self, tf_model, optim_method,
+                 sess=None, dataset=None,
+                 val_split=0.0,
+                 clip_norm=None, clip_value=None,
+                 model_dir=None):
         """
         TFOptimizer is used for distributed training of TensorFlow
         on Spark/BigDL.
@@ -401,16 +360,9 @@ class TFOptimizer:
         should use the Session to load the pre-trained variables and pass it to TFOptimizer.
         """
 
-        if dataset is None:
-            args = TFOptimizer._get_arguments_from_loss(loss, optim_method, sess,
-                                                        val_outputs, val_labels, val_method)
-            loss, optim_method, sess, dataset, inputs = args[:5]
-            grads, variables, graph, val_outputs, val_labels, val_method = args[5:]
-
         self.optim_method = optim_method
         self.sess = sess
         self.dataset = dataset
-        self.graph = graph
 
         self.clip_norm = clip_norm
         if clip_value is not None and not isinstance(clip_value, tuple):
@@ -420,32 +372,9 @@ class TFOptimizer:
         if self.dataset.batch_size <= 0:
             raise ValueError("You should set batch_size instead of batch_per_thread for training")
 
-        if val_method is not None:
-            val_methods = to_list(val_method)
-            if metrics is None:
-                metrics = {}
-
-            for i, method in enumerate(val_methods):
-                metrics['bigdl_metirc_' + str(i)] = BigDLMetric(method, val_outputs, val_labels)
-
-        if model_dir is None:
-            model_dir = tempfile.mkdtemp()
-        else:
-            if not os.path.isdir(model_dir):
-                os.makedirs(model_dir)
-
         self.model_dir = model_dir
 
-        if freeze:
-            self.tf_model = TFModel.create(loss,
-                                           sess, inputs, grads, variables, graph,
-                                           tensors_with_value, session_config,
-                                           metrics, updates, model_dir)
-        else:
-            self.tf_model = TFModel.create_for_unfreeze(loss, sess, inputs, grads,
-                                                        variables, graph, tensors_with_value,
-                                                        session_config, metrics, updates,
-                                                        model_dir)
+        self.tf_model = tf_model
 
         batch_size = self.dataset.batch_size
 
@@ -478,15 +407,8 @@ class TFOptimizer:
             sess.run(tf.global_variables_initializer())
         else:
             sess = session
-        grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
-        grads_vars.sort(key=lambda grad_var: grad_var[1].name)
-        variables = []
-        grads = []
-        for (grad, var) in grads_vars:
-            if grad is not None:
-                variables.append(var)
-                grads.append(grad)
 
+        grads, variables = TFOptimizer._get_vars_grads(loss)
         all_required_inputs = _find_placeholders([loss])
         dataset = tf.get_collection(all_required_inputs[0].name)[0]
 
@@ -495,11 +417,24 @@ class TFOptimizer:
         return [loss, optim_method, sess, dataset, inputs,
                 grads, variables, loss.graph, val_outputs, val_labels, val_method]
 
+    @staticmethod
+    def _get_vars_grads(loss):
+        import tensorflow as tf
+        grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
+        grads_vars.sort(key=lambda grad_var: grad_var[1].name)
+        variables = []
+        grads = []
+        for (grad, var) in grads_vars:
+            if grad is not None:
+                variables.append(var)
+                grads.append(grad)
+        return grads, variables
+
     @classmethod
     def from_loss(cls, loss, optim_method, session=None, val_outputs=None,
                   val_labels=None, val_method=None, val_split=0.0,
                   clip_norm=None, clip_value=None, metrics=None,
-                  tensor_with_value=None, **kwargs):
+                  tensor_with_value=None, session_config=None, model_dir=None, updates=None):
         """
         Create a TFOptimizer from a TensorFlow loss tensor.
         The loss tensor must come from a TensorFlow graph that only takes TFDataset.tensors and
@@ -528,6 +463,9 @@ class TFOptimizer:
         args = TFOptimizer._get_arguments_from_loss(loss, optim_method,
                                                     session, val_outputs,
                                                     val_labels, val_method)
+
+        loss, optim_method, sess, dataset, inputs = args[:5]
+        grads, variables, graph, val_outputs, val_labels, val_method = args[5:]
         if clip_value is not None:
             if isinstance(clip_value, float) or isinstance(clip_value, int):
                 if clip_value <= 0:
@@ -540,19 +478,40 @@ class TFOptimizer:
                                  " (-clip_value, clip_value); " +
                                  "or a tuple which clips to (min_value, max_value)")
 
-        return cls(*(args + [val_split]),
-                   tensors_with_value=tensor_with_value,
-                   clip_norm=clip_norm,
-                   clip_value=clip_value, metrics=metrics, **kwargs)
+        if val_method is not None:
+            val_methods = to_list(val_method)
+            if metrics is None:
+                metrics = {}
+
+            for i, method in enumerate(val_methods):
+                metrics['bigdl_metirc_' + str(i)] = BigDLMetric(method, val_outputs, val_labels)
+
+        tf_model = TFModel.create_for_unfreeze(loss, sess, inputs, grads, variables, graph,
+                                               tensor_with_value, session_config, metrics,
+                                               updates, model_dir)
+
+        return cls(tf_model, optim_method, sess=sess, dataset=dataset, val_split=val_split,
+                   clip_norm=clip_norm, clip_value=clip_value)
+
+    @staticmethod
+    def export_training_model(export_dir, loss, sess, inputs,
+                              metrics=None, tensor_with_value=None, updates=None):
+
+        grads, variables = TFOptimizer._get_vars_grads(loss)
+
+        TFModel.export_for_training(export_dir, loss, sess, inputs, grads, variables, loss.graph,
+                                    tensor_with_value, metrics, updates)
+        logging.info("Exported TensorFlow model in {} for training".format(export_dir))
 
     @classmethod
-    def from_keras(cls, keras_model, dataset, optim_method=None, val_spilt=0.0, **kwargs):
+    def from_keras(cls, keras_model, dataset, optim_method=None, val_split=0.0,
+                   session_config=None, model_dir=None):
         """
         Create a TFOptimizer from a tensorflow.keras model. The model must be compiled.
         :param keras_model: the tensorflow.keras model, which must be compiled.
         :param dataset: a TFDataset
         :param optim_method: the optimization method to be used, such as bigdl.optim.optimizer.Adam
-        :param val_spilt: Float between 0 and 1. Fraction of the training data to be used as
+        :param val_split: Float between 0 and 1. Fraction of the training data to be used as
         validation data.
         :return:
         """
@@ -594,12 +553,12 @@ class TFOptimizer:
             optim_method = keras_optimizer
         optim_method = to_bigdl_optim_method(optim_method)
 
-        if keras_model.metrics and (dataset.get_validation_data() is not None or val_spilt != 0.0):
+        if keras_model.metrics and (dataset.get_validation_data() is not None or val_split != 0.0):
             if isinstance(keras_model.metrics, dict):
                 raise ValueError(
                     "different metrics for different outputs are not supported right now")
 
-            if dataset.get_validation_data() is None and val_spilt == 0.0:
+            if dataset.get_validation_data() is None and val_split == 0.0:
                 raise ValueError("Validation data is not specified. Please set " +
                                  "val_rdd in TFDataset, or set val_split larger than zero")
 
@@ -626,12 +585,20 @@ class TFOptimizer:
 
         updates = keras_model.updates
 
-        return cls(loss, optim_method, sess, dataset, inputs,
-                   grads, variables, loss.graph, val_outputs, val_labels,
-                   bigdl_val_methods, val_spilt,
-                   tensors_with_value=tensor_with_value,
-                   clip_norm=clip_norm,
-                   clip_value=clip_value, updates=updates, **kwargs)
+        metrics = None
+
+        if bigdl_val_methods is not None:
+            val_methods = to_list(bigdl_val_methods)
+            metrics = {}
+            for i, method in enumerate(val_methods):
+                metrics['bigdl_metirc_' + str(i)] = BigDLMetric(method, val_outputs, val_labels)
+
+        tf_model = TFModel.create_for_unfreeze(loss, sess, inputs, grads, variables, loss.graph,
+                                               tensor_with_value, session_config, metrics,
+                                               updates, model_dir)
+
+        return cls(tf_model, optim_method, sess=sess, dataset=dataset, val_split=val_split,
+                   clip_norm=clip_norm, clip_value=clip_value)
 
     def set_constant_gradient_clipping(self, min_value, max_value):
         """
@@ -663,14 +630,14 @@ class TFOptimizer:
 
         if self.tf_model.val_methods is not None and self.val_rdd is not None:
             self.estimator.train_minibatch(train_set=self.training_rdd,
-                                           criterion=IdentityCriterion(),
+                                           criterion=self.tf_model.criterion,
                                            end_trigger=end_trigger,
                                            checkpoint_trigger=checkpoint_trigger,
                                            validation_set=self.val_rdd,
                                            validation_method=self.tf_model.val_methods)
         else:
             self.estimator.train_minibatch(train_set=self.training_rdd,
-                                           criterion=IdentityCriterion(),
+                                           criterion=self.tf_model.criterion,
                                            end_trigger=end_trigger)
 
         self.tf_model.training_helper_layer.get_weights_to_python()

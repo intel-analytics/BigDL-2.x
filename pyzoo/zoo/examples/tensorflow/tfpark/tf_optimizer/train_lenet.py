@@ -63,10 +63,10 @@ def main(max_epoch, data_num):
     loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
 
     # create a optimizer
-    optimizer = TFOptimizer(loss, Adam(1e-3),
-                            val_outputs=[logits],
-                            val_labels=[labels],
-                            val_method=Top1Accuracy(), model_dir="/tmp/lenet/")
+    optimizer = TFOptimizer.from_loss(loss, Adam(1e-3),
+                                      val_outputs=[logits],
+                                      val_labels=[labels],
+                                      val_method=Top1Accuracy(), model_dir="/tmp/lenet/")
     # kick off training
     optimizer.optimize(end_trigger=MaxEpoch(max_epoch))
 
