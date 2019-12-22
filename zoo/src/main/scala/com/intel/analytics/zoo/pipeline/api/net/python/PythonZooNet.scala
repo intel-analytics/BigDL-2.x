@@ -27,6 +27,7 @@ import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.python.api.{JTensor, Sample}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.zoo.TFPark._
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.net._
@@ -137,11 +138,7 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
     TFTrainingHelper(modelPath, config)
   }
 
-  def createTFTrainingHelper2(modelPath: String, config: Array[Byte] = null): Module[Float] = {
-    TFTrainingHelper2(modelPath, config)
-  }
-
-  def saveCheckpoint(model: TFTrainingHelper2): Unit = {
+  def saveCheckpoint(model: TFTrainingHelper): Unit = {
     model.saveCheckpoint()
   }
 
@@ -167,14 +164,6 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
     new StatelessMetric(name, idx)
   }
 
-  def createTFOptimizer(modelPath: String,
-                        optimMethod: OptimMethod[Float],
-                        x: JavaRDD[Sample],
-                        batchSize: Int = 32): TFOptimizer = {
-    new TFOptimizer(modelPath, optimMethod,
-      toJSample(x).asInstanceOf[RDD[JSample[Float]]], batchSize)
-  }
-
   def createGanOptimMethod(dOptim: OptimMethod[T],
                            gOptim: OptimMethod[T],
                            dStep: Int, gStep: Int, gParamSize: Int): OptimMethod[T] = {
@@ -185,7 +174,7 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
 
   def createMiniBatchRDDFromStringRDD(stringRDD: JavaRDD[Array[Byte]],
                                      batchSize: Int): RDDWrapper[StringMiniBatch[T]] = {
-    import com.intel.analytics.zoo.pipeline.api.net.TFTensorNumeric.NumericByteArray
+    import TFTensorNumeric.NumericByteArray
 
     val rdd = stringRDD.rdd.mapPartitions { stringIter =>
       stringIter.grouped(batchSize).map { data =>
