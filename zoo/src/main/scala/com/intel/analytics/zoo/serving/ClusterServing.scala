@@ -118,6 +118,7 @@ object ClusterServing {
     // redis stream control
     val redisDB = new Jedis(helper.redisHost, helper.redisPort.toInt)
     val inputThreshold = 0.6 * 0.8
+    val cutRatio = 0.5
 
     val query = images.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
 
@@ -129,7 +130,7 @@ object ClusterServing {
       if (redisInfo("used_memory").toLong >=
         redisInfo("maxmemory").toLong * inputThreshold) {
         redisDB.xtrim("image_stream",
-          redisDB.xlen("image_stream") / 2, true)
+          (redisDB.xlen("image_stream") * cutRatio).toLong, true)
       }
 
       batchDF.persist()
