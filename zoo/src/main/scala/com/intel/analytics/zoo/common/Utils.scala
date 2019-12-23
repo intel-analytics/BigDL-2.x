@@ -27,6 +27,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataInputStream, FSDataOutputStream, FileSystem, Path}
 import org.apache.hadoop.io.IOUtils
 import org.apache.log4j.Logger
+import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -251,4 +252,6 @@ class AnalyticsZooException(message: String, cause: Throwable)
 
   def this(message: String) = this(message, null)
 }
+
+case class RDDWrapper[T](value: RDD[T])
 

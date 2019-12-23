@@ -40,5 +40,3 @@ class StringMiniBatch[T](data: Tensor[Array[Byte]]) extends MiniBatch[T] {
     throw new UnsupportedOperationException("StringMiniBatch does not support set method")
   }
 }
-
-case class RDDWrapper[T](value: RDD[T])
