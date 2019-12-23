@@ -84,7 +84,6 @@ object ClusterServing {
      * there is an interval between get and cut, this would
      * affect the result of correctness, some new data might be cut
      */
-    var lastMicroBatchSize: Long = 0
 
     var model: InferenceModel = null
     var bcModel: Broadcast[InferenceModel] = null
@@ -118,12 +117,20 @@ object ClusterServing {
 
     // redis stream control
     val redisDB = new Jedis(helper.redisHost, helper.redisPort.toInt)
+    val inputThreshold = 0.6 * 0.8
 
     val query = images.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
 
       /**
        * This is reserved for future dynamic loading model
        */
+      val redisInfo = RedisUtils.getMapFromInfo(redisDB.info())
+
+      if (redisInfo("used_memory").toLong >=
+        redisInfo("maxmemory").toLong * inputThreshold) {
+        redisDB.xtrim("image_stream",
+          redisDB.xlen("image_stream") / 2, true)
+      }
 
       batchDF.persist()
 
@@ -279,35 +286,6 @@ object ClusterServing {
 
           }
         }
-
-        /**
-         * Try to delete processed stream in queue, this may throw exception
-         * if user runs multiple serving because the stream length count could
-         * not be guaranteed in such case, thus, just skip if it fails.
-         */
-
-        /**
-         * To decrease the possibility of loss data
-         * A large batch followed by a small batch will cause
-         * data lost
-         */
-
-        val newLen = redisDB.xlen("image_stream")
-        val lenRemained = (newLen - lastMicroBatchSize) * 1.001
-
-        try {
-          redisDB.xtrim("image_stream",
-            lenRemained.toLong, true)
-
-          println("Remained " + lenRemained + " New length " + newLen.toString)
-        }
-        catch {
-          case e: Exception =>
-            logger.info("WARNING: Deleting processed record " +
-              "encounters an error, skipped")
-        }
-
-        lastMicroBatchSize = microBatchSize
 
         /**
          * Count the statistical data and write to summary

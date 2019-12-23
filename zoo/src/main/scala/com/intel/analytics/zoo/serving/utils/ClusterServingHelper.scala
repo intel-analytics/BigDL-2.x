@@ -81,13 +81,19 @@ class ClusterServingHelper {
   var logErrorFlag: Boolean = true
   var logSummaryFlag: Boolean = false
 
+  /**
+   * model relative
+   */
   var modelType: String = null
   var weightPath: String = null
   var defPath: String = null
   var dirPath: String = null
 
+  /**
+   * environment variables
+   */
+  var kmpBlockTime: String = null
 
-  var dummyMap: Map[Int, String] = Map()
 
   /**
    * Initialize the parameters by loading config file
@@ -236,6 +242,9 @@ class ClusterServingHelper {
     val conf = NNContext.createSparkConf().setAppName("Cluster Serving")
       .set("spark.redis.host", redisHost)
       .set("spark.redis.port", redisPort)
+    if (kmpBlockTime != null) {
+      conf.set("spark.executorEnv", "KMP_BLOCKTIME=" + kmpBlockTime)
+    }
     sc = NNContext.initNNContext(conf)
     nodeNum = EngineRef.getNodeNumber()
     coreNum = EngineRef.getCoreNumber()
@@ -344,9 +353,14 @@ class ClusterServingHelper {
    * @param location
    */
   def parseModelType(location: String): Unit = {
+    /**
+     * Initialize all relevant parameters at first
+     */
     modelType = null
     weightPath = null
     defPath = null
+
+    kmpBlockTime = null
     import java.io.File
     val f = new File(location)
     val fileList = f.listFiles
@@ -391,6 +405,7 @@ class ClusterServingHelper {
           throwOneModelError(true, false, true)
           weightPath = fPath
           modelType = "openvino"
+          kmpBlockTime = "20"
         }
         else if (fName.endsWith("xml")) {
           throwOneModelError(false, true, false)
