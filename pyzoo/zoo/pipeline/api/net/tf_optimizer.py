@@ -448,12 +448,104 @@ class TFOptimizer:
         is the value to feed to the tensor in validation phase.
         :return: a TFOptimizer
         """
-        args = TFOptimizer._get_arguments_from_loss(loss, optim_method,
-                                                    session, val_outputs,
-                                                    val_labels, val_method)
+        import tensorflow as tf
+        all_required_inputs = _find_placeholders([loss])
+        dataset = tf.get_collection(all_required_inputs[0].name)[0]
 
-        loss, optim_method, sess, dataset, inputs = args[:5]
-        grads, variables, graph, val_outputs, val_labels, val_method = args[5:]
+        inputs = dataset._original_tensors
+
+        return cls._from_loss_and_inputs(loss, inputs, dataset, optim_method,
+                                         session=session, val_outputs=val_outputs,
+                                         val_labels=val_labels, val_method=val_method,
+                                         val_split=val_split, clip_norm=clip_norm,
+                                         clip_value=clip_value, metrics=metrics,
+                                         tensor_with_value=tensor_with_value,
+                                         session_config=session_config, model_dir=model_dir,
+                                         updates=updates)
+
+    @classmethod
+    def from_loss_and_inputs(cls, loss, features, labels, dataset,
+                             optim_method, session=None, val_outputs=None,
+                             val_labels=None, val_method=None, val_split=0.0,
+                             clip_norm=None, clip_value=None, metrics=None,
+                             tensor_with_value=None, session_config=None,
+                             model_dir=None, updates=None):
+        """
+        Create a TFOptimizer from a TensorFlow loss tensor and the input tensors (features
+        and labels) that represent the data that have to be fed to calculate the loss.
+        The loss tensor must come from a TensorFlow graph that only takes TFDataset.tensors and
+        the tensors in `tensor_with_value` as inputs.
+        :param loss: The loss tensor of the TensorFlow model, should be a scalar
+        :param features: the input features tf.placeholders that represent the data that have
+        to be fed to calculate the loss. The inputs can be a tuple, list or dict of Tensors.
+        The placeholders's first dimension should be batch dimension.
+        :param labels: the input labels tensor that represent the data that have to be fed to
+        calculate the loss. The inputs can be a tuple, list or dict of Tensors. Could be None
+        if the actual label is already in the features.
+        The placeholders's first dimension should be batch dimension.
+        :param dataset: the training data that will be fed into the inputs. The definition of
+        the dataset's features and labels should be identical to the above argument features
+        and labels except that in the above features and labels arguments, placeholdes should
+        defined with batch dimension. e.g.
+        the above features is `tf.placeholder(dtype=tf.float32, shape=[None, 28, 28, 1])`
+        and the above labels is `tf.placeholder(dtype=tf.int32, shape=[None])`
+        then the dataset can be defined as `TFDataset.from_rdd(rdd,
+                                                               features=(tf.float32, [28, 28, 1]),
+                                                               labels=(tf.int32, []),
+                                                               batch_size=32)`
+        :param optim_method: the optimization method to be used, such as bigdl.optim.optimizer.Adam
+        :param session: the current TensorFlow Session, if you want to used a pre-trained model,
+        you should use the Session to load the pre-trained variables and pass it to TFOptimizer.
+        :param val_outputs: the validation output TensorFlow tensor to be used by val_methods
+        :param val_labels: the validation label TensorFlow tensor to be used by val_methods
+        :param val_method: the BigDL val_method(s) to be used.
+        :param val_split: Float between 0 and 1. Fraction of the training data to be used as
+        validation data.
+        :param clip_norm: float >= 0. Gradients will be clipped when their L2 norm exceeds
+        this value.
+        :param clip_value: float >= 0. Gradients will be clipped when their absolute value
+        exceeds this value.
+        :param metrics: a dictionary. The key should be a string representing the metric's name
+        and the value should be the corresponding TensorFlow tensor, which should be a scalar.
+        :param tensor_with_value: a dictionary. The key is TensorFlow tensor, usually a
+        placeholder, the value of the dictionary is a tuple of two elements. The first one of
+        the tuple is the value to feed to the tensor in training phase and the second one
+        is the value to feed to the tensor in validation phase.
+        :return: a TFOptimizer
+        """
+        if labels is None:
+            inputs = (features,)
+        else:
+            inputs = (features, labels)
+        return cls._from_loss_and_inputs(loss, inputs, dataset, optim_method,
+                                         session=session, val_outputs=val_outputs,
+                                         val_labels=val_labels, val_method=val_method,
+                                         val_split=val_split, clip_norm=clip_norm,
+                                         clip_value=clip_value, metrics=metrics,
+                                         tensor_with_value=tensor_with_value,
+                                         session_config=session_config, model_dir=model_dir,
+                                         updates=updates
+                                         )
+
+    @classmethod
+    def _from_loss_and_inputs(cls, loss, inputs, dataset,
+                              optim_method, session=None, val_outputs=None,
+                              val_labels=None, val_method=None, val_split=0.0,
+                              clip_norm=None, clip_value=None, metrics=None,
+                              tensor_with_value=None, session_config=None,
+                              model_dir=None, updates=None):
+        import tensorflow as tf
+        if session is None:
+            sess = tf.Session()
+            sess.run(tf.global_variables_initializer())
+        else:
+            sess = session
+
+        grads, variables = TFOptimizer._get_vars_grads(loss)
+        graph = loss.graph
+
+        inputs = nest.flatten(inputs)
+
         if clip_value is not None:
             if isinstance(clip_value, float) or isinstance(clip_value, int):
                 if clip_value <= 0:
