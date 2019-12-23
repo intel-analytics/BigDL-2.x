@@ -16,125 +16,240 @@
 
 package com.intel.analytics.zoo.pipeline.api.net
 
-import java.nio.FloatBuffer
-
-import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample}
+import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, AbstractModule, Activity}
 import com.intel.analytics.bigdl.optim._
-import com.intel.analytics.bigdl.utils.Table
-import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image.ImageProcessing
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.{Accuracy, BinaryAccuracy, CategoricalAccuracy, SparseCategoricalAccuracy}
-import org.apache.spark.rdd.RDD
-import org.tensorflow.{Tensor => TTensor}
+import org.slf4j.LoggerFactory
+import org.tensorflow.DataType
 
-import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.reflect.io.Path
 
-private[zoo] class TFTrainingHelper(tfnet: TFNet,
+// variables and gradVariables need to be sorted by name if you want to use multiple
+// optimization methods for a TensorFlow model according to variable names.
+private[zoo] class TFTrainingHelper(graphRunner: GraphRunner,
+                                    checkpointPath: String,
                                     inputs: Array[String],
+                                    inputTypes: Array[Int],
                                     outputs: Array[String],
                                     variables: Array[String],
+                                    variableTypes: Array[Int],
+                                    variableAssignPlaceholders: Array[String],
+                                    assignVariableOp: String,
+                                    extraVariables: Array[String],
+                                    extraVariableTypes: Array[Int],
+                                    extraVariableAssignPlaceholders: Array[String],
+                                    assignExtraVariableOP: String,
                                     gradVariables: Array[String],
+                                    updateOp: String,
                                     defaultTensorValue: Array[Array[Float]])
   extends AbstractModule[Activity, Activity, Float] {
 
   override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
     (weights, gradWeights)
   }
-  private val weights = {
-    val ws = new Array[Tensor[Float]](variables.length)
+
+  override def getExtraParameter(): Array[Tensor[Float]] = {
+    extraParameters
+  }
+
+  private val extraParameters: Array[Tensor[Float]] = initVariables(extraVariables)
+
+  private val weights = initVariables(variables)
+
+  private val weightsMap = {
+    val map = collection.mutable.Map[String, Tensor[Float]]()
+    var i = 0
+    while (i < variables.length) {
+      map(variables(i)) = weights(i)
+      i += 1
+    }
+    map
+  }
+
+  private def initVariables(variableNames: Array[String]): Array[Tensor[Float]] = {
+    val ws = new Array[Tensor[Float]](variableNames.length)
     var i = 0
     while (i < ws.length) {
       ws(i) = Tensor[Float]()
       i += 1
     }
-    setWeights(ws)
+    ws
   }
 
   private val gradWeights = variables.map(_ => Tensor[Float]())
 
-
-  private def setWeights(weights: Array[Tensor[Float]]) = {
-    val sess = tfnet.sess
-    val runner = sess.runner()
-    variables.foreach(runner.fetch)
-    runner.run().asScala.zipWithIndex.map { case (fetch, idx) =>
-      val t = weights(idx)
-      tf2bigdl(fetch.asInstanceOf[TTensor[Float]], t)
-      t
-    }
-    weights
-  }
-
-  private def tf2bigdl(t: TTensor[_], output: Tensor[Float]) = {
-    val shape = t.shape().map(_.toInt)
-    output.resize(shape)
-    val buffer = FloatBuffer.wrap(
-      output.storage().array(),
-      output.storageOffset() - 1,
-      shape.product)
-    t.writeTo(buffer)
-  }
-
-  override def updateOutput(input: Activity): Activity = {
-    val feeds = T()
-    if (input.isTensor) {
-      feeds.insert(input)
-    } else {
-      var i = 0
-      while (i < input.toTable.length()) {
-        feeds.insert(input.toTable(i + 1))
-        i += 1
-      }
-
-    }
-
-    if (this.isTraining()) {
-      var i = 0
-      while (i < defaultTensorValue.length) {
-        feeds.insert(Tensor.scalar[Float](defaultTensorValue(i)(0)))
-        i += 1
-      }
-    } else {
-      var i = 0
-      while (i < defaultTensorValue.length) {
-        feeds.insert(Tensor.scalar[Float](defaultTensorValue(i)(1)))
-        i += 1
-      }
-    }
+  private val graphOutputs = {
+    val graphOuts = Vector.newBuilder[Tensor[Float]]
 
     var i = 0
-    while (i < weights.length) {
-      feeds.insert(weights(i))
+    while (i < outputs.length) {
+      graphOuts += Tensor[Float]()
       i += 1
     }
 
-    val fetches = tfnet.forward(feeds).toTable.toSeq[Tensor[Float]].toArray
-
-    if (isTraining()) {
-      gradWeights.zipWithIndex.foreach { case (grad, idx) =>
-        grad.resizeAs(weights(idx)).add(fetches(idx))
-      }
+    i = 0
+    while (i < gradVariables.length) {
+      graphOuts += Tensor[Float]()
+      i += 1
     }
 
-    val realOutputs = fetches.slice(weights.length, fetches.length)
+    graphOuts.result()
+  }
 
-    output = if (realOutputs.length == 1) {
-      realOutputs.head
+  private val gradWeightsBuffer =
+    graphOutputs.slice(outputs.length, graphOutputs.length)
+
+  output = {
+    if (outputs.length == 1) {
+      graphOutputs(0)
     } else {
-      val result = T()
+      val out = T()
       var i = 0
-      while (i < realOutputs.length) {
-        result.insert(realOutputs(i))
+      while (i < outputs.length) {
+        out.insert(graphOutputs(i))
         i += 1
       }
-      result
+      out
     }
+  }
+
+  override def evaluate(): TFTrainingHelper.this.type = {
+    super.evaluate()
+    setVariableIntoTF(weights, variableAssignPlaceholders,
+      variableTypes.map(NetUtils.tfenum2datatype), assignVariableOp)
+    this
+  }
+
+
+  private def getVariableFromTF(weights: Array[Tensor[Float]],
+                                     variableNames: Array[String]) = {
+    graphRunner.run(
+      input = Vector.empty,
+      inputTypes = Vector.empty,
+      output = weights.toVector,
+      inputNames = Vector.empty,
+      outputNames = variableNames.toVector,
+      targets = Vector.empty)
+  }
+
+  private def setVariableIntoTF(weights: Array[Tensor[Float]],
+                                         inputNames: Array[String],
+                                         variableTypes: Array[DataType],
+                                         assignOp: String) = {
+    graphRunner.run(
+      input = weights.toVector,
+      inputTypes = variableTypes.toVector,
+      output = Vector.empty,
+      inputNames = inputNames.toVector,
+      outputNames = Vector.empty,
+      targets = Vector(assignOp)
+    )
+  }
+
+  def saveCheckpoint(): Unit = {
+    setVariableIntoTF(weights, variableAssignPlaceholders,
+      variableTypes.map(NetUtils.tfenum2datatype), assignVariableOp)
+    setVariableIntoTF(extraParameters, extraVariableAssignPlaceholders,
+      extraVariableTypes.map(NetUtils.tfenum2datatype), assignExtraVariableOP)
+    graphRunner.saveToFile(checkpointPath)
+  }
+
+  @transient
+  private var extraParameterRestored: Boolean = false
+
+  def restoreFromCheckpoint(): Unit = {
+    graphRunner.restoreFromFile(checkpointPath)
+    if (weights.length > 0) {
+      getVariableFromTF(weights, variableNames = variables)
+    }
+
+    if (extraParameters.length > 0) {
+      getVariableFromTF(extraParameters, variableNames = extraVariables)
+    }
+
+    extraParameterRestored = true
+
+  }
+
+  override def apply(name: String): Option[AbstractModule[Activity, Activity, Float]] = {
+    val targetVariables = if (name == getName()) variables else variables.filter(_.startsWith(name))
+    if (targetVariables == null) {
+      None
+    }
+    else {
+      val targetWeights = targetVariables.map(weightsMap)
+      Some(new TFSubGraph(targetWeights))
+    }
+  }
+
+  override def updateOutput(input: Activity): Activity = {
+    NetUtils.timeIt("updateOutput", TFTrainingHelper.logger) {
+      if (this.isTraining()) {
+        NetUtils.timeIt("setTrainingVariableIntoTF", TFTrainingHelper.logger) {
+          setVariableIntoTF(weights, variableAssignPlaceholders,
+            variableTypes.map(NetUtils.tfenum2datatype), assignVariableOp)
+        }
+      }
+
+      if (!extraParameterRestored) {
+        setVariableIntoTF(extraParameters, extraVariableAssignPlaceholders,
+          extraVariableTypes.map(NetUtils.tfenum2datatype), assignExtraVariableOP)
+        extraParameterRestored = true
+      }
+
+      val feeds = NetUtils.activity2VectorBuilder(input)
+
+      if (this.isTraining()) {
+        var i = 0
+        while (i < defaultTensorValue.length) {
+          feeds += Tensor.scalar[Float](defaultTensorValue(i)(0))
+          i += 1
+        }
+      } else {
+        var i = 0
+        while (i < defaultTensorValue.length) {
+          feeds += Tensor.scalar[Float](defaultTensorValue(i)(1))
+          i += 1
+        }
+      }
+
+      val types = inputTypes.toVector.map(NetUtils.tfenum2datatype)
+
+      val (outputNames, outputTensors) = if (isTraining()) {
+        (outputs.toVector ++ gradVariables.toVector, graphOutputs)
+      } else {
+        (outputs.toVector, graphOutputs.slice(0, outputs.length))
+      }
+
+      graphRunner.run(
+        input = feeds.result(),
+        inputTypes = types,
+        output = outputTensors,
+        inputNames = inputs.toVector,
+        outputNames = outputNames,
+        targets = Vector(updateOp))
+
+
+      if (extraParameters.length > 0) {
+        NetUtils.timeIt("getExtraVariableFromTF", TFTrainingHelper.logger) {
+          getVariableFromTF(extraParameters, variableNames = extraVariables)
+        }
+      }
+
+      if (isTraining()) {
+        gradWeights.zipWithIndex.foreach { case (grad, idx) =>
+          grad.resizeAs(weights(idx)).add(gradWeightsBuffer(idx))
+        }
+      }
+    }
+
     output
   }
 
@@ -145,11 +260,14 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
 
 object TFTrainingHelper {
 
+  val logger = LoggerFactory.getLogger(getClass)
+
   def apply(modelPath: String, sessionConfig: Array[Byte] = null): TFTrainingHelper = {
-    val (model, meta) = NetUtils.processTFFolder(modelPath)
 
     val folderPath = Path(modelPath)
     val trainingMetaPath = folderPath / Path("training_meta.json")
+    val graphDefPath = folderPath / Path("model.meta")
+    val checkpointPath = folderPath / Path("model")
 
     val jsonStr = Source.fromFile(trainingMetaPath.jfile).getLines().mkString
     import org.json4s._
@@ -158,27 +276,87 @@ object TFTrainingHelper {
 
     val trainingMeta = parse(jsonStr).camelizeKeys.extract[TrainMeta]
 
-    val newMeta = Meta(
-      (meta.inputNames.toSeq ++:
-        trainingMeta.variables.toSeq).toArray,
-      meta.outputNames)
-    val graphDef = TFNet.parseGraph(model)
+    val graphDef = TFNet.parseGraph(graphDefPath.toString())
     val config = if (sessionConfig != null) {
       sessionConfig
     } else {
       TFNet.defaultSessionConfig.toByteArray()
     }
-    val tfnet = TFNet(graphDef, model, newMeta, config)
-    tfnet.evaluate()
 
+    val graphRunner = new GraphRunner(
+      graphDef.toByteArray,
+      trainingMeta.restoreOp,
+      trainingMeta.restorePathPlaceholder,
+      trainingMeta.saveOp,
+      trainingMeta.savePathPlaceholder,
+      config)
 
-    new TFTrainingHelper(tfnet,
-      trainingMeta.inputNames,
-      trainingMeta.outputNames,
+    val helper = new TFTrainingHelper(graphRunner,
+      checkpointPath.toString(),
+      trainingMeta.inputs,
+      trainingMeta.inputTypes,
+      trainingMeta.metricTensors ++ Array(trainingMeta.batchSizeTensor, trainingMeta.lossTensor),
       trainingMeta.variables,
+      trainingMeta.variableTypes,
+      trainingMeta.variableAssignPlaceholders,
+      trainingMeta.assignVariableOp,
+      trainingMeta.extraVariables,
+      trainingMeta.extraVariableTypes,
+      trainingMeta.extraVariableAssignPlaceholders,
+      trainingMeta.assignExtraVariableOp,
       trainingMeta.gradVariables,
-      trainingMeta.defaultTensorValues
+      trainingMeta.updateOp,
+      trainingMeta.defaultTensorValue
     )
+    helper.restoreFromCheckpoint()
+    helper
+  }
+}
+
+case class TrainMeta(inputs: Array[String],
+                     inputTypes: Array[Int],
+                     metricTensors: Array[String],
+                     batchSizeTensor: String,
+                     lossTensor: String,
+                     variables: Array[String],
+                     variableTypes: Array[Int],
+                     variableAssignPlaceholders: Array[String],
+                     assignVariableOp: String,
+                     extraVariables: Array[String],
+                     extraVariableTypes: Array[Int],
+                     extraVariableAssignPlaceholders: Array[String],
+                     assignExtraVariableOp: String,
+                     gradVariables: Array[String],
+                     restoreOp: String,
+                     restorePathPlaceholder: String,
+                     saveOp: String,
+                     savePathPlaceholder: String,
+                     updateOp: String,
+                     defaultTensorValue: Array[Array[Float]])
+
+
+/**
+ * TFSubGraph will only be used in DistriOptimizer for the purpose of training a TensorFlow
+ * model using multiple optimization methods based on variable names.
+ * Applying a TFTrainingHelper layer by name will get a corresponding instance of TFSubGraph.
+ *
+ * In DistriOptimizer.optimize(), TFSubGraph will only be used to get the sizes and offsets of
+ * each weight portion, slice on the original weights and gradients and apply the optimization
+ * method accordingly.
+ * The gradients of TFSubGraph will never be used and thus a dummy Tensor is put as a placeholder.
+ */
+private class TFSubGraph(
+    weights: Array[Tensor[Float]]) extends AbstractModule[Activity, Activity, Float] {
+  override def updateOutput(input: Activity): Activity = {
+    input
+  }
+
+  override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
+    gradInput
+  }
+
+  override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
+    (weights, weights.map(_ => Tensor[Float]()))
   }
 }
 
@@ -316,29 +494,3 @@ class MergeFeatureLabelFeatureTransformer() extends Preprocessing[Any, Any] {
     }
   }
 }
-
-case class TrainMeta(inputNames: Array[String], outputNames: Array[String],
-                     variables: Array[String], gradVariables: Array[String],
-                     defaultTensorValues: Array[Array[Float]])
-
-
-class TFOptimizer(modelPath: String,
-                  optimMethod: OptimMethod[Float],
-                  x: RDD[Sample[Float]],
-                  batchSize: Int = 32) {
-  private val trainer: TFTrainingHelper = TFTrainingHelper(modelPath)
-  private val optimizer: Optimizer[Float, MiniBatch[Float]] = {
-    val optimizer = Optimizer[Float](trainer, x, new IdentityCriterion(), batchSize)
-
-    optimizer.setOptimMethod(optimMethod)
-    optimizer
-  }
-
-  def optimize(endTrigger: Trigger = Trigger.maxEpoch(1)): Array[Tensor[Float]] = {
-    optimizer.setEndWhen(endTrigger)
-    optimizer.optimize()
-    trainer.parameters()._1
-  }
-}
-
-
