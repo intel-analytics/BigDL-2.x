@@ -20,6 +20,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.Utils
+import com.intel.analytics.zoo.core.TFNetNative
 import org.slf4j.LoggerFactory
 import org.tensorflow.DataType
 import org.tensorflow.framework.GraphDef
@@ -254,6 +255,8 @@ private[zoo] class TFTrainingHelper private (graphRunner: GraphRunner,
 }
 
 object TFTrainingHelper {
+
+  assert(TFNetNative.isLoaded)
 
   val logger = LoggerFactory.getLogger(getClass)
 
