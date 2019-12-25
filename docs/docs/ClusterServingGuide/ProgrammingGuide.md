@@ -13,7 +13,11 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
    
    3. [Conduct Inference]()
 
-* [Logs and Visualization]()
+* [Optional Operations]()
+
+     [Logs and Visualization]()
+
+     [Manually Start and Stop Serving]()
 
 ## Quick Start
 
@@ -44,7 +48,7 @@ For more details, you could also see the log and performance by go to `localhost
 
 ## Build your Own Cluster Serving
 
-## Configuration
+## Prepare (modify configuration)
 ### Locate Config File
 You may have different approaches to access configuration file of Cluster Serving according to the way you run it. Before you run Cluster Serving, you have to find your config file first according to the instructions below and modify it to what your need.
 Your Cluster Serving configuration can all be set in `config.yaml`.
@@ -84,9 +88,7 @@ spark:
 #### Docker User
 For Docker user, the `config.yaml` is in `analytics-zoo/docker/cluster-serving/config.yaml`
 
-
 ### Model configuration
-
 #### Model Supported
 Currently Analytics Zoo Cluster Serving supports models: Tensorflow, Caffe, Pytorch, BigDL, OpenVINO.
 
@@ -149,25 +151,14 @@ If you run Cluster Serving with docker, put your model file into `model` directo
 * total_executor_cores: parameter ` total-executor-cores` in spark
 
 For more details of these config, please refer to [Spark Official Document](https://spark.apache.org/docs/latest/configuration.html)
+## Launch Cluster Serving
+You can use following one line command to start Cluster Serving.
+```
+docker run -itd --name cluster-serving --net=host -v $(pwd)/model:/opt/work/model -v $(pwd)/config.yaml:/opt/work/config.yaml analytics-zoo/cluster-serving:0.7.0-spark_2.4.3
+```
 
-## Start and Stop Serving
-
-In some cases, you may need to keep your data in queue and control the serving at the same time. Thus, we provide following scripts to start, stop, restart Cluster Serving. 
-### Start
-Once you run docker image of Cluster Serving, the serving is automatically started. However, if you have stopped serving, you could start it by `bash start-cluster-serving.sh`.
-
-### Stop
-To stop Cluster Serving for soeme purpose, e.g. save compute resources and keep your data, your could run `bash stop-cluster-serving.sh`
-
-### Restart
-In the case that Cluster Serving encounters some unknown error, you could restart serving by
-`bash restart-cluster-serving.sh`
-
-## Update Model
-To update your model, you could replace your model file in your model directory, and restart Cluster Serving by `bash restart-cluster-serving.sh`. Note that you could also change your config in `config.yaml` and restart serving.
-
-## Data Pipeline I/O
-We support Python API for Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide]().
+## Conduct Inference
+We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide]().
 ### Input API
 To input data to queue, you need a `InputQueue` instance, and using `enqueue` method by giving an image path or image ndarray. See following example.
 ```
@@ -183,6 +174,23 @@ output_api = OutputQueue()
 img1_result = output_api.query('img1')
 all_result = output_api.dequeue() # the output queue is empty after this code
 ```
+
+
+# Optional Operations
+## Manually Start and Stop Serving
+Once you run docker image of Cluster Serving, the serving is automatically started. However, in some cases, you may need to keep your data in queue and manually start or stop the serving to release hardware resources or update model. Thus, we provide following scripts to start, stop, restart Cluster Serving. 
+### Start
+If you have stopped serving, you could start it by `bash start-cluster-serving.sh`.
+
+### Stop
+To stop Cluster Serving for some purpose, e.g. save compute resources and keep your data, your could run `bash stop-cluster-serving.sh`
+
+### Restart
+In the case that Cluster Serving encounters some unknown error, you could restart serving by
+`bash restart-cluster-serving.sh`
+
+## Update Model
+To update your model, you could replace your model file in your model directory, and restart Cluster Serving by `bash restart-cluster-serving.sh`. Note that you could also change your config in `config.yaml` and restart serving.
 
 ## Logs and Visualization
 
