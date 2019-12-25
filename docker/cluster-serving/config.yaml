@@ -10,19 +10,19 @@ data:
   image_shape:
 params:
   # default, 4
-  batch_size: 64  
+  batch_size:
   # default, 1
-  top_n: 5
+  top_n:
 spark:
   # default, local[*]
-  master: local[*]
+  master:
   # default, 4g
   driver_memory: 16g
   # default, 1g
   executor_memory: 128g
   # default, 1
-  num_executors: 8
+  num_executors:
   # default, 4
-  executor_cores: 1
+  executor_cores:
   # default, 4
-  total_executor_cores: 8
+  total_executor_cores:

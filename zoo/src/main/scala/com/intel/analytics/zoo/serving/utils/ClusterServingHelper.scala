@@ -82,7 +82,7 @@ class ClusterServingHelper {
   var logSummaryFlag: Boolean = false
 
   /**
-   * model relative
+   * model related
    */
   var modelType: String = null
   var weightPath: String = null
