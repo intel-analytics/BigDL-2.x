@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # check if started
 if [ -f "running" ]; then
     echo "Serving is already running!"
