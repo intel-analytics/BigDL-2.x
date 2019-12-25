@@ -1,21 +1,32 @@
 # Programming Guide
-Analytics Zoo Cluster Serving is a multi-model supporting and highly scalable service for model inference based on Analytics Zoo. It implements Pub-sub schema via integrating Analytics Zoo with data pipeline platform (e.g. Redis), task scheduling platform (e.g. Spark), where you can push data to the queue and get result from the queue.
-
-Currently the data pipeline platforms we support include: Redis
+Analytics Zoo Cluster Serving is a lightweight distributed, real-time serving solution that supports a wide range of deep learning models (such as TensorFlow, PyTorch, Caffe, BigDL and OpenVINO models). It provides a simple pub/sub API, so that the users can easily send their inference requests to the input queue (using a simple Python API); Cluster Serving will then automatically manage the scale-out and real-time model inference across a large cluster (using distributed streaming frameworks such as Apache Spark Streaming, Apache Flink, etc.) 
 
 This page contains the guide for you to run Analytics Zoo Cluster Serving, including following:
 
 * [Quick Start]()
-* [Configuration]()
-* [Start and Stop Serving]()
-* [Data Pipeline I/O]()
+
+* [Build Your Own Cluster Serving]()
+
+   1. [Prepare (modify configuration)]() 
+   
+   2. [Launch Cluster Serving]()
+   
+   3. [Conduct Inference]()
+
 * [Logs and Visualization]()
 
 ## Quick Start
 
 This section provides a quick start example for you to run Analytics Zoo Cluster Serving. To simplify the examples, we use docker to run Cluster Serving in these examples. If you do not have docker installed, [install docker]() first.
 
-Clone Analytics Zoo Repo to your local repository and go to `analytics-zoo/docker/cluster-serving/`. Download the model [here]() and copy the files in your `model` directory, then use one command to start Cluster Serving.
+Clone Analytics Zoo Repo to your local repository and go to `analytics-zoo/docker/cluster-serving/`. Download the model [here]() and copy the files to your `model` directory. Your directory content should be:
+```
+cluster-serving | 
+               -- |model
+                 -- xx.caffemodel
+                 -- xx.prototxt
+```
+Then use one command to start Cluster Serving.
 ```
 docker run -itd --name cluster-serving --net=host -v $(pwd)/model:/opt/work/model -v $(pwd)/config.yaml:/opt/work/config.yaml analytics-zoo/cluster-serving:0.7.0-spark_2.4.3
 ```
@@ -31,9 +42,11 @@ Wow! You made it!
 
 For more details, you could also see the log and performance by go to `localhost:6006` in your browser and refer to [Log and Visualization](), or view the source code of `quick_start.py` [here](), or refer to [API Guide]().
 
+## Build your Own Cluster Serving
 
 ## Configuration
-
+### Locate Config File
+You may have different approaches to access configuration file of Cluster Serving according to the way you run it. Before you run Cluster Serving, you have to find your config file first according to the instructions below and modify it to what your need.
 Your Cluster Serving configuration can all be set in `config.yaml`.
 
 See an example of `config.yaml` below
@@ -53,13 +66,6 @@ params:
   batch_size: 64
   # default, 1
   top_n: 5  
-  # default, mklblas
-  engine_type:
-log: 
-  # default, y
-  error:
-  # default, n
-  summary: y
 spark:
   # default, local[*]
   master: local[*]
@@ -74,8 +80,7 @@ spark:
   # default, 4
   total_executor_cores: 8
 ```
-### Find Config File
-You may have different approaches to access configuration file of Cluster Serving according to the way you run it. Before you run Cluster Serving, you have to find your config file first according to the instructions below and modify it to what your need.
+
 #### Docker User
 For Docker user, the `config.yaml` is in `analytics-zoo/docker/cluster-serving/config.yaml`
 
@@ -85,7 +90,7 @@ For Docker user, the `config.yaml` is in `analytics-zoo/docker/cluster-serving/c
 #### Model Supported
 Currently Analytics Zoo Cluster Serving supports models: Tensorflow, Caffe, Pytorch, BigDL, OpenVINO.
 
-You need to put your model file into a directory and the directory could have layout like following according to model type
+You need to put your model file into a directory and the directory could have layout like following according to model type, note that only one model is allowed in your directory.
 
 **Tensorflow**
 
@@ -134,10 +139,6 @@ If you run Cluster Serving with docker, put your model file into `model` directo
 ### Inference Parameter Configuration
 * batch_size: the batch size you use for model inference, we recommend this value to be not small than 4 and not larger than 512, as batch size increases, you may get some gain in throughput and multiple times slow down in latency (inference time per batch).
 * top_n: the top-N result you want for output, **note:** if the top-N number is larger than model output size of the the final layer, it would just return all the outputs.
-
-### Log Configuration
-* error: whether to write error to log file, "y" for yes, otherwise no
-* summary: whether to write Cluster Serving summary to Tensorborad, "y" for yes, otherwise no
 
 ### Spark Configuration
 * master: parameter `master` in spark
