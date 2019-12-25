@@ -58,7 +58,7 @@ object TextClassificationStreaming {
     println("################" + model.doPredict(inputs))
 
     val textStream: DataStream[String] = if(inputFile.eq("./")) env.socketTextStream(hostname, port, '\n')
-    else env.readTextFile(inputFile)//.timeWindow(Time.seconds(5))
+    else env.readTextFile(inputFile)
 
     textStream.map(text => {
       val inputTensor: JTensor = model.preprocess(text)
