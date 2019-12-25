@@ -10,13 +10,12 @@ The class `Input` defines methods allowing you to input data into Cluster Servin
 [view source]()
 
 ```
-__init__(config_path)
+__init__()
 ```
-sets up a connection with configuration in `config_path`
+sets up a connection with configuration in your Cluster Serving [configuration file]() `config.yaml`.
 
 _return_: None
 
-`config_path`: the file path of your Cluster Serving [configuration file]() `config.yaml`.
 #### enqueue_image
 [view source]()
 
@@ -46,11 +45,9 @@ The class `Output` defines methods allowing you to get result from Cluster Servi
 [view source]()
 
 ```
-__init__(config_path)
+__init__()
 ```
-sets up a connection with configuration in `config_path`
-
-`config_path`: the file path of your Cluster Serving [configuration file]() `config.yaml`.
+sets up a connection with configuration in your Cluster Serving [configuration file]() `config.yaml`.
 #### query
 [view source]()
 
@@ -74,7 +71,7 @@ json.loads(d)
 [view source]()
 
 ```
-get_result()
+dequeue()
 ```
 gets all result of your model prediction and dequeue them from Pipeline
 
