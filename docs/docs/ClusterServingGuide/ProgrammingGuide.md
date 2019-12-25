@@ -17,7 +17,7 @@ This section provides a quick start example for you to run Analytics Zoo Cluster
 
 Clone Analytics Zoo Repo to your local repository and go to `analytics-zoo/docker/cluster-serving/`. Download the model [here]() and copy the files in your `model` directory, then use one command to start Cluster Serving.
 ```
-docker run
+docker run -itd --name cluster-serving --net=host -v $(pwd)/model:/opt/work/model -v $(pwd)/config.yaml:/opt/work/config.yaml analytics-zoo/cluster-serving:0.7.0-spark_2.4.3
 ```
 Go to `analytics-zoo/pyzoo/zoo/serving/`, and run python program to push data into queue. Note that you need `pip install opencv-python` if they do not exist in your Python environment.
 
@@ -153,17 +153,17 @@ For more details of these config, please refer to [Spark Official Document](http
 
 In some cases, you may need to keep your data in queue and control the serving at the same time. Thus, we provide following scripts to start, stop, restart Cluster Serving. 
 ### Start
-
 Once you run docker image of Cluster Serving, the serving is automatically started. However, if you have stopped serving, you could start it by `bash start-cluster-serving.sh`.
 
 ### Stop
-
 To stop Cluster Serving for soeme purpose, e.g. save compute resources and keep your data, your could run `bash stop-cluster-serving.sh`
 
 ### Restart
-
 In the case that Cluster Serving encounters some unknown error, you could restart serving by
-`restart-cluster-serving.sh`
+`bash restart-cluster-serving.sh`
+
+## Update Model
+To update your model, you could replace your model file in your model directory, and restart Cluster Serving by `bash restart-cluster-serving.sh`. Note that you could also change your config in `config.yaml` and restart serving.
 
 ## Data Pipeline I/O
 We support Python API for Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide]().
@@ -187,17 +187,9 @@ all_result = output_api.dequeue() # the output queue is empty after this code
 
 ### Logs
 
-We use log to save serving information and error.
+We use log to save Cluster Serving information and error.
 
-To see your log, run 
-
-**Serving Logs**
-
-`bash cluster-serving-log.sh`
-
-**Redis Logs**
-
-`bash redis-log.sh`
+To see log, run `bash cluster-serving-log.sh`.
 
 ### Visualization
 
