@@ -35,8 +35,8 @@ _Example_
 from zoo.serving.client.helpers import Input
 import cv2
 input_api = Input()
-img = cv2.imread(/path/to/image)
-input_api.enqueue_image("my-image", img)
+img = cv2.imread('/path/to/image')
+input_api.enqueue_image('my-image', img)
 ```
 
 ### Output
@@ -63,7 +63,7 @@ _Example_
 from zoo.serving.client.helpers import Output
 import json
 output_api = Output()
-d = output_api.query("my-image") 
+d = output_api.query('my-image') 
 json.loads(d)
 ```
 
