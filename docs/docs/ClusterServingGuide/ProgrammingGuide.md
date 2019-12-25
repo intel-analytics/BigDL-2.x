@@ -48,8 +48,8 @@ For more details, you could also see the log and performance by go to `localhost
 
 ## Build your Own Cluster Serving
 
-## Prepare (modify configuration)
-### Locate Config File
+### Prepare (modify configuration)
+#### Locate Config File
 You may have different approaches to access configuration file of Cluster Serving according to the way you run it. Before you run Cluster Serving, you have to find your config file first according to the instructions below and modify it to what your need.
 Your Cluster Serving configuration can all be set in `config.yaml`.
 
@@ -85,11 +85,11 @@ spark:
   total_executor_cores: 8
 ```
 
-#### Docker User
+##### Docker User
 For Docker user, the `config.yaml` is in `analytics-zoo/docker/cluster-serving/config.yaml`
 
-### Model configuration
-#### Model Supported
+#### Model configuration
+##### Model Supported
 Currently Analytics Zoo Cluster Serving supports models: Tensorflow, Caffe, Pytorch, BigDL, OpenVINO.
 
 You need to put your model file into a directory and the directory could have layout like following according to model type, note that only one model is allowed in your directory.
@@ -131,18 +131,18 @@ You need to put your model file into a directory and the directory could have la
    |-- xx.bin
 ```
 
-#### Docker User
+##### Docker User
 If you run Cluster Serving with docker, put your model file into `model` directory. You do not need to set `model:path` in `config.yaml` because a default model location is set in docker image.
 
-### Input Data Configuration
+#### Input Data Configuration
 * src: the queue you subscribe for your input data, e.g. a default config of Redis on local machine is `localhost:6379`.
 * shape: the shape of your input data, e.g. a default config for pretrained imagenet is `3,224,224`.
 
-### Inference Parameter Configuration
+#### Inference Parameter Configuration
 * batch_size: the batch size you use for model inference, we recommend this value to be not small than 4 and not larger than 512, as batch size increases, you may get some gain in throughput and multiple times slow down in latency (inference time per batch).
 * top_n: the top-N result you want for output, **note:** if the top-N number is larger than model output size of the the final layer, it would just return all the outputs.
 
-### Spark Configuration
+#### Spark Configuration
 * master: parameter `master` in spark
 * driver_memory: parameter `driver-memory` in spark
 * executor_memory: parameter `executor-memory` in spark
@@ -176,31 +176,31 @@ all_result = output_api.dequeue() # the output queue is empty after this code
 ```
 
 
-# Optional Operations
-## Manually Start and Stop Serving
+## Optional Operations
+### Manually Start and Stop Serving
 Once you run docker image of Cluster Serving, the serving is automatically started. However, in some cases, you may need to keep your data in queue and manually start or stop the serving to release hardware resources or update model. Thus, we provide following scripts to start, stop, restart Cluster Serving. 
-### Start
+#### Start
 If you have stopped serving, you could start it by `bash start-cluster-serving.sh`.
 
-### Stop
+#### Stop
 To stop Cluster Serving for some purpose, e.g. save compute resources and keep your data, your could run `bash stop-cluster-serving.sh`
 
-### Restart
+#### Restart
 In the case that Cluster Serving encounters some unknown error, you could restart serving by
 `bash restart-cluster-serving.sh`
 
-## Update Model
+### Update Model
 To update your model, you could replace your model file in your model directory, and restart Cluster Serving by `bash restart-cluster-serving.sh`. Note that you could also change your config in `config.yaml` and restart serving.
 
-## Logs and Visualization
+### Logs and Visualization
 
-### Logs
+#### Logs
 
 We use log to save Cluster Serving information and error.
 
 To see log, run `bash cluster-serving-log.sh`.
 
-### Visualization
+#### Visualization
 
 We integrate Tensorboard into Cluster Serving. 
 
