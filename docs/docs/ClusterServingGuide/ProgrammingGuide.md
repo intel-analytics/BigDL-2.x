@@ -46,6 +46,8 @@ image: dog1.jpeg, classification-result: class: 207's prob: 0.9226527
 ```
 Wow! You made it!
 
+Note that you are using default configuration to run Cluster Serving, which is in local mode. To run in cluster mode, you could modify the configuration, see [Configuration Guide]() below.
+
 For more details, you could also see the log and performance by go to `localhost:6006` in your browser and refer to [Log and Visualization](), or view the source code of `quick_start.py` [here](), or refer to [API Guide]().
 
 ## Build your Own Cluster Serving
@@ -73,7 +75,7 @@ params:
   # default, 1
   top_n: 5  
 spark:
-  # default, local[*]
+  # default, local[*], change this to spark://, yarn, etc if you want to run on cluster
   master: local[*]
   # default, 4g
   driver_memory: 32g
@@ -200,7 +202,7 @@ To update your model, you could replace your model file in your model directory,
 
 We use log to save Cluster Serving information and error.
 
-To see log, run `bash cluster-serving-log.sh`.
+To see log, for docker user, run `docker logs cluster-serving`, otherwise, you could redirect your stdout to a file.
 
 #### Visualization
 
