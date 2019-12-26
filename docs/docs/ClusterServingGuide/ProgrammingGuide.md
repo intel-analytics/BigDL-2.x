@@ -53,13 +53,11 @@ For more details, you could also see the log and performance by go to `localhost
 ## Build your Own Cluster Serving
 
 ### Prepare (modify configuration)
-#### Locate Config File
-You may have different approaches to access configuration file of Cluster Serving according to the way you run it. Before you run Cluster Serving, you have to find your config file first according to the instructions below and modify it to what your need.
-Your Cluster Serving configuration can all be set in `config.yaml`.
+The Configuration file is `analytics-zoo/docker/cluster-serving/config.yaml`. Your Cluster Serving configuration can all be set by modifying this file.
 
 See an example of `config.yaml` below
 ```
-## Analytics-zoo Cluster Serving
+## Analytics Zoo Cluster Serving Config Example
 
 model:
   # model path must be set
@@ -68,7 +66,7 @@ data:
   # default, localhost:6379
   src:
   # default, 3,224,224
-  shape:
+  image_shape:
 params:
   # default, 4
   batch_size: 64
@@ -88,9 +86,6 @@ spark:
   # default, 4
   total_executor_cores: 8
 ```
-
-##### Docker User
-For Docker user, the `config.yaml` is in `analytics-zoo/docker/cluster-serving/config.yaml`
 
 #### Model configuration
 ##### Model Supported
@@ -137,6 +132,8 @@ You need to put your model file into a directory and the directory could have la
 
 ##### Docker User
 If you run Cluster Serving with docker, put your model file into `model` directory. You do not need to set `model:path` in `config.yaml` because a default model location is set in docker image.
+##### DIY
+For DIY user, you could put the model in your local directory, and set `model:/path/to/dir`.
 
 #### Input Data Configuration
 * src: the queue you subscribe for your input data, e.g. a default config of Redis on local machine is `localhost:6379`.
@@ -156,21 +153,31 @@ If you run Cluster Serving with docker, put your model file into `model` directo
 
 For more details of these config, please refer to [Spark Official Document](https://spark.apache.org/docs/latest/configuration.html)
 ## Launch Cluster Serving
-You can use following one line command to start Cluster Serving.
+### Docker
+For docker user, you can use following one line command to start Cluster Serving.
 ```
-docker run -itd --name cluster-serving --net=host -v $(pwd)/model:/opt/work/model -v $(pwd)/config.yaml:/opt/work/config.yaml analytics-zoo/cluster-serving:0.7.0-spark_2.4.3
+docker run -itd --name cluster-serving --net=host -v $(pwd)/model/:/opt/work/model/ -v $(pwd)/config.yaml:/opt/work/config.yaml analytics-zoo/cluster-serving:0.7.0-spark_2.4.3
 ```
+### DIY
+For DIY user, you need to install and start your a Redis server.
+
+Download the spark-redis dependency jar [here]().
+
+Go to `analytics-zoo/docker/cluster-serving/`, move two dependency jars to this directory. One is `analytics-zoo/dist/lib/*.jar` and another is the spark-redis jar which you download above.
+
+Then, `bash start-cluster-serving.sh`.
+
+If you want to visualize the inference summary, you also need to install Tensorboard.
 
 ## Conduct Inference
 We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide]().
-### Input API
+### Input and Output API
 To input data to queue, you need a `InputQueue` instance, and using `enqueue` method by giving an image path or image ndarray. See following example.
 ```
 from zoo.serving.client import InputQueue
 input_api = InputQueue()
 input_api.enqueue_image('path/to/image')
 ```
-### Output API
 To get data from queue, you need a `OutputQueue` instance, and using `query` or `dequeue` method. `query` method takes image uri as parameter and return the corresponding result, `dequeue` takes no parameter and just return all results and also delete them in data queue. See following example.
 ```
 from zoo.serving.client import OutputQueue
@@ -178,7 +185,29 @@ output_api = OutputQueue()
 img1_result = output_api.query('img1')
 all_result = output_api.dequeue() # the output queue is empty after this code
 ```
+### Output Format
+Consider the code above, in [Input and Output API] Section.
+```
+img1_result = output_api.query('img1')
+```
+The `img1_result` is a json format string, like following:
+```
+'{"class_1":"prob_1","class_2":"prob_2",...,"class_n","prob_n"}'
+```
+Where `n` is the number of `top_n` in your configuration file. Taking the example of quick start above, an output string of `top_n: 1` could be:
+```
+'{"1":"0.9974158"}'
+```
+which means: (The code to parse the json string to below could be viewed in [Quick Start]())
+```
+image: fish1.jpeg, classification-result: class: 1's prob: 0.9974158
+```
 
+This string could be parsed by `json.loads`.
+```
+import json
+result_class_prob_map = json.loads(img1_result)
+```
 
 ## Optional Operations
 ### Manually Start and Stop Serving
@@ -202,7 +231,7 @@ To update your model, you could replace your model file in your model directory,
 
 We use log to save Cluster Serving information and error.
 
-To see log, for docker user, run `docker logs cluster-serving`, otherwise, you could redirect your stdout to a file.
+To see log, for docker user, run `docker logs cluster-serving`, otherwise, you could view it through stdout.
 
 #### Visualization
 
