@@ -30,6 +30,31 @@ from zoo.ray.util.raycontext import RayContext
 from zoo.ray.mxnet import MXNetTrainer
 
 
+class DummyIter(mx.io.DataIter):
+    def __init__(self, batch_size, data_shape, batches=50):
+        super(DummyIter, self).__init__(batch_size)
+        self.data_shape = (batch_size,) + data_shape
+        self.label_shape = (batch_size,)
+        self.provide_data = [('data', self.data_shape)]
+        self.provide_label = [('softmax_label', self.label_shape)]
+        self.batch = mx.io.DataBatch(data=[mx.nd.zeros(self.data_shape)],
+                                     label=[mx.nd.zeros(self.label_shape)])
+        self._batches = 0
+        self.batches = batches
+
+    def next(self):
+        if self._batches < self.batches:
+            self._batches += 1
+            return self.batch
+        else:
+            self._batches = 0
+            raise StopIteration
+
+
+def dummy_iterator(batch_size, data_shape):
+    return DummyIter(batch_size, data_shape), DummyIter(batch_size, data_shape)
+
+
 def get_cifar10_iterator(batch_size, data_shape, resize=-1, num_parts=1, part_index=0):
     get_cifar10()
 
@@ -60,9 +85,14 @@ def get_cifar10_iterator(batch_size, data_shape, resize=-1, num_parts=1, part_in
 
 def get_data_iters(config, kv):
     """get dataset iterators"""
-    train_data, val_data = get_cifar10_iterator(config["batch_size"], (3, 32, 32),
-                                                num_parts=kv.num_workers, part_index=kv.rank)
-    return train_data, val_data
+    if config["dataset"] == "cifar10":
+        return get_cifar10_iterator(config["batch_size"], (3, 32, 32),
+                                    num_parts=kv.num_workers, part_index=kv.rank)
+    elif config["dataset"] == "dummy":
+        shape_dim = 299 if config["model"] == 'inceptionv3' else 224
+        return dummy_iterator(config["batch_size"], (3, shape_dim, shape_dim))
+    else:
+        raise ValueError("Unsupported dataset")
 
 
 def get_model(config):
@@ -98,6 +128,7 @@ def get_metrics(config):
 def create_config(args):
     config = {
         "model": args.model,
+        "dataset": args.dataset,
         "num_workers": args.num_workers,
         "kvstore": args.kvstore,
         "batch_size": args.batch_size,
@@ -128,6 +159,8 @@ if __name__ == '__main__':
                         in default it is equal to NUM_WORKERS')
     parser.add_argument('--model', type=str, required=True,
                         help='type of model to use. see vision_model for options.')
+    parser.add_argument('--dataset', type=str, default='cifar10',
+                        help='dataset to use. options are cifar10 and dummy.')
     parser.add_argument('--use_thumbnail', action='store_true',
                         help='use thumbnail or not in resnet. default is false.')
     parser.add_argument('--batch-norm', action='store_true',
@@ -153,14 +186,15 @@ if __name__ == '__main__':
     # ray.init()
 
     # sc = init_spark_on_local(cores=32)
+    num_executors = 2 * opt.num_workers if not opt.num_servers else opt.num_workers + opt.num_servers
     sc = init_spark_on_yarn(
         hadoop_conf="/opt/work/hadoop-2.7.2/etc/hadoop",
         conda_name="mxnet",
-        # 1 executor for ray head node.
-        # Each executor is placed on one node. Each raylet is started by an executor.
-        # Each MXNetRunner will run on one raylet, namely one node.
-        num_executor=2*opt.num_workers+1,
-        executor_cores=44,
+        # 1 executor for ray head node. The remaining executors for raylets.
+        # Each executor is given enough cores to be placed on one node.
+        # Each MXNetRunner will run in one executor, namely one node.
+        num_executor=num_executors,
+        executor_cores=28,
         executor_memory="10g",
         driver_memory="2g",
         driver_cores=16,
@@ -169,12 +203,13 @@ if __name__ == '__main__':
                          object_store_memory="10g",
                          env={"http_proxy": "10.239.4.101:913",
                               "https_proxy": "10.239.4.101:913",
-                              "OMP_NUM_THREADS": "44",
-                              "KMP_AFFINITY": "granularity=fine,compact,1,0"})
+                              "OMP_NUM_THREADS": "28",
+                              "KMP_AFFINITY": "granularity=fine,compact,1,0",
+                              "MXNET_SUBGRAPH_BACKEND": "MKLDNN"})
     ray_ctx.init(object_store_memory="10g")
 
     config = create_config(opt)
-    trainer = MXNetTrainer(get_data_iters, get_model, get_loss, get_metrics, config, worker_cpus=44)
+    trainer = MXNetTrainer(get_data_iters, get_model, get_loss, get_metrics, config, worker_cpus=28)
     for epoch in range(opt.epochs):
         train_stats = trainer.train()
         val_stats = trainer.validate()
