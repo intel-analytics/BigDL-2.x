@@ -16,10 +16,10 @@ start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
 --executor-cores 4 --total-executor-cores 4 \
---driver-memory 50g \
+--driver-memory 25g \
 --class com.intel.analytics.zoo.examples.resnet.TrainImageNet \
 -f hdfs://172.168.2.181:9000/imagenet-zl \
---batchSize 2048 --nEpochs 2 --learningRate 0.1 --warmupEpoch 1 \
+--batchSize 128 --nEpochs 2 --learningRate 0.1 --warmupEpoch 1 \
 --maxLr 3.2 --cache /cache  --depth 50 --classes 1000
 
 now=$(date "+%s")
