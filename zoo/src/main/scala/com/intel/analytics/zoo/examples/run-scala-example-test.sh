@@ -8,6 +8,139 @@ export ANALYTICS_ZOO_HOME=$ANALYTICS_ZOO_ROOT/dist
 
 set -e
 
+echo "#5 start example test for resnet training"
+
+#timer
+start=$(date "+%s")
+
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+--master ${MASTER} \
+--total-executor-cores 4 \
+--class com.intel.analytics.zoo.examples.resnet.TrainImageNet \
+-f hdfs://172.168.2.181:9000/imagenet_small \
+--batchSize 8192 --nEpochs 6 --learningRate 0.1 --warmupEpoch 5 \
+--maxLr 3.2 --cache /cache  --depth 50 --classes 1000
+
+now=$(date "+%s")
+time15=$((now-start))
+echo "#5 Resnet time used:$time15 seconds"
+
+echo "#6 start example test for vnni"
+
+if [ -d analytics-zoo-data/data/imagenet_val ]
+then
+    echo "analytics-zoo-data/data/imagenet_val already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/imagenet_val.zip -P analytics-zoo-data/data/
+    unzip -q analytics-zoo-data/data/imagenet_val.zip -d analytics-zoo-data/data/
+fi
+
+if [ -d analytics-zoo-data/data/opencvlib/ ]
+then
+    echo "analytics-zoo-data/data/opencvlib/ already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/opencvlib/opencv_4.0.0_ubuntu_lib.tar -P analytics-zoo-data/data/opencvlib/
+    tar -xvf analytics-zoo-data/data/opencvlib/opencv_4.0.0_ubuntu_lib.tar -C analytics-zoo-data/data/opencvlib/
+fi
+
+if [ -f analytics-zoo-models/openVINO_model/resnet_v1_50.ckpt ]
+then
+    echo "analytics-zoo-models/flink_model/resnet_v1_50.ckpt already exists"
+else
+    wget ${FTP_URI}/analytics-zoo-models/flink_model/resnet_v1_50.ckpt -P analytics-zoo-models/openVINO_model/
+fi
+
+if [ -d analytics-zoo-data/data/imagenet_seq/ ]
+then
+    echo "analytics-zoo-data/data/imagenet_seq/ already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/imagenet_seq.zip -P analytics-zoo-data/data/
+    unzip -q analytics-zoo-data/data/imagenet_seq.zip -d analytics-zoo-data/data/
+fi
+
+if [ -f analytics-zoo-model/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model ]
+then
+    echo "analytics-zoo-model/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model already exists"
+else
+    wget ${FTP_URI}/analytics-zoo-model/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model -P analytics-zoo-model/bigdl_model/
+fi
+
+echo "#6.1 start OpenVINO Int8 Resnet example"
+
+#timer
+start=$(date "+%s")
+echo "Prepare model and data"
+
+java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* \
+com.intel.analytics.zoo.examples.vnni.openvino.PrepareOpenVINOResNet \
+-m analytics-zoo-models/openVINO_model/resnet_v1_50.ckpt \
+-v analytics-zoo-data/data/imagenet_val -l analytics-zoo-data/data/opencvlib/lib
+
+echo "OpenVINO Perf"
+
+java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* \
+com.intel.analytics.zoo.examples.vnni.openvino.Perf \
+-m analytics-zoo-models/openVINO_model/resnet_v1_50_inference_graph.xml \
+-w analytics-zoo-models/openVINO_model/resnet_v1_50_inference_graph.bin
+
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh  \
+--master ${MASTER} --driver-memory 4g \
+--class com.intel.analytics.zoo.examples.vnni.openvino.Perf \
+-m analytics-zoo-models/openVINO_model/resnet_v1_50_inference_graph.xml \
+-w analytics-zoo-models/openVINO_model/resnet_v1_50_inference_graph.bin --onSpark
+
+echo "OpenVINO ImageNetEvaluation"
+
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+--master ${MASTER} --driver-memory 100g \
+--class com.intel.analytics.zoo.examples.vnni.openvino.ImageNetEvaluation \
+-f analytics-zoo-data/data/imagenet_seq/ \
+-m analytics-zoo-models/openVINO_model/resnet_v1_50_inference_graph.xml \
+-w analytics-zoo-models/openVINO_model/resnet_v1_50_inference_graph.bin
+
+echo "OpenVINO Predict"
+
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+--master ${MASTER} --driver-memory 10g \
+--class com.intel.analytics.zoo.examples.vnni.openvino.Predict \
+-f zoo/src/test/resources/imagenet/n04370456/ \
+-m analytics-zoo-models/openVINO_model/resnet_v1_50_inference_graph.xml \
+-w analytics-zoo-models/openVINO_model/resnet_v1_50_inference_graph.bin
+
+now=$(date "+%s")
+time16=$((now-start))
+echo "#6.1 OpenVINO Resnet time used:$time16 seconds"
+
+echo "#6.2 start BigDL Resnet example"
+
+#timer
+start=$(date "+%s")
+echo "BigDL Perf"
+
+java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* \
+com.intel.analytics.zoo.examples.vnni.bigdl.Perf \
+-m analytics-zoo-model/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model -b 64
+
+echo "BigDL ImageNetEvaluation"
+
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+--master ${MASTER} \
+--class com.intel.analytics.zoo.examples.vnni.bigdl.ImageNetEvaluation \
+-f analytics-zoo-data/data/imagenet_seq \
+-m analytics-zoo-model/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model
+
+echo "BigDL Predict"
+
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+--master ${MASTER} \
+--class com.intel.analytics.zoo.examples.vnni.bigdl.Predict \
+-f zoo/src/test/resources/imagenet/n04370456/ \
+-m analytics-zoo-model/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model
+
+now=$(date "+%s")
+time17=$((now-start))
+echo "#6.2 BigDL Resnet time used:$time17 seconds"
+
 echo "#1 start example test for tfnet"
 
 if [ -d analytics-zoo-data/data/object-detection-coco ]
@@ -427,6 +560,9 @@ echo "#2.3 LocalEstimator:TransferLearning used:$time4 seconds"
 echo "#3.1 Streaming:Object Detection time used:$time5 seconds"
 echo "#3.2 Streaming:Text Classification time used:$time6 seconds"
 echo "#4 chatbot time used:$time7 seconds"
+echo "#5 Resnet time used:$time15 seconds"
+echo "#6.1 OpenVINO Resnet time used:$time16 seconds"
+echo "#6.2 BigDL Resnet time used:$time17 seconds"
 echo "App Part"
 echo "#1 text-classification-training time used:$time8 seconds"
 echo "#2.1 text-classification-inference:SimpleDriver time used:$time9 seconds"
