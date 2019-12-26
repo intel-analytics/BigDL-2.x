@@ -5,7 +5,7 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
 * [Quick Start]()
 
-* [Build Your Own Cluster Serving]()
+* [Deploy Your Own Cluster Serving]()
 
    1. [Installation]()
 
@@ -29,7 +29,7 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
 This section provides a quick start example for you to run Analytics Zoo Cluster Serving. To simplify the examples, we use docker to run Cluster Serving in these examples. If you do not have docker installed, [install docker]() first.
 
-Download Analytics Zoo newest release [here]() to your local repository and go to `analytics-zoo/docker/cluster-serving/`. Download the model [here]() and copy the files to your `analytics-zoo/docker/cluster-serving/model` directory. Your directory content should be:
+Download Analytics Zoo latest release [here]() to your local repository and go to `analytics-zoo/docker/cluster-serving/`. Download the model [here]() and copy the files to your `analytics-zoo/docker/cluster-serving/model` directory. Your directory content should be:
 ```
 cluster-serving | 
                -- |model
@@ -56,6 +56,14 @@ Note that you are using default configuration to run Cluster Serving, which is i
 For more details, you could also see the log and performance by go to `localhost:6006` in your browser and refer to [Log and Visualization](), or view the source code of `quick_start.py` [here](), or refer to [API Guide]().
 
 ## Deploy your Own Cluster Serving
+### Installation
+Download Analytics Zoo latest release in [release page]().
+#### Docker User
+For docker user, you have completed the installation.
+#### DIY User
+For DIY user, you have to install Redis, see installation instructions [here]().
+
+Additionally, if you want to visualize inference summary, you have to install Tensorboard.
 
 ### Preparing Model
 The Configuration file is `analytics-zoo/docker/cluster-serving/config.yaml`. Your Cluster Serving configuration can all be set by modifying this file.
@@ -137,7 +145,7 @@ You need to put your model file into a directory and the directory could have la
 
 ##### Docker User
 If you run Cluster Serving with docker, put your model file into `model` directory. You do not need to set `model:path` in `config.yaml` because a default model location is set in docker image.
-##### DIY
+##### DIY User
 For DIY user, you could put the model in your local directory, and set `model:/path/to/dir`.
 
 #### Input Data Configuration
@@ -158,12 +166,12 @@ For DIY user, you could put the model in your local directory, and set `model:/p
 
 For more details of these config, please refer to [Spark Official Document](https://spark.apache.org/docs/latest/configuration.html)
 ## Launching Service
-### Docker
+### Docker User
 For docker user, you can use following one line command to start Cluster Serving.
 ```
 docker run -itd --name cluster-serving --net=host -v $(pwd)/model/:/opt/work/model/ -v $(pwd)/config.yaml:/opt/work/config.yaml analytics-zoo/cluster-serving:0.7.0-spark_2.4.3
 ```
-### DIY
+### DIY User
 For DIY user, you need to install and start your a Redis server.
 
 Download the spark-redis dependency jar [here]().
@@ -172,7 +180,7 @@ Go to `analytics-zoo/docker/cluster-serving/`, move two dependency jars to this 
 
 Then, `bash start-cluster-serving.sh`.
 
-If you want to visualize the inference summary, you also need to install Tensorboard.
+If you want to visualize the inference summary, you also need to install Tensorboard and start the service.
 
 ## Model Inference
 We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide]().
