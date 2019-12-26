@@ -23,7 +23,7 @@ import sys
 from bigdl.dataset import mnist
 from bigdl.dataset.transformer import *
 
-sys.path.append("/tmp/models/slim")  # add the slim library
+sys.path.append("/home/jwang/git/tensorflow-models/research/slim")  # add the slim library
 from nets import lenet
 
 slim = tf.contrib.slim
@@ -43,6 +43,7 @@ def main(max_epoch, data_num):
         return rdd
 
     training_rdd = get_data_rdd("train")
+    train_record = training_rdd.take(1)[0]
     testing_rdd = get_data_rdd("test")
     dataset = TFDataset.from_rdd(training_rdd,
                                  names=["features", "labels"],
@@ -54,6 +55,8 @@ def main(max_epoch, data_num):
 
     # construct the model from TFDataset
     images, labels = dataset.tensors
+
+    train_sample = dataset.get_training_data()
 
     with slim.arg_scope(lenet.lenet_arg_scope()):
         logits, end_points = lenet.lenet(images, num_classes=10, is_training=True)
