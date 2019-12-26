@@ -7,13 +7,17 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
 * [Build Your Own Cluster Serving]()
 
-   1. [Prepare (modify configuration)]() 
-   
-   2. [Launch Cluster Serving]()
-   
-   3. [Conduct Inference]()
+   1. [Installation]()
 
-* [Optional Operations]()
+   2. [Preparing Model]() 
+   
+   3. [Configuration]()
+   
+   4. [Launching Service]()
+   
+   5. [Model inference]()
+
+* [Additional Operations]()
 
      [Logs and Visualization]()
 
@@ -25,18 +29,19 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
 This section provides a quick start example for you to run Analytics Zoo Cluster Serving. To simplify the examples, we use docker to run Cluster Serving in these examples. If you do not have docker installed, [install docker]() first.
 
-Clone Analytics Zoo Repo to your local repository and go to `analytics-zoo/docker/cluster-serving/`. Download the model [here]() and copy the files to your `model` directory. Your directory content should be:
+Download Analytics Zoo newest release [here]() to your local repository and go to `analytics-zoo/docker/cluster-serving/`. Download the model [here]() and copy the files to your `analytics-zoo/docker/cluster-serving/model` directory. Your directory content should be:
 ```
 cluster-serving | 
                -- |model
-                 -- xx.caffemodel
-                 -- xx.prototxt
+                 -- frozen_graph.pb
 ```
 Then use one command to start Cluster Serving.
 ```
 docker run -itd --name cluster-serving --net=host -v $(pwd)/model:/opt/work/model -v $(pwd)/config.yaml:/opt/work/config.yaml analytics-zoo/cluster-serving:0.7.0-spark_2.4.3
 ```
-Go to `analytics-zoo/pyzoo/zoo/serving/`, and run python program to push data into queue. Note that you need `pip install opencv-python` if they do not exist in your Python environment.
+Install `opencv-python` if they do not exist in your Python environment.
+
+Go to `analytics-zoo/pyzoo/zoo/serving/`, and run python program `python quick_start.py` to push data into queue. 
 
 Then you can see the inference output. 
 ```
@@ -50,9 +55,9 @@ Note that you are using default configuration to run Cluster Serving, which is i
 
 For more details, you could also see the log and performance by go to `localhost:6006` in your browser and refer to [Log and Visualization](), or view the source code of `quick_start.py` [here](), or refer to [API Guide]().
 
-## Build your Own Cluster Serving
+## Deploy your Own Cluster Serving
 
-### Prepare (modify configuration)
+### Preparing Model
 The Configuration file is `analytics-zoo/docker/cluster-serving/config.yaml`. Your Cluster Serving configuration can all be set by modifying this file.
 
 See an example of `config.yaml` below
@@ -69,27 +74,27 @@ data:
   image_shape:
 params:
   # default, 4
-  batch_size: 64
+  batch_size:
   # default, 1
-  top_n: 5  
+  top_n:
 spark:
   # default, local[*], change this to spark://, yarn, etc if you want to run on cluster
   master: local[*]
   # default, 4g
-  driver_memory: 32g
+  driver_memory:
   # default, 1g
-  executor_memory: 128g
+  executor_memory:
   # default, 1
-  num_executors: 8
+  num_executors:
   # default, 4
-  executor_cores: 1
+  executor_cores:
   # default, 4
-  total_executor_cores: 8
+  total_executor_cores:
 ```
 
-#### Model configuration
+#### Configuration
 ##### Model Supported
-Currently Analytics Zoo Cluster Serving supports models: Tensorflow, Caffe, Pytorch, BigDL, OpenVINO.
+Currently Analytics Zoo Cluster Serving supports Tensorflow, Caffe, Pytorch, BigDL, OpenVINO models.
 
 You need to put your model file into a directory and the directory could have layout like following according to model type, note that only one model is allowed in your directory.
 
@@ -137,14 +142,14 @@ For DIY user, you could put the model in your local directory, and set `model:/p
 
 #### Input Data Configuration
 * src: the queue you subscribe for your input data, e.g. a default config of Redis on local machine is `localhost:6379`.
-* shape: the shape of your input data, e.g. a default config for pretrained imagenet is `3,224,224`.
+* shape: the shape of your input data, e.g. a default config for pretrained imagenet is `3,224,224`, you should use the same shape of data which trained your model, in Tensorflow the format is usually HWC and in other models the format is usually CHW.
 
 #### Inference Parameter Configuration
 * batch_size: the batch size you use for model inference, we recommend this value to be not small than 4 and not larger than 512, as batch size increases, you may get some gain in throughput and multiple times slow down in latency (inference time per batch).
 * top_n: the top-N result you want for output, **note:** if the top-N number is larger than model output size of the the final layer, it would just return all the outputs.
 
 #### Spark Configuration
-* master: parameter `master` in spark
+* master: Your cluster address, parameter `master` in spark
 * driver_memory: parameter `driver-memory` in spark
 * executor_memory: parameter `executor-memory` in spark
 * num_executors: parameter `num-executors` in spark
@@ -152,7 +157,7 @@ For DIY user, you could put the model in your local directory, and set `model:/p
 * total_executor_cores: parameter ` total-executor-cores` in spark
 
 For more details of these config, please refer to [Spark Official Document](https://spark.apache.org/docs/latest/configuration.html)
-## Launch Cluster Serving
+## Launching Service
 ### Docker
 For docker user, you can use following one line command to start Cluster Serving.
 ```
@@ -169,7 +174,7 @@ Then, `bash start-cluster-serving.sh`.
 
 If you want to visualize the inference summary, you also need to install Tensorboard.
 
-## Conduct Inference
+## Model Inference
 We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide]().
 ### Input and Output API
 To input data to queue, you need a `InputQueue` instance, and using `enqueue` method by giving an image path or image ndarray. See following example.
@@ -239,7 +244,7 @@ We integrate Tensorboard into Cluster Serving.
 
 Tensorboard service is started with Cluster Serving, once your serving is run, you can go to `localhost:6006` to see visualization of your serving.
 
-Analytics Zoo Cluster Serving provides 3 attributes in Tensorboard so far, `Serving Throughput`, `Total Records Number`.
+Analytics Zoo Cluster Serving provides 2 attributes in Tensorboard so far, `Serving Throughput`, `Total Records Number`.
 
 * `Serving Throughput`: The overall throughput, including preprocessing and postprocessing of your serving, the line should be relatively stable after first few records. If this number has a drop and remains lower than previous, you might have lost the connection of some nodes in your cluster.
 
