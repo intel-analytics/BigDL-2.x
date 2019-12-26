@@ -15,10 +15,11 @@ start=$(date "+%s")
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
---total-executor-cores 4 \
+--executor-cores 4 --total-executor-cores 4 \
+--driver-memory 50g \
 --class com.intel.analytics.zoo.examples.resnet.TrainImageNet \
--f hdfs://172.168.2.181:9000/imagenet_small \
---batchSize 8192 --nEpochs 6 --learningRate 0.1 --warmupEpoch 5 \
+-f hdfs://172.168.2.181:9000/imagenet-zl \
+--batchSize 2048 --nEpochs 2 --learningRate 0.1 --warmupEpoch 1 \
 --maxLr 3.2 --cache /cache  --depth 50 --classes 1000
 
 now=$(date "+%s")
@@ -35,9 +36,9 @@ else
     unzip -q analytics-zoo-data/data/imagenet_val.zip -d analytics-zoo-data/data/
 fi
 
-if [ -d analytics-zoo-data/data/opencvlib/ ]
+if [ -d analytics-zoo-data/data/opencvlib/lib ]
 then
-    echo "analytics-zoo-data/data/opencvlib/ already exists"
+    echo "analytics-zoo-data/data/opencvlib/lib already exists"
 else
     wget $FTP_URI/analytics-zoo-data/data/opencvlib/opencv_4.0.0_ubuntu_lib.tar -P analytics-zoo-data/data/opencvlib/
     tar -xvf analytics-zoo-data/data/opencvlib/opencv_4.0.0_ubuntu_lib.tar -C analytics-zoo-data/data/opencvlib/
@@ -50,19 +51,11 @@ else
     wget ${FTP_URI}/analytics-zoo-models/flink_model/resnet_v1_50.ckpt -P analytics-zoo-models/openVINO_model/
 fi
 
-if [ -d analytics-zoo-data/data/imagenet_seq/ ]
+if [ -f analytics-zoo-models/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model ]
 then
-    echo "analytics-zoo-data/data/imagenet_seq/ already exists"
+    echo "analytics-zoo-models/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model already exists"
 else
-    wget $FTP_URI/analytics-zoo-data/data/imagenet_seq.zip -P analytics-zoo-data/data/
-    unzip -q analytics-zoo-data/data/imagenet_seq.zip -d analytics-zoo-data/data/
-fi
-
-if [ -f analytics-zoo-model/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model ]
-then
-    echo "analytics-zoo-model/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model already exists"
-else
-    wget ${FTP_URI}/analytics-zoo-model/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model -P analytics-zoo-model/bigdl_model/
+    wget ${FTP_URI}/analytics-zoo-models/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model -P analytics-zoo-model/bigdl_model/
 fi
 
 echo "#6.1 start OpenVINO Int8 Resnet example"
@@ -94,7 +87,7 @@ echo "OpenVINO ImageNetEvaluation"
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} --driver-memory 100g \
 --class com.intel.analytics.zoo.examples.vnni.openvino.ImageNetEvaluation \
--f analytics-zoo-data/data/imagenet_seq/ \
+-f hdfs://172.168.2.181:9000/imagenet-zl/val/imagenet-seq-0_0.seq \
 -m analytics-zoo-models/openVINO_model/resnet_v1_50_inference_graph.xml \
 -w analytics-zoo-models/openVINO_model/resnet_v1_50_inference_graph.bin
 
@@ -119,15 +112,15 @@ echo "BigDL Perf"
 
 java -cp ${ANALYTICS_ZOO_JAR}:${SPARK_HOME}/jars/* \
 com.intel.analytics.zoo.examples.vnni.bigdl.Perf \
--m analytics-zoo-model/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model -b 64
+-m analytics-zoo-models/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model -b 64
 
 echo "BigDL ImageNetEvaluation"
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
 --class com.intel.analytics.zoo.examples.vnni.bigdl.ImageNetEvaluation \
--f analytics-zoo-data/data/imagenet_seq \
--m analytics-zoo-model/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model
+-f hdfs://172.168.2.181:9000/imagenet-zl/val/imagenet-seq-0_0.seq \
+-m analytics-zoo-models/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model
 
 echo "BigDL Predict"
 
@@ -135,7 +128,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
 --class com.intel.analytics.zoo.examples.vnni.bigdl.Predict \
 -f zoo/src/test/resources/imagenet/n04370456/ \
--m analytics-zoo-model/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model
+-m analytics-zoo-models/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model
 
 now=$(date "+%s")
 time17=$((now-start))
