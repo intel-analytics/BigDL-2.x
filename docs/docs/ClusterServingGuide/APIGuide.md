@@ -32,9 +32,9 @@ _return_: None
 
 _Example_
 ```
-from zoo.serving.client.helpers import Input
+from zoo.serving.client import InputQueue
 import cv2
-input_api = Input()
+input_api = InputQueue()
 img = cv2.imread('/path/to/image')
 input_api.enqueue_image('my-image', img)
 ```
@@ -60,9 +60,9 @@ _return_: string type, the output of your prediction, which can be parsed to a d
 
 _Example_
 ```
-from zoo.serving.client.helpers import Output
+from zoo.serving.client import OutputQueue
 import json
-output_api = Output()
+output_api = OutputQueue()
 d = output_api.query('my-image') 
 json.loads(d)
 ```
@@ -79,9 +79,9 @@ _return_: dict(), with keys the `uri` of your [enqueue](), string type, and valu
 
 _Example_
 ```
-from zoo.serving.client.helpers import Output
+from zoo.serving.client import OutputQueue
 import json
-output_api = Output()
+output_api = OutputQueue()
 d = output_api.dequeue()
 for k in d.keys():
   class_prob_map = json.loads(d[k])
