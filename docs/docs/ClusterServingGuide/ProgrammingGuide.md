@@ -43,7 +43,7 @@ Install `opencv-python` if they do not exist in your Python environment.
 
 Go to `analytics-zoo/pyzoo/zoo/serving/`, and run python program `python quick_start.py` to push data into queue. 
 
-Then you can see the inference output. 
+Then you can see the inference output in console. 
 ```
 image: fish1.jpeg, classification-result: class: 1's prob: 0.9974158
 image: cat1.jpeg, classification-result: class: 287's prob: 0.52377725
