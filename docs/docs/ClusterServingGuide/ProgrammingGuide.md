@@ -78,7 +78,7 @@ params:
   # default, 1
   top_n:
 spark:
-  # default, local[*], change this to spark://, yarn, etc if you want to run on cluster
+  # default, local[*], change this to spark://, yarn, k8s:// etc if you want to run on cluster
   master: local[*]
   # default, 4g
   driver_memory:
