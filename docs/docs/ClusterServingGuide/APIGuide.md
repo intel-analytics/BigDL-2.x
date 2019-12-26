@@ -2,7 +2,7 @@
 
 ## Python 
 
-### Input
+### InputQueue
 The class `Input` defines methods allowing you to input data into Cluster Serving [Input Pipeline]().
 
 #### __init__
@@ -39,7 +39,7 @@ img = cv2.imread('/path/to/image')
 input_api.enqueue_image('my-image', img)
 ```
 
-### Output
+### OutputQueue
 The class `Output` defines methods allowing you to get result from Cluster Serving [Output Pipeline]().
 #### __init__
 [view source]()
@@ -56,7 +56,7 @@ query(uri)
 ```
 query result in output Pipeline by key `uri`
 
-_return_: dict(), string type, the output of your prediction, which can be parsed by json.
+_return_: string type, the output of your prediction, which can be parsed to a dict by json. Format: `'{"class_1":"prob_1", "class_2":"prob_2",...,"class_n":"prob_n"}'`, where `n` is `top_n` in your serving config, the result is sorted by output probability.
 
 _Example_
 ```
@@ -73,9 +73,9 @@ json.loads(d)
 ```
 dequeue()
 ```
-gets all result of your model prediction and dequeue them from Pipeline
+gets all result of your model prediction and dequeue them from OutputQueue
 
-_return_: dict(), with keys the `uri` of your [enqueue], string type, and values the output of your prediction, string type, which can be parsed by json.
+_return_: dict(), with keys the `uri` of your [enqueue](), string type, and values the output of your prediction, string type, which can be parsed by json. Format: `{"image1":'{"class_1":"prob_1", "class_2":"prob_2",...,"class_n":"prob_n"}', "image2":'{"class_1":"prob_1", "class_2":"prob_2",...,"class_n":"prob_n"}'}`, where `n` is `top_n` in your serving config, the result is sorted by output probability.
 
 _Example_
 ```
