@@ -29,11 +29,12 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
 This section provides a quick start example for you to run Analytics Zoo Cluster Serving. To simplify the examples, we use docker to run Cluster Serving in these examples. If you do not have docker installed, [install docker]() first.
 
-Download Analytics Zoo latest release [here]() to your local repository and go to `analytics-zoo/docker/cluster-serving/`. Download the model [here]() and copy the files to your `analytics-zoo/docker/cluster-serving/model` directory. Your directory content should be:
+Download Analytics Zoo latest release [here]() to your local repository and go to `analytics-zoo/docker/cluster-serving/`. We have prepared a small Tensorflow model in your `analytics-zoo/docker/cluster-serving/model` directory. Your directory content should be:
 ```
 cluster-serving | 
-               -- |model
+               -- | model
                  -- frozen_graph.pb
+                 -- graph_meta.json
 ```
 Then use one command to start Cluster Serving.
 ```
@@ -111,6 +112,7 @@ You need to put your model file into a directory and the directory could have la
 ```
 |-- model
    |-- frozen_graph.pb
+   |-- graph_meta.json
 ```
 
 **Caffe**
