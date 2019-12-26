@@ -189,7 +189,11 @@ To input data to queue, you need a `InputQueue` instance, and using `enqueue` me
 ```
 from zoo.serving.client import InputQueue
 input_api = InputQueue()
-input_api.enqueue_image('path/to/image')
+input_api.enqueue_image('my-image1', 'path/to/image1')
+
+import cv2
+image2 = cv2.imread('path/to/image2')
+input_api.enqueue_image('my-image2', image2)
 ```
 To get data from queue, you need a `OutputQueue` instance, and using `query` or `dequeue` method. `query` method takes image uri as parameter and return the corresponding result, `dequeue` takes no parameter and just return all results and also delete them in data queue. See following example.
 ```
