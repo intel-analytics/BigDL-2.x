@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.pipeline.api.net
+package com.intel.analytics.zoo.tfpark
 
 import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample}
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
@@ -40,5 +40,3 @@ class StringMiniBatch[T](data: Tensor[Array[Byte]]) extends MiniBatch[T] {
     throw new UnsupportedOperationException("StringMiniBatch does not support set method")
   }
 }
-
-case class RDDWrapper[T](value: RDD[T])

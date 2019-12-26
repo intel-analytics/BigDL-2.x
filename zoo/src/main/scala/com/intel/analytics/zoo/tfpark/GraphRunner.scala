@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.pipeline.api.net
+package com.intel.analytics.zoo.tfpark
 
 import java.nio._
 
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.core.TFNetNative
+import com.intel.analytics.zoo.pipeline.api.net.TFNet
 import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
 
 import scala.collection.JavaConverters._
-import org.json4s._
-import org.slf4j.LoggerFactory
-
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
@@ -85,7 +84,7 @@ class GraphRunner(
           inputNames: Vector[String],
           outputNames: Vector[String],
           targets: Vector[String]): Vector[Tensor[Float]] = {
-    NetUtils.timeIt("Graph Runner Run", GraphRunner.logger) {
+    Utils.timeIt("Graph Runner Run") {
       try {
         val runner = sess.runner()
 
@@ -105,12 +104,12 @@ class GraphRunner(
         targets.foreach(runner.addTarget)
 
 
-        val outputs = NetUtils.timeIt("Session Run", GraphRunner.logger) {
+        val outputs = Utils.timeIt("Session Run") {
           runner.run()
         }
 
         outputs.asScala.zipWithIndex.foreach { case (t, idx) =>
-          GraphRunner.tf2bigdl(t.asInstanceOf[TTensor[Float]], output(idx))
+          TFUtils.tf2bigdl(t.asInstanceOf[TTensor[Float]], output(idx))
         }
 
         // outputs is returned by tensorflow and cannot be freed using tensorManager
@@ -145,54 +144,4 @@ class GraphRunner(
 object GraphRunner {
 
   assert(TFNetNative.isLoaded)
-
-  private[zoo] def tf2bigdl(t: TTensor[_], output: Tensor[Float]) = {
-    val shape = t.shape().map(_.toInt)
-    output.resize(shape)
-    val buffer = FloatBuffer.wrap(
-      output.storage().array(),
-      output.storageOffset() - 1,
-      shape.product)
-    t.writeTo(buffer)
-  }
-
-  val logger = LoggerFactory.getLogger(getClass)
-
-  implicit val formats = DefaultFormats
-
-  val defaultSessionConfig = SessionConfig()
-
-  case class SessionConfig(intraOpParallelismThreads: Int = 1,
-                           interOpParallelismThreads: Int = 1,
-                           usePerSessionThreads: Boolean = true) {
-
-    // Ideally we should use the following code, however, importing tensorflow proto
-    // will conflict with bigdl.
-
-    //  val defaultSessionConfig = ConfigProto.newBuilder()
-    //    .setInterOpParallelismThreads(1)
-    //    .setIntraOpParallelismThreads(1)
-    //    .setUsePerSessionThreads(true)
-    //    .build().toByteArray
-
-    def toByteArray(): Array[Byte] = {
-      val intraSeq = if (intraOpParallelismThreads > 0) {
-        Seq(16, intraOpParallelismThreads)
-      } else {
-        Seq[Int]()
-      }
-      val interSeq = if (interOpParallelismThreads > 0) {
-        Seq(40, interOpParallelismThreads)
-      } else {
-        Seq[Int]()
-      }
-      val perSessSeq = if (usePerSessionThreads) {
-        Seq(72, 1)
-      } else {
-        Seq[Int]()
-      }
-
-      (intraSeq ++ interSeq ++ perSessSeq).map(_.toByte).toArray
-    }
-  }
 }
