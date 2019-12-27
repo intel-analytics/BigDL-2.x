@@ -52,7 +52,7 @@ image: dog1.jpeg, classification-result: class: 207's prob: 0.9226527
 ```
 Wow! You made it!
 
-Note that you are using default configuration to run Cluster Serving, which is in local mode. To run in cluster mode, you could modify the configuration, see [Configuration Guide]() below.
+Note that the Cluster Serving quick start example will run on your local node only. Check the [Build Your Own Cluster Serving]() section for how to configure and run Cluster Serving in a distributed fashion.
 
 For more details, you could also see the log and performance by go to `localhost:6006` in your browser and refer to [Log and Visualization](), or view the source code of `quick_start.py` [here](), or refer to [API Guide]().
 
@@ -248,6 +248,8 @@ To stop Cluster Serving for some purpose, e.g. save compute resources and keep y
 #### Restart
 In the case that Cluster Serving encounters some unknown error, you could restart serving by
 `bash restart-cluster-serving.sh`
+
+By manually stop and restart the cluster serving, you have the flexibility to update the model in the middle of the inference and you don't have to restart the entire docker.
 
 ### Update Model
 To update your model, you could replace your model file in your model directory, and restart Cluster Serving by `bash restart-cluster-serving.sh`. Note that you could also change your config in `config.yaml` and restart serving.
