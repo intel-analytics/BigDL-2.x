@@ -26,8 +26,8 @@ slim = tf.contrib.slim
 if __name__ == '__main__':
 
     export_dir = "/tmp/lenet_export/"
-    if len(sys.argv) > 0:
-        export_dir = sys.argv(1)
+    if len(sys.argv) > 1:
+        export_dir = sys.argv[1]
 
     features = tf.placeholder(dtype=tf.float32, shape=[None, 28, 28, 1])
     labels = tf.placeholder(dtype=tf.int32, shape=[None])

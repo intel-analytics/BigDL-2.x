@@ -17,10 +17,9 @@ package com.intel.analytics.zoo.tfpark
 
 import com.intel.analytics.bigdl.dataset.MiniBatch
 import com.intel.analytics.bigdl.optim.{OptimMethod, Optimizer, Trigger}
-import com.intel.analytics.zoo.pipeline.api.net.{IdentityCriterion, TFTrainingHelper}
+
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.feature.FeatureSet
-import com.intel.analytics.zoo.pipeline.api.net.TFNet.SessionConfig
 import com.intel.analytics.zoo.pipeline.estimator.Estimator
 
 

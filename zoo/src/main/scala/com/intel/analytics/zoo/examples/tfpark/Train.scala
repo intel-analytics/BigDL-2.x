@@ -73,7 +73,7 @@ object Train {
         SampleToMiniBatch(params.batchSize)
 
       val optimizer = new TFOptimizer(params.modelPath,
-        new Adam[Float](),
+        new Adam[Float](1e-3),
         trainDataSet)
       optimizer.optimize(Trigger.maxEpoch(params.numEpoch))
     }
@@ -128,6 +128,7 @@ object Train {
         val input1 = sample.feature().reshape(Array(28, 28, 1))
         // tf model needs label as scalar and starting from 0
         val input2 = Tensor.scalar[Float](sample.label().valueAt(1) - 1)
+
         ArraySample(Array[Tensor[Float]](input1, input2), Tensor[Float]().resize(1).zero())
       })
     }

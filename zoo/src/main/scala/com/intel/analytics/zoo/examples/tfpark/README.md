@@ -36,8 +36,11 @@ export PYTHONPATH=$PWD/models/research/slim:$PYTHONPATH
 Export lenet Tensorflow model to local directory for later training:
 
 ```bash
+export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package or the dist folder if you build from source
+export SPARK_HOME=... # spark home
 
-python export_lenet.py
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
+export_lenet.py
 ```
 The `export_lenet.py` script would create inputs of placeholders with corresponding shapes and pass to the Tensorflow model,then export model to a specified folder.(The default folder is "/tmp/lenet_export")
 
