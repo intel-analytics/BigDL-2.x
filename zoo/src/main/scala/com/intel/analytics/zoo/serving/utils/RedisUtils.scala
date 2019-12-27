@@ -13,25 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.pipeline.api.net
 
+package com.intel.analytics.zoo.serving.utils
 
+object RedisUtils {
+  def getMapFromInfo(info: String): Map[String, String] = {
+    var infoMap = Map[String, String]()
+    val tabs = info.split("#")
 
-import com.intel.analytics.bigdl.tensor.{ConvertableFrom, StringType, TensorDataType}
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.UndefinedTensorNumeric
+    for (tab <- tabs) {
+      if (tab.length > 0) {
+        val keys = tab.split("\r\n")
 
-import scala.language.implicitConversions
-
-object TFTensorNumeric {
-
-  implicit object NumericByteArray extends UndefinedTensorNumeric[Array[Byte]]("ByteArray") {
-
-    override def getType(): TensorDataType = StringType
-
-    override def fromType[K](k: K)(implicit c: ConvertableFrom[K]): Array[Byte] = {
-      k.toString.getBytes("UTF-8")
+        for (key <- keys) {
+          if (key.split(":").size == 2) {
+            infoMap += (key.split(":").head ->
+              key.split(":").last)
+          }
+        }
+      }
     }
 
+    return infoMap
   }
 }
-

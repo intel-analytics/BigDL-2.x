@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.net
-import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
+package com.intel.analytics.zoo.tfpark
+
 import java.nio._
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import org.tensorflow.types.UInt8
+import org.tensorflow.{DataType, Tensor => TTensor}
 
 import scala.collection.mutable
 
@@ -202,4 +203,3 @@ class TFResourceManager() extends java.io.Serializable {
     }
   }
 }
-
