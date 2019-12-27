@@ -2,7 +2,7 @@
 
 ## Python 
 
-### InputQueue
+### class InputQueue
 The class `Input` defines methods allowing you to input data into Cluster Serving [Input Pipeline]().
 
 #### __init__
@@ -28,18 +28,20 @@ _return_: None
 
 `uri`: a string, unique identification of your image
 
-`img`: `ndarray` of your image, could be loaded by `cv2.imread()` of opencv-python package.
+`img`: path or `ndarray` of your image, could be loaded by `cv2.imread()` of opencv-python package.
 
 _Example_
 ```
 from zoo.serving.client import InputQueue
-import cv2
 input_api = InputQueue()
-img = cv2.imread('/path/to/image')
-input_api.enqueue_image('my-image', img)
+input_api.enqueue_image('my-image1', 'path/to/image1')
+
+import cv2
+image2 = cv2.imread('path/to/image2')
+input_api.enqueue_image('my-image2', image2)
 ```
 
-### OutputQueue
+### class OutputQueue
 The class `Output` defines methods allowing you to get result from Cluster Serving [Output Pipeline]().
 #### __init__
 [view source]()
