@@ -17,9 +17,6 @@
 
 package com.intel.analytics.zoo.serving.utils
 
-import java.io.{File, FileWriter, FileInputStream}
-import java.nio.file.{Files, Paths}
-
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -27,15 +24,19 @@ import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import java.util.LinkedHashMap
 
 import org.apache.log4j.Logger
-import scopt.OptionParser
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.SparkSession
 import org.yaml.snakeyaml.Yaml
+
+import java.io.{File, FileWriter, FileInputStream}
+import java.nio.file.{Files, Paths}
+import java.util.LinkedHashMap
 import java.time.LocalDateTime
+
+import sys.env
 
 import scala.reflect.ClassTag
 
@@ -58,7 +59,11 @@ class ClusterServingHelper {
   type HM = LinkedHashMap[String, String]
 
 //  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
-  val configPath = "config.yaml"
+  val configPath = if (env.contains("ANALYTICS_ZOO_HOME")) {
+    env("ANALYTICS_ZOO_HOME") + "/scripts/cluster-serving/config.yaml"
+  } else {
+    "config.yaml"
+  }
 
   var lastModTime: String = null
   val logger: Logger = Logger.getLogger(getClass)
@@ -81,13 +86,19 @@ class ClusterServingHelper {
   var logErrorFlag: Boolean = true
   var logSummaryFlag: Boolean = false
 
+  /**
+   * model relative
+   */
   var modelType: String = null
   var weightPath: String = null
   var defPath: String = null
   var dirPath: String = null
 
+  /**
+   * environment variables
+   */
+  var kmpBlockTime: String = null
 
-  var dummyMap: Map[Int, String] = Map()
 
   /**
    * Initialize the parameters by loading config file
@@ -167,6 +178,7 @@ class ClusterServingHelper {
         blasFlag = true
       }
       else blasFlag = false
+
     }
     else blasFlag = false
 
@@ -236,6 +248,9 @@ class ClusterServingHelper {
     val conf = NNContext.createSparkConf().setAppName("Cluster Serving")
       .set("spark.redis.host", redisHost)
       .set("spark.redis.port", redisPort)
+    if (kmpBlockTime != null) {
+      conf.set("spark.executorEnv", "KMP_BLOCKTIME=" + kmpBlockTime)
+    }
     sc = NNContext.initNNContext(conf)
     nodeNum = EngineRef.getNodeNumber()
     coreNum = EngineRef.getCoreNumber()
@@ -344,9 +359,16 @@ class ClusterServingHelper {
    * @param location
    */
   def parseModelType(location: String): Unit = {
+
+    /**
+     * Initialize all relevant parameters at first
+     */
     modelType = null
     weightPath = null
     defPath = null
+
+    kmpBlockTime = null
+
     import java.io.File
     val f = new File(location)
     val fileList = f.listFiles
@@ -391,6 +413,7 @@ class ClusterServingHelper {
           throwOneModelError(true, false, true)
           weightPath = fPath
           modelType = "openvino"
+          kmpBlockTime = "20"
         }
         else if (fName.endsWith("xml")) {
           throwOneModelError(false, true, false)

@@ -23,9 +23,16 @@ class ClusterServing:
         self.proc = None
         self.conf_path = "../../../scripts/cluster-serving/config.yaml"
 
+        subprocess.Popen(['chmod', 'a+x', '../../../scripts/cluster-serving/config.yaml'])
+        subprocess.Popen(['chmod', 'a+x', '../../../scripts/cluster-serving/start-cluster-serving.sh'])
+
     def start(self):
+        """
+        Start the serving by running start script
+        :return:
+        """
         self.proc = subprocess.Popen(
-            ['../../../scripts/cluster-serving/start-cluster-serving.sh'])
+            ['../../../scripts/cluster-serving/start-cluster-serving.sh'], shell=True)
 
     def stop(self):
         """
@@ -40,7 +47,7 @@ class ClusterServing:
         self.start()
 
     def set_config(self, field, param, value):
-        with open(self.conf_path) as f:
+        with open(self.conf_path, 'r') as f:
             config = yaml.load(f)
             try:
                 config[field][param] = value
