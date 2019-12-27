@@ -11,21 +11,19 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
    1. [Installation]()
 
-   2. [Preparing Model]() 
+   2. [Configuration]() 
    
-   3. [Configuration]()
+   3. [Launching Service]()
    
-   4. [Launching Service]()
-   
-   5. [Model inference]()
+   4. [Model inference]()
 
 * [Additional Operations]()
 
+     [Manually Start and Stop Serving]()
+
      [Logs and Visualization]()
 
-     [Update Model]()
-     
-     [Manually Start and Stop Serving]()
+     [Update Model]()     
 
 ## Quick Start
 
@@ -227,7 +225,7 @@ Where `n` is the number of `top_n` in your configuration file. Taking the exampl
 ```
 '{"1":"0.9974158"}'
 ```
-which means: (The code to parse the json string to below could be viewed in [Quick Start]())
+A more readable format of this is shown in [Quick Start Example]() above: (The code to parse the json string to below could be viewed in [Quick Start]())
 ```
 image: fish1.jpeg, classification-result: class: 1's prob: 0.9974158
 ```
