@@ -15,16 +15,24 @@
 #
 import subprocess
 import yaml
+import glob
+import os
+import time
 
 
 class ClusterServing:
 
     def __init__(self):
         self.proc = None
-        self.conf_path = "../../../scripts/cluster-serving/config.yaml"
+        zoo_root = os.path.abspath(__file__ + "/../../")
 
-        subprocess.Popen(['chmod', 'a+x', '../../../scripts/cluster-serving/config.yaml'])
-        subprocess.Popen(['chmod', 'a+x', '../../../scripts/cluster-serving/start-cluster-serving.sh'])
+        self.conf_path = os.path.join(zoo_root,
+                                      'scripts/cluster-serving/config.yaml')
+        self.serving_sh_path = os.path.join(zoo_root,
+                                            'scripts/cluster-serving/start-cluster-serving.sh')
+
+        subprocess.Popen(['chmod', 'a+x', self.conf_path])
+        subprocess.Popen(['chmod', 'a+x', self.serving_sh_path])
 
     def start(self):
         """
@@ -32,7 +40,7 @@ class ClusterServing:
         :return:
         """
         self.proc = subprocess.Popen(
-            ['../../../scripts/cluster-serving/start-cluster-serving.sh'], shell=True)
+            [self.serving_sh_path], shell=True)
 
     def stop(self):
         """
@@ -40,13 +48,23 @@ class ClusterServing:
         aka. removing running flag
         :return:
         """
-        self.proc.kill()
+        os.remove("running")
 
     def restart(self):
         self.stop()
+        while not self.proc.poll():
+            # if return null, the subprocess is still running, wait
+            time.sleep(3)
         self.start()
 
     def set_config(self, field, param, value):
+        """
+        Setting config by loading and rewrite the config file
+        :param field: model/data/params
+        :param param: should correspond with field
+        :param value: the value of the field and param specified
+        :return:
+        """
         with open(self.conf_path, 'r') as f:
             config = yaml.load(f)
             try:
