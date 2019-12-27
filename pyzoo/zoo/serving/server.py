@@ -27,9 +27,9 @@ class ClusterServing:
         zoo_root = os.path.abspath(__file__ + "/../../")
 
         self.conf_path = os.path.join(zoo_root,
-                                      'scripts/cluster-serving/config.yaml')
+                                      'bin/cluster-serving/config.yaml')
         self.serving_sh_path = os.path.join(zoo_root,
-                                            'scripts/cluster-serving/start-cluster-serving.sh')
+                                            'bin/cluster-serving/start-cluster-serving.sh')
 
         subprocess.Popen(['chmod', 'a+x', self.conf_path])
         subprocess.Popen(['chmod', 'a+x', self.serving_sh_path])
