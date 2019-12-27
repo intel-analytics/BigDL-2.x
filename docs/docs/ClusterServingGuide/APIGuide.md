@@ -58,7 +58,9 @@ query(uri)
 ```
 query result in output Pipeline by key `uri`
 
-_return_: string type, the output of your prediction, which can be parsed to a dict by json. Format: `'{"class_1":"prob_1", "class_2":"prob_2",...,"class_n":"prob_n"}'`, where `n` is `top_n` in your serving config, the result is sorted by output probability.
+_return_: string type, the output of your prediction, which can be parsed to a dict by json. 
+
+Format: `'{"class_1":"probability_1", "class_2":"probability_2",...,"class_n":"probability_n"}'`, where `n` is `top_n` in your serving config, the result is sorted by output probability.
 
 _Example_
 ```
@@ -66,7 +68,11 @@ from zoo.serving.client import OutputQueue
 import json
 output_api = OutputQueue()
 d = output_api.query('my-image') 
-json.loads(d)
+
+tmp_dict = json.loads(d)
+for class_idx in tmp_dict.keys():
+    output += "class: " + class_idx + "'s prob: " + tmp_dict[class_idx]
+print(output)
 ```
 
 #### dequeue
@@ -77,7 +83,28 @@ dequeue()
 ```
 gets all result of your model prediction and dequeue them from OutputQueue
 
-_return_: dict(), with keys the `uri` of your [enqueue](), string type, and values the output of your prediction, string type, which can be parsed by json. Format: `{"image1":'{"class_1":"prob_1", "class_2":"prob_2",...,"class_n":"prob_n"}', "image2":'{"class_1":"prob_1", "class_2":"prob_2",...,"class_n":"prob_n"}'}`, where `n` is `top_n` in your serving config, the result is sorted by output probability.
+_return_: dict(), with keys the `uri` of your [enqueue](), string type, and values the output of your prediction, string type, which can be parsed by json. 
+
+Format: 
+```
+{
+  "image1": {
+      "class_1": "probability_1",
+      "class_2": "probability_2",
+      ...,
+      "class_n": "probability_n"
+  }, 
+  "image2": {
+      "class_1": "probability_1",
+      "class_2": "probability_2",
+      ...,
+      "class_n": "probability_n"
+  }
+  ...
+}
+```
+
+where `n` is `top_n` in your serving config, the result is sorted by output probability.
 
 _Example_
 ```
@@ -85,8 +112,13 @@ from zoo.serving.client import OutputQueue
 import json
 output_api = OutputQueue()
 d = output_api.dequeue()
+
 for k in d.keys():
-  class_prob_map = json.loads(d[k])
+    output = "image: " + k + ", classification-result:"
+    tmp_dict = json.loads(result[k])
+    for class_idx in tmp_dict.keys():
+        output += "class: " + class_idx + "'s prob: " + tmp_dict[class_idx]
+    print(output)
 ```
 
 
