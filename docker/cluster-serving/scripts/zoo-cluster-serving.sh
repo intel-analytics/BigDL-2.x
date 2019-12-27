@@ -15,11 +15,12 @@ if [ -z "${REDIS_MAXMEM}" ]; then
 fi
 /opt/work/redis-5.0.5/src/redis-cli config set maxmemory ${REDIS_MAXMEM}
 echo "redis config maxmemory set to ${REDIS_MAXMEM}"
-/opt/work/redis-5.0.5/src/redis-cli config set bind "0.0.0.0"
+# bind can not be set after redis starts
+# /opt/work/redis-5.0.5/src/redis-cli config set bind "0.0.0.0"
 /opt/work/redis-5.0.5/src/redis-cli config set protected-mode no
 /opt/work/redis-5.0.5/src/redis-cli config set maxclients 10000
 
-tensorboard --logdir . &
+tensorboard --logdir . --bind_all &
 
 ./start-cluster-serving.sh &
 

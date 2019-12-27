@@ -31,7 +31,7 @@ class API:
     def __init__(self):
 
         try:
-            file_path = "../../../docker/cluster-serving/config.yaml"
+            file_path = "../../../scripts/cluster-serving/config.yaml"
         except Exception:
             raise EOFError("config file does not exist. Please check your config"
                            "at analytics-zoo/docker/cluster-serving/config.yaml")
@@ -105,8 +105,8 @@ class InputQueue(API):
         inf = self.db.info()
 
         try:
-            if inf['used_memory'] >= inf['maxmemory'] * self.input_threshold:
-                raise redis.exceptions.ConnectionError
+            # if inf['used_memory'] >= inf['maxmemory'] * self.input_threshold:
+            #     raise redis.exceptions.ConnectionError
             self.db.xadd("image_stream", d)
             print("Write to Redis successful")
         except redis.exceptions.ConnectionError:
