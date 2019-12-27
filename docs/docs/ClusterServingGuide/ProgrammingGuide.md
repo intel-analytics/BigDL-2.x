@@ -1,6 +1,8 @@
 # Programming Guide
 Analytics Zoo Cluster Serving is a lightweight distributed, real-time serving solution that supports a wide range of deep learning models (such as TensorFlow, PyTorch, Caffe, BigDL and OpenVINO models). It provides a simple pub/sub API, so that the users can easily send their inference requests to the input queue (using a simple Python API); Cluster Serving will then automatically manage the scale-out and real-time model inference across a large cluster (using distributed streaming frameworks such as Apache Spark Streaming, Apache Flink, etc.) 
 
+(Note currently only image classification models are supported).
+
 This page contains the guide for you to run Analytics Zoo Cluster Serving, including following:
 
 * [Quick Start]()
@@ -57,16 +59,26 @@ Note that you are using default configuration to run Cluster Serving, which is i
 For more details, you could also see the log and performance by go to `localhost:6006` in your browser and refer to [Log and Visualization](), or view the source code of `quick_start.py` [here](), or refer to [API Guide]().
 
 ## Deploy your Own Cluster Serving
-### Installation
-Download Analytics Zoo latest release in [release page]().
+### 1. Installation
+Currently Analytics Zoo Cluster Serving supports installation by docker, pip, DIY.
+
+Except for pip user, you need to download Analytics Zoo from [release page]() on the local node.
+
+In addition, you also need to install [Redis]() and [TensorBoard]() (for visualizing the serving status) on the local node; alternatively, you may pull the prebuilt [Docker image]() which has packaged all the required dependency.
+
 #### Docker User
-For docker user, you have completed the installation.
+For docker user, download Analytics Zoo latest release in [release page]()
+#### Pip User
+For pip user, `pip install analytics-zoo`, and you have to install Redis.
+
+Additionally, if you want to visualize inference summary, you have to install Tensorboard.
 #### DIY User
-For DIY user, you have to install Redis, see installation instructions [here]().
+For DIY user, download Analytics Zoo latest release in [release page](), and you have to install Redis.
 
 Additionally, if you want to visualize inference summary, you have to install Tensorboard.
 
-### Preparing Model
+### 2. Configuration
+
 The Configuration file is `analytics-zoo/docker/cluster-serving/config.yaml`. Your Cluster Serving configuration can all be set by modifying this file.
 
 See an example of `config.yaml` below
@@ -100,10 +112,8 @@ spark:
   # default, 4
   total_executor_cores:
 ```
-
-#### Configuration
-##### Model Supported
-Currently Analytics Zoo Cluster Serving supports Tensorflow, Caffe, Pytorch, BigDL, OpenVINO models.
+#### 2.1 Preparing Model
+Currently Analytics Zoo Cluster Serving supports Tensorflow, Caffe, Pytorch, BigDL, OpenVINO models. (Note currently only image classification models are supported).
 
 You need to put your model file into a directory and the directory could have layout like following according to model type, note that only one model is allowed in your directory.
 
@@ -150,24 +160,24 @@ If you run Cluster Serving with docker, put your model file into `model` directo
 ##### DIY User
 For DIY user, you could put the model in your local directory, and set `model:/path/to/dir`.
 
-#### Input Data Configuration
+#### 2.2 Input Data Configuration
 * src: the queue you subscribe for your input data, e.g. a default config of Redis on local machine is `localhost:6379`.
 * shape: the shape of your input data, e.g. a default config for pretrained imagenet is `3,224,224`, you should use the same shape of data which trained your model, in Tensorflow the format is usually HWC and in other models the format is usually CHW.
 
-#### Inference Parameter Configuration
+#### 2.3 Inference Parameter Configuration
 * batch_size: the batch size you use for model inference, we recommend this value to be not small than 4 and not larger than 512, as batch size increases, you may get some gain in throughput and multiple times slow down in latency (inference time per batch).
 * top_n: the top-N result you want for output, **note:** if the top-N number is larger than model output size of the the final layer, it would just return all the outputs.
 
-#### Spark Configuration
-* master: Your cluster address, parameter `master` in spark
-* driver_memory: parameter `driver-memory` in spark
-* executor_memory: parameter `executor-memory` in spark
-* num_executors: parameter `num-executors` in spark
-* executor_cores: paramter `executor-cores` in spark
-* total_executor_cores: parameter ` total-executor-cores` in spark
+#### 2.4 Spark Configuration
+* master: Your cluster address, same as parameter `master` in spark
+* driver_memory: same as parameter `driver-memory` in spark
+* executor_memory: same as parameter `executor-memory` in spark
+* num_executors: same as parameter `num-executors` in spark
+* executor_cores: same as paramter `executor-cores` in spark
+* total_executor_cores: same as parameter ` total-executor-cores` in spark
 
 For more details of these config, please refer to [Spark Official Document](https://spark.apache.org/docs/latest/configuration.html)
-## Launching Service
+## 3. Launching Service
 ### Docker User
 For docker user, you can use following one line command to start Cluster Serving.
 ```
@@ -184,7 +194,7 @@ Then, `bash start-cluster-serving.sh`.
 
 If you want to visualize the inference summary, you also need to install Tensorboard and start the service.
 
-## Model Inference
+## 4. Model Inference
 We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide]().
 ### Input and Output API
 To input data to queue, you need a `InputQueue` instance, and using `enqueue` method by giving an image path or image ndarray. See following example.
