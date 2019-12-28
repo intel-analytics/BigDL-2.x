@@ -22,7 +22,7 @@ _return_: None
 ```
 enqueue_image(uri, img)
 ```
-puts image `img` with identification `uri` into Pipeline with JPG encoding.
+puts image `img` with identification `uri` into Pipeline with JPG encoding. `img` can be either a string (which represents the file path of the image), or an ndarray of the image (which should be returned by cv2.imread() of opencv-python package)
 
 _return_: None
 
@@ -60,7 +60,16 @@ query result in output Pipeline by key `uri`
 
 _return_: string type, the output of your prediction, which can be parsed to a dict by json. 
 
-Format: `'{"class_1":"probability_1", "class_2":"probability_2",...,"class_n":"probability_n"}'`, where `n` is `top_n` in your serving config, the result is sorted by output probability.
+Format: 
+```
+{
+    "class_1": "probability_1",
+    "class_2": "probability_2",
+    ...,
+    "class_n": "probability_n"
+}
+```
+where `n` is `top_n` in your serving config, the result is sorted by output probability.
 
 _Example_
 ```
