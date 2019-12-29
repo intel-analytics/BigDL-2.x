@@ -58,28 +58,22 @@ For more details, you could also see the log and performance by go to `localhost
 
 ## Deploy your Own Cluster Serving
 ### 1. Installation
-Currently Analytics Zoo Cluster Serving supports installation by docker, pip, DIY.
+Currently Analytics Zoo Cluster Serving supports installation by download release, pip.
 
-Except for pip user, you need to download Analytics Zoo from [release page]() on the local node.
+#### Download Release
+You can install Cluster Serving by download Analytics Zoo from [release page]() on the local node.
 
+#### Pip
+You can install Cluster Serving by pip, `pip install analytics-zoo`.
+
+---
 In addition, you also need to install [Redis]() and [TensorBoard]() (for visualizing the serving status) on the local node; alternatively, you may pull the prebuilt [Docker image]() which has packaged all the required dependency.
 
-#### Docker User
-For docker user, download Analytics Zoo latest release in [release page]()
-#### Pip User
-For pip user, `pip install analytics-zoo`, and you have to install Redis.
-
-Additionally, if you want to visualize inference summary, you have to install Tensorboard.
-#### DIY User
-For DIY user, download Analytics Zoo latest release in [release page](), and you have to install Redis.
-
-Additionally, if you want to visualize inference summary, you have to install Tensorboard.
-
 ### 2. Configuration
+#### 2.1 How to Config
+The way to set configuration may be different depending on how you [install]() Cluster Serving.
 
-The Configuration file is `analytics-zoo/docker/cluster-serving/config.yaml`. Your Cluster Serving configuration can all be set by modifying this file.
-
-See an example of `config.yaml` below
+Your Cluster Serving configuration can all be set by modifying config file `config.yaml`. See an example of `config.yaml` below
 ```
 ## Analytics Zoo Cluster Serving Config Example
 
@@ -110,7 +104,20 @@ spark:
   # default, 4
   total_executor_cores:
 ```
-#### 2.1 Preparing Model
+##### Download release
+If you install Cluster Serving by [download release]() the Configuration file is `analytics-zoo/docker/cluster-serving/config.yaml`.
+##### Pip
+If you install Cluster Serving by pip, a `config.yaml` will be generated in your current working directory when you create a instance of `ClusterServing`, you can set your config by either modifying this `config.yaml` or by calling `set_config()` method. See code example below
+```
+from zoo.serving.server import ClusterServing
+my_serving = ClusterServing()
+# config.yaml is generated in your current working directory
+# you can modify it to set your config
+
+# and you can also set your config by
+my_serving.set_config("model", "path", "path/to/model")
+```
+#### 2.2 Preparing Model
 Currently Analytics Zoo Cluster Serving supports Tensorflow, Caffe, Pytorch, BigDL, OpenVINO models. (Note currently only image classification models are supported).
 
 You need to put your model file into a directory and the directory could have layout like following according to model type, note that only one model is allowed in your directory.
@@ -158,15 +165,21 @@ If you run Cluster Serving with docker, put your model file into `model` directo
 ##### DIY User
 For DIY user, you could put the model in your local directory, and set `model:/path/to/dir`.
 
-#### 2.2 Input Data Configuration
-* src: the queue you subscribe for your input data, e.g. a default config of Redis on local machine is `localhost:6379`.
-* shape: the shape of your input data, e.g. a default config for pretrained imagenet is `3,224,224`, you should use the same shape of data which trained your model, in Tensorflow the format is usually HWC and in other models the format is usually CHW.
+#### 2.3 Input Data Configuration
+The field `input` contains your input data configuration.
 
-#### 2.3 Inference Parameter Configuration
+* src: the queue you subscribe for your input data, e.g. a default config of Redis on local machine is `localhost:6379`.
+* image_shape: the shape of your input data, e.g. a default config for pretrained imagenet is `3,224,224`, you should use the same shape of data which trained your model, in Tensorflow the format is usually HWC and in other models the format is usually CHW.
+
+#### 2.4 Inference Parameter Configuration
+The field `params` contains your inference parameter configuration.
+
 * batch_size: the batch size you use for model inference, we recommend this value to be not small than 4 and not larger than 512, as batch size increases, you may get some gain in throughput and multiple times slow down in latency (inference time per batch).
 * top_n: the top-N result you want for output, **note:** if the top-N number is larger than model output size of the the final layer, it would just return all the outputs.
 
-#### 2.4 Spark Configuration
+#### 2.5 Spark Configuration
+The field `spark` contains your spark configuration.
+
 * master: Your cluster address, same as parameter `master` in spark
 * driver_memory: same as parameter `driver-memory` in spark
 * executor_memory: same as parameter `executor-memory` in spark
