@@ -58,8 +58,11 @@ For more details, you could also see the log and performance by go to `localhost
 
 ## Deploy your Own Cluster Serving
 ### 1. Installation
-Currently Analytics Zoo Cluster Serving supports installation by download release, pip.
+Currently Analytics Zoo Cluster Serving supports installation by docker, with all dependencies already packaged, which is recommended. If you do not install with docker, you can install by download release, pip. Note that in this way you need to install [Redis]() and [TensorBoard]() (for visualizing the serving status) on the local node.
 #### Docker
+```
+docker pull zoo-cluster-serving
+```
 
 #### Not Docker
 #### Download Release
@@ -104,19 +107,12 @@ spark:
   # default, 4
   total_executor_cores:
 ```
-##### Download release
-If you install Cluster Serving by [download release]() the Configuration file is `analytics-zoo/docker/cluster-serving/config.yaml`.
-##### Pip
-If you install Cluster Serving by pip, a `config.yaml` will be generated in your current working directory when you create a instance of `ClusterServing`, you can set your config by either modifying this `config.yaml` or by calling `set_config()` method. See code example below
-```
-from zoo.serving.server import ClusterServing
-my_serving = ClusterServing()
-# config.yaml is generated in your current working directory
-# you can modify it to set your config
+##### Docker
 
-# and you can also set your config by
-my_serving.set_config("model", "path", "path/to/model")
-```
+##### Not Docker
+
+Config file `config.yaml` will be generated in your current working directory, you can set your config by modifying it.
+
 #### 2.2 Preparing Model
 Currently Analytics Zoo Cluster Serving supports Tensorflow, Caffe, Pytorch, BigDL, OpenVINO models. (Note currently only image classification models are supported).
 
@@ -164,19 +160,17 @@ Put your model file into `model` directory. You do not need to set `model:path` 
 ##### Not Docker
 Put the model in any of your local directory, and set `model:/path/to/dir`.
 
-#### 2.3 Input Data Configuration
+#### 2.3 Other Configuration
 The field `input` contains your input data configuration.
 
-* src: the queue you subscribe for your input data, e.g. a default config of Redis on local machine is `localhost:6379`.
+* src: the queue you subscribe for your input data, e.g. a default config of Redis on local machine is `localhost:6379`, note that please use the host address in your network instead of localhost or 127.0.0.1 when you run serving in cluster, make sure other nodes in cluster could also recognize this address.
 * image_shape: the shape of your input data, e.g. a default config for pretrained imagenet is `3,224,224`, you should use the same shape of data which trained your model, in Tensorflow the format is usually HWC and in other models the format is usually CHW.
 
-#### 2.4 Inference Parameter Configuration
 The field `params` contains your inference parameter configuration.
 
 * batch_size: the batch size you use for model inference, we recommend this value to be not small than 4 and not larger than 512, as batch size increases, you may get some gain in throughput and multiple times slow down in latency (inference time per batch).
 * top_n: the top-N result you want for output, **note:** if the top-N number is larger than model output size of the the final layer, it would just return all the outputs.
 
-#### 2.5 Spark Configuration
 The field `spark` contains your spark configuration.
 
 * master: Your cluster address, same as parameter `master` in spark
@@ -199,10 +193,6 @@ Download the spark-redis dependency jar [here]().
 Go to `analytics-zoo/docker/cluster-serving/`, move two dependency jars to this directory. One is `analytics-zoo/dist/lib/*.jar` and another is the spark-redis jar which you download above.
 
 If you want to visualize the inference summary, you also need to install Tensorboard and start the service.
-
-#### Downloading Release
-
-#### Pip
 
 
 ## Model Inference
