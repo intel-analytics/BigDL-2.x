@@ -58,19 +58,28 @@ For more details, you could also see the log and performance by go to `localhost
 
 ## Deploy your Own Cluster Serving
 ### 1. Installation
-Currently Analytics Zoo Cluster Serving supports installation by docker, with all dependencies already packaged, which is recommended. If you do not install with docker, you can install by download release, pip. Note that in this way you need to install [Redis]() and [TensorBoard]() (for visualizing the serving status) on the local node.
+Currently Analytics Zoo Cluster Serving supports installation by docker, with all dependencies already packaged, which is recommended. If you do not install with docker, you can install by download release, pip. Note that in this way you need to install Redis and TensorBoard (for visualizing the serving status) on the local node.
 #### Docker
 ```
 docker pull zoo-cluster-serving
 ```
-
+then,
+```
+docker run zoo-cluster-serving
+```
+Go inside the container and finish following operations.
 #### Not Docker
+For Not Docker user, first, install [Redis]() and [TensorBoard]() (for visualizing the serving status) and start them.
+
+Download the spark-redis dependency jar [here](), go to `analytics-zoo/docker/cluster-serving/`, move two dependency jars to this directory. One is `analytics-zoo/dist/lib/*.jar` and another is the spark-redis jar which you download above.
+
+Install Analytics Zoo by download release or pip.
+
 ##### Download Release
-You can install Cluster Serving by download Analytics Zoo from [release page]() on the local node.
+Download Analytics Zoo from [release page]() on the local node.
 
 ##### Pip
-You can install Cluster Serving by pip, `pip install analytics-zoo`.
-
+`pip install analytics-zoo`.
 
 ### 2. Configuration
 #### 2.1 How to Config
@@ -151,9 +160,7 @@ You need to put your model file into a directory and the directory could have la
    |-- xx.xml
    |-- xx.bin
 ```
-##### Docker
-Put your model file into `model` directory. You do not need to set `model:path` in `config.yaml` because a default model location is set in docker image. 
-##### Not Docker
+
 Put the model in any of your local directory, and set `model:/path/to/dir`.
 
 #### 2.3 Other Configuration
@@ -178,18 +185,9 @@ The field `spark` contains your spark configuration.
 
 For more details of these config, please refer to [Spark Official Document](https://spark.apache.org/docs/latest/configuration.html)
 ### 3. Launching Service
-#### Docker
-
-
-#### Not Docker
-For Not Docker user, you need to install and start your a Redis server.
-
-Download the spark-redis dependency jar [here]().
-
-Go to `analytics-zoo/docker/cluster-serving/`, move two dependency jars to this directory. One is `analytics-zoo/dist/lib/*.jar` and another is the spark-redis jar which you download above.
-
-If you want to visualize the inference summary, you also need to install Tensorboard and start the service.
-
+```
+cluster-serving-start
+```
 
 ## Model Inference
 We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide]().
@@ -237,21 +235,24 @@ result_class_prob_map = json.loads(img1_result)
 
 ## Optional Operations
 ### Manually Start and Stop Serving
-Once you run docker image of Cluster Serving, the serving is automatically started. However, in some cases, you may need to keep your data in queue and manually start or stop the serving to release hardware resources or update model. Thus, we provide following scripts to start, stop, restart Cluster Serving. 
+We provide following scripts to start, stop, restart Cluster Serving. 
 #### Start
-If you have stopped serving, you could start it by `bash start-cluster-serving.sh`.
+```
+cluster-serving-start
+```
 
 #### Stop
-To stop Cluster Serving for some purpose, e.g. save compute resources and keep your data, your could run `bash stop-cluster-serving.sh`
-
+```
+cluster-serving-stop
+```
 #### Restart
-In the case that Cluster Serving encounters some unknown error, you could restart serving by
-`bash restart-cluster-serving.sh`
-
-By manually stop and restart the cluster serving, you have the flexibility to update the model in the middle of the inference and you don't have to restart the entire docker.
+```
+cluster-serving-restart
+```
+Restart is usually used when config or model is updated and you have to restart serving to make it work.
 
 ### Update Model
-To update your model, you could replace your model file in your model directory, and restart Cluster Serving by `bash restart-cluster-serving.sh`. Note that you could also change your config in `config.yaml` and restart serving.
+To update your model, you could replace your model file in your model directory, and restart Cluster Serving by `cluster-serving-restart`. Note that you could also change your config in `config.yaml` and restart serving.
 
 ### Logs and Visualization
 
