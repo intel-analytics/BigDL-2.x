@@ -34,6 +34,9 @@ class ClusterServing:
             if not os.path.exists(self.conf_path):
                 raise EOFError("Can not find your config file.")
         shutil.copyfile(self.conf_path, 'config.yaml')
+        """
+        code below this line are all deprecated
+        """
 
         self.serving_start_path = os.path.join(__file__ + "/../../"
                                                'bin/cluster-serving/start-cluster-serving.sh')

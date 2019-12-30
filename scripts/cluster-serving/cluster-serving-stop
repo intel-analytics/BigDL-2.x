@@ -1,4 +1,5 @@
 #!/bin/bash
+
 if [ -f "running" ]; then
     rm running
     echo "Stop signal sent to serving."

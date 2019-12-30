@@ -1,0 +1,10 @@
+#!/usr/bin/python
+
+from shutil import copyfile
+import os
+
+from zoo.serving.server import ClusterServing
+
+serving = ClusterServing()
+
+os.mkdir('model')

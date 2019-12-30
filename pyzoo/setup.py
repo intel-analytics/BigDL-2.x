@@ -23,6 +23,7 @@ from shutil import copyfile, copytree, rmtree
 from setuptools import setup
 
 TEMP_PATH = "zoo/share"
+SCRIPTS_TARGET = "bin/cluster-serving"
 analytics_zoo_home = os.path.abspath(__file__ + "/../../")
 
 
@@ -85,6 +86,8 @@ def init_env():
 
 
 def setup_package():
+    script_names = os.listdir(SCRIPTS_TARGET)
+    scripts = list(map(lambda script: os.path.join(SCRIPTS_TARGET, script), script_names))
     metadata = dict(
         name='analytics-zoo',
         version=VERSION,
@@ -100,6 +103,7 @@ def setup_package():
         include_package_data=True,
         package_data={"zoo.share": ['lib/analytics-zoo*with-dependencies.jar', 'conf/*', 'bin/*',
                                     'extra-resources/*']},
+        scripts=scripts,
         classifiers=[
             'License :: OSI Approved :: Apache Software License',
             'Programming Language :: Python :: 2.7',
