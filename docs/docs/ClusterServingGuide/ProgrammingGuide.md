@@ -38,7 +38,7 @@ cluster-serving |
 ```
 Then use one command to start Cluster Serving.
 ```
-docker run -itd --name cluster-serving --net=host -v $(pwd)/model:/opt/work/model -v $(pwd)/config.yaml:/opt/work/config.yaml analytics-zoo/cluster-serving:0.7.0-spark_2.4.3
+docker run -itd --name cluster-serving --net=host analytics-zoo/cluster-serving:0.7.0-spark_2.4.3
 ```
 Install `opencv-python` if they do not exist in your Python environment.
 
