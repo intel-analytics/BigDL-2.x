@@ -38,7 +38,7 @@ class LSTMModel(nn.Module):
             if 'bias' in name:
                 nn.init.constant_(param, 0.0)
             elif 'weight_ih' in name:
-                nn.init.xavier_normal(param)
+                nn.init.xavier_normal_(param)
             elif 'weight_hh' in name:
                 nn.init.orthogonal_(param)
 
@@ -66,8 +66,10 @@ class VanillaLSTMPytorch(BaseModel):
         self.check_optional_config = check_optional_config
         self.future_seq_len = future_seq_len
         self.feature_num = None
+        self.output_dim = 1
         self.metric = None
-        self.batch_size = None
+        self.criterion = None
+        self.optimizer = None
 
     def _get_configs(self, config):
         super()._check_config(**config)
@@ -75,7 +77,7 @@ class VanillaLSTMPytorch(BaseModel):
         self.batch_size = config.get('batch_size', 1024)
         self.hidden_dim = config.get('hidden_dim', 32)
         self.layer_num = config.get('layer_num', 2)
-        self.dropout = config.get('dropout', 0.8)
+        self.dropout = config.get('dropout', 0.2)
         self.lr = config.get("lr", 0.001)
 
     def _load_data(self, input_data, batch_size):
@@ -84,19 +86,23 @@ class VanillaLSTMPytorch(BaseModel):
         data_loader = DataLoader(data, shuffle=True, batch_size=batch_size)
         return data_loader
 
-    def _train_one_iteration(self, input_seqs, target_seqs):
-        # clear gradients
-        self.model.zero_grad()
+    def _train_one_epoch(self, train_loader):
+        self.model.train()
+        train_losses = []
+        for input_seqs, target_seqs in train_loader:
+            self.model.zero_grad()
 
-        outputs = self.model(input_seqs)
-        loss = self.criterion(outputs, target_seqs)
+            outputs = self.model(input_seqs)
+            loss = self.criterion(outputs, target_seqs)
 
-        # get gradients
-        loss.backward()
+            # get gradients
+            loss.backward()
 
-        # update parameters
-        self.optimizer.step()
-        return loss
+            # update parameters
+            self.optimizer.step()
+
+            train_losses.append(loss.item())
+        return np.mean(train_losses)
 
     def _val_one_epoch(self, val_loader):
         self.model.eval()
@@ -133,8 +139,9 @@ class VanillaLSTMPytorch(BaseModel):
             val_loader = self._load_data(validation_data, self.batch_size)
 
         self.feature_num = x.shape[2]
+        self.output_dim = 1
         self.model = LSTMModel(self.feature_num, self.hidden_dim, self.layer_num, self.dropout,
-                               self.future_seq_len)
+                               self.output_dim)
         # self._print_model()
 
         self.criterion = nn.MSELoss()
@@ -142,30 +149,22 @@ class VanillaLSTMPytorch(BaseModel):
 
         epochs = config.get('epochs', 20)
         assert(epochs > 0)
-
-        iterations = 0
-        val_iteration = 100
+        val_epoch = 1
         for i in range(epochs):
-            for input_seqs, target_seqs in train_loader:
-                iterations += 1
-                loss = self._train_one_iteration(input_seqs, target_seqs)
-
-                if iterations % val_iteration == 0:
-                    if validation_data is not None:
-                        val_loss = self._val_one_epoch(val_loader)
-                    else:
-                        val_loss = self._val_one_epoch(train_loader)
-                    if verbose == 1:
-                        print("Epoch : {}/{}...".format(i, epochs),
-                              "Step: {}...".format(iterations),
-                              "Loss: {:.6f}...".format(loss.item()),
-                              "Val loss: {:.6f}...".format(val_loss),
-                              )
-        print(iterations)
+            train_loss = self._train_one_epoch(train_loader)
+            if verbose == 1:
+                print("Epoch : {}/{}...".format(i, epochs),
+                      "Loss: {:.6f}...".format(train_loss),
+                      )
+            if i % val_epoch == 0:
+                if validation_data:
+                    val_loss = self._val_one_epoch(val_loader)
+                if verbose == 1:
+                    print("Val loss: {:.6f}...".format(val_loss))
         if validation_data:
-            result = self._val_one_epoch(val_loader)
+            result = val_loss
         else:
-            result = loss.item()
+            result = train_loss
         return result
 
     def evaluate(self, x, y, metric=['mse']):
@@ -221,6 +220,7 @@ class VanillaLSTMPytorch(BaseModel):
             "hidden_dim": self.hidden_dim,
             "dropout": self.dropout,
             "layer_num": self.layer_num,
+            "output_dim": self.output_dim,
             # "lr": self.lr
         }
         save_config(config_path, config_to_save)
@@ -239,14 +239,15 @@ class VanillaLSTMPytorch(BaseModel):
 
         self.future_seq_len = config["future_seq_len"]
         self.feature_num = config["feature_num"]
+        self.output_dim = config["output_dim"]
         # for continuous training
         saved_configs = ["future_seq_len", "metric", "batch_size", "hidden_dim",
-                         "dropout", "layer_num"]
+                         "dropout", "layer_num", "output_dim"]
         assert all([c in config for c in saved_configs])
         self._get_configs(config)
 
         self.model = LSTMModel(self.feature_num, self.hidden_dim, self.layer_num, self.dropout,
-                               self.future_seq_len)
+                               self.output_dim)
         self.model.load_state_dict(torch.load(model_path))
         self.model.eval()
 
@@ -294,14 +295,14 @@ if __name__ == "__main__":
     x_test = x_test.astype(np.float32)
     y_test = y_test.astype(np.float32)
 
+    mc = True
     print("fit_eval:", model.fit_eval(x_train, y_train, validation_data=(x_test, y_test),
-                                      verbose=0,
-                                      mc=True, **config))
+                                      verbose=1,
+                                      mc=mc, **config))
     print("evaluate:", model.evaluate(x_test, y_test))
-    mc = False
     if not mc:
         y_pred = model.predict(x_test)
-        print(y_pred.shape)
+        assert y_pred.shape == (x_test.shape[0], future_seq_len)
 
         dirname = 'tmp'
         model.save('tmp.pth', 'tmp.json')
@@ -315,13 +316,14 @@ if __name__ == "__main__":
         assert np.allclose(y_pred, y_pred_after)
     else:
         y_pred, y_uncertainty = model.predict_with_uncertainty(x_test, n_iter=3)
-        print("shape of output of uncertain predict:", y_pred.shape, y_uncertainty.shape)
-        print(y_uncertainty[:5])
+        assert y_pred.shape == (x_test.shape[0], future_seq_len)
+        assert y_uncertainty.shape == (x_test.shape[0], future_seq_len)
+        assert np.any(y_uncertainty)
 
-    from matplotlib import pyplot as plt
-
-    y_test = np.squeeze(y_test)
-    y_pred = np.squeeze(y_pred)
+    # from matplotlib import pyplot as plt
+    #
+    # y_test = np.squeeze(y_test)
+    # y_pred = np.squeeze(y_pred)
 
     # def plot_result(y_test, y_pred):
     #     # target column of dataframe is "value"
