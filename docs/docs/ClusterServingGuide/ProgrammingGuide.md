@@ -15,7 +15,7 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
    
    3. [Launching Service]()
    
-* [Model inference]()
+   4. [Model inference]()
 
 * [Additional Operations]()
 
@@ -189,7 +189,7 @@ For more details of these config, please refer to [Spark Official Document](http
 cluster-serving-start
 ```
 
-## Model Inference
+### 4. Model Inference
 We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide]().
 ### Input and Output API
 To input data to queue, you need a `InputQueue` instance, and using `enqueue` method by giving an image path or image ndarray. See following example.
