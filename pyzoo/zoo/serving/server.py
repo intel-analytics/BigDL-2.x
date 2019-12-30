@@ -31,13 +31,16 @@ class ClusterServing:
                   'are you sure that you install serving by pip?')
             self.conf_path = os.path.abspath(__file__ + "/../../../../scripts/cluster-serving/config.yaml")
 
-            subprocess.Popen(['cat', __file__])
             if not os.path.exists(self.conf_path):
                 raise EOFError("Can not find your config file.")
         shutil.copyfile(self.conf_path, 'config.yaml')
 
-        self.serving_sh_path = os.path.join(__file__ + "/../../"
-                                            'bin/cluster-serving/start-cluster-serving.sh')
+        self.serving_start_path = os.path.join(__file__ + "/../../"
+                                               'bin/cluster-serving/start-cluster-serving.sh')
+        self.serving_stop_path = os.path.join(__file__ + "/../../"
+                                              'bin/cluster-serving/start-cluster-serving.sh')
+        self.serving_restart_path = os.path.join(__file__ + "/../../"
+                                                 'bin/cluster-serving/start-cluster-serving.sh')
 
         subprocess.Popen(['chmod', 'a+x', self.conf_path])
         subprocess.Popen(['chmod', 'a+x', self.serving_sh_path])
@@ -52,12 +55,10 @@ class ClusterServing:
             cmd = 'docker run -it --name cluster-serving --net=host -v ' + \
                 model_path + ':/opt/work/model/ -v config.yaml:/opt/work/config.yaml' + \
                 + ' intelanalytics/zoo-cluster-serving:beta'
-            subprocess.Popen(cmd, shell=True)
-
-        subprocess.Popen('docker run')
+            subprocess.call(cmd, shell=True)
 
     def docker_remove(self):
-        subprocess.Popen('docker rm -f ' + self.name)
+        subprocess.call('docker rm -f ' + self.name)
 
     def start(self):
         """
@@ -65,7 +66,7 @@ class ClusterServing:
         :return:
         """
         self.proc = subprocess.Popen(
-            [self.serving_sh_path], shell=True)
+            [self.serving_start_path], shell=True)
 
     def stop(self):
         """
@@ -73,14 +74,12 @@ class ClusterServing:
         aka. removing running flag
         :return:
         """
-        os.remove("running")
+        subprocess.Popen(
+            [self.serving_stop_path], shell=True)
 
     def restart(self):
-        self.stop()
-        while not self.proc.poll():
-            # if return null, the subprocess is still running, wait
-            time.sleep(3)
-        self.start()
+        subprocess.Popen(
+            [self.serving_restart_path], shell=True)
 
     def set_config(self, field, param, value):
         """
