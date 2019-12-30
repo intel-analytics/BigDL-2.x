@@ -223,22 +223,6 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
-        <repository>
-            <id>sonatype</id>
-            <name>sonatype repository</name>
-            <url>https://oss.sonatype.org/content/groups/public/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>Sonatype-public</id>
-            <name>SnakeYAML repository</name>
-            <url>http://oss.sonatype.org/content/groups/public/</url>
-        </repository>
     </repositories>
 
     <licenses>
@@ -368,7 +352,7 @@
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>1.26-SNAPSHOT</version>
+            <version>1.25</version>
         </dependency>
         <!--<dependency>-->
             <!--<groupId>com.redislabs</groupId>-->
