@@ -373,8 +373,3 @@ echo "#4 chatbot time used:$time7 seconds"
 echo "#5 Resnet time used:$time8 seconds"
 echo "#6.1 OpenVINO Resnet time used:$time9 seconds"
 echo "#6.2 BigDL Resnet time used:$time10 seconds"
-
-
-
-
-
