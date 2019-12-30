@@ -15,7 +15,7 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
    
    3. [Launching Service]()
    
-   4. [Model inference]()
+* [Model inference]()
 
 * [Additional Operations]()
 
@@ -59,15 +59,15 @@ For more details, you could also see the log and performance by go to `localhost
 ## Deploy your Own Cluster Serving
 ### 1. Installation
 Currently Analytics Zoo Cluster Serving supports installation by download release, pip.
+#### Docker
 
+#### Not Docker
 #### Download Release
 You can install Cluster Serving by download Analytics Zoo from [release page]() on the local node.
 
 #### Pip
 You can install Cluster Serving by pip, `pip install analytics-zoo`.
 
----
-In addition, you also need to install [Redis]() and [TensorBoard]() (for visualizing the serving status) on the local node; alternatively, you may pull the prebuilt [Docker image]() which has packaged all the required dependency. If you use our pre-built docker image, please refer to Docker subsection in following if any, otherwise, please refer to DIY subsection.
 
 ### 2. Configuration
 #### 2.1 How to Config
@@ -161,7 +161,7 @@ You need to put your model file into a directory and the directory could have la
 ```
 ##### Docker
 Put your model file into `model` directory. You do not need to set `model:path` in `config.yaml` because a default model location is set in docker image. 
-##### DIY
+##### Not Docker
 Put the model in any of your local directory, and set `model:/path/to/dir`.
 
 #### 2.3 Input Data Configuration
@@ -187,15 +187,12 @@ The field `spark` contains your spark configuration.
 * total_executor_cores: same as parameter ` total-executor-cores` in spark
 
 For more details of these config, please refer to [Spark Official Document](https://spark.apache.org/docs/latest/configuration.html)
-## 3. Launching Service
-### Downloading Release
+### 3. Launching Service
 #### Docker
-For docker user, you can use following one line command to start Cluster Serving.
-```
-docker run -itd --name cluster-serving --net=host -v $(pwd)/model/:/opt/work/model/ -v $(pwd)/config.yaml:/opt/work/config.yaml analytics-zoo/cluster-serving:0.7.0-spark_2.4.3
-```
-#### DIY
-For DIY user, you need to install and start your a Redis server.
+
+
+#### Not Docker
+For Not Docker user, you need to install and start your a Redis server.
 
 Download the spark-redis dependency jar [here]().
 
@@ -203,27 +200,12 @@ Go to `analytics-zoo/docker/cluster-serving/`, move two dependency jars to this 
 
 If you want to visualize the inference summary, you also need to install Tensorboard and start the service.
 
-Then, `bash start-cluster-serving.sh`.
-### Pip
-#### Docker
-You can use following code to start a docker container running Cluster Serving.
-```
-from zoo.serving.server import ClusterServing
-my_serving = ClusterServing()
-my_serving.docker_run()
-```
-#### DIY
-For DIY user, you need to install and start your a Redis server.
+#### Downloading Release
 
-Download the spark-redis dependency jar [here]().
+#### Pip
 
-Then, you can use following code to start Cluster Serving.
-```
-from zoo.serving.server import ClusterServing
-my_serving = ClusterServing()
-my_serving.start()
-```
-## 4. Model Inference
+
+## Model Inference
 We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide]().
 ### Input and Output API
 To input data to queue, you need a `InputQueue` instance, and using `enqueue` method by giving an image path or image ndarray. See following example.
