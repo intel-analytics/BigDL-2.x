@@ -65,10 +65,10 @@ docker pull zoo-cluster-serving
 ```
 
 #### Not Docker
-#### Download Release
+##### Download Release
 You can install Cluster Serving by download Analytics Zoo from [release page]() on the local node.
 
-#### Pip
+##### Pip
 You can install Cluster Serving by pip, `pip install analytics-zoo`.
 
 
@@ -107,10 +107,6 @@ spark:
   # default, 4
   total_executor_cores:
 ```
-##### Docker
-
-##### Not Docker
-
 Config file `config.yaml` will be generated in your current working directory, you can set your config by modifying it.
 
 #### 2.2 Preparing Model
