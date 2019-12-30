@@ -15,7 +15,7 @@
 #
 import subprocess
 import yaml
-import glob
+import shutil
 import os
 import time
 
@@ -23,16 +23,41 @@ import time
 class ClusterServing:
 
     def __init__(self):
+        self.name = 'cluster-serving'
         self.proc = None
-        zoo_root = os.path.abspath(__file__ + "/../../")
+        self.conf_path = os.path.abspath(__file__ + "/../../bin/cluster-serving/config.yaml")
+        if not os.path.exists(self.conf_path):
+            print('WARNING: Config file does not exist in your pip directory,'
+                  'are you sure that you install serving by pip?')
+            self.conf_path = os.path.abspath(__file__ + "/../../../../scripts/cluster-serving/config.yaml")
 
-        self.conf_path = os.path.join(zoo_root,
-                                      'bin/cluster-serving/config.yaml')
-        self.serving_sh_path = os.path.join(zoo_root,
+            subprocess.Popen(['cat', __file__])
+            if not os.path.exists(self.conf_path):
+                raise EOFError("Can not find your config file.")
+        shutil.copyfile(self.conf_path, 'config.yaml')
+
+        self.serving_sh_path = os.path.join(__file__ + "/../../"
                                             'bin/cluster-serving/start-cluster-serving.sh')
 
         subprocess.Popen(['chmod', 'a+x', self.conf_path])
         subprocess.Popen(['chmod', 'a+x', self.serving_sh_path])
+
+    def docker_run(self):
+        with open(self.conf_path, 'r') as f:
+            config = yaml.load(f)
+            if not config['model']['path']:
+                raise EOFError('You have not set model path, you have to set'
+                               'model path before you start docker container.')
+            model_path = config['model']['path']
+            cmd = 'docker run -it --name cluster-serving --net=host -v ' + \
+                model_path + ':/opt/work/model/ -v config.yaml:/opt/work/config.yaml' + \
+                + ' intelanalytics/zoo-cluster-serving:beta'
+            subprocess.Popen(cmd, shell=True)
+
+        subprocess.Popen('docker run')
+
+    def docker_remove(self):
+        subprocess.Popen('docker rm -f ' + self.name)
 
     def start(self):
         """
@@ -65,11 +90,15 @@ class ClusterServing:
         :param value: the value of the field and param specified
         :return:
         """
+        if not os.path.exists('config.yaml'):
+            if not os.path.exists(self.conf_path):
+                raise EOFError("Source config does not exist...what have you done...")
+            shutil.copyfile(self.conf_path, '.')
         with open(self.conf_path, 'r') as f:
             config = yaml.load(f)
             try:
                 config[field][param] = value
-            except Exception:
+            except SyntaxError:
                 print("You have provided invalid configuration, "
                       "please check Configuration Guide.")
                 return
