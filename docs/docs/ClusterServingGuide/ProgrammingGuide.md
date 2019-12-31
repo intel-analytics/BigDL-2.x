@@ -250,15 +250,10 @@ Restart is usually used when config or model is updated and you have to restart 
 To update your model, you could replace your model file in your model directory, and restart Cluster Serving by `cluster-serving-restart`. Note that you could also change your config in `config.yaml` and restart serving.
 
 ### Logs and Visualization
-
 #### Logs
-
-We use log to save Cluster Serving information and error.
-
-To see log, for docker user, run `docker logs cluster-serving`, otherwise, you could view it through stdout.
+We use log to save Cluster Serving information and error. To see log, please refer to `cluster-serving.log`.
 
 #### Visualization
-
 We integrate Tensorboard into Cluster Serving. 
 
 Tensorboard service is started with Cluster Serving, once your serving is run, you can go to `localhost:6006` to see visualization of your serving.
