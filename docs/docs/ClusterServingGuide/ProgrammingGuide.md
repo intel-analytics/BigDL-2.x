@@ -76,10 +76,10 @@ Download the spark-redis dependency jar [here](), go to `analytics-zoo/docker/cl
 Install Analytics Zoo by download release or pip.
 
 ##### Download Release
-Download Analytics Zoo from [release page]() on the local node.
+Download Analytics Zoo from [release page]() on the local node, go to `analytics-zoo/scripts/cluster-serving`.
 
 ##### Pip
-`pip install analytics-zoo`.
+`pip install analytics-zoo`. And go to any directory, run `cluster-serving-init`.
 
 ### 2. Configuration
 #### 2.1 How to Config
@@ -116,7 +116,7 @@ spark:
   # default, 4
   total_executor_cores:
 ```
-Config file `config.yaml` will be generated in your current working directory, you can set your config by modifying it.
+After [installation](), you will see a config file `config.yaml` your current working directory, you can set your config by modifying it.
 
 #### 2.2 Preparing Model
 Currently Analytics Zoo Cluster Serving supports Tensorflow, Caffe, Pytorch, BigDL, OpenVINO models. (Note currently only image classification models are supported).
