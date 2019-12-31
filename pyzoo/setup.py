@@ -24,7 +24,7 @@ from setuptools import setup
 
 TEMP_PATH = "zoo/share"
 analytics_zoo_home = os.path.abspath(__file__ + "/../../")
-SCRIPTS_TARGET = os.path.join(analytics_zoo_home, "dist/bin/cluster-serving")
+SCRIPTS_TARGET = os.path.join(TEMP_PATH, "bin/cluster-serving")
 
 
 def get_analytics_zoo_packages():
