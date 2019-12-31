@@ -42,7 +42,7 @@ docker run -itd --name cluster-serving --net=host analytics-zoo/cluster-serving:
 ```
 Install `opencv-python` if they do not exist in your Python environment.
 
-Go to `analytics-zoo/pyzoo/zoo/serving/`, and run python program `python quick_start.py` to push data into queue. 
+Go to `analytics-zoo/pyzoo/zoo/serving/`, and run python program `python quick_start.py` to push data into queue and get inference result. 
 
 Then you can see the inference output in console. 
 ```
