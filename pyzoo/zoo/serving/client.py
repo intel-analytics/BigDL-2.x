@@ -105,8 +105,8 @@ class InputQueue(API):
         inf = self.db.info()
 
         try:
-            # if inf['used_memory'] >= inf['maxmemory'] * self.input_threshold:
-            #     raise redis.exceptions.ConnectionError
+            if inf['used_memory'] >= inf['maxmemory'] * self.input_threshold:
+                raise redis.exceptions.ConnectionError
             self.db.xadd("image_stream", d)
             print("Write to Redis successful")
         except redis.exceptions.ConnectionError:
