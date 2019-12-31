@@ -71,20 +71,16 @@ Go inside the container and finish following operations.
 #### Not Docker
 For Not Docker user, first, install [Redis]() and [TensorBoard]() (for visualizing the serving status) and start them.
 
-Download the spark-redis dependency jar [here](), go to `analytics-zoo/docker/cluster-serving/`, move two dependency jars to this directory. One is `analytics-zoo/dist/lib/*.jar` and another is the spark-redis jar which you download above.
-
 Install Analytics Zoo by download release or pip.
 
 ##### Download Release
-Download Analytics Zoo from [release page]() on the local node, go to `analytics-zoo/scripts/cluster-serving`.
+Download Analytics Zoo from [release page]() on the local node, go to `analytics-zoo/scripts/cluster-serving`, run `cluster-serving-init`.
 
 ##### Pip
 `pip install analytics-zoo`. And go to any directory, run `cluster-serving-init`.
 
 ### 2. Configuration
 #### 2.1 How to Config
-The way to set configuration may be different depending on how you [install]() Cluster Serving.
-
 Your Cluster Serving configuration can all be set by modifying config file `config.yaml`. See an example of `config.yaml` below
 ```
 ## Analytics Zoo Cluster Serving Config Example
@@ -171,7 +167,7 @@ The field `input` contains your input data configuration.
 
 The field `params` contains your inference parameter configuration.
 
-* batch_size: the batch size you use for model inference, we recommend this value to be not small than 4 and not larger than 512, as batch size increases, you may get some gain in throughput and multiple times slow down in latency (inference time per batch).
+* batch_size: the batch size you use for model inference, we recommend this value to be not small than 4 and not larger than 512. In general, using larger batch size means higher throughput, but also increase the latency between batches accordingly.
 * top_n: the top-N result you want for output, **note:** if the top-N number is larger than model output size of the the final layer, it would just return all the outputs.
 
 The field `spark` contains your spark configuration.
