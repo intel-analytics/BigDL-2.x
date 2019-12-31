@@ -81,7 +81,7 @@ Download Analytics Zoo from [release page]() on the local node, go to `analytics
 
 ### 2. Configuration
 #### 2.1 How to Config
-Your Cluster Serving configuration can all be set by modifying config file `config.yaml`. See an example of `config.yaml` below
+After [installation](), you will see a config file `config.yaml` your current working directory. Your Cluster Serving configuration can all be set by modifying it. See an example of `config.yaml` below
 ```
 ## Analytics Zoo Cluster Serving Config Example
 
@@ -112,7 +112,6 @@ spark:
   # default, 4
   total_executor_cores:
 ```
-After [installation](), you will see a config file `config.yaml` your current working directory, you can set your config by modifying it.
 
 #### 2.2 Preparing Model
 Currently Analytics Zoo Cluster Serving supports Tensorflow, Caffe, Pytorch, BigDL, OpenVINO models. (Note currently only image classification models are supported).
@@ -187,7 +186,7 @@ cluster-serving-start
 
 ### 4. Model Inference
 We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide]().
-### Input and Output API
+#### Input and Output API
 To input data to queue, you need a `InputQueue` instance, and using `enqueue` method by giving an image path or image ndarray. See following example.
 ```
 from zoo.serving.client import InputQueue
@@ -205,7 +204,7 @@ output_api = OutputQueue()
 img1_result = output_api.query('img1')
 all_result = output_api.dequeue() # the output queue is empty after this code
 ```
-### Output Format
+#### Output Format
 Consider the code above, in [Input and Output API] Section.
 ```
 img1_result = output_api.query('img1')
