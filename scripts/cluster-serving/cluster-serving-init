@@ -7,4 +7,5 @@ from zoo.serving.server import ClusterServing
 
 serving = ClusterServing()
 
-os.mkdir('model')
+if not os.path.exists('model'):
+    os.mkdir('model')

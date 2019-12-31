@@ -33,7 +33,10 @@ class ClusterServing:
 
             if not os.path.exists(self.conf_path):
                 raise EOFError("Can not find your config file.")
-        shutil.copyfile(self.conf_path, 'config.yaml')
+        try:
+            shutil.copyfile(self.conf_path, 'config.yaml')
+        except Exception:
+            print("WARNING: An initialized config file already exists.")
         """
         code below this line are all deprecated
         """
@@ -46,7 +49,6 @@ class ClusterServing:
                                                  'bin/cluster-serving/start-cluster-serving.sh')
 
         subprocess.Popen(['chmod', 'a+x', self.conf_path])
-        subprocess.Popen(['chmod', 'a+x', self.serving_sh_path])
 
     def docker_run(self):
         with open(self.conf_path, 'r') as f:

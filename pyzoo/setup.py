@@ -23,8 +23,8 @@ from shutil import copyfile, copytree, rmtree
 from setuptools import setup
 
 TEMP_PATH = "zoo/share"
-SCRIPTS_TARGET = "bin/cluster-serving"
 analytics_zoo_home = os.path.abspath(__file__ + "/../../")
+SCRIPTS_TARGET = os.path.join(analytics_zoo_home, "dist/bin/cluster-serving")
 
 
 def get_analytics_zoo_packages():
@@ -56,7 +56,7 @@ and run sdist.
       cd $ANALYTICS_ZOO_HOME
       ./make-dist.sh
     Building the source dist is done in the Python directory:
-      cd $ANALYTICS_ZOO_HOME/pyzoo
+      cd $ANALYTICS_ZOOscripts_HOME/pyzoo
       python setup.py sdist
       pip install dist/*.tar.gz"""
 
