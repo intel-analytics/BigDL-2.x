@@ -269,3 +269,6 @@ Analytics Zoo Cluster Serving provides 2 attributes in Tensorboard so far, `Serv
 
 * `Total Records Number`: The total number of records that serving gets so far.
 
+See example of visualization:
+
+[Example Chart](https://github.com/Litchilitchy/analytics-zoo/blob/cluster-serving-doc/docs/docs/ClusterServingGuide/serving-example-chart.png)
