@@ -99,11 +99,9 @@ object StreamingTextClassification {
       // Note that no duplication in storage level only for running locally.
       // Replication necessary in distributed scenario for fault tolerance.
 
-      val lines = ssc.textFileStream(param.inputFile)
-      if(param.inputFile.isEmpty) {
-        val lines = ssc.socketTextStream(param.host,
-          param.port, StorageLevel.MEMORY_AND_DISK_SER)
-      }
+      val lines = if (param.inputFile.isEmpty)
+      ssc.socketTextStream(param.host, param.port, StorageLevel.MEMORY_AND_DISK_SER)
+      else ssc.textFileStream(param.inputFile)
 
       lines.foreachRDD { lineRdd =>
         if (!lineRdd.partitions.isEmpty) {
