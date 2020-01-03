@@ -71,7 +71,7 @@ docker run zoo-cluster-serving
 ```
 Go inside the container and finish following operations.
 #### Manual installation
-For Not Docker user, first, install [Redis]() and [TensorBoard]() (for visualizing the serving status) and start them.
+For Not Docker user, first, install [Redis]() and [TensorBoard]() (for visualizing the serving status) and add `$REDIS_HOME` variable to your environment if you want Cluster Serving to help you start and stop it.
 
 Install Analytics Zoo by download release or pip.
 
@@ -169,7 +169,7 @@ The field `input` contains your input data configuration.
 The field `params` contains your inference parameter configuration.
 
 * batch_size: the batch size you use for model inference, we recommend this value to be not small than 4 and not larger than 512. In general, using larger batch size means higher throughput, but also increase the latency between batches accordingly.
-* top_n: the top-N result you want for output, **note:** if the top-N number is larger than model output size of the the final layer, it would just return all the outputs.
+* top_n: the top N classes in the prediction result. **note:** if the top-N number is larger than model output size of the the final layer, it would just return all the outputs.
 
 The field `spark` contains your spark configuration.
 
@@ -188,7 +188,7 @@ You can use following command to start Cluster Serving.
 ```
 cluster-serving-start
 ```
-This command will start Redis and Tensorboard if they are not running. Note that you need to provide `REDIS_HOME` environment variable if you need this feature.
+This command will start Redis and Tensorboard if they are not running. Note that you need to provide `REDIS_HOME` environment variable as mentioned in [Installation](), if you need this feature.
 
 #### Stop
 You can use following command to stop Cluster Serving, data in Redis and Tensorboard service will persist.
@@ -236,16 +236,7 @@ The `img1_result` is a json format string, like following:
 ```
 '{"class_1":"prob_1","class_2":"prob_2",...,"class_n","prob_n"}'
 ```
-Where `n` is the number of `top_n` in your configuration file. Taking the example of quick start above, an output string of `top_n: 1` could be:
-```
-'{"1":"0.9974158"}'
-```
-A more readable format of this is shown in [Quick Start Example]() above: (The code to parse the json string to below could be viewed in [Quick Start]())
-```
-image: fish1.jpeg, classification-result: class: 1's prob: 0.9974158
-```
-
-This string could be parsed by `json.loads`.
+Where `n` is the number of `top_n` in your configuration file. This string could be parsed by `json.loads`.
 ```
 import json
 result_class_prob_map = json.loads(img1_result)
