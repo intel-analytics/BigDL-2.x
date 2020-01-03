@@ -19,11 +19,11 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
 * [Additional Operations]()
 
-     - [Manually Start and Stop Serving]()
+     - [Update Model]()
 
      - [Logs and Visualization]()
 
-     - [Update Model]()     
+          
 
 ## Quick Start
 
