@@ -29,20 +29,20 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
 This section provides a quick start example for you to run Analytics Zoo Cluster Serving. To simplify the examples, we use docker to run Cluster Serving in these examples. If you do not have docker installed, [install docker]() first.
 
-Download Analytics Zoo latest release [here]() to your local repository and go to `analytics-zoo/docker/cluster-serving/`. We have prepared a small Tensorflow model in your `analytics-zoo/docker/cluster-serving/model` directory. Your directory content should be:
+Use one command to run Cluster Serving container.
+```
+docker run -itd --name cluster-serving --net=host analytics-zoo/cluster-serving:0.7.0-spark_2.4.3
+```
+Log into the container using `docker exec -it cluster-serving bash`. 
+
+We already prepared `analytics-zoo` and `opencv-python` with pip in this container. And prepared model in `model` directory with following structure.
+
 ```
 cluster-serving | 
                -- | model
                  -- frozen_graph.pb
                  -- graph_meta.json
 ```
-Then use one command to start Cluster Serving.
-```
-docker run -itd --name cluster-serving --net=host analytics-zoo/cluster-serving:0.7.0-spark_2.4.3
-```
-We already prepared `analytics-zoo` and `opencv-python` with pip in this container.
-
-Log into the container using `docker exec -it cluster-serving bash`. 
 
 Start Cluster Serving using `cluster-serving-start`. Then, run python program `python quick_start.py` to push data into queue and get inference result. 
 
