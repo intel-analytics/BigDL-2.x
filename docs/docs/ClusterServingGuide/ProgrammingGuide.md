@@ -200,10 +200,10 @@ You can use following command to restart Cluster Serving.
 ```
 cluster-serving-restart
 ```
-#### Stop All
-You can use following command to stop all running services related to Cluster Serving, specifically, Redis and Tensorboard. 
+#### Shut Down
+You can use following command to shutdown Cluster Serving, this operation will stop all running services related to Cluster Serving, specifically, Redis and Tensorboard, note that your data in Redis will be removed when you shutdown. 
 ```
-cluster-serving-stop-all
+cluster-serving-shutdown
 ```
 
 If you are using docker, you could also run `docker rm` to stop them.
