@@ -182,18 +182,24 @@ For more details of these config, please refer to [Spark Official Document](http
 ### 3. Launching Service
 We provide following scripts to start, stop, restart Cluster Serving. 
 #### Start
+You can use following command to start Cluster Serving.
 ```
 cluster-serving-start
 ```
+This command will start Redis and Tensorboard if they are not running. Note that you need to provide `REDIS_HOME` environment variable if you need this feature.
 
 #### Stop
+You can use following command to stop Cluster Serving, data in Redis and Tensorboard service will persist.
 ```
 cluster-serving-stop
 ```
 #### Restart
+You can use following command to restart Cluster Serving.
 ```
 cluster-serving-restart
 ```
+#### Stop All
+You can use following command to stop all running services related to Cluster Serving, specifically, Redis and Tensorboard. If you are using docker, you could also run `docker rm` to stop them.
 ### 4. Model Inference
 We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide]().
 #### Input and Output API
