@@ -180,10 +180,20 @@ The field `spark` contains your spark configuration.
 
 For more details of these config, please refer to [Spark Official Document](https://spark.apache.org/docs/latest/configuration.html)
 ### 3. Launching Service
+We provide following scripts to start, stop, restart Cluster Serving. 
+#### Start
 ```
 cluster-serving-start
 ```
 
+#### Stop
+```
+cluster-serving-stop
+```
+#### Restart
+```
+cluster-serving-restart
+```
 ### 4. Model Inference
 We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide]().
 #### Input and Output API
@@ -229,24 +239,7 @@ result_class_prob_map = json.loads(img1_result)
 ```
 
 ## Optional Operations
-### Manually Start and Stop Serving
-We provide following scripts to start, stop, restart Cluster Serving. 
-#### Start
-```
-cluster-serving-start
-```
-
-#### Stop
-```
-cluster-serving-stop
-```
-#### Restart
-```
-cluster-serving-restart
-```
-Restart is usually used when config or model is updated and you have to restart serving to make it work.
-
-### Update Model
+### Update Model or Change Config
 To update your model, you could replace your model file in your model directory, and restart Cluster Serving by `cluster-serving-restart`. Note that you could also change your config in `config.yaml` and restart serving.
 
 ### Logs and Visualization
