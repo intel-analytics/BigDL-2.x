@@ -40,9 +40,11 @@ Then use one command to start Cluster Serving.
 ```
 docker run -itd --name cluster-serving --net=host analytics-zoo/cluster-serving:0.7.0-spark_2.4.3
 ```
-Install `opencv-python` if they do not exist in your Python environment.
+We already prepared `analytics-zoo` and `opencv-python` with pip in this container.
 
-Go to `analytics-zoo/pyzoo/zoo/serving/`, and run python program `python quick_start.py` to push data into queue and get inference result. 
+Log into the container using `docker exec -it cluster-serving bash`. 
+
+Start Cluster Serving using `cluster-serving-start`. Then, run python program `python quick_start.py` to push data into queue and get inference result. 
 
 Then you can see the inference output in console. 
 ```
