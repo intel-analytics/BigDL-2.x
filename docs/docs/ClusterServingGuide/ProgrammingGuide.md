@@ -60,17 +60,17 @@ For more details, you could also see the log and performance by go to `localhost
 
 ## Deploy your Own Cluster Serving
 ### 1. Installation
-Currently Analytics Zoo Cluster Serving supports installation by docker, with all dependencies already packaged, which is recommended. If you do not install with docker, you can install by download release, pip. Note that in this way you need to install Redis and TensorBoard (for visualizing the serving status) on the local node.
+It is recommended to install Cluster Serving by pulling the pre-built Docker image to your local node, which have packaged all the required dependencies. Alternatively, you may also manually install Cluster Serving (through either pip or direct downloading) as well as Redis and TensorBoard (for visualizing the serving status) on the local node.
 #### Docker
 ```
 docker pull zoo-cluster-serving
 ```
-then,
+then, (or directly run `docker run`, it will pull the image if it does not exist)
 ```
 docker run zoo-cluster-serving
 ```
 Go inside the container and finish following operations.
-#### Not Docker
+#### Manual installation
 For Not Docker user, first, install [Redis]() and [TensorBoard]() (for visualizing the serving status) and start them.
 
 Install Analytics Zoo by download release or pip.
