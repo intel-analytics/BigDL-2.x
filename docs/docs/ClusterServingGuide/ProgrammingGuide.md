@@ -199,7 +199,12 @@ You can use following command to restart Cluster Serving.
 cluster-serving-restart
 ```
 #### Stop All
-You can use following command to stop all running services related to Cluster Serving, specifically, Redis and Tensorboard. If you are using docker, you could also run `docker rm` to stop them.
+You can use following command to stop all running services related to Cluster Serving, specifically, Redis and Tensorboard. 
+```
+cluster-serving-stop-all
+```
+
+If you are using docker, you could also run `docker rm` to stop them.
 ### 4. Model Inference
 We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide]().
 #### Input and Output API
