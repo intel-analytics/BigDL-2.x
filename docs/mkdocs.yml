@@ -74,7 +74,8 @@ pages:
     - TFDataset: APIGuide/TFPark/tf-dataset.md
     - Text Models: APIGuide/TFPark/text-models.md
     - BERT Classifier: APIGuide/TFPark/bert-classifier.md
-  - Feature Engineering:
+- Cluster Serving: ClusterServingGuide/APIGuide.md
+- Feature Engineering:
     - FeatureSet: APIGuide/FeatureEngineering/featureset.md
     - Relation: APIGuide/FeatureEngineering/relation.md
     - Image: APIGuide/FeatureEngineering/image.md
