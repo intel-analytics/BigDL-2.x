@@ -42,7 +42,11 @@ class OnnxLoader(object):
     @classmethod
     def from_path(cls, onnx_path, is_training=False):
         onnx_model = onnx.load(onnx_path)
-        zmodel = OnnxLoader(onnx_model.graph).to_keras()
+        try:
+            zmodel = OnnxLoader(onnx_model.graph).to_keras()
+        except Exception as e:
+            print(onnx_model)
+            raise e
         zmodel.training(is_training=is_training)
         return zmodel
 

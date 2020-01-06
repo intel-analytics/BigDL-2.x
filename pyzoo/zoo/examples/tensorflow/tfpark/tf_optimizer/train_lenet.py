@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import heapq
-
 import tensorflow as tf
 from zoo import init_nncontext
 from zoo.tfpark import TFOptimizer, TFDataset
@@ -47,12 +45,10 @@ def main(max_epoch, data_num):
     training_rdd = get_data_rdd("train")
     testing_rdd = get_data_rdd("test")
     dataset = TFDataset.from_rdd(training_rdd,
-                                 names=["features", "labels"],
-                                 shapes=[[28, 28, 1], []],
-                                 types=[tf.float32, tf.int32],
+                                 features=(tf.float32, [28, 28, 1]),
+                                 labels=(tf.int32, []),
                                  batch_size=280,
-                                 val_rdd=testing_rdd
-                                 )
+                                 val_rdd=testing_rdd)
 
     # construct the model from TFDataset
     images, labels = dataset.tensors
@@ -63,10 +59,10 @@ def main(max_epoch, data_num):
     loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
 
     # create a optimizer
-    optimizer = TFOptimizer(loss, Adam(1e-3),
-                            val_outputs=[logits],
-                            val_labels=[labels],
-                            val_method=Top1Accuracy(), model_dir="/tmp/lenet/")
+    optimizer = TFOptimizer.from_loss(loss, Adam(1e-3),
+                                      val_outputs=[logits],
+                                      val_labels=[labels],
+                                      val_method=Top1Accuracy(), model_dir="/tmp/lenet/")
     # kick off training
     optimizer.optimize(end_trigger=MaxEpoch(max_epoch))
 

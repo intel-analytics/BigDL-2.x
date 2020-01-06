@@ -11,6 +11,8 @@ Based on Streaming example NetworkWordCount and Zoo text classification example.
 ## Run this example
 Make sure all nodes can access pre-trained model and word index.
 
+### Method One
+
 1. TERMINAL 1: Running Netcat
 ```
 nc -lk [port]
@@ -34,6 +36,28 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 ```
 hello world
 It's a fine day
+```
+
+## Method Two
+
+1. TERMINAL 2: Start StreamingTextClassification
+```
+MASTER=...
+model=... // model path. Local file system/HDFS/Amazon S3 are supported
+indexPath=... // word index path. Local file system/HDFS/Amazon S3 are supported
+inputFile=... // dir to the file you will input data
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+    --master ${MASTER} \
+    --driver-memory 2g \
+    --executor-memory 5g \
+    --class com.intel.analytics.zoo.examples.streaming.textclassification.StreamingTextClassification \
+    --model ${model} --indexPath ${indexPath} --inputFile ${inputFile}
+```
+
+2. TERMINAL 1: Input text using echo
+```
+export inputFile=... // dir to the file you will input data
+echo "hello world" > ${inputFile}/s  // s can be any new file
 ```
 
 **Then, you can see output in TERMINAL 2.**

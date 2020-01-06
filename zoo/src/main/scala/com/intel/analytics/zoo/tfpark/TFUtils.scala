@@ -14,64 +14,53 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.net
+package com.intel.analytics.zoo.tfpark
 
+import java.io.{File, FileInputStream, InputStream}
 import java.nio.FloatBuffer
 
-import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample}
+import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, AbstractModule, Activity}
 import com.intel.analytics.bigdl.optim._
-import com.intel.analytics.bigdl.utils.Table
-import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.zoo.feature.common.Preprocessing
 import com.intel.analytics.zoo.feature.image.ImageProcessing
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.{Accuracy, BinaryAccuracy, CategoricalAccuracy, SparseCategoricalAccuracy}
-import org.apache.spark.rdd.RDD
-import org.tensorflow.{Tensor => TTensor}
+import org.tensorflow.framework.GraphDef
+import org.tensorflow.{DataType, Tensor => TTensor}
 
-import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.reflect.io.Path
 
-private[zoo] class TFTrainingHelper(tfnet: TFNet,
-                                    inputs: Array[String],
-                                    outputs: Array[String],
-                                    variables: Array[String],
-                                    gradVariables: Array[String],
-                                    defaultTensorValue: Array[Array[Float]])
-  extends AbstractModule[Activity, Activity, Float] {
+object TFUtils {
 
-  override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
-    (weights, gradWeights)
+  val defaultSessionConfig = SessionConfig()
+
+  private[zoo] def getTrainMeta(trainMetaPath: Path) = {
+    val jsonStr = Source.fromFile(trainMetaPath.jfile).getLines().mkString
+    import org.json4s._
+    import org.json4s.jackson.JsonMethods._
+    implicit val formats = DefaultFormats
+
+    parse(jsonStr).camelizeKeys.extract[TrainMeta]
   }
-  private val weights = {
-    val ws = new Array[Tensor[Float]](variables.length)
-    var i = 0
-    while (i < ws.length) {
-      ws(i) = Tensor[Float]()
-      i += 1
+
+  private[zoo] def parseGraph(graphProtoTxt: String): GraphDef = {
+    var fr: File = null
+    var in: InputStream = null
+    try {
+      fr = new File(graphProtoTxt)
+      in = new FileInputStream(fr)
+
+      GraphDef.parseFrom(in)
+    } finally {
+      if (in != null) in.close()
     }
-    setWeights(ws)
   }
 
-  private val gradWeights = variables.map(_ => Tensor[Float]())
-
-
-  private def setWeights(weights: Array[Tensor[Float]]) = {
-    val sess = tfnet.sess
-    val runner = sess.runner()
-    variables.foreach(runner.fetch)
-    runner.run().asScala.zipWithIndex.map { case (fetch, idx) =>
-      val t = weights(idx)
-      tf2bigdl(fetch.asInstanceOf[TTensor[Float]], t)
-      t
-    }
-    weights
-  }
-
-  private def tf2bigdl(t: TTensor[_], output: Tensor[Float]) = {
+  private[zoo] def tf2bigdl(t: TTensor[_], output: Tensor[Float]) = {
     val shape = t.shape().map(_.toInt)
     output.resize(shape)
     val buffer = FloatBuffer.wrap(
@@ -81,107 +70,35 @@ private[zoo] class TFTrainingHelper(tfnet: TFNet,
     t.writeTo(buffer)
   }
 
-  override def updateOutput(input: Activity): Activity = {
-    val feeds = T()
-    if (input.isTensor) {
-      feeds.insert(input)
-    } else {
-      var i = 0
-      while (i < input.toTable.length()) {
-        feeds.insert(input.toTable(i + 1))
-        i += 1
-      }
+  def tfenum2datatype(enum: Int): DataType = {
+    enum match {
+      case 1 => DataType.FLOAT
+      case 2 => DataType.DOUBLE
+      case 3 => DataType.INT32
+      case 4 => DataType.UINT8
+      case 7 => DataType.STRING
+      case 9 => DataType.INT64
+      case 10 => DataType.BOOL
+      case _ => throw new IllegalArgumentException(s"unsupported tensorflow datatype $enum")
 
     }
-
-    if (this.isTraining()) {
-      var i = 0
-      while (i < defaultTensorValue.length) {
-        feeds.insert(Tensor.scalar[Float](defaultTensorValue(i)(0)))
-        i += 1
-      }
-    } else {
-      var i = 0
-      while (i < defaultTensorValue.length) {
-        feeds.insert(Tensor.scalar[Float](defaultTensorValue(i)(1)))
-        i += 1
-      }
-    }
-
-    var i = 0
-    while (i < weights.length) {
-      feeds.insert(weights(i))
-      i += 1
-    }
-
-    val fetches = tfnet.forward(feeds).toTable.toSeq[Tensor[Float]].toArray
-
-    if (isTraining()) {
-      gradWeights.zipWithIndex.foreach { case (grad, idx) =>
-        grad.resizeAs(weights(idx)).add(fetches(idx))
-      }
-    }
-
-    val realOutputs = fetches.slice(weights.length, fetches.length)
-
-    output = if (realOutputs.length == 1) {
-      realOutputs.head
-    } else {
-      val result = T()
-      var i = 0
-      while (i < realOutputs.length) {
-        result.insert(realOutputs(i))
-        i += 1
-      }
-      result
-    }
-    output
   }
 
-  override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
-    gradInput
+  def tfdatatype2enum(dataType: DataType): Int = {
+    dataType match {
+      case DataType.FLOAT => 1
+      case DataType.DOUBLE => 2
+      case DataType.INT32 => 3
+      case DataType.UINT8 => 4
+      case DataType.STRING => 7
+      case DataType.INT64 => 9
+      case DataType.BOOL => 10
+      case _ => throw new IllegalArgumentException(s"unsupported tensorflow datatype $dataType")
+
+    }
   }
+
 }
-
-object TFTrainingHelper {
-
-  def apply(modelPath: String, sessionConfig: Array[Byte] = null): TFTrainingHelper = {
-    val (model, meta) = NetUtils.processTFFolder(modelPath)
-
-    val folderPath = Path(modelPath)
-    val trainingMetaPath = folderPath / Path("training_meta.json")
-
-    val jsonStr = Source.fromFile(trainingMetaPath.jfile).getLines().mkString
-    import org.json4s._
-    import org.json4s.jackson.JsonMethods._
-    implicit val formats = DefaultFormats
-
-    val trainingMeta = parse(jsonStr).camelizeKeys.extract[TrainMeta]
-
-    val newMeta = Meta(
-      (meta.inputNames.toSeq ++:
-        trainingMeta.variables.toSeq).toArray,
-      meta.outputNames)
-    val graphDef = TFNet.parseGraph(model)
-    val config = if (sessionConfig != null) {
-      sessionConfig
-    } else {
-      TFNet.defaultSessionConfig.toByteArray()
-    }
-    val tfnet = TFNet(graphDef, model, newMeta, config)
-    tfnet.evaluate()
-
-
-    new TFTrainingHelper(tfnet,
-      trainingMeta.inputNames,
-      trainingMeta.outputNames,
-      trainingMeta.variables,
-      trainingMeta.gradVariables,
-      trainingMeta.defaultTensorValues
-    )
-  }
-}
-
 
 class IdentityCriterion extends AbstractCriterion[Activity, Activity, Float]() {
 
@@ -317,28 +234,84 @@ class MergeFeatureLabelFeatureTransformer() extends Preprocessing[Any, Any] {
   }
 }
 
-case class TrainMeta(inputNames: Array[String], outputNames: Array[String],
-                     variables: Array[String], gradVariables: Array[String],
-                     defaultTensorValues: Array[Array[Float]])
 
+case class TrainMeta(inputs: Array[String],
+                     inputTypes: Array[Int],
+                     metricTensors: Array[String],
+                     batchSizeTensor: String,
+                     lossTensor: String,
+                     variables: Array[String],
+                     variableTypes: Array[Int],
+                     variableAssignPlaceholders: Array[String],
+                     assignVariableOp: String,
+                     extraVariables: Array[String],
+                     extraVariableTypes: Array[Int],
+                     extraVariableAssignPlaceholders: Array[String],
+                     assignExtraVariableOp: String,
+                     gradVariables: Array[String],
+                     restoreOp: String,
+                     restorePathPlaceholder: String,
+                     saveOp: String,
+                     savePathPlaceholder: String,
+                     updateOp: String,
+                     defaultTensorValue: Array[Array[Float]],
+                     metricsNames: Array[String])
 
-class TFOptimizer(modelPath: String,
-                  optimMethod: OptimMethod[Float],
-                  x: RDD[Sample[Float]],
-                  batchSize: Int = 32) {
-  private val trainer: TFTrainingHelper = TFTrainingHelper(modelPath)
-  private val optimizer: Optimizer[Float, MiniBatch[Float]] = {
-    val optimizer = Optimizer[Float](trainer, x, new IdentityCriterion(), batchSize)
-
-    optimizer.setOptimMethod(optimMethod)
-    optimizer
+/**
+ * TFSubGraph will only be used in DistriOptimizer for the purpose of training a TensorFlow
+ * model using multiple optimization methods based on variable names.
+ * Applying a TFTrainingHelper2 layer by name will get a corresponding instance of TFSubGraph.
+ *
+ * In DistriOptimizer.optimize(), TFSubGraph will only be used to get the sizes and offsets of
+ * each weight portion, slice on the original weights and gradients and apply the optimization
+ * method accordingly.
+ * The gradients of TFSubGraph will never be used and thus a dummy Tensor is put as a placeholder.
+ */
+private[zoo] class TFSubGraph(
+        weights: Array[Tensor[Float]]) extends AbstractModule[Activity, Activity, Float] {
+  override def updateOutput(input: Activity): Activity = {
+    input
   }
 
-  def optimize(endTrigger: Trigger = Trigger.maxEpoch(1)): Array[Tensor[Float]] = {
-    optimizer.setEndWhen(endTrigger)
-    optimizer.optimize()
-    trainer.parameters()._1
+  override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
+    gradInput
+  }
+
+  override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
+    (weights, weights.map(_ => Tensor[Float]()))
   }
 }
 
+case class SessionConfig(intraOpParallelismThreads: Int = 1,
+                         interOpParallelismThreads: Int = 1,
+                         usePerSessionThreads: Boolean = true) {
 
+  // Ideally we should use the following code, however, importing tensorflow proto
+  // will conflict with bigdl.
+
+  //  val defaultSessionConfig = ConfigProto.newBuilder()
+  //    .setInterOpParallelismThreads(1)
+  //    .setIntraOpParallelismThreads(1)
+  //    .setUsePerSessionThreads(true)
+  //    .build().toByteArray
+
+  def toByteArray(): Array[Byte] = {
+    val intraSeq = if (intraOpParallelismThreads > 0) {
+      Seq(16, intraOpParallelismThreads)
+    } else {
+      Seq[Int]()
+    }
+    val interSeq = if (interOpParallelismThreads > 0) {
+      Seq(40, interOpParallelismThreads)
+    } else {
+      Seq[Int]()
+    }
+    val perSessSeq = if (usePerSessionThreads) {
+      Seq(72, 1)
+    } else {
+      Seq[Int]()
+    }
+
+    (intraSeq ++ interSeq ++ perSessSeq).map(_.toByte).toArray
+  }
+}
