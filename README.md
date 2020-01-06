@@ -27,7 +27,7 @@ Analytics Zoo provides a unified data analytics and AI platform that seamlessly 
 
 - High-Level **ML Workflow** that automates the process of building large-scale machine learning applications.
 
-  - Automatically distributed real-time serving (for TensorFlow/PyTorch/Caffe/BigDL/ OpenVINO models) with a simple pub/sub API. 
+  - Automatically distributed real-time serving (for TensorFlow/PyTorch/Caffe/BigDL/OpenVINO models) with a simple pub/sub API. 
 
   - Scalable AutoML for time series prediction (that automatically generates features, selects models and tunes hyperparameter).
 
@@ -52,13 +52,13 @@ You may want to develop your AI solution using Analytics Zoo if:
 
 # <font size="6">How to use Analytics Zoo? </font>
 
-- Quick start with Analytics Zoo using the pre-built [Docker Image](https://analytics-zoo.github.io/master/##docker-images-and-builders)
+- Quick start with Analytics Zoo using the pre-built [Docker Image](https://analytics-zoo.github.io/master/##docker-images-and-builders).
 
-- Refer to the [Python](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) and [Scala](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/) installation guides to install Analytics Zoo
+- Refer to the [Python](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) and [Scala](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/) installation guides to install Analytics Zoo.
 
-- Visit the [Document Website](https://analytics-zoo.github.io/) for information on Analytics Zoo
+- Visit the [Document Website](https://analytics-zoo.github.io/) for information on Analytics Zoo.
 
-- Check the [Powered By](https://analytics-zoo.github.io/master/#powered-by/) & [Presentations](https://analytics-zoo.github.io/master/#presentations/) pages for real-world applications using Analytics Zoo
+- Check the [Powered By](https://analytics-zoo.github.io/master/#powered-by/) & [Presentations](https://analytics-zoo.github.io/master/#presentations/) pages for real-world applications using Analytics Zoo.
 
-- Join the [Google Group](https://groups.google.com/forum/#!forum/bigdl-user-group) (or subscribe to the [Mail List](mailto:bigdl-user-group+subscribe@googlegroups.com)) for more questions and discussions on Analytics Zoo
+- Join the [Google Group](https://groups.google.com/forum/#!forum/bigdl-user-group) (or subscribe to the [Mail List](mailto:bigdl-user-group+subscribe@googlegroups.com)) for more questions and discussions on Analytics Zoo.
 
