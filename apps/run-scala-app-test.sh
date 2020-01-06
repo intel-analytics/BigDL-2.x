@@ -126,13 +126,14 @@ echo "# Test 3.2 text-classification-inference:WebServiceDriver"
 start=$(date "+%s")
 
 mvn spring-boot:run -DEMBEDDING_FILE_PATH=${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
--DMODEL_PATH=${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/models/text-classification.bigdl >1.log &
-curl -d hello -x "" http://localhost:8080/predict &
+-DMODEL_PATH=${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/models/text-classification.bigdl &
 while :
 do
+  curl -d hello -x "" http://localhost:8080/predict > 1.log &
 if [ -n "$(grep "class" ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/text-classification-inference/1.log)" ];then
     echo "----Find-----"
     kill -9 $(ps -ef | grep text-classification | grep -v grep |awk '{print $2}')
+    rm 1.log
     sleep 1s
     break
 fi
@@ -156,7 +157,7 @@ then
 else
     wget $FTP_URI/analytics-zoo-models/recommendation/ncf.bigdl -P analytics-zoo-models/recommendation/
 fi
-echo "# Test 3.1 recommendation-inference:SimpleScalaDriver"
+echo "# Test 4.1 recommendation-inference:SimpleScalaDriver"
 #timer
 start=$(date "+%s")
 
@@ -180,7 +181,6 @@ now=$(date "+%s")
 time6=$((now-start))
 echo "#App[Model-inference-example] Test 4.2: recommendation-inference:SimpleDriver time used:$time6 seconds"
 
-
 echo "# Test 5.model-inference-flink"
 
 cd ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/model-inference-flink
@@ -196,6 +196,13 @@ else
     unzip flink-1.7.2.zip
 fi
 
+if [ -f analytics-zoo-data/data/streaming/text-model/2.log ]
+then
+    echo "analytics-zoo-data/data/streaming/text-model/2.log already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/streaming/text-model/2.log -P analytics-zoo-data/data/streaming/text-model/2.log
+fi
+
 ./flink-1.7.2/bin/start-cluster.sh
 
 echo "# Test 5.1 model-inference-flink:Text Classification"
@@ -204,7 +211,7 @@ start=$(date "+%s")
 
 ./flink-1.7.2/bin/flink run \
 ./model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
---inputFile ${ANALYTICS_ZOO_ROOT}/analytics-zoo-data/data/streaming/text-model/2.log \
+--inputFile analytics-zoo-data/data/streaming/text-model/2.log \
 --embeddingFilePath analytics-zoo-data/data/glove/glove/glove.6B.300d.txt \
 --modelPath models/text-classification.bigdl \
 --parallelism 1
@@ -215,7 +222,12 @@ echo "#App[Model-inference-example] Test 5.1: model-inference-flink:Text Classif
 
 ./flink-1.7.2/bin/stop-cluster.sh
 
-wget ${FTP_URI}/analytics-zoo-models/flink_model/resnet_v1_50.ckpt
+if [ -f resnet_v1_50.ckpt ]
+then
+    echo "analytics-zoo-models/flink_model/resnet_v1_50.ckpt already exists"
+else
+    wget ${FTP_URI}/analytics-zoo-models/flink_model/resnet_v1_50.ckpt
+fi
 
 ./flink-1.7.2/bin/start-cluster.sh
 
@@ -235,7 +247,6 @@ ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/model-inference-flink/target
 now=$(date "+%s")
 time8=$((now-start))
 echo "#App[Model-inference-example] Test 5.1: model-inference-flink:Resnet50 Image Classification time used:$time8 seconds"
-
 
 ./flink-1.7.2/bin/stop-cluster.sh
 
