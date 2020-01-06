@@ -41,6 +41,7 @@ pages:
     - BERT Classifier: ProgrammingGuide/bert-classifier.md
   - PyTorch: ProgrammingGuide/pytorch.md
   - RayOnSpark: ProgrammingGuide/rayonspark.md
+  - Cluster Serving: ClusterServingGuide/ProgrammingGuide.md
   - Feature Engineering:
     - Working with Images: ProgrammingGuide/workingwithimages.md
     - Working with Texts: ProgrammingGuide/workingwithtexts.md
