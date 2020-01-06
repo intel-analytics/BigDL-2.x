@@ -11,7 +11,7 @@ _A unified Data Analytics and AI platform for **distributed TensorFlow, Keras, P
 Analytics Zoo provides a unified data analytics and AI platform that seamlessly unites TensorFlow, Keras, PyTorch, Spark, Flink and Ray programs into an integrated pipeline, which can transparently scale from a laptop to large clusters to process production big data.
 
 <div align="center">
-   <p align="center"> <img src="https://github.com/Wesley-Du/Wesley-Du.github.io/tree/master/assets/blockdiagram.jpg" height=362px； weight=1077px；"><br></p>
+   <p align="center"> <img src="https://github.com/Wesley-Du/Wesley-Du.github.io/tree/master/assets/blockdiagram.jpg" height=240px； weight=718px；"><br></p>
 </div>
 
 
