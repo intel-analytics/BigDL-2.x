@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
     # ray.init()
 
-    # sc = init_spark_on_local(cores=8)
+    # sc = init_spark_on_local(cores="*")
     sc = init_spark_on_yarn(
         hadoop_conf="/opt/work/hadoop-2.7.2/etc/hadoop",
         conda_name="mxnet",
@@ -111,7 +111,7 @@ if __name__ == '__main__':
     ray_ctx.init(object_store_memory="2g")
 
     config = create_config(opt)
-    trainer = MXNetTrainer(get_data_iters, get_model, get_loss, get_metrics, config)
+    trainer = MXNetTrainer(config, get_data_iters, get_model, get_loss, get_metrics)
     for epoch in range(opt.epochs):
         train_stats = trainer.train()
         val_stats = trainer.validate()
