@@ -54,7 +54,7 @@ You may want to develop your AI solution using Analytics Zoo if:
 
 - Quick start with Analytics Zoo using the pre-built [Docker Image](https://analytics-zoo.github.io/master/##docker-images-and-builders)
 
-- Refer to the [Python](https://analytics-zoo.github.io/master/##PythonUserGuide/install/) and [Scala](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/) installation guides to install Analytics Zoo
+- Refer to the [Python](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) and [Scala](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/) installation guides to install Analytics Zoo
 
 - Visit the [Document Website](https://analytics-zoo.github.io/) for information on Analytics Zoo
 
