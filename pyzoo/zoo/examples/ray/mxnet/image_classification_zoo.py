@@ -185,7 +185,7 @@ if __name__ == '__main__':
 
     # ray.init()
 
-    # sc = init_spark_on_local(cores=32)
+    # sc = init_spark_on_local(cores="*")
     num_executors = 2 * opt.num_workers if not opt.num_servers else opt.num_workers + opt.num_servers
     sc = init_spark_on_yarn(
         hadoop_conf="/opt/work/hadoop-2.7.2/etc/hadoop",
@@ -209,7 +209,7 @@ if __name__ == '__main__':
     ray_ctx.init(object_store_memory="10g")
 
     config = create_config(opt)
-    trainer = MXNetTrainer(get_data_iters, get_model, get_loss, get_metrics, config, worker_cpus=28)
+    trainer = MXNetTrainer(config, get_data_iters, get_model, get_loss, get_metrics, worker_cpus=28)
     for epoch in range(opt.epochs):
         train_stats = trainer.train()
         val_stats = trainer.validate()
