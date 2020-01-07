@@ -19,7 +19,7 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
    
    4. [Model inference](#Model-inference)
 
-* [Additional Operations](#Additional-Operations)
+* [Optional Operations](#Optional-Operations)
 
      - [Update Model](#Update-Model)
 
