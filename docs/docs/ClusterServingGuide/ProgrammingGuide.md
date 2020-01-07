@@ -5,7 +5,7 @@ Analytics Zoo Cluster Serving is a lightweight distributed, real-time serving s
 
 This page contains the guide for you to run Analytics Zoo Cluster Serving, including following:
 
-* [Analytics Zoo Cluster Serving Workflow Overview](#Analytics Zoo Cluster Serving Workflow Overview) 
+* [Analytics Zoo Cluster Serving Workflow Overview](#Analytics-Zoo-Cluster-Serving-Workflow-Overview) 
 
 * [Quick Start]()
 
