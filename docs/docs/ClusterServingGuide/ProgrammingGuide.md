@@ -7,23 +7,23 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
 * [Analytics Zoo Cluster Serving Workflow Overview](#Analytics-Zoo-Cluster-Serving-Workflow-Overview) 
 
-* [Quick Start]()
+* [Quick Start](#Quick-Start)
 
-* [Deploy Your Own Cluster Serving]()
+* [Deploy Your Own Cluster Serving](#Deploy-Your-Own-Cluster-Serving)
 
-   1. [Installation]()
+   1. [Installation](#Installation)
 
-   2. [Configuration]() 
+   2. [Configuration](#Configuration) 
    
-   3. [Launching Service]()
+   3. [Launching Service](#Launching-Service)
    
-   4. [Model inference]()
+   4. [Model inference](#Model-inference)
 
-* [Additional Operations]()
+* [Additional Operations](#Additional-Operations)
 
-     - [Update Model]()
+     - [Update Model](#Update-Model)
 
-     - [Logs and Visualization]()
+     - [Logs and Visualization](#Logs-and-Visualization)
 
           
 ## Analytics Zoo Cluster Serving Workflow Overview
@@ -101,9 +101,9 @@ image: dog1.jpeg, classification-result: class: 207's prob: 0.9226527
 ```
 Wow! You made it!
 
-Note that the Cluster Serving quick start example will run on your local node only. Check the [Build Your Own Cluster Serving]() section for how to configure and run Cluster Serving in a distributed fashion.
+Note that the Cluster Serving quick start example will run on your local node only. Check the [Build Your Own Cluster Serving](#Build-Your-Own-Cluster-Serving) section for how to configure and run Cluster Serving in a distributed fashion.
 
-For more details, you could also see the log and performance by go to `localhost:6006` in your browser and refer to [Log and Visualization](), or view the source code of `quick_start.py` [here](), or refer to [API Guide]().
+For more details, you could also see the log and performance by go to `localhost:6006` in your browser and refer to [Log and Visualization](#Log-and-Visualization), or view the source code of `quick_start.py` [here](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/serving/quick_start.py), or refer to [API Guide](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ClusterServingGuide/APIGuide.md).
 
 ## Deploy your Own Cluster Serving
 ### 1. Installation
@@ -130,7 +130,7 @@ Download Analytics Zoo from [release page]() on the local node, go to `analytics
 
 ### 2. Configuration
 #### 2.1 How to Config
-After [installation](), you will see a config file `config.yaml` your current working directory. Your Cluster Serving configuration can all be set by modifying it. See an example of `config.yaml` below
+After [installation](#installation), you will see a config file `config.yaml` your current working directory. Your Cluster Serving configuration can all be set by modifying it. See an example of `config.yaml` below
 ```
 ## Analytics Zoo Cluster Serving Config Example
 
@@ -235,7 +235,7 @@ You can use following command to start Cluster Serving.
 ```
 cluster-serving-start
 ```
-This command will start Redis and Tensorboard if they are not running. Note that you need to provide `REDIS_HOME` environment variable as mentioned in [Installation](), if you need this feature.
+This command will start Redis and Tensorboard if they are not running. Note that you need to provide `REDIS_HOME` environment variable as mentioned in [Installation](#Installation), if you need this feature.
 
 #### Stop
 You can use following command to stop Cluster Serving, data in Redis and Tensorboard service will persist.
@@ -255,7 +255,7 @@ cluster-serving-shutdown
 
 If you are using docker, you could also run `docker rm` to stop them.
 ### 4. Model Inference
-We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide]().
+We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ClusterServingGuide/APIGuide.md).
 #### Input and Output API
 To input data to queue, you need a `InputQueue` instance, and using `enqueue` method by giving an image path or image ndarray. See following example.
 ```
@@ -275,7 +275,7 @@ img1_result = output_api.query('img1')
 all_result = output_api.dequeue() # the output queue is empty after this code
 ```
 #### Output Format
-Consider the code above, in [Input and Output API] Section.
+Consider the code above, in [Input and Output API](#Input-and-Output-API) Section.
 ```
 img1_result = output_api.query('img1')
 ```
