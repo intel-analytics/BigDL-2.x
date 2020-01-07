@@ -3,7 +3,9 @@ Analytics Zoo Cluster Serving is a lightweight distributed, real-time serving s
 
 (Note currently only image classification models are supported).
 
-This page contains the guide for you to run Analytics Zoo Cluster Serving, including following:
+This Programming Guide will provides these information as below:
+
+* [Analytics Zoo Cluster Serving Workflow Overview]() 
 
 * [Quick Start]()
 
@@ -24,6 +26,48 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
      - [Logs and Visualization]()
 
           
+## Analytics Zoo Cluster Serving Workflow Overview
+
+The overall architecture of Analytics Zoo Cluster Serving solution is illustrated as below: 
+![overview](cluster_serving_overview.jpg)
+
+The Analytics Zoo Cluster Serving high level workflow is illustrated as below. It outlined a 3-step "Prepare-Launch-Inference" design principle that applies to either Analytics Zoo Docker user (as shown with the Quick Start example below) or experienced Analytics Zoo user without Docker. Note that the Quick Start example below further simplies the steps so the first time users can get Cluster Serving running within minutes. 
+
+![steps](cluster_serving_steps.jpg)
+
+### 1. Install and prepare Cluster Serving environment on a local node:
+
+- Copy a previously trained model to the local node; currently TensorFlow, PyTorch, Caffe, BigDL and OpenVINO models are supported.
+- Install Analytics Zoo on the local node (e.g., using a single pip install command)
+- Configure Cluster Server on the local node, including the file path to the trained model and the address of the cluster (such as Apache Hadoop YARN cluster, Spark Cluster, K8s cluster, etc.).
+Please note that you only need to deploy the Cluster Serving solution on a single local node, and no modifications are needed for the (YARN or K8s) cluster. 
+
+### 2. Launch the Cluster Serving service
+
+You can launch the Cluster Serving service by running the startup script on the local node, such as:
+
+```
+start-cluster-serving.sh  
+```
+
+Under the hood, Cluster Serving will automatically deploy the trained model and serve the model inference requests across the cluster in a distributed fashion. You may monitor its runtime status (such as inference throughput) using  TensorBoard. 
+
+### 3. Distributed, real-time (streaming) inference
+
+Cluster Serving provides a simple pub/sub API to the users, so that you can easily send the inference requests to an input queue (currently Redis Streams is used) using a simple Python API, such as:
+
+```
+input = InputQueue()
+input.enqueue_image(id, image)
+```
+
+Cluster Serving will then read the requests from the Redis stream, run the distributed real-time inference across the cluster (using Spark Streaming or Flink), and return the results back through Redis. As a result, you may get the inference results again using a simple Python API, such as:
+
+```
+output = OutputQueue()
+results = output.dequeue()
+```
+
 
 ## Quick Start
 
