@@ -3,7 +3,7 @@ Analytics Zoo Cluster Serving is a lightweight distributed, real-time serving s
 
 (Note currently only image classification models are supported).
 
-This Programming Guide will provides these information as below:
+This page contains the guide for you to run Analytics Zoo Cluster Serving, including following:
 
 * [Analytics Zoo Cluster Serving Workflow Overview]() 
 
@@ -29,9 +29,12 @@ This Programming Guide will provides these information as below:
 ## Analytics Zoo Cluster Serving Workflow Overview
 
 The overall architecture of Analytics Zoo Cluster Serving solution is illustrated as below: 
+
 ![overview](cluster_serving_overview.jpg)
 
-The Analytics Zoo Cluster Serving high level workflow is illustrated as below. It outlined a 3-step "Prepare-Launch-Inference" design principle that applies to either Analytics Zoo Docker user (as shown with the Quick Start example below) or experienced Analytics Zoo user without Docker. Note that the Quick Start example below further simplies the steps so the first time users can get Cluster Serving running within minutes. 
+
+The Analytics Zoo Cluster Serving high level workflow is illustrated as below. It outlined a 3-step "Prepare-Launch-Inference" design principle that applies to either Analytics Zoo Docker users (as shown with the Quick Start example below) or experienced users without Docker. Note that the Quick Start example below further simplies the steps so the first time users can get Cluster Serving running within minutes. 
+
 
 ![steps](cluster_serving_steps.jpg)
 
