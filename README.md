@@ -33,7 +33,7 @@ Analytics Zoo provides a unified data analytics and AI platform that seamlessly 
 
 You may want to develop your AI solutions using Analytics Zoo if:
 - You want to easily prototype the entire end-to-end pipeline that applies AI models (e.g., TensorFlow, Keras, PyTorch, BigDL, OpenVINO, etc.) to production big data.
-- You want to transparently scale your applications from a laptop to large clusters with "zero" code changes.
+- You want to transparently scale your AI applications from a laptop to large clusters with "zero" code changes.
 - You want to deploy your AI pipelines to existing YARN or K8S clusters *WITHOUT* any modifications to the clusters.
 - You want to automate the process of applying machine learning (such as feature engineering, hyperparameter tuning, model selection and distributed inference). 
 
