@@ -31,16 +31,11 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
 The overall architecture of Analytics Zoo Cluster Serving solution is illustrated as below: 
 
-
 ![overview](cluster_serving_overview.jpg)
 
-
-
-The illustration below outlined a 3-step "Prepare-Launch-Inference" principle. The same principle applies regardless if you use Analytics Zoo by a Docker image or not. Note that the Quick Start example uses a pre-built Docker image and already provides some preparation work so it looks more simplified than 3 steps. 
-
+The illustrations below outline a 3-step "Prepare-Launch-Inference" principle. The same principle applies regardless if you use Analytics Zoo by a Docker image or not. Note that the Quick Start example uses a pre-built Docker image and already provides some preparation work so it looks more simplified than 3 steps. 
 
 ![steps](cluster_serving_steps.jpg)
-
 
 ### 1. Install and prepare Cluster Serving environment on a local node:
 
@@ -139,7 +134,7 @@ Download Analytics Zoo from [release page](https://analytics-zoo.github.io/maste
 
 ### Configuration
 #### How to Config
-After [installation](#installation), you will see a config file `config.yaml` your current working directory. Your Cluster Serving configuration can all be set by modifying it. See an example of `config.yaml` below
+After [Installation](#Installation), you will see a config file `config.yaml` your current working directory. Your Cluster Serving configuration can all be set by modifying it. See an example of `config.yaml` below
 ```
 ## Analytics Zoo Cluster Serving Config Example
 
