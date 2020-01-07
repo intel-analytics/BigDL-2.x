@@ -11,17 +11,17 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
 * [Deploy Your Own Cluster Serving](#Deploy-Your-Own-Cluster-Serving)
 
-   1. [Installation](#Installation)
+   1. [Installation](#1.-Installation)
 
-   2. [Configuration](#Configuration) 
+   2. [Configuration](#2.-Configuration) 
    
-   3. [Launching Service](#Launching-Service)
+   3. [Launching Service](#3.-Launching-Service)
    
-   4. [Model inference](#Model-inference)
+   4. [Model inference](#4.-Model-inference)
 
 * [Optional Operations](#Optional-Operations)
 
-     - [Update Model](#Update-Model)
+     - [Update Model or Change Config](#Update-Model-or-Change-Config)
 
      - [Logs and Visualization](#Logs-and-Visualization)
 
@@ -101,9 +101,9 @@ image: dog1.jpeg, classification-result: class: 207's prob: 0.9226527
 ```
 Wow! You made it!
 
-Note that the Cluster Serving quick start example will run on your local node only. Check the [Build Your Own Cluster Serving](#Build-Your-Own-Cluster-Serving) section for how to configure and run Cluster Serving in a distributed fashion.
+Note that the Cluster Serving quick start example will run on your local node only. Check the [Deploy Your Own Cluster Serving](#Deploy-Your-Own-Cluster-Serving) section for how to configure and run Cluster Serving in a distributed fashion.
 
-For more details, you could also see the log and performance by go to `localhost:6006` in your browser and refer to [Log and Visualization](#Log-and-Visualization), or view the source code of `quick_start.py` [here](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/serving/quick_start.py), or refer to [API Guide](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ClusterServingGuide/APIGuide.md).
+For more details, you could also see the log and performance by go to `localhost:6006` in your browser and refer to [Logs and Visualization](#Logs-and-Visualization), or view the source code of `quick_start.py` [here](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/serving/quick_start.py), or refer to [API Guide](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ClusterServingGuide/APIGuide.md).
 
 ## Deploy your Own Cluster Serving
 ### 1. Installation
