@@ -5,9 +5,9 @@ Analytics Zoo Cluster Serving is a lightweight distributed, real-time serving s
 
 This page contains the guide for you to run Analytics Zoo Cluster Serving, including following:
 
-* [Analytics Zoo Cluster Serving Workflow Overview](#Analytics-Zoo-Cluster-Serving-Workflow-Overview) 
-
 * [Quick Start](#Quick-Start)
+
+* [Workflow Overview](#Workflow-Overview) 
 
 * [Deploy Your Own Cluster Serving](#Deploy-Your-Own-Cluster-Serving)
 
@@ -21,54 +21,9 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
 * [Optional Operations](#Optional-Operations)
 
-     - [Update Model or Change Config](#Update-Model-or-Change-Config)
+     - [Update Model or Configurations](#Update-Model-or-Configurations)
 
      - [Logs and Visualization](#Logs-and-Visualization)
-
-
-
-## Analytics Zoo Cluster Serving Workflow Overview
-
-The overall architecture of Analytics Zoo Cluster Serving solution is illustrated as below: 
-
-![overview](cluster_serving_overview.jpg)
-
-The illustrations below outline a 3-step "Prepare-Launch-Inference" principle. The same principle applies regardless if you use Analytics Zoo by a Docker image or not. Note that the Quick Start example uses a pre-built Docker image and already provides some preparation work so it looks more simplified than 3 steps. 
-
-![steps](cluster_serving_steps.jpg)
-
-### 1. Install and prepare Cluster Serving environment on a local node:
-
-- Copy a previously trained model to the local node; currently TensorFlow, PyTorch, Caffe, BigDL and OpenVINO models are supported.
-- Install Analytics Zoo on the local node (e.g., using a single pip install command)
-- Configure Cluster Server on the local node, including the file path to the trained model and the address of the cluster (such as Apache Hadoop YARN cluster, Spark Cluster, K8s cluster, etc.).
-Please note that you only need to deploy the Cluster Serving solution on a single local node, and no modifications are needed for the (YARN or K8s) cluster. 
-
-### 2. Launch the Cluster Serving service
-
-You can launch the Cluster Serving service by running the startup script on the local node, such as:
-
-```
-start-cluster-serving.sh  
-```
-
-Under the hood, Cluster Serving will automatically deploy the trained model and serve the model inference requests across the cluster in a distributed fashion. You may monitor its runtime status (such as inference throughput) using  TensorBoard. 
-
-### 3. Distributed, real-time (streaming) inference
-
-Cluster Serving provides a simple pub/sub API to the users, so that you can easily send the inference requests to an input queue (currently Redis Streams is used) using a simple Python API, such as:
-
-```
-input = InputQueue()
-input.enqueue_image(id, image)
-```
-
-Cluster Serving will then read the requests from the Redis stream, run the distributed real-time inference across the cluster (using Spark Streaming or Flink), and return the results back through Redis. As a result, you may get the inference results again using a simple Python API, such as:
-
-```
-output = OutputQueue()
-results = output.dequeue()
-```
 
 
 ## Quick Start
@@ -109,6 +64,35 @@ Note that the Cluster Serving quick start example will run on your local node on
 
 For more details, you could also see the log and performance by go to `localhost:6006` in your browser and refer to [Logs and Visualization](#Logs-and-Visualization), or view the source code of `quick_start.py` [here](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/serving/quick_start.py), or refer to [API Guide](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ClusterServingGuide/APIGuide.md).
 
+
+## Workflow Overview
+
+The overall architecture of Analytics Zoo Cluster Serving solution is illustrated as below: 
+
+![overview](cluster_serving_overview.jpg)
+
+The illustrations below outline a 3-step "Prepare-Launch-Inference" principle. The same principle applies regardless if you use Analytics Zoo by a Docker image or not. Note that the Quick Start example uses a pre-built Docker image and already provides some preparation work so it looks more simplified than 3 steps. 
+
+![steps](cluster_serving_steps.jpg)
+
+#### 1. Install and prepare Cluster Serving environment on a local node:
+
+- Copy a previously trained model to the local node; currently TensorFlow, PyTorch, Caffe, BigDL and OpenVINO models are supported.
+- Install Analytics Zoo on the local node (e.g., using a single pip install command)
+- Configure Cluster Server on the local node, including the file path to the trained model and the address of the cluster (such as Apache Hadoop YARN cluster, Spark Cluster, K8s cluster, etc.).
+Please note that you only need to deploy the Cluster Serving solution on a single local node, and no modifications are needed for the (YARN or K8s) cluster. 
+
+#### 2. Launch the Cluster Serving service
+
+You can launch the Cluster Serving service by running the startup script on the local node. Under the hood, Cluster Serving will automatically deploy the trained model and serve the model inference requests across the cluster in a distributed fashion. You may monitor its runtime status (such as inference throughput) using  TensorBoard. 
+
+#### 3. Distributed, real-time (streaming) inference
+
+Cluster Serving provides a simple pub/sub API to the users, so that you can easily send the inference requests to an input queue (currently Redis Streams is used) using a simple Python API.
+
+Cluster Serving will then read the requests from the Redis stream, run the distributed real-time inference across the cluster (using Spark Streaming or Flink), and return the results back through Redis. As a result, you may get the inference results again using a simple Python API, such as:
+
+
 ## Deploy your Own Cluster Serving
 ### Installation
 It is recommended to install Cluster Serving by pulling the pre-built Docker image to your local node, which have packaged all the required dependencies. Alternatively, you may also manually install Cluster Serving (through either pip or direct downloading) as well as Redis and TensorBoard (for visualizing the serving status) on the local node.
@@ -122,7 +106,7 @@ docker run zoo-cluster-serving
 ```
 Go inside the container and finish following operations.
 #### Manual installation
-For Not Docker user, first, install [Redis]() and [TensorBoard]() (for visualizing the serving status) and add `$REDIS_HOME` variable to your environment if you want Cluster Serving to help you start and stop it.
+For non-Docker user, first, install [Redis]() and [TensorBoard]() (for visualizing the serving status) and add `$REDIS_HOME` variable to your environment if you want Cluster Serving to help you start and stop it.
 
 Install Analytics Zoo by download release or pip.
 
@@ -239,7 +223,7 @@ You can use following command to start Cluster Serving.
 ```
 cluster-serving-start
 ```
-This command will start Redis and Tensorboard if they are not running. Note that you need to provide `REDIS_HOME` environment variable as mentioned in [Installation](#Installation), if you need this feature.
+This command will start Redis and Tensorboard if they are not running. Note that you need to provide `REDIS_HOME` environment variable as mentioned in [Installation](#Installation).
 
 #### Stop
 You can use following command to stop Cluster Serving, data in Redis and Tensorboard service will persist.
@@ -294,8 +278,8 @@ result_class_prob_map = json.loads(img1_result)
 ```
 
 ## Optional Operations
-### Update Model or Change Config
-To update your model, you could replace your model file in your model directory, and restart Cluster Serving by `cluster-serving-restart`. Note that you could also change your config in `config.yaml` and restart serving.
+### Update Model or Configurations
+To update your model, you could replace your model file in your model directory, and restart Cluster Serving by `cluster-serving-restart`. Note that you could also change your configurations in `config.yaml` and restart serving.
 
 ### Logs and Visualization
 #### Logs
