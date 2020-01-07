@@ -11,13 +11,13 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
 * [Deploy Your Own Cluster Serving](#Deploy-Your-Own-Cluster-Serving)
 
-   1. [Installation](#1.-Installation)
+   1. [Installation](#Installation)
 
-   2. [Configuration](#2.-Configuration) 
+   2. [Configuration](#Configuration) 
    
-   3. [Launching Service](#3.-Launching-Service)
+   3. [Launching Service](#Launching-Service)
    
-   4. [Model inference](#4.-Model-inference)
+   4. [Model inference](#Model-inference)
 
 * [Optional Operations](#Optional-Operations)
 
@@ -106,7 +106,7 @@ Note that the Cluster Serving quick start example will run on your local node on
 For more details, you could also see the log and performance by go to `localhost:6006` in your browser and refer to [Logs and Visualization](#Logs-and-Visualization), or view the source code of `quick_start.py` [here](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/serving/quick_start.py), or refer to [API Guide](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ClusterServingGuide/APIGuide.md).
 
 ## Deploy your Own Cluster Serving
-### 1. Installation
+### Installation
 It is recommended to install Cluster Serving by pulling the pre-built Docker image to your local node, which have packaged all the required dependencies. Alternatively, you may also manually install Cluster Serving (through either pip or direct downloading) as well as Redis and TensorBoard (for visualizing the serving status) on the local node.
 #### Docker
 ```
@@ -128,8 +128,8 @@ Download Analytics Zoo from [release page]() on the local node, go to `analytics
 ##### Pip
 `pip install analytics-zoo`. And go to any directory, run `cluster-serving-init`.
 
-### 2. Configuration
-#### 2.1 How to Config
+### Configuration
+#### How to Config
 After [installation](#installation), you will see a config file `config.yaml` your current working directory. Your Cluster Serving configuration can all be set by modifying it. See an example of `config.yaml` below
 ```
 ## Analytics Zoo Cluster Serving Config Example
@@ -162,7 +162,7 @@ spark:
   total_executor_cores:
 ```
 
-#### 2.2 Preparing Model
+#### Preparing Model
 Currently Analytics Zoo Cluster Serving supports Tensorflow, Caffe, Pytorch, BigDL, OpenVINO models. (Note currently only image classification models are supported).
 
 You need to put your model file into a directory and the directory could have layout like following according to model type, note that only one model is allowed in your directory.
@@ -207,7 +207,7 @@ You need to put your model file into a directory and the directory could have la
 
 Put the model in any of your local directory, and set `model:/path/to/dir`.
 
-#### 2.3 Other Configuration
+#### Other Configuration
 The field `input` contains your input data configuration.
 
 * src: the queue you subscribe for your input data, e.g. a default config of Redis on local machine is `localhost:6379`, note that please use the host address in your network instead of localhost or 127.0.0.1 when you run serving in cluster, make sure other nodes in cluster could also recognize this address.
@@ -228,7 +228,7 @@ The field `spark` contains your spark configuration.
 * total_executor_cores: same as parameter ` total-executor-cores` in spark
 
 For more details of these config, please refer to [Spark Official Document](https://spark.apache.org/docs/latest/configuration.html)
-### 3. Launching Service
+### Launching Service
 We provide following scripts to start, stop, restart Cluster Serving. 
 #### Start
 You can use following command to start Cluster Serving.
@@ -254,7 +254,7 @@ cluster-serving-shutdown
 ```
 
 If you are using docker, you could also run `docker rm` to stop them.
-### 4. Model Inference
+### Model Inference
 We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ClusterServingGuide/APIGuide.md).
 #### Input and Output API
 To input data to queue, you need a `InputQueue` instance, and using `enqueue` method by giving an image path or image ndarray. See following example.
