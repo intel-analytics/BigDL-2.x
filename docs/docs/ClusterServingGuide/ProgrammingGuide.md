@@ -25,18 +25,22 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
      - [Logs and Visualization](#Logs-and-Visualization)
 
-          
+
+
 ## Analytics Zoo Cluster Serving Workflow Overview
 
 The overall architecture of Analytics Zoo Cluster Serving solution is illustrated as below: 
 
+
 ![overview](cluster_serving_overview.jpg)
 
 
-The Analytics Zoo Cluster Serving high level workflow is illustrated as below. It outlined a 3-step "Prepare-Launch-Inference" design principle that applies to either Analytics Zoo Docker users (as shown with the Quick Start example below) or experienced users without Docker. Note that the Quick Start example below further simplies the steps so the first time users can get Cluster Serving running within minutes. 
+
+The illustration below outlined a 3-step "Prepare-Launch-Inference" principle. The same principle applies regardless if you use Analytics Zoo by a Docker image or not. Note that the Quick Start example uses a pre-built Docker image and already provides some preparation work so it looks more simplified than 3 steps. 
 
 
 ![steps](cluster_serving_steps.jpg)
+
 
 ### 1. Install and prepare Cluster Serving environment on a local node:
 
@@ -74,7 +78,12 @@ results = output.dequeue()
 
 ## Quick Start
 
-This section provides a quick start example for you to run Analytics Zoo Cluster Serving. To simplify the examples, we use docker to run Cluster Serving in these examples. If you do not have docker installed, [install docker]() first.
+This section provides a quick start example for you to run Analytics Zoo Cluster Serving. To simplify the examples, we use docker to run Cluster Serving in these examples. If you do not have docker installed, [install docker]() first. The quick start example contains all the necessary components so the first time users can get it up and running within minutes:
+
+* A docker image for Analytics Zoo Cluster Serving (with all dependencies installed)
+* A sample configuration file
+* A sample trained TensorFlow model, and sample data for inference
+* A sample Python client program
 
 Use one command to run Cluster Serving container.
 ```
