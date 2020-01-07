@@ -22,7 +22,7 @@ Analytics Zoo provides a unified data analytics and AI platform that seamlessly 
   - Plain Java/Python APIs for (TensorFlow/PyTorch/BigDL/OpenVINO) [Model Inference](https://analytics-zoo.github.io/master/#ProgrammingGuide/inference). 
 
 - High-Level **ML Workflow** that automates the process of building large-scale machine learning applications.
-  - [Automatically distributed real-time serving](https://analytics-zoo.github.io/master/#ClusterServingGuide/ProgrammingGuide) (for TensorFlow/PyTorch/Caffe/BigDL/OpenVINO models) with a simple pub/sub API. 
+  - Automatically distributed [Cluster Serving](https://analytics-zoo.github.io/master/#ClusterServingGuide/ProgrammingGuide) (for TensorFlow/PyTorch/Caffe/BigDL/OpenVINO models) with a simple pub/sub API. 
   - Scalable [AutoML](https://github.com/intel-analytics/analytics-zoo/blob/automl/pyzoo/zoo/automl/README.md) for time series prediction (that automatically generates features, selects models and tunes hyperparameters).
 
 - **Built-in Algorithms and Models** for [Recommendation](https://analytics-zoo.github.io/master/#APIGuide/Models/recommendation/), [Time Series](https://analytics-zoo.github.io/master/#APIGuide/Models/anomaly-detection/), [Computer Vision](https://analytics-zoo.github.io/master/#APIGuide/Models/object-detection/) and [NLP](https://analytics-zoo.github.io/master/#APIGuide/Models/seq2seq/) applications.
@@ -44,6 +44,6 @@ You may want to develop your AI solutions using Analytics Zoo if:
 
 - Quick start with Analytics Zoo using the pre-built [Docker Image](https://analytics-zoo.github.io/master/#DockerUserGuide/index).
 - Refer to the [Python](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) and [Scala](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/) installation guides to install Analytics Zoo.
-- Visit the [Document Website](https://analytics-zoo.github.io/) for information on Analytics Zoo.
+- Visit the [Document Website](https://analytics-zoo.github.io/) for more information on Analytics Zoo.
 - Check the [Powered By](https://analytics-zoo.github.io/master/#powered-by/) & [Presentations](https://analytics-zoo.github.io/master/#presentations/) pages for real-world applications using Analytics Zoo.
 - Join the [Google Group](https://groups.google.com/forum/#!forum/bigdl-user-group) (or subscribe to the [Mail List](mailto:bigdl-user-group+subscribe@googlegroups.com)) for more questions and discussions on Analytics Zoo.
