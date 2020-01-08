@@ -1,6 +1,10 @@
 # Programming Guide
 Analytics Zoo Cluster Serving is a lightweight distributed, real-time serving solution that supports a wide range of deep learning models (such as TensorFlow, PyTorch, Caffe, BigDL and OpenVINO models). It provides a simple pub/sub API, so that the users can easily send their inference requests to the input queue (using a simple Python API); Cluster Serving will then automatically manage the scale-out and real-time model inference across a large cluster (using distributed streaming frameworks such as Apache Spark Streaming, Apache Flink, etc.) 
 
+The overall architecture of Analytics Zoo Cluster Serving solution is illustrated as below: 
+
+![overview](cluster_serving_overview.jpg)
+
 (Note currently only image classification models are supported).
 
 This page contains the guide for you to run Analytics Zoo Cluster Serving, including following:
@@ -28,7 +32,7 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
 ## Quick Start
 
-This section provides a quick start example for you to run Analytics Zoo Cluster Serving. To simplify the example, we use docker to run Cluster Serving. If you do not have docker installed, [install docker]() first. The quick start example contains all the necessary components so the first time users can get it up and running within minutes:
+This section provides a quick start example for you to run Analytics Zoo Cluster Serving. To simplify the example, we use docker to run Cluster Serving. If you do not have docker installed, [install docker](https://docs.docker.com/install/) first. The quick start example contains all the necessary components so the first time users can get it up and running within minutes:
 
 * A docker image for Analytics Zoo Cluster Serving (with all dependencies installed)
 * A sample configuration file
@@ -69,10 +73,6 @@ For more details, you could also see the log and performance by go to `localhost
 
 ## Workflow Overview
 
-The overall architecture of Analytics Zoo Cluster Serving solution is illustrated as below: 
-
-![overview](cluster_serving_overview.jpg)
-
 The figure below illustrates the simple 3-step "Prepare-Launch-Inference" workflow for Cluster Serving.
 
 ![steps](cluster_serving_steps.jpg)
@@ -108,7 +108,7 @@ docker run zoo-cluster-serving
 ```
 Go inside the container and continue to [Configuration](#Configuration).
 #### Manual installation
-Non-Docker users need to install [Redis]() and [TensorBoard]() (for visualizing the serving status), and set environment variable `$REDIS_HOME` if you want Cluster Serving to help you start and stop it.
+Non-Docker users need to install [Redis](https://redis.io/topics/quickstart) and [TensorBoard](https://pypi.org/project/tensorboard/) (for visualizing the serving status). Please make sure the environment variable `$REDIS_HOME` is set if you want Cluster Serving to help you start and stop it. The `$REDIS_HOME` should be set to the path where you install Redis.
 
 Install Analytics Zoo by download release or pip.
 
@@ -245,7 +245,7 @@ You can use following command to shutdown Cluster Serving. This operation will s
 cluster-serving-shutdown
 ```
 
-If you are using Docker, you could also run `docker rm` to stop them.
+If you are using Docker, you could also run `docker rm` to shutdown Cluster Serving.
 ### Model Inference
 We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ClusterServingGuide/APIGuide.md).
 #### Input and Output API
