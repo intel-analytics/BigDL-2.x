@@ -15,13 +15,13 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
 * [Deploy Your Own Cluster Serving](#Deploy-Your-Own-Cluster-Serving)
 
-   1. [Installation](#1-Installation)
+   \1. [Installation](#1-Installation)
 
-   2. [Configuration](#2-Configuration) 
+   \2. [Configuration](#2-Configuration) 
    
-   3. [Launching Service](#3-Launching-Service)
+   \3. [Launching Service](#3-Launching-Service)
    
-   4. [Model inference](#4-Model-inference)
+   \4. [Model inference](#4-Model-inference)
 
 * [Optional Operations](#Optional-Operations)
 
