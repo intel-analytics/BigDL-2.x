@@ -15,13 +15,13 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
 
 * [Deploy Your Own Cluster Serving](#Deploy-Your-Own-Cluster-Serving)
 
-   1. [Installation](#Installation)
+   1. [Installation](#1-Installation)
 
-   2. [Configuration](#Configuration) 
+   2. [Configuration](#2-Configuration) 
    
-   3. [Launching Service](#Launching-Service)
+   3. [Launching Service](#3-Launching-Service)
    
-   4. [Model inference](#Model-inference)
+   4. [Model inference](#4-Model-inference)
 
 * [Optional Operations](#Optional-Operations)
 
@@ -96,7 +96,7 @@ Cluster Serving will then read the requests from the Redis stream, run the distr
 
 
 ## Deploy your Own Cluster Serving
-### Installation
+### 1. Installation
 It is recommended to install Cluster Serving by pulling the pre-built Docker image to your local node, which have packaged all the required dependencies. Alternatively, you may also manually install Cluster Serving (through either pip or direct downloading) as well as Redis and TensorBoard (for visualizing the serving status) on the local node.
 #### Docker
 ```
@@ -106,9 +106,9 @@ then, (or directly run `docker run`, it will pull the image if it does not exist
 ```
 docker run zoo-cluster-serving
 ```
-Go inside the container and continue to [Configuration](#Configuration).
+Go inside the container and continue to [Configuration](#2-Configuration).
 #### Manual installation
-Non-Docker users need to install [Redis](https://redis.io/topics/quickstart) and [TensorBoard](https://pypi.org/project/tensorboard/) (for visualizing the serving status). Please make sure the environment variable `$REDIS_HOME` is set if you want Cluster Serving to help you start and stop it. The `$REDIS_HOME` should be set to the path where you install Redis.
+Non-Docker users need to install [Redis](https://redis.io/topics/quickstart) and [TensorBoard](https://www.tensorflow.org/tensorboard/get_started) (for visualizing the serving status). Please make sure the environment variable `$REDIS_HOME` is set to the path where you install Redis so that Cluster Serving can start or stop it. 
 
 Install Analytics Zoo by download release or pip.
 
@@ -120,9 +120,9 @@ Go to `analytics-zoo/scripts/cluster-serving`, run `cluster-serving-init`.
 ##### Pip
 `pip install analytics-zoo`. And go to any directory, run `cluster-serving-init`.
 
-### Configuration
+### 2. Configuration
 #### How to Config
-After [Installation](#Installation), you will see a config file `config.yaml` in your current working directory. This file contains all the configurations that you can customize for your Cluster Serving. See an example of `config.yaml` below.
+After [Installation](#1-Installation), you will see a config file `config.yaml` in your current working directory. This file contains all the configurations that you can customize for your Cluster Serving. See an example of `config.yaml` below.
 ```
 ## Analytics Zoo Cluster Serving Config Example
 
@@ -220,14 +220,14 @@ The field `spark` contains your spark configuration.
 * total_executor_cores: same as parameter ` total-executor-cores` in spark
 
 For more details of these config, please refer to [Spark Official Document](https://spark.apache.org/docs/latest/configuration.html)
-### Launching Service
+### 3. Launching Service
 We provide following scripts to start, stop, restart Cluster Serving. 
 #### Start
 You can use following command to start Cluster Serving.
 ```
 cluster-serving-start
 ```
-This command will start Redis and TensorBoard if they are not running. Note that you need to provide `REDIS_HOME` environment variable as mentioned in [Installation](#Installation).
+This command will start Redis and TensorBoard if they are not running. Note that you need to provide `REDIS_HOME` environment variable as mentioned in [Installation](#1-Installation).
 
 #### Stop
 You can use following command to stop Cluster Serving. Data in Redis and TensorBoard service will persist.
@@ -246,7 +246,7 @@ cluster-serving-shutdown
 ```
 
 If you are using Docker, you could also run `docker rm` to shutdown Cluster Serving.
-### Model Inference
+### 4. Model Inference
 We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ClusterServingGuide/APIGuide.md).
 #### Input and Output API
 To input data to queue, you need a `InputQueue` instance, and using `enqueue` method by giving an image path or image ndarray. See following example.
