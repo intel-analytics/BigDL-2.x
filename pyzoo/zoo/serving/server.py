@@ -14,10 +14,12 @@
 # limitations under the License.
 #
 import subprocess
-import yaml
+
 import shutil
+import glob
 import os
-import time
+import urllib.request
+from zoo.util.engine import get_analytics_zoo_classpath
 
 
 class ClusterServing:
@@ -25,7 +27,54 @@ class ClusterServing:
     def __init__(self):
         self.name = 'cluster-serving'
         self.proc = None
-        self.conf_path = os.path.abspath(__file__ + "/../../bin/cluster-serving/config.yaml")
+        self.conf_path = os.path.abspath(__file__ + "/../../share/bin/cluster-serving/config.yaml")
+        self.zoo_jar = 'zoo.jar'
+        self.bigdl_jar = 'bigdl.jar'
+        self.spark_redis_jar = 'spark-redis-2.4.0-jar-with-dependencies.jar'
+
+        self.download_spark_redis_jar()
+        self.copy_config()
+        self.try_copy_bigdl_jar()
+        self.copy_zoo_jar()
+
+        if not os.path.exists('model'):
+            os.mkdir('model')
+
+    def try_copy_bigdl_jar(self):
+        try:
+            from bigdl.util.engine import get_bigdl_classpath
+            shutil.copyfile(get_bigdl_classpath(), self.bigdl_jar)
+
+        except Exception:
+            print("WARNING: if you are running Cluster Serving using pip, you have misconfig"
+                  "with bigdl python package, otherwise, ignore this WARNING.")
+
+    def copy_zoo_jar(self):
+        jar_path = get_analytics_zoo_classpath()
+        if jar_path:
+            pass
+        else:
+            jar_paths = glob.glob(os.path.abspath(
+                __file__ + "/../../../../dist/lib/*.jar"))
+            assert len(jar_paths) > 0, "No zoo jar is found"
+            assert len(jar_paths) == 1, "Expecting one jar: %s" % len(jar_paths)
+            jar_path = jar_paths[0]
+        shutil.copyfile(jar_path, self.zoo_jar)
+
+    def download_spark_redis_jar(self):
+
+        if not os.path.exists(self.spark_redis_jar):
+            print("Downloading spark-redis dependency...")
+            urllib.request.urlretrieve('https://oss.sonatype.org/content/repositories/'
+                                       'public/com/redislabs/spark-redis/2.4.0/'
+                                       + self.spark_redis_jar,
+
+                                       self.spark_redis_jar)
+        else:
+            print("spark-redis jar already exist.")
+
+    def copy_config(self):
+        print("Trying to find config file in ", self.conf_path)
         if not os.path.exists(self.conf_path):
             print('WARNING: Config file does not exist in your pip directory,'
                   'are you sure that you install serving by pip?')
@@ -37,74 +86,5 @@ class ClusterServing:
             shutil.copyfile(self.conf_path, 'config.yaml')
         except Exception:
             print("WARNING: An initialized config file already exists.")
-        """
-        code below this line are all deprecated
-        """
-
-        self.serving_start_path = os.path.join(__file__ + "/../../"
-                                               'bin/cluster-serving/start-cluster-serving.sh')
-        self.serving_stop_path = os.path.join(__file__ + "/../../"
-                                              'bin/cluster-serving/start-cluster-serving.sh')
-        self.serving_restart_path = os.path.join(__file__ + "/../../"
-                                                 'bin/cluster-serving/start-cluster-serving.sh')
 
         subprocess.Popen(['chmod', 'a+x', self.conf_path])
-
-    def docker_run(self):
-        with open(self.conf_path, 'r') as f:
-            config = yaml.load(f)
-            if not config['model']['path']:
-                raise EOFError('You have not set model path, you have to set'
-                               'model path before you start docker container.')
-            model_path = config['model']['path']
-            cmd = 'docker run -it --name cluster-serving --net=host -v ' + \
-                model_path + ':/opt/work/model/ -v config.yaml:/opt/work/config.yaml' + \
-                + ' intelanalytics/zoo-cluster-serving:beta'
-            subprocess.call(cmd, shell=True)
-
-    def docker_remove(self):
-        subprocess.call('docker rm -f ' + self.name)
-
-    def start(self):
-        """
-        Start the serving by running start script
-        :return:
-        """
-        self.proc = subprocess.Popen(
-            [self.serving_start_path], shell=True)
-
-    def stop(self):
-        """
-        Stop the serving by sending stop signal
-        aka. removing running flag
-        :return:
-        """
-        subprocess.Popen(
-            [self.serving_stop_path], shell=True)
-
-    def restart(self):
-        subprocess.Popen(
-            [self.serving_restart_path], shell=True)
-
-    def set_config(self, field, param, value):
-        """
-        Setting config by loading and rewrite the config file
-        :param field: model/data/params
-        :param param: should correspond with field
-        :param value: the value of the field and param specified
-        :return:
-        """
-        if not os.path.exists('config.yaml'):
-            if not os.path.exists(self.conf_path):
-                raise EOFError("Source config does not exist...what have you done...")
-            shutil.copyfile(self.conf_path, '.')
-        with open(self.conf_path, 'r') as f:
-            config = yaml.load(f)
-            try:
-                config[field][param] = value
-            except SyntaxError:
-                print("You have provided invalid configuration, "
-                      "please check Configuration Guide.")
-                return
-        with open(self.conf_path, 'w') as f:
-            yaml.dump(config, f, default_flow_style=False)

@@ -2,7 +2,7 @@
 
 model:
   # model path must be set
-  path: /opt/work/model
+  path: /home/litchy/models/caffe_res50
 data:
   # default, localhost:6379
   src:
@@ -13,6 +13,9 @@ params:
   batch_size:
   # default, 1
   top_n:
+redis:
+  # default, 4g
+  maxmem: 
 spark:
   # default, local[*]
   master: 
