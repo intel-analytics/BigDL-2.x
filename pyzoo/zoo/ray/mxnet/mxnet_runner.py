@@ -139,10 +139,10 @@ class MXNetRunner(object):
                     for name, acc in zip(names, accs):
                         stats[name] = acc
             else:  # Symbolic API
-                # TODO: seems no history returned by fit?
+                # TODO: seems no history (i.e. validation accuracy) returned by fit?
                 self.model.fit(train_data=self.train_data,
-                               num_epoch=1,
-                               # initializer=mx.init.Normal(),
+                               num_epoch=1 if "epochs" not in self.config else self.config["epochs"],
+                               initializer=self.config["init"],
                                kvstore=self.kv,
                                optimizer=self.config["optimizer"],
                                eval_metric=self.metrics,
