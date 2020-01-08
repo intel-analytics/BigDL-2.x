@@ -110,7 +110,7 @@ Go inside the container and continue to [Configuration](#2-Configuration).
 #### Manual installation
 Non-Docker users need to install [Redis](https://redis.io/topics/quickstart) and [TensorBoard](https://www.tensorflow.org/tensorboard/get_started).
 
-Please follow the installation instructions on Redis website. Make sure the environment variable `$REDIS_HOME` is set to the path where you install Redis, so that Cluster Serving can start or stop it. 
+Please follow the installation instructions on Redis website. Make sure the environment variable `$REDIS_HOME` is set to the path where you install Redis, so that Cluster Serving can start or shutdown it. 
 
 Cluster Sering use TensorBoard to visualize the serving status. Use `pip install tensorboard` to install TensorBoard.
 
