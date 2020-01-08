@@ -1,0 +1,8 @@
+#!/usr/bin/python
+
+
+from zoo.serving.server import ClusterServing
+
+serving = ClusterServing()
+
+print("All environments for Cluster Serving are ready perfectly.")

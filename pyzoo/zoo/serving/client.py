@@ -31,7 +31,7 @@ class API:
     def __init__(self):
 
         try:
-            file_path = "../../../docker/cluster-serving/config.yaml"
+            file_path = "../../../scripts/cluster-serving/config.yaml"
         except Exception:
             raise EOFError("config file does not exist. Please check your config"
                            "at analytics-zoo/docker/cluster-serving/config.yaml")

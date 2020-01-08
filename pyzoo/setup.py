@@ -24,6 +24,7 @@ from setuptools import setup
 
 TEMP_PATH = "zoo/share"
 analytics_zoo_home = os.path.abspath(__file__ + "/../../")
+SCRIPTS_TARGET = os.path.join(TEMP_PATH, "bin/cluster-serving")
 
 
 def get_analytics_zoo_packages():
@@ -85,6 +86,9 @@ def init_env():
 
 
 def setup_package():
+    script_names = os.listdir(SCRIPTS_TARGET)
+    scripts = list(map(lambda script: os.path.join(SCRIPTS_TARGET, script), script_names))
+    
     metadata = dict(
         name='analytics-zoo',
         version=VERSION,
@@ -100,6 +104,7 @@ def setup_package():
         include_package_data=True,
         package_data={"zoo.share": ['lib/analytics-zoo*with-dependencies.jar', 'conf/*', 'bin/*',
                                     'extra-resources/*']},
+        scripts=scripts,
         classifiers=[
             'License :: OSI Approved :: Apache Software License',
             'Programming Language :: Python :: 2.7',
@@ -122,3 +127,4 @@ if __name__ == '__main__':
     finally:
         if build_from_source() and os.path.exists(TEMP_PATH):
             rmtree(TEMP_PATH)
+
