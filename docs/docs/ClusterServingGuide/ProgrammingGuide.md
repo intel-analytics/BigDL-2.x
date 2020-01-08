@@ -5,7 +5,7 @@ The overall architecture of Analytics Zoo Cluster Serving solution is illustrate
 
 ![overview](cluster_serving_overview.jpg)
 
-(Note currently only image classification models are supported).
+Note: currently only **image classification** models are supported.
 
 This page contains the guide for you to run Analytics Zoo Cluster Serving, including following:
 
@@ -108,9 +108,13 @@ docker run zoo-cluster-serving
 ```
 Go inside the container and continue to [Configuration](#2-Configuration).
 #### Manual installation
-Non-Docker users need to install [Redis](https://redis.io/topics/quickstart) and [TensorBoard](https://www.tensorflow.org/tensorboard/get_started) (for visualizing the serving status). Please make sure the environment variable `$REDIS_HOME` is set to the path where you install Redis so that Cluster Serving can start or stop it. 
+Non-Docker users need to install [Redis](https://redis.io/topics/quickstart) and [TensorBoard](https://www.tensorflow.org/tensorboard/get_started).
 
-Install Analytics Zoo by download release or pip.
+Please follow the installation instructions on Redis website. Make sure the environment variable `$REDIS_HOME` is set to the path where you install Redis, so that Cluster Serving can start or stop it. 
+
+Cluster Sering use TensorBoard to visualize the serving status. Use `pip install tensorboard` to install TensorBoard.
+
+Install Analytics Zoo by Download Release or Pip.
 
 ##### Download Release
 Download Analytics Zoo from [release page](https://analytics-zoo.github.io/master/#release-download/) on the local node. 
@@ -155,7 +159,7 @@ spark:
 ```
 
 #### Preparing Model
-Currently Analytics Zoo Cluster Serving supports TensorFlow, Caffe, PyTorch, BigDL, OpenVINO models. (Note currently only image classification models are supported).
+Currently Analytics Zoo Cluster Serving supports TensorFlow, Caffe, PyTorch, BigDL, OpenVINO models. Note that currently only **image classification** models are supported.
 
 You need to put your model file into a directory and the directory could have layout like following according to model type, note that only one model is allowed in your directory.
 
