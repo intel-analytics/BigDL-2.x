@@ -18,13 +18,12 @@ package com.intel.analytics.zoo.pipeline.inference
 
 import java.io.{File, IOException}
 import java.nio.file.{Files, Paths}
-import java.util.{ArrayList, Arrays, UUID, List => JList}
+import java.util.{ArrayList, Arrays, List => JList}
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.pipeline.api.net.{NetUtils, RegistryMap, SerializationHolder}
 import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 import com.intel.analytics.zoo.pipeline.inference.OpenVINOModel.OpenVINOModelHolder
-import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
