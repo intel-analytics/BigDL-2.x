@@ -49,15 +49,11 @@ class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
     OpenVINOModel.logger.info("Lazy loading OpenVINO model")
     var nativeRef = -1L
     try {
-      if (NetUtils.isDriver) {
-        
-      } else {
 
-      }
       val modelFile = File.createTempFile("OpenVINO", ".xml")
-      Files.write(Paths.get(modelFile.toURI), modelHolder.modelBytes)
+      Files.write(Paths.get(modelFile.toURI), modelHolder.getModelBytes())
       val weightFile = File.createTempFile("OpenVINO", ".bin")
-      Files.write(Paths.get(weightFile.toURI), modelHolder.weightBytes)
+      Files.write(Paths.get(weightFile.toURI), modelHolder.getWeightBytes())
 
       nativeRef = if (isInt8) {
         OpenVINOModel.logger.info(s"Load int8 model")
