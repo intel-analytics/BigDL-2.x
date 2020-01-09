@@ -5,4 +5,4 @@ from zoo.serving.server import ClusterServing
 
 serving = ClusterServing()
 
-print("All environments for Cluster Serving are ready perfectly.")
+print("Cluster Serving has been properly set up.")

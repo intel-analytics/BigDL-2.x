@@ -88,7 +88,7 @@ def init_env():
 def setup_package():
     script_names = os.listdir(SCRIPTS_TARGET)
     scripts = list(map(lambda script: os.path.join(SCRIPTS_TARGET, script), script_names))
-    
+
     metadata = dict(
         name='analytics-zoo',
         version=VERSION,
@@ -127,4 +127,3 @@ if __name__ == '__main__':
     finally:
         if build_from_source() and os.path.exists(TEMP_PATH):
             rmtree(TEMP_PATH)
-
