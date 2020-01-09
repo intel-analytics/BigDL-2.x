@@ -53,6 +53,7 @@ class ClusterServing:
     def copy_zoo_jar(self):
         jar_path = get_analytics_zoo_classpath()
         if jar_path:
+
             self.try_copy_bigdl_jar()
 
         else:
