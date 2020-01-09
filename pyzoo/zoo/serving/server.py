@@ -53,15 +53,11 @@ class ClusterServing:
     def copy_zoo_jar(self):
         jar_path = get_analytics_zoo_classpath()
         if jar_path:
-
             self.try_copy_bigdl_jar()
-
         else:
             """
-            not install by pip, so run prepare_env here
-            
+            not install by pip, so run prepare_env here            
             """
-
             jar_paths = glob.glob(os.path.abspath(
                 __file__ + "/../../../../dist/lib/*.jar"))
             assert len(jar_paths) > 0, "No zoo jar is found"
@@ -70,13 +66,11 @@ class ClusterServing:
         shutil.copyfile(jar_path, self.zoo_jar)
 
     def download_spark_redis_jar(self):
-
         if not os.path.exists(self.spark_redis_jar):
             print("Downloading spark-redis dependency...")
             urllib.request.urlretrieve('https://oss.sonatype.org/content/repositories/'
                                        'public/com/redislabs/spark-redis/2.4.0/'
                                        + self.spark_redis_jar,
-
                                        self.spark_redis_jar)
         else:
             print("spark-redis jar already exist.")
