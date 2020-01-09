@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [ -f "running" ]; then
+    rm running
+    echo "Stop signal sent to serving."
+else
+    echo "Serving is not running, stop operation ignored."
+fi
+
+
