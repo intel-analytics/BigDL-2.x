@@ -58,7 +58,6 @@ class ClusterServing:
             """
             not install by pip, so run prepare_env here            
             """
-            self.try_copy_bigdl_jar()
             jar_paths = glob.glob(os.path.abspath(
                 __file__ + "/../../../../dist/lib/*.jar"))
             assert len(jar_paths) > 0, "No zoo jar is found"
