@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.pipeline.inference
 
 import java.io.{File, FileOutputStream, InputStream}
 import java.nio.channels.Channels
-import java.nio.file.{Files, Paths}
 
 import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 import com.intel.analytics.zoo.core.openvino.OpenvinoNativeLoader
@@ -93,13 +92,11 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
                      weightFilePath: String,
                      deviceType: DeviceTypeEnumVal,
                      batchSize: Int = 0): OpenVINOModel = {
-    timing("load OpenVINO IR") {
-      val modelBytes = Files.readAllBytes(Paths.get(modelFilePath))
-      val weightBytes = Files.readAllBytes(Paths.get(weightFilePath))
-      val buffer = Source.fromBytes(modelBytes)
+    timing("load openvino IR") {
+      val buffer = Source.fromFile(modelFilePath)
       val isInt8 = buffer.getLines().count(_ matches ".*statistics.*") > 0
       buffer.close()
-      new OpenVINOModel(new OpenVINOModelHolder(modelBytes, weightBytes),
+      new OpenVINOModel(new OpenVINOModelHolder(modelFilePath, weightFilePath),
         isInt8, batchSize, deviceType)
     }
   }
@@ -112,8 +109,10 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
       val buffer = Source.fromBytes(modelBytes)
       val isInt8 = buffer.getLines().count(_ matches ".*statistics.*") > 0
       buffer.close()
-      new OpenVINOModel(new OpenVINOModelHolder(modelBytes, weightBytes),
-        isInt8, batchSize, deviceType)
+      val modelHolder = new OpenVINOModelHolder("", "")
+      modelHolder.setModelBytes(modelBytes)
+      modelHolder.setWeightBytes(weightBytes)
+      new OpenVINOModel(modelHolder, isInt8, batchSize, deviceType)
     }
   }
 

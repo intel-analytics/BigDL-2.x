@@ -49,6 +49,11 @@ class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
     OpenVINOModel.logger.info("Lazy loading OpenVINO model")
     var nativeRef = -1L
     try {
+      if (NetUtils.isDriver) {
+        
+      } else {
+
+      }
       val modelFile = File.createTempFile("OpenVINO", ".xml")
       Files.write(Paths.get(modelFile.toURI), modelHolder.modelBytes)
       val weightFile = File.createTempFile("OpenVINO", ".bin")
@@ -134,13 +139,26 @@ object OpenVINOModel {
   @transient
   private lazy val inDriver = NetUtils.isDriver
 
-  class OpenVINOModelHolder(@transient var modelBytes: Array[Byte],
-                            @transient var weightBytes: Array[Byte],
+  class OpenVINOModelHolder(modePath: String,
+                            weightPath: String,
                             private var id: String)
     extends SerializationHolder {
 
-    def this(modelBytes: Array[Byte], weightBytes: Array[Byte]) =
-      this(modelBytes, weightBytes, UUID.randomUUID().toString)
+    @transient
+    private var modelBytes: Array[Byte] = null
+    @transient
+    private var weightBytes: Array[Byte] = null
+
+    def this(modePath: String, weightPath: String) =
+      this(modePath: String, weightPath: String, UUID.randomUUID().toString)
+
+    def setModelBytes(modeBytes: Array[Byte]): Unit = {
+      this.modelBytes = modeBytes
+    }
+
+    def setWeightBytes(weightBytes: Array[Byte]): Unit = {
+      this.weightBytes = weightBytes
+    }
 
     def getModelBytes(): Array[Byte] = {
       modelBytes
