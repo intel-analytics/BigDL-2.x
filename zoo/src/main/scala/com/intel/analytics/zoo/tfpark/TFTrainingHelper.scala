@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.net
+package com.intel.analytics.zoo.tfpark
 
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.zoo.common.Utils
+import com.intel.analytics.zoo.core.TFNetNative
 import org.slf4j.LoggerFactory
 import org.tensorflow.DataType
+import org.tensorflow.framework.GraphDef
 
-import scala.io.Source
 import scala.reflect.io.Path
 
 // variables and gradVariables need to be sorted by name if you want to use multiple
 // optimization methods for a TensorFlow model according to variable names.
-private[zoo] class TFTrainingHelper2(graphRunner: GraphRunner,
+private[zoo] class TFTrainingHelper private (graphRunner: GraphRunner,
                                     checkpointPath: String,
                                     inputs: Array[String],
                                     inputTypes: Array[Int],
@@ -114,10 +116,10 @@ private[zoo] class TFTrainingHelper2(graphRunner: GraphRunner,
     }
   }
 
-  override def evaluate(): TFTrainingHelper2.this.type = {
+  override def evaluate(): TFTrainingHelper.this.type = {
     super.evaluate()
     setVariableIntoTF(weights, variableAssignPlaceholders,
-      variableTypes.map(NetUtils.tfenum2datatype), assignVariableOp)
+      variableTypes.map(TFUtils.tfenum2datatype), assignVariableOp)
     this
   }
 
@@ -149,9 +151,9 @@ private[zoo] class TFTrainingHelper2(graphRunner: GraphRunner,
 
   def saveCheckpoint(): Unit = {
     setVariableIntoTF(weights, variableAssignPlaceholders,
-      variableTypes.map(NetUtils.tfenum2datatype), assignVariableOp)
+      variableTypes.map(TFUtils.tfenum2datatype), assignVariableOp)
     setVariableIntoTF(extraParameters, extraVariableAssignPlaceholders,
-      extraVariableTypes.map(NetUtils.tfenum2datatype), assignExtraVariableOP)
+      extraVariableTypes.map(TFUtils.tfenum2datatype), assignExtraVariableOP)
     graphRunner.saveToFile(checkpointPath)
   }
 
@@ -184,21 +186,21 @@ private[zoo] class TFTrainingHelper2(graphRunner: GraphRunner,
   }
 
   override def updateOutput(input: Activity): Activity = {
-    NetUtils.timeIt("updateOutput", TFTrainingHelper2.logger) {
+    Utils.timeIt("updateOutput") {
       if (this.isTraining()) {
-        NetUtils.timeIt("setTrainingVariableIntoTF", TFTrainingHelper2.logger) {
+        Utils.timeIt("setTrainingVariableIntoTF") {
           setVariableIntoTF(weights, variableAssignPlaceholders,
-            variableTypes.map(NetUtils.tfenum2datatype), assignVariableOp)
+            variableTypes.map(TFUtils.tfenum2datatype), assignVariableOp)
         }
       }
 
       if (!extraParameterRestored) {
         setVariableIntoTF(extraParameters, extraVariableAssignPlaceholders,
-          extraVariableTypes.map(NetUtils.tfenum2datatype), assignExtraVariableOP)
+          extraVariableTypes.map(TFUtils.tfenum2datatype), assignExtraVariableOP)
         extraParameterRestored = true
       }
 
-      val feeds = NetUtils.activity2VectorBuilder(input)
+      val feeds = Utils.activity2VectorBuilder(input)
 
       if (this.isTraining()) {
         var i = 0
@@ -214,7 +216,7 @@ private[zoo] class TFTrainingHelper2(graphRunner: GraphRunner,
         }
       }
 
-      val types = inputTypes.toVector.map(NetUtils.tfenum2datatype)
+      val types = inputTypes.toVector.map(TFUtils.tfenum2datatype)
 
       val (outputNames, outputTensors) = if (isTraining()) {
         (outputs.toVector ++ gradVariables.toVector, graphOutputs)
@@ -232,7 +234,7 @@ private[zoo] class TFTrainingHelper2(graphRunner: GraphRunner,
 
 
       if (extraParameters.length > 0) {
-        NetUtils.timeIt("getExtraVariableFromTF", TFTrainingHelper2.logger) {
+        Utils.timeIt("getExtraVariableFromTF") {
           getVariableFromTF(extraParameters, variableNames = extraVariables)
         }
       }
@@ -252,102 +254,58 @@ private[zoo] class TFTrainingHelper2(graphRunner: GraphRunner,
   }
 }
 
-object TFTrainingHelper2 {
+object TFTrainingHelper {
+
+  assert(TFNetNative.isLoaded)
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  def apply(modelPath: String, sessionConfig: Array[Byte] = null): TFTrainingHelper2 = {
+  def apply(graphDef: GraphDef,
+            checkpointPath: String,
+            trainMeta: TrainMeta,
+            config: Array[Byte]): TFTrainingHelper = {
+
+    val graphRunner = new GraphRunner(
+      graphDef.toByteArray,
+      trainMeta.restoreOp,
+      trainMeta.restorePathPlaceholder,
+      trainMeta.saveOp,
+      trainMeta.savePathPlaceholder,
+      config)
+
+    val helper = new TFTrainingHelper(graphRunner,
+      checkpointPath,
+      trainMeta.inputs,
+      trainMeta.inputTypes,
+      trainMeta.metricTensors ++ Array(trainMeta.batchSizeTensor, trainMeta.lossTensor),
+      trainMeta.variables,
+      trainMeta.variableTypes,
+      trainMeta.variableAssignPlaceholders,
+      trainMeta.assignVariableOp,
+      trainMeta.extraVariables,
+      trainMeta.extraVariableTypes,
+      trainMeta.extraVariableAssignPlaceholders,
+      trainMeta.assignExtraVariableOp,
+      trainMeta.gradVariables,
+      trainMeta.updateOp,
+      trainMeta.defaultTensorValue
+    )
+    helper.restoreFromCheckpoint()
+    helper
+  }
+
+  def apply(modelPath: String, sessionConfig: Array[Byte] = null): TFTrainingHelper = {
 
     val folderPath = Path(modelPath)
     val trainingMetaPath = folderPath / Path("training_meta.json")
     val graphDefPath = folderPath / Path("model.meta")
     val checkpointPath = folderPath / Path("model")
 
-    val jsonStr = Source.fromFile(trainingMetaPath.jfile).getLines().mkString
-    import org.json4s._
-    import org.json4s.jackson.JsonMethods._
-    implicit val formats = DefaultFormats
+    val trainingMeta = TFUtils.getTrainMeta(trainingMetaPath)
+    val graphDef = TFUtils.parseGraph(graphDefPath.toString())
+    val config = Option(sessionConfig).getOrElse(TFUtils.defaultSessionConfig.toByteArray())
 
-    val trainingMeta = parse(jsonStr).camelizeKeys.extract[TrainMeta2]
-
-    val graphDef = TFNet.parseGraph(graphDefPath.toString())
-    val config = if (sessionConfig != null) {
-      sessionConfig
-    } else {
-      TFNet.defaultSessionConfig.toByteArray()
-    }
-
-    val graphRunner = new GraphRunner(
-      graphDef.toByteArray,
-      trainingMeta.restoreOp,
-      trainingMeta.restorePathPlaceholder,
-      trainingMeta.saveOp,
-      trainingMeta.savePathPlaceholder,
-      config)
-
-    val helper = new TFTrainingHelper2(graphRunner,
-      checkpointPath.toString(),
-      trainingMeta.inputs,
-      trainingMeta.inputTypes,
-      trainingMeta.outputs,
-      trainingMeta.variables,
-      trainingMeta.variableTypes,
-      trainingMeta.variableAssignPlaceholders,
-      trainingMeta.assignVariableOp,
-      trainingMeta.extraVariables,
-      trainingMeta.extraVariableTypes,
-      trainingMeta.extraVariableAssignPlaceholders,
-      trainingMeta.assignExtraVariableOp,
-      trainingMeta.gradVariables,
-      trainingMeta.updateOp,
-      trainingMeta.defaultTensorValue
-    )
-    helper.restoreFromCheckpoint()
+    val helper = TFTrainingHelper(graphDef, checkpointPath.toString(), trainingMeta, config)
     helper
-  }
-}
-
-case class TrainMeta2(inputs: Array[String],
-                     inputTypes: Array[Int],
-                     outputs: Array[String],
-                     variables: Array[String],
-                     variableTypes: Array[Int],
-                     variableAssignPlaceholders: Array[String],
-                     assignVariableOp: String,
-                     extraVariables: Array[String],
-                     extraVariableTypes: Array[Int],
-                     extraVariableAssignPlaceholders: Array[String],
-                     assignExtraVariableOp: String,
-                     gradVariables: Array[String],
-                     restoreOp: String,
-                     restorePathPlaceholder: String,
-                     saveOp: String,
-                     savePathPlaceholder: String,
-                     updateOp: String,
-                     defaultTensorValue: Array[Array[Float]])
-
-
-/**
- * TFSubGraph will only be used in DistriOptimizer for the purpose of training a TensorFlow
- * model using multiple optimization methods based on variable names.
- * Applying a TFTrainingHelper2 layer by name will get a corresponding instance of TFSubGraph.
- *
- * In DistriOptimizer.optimize(), TFSubGraph will only be used to get the sizes and offsets of
- * each weight portion, slice on the original weights and gradients and apply the optimization
- * method accordingly.
- * The gradients of TFSubGraph will never be used and thus a dummy Tensor is put as a placeholder.
- */
-private class TFSubGraph(
-    weights: Array[Tensor[Float]]) extends AbstractModule[Activity, Activity, Float] {
-  override def updateOutput(input: Activity): Activity = {
-    input
-  }
-
-  override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
-    gradInput
-  }
-
-  override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
-    (weights, weights.map(_ => Tensor[Float]()))
   }
 }

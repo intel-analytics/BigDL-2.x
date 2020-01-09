@@ -62,6 +62,20 @@ object ClusterServing {
     val W = helper.dataShape(1)
     val H = helper.dataShape(2)
 
+    /**
+     * chwFlag is to set image input of CHW or HWC
+     * if true, the format is CHW
+     * else, the format is HWC
+     *
+     * Note that currently CHW is commonly used
+     * and HWC is often used in Tensorflow models
+     */
+    val chwFlag = if (modelType == "tensorflow") {
+      false
+    } else {
+      true
+    }
+
     val logger = helper.logger
 
     /**
@@ -70,7 +84,6 @@ object ClusterServing {
      * there is an interval between get and cut, this would
      * affect the result of correctness, some new data might be cut
      */
-    var lastMicroBatchSize: Long = 0
 
     var model: InferenceModel = null
     var bcModel: Broadcast[InferenceModel] = null
@@ -104,12 +117,21 @@ object ClusterServing {
 
     // redis stream control
     val redisDB = new Jedis(helper.redisHost, helper.redisPort.toInt)
+    val inputThreshold = 0.6 * 0.8
+    val cutRatio = 0.5
 
     val query = images.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
 
       /**
        * This is reserved for future dynamic loading model
        */
+      val redisInfo = RedisUtils.getMapFromInfo(redisDB.info())
+
+      if (redisInfo("used_memory").toLong >=
+        redisInfo("maxmemory").toLong * inputThreshold) {
+        redisDB.xtrim("image_stream",
+          (redisDB.xlen("image_stream") * cutRatio).toLong, true)
+      }
 
       batchDF.persist()
 
@@ -167,7 +189,7 @@ object ClusterServing {
                 val row = pathBytesBatch(i)
                 val path = row.getAs[String]("uri")
                 val tensors = ImageProcessing.bytesToBGRTensor(java.util
-                  .Base64.getDecoder.decode(row.getAs[String]("image")))
+                  .Base64.getDecoder.decode(row.getAs[String]("image")), chwFlag)
                 (path, tensors)
 
               })
@@ -175,18 +197,18 @@ object ClusterServing {
           })
           pathBytesChunk.mapPartitions(pathBytes => {
             val localModel = bcModel.value
-            val t = Tensor[Float](batchSize, C, W, H)
+            val t = if (chwFlag) {
+              Tensor[Float](batchSize, C, H, W)
+            } else {
+              Tensor[Float](batchSize, H, W, C)
+            }
             pathBytes.grouped(batchSize).flatMap(pathByteBatch => {
               val thisBatchSize = pathByteBatch.size
-
 
               (0 until thisBatchSize).toParArray
                 .foreach(i => t.select(1, i + 1).copy(pathByteBatch(i)._2))
 
-              val x = if (modelType == "tensorflow") {
-                t.transpose(2, 3)
-                  .transpose(3, 4).contiguous()
-              } else if (modelType == "openvino") {
+              val x = if (modelType == "openvino") {
                 t.addSingletonDimension()
               } else {
                 t
@@ -266,27 +288,6 @@ object ClusterServing {
           }
         }
 
-        /**
-         * Try to delete processed stream in queue, this may throw exception
-         * if user runs multiple serving because the stream length count could
-         * not be guaranteed in such case, thus, just skip if it fails.
-         */
-
-        val newLen = redisDB.xlen("image_stream")
-        val lenRemained = newLen - lastMicroBatchSize
-        try {
-          redisDB.xtrim("image_stream",
-            lenRemained, true)
-
-          println("Remained " + lenRemained + " New length " + newLen.toString)
-        }
-        catch {
-          case e: Exception =>
-            logger.info("WARNING: Deleting processed record " +
-              "encounters an error, skipped")
-
-        }
-        lastMicroBatchSize = microBatchSize
         /**
          * Count the statistical data and write to summary
          */
