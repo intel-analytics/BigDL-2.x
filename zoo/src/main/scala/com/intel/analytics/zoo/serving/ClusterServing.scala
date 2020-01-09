@@ -296,16 +296,26 @@ object ClusterServing {
         val microBatchThroughPut = (microBatchSize / microBatchLatency).toFloat
 
         totalCnt += microBatchSize.toInt
+        try {
+          if (model.inferenceSummary != null) {
+            (timeStamp until timeStamp + microBatchLatency.toInt).foreach( time => {
+              model.inferenceSummary.addScalar(
+                "Serving Throughput", microBatchThroughPut, time)
+            })
 
-        if (model.inferenceSummary != null) {
-          (timeStamp until timeStamp + microBatchLatency.toInt).foreach( time => {
             model.inferenceSummary.addScalar(
-              "Serving Throughput", microBatchThroughPut, time)
-          })
-
-          model.inferenceSummary.addScalar(
-            "Total Records Number", totalCnt, batchId)
+              "Total Records Number", totalCnt, batchId)
+          }
         }
+        catch {
+          case e: Exception =>
+            /**
+             * If been interrupted by stop signal, do nothing
+             * End the streaming until this micro batch process ends
+             */
+            logger.info("Summary not supported. skipped.")
+        }
+
 
         timeStamp += microBatchLatency.toInt
 
