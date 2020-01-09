@@ -35,7 +35,7 @@ class ClusterServing:
 
         self.download_spark_redis_jar()
         self.copy_config()
-        self.try_copy_bigdl_jar()
+
         self.copy_zoo_jar()
 
         if not os.path.exists('model'):
@@ -53,8 +53,14 @@ class ClusterServing:
     def copy_zoo_jar(self):
         jar_path = get_analytics_zoo_classpath()
         if jar_path:
-            pass
+            self.try_copy_bigdl_jar()
+
         else:
+            """
+            not install by pip, so run prepare_env here
+            
+            """
+
             jar_paths = glob.glob(os.path.abspath(
                 __file__ + "/../../../../dist/lib/*.jar"))
             assert len(jar_paths) > 0, "No zoo jar is found"
