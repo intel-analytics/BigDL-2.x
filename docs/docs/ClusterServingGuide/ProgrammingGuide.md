@@ -117,7 +117,7 @@ Cluster Sering use TensorBoard to visualize the serving status. Use `pip install
 Install Analytics Zoo by Download Release or Pip.
 
 ##### Download Release
-Download Analytics Zoo from [release page](https://analytics-zoo.github.io/master/#release-download/) on the local node. 
+Download Analytics Zoo from [release page](https://analytics-zoo.github.io/master/#release-download/) on the local node. After download finishes, please `source analytics-zoo/pyzoo/dev/prepare_env.sh` to prepare Python path for your Python API.
 
 Go to `analytics-zoo/scripts/cluster-serving`, run `cluster-serving-init`.
 
