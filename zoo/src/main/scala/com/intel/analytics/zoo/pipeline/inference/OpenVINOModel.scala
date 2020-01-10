@@ -119,8 +119,6 @@ class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
 
 object OpenVINOModel {
 
-  private val modelBytesRegistry = new RegistryMap[(Array[Byte], Array[Byte])]()
-
   val logger = LoggerFactory.getLogger(getClass)
 
   @transient
@@ -131,12 +129,12 @@ object OpenVINOModel {
     extends SerializationHolder {
 
     override def writeInternal(out: CommonOutputStream): Unit = {
-      // Temp Model Bytes
-      val localModelBytes = Files.readAllBytes(Paths.get(modelPath))
-      // Temp Weight Bytes
-      val localWeightBytes = Files.readAllBytes(Paths.get(weightPath))
       logger.debug("Write OpenVINO model into stream")
       if (inDriver) {
+        // Temp Model Bytes
+        val localModelBytes = Files.readAllBytes(Paths.get(modelPath))
+        // Temp Weight Bytes
+        val localWeightBytes = Files.readAllBytes(Paths.get(weightPath))
         out.writeInt(localModelBytes.length)
         timing(s"writing " +
           s"${localModelBytes.length / 1024 / 1024}Mb openvino model to stream") {

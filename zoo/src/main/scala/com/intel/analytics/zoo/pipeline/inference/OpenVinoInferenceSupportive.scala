@@ -79,11 +79,6 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
         case (_, _, _) => throw
           new InferenceRuntimeException("OpenVINO load from Temp dir error")
       }
-      timing("delete temporary model files") {
-        modelFile.delete()
-        weightFile.delete()
-        if(mappingFile.exists()) {mappingFile.delete()}
-      }
       model
     }
   }
