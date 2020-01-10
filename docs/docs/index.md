@@ -1,5 +1,5 @@
 <div align="center">
-   <p align="center"> <img src="https://github.com/analytics-zoo/analytics-zoo.github.io/blob/master/img/logo.jpg" height=240px; weight=320px;"><br></p>
+   <p align="center"> <img src="Image/logo.jpg" height=240px; weight=320px;"><br></p>
 </div>
       
 _A unified Data Analytics and AI platform for **distributed TensorFlow, Keras, PyTorch, Apache Spark/Flink and Ray**_
@@ -11,7 +11,7 @@ _A unified Data Analytics and AI platform for **distributed TensorFlow, Keras, P
 Analytics Zoo provides a unified data analytics and AI platform that seamlessly unites TensorFlow, Keras, PyTorch, Spark, Flink and Ray programs into an integrated pipeline, which can transparently scale from a laptop to large clusters to process production big data.
 
 <div align="center">
-   <p align="center"> <img src="https://github.com/intel-analytics/analytics-zoo/tree/master/docs/docs/Image/blockdiagram.jpg" height=240px; weight=718px;"><br></p>
+   <p align="center"> <img src="Image/blockdiagram.jpg" height=240px; weight=718px;"><br></p>
 </div>
 
 
