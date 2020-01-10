@@ -16,6 +16,11 @@
 from .abstract import BaseModel
 from .VanillaLSTM import VanillaLSTM
 from .Seq2Seq import LSTMSeq2Seq
+from zoo.automl.common.util import *
+
+MODEL_MAP = {"LSTM": VanillaLSTM,
+             "Seq2seq": LSTMSeq2Seq,
+             }
 
 
 class TimeSequenceModel(BaseModel):
@@ -28,20 +33,25 @@ class TimeSequenceModel(BaseModel):
         :param check_optional_config:
         :param future_seq_len:
         """
-        if future_seq_len:
-            self._model_selection(future_seq_len, check_optional_config)
+        self.check_optional_config = check_optional_config
+        self.future_seq_len = future_seq_len
+        self.model = None
+        self.selected_model = None
 
-    def _model_selection(self, future_seq_len, check_optional_config=False, verbose=1):
-        if future_seq_len == 1:
-            self.model = VanillaLSTM(check_optional_config=check_optional_config,
-                                     future_seq_len=future_seq_len)
-            if verbose == 1:
-                print("Model selection: Vanilla LSTM model is selected.")
-        else:
-            self.model = LSTMSeq2Seq(check_optional_config=check_optional_config,
-                                     future_seq_len=future_seq_len)
-            if verbose == 1:
-                print("Model selection: LSTM Seq2Seq model is selected.")
+    #     if future_seq_len:
+    #         self._model_selection(future_seq_len, check_optional_config)
+    #
+    # def _model_selection(self, future_seq_len, check_optional_config=False, verbose=1):
+    #     if future_seq_len == 1:
+    #         self.model = VanillaLSTM(check_optional_config=check_optional_config,
+    #                                  future_seq_len=future_seq_len)
+    #         if verbose == 1:
+    #             print("Model selection: Vanilla LSTM model is selected.")
+    #     else:
+    #         self.model = LSTMSeq2Seq(check_optional_config=check_optional_config,
+    #                                  future_seq_len=future_seq_len)
+    #         if verbose == 1:
+    #             print("Model selection: LSTM Seq2Seq model is selected.")
 
     def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, **config):
         """
@@ -59,11 +69,21 @@ class TimeSequenceModel(BaseModel):
         :param config: optimization hyper parameters
         :return: the resulting metric
         """
+        if not self.model:
+            self._sel_model(config)
+
         return self.model.fit_eval(x, y,
                                    validation_data=validation_data,
                                    mc=mc,
                                    verbose=verbose,
                                    **config)
+
+    def _sel_model(self, config):
+        self.selected_model = config.get("model", "LSTM")
+        self.model = MODEL_MAP[self.selected_model](
+            check_optional_config=self.check_optional_config,
+            future_seq_len=self.future_seq_len)
+        print(self.selected_model, "is selected.")
 
     def evaluate(self, x, y, metric=['mse']):
         """
@@ -93,10 +113,17 @@ class TimeSequenceModel(BaseModel):
         :param config_path: the config file
         :return:
         """
+        model_config = {"future_seq_len": self.future_seq_len,
+                        "model": self.selected_model}
+        save_config(config_path, model_config)
         self.model.save(model_path, config_path)
 
     def restore(self, model_path, **config):
-        self._model_selection(future_seq_len=config["future_seq_len"], verbose=0)
+        assert "future_seq_len" in config
+        assert "model" in config
+        self.future_seq_len = config["future_seq_len"]
+        self._sel_model(config=config)
+        # self._model_selection(future_seq_len=config["future_seq_len"], verbose=0)
         self.model.restore(model_path, **config)
 
     def _get_required_parameters(self):

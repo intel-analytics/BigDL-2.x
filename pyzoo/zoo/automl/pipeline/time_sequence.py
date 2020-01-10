@@ -111,7 +111,8 @@ class TimeSequencePipeline(Pipeline):
         :return:
         """
         # self._check_configs()
-        self.config = self.get_default_configs()
+        if self.config is None:
+            self.config = self.get_default_configs()
         if user_configs is not None:
             self.config.update(user_configs)
         ft_id_config_set = {'future_seq_len', 'dt_col', 'target_col',

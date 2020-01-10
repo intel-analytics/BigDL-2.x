@@ -300,7 +300,7 @@ class LSTMSeq2Seq(BaseModel):
 
         config_to_save = {"past_seq_len": self.past_seq_len,
                           "feature_num": self.feature_num,
-                          "future_seq_len": self.future_seq_len,
+                          # "future_seq_len": self.future_seq_len,
                           "target_col_num": self.target_col_num,
                           "metric": self.metric,
                           "latent_dim": self.latent_dim,
@@ -317,7 +317,7 @@ class LSTMSeq2Seq(BaseModel):
 
         self.past_seq_len = config["past_seq_len"]
         self.feature_num = config["feature_num"]
-        self.future_seq_len = config["future_seq_len"]
+        # self.future_seq_len = config["future_seq_len"]
         self.target_col_num = config["target_col_num"]
         self.metric = config["metric"]
         self.latent_dim = config["latent_dim"]
