@@ -47,26 +47,17 @@ class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
   @transient
   private lazy val executableNetworkReference: Long = {
     OpenVINOModel.logger.info("Lazy loading OpenVINO model")
-    var nativeRef = -1L
-    try {
-      nativeRef = if (isInt8) {
-        OpenVINOModel.logger.info(s"Load int8 model")
-        supportive.loadOpenVinoIRInt8(modelHolder.modelPath,
-          modelHolder.weightPath,
-          deviceType.value, batchSize)
-      } else {
-        OpenVINOModel.logger.info(s"Load fp32 model")
-        supportive.loadOpenVinoIR(modelHolder.modelPath,
-          modelHolder.weightPath,
-          deviceType.value, batchSize)
-      }
+    if (isInt8) {
+      OpenVINOModel.logger.info(s"Load int8 model")
+      supportive.loadOpenVinoIRInt8(modelHolder.modelPath,
+        modelHolder.weightPath,
+        deviceType.value, batchSize)
+    } else {
+      OpenVINOModel.logger.info(s"Load fp32 model")
+      supportive.loadOpenVinoIR(modelHolder.modelPath,
+        modelHolder.weightPath,
+        deviceType.value, batchSize)
     }
-    catch {
-      case io: IOException =>
-        OpenVINOModel.logger.error("error during loading OpenVINO model")
-        throw io
-    }
-    nativeRef
   }
 
   override def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
