@@ -85,20 +85,22 @@ class ClusterServing:
         if not os.path.exists(self.conf_path):
             print('WARNING: Config file does not exist in your pip directory,'
                   'are you sure that you install serving by pip?')
-            build_conf_path = self.conf_path = os.path.abspath(
-                __file__ + "/../../../../scripts/cluster-serving/config.yaml")
-            prebuilt_conf_path = self.conf_path = os.path.abspath(
-                __file__ + "/../../../../../bin/cluster-serving/config.yaml")
+            build_conf_path = glob.glob(os.path.abspath(
+                __file__ + "/../../../../scripts/cluster-serving/config.yaml"))
+            prebuilt_conf_path = glob.glob(os.path.abspath(
+                __file__ + "/../../../../../bin/cluster-serving/config.yaml"))
             conf_paths = build_conf_path + prebuilt_conf_path
 
             assert len(conf_paths) > 0, "No config file is found"
             self.conf_path = conf_paths[0]
+            print("config path is found at ", self.conf_path)
 
             if not os.path.exists(self.conf_path):
                 raise EOFError("Can not find your config file.")
         try:
             shutil.copyfile(self.conf_path, 'config.yaml')
-        except Exception:
+        except Exception as e:
+            print(e)
             print("WARNING: An initialized config file already exists.")
 
         subprocess.Popen(['chmod', 'a+x', self.conf_path])
