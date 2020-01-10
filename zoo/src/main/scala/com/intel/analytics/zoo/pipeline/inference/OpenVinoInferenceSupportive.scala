@@ -64,6 +64,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
   }
 
 
+
   def loadOpenVinoIRFromTempDir(modelName: String, tempDir: String): OpenVINOModel = {
     val modelFilePath: String = s"$tempDir/$modelName.xml"
     val weightFilePath: String = s"$tempDir/$modelName.bin"
@@ -82,7 +83,6 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
       model
     }
   }
-
 
   def loadOpenVinoIR(modelFilePath: String,
                      weightFilePath: String,

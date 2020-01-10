@@ -24,6 +24,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.pipeline.api.net.{NetUtils, RegistryMap, SerializationHolder}
 import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 import com.intel.analytics.zoo.pipeline.inference.OpenVINOModel.OpenVINOModelHolder
+import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -108,6 +109,11 @@ class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
       case true =>
       case false =>
         supportive.releaseOpenVINOIR(executableNetworkReference)
+        // Remove Temp model files
+        if (modelHolder.modelPath.contains("ZOOTEMPOpenVINO")) {
+          FileUtils.deleteQuietly(new File(modelHolder.modelPath))
+          FileUtils.deleteQuietly(new File(modelHolder.weightPath))
+        }
         isRelease = true
     }
   }
@@ -174,9 +180,9 @@ object OpenVINOModel {
           numOfBytes += read
         }
       }
-      val modelFile = File.createTempFile("OpenVINO", ".xml")
+      val modelFile = File.createTempFile("ZOOTEMPOpenVINO", ".xml")
       Files.write(Paths.get(modelFile.toURI), localModelBytes)
-      val weightFile = File.createTempFile("OpenVINO", ".bin")
+      val weightFile = File.createTempFile("ZOOTEMPOpenVINO", ".bin")
       Files.write(Paths.get(weightFile.toURI), localWeightBytes)
       this.modelPath = modelFile.getAbsolutePath
       this.weightPath = weightFile.getAbsolutePath
