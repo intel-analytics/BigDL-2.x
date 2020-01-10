@@ -33,7 +33,7 @@ class TimeSequenceFeatureTransformer():
                  dt_col="datetime",
                  target_col="value",
                  extra_features_col=None,
-                 generate_feature_names=None,
+                 generated_feature_names=None,
                  drop_missing=True,
                  check_uniform=True):
         """
@@ -45,7 +45,7 @@ class TimeSequenceFeatureTransformer():
         :param dt_col: str. The name of datetime column in the input data frame.
         :param target_col: a list of str/str.
         :param extra_features_col: a list of str/str.
-        :param generate_feature_names: a subset of allowed generated feature names. The field will
+        :param generated_feature_names: a subset of allowed generated feature names. The field will
          be passed into FeatureGenerator only when FeatureGenerator is enabled. If
          generated_feature_names is None and FeatureGenerator is enabled, it will generate all the
          candidate features.
@@ -54,14 +54,14 @@ class TimeSequenceFeatureTransformer():
             be dropped and won't raise errors.
         :param check_uniform: whether to check if time sequence comes in uniform sampling intervals.
         """
-        self._check_input(horizon, dt_col, target_col, extra_features_col, drop_missing,
-                          check_uniform)
+        self._check_input(horizon, dt_col, target_col, extra_features_col, generated_feature_names,
+                          drop_missing, check_uniform)
         self.dt_col = dt_col
         self.target_col = target_col
         self.extra_features_col = extra_features_col
         self.drop_missing = drop_missing
         self.check_uniform = check_uniform
-        self.generate_feature_names = generate_feature_names
+        self.generate_feature_names = generated_feature_names
 
         self.past_seq_len = None
         self.transformer_names = None
@@ -74,7 +74,7 @@ class TimeSequenceFeatureTransformer():
         if not (isinstance(horizon, int) or all(isinstance(x, int) for x in horizon)):
             raise ValueError("Input horizon should be an int or a list/tuple/range of integers")
         if isinstance(horizon, tuple):
-            self.horizon = range(horizon)
+            self.horizon = range(horizon[0], horizon[1])
         else:
             self.horizon = horizon
 
@@ -83,7 +83,7 @@ class TimeSequenceFeatureTransformer():
         if not isinstance(target_col, str) or all(isinstance(x, str) for x in target_col):
             raise ValueError("Input target_col should be a str or a list of strs")
         if extra_features_col and not (isinstance(extra_features_col, str) or
-            all(isinstance(x, str) for x in extra_features_col)):
+                                       all(isinstance(x, str) for x in extra_features_col)):
             raise ValueError("Input extra_features_col should be a str or a list of strs")
 
         allowed_features = FeatureGenerator.get_allowed_features()
@@ -134,7 +134,7 @@ class TimeSequenceFeatureTransformer():
         """
         self._get_configs(config)
         self._check_transformers()
-        self._check_input_dataframe(input_df, mode="train")
+        self._check_input_df(input_df, mode="train")
         self._instantiate_transformers()
 
         train_x, train_y = self._transform(input_df, pre_roll_is_train=True, roll_is_train=True,
@@ -157,7 +157,7 @@ class TimeSequenceFeatureTransformer():
              Else, x is in format (no. of samples, feature_length, 1)
             y: y is 2-d numpy array in format (no. of samples, horizon_num/target_col_num/1)
         """
-        self._check_input_dataframe(input_df, mode="val")
+        self._check_input_df(input_df, mode="val")
         self._check_train_transformed()
         val_x, val_y = self._transform(input_df, pre_roll_is_train=False, roll_is_train=True,
                                        post_roll_is_train=False)
@@ -178,7 +178,7 @@ class TimeSequenceFeatureTransformer():
              target column num + extra feature column num + generated feature num),
              Else, x is in format (no. of samples, feature_length, 1)
         """
-        self._check_input_dataframe(input_df, mode="test")
+        self._check_input_df(input_df, mode="test")
         self._check_train_transformed()
         test_x, _ = self._transform(input_df, pre_roll_is_train=False, roll_is_train=False,
                                     post_roll_is_train=False)
@@ -441,7 +441,7 @@ class TimeSequenceFeatureTransformer():
             self.post_roll_transformers = [POST_ROLL_NAME2TRANSFORMER[name]
                                            for name in sorted_post_roll_transformer_names]
 
-    def _check_input_dataframe(self, input_df, mode="train"):
+    def _check_input_df(self, input_df, mode="train"):
         """
         1. check NaT in datetime
         2. check input datetime format. Requires to be datetime64
