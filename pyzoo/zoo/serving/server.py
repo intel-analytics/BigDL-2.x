@@ -59,6 +59,7 @@ class ClusterServing:
             not install by pip, so run prepare_env here
             """
             build_jar_paths = glob.glob(os.path.abspath(
+
                 __file__ + "/../../../../dist/lib/*.jar"))
             prebuilt_jar_paths = glob.glob(os.path.abspath(
                 __file__ + "/../../../../*.jar"))
