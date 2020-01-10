@@ -68,7 +68,7 @@ Wow! You made it!
 
 Note that the Cluster Serving quick start example will run on your local node only. Check the [Deploy Your Own Cluster Serving](#Deploy-Your-Own-Cluster-Serving) section for how to configure and run Cluster Serving in a distributed fashion.
 
-For more details, you could also see the log and performance by go to `localhost:6006` in your browser and refer to [Logs and Visualization](#Logs-and-Visualization), or view the source code of `quick_start.py` [here](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/serving/quick_start.py), or refer to [API Guide](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ClusterServingGuide/APIGuide.md).
+For more details, you could also see the log and performance by go to `localhost:6006` in your browser and refer to [Logs and Visualization](#Logs-and-Visualization), or view the source code of `quick_start.py` [here](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/serving/quick_start.py), or refer to [API Guide](APIGuide.md).
 
 
 ## Workflow Overview
@@ -251,7 +251,7 @@ cluster-serving-shutdown
 
 If you are using Docker, you could also run `docker rm` to shutdown Cluster Serving.
 ### 4. Model Inference
-We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ClusterServingGuide/APIGuide.md).
+We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide](APIGuide.md).
 #### Input and Output API
 To input data to queue, you need a `InputQueue` instance, and using `enqueue` method by giving an image path or image ndarray. See following example.
 ```
