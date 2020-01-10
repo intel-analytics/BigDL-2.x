@@ -76,7 +76,9 @@ For Not Docker user, first, install [Redis](https://redis.io/download) and [Tens
 Install Analytics Zoo by download release or pip.
 
 ##### Download Release
-Download Analytics Zoo from [release page](https://analytics-zoo.github.io/master/#release-download/) on the local node, go to `analytics-zoo/scripts/cluster-serving`, run `cluster-serving-init`.
+Download Analytics Zoo from [release page](https://analytics-zoo.github.io/master/#release-download/) on the local node, run `source analytics-zoo/bin/analytics-zoo-env.sh` to set environments.
+
+Go to `analytics-zoo/scripts/cluster-serving`, run `cluster-serving-init`.
 
 ##### Pip
 `pip install analytics-zoo`. And go to any directory, run `cluster-serving-init`.
