@@ -81,7 +81,7 @@ else
 fi
 
 # try to start tensorboard
-#tensorboard --logdir . --port 6006 --bind_all &
+tensorboard --logdir . --port 6006 &
 
 # if jar paths are not set, try to use them in current directory
 if [ -z "${ZOO_JAR}"]; then
@@ -93,7 +93,6 @@ fi
 if [ -z "${SPARK_REDIS_JAR}"]; then
     SPARK_REDIS_JAR=spark-redis-2.4.0-jar-with-dependencies.jar
 fi
-
 
 
 ${SPARK_HOME}/bin/spark-submit --master ${spark_master} --driver-memory ${spark_driver_memory} --executor-memory ${spark_executor_memory} --num-executors ${spark_num_executors} --executor-cores ${spark_executor_cores} --total-executor-cores ${spark_total_executor_cores} --conf "spark.executor.extraJavaOptions=-Dbigdl.engineType=${params_engine_type}" --conf "spark.driver.extraJavaOptions=-Dbigdl.engineType=${params_engine_type}" --jars ${SPARK_REDIS_JAR},${BIGDL_JAR} --class com.intel.analytics.zoo.serving.ClusterServing ${ZOO_JAR} >> cluster-serving.log
