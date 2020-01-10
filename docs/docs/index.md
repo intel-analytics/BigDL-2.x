@@ -16,14 +16,14 @@ Analytics Zoo provides a unified data analytics and AI platform that seamlessly 
 
 
 - **Integrated Analytics and AI Pipelines** for easily prototyping and deploying end-to-end AI applications. 
-  - Write [TensorFlow](https://analytics-zoo.github.io/master/#ProgrammingGuide/tensorflow/#tfpark-api) or [PyTorch](https://analytics-zoo.github.io/master/#ProgrammingGuide/pytorch/) inline with Spark code for distributed training and inference.
-  - Native deep learning (TensorFlow/Keras/PyTorch/BigDL) support in [Spark ML](https://analytics-zoo.github.io/master/#ProgrammingGuide/nnframes) Pipelines.
-  - Directly run Ray programs on big data cluster through [RayOnSpark](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/). 
-  - Plain Java/Python APIs for (TensorFlow/PyTorch/BigDL/OpenVINO) [Model Inference](https://analytics-zoo.github.io/master/#ProgrammingGuide/inference). 
+    - Write [TensorFlow](https://analytics-zoo.github.io/master/#ProgrammingGuide/tensorflow/#tfpark-api) or [PyTorch](https://analytics-zoo.github.io/master/#ProgrammingGuide/pytorch/) inline with Spark code for distributed training and inference.
+    - Native deep learning (TensorFlow/Keras/PyTorch/BigDL) support in [Spark ML](https://analytics-zoo.github.io/master/#ProgrammingGuide/nnframes) Pipelines.
+    - Directly run Ray programs on big data cluster through [RayOnSpark](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/). 
+    - Plain Java/Python APIs for (TensorFlow/PyTorch/BigDL/OpenVINO) [Model Inference](https://analytics-zoo.github.io/master/#ProgrammingGuide/inference). 
 
 - High-Level **ML Workflow** that automates the process of building large-scale machine learning applications.
-  - Automatically distributed [Cluster Serving](https://analytics-zoo.github.io/master/#ClusterServingGuide/ProgrammingGuide) (for TensorFlow/PyTorch/Caffe/BigDL/OpenVINO models) with a simple pub/sub API. 
-  - Scalable [AutoML](https://github.com/intel-analytics/analytics-zoo/blob/automl/pyzoo/zoo/automl/README.md) for time series prediction (that automatically generates features, selects models and tunes hyperparameters).
+    - Automatically distributed [Cluster Serving](https://analytics-zoo.github.io/master/#ClusterServingGuide/ProgrammingGuide) (for TensorFlow/PyTorch/Caffe/BigDL/OpenVINO models) with a simple pub/sub API. 
+    - Scalable [AutoML](https://github.com/intel-analytics/analytics-zoo/blob/automl/pyzoo/zoo/automl/README.md) for time series prediction (that automatically generates features, selects models and tunes hyperparameters).
 
 - **Built-in Algorithms and Models** for [Recommendation](https://analytics-zoo.github.io/master/#APIGuide/Models/recommendation/), [Time Series](https://analytics-zoo.github.io/master/#APIGuide/Models/anomaly-detection/), [Computer Vision](https://analytics-zoo.github.io/master/#APIGuide/Models/object-detection/) and [NLP](https://analytics-zoo.github.io/master/#APIGuide/Models/seq2seq/) applications.
 
