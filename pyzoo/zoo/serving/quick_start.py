@@ -21,10 +21,11 @@ import json
 import time
 
 
-if __name__ == "__main__":
+def run():
     input_api = InputQueue()
 
-    base_path = "../../test/zoo/resources/serving_quick_start"
+    base_path = os.path.abspath(
+        __file__ + "/../../../test/zoo/resources/serving_quick_start")
 
     if not base_path:
         raise EOFError("You have to set your image path")
@@ -48,3 +49,7 @@ if __name__ == "__main__":
         for class_idx in tmp_dict.keys():
             output += "class: " + class_idx + "'s prob: " + tmp_dict[class_idx]
         print(output)
+
+
+if __name__ == "__main__":
+    run()

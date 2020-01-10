@@ -1,0 +1,6 @@
+#!/bin/bash
+
+./stop-cluster-serving.sh
+${REDIS_HOME}/src/redis-cli shutdown &&
+
+echo "Cluster Serving is shutdown."
