@@ -56,10 +56,15 @@ class ClusterServing:
             self.try_copy_bigdl_jar()
         else:
             """
-            not install by pip, so run prepare_env here            
+            not install by pip, so run prepare_env here
             """
-            jar_paths = glob.glob(os.path.abspath(
+            build_jar_paths = glob.glob(os.path.abspath(
+
                 __file__ + "/../../../../dist/lib/*.jar"))
+            prebuilt_jar_paths = glob.glob(os.path.abspath(
+                __file__ + "/../../../../*.jar"))
+            jar_paths = build_jar_paths + prebuilt_jar_paths
+
             assert len(jar_paths) > 0, "No zoo jar is found"
             assert len(jar_paths) == 1, "Expecting one jar: %s" % len(jar_paths)
             jar_path = jar_paths[0]
@@ -80,8 +85,14 @@ class ClusterServing:
         if not os.path.exists(self.conf_path):
             print('WARNING: Config file does not exist in your pip directory,'
                   'are you sure that you install serving by pip?')
-            self.conf_path = os.path.abspath(
+            build_conf_path = self.conf_path = os.path.abspath(
                 __file__ + "/../../../../scripts/cluster-serving/config.yaml")
+            prebuilt_conf_path = self.conf_path = os.path.abspath(
+                __file__ + "/../../../../../bin/cluster-serving/config.yaml")
+            conf_paths = build_conf_path + prebuilt_conf_path
+
+            assert len(conf_paths) > 0, "No config file is found"
+            self.conf_path = conf_paths[0]
 
             if not os.path.exists(self.conf_path):
                 raise EOFError("Can not find your config file.")
