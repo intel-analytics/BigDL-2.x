@@ -62,11 +62,11 @@ if [ -z "${redis_maxmem}" ]; then
 fi
 
 # try to start redis server
-if [ -z "${REDIS_HOME}"]; then
+if [ -z "${REDIS_HOME}" ]; then
     echo "REDIS_HOME variable is not set, skip redis start. Note that you need to set it otherwise Cluster Serving would not start or stop Redis for you."
 else
-    ${REDIS_HOME}/src/redis-server > /opt/work/redis.log &
-    echo "redis server started, please check log in /opt/work/redis.log" && sleep 1
+    ${REDIS_HOME}/src/redis-server > redis.log &
+    echo "redis server started, please check log in redis.log" && sleep 1
 
     # sleep for 1 sec to ensure server is ready and client could connect
     ${REDIS_HOME}/src/redis-cli config set stop-writes-on-bgsave-error no
@@ -84,13 +84,13 @@ fi
 tensorboard --logdir . --port 6006 &
 
 # if jar paths are not set, try to use them in current directory
-if [ -z "${ZOO_JAR}"]; then
+if [ -z "${ZOO_JAR}" ]; then
     ZOO_JAR=zoo.jar
 fi
-if [ -z "${BIGDL_JAR}"]; then
+if [ -z "${BIGDL_JAR}" ]; then
     BIGDL_JAR=bigdl.jar
 fi
-if [ -z "${SPARK_REDIS_JAR}"]; then
+if [ -z "${SPARK_REDIS_JAR}" ]; then
     SPARK_REDIS_JAR=spark-redis-2.4.0-jar-with-dependencies.jar
 fi
 
