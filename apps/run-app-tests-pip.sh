@@ -549,20 +549,7 @@ start=$(date "+%s")
 chmod +x $ANALYTICS_ZOO_HOME/bin/data/HiCS/get_HiCS.sh
 $ANALYTICS_ZOO_HOME/bin/data/HiCS/get_HiCS.sh
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo
-${SPARK_HOME}/bin/spark-submit \
-        --master ${MASTER} \
-        --driver-cores 2  \
-        --driver-memory 12g  \
-        --total-executor-cores 2  \
-        --executor-cores 2  \
-        --executor-memory 12g \
-        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py  \
-        --properties-file ${ANALYTICS_ZOO_CONF} \
-        --jars ${ANALYTICS_ZOO_JAR} \
-        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py
-
+python ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
@@ -571,8 +558,25 @@ then
     exit $exit_status
 fi
 now=$(date "+%s")
-time15=$((now-start))
+time14=$((now-start))
 echo "#14 anomaly-detection-hd time used:$time14 seconds"
+
+eecho "#15 start app test for pytorch face-generation"
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generation
+sed '/get_ipython()/d' face_generation.py
+python ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generation.py
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "pytorch face-generation failed"
+    exit $exit_status
+fi
+now=$(date "+%s")
+time15=$((now-start))
+echo "#15 pytorch face-generation time used:$time15 seconds"
 
 fi
 
