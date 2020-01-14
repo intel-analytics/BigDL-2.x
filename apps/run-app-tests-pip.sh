@@ -574,24 +574,6 @@ now=$(date "+%s")
 time15=$((now-start))
 echo "#14 anomaly-detection-hd time used:$time14 seconds"
 
-echo "#15 start app test for ray paramater-server"
-#timer
-start=$(date "+%s")
-
-${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/ray/parameter_server/sharded_parameter_server
-python sharded_parameter_server.py
-
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "ray paramater-server failed"
-    exit $exit_status
-fi
-now=$(date "+%s")
-time15=$((now-start))
-echo "#15 ray paramater-server time used:$time15 seconds"
-
 fi
 
 # This should be done at the very end after all tests finish.
