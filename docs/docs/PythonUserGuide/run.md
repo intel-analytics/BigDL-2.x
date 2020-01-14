@@ -1,6 +1,6 @@
 You need to first [install](install.md) analytics-zoo, either [from pip](install/#install-from-pip) or [without pip](install/#install-without-pip).
 
-**NOTE**: Only __Python 2.7__, __Python 3.5__ and __Python 3.6__ are supported for now.
+**NOTE**: Only __Python 3.5__ and __Python 3.6__ are supported for now. We have removed our support for Python 2.7 due to its end of life.
 
 ---
 

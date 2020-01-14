@@ -2,7 +2,7 @@
 In this notebook, we will use a pre-trained Inception_V1 model. But we will operate on the pre-trained model to freeze first few layers, replace the classifier on the top, then fine tune the whole model. And we use the fine-tuned model to solve the dogs-vs-cats classification problem,
 
 ## Environment
-* Python 2.7
+* Python 3.5/3.6
 * JDK 8
 * Apache Spark 2.x
 * Jupyter Notebook 4.1
