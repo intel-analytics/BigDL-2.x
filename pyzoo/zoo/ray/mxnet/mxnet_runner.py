@@ -241,10 +241,12 @@ class MXNetTrainer(object):
         ]
 
         # Compute URL for initializing distributed setup
-        # ips = ray.get(
-        #     [runner.get_node_ip.remote() for runner in self.runners])
-        # ports = ray.get(
-        #     [runner.find_free_port.remote() for runner in self.runners])
+        ips = ray.get(
+            [runner.get_node_ip.remote() for runner in self.runners])
+        ports = ray.get(
+            [runner.find_free_port.remote() for runner in self.runners])
+        print(ips)
+        print(ports)
 
         env = {
             "DMLC_PS_ROOT_URI": str(get_host_ip()),
