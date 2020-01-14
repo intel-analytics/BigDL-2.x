@@ -1,4 +1,4 @@
-![logo](Image/logo.jpg) 
+![logo](Image/logo_s.jpg) 
 
 _A unified Data Analytics and AI platform for **distributed TensorFlow, Keras, PyTorch, Apache Spark/Flink and Ray**_
 
