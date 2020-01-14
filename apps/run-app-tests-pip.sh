@@ -543,6 +543,55 @@ now=$(date "+%s")
 time13=$((now-start))
 echo "#13 sentiment-analysis time used:$time13 seconds"
 
+echo "#14 start app test for anomaly-detection-hd"
+#timer
+start=$(date "+%s")
+chmod +x $ANALYTICS_ZOO_HOME/bin/data/HiCS/get_HiCS.sh
+$ANALYTICS_ZOO_HOME/bin/data/HiCS/get_HiCS.sh
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-cores 2  \
+        --driver-memory 12g  \
+        --total-executor-cores 2  \
+        --executor-cores 2  \
+        --executor-memory 12g \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py  \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "anomaly-detection-hd failed"
+    exit $exit_status
+fi
+now=$(date "+%s")
+time15=$((now-start))
+echo "#14 anomaly-detection-hd time used:$time14 seconds"
+
+echo "#15 start app test for ray paramater-server"
+#timer
+start=$(date "+%s")
+
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/ray/parameter_server/sharded_parameter_server
+python sharded_parameter_server.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "ray paramater-server failed"
+    exit $exit_status
+fi
+now=$(date "+%s")
+time15=$((now-start))
+echo "#15 ray paramater-server time used:$time15 seconds"
+
 fi
 
 # This should be done at the very end after all tests finish.

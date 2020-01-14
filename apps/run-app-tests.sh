@@ -16,22 +16,32 @@ set -e
 RUN_PART1=0
 RUN_PART2=0
 RUN_PART3=0
+RUN_PART4=0
 if [ $1 = 1 ]; then
 RUN_PART1=1
 RUN_PART2=0
 RUN_PART3=0
+RUN_PART4=0
 elif [ $1 = 2 ]; then
 RUN_PART1=0
 RUN_PART2=1
 RUN_PART3=0
+RUN_PART4=0
 elif [ $1 = 3 ]; then
 RUN_PART1=0
 RUN_PART2=0
 RUN_PART3=1
+RUN_PART4=0
+elif [ $1 = 4 ]; then
+RUN_PART1=0
+RUN_PART2=0
+RUN_PART3=0
+RUN_PART4=1
 else
 RUN_PART1=1
 RUN_PART2=1
 RUN_PART3=1
+RUN_PART4=1
 fi
 
 if [ $RUN_PART1 = 1 ]; then
@@ -545,6 +555,33 @@ time13=$((now-start))
 echo "#13 image-augmentation-3d time used:$time13 seconds"
 fi
 
+
+if [ $RUN_PART4 = 1 ]; then
+echo "#14 start app test for anomaly-detection-hd"
+#timer
+start=$(date "+%s")
+chmod +x $ANALYTICS_ZOO_HOME/bin/data/HiCS/get_HiCS.sh
+$ANALYTICS_ZOO_HOME/bin/data/HiCS/get_HiCS.sh
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-cores 2  \
+        --driver-memory 12g  \
+        --total-executor-cores 2  \
+        --executor-cores 2  \
+        --executor-memory 12g \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py  \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py
+now=$(date "+%s")
+time14=$((now-start))
+echo "#14 anomaly-detection-hd time used:$time14 seconds"
+
+fi
+
 echo "#1 anomaly-detection-nyc-taxi time used:$time1 seconds"
 echo "#2 object-detection time used:$time2 seconds"
 echo "#3 ncf-explicit-feedback time used:$time3 seconds"
@@ -558,3 +595,4 @@ echo "#10 dogs-vs-cats time used:$time10 seconds"
 echo "#11 sentiment-analysis time used:$time11 seconds"
 echo "#12 image_classification_inference time used:$time12 seconds"
 echo "#13 image-augmentation-3d time used:$time13 seconds"
+echo "#14 anomaly-detection-hd time used:$time14 seconds"
