@@ -221,6 +221,13 @@ private[zoo] object Utils {
     saveStream(inputStream, fileName = remotePath, isOverwrite = isOverwrite)
   }
 
+  def getRemoteFileToLocal(remotePath: String, localPath: String,
+                           isOverwrite: Boolean = false): Unit = {
+
+    val inputStream = getFileSystem(remotePath).open(new Path(remotePath))
+    saveStream(inputStream, fileName = localPath, isOverwrite = isOverwrite)
+  }
+
   /**
    * Save bytes into given path (local or remote file system).
    * WARNING: Don't use it to read large files. It may cause performance issue

@@ -17,6 +17,11 @@ from bigdl.util.common import Sample as BSample, JTensor as BJTensor,\
     JavaCreator, _get_gateway, _java2py, _py2java
 import numpy as np
 import os
+import tempfile
+import uuid
+import shutil
+
+from urllib.parse import urlparse
 
 
 def convert_to_safe_path(input_path, follow_symlinks=True):
@@ -47,6 +52,51 @@ def to_list_of_numpy(elements):
     return results
 
 
+def save_file(save_func, path):
+    parse_result = urlparse(path)
+    if parse_result.scheme == "hdfs":
+        file_name = str(uuid.uuid1())
+        splits = path.split(".")
+        if len(splits) > 0:
+            file_name = file_name + "." + splits[-1]
+
+        temp_path = os.path.join(tempfile.gettempdir(), file_name)
+
+        try:
+            save_func(temp_path)
+            put_local_file_to_remote(temp_path, path)
+        finally:
+            os.remove(temp_path)
+    else:
+        save_func(path)
+
+
+def load_from_file(load_func, path):
+    parse_result = urlparse(path)
+    if parse_result.scheme == "hdfs":
+        file_name = str(uuid.uuid1())
+        splits = path.split(".")
+        if len(splits) > 0:
+            file_name = file_name + "." + splits[-1]
+
+        temp_path = os.path.join(tempfile.gettempdir(), file_name)
+        get_remote_file_to_local(path, temp_path)
+        try:
+            return load_func(temp_path)
+        finally:
+            os.remove(temp_path)
+    else:
+        return load_func(path)
+
+
+def get_remote_file_to_local(remote_path, local_path, over_write=False):
+    callZooFunc("float", "getRemoteFileToLocal", remote_path, local_path, over_write)
+
+
+def put_local_file_to_remote(local_path, remote_path, over_write=False):
+    callZooFunc("float", "putLocalFileToRemote", local_path, remote_path, over_write)
+
+
 def set_core_number(num):
     callZooFunc("float", "setCoreNumber", num)
 
@@ -65,7 +115,8 @@ def callZooFunc(bigdl_type, name, *args):
             result = _java2py(gateway, java_result)
         except Exception as e:
             error = e
-            if "does not exist" not in str(e):
+            if not ("does not exist" in str(e)
+                    and "Method {}".format(name) in str(e)):
                 raise e
         else:
             return result
