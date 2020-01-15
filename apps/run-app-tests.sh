@@ -361,7 +361,7 @@ start=$(date "+%s")
 chmod +x $ANALYTICS_ZOO_HOME/bin/data/HiCS/get_HiCS.sh
 $ANALYTICS_ZOO_HOME/bin/data/HiCS/get_HiCS.sh
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo
-sed '/get_ipython()/d' autoencoder-zoo.py
+sed '/get_ipython()/d' ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
         --driver-cores 2  \
@@ -383,7 +383,7 @@ echo "#15 start app test for pytorch face-generation"
 #timer
 start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generation
-sed '/get_ipython()/d' face_generation.py
+sed '/get_ipython()/d' ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generatio.py
 ${SPARK_HOME}/bin/spark-submit \
         --master ${MASTER} \
         --driver-cores 2  \
