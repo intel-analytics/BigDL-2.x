@@ -11,7 +11,7 @@ docs/gen_site.py -p -s -m 8080
 Then choose correct proxy and open the link of your ip address and port number. 
 
 Tips:
-* Please use python27, for now python3 is not supported.
+* Please use Python 3.5 or 3.6.
 * If AttributeError appears, check your pip version. The following command may be useful:
 
 ```
