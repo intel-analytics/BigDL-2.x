@@ -9,7 +9,7 @@ Quick example about integrating analytics-zoo inference/predict service into str
 
 ## Environment
 * Python 3.5/3.6
-* Apache Spark 2.1.0 (This version needs to be same with the version you use to build Analytics Zoo)
+* Apache Spark 2.x (This version needs to be same with the version you use to build Analytics Zoo)
 * Analytics Zoo ([install analytics-zoo]((https://analytics-zoo.github.io/master/#PythonUserGuide/install/) ) via __pip__ or __download the prebuilt package__.)
 
 ## Datasets and pre-trained models
