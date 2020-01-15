@@ -610,9 +610,9 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
    */
   private def tryAddCriterion(layerType : String, layerName: String = null) : Boolean = {
     layerType.toUpperCase match {
-      case "SOFTMAX_LOSS" => criterions.add(ClassNLLCriterion[T]())
+      case "SOFTMAX_LOSS" => criterions.add(ZooClassNLLCriterion[T]())
         false
-      case "SOFTMAXWITHLOSS" => criterions.add(ClassNLLCriterion[T]())
+      case "SOFTMAXWITHLOSS" => criterions.add(ZooClassNLLCriterion[T]())
         false
       case "EUCLIDEANLOSS" => criterions.add(MSECriterion[T]())
         true
@@ -628,7 +628,7 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
     }
   }
 
-  private def createInfoGainCriterion(layerName : String) : ClassNLLCriterion[T] = {
+  private def createInfoGainCriterion(layerName : String) : ZooClassNLLCriterion[T] = {
     val param = getInforgainParam(layerName).get
     val weightBlob = getBlob(layerName, 2)
     if (weightBlob.isDefined) {
@@ -641,9 +641,9 @@ class CaffeLoader[T: ClassTag](prototxtPath: String, modelPath: String,
         i += 1
       }
       val weightTensor = Tensor(weightArr, size)
-      ClassNLLCriterion[T](weightTensor)
+      ZooClassNLLCriterion[T](weightTensor)
     } else {
-      ClassNLLCriterion[T]()
+      ZooClassNLLCriterion[T]()
     }
   }
 
