@@ -5,7 +5,7 @@ In messi.ipynb we use a pretrained detect messi model to detect messi in a video
 
 ## Environment
 * Python 3.5/3.6 (Need moviepy)
-* Apache Spark 2.1.0 (This version needs to be same with the version you use to build Analytics Zoo)
+* Apache Spark 2.x (This version needs to be same with the version you use to build Analytics Zoo)
 
 ## Install or download Analytics Zoo
 Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.

@@ -3,7 +3,7 @@ This is a simple example of image augmentation for 3D images using Analytics ZOO
 
 ## Environment
 * Python 3.5/3.6 (numpy 1.11.1)
-* Apache Spark 2.1.0 (This version needs to be same with the version you use to build Analytics Zoo)
+* Apache Spark 2.x (This version needs to be same with the version you use to build Analytics Zoo)
 
 ## Install or download Analytics Zoo
 Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.

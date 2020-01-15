@@ -6,7 +6,7 @@ Since outliers are rare and different, that the auto-encoder will not learn to m
 
 ## Environment
 * Python 3.5/3.6
-* Apache Spark 2.2.0 (This version needs to be same with the version you use to build Analytics Zoo)
+* Apache Spark 2.x (This version needs to be same with the version you use to build Analytics Zoo)
 
 ## Run with Jupyter
 * Download Analytics Zoo and build it.
