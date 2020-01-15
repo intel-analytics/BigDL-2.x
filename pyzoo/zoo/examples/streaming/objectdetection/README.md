@@ -4,8 +4,8 @@ Imagining we have pre-trained model and image files in file system, and we want 
 So, there are two applications in this example: image_path_writer and streaming_object_detection. image_path_writer will package image paths into text files. Meanwhile, streaming_object_detection read image path from those text files, then read image content and make prediction.
 
 ## Environment
-* Python (2.7, 3.5 or 3.6)
-* Apache Spark 1.6.0/2.1.0 (This version needs to be same with the version you use to build Analytics Zoo)
+* Python 3.5/3.6
+* Apache Spark 2.x (This version needs to be same with the version you use to build Analytics Zoo)
 * Analytics Zoo ([install analytics-zoo]((https://analytics-zoo.github.io/master/#PythonUserGuide/install/) ) via __pip__ or __download the prebuilt package__.)
 
 ## Datasets and pre-trained models
