@@ -432,6 +432,7 @@ start=$(date "+%s")
 chmod +x $ANALYTICS_ZOO_HOME/bin/data/HiCS/get_HiCS.sh
 $ANALYTICS_ZOO_HOME/bin/data/HiCS/get_HiCS.sh
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo
+sed '/get_ipython()/d' face_generation.py
 python ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py
 exit_status=$?
 if [ $exit_status -ne 0 ];
