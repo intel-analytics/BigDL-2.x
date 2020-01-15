@@ -578,6 +578,25 @@ now=$(date "+%s")
 time15=$((now-start))
 echo "#15 pytorch face-generation time used:$time15 seconds"
 
+echo "#16 start app test for ray paramater-server"
+#timer
+start=$(date "+%s")
+
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/ray/parameter_server/sharded_parameter_server
+python sharded_parameter_server.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "ray paramater-server failed"
+    exit $exit_status
+fi
+now=$(date "+%s")
+time16=$((now-start))
+
+echo "#16 ray paramater-server time used:$time16 seconds"
+
 fi
 
 # This should be done at the very end after all tests finish.
