@@ -54,7 +54,7 @@ def to_list_of_numpy(elements):
 
 def save_file(save_func, path):
     parse_result = urlparse(path)
-    if parse_result.scheme == "hdfs":
+    if parse_result.scheme.lower() == "hdfs":
         file_name = str(uuid.uuid1())
         splits = path.split(".")
         if len(splits) > 0:
@@ -73,7 +73,7 @@ def save_file(save_func, path):
 
 def load_from_file(load_func, path):
     parse_result = urlparse(path)
-    if parse_result.scheme == "hdfs":
+    if parse_result.scheme.lower() == "hdfs":
         file_name = str(uuid.uuid1())
         splits = path.split(".")
         if len(splits) > 0:
