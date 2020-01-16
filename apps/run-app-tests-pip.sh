@@ -469,7 +469,7 @@ echo "#16 start app test for ray paramater-server"
 start=$(date "+%s")
 
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/ray/parameter_server/sharded_parameter_server
-python sharded_parameter_server.py
+python ${ANALYTICS_ZOO_HOME}/apps/ray/parameter_server/sharded_parameter_server.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
