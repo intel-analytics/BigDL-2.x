@@ -362,19 +362,13 @@ chmod +x $ANALYTICS_ZOO_HOME/bin/data/HiCS/get_HiCS.sh
 $ANALYTICS_ZOO_HOME/bin/data/HiCS/get_HiCS.sh
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo
 sed -i '/get_ipython()/d' ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py
-sed -i '/plt./d' ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py
-${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
-        --master ${MASTER} \
+sed -i '127,273d' ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
         --driver-cores 2  \
         --driver-memory 12g  \
         --total-executor-cores 2  \
         --executor-cores 2  \
         --executor-memory 12g \
-        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py  \
-        --properties-file ${ANALYTICS_ZOO_CONF} \
-        --jars ${ANALYTICS_ZOO_JAR} \
-        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py
 now=$(date "+%s")
 time14=$((now-start))
@@ -386,18 +380,13 @@ start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generation
 sed -i '/get_ipython()/d' ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generation.py
 sed -i '/plt./d' ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generation.py
-${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
         --master ${MASTER} \
         --driver-cores 2  \
         --driver-memory 12g  \
         --total-executor-cores 2  \
         --executor-cores 2  \
         --executor-memory 12g \
-        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/ray/pytorch/face_generation.py  \
-        --properties-file ${ANALYTICS_ZOO_CONF} \
-        --jars ${ANALYTICS_ZOO_JAR} \
-        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
         ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generation.py
 now=$(date "+%s")
 time15=$((now-start))
