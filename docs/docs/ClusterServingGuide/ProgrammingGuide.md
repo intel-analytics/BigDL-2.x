@@ -97,20 +97,24 @@ Cluster Serving will then read the requests from the Redis stream, run the distr
 
 ## Deploy your Own Cluster Serving
 ### 1. Installation
-It is recommended to install Cluster Serving by pulling the pre-built Docker image to your local node, which have packaged all the required dependencies. Alternatively, you may also manually install Cluster Serving (through either pip or direct downloading) as well as Redis and TensorBoard (for visualizing the serving status) on the local node.
+It is recommended to install Cluster Serving by pulling the pre-built Docker image to your local node, which have packaged all the required dependencies. Alternatively, you may also manually install Cluster Serving (through either pip or direct downloading) as well as Spark, Redis and TensorBoard (for visualizing the serving status) on the local node.
 #### Docker
 ```
-docker pull zoo-cluster-serving
+docker pull intelanalytics/zoo-cluster-serving
 ```
 then, (or directly run `docker run`, it will pull the image if it does not exist)
 ```
-docker run zoo-cluster-serving
+docker run --name cluster-serving -itd intelanalytics/zoo-cluster-serving bash
 ```
-Go inside the container and continue to [Configuration](#2-Configuration).
+Log into the container
+```
+docker exec -it cluster-serving bash
+```
+`cd ./cluster-serving`, you can see all the environments are prepared.
 #### Manual installation
-Non-Docker users need to install [Redis](https://redis.io/topics/quickstart) and [TensorBoard](https://www.tensorflow.org/tensorboard/get_started).
+Non-Docker users need to install [Spark 2.4.3](https://archive.apache.org/dist/spark/spark-2.4.3/spark-2.4.3-bin-hadoop2.7.tgz), [Redis](https://redis.io/topics/quickstart) and [TensorBoard](https://www.tensorflow.org/tensorboard/get_started).
 
-Please follow the installation instructions on Redis website. Make sure the environment variable `$REDIS_HOME` is set to the path where you install Redis, so that Cluster Serving can start or shutdown it. 
+After preparing dependencies above, make sure the environment variable `$SPARK_HOME` (/path/to/spark-SPARK_VERSION-bin-hadoop-HADOOP_VERSION), `$REDIS_HOME`(/path/to/redis-REDIS_VERSION) is set before following steps. 
 
 Cluster Sering use TensorBoard to visualize the serving status. Use `pip install tensorboard` to install TensorBoard.
 
@@ -255,7 +259,9 @@ cluster-serving-shutdown
 
 If you are using Docker, you could also run `docker rm` to shutdown Cluster Serving.
 ### 4. Model Inference
-We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide](APIGuide.md).
+We support Python API for conducting inference with Data Pipeline in Cluster Serving. The requirements of API are `opencv-python`, `pyyaml`, `redis`.
+
+We provide basic usage here, for more details, please see [API Guide](APIGuide.md).
 #### Input and Output API
 To input data to queue, you need a `InputQueue` instance, and using `enqueue` method by giving an image path or image ndarray. See following example.
 ```
