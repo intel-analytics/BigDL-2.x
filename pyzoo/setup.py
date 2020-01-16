@@ -92,7 +92,8 @@ def setup_package():
     metadata = dict(
         name='analytics-zoo',
         version=VERSION,
-        description='Distributed TensorFlow, Keras, PyTorch and BigDL on Apache Spark',
+        description='A unified Data Analytics and AI platform for distributed TensorFlow, Keras, '
+                    'PyTorch, Apache Spark/Flink and Ray',
         author='Analytics Zoo Authors',
         author_email='bigdl-user-group@googlegroups.com',
         license='Apache License, Version 2.0',
@@ -107,7 +108,6 @@ def setup_package():
         scripts=scripts,
         classifiers=[
             'License :: OSI Approved :: Apache Software License',
-            'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3',
             'Programming Language :: Python :: 3.5',
             'Programming Language :: Python :: 3.6',
