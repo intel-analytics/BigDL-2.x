@@ -446,7 +446,7 @@ now=$(date "+%s")
 time14=$((now-start))
 echo "#14 anomaly-detection-hd time used:$time14 seconds"
 
-eecho "#15 start app test for pytorch face-generation"
+echo "#15 start app test for pytorch face-generation"
 #timer
 start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generation
