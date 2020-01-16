@@ -52,14 +52,29 @@ def to_list_of_numpy(elements):
     return results
 
 
-def save_file(save_func, path):
+def is_local_path(path):
     parse_result = urlparse(path)
-    if parse_result.scheme.lower() == "hdfs":
-        file_name = str(uuid.uuid1())
-        splits = path.split(".")
-        if len(splits) > 0:
-            file_name = file_name + "." + splits[-1]
+    return len(parse_result.scheme.lower()) == 0 or parse_result.scheme.lower() == "file"
 
+
+def append_suffix(prefix, path):
+    # append suffix
+    splits = path.split(".")
+    if len(splits) > 0:
+        file_name = prefix + "." + splits[-1]
+    else:
+        file_name = prefix
+
+    return file_name
+
+
+def save_file(save_func, path):
+
+    if is_local_path(path):
+        save_func(path)
+    else:
+        file_name = str(uuid.uuid1())
+        file_name = append_suffix(file_name, path)
         temp_path = os.path.join(tempfile.gettempdir(), file_name)
 
         try:
@@ -67,26 +82,20 @@ def save_file(save_func, path):
             put_local_file_to_remote(temp_path, path)
         finally:
             os.remove(temp_path)
-    else:
-        save_func(path)
 
 
 def load_from_file(load_func, path):
-    parse_result = urlparse(path)
-    if parse_result.scheme.lower() == "hdfs":
+    if is_local_path(path):
+        return load_func(path)
+    else:
         file_name = str(uuid.uuid1())
-        splits = path.split(".")
-        if len(splits) > 0:
-            file_name = file_name + "." + splits[-1]
-
+        file_name = append_suffix(file_name, path)
         temp_path = os.path.join(tempfile.gettempdir(), file_name)
         get_remote_file_to_local(path, temp_path)
         try:
             return load_func(temp_path)
         finally:
             os.remove(temp_path)
-    else:
-        return load_func(path)
 
 
 def get_remote_file_to_local(remote_path, local_path, over_write=False):
