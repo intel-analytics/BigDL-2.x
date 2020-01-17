@@ -423,6 +423,7 @@ sed "s/MaxIteration(5000)/MaxIteration(50)/g" \
 
 sed "s/model-5000/model-50/g" \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_eval.py \
+    | grep -v "plt" \
     > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_eval_tmp.py
 
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_train_tmp.py
