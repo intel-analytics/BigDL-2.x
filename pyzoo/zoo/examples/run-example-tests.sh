@@ -355,8 +355,6 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
 
 echo "start example test for TFPark gan 9"
 
-pip install tensorflow_gan==2.0.0
-
 sed "s/MaxIteration(5000)/MaxIteration(50)/g" \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_train.py \
     > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_train_tmp.py

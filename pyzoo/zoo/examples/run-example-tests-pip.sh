@@ -417,8 +417,6 @@ then
     exit $exit_status
 fi
 
-pip install tensorflow_gan==2.0.0
-
 sed "s/MaxIteration(5000)/MaxIteration(50)/g" \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_train.py \
     > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_train_tmp.py
