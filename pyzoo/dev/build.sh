@@ -24,7 +24,7 @@ if (( $# < 2)); then
   echo "Usage: build.sh platform version mvn_parameters"
   echo "Usage example: bash build.sh linux default"
   echo "Usage example: bash build.sh linux 0.6.0.dev0"
-  echo "If needed, you can also add other profiles such as: -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.x"
+  echo "If needed, you can also add other profiles such as: -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.4+"
   exit -1
 fi
 
