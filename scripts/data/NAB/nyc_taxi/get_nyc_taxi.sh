@@ -39,7 +39,7 @@ then
 fi
 
 echo "Downloading nyc_taxi.csv"
-wget raw.githubusercontent.com/numenta/NAB/master/data/realKnownCause/nyc_taxi.csv
+wget https://analytics-zoo-data.s3.amazonaws.com/nyc_taxi.csv
 
 
 echo "Finished"
