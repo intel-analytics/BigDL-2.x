@@ -170,7 +170,7 @@ object ClusterServing {
                 val localPartitionModel = bcModel.value
                 val result = localPartitionModel.doPredict(tensors.addSingletonDimension()).toTensor
 
-                val value = PostProcessing.getInfofromTensor(topN, result)
+                val value = PostProcessing.getInfofromTensor(topN, result.squeeze())
 
                 Record(path, value)
               })
