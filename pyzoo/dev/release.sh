@@ -28,7 +28,7 @@ if (( $# < 3)); then
   echo "Usage: release.sh platform version upload mvn_parameters"
   echo "Usage example: bash release.sh linux default true"
   echo "Usage example: bash release.sh linux 0.6.0.dev0 true"
-  echo "If needed, you can also add other profiles such as: -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.x"
+  echo "If needed, you can also add other profiles such as: -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.4+"
   exit -1
 fi
 
