@@ -7,7 +7,7 @@ For Python users, Analytics Zoo can be installed either [from pip](#install-from
 You can use the following command to install the latest release version of __analytics-zoo__ via pip easily:
 
 ```bash
-pip install analytics-zoo
+pip install analytics-zoo==0.7.0
 ```
 
 * You are strongly recommended to use Python 3.5 or 3.6. You might need to run `pip3 install analytics-zoo` instead.
