@@ -576,6 +576,15 @@ class TFDataset(object):
         return TFBytesDataset(bytes_rdd, batch_size, batch_per_thread,
                               hard_code_batch_size, validation_bytes_rdd)
 
+    @staticmethod
+    def from_tf_data_dataset(tf_data_dataset, data_count, batch_size=-1,
+                             batch_per_thread=-1, hard_code_batch_size=False,
+                             validation_dataset=None, validation_data_count=None,
+                             sequential_order=False, shuffle=True):
+        return TFDataDataset(tf_data_dataset, data_count, batch_size, batch_per_thread,
+                             hard_code_batch_size, validation_dataset, validation_data_count,
+                             sequential_order, shuffle)
+
 
 class MapDataset(TFDataset):
 
@@ -625,6 +634,78 @@ class MapDataset(TFDataset):
         :return: the num of partitions of the underlying RDD
         """
         return self.pre_dataset.get_num_partitions()
+
+
+class TFDataDataset(TFDataset):
+
+    def get_num_partitions(self):
+        raise NotImplementedError()
+
+    def __init__(self, tf_data_dataset, data_count, batch_size,
+                 batch_per_thread, hard_code_batch_size=False,
+                 validation_dataset=None, validation_data_count=None,
+                 sequential_order=False, shuffle=True):
+
+        # node_num, core_num = get_node_and_core_number()
+
+        flatten_shapes = nest.flatten(tf_data_dataset.output_shapes)
+        flatten_types = nest.flatten(tf_data_dataset.output_types)
+
+        flatten_tensor_structure = [TensorMeta(dtype=flatten_types[i],
+                                               shape=list(flatten_shapes[i][1:]),
+                                               name="zoo_input_{}".format(i))
+                                    for i in range(len(flatten_shapes))]
+
+        tensor_structure = nest.pack_sequence_as(tf_data_dataset.output_shapes,
+                                                 flatten_tensor_structure)
+
+        super(TFDataDataset, self).__init__(tensor_structure, batch_size,
+                                            batch_per_thread, hard_code_batch_size)
+
+        self.train_dataset = tf_data_dataset
+        self.train_iterator = self.train_dataset.make_initializable_iterator()
+        self.train_next_ops = nest.flatten(self.train_iterator.get_next())
+
+        self.validation_dataset = validation_dataset
+        self.validation_iterator = None
+        self.validation_next_ops = None
+        self.data_count = data_count
+        self.validation_data_count = validation_data_count
+        if validation_dataset is not None:
+            self.validation_iterator = self.validation_dataset.make_initializable_iterator()
+            self.validation_next_ops = nest.flatten(self.validation_iterator.get_next())
+            assert validation_data_count is not None
+
+        self.sequential_order = sequential_order
+        self.shuffle = shuffle
+
+    def get_prediction_data(self):
+        raise NotImplementedError()
+
+    def get_evaluation_data(self):
+        raise NotImplementedError()
+
+    def get_training_data(self):
+        import tensorflow as tf
+        serialized_graph = bytearray(tf.get_default_graph().as_graph_def().SerializeToString())
+        init_op_name = self.train_iterator.initializer.name
+        output_names = [op.name for op in self.train_next_ops]
+
+        jvalue = callZooFunc("float", "createTFDataFeatureSet",
+                             serialized_graph, init_op_name, output_names, self.data_count)
+        return FeatureSet(jvalue=jvalue)
+
+    def get_validation_data(self):
+        if self.validation_dataset is not None:
+            import tensorflow as tf
+            serialized_graph = bytearray(tf.get_default_graph().as_graph_def().SerializeToString())
+            init_op_name = self.validation_iterator.initializer.name
+            output_names = [op.name for op in self.validation_next_ops]
+
+            jvalue = callZooFunc("float", "createTFDataFeatureSet",
+                                 serialized_graph, init_op_name, output_names, self.validation_data_count)
+            return FeatureSet(jvalue=jvalue)
+        return None
 
 
 class TFFeatureDataset(TFDataset):

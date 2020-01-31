@@ -24,12 +24,13 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 
+import scala.util.control.NonFatal
+
 
 class TFDataFeatureSet(private val graph: Array[Byte],
-                       private val trainInitIteratorOp: String,
-                       private val validationInitIterationOp: String,
-                       private val trainOutputNames: Array[String],
-                       private val validationOutputNames: Array[String])
+                       private val initIteratorOp: String,
+                       private val outputNames: Array[String],
+                       private val dataCount: Int)
   extends DistributedFeatureSet[MiniBatch[Float]] {
 
   private val graphRunnerRDD = getGraphRunnerRDD(graph)
@@ -43,7 +44,7 @@ class TFDataFeatureSet(private val graph: Array[Byte],
     val broadcastedGraph = sc.broadcast(graph)
     val originRdd = sc.parallelize(
       Array.tabulate(nodeNumber)(_ => "dummy123123"), nodeNumber * 10)
-      .mapPartitions(_ => (0 until 20000000).toIterator)
+      .mapPartitions(_ => (0 until 200).toIterator)
       .coalesce(nodeNumber)
       .setName("PartitionRDD")
       .persist(StorageLevel.DISK_ONLY)
@@ -62,10 +63,14 @@ class TFDataFeatureSet(private val graph: Array[Byte],
   }
 
   override def data(train: Boolean): RDD[MiniBatch[Float]] = {
-    val initOp = this.trainInitIteratorOp
-    val outputNames = this.trainOutputNames.toVector
+    val initOp = this.initIteratorOp
+    val outputNames = this.outputNames.toVector
     graphRunnerRDD.mapPartitions{dataIter =>
       val graphRunner = dataIter.next()
+
+      if (!train) {
+        graphRunner.runTargets(Vector(initOp))
+      }
 
       new Iterator[MiniBatch[Float]] {
 
@@ -96,11 +101,11 @@ class TFDataFeatureSet(private val graph: Array[Byte],
               } else {
                 false
               }
-            case _: java.lang.IllegalArgumentException =>
+            case _: java.lang.IllegalStateException =>
               graphRunner.runTargets(Vector(initOp))
               graphRunner.runOutputs(outputVec, outputNames)
               true
-            case e: _ => throw e
+            case e: Throwable => throw e
           }
           (success, outputs)
         }
@@ -124,7 +129,7 @@ class TFDataFeatureSet(private val graph: Array[Byte],
   }
 
   override def size(): Long = {
-    data(false).count()
+    dataCount
   }
 
   override def toDistributed(): DistributedDataSet[MiniBatch[Float]] = {
@@ -134,11 +139,9 @@ class TFDataFeatureSet(private val graph: Array[Byte],
 
 object TFDataFeatureSet {
   def apply(graph: Array[Byte],
-            trainInitIteratorOp: String,
-            validationInitIterationOp: String,
-            trainOutputNames: Array[String],
-            validationOutputNames: Array[String]): TFDataFeatureSet = {
-    new TFDataFeatureSet(graph, trainInitIteratorOp,
-      validationInitIterationOp, trainOutputNames, validationOutputNames)
+            initIteratorOp: String,
+            outputNames: Array[String],
+            dataCount: Int): TFDataFeatureSet = {
+    new TFDataFeatureSet(graph, initIteratorOp, outputNames, dataCount)
   }
 }

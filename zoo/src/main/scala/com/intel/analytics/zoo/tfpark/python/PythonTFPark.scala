@@ -25,6 +25,8 @@ import com.intel.analytics.zoo.tfpark._
 import org.apache.spark.api.java.JavaRDD
 
 import scala.reflect.ClassTag
+import scala.collection.JavaConverters._
+import java.util.{List => JList}
 
 
 object PythonTFPark {
@@ -89,7 +91,18 @@ class PythonTFPark[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
         new TFMiniBatch(Array(tensor))
       }
     }
-    RDDWrapper[TFMiniBatch](rdd)
+      RDDWrapper[TFMiniBatch](rdd)
+  }
+
+  def createTFDataFeatureSet(graph: Array[Byte],
+                             initIteratorOp: String,
+                             outputNames: JList[String],
+                             dataCount: Int): TFDataFeatureSet = {
+
+
+    TFDataFeatureSet(graph,
+      initIteratorOp,
+      outputNames.asScala.toArray, dataCount)
   }
 
   def createMiniBatchFeatureSetFromStringRDD(stringRDD: JavaRDD[Array[Byte]],
