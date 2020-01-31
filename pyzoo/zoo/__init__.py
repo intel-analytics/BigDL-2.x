@@ -20,6 +20,7 @@ from zoo.util.engine import prepare_env
 prepare_env()
 creator_classes = JavaCreator.get_creator_class()[:]
 JavaCreator.set_creator_class([])
+JavaCreator.add_creator_class("com.intel.analytics.zoo.tfpark.python.PythonTFPark")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.nnframes.python.PythonNNFrames")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.python.PythonImageFeature")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.keras.python.PythonAutoGrad")
