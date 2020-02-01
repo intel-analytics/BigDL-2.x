@@ -67,7 +67,9 @@ def main(max_epoch, data_num):
     acc = accuracy(logits, labels)
 
     # create a optimizer
-    optimizer = TFOptimizer.from_loss(loss, Adam(1e-3), metrics={"acc": acc}, model_dir="/tmp/lenet/")
+    optimizer = TFOptimizer.from_loss(loss, Adam(1e-3),
+                                      metrics={"acc": acc},
+                                      model_dir="/tmp/lenet/")
     # kick off training
     optimizer.optimize(end_trigger=MaxEpoch(max_epoch))
 
