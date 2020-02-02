@@ -97,12 +97,13 @@ class PythonTFPark[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
   def createTFDataFeatureSet(graph: Array[Byte],
                              initIteratorOp: String,
                              outputNames: JList[String],
+                             outputTypes: JList[Int],
                              dataCount: Int): TFDataFeatureSet = {
 
 
     TFDataFeatureSet(graph,
       initIteratorOp,
-      outputNames.asScala.toArray, dataCount)
+      outputNames.asScala.toArray, outputTypes.asScala.toArray, dataCount)
   }
 
   def createMiniBatchFeatureSetFromStringRDD(stringRDD: JavaRDD[Array[Byte]],

@@ -23,15 +23,72 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
-
-import scala.util.control.NonFatal
-
+import org.tensorflow.DataType
 
 class TFDataFeatureSet(private val graph: Array[Byte],
                        private val initIteratorOp: String,
                        private val outputNames: Array[String],
-                       private val dataCount: Int)
+                       private val outputTypes: Array[DataType],
+                       private val dataCount: Int,
+                       private val batchSize: Int)
   extends DistributedFeatureSet[MiniBatch[Float]] {
+
+  private def toBatchAll(data: Array[Array[Tensor[_]]]): Array[Tensor[_]] = {
+    val result = new Array[Tensor[_]](outputNames.length)
+    var i = 0
+    while (i < outputNames.length) {
+      if (outputTypes(i) == DataType.STRING) {
+        val tensors = new Array[Tensor[Array[Byte]]](data.length)
+        var j = 0
+        while (j < data.length) {
+          tensors(i) = data(j)(i).asInstanceOf[Tensor[Array[Byte]]]
+          j += 1
+        }
+        result(i) = toBatchString(tensors)
+      } else {
+        val tensors = new Array[Tensor[Float]](data.length)
+        var j = 0
+        while (j < data.length) {
+          tensors(i) = data(j)(i).asInstanceOf[Tensor[Float]]
+          j += 1
+        }
+        result(i) = toBatchFloat(tensors)
+      }
+
+      i += 1
+    }
+    result
+  }
+
+  private def toBatchString(data: Array[Tensor[Array[Byte]]]) = {
+    val result = Tensor[Array[Byte]](Array(data.length))
+    val storage = result.storage().array()
+    var i = 0
+    while (i < data.length) {
+      storage(i) = data(i).value()
+      i += 1
+    }
+    result
+  }
+
+  private def toBatchFloat(data: Array[Tensor[Float]]) = {
+    val firstDimSize = data.length
+    val restDimSize = data(0).size()
+    val newShape = Array.tabulate(restDimSize.length + 1) { i =>
+      if (i == 0) {
+        firstDimSize
+      } else {
+        restDimSize(i - 1)
+      }
+    }
+    val result = Tensor[Float](newShape)
+    var i = 0
+    while (i < firstDimSize) {
+      result.select(0, i).copy(data(i))
+      i += 1
+    }
+    result
+  }
 
   private val graphRunnerRDD = getGraphRunnerRDD(graph)
 
@@ -62,65 +119,112 @@ class TFDataFeatureSet(private val graph: Array[Byte],
     graphRunnerRDD
   }
 
+  private def generateOutputTensors(types: Array[DataType]) = {
+    val outputs = Array.tabulate[Tensor[_]](types.length) { i =>
+      if (types(i) == DataType.STRING) {
+        Tensor[Array[Byte]]()
+      } else {
+        Tensor[Float]()
+      }
+    }
+    outputs
+  }
+
   override def data(train: Boolean): RDD[MiniBatch[Float]] = {
     val initOp = this.initIteratorOp
     val outputNames = this.outputNames.toVector
-    graphRunnerRDD.mapPartitions{dataIter =>
-      val graphRunner = dataIter.next()
+    if (train) {
+      graphRunnerRDD.mapPartitions { dataIter =>
+        val graphRunner = dataIter.next()
 
-      if (!train) {
-        graphRunner.runTargets(Vector(initOp))
-      }
+        new Iterator[MiniBatch[Float]] {
 
-      new Iterator[MiniBatch[Float]] {
-
-        private var buffer: Array[Tensor[Float]] = null
-        override def hasNext(): Boolean = {
-          if (buffer == null) {
-            val result = getNext(train)
-            buffer = result._2
-            result._1
-          } else {
+          override def hasNext(): Boolean = {
             true
           }
 
-        }
-
-        private def getNext(restart: Boolean) = {
-          val outputs = Array.tabulate(outputNames.length)(_ => Tensor[Float]())
-          val outputVec = outputs.toVector
-          val success = try {
-            graphRunner.runOutputs(outputVec, outputNames)
-            true
-          } catch {
-            case _: java.lang.IndexOutOfBoundsException =>
-              if (restart) {
+          private def getNext() = {
+            val outputs = generateOutputTensors(outputTypes)
+            val outputVec = outputs.toVector
+            try {
+              graphRunner.runOutputs(outputVec, outputNames, outputTypes.toVector)
+            } catch {
+              case _: java.lang.IndexOutOfBoundsException =>
                 graphRunner.runTargets(Vector(initOp))
-                graphRunner.runOutputs(outputVec, outputNames)
+                graphRunner.runOutputs(outputVec, outputNames, outputTypes.toVector)
+              case _: java.lang.IllegalStateException =>
+                graphRunner.runTargets(Vector(initOp))
+                graphRunner.runOutputs(outputVec, outputNames, outputTypes.toVector)
+              case e: Throwable => throw e
+            }
+            outputs
+          }
+
+          override def next(): MiniBatch[Float] = {
+            val result = new Array[Array[Tensor[_]]](batchSize)
+            var i = 0
+            while (i < batchSize) {
+              result(i) = getNext()
+              i += 1
+            }
+            MiniBatch(toBatchAll(result))
+          }
+        }
+      }
+    } else {
+      graphRunnerRDD.mapPartitions { dataIter =>
+        val graphRunner = dataIter.next()
+        graphRunner.runTargets(Vector(initOp))
+
+        new Iterator[MiniBatch[Float]] {
+
+          private var buffer: Array[Tensor[_]] = null
+          override def hasNext(): Boolean = {
+            if (buffer != null) {
+              true
+            } else {
+              var success = true
+              var i = 0
+              val data = scala.collection.mutable.ArrayBuffer[Array[Tensor[_]]]()
+              while (i < batchSize && success) {
+                val (_success, tensors) = getNext()
+                success = _success
+                data += tensors
+                i += 0
+              }
+              if (data.nonEmpty) {
+                buffer = toBatchAll(data.toArray)
                 true
               } else {
                 false
               }
-            case _: java.lang.IllegalStateException =>
-              graphRunner.runTargets(Vector(initOp))
-              graphRunner.runOutputs(outputVec, outputNames)
-              true
-            case e: Throwable => throw e
+            }
           }
-          (success, outputs)
-        }
 
-        override def next(): MiniBatch[Float] = {
-          if (hasNext()) {
-            val miniBatch = MiniBatch(buffer)
-            buffer = null
-            miniBatch
-          } else {
-            throw new NoSuchElementException()
+          private def getNext() = {
+            val outputs = generateOutputTensors(outputTypes)
+            val outputVec = outputs.toVector
+            val success = try {
+              graphRunner.runOutputs(outputVec, outputNames, outputTypes.toVector)
+              true
+            } catch {
+              case _: java.lang.IndexOutOfBoundsException => false
+              case e: Throwable => throw e
+            }
+            (success, outputs)
+          }
+
+          override def next(): MiniBatch[Float] = {
+            if (hasNext()) {
+              MiniBatch(buffer)
+            } else {
+              throw new NoSuchElementException("Next on an empty iterator")
+            }
           }
         }
       }
     }
+
 
   }
 
@@ -141,7 +245,9 @@ object TFDataFeatureSet {
   def apply(graph: Array[Byte],
             initIteratorOp: String,
             outputNames: Array[String],
-            dataCount: Int): TFDataFeatureSet = {
-    new TFDataFeatureSet(graph, initIteratorOp, outputNames, dataCount)
+            outputTypes: Array[Int],
+            dataCount: Int, batchSize: Int): TFDataFeatureSet = {
+    val types = outputTypes.map(TFUtils.tfenum2datatype)
+    new TFDataFeatureSet(graph, initIteratorOp, outputNames, types, dataCount, batchSize)
   }
 }

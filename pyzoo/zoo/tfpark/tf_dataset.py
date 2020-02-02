@@ -646,7 +646,10 @@ class TFDataDataset(TFDataset):
                  validation_dataset=None, validation_data_count=None,
                  sequential_order=False, shuffle=True):
 
-        # node_num, core_num = get_node_and_core_number()
+        node_num, core_num = get_node_and_core_number()
+        self.per_node_batch_size = batch_size // node_num
+
+        assert batch_size % (node_num * core_num) == 0, "batch_size must be a multiple of total number of cores"
 
         flatten_shapes = nest.flatten(tf_data_dataset.output_shapes)
         flatten_types = nest.flatten(tf_data_dataset.output_types)
@@ -665,6 +668,7 @@ class TFDataDataset(TFDataset):
         self.train_dataset = tf_data_dataset
         self.train_iterator = self.train_dataset.make_initializable_iterator()
         self.train_next_ops = nest.flatten(self.train_iterator.get_next())
+        self.output_types = [t.as_datatype_enum() for t in nest.flatten(self.train_dataset.output_types)]
 
         self.validation_dataset = validation_dataset
         self.validation_iterator = None
@@ -692,7 +696,8 @@ class TFDataDataset(TFDataset):
         output_names = [op.name for op in self.train_next_ops]
 
         jvalue = callZooFunc("float", "createTFDataFeatureSet",
-                             serialized_graph, init_op_name, output_names, self.data_count)
+                             serialized_graph, init_op_name, output_names, self.output_types,
+                             self.data_count, self.per_node_batch_size)
         return FeatureSet(jvalue=jvalue)
 
     def get_validation_data(self):
@@ -703,7 +708,8 @@ class TFDataDataset(TFDataset):
             output_names = [op.name for op in self.validation_next_ops]
 
             jvalue = callZooFunc("float", "createTFDataFeatureSet",
-                                 serialized_graph, init_op_name, output_names, self.validation_data_count)
+                                 serialized_graph, init_op_name, output_names,
+                                 self.output_types, self.validation_data_count, self.per_node_batch_size)
             return FeatureSet(jvalue=jvalue)
         return None
 

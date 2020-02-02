@@ -45,8 +45,7 @@ def main(max_epoch, data_num):
 
     def get_dataset(split):
         dataset = tfds.load(name="mnist", split=split)
-        dataset = dataset.map(lambda data: (((tf.to_float(data['image']) - mnist.TRAIN_MEAN)/mnist.TRAIN_STD), tf.to_float(data['label'])))
-        dataset = dataset.batch(BATCH_SIZE)
+        dataset = dataset.map(lambda data: (((tf.to_float(data['image']) - mnist.TRAIN_MEAN)/mnist.TRAIN_STD), data['label']))
         return dataset
 
     train_dataset = get_dataset("train")
