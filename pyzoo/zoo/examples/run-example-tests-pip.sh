@@ -338,7 +338,7 @@ else
 fi
 
 export SPARK_DRIVER_MEMORY=20g
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/tf_optimizer/train_lenet.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/tf_optimizer/train.py
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
@@ -347,32 +347,13 @@ then
     exit $exit_status
 fi
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/tf_optimizer/evaluate_lenet.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/tf_optimizer/evaluate.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
     clear_up
     echo "tensorflow distributed_training evaluate_lenet failed"
-    exit $exit_status
-fi
-
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/tf_optimizer/train_mnist_keras.py
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "tensorflow distributed_training train_mnist_keras failed"
-    exit $exit_status
-fi
-
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/tf_optimizer/evaluate_mnist_keras.py
-
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "tensorflow distributed_training evaluate_mnist_keras failed"
     exit $exit_status
 fi
 
