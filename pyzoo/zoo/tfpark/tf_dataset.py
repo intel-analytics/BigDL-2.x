@@ -17,6 +17,9 @@
 import numpy as np
 import sys
 
+
+from tensorflow._api.v1 import gfile
+from bigdl.dataset.dataset import DataSet
 from bigdl.transform.vision.image import FeatureTransformer
 from bigdl.util.common import get_node_and_core_number
 from zoo.common.utils import callZooFunc
@@ -655,7 +658,7 @@ class TFDataDataset(TFDataset):
         flatten_types = nest.flatten(tf_data_dataset.output_types)
 
         flatten_tensor_structure = [TensorMeta(dtype=flatten_types[i],
-                                               shape=list(flatten_shapes[i][1:]),
+                                               shape=list(flatten_shapes[i]),
                                                name="zoo_input_{}".format(i))
                                     for i in range(len(flatten_shapes))]
 
@@ -668,7 +671,7 @@ class TFDataDataset(TFDataset):
         self.train_dataset = tf_data_dataset
         self.train_iterator = self.train_dataset.make_initializable_iterator()
         self.train_next_ops = nest.flatten(self.train_iterator.get_next())
-        self.output_types = [t.as_datatype_enum() for t in nest.flatten(self.train_dataset.output_types)]
+        self.output_types = [t.as_datatype_enum for t in nest.flatten(self.train_dataset.output_types)]
 
         self.validation_dataset = validation_dataset
         self.validation_iterator = None
@@ -694,7 +697,6 @@ class TFDataDataset(TFDataset):
         serialized_graph = bytearray(tf.get_default_graph().as_graph_def().SerializeToString())
         init_op_name = self.train_iterator.initializer.name
         output_names = [op.name for op in self.train_next_ops]
-
         jvalue = callZooFunc("float", "createTFDataFeatureSet",
                              serialized_graph, init_op_name, output_names, self.output_types,
                              self.data_count, self.per_node_batch_size)
