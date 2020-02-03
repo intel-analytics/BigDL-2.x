@@ -25,6 +25,9 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.tensorflow.DataType
 
+import com.intel.analytics.zoo.tfpark.TFTensorNumeric.NumericByteArray
+
+
 class TFDataFeatureSet(private val graph: Array[Byte],
                        private val initIteratorOp: String,
                        private val outputNames: Array[String],
@@ -167,7 +170,7 @@ class TFDataFeatureSet(private val graph: Array[Byte],
               result(i) = getNext()
               i += 1
             }
-            MiniBatch(toBatchAll(result))
+            new TFMiniBatch[Float](toBatchAll(result))
           }
         }
       }
@@ -216,7 +219,7 @@ class TFDataFeatureSet(private val graph: Array[Byte],
 
           override def next(): MiniBatch[Float] = {
             if (hasNext()) {
-              MiniBatch(buffer)
+              new TFMiniBatch[Float](buffer)
             } else {
               throw new NoSuchElementException("Next on an empty iterator")
             }
