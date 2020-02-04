@@ -18,25 +18,46 @@ package com.intel.analytics.zoo.tfpark
 import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample}
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.{Tensor, TensorNumericMath}
-import org.apache.spark.rdd.RDD
+import com.intel.analytics.bigdl.utils.T
 
-class StringMiniBatch[T](data: Tensor[Array[Byte]]) extends MiniBatch[T] {
-  override def size(): Int = data.nElement()
 
-  override def slice(offset: Int, length: Int): MiniBatch[T] = {
-    new StringMiniBatch[T](data.narrow(1, offset, length))
+class TFMiniBatch(data: Array[Tensor[_]]) extends MiniBatch[Float] {
+  override def size(): Int = data(0).size(1)
+
+  override def slice(offset: Int, length: Int): MiniBatch[Float] = {
+    val newData = new Array[Tensor[_]](data.length)
+    var i = 0
+    while (i < data.length) {
+      newData(i) = data(i).narrow(1, offset, length)
+      i += 1
+    }
+    new TFMiniBatch(newData)
   }
 
   override def getInput(): Activity = {
-    data
+    if (data.length == 1) {
+      data(0)
+    } else {
+      val t = T()
+      var i = 0
+      while (i < data.length) {
+        t.insert(data(i))
+        i += 1
+      }
+      t
+    }
   }
 
   override def getTarget(): Activity = {
     null // fake target, should new be used
   }
 
-  override def set(samples: Seq[Sample[T]])
-                  (implicit ev: TensorNumericMath.TensorNumeric[T]): StringMiniBatch.this.type = {
-    throw new UnsupportedOperationException("StringMiniBatch does not support set method")
+  override def set(samples: Seq[Sample[Float]])
+                  (implicit ev: TensorNumericMath.TensorNumeric[Float]): TFMiniBatch.this.type = {
+    throw new UnsupportedOperationException("TFMiniBatch does not support set method")
   }
+}
+
+object TFMiniBatch {
+  def apply(data: Array[Tensor[_]]): TFMiniBatch = new TFMiniBatch(data)
 }
