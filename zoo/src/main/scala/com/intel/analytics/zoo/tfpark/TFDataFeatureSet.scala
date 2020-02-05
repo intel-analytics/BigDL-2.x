@@ -104,7 +104,7 @@ class TFDataFeatureSet(private val graph: Array[Byte],
               result(i) = getNext()
               i += 1
             }
-            new TFMiniBatch[Float](TFDataFeatureSet.toBatchAll(result, types))
+            TFMiniBatch(TFDataFeatureSet.toBatchAll(result, types))
           }
         }
       } else {
@@ -151,7 +151,7 @@ class TFDataFeatureSet(private val graph: Array[Byte],
 
           override def next(): MiniBatch[Float] = {
             if (hasNext()) {
-              val result = new TFMiniBatch[Float](buffer)
+              val result = TFMiniBatch(buffer)
               buffer = null
               result
             } else {
