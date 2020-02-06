@@ -19,7 +19,7 @@ from bigdl.util.common import *
 from pyspark.ml.linalg import Vectors
 from pyspark.sql import SparkSession
 from zoo.common.nncontext import *
-from zoo.pipeline.api.net import TFNet
+from zoo.tfpark import TFNet
 from zoo.pipeline.nnframes import *
 
 import tensorflow as tf
