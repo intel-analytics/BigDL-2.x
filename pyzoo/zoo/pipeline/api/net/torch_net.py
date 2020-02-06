@@ -13,19 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import torch
 import os
-import tempfile
 import shutil
-import numpy as np
 import sys
+import tempfile
 
+import numpy as np
+import torch
 from pyspark import RDD
+
 from bigdl.nn.layer import Layer
 from zoo import getOrCreateSparkContext
-from zoo.feature.image import ImageSet
 from zoo.common.utils import callZooFunc
-from zoo.pipeline.api.net.tfnet import to_sample_rdd
+from zoo.feature.image import ImageSet
+from zoo.tfpark.tfnet import to_sample_rdd
 
 if sys.version >= '3':
     long = int

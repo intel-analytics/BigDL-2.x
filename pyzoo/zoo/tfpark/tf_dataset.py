@@ -17,7 +17,6 @@
 import numpy as np
 import sys
 
-from bigdl.dataset.dataset import DataSet
 from bigdl.transform.vision.image import FeatureTransformer
 from bigdl.util.common import get_node_and_core_number
 from zoo.common.utils import callZooFunc
@@ -26,6 +25,8 @@ from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.feature.common import FeatureSet, SampleToMiniBatch
 from zoo.feature.image import ImagePreprocessing, ImageFeatureToSample
 from zoo.util import nest
+
+import tensorflow as tf
 
 if sys.version >= '3':
     long = int
@@ -50,7 +51,7 @@ def _to_tensor_structure(tensors):
 
 
 def _tensors_to_rdd(tensors, sc, splits):
-    import tensorflow as tf
+
     if isinstance(tensors, np.ndarray):
         tensors = (tensors,)
 
@@ -175,7 +176,7 @@ class TFDataset(object):
         self._tensors = None
 
     def _create_placeholders(self):
-        import tensorflow as tf
+
         if not self.hard_code_batch_size:
             tensors = nest.pack_sequence_as(
                 self.tensor_structure, [tf.placeholder(name=t.name,
@@ -666,7 +667,7 @@ class TFBytesDataset(TFDataset):
     def __init__(self, string_rdd, batch_size,
                  batch_per_thread, hard_code_batch_size=False,
                  validation_string_rdd=None, sequential_order=False, shuffle=True):
-        import tensorflow as tf
+
         tensor_structure = (TensorMeta(dtype=tf.string, shape=(), name="input"),)
 
         super(TFBytesDataset, self).__init__(tensor_structure, batch_size,
@@ -857,8 +858,6 @@ class TFNdarrayDataset(TFDataset):
                  features=None, labels=None,
                  sequential_order=False,
                  shuffle=True):
-
-        import tensorflow as tf
 
         if features is not None:
             feature_structure = _to_tensor_structure(features)

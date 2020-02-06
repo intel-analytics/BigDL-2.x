@@ -16,9 +16,11 @@
 
 import sys
 
-from zoo.pipeline.api.net.tfnet import TFNet
-from zoo.pipeline.api.net.utils import _find_placeholders, _check_the_same
+import tensorflow as tf
+import tensorflow.keras.backend as K
 
+from zoo.pipeline.api.net.utils import _find_placeholders, _check_the_same
+from zoo.tfpark.tfnet import TFNet
 
 if sys.version >= '3':
     long = int
@@ -50,7 +52,6 @@ class TFPredictor:
 
     @staticmethod
     def _get_datasets_and_inputs(outputs):
-        import tensorflow as tf
         all_required_inputs = _find_placeholders(outputs)
         dataset = tf.get_collection(all_required_inputs[0].name)[0]
         inputs = dataset.tensors
@@ -64,7 +65,7 @@ class TFPredictor:
 
     @classmethod
     def from_keras(cls, keras_model, dataset):
-        import tensorflow.keras.backend as K
+
         sess = K.get_session()
 
         outputs = keras_model.outputs

@@ -17,9 +17,8 @@
 import pytest
 
 
-from bigdl.optim.optimizer import Adam, MaxEpoch
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.pipeline.api.net import Net, TFNet, TFDataset, TFOptimizer
+from zoo.tfpark import TFNet, TFDataset
 from bigdl.util.common import *
 
 np.random.seed(1337)  # for reproducibility
@@ -27,9 +26,10 @@ np.random.seed(1337)  # for reproducibility
 
 class TestTF(ZooTestCase):
 
+    resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
+
     def test_init_tf_net(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
-        tfnet_path = os.path.join(resource_path, "tfnet")
+        tfnet_path = os.path.join(TestTF.resource_path, "tfnet")
         net = TFNet.from_export_folder(tfnet_path)
         output = net.forward(np.random.rand(2, 4))
         assert output.shape == (2, 2)
@@ -78,16 +78,14 @@ class TestTF(ZooTestCase):
         self.assert_allclose(grad_input_value, grad_input_value_ref)
 
     def test_init_tfnet_from_saved_model(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
-        model_path = os.path.join(resource_path, "saved-model-resource")
+        model_path = os.path.join(TestTF.resource_path, "saved-model-resource")
         tfnet = TFNet.from_saved_model(model_path, inputs=["flatten_input:0"],
                                        outputs=["dense_2/Softmax:0"])
         result = tfnet.predict(np.ones(dtype=np.float32, shape=(20, 28, 28, 1)))
         result.collect()
 
     def test_tf_net_predict(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
-        tfnet_path = os.path.join(resource_path, "tfnet")
+        tfnet_path = os.path.join(TestTF.resource_path, "tfnet")
         import tensorflow as tf
         tf_session_config = tf.ConfigProto(inter_op_parallelism_threads=1,
                                            intra_op_parallelism_threads=1)
@@ -96,8 +94,7 @@ class TestTF(ZooTestCase):
         assert output.shape == (16, 2)
 
     def test_tf_net_predict_dataset(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
-        tfnet_path = os.path.join(resource_path, "tfnet")
+        tfnet_path = os.path.join(TestTF.resource_path, "tfnet")
         net = TFNet.from_export_folder(tfnet_path)
         dataset = TFDataset.from_ndarrays((np.random.rand(16, 4),))
         output = net.predict(dataset)
