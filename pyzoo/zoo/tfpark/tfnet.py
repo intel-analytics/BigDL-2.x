@@ -14,20 +14,20 @@
 # limitations under the License.
 #
 
-from bigdl.nn.layer import Layer
+import os
+import sys
+import tempfile
 
 import numpy as np
 import six
-import tempfile
-import os
-import sys
 from pyspark import RDD
 
-from zoo.common.nncontext import getOrCreateSparkContext
+from bigdl.nn.layer import Layer
 from zoo.common import JTensor, Sample
-from zoo.feature.image import ImageSet
+from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.common.utils import callZooFunc
-from zoo.pipeline.api.net.tf_dataset import TFImageDataset, TFDataset, MapDataset
+from zoo.feature.image import ImageSet
+from zoo.tfpark.tf_dataset import TFImageDataset, TFDataset, MapDataset
 
 if sys.version >= '3':
     long = int

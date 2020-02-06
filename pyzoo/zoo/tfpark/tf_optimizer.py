@@ -14,24 +14,25 @@
 # limitations under the License.
 #
 
-import tempfile
-import warnings
-import os
 import json
-import sys
-
 import logging
+import os
+import sys
+import tempfile
 
 from bigdl.nn.criterion import Criterion
 from bigdl.nn.layer import Layer
+from bigdl.optim.optimizer import MaxEpoch, EveryEpoch
 from bigdl.util.common import to_list, JavaValue
 from zoo.common.utils import callZooFunc
-from bigdl.optim.optimizer import MaxEpoch, EveryEpoch
 from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss
-from zoo.pipeline.api.net.tf_dataset import MapDataset
 from zoo.pipeline.api.net.utils import _find_placeholders, to_bigdl_optim_method
 from zoo.pipeline.estimator import Estimator
+from zoo.tfpark.tf_dataset import MapDataset
 from zoo.util import nest
+
+import tensorflow as tf
+from tensorflow import gfile
 
 if sys.version >= '3':
     long = int
@@ -127,7 +128,7 @@ class TFModel(object):
     @staticmethod
     def _process_session_config(session_config):
         if session_config is not None:
-            import tensorflow as tf
+
             assert isinstance(session_config, tf.ConfigProto), \
                 "session_config should be a tf.ConfigProto"
             session_config.use_per_session_threads = True
@@ -143,7 +144,7 @@ class TFModel(object):
 
     @staticmethod
     def _process_metrics(graph, metrics):
-        import tensorflow as tf
+
         outputs = []
         val_methods = None
         if metrics is not None:
@@ -174,7 +175,6 @@ class TFModel(object):
 
     @staticmethod
     def _process_variables_for_unfreeze(graph, variables, updates):
-        import tensorflow as tf
 
         all_trainable_variables = variables
 
@@ -234,8 +234,6 @@ class TFModel(object):
                                   grads, update_op,
                                   additional_values):
 
-        import tensorflow as tf
-        from tensorflow import gfile
         saver = tf.train.Saver()
         if not os.path.isdir(folder):
             os.makedirs(folder)
@@ -277,7 +275,6 @@ class TFModel(object):
     @staticmethod
     def export_for_training(model_dir, loss_tensor, sess, inputs, grads, variables, graph,
                             tensors_with_value, metrics, updates):
-        import tensorflow as tf
 
         inputs, additional_values = TFModel._expand_inputs(inputs, tensors_with_value, loss_tensor)
         metric_tensors, val_methods = TFModel._process_metrics(graph, metrics)
@@ -389,7 +386,7 @@ class TFOptimizer:
 
     @staticmethod
     def _get_arguments_from_loss(loss, optim_method, session, val_outputs, val_labels, val_method):
-        import tensorflow as tf
+
         if session is None:
             sess = tf.Session()
             sess.run(tf.global_variables_initializer())
@@ -407,7 +404,7 @@ class TFOptimizer:
 
     @staticmethod
     def _get_vars_grads(loss):
-        import tensorflow as tf
+
         grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
         grads_vars.sort(key=lambda grad_var: grad_var[1].name)
         variables = []
