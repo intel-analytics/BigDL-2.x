@@ -16,6 +16,7 @@
 package com.intel.analytics.zoo.tfpark.python
 
 import com.intel.analytics.bigdl.Module
+import com.intel.analytics.bigdl.nn.Transformer
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
@@ -75,6 +76,9 @@ class PythonTFPark[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
   }
 
 
+  def createFakeOptimMethod(): OptimMethod[T] = {
+    new FakeOptimMethod[T]()
+  }
 
   def createMiniBatchRDDFromStringRDD(stringRDD: JavaRDD[Array[Byte]],
                                       batchSize: Int): RDDWrapper[TFMiniBatch] = {

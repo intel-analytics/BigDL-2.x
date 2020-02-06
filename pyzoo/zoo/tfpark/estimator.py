@@ -18,67 +18,13 @@ import tensorflow as tf
 
 from bigdl.optim.optimizer import MaxIteration, Loss, TreeNNAccuracy
 from zoo.pipeline.api.keras import metrics
-from zoo.pipeline.api.net.utils import to_bigdl_optim_method
+from zoo.pipeline.api.net import TFNet
 from zoo.tfpark.tf_optimizer import TFOptimizer
 from zoo.tfpark.tf_dataset import TFDataset
-from zoo.tfpark.tfnet import TFNet
 
 from zoo.util import nest
 import six
 import os
-
-
-def add_train_op(model_fn, features, labels, mode, params, config, optimizer):
-    model_fn_args = function_utils.fn_args(model_fn)
-    kwargs = {}
-    if 'labels' in model_fn_args:
-        kwargs['labels'] = labels
-    else:
-        if labels is not None:
-            raise ValueError(
-                'model_fn does not take labels, but input_fn returns labels.')
-    if 'mode' in model_fn_args:
-        kwargs['mode'] = mode
-    if 'params' in model_fn_args:
-        kwargs['params'] = params
-    if 'config' in model_fn_args:
-        kwargs['config'] = config
-
-    spec = model_fn(features=features, **kwargs)
-
-    if isinstance(spec, tf.estimator.EstimatorSpec):
-        train_op = spec.train_op
-    else:
-        train_op = None
-
-    if mode == tf.estimator.ModeKeys.TRAIN and train_op is None:
-        if optimizer is None:
-            raise ValueError("optimizer should be set when used for training. For example:" +
-                             " Estimator(model_fn, tf.train.AdamOptimizer())")
-        grads_and_vars = optimizer.compute_gradients(spec.loss)
-
-        vars_with_grad = [v for g, v in grads_and_vars if g is not None]
-        if not vars_with_grad:
-            raise ValueError(
-                "No gradients provided for any variable, check your graph for ops"
-                " that do not support gradients, between variables %s and loss %s." %
-                ([str(v) for _, v in grads_and_vars], spec.loss))
-
-        train_op = optimizer.apply_gradients(grads_and_vars,
-                                             global_step=tf.train.get_global_step())
-
-    return tf.estimator.EstimatorSpec(mode,
-                                      spec.predictions,
-                                      spec.loss,
-                                      train_op)
-
-
-class TFEstimatorSpec:
-
-    def __init__(self, mode, predictions=None, loss=None):
-        self.mode = mode
-        self.predictions = predictions
-        self.loss = loss
 
 
 class TFEstimator(object):
@@ -132,10 +78,7 @@ class TFEstimator(object):
                        and `tf.Tensor` names are unchanged.
         """
 
-        def tf_model_fn(features, labels, mode, params, config):
-            return add_train_op(model_fn, features, labels, mode, params, config, optimizer)
-
-        estimator = tf.estimator.Estimator(tf_model_fn, model_dir, config, params, warm_start_from)
+        estimator = tf.estimator.Estimator(model_fn, model_dir, config, params, warm_start_from)
         self._model_fn = model_fn
         self.optimizer = optimizer
         self._model_dir = estimator.model_dir
@@ -160,36 +103,7 @@ class TFEstimator(object):
 
         model_fn_results = self._model_fn(features=features, **kwargs)
 
-        if not isinstance(model_fn_results, TFEstimatorSpec):
-            raise ValueError('model_fn should return an TFEstimatorSpec.')
-
         return model_fn_results
-
-    def clear_gradient_clipping(self):
-        self.gradient_clipping_constant = None
-        self.gradient_clipping_norm = None
-
-    def set_constant_gradient_clipping(self, min, max):
-        """
-        Configure constant clipping settings.
-
-
-        :param min_value: the minimum value to clip by
-        :param max_value: the maxmimum value to clip by
-        """
-        self.gradient_clipping_constant = (min, max)
-
-    def set_gradient_clipping_by_l2_norm(self, clip_norm):
-        """
-        Configure L2 norm clipping settings.
-
-
-        :param clip_norm: gradient L2-Norm threshold
-        """
-        self.gradient_clipping_norm = clip_norm
-
-    def set_optimizer(self, optimizer):
-        self.optimizer = optimizer
 
     def train(self, input_fn, steps=None):
         """Trains a model given training data `input_fn`.
@@ -223,7 +137,6 @@ class TFEstimator(object):
                                            result.label_tensors,
                                            tf.estimator.ModeKeys.TRAIN,
                                            self.config)
-                optim_method = to_bigdl_optim_method(koptim_method=self.optimizer)
                 latest_checkpoint = self.estimator.latest_checkpoint()
 
                 with tf.Session() as sess:
@@ -234,12 +147,12 @@ class TFEstimator(object):
                         sess.run(tf.global_variables_initializer())
 
                     zoo_ckpt_path = os.path.join(self._model_dir, "analytics-zoo")
-                    opt = TFOptimizer.from_loss(spec.loss,
-                                                optim_method,
-                                                session=sess,
-                                                clip_norm=self.gradient_clipping_norm,
-                                                clip_value=self.gradient_clipping_constant,
-                                                model_dir=zoo_ckpt_path)
+
+                    opt = TFOptimizer.from_train_op(spec.train_op,
+                                                    spec.loss,
+                                                    sess=sess,
+                                                    dataset=result,
+                                                    model_dir=zoo_ckpt_path)
 
                     opt.optimize(MaxIteration(steps))
                     sess.run(assign_step, feed_dict={add_step_input: steps})

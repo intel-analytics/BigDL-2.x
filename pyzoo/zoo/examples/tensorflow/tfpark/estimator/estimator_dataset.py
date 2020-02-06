@@ -16,10 +16,10 @@
 
 import tensorflow as tf
 import numpy as np
-
 from zoo import init_nncontext
 from zoo.tfpark import TFDataset
-from zoo.tfpark import TFEstimator, TFEstimatorSpec
+from zoo.tfpark import TFEstimator
+from zoo.tfpark import ZooOptimizer
 
 
 def get_data_rdd(dataset, sc):
@@ -45,9 +45,12 @@ def main():
         if mode == tf.estimator.ModeKeys.EVAL or mode == tf.estimator.ModeKeys.TRAIN:
             loss = tf.reduce_mean(
                 tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
-            return TFEstimatorSpec(mode, predictions=logits, loss=loss)
+
+            optimizer = ZooOptimizer(tf.train.AdamOptimizer())
+            train_op = optimizer.minimize(loss)
+            return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
         else:
-            return TFEstimatorSpec(mode, predictions=logits)
+            return tf.estimator.EstimatorSpec(mode, predictions=logits)
 
     def input_fn(mode):
         if mode == tf.estimator.ModeKeys.TRAIN:
