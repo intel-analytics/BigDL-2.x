@@ -65,7 +65,9 @@ def find_placeholders(grads):
 
     def predicate(t):
         if not isinstance(t, tf.Operation):
-            t.op.type.startswith("Placeholder")
+            return t.op.type.startswith("Placeholder")
+        else:
+            return False
 
     return find_tensors(grads, predicate)
 

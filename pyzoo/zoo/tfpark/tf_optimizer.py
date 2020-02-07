@@ -425,9 +425,6 @@ class TFOptimizer:
         if metrics is None:
             metrics = {}
 
-        if train_op is None or optim_method is None:
-            optim_method = FakeOptimMethod()
-
         tf_model = TFModel.create(loss, sess, inputs, grads, variables, graph,
                                   tensor_with_value, session_config, metrics,
                                   updates, model_dir, train_op=train_op)
