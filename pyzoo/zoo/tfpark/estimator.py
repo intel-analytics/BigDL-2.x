@@ -18,7 +18,7 @@ import tensorflow as tf
 
 from bigdl.optim.optimizer import MaxIteration, Loss, TreeNNAccuracy
 from zoo.pipeline.api.keras import metrics
-from zoo.pipeline.api.net import TFNet
+from zoo.tfpark.tfnet import TFNet
 from zoo.tfpark.tf_optimizer import TFOptimizer
 from zoo.tfpark.tf_dataset import TFDataset
 
