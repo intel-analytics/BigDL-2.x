@@ -69,7 +69,8 @@ def main(option):
             loss = tf.reduce_mean(
                 tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
             train_op = ZooOptimizer(tf.train.AdamOptimizer()).minimize(loss)
-            return tf.estimator.EstimatorSpec(mode, train_op=train_op, predictions=logits, loss=loss)
+            return tf.estimator.EstimatorSpec(mode, train_op=train_op,
+                                              predictions=logits, loss=loss)
         else:
             raise NotImplementedError
 

@@ -21,4 +21,3 @@ from .tf_dataset import TFDataset
 from .zoo_optimizer import ZooOptimizer
 from .tf_predictor import TFPredictor
 from .tfnet import TFNet
-
