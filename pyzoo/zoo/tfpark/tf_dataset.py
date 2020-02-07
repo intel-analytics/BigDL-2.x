@@ -644,10 +644,33 @@ class TFDataDataset(TFDataset):
     def get_num_partitions(self):
         raise NotImplementedError()
 
+    @staticmethod
+    def _assert_not_batched(dataset):
+        from tensorflow.python.data.ops import dataset_ops
+        if isinstance(dataset, dataset_ops.DatasetV1Adapter):
+            TFDataDataset._assert_not_batched(dataset._dataset)
+        elif isinstance(dataset, dataset_ops.BatchDataset):
+            raise ValueError("Dataset should not be batched,"
+                             "please use a dataset with the batch operation")
+        else:
+            for dt in dataset._inputs():
+                TFDataDataset._assert_not_batched(dt)
+
     def __init__(self, tf_data_dataset, data_count, batch_size,
                  batch_per_thread, hard_code_batch_size=False,
                  validation_dataset=None, validation_data_count=None,
                  sequential_order=False, shuffle=True):
+        from tensorflow.python.keras.engine import training_utils
+
+        if shuffle:
+            training_utils.verify_dataset_shuffled(tf_data_dataset)
+
+        # we assume that the dataset user passed is not batched,
+        # because we currently did not find a way to get out a
+        # batch of strings in java api
+        TFDataDataset._assert_not_batched(tf_data_dataset)
+        if validation_dataset is not None:
+            TFDataDataset._assert_not_batched(validation_dataset)
 
         node_num, core_num = get_node_and_core_number()
         self.per_node_batch_size = batch_size // node_num
