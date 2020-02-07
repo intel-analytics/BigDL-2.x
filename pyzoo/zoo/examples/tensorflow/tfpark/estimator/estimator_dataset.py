@@ -17,9 +17,7 @@
 import tensorflow as tf
 import numpy as np
 from zoo import init_nncontext
-from zoo.tfpark import TFDataset
-from zoo.tfpark import TFEstimator
-from zoo.tfpark import ZooOptimizer
+from zoo.tfpark import TFDataset, TFEstimator, ZooOptimizer
 
 
 def get_data_rdd(dataset, sc):

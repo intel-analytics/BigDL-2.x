@@ -17,13 +17,11 @@ from optparse import OptionParser
 
 import tensorflow as tf
 
-from tfpark import ZooOptimizer
 from zoo import init_nncontext
 from zoo.feature.common import *
 from zoo.feature.image.imagePreprocessing import *
 from zoo.feature.image.imageset import *
-from zoo.tfpark import TFDataset
-from zoo.tfpark import TFEstimator
+from zoo.tfpark import TFDataset, TFEstimator, ZooOptimizer
 
 
 def main(option):
