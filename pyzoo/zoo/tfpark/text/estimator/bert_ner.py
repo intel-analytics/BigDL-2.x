@@ -67,7 +67,7 @@ class BERTNER(BERTBaseEstimator):
     def __init__(self, num_entities, bert_config_file, init_checkpoint=None,
                  use_one_hot_embeddings=False, optimizer=None, model_dir=None):
         super(BERTNER, self).__init__(
-            model_fn=make_bert_classifier_model_fn(optimizer),
+            model_fn=make_bert_ner_model_fn(optimizer),
             bert_config_file=bert_config_file,
             init_checkpoint=init_checkpoint,
             use_one_hot_embeddings=use_one_hot_embeddings,
