@@ -72,7 +72,7 @@ def main():
                                          batch_per_thread=80)
 
         return dataset
-    estimator = TFEstimator(model_fn, tf.train.AdamOptimizer(), model_dir="/tmp/estimator")
+    estimator = TFEstimator.from_model_fn(model_fn, model_dir="/tmp/estimator")
 
     estimator.train(input_fn, steps=60000//320)
 
@@ -82,6 +82,7 @@ def main():
     predictions = estimator.predict(input_fn)
 
     print(predictions.first())
+
 
 if __name__ == '__main__':
     main()

@@ -445,6 +445,7 @@ class TFOptimizer:
         return TFOptimizer._from_grads(loss=loss, sess=sess, inputs=inputs, grads=grads,
                                        variables=variables, dataset=dataset, metrics=metrics,
                                        tensor_with_value=tensor_with_value,
+                                       optim_method=FakeOptimMethod(),
                                        session_config=session_config, updates=updates,
                                        model_dir=model_dir, train_op=train_op)
 

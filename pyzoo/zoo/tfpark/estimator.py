@@ -29,8 +29,23 @@ import os
 
 class TFEstimator(object):
 
-    def __init__(self, model_fn, optimizer=None, model_dir=None, config=None,
-                 params=None, warm_start_from=None):
+    def __init__(self, estimator):
+        """
+        :param estimator: a tf.estimator.Estimator, in the estimator's model_fn,
+        ZooOptimizer must be used and only ZooOptimizer should be used to derive
+        the train_op.
+        """
+
+        self.estimator = estimator
+        self._model_fn = self.estimator.model_fn
+        self._model_dir = self.estimator.model_dir
+        self.config = self.estimator.config
+        self.params = self.estimator.params
+        self.tf_optimizer = None
+
+    @classmethod
+    def from_model_fn(cls, model_fn, model_dir=None, config=None,
+                      params=None, warm_start_from=None):
         """
         :param model_fn: Model function. Follows the signature:
 
@@ -57,9 +72,10 @@ class TFEstimator(object):
                     configuration such as `num_ps_replicas`, or `model_dir`.
 
             * Returns:
-                `zoo.tfpark.estimator.TFEstimatorSpec`
-        :param optimizer: the tf.train.Optimizer to be used in training,
-                         e.g. tf.train.AdamOptimizer()
+                `tf.estimator.EstimatorSpec`
+
+            For the train_op in tf.estimator.EstimatorSpec, it derive from and only from
+            `zoo.tfpark.ZooOptimizer`
         :param model_dir: Directory to save model parameters, graph and etc. This can
             also be used to load checkpoints from the directory into an estimator to
             continue training a previously saved model. If `PathLike` object, the
@@ -77,17 +93,9 @@ class TFEstimator(object):
                        warm-started, and it is assumed that vocabularies
                        and `tf.Tensor` names are unchanged.
         """
-
-        estimator = tf.estimator.Estimator(model_fn, model_dir, config, params, warm_start_from)
-        self._model_fn = model_fn
-        self.optimizer = optimizer
-        self._model_dir = estimator.model_dir
-        self.estimator = estimator
-        self.config = config
-        self.params = params
-        self.tf_optimizer = None
-        self.gradient_clipping_norm = None
-        self.gradient_clipping_constant = None
+        estimator = tf.estimator.Estimator(model_fn, model_dir=model_dir, config=config,
+                                           params=params, warm_start_from=warm_start_from)
+        return cls(estimator)
 
     def _call_model_fn(self, features, labels, mode, config):
         model_fn_args = function_utils.fn_args(self._model_fn)
