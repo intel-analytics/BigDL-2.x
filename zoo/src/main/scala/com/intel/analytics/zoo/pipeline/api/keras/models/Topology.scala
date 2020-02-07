@@ -1564,7 +1564,8 @@ object InternalDistriOptimizer {
         parameterArray._2(i).resizeAs(parameterArray._1(i))
       )
 
-      val (parameter, gradientParameter) = InternalOptimizerUtil.getParametersFromModel(trainingModel)
+      val (parameter, gradientParameter) =
+        InternalOptimizerUtil.getParametersFromModel(trainingModel)
 
 
       val (weights, gradients) = models.mapPartitions(iter => {
