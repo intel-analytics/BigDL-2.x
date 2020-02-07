@@ -626,7 +626,7 @@ class TFOptimizer:
         if checkpoint_trigger is None:
             checkpoint_trigger = EveryEpoch()
 
-        if self.tf_model.val_methods is not None and self.val_rdd is not None:
+        if self.tf_model.val_methods and self.val_rdd is not None:
             self.estimator.train_minibatch(train_set=self.training_rdd,
                                            criterion=self.tf_model.criterion,
                                            end_trigger=end_trigger,
