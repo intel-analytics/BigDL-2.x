@@ -677,6 +677,10 @@ class TFDataDataset(TFDataset):
 
         assert batch_size % (node_num * core_num) == 0, "batch_size must be a multiple of total number of cores"
 
+        shard_index = tf.placeholder(dtype=tf.int64, shape=())
+        tf_data_dataset = tf_data_dataset.shard(node_num, shard_index)
+        validation_dataset = validation_dataset.shard(node_num, shard_index)
+
         flatten_shapes = nest.flatten(tf_data_dataset.output_shapes)
         flatten_types = nest.flatten(tf_data_dataset.output_types)
 
@@ -691,6 +695,7 @@ class TFDataDataset(TFDataset):
         super(TFDataDataset, self).__init__(tensor_structure, batch_size,
                                             batch_per_thread, hard_code_batch_size)
 
+        self.shard_index = shard_index
         self.train_dataset = tf_data_dataset
         self.train_iterator = self.train_dataset.make_initializable_iterator()
         self.train_next_ops = nest.flatten(self.train_iterator.get_next())
@@ -722,7 +727,7 @@ class TFDataDataset(TFDataset):
         output_names = [op.name for op in self.train_next_ops]
         jvalue = callZooFunc("float", "createTFDataFeatureSet",
                              serialized_graph, init_op_name, output_names, self.output_types,
-                             self.data_count, self.per_node_batch_size)
+                             self.data_count, self.per_node_batch_size, self.shard_index.name)
         return FeatureSet(jvalue=jvalue)
 
     def get_validation_data(self):
@@ -734,7 +739,8 @@ class TFDataDataset(TFDataset):
 
             jvalue = callZooFunc("float", "createTFDataFeatureSet",
                                  serialized_graph, init_op_name, output_names,
-                                 self.output_types, self.validation_data_count, self.per_node_batch_size)
+                                 self.output_types, self.validation_data_count,
+                                 self.per_node_batch_size, self.shard_index.name)
             return FeatureSet(jvalue=jvalue)
         return None
 

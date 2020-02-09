@@ -33,7 +33,8 @@ class TFDataFeatureSet(private val graph: Array[Byte],
                        private val outputNames: Array[String],
                        private val outputTypes: Array[DataType],
                        private val dataCount: Int,
-                       private val batchSize: Int)
+                       private val batchSize: Int,
+                       private val shardIndex: String)
   extends DistributedFeatureSet[MiniBatch[Float]] {
 
   private val graphRunnerRDD = getGraphRunnerRDD(graph)
@@ -70,9 +71,16 @@ class TFDataFeatureSet(private val graph: Array[Byte],
     val names = this.outputNames.toVector
     val types = this.outputTypes.toVector
     val batchSize = this.batchSize
+    val shardIdx = this.shardIndex
 
-    graphRunnerRDD.mapPartitions { dataIter =>
+    graphRunnerRDD.mapPartitionsWithIndex { case (idx, dataIter) =>
       val graphRunner = dataIter.next()
+      def intiIterator(): Unit =  {
+        graphRunner.runTargets(Vector(initOp),
+          inputs = Vector(Tensor.scalar[Float](idx.toFloat)),
+          inputTypes = Vector(DataType.INT64),
+          inputNames = Vector(shardIdx))
+      }
       if (train) {
         new Iterator[MiniBatch[Float]] {
 
@@ -87,10 +95,10 @@ class TFDataFeatureSet(private val graph: Array[Byte],
               graphRunner.runOutputs(outputVec, names, types)
             } catch {
               case _: java.lang.IndexOutOfBoundsException =>
-                graphRunner.runTargets(Vector(initOp))
+                intiIterator()
                 graphRunner.runOutputs(outputVec, names, types)
               case _: java.lang.IllegalStateException =>
-                graphRunner.runTargets(Vector(initOp))
+                intiIterator()
                 graphRunner.runOutputs(outputVec, names, types)
               case e: Throwable => throw e
             }
@@ -108,7 +116,7 @@ class TFDataFeatureSet(private val graph: Array[Byte],
           }
         }
       } else {
-        graphRunner.runTargets(Vector(initOp))
+        intiIterator()
         new Iterator[MiniBatch[Float]] {
 
           private var buffer: Array[Tensor[_]] = null
@@ -181,9 +189,10 @@ object TFDataFeatureSet {
             initIteratorOp: String,
             outputNames: Array[String],
             outputTypes: Array[Int],
-            dataCount: Int, batchSize: Int): TFDataFeatureSet = {
+            dataCount: Int, batchSize: Int, shardIndex: String): TFDataFeatureSet = {
     val types = outputTypes.map(TFUtils.tfenum2datatype)
-    new TFDataFeatureSet(graph, initIteratorOp, outputNames, types, dataCount, batchSize)
+    new TFDataFeatureSet(graph, initIteratorOp, outputNames, types,
+      dataCount, batchSize, shardIndex)
   }
 
   private def toBatchAll(data: Array[Array[Tensor[_]]],
