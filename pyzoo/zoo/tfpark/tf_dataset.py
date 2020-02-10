@@ -675,6 +675,10 @@ class TFDataDataset(TFDataset):
         node_num, core_num = get_node_and_core_number()
         self.per_node_batch_size = batch_size // node_num
 
+        tf_data_dataset = tf_data_dataset.batch(self.per_node_batch_size)
+        if validation_dataset is not None:
+            validation_dataset = validation_dataset.batch(self.per_node_batch_size)
+
         assert batch_size % (node_num * core_num) == 0, "batch_size must be a multiple of total number of cores"
 
         shard_index = tf.placeholder(dtype=tf.int64, shape=())
@@ -685,7 +689,7 @@ class TFDataDataset(TFDataset):
         flatten_types = nest.flatten(tf_data_dataset.output_types)
 
         flatten_tensor_structure = [TensorMeta(dtype=flatten_types[i],
-                                               shape=list(flatten_shapes[i]),
+                                               shape=list(flatten_shapes[i][1:]),
                                                name="zoo_input_{}".format(i))
                                     for i in range(len(flatten_shapes))]
 

@@ -70,7 +70,6 @@ class TFDataFeatureSet(private val graph: Array[Byte],
     val initOp = this.initIteratorOp
     val names = this.outputNames.toVector
     val types = this.outputTypes.toVector
-    val batchSize = this.batchSize
     val shardIdx = this.shardIndex
 
     graphRunnerRDD.mapPartitionsWithIndex { case (idx, dataIter) =>
@@ -106,13 +105,7 @@ class TFDataFeatureSet(private val graph: Array[Byte],
           }
 
           override def next(): MiniBatch[Float] = {
-            val result = new Array[Array[Tensor[_]]](batchSize)
-            var i = 0
-            while (i < batchSize) {
-              result(i) = getNext()
-              i += 1
-            }
-            TFMiniBatch(TFDataFeatureSet.toBatchAll(result, types))
+            TFMiniBatch(getNext())
           }
         }
       } else {
@@ -124,23 +117,11 @@ class TFDataFeatureSet(private val graph: Array[Byte],
             if (buffer != null) {
               true
             } else {
-              var success = true
-              var i = 0
-              val data = scala.collection.mutable.ArrayBuffer[Array[Tensor[_]]]()
-              while (i < batchSize && success) {
-                val (_success, tensors) = getNext()
-                success = _success
-                if (success) {
-                  data += tensors
-                }
-                i += 1
+              val (success, result) = getNext()
+              if (success) {
+                buffer = result
               }
-              if (data.nonEmpty) {
-                buffer = TFDataFeatureSet.toBatchAll(data.toArray, types)
-                true
-              } else {
-                false
-              }
+              success
             }
           }
 
