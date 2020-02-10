@@ -55,7 +55,7 @@ class TFDataFeatureSet(private val graph: Array[Byte],
     originRdd.count()
     val graphRunnerRDD = originRdd.mapPartitions { iter =>
       val graphDef = broadcastedGraph.value
-      val runner = new GraphRunner(graphDef,
+      val runner = GraphRunner(graphDef,
         null, null, null, null, SessionConfig(intraOpParallelismThreads = coreNumber).toByteArray())
       Iterator.single(runner)
     }.setName("GraphRunnerRDD").cache()

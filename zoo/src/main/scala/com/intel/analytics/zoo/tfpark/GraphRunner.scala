@@ -162,4 +162,14 @@ class GraphRunner(
 object GraphRunner {
 
   assert(TFNetNative.isLoaded)
+
+  def apply(graphDef: Array[Byte],
+            restoreOp: String,
+            restorePathPlaceholder: String,
+            saveOp: String,
+            savePathPlaceholder: String,
+            config: Array[Byte]): GraphRunner =  {
+    new GraphRunner(graphDef, restoreOp, restorePathPlaceholder, saveOp, savePathPlaceholder, config)
+  }
+
 }
