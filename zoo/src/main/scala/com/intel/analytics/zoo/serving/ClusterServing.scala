@@ -176,7 +176,9 @@ object ClusterServing {
               })
             })
           })
-        } else {
+        }
+
+        else {
           /**
            * In Normal mode, every model will use multiple thread to
            * achieve best latency. Thus, we only use a single model to
@@ -195,46 +197,91 @@ object ClusterServing {
               })
             })
           })
+
+          // per batch size should be equal to OMP_NUM_THEADS to get max performance
+
+          val perBatchSize = if (modelType == "tensorflow" || modelType == "pytorch") {
+            16
+          } else {
+            coreNum
+          }
+	        val upperParNum = (coreNum - 1) / perBatchSize + 1
+
           pathBytesChunk.mapPartitions(pathBytes => {
-            val localModel = bcModel.value
-            val t = if (chwFlag) {
-              Tensor[Float](batchSize, C, H, W)
-            } else {
-              Tensor[Float](batchSize, H, W, C)
-            }
-            pathBytes.grouped(batchSize).flatMap(pathByteBatch => {
-              val thisBatchSize = pathByteBatch.size
+          	pathBytes.grouped(coreNum).flatMap(batch => {
+          		(0 until upperParNum).toParArray.flatMap(cpIndex => {
+                val localModel = bcModel.value
+          			val threadTensor = if (chwFlag) {
+		              Tensor[Float](batchSize, C, H, W)
+		            } else {
+		              Tensor[Float](batchSize, H, W, C)
+		            }
+          			val beginIndex = cpIndex * perBatchSize
+          			val endIndex = if (beginIndex + perBatchSize < batchSize) 
+          				beginIndex + perBatchSize else batchSize
 
-              (0 until thisBatchSize).toParArray
-                .foreach(i => t.select(1, i + 1).copy(pathByteBatch(i)._2))
+          			(beginIndex until endIndex).toParArray.foreach(nIndex => {
+          				threadTensor.select(1, nIndex - beginIndex + 1).copy(batch(nIndex)._2)
+          			})
+          			if (modelType == "openvino") {
+          				threadTensor.addSingletonDimension()
+          			}
+          			val result = localModel.doPredict(threadTensor).toTensor
+          			if (modelType == "openvino") {
+          				threadTensor.squeeze(1)
+          			}
+					      (beginIndex - beginIndex until endIndex - beginIndex).toParArray.map(i => {
+		                val value = PostProcessing.getInfofromTensor(topN,
+		                  result.select(1, i + 1).squeeze())
+		                Record(batch(beginIndex + i)._1, value)
+		            })
+          		})
+          	})
 
-              val x = if (modelType == "openvino") {
-                t.addSingletonDimension()
-              } else {
-                t
-              }
-              /**
-               * addSingletonDimension method will modify the
-               * original Tensor, thus if reuse of Tensor is needed,
-               * have to squeeze it back.
-               */
-              val result = if (modelType == "openvino") {
-                val res = localModel.doPredict(x).toTensor.squeeze()
-                t.squeeze(1)
-                res
-              } else {
-                localModel.doPredict(x).toTensor
-              }
-
-              (0 until thisBatchSize).toParArray.map(i => {
-                val value = PostProcessing.getInfofromTensor(topN,
-                  result.select(1, i + 1).squeeze())
-                Record(pathByteBatch(i)._1, value)
-              })
-
-            })
           })
-        }
+		}
+
+
+        //   pathBytesChunk.mapPartitions(pathBytes => {
+        //     val localModel = bcModel.value
+        //     val t = if (chwFlag) {
+        //       Tensor[Float](batchSize, C, H, W)
+        //     } else {
+        //       Tensor[Float](batchSize, H, W, C)
+        //     }
+        //     pathBytes.grouped(batchSize).flatMap(pathByteBatch => {
+        //       val thisBatchSize = pathByteBatch.size
+
+        //       (0 until thisBatchSize).toParArray
+        //         .foreach(i => t.select(1, i + 1).copy(pathByteBatch(i)._2))
+
+        //       val x = if (modelType == "openvino") {
+        //         t.addSingletonDimension()
+        //       } else {
+        //         t
+        //       }
+        //       /**
+        //        * addSingletonDimension method will modify the
+        //        * original Tensor, thus if reuse of Tensor is needed,
+        //        * have to squeeze it back.
+        //        */
+        //       val result = if (modelType == "openvino") {
+        //         val res = localModel.doPredict(x).toTensor.squeeze()
+        //         t.squeeze(1)
+        //         res
+        //       } else {
+        //         localModel.doPredict(x).toTensor
+        //       }
+
+        //       (0 until thisBatchSize).toParArray.map(i => {
+        //         val value = PostProcessing.getInfofromTensor(topN,
+        //           result.select(1, i + 1).squeeze())
+        //         Record(pathByteBatch(i)._1, value)
+        //       })
+
+        //     })
+        //   })
+        // }
 
 
         /**
@@ -340,3 +387,4 @@ object ClusterServing {
     System.exit(0)
   }
 }
+
