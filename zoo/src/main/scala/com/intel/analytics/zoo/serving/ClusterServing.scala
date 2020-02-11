@@ -200,11 +200,7 @@ object ClusterServing {
 
           // per batch size should be equal to OMP_NUM_THEADS to get max performance
 
-          val perBatchSize = if (modelType == "tensorflow" || modelType == "pytorch") {
-            16
-          } else {
-            coreNum
-          }
+          val perBatchSize = helper.maxParNum
           val upperParNum = (coreNum - 1) / perBatchSize + 1
 
           pathBytesChunk.mapPartitions(pathBytes => {
@@ -212,15 +208,15 @@ object ClusterServing {
               (0 until upperParNum).toParArray.flatMap(cpIndex => {
                 val localModel = bcModel.value
                 val threadTensor = if (chwFlag) {
-                  Tensor[Float](batchSize, C, H, W)
+                  Tensor[Float](perBatchSize, C, H, W)
                 } else {
-                  Tensor[Float](batchSize, H, W, C)
+                  Tensor[Float](perBatchSize, H, W, C)
                 }
                 val beginIndex = cpIndex * perBatchSize
-                val endIndex = if (beginIndex + perBatchSize < batchSize) {
+                val endIndex = if (beginIndex + perBatchSize < batch.size) {
                   beginIndex + perBatchSize
                 } else {
-                  batchSize
+                  batch.size
                 }
 
                 (beginIndex until endIndex).toParArray.foreach(nIndex => {

@@ -72,6 +72,7 @@ class ClusterServingHelper {
   var topN: Int = 1
   var nodeNum: Int = 1
   var coreNum: Int = 1
+  var maxParNum: Int = 16
   var engineType: String = null
   var blasFlag: Boolean = false
 
@@ -142,21 +143,6 @@ class ClusterServingHelper {
     // engine Type need to be used on executor so do not set here
 //    engineType = getYaml(paramsConfig, "engine_type", "mklblas")
     topN = getYaml(paramsConfig, "top_n", "1").toInt
-
-//    val logConfig = configList.get("log").asInstanceOf[HM]
-//    logErrorFlag = if (getYaml(logConfig, "error", "y") ==
-//      "y") true else false
-//    logSummaryFlag = if (getYaml(logConfig, "summary", "y") ==
-//      "y") true else false
-//
-//    if (logErrorFlag) {
-//      logFile = {
-//        val logF = new File("./cluster_serving.log")
-//        if (Files.exists(Paths.get("./cluster_serving.log")))
-//          logF.createNewFile()
-//        new FileWriter(logF)
-//      }
-//    }
 
     logFile = {
       val logF = new File("./cluster-serving.log")
@@ -285,7 +271,9 @@ class ClusterServingHelper {
    * @return
    */
   def loadInferenceModel(): InferenceModel = {
-    val parallelNum = if (blasFlag) coreNum else 1
+    val parallelNum = if (blasFlag) coreNum else {
+      (coreNum - 1) / maxParNum + 1
+    }
     val model = new InferenceModel(parallelNum)
 
     // quantize model would not bring any drawback here
