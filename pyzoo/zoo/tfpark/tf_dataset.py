@@ -30,6 +30,7 @@ from zoo.feature.image import ImagePreprocessing, ImageFeatureToSample
 from zoo.util import nest
 
 import tensorflow as tf
+from tensorflow.python.data.ops import dataset_ops
 
 if sys.version >= '3':
     long = int
@@ -646,31 +647,53 @@ class TFDataDataset(TFDataset):
 
     @staticmethod
     def _assert_not_batched(dataset):
-        from tensorflow.python.data.ops import dataset_ops
+
         if isinstance(dataset, dataset_ops.DatasetV1Adapter):
             TFDataDataset._assert_not_batched(dataset._dataset)
         elif isinstance(dataset, dataset_ops.BatchDataset):
             raise ValueError("Dataset should not be batched,"
-                             "please use a dataset with the batch operation")
+                             "please use a dataset without the batch operation")
         else:
             for dt in dataset._inputs():
                 TFDataDataset._assert_not_batched(dt)
+    @staticmethod
+    def check_rules(dataset, rules, is_training):
+        from tensorflow.python.data.ops import dataset_ops
+
+        if isinstance(dataset, dataset_ops.DatasetV1Adapter):
+            TFDataDataset.check_rules(dataset._dataset, rules, is_training)
+        else:
+            for rule, message in rules:
+                assert not rule(dataset, is_training), message
+            else:
+                for dt in dataset._inputs():
+                    TFDataDataset._assert_not_batched(dt)
 
     def __init__(self, tf_data_dataset, data_count, batch_size,
                  batch_per_thread, hard_code_batch_size=False,
                  validation_dataset=None, validation_data_count=None,
                  sequential_order=False, shuffle=True):
-        from tensorflow.python.keras.engine import training_utils
 
+        # rule 1: we assume that the dataset user passed is not batched
+        rules = [(
+            lambda dataset, is_training: isinstance(dataset, dataset_ops.BatchDataset),
+            "Dataset should not be batched, please use a dataset without the batch operation"
+        )]
+        TFDataDataset.check_rules(tf_data_dataset, rules, True)
+        if validation_dataset is not None:
+            TFDataDataset.check_rules(validation_dataset, rules, False)
+
+        # Dataset.from_generators is implemented using tf.numpy_function
+        py_func_ops = {"PyFunc", "PyFuncStateless", "EagerPyFunc"}
+        for node in tf.get_default_graph().as_graph_def().node:
+            op_type = node.op
+            if op_type in py_func_ops:
+                raise ValueError("tf.py_func, tf.py_function, tf.numpy_function and" +
+                                 " Dataset.from_generators are not supported in TFPark")
+
+        from tensorflow.python.keras.engine import training_utils
         if shuffle:
             training_utils.verify_dataset_shuffled(tf_data_dataset)
-
-        # we assume that the dataset user passed is not batched,
-        # because we currently did not find a way to get out a
-        # batch of strings in java api
-        TFDataDataset._assert_not_batched(tf_data_dataset)
-        if validation_dataset is not None:
-            TFDataDataset._assert_not_batched(validation_dataset)
 
         node_num, core_num = get_node_and_core_number()
         self.per_node_batch_size = batch_size // node_num
@@ -679,11 +702,14 @@ class TFDataDataset(TFDataset):
         if validation_dataset is not None:
             validation_dataset = validation_dataset.batch(self.per_node_batch_size)
 
-        assert batch_size % (node_num * core_num) == 0, "batch_size must be a multiple of total number of cores"
+        assert batch_size % (node_num * core_num) == 0,\
+            "batch_size must be a multiple of total number of cores, " \
+            + "got batch_size {}, node_num {}, core_num {}".format(batch_size, node_num, core_num)
 
         shard_index = tf.placeholder(dtype=tf.int64, shape=())
         tf_data_dataset = tf_data_dataset.shard(node_num, shard_index)
-        validation_dataset = validation_dataset.shard(node_num, shard_index)
+        if validation_dataset is not None:
+            validation_dataset = validation_dataset.shard(node_num, shard_index)
 
         flatten_shapes = nest.flatten(tf_data_dataset.output_shapes)
         flatten_types = nest.flatten(tf_data_dataset.output_types)
@@ -703,7 +729,8 @@ class TFDataDataset(TFDataset):
         self.train_dataset = tf_data_dataset
         self.train_iterator = self.train_dataset.make_initializable_iterator()
         self.train_next_ops = nest.flatten(self.train_iterator.get_next())
-        self.output_types = [t.as_datatype_enum for t in nest.flatten(self.train_dataset.output_types)]
+        self.output_types = [t.as_datatype_enum
+                             for t in nest.flatten(self.train_dataset.output_types)]
 
         self.validation_dataset = validation_dataset
         self.validation_iterator = None
@@ -713,10 +740,13 @@ class TFDataDataset(TFDataset):
         if validation_dataset is not None:
             self.validation_iterator = self.validation_dataset.make_initializable_iterator()
             self.validation_next_ops = nest.flatten(self.validation_iterator.get_next())
-            assert validation_data_count is not None
+            assert validation_data_count is not None, "validation_data_count must be provided " \
+                                                      + "if validation_dataset is provided"
 
         self.sequential_order = sequential_order
         self.shuffle = shuffle
+        self.graph = self.train_next_ops[0].graph
+        self.graph_def = bytearray(self.graph.as_graph_def().SerializeToString())
 
     def get_prediction_data(self):
         raise NotImplementedError()
@@ -725,24 +755,21 @@ class TFDataDataset(TFDataset):
         raise NotImplementedError()
 
     def get_training_data(self):
-        import tensorflow as tf
-        serialized_graph = bytearray(tf.get_default_graph().as_graph_def().SerializeToString())
         init_op_name = self.train_iterator.initializer.name
         output_names = [op.name for op in self.train_next_ops]
         jvalue = callZooFunc("float", "createTFDataFeatureSet",
-                             serialized_graph, init_op_name, output_names, self.output_types,
+                             self.graph_def, init_op_name, output_names, self.output_types,
                              self.data_count, self.per_node_batch_size, self.shard_index.name)
         return FeatureSet(jvalue=jvalue)
 
     def get_validation_data(self):
         if self.validation_dataset is not None:
             import tensorflow as tf
-            serialized_graph = bytearray(tf.get_default_graph().as_graph_def().SerializeToString())
             init_op_name = self.validation_iterator.initializer.name
             output_names = [op.name for op in self.validation_next_ops]
 
             jvalue = callZooFunc("float", "createTFDataFeatureSet",
-                                 serialized_graph, init_op_name, output_names,
+                                 self.graph_def, init_op_name, output_names,
                                  self.output_types, self.validation_data_count,
                                  self.per_node_batch_size, self.shard_index.name)
             return FeatureSet(jvalue=jvalue)
