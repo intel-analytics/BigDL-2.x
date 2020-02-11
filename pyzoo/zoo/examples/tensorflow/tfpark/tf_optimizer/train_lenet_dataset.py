@@ -30,7 +30,7 @@ slim = tf.contrib.slim
 
 import tensorflow_datasets as tfds
 
-BATCH_SIZE=1024
+BATCH_SIZE=1536
 def main(max_epoch, data_num):
     sc = init_nncontext()
 
@@ -40,12 +40,23 @@ def main(max_epoch, data_num):
     #
     # images_data = images_data[:1000]
     # labels_data = labels_data[:1000]
-
-    # tfds.image.MNIST.as_dataset()
+    # dataset = tf.data.TFRecordDataset("/home/bdt/tensorflow_datasets/mnist/3.0.0/mnist-train.tfrecord-00000-of-00001")
 
     def get_dataset(split):
-        dataset = tfds.load(name="mnist", split=split)
+        m = tfds.image.MNIST()
+        # dataset = mnist.as_dataset()
+        from tensorflow_datasets.core import example_parser
+
+        # reader = tfds.core.tfrecords_reader.Reader("/home/bdt/tensorflow_datasets", mnist.info.features.get_serialized_info())
+        # dataset = reader.read("train")
+
+        parser = example_parser.ExampleParser(m.info.features.get_serialized_info())
+        dataset = tf.data.TFRecordDataset(
+            "/home/bdt/tensorflow_datasets/mnist/3.0.0/mnist-train.tfrecord-00000-of-00001")
+        dataset = dataset.map(parser.parse_example)
+        dataset = dataset.map(lambda x: m.info.features.decode_example(x))
         dataset = dataset.map(lambda data: (((tf.to_float(data['image']) - mnist.TRAIN_MEAN)/mnist.TRAIN_STD), data['label']))
+        dataset = dataset.prefetch(2*BATCH_SIZE)
         return dataset
 
     train_dataset = get_dataset("train")
