@@ -74,81 +74,15 @@ class TFDataFeatureSet(private val graph: Array[Byte],
 
     graphRunnerRDD.mapPartitionsWithIndex { case (idx, dataIter) =>
       val graphRunner = dataIter.next()
-      def intiIterator(): Unit =  {
-        graphRunner.runTargets(Vector(initOp),
-          inputs = Vector(Tensor.scalar[Float](idx.toFloat)),
-          inputTypes = Vector(DataType.INT64),
-          inputNames = Vector(shardIdx))
-      }
-      if (train) {
-        new Iterator[MiniBatch[Float]] {
-
-          override def hasNext(): Boolean = {
-            true
-          }
-
-          private def getNext() = {
-            val outputs = TFDataFeatureSet.generateOutputTensors(types)
-            val outputVec = outputs.toVector
-            try {
-              graphRunner.runOutputs(outputVec, names, types)
-            } catch {
-              case _: java.lang.IndexOutOfBoundsException =>
-                intiIterator()
-                graphRunner.runOutputs(outputVec, names, types)
-              case _: java.lang.IllegalStateException =>
-                intiIterator()
-                graphRunner.runOutputs(outputVec, names, types)
-              case e: Throwable => throw e
-            }
-            outputs
-          }
-
-          override def next(): MiniBatch[Float] = {
-            TFMiniBatch(getNext())
-          }
-        }
-      } else {
-        intiIterator()
-        new Iterator[MiniBatch[Float]] {
-
-          private var buffer: Array[Tensor[_]] = null
-          override def hasNext(): Boolean = {
-            if (buffer != null) {
-              true
-            } else {
-              val (success, result) = getNext()
-              if (success) {
-                buffer = result
-              }
-              success
-            }
-          }
-
-          private def getNext() = {
-            val outputs = TFDataFeatureSet.generateOutputTensors(types)
-            val outputVec = outputs.toVector
-            val success = try {
-              graphRunner.runOutputs(outputVec, names, types)
-              true
-            } catch {
-              case _: java.lang.IndexOutOfBoundsException => false
-              case e: Throwable => throw e
-            }
-            (success, outputs)
-          }
-
-          override def next(): MiniBatch[Float] = {
-            if (hasNext()) {
-              val result = TFMiniBatch(buffer)
-              buffer = null
-              result
-            } else {
-              throw new NoSuchElementException("Next on an empty iterator")
-            }
-          }
-        }
-      }
+      TFDataFeatureSet.makeIterators(
+        graphRunner,
+        train,
+        initOp,
+        idx,
+        shardIdx,
+        types,
+        names
+      )
     }
   }
 
@@ -235,7 +169,7 @@ object TFDataFeatureSet {
     result
   }
 
-  private def generateOutputTensors(types: Vector[DataType]) = {
+  private[zoo] def generateOutputTensors(types: Vector[DataType]) = {
     val outputs = Array.tabulate[Tensor[_]](types.length) { i =>
       if (types(i) == DataType.STRING) {
         Tensor[Array[Byte]]()
@@ -244,5 +178,89 @@ object TFDataFeatureSet {
       }
     }
     outputs
+  }
+
+  private[zoo] def makeIterators(graphRunner: GraphRunner,
+                                 train: Boolean,
+                                 initOp: String,
+                                 idx: Int,
+                                 shardIdx: String,
+                                 types: Vector[DataType],
+                                 names: Vector[String]): Iterator[TFMiniBatch] = {
+    def intiIterator(): Unit =  {
+      graphRunner.runTargets(Vector(initOp),
+        inputs = Vector(Tensor.scalar[Float](idx.toFloat)),
+        inputTypes = Vector(DataType.INT64),
+        inputNames = Vector(shardIdx))
+    }
+    if (train) {
+      new Iterator[MiniBatch[Float]] {
+
+        override def hasNext(): Boolean = {
+          true
+        }
+
+        private def getNext() = {
+          val outputs = TFDataFeatureSet.generateOutputTensors(types)
+          val outputVec = outputs.toVector
+          try {
+            graphRunner.runOutputs(outputVec, names, types)
+          } catch {
+            case _: java.lang.IndexOutOfBoundsException =>
+              intiIterator()
+              graphRunner.runOutputs(outputVec, names, types)
+            case _: java.lang.IllegalStateException =>
+              intiIterator()
+              graphRunner.runOutputs(outputVec, names, types)
+            case e: Throwable => throw e
+          }
+          outputs
+        }
+
+        override def next(): MiniBatch[Float] = {
+          TFMiniBatch(getNext())
+        }
+      }
+    } else {
+      intiIterator()
+      new Iterator[MiniBatch[Float]] {
+
+        private var buffer: Array[Tensor[_]] = null
+        override def hasNext(): Boolean = {
+          if (buffer != null) {
+            true
+          } else {
+            val (success, result) = getNext()
+            if (success) {
+              buffer = result
+            }
+            success
+          }
+        }
+
+        private def getNext() = {
+          val outputs = TFDataFeatureSet.generateOutputTensors(types)
+          val outputVec = outputs.toVector
+          val success = try {
+            graphRunner.runOutputs(outputVec, names, types)
+            true
+          } catch {
+            case _: java.lang.IndexOutOfBoundsException => false
+            case e: Throwable => throw e
+          }
+          (success, outputs)
+        }
+
+        override def next(): MiniBatch[Float] = {
+          if (hasNext()) {
+            val result = TFMiniBatch(buffer)
+            buffer = null
+            result
+          } else {
+            throw new NoSuchElementException("Next on an empty iterator")
+          }
+        }
+      }
+    }
   }
 }

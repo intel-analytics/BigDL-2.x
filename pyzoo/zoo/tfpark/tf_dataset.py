@@ -139,6 +139,8 @@ class TFDataset(object):
         self.has_batch = True
         node_num, core_num = get_node_and_core_number()
         self.total_core_num = node_num * core_num
+        self.node_num = node_num
+        self.core_num = core_num
         if batch_size > 0:
             if batch_size % self.total_core_num != 0:
                 raise ValueError("batch_size should be a multiple " +
@@ -643,7 +645,8 @@ class MapDataset(TFDataset):
 class TFDataDataset(TFDataset):
 
     def get_num_partitions(self):
-        raise NotImplementedError()
+        # only called in inference case
+        return self.total_core_num
 
     @staticmethod
     def _assert_not_batched(dataset):
@@ -695,27 +698,11 @@ class TFDataDataset(TFDataset):
         if shuffle:
             training_utils.verify_dataset_shuffled(tf_data_dataset)
 
-        node_num, core_num = get_node_and_core_number()
-        self.per_node_batch_size = batch_size // node_num
-
-        tf_data_dataset = tf_data_dataset.batch(self.per_node_batch_size)
-        if validation_dataset is not None:
-            validation_dataset = validation_dataset.batch(self.per_node_batch_size)
-
-        assert batch_size % (node_num * core_num) == 0,\
-            "batch_size must be a multiple of total number of cores, " \
-            + "got batch_size {}, node_num {}, core_num {}".format(batch_size, node_num, core_num)
-
-        shard_index = tf.placeholder(dtype=tf.int64, shape=())
-        tf_data_dataset = tf_data_dataset.shard(node_num, shard_index)
-        if validation_dataset is not None:
-            validation_dataset = validation_dataset.shard(node_num, shard_index)
-
         flatten_shapes = nest.flatten(tf_data_dataset.output_shapes)
         flatten_types = nest.flatten(tf_data_dataset.output_types)
 
         flatten_tensor_structure = [TensorMeta(dtype=flatten_types[i],
-                                               shape=list(flatten_shapes[i][1:]),
+                                               shape=list(flatten_shapes[i]),
                                                name="zoo_input_{}".format(i))
                                     for i in range(len(flatten_shapes))]
 
@@ -724,6 +711,22 @@ class TFDataDataset(TFDataset):
 
         super(TFDataDataset, self).__init__(tensor_structure, batch_size,
                                             batch_per_thread, hard_code_batch_size)
+
+        if self.batch_size > 0 and self.has_batch:
+            # training case
+            self._per_partition_batch_size = self.batch_size // self.node_num
+        else:
+            # inference case
+            self._per_partition_batch_size = self.batch_per_thread
+
+        tf_data_dataset = tf_data_dataset.batch(self._per_partition_batch_size)
+        if validation_dataset is not None:
+            validation_dataset = validation_dataset.batch(self._per_partition_batch_size)
+
+        shard_index = tf.placeholder(dtype=tf.int64, shape=())
+        tf_data_dataset = tf_data_dataset.shard(self.node_num, shard_index)
+        if validation_dataset is not None:
+            validation_dataset = validation_dataset.shard(self.node_num, shard_index)
 
         self.shard_index = shard_index
         self.train_dataset = tf_data_dataset
@@ -737,11 +740,16 @@ class TFDataDataset(TFDataset):
         self.validation_next_ops = None
         self.data_count = data_count
         self.validation_data_count = validation_data_count
+
+        self._train_init_op_name = self.train_iterator.initializer.name
+        self._train_output_names = [op.name for op in self.train_next_ops]
         if validation_dataset is not None:
             self.validation_iterator = self.validation_dataset.make_initializable_iterator()
             self.validation_next_ops = nest.flatten(self.validation_iterator.get_next())
             assert validation_data_count is not None, "validation_data_count must be provided " \
                                                       + "if validation_dataset is provided"
+            self._val_init_op_name = self.validation_iterator.initializer.name
+            self._val_output_names = [op.name for op in self.validation_next_ops]
 
         self.sequential_order = sequential_order
         self.shuffle = shuffle
@@ -749,29 +757,33 @@ class TFDataDataset(TFDataset):
         self.graph_def = bytearray(self.graph.as_graph_def().SerializeToString())
 
     def get_prediction_data(self):
-        raise NotImplementedError()
+        jvalue = callZooFunc("float", "createMiniBatchRDDFromTFDataset",
+                             self.graph_def, self._train_init_op_name, self._train_output_names, self.output_types,
+                             self.data_count, self._per_partition_batch_size, self.shard_index.name)
+        rdd = jvalue.value().toJavaRDD()
+        return rdd
 
     def get_evaluation_data(self):
-        raise NotImplementedError()
+        jvalue = callZooFunc("float", "createMiniBatchRDDFromTFDataset",
+                             self.graph_def, self._train_init_op_name, self._train_output_names,
+                             self.output_types, self.data_count, self._per_partition_batch_size,
+                             self.shard_index.name)
+        rdd = jvalue.value().toJavaRDD()
+        return rdd
 
     def get_training_data(self):
-        init_op_name = self.train_iterator.initializer.name
-        output_names = [op.name for op in self.train_next_ops]
         jvalue = callZooFunc("float", "createTFDataFeatureSet",
-                             self.graph_def, init_op_name, output_names, self.output_types,
-                             self.data_count, self.per_node_batch_size, self.shard_index.name)
+                             self.graph_def, self._train_init_op_name, self._train_output_names,
+                             self.output_types, self.data_count, self._per_partition_batch_size,
+                             self.shard_index.name)
         return FeatureSet(jvalue=jvalue)
 
     def get_validation_data(self):
         if self.validation_dataset is not None:
-            import tensorflow as tf
-            init_op_name = self.validation_iterator.initializer.name
-            output_names = [op.name for op in self.validation_next_ops]
-
             jvalue = callZooFunc("float", "createTFDataFeatureSet",
-                                 self.graph_def, init_op_name, output_names,
+                                 self.graph_def, self._val_init_op_name, self._val_output_names,
                                  self.output_types, self.validation_data_count,
-                                 self.per_node_batch_size, self.shard_index.name)
+                                 self._per_partition_batch_size, self.shard_index.name)
             return FeatureSet(jvalue=jvalue)
         return None
 
