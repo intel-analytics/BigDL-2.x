@@ -43,12 +43,11 @@ class TFDataFeatureSet(private val graph: Array[Byte],
     val sc = SparkContext.getOrCreate()
     val nodeNumber = EngineRef.getNodeNumber()
     val coreNumber = EngineRef.getCoreNumber()
-    // TODO: make sure 1 executor 1 partition
 
     val broadcastedGraph = sc.broadcast(graph)
     val originRdd = sc.parallelize(
-      Array.tabulate(nodeNumber)(_ => "dummy123123"), nodeNumber * 10)
-      .mapPartitions(_ => (0 until 200).toIterator)
+      Array.tabulate(nodeNumber * 20)(_ => 0), nodeNumber * 10)
+      .mapPartitions(_ => (0 until 20).toIterator)
       .coalesce(nodeNumber)
       .setName("PartitionRDD")
       .persist(StorageLevel.DISK_ONLY)
@@ -108,65 +107,6 @@ object TFDataFeatureSet {
     val types = outputTypes.map(TFUtils.tfenum2datatype)
     new TFDataFeatureSet(graph, initIteratorOp, outputNames, types,
       dataCount, batchSize, shardIndex)
-  }
-
-  private def toBatchAll(data: Array[Array[Tensor[_]]],
-                         outputTypes: Vector[DataType]): Array[Tensor[_]] = {
-    val outputLength = outputTypes.length
-    val result = new Array[Tensor[_]](outputLength)
-    var i = 0
-    while (i < outputLength) {
-      if (outputTypes(i) == DataType.STRING) {
-        val tensors = new Array[Tensor[Array[Byte]]](data.length)
-        var j = 0
-        while (j < data.length) {
-          tensors(j) = data(j)(i).asInstanceOf[Tensor[Array[Byte]]]
-          j += 1
-        }
-        result(i) = toBatchString(tensors)
-      } else {
-        val tensors = new Array[Tensor[Float]](data.length)
-        var j = 0
-        while (j < data.length) {
-          tensors(j) = data(j)(i).asInstanceOf[Tensor[Float]]
-          j += 1
-        }
-        result(i) = toBatchFloat(tensors)
-      }
-
-      i += 1
-    }
-    result
-  }
-
-  private def toBatchString(data: Array[Tensor[Array[Byte]]]) = {
-    val result = Tensor[Array[Byte]](Array(data.length))
-    val storage = result.storage().array()
-    var i = 0
-    while (i < data.length) {
-      storage(i) = data(i).value()
-      i += 1
-    }
-    result
-  }
-
-  private def toBatchFloat(data: Array[Tensor[Float]]) = {
-    val firstDimSize = data.length
-    val restDimSize = data(0).size()
-    val newShape = Array.tabulate(restDimSize.length + 1) { i =>
-      if (i == 0) {
-        firstDimSize
-      } else {
-        restDimSize(i - 1)
-      }
-    }
-    val result = Tensor[Float](newShape)
-    var i = 0
-    while (i < firstDimSize) {
-      result.select(1, i + 1).copy(data(i))
-      i += 1
-    }
-    result
   }
 
   private[zoo] def generateOutputTensors(types: Vector[DataType]) = {
