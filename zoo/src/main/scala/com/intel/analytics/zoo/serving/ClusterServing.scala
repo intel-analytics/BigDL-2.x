@@ -205,41 +205,44 @@ object ClusterServing {
           } else {
             coreNum
           }
-	        val upperParNum = (coreNum - 1) / perBatchSize + 1
+          val upperParNum = (coreNum - 1) / perBatchSize + 1
 
           pathBytesChunk.mapPartitions(pathBytes => {
-          	pathBytes.grouped(coreNum).flatMap(batch => {
-          		(0 until upperParNum).toParArray.flatMap(cpIndex => {
+            pathBytes.grouped(coreNum).flatMap(batch => {
+              (0 until upperParNum).toParArray.flatMap(cpIndex => {
                 val localModel = bcModel.value
-          			val threadTensor = if (chwFlag) {
-		              Tensor[Float](batchSize, C, H, W)
-		            } else {
-		              Tensor[Float](batchSize, H, W, C)
-		            }
-          			val beginIndex = cpIndex * perBatchSize
-          			val endIndex = if (beginIndex + perBatchSize < batchSize) 
-          				beginIndex + perBatchSize else batchSize
+                val threadTensor = if (chwFlag) {
+                  Tensor[Float](batchSize, C, H, W)
+                } else {
+                  Tensor[Float](batchSize, H, W, C)
+                }
+                val beginIndex = cpIndex * perBatchSize
+                val endIndex = if (beginIndex + perBatchSize < batchSize) {
+                  beginIndex + perBatchSize
+                } else {
+                  batchSize
+                }
 
-          			(beginIndex until endIndex).toParArray.foreach(nIndex => {
-          				threadTensor.select(1, nIndex - beginIndex + 1).copy(batch(nIndex)._2)
-          			})
-          			if (modelType == "openvino") {
-          				threadTensor.addSingletonDimension()
-          			}
-          			val result = localModel.doPredict(threadTensor).toTensor
-          			if (modelType == "openvino") {
-          				threadTensor.squeeze(1)
-          			}
-					      (beginIndex - beginIndex until endIndex - beginIndex).toParArray.map(i => {
-		                val value = PostProcessing.getInfofromTensor(topN,
-		                  result.select(1, i + 1).squeeze())
-		                Record(batch(beginIndex + i)._1, value)
-		            })
-          		})
-          	})
+                (beginIndex until endIndex).toParArray.foreach(nIndex => {
+                  threadTensor.select(1, nIndex - beginIndex + 1).copy(batch(nIndex)._2)
+                })
+                if (modelType == "openvino") {
+                  threadTensor.addSingletonDimension()
+                }
+                val result = localModel.doPredict(threadTensor).toTensor
+                if (modelType == "openvino") {
+                  threadTensor.squeeze(1)
+                }
+                (beginIndex - beginIndex until endIndex - beginIndex).toParArray.map(i => {
+                  val value = PostProcessing.getInfofromTensor(topN,
+                    result.select(1, i + 1).squeeze())
+                  Record(batch(beginIndex + i)._1, value)
+                })
+              })
+            })
 
           })
-		}
+        }
 
 
         //   pathBytesChunk.mapPartitions(pathBytes => {
