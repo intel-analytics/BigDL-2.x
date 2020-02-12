@@ -586,7 +586,7 @@ class TFDataset(object):
     def from_tf_data_dataset(dataset, batch_size=-1,
                              batch_per_thread=-1, hard_code_batch_size=False,
                              validation_dataset=None,
-                             sequential_order=False, shuffle=True):
+                             sequential_order=False, shuffle=True, remove_checking=False):
         """
         Create a TFDataset from a tf.data.Dataset.
 
@@ -616,7 +616,7 @@ class TFDataset(object):
         """
         return TFDataDataset(dataset, batch_size, batch_per_thread,
                              hard_code_batch_size, validation_dataset,
-                             sequential_order, shuffle)
+                             sequential_order, shuffle, remove_checking)
 
 
 class MapDataset(TFDataset):
@@ -703,7 +703,7 @@ class TFDataDataset(TFDataset):
     def __init__(self, tf_data_dataset, batch_size,
                  batch_per_thread, hard_code_batch_size=False,
                  validation_dataset=None,
-                 sequential_order=False, shuffle=True):
+                 sequential_order=False, shuffle=True, remove_checking=False):
 
         # rule 1: we assume that the dataset user passed is not batched
         rules = [(
@@ -711,12 +711,13 @@ class TFDataDataset(TFDataset):
             "Dataset should not be batched, please use a dataset without the batch operation"),
             (
             lambda dataset, is_training: isinstance(dataset, dataset_ops.RepeatDataset),
-                "Dataset should not be repeated, please use a dataset without the repeat operation"
-            )
+                "Dataset should not be repeated, please use a dataset without the repeat operation")
         ]
-        TFDataDataset.check_rules(tf_data_dataset, rules, True)
-        if validation_dataset is not None:
-            TFDataDataset.check_rules(validation_dataset, rules, False)
+
+        if not remove_checking:
+            TFDataDataset.check_rules(tf_data_dataset, rules, True)
+            if validation_dataset is not None:
+                TFDataDataset.check_rules(validation_dataset, rules, False)
 
         py_func_ops = {"PyFunc", "PyFuncStateless", "EagerPyFunc"}
         for node in tf.get_default_graph().as_graph_def().node:
