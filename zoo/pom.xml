@@ -321,6 +321,11 @@
             <version>1.15.0</version>
         </dependency>
         <dependency>
+            <groupId>black.ninia</groupId>
+            <artifactId>jep</artifactId>
+            <version>3.9.0</version>
+        </dependency>
+        <dependency>
             <groupId>org.tensorflow</groupId>
             <artifactId>tensorflow-hadoop</artifactId>
             <version>1.15.0</version>
