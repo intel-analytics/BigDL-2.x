@@ -32,8 +32,6 @@ class TFDataFeatureSet(private val graph: Array[Byte],
                        private val initIteratorOp: String,
                        private val outputNames: Array[String],
                        private val outputTypes: Array[DataType],
-                       private val dataCount: Int,
-                       private val batchSize: Int,
                        private val shardIndex: String)
   extends DistributedFeatureSet[MiniBatch[Float]] {
 
@@ -90,7 +88,7 @@ class TFDataFeatureSet(private val graph: Array[Byte],
   }
 
   override def size(): Long = {
-    dataCount
+    -1
   }
 
   override def toDistributed(): DistributedDataSet[MiniBatch[Float]] = {
@@ -103,10 +101,9 @@ object TFDataFeatureSet {
             initIteratorOp: String,
             outputNames: Array[String],
             outputTypes: Array[Int],
-            dataCount: Int, batchSize: Int, shardIndex: String): TFDataFeatureSet = {
+            shardIndex: String): TFDataFeatureSet = {
     val types = outputTypes.map(TFUtils.tfenum2datatype)
-    new TFDataFeatureSet(graph, initIteratorOp, outputNames, types,
-      dataCount, batchSize, shardIndex)
+    new TFDataFeatureSet(graph, initIteratorOp, outputNames, types, shardIndex)
   }
 
   private[zoo] def generateOutputTensors(types: Vector[DataType]) = {
@@ -134,7 +131,7 @@ object TFDataFeatureSet {
         inputNames = Vector(shardIdx))
     }
     if (train) {
-      new Iterator[MiniBatch[Float]] {
+      new Iterator[TFMiniBatch] {
 
         override def hasNext(): Boolean = {
           true
@@ -157,13 +154,13 @@ object TFDataFeatureSet {
           outputs
         }
 
-        override def next(): MiniBatch[Float] = {
+        override def next(): TFMiniBatch = {
           TFMiniBatch(getNext())
         }
       }
     } else {
       intiIterator()
-      new Iterator[MiniBatch[Float]] {
+      new Iterator[TFMiniBatch] {
 
         private var buffer: Array[Tensor[_]] = null
         override def hasNext(): Boolean = {
@@ -191,7 +188,7 @@ object TFDataFeatureSet {
           (success, outputs)
         }
 
-        override def next(): MiniBatch[Float] = {
+        override def next(): TFMiniBatch = {
           if (hasNext()) {
             val result = TFMiniBatch(buffer)
             buffer = null

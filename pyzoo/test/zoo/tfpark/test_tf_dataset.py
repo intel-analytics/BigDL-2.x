@@ -287,18 +287,23 @@ class TestTFDataset(ZooTestCase):
         opt.optimize()
 
     def test_tfdataset_with_tf_data_dataset(self):
-        import tensorflow_datasets as tfds
-        dataset = tfds.load("mnist", split="train")
-        dataset = dataset.map(lambda data: (tf.to_float(data['image']), data['label']))
-        dataset = TFDataset.from_tf_data_dataset(dataset, 60000, batch_size=128)
-        seq = tf.keras.models.Sequential([
-            tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(10)])
+        dataset = tf.data.Dataset.from_tensor_slices((np.random.randn(100, 28, 28, 1),
+                                                      np.random.randint(0, 10, size=(100,))))
+        dataset = dataset.map(lambda feature, label: (tf.to_float(feature), label))
+        dataset = TFDataset.from_tf_data_dataset(dataset, batch_size=16)
+        seq = tf.keras.Sequential(
+            [tf.keras.layers.Flatten(input_shape=(28, 28, 1)),
+             tf.keras.layers.Dense(10, activation="softmax")])
+
         seq.compile(optimizer=tf.keras.optimizers.RMSprop(),
                     loss='sparse_categorical_crossentropy',
                     metrics=['accuracy'])
         model = KerasModel(seq)
         model.fit(dataset)
+        dataset = tf.data.Dataset.from_tensor_slices(np.random.randn(100, 28, 28, 1))
+        dataset = dataset.map(lambda data: tf.to_float(data))
+        dataset = TFDataset.from_tf_data_dataset(dataset, batch_per_thread=16)
+        model.predict(dataset).collect()
 
 
 if __name__ == "__main__":

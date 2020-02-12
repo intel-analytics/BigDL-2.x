@@ -583,12 +583,39 @@ class TFDataset(object):
                               hard_code_batch_size, validation_bytes_rdd)
 
     @staticmethod
-    def from_tf_data_dataset(tf_data_dataset, data_count, batch_size=-1,
+    def from_tf_data_dataset(dataset, batch_size=-1,
                              batch_per_thread=-1, hard_code_batch_size=False,
-                             validation_dataset=None, validation_data_count=None,
+                             validation_dataset=None,
                              sequential_order=False, shuffle=True):
-        return TFDataDataset(tf_data_dataset, data_count, batch_size, batch_per_thread,
-                             hard_code_batch_size, validation_dataset, validation_data_count,
+        """
+        Create a TFDataset from a tf.data.Dataset.
+
+        The recommended way to create the dataset is to reading files in a shared file
+        system (e.g. HDFS) that is accessible from every executor of this Spark Application.
+
+        If the dataset is created by reading files in the local file system, then the
+        files must exist in every executor in the exact same path. The path should be
+        absolute path and relative path is not supported.
+
+        A few kinds of dataset is not supported for now:
+        1. dataset created from tf.data.Dataset.from_generators
+        2. dataset with Dataset.batch operation.
+        3. dataset with Dataset.repeat operation
+        4. dataset contains tf.py_func, tf.py_function or tf.numpy_function
+
+        :param dataset: the tf.data.Dataset
+        :param batch_size: the batch size, used for training, should be a multiple of
+        total core num
+        :param batch_per_thread: the batch size for each thread, used for inference or evaluation
+        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
+        if True, the static size of the first dimension of the resulting tensors is
+        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
+        it is None.
+        :param validation_dataset: the dataset used for validation
+        :return: a TFDataset
+        """
+        return TFDataDataset(dataset, batch_size, batch_per_thread,
+                             hard_code_batch_size, validation_dataset,
                              sequential_order, shuffle)
 
 
@@ -659,6 +686,7 @@ class TFDataDataset(TFDataset):
         else:
             for dt in dataset._inputs():
                 TFDataDataset._assert_not_batched(dt)
+
     @staticmethod
     def check_rules(dataset, rules, is_training):
         from tensorflow.python.data.ops import dataset_ops
@@ -672,21 +700,24 @@ class TFDataDataset(TFDataset):
                 for dt in dataset._inputs():
                     TFDataDataset._assert_not_batched(dt)
 
-    def __init__(self, tf_data_dataset, data_count, batch_size,
+    def __init__(self, tf_data_dataset, batch_size,
                  batch_per_thread, hard_code_batch_size=False,
-                 validation_dataset=None, validation_data_count=None,
+                 validation_dataset=None,
                  sequential_order=False, shuffle=True):
 
         # rule 1: we assume that the dataset user passed is not batched
         rules = [(
             lambda dataset, is_training: isinstance(dataset, dataset_ops.BatchDataset),
-            "Dataset should not be batched, please use a dataset without the batch operation"
-        )]
+            "Dataset should not be batched, please use a dataset without the batch operation"),
+            (
+            lambda dataset, is_training: isinstance(dataset, dataset_ops.RepeatDataset),
+                "Dataset should not be repeated, please use a dataset without the repeat operation"
+            )
+        ]
         TFDataDataset.check_rules(tf_data_dataset, rules, True)
         if validation_dataset is not None:
             TFDataDataset.check_rules(validation_dataset, rules, False)
 
-        # Dataset.from_generators is implemented using tf.numpy_function
         py_func_ops = {"PyFunc", "PyFuncStateless", "EagerPyFunc"}
         for node in tf.get_default_graph().as_graph_def().node:
             op_type = node.op
@@ -694,8 +725,8 @@ class TFDataDataset(TFDataset):
                 raise ValueError("tf.py_func, tf.py_function, tf.numpy_function and" +
                                  " Dataset.from_generators are not supported in TFPark")
 
-        from tensorflow.python.keras.engine import training_utils
         if shuffle:
+            from tensorflow.python.keras.engine import training_utils
             training_utils.verify_dataset_shuffled(tf_data_dataset)
 
         flatten_shapes = nest.flatten(tf_data_dataset.output_shapes)
@@ -705,8 +736,10 @@ class TFDataDataset(TFDataset):
                                                shape=list(flatten_shapes[i]),
                                                name="zoo_input_{}".format(i))
                                     for i in range(len(flatten_shapes))]
-
-        tensor_structure = nest.pack_sequence_as(tf_data_dataset.output_shapes,
+        structure = tf_data_dataset.output_types
+        if isinstance(structure, tf.DType):
+            structure = (structure, )
+        tensor_structure = nest.pack_sequence_as(structure,
                                                  flatten_tensor_structure)
 
         super(TFDataDataset, self).__init__(tensor_structure, batch_size,
@@ -715,18 +748,20 @@ class TFDataDataset(TFDataset):
         if self.batch_size > 0 and self.has_batch:
             # training case
             self._per_partition_batch_size = self.batch_size // self.node_num
+            self._shard_num = self.node_num
         else:
             # inference case
             self._per_partition_batch_size = self.batch_per_thread
+            self._shard_num = self.total_core_num
 
         tf_data_dataset = tf_data_dataset.batch(self._per_partition_batch_size)
         if validation_dataset is not None:
             validation_dataset = validation_dataset.batch(self._per_partition_batch_size)
 
         shard_index = tf.placeholder(dtype=tf.int64, shape=())
-        tf_data_dataset = tf_data_dataset.shard(self.node_num, shard_index)
+        tf_data_dataset = tf_data_dataset.shard(self._shard_num, shard_index)
         if validation_dataset is not None:
-            validation_dataset = validation_dataset.shard(self.node_num, shard_index)
+            validation_dataset = validation_dataset.shard(self._shard_num, shard_index)
 
         self.shard_index = shard_index
         self.train_dataset = tf_data_dataset
@@ -738,16 +773,12 @@ class TFDataDataset(TFDataset):
         self.validation_dataset = validation_dataset
         self.validation_iterator = None
         self.validation_next_ops = None
-        self.data_count = data_count
-        self.validation_data_count = validation_data_count
 
         self._train_init_op_name = self.train_iterator.initializer.name
         self._train_output_names = [op.name for op in self.train_next_ops]
         if validation_dataset is not None:
             self.validation_iterator = self.validation_dataset.make_initializable_iterator()
             self.validation_next_ops = nest.flatten(self.validation_iterator.get_next())
-            assert validation_data_count is not None, "validation_data_count must be provided " \
-                                                      + "if validation_dataset is provided"
             self._val_init_op_name = self.validation_iterator.initializer.name
             self._val_output_names = [op.name for op in self.validation_next_ops]
 
@@ -758,32 +789,29 @@ class TFDataDataset(TFDataset):
 
     def get_prediction_data(self):
         jvalue = callZooFunc("float", "createMiniBatchRDDFromTFDataset",
-                             self.graph_def, self._train_init_op_name, self._train_output_names, self.output_types,
-                             self.data_count, self._per_partition_batch_size, self.shard_index.name)
+                             self.graph_def, self._train_init_op_name, self._train_output_names,
+                             self.output_types, self.shard_index.name)
         rdd = jvalue.value().toJavaRDD()
         return rdd
 
     def get_evaluation_data(self):
         jvalue = callZooFunc("float", "createMiniBatchRDDFromTFDataset",
                              self.graph_def, self._train_init_op_name, self._train_output_names,
-                             self.output_types, self.data_count, self._per_partition_batch_size,
-                             self.shard_index.name)
+                             self.output_types, self.shard_index.name)
         rdd = jvalue.value().toJavaRDD()
         return rdd
 
     def get_training_data(self):
         jvalue = callZooFunc("float", "createTFDataFeatureSet",
                              self.graph_def, self._train_init_op_name, self._train_output_names,
-                             self.output_types, self.data_count, self._per_partition_batch_size,
-                             self.shard_index.name)
+                             self.output_types, self.shard_index.name)
         return FeatureSet(jvalue=jvalue)
 
     def get_validation_data(self):
         if self.validation_dataset is not None:
             jvalue = callZooFunc("float", "createTFDataFeatureSet",
                                  self.graph_def, self._val_init_op_name, self._val_output_names,
-                                 self.output_types, self.validation_data_count,
-                                 self._per_partition_batch_size, self.shard_index.name)
+                                 self.output_types, self.shard_index.name)
             return FeatureSet(jvalue=jvalue)
         return None
 

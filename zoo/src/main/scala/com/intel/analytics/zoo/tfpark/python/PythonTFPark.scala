@@ -104,7 +104,6 @@ class PythonTFPark[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
                                       initIteratorOp: String,
                                       outputNames: JList[String],
                                       outputTypes: JList[Int],
-                                      dataCount: Int, batchSize: Int,
                                       shardIndex: String): RDDWrapper[TFMiniBatch] = {
     val types = outputTypes.asScala.map(TFUtils.tfenum2datatype).toVector
     val names = outputNames.asScala.toVector
@@ -139,13 +138,12 @@ class PythonTFPark[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
                              initIteratorOp: String,
                              outputNames: JList[String],
                              outputTypes: JList[Int],
-                             dataCount: Int, batchSize: Int,
                              shardIndex: String): TFDataFeatureSet = {
 
 
     TFDataFeatureSet(graph,
       initIteratorOp,
-      outputNames.asScala.toArray, outputTypes.asScala.toArray, dataCount, batchSize, shardIndex)
+      outputNames.asScala.toArray, outputTypes.asScala.toArray, shardIndex)
   }
 
   def createMiniBatchFeatureSetFromStringRDD(stringRDD: JavaRDD[Array[Byte]],
