@@ -43,6 +43,7 @@ object ClusterServing {
 
   def main(args: Array[String]): Unit = {
 
+    System.setProperty("bigdl.engineType", "mkldnn")
     val helper = new ClusterServingHelper()
     helper.initArgs()
     helper.initContext()
@@ -77,6 +78,7 @@ object ClusterServing {
     }
 
     val logger = helper.logger
+    val task = "object-detection"
 
     /**
      * For cut input stream, this variable is to avoid
@@ -170,7 +172,7 @@ object ClusterServing {
                 val localPartitionModel = bcModel.value
                 val result = localPartitionModel.doPredict(tensors.addSingletonDimension()).toTensor
 
-                val value = PostProcessing.getInfofromTensor(topN, result.squeeze())
+                val value = PostProcessing.getInfofromTensor(topN, result.squeeze(), task)
 
                 Record(path, value)
               })
@@ -229,9 +231,10 @@ object ClusterServing {
                 if (modelType == "openvino") {
                   threadTensor.squeeze(1)
                 }
+
                 (beginIndex - beginIndex until endIndex - beginIndex).toParArray.map(i => {
                   val value = PostProcessing.getInfofromTensor(topN,
-                    result.select(1, i + 1).squeeze())
+                    result.select(1, i + 1), task)
                   Record(batch(beginIndex + i)._1, value)
                 })
               })

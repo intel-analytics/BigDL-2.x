@@ -72,7 +72,7 @@ class ClusterServingHelper {
   var topN: Int = 1
   var nodeNum: Int = 1
   var coreNum: Int = 1
-  var maxParNum: Int = 16
+  var maxParNum: Int = batchSize
   var engineType: String = null
   var blasFlag: Boolean = false
 
