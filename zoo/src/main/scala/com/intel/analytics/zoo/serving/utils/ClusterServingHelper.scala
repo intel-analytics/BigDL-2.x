@@ -74,6 +74,7 @@ class ClusterServingHelper {
   var coreNum: Int = 1
   var engineType: String = null
   var blasFlag: Boolean = false
+  var task: String = null
 
   var dataShape = Array[Int]()
 
@@ -110,7 +111,7 @@ class ClusterServingHelper {
     // parse model field
     val modelConfig = configList.get("model").asInstanceOf[HM]
     val modelFolder = getYaml(modelConfig, "path", null)
-
+    task = getYaml(modelConfig, "task", null)
 
     parseModelType(modelFolder)
 

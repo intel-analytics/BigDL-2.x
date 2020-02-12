@@ -77,7 +77,7 @@ object ClusterServing {
     }
 
     val logger = helper.logger
-
+    val task = helper.task
     /**
      * For cut input stream, this variable is to avoid
      * unsafe cut of input stream, if cut current batch
@@ -170,7 +170,7 @@ object ClusterServing {
                 val localPartitionModel = bcModel.value
                 val result = localPartitionModel.doPredict(tensors.addSingletonDimension()).toTensor
 
-                val value = PostProcessing.getInfofromTensor(topN, result.squeeze())
+                val value = PostProcessing.getInfofromTensor(topN, result.squeeze(), task)
 
                 Record(path, value)
               })
@@ -228,7 +228,7 @@ object ClusterServing {
 
               (0 until thisBatchSize).toParArray.map(i => {
                 val value = PostProcessing.getInfofromTensor(topN,
-                  result.select(1, i + 1).squeeze())
+                  result.select(1, i + 1), task)
                 Record(pathByteBatch(i)._1, value)
               })
 

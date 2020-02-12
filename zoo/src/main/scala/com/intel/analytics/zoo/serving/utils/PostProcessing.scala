@@ -18,9 +18,32 @@ package com.intel.analytics.zoo.serving.utils
 
 import com.intel.analytics.bigdl.tensor.Tensor
 
-object PostProcessing {
-  def getInfofromTensor(topN: Int, result: Tensor[Float]): String = {
 
+/**
+ * Post processing util for Cluster Serving
+ */
+object PostProcessing {
+
+  /**
+   * Image classification post processing
+   * get result from 1-D Tensor of softmax
+   * and create a json string to store the result
+   * @param topN
+   * @param result
+   * @return
+   */
+  def getInfofromTensor(topN: Int, result: Tensor[Float], task: String): String = {
+    if (task == "classification") {
+      classification(topN, result)
+    }
+    else if (task == "object-detection") {
+      detection(topN, result)
+    }
+    else {
+      null
+    }
+  }
+  def classification(topN: Int, result: Tensor[Float]): String = {
     val outputSize = if (result.size(1) > topN) {
       topN
     } else {
@@ -39,5 +62,19 @@ object PostProcessing {
     value += "\"}"
     value
   }
+  def detection(topN: Int, result: Tensor[Float]): String = {
+    val outputSize = if (result.size(1) > topN) {
+      topN
+    } else {
+      result.size(1)
+    }
+    var value: String = "{"
 
+    value += "\"" + result.valueAt(1).toString + "\":\""
+    (2 until 7).foreach( i => {
+      value += result.valueAt(i).toString + ","
+    })
+    value += result.valueAt(7).toString + "\"}"
+    value
+  }
 }
