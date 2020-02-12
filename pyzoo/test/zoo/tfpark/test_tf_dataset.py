@@ -286,6 +286,20 @@ class TestTFDataset(ZooTestCase):
         opt = TFOptimizer.from_loss(loss, Adam())
         opt.optimize()
 
+    def test_tfdataset_with_tf_data_dataset(self):
+        import tensorflow_datasets as tfds
+        dataset = tfds.load("mnist", split="train")
+        dataset = dataset.map(lambda data: (tf.to_float(data['image']), data['label']))
+        dataset = TFDataset.from_tf_data_dataset(dataset, 60000, batch_size=128)
+        seq = tf.keras.models.Sequential([
+            tf.keras.layers.Flatten(),
+            tf.keras.layers.Dense(10)])
+        seq.compile(optimizer=tf.keras.optimizers.RMSprop(),
+                    loss='sparse_categorical_crossentropy',
+                    metrics=['accuracy'])
+        model = KerasModel(seq)
+        model.fit(dataset)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
