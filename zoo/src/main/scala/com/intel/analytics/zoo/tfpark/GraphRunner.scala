@@ -168,8 +168,9 @@ object GraphRunner {
             restorePathPlaceholder: String,
             saveOp: String,
             savePathPlaceholder: String,
-            config: Array[Byte]): GraphRunner =  {
-    new GraphRunner(graphDef, restoreOp, restorePathPlaceholder, saveOp, savePathPlaceholder, config)
+            config: Array[Byte]): GraphRunner = {
+    new GraphRunner(graphDef, restoreOp, restorePathPlaceholder,
+      saveOp, savePathPlaceholder, config)
   }
 
 }

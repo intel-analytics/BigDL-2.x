@@ -124,7 +124,7 @@ object TFDataFeatureSet {
                                  shardIdx: String,
                                  types: Vector[DataType],
                                  names: Vector[String]): Iterator[TFMiniBatch] = {
-    def intiIterator(): Unit =  {
+    def intiIterator(): Unit = {
       graphRunner.runTargets(Vector(initOp),
         inputs = Vector(Tensor.scalar[Float](idx.toFloat)),
         inputTypes = Vector(DataType.INT64),
