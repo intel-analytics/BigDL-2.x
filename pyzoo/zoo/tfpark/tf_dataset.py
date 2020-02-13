@@ -623,6 +623,22 @@ class TFDataset(object):
                        batch_per_thread=-1, hard_code_batch_size=False,
                        validation_df=None,
                        sequential_order=False, shuffle=True):
+        """
+        Create a TFDataset from a pyspark.sql.DataFrame.
+
+        :param df: the DataFrame for the dataset
+        :param feature_cols: a list of string, indicating which columns are used as features
+        :param labels_cols: a list of string, indicating which columns are used as labels
+        :param batch_size: the batch size, used for training, should be a multiple of
+        total core num
+        :param batch_per_thread: the batch size for each thread, used for inference or evaluation
+        :param hard_code_batch_size: whether to hard code the batch_size into tensorflow graph,
+        if True, the static size of the first dimension of the resulting tensors is
+        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
+        it is None.
+        :param validation_df: the DataFrame used for validation
+        :return: a TFDataset
+        """
         return DataFrameDataset(df, feature_cols, labels_cols, batch_size,
                                 batch_per_thread, hard_code_batch_size, validation_df,
                                 sequential_order, shuffle)
