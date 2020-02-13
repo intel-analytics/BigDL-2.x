@@ -200,11 +200,7 @@ object ClusterServing {
 
           // per batch size should be equal to OMP_NUM_THEADS to get max performance
 
-          val perBatchSize = if (modelType == "tensorflow" || modelType == "pytorch") {
-            16
-          } else {
-            coreNum
-          }
+          val perBatchSize = helper.batchSize
           val upperParNum = (coreNum - 1) / perBatchSize + 1
 
           pathBytesChunk.mapPartitions(pathBytes => {
