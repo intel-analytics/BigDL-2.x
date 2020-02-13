@@ -213,10 +213,10 @@ object ClusterServing {
                   Tensor[Float](batchSize, H, W, C)
                 }
                 val beginIndex = cpIndex * perBatchSize
-                val endIndex = if (beginIndex + perBatchSize < batchSize) {
+                val endIndex = if (beginIndex + perBatchSize < batch.size) {
                   beginIndex + perBatchSize
                 } else {
-                  batchSize
+                  batch.size
                 }
 
                 (beginIndex until endIndex).toParArray.foreach(nIndex => {
@@ -228,10 +228,11 @@ object ClusterServing {
                 val result = localModel.doPredict(threadTensor).toTensor
                 if (modelType == "openvino") {
                   threadTensor.squeeze(1)
+                  result.squeeze(1)
                 }
                 (beginIndex - beginIndex until endIndex - beginIndex).toParArray.map(i => {
                   val value = PostProcessing.getInfofromTensor(topN,
-                    result.select(1, i + 1).squeeze())
+                    result.select(1, i + 1))
                   Record(batch(beginIndex + i)._1, value)
                 })
               })
