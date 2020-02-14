@@ -398,14 +398,9 @@ then
     exit $exit_status
 fi
 
-sed "s/MaxIteration(5000)/MaxIteration(50)/g" \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_train.py \
+sed "s/MaxIteration(1000)/MaxIteration(5)/g;s/range(20)/range(2)/g" \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_train_and_evaluate.py \
     > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_train_tmp.py
-
-sed "s/model-5000/model-50/g" \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_eval.py \
-    | grep -v "plt" \
-    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_eval_tmp.py
 
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_train_tmp.py
 exit_status=$?
@@ -413,15 +408,6 @@ if [ $exit_status -ne 0 ];
 then
     clear_up
     echo "TFPark gan gan_train failed"
-    exit $exit_status
-fi
-
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_eval_tmp.py
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "TFPark gan gan_eval failed"
     exit $exit_status
 fi
 
