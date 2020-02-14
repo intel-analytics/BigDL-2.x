@@ -1038,11 +1038,6 @@ class TFNdarrayDataset(TFDataset):
         self.shuffle = shuffle
 
     def get_prediction_data(self):
-
-        def to_sample(t):
-            # print(t)
-            Sample.from_ndarray(
-                nest.flatten(t), np.array([0.0]))
         rdd = self.rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
         rdd_wrapper = callZooFunc("float", "zooRDDSampleToMiniBatch", rdd, self.batch_per_thread)
         return rdd_wrapper.value().toJavaRDD()
