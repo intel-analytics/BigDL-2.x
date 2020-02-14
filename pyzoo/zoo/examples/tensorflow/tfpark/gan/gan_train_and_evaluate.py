@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 from tensorflow_gan.examples.mnist.networks import *
 from tensorflow_gan.python.losses.losses_impl import *
 
-MODEL_DIR="/tmp/gan_model"
+MODEL_DIR = "/tmp/gan_model"
 NOISE_DIM = 64
 
 
@@ -63,7 +63,7 @@ def eval():
 if __name__ == "__main__":
     sc = init_nncontext()
     training_rdd = get_data_rdd("train", sc)
-    
+
     def input_fn():
         dataset = TFDataset.from_rdd(training_rdd,
                                      features=(tf.float32, (28, 28, 1)),
@@ -74,7 +74,9 @@ if __name__ == "__main__":
             return tf.random.normal(mean=0.0, stddev=1.0, shape=(batch_size, NOISE_DIM))
 
         dataset = dataset.map(
-            lambda tensors: ((noise_fn(tf.shape(tensors[0])[0]), tf.one_hot(tensors[1], depth=10)), tensors[0]))
+            lambda tensors: ((noise_fn(tf.shape(tensors[0])[0]),
+                              tf.one_hot(tensors[1], depth=10)),
+                             tensors[0]))
         return dataset
 
     opt = GANEstimator(

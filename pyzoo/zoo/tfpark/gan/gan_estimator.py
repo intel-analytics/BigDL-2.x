@@ -155,7 +155,7 @@ class GANEstimator(object):
 
             with tf.control_dependencies([increase_counter]):
                 train_op = tf.no_op()
-                
+
             with tf.Session() as sess:
                 sess.run(tf.global_variables_initializer())
                 saver = tf.train.Saver()
