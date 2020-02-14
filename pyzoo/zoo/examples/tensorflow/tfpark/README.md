@@ -152,6 +152,7 @@ Please first install tensorflow_gan to run this example. (pip install tensorflow
 
 ### Train and evaluation
 ```bash
+export MASTER=local[1]
 python gan/gan_train.py
 ```
 The training program will generate a TensorFlow checkpoint at /tmp/gan_model and every 1000 steps will generate 50 hand-written
@@ -171,7 +172,7 @@ Please first install tensorflow_gan to run this example. (pip install tensorflow
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] gan/gan_train.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[1] gan/gan_train.py
 ```
 
 The training program will generate a TensorFlow checkpoint at /tmp/gan_model and every 1000 steps will generate 50 hand-written
