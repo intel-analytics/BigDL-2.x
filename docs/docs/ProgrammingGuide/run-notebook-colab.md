@@ -1,8 +1,8 @@
-# Summary
+# Analytics Zoo on Colab
 
-With colaboratory, we can easily setup and run code in the cloud. How can we run Analytics Zoo [tutorials](https://github.com/intel-analytics/zoo-tutorials) or examples on colaboratory? 
+With [colaboratory](https://colab.research.google.com/), we can easily set up and run code in the cloud. How can we install Analytics Zoo and run notebooks on colaboratory? 
 
-First, load or create the notebook file in colaboratory. Then, prepare the environment. Only you need to prepare is installing JDK and Analytics Zoo. As installing analytics-zoo from pip will automatically install pyspark, you are recommended to not install pyspark anymore.  
+First, create or load a notebook file in colaboratory. Then, prepare the environment. Only you need to prepare is installing JDK and Analytics Zoo. As installing analytics-zoo from pip will automatically install pyspark, you are recommended to not install pyspark anymore.  
 
 ## Prepare Environment
 
@@ -24,19 +24,34 @@ os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-8-openjdk-amd64"
 You can add the following command on your colab file to install the analytics-zoo via pip easily:
 
 ```python
-# Install latest release version of Analytics-Zoo 
-# Installing analytics-zoo from pip will automatically install pyspark. 
+# Install latest release version of analytics-zoo 
+# Installing analytics-zoo from pip will automatically install pyspark, bigdl, and their dependencies.
 !pip install analytics-zoo
+```
+
+Begin your code. Call `init_nncontext()` that will create a SparkContext with optimized performance configuration and initialize the BigDL engine.
+
+```python
+from zoo.common.nncontext import*
+sc = init_nncontext()
+```
+
+Output on Colaboratoy:
+
+```
+Prepending /usr/local/lib/python3.6/dist-packages/bigdl/share/conf/spark-bigdl.conf to sys.path
+Adding /usr/local/lib/python3.6/dist-packages/zoo/share/lib/analytics-zoo-bigdl_0.10.0-spark_2.4.3-0.7.0-jar-with-dependencies.jar to BIGDL_JARS
+Prepending /usr/local/lib/python3.6/dist-packages/zoo/share/conf/spark-analytics-zoo.conf to sys.path
 ```
 
 ## Run Github Notebook on colaboratory
 
-If you would like to open the Notebook in a GitHub repo directly, the only thing you need to do is:
+If you would like to open Analytics Zoo Notebook in a GitHub repo directly, the only thing you need to do is:
 
 - Open the Notebook file on GitHub in a browser (So the URL ends in *.ipynb*).
 
 - Change the URL from https://github.com/full_path_to_the_notebook to https://colab.research.google.com/github/full_path_to_the_notebook
 
-  For example, change URL of tutorial https://github.com/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb to https://colab.research.google.com/github/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb 
+  For example, change the URL of Analytics Zoo tutorial https://github.com/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb to https://colab.research.google.com/github/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb 
 
-Then, prepare environment of Java8 and Analytics Zoo as instructions above. If the notebook is not authored, you could make a copy and run it within the instructions.
+Then, prepare the environment of Java8 and Analytics Zoo as instructions above at the beginning of the colab notebook. If you would like to save changes, you can make a copy to drive and run it within the instructions.
