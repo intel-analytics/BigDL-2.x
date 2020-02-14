@@ -285,7 +285,9 @@ class ClusterServingHelper {
    * @return
    */
   def loadInferenceModel(): InferenceModel = {
-    val parallelNum = if (blasFlag) coreNum else 1
+    val parallelNum = if (blasFlag) coreNum else {
+      (coreNum - 1) / batchSize + 1
+    }
     val model = new InferenceModel(parallelNum)
 
     // quantize model would not bring any drawback here
