@@ -234,7 +234,6 @@ class PythonZoo[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBigDLK
     testResultArray.toList.asJava
   }
 
-
   def setCoreNumber(num: Int): Unit = {
     EngineRef.setCoreNumber(num)
   }

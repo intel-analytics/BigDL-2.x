@@ -18,24 +18,15 @@ from zoo.tfpark.gan.gan_estimator import GANEstimator
 
 from zoo import init_nncontext
 from zoo.tfpark import TFDataset, ZooOptimizer
-from bigdl.dataset import mnist
 import numpy as np
 import matplotlib.pyplot as plt
 
 from tensorflow_gan.examples.mnist.networks import *
 from tensorflow_gan.python.losses.losses_impl import *
+import tensorflow_datasets as tfds
 
 MODEL_DIR = "/tmp/gan_model"
 NOISE_DIM = 64
-
-
-def get_data_rdd(dataset, sc):
-    (images_data, labels_data) = mnist.read_data_sets("/tmp/mnist", dataset)
-    image_rdd = sc.parallelize(images_data)
-    labels_rdd = sc.parallelize(labels_data)
-    rdd = image_rdd.zip(labels_rdd) \
-        .map(lambda rec_tuple: (((rec_tuple[0] / 255) - 0.5) * 2, np.array(rec_tuple[1])))
-    return rdd
 
 
 def eval():
@@ -62,25 +53,20 @@ def eval():
 
 if __name__ == "__main__":
     sc = init_nncontext()
-    training_rdd = get_data_rdd("train", sc)
 
     def input_fn():
-        dataset = TFDataset.from_rdd(training_rdd,
-                                     features=(tf.float32, (28, 28, 1)),
-                                     labels=(tf.int32, ()),
-                                     batch_size=36)
-        
-        def map_func(tensors):
-            images = tensors[0]
-            labels = tensors[1]
-            one_hot_label = tf.one_hot(labels, depth=10)
-            in_graph_batch_size = tf.shape(images)[0]
-            noise = tf.random.normal(mean=0.0, stddev=1.0, shape=(in_graph_batch_size, NOISE_DIM))
+        def map_func(data):
+            image = data['image']
+            label = data['label']
+            one_hot_label = tf.one_hot(label, depth=10)
+            noise = tf.random.normal(mean=0.0, stddev=1.0, shape=(NOISE_DIM,))
             generator_inputs = (noise, one_hot_label)
-            discriminator_inputs = images
+            discriminator_inputs = ((tf.to_float(image) / 255.0) - 0.5) * 2
             return (generator_inputs, discriminator_inputs)
 
-        dataset = dataset.map(map_func)
+        ds = tfds.load("mnist", split="train")
+        ds = ds.map(map_func)
+        dataset = TFDataset.from_tf_data_dataset(ds, batch_size=36)
         return dataset
 
     opt = GANEstimator(

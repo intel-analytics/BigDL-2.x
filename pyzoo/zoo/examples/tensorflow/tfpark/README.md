@@ -148,7 +148,7 @@ bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] t
 
 ## Run the GAN example after pip install
 
-Please first install tensorflow_gan to run this example. (pip install tensorflow_probability==0.7.0 tensorflow_gan==2.0.0)
+Please first install tensorflow_gan to run this example. (pip install tensorflow_probability==0.7.0 tensorflow_datasets==2.0.0 tensorflow_gan==2.0.0)
 
 ### Train and evaluation
 ```bash
