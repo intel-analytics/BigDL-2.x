@@ -69,14 +69,18 @@ if __name__ == "__main__":
                                      features=(tf.float32, (28, 28, 1)),
                                      labels=(tf.int32, ()),
                                      batch_size=36)
+        
+        def map_func(tensors):
+            images = tensors[0]
+            labels = tensors[1]
+            one_hot_label = tf.one_hot(labels, depth=10)
+            in_graph_batch_size = tf.shape(images)[0]
+            noise = tf.random.normal(mean=0.0, stddev=1.0, shape=(in_graph_batch_size, NOISE_DIM))
+            generator_inputs = (noise, one_hot_label)
+            discriminator_inputs = images
+            return (generator_inputs, discriminator_inputs)
 
-        def noise_fn(batch_size):
-            return tf.random.normal(mean=0.0, stddev=1.0, shape=(batch_size, NOISE_DIM))
-
-        dataset = dataset.map(
-            lambda tensors: ((noise_fn(tf.shape(tensors[0])[0]),
-                              tf.one_hot(tensors[1], depth=10)),
-                             tensors[0]))
+        dataset = dataset.map(map_func)
         return dataset
 
     opt = GANEstimator(
