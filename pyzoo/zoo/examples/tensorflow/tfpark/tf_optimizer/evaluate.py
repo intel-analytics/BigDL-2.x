@@ -21,7 +21,6 @@ import numpy as np
 import sys
 
 from bigdl.dataset import mnist
-from bigdl.dataset.transformer import *
 
 sys.path.append("/tmp/models/slim")  # add the slim library
 from nets import lenet
