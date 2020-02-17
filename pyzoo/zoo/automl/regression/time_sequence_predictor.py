@@ -84,6 +84,35 @@ class SmokeRecipe(Recipe):
             "num_samples": 1,
         }
 
+class MTNetSmokeRecipe(Recipe):
+    """
+    A very simple Recipe for smoke test that runs one epoch and one iteration
+    with only 1 random sample.
+    """
+    def __init__(self):
+        pass
+
+    def search_space(self, all_available_features):
+        return {
+            "selected_features": all_available_features,
+            "model": "MTNet",
+            "lr": 0.001,
+            "batch_size": 16,
+            "epochs": 1,
+            "dropout": 0.2 ,
+            "time_step": RandomSample(lambda spec: np.random.choice([3, 4], size=1)[0]),
+            "filter_size": 2,
+            "long_num": RandomSample(lambda spec: np.random.choice([3, 4], size=1)[0]),
+            "ar_size": RandomSample(lambda spec: np.random.choice([2, 3], size=1)[0]),
+            "past_seq_len": RandomSample(lambda spec: (spec.config.long_num + 1) * spec.config.time_step),
+        }
+
+    def runtime_params(self):
+        return {
+            "training_iteration": 1,
+            "num_samples": 1,
+        }
+
 
 class GridRandomRecipe(Recipe):
     """
@@ -557,7 +586,8 @@ class TimeSequencePredictor(object):
 
 if __name__ == "__main__":
     try:
-        dataset_path = os.getenv("ANALYTICS_ZOO_HOME") + "/bin/data/NAB/nyc_taxi/nyc_taxi.csv"
+        # dataset_path = os.getenv("ANALYTICS_ZOO_HOME") + "/bin/data/NAB/nyc_taxi/nyc_taxi.csv"
+        dataset_path = "~/sources/analytics-zoo/dist/bin/data/NAB/nyc_taxi/nyc_taxi.csv"
         df = pd.read_csv(dataset_path)
     except Exception as e:
         print("nyc_taxi.csv doesn't exist")
@@ -633,7 +663,7 @@ if __name__ == "__main__":
                        metric="mse",
                        # recipe=BayesRecipe(num_rand_samples=2, look_back=(2, 4)),
                        # recipe=RandomRecipe(look_back=(2, 4)),
-                       recipe=SmokeRecipe(),
+                       recipe=MTNetSmokeRecipe(),
                        mc=mc,
                        distributed=distributed,
                        hdfs_url=hdfs_url)

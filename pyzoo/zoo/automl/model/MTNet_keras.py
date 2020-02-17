@@ -280,7 +280,7 @@ class AttentionRNN(Layer):
 
 class MTNetKeras:
 
-    def __init__(self, name='MTNet'):
+    def __init__(self, check_optional_config=True, future_seq_len=1):
 
         """
         Constructor of MTNet model
@@ -516,7 +516,7 @@ class MTNetKeras:
         if self.epochs != epochs:
             self.epochs = epochs
         if self.metrics is None:
-            self.metrics = ['mean_absolute_error']
+            self.metrics = ['mean_squared_error']
 
     def fit_eval(self, x, y, validation_data=None, mc=False, metrics=None,
                  epochs=10, verbose=0, **config):
@@ -661,8 +661,8 @@ if __name__ == "__main__":
         'selected_features': ['IS_WEEKEND(datetime)', 'MONTH(datetime)', 'IS_AWAKE(datetime)',
                               'HOUR(datetime)'],
         'batch_size': 64,
-        'epochs': 1,
-        "time_step": 3,
+        'epochs': 10,
+        "time_step": 4,
         "long_num": 3,
         "cnn_height": 2,
         'ar_window': 2,
