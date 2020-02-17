@@ -203,24 +203,10 @@ class AttentionRNNWrapper(Wrapper):
 
 
 class AttentionRNN(Layer):
-    def __init__(self, hidden_sizes, input_keep_prob, output_keep_prob, num, batch_size, Tc, **kwargs):
+    def __init__(self, hidden_sizes, dropout, num, Tc, training=None, **kwargs):
         super(AttentionRNN, self).__init__(**kwargs)
-        # # tensorflow
-        # rnns = [tf.nn.rnn_cell.GRUCell(h_size, activation=tf.nn.relu) for h_size in
-        #         hidden_sizes]
-        # # dropout
-        # if input_keep_prob < 1 or output_keep_prob < 1:
-        #     rnns = [tf.nn.rnn_cell.DropoutWrapper(rnn,
-        #                                           input_keep_prob=input_keep_prob,
-        #                                           output_keep_prob=output_keep_prob)
-        #             for rnn in rnns]
-        #
-        # if len(rnns) > 1:
-        #     self.rnns = tf.nn.rnn_cell.MultiRNNCell(rnns)
-        # else:
-        #     self.rnns = rnns[0]
         # keras
-        rnn_cells = [GRUCell(h_size, activation="relu", dropout=1 - input_keep_prob)
+        rnn_cells = [GRUCell(h_size, activation="relu", dropout=dropout)
                      for h_size in hidden_sizes]
         # output dropout of GRUCell is omitted since the output_keep_prob is 1 in all configs.
         self.rnns = StackedRNNCells(rnn_cells)
@@ -228,6 +214,7 @@ class AttentionRNN(Layer):
         self.last_rnn_size = hidden_sizes[-1]
         self.num = num
         self.Tc = Tc
+        self.training=training
 
     def build(self, input_shape):
         # input_shape is <batch_size, Tc, hidden_size>
@@ -284,7 +271,7 @@ class AttentionRNN(Layer):
                 # <batch_size, en_conv_hidden_size>
                 x_t = tf.reshape(x_t, shape=[-1, self.last_rnn_size])
 
-                h_state, s_state = self.rnns(x_t, s_state)
+                h_state, s_state = self.rnns(x_t, s_state, training=self.training)
 
             res_hstates = res_hstates.write(k, h_state)
 
@@ -317,10 +304,13 @@ class MTNetKeras:
         self.batch_size = None
 
         self.saved_configs = {"cnn_height", "long_num", "time_step", "ar_window",
-                              "cnn_hid_size", "rnn_hid_sizes", "dropout", "lr", "batch_size", "epochs",
+                              "cnn_hid_size", "rnn_hid_sizes", "dropout", "lr", "batch_size",
+                              "epochs", "metrics", "mc",
                               "feature_num", "output_dim"}
         self.model = None
-        self.metric = None
+        self.metrics = None
+        self.mc=None
+        self.epochs=None
 
     def _get_configs(self, rs=False, config=None):
         if rs:
@@ -328,6 +318,9 @@ class MTNetKeras:
             assert config_names.issuperset(self.saved_configs)
             # assert config_names.issuperset(self.lr_decay_configs) or \
             #        config_names.issuperset(self.lr_configs)
+            self.epochs = config.get("epochs")
+            self.metrics = config.get("metrics")
+            self.mc = config.get("mc")
             self.feature_num = config.get("feature_num")
             self.output_dim = config.get("output_dim")
         self.time_step = config.get("time_step", 1)
@@ -341,7 +334,6 @@ class MTNetKeras:
 
         self.batch_size = config.get("batch_size", 64)
         self.lr = config.get('lr', 0.001)
-        self.epochs = config.get('epochs', 10)
         self._check_configs()
 
     def _check_configs(self):
@@ -365,6 +357,7 @@ class MTNetKeras:
         :param config:
         :return:
         """
+        training = True if mc else None
         # long-term time series historical data inputs
         long_input = Input(shape=(self.long_num, self.time_step, self.feature_num))
         # short-term time series historical data
@@ -372,13 +365,13 @@ class MTNetKeras:
 
         # ------- no-linear component----------------
         # memory and context : (batch, long_num, last_rnn_size)
-        memory = self.__encoder(long_input, num=self.long_num, name='memory')
+        memory = self.__encoder(long_input, num=self.long_num, name='memory', training=training)
         # memory = memory_model(long_input)
-        context = self.__encoder(long_input, num=self.long_num, name='context')
+        context = self.__encoder(long_input, num=self.long_num, name='context', training=training)
         # context = context_model(long_input)
         # query: (batch, 1, last_rnn_size)
         query_input = Reshape((1, self.time_step, self.feature_num), name='reshape_query')(short_input)
-        query = self.__encoder(query_input, num=1, name='query')
+        query = self.__encoder(query_input, num=1, name='query', training=training)
         # query = query_model(query_input)
 
         # prob = memory * query.T, shape is (long_num, 1)
@@ -431,7 +424,7 @@ class MTNetKeras:
 
         return self.model
 
-    def __encoder(self, input, num, name='Encoder'):
+    def __encoder(self, input, num, name='Encoder', training=None):
         """
             Treat batch_size dimension and num dimension as one batch_size dimension
             (batch_size * num).
@@ -455,32 +448,24 @@ class MTNetKeras:
                          kernel_initializer=TruncatedNormal(stddev=0.1),
                          bias_initializer=Constant(0.1),
                          activation="relu")(reshaped_input)
-        cnn_out = Dropout(self.dropout)(cnn_out)
+        cnn_out = Dropout(self.dropout)(cnn_out, training=training)
 
         rnn_input = Lambda(lambda x:
                                 K.reshape(x, (-1, num, Tc, self.cnn_hid_size)),)(cnn_out)
 
-        # hidden_sizes, input_keep_prob, output_keep_prob, num, batch_size, Tc
+        # use AttentionRNN
         output = AttentionRNN(hidden_sizes=self.rnn_hid_sizes,
-                              input_keep_prob=1-self.dropout,
-                              output_keep_prob=1,
+                              dropout=self.dropout,
                               num=num,
                               Tc=Tc,
-                              batch_size=self.batch_size,
+                              training=training,
                               name=name + 'attention_rnn')(rnn_input)
         return output
 
-        # rnn inputs
-        # <batch_size, n, conv_out, en_conv_hidden_size>
-        # rnn_input = Reshape((num, Tc, self.cnn_hid_size), name="first_reshape_{}".format(np.random.random_integers(0, 100)))(cnn_out)
-
+        # # use AttentionRNNWrapper
         # rnn_cells = [GRUCell(h_size, activation="relu", dropout=self.dropout)
         #              for h_size in self.rnn_hid_sizes]
         # test_cell = GRUCell(self.last_rnn_size, activation="relu", dropout=self.dropout)
-        # # output dropout of GRUCell is omitted since the output_keep_prob is 1 in all configs.
-        # # rnn_cell = StackedRNNCells(rnn_cells)
-        # # attention_rnn_cell = AttentionCellWrapper(test_cell)
-        # # attention_rnn = RNN(attention_rnn_cell)
         #
         # attention_rnn = AttentionRNNWrapper(RNN(rnn_cells),
         #                                     weight_initializer=TruncatedNormal(stddev=0.1))
@@ -491,7 +476,7 @@ class MTNetKeras:
         #     # input_i = (batch, conv_hid_size, Tc)
         #     input_i = Permute((2, 1), input_shape=[Tc, self.cnn_hid_size])(input_i)
         #     # output = (batch, last_rnn_hid_size)
-        #     output_i = attention_rnn(input_i)
+        #     output_i = attention_rnn(input_i, training=training)
         #     # output = (batch, 1, last_rnn_hid_size)
         #     output_i = Reshape((1, -1))(output_i)
         #     outputs.append(output_i)
@@ -519,18 +504,28 @@ class MTNetKeras:
             validation_data = ([long_val, short_val], val_y)
         return [long_term, short_term], y, validation_data
 
+    def _get_attributes(self, mc, metrics, epochs, config):
+        # for incremental fitting after restore
+        if self.config is None:
+            self.config = config
+            self._get_configs(config=self.config)
+        if self.mc != mc:
+            self.mc = mc
+        if self.metrics != metrics and metrics is not None:
+            self.metrics = metrics
+        if self.epochs != epochs:
+            self.epochs = epochs
+        if self.metrics is None:
+            self.metrics = ['mean_absolute_error']
+
     def fit_eval(self, x, y, validation_data=None, mc=False, metrics=None,
-                 epochs=100, verbose=0, config=None):
+                 epochs=10, verbose=0, **config):
+        self._get_attributes(mc=mc, metrics=metrics, epochs=epochs, config=config)
         x, y, validation_data = self._pre_processing(x, y, validation_data)
-        if metrics is None:
-            metrics = ['mean_absolute_error', tf.keras.metrics.RootMeanSquaredError()]
-        self.config = config
-        self._get_configs(config=self.config)
-        # x, y, validation_data = self._pre_processing(x, y, validation_data)
         # if model is not initialized, __build the model
         if self.model is None:
             st = time.time()
-            self._build_train(mc=mc, metrics=metrics)
+            self._build_train(mc=self.mc, metrics=self.metrics)
             end = time.time()
             print("Build model took {}s".format(end - st))
 
@@ -542,7 +537,8 @@ class MTNetKeras:
         st = time.time()
         hist = self.model.fit(x, y, validation_data=validation_data,
                               batch_size=self.batch_size,
-                              epochs=epochs)
+                              epochs=self.epochs,
+                              verbose=verbose)
         #
         # hist = self.model.fit_generator(generator=train_data,
         #                                 validation_data=validation_data,
@@ -551,9 +547,9 @@ class MTNetKeras:
         if validation_data is None:
             # get train metrics
             # results = self.model.evaluate(x, y)
-            result = hist.history.get(metrics[0])[-1]
+            result = hist.history.get(self.metrics[0])[-1]
         else:
-            result = hist.history.get('val_' + str(metrics[0]))[-1]
+            result = hist.history.get('val_' + str(self.metrics[0]))[-1]
         return result
 
     def evaluate(self, x, y, metrics=['mse']):
@@ -573,12 +569,21 @@ class MTNetKeras:
         return [Evaluator.evaluate(m, y, y_pred, multioutput=multioutput) for m in metrics]
 
     def predict(self, x, mc=False):
-        # input_x = self._gen_hist_inputs(x)
-        # return self.model.predict(input_x)
-        return self.model.predict(x)
+        input_x = self._gen_hist_inputs(x)
+        return self.model.predict(input_x)
+
+    def predict_with_uncertainty(self, x, n_iter=100):
+        result = np.zeros((n_iter,) + (x.shape[0], self.output_dim))
+
+        for i in range(n_iter):
+            result[i, :, :] = self.predict(x, mc=True)
+
+        prediction = result.mean(axis=0)
+        uncertainty = result.std(axis=0)
+        return prediction, uncertainty
 
     def save(self, model_path, config_path):
-        self.model.save(model_path)
+        self.model.save_weights(model_path)
         config_to_save = {"cnn_height": self.cnn_height,
                           "long_num": self.long_num,
                           "time_step": self.time_step,
@@ -588,9 +593,13 @@ class MTNetKeras:
                           "dropout": self.dropout,
                           "lr": self.lr,
                           "batch_size": self.batch_size,
+                          # for fit eval
                           "epochs": self.epochs,
+                          # todo: can not serialize metrics unless all elements are str
+                          "metrics": self.metrics,
+                          "mc": self.mc,
                           "feature_num": self.feature_num,
-                          "output_dim": self.output_dim
+                          "output_dim": self.output_dim,
                           }
         assert set(config_to_save.keys()) == self.saved_configs, \
             "The keys in config_to_save is not the same as self.saved_configs." \
@@ -617,12 +626,10 @@ class MTNetKeras:
      :param model_path: the model file
      :param config: the trial config
      """
-     if not self.built:
-         # build model
-         self._get_configs(rs=True, config=config)
-         self.model = tf.keras.models.load_model(model_path)
-
-     self.built = 1
+     self.config = config
+     self._get_configs(rs=True, config=config)
+     self._build_train(mc=self.mc, metrics=self.metrics)
+     self.model.load_weights(model_path)
 
     def _get_optional_configs(self):
         return {
@@ -635,60 +642,68 @@ class MTNetKeras:
         }
 
 
-# if __name__ == "__main__":
-#     from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
-#     from zoo.automl.common.util import split_input_df
-#
-#     import os
-#     import pandas as pd
-#
-#     dataset_path = os.path.join("/home/shan/sources/automl-analytics-zoo/dist",
-#                                 "bin/data/NAB/nyc_taxi/nyc_taxi.csv")
-#     df = pd.read_csv(dataset_path)
-#     # df = pd.read_csv('automl/data/nyc_taxi.csv')
-#     future_seq_len = 1
-#     model = MTNetKeras(check_optional_config=False, future_seq_len=future_seq_len)
-#     train_df, val_df, test_df = split_input_df(df, val_split_ratio=0.1, test_split_ratio=0.1)
-#     feature_transformer = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len)
-#     config = {
-#         'selected_features': ['IS_WEEKEND(datetime)', 'MONTH(datetime)', 'IS_AWAKE(datetime)',
-#                               'HOUR(datetime)'],
-#         'batch_size': 64,
-#         'epochs': 5,
-#         "time_step": 6,
-#         "long_num": 10,
-#         "cnn_height": 2,
-#         'ar_window': 2,
-#         'dropout': 0.2,
-#         # past_seq_len = (n + 1) * T
-#     }
-#     config['past_seq_len'] = (config['long_num'] + 1) * config['time_step']
-#     x_train, y_train = feature_transformer.fit_transform(train_df, **config)
-#     x_val, y_val = feature_transformer.transform(val_df, is_train=True)
-#     x_test, y_test = feature_transformer.transform(test_df, is_train=True)
-#     # y_train = np.c_[y_train, y_train/2]
-#     # y_test = np.c_[y_test, y_test/2]
-#     for i in range(1):
-#         print("fit_eval:", model.fit_eval(x_train, y_train, validation_data=(x_val, y_val), **config))
-#
-#     print("evaluate:", model.evaluate(x_test, y_test))
-#     y_pred = model.predict(x_test)
-#
-#     # dirname = "tmp"
-#     # model_1 = MTNet(check_optional_config=False)
-#     # save(dirname, model=model)
-#     # restore(dirname, model=model_1, config=config)
-#     # predict_after = model_1.predict(x_test)
-#     # assert np.allclose(y_pred, predict_after), \
-#     #     "Prediction values are not the same after restore: " \
-#     #     "predict before is {}, and predict after is {}".format(y_pred,
-#     #                                                            predict_after)
-#     # new_config = {'epochs': 1}
-#     # for i in range(2):
-#     #     model_1.fit_eval(x_train, y_train, **new_config)
-#     #     print("evaluate:", model_1.evaluate(x_test, y_test))
-#     # import shutil
-#     # shutil.rmtree("tmp")
+if __name__ == "__main__":
+    from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
+    from zoo.automl.common.util import split_input_df
+
+    import os
+    import pandas as pd
+
+    dataset_path = os.path.join("~/sources/analytics-zoo/dist",
+                                "bin/data/NAB/nyc_taxi/nyc_taxi.csv")
+    df = pd.read_csv(dataset_path)
+    # df = pd.read_csv('automl/data/nyc_taxi.csv')
+    future_seq_len = 1
+    model = MTNetKeras()
+    train_df, val_df, test_df = split_input_df(df, val_split_ratio=0.1, test_split_ratio=0.1)
+    feature_transformer = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len)
+    config = {
+        'selected_features': ['IS_WEEKEND(datetime)', 'MONTH(datetime)', 'IS_AWAKE(datetime)',
+                              'HOUR(datetime)'],
+        'batch_size': 64,
+        'epochs': 1,
+        "time_step": 3,
+        "long_num": 3,
+        "cnn_height": 2,
+        'ar_window': 2,
+        'dropout': 0.2,
+        # past_seq_len = (n + 1) * T
+    }
+    config['past_seq_len'] = (config['long_num'] + 1) * config['time_step']
+    x_train, y_train = feature_transformer.fit_transform(train_df, **config)
+    x_val, y_val = feature_transformer.transform(val_df, is_train=True)
+    x_test, y_test = feature_transformer.transform(test_df, is_train=True)
+    # y_train = np.c_[y_train, y_train/2]
+    # y_test = np.c_[y_test, y_test/2]
+
+    mc = True
+    print("fit_eval:", model.fit_eval(x_train, y_train, validation_data=(x_val, y_val), verbose=1, mc=mc, **config))
+
+    print("evaluate:", model.evaluate(x_test, y_test))
+    y_pred = model.predict(x_test)
+
+    if mc:
+        pred, uncertainty = model.predict_with_uncertainty(x_test, 2)
+        assert np.any(uncertainty)
+
+    else:
+        import shutil
+        try:
+            dirname = "tmp"
+            model_1 = MTNetKeras()
+            save(dirname, model=model)
+
+            restore(dirname, model=model_1, config=config)
+            predict_after = model_1.predict(x_test)
+            assert np.allclose(y_pred, predict_after), \
+                "Prediction values are not the same after restore: " \
+                "predict before is {}, and predict after is {}".format(y_pred,
+                                                                       predict_after)
+            new_config = {'epochs': 1}
+            model_1.fit_eval(x_train, y_train, **new_config)
+            print("evaluate:", model_1.evaluate(x_test, y_test))
+        finally:
+            shutil.rmtree("tmp")
 #
 #
 #     from matplotlib import pyplot as plt
