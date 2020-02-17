@@ -462,12 +462,6 @@ class TFDataset(object):
         Create a TFDataset from tfrecord files.
         :param sc: The SparkContext
         :param file_path: comma seperated tfrecord file(s) path
-            structure of tensors. Follows the signature:
-            * Args:
-                * `example`: a string TensorFlow tensor representing a single record
-            * Returns:
-                a tuple or dictionary of output tensors and the output tensors must be
-                of numeric type
         :param batch_size: the batch size, used for training, should be a multiple of
         total core num
         :param batch_per_thread: the batch size for each thread, used for inference or evaluation
