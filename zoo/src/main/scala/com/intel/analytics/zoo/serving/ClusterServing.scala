@@ -120,6 +120,16 @@ object ClusterServing {
     val inputThreshold = 0.6 * 0.8
     val cutRatio = 0.5
 
+    val upperParNum = (coreNum - 1) / batchSize + 1
+
+    val omp = if (sys.env.contains("OMP_NUM_THREADS")) {
+      sys.env("OMP_NUM_THREADS")
+    } else {
+      1
+    }
+
+    logger.info(s"Core number is $coreNum, Using batchSize $batchSize, OMP $omp, model number $upperParNum")
+
     val query = images.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
 
       /**
@@ -200,34 +210,36 @@ object ClusterServing {
 
           // per batch size should be equal to OMP_NUM_THEADS to get max performance
 
-          val perBatchSize = helper.batchSize
-          val upperParNum = (coreNum - 1) / perBatchSize + 1
+          val tensorArray = new Array[Tensor[Float]](upperParNum)
+          (0 until upperParNum).foreach(i => {
+            if (chwFlag) {
+              tensorArray(i) = Tensor[Float](batchSize, C, H, W)
+            } else {
+              tensorArray(i) = Tensor[Float](batchSize, H, W, C)
+            }
+          })
 
           pathBytesChunk.mapPartitions(pathBytes => {
             pathBytes.grouped(coreNum).flatMap(batch => {
-              (0 until upperParNum).toParArray.flatMap(cpIndex => {
+              (0 until upperParNum).toParArray.flatMap(modelIndex => {
                 val localModel = bcModel.value
-                val threadTensor = if (chwFlag) {
-                  Tensor[Float](batchSize, C, H, W)
-                } else {
-                  Tensor[Float](batchSize, H, W, C)
-                }
-                val beginIndex = cpIndex * perBatchSize
-                val endIndex = if (beginIndex + perBatchSize < batch.size) {
-                  beginIndex + perBatchSize
+
+                val beginIndex = modelIndex * batchSize
+                val endIndex = if (beginIndex + batchSize < batch.size) {
+                  beginIndex + batchSize
                 } else {
                   batch.size
                 }
 
                 (beginIndex until endIndex).toParArray.foreach(nIndex => {
-                  threadTensor.select(1, nIndex - beginIndex + 1).copy(batch(nIndex)._2)
+                  tensorArray(modelIndex).select(1, nIndex - beginIndex + 1).copy(batch(nIndex)._2)
                 })
                 if (modelType == "openvino") {
-                  threadTensor.addSingletonDimension()
+                  tensorArray(modelIndex).addSingletonDimension()
                 }
-                val result = localModel.doPredict(threadTensor).toTensor
+                val result = localModel.doPredict(tensorArray(modelIndex)).toTensor
                 if (modelType == "openvino") {
-                  threadTensor.squeeze(1)
+                  tensorArray(modelIndex).squeeze(1)
                   result.squeeze(1)
                 }
                 (beginIndex - beginIndex until endIndex - beginIndex).toParArray.map(i => {
@@ -304,6 +316,7 @@ object ClusterServing {
               .format("org.apache.spark.sql.redis")
               .option("table", "result")
               .option("key.column", "uri")
+              .option("iterator.grouping.size", batchSize)
               .mode(SaveMode.Append).save()
 
             errFlag = false
