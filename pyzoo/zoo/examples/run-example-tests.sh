@@ -372,7 +372,8 @@ if [ -f analytics-zoo-data/data/WikiQAProcessed.zip ]
 then
     echo "analytics-zoo-data/data/WikiQAProcessed.zip already exists"
 else
-    wget -nv https://s3.amazonaws.com/analytics-zoo-data/WikiQAProcessed.zip -P analytics-zoo-data/data
+    echo "downloading WikiQAProcessed.zip"
+    wget -nv $FTP_URI/analytics-zoo-data/WikiQAProcessed.zip -P analytics-zoo-data/data
     unzip -q analytics-zoo-data/data/WikiQAProcessed.zip -d analytics-zoo-data/data/
 fi
 
