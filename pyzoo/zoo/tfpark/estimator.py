@@ -298,8 +298,7 @@ class TFEstimator(object):
                         def zip_key(outs, keys):
                             if isinstance(outs, list):
                                 error_msg = "output length is " \
-                                             + "{} but keys length is {}".format(len(outs),
-                                                                                 len(keys))
+                                    + "{} but keys length is {}".format(len(outs), len(keys))
                                 assert len(outs) == len(keys), error_msg
                             else:
                                 outs = [outs]
@@ -308,7 +307,8 @@ class TFEstimator(object):
                                 res_dict[key] = out
                             return res_dict
 
-                        pred_keys = sorted(spec.predictions.keys()) if not predict_keys else predict_keys
+                        pred_keys = sorted(spec.predictions.keys()) if not predict_keys \
+                            else predict_keys
                         predictions = predictions.map(lambda res: zip_key(res, pred_keys))
                     return predictions
 

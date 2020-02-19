@@ -40,7 +40,8 @@ def make_input_fn(data_df, label_df, mode, batch_size=-1, batch_per_thread=-1):
     else:
         def input_function():
             ds = tf.data.Dataset.from_tensor_slices((dict(data_df),))
-            ds = TFDataset.from_tf_data_dataset(dataset=ds, batch_size=batch_size, batch_per_thread=batch_per_thread)
+            ds = TFDataset.from_tf_data_dataset(dataset=ds, batch_size=batch_size,
+                                                batch_per_thread=batch_per_thread)
             return ds
     return input_function
 
@@ -72,7 +73,7 @@ if __name__ == "__main__":
 
     linear_est = tf.estimator.LinearClassifier(feature_columns=feature_columns,
                                                optimizer=ZooOptimizer(tf.train.FtrlOptimizer(0.2)),
-                                             model_dir="/tmp/estimator/linear")
+                                               model_dir="/tmp/estimator/linear")
     zoo_est = TFEstimator(linear_est)
     train_input_fn = make_input_fn(dftrain, y_train,
                                    mode=tf.estimator.ModeKeys.TRAIN,

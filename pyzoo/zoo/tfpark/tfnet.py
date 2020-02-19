@@ -289,7 +289,8 @@ class TFNet(Layer):
                 input_dict = dict([(t.name, t) for t in inputs])
                 output_dict = dict([(t.name, t) for t in outputs])
                 tf.saved_model.simple_save(sess, temp, inputs=input_dict, outputs=output_dict)
-                net = TFNet.from_saved_model(temp, inputs=[t.name for t in inputs], outputs=[t.name for t in outputs],
+                net = TFNet.from_saved_model(temp, inputs=[t.name for t in inputs],
+                                             outputs=[t.name for t in outputs],
                                              tf_session_config=tf_session_config, init_op=init_op)
         finally:
             import shutil
