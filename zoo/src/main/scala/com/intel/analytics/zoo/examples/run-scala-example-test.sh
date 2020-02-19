@@ -14,7 +14,7 @@ if [ -d analytics-zoo-data/data/object-detection-coco ]
 then
     echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
-    wget -q $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data/
+    wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data/
     unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/
 fi
 
@@ -22,7 +22,7 @@ if [ -d analytics-zoo-models/tfnet ]
 then
     echo "analytics-zoo-model/tfnet already exists"
 else
-    wget -q $FTP_URI/analytics-zoo-models/tfnet/tfnet.zip -P analytics-zoo-models/tfnet/
+    wget $FTP_URI/analytics-zoo-models/tfnet/tfnet.zip -P analytics-zoo-models/tfnet/
     unzip -q analytics-zoo-models/tfnet/tfnet.zip -d analytics-zoo-models/tfnet/
 fi
 
@@ -48,21 +48,21 @@ if [ -d analytics-zoo-data/data/mnist ]
 then
     echo "analytics-zoo-data/data/mnist already exists"
 else
-    wget -q $FTP_URI/analytics-zoo-data/data/mnist.zip -P analytics-zoo-data/data
+    wget $FTP_URI/analytics-zoo-data/data/mnist.zip -P analytics-zoo-data/data
     unzip -q analytics-zoo-data/data/mnist.zip -d analytics-zoo-data/data/
 fi
 
 if [ -d analytics-zoo-data/data/cifar10 ];then
     echo "analytics-zoo-data/data/cifar10 already exists"
 else
-    wget -q $FTP_URI/analytics-zoo-data/data/cifar10.zip -P analytics-zoo-data/data
+    wget $FTP_URI/analytics-zoo-data/data/cifar10.zip -P analytics-zoo-data/data
     unzip -q analytics-zoo-data/data/cifar10.zip -d analytics-zoo-data/data/
 fi
 
 if [ -d analytics-zoo-models/localestimator/saved_model4 ];then
     echo "analytics-zoo-models/localestimator/saved_model4 already exists"
 else
-    wget -q $FTP_URI/analytics-zoo-models/localestimator/saved_model4.zip  -P analytics-zoo-models/localestimator
+    wget $FTP_URI/analytics-zoo-models/localestimator/saved_model4.zip  -P analytics-zoo-models/localestimator
     unzip -q analytics-zoo-models/localestimator/saved_model4.zip -d analytics-zoo-models/localestimator/
 fi
 
@@ -122,14 +122,14 @@ echo "#3.1 start example test for streaming Object Detection"
 if [ -d analytics-zoo-data/data/object-detection-coco ];then
     echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
-    wget -q $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
+    wget $FTP_URI/analytics-zoo-data/data/object-detection-coco.zip -P analytics-zoo-data/data
     unzip -q analytics-zoo-data/data/object-detection-coco.zip -d analytics-zoo-data/data/
 fi
 
 if [ -f analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model ];then
     echo "analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model already exists"
 else
-    wget -q ${FTP_URI}/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model -P analytics-zoo-models/object-detection/
+    wget ${FTP_URI}/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model -P analytics-zoo-models/object-detection/
 fi
 
 mkdir output
@@ -179,7 +179,7 @@ if [ -d analytics-zoo-data/data/streaming/text-model ]
 then
     echo "analytics-zoo-data/data/streaming/text-model already exists"
 else
-    wget -q $FTP_URI/analytics-zoo-data/data/streaming/text-model.zip -P analytics-zoo-data/data/streaming/
+    wget $FTP_URI/analytics-zoo-data/data/streaming/text-model.zip -P analytics-zoo-data/data/streaming/
     unzip -q analytics-zoo-data/data/streaming/text-model.zip -d analytics-zoo-data/data/streaming/
 fi
 
@@ -217,7 +217,7 @@ if [ -d analytics-zoo-data/data/chatbot_short ]
 then
     echo "analytics-zoo-data/data/object-detection-coco already exists"
 else
-    wget -q $FTP_URI/analytics-zoo-data/data/chatbot_short.zip -P analytics-zoo-data/data
+    wget $FTP_URI/analytics-zoo-data/data/chatbot_short.zip -P analytics-zoo-data/data
     unzip analytics-zoo-data/data/chatbot_short.zip -d analytics-zoo-data/data/
 fi
 
@@ -259,7 +259,7 @@ if [ -d analytics-zoo-data/data/imagenet_val ]
 then
     echo "analytics-zoo-data/data/imagenet_val already exists"
 else
-    wget -q $FTP_URI/analytics-zoo-data/data/imagenet_val.zip -P analytics-zoo-data/data/
+    wget $FTP_URI/analytics-zoo-data/data/imagenet_val.zip -P analytics-zoo-data/data/
     unzip -q analytics-zoo-data/data/imagenet_val.zip -d analytics-zoo-data/data/
 fi
 
@@ -267,7 +267,7 @@ if [ -d analytics-zoo-data/data/opencvlib/lib ]
 then
     echo "analytics-zoo-data/data/opencvlib/lib already exists"
 else
-    wget -q $FTP_URI/analytics-zoo-data/data/opencvlib/opencv_4.0.0_ubuntu_lib.tar -P analytics-zoo-data/data/opencvlib/
+    wget $FTP_URI/analytics-zoo-data/data/opencvlib/opencv_4.0.0_ubuntu_lib.tar -P analytics-zoo-data/data/opencvlib/
     tar -xvf analytics-zoo-data/data/opencvlib/opencv_4.0.0_ubuntu_lib.tar -C analytics-zoo-data/data/opencvlib/
 fi
 
@@ -275,14 +275,14 @@ if [ -f analytics-zoo-models/openVINO_model/resnet_v1_50.ckpt ]
 then
     echo "analytics-zoo-models/flink_model/resnet_v1_50.ckpt already exists"
 else
-    wget -q ${FTP_URI}/analytics-zoo-models/flink_model/resnet_v1_50.ckpt -P analytics-zoo-models/openVINO_model/
+    wget ${FTP_URI}/analytics-zoo-models/flink_model/resnet_v1_50.ckpt -P analytics-zoo-models/openVINO_model/
 fi
 
 if [ -f analytics-zoo-models/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model ]
 then
     echo "analytics-zoo-models/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model already exists"
 else
-    wget -q ${FTP_URI}/analytics-zoo-models/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model -P analytics-zoo-models/bigdl_model/
+    wget ${FTP_URI}/analytics-zoo-models/bigdl_model/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model -P analytics-zoo-models/bigdl_model/
 fi
 
 echo "#6.1 start OpenVINO Int8 Resnet example"
