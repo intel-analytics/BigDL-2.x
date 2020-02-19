@@ -15,15 +15,15 @@ of TFDataset's API in [Analytics-Zoo API Guide](../../APIGuide/TFPark/tf-dataset
 
 ### Basics
 
-`TFDataset`'s job is to take in dataset, distribute the data across the Spark Cluster and transform each data
+`TFDataset`'s job is to take in dataset, distribute the data across the Spark cluster and transform each data
 record into the format that is compatible with TFPark.
 
 Here are a few common features that every TFDataset share:
 
-1. `TFDataset` will automatically stack consecutive records into batches, so manually batching is not necessary
-(and not supported). `batch_size` argument (for training) or `batch_per_thread` argument (for inference or evaluation)
-should be set when creating TFDataset. The `batch_size` here is used for training and it means the total batch size
-in distributed training. In other words, it equals to the total number of records processed in one iteration in the
+1. `TFDataset` will automatically stack consecutive records into batches. The `batch_size` argument (for training)
+or `batch_per_thread` argument (for inference or evaluation) should be set when creating TFDataset.
+The `batch_size` here is used for training and it means the total batch size in distributed training.
+In other words, it equals to the total number of records processed in one iteration in the
 whole cluster. `batch_size` should be a multiple of the total number of cores that is allocated for this Spark application
 so that we can distributed the workload evenly across the cluster. You may need to adjust your other training
 hyper-parameters when `batch_size` is changed. `batch_per_thread` is used for inference or evaluation
@@ -49,6 +49,7 @@ dataset = TFDataset.from_ndarrays((feature_data, label_data), batch_size=32, val
 
 If your input data is quite small, the simplest way to create `TFDataset` to convert them to ndarrays and use
 `TFDataset.from_ndarrays()`
+
 E.g.
 
 ```python
@@ -66,7 +67,7 @@ files and pass it to TFDataset. TFDataset will automatically ship the dataset to
 data and batch the records for further consumption.
 
 If you data files is already in HDFS, you should configure you dataset with the path with the following pattern
-"hdfs://namenode:port/path/to/file.txt" and TFDataset will directly access that file in HDFS in each executor.
+`"hdfs://namenode:port/path/to/file.txt"` and TFDataset will directly access that file in HDFS in each executor.
 `HDFS_HDFS_HOME` environment may needs to be set to the location where hadoop is installed for both Spark driver
 and Spark executor. More information on the environment variable can be found [here](https://github.com/tensorflow/examples/blob/master/community/en/docs/deploy/hadoop.md).
 
