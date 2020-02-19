@@ -218,7 +218,8 @@ object TFNetForInference {
                      signature: Option[String],
                      inputs: Option[Array[String]],
                      outputs: Option[Array[String]],
-                     sessionConfig: Array[Byte]): TFNetForInference = {
+                     sessionConfig: Array[Byte],
+                     tableInitOp: Option[String] = None): TFNetForInference = {
 
     if (tag.isEmpty) {
       logger.warn(s"Loading TensorFlow SavedModel: " +
@@ -227,7 +228,7 @@ object TFNetForInference {
     val savedModelBundle = SavedModelBundle.load(modelPath, tag.getOrElse(DEFAULT_TAG))
 
     val metaGraphDef = MetaGraphDef.parseFrom(savedModelBundle.metaGraphDef())
-    val initOp = getInitOp(metaGraphDef)
+    val initOp = if (tableInitOp.isDefined) tableInitOp else getInitOp(metaGraphDef)
 
     val (inputNames, outputNames) = if (!(inputs.isDefined && outputs.isDefined)) {
       if (signature.isEmpty) {
