@@ -31,6 +31,7 @@ import org.apache.commons.io.FileUtils
 
 import scala.language.postfixOps
 import sys.process._
+/*
 
 class ImageClassificationSpec extends ZooSpecHelper {
   val resource = getClass.getClassLoader.getResource("imagenet/n04370456/")
@@ -194,3 +195,4 @@ class ImageClassifierSerialTest extends ModuleSerializationTest {
      Float]], input, ImageClassifier.loadModel[Float])
   }
 }
+*/

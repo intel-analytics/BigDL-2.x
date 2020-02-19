@@ -29,7 +29,8 @@ import scala.io.Source
 import scala.language.postfixOps
 import scala.sys.process._
 
-/**
+/*
+
 @OpenVinoTest
 class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
   with InferenceSupportive {
@@ -409,4 +410,4 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     }
   }
 }
-**/
+*/
