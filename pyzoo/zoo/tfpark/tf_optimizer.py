@@ -547,10 +547,6 @@ class TFOptimizer:
         """
         import tensorflow.keras.backend as K
 
-        if isinstance(dataset, MapDataset):
-            raise ValueError("MapDataset is not supported for Keras Model for now, " +
-                             "please warp the map_fn in a Keras layer in your keras model")
-
         model_inputs = keras_model.inputs
         if hasattr(keras_model, "targets"):
             model_targets = keras_model.targets
