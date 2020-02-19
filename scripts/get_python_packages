@@ -48,7 +48,14 @@ then
 fi
 
 echo "Fetching nlp-architect ${NLP_ARCHITECT_VERSION}"
-GET_COMMAND="wget -nc https://github.com/NervanaSystems/nlp-architect/archive/v${NLP_ARCHITECT_VERSION}.zip -P $DEST_DIR"
+if [ $FTP_URI ];
+then
+    PREFIX="$FTP_URI/nlp_architect"
+else
+    PREFIX=https://github.com/NervanaSystems/nlp-architect/archive
+
+fi
+GET_COMMAND="wget -nc $PREFIX/v${NLP_ARCHITECT_VERSION}.zip -P $DEST_DIR"
 echo "Running: $GET_COMMAND"
 $GET_COMMAND
 exit_status=$?
