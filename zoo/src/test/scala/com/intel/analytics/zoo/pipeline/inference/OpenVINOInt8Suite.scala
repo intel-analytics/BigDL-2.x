@@ -86,7 +86,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     tmpDir = Utils.createTmpDir("ZooVino").toFile()
     val dir = new File(s"${tmpDir.getAbsolutePath}/OpenVinoInt8Spec").getCanonicalPath
 
-    s"wget-q -P $dir $resnet_v1_50_url" !;
+    s"wget -q -P $dir $resnet_v1_50_url" !;
     s"tar xvf $dir/$resnet_v1_50_tar -C $dir" !;
 
     s"wget -q -P $dir $calibrateValTarUrl" !;
