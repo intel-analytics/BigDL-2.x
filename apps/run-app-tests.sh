@@ -73,26 +73,26 @@ if [ -f "$FILENAME" ]
 then
     echo "$FILENAME already exists"
 else
-    wget -q $FTP_URI/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
+    wget $FTP_URI/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
 fi
 if [ -f "$FILENAME" ]
 then
     echo "$FILENAME already exists"
 else
-    wget -q https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
+    wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
 fi
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/object-detection/train_dog.mp4"
 if [ -f "$FILENAME" ]
 then
     echo "$FILENAME already exists"
 else
-    wget -q $FTP_URI/analytics-zoo-data/apps/object-detection/train_dog.mp4 -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
+    wget $FTP_URI/analytics-zoo-data/apps/object-detection/train_dog.mp4 -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
 fi
 if [ -f "$FILENAME" ]
 then
     echo "$FILENAME already exists"
 else
-    wget -q https://s3.amazonaws.com/analytics-zoo-data/train_dog.mp4 -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
+    wget https://s3.amazonaws.com/analytics-zoo-data/train_dog.mp4 -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
 fi
 
 FILENAME="/root/.imageio/ffmpeg/ffmpeg-linux64-v3.3.1"
@@ -100,7 +100,7 @@ if [ -f "$FILENAME" ]
 then
     echo "$FILENAME already exists"
 else
-    wget -q $FTP_URI/analytics-zoo-data/apps/object-detection/ffmpeg-linux64-v3.3.1 -P /root/.imageio/ffmpeg/
+    wget $FTP_URI/analytics-zoo-data/apps/object-detection/ffmpeg-linux64-v3.3.1 -P /root/.imageio/ffmpeg/
 fi
 
 ${SPARK_HOME}/bin/spark-submit \
@@ -203,7 +203,7 @@ then
 else
    echo "Downloading images"
 
-   wget -q $FTP_URI/analytics-zoo-data/imageClassification.tar.gz -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity
+   wget $FTP_URI/analytics-zoo-data/imageClassification.tar.gz -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity
    tar -zxvf ${ANALYTICS_ZOO_HOME}/apps/image-similarity/imageClassification.tar.gz -C ${ANALYTICS_ZOO_HOME}/apps/image-similarity
 
    echo "Finished downloading images"
@@ -215,7 +215,7 @@ then
 else
    echo "Downloading places365 deploy model"
 
-   wget -q https://analytics-zoo-data.s3.amazonaws.com/deploy_googlenet_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365
+   wget https://analytics-zoo-data.s3.amazonaws.com/deploy_googlenet_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365
 
    echo "Finished downloading model"
 fi
@@ -226,7 +226,7 @@ then
 else
    echo "Downloading places365 weight model"
 
-   wget -q http://places2.csail.mit.edu/models_places365/googlenet_places365.caffemodel -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365
+   wget http://places2.csail.mit.edu/models_places365/googlenet_places365.caffemodel -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365
 
    echo "Finished downloading model"
 fi
@@ -237,7 +237,7 @@ then
 else
    echo "Downloading VGG deploy model"
 
-   wget -q https://analytics-zoo-data.s3.amazonaws.com/deploy_vgg16_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
+   wget https://analytics-zoo-data.s3.amazonaws.com/deploy_vgg16_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
 
    echo "Finished downloading model"
 fi
@@ -248,7 +248,7 @@ then
 else
    echo "Downloading VGG weight model"
 
-   wget -q $FTP_URI/analytics-zoo-models/image-classification/vgg16_places365.caffemodel -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
+   wget $FTP_URI/analytics-zoo-models/image-classification/vgg16_places365.caffemodel -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
 
    echo "Finished downloading model"
 fi
@@ -285,7 +285,7 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading VGG model"
-   wget -q -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/analytics-zoo_vgg-16_imagenet_0.1.0.model --no-host-directories
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/analytics-zoo_vgg-16_imagenet_0.1.0.model --no-host-directories
    echo "Finished"
 fi
 
@@ -295,8 +295,8 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading celeba images"
-   wget -q -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/img_align_celeba.zip --no-host-directories
-   unzip -q -d ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/img_align_celeba.zip --no-host-directories
+   unzip -d ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip
    echo "Finished"
 fi
 
@@ -330,8 +330,8 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading celeba images"
-   wget -q -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/img_align_celeba.zip --no-host-directories
-   unzip -q -d ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/img_align_celeba.zip --no-host-directories
+   unzip -d ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip
    echo "Finished"
 fi
 
@@ -390,7 +390,7 @@ then
 else
    echo "Downloading model"
 
-   wget -q $FTP_URI/analytics-zoo-models/image-classification/bigdl_inception-v1_imagenet_0.4.0.model -P demo
+   wget $FTP_URI/analytics-zoo-models/image-classification/bigdl_inception-v1_imagenet_0.4.0.model -P demo
 
    echo "Finished downloading model"
 fi
@@ -401,8 +401,8 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading dogs and cats images"
-   wget -q  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/train.zip  -P ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats
-   unzip -q -d ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/ ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/train.zip
+   wget  $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/train.zip  -P ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats
+   unzip -d ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/ ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/train.zip
    mkdir -p demo/dogs
    mkdir -p demo/cats
    cp ${ANALYTICS_ZOO_HOME}/apps/dogs-vs-cats/train/cat.7* demo/cats
@@ -440,7 +440,7 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading glove6B"
-   wget -q -P /tmp/.bigdl/dataset/ $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip
+   wget -P /tmp/.bigdl/dataset/ $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip
    echo "Finished"
 fi
 
@@ -475,8 +475,8 @@ start=$(date "+%s")
  touch ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/inception.py
  echo "from nets.inception_v1 import inception_v1" >> ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/inception.py
  echo "from nets.inception_v1 import inception_v1_arg_scope" >> ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/inception.py
- wget -q https://analytics-zoo-data.s3.amazonaws.com/inception_utils.py -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/
- wget -q https://analytics-zoo-data.s3.amazonaws.com/inception_v1.py -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/
+ wget https://analytics-zoo-data.s3.amazonaws.com/inception_utils.py -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/
+ wget https://analytics-zoo-data.s3.amazonaws.com/inception_v1.py -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/
  echo "Finished downloading model"
  FILENAME="${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint/inception_v1.ckpt"
 if [ -f "$FILENAME" ]
@@ -485,7 +485,7 @@ then
 else
    echo "Downloading inception_v1 checkpoint"
    
-   wget -q http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint
+   wget http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint
    tar -zxvf ${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint/inception_v1_2016_08_28.tar.gz -C ${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint
    
    echo "Finished downloading checkpoint"
@@ -497,10 +497,10 @@ then
 else
    echo "Downloading dogs and cats images"
    
-   wget -q $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/minitrain.zip -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/data
-   unzip -q -d ${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain ${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain.zip
-   #wget -q $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/train.zip -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/data
-   #unzip -q -d ${ANALYTICS_ZOO_HOME}/apps/tfnet/data ${ANALYTICS_ZOO_HOME}/apps/tfnet/data/train.zip
+   wget $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/minitrain.zip -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/data
+   unzip -d ${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain ${ANALYTICS_ZOO_HOME}/apps/tfnet/data/minitrain.zip
+   #wget $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/train.zip -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/data
+   #unzip -d ${ANALYTICS_ZOO_HOME}/apps/tfnet/data ${ANALYTICS_ZOO_HOME}/apps/tfnet/data/train.zip
     echo "Finished downloading images"
 fi
  ${SPARK_HOME}/bin/spark-submit \
