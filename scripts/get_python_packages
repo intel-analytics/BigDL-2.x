@@ -48,7 +48,7 @@ then
 fi
 
 echo "Fetching nlp-architect ${NLP_ARCHITECT_VERSION}"
-GET_COMMAND="wget -q -nc https://github.com/NervanaSystems/nlp-architect/archive/v${NLP_ARCHITECT_VERSION}.zip -P $DEST_DIR"
+GET_COMMAND="wget -nv -nc https://github.com/NervanaSystems/nlp-architect/archive/v${NLP_ARCHITECT_VERSION}.zip -P $DEST_DIR"
 echo "Running: $GET_COMMAND"
 $GET_COMMAND
 exit_status=$?
@@ -60,7 +60,7 @@ then
 fi
 
 echo "Fetching bert with ${BERT_COMMIT_ID}"
-GET_COMMAND="wget -q -nc https://github.com/google-research/bert/archive/${BERT_COMMIT_ID}.zip -P $DEST_DIR"
+GET_COMMAND="wget -nv -nc https://github.com/google-research/bert/archive/${BERT_COMMIT_ID}.zip -P $DEST_DIR"
 echo "Running: $GET_COMMAND"
 $GET_COMMAND
 exit_status=$?
