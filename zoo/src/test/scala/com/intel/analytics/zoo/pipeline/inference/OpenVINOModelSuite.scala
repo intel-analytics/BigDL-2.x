@@ -73,10 +73,10 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     tmpDir = Utils.createTmpDir("ZooVino").toFile()
     val dir = new File(s"${tmpDir.getAbsolutePath}/OpenVinoInferenceModelSpec").getCanonicalPath
 
-    s"wget -P $dir $url_ov_fasterrcnn_tests_inputdata1" !;
-    s"wget -P $dir $url_ov_fasterrcnn_tests_inputdata2" !;
+    s"wget -q -P $dir $url_ov_fasterrcnn_tests_inputdata1" !;
+    s"wget -q -P $dir $url_ov_fasterrcnn_tests_inputdata2" !;
 
-    s"wget -P $dir $fasterrcnnModelUrl" !;
+    s"wget -q -P $dir $fasterrcnnModelUrl" !;
     s"tar xvf $dir/$fasterrcnnModelTar -C $dir" !;
 
     s"ls -alh $dir" !;

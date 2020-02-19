@@ -41,7 +41,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
     val dirName = dir.getCanonicalPath
     val modelFileName = url.split("/").last
 
-    val cmd = s"wget -P $dirName $url"
+    val cmd = s"wget -q -P $dirName $url"
     val cmd_result = cmd !
 
     System.setProperty("bigdl.localMode", "true")
@@ -87,7 +87,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
     val dirName = dir.getCanonicalPath
     val modelFileName = url.split("/").last
 
-    val cmd = s"wget -P $dirName $url"
+    val cmd = s"wget -q -P $dirName $url"
     val cmd_result = cmd !
 
     val conf = Engine.createSparkConf().setMaster("local[1]").setAppName("predictor")
@@ -185,7 +185,7 @@ class ImageClassifierSerialTest extends ModuleSerializationTest {
     val url = "https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/" +
       "imagenet/bigdl_inception-v1_imagenet_0.4.0.model"
     val modelFileName = url.split("/").last
-    val cmd = s"wget -P $dirName $url"
+    val cmd = s"wget -q -P $dirName $url"
     val cmd_result = cmd !
 
     val model = ImageClassifier.loadModel[Float](dirName + "/" + modelFileName)

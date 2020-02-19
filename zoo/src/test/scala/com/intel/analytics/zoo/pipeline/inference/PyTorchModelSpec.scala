@@ -42,7 +42,7 @@ class PyTorchModelSpec extends FunSuite with Matchers with BeforeAndAfterAll
   override def beforeAll()  {
     tmpDir = Utils.createTmpDir("ZooVino").toFile()
     val dir = new File(s"${tmpDir.getAbsolutePath}/PyTorchModelSpec").getCanonicalPath
-    s"wget -P $dir $modelURL" !;
+    s"wget -q -P $dir $modelURL" !;
 
     s"ls -alh $dir" !;
 
