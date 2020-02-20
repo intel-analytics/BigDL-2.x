@@ -287,6 +287,8 @@ class TFNet(Layer):
                 import tensorflow as tf
                 init_op = tf.tables_initializer().name
                 input_dict = dict([(t.name, t) for t in inputs])
+                # work around feed and fetch the same tensor
+                outputs = [tf.identity(out) for out in outputs]
                 output_dict = dict([(t.name, t) for t in outputs])
                 tf.saved_model.simple_save(sess, temp, inputs=input_dict, outputs=output_dict)
                 net = TFNet.from_saved_model(temp, inputs=[t.name for t in inputs],
