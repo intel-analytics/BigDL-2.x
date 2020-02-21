@@ -131,7 +131,8 @@ object ClusterServing {
     logger.info(s"Core number is $coreNum, Using batchSize $batchSize, OMP $omp, model number $upperParNum")
 
     val query = images.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
-
+      val t1 = System.currentTimeMillis()
+      logger.info(s"start time stamp $t1")
       /**
        * This is reserved for future dynamic loading model
        */
@@ -144,11 +145,16 @@ object ClusterServing {
       }
 
       batchDF.persist()
+      val t2 = System.currentTimeMillis()
+      logger.info(s"get to persist ${t2 - t1}")
 
-      val microBatchSize = batchDF.count()
-      logger.info("Micro batch size " + microBatchSize.toString)
+//      val microBatchSize = batchDF.count()
+      val t3 = System.currentTimeMillis()
+//      logger.info(s"count ${t3 - t2}")
+//      logger.info("Micro batch size " + microBatchSize.toString)
 
-      if (microBatchSize != 0) {
+
+      if (!batchDF.isEmpty) {
         /**
          * The streaming may be triggered somehow and it is possible
          * to get an empty batch
@@ -211,6 +217,8 @@ object ClusterServing {
           // per batch size should be equal to OMP_NUM_THEADS to get max performance
 
           val tensorArray = new Array[Tensor[Float]](upperParNum)
+
+
           (0 until upperParNum).foreach(i => {
             if (chwFlag) {
               tensorArray(i) = Tensor[Float](batchSize, C, H, W)
@@ -221,7 +229,10 @@ object ClusterServing {
 
           pathBytesChunk.mapPartitions(pathBytes => {
             pathBytes.grouped(coreNum).flatMap(batch => {
-              (0 until upperParNum).toParArray.flatMap(modelIndex => {
+
+              val thisUpperParNum = (batch.size - 1) / batchSize + 1
+              println(s"using $thisUpperParNum models to predict ${batch.size} records")
+              (0 until thisUpperParNum).toParArray.flatMap(modelIndex => {
                 val localModel = bcModel.value
 
                 val beginIndex = modelIndex * batchSize
@@ -231,15 +242,26 @@ object ClusterServing {
                   batch.size
                 }
 
+                val thisTensor = if (beginIndex + batchSize < batch.size) {
+                  tensorArray(modelIndex)
+                } else {
+                  if (chwFlag){
+                    tensorArray(modelIndex).resize(endIndex - beginIndex, C, H, W)
+                  } else {
+                    tensorArray(modelIndex).resize(endIndex - beginIndex, H, W, C)
+                  }
+
+                }
+
                 (beginIndex until endIndex).toParArray.foreach(nIndex => {
-                  tensorArray(modelIndex).select(1, nIndex - beginIndex + 1).copy(batch(nIndex)._2)
+                  thisTensor.select(1, nIndex - beginIndex + 1).copy(batch(nIndex)._2)
                 })
                 if (modelType == "openvino") {
-                  tensorArray(modelIndex).addSingletonDimension()
+                  thisTensor.addSingletonDimension()
                 }
-                val result = localModel.doPredict(tensorArray(modelIndex)).toTensor
+                val result = localModel.doPredict(thisTensor).toTensor
                 if (modelType == "openvino") {
-                  tensorArray(modelIndex).squeeze(1)
+//                  tensorArray(modelIndex).squeeze(1)
                   result.squeeze(1)
                 }
                 (beginIndex - beginIndex until endIndex - beginIndex).toParArray.map(i => {
@@ -352,36 +374,37 @@ object ClusterServing {
          * Count the statistical data and write to summary
          */
         val microBatchEnd = System.nanoTime()
-        val microBatchLatency = (microBatchEnd - microBatchStart) / 1e9
-        val microBatchThroughPut = (microBatchSize / microBatchLatency).toFloat
+//        val microBatchLatency = (microBatchEnd - microBatchStart) / 1e9
+//        val microBatchThroughPut = (microBatchSize / microBatchLatency).toFloat
+//
+//        totalCnt += microBatchSize.toInt
+//        try {
+//          if (model.inferenceSummary != null) {
+//            (timeStamp until timeStamp + microBatchLatency.toInt).foreach( time => {
+//              model.inferenceSummary.addScalar(
+//                "Serving Throughput", microBatchThroughPut, time)
+//            })
+//
+//            model.inferenceSummary.addScalar(
+//              "Total Records Number", totalCnt, batchId)
+//          }
+//        }
+//        catch {
+//          case e: Exception =>
+//            /**
+//             * If been interrupted by stop signal, do nothing
+//             * End the streaming until this micro batch process ends
+//             */
+//            logger.info("Summary not supported. skipped.")
+//        }
 
-        totalCnt += microBatchSize.toInt
-        try {
-          if (model.inferenceSummary != null) {
-            (timeStamp until timeStamp + microBatchLatency.toInt).foreach( time => {
-              model.inferenceSummary.addScalar(
-                "Serving Throughput", microBatchThroughPut, time)
-            })
-
-            model.inferenceSummary.addScalar(
-              "Total Records Number", totalCnt, batchId)
-          }
-        }
-        catch {
-          case e: Exception =>
-            /**
-             * If been interrupted by stop signal, do nothing
-             * End the streaming until this micro batch process ends
-             */
-            logger.info("Summary not supported. skipped.")
-        }
-
-
-        timeStamp += microBatchLatency.toInt
-
-        logger.info(microBatchSize +
-          " inputs predict ended, time elapsed " + microBatchLatency.toString)
-
+//
+//        timeStamp += microBatchLatency.toInt
+//
+//        logger.info(microBatchSize +
+//          " inputs predict ended, time elapsed " + microBatchLatency.toString)
+        val t4 = System.currentTimeMillis()
+        logger.info(s"total  ${t4 - t1}")
       }
     }
 
