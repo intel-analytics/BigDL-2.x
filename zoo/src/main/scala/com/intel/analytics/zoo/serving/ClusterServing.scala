@@ -29,6 +29,8 @@ import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, SaveMode}
 import redis.clients.jedis.Jedis
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 
 object ClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -374,6 +376,10 @@ object ClusterServing {
          * Count the statistical data and write to summary
          */
         val microBatchEnd = System.nanoTime()
+
+        AsyncUtils.writeServingSummay(model, batchDF,
+          microBatchStart, microBatchEnd, timeStamp, totalCnt)
+          .onComplete(_ => None)
 //        val microBatchLatency = (microBatchEnd - microBatchStart) / 1e9
 //        val microBatchThroughPut = (microBatchSize / microBatchLatency).toFloat
 //
