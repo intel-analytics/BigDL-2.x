@@ -75,7 +75,7 @@ from_rdd(rdd, features, labels=None, batch_size=-1, batch_per_thread=-1, hard_co
 
 ### **from_string_rdd**
 
-Create a TFDataset from a RDD of strings. Each element is the RDD should be a single string.
+Create a TFDataset from a RDD of strings. Each element in the RDD should be a single string.
 The returning TFDataset's feature_tensors has only one Tensor. the type of the Tensor
 is tf.string, and the shape is (None,). The returning don't have label_tensors. If the
 dataset is used for training, the label should be encoded in the string.
