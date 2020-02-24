@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.automl.feature.transformer import PostRollTransformer
+from zoo.automl.feature.base import PostRollTransformer
 import numpy as np
 
 

@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.automl.feature.transformer import RollTransformer
+from zoo.automl.feature.base import RollTransformer
 
 # import numpy as np
 # import pandas as pd

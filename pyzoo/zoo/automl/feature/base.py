@@ -19,17 +19,17 @@ from abc import ABC, abstractmethod
 
 class BaseTransformer(ABC):
     """
-        Abstract Base class for basic feature transformers.
+        Abstract Base class for basic transformers.
     """
 
     @abstractmethod
-    def transform(self, inputs, is_train=False):
+    def transform(self, inputs):
         """
-        fit data with the input
-        :param inputs: input to be fitted
-        :param is_train: indicate whether in training mode
-        :return:
+        transform data with the input
+        :param inputs: input to be transformed
+        :return: transformed inputs
         """
+        raise NotImplementedError()
 
     def inverse_transform(self, target):
         """
@@ -39,21 +39,54 @@ class BaseTransformer(ABC):
         """
         return target
 
+    @abstractmethod
+    def need_inverse(self):
+        """
+        indicate if the transformer needs to be inverse_transformed
+        :return: True or False
+        """
+        raise NotImplementedError()
+
+
+class BaseEstimator(BaseTransformer):
+    """
+        Abstract Base class for basic estimators.
+    """
+    @abstractmethod
+    def fit(self, inputs):
+        raise NotImplementedError()
+
+    def fit_transform(self, inputs):
+        """
+        fit and transform inputs
+        :param inputs: input to be fitted
+        :return: transformed inputs
+        """
+        return self.fit(inputs).transform(inputs)
+
+    @abstractmethod
     def save(self, file_path):
         """
-        save the status of Transformer
+        save the states of estimator
         :param file_path
         :return:
         """
-        pass
+        raise NotImplementedError()
 
+    @abstractmethod
     def restore(self, file_path):
         """
-        restore the status saved
+        restore the states from file
         :param file_path
         :return:
         """
-        pass
+        raise NotImplementedError()
+
+    def need_inverse(self):
+        """
+        indicate if the transformer needs to be inverse_transformed.
+        """
+        return True
 
 
 class PreRollTransformer(BaseTransformer):

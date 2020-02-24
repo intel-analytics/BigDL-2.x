@@ -15,35 +15,45 @@
 #
 import os
 
-from zoo.automl.feature.transformer import PreRollTransformer
+from zoo.automl.feature.base import BaseEstimator, BaseTransformer
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.externals import joblib
+from zoo.automl.feature.feature_utils import check_is_fitted
 
 
-class MinMaxNormalizer(PreRollTransformer):
+class MinMaxStandardizer(BaseEstimator):
     """
-    min max scalar
+    min max scaler
     """
 
     def __init__(self):
         self.scaler = MinMaxScaler()
         self.scaler_filename = "scaler.save"
 
-    def transform(self, inputs, transform_cols=None, is_train=False):
+    def fit(self, inputs):
+        """
+        :param inputs: numpy array
+        :return:
+        """
+        self.scaler.fit(inputs)
+        return self
+
+    def transform(self, inputs, transform_cols=None):
         """
         inplace standard scale transform_cols of input data frame.
-        :param inputs: input data frame
+        :param inputs: input numpy array
         :param transform_cols: columns to be transformed.
         :param is_train: indicate whether in training mode
         :return:
         """
+        self.scaler.transform(inputs)
         if is_train:
             self.scaler.fit(inputs[transform_cols].values)
         else:
             self.scaler.transform(inputs[transform_cols].values)
 
-    def inverse_transform(self, target):
+    def inverse_transform(self, target, transform_cols=None):
         """
         since the scaler may include the transform of extra feature columns, and the inverse target
         only include target columns. Maybe need to extract the target scale information and inverse
