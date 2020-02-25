@@ -42,9 +42,6 @@ class TFTrainingHelperV2(graphRunner: GraphRunner,
     extraVariableTypes, extraVariableAssignPlaceholders, assignExtraVariableOP, gradVariables,
     updateOp, initOp, defaultTensorValue) {
 
-  @transient
-  private var shouldUpdateParameter = false
-
 
   override def beforeRunGradient(): Unit = {
 
@@ -69,11 +66,6 @@ class TFTrainingHelperV2(graphRunner: GraphRunner,
         extraVariableTypes.map(TFUtils.tfenum2datatype), assignExtraVariableOP)
       extraParameterRestored = true
     }
-  }
-
-  override def afterRunGradient(): Unit = {
-    super.afterRunGradient()
-    shouldUpdateParameter = true
   }
 
   def moveWeightsOutOfTF(): Unit = {

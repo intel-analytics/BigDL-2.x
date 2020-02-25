@@ -117,14 +117,6 @@ private[zoo] class TFTrainingHelper protected (graphRunner: GraphRunner,
     }
   }
 
-  override def evaluate(): TFTrainingHelper.this.type = {
-    super.evaluate()
-    setVariableIntoTF(weights, variableAssignPlaceholders,
-      variableTypes.map(TFUtils.tfenum2datatype), assignVariableOp)
-    this
-  }
-
-
   protected def getVariableFromTF(weights: Array[Tensor[Float]],
                                      variableNames: Array[String]) = {
     val outputTypes = Vector.fill(variableNames.length)(DataType.FLOAT)
@@ -155,6 +147,9 @@ private[zoo] class TFTrainingHelper protected (graphRunner: GraphRunner,
 
   @transient
   protected var weightsRestored: Boolean = false
+
+  @transient
+  protected var shouldUpdateParameter = false
 
   @transient
   private lazy val tableInited = {
@@ -196,12 +191,13 @@ private[zoo] class TFTrainingHelper protected (graphRunner: GraphRunner,
   }
 
   protected def beforeRunGradient() = {
-    if (this.isTraining() || !weightsRestored) {
+    if (shouldUpdateParameter || !weightsRestored) {
       Utils.timeIt("setTrainingVariableIntoTF") {
         setVariableIntoTF(weights, variableAssignPlaceholders,
           variableTypes.map(TFUtils.tfenum2datatype), assignVariableOp)
       }
       weightsRestored = true
+      shouldUpdateParameter = false
     }
 
     if (!extraParameterRestored) {
@@ -222,6 +218,7 @@ private[zoo] class TFTrainingHelper protected (graphRunner: GraphRunner,
       gradWeights.zipWithIndex.foreach { case (grad, idx) =>
         grad.resizeAs(weights(idx)).add(gradWeightsBuffer(idx))
       }
+      shouldUpdateParameter = true
     }
   }
 

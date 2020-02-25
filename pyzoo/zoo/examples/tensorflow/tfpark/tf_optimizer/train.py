@@ -15,7 +15,7 @@
 #
 import tensorflow as tf
 from zoo import init_nncontext
-from zoo.tfpark import TFOptimizer, TFDataset
+from zoo.tfpark import TFOptimizer, TFDataset, ZooOptimizer
 from bigdl.optim.optimizer import *
 import numpy as np
 import sys
@@ -60,16 +60,16 @@ def main(max_epoch, data_num):
 
     acc = accuracy(logits, labels)
 
+    optimizer = ZooOptimizer(tf.train.AdamOptimizer(1e-3))
+
+    train_op = optimizer.minimize(loss)
     # create a optimizer
-    optimizer = TFOptimizer.from_loss(loss, Adam(1e-3),
-                                      metrics={"acc": acc},
-                                      model_dir="/tmp/lenet/")
+    trainer = TFOptimizer.from_train_op(train_op,
+                                        loss=loss,
+                                        metrics={"acc": acc},
+                                        model_dir="/tmp/lenet/")
     # kick off training
-    optimizer.optimize(end_trigger=MaxEpoch(max_epoch))
-
-    saver = tf.train.Saver()
-    saver.save(optimizer.sess, "/tmp/lenet/model")
-
+    trainer.optimize(end_trigger=MaxEpoch(max_epoch))
 
 if __name__ == '__main__':
 
