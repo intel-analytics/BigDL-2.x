@@ -29,6 +29,8 @@ import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, SaveMode}
 import redis.clients.jedis.Jedis
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 
 object ClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -292,35 +294,12 @@ object ClusterServing {
          * Count the statistical data and write to summary
          */
         val microBatchEnd = System.nanoTime()
-        val microBatchLatency = (microBatchEnd - microBatchStart) / 1e9
-        val microBatchThroughPut = (microBatchSize / microBatchLatency).toFloat
 
-        totalCnt += microBatchSize.toInt
-        try {
-          if (model.inferenceSummary != null) {
-            (timeStamp until timeStamp + microBatchLatency.toInt).foreach( time => {
-              model.inferenceSummary.addScalar(
-                "Serving Throughput", microBatchThroughPut, time)
-            })
-
-            model.inferenceSummary.addScalar(
-              "Total Records Number", totalCnt, batchId)
-          }
-        }
-        catch {
-          case e: Exception =>
-            /**
-             * If been interrupted by stop signal, do nothing
-             * End the streaming until this micro batch process ends
-             */
-            logger.info("Summary not supported. skipped.")
-        }
+        AsyncUtils.writeServingSummay(model, batchDF,
+          microBatchStart, microBatchEnd, timeStamp, totalCnt)
+          .onComplete(_ => None)
 
 
-        timeStamp += microBatchLatency.toInt
-
-        logger.info(microBatchSize +
-          " inputs predict ended, time elapsed " + microBatchLatency.toString)
 
       }
     }
