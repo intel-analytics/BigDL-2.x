@@ -411,6 +411,7 @@ object ClusterServing {
 //          " inputs predict ended, time elapsed " + microBatchLatency.toString)
         val t4 = System.currentTimeMillis()
         logger.info(s"total  ${t4 - t1}")
+        logger.info(s"end time stamp $t4")
       }
     }
 
