@@ -36,18 +36,18 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
     new InferenceModel(supportedConcurrentNum)
   }
 
-  def inferenceModelLoad(
+  def inferenceModelLoadBigDL(
       model: InferenceModel,
       modelPath: String,
       weightPath: String): Unit = {
-    model.doLoad(modelPath, weightPath)
+    model.loadBigDL(modelPath, weightPath)
   }
 
   def inferenceModelLoadCaffe(
       model: InferenceModel,
       modelPath: String,
       weightPath: String): Unit = {
-    model.doLoadCaffe(modelPath, weightPath)
+    model.loadCaffe(modelPath, weightPath)
   }
 
   def inferenceModelLoadOpenVINO(
@@ -55,9 +55,10 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
       modelPath: String,
       weightPath: String,
       batchSize: Int = 0): Unit = {
-    model.doLoadOpenVINO(modelPath, weightPath, batchSize)
+    model.loadOpenVINO(modelPath, weightPath, batchSize)
   }
 
+  @deprecated("this method will be deprecated", "0.8.0")
   def inferenceModelOpenVINOLoadTF(
       model: InferenceModel,
       modelPath: String,
@@ -65,6 +66,7 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
     model.doLoadTF(modelPath, modelType)
   }
 
+  @deprecated("this method will be deprecated", "0.8.0")
   def inferenceModelOpenVINOLoadTF(
       model: InferenceModel,
       modelPath: String,
@@ -73,6 +75,7 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
     model.doLoadTF(modelPath, pipelineConfigFilePath, extensionsConfigFilePath)
   }
 
+  @deprecated("this method will be deprecated", "0.8.0")
   def inferenceModelOpenVINOLoadTF(model: InferenceModel,
                                    modelPath: String,
                                    objectDetectionModelType: String,
@@ -82,6 +85,7 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
       pipelineConfigFilePath, extensionsConfigFilePath)
   }
 
+  @deprecated("this method will be deprecated", "0.8.0")
   def inferenceModelOpenVINOLoadTF(model: InferenceModel,
                                    modelPath: String,
                                    imageClassificationModelType: String,
@@ -99,6 +103,7 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
       ifReverseInputChannels, meanValues.asScala.toArray.map(_.toFloat), scale.toFloat)
   }
 
+  @deprecated("this method will be deprecated", "0.8.0")
   def inferenceModelOpenVINOLoadTFAsCalibratedOpenVINO(model: InferenceModel,
                                                        modelPath: String,
                                                        modelType: String,
@@ -120,13 +125,13 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
       networkType, validationFilePath, subset, opencvLibPath)
   }
 
-  def inferenceModelTensorFlowLoadTF(
+  def inferenceModelTensorFlowLoadTFFrozen(
       model: InferenceModel,
       modelPath: String,
       intraOpParallelismThreads: Int,
       interOpParallelismThreads: Int,
       usePerSessionThreads: Boolean): Unit = {
-    model.doLoadTF(modelPath, intraOpParallelismThreads,
+    model.loadTFFrozen(modelPath, intraOpParallelismThreads,
       interOpParallelismThreads, usePerSessionThreads)
   }
 

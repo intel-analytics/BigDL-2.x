@@ -35,101 +35,123 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     super(autoScalingEnabled, concurrentNum);
   }
 
-  public void load(String modelPath) {
-    doLoad(modelPath, null, true);
+  public void loadBigDL(String modelPath) {
+    loadBigDL(modelPath, null, true);
   }
 
-  public void load(String modelPath, String weightPath) {
-    doLoad(modelPath, weightPath, true);
+  public void loadBigDL(String modelPath, String weightPath) {
+    loadBigDL(modelPath, weightPath, true);
   }
 
   public void loadCaffe(String modelPath) {
-    doLoadCaffe(modelPath, null, true);
+    loadCaffe(modelPath, null, true);
   }
 
-  public void loadCaffe(String modelPath, String weightPath) {
-    doLoadCaffe(modelPath, weightPath, true);
+  public void loadCaffe(String modelPath, String weightPath) { loadCaffe(modelPath, weightPath, true);
   }
 
-  public void loadTF(String modelPath) {
-    doLoadTF(modelPath);
+  public void loadTFFrozen(String modelPath) {
+    loadTFFrozen(modelPath);
   }
 
-  public void loadTF(String modelPath, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
-    doLoadTF(modelPath, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+  public void loadTFFrozen(String modelPath, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
+    loadTFFrozen(modelPath, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
   }
 
-  public void loadTF(String modelPath, String[] inputs, String[] outputs) {
-    doLoadTF(modelPath, inputs, outputs);
+  public void loadTFFrozen(String modelPath, String[] inputs, String[] outputs) {
+    loadTFFrozen(modelPath, inputs, outputs);
   }
 
-  public void loadTF(String modelPath, String[] inputs, String[] outputs, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
-    doLoadTF(modelPath, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+  public void loadTFFrozen(String modelPath, String[] inputs, String[] outputs, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
+    loadTFFrozen(modelPath, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
   }
 
-  public void loadTF(byte[] savedModelBytes, String[] inputs, String[] outputs) {
-    doLoadTF(savedModelBytes, inputs, outputs);
+  public void loadTFFrozen(byte[] forzenModelBytes, String[] inputs, String[] outputs) {
+    loadTFFrozen(forzenModelBytes, inputs, outputs);
+    }
+
+  public void loadTFFrozen(byte[] forzenModelBytes, String[] inputs, String[] outputs, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads){
+    loadTFFrozen(forzenModelBytes, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+  }
+    
+  public void loadTFSaved(String modelPath, String[] inputs, String[] outputs) { loadTFSaved(modelPath, inputs, outputs);
   }
 
-  public void loadTF(byte[] savedModelBytes, String[] inputs, String[] outputs, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
-    doLoadTF(savedModelBytes, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+  public void loadTFSaved(String modelPath, String[] inputs, String[] outputs, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
+    loadTFSaved(modelPath, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+  }
+
+  public void loadTFSaved(byte[] savedModelBytes, String[] inputs, String[] outputs) {
+    loadTFSaved(savedModelBytes, inputs, outputs);
+  }
+
+  public void loadTFSaved(byte[] savedModelBytes, String[] inputs, String[] outputs, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
+    loadTFSaved(savedModelBytes, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
   }
 
   public void loadPyTorch(String modelPath) {
-    doLoadPyTorch(modelPath);
+    loadPyTorch(modelPath);
   }
 
   public void loadPyTorch(byte[] modelBytes) {
-    doLoadPyTorch(modelBytes);
+    loadPyTorch(modelBytes);
   }
 
+  @Deprecated
   public void loadTF(String modelPath, String objectDetectionModelType) {
     doLoadTF(modelPath, objectDetectionModelType);
   }
 
+  @Deprecated
   public void loadTF(String modelPath, String pipelineConfigFilePath, String extensionsConfigFilePath) {
     doLoadTF(modelPath, pipelineConfigFilePath, extensionsConfigFilePath);
   }
 
+  @Deprecated
   public void loadTF(String modelPath, String objectDetectionModelType, String pipelineConfigFilePath, String extensionsConfigFilePath) {
     doLoadTF(modelPath, objectDetectionModelType, pipelineConfigFilePath, extensionsConfigFilePath);
   }
 
+  @Deprecated
   public void loadTF(String modelPath, String imageClassificationModelType, String checkpointPath, int[] inputShape, boolean ifReverseInputChannels, float[] meanValues, float scale) {
     doLoadTF(modelPath, imageClassificationModelType, checkpointPath, inputShape, ifReverseInputChannels, meanValues, scale);
   }
 
+  @Deprecated
   public void loadTF(byte[] modelBytes, String imageClassificationModelType, byte[] checkpointBytes, int[] inputShape, boolean ifReverseInputChannels, float[] meanValues, float scale) {
     doLoadTF(modelBytes, imageClassificationModelType, checkpointBytes, inputShape, ifReverseInputChannels, meanValues, scale);
   }
 
+  @Deprecated
   public void loadTF(String savedModelDir, int[] inputShape, boolean ifReverseInputChannels, float[] meanValues, float scale, String input) {
     doLoadTF(savedModelDir, inputShape, ifReverseInputChannels, meanValues, scale, input);
   }
 
+  @Deprecated
   public void loadTF(byte[] savedModelBytes, int[] inputShape, boolean ifReverseInputChannels, float[] meanValues, float scale, String input) {
     doLoadTF(savedModelBytes, inputShape, ifReverseInputChannels, meanValues, scale, input);
   }
 
+  @Deprecated
   public void loadTFAsCalibratedOpenVINO(String modelPath, String modelType, String checkpointPath, int[] inputShape, boolean ifReverseInputChannels, float[] meanValues, float scale,
                                           String networkType, String validationFilePath, int subset, String opencvLibPath) {
     doLoadTFAsCalibratedOpenVINO(modelPath, modelType, checkpointPath, inputShape, ifReverseInputChannels, meanValues, scale, networkType, validationFilePath, subset, opencvLibPath);
   }
 
   public void loadOpenVINO(String modelFilePath, String weightFilePath, int batchSize) {
-    doLoadOpenVINO(modelFilePath, weightFilePath, batchSize);
+    loadOpenVINO(modelFilePath, weightFilePath, batchSize);
   }
 
   public void loadOpenVINO(String modelFilePath, String weightFilePath) {
-    doLoadOpenVINO(modelFilePath, weightFilePath, 0);
+    loadOpenVINO(modelFilePath, weightFilePath, 0);
   }
 
   public void loadOpenVINO(byte[] modelBytes, byte[] weightBytes, int batchSize) {
-    doLoadOpenVINO(modelBytes, weightBytes, batchSize);
+    loadOpenVINO(modelBytes, weightBytes, batchSize);
   }
 
   public void loadOpenVINO(byte[] modelBytes, byte[] weightBytes) {
-    doLoadOpenVINO(modelBytes, weightBytes, 0);
+    loadOpenVINO(modelBytes, weightBytes, 0);
   }
 
   public void reload(String modelPath) {
