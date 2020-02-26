@@ -40,6 +40,40 @@ optimizer.optimize(end_trigger=MaxEpoch(5))
 
 ## Methods
 
+### from_train_op (factory method)
+
+Create a TFOptimizer from a TensorFlow loss tensor.
+The loss tensor must come from a TensorFlow graph that only takes TFDataset.tensors and
+the tensors in `tensor_with_value` as inputs.
+
+```python
+from_train_op(train_op, loss, metrics=None, updates=None, sess=None, dataset=None,
+              tensor_with_value=None, session_config=None, model_dir=None)
+```
+
+#### Arguments
+
+
+* **train_op**: a TensorFlow operation that triggers the update of gradients, often the return value
+                of tf.train.Optimizer.minimize()
+* **loss**: a scalar tensor representing the loss value of this minibatch
+* **metrics**: a dictionary. The key should be a string representing the metric's name
+             and the value should be the corresponding TensorFlow tensor, which should be a scalar.
+* **updates**: a list of TensorFlow operations that should be run at each iteration, e.g. the
+               operation that updates moving mean and moving variance of a batchnorm layer.
+* **sess**: the current TensorFlow Session, if you want to used a pre-trained model,
+             you should use the Session to load the pre-trained variables and pass it to TFOptimizer.
+* **dataset**: the dataset that create the train_op, usually you do not need to pass this argument
+* **tensor_with_value**: a dictionary. The key is TensorFlow tensor, usually a
+                      placeholder, the value of the dictionary is a tuple of two elements. The first one of
+                      the tuple is the value to feed to the tensor in training phase and the second one
+                      is the value to feed to the tensor in validation phase.
+* **session_config**: a tf.ConfigProto object used to configure the TensorFlow session in each
+                      Spark executor. For example, you can use this argument to set the number of
+                      TensorFlow thread used in each Spark task.
+* **model_dir**: a directory to keep all the checkpoints and TensorBoard summary files 
+
+
 ### from_loss (factory method)
 
 Create a TFOptimizer from a TensorFlow loss tensor.
