@@ -28,7 +28,7 @@ object AsyncUtils {
                          start: Long,
                          end: Long,
                          timeStamp: Int,
-                         lastCnt: Int): Future[Unit] = Future{
+                         lastCnt: Int): Future[(Int, Int)] = Future{
     val microBatchSize = df.count()
     val microBatchLatency = (end - start) / 1e9
     val microBatchThroughPut = (microBatchSize / microBatchLatency).toFloat
@@ -42,7 +42,7 @@ object AsyncUtils {
       model.inferenceSummary.addScalar(
         "Total Records Number", totalCnt, time)
     })
-
+    (timeStamp, totalCnt)
   }
 
 }

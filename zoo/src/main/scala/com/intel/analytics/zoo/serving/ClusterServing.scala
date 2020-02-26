@@ -19,7 +19,6 @@ package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
-
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
 import com.intel.analytics.zoo.serving.utils._
 import com.intel.analytics.zoo.utils.ImageProcessing
@@ -30,6 +29,7 @@ import org.apache.spark.sql.{DataFrame, SaveMode}
 import redis.clients.jedis.Jedis
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Failure, Success}
 
 
 object ClusterServing {
@@ -297,7 +297,14 @@ object ClusterServing {
 
         AsyncUtils.writeServingSummay(model, batchDF,
           microBatchStart, microBatchEnd, timeStamp, totalCnt)
-          .onComplete(_ => None)
+          .onComplete{
+            case Success(value) => {
+              timeStamp += value._1
+              totalCnt += value._2
+            }
+            case Failure(exception) => logger.info(s"$exception, " +
+              s"write summary fails, please check.")
+          }
 
 
 
