@@ -114,7 +114,7 @@ class SparkRunner():
         assert bigdl_classpath, "Cannot find bigdl classpath"
         return bigdl_classpath, bigdl_classpath.split("/")[-1]
 
-    def _get_zoo_classpathjar_name_on_driver(self):
+    def _get_zoo_classpath_jar_name_on_driver(self):
         from zoo.util.engine import get_analytics_zoo_classpath
         zoo_classpath = get_analytics_zoo_classpath()
         assert zoo_classpath, "Cannot find Analytics-Zoo classpath"
