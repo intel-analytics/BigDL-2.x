@@ -21,7 +21,7 @@ from test.zoo.pipeline.utils.test_utils import ZooTestCase
 import tensorflow as tf
 import numpy as np
 
-from zoo.tfpark import TFDataset, TFOptimizer
+from zoo.tfpark import TFDataset, TFOptimizer, ZooOptimizer
 
 
 class TestTFParkTFOptimizer(ZooTestCase):
@@ -51,7 +51,8 @@ class TestTFParkTFOptimizer(ZooTestCase):
             loss = tf.reduce_mean(tf.losses.
                                   sparse_softmax_cross_entropy(logits=embedding,
                                                                labels=label_tensor))
-            optimizer = TFOptimizer.from_loss(loss, Adam(1e-3))
+            train_op = ZooOptimizer(tf.train.AdamOptimizer(1e-3)).minimize(loss)
+            optimizer = TFOptimizer.from_train_op(train_op, loss=loss)
             optimizer.optimize(end_trigger=MaxEpoch(1))
             optimizer.sess.close()
 
@@ -64,21 +65,31 @@ class TestTFParkTFOptimizer(ZooTestCase):
                                               batch_size=4,
                                               val_tensors=(features, labels))
             feature_tensor, label_tensor = dataset.tensors
-            features = tf.layers.dense(feature_tensor, 8)
-            output = tf.layers.dense(features, 10)
+            with tf.variable_scope("first_dense"):
+                features = tf.layers.dense(feature_tensor, 8, name="first_dense")
+            with tf.variable_scope("second_dense"):
+                output = tf.layers.dense(features, 10, name="")
+
             loss = tf.reduce_mean(tf.losses.
                                   sparse_softmax_cross_entropy(logits=output,
                                                                labels=label_tensor))
-            optimizer = TFOptimizer.from_loss(loss, {"dense/": Adam(1e-3), "dense_1/": SGD(0.0)},
-                                              val_outputs=[output],
-                                              val_labels=[label_tensor],
-                                              val_method=Accuracy(), metrics={"loss": loss})
-            initial_weights = optimizer.tf_model.training_helper_layer.get_weights()
+
+            train_op_1 = ZooOptimizer(tf.train.AdamOptimizer(1e-3))\
+                .minimize(loss, var_list=tf.trainable_variables("first_dense"))
+            train_op_2 = ZooOptimizer(tf.train.GradientDescentOptimizer(0.0))\
+                .minimize(loss, var_list=tf.trainable_variables("second_dense"))
+            train_op = tf.group(train_op_1, train_op_2)
+            optimizer = TFOptimizer.from_train_op(train_op, loss=loss, metrics={"loss": loss})
+            # first run to get rid of bf16 conversion effect
             optimizer.optimize(end_trigger=MaxEpoch(1))
-            updated_weights = optimizer.tf_model.training_helper_layer.get_weights()
-            for i in [0, 1]:  # weights and bias combined with "dense/" should be updated
+            initial_weights = optimizer.sess.run(tf.trainable_variables("first_dense") +
+                                                 tf.trainable_variables("second_dense"))
+            optimizer.optimize(end_trigger=MaxEpoch(2))
+            updated_weights = optimizer.sess.run(tf.trainable_variables("first_dense") +
+                                                 tf.trainable_variables("second_dense"))
+            for i in [0, 1]:  # weights and bias combined with "first_dense" should be updated
                 assert not np.allclose(initial_weights[i], updated_weights[i])
-            for i in [2, 3]:  # weights and bias combined with "dense_1" should be unchanged
+            for i in [2, 3]:  # weights and bias combined with "second_dense" should be unchanged
                 assert np.allclose(initial_weights[i], updated_weights[i])
             optimizer.sess.close()
 

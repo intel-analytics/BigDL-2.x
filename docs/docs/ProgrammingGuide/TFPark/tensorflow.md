@@ -161,9 +161,8 @@ More on TFEstimator API [API Guide](../../APIGuide/TFPark/estimator.md)
 ## Concepts
 
 - **TFOptimizer** is the class that does all the hard work in distributed training, such as model
-distribution and parameter synchronization. It takes the user specified **loss** (a TensorFlow scalar tensor) as
-an argument and runs stochastic gradient descent using the given **optimMethod** on all the **Variables** that
-contribute to this loss.
+distribution and parameter synchronization. A `train_op` operation derived from a ZooOptimizer and
+a `loss` scalar tensor are required to create a TFOptimizer.
 
 - **TFPredictor** takes a list of user specified TensorFlow tensors as the model outputs, and feed all the
 elements in TFDatasets to produce those outputs; it returns a Spark RDD with each of its records representing the

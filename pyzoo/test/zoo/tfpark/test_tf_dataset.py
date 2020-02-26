@@ -19,7 +19,7 @@ from zoo.feature.common import ChainedPreprocessing, FeatureSet
 from zoo.feature.image import *
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.pipeline.api.keras.optimizers import Adam
-from zoo.tfpark import TFNet, TFOptimizer
+from zoo.tfpark import TFNet, TFOptimizer, ZooOptimizer
 import tensorflow as tf
 import numpy as np
 import os
@@ -282,7 +282,8 @@ class TestTFDataset(ZooTestCase):
         flat = tf.layers.flatten(images)
         logits = tf.layers.dense(flat, 10)
         loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
-        opt = TFOptimizer.from_loss(loss, Adam())
+        train_op = ZooOptimizer(tf.train.AdamOptimizer()).minimize(loss)
+        opt = TFOptimizer.from_train_op(train_op, loss=loss)
         opt.optimize()
 
     def test_tfdataset_with_tf_data_dataset(self):

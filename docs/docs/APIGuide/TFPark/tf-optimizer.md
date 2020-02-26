@@ -42,9 +42,8 @@ optimizer.optimize(end_trigger=MaxEpoch(5))
 
 ### from_train_op (factory method)
 
-Create a TFOptimizer from a TensorFlow loss tensor.
-The loss tensor must come from a TensorFlow graph that only takes TFDataset.tensors and
-the tensors in `tensor_with_value` as inputs.
+Create a TFOptimizer from a TensorFlow train_op operation.
+The train_op must come from a ZooOptimizer.
 
 ```python
 from_train_op(train_op, loss, metrics=None, updates=None, sess=None, dataset=None,
@@ -54,8 +53,8 @@ from_train_op(train_op, loss, metrics=None, updates=None, sess=None, dataset=Non
 #### Arguments
 
 
-* **train_op**: a TensorFlow operation that triggers the update of gradients, often the return value
-                of tf.train.Optimizer.minimize()
+* **train_op**: a TensorFlow operation that triggers the update of gradients, e.g.
+                train_op = ZooOptimizer(tf.train.AdamOptimizer(1e-3)).minimize(loss)
 * **loss**: a scalar tensor representing the loss value of this minibatch
 * **metrics**: a dictionary. The key should be a string representing the metric's name
              and the value should be the corresponding TensorFlow tensor, which should be a scalar.
