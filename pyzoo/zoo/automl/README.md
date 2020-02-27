@@ -4,7 +4,10 @@ _A distributed **Automated Machine Learning** libary based on **ray** and **tens
 
 ---
 
+
 This library provides a framework and implementations for automatic feature engineering, model selection and hyper parameter optimization. It also provides a built-in automatically optimized model: _**TimeSequencePredictor**_ , which can be used for time series data analysis or anomaly detection. 
+
+Analytics Zoo AutoML is still in experimental stage and `pip install` haven't been supported yet. To use AutoML, you can download code of Analytics-zoo [automl branch](https://github.com/intel-analytics/analytics-zo/tree/automl). Then build the whl package manually following the instructions [here](https://analytics-zoo.github.io/master/#DeveloperGuide/python/#build-whl-package-for-pip-install) and intall the whl with pip in local.
 
 
 ## 1 Automated Time Series Prediction 
@@ -13,8 +16,7 @@ This library provides a framework and implementations for automatic feature engi
 
 ### Training a model using _TimeSequencePredictor_
 
-_TimeSequencePredictor_ can be used to train a model on historical time sequence data and predict future sequences. Note that: 
-  * Current implementation only supports univariant prediction, which means target value should only be a scalar on each data point of the sequence. Input features can be multivariant.  
+_TimeSequencePredictor_ can be used to train a model on historical time sequence data and predict future sequences. Note that:   
   * We require input time series data to be uniformly sampled in timeline. Missing data points will lead to errors or unreliable prediction result. 
 
    1. Before training, init RayOnSpark.   
@@ -103,13 +105,13 @@ Output dataframe look likes below (assume predict n values forward). col `dateti
  * Evaluation using _Pipeline_ object
  ```python
   #evaluate with MSE and R2 metrics
- mse, rs = pipeline.evaluate(test_df, metric=["mean_squared_error", "r_square"])
+ mse, rs = pipeline.evaluate(test_df, metrics=["mse", "rs"])
  ```
 
  * Incremental training using _Pipeline_ object
  ```python
  #fit with new data and train for 5 epochs
- pipeline.fit(newtrain_df,epoch_num=5)
+ pipeline.fit(new_train_df,epoch_num=5)
  ```
 
 ## 2 AutoML Framework Overview
