@@ -35,66 +35,65 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     super(autoScalingEnabled, concurrentNum);
   }
 
-  public void loadBigDL(String modelPath) {
-    loadBigDL(modelPath, null, true);
-  }
+  public void loadBigDL(String modelPath) { doLoadBigDL(modelPath, null, true); }
 
   public void loadBigDL(String modelPath, String weightPath) {
-    loadBigDL(modelPath, weightPath, true);
+    doLoadBigDL(modelPath, weightPath, true);
   }
 
   public void loadCaffe(String modelPath) {
-    loadCaffe(modelPath, null, true);
+    doLoadCaffe(modelPath, null, true);
   }
 
-  public void loadCaffe(String modelPath, String weightPath) { loadCaffe(modelPath, weightPath, true);
+  public void loadCaffe(String modelPath, String weightPath) {
+    doLoadCaffe(modelPath, weightPath, true);
   }
 
   public void loadTFFrozen(String modelPath) {
-    loadTFFrozen(modelPath);
+    doLoadTFFrozen(modelPath);
   }
 
   public void loadTFFrozen(String modelPath, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
-    loadTFFrozen(modelPath, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+    doLoadTFFrozen(modelPath, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
   }
 
   public void loadTFFrozen(String modelPath, String[] inputs, String[] outputs) {
-    loadTFFrozen(modelPath, inputs, outputs);
+    doLoadTFFrozen(modelPath, inputs, outputs);
   }
 
   public void loadTFFrozen(String modelPath, String[] inputs, String[] outputs, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
-    loadTFFrozen(modelPath, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+    doLoadTFFrozen(modelPath, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
   }
 
   public void loadTFFrozen(byte[] forzenModelBytes, String[] inputs, String[] outputs) {
-    loadTFFrozen(forzenModelBytes, inputs, outputs);
-    }
+    doLoadTFFrozen(forzenModelBytes, inputs, outputs);
+  }
 
   public void loadTFFrozen(byte[] forzenModelBytes, String[] inputs, String[] outputs, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads){
-    loadTFFrozen(forzenModelBytes, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+    doLoadTFFrozen(forzenModelBytes, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
   }
-    
-  public void loadTFSaved(String modelPath, String[] inputs, String[] outputs) { loadTFSaved(modelPath, inputs, outputs);
+
+  public void loadTFSaved(String modelPath, String[] inputs, String[] outputs) { doLoadTFSaved(modelPath, inputs, outputs);
   }
 
   public void loadTFSaved(String modelPath, String[] inputs, String[] outputs, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
-    loadTFSaved(modelPath, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+    doLoadTFSaved(modelPath, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
   }
 
   public void loadTFSaved(byte[] savedModelBytes, String[] inputs, String[] outputs) {
-    loadTFSaved(savedModelBytes, inputs, outputs);
+    doLoadTFSaved(savedModelBytes, inputs, outputs);
   }
 
   public void loadTFSaved(byte[] savedModelBytes, String[] inputs, String[] outputs, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
-    loadTFSaved(savedModelBytes, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+    doLoadTFSaved(savedModelBytes, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
   }
 
   public void loadPyTorch(String modelPath) {
-    loadPyTorch(modelPath);
+    doLoadPyTorch(modelPath);
   }
 
   public void loadPyTorch(byte[] modelBytes) {
-    loadPyTorch(modelBytes);
+    doLoadPyTorch(modelBytes);
   }
 
   @Deprecated
@@ -139,19 +138,19 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
   }
 
   public void loadOpenVINO(String modelFilePath, String weightFilePath, int batchSize) {
-    loadOpenVINO(modelFilePath, weightFilePath, batchSize);
+    doLoadOpenVINO(modelFilePath, weightFilePath, batchSize);
   }
 
   public void loadOpenVINO(String modelFilePath, String weightFilePath) {
-    loadOpenVINO(modelFilePath, weightFilePath, 0);
+    doLoadOpenVINO(modelFilePath, weightFilePath, 0);
   }
 
   public void loadOpenVINO(byte[] modelBytes, byte[] weightBytes, int batchSize) {
-    loadOpenVINO(modelBytes, weightBytes, batchSize);
+    doLoadOpenVINO(modelBytes, weightBytes, batchSize);
   }
 
   public void loadOpenVINO(byte[] modelBytes, byte[] weightBytes) {
-    loadOpenVINO(modelBytes, weightBytes, 0);
+    doLoadOpenVINO(modelBytes, weightBytes, 0);
   }
 
   public void reload(String modelPath) {

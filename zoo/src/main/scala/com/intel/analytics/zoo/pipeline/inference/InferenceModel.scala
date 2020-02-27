@@ -77,7 +77,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param modelPath  the file path of the model
    * @param weightPath the file path of the weights
    */
-  def loadBigDL(modelPath: String,
+  def doLoadBigDL(modelPath: String,
              weightPath: String = null,
              blas: Boolean = true): Unit = {
     clearModelQueue()
@@ -91,7 +91,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param modelPath  the path of the prototxt file
    * @param weightPath the path of the caffemodel file
    */
-  def loadCaffe(modelPath: String,
+  def doLoadCaffe(modelPath: String,
                   weightPath: String,
                   blas: Boolean = true): Unit = {
     clearModelQueue()
@@ -104,7 +104,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    *
    * @param modelPath the path of the tensorflow frozen model file
    */
-  def loadTFFrozen(modelPath: String): Unit = {
+  def doLoadTFFrozen(modelPath: String): Unit = {
     doLoadTensorflowModel(modelPath, 1, 1, true)
   }
 
@@ -116,7 +116,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param interOpParallelismThreads the num of interOpParallelismThreads
    * @param usePerSessionThreads      whether to perSessionThreads
    */
-  def loadTFFrozen(modelPath: String,
+  def doLoadTFFrozen(modelPath: String,
                intraOpParallelismThreads: Int,
                interOpParallelismThreads: Int,
                usePerSessionThreads: Boolean): Unit = {
@@ -134,7 +134,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param inputs     the inputs of the model
    * @param outputs    the outputs of the model
    */
-  def loadTFFrozen(modelPath: String,
+  def doLoadTFFrozen(modelPath: String,
                inputs: Array[String],
                outputs: Array[String]): Unit = {
     doLoadTensorflowModel(modelPath, inputs, outputs, 1, 1, true)
@@ -150,7 +150,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param interOpParallelismThreads the num of interOpParallelismThreads
    * @param usePerSessionThreads      whether to perSessionThreads
    */
-  def loadTFFrozen(modelPath: String,
+  def doLoadTFFrozen(modelPath: String,
                inputs: Array[String],
                outputs: Array[String],
                intraOpParallelismThreads: Int,
@@ -173,7 +173,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
      * @param outputs    the outputs of the model
      */
 
-    def loadTFFrozen(frozenModelBytes: Array[Byte],
+    def doLoadTFFrozen(frozenModelBytes: Array[Byte],
                  inputs: Array[String],
                  outputs: Array[String]): Unit = {
       doLoadTensorflowModel(frozenModelBytes, inputs, outputs, 1, 1, true)
@@ -189,7 +189,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
      * @param interOpParallelismThreads the num of interOpParallelismThreads
      * @param usePerSessionThreads      whether to perSessionThreads
      */
-    def loadTFFrozen(frozenModelBytes: Array[Byte],
+    def doLoadTFFrozen(frozenModelBytes: Array[Byte],
                  inputs: Array[String],
                  outputs: Array[String],
                  intraOpParallelismThreads: Int,
@@ -211,7 +211,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param inputs     the inputs of the model
    * @param outputs    the outputs of the model
    */
-  def loadTFSaved(modelPath: String,
+  def doLoadTFSaved(modelPath: String,
                inputs: Array[String],
                outputs: Array[String]): Unit = {
     doLoadTensorflowSavedModel(modelPath, inputs, outputs, 1, 1, true)
@@ -227,7 +227,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param interOpParallelismThreads  the num of interOpParallelismThreads
    * @param usePerSessionThreads       whether to perSessionThreads
    */
-  def loadTFSaved(modelPath: String,
+  def doLoadTFSaved(modelPath: String,
                inputs: Array[String],
                outputs: Array[String],
                intraOpParallelismThreads: Int,
@@ -249,7 +249,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param inputs          the inputs of the model
    * @param outputs         the outputs of the model
    */
-  def loadTFSaved(savedModelBytes: Array[Byte],
+  def doLoadTFSaved(savedModelBytes: Array[Byte],
                inputs: Array[String],
                outputs: Array[String]): Unit = {
     doLoadTensorflowSavedModel(savedModelBytes, inputs, outputs, 1, 1, true)
@@ -265,7 +265,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param interOpParallelismThreads the num of interOpParallelismThreads
    * @param usePerSessionThreads      whether to perSessionThreads
    */
-  def loadTFSaved(savedModelBytes: Array[Byte],
+  def doLoadTFSaved(savedModelBytes: Array[Byte],
                inputs: Array[String],
                outputs: Array[String],
                intraOpParallelismThreads: Int,
@@ -285,7 +285,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    *
    * @param modelPath the path of the torch script
    */
-  def loadPyTorch(modelPath: String): Unit = {
+  def doLoadPyTorch(modelPath: String): Unit = {
     doLoadPyTorchModel(modelPath)
   }
 
@@ -294,7 +294,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    *
    * @param modelBytes the bytes of the torch script
    */
-  def loadPyTorch(modelBytes: Array[Byte]): Unit = {
+  def doLoadPyTorch(modelBytes: Array[Byte]): Unit = {
     doLoadPyTorchModel(modelBytes)
   }
 
@@ -505,7 +505,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param modelPath  the path of openvino ir xml file
    * @param weightPath the path of openvino ir bin file
    */
-  def loadOpenVINO(modelPath: String, weightPath: String, batchSize: Int = 0): Unit = {
+  def doLoadOpenVINO(modelPath: String, weightPath: String, batchSize: Int = 0): Unit = {
     if (concurrentNum > 1) {
       InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
         s"openvino model does not support shared weights model copies")
@@ -524,7 +524,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param weightBytes the bytes of openvino ir bin file
    * @param batchSize   the batchsize of openvino ir
    */
-  def loadOpenVINO(modelBytes: Array[Byte],
+  def doLoadOpenVINO(modelBytes: Array[Byte],
                      weightBytes: Array[Byte], batchSize: Int): Unit = {
     if (concurrentNum > 1) {
       InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
