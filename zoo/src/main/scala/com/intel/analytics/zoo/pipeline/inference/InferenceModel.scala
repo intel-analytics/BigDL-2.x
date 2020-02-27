@@ -76,7 +76,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    *
    * @param modelPath  the file path of the model
    * @param weightPath the file path of the weights
-   * @param blas  whether to quantize
+   * @param blas       whether to quantize
    */
   def doLoadBigDL(modelPath: String,
              weightPath: String = null,
@@ -91,7 +91,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    *
    * @param modelPath  the path of the prototxt file
    * @param weightPath the path of the caffemodel file
-   * @param blas  whether to quantize
+   * @param blas       whether to quantize
    */
   def doLoadCaffe(modelPath: String,
                   weightPath: String,
@@ -571,7 +571,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                                         usePerSessionThreads: Boolean): Unit = {
         clearModelQueue()
         this.originalModel =
-          InferenceModelFactory.loadFloatModelForTF(frozenModelBytes,
+          InferenceModelFactory.loadFloatModelForTFFrozenModelBytes(frozenModelBytes,
             inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads)
         offerModelQueue()
       }
@@ -728,7 +728,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    */
   def doReload(modelPath: String, weightPath: String): Unit = {
     clearModelQueue()
-    doLoad(modelPath, weightPath)
+    doLoadBigDL(modelPath, weightPath)
   }
 
   @deprecated

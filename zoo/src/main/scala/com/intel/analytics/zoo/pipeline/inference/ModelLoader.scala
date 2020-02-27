@@ -111,7 +111,7 @@ object ModelLoader extends InferenceSupportive {
         s"ls $tmpDir/frozen-model" !;
         val frozenModelDir = new File(s"$tmpDir/frozen-model").listFiles()(0).getAbsolutePath
 
-        val model = TFNet(forzenModelDir, inputs, outputs, config)
+        val model = TFNet(frozenModelDir, inputs, outputs, config)
         logger.info(s"loaded model as $model")
         s"rm -rf $tmpDir" !;
         model

@@ -77,7 +77,7 @@ object InferenceModelFactory extends InferenceSupportive {
       new FloatModel(model, metaModel, true)
     }
 
-  def loadFloatModelForTF(frozenModelBytes: Array[Byte],
+  def loadFloatModelForTFFrozenModelBytes(frozenModelBytes: Array[Byte],
                               inputs: Array[String],
                               outputs: Array[String],
                               intraOpParallelismThreads: Int = 1,
