@@ -105,7 +105,7 @@ and then directly use spark-submit to run the Analytics Zoo Python program on th
 
 Follow the steps below to create the conda environment:
    
-1) Install [Conda](https://docs.conda.io/projects/conda/en/latest/commands/install.html) in your environment.
+1) Install [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) in your environment.
 
 2) Create a new conda environment (with name "environment" for example):
 ```
@@ -114,7 +114,7 @@ conda activate environment
 ```
 
 3) Install python dependencies into the created conda environment.
-
+Install the dependencies according to the dependencies listed in `requirements.txt`. You can add your own dependencies into this file if you wish. The current requirements only contain those needed for running Analytics Zoo Python examples and models.
 ```
 pip install -r ${ANALYTICS_ZOO_HOME}/bin/requirements.txt
 ```
@@ -124,3 +124,4 @@ pip install -r ${ANALYTICS_ZOO_HOME}/bin/requirements.txt
 ```
 conda pack -o environment.tar.gz
 ```
+Then you can find the conda package file under the current directory.
