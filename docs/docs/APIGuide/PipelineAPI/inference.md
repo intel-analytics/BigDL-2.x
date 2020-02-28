@@ -9,7 +9,7 @@ Inference Model is a package in Analytics Zoo aiming to provide high-level APIs 
 **Basic usage of Inference Model:**
 
 1. Directly use InferenceModel or write a subclass extends `InferenceModel` (`AbstractInferenceModel` in Java).
-2. Load pre-trained models with corresponding `load` methods, e.g, doLoad for Analytics Zoo, and doLoadTF for TensorFlow.
+2. Load pre-trained models with corresponding `load` methods, e.g, doLoadBigDL for Analytics Zoo, and doLoadTF for TensorFlow.
 3. Do prediction with `predict` method.
 
 **OpenVINO requirements:**
@@ -45,21 +45,21 @@ Load Analytics Zoo model with corresponding `load` methods (`load` for Java and 
 public class ExtendedInferenceModel extends AbstractInferenceModel {
 }
 ExtendedInferenceModel model = new ExtendedInferenceModel();
-model.load(modelPath, weightPath);
+model.loadBigDL(modelPath, weightPath);
 ```
 
 **Scala**
 
 ```scala
 val model = new InferenceModel()
-model.doLoad(modelPath, weightPath)
+model.doLoadBigDL(modelPath, weightPath)
 ```
 
 **Python**
 
 ```python
 model = InferenceModel()
-model.load(modelPath, weightPath)
+model.load_bigdl(modelPath, weightPath)
 ```
 
 * `modelPath`: String. Path of pre-trained model.

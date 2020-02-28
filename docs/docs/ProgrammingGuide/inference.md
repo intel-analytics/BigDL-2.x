@@ -10,7 +10,7 @@ Inference Model is a package in Analytics Zoo aiming to provide high-level APIs 
 **Basic usage of Inference Model:**
 
 1. Directly use InferenceModel or write a subclass extends `InferenceModel` (`AbstractInferenceModel` in Java).
-2. Load pre-trained models with corresponding `load` methods, e.g, `doLoad` for Analytics Zoo, and `doLoadTF` for TensorFlow.
+2. Load pre-trained models with corresponding `load` methods, e.g, `doLoadBigDL` for Analytics Zoo, and `doLoadTF` for TensorFlow.
 3. Do prediction with `predict` method.
 
 **Supported models:**
@@ -56,7 +56,7 @@ public class ExtendedInferenceModel extends AbstractInferenceModel {
 }
 ExtendedInferenceModel model = new ExtendedInferenceModel();
 // Load Analytics Zoo model
-model.load(modelPath, weightPath);
+model.loadBigDL(modelPath, weightPath);
 // Predict
 List<List<JTensor>> result = model.predict(inputList);
 ```
@@ -70,7 +70,7 @@ import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 
 val model = new InferenceModel()
 // Load Analytics Zoo model
-model.doLoad(modelPath, weightPath)
+model.doLoadBigDL(modelPath, weightPath)
 // Predict
 val result = model.doPredict(inputList)
 ```
@@ -100,7 +100,7 @@ from zoo.pipeline.inference import InferenceModel
 
 model = InferenceModel()
 # Load Analytics Zoo model
-model.load(model_path, weight_path)
+model.load_bigdl(model_path, weight_path)
 # Predict
 result = model.predict(input_list)
 ```
@@ -117,7 +117,7 @@ class ExtendedInferenceModel(InferenceModel):
 
 model = ExtendedInferenceModel()
 # Load Analytics Zoo model
-model.load(model_path, weight_path)
+model.load_bigdl(model_path, weight_path)
 # Predict
 result = model.predict(input_list)
 ```

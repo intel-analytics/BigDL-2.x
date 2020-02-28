@@ -18,13 +18,13 @@ from bigdl.util.common import JavaValue
 from zoo.common.utils import callZooFunc
 from bigdl.nn.layer import Layer
 from zoo.pipeline.api.keras.engine import KerasNet
-
+from deprecated import deprecated
 
 class InferenceModel(JavaValue):
     """
     Model for thread-safe inference.
     To do inference, you need to first initiate an InferenceModel instance, then call
-    load|load_caffe|load_tf|load_openvino to load a pre-trained model, and finally call predict.
+    load_bigdl|load_caffe|load_tf|load_openvino to load a pre-trained model, and finally call predict.
 
     # Arguments
     supported_concurrent_num: Int. How many concurrent threads to invoke. Default is 1.
@@ -33,14 +33,14 @@ class InferenceModel(JavaValue):
     def __init__(self, supported_concurrent_num=1, bigdl_type="float"):
         super(InferenceModel, self).__init__(None, bigdl_type, supported_concurrent_num)
 
-    def load(self, model_path, weight_path=None):
+    def load_bigdl(self, model_path, weight_path=None):
         """
         Load a pre-trained Analytics Zoo or BigDL model.
 
         :param model_path: String. The file path to the model.
         :param weight_path: String. The file path to the weights if any. Default is None.
         """
-        callZooFunc(self.bigdl_type, "inferenceModelLoad",
+        callZooFunc(self.bigdl_type, "inferenceModelLoadBigDL",
                     self.value, model_path, weight_path)
 
     def load_caffe(self, model_path, weight_path):
@@ -117,6 +117,7 @@ class InferenceModel(JavaValue):
         else:
             raise ValueError("Currently only tensorflow and openvino are supported as backend")
 
+    @deprecated(deprecated_in="0.8.0")
     def load_tf_object_detection_as_openvino(self,
                                              model_path,
                                              object_detection_model_type,
@@ -139,6 +140,7 @@ class InferenceModel(JavaValue):
                     pipeline_config_path,
                     extensions_config_path)
 
+    @deprecated(deprecated_in="0.8.0")
     def load_tf_image_classification_as_openvino(self,
                                                  model_path,
                                                  image_classification_model_type,
@@ -172,6 +174,7 @@ class InferenceModel(JavaValue):
                     [float(value) for value in mean_values],
                     float(scale))
 
+    @deprecated(deprecated_in="0.8.0")
     def load_tf_as_calibrated_openvino(self,
                                        model_path,
                                        model_type,

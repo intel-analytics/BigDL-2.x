@@ -43,7 +43,7 @@ class TestInferenceModel(ZooTestCase):
 
     def test_load_model(self):
         model = InferenceModel(3)
-        model.load(os.path.join(resource_path, "models/bigdl/bigdl_lenet.model"))
+        model.load_bigdl(os.path.join(resource_path, "models/bigdl/bigdl_lenet.model"))
         input_data = np.random.random([4, 28, 28, 1])
         output_data = model.predict(input_data)
 
