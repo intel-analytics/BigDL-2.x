@@ -298,10 +298,9 @@ object ClusterServing {
         AsyncUtils.writeServingSummay(model, batchDF,
           microBatchStart, microBatchEnd, timeStamp, totalCnt)
           .onComplete{
-            case Success(value) => {
+            case Success(value) =>
               timeStamp += value._1
               totalCnt += value._2
-            }
             case Failure(exception) => logger.info(s"$exception, " +
               s"write summary fails, please check.")
           }
