@@ -497,7 +497,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
       doLoadTensorflowSavedModel(modelPath, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads)
       }
     else{
-      println("Please input the right type of tensorflow model file: "frozenModel" or "savedModel".")
+      println("Please input the right type of tensorflow model file: frozenModel or savedModel")
       }
     }
 
@@ -515,7 +515,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
         doLoadTensorflowSavedModel(modelBytes, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads)
         }
       else{
-        println("Please input the right type of tensorflow model file: "frozenModel" or "savedModel".")
+        println("Please input the right type of tensorflow model file: frozenModel or savedModel")
         }
       }
 
@@ -697,7 +697,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    */
   def doReload(modelPath: String, weightPath: String): Unit = {
     clearModelQueue()
-    doLoadBigDL(modelPath, weightPath)
+    doLoad(modelPath, weightPath)
   }
 
   @deprecated
