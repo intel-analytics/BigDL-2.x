@@ -71,7 +71,7 @@ object ModelLoader extends InferenceSupportive {
     }
   }
 
-  def loadFloatModelForTF(modelPath: String,
+  def loadFloatModelForTFFrozenModel(modelPath: String,
                             inputs: Array[String],
                             outputs: Array[String],
                             config: TFNet.SessionConfig = TFNet.defaultSessionConfig)

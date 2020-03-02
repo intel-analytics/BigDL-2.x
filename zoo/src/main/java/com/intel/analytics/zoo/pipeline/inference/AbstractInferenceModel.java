@@ -35,57 +35,42 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     super(autoScalingEnabled, concurrentNum);
   }
 
-  public void loadBigDL(String modelPath) { doLoadBigDL(modelPath, null, true); }
+  public void load(String modelPath) { doLoad(modelPath, null, true); }
 
-  public void loadBigDL(String modelPath, String weightPath) {
-    doLoadBigDL(modelPath, weightPath, true);
+  public void load(String modelPath, String weightPath, Boolean blas) {
+    doLoad(modelPath, weightPath, true);
   }
 
   public void loadCaffe(String modelPath) {
     doLoadCaffe(modelPath, null, true);
   }
 
-  public void loadCaffe(String modelPath, String weightPath) {
+  public void loadCaffe(String modelPath, String weightPath, Boolean blas) {
     doLoadCaffe(modelPath, weightPath, true);
   }
 
-  public void loadTFFrozen(String modelPath) {
-    doLoadTFFrozen(modelPath);
+  public void loadTensorflow(String modelPath) {
+    doLoadTensorflow(modelPath);
   }
 
-  public void loadTFFrozen(String modelPath, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
-    doLoadTFFrozen(modelPath, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+  public void loadTensorflow(String modelPath, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
+    doLoadTensorflow(modelPath, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
   }
 
-  public void loadTFFrozen(String modelPath, String[] inputs, String[] outputs) {
-    doLoadTFFrozen(modelPath, inputs, outputs);
+  public void loadTensorflow(String modelPath, String modelType, String[] inputs, String[] outputs) {
+    doLoadTensorflow(modelPath, modelType, inputs, outputs);
   }
 
-  public void loadTFFrozen(String modelPath, String[] inputs, String[] outputs, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
-    doLoadTFFrozen(modelPath, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+  public void loadTensorflow(String modelPath, String modelType, String[] inputs, String[] outputs, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
+    doLoadTensorflow(modelPath, modelType, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
   }
 
-  public void loadTFFrozen(byte[] forzenModelBytes, String[] inputs, String[] outputs) {
-    doLoadTFFrozen(forzenModelBytes, inputs, outputs);
+  public void loadTensorflow(byte[] savedModelBytes, String modelType, String[] inputs, String[] outputs) {
+    doLoadTensorflow(savedModelBytes, modelType, inputs, outputs);
   }
 
-  public void loadTFFrozen(byte[] forzenModelBytes, String[] inputs, String[] outputs, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads){
-    doLoadTFFrozen(forzenModelBytes, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
-  }
-
-  public void loadTFSaved(String modelPath, String[] inputs, String[] outputs) { doLoadTFSaved(modelPath, inputs, outputs);
-  }
-
-  public void loadTFSaved(String modelPath, String[] inputs, String[] outputs, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
-    doLoadTFSaved(modelPath, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
-  }
-
-  public void loadTFSaved(byte[] savedModelBytes, String[] inputs, String[] outputs) {
-    doLoadTFSaved(savedModelBytes, inputs, outputs);
-  }
-
-  public void loadTFSaved(byte[] savedModelBytes, String[] inputs, String[] outputs, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
-    doLoadTFSaved(savedModelBytes, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+  public void loadTensorflow(byte[] savedModelBytes, String modelType, String[] inputs, String[] outputs, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
+    doLoadTensorflow(savedModelBytes, modelType, inputs, outputs, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
   }
 
   public void loadPyTorch(String modelPath) {

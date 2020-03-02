@@ -36,11 +36,11 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
     new InferenceModel(supportedConcurrentNum)
   }
 
-  def inferenceModelLoadBigDL(
+  def inferenceModelLoad(
       model: InferenceModel,
       modelPath: String,
       weightPath: String): Unit = {
-    model.doLoadBigDL(modelPath, weightPath)
+    model.doLoad(modelPath, weightPath)
   }
 
   def inferenceModelLoadCaffe(
@@ -131,7 +131,7 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
       intraOpParallelismThreads: Int,
       interOpParallelismThreads: Int,
       usePerSessionThreads: Boolean): Unit = {
-    model.doLoadTFFrozen(modelPath, intraOpParallelismThreads,
+    model.doLoadTensorflow(modelPath, intraOpParallelismThreads,
       interOpParallelismThreads, usePerSessionThreads)
   }
 
