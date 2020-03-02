@@ -12,9 +12,7 @@ Analytics Zoo AutoML is still in experimental stage. And you need to manual buil
 it in local. 
 
 1. First, download Analytics Zoo automl source code from [GitHub](https://github.com/intel-analytics/analytics-zoo/tree/automl):
-    ```bash
-    git clone -b automl https://github.com/intel-analytics/analytics-zoo.git
-    ```
+
 2. Then build whl package for pip install. You may also refer to the doc [here](https://analytics-zoo.github.io/master/#DeveloperGuide/python/#build-whl-package-for-pip-install).
     ```bash
     bash analytics-zoo/pyzoo/dev/build.sh linux default

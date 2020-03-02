@@ -7,32 +7,9 @@ _A distributed **Automated Machine Learning** libary based on **ray** and **tens
 
 This library provides a framework and implementations for automatic feature engineering, model selection and hyper parameter optimization. It also provides a built-in automatically optimized model: _**TimeSequencePredictor**_ , which can be used for time series data analysis or anomaly detection. 
 
-## 1 Install Analytics-zoo AutoML 
-Analytics Zoo AutoML is still in experimental stage and `pip install` haven't been supported yet. You can follow the steps below to manually build whl package and install the package in local.
+Analytics Zoo AutoML is still in experimental stage and `pip install` haven't been supported yet. You may refer to [this guide](https://github.com/intel-analytics/analytics-zoo/tree/automl/apps/automl) in the readme of apps folder to enable automl.
 
-1. Download Analytics Zoo automl source code from [GitHub](https://github.com/intel-analytics/analytics-zoo/tree/automl):
-    ```bash
-    git clone -b automl https://github.com/intel-analytics/analytics-zoo.git
-    ```
-2. Build whl package for pip install. You may also refer to the doc [here](https://analytics-zoo.github.io/master/#DeveloperGuide/python/#build-whl-package-for-pip-install).
-    ```bash
-    bash analytics-zoo/pyzoo/dev/build.sh linux default
-    ```
-3. Create conda environment.
-    1. Install [Conda](https://docs.conda.io/projects/conda/en/latest/commands/install.html).
-    2. Create a new conda environment (with name "zoo_automl" for example).
-    ```bash
-    conda create -n zoo_automl python=3.6
-    source activate zoo_automl
-    ```
-4. Install the whl built before. The `whl` locates in `analytics-zoo/pyzoo/dist`
-    ```bash
-    pip install analytics-zoo/pyzoo/dist/analytics_zoo-VERSION-py2.py3-none-PLATFORM_x86_64.whl[automl]
-    ```
-    Note that the extra dependencies (including `ray`, `psutil`, `aiohttp`, `setproctitle`, `scikit-learn`,`featuretools`, `tensorflow`, `pandas`, `numpy`, `requests`) will be installed by specifying `[automl]`.
-
-
-## 2 Automated Time Series Prediction 
+## 1 Automated Time Series Prediction 
 
 
 
@@ -136,7 +113,7 @@ Output dataframe look likes below (assume predict n values forward). col `dateti
  pipeline.fit(new_train_df,epoch_num=5)
  ```
 
-## 3 AutoML Framework Overview
+## 2 AutoML Framework Overview
 
 There are four essential components in the AutoML framework, i.e. FeatureTransformer, Model, SearchEngine, and Pipeline. 
 
