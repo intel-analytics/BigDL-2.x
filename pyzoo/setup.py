@@ -103,7 +103,7 @@ def setup_package():
         extras_require={'ray': ['ray>=0.6.6', 'psutil', 'aiohttp', 'setproctitle'],
                         'automl': ['tensorflow>=1.14.0,<2.0.0', 'ray==0.7.0', 'psutil', 'aiohttp',
                                    'setproctitle', 'pandas', 'featuretools', 'scikit-learn',
-                                   'numpy', 'requests']},
+                                   'requests']},
         dependency_links=['https://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz'],
         include_package_data=True,
         package_data={"zoo.share": ['lib/analytics-zoo*with-dependencies.jar', 'conf/*', 'bin/*',

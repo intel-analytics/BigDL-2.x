@@ -28,7 +28,7 @@ it in local.
     ```bash
     pip install analytics-zoo/pyzoo/dist/analytics_zoo-VERSION-py2.py3-none-PLATFORM_x86_64.whl[automl]
     ```
-    Note that the extra dependencies (including `ray`, `psutil`, `aiohttp`, `setproctitle`, `scikit-learn`,`featuretools`, `tensorflow`, `pandas`, `numpy`, `requests`) will be installed by specifying `[automl]`.
+    Note that the extra dependencies (including `ray`, `psutil`, `aiohttp`, `setproctitle`, `scikit-learn`,`featuretools`, `tensorflow`, `pandas`, `requests`) will be installed by specifying `[automl]`.
 
 
 ## Run Jupyter after pip install
