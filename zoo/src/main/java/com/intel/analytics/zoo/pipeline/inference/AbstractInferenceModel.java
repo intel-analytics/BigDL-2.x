@@ -35,9 +35,11 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     super(autoScalingEnabled, concurrentNum);
   }
 
-  public void load(String modelPath) { doLoad(modelPath, null, true); }
+  public void load(String modelPath) {
+    doLoad(modelPath, null, true);
+  }
 
-  public void load(String modelPath, String weightPath, Boolean blas) {
+  public void load(String modelPath, String weightPath) {
     doLoad(modelPath, weightPath, true);
   }
 
@@ -45,7 +47,7 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     doLoadCaffe(modelPath, null, true);
   }
 
-  public void loadCaffe(String modelPath, String weightPath, Boolean blas) {
+  public void loadCaffe(String modelPath, String weightPath) {
     doLoadCaffe(modelPath, weightPath, true);
   }
 
