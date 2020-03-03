@@ -172,7 +172,9 @@ class SparkRunner():
                 command = command + " --py-files {} ".format(extra_python_lib)
             if jars:
                 command = command + " --jars {}".format(jars)
-            return command + " --driver-class-path {}:{}".format(self._get_zoo_classpath_jar_name_on_driver()[0], self. _get_bigdl_classpath_jar_name_on_driver()[0])
+            return command + " --driver-class-path {}:{}"\
+                       .format(self._get_zoo_classpath_jar_name_on_driver()[0],
+                               self. _get_bigdl_classpath_jar_name_on_driver()[0])
 
         def _submit_opt():
             conf = {
