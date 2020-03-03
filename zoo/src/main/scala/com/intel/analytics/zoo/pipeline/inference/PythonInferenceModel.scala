@@ -131,7 +131,7 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
       intraOpParallelismThreads: Int,
       interOpParallelismThreads: Int,
       usePerSessionThreads: Boolean): Unit = {
-    model.doLoadTensorflow(modelPath, intraOpParallelismThreads,
+    model.doLoadTensorflow(modelPath, modelType, intraOpParallelismThreads,
       interOpParallelismThreads, usePerSessionThreads)
   }
 

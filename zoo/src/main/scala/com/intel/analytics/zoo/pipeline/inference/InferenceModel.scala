@@ -121,7 +121,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param usePerSessionThreads      whether to perSessionThreads
    */
   def doLoadTensorflow(modelPath: String,
-                       modelType: String
+                       modelType: String,
                        intraOpParallelismThreads: Int,
                        interOpParallelismThreads: Int,
                        usePerSessionThreads: Boolean): Unit = {
@@ -490,7 +490,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
         doLoadTensorflowFrozenModel(modelPath,
          intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads)
       case _ =>
-       InferenceSupportive.logger.warn(s"$modelType not supported, + s"supported tf should be frozenModel")
+       InferenceSupportive.logger.warn(s"$modelType not supported, " + s"supported tf should be frozenModel")
     }
   }
 

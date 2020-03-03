@@ -51,12 +51,12 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     doLoadCaffe(modelPath, weightPath, true);
   }
 
-  public void loadTensorflow(String modelPath) {
-    doLoadTensorflow(modelPath);
+  public void loadTensorflow(String modelPath, String modelType) {
+    doLoadTensorflow(modelPath, modelType);
   }
 
-  public void loadTensorflow(String modelPath, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
-    doLoadTensorflow(modelPath, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
+  public void loadTensorflow(String modelPath, String modelType, int intraOpParallelismThreads, int interOpParallelismThreads, boolean usePerSessionThreads) {
+    doLoadTensorflow(modelPath, modelType, intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads);
   }
 
   public void loadTensorflow(String modelPath, String modelType, String[] inputs, String[] outputs) {
