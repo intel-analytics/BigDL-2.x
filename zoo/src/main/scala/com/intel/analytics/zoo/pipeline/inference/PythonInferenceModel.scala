@@ -128,6 +128,7 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
   def inferenceModelTensorFlowLoadTF(
       model: InferenceModel,
       modelPath: String,
+      modelType: String,
       intraOpParallelismThreads: Int,
       interOpParallelismThreads: Int,
       usePerSessionThreads: Boolean): Unit = {

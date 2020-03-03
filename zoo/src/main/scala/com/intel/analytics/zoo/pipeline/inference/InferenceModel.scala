@@ -483,12 +483,13 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                                     usePerSessionThreads: Boolean): Unit = {
     modelType match {
       case null | "" =>
-        require(modelPath != null && modelPath != "",
-          "modeltype is not provided, modelPath should be specified")
+        InferenceSupportive.logger.info(s"modelType defaults to frozenModel." )
+        doLoadTensorflowFrozenModel(modelPath,
+          intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads)
       case "frozenModel" =>
         InferenceSupportive.logger.info(s"$modelType is supported." )
         doLoadTensorflowFrozenModel(modelPath,
-         intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads)
+          intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads)
       case _ =>
        InferenceSupportive.logger.warn(s"$modelType not supported, " + s"supported tf should be frozenModel")
     }
@@ -503,8 +504,8 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                                     usePerSessionThreads: Boolean): Unit = {
     modelType match {
       case null | "" =>
-        require(modelPath != null && modelPath != "",
-          "modeltype is not provided, modelPath should be specified")
+        require(modeltype != null && modeltype != "",
+          "modeltype should be specified")
       case "frozenModel" =>
         InferenceSupportive.logger.info(s"$modelType is supported." )
         doLoadTensorflowFrozenModel(modelPath, inputs, outputs,
@@ -528,8 +529,8 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                                     usePerSessionThreads: Boolean): Unit = {
     modelType match {
       case null | "" =>
-        require(modelPath != null && modelPath != "",
-          "modeltype is not provided, modelPath should be specified")
+        require(modeltype != null && modeltype != "",
+          "modeltype should be specified")
       case "frozenModel" =>
         InferenceSupportive.logger.info(s"$modelType is supported." )
         doLoadTensorflowFrozenModel(modelBytes, inputs, outputs,
@@ -544,10 +545,10 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     }
   }
 
-  private def doLoadTensorflowModelFrozenModel(modelPath: String,
-                                               intraOpParallelismThreads: Int,
-                                               interOpParallelismThreads: Int,
-                                               usePerSessionThreads: Boolean): Unit = {
+  private def doLoadTensorflowFrozenModel(modelPath: String,
+                                          intraOpParallelismThreads: Int,
+                                          interOpParallelismThreads: Int,
+                                          usePerSessionThreads: Boolean): Unit = {
     clearModelQueue()
     this.originalModel =
       InferenceModelFactory.loadFloatModelForTF(modelPath,
