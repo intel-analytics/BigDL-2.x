@@ -7,8 +7,7 @@ _A distributed **Automated Machine Learning** libary based on **ray** and **tens
 
 This library provides a framework and implementations for automatic feature engineering, model selection and hyper parameter optimization. It also provides a built-in automatically optimized model: _**TimeSequencePredictor**_ , which can be used for time series data analysis or anomaly detection. 
 
-Analytics Zoo AutoML is still in experimental stage and `pip install` haven't been supported yet. To use AutoML, you can download code of Analytics-zoo [automl branch](https://github.com/intel-analytics/analytics-zo/tree/automl). Then build the whl package manually following the instructions [here](https://analytics-zoo.github.io/master/#DeveloperGuide/python/#build-whl-package-for-pip-install) and intall the whl with pip in local.
-
+Analytics Zoo AutoML is still in experimental stage and `pip install` haven't been supported yet. You may refer to [this guide](https://github.com/intel-analytics/analytics-zoo/tree/automl/apps/automl) in the readme of apps folder to enable automl.
 
 ## 1 Automated Time Series Prediction 
 
