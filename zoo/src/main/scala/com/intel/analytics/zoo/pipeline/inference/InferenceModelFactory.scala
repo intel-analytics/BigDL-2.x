@@ -71,7 +71,8 @@ object InferenceModelFactory extends InferenceSupportive {
                             usePerSessionThreads: Boolean = true): FloatModel = {
       val sessionConfig = TFNet.SessionConfig(intraOpParallelismThreads,
         interOpParallelismThreads, usePerSessionThreads)
-      val model = ModelLoader.loadFloatModelForTFFrozenModel(modelPath, inputs, outputs, sessionConfig)
+      val model = ModelLoader.
+        loadFloatModelForTFFrozenModel(modelPath, inputs, outputs, sessionConfig)
       model.evaluate()
       val metaModel = makeMetaModel(model)
       new FloatModel(model, metaModel, true)
@@ -99,7 +100,8 @@ object InferenceModelFactory extends InferenceSupportive {
                                     usePerSessionThreads: Boolean = true): FloatModel = {
     val sessionConfig = TFNet.SessionConfig(intraOpParallelismThreads,
       interOpParallelismThreads, usePerSessionThreads)
-    val model = ModelLoader.loadFloatModelForTFSavedModel(modelPath, inputs, outputs, sessionConfig)
+    val model = ModelLoader.
+      loadFloatModelForTFSavedModel(modelPath, inputs, outputs, sessionConfig)
     model.evaluate()
     val metaModel = makeMetaModel(model)
     new FloatModel(model, metaModel, true)
