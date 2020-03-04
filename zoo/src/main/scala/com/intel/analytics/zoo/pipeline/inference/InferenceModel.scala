@@ -38,7 +38,6 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
 
   private var batchCnt: Int = 0
   @transient var inferenceSummary: InferenceSummary = null
-
   /**
    * default constructor, will create a InferenceModel with auto-scaling enabled.
    *
@@ -58,8 +57,8 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * create an InferenceModel with specified autoScalingEnabled, supportedConcurrentNum
    * and maxConcurrentNum
    *
-   * @param autoScalingEnabled if auto-scaling is enabled
-   * @param concurrentNum      the concurrentNum of the InferenceModel
+   * @param autoScalingEnabled     if auto-scaling is enabled
+   * @param concurrentNum          the concurrentNum of the InferenceModel
    * @return a specified InferenceModel
    */
   def this(autoScalingEnabled: Boolean, concurrentNum: Int) =
@@ -244,11 +243,11 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   /**
    * loads a TF model as OpenVINO
    *
-   * @param modelPath                the path of the tensorflow model
+   * @param modelPath the path of the tensorflow model
    * @param objectDetectionModelType the type of the tensorflow model,
-   *                                 please refer to [[ModelType]]
+   *                  please refer to [[ModelType]]
    *                  e.g. faster_rcnn_resnet101_coco, mask_rcnn_inception_v2_coco,
-   *                                 rfcn_resnet101_coco, ssd_inception_v2_coco
+   *                  rfcn_resnet101_coco, ssd_inception_v2_coco
    */
   @deprecated("this method will be deprecated", "0.8.0")
   def doLoadTF(modelPath: String, objectDetectionModelType: String): Unit = {
@@ -281,13 +280,13 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   /**
    * loads a TF model as OpenVINO
    *
-   * @param modelPath                the path of the tensorflow model
-   * @param objectDetectionModelType the type of the tensorflow model,
-   *                                 please refer to [[ModelType]]
+   * @param modelPath            the path of the tensorflow model
+   * @param objectDetectionModelType  the type of the tensorflow model,
+   *                             please refer to [[ModelType]]
    *                             e.g. faster_rcnn_resnet101_coco, mask_rcnn_inception_v2_coco,
-   *                                 rfcn_resnet101_coco, ssd_inception_v2_coco
-   * @param pipelineConfigPath       the path of the pipeline configure file
-   * @param extensionsConfigPath     the path of the extensions configure file
+   *                             rfcn_resnet101_coco, ssd_inception_v2_coco
+   * @param pipelineConfigPath   the path of the pipeline configure file
+   * @param extensionsConfigPath the path of the extensions configure file
    */
   @deprecated("this method will be deprecated", "0.8.0")
   def doLoadTF(modelPath: String,
@@ -305,15 +304,15 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   /**
    * load TF model as OpenVINO IR
    *
-   * @param modelPath                    the path of the tensorflow model
+   * @param modelPath              the path of the tensorflow model
    * @param imageClassificationModelType the type of the tensorflow model
-   * @param checkpointPath               the path of the tensorflow checkpoint file
-   * @param inputShape                   input shape that should be fed to an input node(s) of the model
-   * @param ifReverseInputChannels       the boolean value of if need reverse input channels.
-   *                                     switch the input channels order from RGB to BGR (or vice versa).
-   * @param meanValues                   all input values coming from original network inputs
-   *                                     will be divided by this value.
-   * @param scale                        the scale value, to be used for the input image per channel.
+   * @param checkpointPath         the path of the tensorflow checkpoint file
+   * @param inputShape             input shape that should be fed to an input node(s) of the model
+   * @param ifReverseInputChannels the boolean value of if need reverse input channels.
+   *                               switch the input channels order from RGB to BGR (or vice versa).
+   * @param meanValues             all input values coming from original network inputs
+   *                               will be divided by this value.
+   * @param scale                  the scale value, to be used for the input image per channel.
    */
   @deprecated("this method will be deprecated", "0.8.0")
   def doLoadTF(modelPath: String,
@@ -331,15 +330,15 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   /**
    * load TF model as OpenVINO IR
    *
-   * @param modelBytes                   the bytes of the tensorflow model
+   * @param modelBytes             the bytes of the tensorflow model
    * @param imageClassificationModelType the type of the tensorflow model
-   * @param checkpointBytes              the bytes of the tensorflow checkpoint file
-   * @param inputShape                   input shape that should be fed to an input node(s) of the model
-   * @param ifReverseInputChannels       the boolean value of if need reverse input channels.
-   *                                     switch the input channels order from RGB to BGR (or vice versa).
-   * @param meanValues                   all input values coming from original network inputs
-   *                                     will be divided by this value.
-   * @param scale                        the scale value, to be used for the input image per channel.
+   * @param checkpointBytes        the bytes of the tensorflow checkpoint file
+   * @param inputShape             input shape that should be fed to an input node(s) of the model
+   * @param ifReverseInputChannels the boolean value of if need reverse input channels.
+   *                               switch the input channels order from RGB to BGR (or vice versa).
+   * @param meanValues             all input values coming from original network inputs
+   *                               will be divided by this value.
+   * @param scale                  the scale value, to be used for the input image per channel.
    */
   @deprecated("this method will be deprecated", "0.8.0")
   def doLoadTF(modelBytes: Array[Byte],
@@ -799,7 +798,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
 
       val latency = end - begin
       val name = s"model predict for batch ${batchSize}"
-      InferenceSupportive.logger.info(s"$name time elapsed [${latency / 1e9} s, ${latency / 1e6} ms].")
+      InferenceSupportive.logger.info(s"$name time elapsed [${latency/1e9} s, ${latency/1e6} ms].")
 
       result
     } finally {
@@ -896,11 +895,11 @@ object InferenceModel {
   /**
    * optimize TF model as OpenVINO IR
    *
-   * @param modelPath                the path of the tensorflow model
-   * @param objectDetectionModelType the type of the tensorflow model
-   * @param pipelineConfigPath       the path of the pipeline configure file
-   * @param extensionsConfigPath     the path of the extensions configure file
-   * @param outputDir                the output dir
+   * @param modelPath              the path of the tensorflow model
+   * @param objectDetectionModelType  the type of the tensorflow model
+   * @param pipelineConfigPath     the path of the pipeline configure file
+   * @param extensionsConfigPath   the path of the extensions configure file
+   * @param outputDir              the output dir
    */
   def doOptimizeTF(modelPath: String,
                    objectDetectionModelType: String,
@@ -914,16 +913,16 @@ object InferenceModel {
   /**
    * optimize TF model as OpenVINO IR
    *
-   * @param modelPath                    the path of the tensorflow model
-   * @param imageClassificationModelType the type of the tensorflow model
-   * @param checkpointPath               the path of the tensorflow checkpoint file
-   * @param inputShape                   input shape that should be fed to an input node(s) of the model
-   * @param ifReverseInputChannels       the boolean value of if need reverse input channels.
-   *                                     switch the input channels order from RGB to BGR (or vice versa).
-   * @param meanValues                   all input values coming from original network inputs
-   *                                     will be divided by this value.
-   * @param scale                        the scale value, to be used for the input image per channel.
-   * @param outputDir                    the output dir
+   * @param modelPath              the path of the tensorflow model
+   * @param imageClassificationModelType  the type of the tensorflow model
+   * @param checkpointPath         the path of the tensorflow checkpoint file
+   * @param inputShape             input shape that should be fed to an input node(s) of the model
+   * @param ifReverseInputChannels the boolean value of if need reverse input channels.
+   *                               switch the input channels order from RGB to BGR (or vice versa).
+   * @param meanValues             all input values coming from original network inputs
+   *                               will be divided by this value.
+   * @param scale                  the scale value, to be used for the input image per channel.
+   * @param outputDir              the output dir
    */
   def doOptimizeTF(modelPath: String,
                    imageClassificationModelType: String,
@@ -941,19 +940,19 @@ object InferenceModel {
   /**
    * calibrate tensorflow model
    *
-   * @param modelPath          Path to an .xml file with a trained model
-   * @param networkType        Type of an inferred network,
-   *                           "C" to calibrate Classification,
-   *                           "OD" to calibrate Object Detection,
-   *                           "RawC" to collect only statistics for Classification,
-   *                           "RawOD" to collect only statistics for Object Detection
-   * @param validationFilePath Path to a directory with validation images
-   * @param subset             Number of pictures from the whole validation set
-   *                           to create the calibration dataset.
-   * @param opencvLibPath      the lib path whwere libopencv_imgcodecs.so.4.0,
-   *                           libopencv_core.so.4.0
-   *                           and libopencv_imgproc.so.4.0 can be found
-   * @param outputDir          the output directory
+   * @param modelPath            Path to an .xml file with a trained model
+   * @param networkType          Type of an inferred network,
+   *                             "C" to calibrate Classification,
+   *                             "OD" to calibrate Object Detection,
+   *                             "RawC" to collect only statistics for Classification,
+   *                             "RawOD" to collect only statistics for Object Detection
+   * @param validationFilePath   Path to a directory with validation images
+   * @param subset               Number of pictures from the whole validation set
+   *                             to create the calibration dataset.
+   * @param opencvLibPath        the lib path whwere libopencv_imgcodecs.so.4.0,
+   *                             libopencv_core.so.4.0
+   *                             and libopencv_imgproc.so.4.0 can be found
+   * @param outputDir            the output directory
    */
   def doCalibrateTF(modelPath: String,
                     networkType: String,
