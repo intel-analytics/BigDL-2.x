@@ -106,7 +106,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    *
    * @param modelPath the path of the tensorflow frozen model
    */
-  def doLoadTensorflow(modelPath: String, modelType="frozenModel"): Unit = {
+  def doLoadTensorflow(modelPath: String, modelType: String ="frozenModel"): Unit = {
     doLoadTensorflowModel(modelPath, modelType, 1, 1, true)
   }
 
@@ -120,7 +120,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param usePerSessionThreads      whether to perSessionThreads
    */
   def doLoadTensorflow(modelPath: String,
-                       modelType="frozenModel",
+                       modelType: String ="frozenModel",
                        intraOpParallelismThreads: Int,
                        interOpParallelismThreads: Int,
                        usePerSessionThreads: Boolean): Unit = {
