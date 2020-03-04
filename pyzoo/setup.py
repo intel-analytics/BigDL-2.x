@@ -94,6 +94,7 @@ def setup_package():
         version=VERSION,
         description='A unified Data Analytics and AI platform for distributed TensorFlow, Keras, '
                     'PyTorch, Apache Spark/Flink and Ray',
+        long_description=open("../README.md").read(),
         author='Analytics Zoo Authors',
         author_email='bigdl-user-group@googlegroups.com',
         license='Apache License, Version 2.0',
