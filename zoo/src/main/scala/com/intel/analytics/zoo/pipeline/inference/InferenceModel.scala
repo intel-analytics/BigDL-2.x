@@ -76,7 +76,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    *
    * @param modelPath  the file path of the model
    * @param weightPath the file path of the weights
-   * @param blas       whether to quantize
+   * @param blas       whether MKLBLAS or MKLDNN
    */
   def doLoad(modelPath: String,
              weightPath: String = null,
@@ -91,7 +91,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    *
    * @param modelPath  the path of the prototxt file
    * @param weightPath the path of the caffemodel file
-   * @param blas       whether to quantize
+   * @param blas       whether MKLBLAS or MKLDNN
    */
   def doLoadCaffe(modelPath: String,
                   weightPath: String,
@@ -491,7 +491,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
         doLoadTensorflowFrozenModel(modelPath,
           intraOpParallelismThreads, interOpParallelismThreads, usePerSessionThreads)
       case _ =>
-       InferenceSupportive.logger.warn(s"$modelType not supported, " + s"supported tf should be frozenModel")
+       InferenceSupportive.logger.warn(s"$modelType not supported, " + s"supported tf model should be frozenModel")
     }
   }
 
@@ -504,8 +504,8 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                                     usePerSessionThreads: Boolean): Unit = {
     modelType match {
       case null | "" =>
-        require(modeltype != null && modeltype != "",
-          "modeltype should be specified")
+        require(modelType != null && modelType != "",
+          "modelType should be specified")
       case "frozenModel" =>
         InferenceSupportive.logger.info(s"$modelType is supported." )
         doLoadTensorflowFrozenModel(modelPath, inputs, outputs,
@@ -529,8 +529,8 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
                                     usePerSessionThreads: Boolean): Unit = {
     modelType match {
       case null | "" =>
-        require(modeltype != null && modeltype != "",
-          "modeltype should be specified")
+        require(modelType != null && modelType != "",
+          "modelType should be specified")
       case "frozenModel" =>
         InferenceSupportive.logger.info(s"$modelType is supported." )
         doLoadTensorflowFrozenModel(modelBytes, inputs, outputs,
