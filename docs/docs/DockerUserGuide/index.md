@@ -116,15 +116,19 @@ After connecting to the Jupyter Notebook in the browser, users can run multiple 
 
 #### Run Analytics Zoo example with Jupyter Notebook
 1. Click into the "dogs-vs-cats" folder: 
+
 ![notebook2](notebook2.jpg)
 
 2. Open the notebook file: 
+
 ![notebook3](notebook3.jpg)
 
 3. Start to run the "dogs-vs-cats" notebook:
+
 ![notebook4](notebook4.jpg)
 
 4. Run through the example and check the prediction:
+
 ![notebook5](notebook5.jpg)
 
 ### Create a new Analytics Zoo Jupyter Notebook example
