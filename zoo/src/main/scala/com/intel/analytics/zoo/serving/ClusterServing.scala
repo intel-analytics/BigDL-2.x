@@ -257,6 +257,7 @@ object ClusterServing {
               .format("org.apache.spark.sql.redis")
               .option("table", "result")
               .option("key.column", "uri")
+              .option("iterator.grouping.size", batchSize)
               .mode(SaveMode.Append).save()
 
             errFlag = false
