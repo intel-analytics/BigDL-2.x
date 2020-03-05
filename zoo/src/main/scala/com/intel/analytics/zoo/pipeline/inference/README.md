@@ -93,7 +93,7 @@ There are two backends to load a tensorflow model: TensorFlow and OpenVINO. When
 
 **1. Load with TensorFlow backend**
 
-Load model into `TFNet` with TensorFlow backend, with corresponding `loadTensorflow` methods (`loadTensorflow` for Java, `doLoadTensorflow` for Scala and `load_tensorflow` Python)
+Load model into `TFNet` with corresponding `loadTensorflow` methods (`loadTensorflow` for Java, `doLoadTensorflow` for Scala and `load_tensorflow` for Python)
 
 **Java**
 
