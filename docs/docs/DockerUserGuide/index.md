@@ -9,14 +9,14 @@ Users can also develop their own Data Analytics or AI applications using Analyti
 This document provides step-by-step instructions for users to easily start using the Analytics Zoo docker:
 
 * [Launch an Analytics Zoo Docker Container](#Launch-an-Analytics-Zoo-Docker-Container)
-* [Run Analytics Zoo Jupyter Notebook example in a container (local)](#Run-Analytics-Zoo-Jupyter-Notebook-example-in-a-container (local))
-** [Start the Jupyter Notebook service in the container](#Start-the-Jupyter-Notebook-service-in-the-container)
-** [Connect to Jupyter Notebook Service](#Connect-to-Jupyter-Notebook-Service)
-** [Run Analytics Zoo Jupyter Notebook examples](#Run-Analytics-Zoo-Jupyter-Notebook-examples)
-** [Create a new Analytics Zoo Jupyter Notebook example](#Create-a-new-Analytics-Zoo-Jupyter-Notebook-example)
+* [Run Analytics Zoo Jupyter Notebook example in a container (local)](#Run-Analytics-Zoo-Jupyter-Notebook-example-in-a-container-\(local\))
+- [Start the Jupyter Notebook service in the container](#Start-the-Jupyter-Notebook-service-in-the-container)
+- [Connect to Jupyter Notebook Service](#Connect-to-Jupyter-Notebook-Service)
+- [Run Analytics Zoo Jupyter Notebook examples](#Run-Analytics-Zoo-Jupyter-Notebook-examples)
+- [Create a new Analytics Zoo Jupyter Notebook example](#Create-a-new-Analytics-Zoo-Jupyter-Notebook-example)
 * [Submit Jupyter Notebook example from container to remote Spark cluster](#Submit-Jupyter-Notebook-example-from-container-to-remote-Spark-cluster)
 * [Terminate the Analytics Zoo Docker Container](#Terminate-the-Analytics-Zoo-Docker-Container)
-* [Build A Customized Analytics Zoo Docker Image (optional)](#Build-A-Customized-Analytics-Zoo-Docker-Image-(optional))
+* [Build A Customized Analytics Zoo Docker Image (optional)](#Build-A-Customized-Analytics-Zoo-Docker-Image-\(optional\))
 
 Note: The Analytics-Zoo docker images have been pre-built with below packages:
 
