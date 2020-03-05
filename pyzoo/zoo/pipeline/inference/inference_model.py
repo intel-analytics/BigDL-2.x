@@ -19,6 +19,7 @@ from zoo.common.utils import callZooFunc
 from bigdl.nn.layer import Layer
 from zoo.pipeline.api.keras.engine import KerasNet
 
+
 class InferenceModel(JavaValue):
     """
     Model for thread-safe inference.
@@ -63,7 +64,7 @@ class InferenceModel(JavaValue):
         callZooFunc(self.bigdl_type, "inferenceModelLoadOpenVINO",
                     self.value, model_path, weight_path, batch_size)
 
-    def load_tensorflow(self, model_path, model_type, intra_op_parallelism_threads=1,
+    def load_tensorflow(self, model_path, model_type="frozenModel", intra_op_parallelism_threads=1,
                         inter_op_parallelism_threads=1, use_per_session_threads=True):
         """
         Load an TensorFlow model using tensorflow.
@@ -75,7 +76,7 @@ class InferenceModel(JavaValue):
         :param use_per_session_threads: Boolean. Whether to use perSessionThreads. Default is True.
         """
         callZooFunc(self.bigdl_type, "inferenceModelLoadTensorFlow",
-                    self.value, model_path, "frozenModel", intra_op_parallelism_threads,
+                    self.value, model_path, model_type, intra_op_parallelism_threads,
                     inter_op_parallelism_threads, use_per_session_threads)
 
     # deprecated(deprecated_in="0.8.0")
