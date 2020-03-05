@@ -321,8 +321,9 @@ class TFModel(object):
                 os.makedirs(model_dir)
 
         meta, saver, val_methods = TFModel.export(model_dir, loss_tensor, sess,
-                                                  inputs, labels, predictions, grads, variables, graph,
-                                                  tensors_with_value, metrics, updates, train_op)
+                                                  inputs, labels, predictions, grads, variables,
+                                                  graph, tensors_with_value, metrics, updates,
+                                                  train_op)
 
         training_helper_layer = TFTrainingHelper(model_dir,
                                                  session_config, saver, meta, sess)
@@ -451,7 +452,8 @@ class TFOptimizer:
 
         inputs = nest.flatten(inputs)
         labels = nest.flatten(labels)
-        return TFOptimizer._from_grads(loss=loss, sess=sess, inputs=inputs, labels=labels, grads=grads,
+        return TFOptimizer._from_grads(loss=loss, sess=sess, inputs=inputs, labels=labels,
+                                       grads=grads,
                                        variables=variables, dataset=dataset, metrics=metrics,
                                        tensor_with_value=tensor_with_value,
                                        optim_method=FakeOptimMethod(),
@@ -535,8 +537,8 @@ class TFOptimizer:
             for i, method in enumerate(val_methods):
                 metrics['bigdl_metirc_' + str(i)] = BigDLMetric(method, val_outputs, val_labels)
 
-        return TFOptimizer._from_grads(loss, sess, inputs, labels, grads, variables, dataset, optim_method,
-                                       val_split, clip_norm, clip_value,
+        return TFOptimizer._from_grads(loss, sess, inputs, labels, grads, variables, dataset,
+                                       optim_method, val_split, clip_norm, clip_value,
                                        metrics, tensor_with_value, session_config,
                                        model_dir, updates)
 
@@ -546,8 +548,8 @@ class TFOptimizer:
 
         grads, variables = TFOptimizer._get_vars_grads(loss)
 
-        TFModel.export(export_dir, loss, sess, inputs, labels, predictions, grads, variables, loss.graph,
-                       tensor_with_value, metrics, updates)
+        TFModel.export(export_dir, loss, sess, inputs, labels, predictions, grads, variables,
+                       loss.graph, tensor_with_value, metrics, updates)
         logging.info("Exported TensorFlow model in {} for training".format(export_dir))
 
     @classmethod

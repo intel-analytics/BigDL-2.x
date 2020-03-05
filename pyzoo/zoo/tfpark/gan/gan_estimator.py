@@ -163,7 +163,8 @@ class GANEstimator(object):
                 kpt = tf.train.latest_checkpoint(self.model_dir)
                 if kpt is not None:
                     saver.restore(sess, kpt)
-                opt = TFOptimizer._from_grads(loss, sess, inputs=nest.flatten(dataset._original_tensors),
+                opt = TFOptimizer._from_grads(loss, sess,
+                                              inputs=nest.flatten(dataset._original_tensors),
                                               labels=[],
                                               grads=grads, variables=variables, dataset=dataset,
                                               optim_method=FakeOptimMethod(),
