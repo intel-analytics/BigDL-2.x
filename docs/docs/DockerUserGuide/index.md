@@ -68,6 +68,14 @@ Once the container is sucessfully launched, you will automatically login to the 
 root@[hostname]:/opt/work#
 ```
 
+Note: The /opt/work directory contains: 
+* download-analytics-zoo.sh is used for downloading Analytics-Zoo distributions.
+* start-notebook.sh is used for starting the jupyter notebook. You can specify the environment settings and spark settings to start a - specified jupyter notebook.
+* analytics-Zoo-${ANALYTICS_ZOO_VERSION} is the Analytics-Zoo home of Analytics-Zoo distribution.
+* analytics-zoo-SPARK_x.x-x.x.x-dist.zip is the zip file of Analytics-Zoo distribution.
+* spark-${SPARK_VERSION} is the Spark home.
+* analytics-zoo is cloned from https://github.com/intel-analytics/analytics-zoo, contains apps, examples using analytics-zoo.
+
 ## Run Analytics Zoo Jupyter Notebook example in a container
 
 This section depends on the previous section [“Launch Analytics Zoo Docker Container”](#Launch-Analytics-Zoo-Docker-Container). After the user launches the Analytics Zoo docker container, the Jupyter Notebook service can be started and Analytics Zoo jupyter examples are available. 
@@ -212,7 +220,7 @@ sudo docker build \
     --build-arg ANALYTICS_ZOO_VERSION=0.3.0 \
     --build-arg BIGDL_VERSION=0.6.0 \
     --build-arg SPARK_VERSION=2.3.1 \
-    --rm -t intelanalytics/analytics-zoo:0.3.0-bigdl_0.6.0-spark_2.3.1 .
+    --rm -t intelanalytics/analytics-zoo:0.7.0-bigdl_0.10.0-spark_2.4.3 .
 ```
 
 ## Pre-installed Packages
