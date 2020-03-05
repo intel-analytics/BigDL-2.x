@@ -17,8 +17,8 @@
 
 package com.intel.analytics.zoo.serving.utils
 
-import java.io.{File, FileWriter, FileInputStream}
-import java.nio.file.{Files, Paths}
+import java.io.{File, FileInputStream, FileWriter}
+import java.nio.file.{Files, Path, Paths}
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
@@ -361,8 +361,11 @@ class ClusterServingHelper {
     val scheme = location.split(":").head
     val remoteSchemeSet: Set[String] = Set("hdfs", "s3", "s3n", "s3a")
     val localModelPath = if (remoteSchemeSet.contains(scheme)) {
-      FileUtils.copyToLocal(location + "/*", "model/")
-      "model/"
+
+      val path = Files.createTempDirectory("model")
+      val dstPath = path.getParent + "/" + path.getFileName
+      FileUtils.copyToLocal(location + "/*", dstPath)
+      dstPath
     } else {
       location
     }
