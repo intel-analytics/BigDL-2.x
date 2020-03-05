@@ -295,7 +295,7 @@ class ClusterServingHelper {
       case "caffe" => model.doLoadCaffe(defPath, weightPath, blas = blasFlag)
       case "bigdl" => model.doLoad(weightPath, blas = blasFlag)
 
-      case "tensorflow" => model.doLoadTF(weightPath, coreNum, 1, true)
+      case "tensorflow" => model.doLoadTensorflow(weightPath, "frozenModel", coreNum, 1, true)
       case "pytorch" => model.doLoadPyTorch(weightPath)
       case "keras" => logError("Keras currently not supported in Cluster Serving")
       case "openvino" => model.doLoadOpenVINO(defPath, weightPath, batchSize)
