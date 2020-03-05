@@ -31,7 +31,7 @@ A Linux user (CentOS or Ubuntu) can pull a docker image and launch the docker co
 2. Download and Install Docker following the instructions on: 
 https://docs.docker.com/get-docker/
 3. Pull an Analytics Zoo docker image (optional)
-It is optional to pull an Analytics Zoo docker image in advance, as the command “docker run” in [“Launch Analytics Zoo Docker Container”](#Launch-Analytics-Zoo-Docker-Container) step will check the availability of the docker image and pull the image if it is absent. For example, to pull the latest docker image in advance, use: 
+*Note: It is optional to pull an Analytics Zoo docker image in advance, as the command “docker run” in [“Launch Analytics Zoo Docker Container”](#Launch-Analytics-Zoo-Docker-Container) step will check the availability of the docker image and pull the image if it is absent. To manually pull the latest docker image, use: 
 ```
 sudo docker pull intelanalytics/analytics-zoo:latest
 ```
