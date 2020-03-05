@@ -1,15 +1,14 @@
-Analytics Zoo Docker User Guide
 
 # Introduction 
 In order to simply the Analytics Zoo installation and configuration, Analytics Zoo docker images have been built and provided on Docker Hub. These docker images have been pre-built with all the dependencies and readily configured to run a bunch of Analytics Zoo examples out-of-box. 
 
 With an Analytics Zoo docker image, users can run Analytics Zoo examples on Linux (such as Ubuntu, CentOS), MacOS and Windows. Users can choose to run the Analytics Zoo examples within the container environment as a local mode, or submit the Analytics Zoo task from the container environment to a remote Spark cluster. 
 
-Users can also develop their own Data Analytics or AI applications using Analytics Zoo within Jupyter Notebook, either by starting with a blank Python template in the Jupyter Notebook, or modeling after the various Analytics Zoo examples provided in the docker.  
+Users can also develop their own Data Analytics or AI applications using Analytics Zoo within Jupyter Notebook, either by starting with a blank Python template in the Jupyter Notebook, or cloning & modifying upon the various Analytics Zoo examples provided in the docker.
 
 This document provides step-by-step instructions for users to easily start using the Analytics Zoo docker. 
 
-Note: The Analytics-Zoo docker image has been pre-built with below packages:
+Note: The Analytics-Zoo docker images have been pre-built with below packages:
 
 * git
 * maven
@@ -42,7 +41,7 @@ A Linux user (CentOS or Ubuntu) can pull a docker image and launch the docker co
 2. Download and Install Docker following the instructions on: 
 https://docs.docker.com/get-docker/
 3. Pull an Analytics Zoo docker image (optional)
-It is optional to pull an Analytics Zoo docker image in advance, as the command “docker run” in “Launch Analytics Zoo Docker” step will check the availability of the docker image and pull the image if it is absent. For example, to pull the latest docker image in advance, use: 
+It is optional to pull an Analytics Zoo docker image in advance, as the command “docker run” in [“Launch Analytics Zoo Docker Container”](!Launch-Analytics-Zoo-Docker-Container) step will check the availability of the docker image and pull the image if it is absent. For example, to pull the latest docker image in advance, use: 
 ```
 sudo docker pull intelanalytics/analytics-zoo:latest
 ```
@@ -54,36 +53,34 @@ Launch an Analytics Zoo docker container with this command line:
 $sudo docker run -it --rm --net=host -e NotebookPort=12345 -e NotebookToken="your-token" intelanalytics/analytics-zoo:latest bash
 ```
 * The value 12345 is a user specified port number. 
-* The value your-token is a user specified string.
+* The value "your-token" is a user specified string.
 
-As a result, you will login to the container and see this as the output: 
-```
-root@[hostname]:/opt/work#
-```
-
-Optional: 
-
-To specify an Analytics Zoo version: 
+If you want to specify an Analytics Zoo version, for example 0.7.0, use: 
 ```
 sudo docker run -it --rm --net=host \
     -e NotebookPort=12345 \
     -e NotebookToken="your-token" \
-    intelanalytics/analytics-zoo:0.7.0-bigdl_0.10.0-spark_2.4.3
+    intelanalytics/analytics-zoo:0.7.0-bigdl_0.10.0-spark_2.4.3 bash
 ```
 
-To specify http/https proxy: 
+If you need to use http/https proxy, use:  
 ```
 sudo docker run -it --rm --net=host \
     -e NotebookPort=12345 \
     -e NotebookToken="your-token" \
     -e http_proxy=http://your-proxy-host:your-proxy-port \
     -e https_proxy=https://your-proxy-host:your-proxy-port \
-    intelanalytics/analytics-zoo:default
+    intelanalytics/analytics-zoo:default bash
+```
+
+Once the container is sucessfully launched, you will automatically login to the container and see this as the output: 
+```
+root@[hostname]:/opt/work#
 ```
 
 # Run Analytics Zoo Jupyter Notebook example in a container (local)
 
-This section depends on the previous section “Launch an Analytics Zoo Docker Container”. After the user launches the Analytics Zoo docker container, the Jupyter Notebook service can be started and Analytics Zoo jupyter examples are available. 
+This section depends on the previous section [“Launch Analytics Zoo Docker Container”](!Launch-Analytics-Zoo-Docker-Container). After the user launches the Analytics Zoo docker container, the Jupyter Notebook service can be started and Analytics Zoo jupyter examples are available. 
 
 ## Start the Jupyter Notebook service in the container
 
@@ -100,7 +97,7 @@ As a result, you will see the output message like below. This means the Jupyter 
 ```
 [I 01:04:45.625 NotebookApp] Serving notebooks from local directory: /opt/work/analytics-zoo-0.5.0-SNAPSHOT/apps
 [I 01:04:45.625 NotebookApp] The Jupyter Notebook is running at:
-[I 01:04:45.625 NotebookApp] http://(arda-Z270X-UD5 or 127.0.0.1):12345/?token=...
+[I 01:04:45.625 NotebookApp] http://(the-host-name or 127.0.0.1):12345/?token=...
 [I 01:04:45.625 NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
 ```
 
@@ -112,9 +109,7 @@ After the Jupyter Notebook service is successfully started, users can connect to
 2. Launch a browser, and connect to the Jupyter Notebook service with the URL: 
 https://container-ip-address:port-number/?token=your-token
 
-In the previous steps, 12345 is used as the port-number, and string “your-token” is used as the token. 
-
-As a result, you will see the Jupyter Notebook as this: 
+As a result, you will see the Jupyter Notebook like this: 
 
 ![notebook1](notebook1.jpg)
 
@@ -159,7 +154,7 @@ sudo docker run -itd --net=host \
     -e RUNTIME_EXECUTOR_CORES=4 \
     -e RUNTIME_EXECUTOR_MEMORY=20g \
     -e RUNTIME_TOTAL_EXECUTOR_CORES=4 \
-    intelanalytics/analytics-zoo:latest
+    intelanalytics/analytics-zoo:latest bash
 ```
 
 The “RUNTIME_SPARK_MASTER” is used to specify the remote Spark cluster address: 
@@ -167,7 +162,7 @@ The “RUNTIME_SPARK_MASTER” is used to specify the remote Spark cluster addre
 RUNTIME_SPARK_MASTER=spark://your-spark-master-host:your-spark-master-port 
 ```
 
-The additional parameters are used to specify Spark configurations:  
+These additional parameters are used to specify Spark configurations:  
 ```
     -e RUNTIME_DRIVER_CORES=4 \
     -e RUNTIME_DRIVER_MEMORY=20g \
@@ -177,12 +172,12 @@ The additional parameters are used to specify Spark configurations:
 ```
 
 ### Run the Jupyter Notebook example on the remote Spark cluster
-Follow the same steps in section “Connect to Jupyter Notebook Service” to interactively run the Analytics Zoo Jupyter Notebook. The execution will be distributed to the Spark cluster. 
+Follow the same steps in section [“Connect to Jupyter Notebook Service”](!Connect-to-Jupyter-Notebook-Service) to interactively run the Analytics Zoo Jupyter Notebook. The execution will be distributed to the Spark cluster. 
 
-# Terminate the Analytics Zoo Docker container
+# Terminate the Analytics Zoo Docker Container
 Users should terminate the Analytics Zoo docker container done using it. 
 
-### Terminate the Analytics Zoo Docker container
+### Terminate the Analytics Zoo Docker Container
 A user can list all the active docker containers by command line: 
 ```
 $sudo docker ps
@@ -200,7 +195,7 @@ $sudo docker rm -f 40de2cdad025
 ```
 
 # Build A Customized Analytics Zoo Docker Image (optional)
-A set of pre-build Analytics Zoo docker images have been provided on the Docker Hub (https://hub.docker.com/r/intelanalytics/analytics-zoo/tags?page=1&ordering=last_updated). Users can retrieve these docker images by  “docker pull” command and specify a tag for which docker image to download. For example: 
+A set of pre-build Analytics Zoo docker images have been provided on the [Docker Hub](!https://hub.docker.com/r/intelanalytics/analytics-zoo/tags?page=1&ordering=last_updated). Users can retrieve these docker images by  “docker pull” command and specify a tag for which docker image to download. For example: 
 ```
 sudo docker pull intelanalytics/analytics-zoo:0.7.0-bigdl_0.10.0-spark_2.4.3
 sudo docker pull intelanalytics/analytics-zoo:latest 
