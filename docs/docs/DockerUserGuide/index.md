@@ -1,5 +1,5 @@
+# Analytics Zoo Docker User Guide 
 
-# Introduction 
 In order to simply the Analytics Zoo installation and configuration, Analytics Zoo docker images have been built and provided on Docker Hub. These docker images have been pre-built with all the dependencies and readily configured to run a bunch of Analytics Zoo examples out-of-box. The pre-installed packages are listed at the end of this page. 
 
 With an Analytics Zoo docker image, users can run Analytics Zoo examples on Linux (such as Ubuntu, CentOS), MacOS and Windows. Users can choose to run the Analytics Zoo examples within the container environment as a local mode, or submit the Analytics Zoo task from the container environment to a remote Spark cluster. 
@@ -17,6 +17,8 @@ This document provides step-by-step instructions for users to easily start using
 * [Submit Jupyter Notebook example from container to remote Spark cluster](#Submit-Jupyter-Notebook-example-from-container-to-remote-Spark-cluster)
 * [Terminate the Analytics Zoo Docker Container](#Terminate-the-Analytics-Zoo-Docker-Container)
 * [Build A Customized Analytics Zoo Docker Image](#Build-A-Customized-Analytics-Zoo-Docker-Image)
+
+
 
 
 ## Launch an Analytics Zoo Docker Container
