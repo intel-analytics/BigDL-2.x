@@ -71,8 +71,10 @@ class InferenceModel(JavaValue):
 
         :param model_path: String. The file path to the TensorFlow model.
         :param model_type: String. The type of the tensorflow model file. Default is "frozenModel"
-        :param intra_op_parallelism_threads: Int. The number of intraOpParallelismThreads. Default is 1.
-        :param inter_op_parallelism_threads: Int. The number of interOpParallelismThreads. Default is 1.
+        :param intra_op_parallelism_threads: Int. The number of intraOpParallelismThreads.
+                                             Default is 1.
+        :param inter_op_parallelism_threads: Int. The number of interOpParallelismThreads.
+                                             Default is 1.
         :param use_per_session_threads: Boolean. Whether to use perSessionThreads. Default is True.
         """
         callZooFunc(self.bigdl_type, "inferenceModelLoadTensorFlow",
