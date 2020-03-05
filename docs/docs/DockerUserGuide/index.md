@@ -1,6 +1,6 @@
 
 # Introduction 
-In order to simply the Analytics Zoo installation and configuration, Analytics Zoo docker images have been built and provided on Docker Hub. These docker images have been pre-built with all the dependencies and readily configured to run a bunch of Analytics Zoo examples out-of-box. 
+In order to simply the Analytics Zoo installation and configuration, Analytics Zoo docker images have been built and provided on Docker Hub. These docker images have been pre-built with all the dependencies and readily configured to run a bunch of Analytics Zoo examples out-of-box. The pre-installed packages are listed at the end of this page. 
 
 With an Analytics Zoo docker image, users can run Analytics Zoo examples on Linux (such as Ubuntu, CentOS), MacOS and Windows. Users can choose to run the Analytics Zoo examples within the container environment as a local mode, or submit the Analytics Zoo task from the container environment to a remote Spark cluster. 
 
@@ -9,36 +9,14 @@ Users can also develop their own Data Analytics or AI applications using Analyti
 This document provides step-by-step instructions for users to easily start using the Analytics Zoo docker:
 
 * [Launch an Analytics Zoo Docker Container](#Launch-an-Analytics-Zoo-Docker-Container)
-* [Run Analytics Zoo Jupyter Notebook example in a container (local)](#Run-Analytics-Zoo-Jupyter-Notebook-example-in-a-container-\(local\))
-- [Start the Jupyter Notebook service in the container](#Start-the-Jupyter-Notebook-service-in-the-container)
-- [Connect to Jupyter Notebook Service](#Connect-to-Jupyter-Notebook-Service)
-- [Run Analytics Zoo Jupyter Notebook examples](#Run-Analytics-Zoo-Jupyter-Notebook-examples)
-- [Create a new Analytics Zoo Jupyter Notebook example](#Create-a-new-Analytics-Zoo-Jupyter-Notebook-example)
+* [Run Analytics Zoo Jupyter Notebook example in a container](#Run-Analytics-Zoo-Jupyter-Notebook-example-in-a-container)
+    - [Start the Jupyter Notebook service in the container](#Start-the-Jupyter-Notebook-service-in-the-container)
+    - [Connect to Jupyter Notebook Service](#Connect-to-Jupyter-Notebook-Service)
+    - [Run Analytics Zoo Jupyter Notebook examples](#Run-Analytics-Zoo-Jupyter-Notebook-examples)
+    - [Create a new Analytics Zoo Jupyter Notebook example](#Create-a-new-Analytics-Zoo-Jupyter-Notebook-example)
 * [Submit Jupyter Notebook example from container to remote Spark cluster](#Submit-Jupyter-Notebook-example-from-container-to-remote-Spark-cluster)
 * [Terminate the Analytics Zoo Docker Container](#Terminate-the-Analytics-Zoo-Docker-Container)
-* [Build A Customized Analytics Zoo Docker Image (optional)](#Build-A-Customized-Analytics-Zoo-Docker-Image-\(optional\))
-
-Note: The Analytics-Zoo docker images have been pre-built with below packages:
-
-* git
-* maven
-* Oracle jdk 1.8.0_152 (in /opt/jdk1.8.0_152)
-* python 3.6.9
-* pip
-* numpy
-* scipy
-* pandas
-* scikit-learn
-* matplotlib
-* seaborn
-* jupyter
-* wordcloud
-* moviepy
-* requests
-* tensorflow
-* spark-${SPARK_VERSION} (in /opt/work/spark-${SPARK_VERSION})
-* Analytics-Zoo distribution (in /opt/work/analytics-zoo-${ANALYTICS_ZOO_VERSION})
-* Analytics-Zoo source code (in /opt/work/analytics-zoo)
+* [Build A Customized Analytics Zoo Docker Image](#Build-A-Customized-Analytics-Zoo-Docker-Image)
 
 
 ## Launch an Analytics Zoo Docker Container
@@ -88,7 +66,7 @@ Once the container is sucessfully launched, you will automatically login to the 
 root@[hostname]:/opt/work#
 ```
 
-## Run Analytics Zoo Jupyter Notebook example in a container (local)
+## Run Analytics Zoo Jupyter Notebook example in a container
 
 This section depends on the previous section [“Launch Analytics Zoo Docker Container”](#Launch-Analytics-Zoo-Docker-Container). After the user launches the Analytics Zoo docker container, the Jupyter Notebook service can be started and Analytics Zoo jupyter examples are available. 
 
@@ -204,7 +182,7 @@ Terminate the corresponding docker container by its ID:
 $sudo docker rm -f 40de2cdad025        
 ```
 
-## Build A Customized Analytics Zoo Docker Image (optional)
+## Build A Customized Analytics Zoo Docker Image
 A set of pre-build Analytics Zoo docker images have been provided on the [Docker Hub](!https://hub.docker.com/r/intelanalytics/analytics-zoo/tags?page=1&ordering=last_updated). Users can retrieve these docker images by  “docker pull” command and specify a tag for which docker image to download. For example: 
 ```
 sudo docker pull intelanalytics/analytics-zoo:0.7.0-bigdl_0.10.0-spark_2.4.3
@@ -234,3 +212,28 @@ sudo docker build \
     --build-arg SPARK_VERSION=2.3.1 \
     --rm -t intelanalytics/analytics-zoo:0.3.0-bigdl_0.6.0-spark_2.3.1 .
 ```
+
+## Pre-installed Packages
+
+The Analytics-Zoo docker images have been pre-built with below packages:
+* git
+* maven
+* Oracle jdk 1.8.0_152 (in /opt/jdk1.8.0_152)
+* python 3.6.9
+* pip
+* numpy
+* scipy
+* pandas
+* scikit-learn
+* matplotlib
+* seaborn
+* jupyter
+* wordcloud
+* moviepy
+* requests
+* tensorflow
+* spark-${SPARK_VERSION} (in /opt/work/spark-${SPARK_VERSION})
+* Analytics-Zoo distribution (in /opt/work/analytics-zoo-${ANALYTICS_ZOO_VERSION})
+* Analytics-Zoo source code (in /opt/work/analytics-zoo)
+
+
