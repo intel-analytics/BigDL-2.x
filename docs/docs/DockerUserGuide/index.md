@@ -115,10 +115,16 @@ As a result, you will see the Jupyter Notebook like this:
 After connecting to the Jupyter Notebook in the browser, users can run multiple Analytics Zoo Jupyter Notebook examples. The example shown below is the “dogs-vs-cats”. 
 
 #### Run Analytics Zoo example with Jupyter Notebook
-
+1. Click into the "dogs-vs-cats" folder: 
 ![notebook2](notebook2.jpg)
+
+2. Open the notebook file: 
 ![notebook3](notebook3.jpg)
+
+3. Start to run the "dogs-vs-cats" notebook:
 ![notebook4](notebook4.jpg)
+
+4. Run through the example and check the prediction:
 ![notebook5](notebook5.jpg)
 
 ### Create a new Analytics Zoo Jupyter Notebook example
@@ -130,7 +136,7 @@ Once the user is connected to the Jupyter Notebook service and opens the address
 ![notebook6](notebook6.jpg)
 
 #### “Make a Copy” from an existing Analytics Zoo Jupyter Notebook example and model after it
-The user can also select an existing Analytics Zoo Jupyter Notebook example approximating to his own use case, then make a copy and start tailing it. 
+The user can also select an existing Analytics Zoo Jupyter Notebook example approximating to his own use case, then click "Make a Copy" and start tailing it. 
 
 ![notebook7](notebook7.jpg)
 
