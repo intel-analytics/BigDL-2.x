@@ -19,7 +19,6 @@ package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
-
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
 import com.intel.analytics.zoo.serving.utils._
 import com.intel.analytics.zoo.utils.ImageProcessing
@@ -28,6 +27,9 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, SaveMode}
 import redis.clients.jedis.Jedis
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Failure, Success}
 
 
 object ClusterServing {
@@ -293,35 +295,18 @@ object ClusterServing {
          * Count the statistical data and write to summary
          */
         val microBatchEnd = System.nanoTime()
-        val microBatchLatency = (microBatchEnd - microBatchStart) / 1e9
-        val microBatchThroughPut = (microBatchSize / microBatchLatency).toFloat
 
-        totalCnt += microBatchSize.toInt
-        try {
-          if (model.inferenceSummary != null) {
-            (timeStamp until timeStamp + microBatchLatency.toInt).foreach( time => {
-              model.inferenceSummary.addScalar(
-                "Serving Throughput", microBatchThroughPut, time)
-            })
-
-            model.inferenceSummary.addScalar(
-              "Total Records Number", totalCnt, batchId)
+        AsyncUtils.writeServingSummay(model, batchDF,
+          microBatchStart, microBatchEnd, timeStamp, totalCnt)
+          .onComplete{
+            case Success(value) =>
+              timeStamp += value._1
+              totalCnt += value._2
+            case Failure(exception) => logger.info(s"$exception, " +
+              s"write summary fails, please check.")
           }
-        }
-        catch {
-          case e: Exception =>
-            /**
-             * If been interrupted by stop signal, do nothing
-             * End the streaming until this micro batch process ends
-             */
-            logger.info("Summary not supported. skipped.")
-        }
 
 
-        timeStamp += microBatchLatency.toInt
-
-        logger.info(microBatchSize +
-          " inputs predict ended, time elapsed " + microBatchLatency.toString)
 
       }
     }
