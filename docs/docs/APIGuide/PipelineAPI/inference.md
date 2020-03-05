@@ -9,7 +9,7 @@ Inference Model is a package in Analytics Zoo aiming to provide high-level APIs 
 **Basic usage of Inference Model:**
 
 1. Directly use InferenceModel or write a subclass extends `InferenceModel` (`AbstractInferenceModel` in Java).
-2. Load pre-trained models with corresponding `load` methods, e.g, doLoad for Analytics Zoo, and doLoadTF for TensorFlow.
+2. Load pre-trained models with corresponding `load` methods, e.g, doLoad for Analytics Zoo, and doLoadTensorflow for TensorFlow.
 3. Do prediction with `predict` method.
 
 **OpenVINO requirements:**
@@ -99,7 +99,7 @@ There are two backends to load a tensorflow model: TensorFlow and OpenVINO. When
 
 **1. Load with TensorFlow backend**
 
-Load model into `FloatModel` with TensorFlow backend, with corresponding `loadTF` methods (`loadTF` for Java, `doLoadTF` for Scala and `load_tf` Python)
+Load model into `FloatModel` with TensorFlow backend, with corresponding `loadTensorflow` methods (`loadTensorflow` for Java, `doLoadTensorflow` for Scala and `load_tensorflow` for Python)
 
 **Java**
 
@@ -107,24 +107,25 @@ Load model into `FloatModel` with TensorFlow backend, with corresponding `loadTF
 public class ExtendedInferenceModel extends AbstractInferenceModel {
 }
 ExtendedInferenceModel model = new ExtendedInferenceModel();
-model.loadTF(modelPath);
+model.loadTensorflow(modelPath, modelType);
 ```
 
 **Scala**
 
 ```scala
 val model = new InferenceModel()
-model.doLoadTF(modelPath)
+model.doLoadTensorflow(modelPath, modelType)
 ```
 
 **Python**
 
 ```python
 model = InferenceModel()
-model.load_tf(modelPath)
+model.load_tensorflow(modelPath, modelType)
 ```
 
 * `modelPath`: String. Path of pre-trained model.
+* `modelType`: String. Type of pre-trained model file.
 
 **2. Load with OpenVINO backend**
 
