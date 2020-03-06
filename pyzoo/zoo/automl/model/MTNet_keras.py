@@ -6,15 +6,8 @@ from tensorflow.keras.initializers import TruncatedNormal, Constant
 import tensorflow.keras.backend as K
 import math
 
-# from zoo.automl.common.util import *
-# from zoo.automl.common.metrics import Evaluator
-# from tensorflow.python.ops import array_ops
-# from tensorflow.python.util import nest
-# from tensorflow.python.ops import nn_ops
-# from tensorflow.python.ops import math_ops
 import tensorflow as tf
 # _Linear = core_rnn_cell._Linear
-from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
 import pandas as pd
 from zoo.automl.model.abstract import BaseModel
@@ -22,8 +15,9 @@ from zoo.automl.model.abstract import BaseModel
 
 class AttentionRNNWrapper(Wrapper):
     """
-        The AttentionRNNWrapper is a modified version of
-        https://github.com/zimmerrol/keras-utility-layer-collection/blob/master/kulc/attention.py
+        This class is modified based on
+        https://github.com/zimmerrol/keras-utility-layer-collection/blob/master/kulc/attention.py.
+        whose origin author is Roland Zimmermann.
         The idea of the implementation is based on the paper:
             "Effective Approaches to Attention-based Neural Machine Translation" by Luong et al.
         This layer is an attention layer, which can be wrapped around arbitrary RNN layers.
@@ -202,83 +196,7 @@ class AttentionRNNWrapper(Wrapper):
         return dict(list(base_config.items()) + list(config.items()))
 
 
-class AttentionRNN(Layer):
-    def __init__(self, hidden_sizes, dropout, num, Tc, training=None, **kwargs):
-        super(AttentionRNN, self).__init__(**kwargs)
-        # keras
-        rnn_cells = [GRUCell(h_size, activation="relu", dropout=dropout)
-                     for h_size in hidden_sizes]
-        # output dropout of GRUCell is omitted since the output_keep_prob is 1 in all configs.
-        self.rnns = StackedRNNCells(rnn_cells)
-        self.hidden_sizes = hidden_sizes
-        self.last_rnn_size = hidden_sizes[-1]
-        self.num = num
-        self.Tc = Tc
-        self.training=training
-
-    def build(self, input_shape):
-        # input_shape is <batch_size, Tc, hidden_size>
-        Tc = input_shape[1]
-        # hidden size equals self.last_rnn_size
-        hidden_size = input_shape[2]
-        self.v = self.add_weight(shape=(self.Tc, 1),
-                                 initializer=TruncatedNormal(stddev=0.1),
-                                 name="att_v")
-        self.w = self.add_weight(shape=(self.last_rnn_size, self.Tc),
-                                 initializer=TruncatedNormal(stddev=0.1),
-                                 name="att_w")
-        self.u = self.add_weight(shape=(self.Tc, self.Tc),
-                                 initializer=TruncatedNormal(stddev=0.1),
-                                 name="att_u")
-        self.rnns.build(input_shape=[self.last_rnn_size])
-        self.built = True
-
-    def call(self, input):
-        # print(input.shape)
-        batch_size = tf.shape(input)[0]
-        res_hstates = tf.TensorArray(tf.float32, self.num)
-        for k in range(self.num):
-            # <batch_size, en_conv_hidden_size, Tc>
-            attr_input = tf.transpose(input[:, k], perm=[0, 2, 1])
-
-            # <batch_size, last_rnn_hidden_size>
-            # s_state = self.rnns.zero_state(self.batch_size, tf.float32)
-
-            s_state = self.rnns.get_initial_state(batch_size=batch_size, dtype=tf.float32)
-            if len(self.hidden_sizes) > 1:
-                h_state = s_state[-1]
-            else:
-                h_state = s_state
-
-            for t in range(self.Tc):
-                # h(t-1) dot attr_w
-                h_part = tf.matmul(h_state, self.w)
-                # en_conv_hidden_size * <batch_size_new, 1>
-                e_ks = tf.TensorArray(tf.float32, self.last_rnn_size)
-                _, output = tf.while_loop(
-                    lambda i, _: tf.less(i, self.last_rnn_size),
-                    lambda i, output_ta: (i + 1, output_ta.write(i, tf.matmul(
-                        tf.tanh(h_part + tf.matmul(attr_input[:, i], self.u)), self.v))),
-                    [0, e_ks])
-                # <batch_size, en_conv_hidden_size, 1>
-                e_ks = tf.transpose(output.stack(), perm=[1, 0, 2])
-                e_ks = tf.reshape(e_ks, shape=[-1, self.last_rnn_size])
-
-                # <batch_size, en_conv_hidden_size>
-                a_ks = tf.nn.softmax(e_ks)
-
-                x_t = tf.matmul(tf.expand_dims(attr_input[:, :, t], -2), tf.matrix_diag(a_ks))
-                # <batch_size, en_conv_hidden_size>
-                x_t = tf.reshape(x_t, shape=[-1, self.last_rnn_size])
-
-                h_state, s_state = self.rnns(x_t, s_state, training=self.training)
-
-            res_hstates = res_hstates.write(k, h_state)
-
-        return tf.transpose(res_hstates.stack(), perm=[1, 0, 2])
-
-
-class MTNetKeras:
+class MTNetKeras(BaseModel):
 
     def __init__(self, check_optional_config=True, future_seq_len=1):
 
@@ -309,8 +227,8 @@ class MTNetKeras:
                               "feature_num", "output_dim"}
         self.model = None
         self.metrics = None
-        self.mc=None
-        self.epochs=None
+        self.mc = None
+        self.epochs = None
 
     def _get_configs(self, rs=False, config=None):
         if rs:
@@ -405,22 +323,22 @@ class MTNetKeras:
         #     lr = min_lr + (max_lr - min_lr) * math.exp(-epoch / 60)
         #     return lr
         # callbacks = [tf.keras.callbacks.LearningRateScheduler(lr_scheduler, verbose=1)]
-        initial_lr = 0.003
-        rate = math.exp(-1 / 60)
-        lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
-            initial_lr,
-            decay_steps=249,
-            decay_rate=rate,
-            staircase=True
-        )
+        # initial_lr = 0.003
+        # rate = math.exp(-1 / 60)
+        # lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+        #     initial_lr,
+        #     decay_steps=249,
+        #     decay_rate=rate,
+        #     staircase=True
+        # )
+        #
+        # self.model.compile(loss="mae",
+        #                    metrics=metrics,
+        #                    optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule))
 
         self.model.compile(loss="mae",
                            metrics=metrics,
-                           optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule))
-
-        # self.model.compile(loss="mae",
-        #                    metrics=metrics,
-        #                    optimizer=tf.keras.optimizers.Adam(lr=self.lr))
+                           optimizer=tf.keras.optimizers.Adam(lr=self.lr))
 
         return self.model
 
@@ -453,40 +371,28 @@ class MTNetKeras:
         rnn_input = Lambda(lambda x:
                                 K.reshape(x, (-1, num, Tc, self.cnn_hid_size)),)(cnn_out)
 
-        # use AttentionRNN
-        output = AttentionRNN(hidden_sizes=self.rnn_hid_sizes,
-                              dropout=self.dropout,
-                              num=num,
-                              Tc=Tc,
-                              training=training,
-                              name=name + 'attention_rnn')(rnn_input)
-        return output
+        # use AttentionRNNWrapper
+        rnn_cells = [GRUCell(h_size, activation="relu", dropout=self.dropout)
+                     for h_size in self.rnn_hid_sizes]
 
-        # # use AttentionRNNWrapper
-        # rnn_cells = [GRUCell(h_size, activation="relu", dropout=self.dropout)
-        #              for h_size in self.rnn_hid_sizes]
-        # test_cell = GRUCell(self.last_rnn_size, activation="relu", dropout=self.dropout)
-        #
-        # attention_rnn = AttentionRNNWrapper(RNN(rnn_cells),
-        #                                     weight_initializer=TruncatedNormal(stddev=0.1))
-        #
-        # outputs = []
-        # for i in range(num):
-        #     input_i = rnn_input[:, i]
-        #     # input_i = (batch, conv_hid_size, Tc)
-        #     input_i = Permute((2, 1), input_shape=[Tc, self.cnn_hid_size])(input_i)
-        #     # output = (batch, last_rnn_hid_size)
-        #     output_i = attention_rnn(input_i, training=training)
-        #     # output = (batch, 1, last_rnn_hid_size)
-        #     output_i = Reshape((1, -1))(output_i)
-        #     outputs.append(output_i)
-        # if len(outputs) > 1:
-        #     output = Lambda(lambda x: concatenate(x, axis=1))(outputs)
-        #     # print(output.shape)
-        # else:
-        #     output = outputs[0]
-        # # encoder_model = Model(input, output, name='Encoder' + name)
-        # return output
+        attention_rnn = AttentionRNNWrapper(RNN(rnn_cells),
+                                            weight_initializer=TruncatedNormal(stddev=0.1))
+
+        outputs = []
+        for i in range(num):
+            input_i = rnn_input[:, i]
+            # input_i = (batch, conv_hid_size, Tc)
+            input_i = Permute((2, 1), input_shape=[Tc, self.cnn_hid_size])(input_i)
+            # output = (batch, last_rnn_hid_size)
+            output_i = attention_rnn(input_i, training=training)
+            # output = (batch, 1, last_rnn_hid_size)
+            output_i = Reshape((1, -1))(output_i)
+            outputs.append(output_i)
+        if len(outputs) > 1:
+            output = Lambda(lambda x: concatenate(x, axis=1))(outputs)
+        else:
+            output = outputs[0]
+        return output
 
     def _gen_hist_inputs(self, x):
         long_term = np.reshape(x[:, : self.time_step * self.long_num],
@@ -529,20 +435,12 @@ class MTNetKeras:
             end = time.time()
             print("Build model took {}s".format(end - st))
 
-        # st = time.time()
-        # self.model.compile(loss="mae",
-        #                    metrics=metrics,
-        #                    optimizer=tf.keras.optimizers.Adam(lr=self.lr))
-        # print("Compile model took {}s".format(time.time() - st))
         st = time.time()
         hist = self.model.fit(x, y, validation_data=validation_data,
                               batch_size=self.batch_size,
                               epochs=self.epochs,
                               verbose=verbose)
-        #
-        # hist = self.model.fit_generator(generator=train_data,
-        #                                 validation_data=validation_data,
-        #                                 )
+
         print("Fit model took {}s".format(time.time() - st))
         if validation_data is None:
             # get train metrics
@@ -621,17 +519,17 @@ class MTNetKeras:
         save_config(config_path, config_to_save)
 
     def restore(self, model_path, **config):
-     """
-     restore model from file
-     :param model_path: the model file
-     :param config: the trial config
-     """
-     self.config = config
-     self._get_configs(rs=True, config=config)
-     self._build_train(mc=self.mc, metrics=self.metrics)
-     self.model.load_weights(model_path)
+        """
+        restore model from file
+        :param model_path: the model file
+        :param config: the trial config
+        """
+        self.config = config
+        self._get_configs(rs=True, config=config)
+        self._build_train(mc=self.mc, metrics=self.metrics)
+        self.model.load_weights(model_path)
 
-    def _get_optional_configs(self):
+    def _get_optional_parameters(self):
         return {
             "batch_size",
             "dropout",
@@ -641,18 +539,22 @@ class MTNetKeras:
             "ar_size",
         }
 
+    def _get_required_parameters(self):
+        return None
+
 
 if __name__ == "__main__":
     from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
-    from zoo.automl.common.util import split_input_df
+    from zoo.automl.common.util import *
 
     import os
     import pandas as pd
+    import shutil
 
-    dataset_path = os.path.join("~/sources/analytics-zoo/dist",
-                                "bin/data/NAB/nyc_taxi/nyc_taxi.csv")
+    dataset_path = os.getenv("ANALYTICS_ZOO_HOME") + "/bin/data/NAB/nyc_taxi/nyc_taxi.csv"
+    # dataset_path = "~/sources/automl-analytics-zoo/dist/bin/data/NAB/nyc_taxi/nyc_taxi.csv"
     df = pd.read_csv(dataset_path)
-    # df = pd.read_csv('automl/data/nyc_taxi.csv')
+
     future_seq_len = 1
     model = MTNetKeras()
     train_df, val_df, test_df = split_input_df(df, val_split_ratio=0.1, test_split_ratio=0.1)
@@ -661,7 +563,7 @@ if __name__ == "__main__":
         'selected_features': ['IS_WEEKEND(datetime)', 'MONTH(datetime)', 'IS_AWAKE(datetime)',
                               'HOUR(datetime)'],
         'batch_size': 64,
-        'epochs': 10,
+        'epochs': 1,
         "time_step": 4,
         "long_num": 3,
         "cnn_height": 2,
@@ -677,7 +579,8 @@ if __name__ == "__main__":
     # y_test = np.c_[y_test, y_test/2]
 
     mc = True
-    print("fit_eval:", model.fit_eval(x_train, y_train, validation_data=(x_val, y_val), verbose=1, mc=mc, **config))
+    print("fit_eval:", model.fit_eval(x_train, y_train, validation_data=(x_val, y_val), verbose=1,
+                                      mc=mc, **config))
 
     print("evaluate:", model.evaluate(x_test, y_test))
     y_pred = model.predict(x_test)
@@ -687,13 +590,15 @@ if __name__ == "__main__":
         assert np.any(uncertainty)
 
     else:
-        import shutil
         try:
             dirname = "tmp"
             model_1 = MTNetKeras()
+            print("saving")
             save(dirname, model=model)
+            print("save done ")
 
             restore(dirname, model=model_1, config=config)
+            print("restore done")
             predict_after = model_1.predict(x_test)
             assert np.allclose(y_pred, predict_after), \
                 "Prediction values are not the same after restore: " \
