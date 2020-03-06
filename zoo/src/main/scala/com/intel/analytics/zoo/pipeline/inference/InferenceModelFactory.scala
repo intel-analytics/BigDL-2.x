@@ -22,7 +22,7 @@ import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 object InferenceModelFactory extends InferenceSupportive {
 
   def loadFloatModelForBigDL(modelPath: String): FloatModel = {
-    loadFloatModel(modelPath, null, false)
+    loadFloatModelForBigDL(modelPath, null, false)
   }
 
   def loadFloatModelForBigDL(modelPath: String, weightPath: String, blas: Boolean = true)
