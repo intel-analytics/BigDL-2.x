@@ -18,7 +18,7 @@ from bigdl.util.common import JavaValue
 from zoo.common.utils import callZooFunc
 from bigdl.nn.layer import Layer
 from zoo.pipeline.api.keras.engine import KerasNet
-
+import warnings
 
 class InferenceModel(JavaValue):
     """
@@ -81,7 +81,7 @@ class InferenceModel(JavaValue):
                     self.value, model_path, model_type, intra_op_parallelism_threads,
                     inter_op_parallelism_threads, use_per_session_threads)
 
-    # deprecated(deprecated_in="0.8.0")
+    # deprecated in "0.8.0"
     def load_tf(self, model_path, backend="tensorflow",
                 intra_op_parallelism_threads=1, inter_op_parallelism_threads=1,
                 use_per_session_threads=True, model_type=None,
@@ -112,6 +112,7 @@ class InferenceModel(JavaValue):
                                           Need pipeline_config_path and extensions_config_path
                                           for 'openvino' backend if model_type is not specified.
         """
+        warnings.warn("deprecated in 0.8.0")
         backend = backend.lower()
         if backend == "tensorflow" or backend == "tf":
             callZooFunc(self.bigdl_type, "inferenceModelLoadTensorFlow",
@@ -135,7 +136,7 @@ class InferenceModel(JavaValue):
         else:
             raise ValueError("Currently only tensorflow and openvino are supported as backend")
 
-    # deprecated(deprecated_in="0.8.0")
+    # deprecated in "0.8.0"
     def load_tf_object_detection_as_openvino(self,
                                              model_path,
                                              object_detection_model_type,
@@ -150,6 +151,7 @@ class InferenceModel(JavaValue):
         :param extensions_config_path: String, the path of the extensions configure file
         :return:
         """
+        warnings.warn("deprecated in 0.8.0")
         callZooFunc(self.bigdl_type,
                     "inferenceModelOpenVINOLoadTF",
                     self.value,
@@ -158,7 +160,7 @@ class InferenceModel(JavaValue):
                     pipeline_config_path,
                     extensions_config_path)
 
-    # deprecated(deprecated_in="0.8.0")
+    # deprecated in "0.8.0"
     def load_tf_image_classification_as_openvino(self,
                                                  model_path,
                                                  image_classification_model_type,
@@ -181,6 +183,7 @@ class InferenceModel(JavaValue):
         :param scale: Float, the scale value, to be used for the input image per channel.
         :return:
         """
+        warnings.warn("deprecated in 0.8.0")
         callZooFunc(self.bigdl_type,
                     "inferenceModelOpenVINOLoadTF",
                     self.value,
@@ -192,7 +195,7 @@ class InferenceModel(JavaValue):
                     [float(value) for value in mean_values],
                     float(scale))
 
-    # deprecated(deprecated_in="0.8.0")
+    # deprecated in "0.8.0"
     def load_tf_as_calibrated_openvino(self,
                                        model_path,
                                        model_type,
@@ -230,6 +233,7 @@ class InferenceModel(JavaValue):
                 please also refer to https://github.com/opencv/opencv.
         :return:
         """
+        warnings.warn("deprecated in 0.8.0")
         callZooFunc(self.bigdl_type,
                     "inferenceModelOpenVINOLoadTFAsCalibratedOpenVINO",
                     self.value,
