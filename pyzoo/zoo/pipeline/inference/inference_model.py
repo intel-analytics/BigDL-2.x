@@ -34,14 +34,14 @@ class InferenceModel(JavaValue):
     def __init__(self, supported_concurrent_num=1, bigdl_type="float"):
         super(InferenceModel, self).__init__(None, bigdl_type, supported_concurrent_num)
 
-    def load(self, model_path, weight_path=None):
+    def load_bigdl(self, model_path, weight_path=None):
         """
         Load a pre-trained Analytics Zoo or BigDL model.
 
         :param model_path: String. The file path to the model.
         :param weight_path: String. The file path to the weights if any. Default is None.
         """
-        callZooFunc(self.bigdl_type, "inferenceModelLoad",
+        callZooFunc(self.bigdl_type, "inferenceModelLoadBigDL",
                     self.value, model_path, weight_path)
 
     def load_caffe(self, model_path, weight_path):

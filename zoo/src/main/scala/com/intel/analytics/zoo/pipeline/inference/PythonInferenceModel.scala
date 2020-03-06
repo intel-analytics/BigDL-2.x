@@ -36,11 +36,11 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
     new InferenceModel(supportedConcurrentNum)
   }
 
-  def inferenceModelLoad(
+  def inferenceModelLoadBigDL(
       model: InferenceModel,
       modelPath: String,
       weightPath: String): Unit = {
-    model.doLoad(modelPath, weightPath)
+    model.doLoadBigDL(modelPath, weightPath)
   }
 
   def inferenceModelLoadCaffe(

@@ -78,11 +78,11 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    * @param weightPath the file path of the weights
    * @param blas       whether MKLBLAS or MKLDNN
    */
-  def doLoad(modelPath: String,
+  def doLoadBigDL(modelPath: String,
              weightPath: String = null,
              blas: Boolean = true): Unit = {
     clearModelQueue()
-    this.originalModel = InferenceModelFactory.loadFloatModel(modelPath, weightPath, blas)
+    this.originalModel = InferenceModelFactory.loadFloatModelForBigDL(modelPath, weightPath, blas)
     offerModelQueue()
   }
 

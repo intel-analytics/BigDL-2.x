@@ -293,7 +293,7 @@ class ClusterServingHelper {
     // perhaps machine not supporting DNN would not accept quantize
     modelType match {
       case "caffe" => model.doLoadCaffe(defPath, weightPath, blas = blasFlag)
-      case "bigdl" => model.doLoad(weightPath, blas = blasFlag)
+      case "bigdl" => model.doLoadBigDL(weightPath, blas = blasFlag)
 
       case "tensorflow" => model.doLoadTensorflow(weightPath, "frozenModel", coreNum, 1, true)
       case "pytorch" => model.doLoadPyTorch(weightPath)

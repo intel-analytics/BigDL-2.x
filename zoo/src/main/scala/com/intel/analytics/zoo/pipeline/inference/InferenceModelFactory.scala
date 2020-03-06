@@ -25,7 +25,7 @@ object InferenceModelFactory extends InferenceSupportive {
     loadFloatModel(modelPath, null, false)
   }
 
-  def loadFloatModel(modelPath: String, weightPath: String, blas: Boolean = true)
+  def loadFloatModelForBigDL(modelPath: String, weightPath: String, blas: Boolean = true)
   : FloatModel = {
     val model = if (blas) {
       ModelLoader.loadFloatModel(modelPath, weightPath)
