@@ -67,7 +67,7 @@ object StreamingInferenceObjectDetection {
       // Load pre-trained bigDL model
       val model = new InferenceModel(1)
 
-      model.doLoad(params.model)
+      model.doLoadBigDL(params.model)
 
       val labelMap = LabelReader.apply("COCO")
 

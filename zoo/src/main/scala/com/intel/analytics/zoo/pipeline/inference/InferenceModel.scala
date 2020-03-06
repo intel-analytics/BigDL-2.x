@@ -739,7 +739,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
    */
   def doReload(modelPath: String, weightPath: String): Unit = {
     clearModelQueue()
-    doLoad(modelPath, weightPath)
+    doLoadBigDL(modelPath, weightPath)
   }
 
   @deprecated
