@@ -117,7 +117,7 @@ class ExtendedInferenceModel(InferenceModel):
 
 model = ExtendedInferenceModel()
 # Load Analytics Zoo model
-model.load(model_path, weight_path)
+model.load_bigdl(model_path, weight_path)
 # Predict
 result = model.predict(input_list)
 ```
