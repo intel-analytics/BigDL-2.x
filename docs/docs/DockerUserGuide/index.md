@@ -2,14 +2,14 @@
 
 In order to simply the Analytics Zoo installation and configuration, Analytics Zoo docker images have been built and provided on Docker Hub. These docker images have been pre-built with all the dependencies and readily configured to run a bunch of Analytics Zoo examples out-of-box on Linux (such as Ubuntu, CentOS), MacOS or Windows. The pre-installed packages are listed at the end of this page. This document provides step-by-step instructions for users to easily start using the Analytics Zoo docker:
 
-* [Launch an Analytics Zoo Docker container](#Launch-an-Analytics-Zoo-Docker-container)
-* [Run Analytics Zoo Jupyter Notebook example in a container](#Run-Analytics-Zoo-Jupyter-Notebook-example-in-a-container)
-    - [Start the Jupyter Notebook service in the container](#Start-the-Jupyter-Notebook-service-in-the-container)
-    - [Connect to Jupyter Notebook service](#Connect-to-Jupyter-Notebook-service)
-    - [Run Analytics Zoo Jupyter Notebook examples](#Run-Analytics-Zoo-Jupyter-Notebook-examples)
-    - [Create a new Analytics Zoo Jupyter Notebook example](#Create-a-new-Analytics-Zoo-Jupyter-Notebook-example)
-* [Terminate the Analytics Zoo Docker container](#Terminate-the-Analytics-Zoo-Docker-container)
-* [Build a customized Analytics Zoo Docker image](#Build-a-customized-Analytics-Zoo-Docker-image)
+* [Launch an Analytics Zoo Docker container](#launch-an-analytics-zoo-docker-container)
+* [Run Analytics Zoo Jupyter Notebook example in a container](#run-analytics-zoo-jupyter-notebook-example-in-a-container)
+    - [Start the Jupyter Notebook service in the container](#start-the-jupyter-notebook-service-in-the-container)
+    - [Connect to Jupyter Notebook service](#connect-to-jupyter-notebook-service)
+    - [Run Analytics Zoo Jupyter Notebook examples](#run-analytics-zoo-jupyter-notebook-examples)
+    - [Create a new Analytics Zoo Jupyter Notebook example](#create-a-new-analytics-zoo-jupyter-notebook-example)
+* [Terminate the Analytics Zoo Docker container](#terminate-the-analytics-zoo-docker-container)
+* [Build a customized Analytics Zoo Docker image](#build-a-customized-analytics-zoo-docker-image)
 
 
 
@@ -23,7 +23,7 @@ A Linux user (CentOS or Ubuntu) can pull a Docker image and launch the Docker co
 2. Download and Install Docker following the instructions on: 
 https://docs.docker.com/get-docker/
 3. Pull an Analytics Zoo docker image (optional)
-* Note: It is optional to pull an Analytics Zoo docker image in advance, as the command “docker run” in [“Launch Analytics Zoo Docker container”](#Launch-Analytics-Zoo-Docker-container) step will check the availability of the docker image and pull the image if it is absent. To manually pull the latest docker image, use: 
+* Note: It is optional to pull an Analytics Zoo docker image in advance, as the command “docker run” in [“Launch Analytics Zoo Docker container”](#launch-analytics-zoo-docker-container) step will check the availability of the docker image and pull the image if it is absent. To manually pull the latest docker image, use: 
 ```
 sudo docker pull intelanalytics/analytics-zoo:latest
 ```
@@ -70,7 +70,7 @@ Note: The /opt/work directory contains:
 
 ## Run Analytics Zoo Jupyter Notebook example in a container
 
-This section depends on the previous section [“Launch Analytics Zoo Docker container”](#Launch-Analytics-Zoo-Docker-container). After the user launches the Analytics Zoo Docker container, the Jupyter Notebook service can be started and Analytics Zoo Jupyter Notebook examples are available. 
+This section depends on the previous section [“Launch Analytics Zoo Docker container”](#launch-analytics-zoo-docker-container). After the user launches the Analytics Zoo Docker container, the Jupyter Notebook service can be started and Analytics Zoo Jupyter Notebook examples are available. 
 
 ### Start the Jupyter Notebook service in the container
 
