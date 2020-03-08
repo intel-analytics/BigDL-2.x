@@ -87,6 +87,22 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   }
 
   /**
+   * loads a bigdl, analytics-zoo model
+   *
+   * @param modelPath  the file path of the model
+   * @param weightPath the file path of the weights
+   * @param blas       whether MKLBLAS or MKLDNN
+   */
+  @deprecated("this method is deprecated, use doLoadBigDL() instead")
+  def doLoad(modelPath: String,
+             weightPath: String = null,
+             blas: Boolean = true): Unit = {
+    clearModelQueue()
+    this.originalModel = InferenceModelFactory.loadFloatModelForBigDL(modelPath, weightPath, blas)
+    offerModelQueue()
+  }
+
+  /**
    * loads a caffe model
    *
    * @param modelPath  the path of the prototxt file

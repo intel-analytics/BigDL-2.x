@@ -43,6 +43,16 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     doLoadBigDL(modelPath, weightPath, true);
   }
 
+  @Deprecated
+  public void load(String modelPath) {
+    doLoad(modelPath, null, true);
+  }
+
+  @Deprecated
+  public void load(String modelPath, String weightPath) {
+    doLoad(modelPath, weightPath, true);
+  }
+
   public void loadCaffe(String modelPath) {
     doLoadCaffe(modelPath, null, true);
   }
