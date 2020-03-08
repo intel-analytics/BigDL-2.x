@@ -364,7 +364,7 @@ class ClusterServingHelper {
 
       val path = Files.createTempDirectory("model")
       val dstPath = path.getParent + "/" + path.getFileName
-      FileUtils.copyToLocal(location + "/*", dstPath)
+      FileUtils.copyToLocal(location, dstPath)
       dstPath
     } else {
       location
