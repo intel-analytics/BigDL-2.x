@@ -101,6 +101,8 @@ We provide `loadTensorflow` with the following parameters:
 * `interOpParallelismThreads`: Int. The number of interOpParallelismThreads.
 * `usePerSessionThreads`: Boolean. Whether to perSessionThreads
 
+Note that we prepare several implementations with less parameters based on this method, e.g., `loadTensorflow(modelPath, modelType)`.
+
 **Java**
 
 ```java
