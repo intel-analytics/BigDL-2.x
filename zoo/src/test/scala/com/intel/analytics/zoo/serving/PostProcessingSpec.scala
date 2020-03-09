@@ -21,6 +21,13 @@ import org.scalatest.{FlatSpec, Matchers}
 import com.intel.analytics.zoo.serving.utils.PostProcessing
 
 class PostProcessingSpec extends FlatSpec with Matchers {
+  "tensor to ndarray string" should "work" in {
+    val t1 = Tensor(Array(4.0f, 5, 3, 4), shape = Array(2, 2))
+    val ansStr = new PostProcessing(t1).tensorToNdArrayString()
+    val truthStr = "[[4.0,5.0],[3.0,4.0]]"
+    assert(ansStr == truthStr)
+  }
+
   "TopN filter" should "work properly" in {
     val t1 = Tensor(Storage(Array(3.0f, 2, 1, 4, 5)))
     val ansTensor = new PostProcessing(t1).topN(2)
