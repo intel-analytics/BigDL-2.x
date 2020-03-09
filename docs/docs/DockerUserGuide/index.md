@@ -1,6 +1,6 @@
 # Analytics Zoo Docker User Guide 
 
-In order to simply the Analytics Zoo installation and configuration, Analytics Zoo docker images have been built and provided on Docker Hub. These docker images have been pre-built with all the dependencies and readily configured to run a bunch of Analytics Zoo examples out-of-box on Linux (such as Ubuntu, CentOS), MacOS or Windows. The pre-installed packages are listed at the end of this page. This document provides step-by-step instructions for users to easily start using the Analytics Zoo docker:
+In order to simply the Analytics Zoo installation and configuration, Analytics Zoo docker images have been built and provided on [Docker Hub](!https://hub.docker.com/r/intelanalytics/analytics-zoo). These docker images have been pre-built with all the dependencies and readily configured to run a bunch of Analytics Zoo examples out-of-box on Linux (such as Ubuntu, CentOS), MacOS or Windows. The pre-installed packages are listed at the end of this page. This document provides step-by-step instructions for users to easily start using the Analytics Zoo docker:
 
 * [Launch an Analytics Zoo Docker container](#launch-an-analytics-zoo-docker-container)
 * [Run Analytics Zoo Jupyter Notebook example in a container](#run-analytics-zoo-jupyter-notebook-example-in-a-container)
@@ -138,7 +138,7 @@ The user can also select an existing Analytics Zoo Jupyter Notebook example appr
 
 
 ## Terminate the Analytics Zoo Docker container
-Users should terminate the Analytics Zoo Docker container done using it. 
+Users should terminate the Analytics Zoo Docker container after using it. 
 
 #### Terminate the Analytics Zoo Docker container
 A user can list all the active Docker containers by command line: 
