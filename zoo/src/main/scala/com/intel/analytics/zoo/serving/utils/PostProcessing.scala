@@ -16,11 +16,49 @@
 
 package com.intel.analytics.zoo.serving.utils
 
-import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 
-object PostProcessing {
+class PostProcessing(t: Tensor[Float]) {
+  def tensorToNdArrayString(): String = {
+    val sizeArray = t.size()
+    var strideArray = Array[Int]()
+    val totalSize = {
+      var res: Int = 1
+      (0 until sizeArray.length).foreach(i => res *= sizeArray(i))
+      res
+    }
+
+
+    (0 until sizeArray.length).foreach(i => {
+      var res: Int = 1
+      (0 to i).foreach(j => {
+        res *= sizeArray(j)
+      })
+      strideArray = strideArray :+ res
+    })
+    val flatTensor = t.resize(totalSize).toArray()
+    var str: String = ""
+    (0 until flatTensor.length).foreach(i => {
+      (0 until sizeArray.length).foreach(j => {
+        if (i % strideArray(j) == 0) {
+          str += "["
+        }
+      })
+      str += flatTensor(i).toString
+      (0 until sizeArray.length).foreach(j => {
+        if ((i + 1) % strideArray(j) == 0) {
+          str += "]"
+        }
+      })
+      if (i != flatTensor.length - 1) {
+        str += ","
+      }
+    })
+    str
+  }
+
+
   def getInfofromTensor(topN: Int, result: Tensor[Float]): String = {
-
     val outputSize = if (result.size(1) > topN) {
       topN
     } else {
@@ -39,5 +77,25 @@ object PostProcessing {
     value += "\"}"
     value
   }
-
+  def topN(topN: Int): Tensor[Float] = {
+    val list = TensorUtils.getTopN(topN, t)
+    val res = Tensor[Float](list.size, 2)
+    (0 until list.size).foreach(i => {
+      val tmpTensor = Tensor(Storage(Array(list(i)._1, list(i)._2)))
+      res.select(1, i + 1).copy(tmpTensor)
+    })
+    res
+  }
+}
+object PostProcessing {
+  def apply(t: Tensor[Float], filter: String = null, args: Array[Int] = null): String = {
+    val cls = new PostProcessing(t)
+    val filteredTensor = if (filter == "topN") {
+      require(args.length == 1, "topN filter only support 1 argument, please check.")
+      cls.topN(args(0))
+    } else {
+      t
+    }
+    cls.tensorToNdArrayString()
+  }
 }
