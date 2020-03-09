@@ -46,7 +46,7 @@ class InferenceModel(JavaValue):
 
     # deprecated in "0.8.0"
     def load(self, model_path, weight_path=None):
-            """
+        """
         Load a pre-trained Analytics Zoo or BigDL model.
 
         :param model_path: String. The file path to the model.
