@@ -44,6 +44,18 @@ class InferenceModel(JavaValue):
         callZooFunc(self.bigdl_type, "inferenceModelLoadBigDL",
                     self.value, model_path, weight_path)
 
+    # deprecated in "0.8.0"
+    def load(self, model_path, weight_path=None):
+            """
+        Load a pre-trained Analytics Zoo or BigDL model.
+
+        :param model_path: String. The file path to the model.
+        :param weight_path: String. The file path to the weights if any. Default is None.
+        """
+        warnings.warn("deprecated in 0.8.0")
+        callZooFunc(self.bigdl_type, "inferenceModelLoad",
+                    self.value, model_path, weight_path)
+
     def load_caffe(self, model_path, weight_path):
         """
         Load a pre-trained Caffe model.
