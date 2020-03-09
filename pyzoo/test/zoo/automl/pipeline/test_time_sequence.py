@@ -113,7 +113,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         mse, rs, smape = self.random_pipeline_1.evaluate(self.test_df,
                                                          metrics=["mse",
                                                                   "r2", "smape"])
-        assert all(100 > i > 0 for i in smape)
+        assert 100 > smape > 0
         assert isinstance(mse, np.float)
         assert isinstance(rs, np.float)
         assert isinstance(smape, np.float)
