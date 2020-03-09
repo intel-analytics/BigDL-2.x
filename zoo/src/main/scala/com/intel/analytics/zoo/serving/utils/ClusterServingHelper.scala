@@ -76,6 +76,7 @@ class ClusterServingHelper {
   var blasFlag: Boolean = false
 
   var dataShape = Array[Int]()
+  var filter: String = "topN"
 
   var logFile: FileWriter = null
   var logErrorFlag: Boolean = true
@@ -128,6 +129,7 @@ class ClusterServingHelper {
     for (i <- shapeList) {
       dataShape = dataShape :+ i.trim.toInt
     }
+    filter = getYaml(dataConfig, "filter", "topN")
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
     batchSize = getYaml(paramsConfig, "batch_size", "4").toInt
