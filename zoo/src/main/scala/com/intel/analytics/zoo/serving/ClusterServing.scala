@@ -62,6 +62,8 @@ object ClusterServing {
     val W = helper.dataShape(1)
     val H = helper.dataShape(2)
 
+    val filter = helper.filter
+
     /**
      * chwFlag is to set image input of CHW or HWC
      * if true, the format is CHW
@@ -170,7 +172,7 @@ object ClusterServing {
                 val localPartitionModel = bcModel.value
                 val result = localPartitionModel.doPredict(tensors.addSingletonDimension()).toTensor
 
-                val value = PostProcessing.getInfofromTensor(topN, result.squeeze())
+                val value = PostProcessing(result)
 
                 Record(path, value)
               })
@@ -227,8 +229,7 @@ object ClusterServing {
               }
 
               (0 until thisBatchSize).toParArray.map(i => {
-                val value = PostProcessing.getInfofromTensor(topN,
-                  result.select(1, i + 1).squeeze())
+                val value = PostProcessing(result.select(1, i + 1))
                 Record(pathByteBatch(i)._1, value)
               })
 
