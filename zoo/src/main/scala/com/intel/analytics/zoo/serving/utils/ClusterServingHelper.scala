@@ -359,15 +359,13 @@ class ClusterServingHelper {
      * Currently support hdfs, s3
      */
     val scheme = location.split(":").head
-    val remoteSchemeSet: Set[String] = Set("hdfs", "s3", "s3n", "s3a")
-    val localModelPath = if (remoteSchemeSet.contains(scheme)) {
-
+    val localModelPath = if (scheme == "file" || scheme.length == 0) {
+      location
+    } else {
       val path = Files.createTempDirectory("model")
       val dstPath = path.getParent + "/" + path.getFileName
       FileUtils.copyToLocal(location, dstPath)
       dstPath
-    } else {
-      location
     }
 
     /**
