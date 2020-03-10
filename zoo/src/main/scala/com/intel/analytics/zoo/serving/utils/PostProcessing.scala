@@ -18,9 +18,25 @@ package com.intel.analytics.zoo.serving.utils
 
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 
+
+/**
+ * PostProssing
+ * PostProcessing contains two steps
+ * step 1 is filter, which is optional,
+ * used to transform output tensor to type wanted
+ * step 2 is to ndarray string, which is mandatory
+ * to parse tensor into readable string
+ * this string could be parsed by json in Python to a list
+ * @param tensor
+ */
 class PostProcessing(tensor: Tensor[Float]) {
   var t: Tensor[Float] = tensor
 
+  /**
+   * Transform tensor into readable string,
+   * could apply to any shape of tensor
+   * @return
+   */
   def tensorToNdArrayString(): String = {
     val sizeArray = t.size()
     var strideArray = Array[Int]()
@@ -59,7 +75,13 @@ class PostProcessing(tensor: Tensor[Float]) {
     str
   }
 
-
+  /**
+   * Deprecated
+   * Directly transform tensor into json format string
+   * @param topN
+   * @param result
+   * @return
+   */
   def getInfofromTensor(topN: Int, result: Tensor[Float]): String = {
     val outputSize = if (result.size(1) > topN) {
       topN
@@ -79,6 +101,12 @@ class PostProcessing(tensor: Tensor[Float]) {
     value += "\"}"
     value
   }
+
+  /**
+   * TopN filter, take 1-D size (n) tensor as input
+   * @param topN
+   * @return 2-D size (topN, 2) tensor
+   */
   def topN(topN: Int): Tensor[Float] = {
     val list = TensorUtils.getTopN(topN, t)
     val res = Tensor[Float](list.size, 2)
