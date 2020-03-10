@@ -3,8 +3,7 @@ package com.intel.analytics.zoo.serving
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
 import com.intel.analytics.zoo.serving.ClusterServing.Record
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, PostProcessing}
-import com.intel.analytics.zoo.utils.ImageProcessing
+import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
 import org.apache.spark.sql.{SaveMode, SparkSession}
 import org.apache.spark.streaming.{Duration, StreamingContext}
 import com.redislabs.provider.redis.streaming._
@@ -83,8 +82,7 @@ object SSServing {
             itemBatch.indices.toParArray.map(i => {
 
               val uri = itemBatch(i).fields("uri")
-              val tensor = ImageProcessing.bytesToBGRTensor(java.util
-                .Base64.getDecoder.decode(itemBatch(i).fields("image")))
+              val tensor = PreProcessing(itemBatch(i).fields("image"))
               (uri, tensor)
             })
           })
@@ -128,8 +126,7 @@ object SSServing {
             }
 
             (0 until thisBatchSize).toParArray.map(i => {
-              val value = PostProcessing.getInfofromTensor(topN,
-                result.select(1, i + 1).squeeze())
+              val value = PostProcessing(result.select(1, i + 1).squeeze())
               Record(pathByteBatch(i)._1, value)
             })
 

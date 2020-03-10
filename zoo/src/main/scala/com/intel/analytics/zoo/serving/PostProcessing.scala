@@ -93,13 +93,20 @@ class PostProcessing(tensor: Tensor[Float]) {
 object PostProcessing {
   def apply(t: Tensor[Float], filter: String = null): String = {
     val cls = new PostProcessing(t)
-    require(filter.split(":").length == 2,
-      "please check your filter format, should be filter_name:filter_args")
-    val filterType = filter.split(":").head
-    val fileterArgs = filter.split(":").last.split(",")
+    var filterArgs: Array[String] = null
+    val filterType = if (filter != null) {
+      require(filter.split(":").length == 2,
+        "please check your filter format, should be filter_name:filter_args")
+      filterArgs = filter.split(":").last.split(",")
+      filter.split(":").head
+    } else {
+      ""
+    }
+
+
     cls.t = if (filterType == "topN") {
-      require(fileterArgs.length == 1, "topN filter only support 1 argument, please check.")
-      cls.topN(fileterArgs(0).toInt)
+      require(filterArgs.length == 1, "topN filter only support 1 argument, please check.")
+      cls.topN(filterArgs(0).toInt)
     } else {
       t
     }
