@@ -81,8 +81,8 @@ class PostProcessing(t: Tensor[Float]) {
     val list = TensorUtils.getTopN(topN, t)
     val res = Tensor[Float](list.size, 2)
     (0 until list.size).foreach(i => {
-      val tmpTensor = Tensor(Storage(Array(list(i)._1, list(i)._2)))
-      res.select(1, i + 1).copy(tmpTensor)
+      res.setValue(i + 1, 1, list(i)._1)
+      res.setValue(i + 1, 2, list(i)._2)
     })
     res
   }
