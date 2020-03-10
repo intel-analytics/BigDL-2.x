@@ -18,7 +18,9 @@ package com.intel.analytics.zoo.serving.utils
 
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 
-class PostProcessing(t: Tensor[Float]) {
+class PostProcessing(tensor: Tensor[Float]) {
+  var t: Tensor[Float] = tensor
+
   def tensorToNdArrayString(): String = {
     val sizeArray = t.size()
     var strideArray = Array[Int]()
@@ -32,7 +34,7 @@ class PostProcessing(t: Tensor[Float]) {
     (0 until sizeArray.length).foreach(i => {
       var res: Int = 1
       (0 to i).foreach(j => {
-        res *= sizeArray(j)
+        res *= sizeArray(sizeArray.length - 1 - j)
       })
       strideArray = strideArray :+ res
     })
@@ -81,18 +83,22 @@ class PostProcessing(t: Tensor[Float]) {
     val list = TensorUtils.getTopN(topN, t)
     val res = Tensor[Float](list.size, 2)
     (0 until list.size).foreach(i => {
-      val tmpTensor = Tensor(Storage(Array(list(i)._1, list(i)._2)))
-      res.select(1, i + 1).copy(tmpTensor)
+      res.setValue(i + 1, 1, list(i)._1)
+      res.setValue(i + 1, 2, list(i)._2)
     })
     res
   }
 }
 object PostProcessing {
-  def apply(t: Tensor[Float], filter: String = null, args: Array[Int] = null): String = {
+  def apply(t: Tensor[Float], filter: String = null): String = {
     val cls = new PostProcessing(t)
-    val filteredTensor = if (filter == "topN") {
-      require(args.length == 1, "topN filter only support 1 argument, please check.")
-      cls.topN(args(0))
+    require(filter.split(":").length == 2,
+      "please check your filter format, should be filter_name:filter_args")
+    val filterType = filter.split(":").head
+    val fileterArgs = filter.split(":").last.split(",")
+    cls.t = if (filterType == "topN") {
+      require(fileterArgs.length == 1, "topN filter only support 1 argument, please check.")
+      cls.topN(fileterArgs(0).toInt)
     } else {
       t
     }

@@ -129,7 +129,8 @@ class ClusterServingHelper {
     for (i <- shapeList) {
       dataShape = dataShape :+ i.trim.toInt
     }
-    filter = getYaml(dataConfig, "filter", "topN")
+
+    filter = getYaml(dataConfig, "filter", "topN:1")
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
     batchSize = getYaml(paramsConfig, "batch_size", "4").toInt

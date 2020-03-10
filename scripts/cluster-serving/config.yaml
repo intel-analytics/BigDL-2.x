@@ -8,6 +8,8 @@ data:
   src:
   # default, 3, 224, 224
   image_shape:
+  # default, topN:1
+  filter:
 params:
   # default, 4
   batch_size:
