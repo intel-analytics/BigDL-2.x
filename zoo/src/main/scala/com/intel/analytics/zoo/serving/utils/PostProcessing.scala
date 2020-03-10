@@ -96,11 +96,11 @@ object PostProcessing {
       "please check your filter format, should be filter_name:filter_args")
     val filterType = filter.split(":").head
     val fileterArgs = filter.split(":").last.split(",")
-    cls.t = if (filterType == "topN") {
-      require(fileterArgs.length == 1, "topN filter only support 1 argument, please check.")
-      cls.topN(fileterArgs(0).toInt)
-    } else {
-      t
+    cls.t = filterType match {
+      case "topN" =>
+        require(fileterArgs.length == 1, "topN filter only support 1 argument, please check.")
+        cls.topN(fileterArgs(0).toInt)
+      case _ => t
     }
     cls.tensorToNdArrayString()
   }
