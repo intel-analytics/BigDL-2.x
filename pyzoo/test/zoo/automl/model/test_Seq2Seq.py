@@ -27,7 +27,7 @@ from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 class TestSeq2Seq(ZooTestCase):
 
     def setup_method(self, method):
-        super().setup_method(method)
+        # super().setup_method(method)
         self.train_data = pd.DataFrame(data=np.random.randn(64, 4))
         self.val_data = pd.DataFrame(data=np.random.randn(16, 4))
         self.test_data = pd.DataFrame(data=np.random.randn(16, 4))
@@ -52,6 +52,9 @@ class TestSeq2Seq(ZooTestCase):
         self.fitted = False
         self.predict_1 = None
         self.predict_2 = None
+
+    def teardown_method(self, method):
+        pass
 
     def test_fit_eval_1(self):
         x_train_1, y_train_1 = self.feat._roll_train(self.train_data,

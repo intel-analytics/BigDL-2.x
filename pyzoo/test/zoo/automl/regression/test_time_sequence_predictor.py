@@ -23,8 +23,6 @@ from zoo.automl.regression.time_sequence_predictor import *
 class TestTimeSequencePredictor(ZooTestCase):
 
     def setup_method(self, method):
-        super().setup_method(method)
-        ray.init()
 
         # sample_num should > past_seq_len, the default value of which is 1
         sample_num = 100
@@ -53,8 +51,7 @@ class TestTimeSequencePredictor(ZooTestCase):
         """
         Teardown any state that was previously setup with a setup_method call.
         """
-        super().teardown_method(method)
-        ray.shutdown()
+        pass
 
     def test_fit(self):
         pipeline_1 = self.tsp_1.fit(self.train_df, self.validation_df)
