@@ -17,8 +17,8 @@
 
 package com.intel.analytics.zoo.serving.utils
 
-import java.io.{File, FileWriter, FileInputStream}
-import java.nio.file.{Files, Paths}
+import java.io.{File, FileInputStream, FileWriter}
+import java.nio.file.{Files, Path, Paths}
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
@@ -129,6 +129,7 @@ class ClusterServingHelper {
     for (i <- shapeList) {
       dataShape = dataShape :+ i.trim.toInt
     }
+
     filter = getYaml(dataConfig, "filter", "topN:1")
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
@@ -297,7 +298,7 @@ class ClusterServingHelper {
       case "caffe" => model.doLoadCaffe(defPath, weightPath, blas = blasFlag)
       case "bigdl" => model.doLoad(weightPath, blas = blasFlag)
 
-      case "tensorflow" => model.doLoadTF(weightPath, coreNum, 1, true)
+      case "tensorflow" => model.doLoadTensorflow(weightPath, "frozenModel", coreNum, 1, true)
       case "pytorch" => model.doLoadPyTorch(weightPath)
       case "keras" => logError("Keras currently not supported in Cluster Serving")
       case "openvino" => model.doLoadOpenVINO(defPath, weightPath, batchSize)
@@ -356,6 +357,19 @@ class ClusterServingHelper {
    * @param location
    */
   def parseModelType(location: String): Unit = {
+    /**
+     * Download file to local if the scheme is remote
+     * Currently support hdfs, s3
+     */
+    val scheme = location.split(":").head
+    val localModelPath = if (scheme == "file" || scheme.length == 0) {
+      location
+    } else {
+      val path = Files.createTempDirectory("model")
+      val dstPath = path.getParent + "/" + path.getFileName
+      FileUtils.copyToLocal(location, dstPath)
+      dstPath
+    }
 
     /**
      * Initialize all relevant parameters at first
@@ -367,7 +381,7 @@ class ClusterServingHelper {
     kmpBlockTime = null
 
     import java.io.File
-    val f = new File(location)
+    val f = new File(localModelPath)
     val fileList = f.listFiles
 
     // model type is always null, not support pass model type currently

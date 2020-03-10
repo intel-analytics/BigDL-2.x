@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.examples.tfnet
+package com.intel.analytics.zoo.examples.tensorflow.tfnet
 
 import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
-import com.intel.analytics.bigdl.nn.{Contiguous, Sequential, Transpose}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.{ImageMatToTensor, ImageResize, ImageSet, ImageSetToSample}

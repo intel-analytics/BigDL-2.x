@@ -17,10 +17,10 @@
 package com.intel.analytics.zoo.serving.utils
 
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
-import sun.util.resources.cldr.en.TimeZoneNames_en_SG
 
 class PostProcessing(tensor: Tensor[Float]) {
   var t: Tensor[Float] = tensor
+
   def tensorToNdArrayString(): String = {
     val sizeArray = t.size()
     var strideArray = Array[Int]()
