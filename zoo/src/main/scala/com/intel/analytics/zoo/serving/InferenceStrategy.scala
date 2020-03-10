@@ -8,9 +8,26 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.util.LongAccumulator
 
 
-class InferenceStrategy(params: Params,
-                        bcModel: Broadcast[InferenceModel],
-                        acc: LongAccumulator) extends Serializable {
+object InferenceStrategy {
+  var params: Params = null
+  var bcModel: Broadcast[InferenceModel] = null
+  var acc: LongAccumulator = null
+
+  def apply(_params: Params,
+            _bcModel: Broadcast[InferenceModel],
+            _acc: LongAccumulator,
+            r: RDD[(String, Tensor[Float])],
+            strategy: String): RDD[Record] = {
+    params = _params
+    bcModel = _bcModel
+    acc = _acc
+    val result = strategy match {
+      case "single" => singleThreadInference(r)
+      case "all" => allThreadInference(r)
+      case _ => allThreadInference(r)
+    }
+    result
+  }
 
   /**
    * Use single thread to do inference for one tensor
@@ -88,10 +105,4 @@ class InferenceStrategy(params: Params,
     })
   }
 
-}
-object InferenceStrategy {
-  def apply(params: Params, bcModel:
-            Broadcast[InferenceModel],
-            acc: LongAccumulator): InferenceStrategy =
-    new InferenceStrategy(params, bcModel, acc)
 }

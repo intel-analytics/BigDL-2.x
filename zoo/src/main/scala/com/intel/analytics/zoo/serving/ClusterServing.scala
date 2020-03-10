@@ -190,7 +190,7 @@ object ClusterServing {
            * over 64 in serving to achieve good latency. Thus, no
            * batching is required if the machine has over about 30 cores.           *
            */
-          InferenceStrategy(serParams, bcModel, acc).singleThreadInference(preProcessed)
+          InferenceStrategy(serParams, bcModel, acc, preProcessed, "single")
         } else {
           /**
            * In Normal mode, every model will use multiple thread to
@@ -198,7 +198,7 @@ object ClusterServing {
            * do sequential predict, maximizing the latency performance
            * and minimizing the memory usage.
            */
-          InferenceStrategy(serParams, bcModel, acc).allThreadInference(preProcessed)
+          InferenceStrategy(serParams, bcModel, acc, preProcessed, "all")
         }
 
 
