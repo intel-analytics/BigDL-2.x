@@ -64,7 +64,7 @@ object StreamingInferenceTextClassification {
 
       // Load pre-trained bigDL model
       val model = new InferenceModel(4)
-      model.doLoad(param.model)
+      model.doLoadBigDL(param.model)
 
       // Labels of 20 Newsgroup dataset
       val labels = Array("alt.atheism",
