@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
+
 package com.intel.analytics.zoo.serving.utils
 
-import com.intel.analytics.bigdl.tensor.Tensor
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
 
-object TensorUtils {
-  def getTopN(n: Int, t: Tensor[Float]): List[(Int, Float)] = {
-    val arr = t.toArray().toList
-    val idx = (0 until arr.size)
-    val l = idx.zip(arr).toList
+object FileUtils {
+  /**
+   * Use hadoop utils to copy file from remote to local
+   * @param src remote path, could be hdfs, s3
+   * @param dst local path
+   */
+  def copyToLocal(src: String, dst: String): Unit = {
+    val conf = new Configuration()
 
-    def update(l: List[(Int, Float)], e: (Int, Float)): List[(Int, Float)] = {
-      if (e._2 > l.head._2) (e :: l.tail).sortWith(_._2 < _._2) else l
-    }
+    val srcPath = new Path(src)
+    val fs = srcPath.getFileSystem(conf)
 
-    l.drop(n).foldLeft(l.take(n).sortWith(_._2 < _._2))(update).
-      sortWith(_._2 > _._2)
+    val dstPath = new Path(dst)
+    fs.copyToLocalFile(srcPath, dstPath)
   }
 }

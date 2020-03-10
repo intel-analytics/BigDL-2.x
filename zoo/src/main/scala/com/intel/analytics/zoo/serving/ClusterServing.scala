@@ -19,7 +19,6 @@ package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
-
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
 import com.intel.analytics.zoo.serving.utils._
 import com.intel.analytics.zoo.utils.ImageProcessing
@@ -28,6 +27,9 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, SaveMode}
 import redis.clients.jedis.Jedis
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Failure, Success}
 
 
 object ClusterServing {
@@ -61,6 +63,8 @@ object ClusterServing {
     val C = helper.dataShape(0)
     val W = helper.dataShape(1)
     val H = helper.dataShape(2)
+
+    val filter = helper.filter
 
     /**
      * chwFlag is to set image input of CHW or HWC
@@ -170,7 +174,7 @@ object ClusterServing {
                 val localPartitionModel = bcModel.value
                 val result = localPartitionModel.doPredict(tensors.addSingletonDimension()).toTensor
 
-                val value = PostProcessing.getInfofromTensor(topN, result.squeeze())
+                val value = PostProcessing(result)
 
                 Record(path, value)
               })
@@ -227,8 +231,7 @@ object ClusterServing {
               }
 
               (0 until thisBatchSize).toParArray.map(i => {
-                val value = PostProcessing.getInfofromTensor(topN,
-                  result.select(1, i + 1).squeeze())
+                val value = PostProcessing(result.select(1, i + 1))
                 Record(pathByteBatch(i)._1, value)
               })
 
@@ -257,6 +260,7 @@ object ClusterServing {
               .format("org.apache.spark.sql.redis")
               .option("table", "result")
               .option("key.column", "uri")
+              .option("iterator.grouping.size", batchSize)
               .mode(SaveMode.Append).save()
 
             errFlag = false
@@ -292,35 +296,18 @@ object ClusterServing {
          * Count the statistical data and write to summary
          */
         val microBatchEnd = System.nanoTime()
-        val microBatchLatency = (microBatchEnd - microBatchStart) / 1e9
-        val microBatchThroughPut = (microBatchSize / microBatchLatency).toFloat
 
-        totalCnt += microBatchSize.toInt
-        try {
-          if (model.inferenceSummary != null) {
-            (timeStamp until timeStamp + microBatchLatency.toInt).foreach( time => {
-              model.inferenceSummary.addScalar(
-                "Serving Throughput", microBatchThroughPut, time)
-            })
-
-            model.inferenceSummary.addScalar(
-              "Total Records Number", totalCnt, batchId)
+        AsyncUtils.writeServingSummay(model, batchDF,
+          microBatchStart, microBatchEnd, timeStamp, totalCnt)
+          .onComplete{
+            case Success(value) =>
+              timeStamp += value._1
+              totalCnt += value._2
+            case Failure(exception) => logger.info(s"$exception, " +
+              s"write summary fails, please check.")
           }
-        }
-        catch {
-          case e: Exception =>
-            /**
-             * If been interrupted by stop signal, do nothing
-             * End the streaming until this micro batch process ends
-             */
-            logger.info("Summary not supported. skipped.")
-        }
 
 
-        timeStamp += microBatchLatency.toInt
-
-        logger.info(microBatchSize +
-          " inputs predict ended, time elapsed " + microBatchLatency.toString)
 
       }
     }
