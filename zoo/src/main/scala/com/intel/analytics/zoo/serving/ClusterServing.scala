@@ -22,11 +22,14 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
 import com.intel.analytics.zoo.serving.utils._
 import com.intel.analytics.zoo.utils.ImageProcessing
+import com.redislabs.provider.redis.streaming.ConsumerConfig
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, SaveMode}
+import org.apache.spark.streaming.{Duration, StreamingContext}
 import redis.clients.jedis.Jedis
+import com.redislabs.provider.redis.streaming._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
@@ -104,17 +107,6 @@ object ClusterServing {
       s"${spark.conf.get("spark.redis.host")}:${spark.conf.get("spark.redis.port")}")
 
 
-    val images = spark
-      .readStream
-      .format("redis")
-      .option("stream.keys", "image_stream")
-      .option("stream.read.batch.size", batchSize)
-      .option("stream.parallelism", nodeNum)
-      .schema(StructType(Array(
-        StructField("uri", StringType),
-        StructField("image", StringType)
-      )))
-      .load()
 
     var totalCnt: Int = 0
     var timeStamp: Int = 0
@@ -124,7 +116,11 @@ object ClusterServing {
     val inputThreshold = 0.6 * 0.8
     val cutRatio = 0.5
 
-    val query = images.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
+    val ssc = new StreamingContext(spark.sparkContext, new Duration(100))
+
+    //    val image = ssc.socketTextStream("localhost", 9999)
+    val images = ssc.createRedisXStream(Seq(ConsumerConfig("image_stream", "group1", "cli1")))
+    val query = images.foreachRDD{ x =>
 
       /**
        * This is reserved for future dynamic loading model
@@ -137,12 +133,9 @@ object ClusterServing {
           (redisDB.xlen("image_stream") * cutRatio).toLong, true)
       }
 
-      batchDF.persist()
+      x.persist()
 
-      val microBatchSize = batchDF.count()
-      logger.info("Micro batch size " + microBatchSize.toString)
-
-      if (microBatchSize != 0) {
+      if (!x.isEmpty) {
         /**
          * The streaming may be triggered somehow and it is possible
          * to get an empty batch
@@ -164,12 +157,11 @@ object ClusterServing {
            * over 64 in serving to achieve good latency. Thus, no
            * batching is required if the machine has over about 30 cores.           *
            */
-          batchDF.rdd.mapPartitions(pathBytes => {
-            pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
-              pathBytesBatch.indices.toParArray.map(i => {
-                val path = pathBytesBatch(i).getAs[String]("uri")
-                val tensors = ImageProcessing.bytesToBGRTensor(java.util
-                  .Base64.getDecoder.decode(pathBytesBatch(i).getAs[String]("image")))
+          x.mapPartitions(it => {
+            it.grouped(coreNum).flatMap(itemBatch => {
+              itemBatch.indices.toParArray.map(i => {
+                val uri = itemBatch(i).fields("uri")
+                val tensors = PreProcessing(pathBytesBatch(i).getAs[String]("image")))
 
                 val localPartitionModel = bcModel.value
                 val result = localPartitionModel.doPredict(tensors.addSingletonDimension()).toTensor
