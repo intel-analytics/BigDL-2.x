@@ -24,6 +24,13 @@ from sklearn.utils.testing import assert_array_almost_equal
 
 
 class TestMetrics(ZooTestCase):
+
+    def setup_method(self, method):
+        pass
+
+    def teardown_method(self, method):
+        pass
+
     def test_metrics(self, n_samples=50):
         y_true = np.arange(n_samples) + 1
         y_pred = y_true + 1

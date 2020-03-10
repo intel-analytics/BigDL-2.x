@@ -26,6 +26,12 @@ from zoo.automl.feature.time_sequence import *
 
 class TestTimeSequenceFeature(ZooTestCase):
 
+    def setup_method(self, method):
+        pass
+
+    def teardown_method(self, method):
+        pass
+
     def test_get_feature_list(self):
         dates = pd.date_range('1/1/2019', periods=8)
         data = np.random.randn(8, 3)
