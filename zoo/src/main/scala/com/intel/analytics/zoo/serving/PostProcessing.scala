@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.utils
+package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.zoo.serving.utils.TensorUtils
 
 class PostProcessing(tensor: Tensor[Float]) {
   var t: Tensor[Float] = tensor

@@ -57,7 +57,6 @@ case class Result(id: String, value: String)
 class ClusterServingHelper {
   type HM = LinkedHashMap[String, String]
 
-//  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
   val configPath = "config.yaml"
 
   var lastModTime: String = null
@@ -145,21 +144,6 @@ class ClusterServingHelper {
     // engine Type need to be used on executor so do not set here
 //    engineType = getYaml(paramsConfig, "engine_type", "mklblas")
     topN = getYaml(paramsConfig, "top_n", "1").toInt
-
-//    val logConfig = configList.get("log").asInstanceOf[HM]
-//    logErrorFlag = if (getYaml(logConfig, "error", "y") ==
-//      "y") true else false
-//    logSummaryFlag = if (getYaml(logConfig, "summary", "y") ==
-//      "y") true else false
-//
-//    if (logErrorFlag) {
-//      logFile = {
-//        val logF = new File("./cluster_serving.log")
-//        if (Files.exists(Paths.get("./cluster_serving.log")))
-//          logF.createNewFile()
-//        new FileWriter(logF)
-//      }
-//    }
 
     logFile = {
       val logF = new File("./cluster-serving.log")
@@ -363,7 +347,7 @@ class ClusterServingHelper {
      */
     val scheme = location.split(":").head
     val localModelPath = if (scheme == "file" || scheme.length == 0) {
-      location
+      location.split("file://").last
     } else {
       val path = Files.createTempDirectory("model")
       val dstPath = path.getParent + "/" + path.getFileName
@@ -402,7 +386,7 @@ class ClusterServingHelper {
         // ckpt seems not supported
         else if (fName.endsWith("pb")) {
           throwOneModelError(true, false, true)
-          weightPath = location
+          weightPath = localModelPath
           modelType = "tensorflow"
         }
         else if (fName.endsWith("pt")) {

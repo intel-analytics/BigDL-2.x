@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
 import com.intel.analytics.zoo.serving.utils._
-import com.intel.analytics.zoo.utils.ImageProcessing
+import com.intel.analytics.zoo.serving.InferenceStrategy
 import com.redislabs.provider.redis.streaming.ConsumerConfig
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.broadcast.Broadcast
@@ -44,6 +44,21 @@ object ClusterServing {
 
 
   case class Record(uri: String, value: String)
+  class Params(_coreNum: Int,
+               _filter: String,
+               _chwFlag: Boolean,
+               _C: Int,
+               _H: Int,
+               _W: Int,
+               _modelType: String) extends Serializable {
+    val coreNum = _coreNum
+    val filter = _filter
+    val chwFlag = _chwFlag
+    val C = _C
+    val H = _H
+    val W = _W
+    val modelType = _modelType
+  }
 
 
   def main(args: Array[String]): Unit = {
@@ -116,12 +131,16 @@ object ClusterServing {
     val inputThreshold = 0.6 * 0.8
     val cutRatio = 0.5
 
+
+    val serParams = new Params(helper.coreNum, helper.filter,
+      chwFlag, helper.dataShape(0), helper.dataShape(1), helper.dataShape(2),
+      _modelType = helper.modelType)
+
     val ssc = new StreamingContext(spark.sparkContext, new Duration(100))
 
     //    val image = ssc.socketTextStream("localhost", 9999)
     val images = ssc.createRedisXStream(Seq(ConsumerConfig("image_stream", "group1", "cli1")))
-    val query = images.foreachRDD{ x =>
-
+    images.foreachRDD{ x =>
       /**
        * This is reserved for future dynamic loading model
        */
@@ -143,35 +162,29 @@ object ClusterServing {
          * If the batch is not empty, start preprocessing and predict here
          */
 
-
         val microBatchStart = System.nanoTime()
+        val preProcessed = x.mapPartitions(it => {
+          it.grouped(serParams.coreNum).flatMap(itemBatch => {
+            itemBatch.indices.toParArray.map(i => {
+              val uri = itemBatch(i).fields("uri")
+              val tensor = PreProcessing(itemBatch(i).fields("image"))
+              (uri, tensor)
+            })
+          })
+        })
 
         /**
          * Engine type controlling, for different engine type,
          * different partitioning and batching scheduling is used
          */
-        val resultPartitions = if (blasFlag) {
+        val postProcessed = if (blasFlag) {
           /**
            * In BLAS mode, every model could predict only using
            * a single thread, besides, batch size usually is not
            * over 64 in serving to achieve good latency. Thus, no
            * batching is required if the machine has over about 30 cores.           *
            */
-          x.mapPartitions(it => {
-            it.grouped(coreNum).flatMap(itemBatch => {
-              itemBatch.indices.toParArray.map(i => {
-                val uri = itemBatch(i).fields("uri")
-                val tensors = PreProcessing(pathBytesBatch(i).getAs[String]("image")))
-
-                val localPartitionModel = bcModel.value
-                val result = localPartitionModel.doPredict(tensors.addSingletonDimension()).toTensor
-
-                val value = PostProcessing(result, filter)
-
-                Record(path, value)
-              })
-            })
-          })
+          InferenceStrategy(serParams, bcModel).singleThreadInference(preProcessed)
         } else {
           /**
            * In Normal mode, every model will use multiple thread to
@@ -179,63 +192,14 @@ object ClusterServing {
            * do sequential predict, maximizing the latency performance
            * and minimizing the memory usage.
            */
-          val pathBytesChunk = batchDF.rdd.mapPartitions(pathBytes => {
-            pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
-              pathBytesBatch.indices.toParArray.map(i => {
-                val row = pathBytesBatch(i)
-                val path = row.getAs[String]("uri")
-                val tensors = ImageProcessing.bytesToBGRTensor(java.util
-                  .Base64.getDecoder.decode(row.getAs[String]("image")), chwFlag)
-                (path, tensors)
-
-              })
-            })
-          })
-          pathBytesChunk.mapPartitions(pathBytes => {
-            val localModel = bcModel.value
-            val t = if (chwFlag) {
-              Tensor[Float](batchSize, C, H, W)
-            } else {
-              Tensor[Float](batchSize, H, W, C)
-            }
-            pathBytes.grouped(batchSize).flatMap(pathByteBatch => {
-              val thisBatchSize = pathByteBatch.size
-
-              (0 until thisBatchSize).toParArray
-                .foreach(i => t.select(1, i + 1).copy(pathByteBatch(i)._2))
-
-              val x = if (modelType == "openvino") {
-                t.addSingletonDimension()
-              } else {
-                t
-              }
-              /**
-               * addSingletonDimension method will modify the
-               * original Tensor, thus if reuse of Tensor is needed,
-               * have to squeeze it back.
-               */
-              val result = if (modelType == "openvino") {
-                val res = localModel.doPredict(x).toTensor.squeeze()
-                t.squeeze(1)
-                res
-              } else {
-                localModel.doPredict(x).toTensor
-              }
-
-              (0 until thisBatchSize).toParArray.map(i => {
-                val value = PostProcessing(result.select(1, i + 1), filter)
-                Record(pathByteBatch(i)._1, value)
-              })
-
-            })
-          })
+          InferenceStrategy(serParams, bcModel).allThreadInference(preProcessed)
         }
 
 
         /**
          * Predict ends, start writing data to output queue
          */
-        val resDf = spark.createDataFrame(resultPartitions)
+        val resDf = spark.createDataFrame(postProcessed)
 
         var errFlag: Boolean = true
 
@@ -289,7 +253,7 @@ object ClusterServing {
          */
         val microBatchEnd = System.nanoTime()
 
-        AsyncUtils.writeServingSummay(model, batchDF,
+        AsyncUtils.writeServingSummay(model, x,
           microBatchStart, microBatchEnd, timeStamp, totalCnt)
           .onComplete{
             case Success(value) =>
@@ -309,11 +273,11 @@ object ClusterServing {
      * The stop signal will be listened by another thread
      * with interval of 1 second.
      */
-    val servingQuery = query.start()
+    ssc.start()
 
-    ClusterServingManager.listenTermination(helper, servingQuery)
+    ClusterServingManager.listenTermination(helper, ssc)
 
-    servingQuery.awaitTermination()
+    ssc.awaitTermination()
 
     assert(spark.streams.active.isEmpty)
     System.exit(0)

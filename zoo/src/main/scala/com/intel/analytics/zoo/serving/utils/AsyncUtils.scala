@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.serving.utils
 
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
 
 import scala.concurrent.Future
@@ -24,7 +25,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object AsyncUtils {
   def writeServingSummay(model: InferenceModel,
-                         df: DataFrame,
+                         df: RDD[_],
                          start: Long,
                          end: Long,
                          timeStamp: Int,
