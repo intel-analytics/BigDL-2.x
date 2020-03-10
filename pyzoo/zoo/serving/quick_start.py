@@ -45,9 +45,10 @@ def run():
     result = output_api.dequeue()
     for k in result.keys():
         output = "image: " + k + ", classification-result:"
-        tmp_dict = json.loads(result[k])
-        for class_idx in tmp_dict.keys():
-            output += "class: " + class_idx + "'s prob: " + tmp_dict[class_idx]
+        tmp_list = json.loads(result[k])
+        for record in range(len(tmp_list)):
+            output += " class: " + str(tmp_list[record][0]) \
+                      + "'s prob: " + str(tmp_list[record][1])
         print(output)
 
 
