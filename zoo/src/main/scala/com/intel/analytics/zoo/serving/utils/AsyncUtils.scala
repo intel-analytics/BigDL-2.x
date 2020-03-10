@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.serving.utils
 
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
+import com.redislabs.provider.redis.streaming.StreamItem
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
 
@@ -25,18 +26,18 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object AsyncUtils {
   def writeServingSummay(model: InferenceModel,
-                         df: RDD[_],
+                         size: Long,
                          start: Long,
                          end: Long,
                          timeStamp: Int,
                          lastCnt: Int): Future[(Int, Int)] = Future{
-    val microBatchSize = df.count()
+
     val microBatchLatency = (end - start) / 1e9
-    val microBatchThroughPut = (microBatchSize / microBatchLatency).toFloat
-    println(s"Inferece end. Input size $microBatchSize. " +
+    val microBatchThroughPut = (size / microBatchLatency).toFloat
+    println(s"Inferece end. Input size $size. " +
       s"Latency $microBatchLatency, Throughput $microBatchThroughPut")
 
-    val totalCnt = lastCnt + microBatchSize.toInt
+    val totalCnt = lastCnt + size.toInt
     (timeStamp until timeStamp + microBatchLatency.toInt).foreach( time => {
       model.inferenceSummary.addScalar(
         "Serving Throughput", microBatchThroughPut, time)

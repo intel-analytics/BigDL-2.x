@@ -5,9 +5,12 @@ import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.spark.rdd.RDD
 import com.intel.analytics.zoo.serving.ClusterServing.{Params, Record}
 import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.util.LongAccumulator
 
 
-class InferenceStrategy(params: Params, bcModel: Broadcast[InferenceModel]) {
+class InferenceStrategy(params: Params,
+                        bcModel: Broadcast[InferenceModel],
+                        acc: LongAccumulator) extends Serializable {
 
   /**
    * Use single thread to do inference for one tensor
@@ -20,6 +23,7 @@ class InferenceStrategy(params: Params, bcModel: Broadcast[InferenceModel]) {
     r.mapPartitions(it => {
       it.grouped(params.coreNum).flatMap(itemBatch => {
         itemBatch.indices.toParArray.map(i => {
+          acc.add(1)
           val uri = itemBatch(i)._1
           val t = itemBatch(i)._2
           val localPartitionModel = bcModel.value
@@ -48,15 +52,19 @@ class InferenceStrategy(params: Params, bcModel: Broadcast[InferenceModel]) {
       }
       it.grouped(params.coreNum).flatMap(pathByteBatch => {
         val thisBatchSize = pathByteBatch.size
-
+        acc.add(thisBatchSize)
         (0 until thisBatchSize).toParArray
           .foreach(i => t.select(1, i + 1).copy(pathByteBatch(i)._2))
 
-
-        val x = if (params.modelType == "openvino") {
-          t.addSingletonDimension()
+        val thisT = if (params.chwFlag) {
+          t.resize(thisBatchSize, params.C, params.H, params.W)
         } else {
-          t
+          t.resize(thisBatchSize, params.H, params.W, params.C)
+        }
+        val x = if (params.modelType == "openvino") {
+          thisT.addSingletonDimension()
+        } else {
+          thisT
         }
         /**
          * addSingletonDimension method will modify the
@@ -83,6 +91,7 @@ class InferenceStrategy(params: Params, bcModel: Broadcast[InferenceModel]) {
 }
 object InferenceStrategy {
   def apply(params: Params, bcModel:
-            Broadcast[InferenceModel]): InferenceStrategy =
-    new InferenceStrategy(params, bcModel)
+            Broadcast[InferenceModel],
+            acc: LongAccumulator): InferenceStrategy =
+    new InferenceStrategy(params, bcModel, acc)
 }

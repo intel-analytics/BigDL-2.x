@@ -30,6 +30,8 @@ import org.apache.spark.sql.{DataFrame, SaveMode}
 import org.apache.spark.streaming.{Duration, StreamingContext}
 import redis.clients.jedis.Jedis
 import com.redislabs.provider.redis.streaming._
+import org.apache.spark.storage.StorageLevel
+import org.apache.spark.util.{DoubleAccumulator, LongAccumulator}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
@@ -137,6 +139,8 @@ object ClusterServing {
       _modelType = helper.modelType)
 
     val ssc = new StreamingContext(spark.sparkContext, new Duration(100))
+    val acc = new LongAccumulator()
+    helper.sc.register(acc)
 
     //    val image = ssc.socketTextStream("localhost", 9999)
     val images = ssc.createRedisXStream(Seq(ConsumerConfig("image_stream", "group1", "cli1")))
@@ -144,17 +148,19 @@ object ClusterServing {
       /**
        * This is reserved for future dynamic loading model
        */
-      val redisInfo = RedisUtils.getMapFromInfo(redisDB.info())
-
-      if (redisInfo("used_memory").toLong >=
-        redisInfo("maxmemory").toLong * inputThreshold) {
-        redisDB.xtrim("image_stream",
-          (redisDB.xlen("image_stream") * cutRatio).toLong, true)
-      }
-
       x.persist()
 
       if (!x.isEmpty) {
+        val microBatchStart = System.nanoTime()
+        acc.reset()
+
+        val redisInfo = RedisUtils.getMapFromInfo(redisDB.info())
+
+        if (redisInfo("used_memory").toLong >=
+          redisInfo("maxmemory").toLong * inputThreshold) {
+          redisDB.xtrim("image_stream",
+            (redisDB.xlen("image_stream") * cutRatio).toLong, true)
+        }
         /**
          * The streaming may be triggered somehow and it is possible
          * to get an empty batch
@@ -162,7 +168,7 @@ object ClusterServing {
          * If the batch is not empty, start preprocessing and predict here
          */
 
-        val microBatchStart = System.nanoTime()
+
         val preProcessed = x.mapPartitions(it => {
           it.grouped(serParams.coreNum).flatMap(itemBatch => {
             itemBatch.indices.toParArray.map(i => {
@@ -184,7 +190,7 @@ object ClusterServing {
            * over 64 in serving to achieve good latency. Thus, no
            * batching is required if the machine has over about 30 cores.           *
            */
-          InferenceStrategy(serParams, bcModel).singleThreadInference(preProcessed)
+          InferenceStrategy(serParams, bcModel, acc).singleThreadInference(preProcessed)
         } else {
           /**
            * In Normal mode, every model will use multiple thread to
@@ -192,7 +198,7 @@ object ClusterServing {
            * do sequential predict, maximizing the latency performance
            * and minimizing the memory usage.
            */
-          InferenceStrategy(serParams, bcModel).allThreadInference(preProcessed)
+          InferenceStrategy(serParams, bcModel, acc).allThreadInference(preProcessed)
         }
 
 
@@ -253,7 +259,7 @@ object ClusterServing {
          */
         val microBatchEnd = System.nanoTime()
 
-        AsyncUtils.writeServingSummay(model, x,
+        AsyncUtils.writeServingSummay(model, acc.value,
           microBatchStart, microBatchEnd, timeStamp, totalCnt)
           .onComplete{
             case Success(value) =>
@@ -262,8 +268,6 @@ object ClusterServing {
             case Failure(exception) => logger.info(s"$exception, " +
               s"write summary fails, please check.")
           }
-
-
 
       }
     }
