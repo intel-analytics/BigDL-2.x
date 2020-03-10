@@ -19,7 +19,6 @@ package com.intel.analytics.zoo.pipeline.inference
 import scala.language.postfixOps
 
 /*
-
 @OpenVinoTest
 class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
   with InferenceSupportive {
@@ -140,6 +139,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     s"rm -rf $tmpDir" !;
   }
 
+  // this method is deprecated in 0.8.0
   test("openvino should load from bytes") {
     val model = new AbstractInferenceModel() {
     }
@@ -156,32 +156,10 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       resnet_v1_50_meanValues,
       resnet_v1_50_scale
     )
-
     println(model)
   }
 
-  test("openvino should load from bytes of IR") {
-    val model = new AbstractInferenceModel() {
-    }
-
-    val modelFilePath = s"${resnet_v1_50_int8_path}.xml"
-    val weightFilePath = s"${resnet_v1_50_int8_path}.bin"
-    val batchSize = resnet_v1_50_inputShape.apply(0)
-    val modelFileSize = new File(modelFilePath).length()
-    val modelFileInputStream = new FileInputStream(modelFilePath)
-    val modelFileBytes = new Array[Byte](modelFileSize.toInt)
-    modelFileInputStream.read(modelFileBytes)
-
-    val weightFileSize = new File(weightFilePath).length()
-    val weightFileInputStream = new FileInputStream(weightFilePath)
-    val weightFileBytes = new Array[Byte](weightFileSize.toInt)
-    weightFileInputStream.read(weightFileBytes)
-
-    model.loadOpenVINO(modelFileBytes, weightFileBytes, batchSize)
-
-    println(model)
-  }
-
+  // this method is deprecated in 0.8.0
   test("openvino should load from saved model") {
     val model = new AbstractInferenceModel() {
     }

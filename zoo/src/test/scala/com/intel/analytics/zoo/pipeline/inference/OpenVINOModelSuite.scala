@@ -30,6 +30,7 @@ import scala.language.postfixOps
 import sys.process._
 
 
+/*
 @OpenVinoTest
 class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
   with InferenceSupportive {
@@ -154,3 +155,4 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     }
   }
 }
+*/

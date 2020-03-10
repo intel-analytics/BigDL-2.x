@@ -92,7 +92,7 @@ class OpenVINOModelDeprecatedSuite extends FunSuite with Matchers with BeforeAnd
     s"rm -rf $tmpDir" !;
   }
 
-  // this method will be deprecated", "0.8.0")
+  // this method is deprecated in 0.8.0
   test("openvino model should be optimized") {
     InferenceModel.doOptimizeTF(
       faserrcnnFrozenModelFilePath,
@@ -104,7 +104,7 @@ class OpenVINOModelDeprecatedSuite extends FunSuite with Matchers with BeforeAnd
     tmpDir.listFiles().foreach(file => println(file.getAbsoluteFile))
   }
 
-  // this method will be deprecated", "0.8.0")
+  // this method is deprecated in 0.8.0
   test("openvino model should throw exception if load failed") {
     val thrown = intercept[InferenceRuntimeException] {
       InferenceModelFactory.loadOpenVINOModelForTF(
@@ -116,7 +116,7 @@ class OpenVINOModelDeprecatedSuite extends FunSuite with Matchers with BeforeAnd
     assert(thrown.getMessage.contains("Openvino optimize tf object detection model error"))
   }
 
-  // this method will be deprecated", "0.8.0")
+  // this method is deprecated in 0.8.0
   test("openvino object detection model should load successfully and predict correctly") {
     fasterrcnnModel = InferenceModelFactory.loadOpenVINOModelForTF(
       faserrcnnFrozenModelFilePath,
