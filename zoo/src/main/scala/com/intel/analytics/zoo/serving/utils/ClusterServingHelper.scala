@@ -345,7 +345,7 @@ class ClusterServingHelper {
      */
     val scheme = location.split(":").head
     val localModelPath = if (scheme == "file" || scheme.length == 0) {
-      location
+      location.split("file://").last
     } else {
       val path = Files.createTempDirectory("model")
       val dstPath = path.getParent + "/" + path.getFileName
@@ -384,7 +384,7 @@ class ClusterServingHelper {
         // ckpt seems not supported
         else if (fName.endsWith("pb")) {
           throwOneModelError(true, false, true)
-          weightPath = location
+          weightPath = localModelPath
           modelType = "tensorflow"
         }
         else if (fName.endsWith("pt")) {

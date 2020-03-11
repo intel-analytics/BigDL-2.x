@@ -121,13 +121,13 @@ object PostProcessing {
   def apply(t: Tensor[Float], filter: String = null): String = {
     val cls = new PostProcessing(t)
     if (filter != null) {
-      require(filter.last == ")",
+      require(filter.last == ')',
         "please check your filter format, should be filter_name(filter_args)")
-      require(filter.split("(").length == 2,
+      require(filter.split("\\(").length == 2,
         "please check your filter format, should be filter_name(filter_args)")
 
-      val filterType = filter.split("(").head
-      val filterArgs = filter.split("(").last.dropRight(1).split(",")
+      val filterType = filter.split("\\(").head
+      val filterArgs = filter.split("\\(").last.dropRight(1).split(",")
       cls.t = filterType match {
         case "topN" =>
           require(filterArgs.length == 1, "topN filter only support 1 argument, please check.")
