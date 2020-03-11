@@ -28,7 +28,8 @@ python -m pytest -v --doctest-modules ../zoo \
     --ignore=../zoo/pipeline/api/keras2 \
     --ignore=../zoo/tfpark/text \
     --ignore=../zoo/examples \
-    --ignore=../zoo/ray/
+    --ignore=../zoo/ray/ \
+    --ignore=../zoo/automl/
 exit_status_1=$?
 if [ $exit_status_1 -ne 0 ];
 then
@@ -49,6 +50,7 @@ if [[ $py_version == *"Python 2.7"* ]]; then
     
     echo "Running other tests"
     python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py \
+       --ignore=../test/zoo/automl/ \
        --ignore-../test/zoo/tfpark/ \
        --ignore=../test/zoo/pipeline/api/keras2/ \
        --ignore=../test/zoo/pipeline/autograd/ \
@@ -65,14 +67,6 @@ else
     
     echo "Running TFPark tests"
     python -m pytest -v ../test/zoo/tfpark/
-    exit_status_3=$?
-    if [ $exit_status_3 -ne 0 ];
-    then
-        exit $exit_status_3
-    fi
-
-    echo "Running automl tests"
-    python -m pytest -v ../test/zoo/automl
     exit_status_3=$?
     if [ $exit_status_3 -ne 0 ];
     then
