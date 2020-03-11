@@ -35,29 +35,30 @@ object ImageClassificationStreaming {
     var output = "/home/joy/output"
     val params = ParameterTool.fromArgs(args)
 
-//    try {
-//      modelPath = params.get("modelPath")
-//      modelType = params.get("modelType")
-//      imageDir = params.get("images")
-//      classesFile = params.get("classes")
-//      //      modelInputs = if (params.has("modelInputs")){
-//      //        modelInputsStr = params.get("modelInputs")
-//      //        modelInputsStr.toArray
-//      //      } else Array("input:0")
-//      //      ifReverseInputChannels = if (params.has("ifReverseInputChannels")) params.getBoolean("ifReverseInputChannels") else true
-//      //      meanValues = if (params.has("meanValues")) {
-//      //        val meanValuesStr = params.get("meanValues")
-//      //        meanValuesStr.split(",").map(_.toFloat).toArray
-//      //      } else Array(123.68f, 116.78f, 103.94f)
-//      //      scale = if (params.has("scale")) params.getFloat("scale") else 1.0f
-//    } catch {
-//      case e: Exception => {
-//        System.err.println("Please run 'ImageClassificationStreaming --modelType <modelType> --checkpointPath <checkpointPath> " +
-//          "--inputShape <inputShapes> --ifReverseInputChannels <ifReverseInputChannels> --imageDir <imageDir> --classesFile <classesFile> --meanValues <meanValues> --scale <scale>" +
-//          "--parallelism <parallelism>'.")
-//        return
-//      }
-//    }
+    try {
+      modelPath = params.get("modelPath")
+      modelType = params.get("modelType")
+      imageDir = params.get("images")
+      classesFile = params.get("classes")
+      modelInputs = if (params.has("modelInputs")){
+        modelInputsStr = params.get("modelInputs")
+        modelInputsStr.toArray
+      } else Array("input:0")
+      modelOutputs = if (params.has("modelOutputs")){
+        modelOutputsStr = params.get("modelOutputs")
+        modelOutputsStr.toArray
+      } else Array("MobilenetV1/Predictions/Reshape_1:0")
+      intraOpParallelismThreads = if (params.has("intraOpParallelismThreads")) params.getInt("intraOpParallelismThreads") else 1
+      interOpParallelismThreads = if (params.has("interOpParallelismThreads")) params.getInt("interOpParallelismThreads") else 1
+      usePerSessionThreads = if (params.has("usePerSessionThreads")) params.getBoolean("usePerSessionThreads") else true
+    } catch {
+      case e: Exception => {
+        System.err.println("Please run ImageClassificationStreaming --modelPath <modelPath> --modelType <modelType> " +
+          "--images <imageDir> --classes <classesFile> --modelInputs <modelInputs> --modelOutputs <modelOutputs> --intraOpParallelismThreads <intraOpParallelismThreads> --interOpParallelismThreads <interOpParallelismThreads> --usePerSessionThreads <usePerSessionThreads>" +
+          "--parallelism <parallelism>'.")
+        return
+      }
+    }
 
     //println("params resolved", modelType, checkpointPath, imageDir, classesFile, inputShape.mkString(","), ifReverseInputChannels, meanValues.mkString(","), scale)
     println("start ImageClassificationStreaming job...")
