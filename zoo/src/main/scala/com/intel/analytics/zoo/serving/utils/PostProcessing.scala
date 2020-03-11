@@ -120,15 +120,20 @@ class PostProcessing(tensor: Tensor[Float]) {
 object PostProcessing {
   def apply(t: Tensor[Float], filter: String = null): String = {
     val cls = new PostProcessing(t)
-    require(filter.split(":").length == 2,
-      "please check your filter format, should be filter_name:filter_args")
-    val filterType = filter.split(":").head
-    val fileterArgs = filter.split(":").last.split(",")
-    cls.t = filterType match {
-      case "topN" =>
-        require(fileterArgs.length == 1, "topN filter only support 1 argument, please check.")
-        cls.topN(fileterArgs(0).toInt)
-      case _ => t
+    if (filter != null) {
+      require(filter.last == ")",
+        "please check your filter format, should be filter_name(filter_args)")
+      require(filter.split("(").length == 2,
+        "please check your filter format, should be filter_name(filter_args)")
+
+      val filterType = filter.split("(").head
+      val filterArgs = filter.split("(").last.dropRight(1).split(",")
+      cls.t = filterType match {
+        case "topN" =>
+          require(filterArgs.length == 1, "topN filter only support 1 argument, please check.")
+          cls.topN(filterArgs(0).toInt)
+        case _ => t
+      }
     }
     cls.tensorToNdArrayString()
   }

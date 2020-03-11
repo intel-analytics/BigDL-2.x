@@ -130,7 +130,7 @@ class ClusterServingHelper {
       dataShape = dataShape :+ i.trim.toInt
     }
 
-    filter = getYaml(dataConfig, "filter", "topN:1")
+    filter = getYaml(dataConfig, "filter", "topN(1)")
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
     batchSize = getYaml(paramsConfig, "batch_size", "4").toInt
@@ -142,24 +142,6 @@ class ClusterServingHelper {
      * Once BigDL supports it, engine type could be set here
      * And also other frameworks supporting multiple engine type
      */
-    // engine Type need to be used on executor so do not set here
-//    engineType = getYaml(paramsConfig, "engine_type", "mklblas")
-    topN = getYaml(paramsConfig, "top_n", "1").toInt
-
-//    val logConfig = configList.get("log").asInstanceOf[HM]
-//    logErrorFlag = if (getYaml(logConfig, "error", "y") ==
-//      "y") true else false
-//    logSummaryFlag = if (getYaml(logConfig, "summary", "y") ==
-//      "y") true else false
-//
-//    if (logErrorFlag) {
-//      logFile = {
-//        val logF = new File("./cluster_serving.log")
-//        if (Files.exists(Paths.get("./cluster_serving.log")))
-//          logF.createNewFile()
-//        new FileWriter(logF)
-//      }
-//    }
 
     logFile = {
       val logF = new File("./cluster-serving.log")
