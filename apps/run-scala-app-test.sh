@@ -240,7 +240,7 @@ start=$(date "+%s")
 -c com.intel.analytics.zoo.apps.model.inference.flink.ImageClassification.ImageClassificationStreaming  \
 ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar  \
 --modelPath mobilenet_v1_1.0_224_frozen.pb   --modelType frozenModel   \
---image ${ANALYTICS_ZOO_ROOT}/zoo/src/test/resources/imagenet/n04370456/ \
+--images ${ANALYTICS_ZOO_ROOT}/zoo/src/test/resources/imagenet/n04370456/ \
 --classes ${ANALYTICS_ZOO_ROOT}/zoo/src/main/resources/imagenet_classname.txt
 
 now=$(date "+%s")
