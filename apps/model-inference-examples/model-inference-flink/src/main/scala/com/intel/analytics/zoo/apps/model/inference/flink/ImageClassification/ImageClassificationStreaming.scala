@@ -23,16 +23,16 @@ object ImageClassificationStreaming {
 
     // Define parameters
     // Define and obtain arguments from Params
-    var modelPath = "/home/joy/workspace/models/mobilenet_v1/frozen_inference_graph.pb"
+    var modelPath = "/path/to/modelFile"
     var modelType = "frozenModel"
     var modelInputs = Array("input:0")
     var modelOutputs = Array("MobilenetV1/Predictions/Reshape_1:0")
-    var imageDir = "/home/joy/workspace/images"
-    var classesFile = "/home/joy/analytics-zoo/zoo/src/main/resources/imagenet_classname.txt"
+    var imageDir = "/path/to/imageDir"
+    var classesFile = "/path/to/labelFile"
     var intraOpParallelismThreads = 1
     var interOpParallelismThreads = 1
     var usePerSessionThreads = true
-    var output = "/home/joy/output"
+    var output = "/path/to/output"
     val params = ParameterTool.fromArgs(args)
 
     try {
@@ -40,14 +40,8 @@ object ImageClassificationStreaming {
       modelType = params.get("modelType")
       imageDir = params.get("images")
       classesFile = params.get("classes")
-      modelInputs = if (params.has("modelInputs")){
-        modelInputsStr = params.get("modelInputs")
-        modelInputsStr.toArray
-      } else Array("input:0")
-      modelOutputs = if (params.has("modelOutputs")){
-        modelOutputsStr = params.get("modelOutputs")
-        modelOutputsStr.toArray
-      } else Array("MobilenetV1/Predictions/Reshape_1:0")
+      modelInputs = if (params.has("modelInputs")) Array(params.get("modelInputs")) else Array("input:0")
+      modelOutputs = if (params.has("modelOutputs")) Array(params.get("modelOutputs")) else Array("MobilenetV1/Predictions/Reshape_1:0")
       intraOpParallelismThreads = if (params.has("intraOpParallelismThreads")) params.getInt("intraOpParallelismThreads") else 1
       interOpParallelismThreads = if (params.has("interOpParallelismThreads")) params.getInt("interOpParallelismThreads") else 1
       usePerSessionThreads = if (params.has("usePerSessionThreads")) params.getBoolean("usePerSessionThreads") else true
@@ -60,7 +54,6 @@ object ImageClassificationStreaming {
       }
     }
 
-    //println("params resolved", modelType, checkpointPath, imageDir, classesFile, inputShape.mkString(","), ifReverseInputChannels, meanValues.mkString(","), scale)
     println("start ImageClassificationStreaming job...")
 
     // ImageNet labels
