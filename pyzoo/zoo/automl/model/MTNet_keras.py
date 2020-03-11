@@ -1,4 +1,3 @@
-#
 # Copyright 2018 Analytics Zoo Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+#
+# MIT License
+#
+# Copyright (c) 2018 Roland Zimmermann
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
 import numpy as np
 import time
 from tensorflow.keras.models import Model
@@ -39,8 +60,8 @@ class AttentionRNNWrapper(Wrapper):
         This way, after each time step an attention vector is calculated
         based on the current output of the LSTM and the entire input time series.
         This attention vector is then used as a weight vector to choose special values
-        from the input data. This data is then finally concatenated to the next input
-        time step's data. On this a linear transformation in the same space as the input data's space
+        from the input data. This data is then finally concatenated to the next input time step's
+        data. On this a linear transformation in the same space as the input data's space
         is performed before the data is fed into the RNN cell again.
         This technique is similar to the input-feeding method described in the paper cited
     """
@@ -142,15 +163,16 @@ class AttentionRNNWrapper(Wrapper):
             base_initial_state = self.layer.get_initial_state(x)
             if len(base_initial_state) != len(initial_states):
                 raise ValueError(
-                    "initial_state does not have the correct length. Received length {0} but expected {1}".format(
-                        len(initial_states), len(base_initial_state)))
+                    "initial_state does not have the correct length. Received length {0} "
+                    "but expected {1}".format(len(initial_states), len(base_initial_state)))
             else:
                 # check the state' shape
                 for i in range(len(initial_states)):
-                    if not initial_states[i].shape.is_compatible_with(base_initial_state[
-                                                                          i].shape):  # initial_states[i][j] != base_initial_state[i][j]:
+                    # initial_states[i][j] != base_initial_state[i][j]:
+                    if not initial_states[i].shape.is_compatible_with(base_initial_state[i].shape):
                         raise ValueError(
-                            "initial_state does not match the default base state of the layer. Received {0} but expected {1}".format(
+                            "initial_state does not match the default base state of the layer. "
+                            "Received {0} but expected {1}".format(
                                 [x.shape for x in initial_states],
                                 [x.shape for x in base_initial_state]))
         else:
@@ -227,7 +249,7 @@ class MTNetKeras(BaseModel):
         self.long_num = None  # the number of the long-term memory series
         self.ar_window = None  # the window size of ar model
         self.feature_num = None  # input's variable dimension (convolution filter width)
-        self.output_dim = None # output's variable dimension
+        self.output_dim = None  # output's variable dimension
         self.cnn_hid_size = None
         # last size is equal to en_conv_hidden_size, should be a list
         self.rnn_hid_sizes = None
@@ -303,7 +325,8 @@ class MTNetKeras(BaseModel):
         context = self.__encoder(long_input, num=self.long_num, name='context', training=training)
         # context = context_model(long_input)
         # query: (batch, 1, last_rnn_size)
-        query_input = Reshape((1, self.time_step, self.feature_num), name='reshape_query')(short_input)
+        query_input = Reshape((1, self.time_step, self.feature_num),
+                              name='reshape_query')(short_input)
         query = self.__encoder(query_input, num=1, name='query', training=training)
         # query = query_model(query_input)
 
@@ -316,14 +339,16 @@ class MTNetKeras(BaseModel):
         # concat: (batch, long_num + 1, last_rnn_size)
 
         pred_x = concatenate([out, query], axis=1)
-        reshaped_pred_x = Reshape((self.last_rnn_size * (self.long_num + 1),), name="reshape_pred_x")(pred_x)
+        reshaped_pred_x = Reshape((self.last_rnn_size * (self.long_num + 1),),
+                                  name="reshape_pred_x")(pred_x)
         nonlinear_pred = Dense(units=self.output_dim,
                                kernel_initializer=TruncatedNormal(stddev=0.1),
                                bias_initializer=Constant(0.1),)(reshaped_pred_x)
 
         # ------------ ar component ------------
         if self.ar_window > 0:
-            ar_pred_x = Reshape((self.ar_window * self.feature_num,), name="reshape_ar")(short_input[:, -self.ar_window:])
+            ar_pred_x = Reshape((self.ar_window * self.feature_num,),
+                                name="reshape_ar")(short_input[:, -self.ar_window:])
             linear_pred = Dense(units=self.output_dim,
                                 kernel_initializer=TruncatedNormal(stddev=0.1),
                                 bias_initializer=Constant(0.1),)(ar_pred_x)
@@ -384,7 +409,7 @@ class MTNetKeras(BaseModel):
         cnn_out = Dropout(self.dropout)(cnn_out, training=training)
 
         rnn_input = Lambda(lambda x:
-                                K.reshape(x, (-1, num, Tc, self.cnn_hid_size)),)(cnn_out)
+                           K.reshape(x, (-1, num, Tc, self.cnn_hid_size)),)(cnn_out)
 
         # use AttentionRNNWrapper
         rnn_cells = [GRUCell(h_size, activation="relu", dropout=self.dropout)

@@ -20,6 +20,7 @@ import pytest
 sc = None
 ray_ctx = None
 
+
 @pytest.fixture(autouse=True, scope='session')
 def automl_fixture():
     sc = init_spark_on_local(cores=4, spark_log_level="INFO")
@@ -28,6 +29,7 @@ def automl_fixture():
     yield
     ray_ctx.stop()
     sc.stop()
+
 
 @pytest.fixture()
 def setUpModule():

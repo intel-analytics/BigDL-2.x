@@ -115,7 +115,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         assert isinstance(rs, np.float)
         assert isinstance(smape, np.float)
         assert 100 > smape > 0
-        
+
         print("Mean square error (future_seq_len=1) is:", mse)
         print("R square (future_seq_len=1) is:", rs)
         print("sMAPE (future_seq_len=1) is:", smape)
