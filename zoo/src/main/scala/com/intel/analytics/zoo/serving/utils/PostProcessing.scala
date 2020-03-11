@@ -74,34 +74,6 @@ class PostProcessing(tensor: Tensor[Float]) {
     })
     str
   }
-
-  /**
-   * Deprecated
-   * Directly transform tensor into json format string
-   * @param topN
-   * @param result
-   * @return
-   */
-  def getInfofromTensor(topN: Int, result: Tensor[Float]): String = {
-    val outputSize = if (result.size(1) > topN) {
-      topN
-    } else {
-      result.size(1)
-    }
-
-    val output = TensorUtils.getTopN(outputSize, result)
-    var value: String = "{"
-    (0 until outputSize - 1).foreach( j => {
-      val tmpValue = "\"" + output(j)._1 + "\":\"" +
-        output(j)._2.toString + "\","
-      value += tmpValue
-    })
-    value += "\"" + output(outputSize - 1)._1 + "\":\"" +
-      output(outputSize - 1)._2.toString
-    value += "\"}"
-    value
-  }
-
   /**
    * TopN filter, take 1-D size (n) tensor as input
    * @param topN
