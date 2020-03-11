@@ -84,6 +84,7 @@ class SmokeRecipe(Recipe):
             "num_samples": 1,
         }
 
+
 class MTNetSmokeRecipe(Recipe):
     """
     A very simple Recipe for smoke test that runs one epoch and one iteration
@@ -99,12 +100,13 @@ class MTNetSmokeRecipe(Recipe):
             "lr": 0.001,
             "batch_size": 16,
             "epochs": 1,
-            "dropout": 0.2 ,
+            "dropout": 0.2,
             "time_step": RandomSample(lambda spec: np.random.choice([3, 4], size=1)[0]),
             "filter_size": 2,
             "long_num": RandomSample(lambda spec: np.random.choice([3, 4], size=1)[0]),
             "ar_size": RandomSample(lambda spec: np.random.choice([2, 3], size=1)[0]),
-            "past_seq_len": RandomSample(lambda spec: (spec.config.long_num + 1) * spec.config.time_step),
+            "past_seq_len": RandomSample(lambda spec: (spec.config.long_num + 1)
+                                         * spec.config.time_step),
         }
 
     def runtime_params(self):

@@ -1,4 +1,4 @@
-    #
+#
 # Copyright 2018 Analytics Zoo Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,8 +58,8 @@ class TimeSequencePipeline(Pipeline):
 
     def _is_val_df_valid(self, validation_df):
         df_not_empty = isinstance(validation_df, pd.DataFrame) and not validation_df.empty
-        df_list_not_empty = isinstance(validation_df, list) and validation_df and \
-                            not all([d.empty for d in validation_df])
+        df_list_not_empty = isinstance(validation_df, list) \
+            and validation_df and not all([d.empty for d in validation_df])
         if validation_df is not None and (df_not_empty or df_list_not_empty):
             return True
         else:

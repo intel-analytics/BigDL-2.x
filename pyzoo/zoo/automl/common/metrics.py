@@ -71,7 +71,8 @@ def sMAPE(y_true, y_pred, multioutput='raw_values'):
         array of floating point values, one for each individual target.
     """
     y_true, y_pred = check_input(y_true, y_pred, multioutput)
-    output_errors = np.mean(100 * np.abs(y_true - y_pred) / (np.abs(y_true) + np.abs(y_pred) + EPSILON), axis=0,)
+    output_errors = np.mean(100 * np.abs(y_true - y_pred) /
+                            (np.abs(y_true) + np.abs(y_pred) + EPSILON), axis=0,)
     if multioutput == 'raw_values':
         return output_errors
     return np.mean(output_errors)
@@ -149,7 +150,8 @@ def sMDAPE(y_true, y_pred, multioutput='raw_values'):
         array of floating point values, one for each individual target.
     """
     y_true, y_pred = check_input(y_true, y_pred, multioutput)
-    output_errors = np.median(100 * np.abs(y_true - y_pred) / (np.abs(y_true) + np.abs(y_pred) + EPSILON), axis=0, )
+    output_errors = np.median(100 * np.abs(y_true - y_pred) /
+                              (np.abs(y_true) + np.abs(y_pred) + EPSILON), axis=0, )
     if multioutput == 'raw_values':
         return output_errors
     return np.mean(output_errors)
@@ -177,7 +179,8 @@ def ME(y_true, y_pred, multioutput='raw_values'):
 def MSPE(y_true, y_pred, multioutput='raw_values'):
     """
     calculate mean squared percentage error (MSPE).
-    <math>\operatorname{MSPE}(L)=\operatorname{E}\left[\left( g(x_i)-\widehat{g}(x_i)\right)^2\right].</math>
+    <math>\operatorname{MSPE}(L)=\operatorname{E}
+    \left[\left( g(x_i)-\widehat{g}(x_i)\right)^2\right].</math>
     :param y_true: array-like of shape = (n_samples) or (n_samples, n_outputs)
         Ground truth (correct) target values.
     :param y_pred: array-like of shape = (n_samples) or (n_samples, n_outputs)
