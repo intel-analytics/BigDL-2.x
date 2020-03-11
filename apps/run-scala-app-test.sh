@@ -222,11 +222,11 @@ echo "#App[Model-inference-example] Test 5.1: model-inference-flink:Text Classif
 
 ./flink-1.7.2/bin/stop-cluster.sh
 
-if [ -f frozen_inference_graph.pb ]
+if [ -f mobilenet_v1_1.0_224_frozen.pb ]
 then
-    echo "analytics-zoo-models/flink_model/frozen_inference_graph.pb already exists"
+    echo "analytics-zoo-models/flink_model/mobilenet_v1_1.0_224_frozen.pb already exists"
 else
-    wget ${FTP_URI}/analytics-zoo-models/flink_model/frozen_inference_graph.pb
+    wget ${FTP_URI}/analytics-zoo-models/flink_model/mobilenet_v1_1.0_224_frozen.pb
 fi
 
 ./flink-1.7.2/bin/start-cluster.sh
@@ -239,7 +239,7 @@ start=$(date "+%s")
 -m localhost:8081 -p 1 \
 -c com.intel.analytics.zoo.apps.model.inference.flink.ImageClassification.ImageClassificationStreaming  \
 ${ANALYTICS_ZOO_ROOT}/apps/model-inference-examples/model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar  \
---modelPath frozen_inference_graph.pb   --modelType frozenModel   \
+--modelPath mobilenet_v1_1.0_224_frozen.pb   --modelType frozenModel   \
 --image ${ANALYTICS_ZOO_ROOT}/zoo/src/test/resources/imagenet/n04370456/ \
 --classes ${ANALYTICS_ZOO_ROOT}/zoo/src/main/resources/imagenet_classname.txt
 
