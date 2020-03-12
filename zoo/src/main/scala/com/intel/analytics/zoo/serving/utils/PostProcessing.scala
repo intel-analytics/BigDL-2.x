@@ -79,13 +79,14 @@ class PostProcessing(tensor: Tensor[Float]) {
    * @param topN
    * @return 2-D size (topN, 2) tensor
    */
-  def topN(topN: Int): Tensor[Float] = {
+  def topN(topN: Int): String = {
     val list = TensorUtils.getTopN(topN, t)
-    val res = Tensor[Float](list.size, 2)
-    (0 until list.size).foreach(i => {
-      res.setValue(i + 1, 1, list(i)._1)
-      res.setValue(i + 1, 2, list(i)._2)
-    })
+    var res: String = ""
+    res += "["
+    (0 until list.size).foreach(i =>
+      res += "[" + list(i)._1.toString + "," + list(i)._2.toString + "]"
+    )
+    res += "]"
     res
   }
 }
@@ -100,13 +101,16 @@ object PostProcessing {
 
       val filterType = filter.split("\\(").head
       val filterArgs = filter.split("\\(").last.dropRight(1).split(",")
-      cls.t = filterType match {
+      val res = filterType match {
         case "topN" =>
           require(filterArgs.length == 1, "topN filter only support 1 argument, please check.")
           cls.topN(filterArgs(0).toInt)
-        case _ => t
+        case _ => ""
       }
+      res
     }
-    cls.tensorToNdArrayString()
+    else {
+      cls.tensorToNdArrayString()
+    }
   }
 }
