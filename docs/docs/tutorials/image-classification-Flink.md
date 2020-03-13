@@ -72,8 +72,8 @@ If you import the example project in the IDE(eg: IDEA), select **New - Project**
 
 The raw images in **ImageNet** are various sizes.  Let us show two of the predicting images.
 
-<img src="../../zoo/src/test/resources/imagenet/n02110063/n02110063_15462.JPEG" width="180">       
-<img src="../../zoo/src/test/resources/imagenet/n04370456/n04370456_5753.JPEG" width="180">
+<img src="../../../zoo/src/test/resources/imagenet/n02110063/n02110063_15462.JPEG" width="180">       
+<img src="../../../zoo/src/test/resources/imagenet/n04370456/n04370456_5753.JPEG" width="180">
 
 #### Preprocessing dataset
 
