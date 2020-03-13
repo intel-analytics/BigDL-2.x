@@ -371,7 +371,7 @@ class ClusterServingHelper {
 
       for (file <- fileList) {
         val fName = file.getName
-        val fPath = new File(location, fName).toString
+        val fPath = new File(localModelPath, fName).toString
         if (fName.endsWith("caffemodel")) {
           throwOneModelError(true, false, true)
           weightPath = fPath
