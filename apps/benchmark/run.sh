@@ -47,7 +47,6 @@ case $TYPE in
 
   "torch" | "TORCH")
     CLASS=com.intel.analytics.zoo.benchmark.inference.TorchNetPerf
-    OPTIONS='-Dbigdl.engineType=mkldnn -Dbigdl.mklNumThreads='${CPU}
     export OMP_NUM_THREADS=${CPU}
     ;;
 
