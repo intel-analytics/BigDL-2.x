@@ -1,6 +1,6 @@
 # Analytics Zoo Docker User Guide 
 
-In order to simply the Analytics Zoo installation and configuration, Analytics Zoo docker images have been built and provided on [Docker Hub](!https://hub.docker.com/r/intelanalytics/analytics-zoo). These docker images have been pre-built with all the dependencies and readily configured to run a bunch of Analytics Zoo examples out-of-box on Linux (such as Ubuntu, CentOS), MacOS or Windows. The pre-installed packages are listed at the end of this page. This document provides step-by-step instructions for users to easily start using the Analytics Zoo docker:
+In order to simply the Analytics Zoo installation and configuration, Analytics Zoo docker images have been built and provided on [Docker Hub](https://hub.docker.com/r/intelanalytics/analytics-zoo). These docker images have been pre-built with all the dependencies and readily configured to run a bunch of Analytics Zoo examples out-of-box on Linux (such as Ubuntu, CentOS), MacOS or Windows. The pre-installed packages are listed at the end of this page. This document provides step-by-step instructions for users to easily start using the Analytics Zoo docker:
 
 * [Launch an Analytics Zoo Docker container](#launch-an-analytics-zoo-docker-container)
 * [Run Analytics Zoo Jupyter Notebook example in a container](#run-analytics-zoo-jupyter-notebook-example-in-a-container)
@@ -158,7 +158,7 @@ $sudo docker rm -f 40de2cdad025
 ```
 
 ## Build a customized Analytics Zoo Docker image
-A set of pre-build Analytics Zoo Docker images have been provided on the [Docker Hub](!https://hub.docker.com/r/intelanalytics/analytics-zoo/tags?page=1&ordering=last_updated). Users can retrieve these Docker images by  “docker pull” command and specify a tag for which Docker image to download. For example: 
+A set of pre-build Analytics Zoo Docker images have been provided on the [Docker Hub](https://hub.docker.com/r/intelanalytics/analytics-zoo/tags?page=1&ordering=last_updated). Users can retrieve these Docker images by  “docker pull” command and specify a tag for which Docker image to download. For example: 
 ```
 sudo docker pull intelanalytics/analytics-zoo:0.7.0-bigdl_0.10.0-spark_2.4.3
 sudo docker pull intelanalytics/analytics-zoo:latest 
