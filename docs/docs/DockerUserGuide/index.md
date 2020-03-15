@@ -8,7 +8,7 @@ In order to simply the Analytics Zoo installation and configuration, Analytics Z
     - [Connect to Jupyter Notebook service](#connect-to-jupyter-notebook-service)
     - [Run Analytics Zoo Jupyter Notebook examples](#run-analytics-zoo-jupyter-notebook-examples)
     - [Create a new Analytics Zoo Jupyter Notebook example](#create-a-new-analytics-zoo-jupyter-notebook-example)
-* [Terminate the Analytics Zoo Docker container](#terminate-the-analytics-zoo-docker-container)
+* [Shut Down the Analytics Zoo Docker container](#shut-down-the-analytics-zoo-docker-container)
 * [Build a customized Analytics Zoo Docker image](#build-a-customized-analytics-zoo-docker-image)
 
 
@@ -137,10 +137,10 @@ The user can also select an existing Analytics Zoo Jupyter Notebook example appr
 ![notebook7](notebook7.jpg)
 
 
-## Terminate the Analytics Zoo Docker container
-Users should terminate the Analytics Zoo Docker container after using it. 
+## Shut Down the Analytics Zoo Docker container
+Users should shut down the Analytics Zoo Docker container after using it. 
 
-#### Terminate the Analytics Zoo Docker container
+#### Shut Down the Analytics Zoo Docker container
 A user can list all the active Docker containers by command line: 
 ```
 $sudo docker ps
@@ -152,7 +152,7 @@ CONTAINER ID        IMAGE                                        COMMAND        
 40de2cdad025        intelanalytics/analytics-zoo:latest          "/opt/work/start-n..."   3 hours ago         Up 3 hours                               upbeat_al  
 ```
 
-Terminate the corresponding docker container by its ID: 
+Shut down the corresponding docker container by its ID: 
 ```
 $sudo docker rm -f 40de2cdad025        
 ```
