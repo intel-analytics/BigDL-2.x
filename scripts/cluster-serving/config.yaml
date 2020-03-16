@@ -13,6 +13,8 @@ params:
   batch_size:
   # default, 1
   top_n:
+  # default: OFF
+  performance_mode:
 redis:
   # default, 4g
   maxmem: 
