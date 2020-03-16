@@ -562,7 +562,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         # we do not include target col in candidates.
         # the first column is designed to be the default position of target column.
         target_col = np.array([self.target_col])
-        cols = np.cxixianoncatenate([target_col, feature_cols])
+        cols = np.concatenate([target_col, feature_cols])
         target_feature_matrix = feature_matrix[cols]
         return target_feature_matrix.astype(float)
 
