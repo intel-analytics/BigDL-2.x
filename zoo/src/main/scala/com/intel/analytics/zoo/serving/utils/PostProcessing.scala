@@ -18,7 +18,25 @@ package com.intel.analytics.zoo.serving.utils
 
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 
-class PostProcessing(t: Tensor[Float]) {
+
+/**
+ * PostProssing
+ * PostProcessing contains two steps
+ * step 1 is filter, which is optional,
+ * used to transform output tensor to type wanted
+ * step 2 is to ndarray string, which is mandatory
+ * to parse tensor into readable string
+ * this string could be parsed by json in Python to a list
+ * @param tensor
+ */
+class PostProcessing(tensor: Tensor[Float]) {
+  var t: Tensor[Float] = tensor
+
+  /**
+   * Transform tensor into readable string,
+   * could apply to any shape of tensor
+   * @return
+   */
   def tensorToNdArrayString(): String = {
     val sizeArray = t.size()
     var strideArray = Array[Int]()
@@ -32,7 +50,7 @@ class PostProcessing(t: Tensor[Float]) {
     (0 until sizeArray.length).foreach(i => {
       var res: Int = 1
       (0 to i).foreach(j => {
-        res *= sizeArray(j)
+        res *= sizeArray(sizeArray.length - 1 - j)
       })
       strideArray = strideArray :+ res
     })
@@ -56,46 +74,43 @@ class PostProcessing(t: Tensor[Float]) {
     })
     str
   }
-
-
-  def getInfofromTensor(topN: Int, result: Tensor[Float]): String = {
-    val outputSize = if (result.size(1) > topN) {
-      topN
-    } else {
-      result.size(1)
-    }
-
-    val output = TensorUtils.getTopN(outputSize, result)
-    var value: String = "{"
-    (0 until outputSize - 1).foreach( j => {
-      val tmpValue = "\"" + output(j)._1 + "\":\"" +
-        output(j)._2.toString + "\","
-      value += tmpValue
-    })
-    value += "\"" + output(outputSize - 1)._1 + "\":\"" +
-      output(outputSize - 1)._2.toString
-    value += "\"}"
-    value
-  }
-  def topN(topN: Int): Tensor[Float] = {
+  /**
+   * TopN filter, take 1-D size (n) tensor as input
+   * @param topN
+   * @return 2-D size (topN, 2) tensor
+   */
+  def topN(topN: Int): String = {
     val list = TensorUtils.getTopN(topN, t)
-    val res = Tensor[Float](list.size, 2)
-    (0 until list.size).foreach(i => {
-      val tmpTensor = Tensor(Storage(Array(list(i)._1, list(i)._2)))
-      res.select(1, i + 1).copy(tmpTensor)
-    })
+    var res: String = ""
+    res += "["
+    (0 until list.size).foreach(i =>
+      res += "[" + list(i)._1.toString + "," + list(i)._2.toString + "]"
+    )
+    res += "]"
     res
   }
 }
 object PostProcessing {
-  def apply(t: Tensor[Float], filter: String = null, args: Array[Int] = null): String = {
+  def apply(t: Tensor[Float], filter: String = "None"): String = {
     val cls = new PostProcessing(t)
-    val filteredTensor = if (filter == "topN") {
-      require(args.length == 1, "topN filter only support 1 argument, please check.")
-      cls.topN(args(0))
-    } else {
-      t
+    if (filter != "None") {
+      require(filter.last == ')',
+        "please check your filter format, should be filter_name(filter_args)")
+      require(filter.split("\\(").length == 2,
+        "please check your filter format, should be filter_name(filter_args)")
+
+      val filterType = filter.split("\\(").head
+      val filterArgs = filter.split("\\(").last.dropRight(1).split(",")
+      val res = filterType match {
+        case "topN" =>
+          require(filterArgs.length == 1, "topN filter only support 1 argument, please check.")
+          cls.topN(filterArgs(0).toInt)
+        case _ => ""
+      }
+      res
     }
-    cls.tensorToNdArrayString()
+    else {
+      cls.tensorToNdArrayString()
+    }
   }
 }

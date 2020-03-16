@@ -174,7 +174,7 @@ object ClusterServing {
                 val localPartitionModel = bcModel.value
                 val result = localPartitionModel.doPredict(tensors.addSingletonDimension()).toTensor
 
-                val value = PostProcessing(result)
+                val value = PostProcessing(result, filter)
 
                 Record(path, value)
               })
@@ -231,7 +231,7 @@ object ClusterServing {
               }
 
               (0 until thisBatchSize).toParArray.map(i => {
-                val value = PostProcessing(result.select(1, i + 1))
+                val value = PostProcessing(result.select(1, i + 1), filter)
                 Record(pathByteBatch(i)._1, value)
               })
 
