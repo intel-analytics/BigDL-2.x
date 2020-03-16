@@ -8,11 +8,11 @@ data:
   src:
   # default, 3, 224, 224
   image_shape:
+  # default, topN(1)
+  filter:
 params:
   # default, 4
   batch_size:
-  # default, 1
-  top_n:
 redis:
   # default, 4g
   maxmem: 
