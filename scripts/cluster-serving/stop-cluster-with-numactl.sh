@@ -44,7 +44,7 @@ fi
 . "${SPARK_HOME}/bin/load-spark-env.sh"
 
 # Stop master
-"${SPARK_HOME}/sbin"/spark-daemon.sh stop org.apache.spark.deploy.master.Master
+"${SPARK_HOME}/sbin"/spark-daemon.sh stop org.apache.spark.deploy.master.Master spark-master
 
 _WORKER_NAME_NO=1
 
@@ -61,8 +61,10 @@ if type "numactl" > /dev/null 2>&1; then
       if [[ $_WORKER_NUM -eq 0 ]]; then
         _WORKER_NUM=1
       fi
-      "${SPARK_HOME}/sbin"/spark-daemon.sh stop org.apache.spark.deploy.worker.Worker "$_WORKER_NAME_NO"
-      _WORKER_NAME_NO=$((_WORKER_NAME_NO + 1))
+      for ((i = 0; i < $((_WORKER_NUM)); i ++)); do
+        "${SPARK_HOME}/sbin"/spark-daemon.sh stop org.apache.spark.deploy.worker.Worker "$_WORKER_NAME_NO"
+        _WORKER_NAME_NO=$((_WORKER_NAME_NO + 1))
+      done
     fi
   done
 else
