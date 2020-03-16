@@ -39,6 +39,10 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
                  drop_missing=True):
         """
         Constructor.
+        :param future_seq_len: the future sequence length to be predicted
+        :dt_col: name of datetime column in the input data frame
+        :target_col: name of target column in the input data frame
+        :extra_features_col: name of extra feature columns that needs to predict the target column.
         :param drop_missing: whether to drop missing values in the curve, if this is set to False,
                              an error will be reported if missing values are found. If True, will
                              drop the missing values and won't raise errors.
@@ -558,7 +562,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         # we do not include target col in candidates.
         # the first column is designed to be the default position of target column.
         target_col = np.array([self.target_col])
-        cols = np.concatenate([target_col, feature_cols])
+        cols = np.cxixianoncatenate([target_col, feature_cols])
         target_feature_matrix = feature_matrix[cols]
         return target_feature_matrix.astype(float)
 
@@ -567,67 +571,3 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
 
     def _get_required_parameters(self):
         return set(["selected_features"])
-
-
-# class DummyTimeSequenceFeatures(BaseFeatures):
-#     """
-#     A Dummy Feature Transformer that just load prepared data
-#     use flag train=True or False in config to return train or test
-#     """
-#
-#     def __init__(self, file_path):
-#         """
-#         the prepared data path saved by in numpy.savez
-#         file contains 4 arrays: "x_train", "y_train", "x_test", "y_test"
-#         :param file_path: the file_path of the npz
-#         """
-#         from zoo.automl.common.util import load_nytaxi_data
-#         x_train, y_train, x_test, y_test = load_nytaxi_data(file_path)
-#         self.train_data = (x_train, y_train)
-#         self.test_data = (x_test, y_test)
-#         self.is_train = False
-#
-#     def _get_data(self, train=True):
-#         if train:
-#             return self.train_data
-#         else:
-#             return self.test_data
-#
-#     def fit(self, input_df, **config):
-#         """
-#
-#         :param input_df:
-#         :param config:
-#         :return:
-#         """
-#         self.is_train = True
-#
-#     def transform(self, input_df):
-#         x, y = self._get_data(self.is_train)
-#         if self.is_train is True:
-#             self.is_train = False
-#         return x, y
-#
-#     def _get_optional_parameters(self):
-#         return set()
-#
-#     def _get_required_parameters(self):
-#         return set()
-#
-#     def save(self, file_path, **config):
-#         """
-#         save nothing
-#         :param file_path:
-#         :param config:
-#         :return:
-#         """
-#         pass
-#
-#     def restore(self, file_path, **config):
-#         """
-#         restore nothing
-#         :param file_path:
-#         :param config:
-#         :return:
-#         """
-#         pass
