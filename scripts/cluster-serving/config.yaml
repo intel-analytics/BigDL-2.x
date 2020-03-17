@@ -14,7 +14,7 @@ params:
   # default, 1
   top_n:
   # default: OFF
-  performance_mode:
+  performance_mode: 
 redis:
   # default, 4g
   maxmem: 

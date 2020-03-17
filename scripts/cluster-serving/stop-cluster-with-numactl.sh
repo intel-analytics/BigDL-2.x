@@ -52,7 +52,7 @@ _WORKER_NAME_NO=1
 if type "numactl" > /dev/null 2>&1; then
   # Load NUMA configurations line-by-line and catch NUMA node no.
   IFS=$'\n'; for nnode in `numactl --hardware`; do
-    if [[ ${nnode} =~ ^node\ ([0-9]+)\ cpus:\ .+$ ]]; then
+    if [[ ${nnode} =~ ^node\ ([0-9]+)\ cpus:\ (.+)$ ]]; then
       IFS=' ' _NUMA_CPUS=(${BASH_REMATCH[2]})
       _LENGTH=${#_NUMA_CPUS[@]}
       if ht_enabled; then _LENGTH=$((_LENGTH / 2)); fi
