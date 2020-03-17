@@ -13,16 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-from zoo import init_spark_on_local
-from zoo.ray.util.raycontext import RayContext
 import pytest
 sc = None
 ray_ctx = None
 
 
-@pytest.fixture(autouse=True, scope='session')
+@pytest.fixture(autouse=True, scope='package')
 def automl_fixture():
+    from zoo import init_spark_on_local
+    from zoo.ray.util.raycontext import RayContext
     sc = init_spark_on_local(cores=4, spark_log_level="INFO")
     ray_ctx = RayContext(sc=sc, object_store_memory="1g")
     ray_ctx.init()
