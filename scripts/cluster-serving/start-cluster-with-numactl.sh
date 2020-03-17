@@ -55,8 +55,7 @@ fi
 
 if [ $TOTAL_CORE_NUM -lt 24 ]; then
   # use local mode
-  # TODO
-  echo "local mode"
+  echo "local[*]"
   exit 1
 fi
 
@@ -83,17 +82,17 @@ fi
 grep_port=`netstat -tlpn | awk '{print $4}' | grep "\b$SPARK_MASTER_PORT\b"`
 if [ -n "$grep_port" ]; then
   echo "Port $SPARK_MASTER_PORT is in use"
+  echo "local[*]"
   exit 1
 fi
 
 grep_port=`netstat -tlpn | awk '{print $4}' | grep "\b$SPARK_MASTER_WEBUI_PORT\b"`
 if [ -n "$grep_port" ]; then
   echo "Port $SPARK_MASTER_WEBUI_PORT is in use"
-  exit 1
+  # TODO
 fi
 
 # Start master node
-# TODO
 "${SPARK_HOME}/sbin"/spark-daemon.sh start org.apache.spark.deploy.master.Master spark-master --ip $SPARK_MASTER_HOST --port $SPARK_MASTER_PORT --webui-port $SPARK_MASTER_WEBUI_PORT "$@"
 
 # NOTE: This exact class name is matched downstream by SparkSubmit.
@@ -112,7 +111,6 @@ CLASS="org.apache.spark.deploy.worker.Worker"
 
 # First argument should be the master; we need to store it aside because we may
 # need to insert arguments between it and the other arguments
-# TODO
 MASTER="spark://$SPARK_MASTER_HOST:$SPARK_MASTER_PORT"
 
 # Determine desired worker port
@@ -186,13 +184,15 @@ if type "numactl" > /dev/null 2>&1; then
       done
     fi
   done
+  echo "$MASTER $_LENGTH $((_WORKER_NAME_NO - 1)) $((_LENGTH * $((_WORKER_NAME_NO - 1))))"
 else
   echo "Please install numactl package"
-  if [ "$SPARK_WORKER_INSTANCES" = "" ]; then
-    start_instance "" 1 "$@"
-  else
-    for ((i=0; i<$SPARK_WORKER_INSTANCES; i++)); do
-      start_instance "" $(( 1 + $i )) "$@"
-    done
-  fi
+  echo "local[*]"
+#  if [ "$SPARK_WORKER_INSTANCES" = "" ]; then
+#    start_instance "" 1 "$@"
+#  else
+#    for ((i=0; i<$SPARK_WORKER_INSTANCES; i++)); do
+#      start_instance "" $(( 1 + $i )) "$@"
+#    done
+#  fi
 fi

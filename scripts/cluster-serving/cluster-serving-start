@@ -105,9 +105,15 @@ fi
 if [ "${performance_mode}" == "ON" ]; then
     echo "Start standalone cluster..."
     export SPARK_MASTER_PORT=7077
-    ./start-cluster-with-numactl.sh
-    spark_master="spark://`hostname`:$SPARK_MASTER_PORT"
-    # TODO: executor num
+    IFS=' '
+    OUTPUT=`./start-cluster-with-numactl.sh | tail -1`
+    LENGTH=${#OUTPUT[@]}
+    if [ $LENGTH -gt 1 ]; then
+      spark_master=OUTPUT[1]
+      spark_executor_cores=OUTPUT[2]
+      spark_num_executors=OUTPUT[3]
+      spark_total_executor_cores=OUTPUT[4]
+    fi
 fi
 
 ${SPARK_HOME}/bin/spark-submit --master ${spark_master} --driver-memory ${spark_driver_memory} --executor-memory ${spark_executor_memory} --num-executors ${spark_num_executors} --executor-cores ${spark_executor_cores} --total-executor-cores ${spark_total_executor_cores} --conf "spark.executor.extraJavaOptions=-Dbigdl.engineType=${params_engine_type}" --conf "spark.driver.extraJavaOptions=-Dbigdl.engineType=${params_engine_type}" --jars ${SPARK_REDIS_JAR},${BIGDL_JAR} --class com.intel.analytics.zoo.serving.ClusterServing ${ZOO_JAR} >> cluster-serving.log

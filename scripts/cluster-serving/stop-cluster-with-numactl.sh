@@ -68,11 +68,12 @@ if type "numactl" > /dev/null 2>&1; then
     fi
   done
 else
-  if [ "$SPARK_WORKER_INSTANCES" = "" ]; then
-    "${SPARK_HOME}/sbin"/spark-daemon.sh stop org.apache.spark.deploy.worker.Worker 1
-  else
-    for ((i=0; i<$SPARK_WORKER_INSTANCES; i++)); do
-      "${SPARK_HOME}/sbin"/spark-daemon.sh stop org.apache.spark.deploy.worker.Worker $(( $i + 1 ))
-    done
-  fi
+  echo "Please install numactl package"
+#  if [ "$SPARK_WORKER_INSTANCES" = "" ]; then
+#    "${SPARK_HOME}/sbin"/spark-daemon.sh stop org.apache.spark.deploy.worker.Worker 1
+#  else
+#    for ((i=0; i<$SPARK_WORKER_INSTANCES; i++)); do
+#      "${SPARK_HOME}/sbin"/spark-daemon.sh stop org.apache.spark.deploy.worker.Worker $(( $i + 1 ))
+#    done
+#  fi
 fi
