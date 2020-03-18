@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 #
 # Copyright 2018 Analytics Zoo Authors.
 #
@@ -16,26 +14,9 @@
 # limitations under the License.
 #
 
-. `dirname $0`/prepare_env.sh
+# where pipeline saves file by default
+DEFAULT_PPL_DIR = "./saved_pipeline"
+DEFAULT_CONFIG_DIR = "./saved_configs"
 
-cd "`dirname $0`"
-
-export PYSPARK_PYTHON=python
-export PYSPARK_DRIVER_PYTHON=python
-
-python -m pytest -v ../test/zoo/ray/ \
-       --ignore=../test/zoo/ray/integration/ \
-       --ignore=../test/zoo/ray/test_reinit_raycontext.py
-exit_status_2=$?
-if [ $exit_status_2 -ne 0 ];
-then
-    exit $exit_status_2
-fi
-
-echo "Running automl tests"
-python -m pytest -v ../test/zoo/automl
-exit_status_3=$?
-if [ $exit_status_3 -ne 0 ];
-then
-    exit $exit_status_3
-fi
+# reward metric in tune reporter
+REWARD_METRIC = "reward_metric"

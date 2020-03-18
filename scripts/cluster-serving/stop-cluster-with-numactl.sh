@@ -1,30 +1,5 @@
 #!/usr/bin/env bash
 
-#
-# Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements.  See the NOTICE file distributed with
-# this work for additional information regarding copyright ownership.
-# The ASF licenses this file to You under the Apache License, Version 2.0
-# (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-
-# A shell script to stop all workers on a single slave
-#
-# Environment variables
-#
-#   SPARK_WORKER_INSTANCES The number of worker instances that should be
-#                          running on this slave.  Default is 1.
-
-# Usage: stop-slave.sh
 #   Stops all slaves on this worker machine
 function ht_enabled {
   ret=`lscpu |grep "Thread(s) per core"|awk '{print $4}'`
@@ -34,6 +9,11 @@ function ht_enabled {
     true
   fi
 }
+
+TOTAL_CORE_NUM=`nproc`
+if ht_enabled; then
+  TOTAL_CORE_NUM=$((TOTAL_CORE_NUM / 2))
+fi
 
 _WORKER_NUM=$1
 if [ $TOTAL_CORE_NUM -lt 24 ] && [ -z "${_WORKER_NUM}" ]; then

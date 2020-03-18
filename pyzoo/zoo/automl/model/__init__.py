@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 #
 # Copyright 2018 Analytics Zoo Authors.
 #
@@ -16,26 +14,7 @@
 # limitations under the License.
 #
 
-. `dirname $0`/prepare_env.sh
-
-cd "`dirname $0`"
-
-export PYSPARK_PYTHON=python
-export PYSPARK_DRIVER_PYTHON=python
-
-python -m pytest -v ../test/zoo/ray/ \
-       --ignore=../test/zoo/ray/integration/ \
-       --ignore=../test/zoo/ray/test_reinit_raycontext.py
-exit_status_2=$?
-if [ $exit_status_2 -ne 0 ];
-then
-    exit $exit_status_2
-fi
-
-echo "Running automl tests"
-python -m pytest -v ../test/zoo/automl
-exit_status_3=$?
-if [ $exit_status_3 -ne 0 ];
-then
-    exit $exit_status_3
-fi
+from .abstract import *
+from .VanillaLSTM import *
+from .Seq2Seq import *
+from .time_sequence import *
