@@ -22,7 +22,8 @@ if [ -f "running" ]; then
     rm running
     echo "Stop signal sent to serving."
     parse_yaml config.yaml
-    if [ "${performance_mode}" == "ON" ]; then
+    eval $(parse_yaml config.yaml)
+    if [ "${params_performance_mode}" == "ON" ]; then
       echo "Stop standalone cluster..."
       ./stop-cluster-with-numactl.sh
     fi

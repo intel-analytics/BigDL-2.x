@@ -101,16 +101,18 @@ fi
 if [ "${params_performance_mode}" == "ON" ]; then
     echo "Start standalone cluster..."
     export SPARK_MASTER_PORT=7077
-    IFS=' '
+    IFS=','
     OUTPUT=`./start-cluster-with-numactl.sh | tail -1`
     PARAMS=($OUTPUT)
     unset IFS
     LENGTH=${#PARAMS[@]}
-    if [ $LENGTH -gt 1 ]; then
+    if [ $LENGTH -gt 2 ]; then
       spark_master=${PARAMS[0]}
       spark_executor_cores=${PARAMS[1]}
       spark_num_executors=${PARAMS[2]}
       spark_total_executor_cores=${PARAMS[3]}
+    elif [ $LENGTH -eq 2 ]; then
+      echo ${PARAMS[1]}
     fi
 fi
 

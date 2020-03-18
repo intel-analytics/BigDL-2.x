@@ -1,44 +1,6 @@
 #!/usr/bin/env bash
 
-#
-# Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements.  See the NOTICE file distributed with
-# this work for additional information regarding copyright ownership.
-# The ASF licenses this file to You under the Apache License, Version 2.0
-# (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-
-# This script loads NUMA configurations if `numactl` exists, and
-# it might start multiple slaves on this machine for NUMA awareness.
-#
-# Environment Variables
-#
-#   SPARK_WORKER_INSTANCES  The number of worker instances to run on this
-#                           slave.  Default is 1.
-#   SPARK_WORKER_PORT       The base port number for the first worker. If set,
-#                           subsequent workers will increment this number.  If
-#                           unset, Spark will find a valid port number, but
-#                           with no guarantee of a predictable pattern.
-#   SPARK_WORKER_WEBUI_PORT The base port for the web interface of the first
-#                           worker.  Subsequent workers will increment this
-#                           number.  Default is 8081.
-
 function ht_enabled {
-  #ret=`grep -o '^flags\b.*: .*\bht\b' /proc/cpuinfo | tail -1`
-  #if [ x"${ret}" == "x" ]; then
-  #   false
-  #else
-  #  true
-  #fi
   ret=`lscpu |grep "Thread(s) per core"|awk '{print $4}'`
   if [ $ret -eq 1 ]; then
     false
@@ -52,7 +14,8 @@ if ht_enabled; then
   TOTAL_CORE_NUM=$((TOTAL_CORE_NUM / 2))
 fi
 
-if [ $TOTAL_CORE_NUM -lt 24 ]; then
+_WORKER_NUM=$1
+if [ $TOTAL_CORE_NUM -lt 24 ] && [ -z "${_WORKER_NUM}" ]; then
   # use local mode
   echo "local[*]"
   exit 1
@@ -80,15 +43,8 @@ fi
 
 grep_port=`netstat -tlpn | awk '{print $4}' | grep "\b$SPARK_MASTER_PORT\b"`
 if [ -n "$grep_port" ]; then
-  echo "Port $SPARK_MASTER_PORT is in use"
-  echo "local[*]"
+  echo "failed,Spark master port $SPARK_MASTER_PORT is in use"
   exit 1
-fi
-
-grep_port=`netstat -tlpn | awk '{print $4}' | grep "\b$SPARK_MASTER_WEBUI_PORT\b"`
-if [ -n "$grep_port" ]; then
-  echo "Port $SPARK_MASTER_WEBUI_PORT is in use"
-  # TODO
 fi
 
 # Start master node
@@ -98,18 +54,6 @@ fi
 # Any changes need to be reflected there.
 CLASS="org.apache.spark.deploy.worker.Worker"
 
-# if [[ $# -lt 1 ]] || [[ "$@" = *--help ]] || [[ "$@" = *-h ]]; then
-#  echo "Usage: ./sbin/start-slave.sh [options] <master>"
-#  pattern="Usage:"
-#  pattern+="\|Using Spark's default log4j profile:"
-#  pattern+="\|Registered signal handlers for"
-
-#  "${SPARK_HOME}"/bin/spark-class $CLASS --help 2>&1 | grep -v "$pattern" 1>&2
-#  exit 1
-#fi
-
-# First argument should be the master; we need to store it aside because we may
-# need to insert arguments between it and the other arguments
 MASTER="spark://$SPARK_MASTER_HOST:$SPARK_MASTER_PORT"
 
 # Determine desired worker port
@@ -163,8 +107,10 @@ if type "numactl" > /dev/null 2>&1; then
       IFS=' ' _NUMA_CPUS=(${BASH_REMATCH[2]})
       _LENGTH=${#_NUMA_CPUS[@]}
       if ht_enabled; then _LENGTH=$((_LENGTH / 2)); fi
-      # calculate worker num on this numa node, 12 ~ 23 core/worker
-      _WORKER_NUM=$((_LENGTH / 12))
+      if [[ -z "${_WORKER_NUM}" ]]; then
+        # calculate worker num on this numa node, 12 ~ 23 core/worker
+        _WORKER_NUM=$((_LENGTH / 12))
+      fi
       if [[ $_WORKER_NUM -eq 0 ]]; then
         _WORKER_NUM=1
       fi
@@ -177,21 +123,13 @@ if type "numactl" > /dev/null 2>&1; then
 
         # Launch a worker with numactl
         export SPARK_WORKER_CORES=${_LENGTH} # core num per worker
-        export SPARK_WORKER_MEMORY="$((_NUMA_MEM / _WORKER_NUM))g"  #TODO
+        export SPARK_WORKER_MEMORY="$((_NUMA_MEM / _WORKER_NUM))g"
         start_instance "$_NUMACTL" "$_WORKER_NAME_NO" "$@"
         _WORKER_NAME_NO=$((_WORKER_NAME_NO + 1))
       done
     fi
   done
-  echo "$MASTER $_LENGTH $((_WORKER_NAME_NO - 1)) $((_LENGTH * $((_WORKER_NAME_NO - 1))))"
+  echo "$MASTER,$_LENGTH,$((_WORKER_NAME_NO - 1)),$((_LENGTH * $((_WORKER_NAME_NO - 1))))"
 else
-  echo "Please install numactl package"
-  echo "local[*]"
-#  if [ "$SPARK_WORKER_INSTANCES" = "" ]; then
-#    start_instance "" 1 "$@"
-#  else
-#    for ((i=0; i<$SPARK_WORKER_INSTANCES; i++)); do
-#      start_instance "" $(( 1 + $i )) "$@"
-#    done
-#  fi
+  echo "failed,Please install numactl package"
 fi
