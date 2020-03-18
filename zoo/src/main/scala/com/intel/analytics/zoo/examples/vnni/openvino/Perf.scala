@@ -62,7 +62,6 @@ object Perf {
     parser.parse(args, ResNet50PerfParams()).foreach { param =>
       if (!param.onSpark) {
         System.setProperty("bigdl.localMode", "true")
-        System.setProperty("bigdl.engineType", "mkldnn")
       }
 
       val batchSize = param.batchSize
