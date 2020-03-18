@@ -48,7 +48,7 @@ if [ -n "$grep_port" ]; then
 fi
 
 # Start master node
-"${SPARK_HOME}/sbin"/spark-daemon.sh start org.apache.spark.deploy.master.Master spark-master --ip $SPARK_MASTER_HOST --port $SPARK_MASTER_PORT --webui-port $SPARK_MASTER_WEBUI_PORT "$@"
+"${SPARK_HOME}/sbin"/spark-daemon.sh start org.apache.spark.deploy.master.Master spark-master --ip $SPARK_MASTER_HOST --port $SPARK_MASTER_PORT --webui-port $SPARK_MASTER_WEBUI_PORT
 
 # NOTE: This exact class name is matched downstream by SparkSubmit.
 # Any changes need to be reflected there.
@@ -124,7 +124,7 @@ if type "numactl" > /dev/null 2>&1; then
         # Launch a worker with numactl
         export SPARK_WORKER_CORES=${_LENGTH} # core num per worker
         export SPARK_WORKER_MEMORY="$((_NUMA_MEM / _WORKER_NUM))g"
-        start_instance "$_NUMACTL" "$_WORKER_NAME_NO" "$@"
+        start_instance "$_NUMACTL" "$_WORKER_NAME_NO"
         _WORKER_NAME_NO=$((_WORKER_NAME_NO + 1))
       done
     fi

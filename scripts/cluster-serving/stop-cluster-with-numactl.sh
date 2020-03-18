@@ -35,6 +35,12 @@ function ht_enabled {
   fi
 }
 
+_WORKER_NUM=$1
+if [ $TOTAL_CORE_NUM -lt 24 ] && [ -z "${_WORKER_NUM}" ]; then
+  # use local mode
+  exit 1
+fi
+
 if [ -z "${SPARK_HOME}" ]; then
   export SPARK_HOME="$(cd "`dirname "$0"`"/..; pwd)"
 fi
@@ -56,8 +62,10 @@ if type "numactl" > /dev/null 2>&1; then
       IFS=' ' _NUMA_CPUS=(${BASH_REMATCH[2]})
       _LENGTH=${#_NUMA_CPUS[@]}
       if ht_enabled; then _LENGTH=$((_LENGTH / 2)); fi
-      # calculate worker num on this numa node, 12 ~ 23 core/worker
-      _WORKER_NUM=$((_LENGTH / 12))
+      if [[ -z "${_WORKER_NUM}" ]]; then
+        # calculate worker num on this numa node, 12 ~ 23 core/worker
+        _WORKER_NUM=$((_LENGTH / 12))
+      fi
       if [[ $_WORKER_NUM -eq 0 ]]; then
         _WORKER_NUM=1
       fi
