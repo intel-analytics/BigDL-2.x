@@ -3,7 +3,7 @@
 # debug flag
 #set -x
 
-HYPER=1
+HYPER=`lscpu |grep "Thread(s) per core"|awk '{print $4}'`
 CPU=$(($(nproc) / HYPER))
 echo "Core number ${CPU}"
 
