@@ -21,7 +21,6 @@ import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
 import com.intel.analytics.zoo.serving.utils._
-import com.intel.analytics.zoo.utils.ImageProcessing
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
@@ -168,8 +167,7 @@ object ClusterServing {
             pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
               pathBytesBatch.indices.toParArray.map(i => {
                 val path = pathBytesBatch(i).getAs[String]("uri")
-                val tensors = ImageProcessing.bytesToBGRTensor(java.util
-                  .Base64.getDecoder.decode(pathBytesBatch(i).getAs[String]("image")))
+                val tensors = PreProcessing(pathBytesBatch(i).getAs[String]("image"))
 
                 val localPartitionModel = bcModel.value
                 val result = localPartitionModel.doPredict(tensors.addSingletonDimension()).toTensor
@@ -192,8 +190,7 @@ object ClusterServing {
               pathBytesBatch.indices.toParArray.map(i => {
                 val row = pathBytesBatch(i)
                 val path = row.getAs[String]("uri")
-                val tensors = ImageProcessing.bytesToBGRTensor(java.util
-                  .Base64.getDecoder.decode(row.getAs[String]("image")), chwFlag)
+                val tensors = PreProcessing(row.getAs[String]("image"), chwFlag)
                 (path, tensors)
 
               })
