@@ -4,8 +4,15 @@
 #set -x
 
 HYPER=`lscpu |grep "Thread(s) per core"|awk '{print $4}'`
-CPU=$(($(nproc) / HYPER))
-echo "Core number ${CPU}"
+CORES=$(($(nproc) / HYPER))
+
+if [[ -z "${KMP_AFFINITY}" ]]; then
+  KMP_AFFINITY=granularity=fine,compact
+  if [[HYPER==2]]; then
+    KMP_AFFINITY=${KMP_AFFINITY},1,0
+  fi
+fi
+echo "Core number ${CORES}"
 
 #export LD_LIBRARY_PATH=./openvino
 
@@ -14,7 +21,7 @@ export ANALYTICS_ZOO_HOME=~/zoo-bin
 
 export MASTER="spark://localhost:7077"
 
-#export OMP_NUM_THREADS=${CPU}
+#export OMP_NUM_THREADS=${CORES}
 export KMP_BLOCKTIME=20
 
 ITER=100
@@ -32,7 +39,7 @@ usage()
             openvinomodel.xml \\
             64 \\
             100 \\
-	    2
+	          2
             "
     exit 1
 }
@@ -60,7 +67,7 @@ then
     PARAMS="$5"
 fi
 
-export ZOO_NUM_MKLTHREADS=$((CPU/NUM_EXECUTORS))
+export ZOO_NUM_MKLTHREADS=$((CORES/NUM_EXECUTORS))
 
 CLASS=com.intel.analytics.zoo.benchmark.inference.OpenVINOSparkPerf
 
@@ -72,8 +79,8 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
   --driver-memory 20g \
   --executor-memory 40g \
   --num-executors ${NUM_EXECUTORS} \
-  --executor-cores $((CPU/NUM_EXECUTORS)) \
-  --total-executor-cores ${CPU} \
+  --executor-cores $((CORES/NUM_EXECUTORS)) \
+  --total-executor-cores ${CORES} \
   --conf spark.rpc.message.maxSize=2047
   --class ${CLASS} ${JAR} \
   -m ${MODEL} --iteration ${ITER} --batchSize ${BS} -n ${NUM_EXECUTORS}
