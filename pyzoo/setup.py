@@ -28,16 +28,20 @@ Analytics Zoo: A unified Data Analytics and AI platform for distributed TensorFl
 
 You may want to develop your AI solutions using Analytics Zoo if:
 
-- You want to easily prototype the entire end-to-end pipeline that applies AI models 
-(e.g., TensorFlow, Keras, PyTorch, BigDL, OpenVINO, etc.) to production big data.
-- You want to transparently scale your AI applications from a laptop to large clusters with "zero" code changes.
-- You want to deploy your AI pipelines to existing YARN or K8S clusters *WITHOUT* any modifications to the clusters.
-- You want to automate the process of applying machine learning (such as feature engineering, hyperparameter tuning,
- model selection and distributed inference).
+- You want to easily prototype the entire end-to-end pipeline that applies AI models
+ (e.g., TensorFlow, Keras, PyTorch, BigDL, OpenVINO, etc.) to production big data.
+- You want to transparently scale your AI applications from a laptop to large clusters with "zero"
+ code changes.
+- You want to deploy your AI pipelines to existing YARN or K8S clusters *WITHOUT* any modifications
+ to the clusters.
+- You want to automate the process of applying machine learning (such as feature engineering,
+ hyperparameter tuning, model selection and distributed inference).
 
-Find instructions to install analytics-zoo via pip, please visit our documentation page: https://analytics-zoo.github.io/master/#PythonUserGuide/install/
+Find instructions to install analytics-zoo via pip, please visit our documentation page:
+ https://analytics-zoo.github.io/master/#PythonUserGuide/install/
 
-For source code and more information, please visit our GitHub page: https://github.com/intel-analytics/analytics-zoo
+For source code and more information, please visit our GitHub page:
+ https://github.com/intel-analytics/analytics-zoo
 '''
 
 
