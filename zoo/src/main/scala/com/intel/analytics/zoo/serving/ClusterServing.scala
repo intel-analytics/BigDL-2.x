@@ -144,14 +144,15 @@ object ClusterServing {
 
     //    val image = ssc.socketTextStream("localhost", 9999)
     val images = ssc.createRedisXStream(Seq(ConsumerConfig("image_stream", "group1", "cli1")))
-    images.foreachRDD{ x =>
+    images.foreachRDD{ m =>
       /**
        * This is reserved for future dynamic loading model
        */
-      x.persist()
+      m.persist()
 
-      if (!x.isEmpty) {
+      if (!m.isEmpty) {
         val microBatchStart = System.nanoTime()
+        val x = m.coalesce(1)
         acc.reset()
 
         val redisInfo = RedisUtils.getMapFromInfo(redisDB.info())
