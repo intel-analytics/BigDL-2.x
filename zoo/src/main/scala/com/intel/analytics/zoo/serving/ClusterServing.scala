@@ -95,7 +95,7 @@ object ClusterServing {
     bcModel = helper.sc.broadcast(model)
 
     model.setInferenceSummary(
-      InferenceSummary(".", helper.dateTime + "-ClusterServing"))
+      InferenceSummary("./TensorboardEventLogs", helper.dateTime + "-ClusterServing"))
 
     val spark = helper.getSparkSession()
 
