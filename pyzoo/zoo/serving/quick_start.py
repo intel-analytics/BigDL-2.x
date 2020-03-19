@@ -37,10 +37,10 @@ def run():
             continue
         img = cv2.imread(os.path.join(base_path, p))
         img = cv2.resize(img, (224, 224))
-        for i in range(200):
+        for i in range(500):
             input_api.enqueue_image(p, img)
 
-    time.sleep(5)
+        time.sleep(3600)
 
     # get all result and dequeue
     result = output_api.dequeue()

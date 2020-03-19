@@ -22,6 +22,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
 import com.intel.analytics.zoo.serving.utils._
 import com.intel.analytics.zoo.serving.InferenceStrategy
+import com.intel.analytics.zoo.serving.spark.ServingReceiver
 import com.redislabs.provider.redis.streaming.ConsumerConfig
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.broadcast.Broadcast
@@ -39,10 +40,7 @@ import scala.util.{Failure, Success}
 
 object ClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
-  Logger.getLogger("akka").setLevel(Level.ERROR)
-  Logger.getLogger("breeze").setLevel(Level.ERROR)
-  Logger.getLogger("com.intel.analytics.zoo.feature.image").setLevel(Level.ERROR)
-  Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
+  Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.ERROR)
 
 
   case class Record(uri: String, value: String)
@@ -138,12 +136,18 @@ object ClusterServing {
       chwFlag, helper.dataShape(0), helper.dataShape(1), helper.dataShape(2),
       _modelType = helper.modelType)
 
-    val ssc = new StreamingContext(spark.sparkContext, new Duration(100))
+    val ssc = new StreamingContext(spark.sparkContext, new Duration(200))
     val acc = new LongAccumulator()
     helper.sc.register(acc)
 
+    val receiver = new ServingReceiver()
+    val images = ssc.receiverStream(receiver)
+
     //    val image = ssc.socketTextStream("localhost", 9999)
-    val images = ssc.createRedisXStream(Seq(ConsumerConfig("image_stream", "group1", "cli1")))
+
+//    val images = ssc.createRedisXStream(Seq(ConsumerConfig("image_stream", "group1", "cli1",
+//      batchSize = 512, block = 50)))
+
     images.foreachRDD{ m =>
       /**
        * This is reserved for future dynamic loading model
@@ -173,8 +177,10 @@ object ClusterServing {
         val preProcessed = x.mapPartitions(it => {
           it.grouped(serParams.coreNum).flatMap(itemBatch => {
             itemBatch.indices.toParArray.map(i => {
-              val uri = itemBatch(i).fields("uri")
-              val tensor = PreProcessing(itemBatch(i).fields("image"))
+              val uri = itemBatch(i)._1
+              val tensor = PreProcessing(itemBatch(i)._2)
+//              val uri = itemBatch(i).fields("uri")
+//              val tensor = PreProcessing(itemBatch(i).fields("image"))
               (uri, tensor)
             })
           })
