@@ -23,9 +23,9 @@ if [ -f "running" ]; then
     echo "Stop signal sent to serving."
     parse_yaml config.yaml
     eval $(parse_yaml config.yaml)
-    if [ "${params_performance_mode}" == "ON" ]; then
+    if [ "${params_performance_mode}" == "ON" ] && [ "${spark_master}" == "local[*]" ]; then
       echo "Stop standalone cluster..."
-      ./stop-cluster-with-numactl.sh
+      ./cluster-with-numactl.sh stop
     fi
 else
     echo "Serving is not running, stop operation ignored."
