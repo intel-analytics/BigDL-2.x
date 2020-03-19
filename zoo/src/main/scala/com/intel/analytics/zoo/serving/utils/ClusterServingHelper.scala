@@ -210,12 +210,12 @@ class ClusterServingHelper {
     if (configValue == null) {
       if (default == null) throw new Error(configList.toString + key + " must be provided")
       else {
-        println(configList.toString + key + " is null, using default.")
+//        println(configList.toString + key + " is null, using default.")
         return default
       }
     }
     else {
-      println(configList.toString + key + " getted: " + configValue)
+//      println(configList.toString + key + " getted: " + configValue)
       logger.info(configList.toString + key + " getted: " + configValue)
       return configValue
     }
