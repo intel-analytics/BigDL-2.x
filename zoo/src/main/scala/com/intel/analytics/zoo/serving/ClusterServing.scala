@@ -259,6 +259,7 @@ object ClusterServing {
          * Count the statistical data and write to summary
          */
         val microBatchEnd = System.nanoTime()
+        println(s"Currently recs in redis: ${redisDB.xlen("image_stream")}")
 
         AsyncUtils.writeServingSummay(model, acc.value,
           microBatchStart, microBatchEnd, timeStamp, totalCnt)
