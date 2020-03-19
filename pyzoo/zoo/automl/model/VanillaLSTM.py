@@ -26,7 +26,7 @@ from zoo.automl.common.metrics import Evaluator
 
 class VanillaLSTM(BaseModel):
 
-    def __init__(self, check_optional_config=True, future_seq_len=1):
+    def __init__(self, check_optional_config=False, future_seq_len=1):
         """
         Constructor of Vanilla LSTM model
         """
@@ -52,6 +52,7 @@ class VanillaLSTM(BaseModel):
         super()._check_config(**config)
         self.metric = config.get('metric', 'mean_squared_error')
         self.batch_size = config.get('batch_size', 1024)
+        self.feature_num = config["feature_num"]
 
         inp = Input(shape=(None, self.feature_num))
         lstm_1 = LSTM(units=config.get('lstm_1_units', 20),
@@ -102,7 +103,7 @@ class VanillaLSTM(BaseModel):
         :param config: optimization hyper parameters
         :return: the resulting metric
         """
-        self.feature_num = x.shape[2]
+        config.update({"feature_num": x.shape[2]})
         # if model is not initialized, __build the model
         if self.model is None:
             self._build(mc=mc, **config)
@@ -188,9 +189,7 @@ class VanillaLSTM(BaseModel):
 
     def _get_required_parameters(self):
         return {
-            # 'input_shape_x',
-            # 'input_shape_y',
-            # 'out_units'
+            "feature_num"
         }
 
     def _get_optional_parameters(self):
