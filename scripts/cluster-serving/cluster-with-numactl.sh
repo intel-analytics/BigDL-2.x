@@ -17,10 +17,12 @@ fi
 
 if ! type "numactl" > /dev/null 2>&1; then
   echo "failed,Please install numactl package to activate PERFORMANCE_MODE"
+  exit 1
 fi
 
 if ht_enabled; then
   echo "failed,Please turn off Hyperthreading to activate PERFORMANCE_MODE"
+  exit 1
 fi
 
 _WORKER_CORE_NUM_LESS_THAN=24
@@ -117,7 +119,8 @@ IFS=$'\n'; _NUMA_HARDWARE_INFO=(`numactl --hardware`)
 _NUMA_NODE_NUM=`echo ${_NUMA_HARDWARE_INFO[0]} | sed -e "s/^available: \([0-9]*\) nodes .*$/\1/"`
 _TOTAL_MEM=`grep MemTotal /proc/meminfo | awk '{print $2}'`
 # Memory size of each NUMA node = (Total memory size - 1g) / Num of NUMA nodes
-_NUMA_MEM=$((((_TOTAL_MEM - 1048576) / 1048576) / $_NUMA_NODE_NUM))
+_1G=1048576
+_NUMA_MEM=$((((_TOTAL_MEM - _1G) / _1G) / $_NUMA_NODE_NUM))
   
 _WORKER_NAME_NO=1
 
