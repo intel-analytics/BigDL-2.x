@@ -16,7 +16,18 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
+import java.io.{File, FileInputStream}
+import java.util
+import java.util.{Arrays, Properties}
+
+import org.scalatest._
+import org.slf4j.LoggerFactory
+import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
+import com.intel.analytics.zoo.common.Utils
+
+import scala.io.Source
 import scala.language.postfixOps
+import scala.sys.process._
 
 /*
 @OpenVinoTest
@@ -48,22 +59,13 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
   val resnet_v1_50_meanValues = Array(123.68f, 116.78f, 103.94f)
   val resnet_v1_50_scale = 1.0f
   var resnet_v1_50_path: String = _
-  var resnet_v1_50_int8_path: String = _
-
-  val calibrateValTarUrl = s"$s3Url/analytics-zoo-models/openvino/val_bmp_32.tar"
-  val calibrateValTar = calibrateValTarUrl.split("/").last
-  var calibrateValFilePath: String = _
-  var calibrateValDirPath: String = _
+  var valDirPath: String = _
 
   val resnet_v1_50_shape = Array(4, 3, 224, 224)
   val image_input_65_url = s"$s3Url/analytics-zoo-models/openvino/ic_input_65"
   val image_input_970_url = s"$s3Url/analytics-zoo-models/openvino/ic_input_970"
   var image_input_65_filePath: String = _
   var image_input_970_filePath: String = _
-
-  val opencvLibTarURL = s"$s3Url/analytics-zoo-models/openvino/opencv_4.0.0_ubuntu_lib.tar"
-  val opencvLibTar = opencvLibTarURL.split("/").last
-  var opencvLibPath: String = _
 
   val savedModelTarURL = s"$s3Url/analytics-zoo-models/openvino/saved-model.tar"
   val savedModelTar = savedModelTarURL.split("/").last
@@ -79,14 +81,8 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     s"wget -nv -P $dir $resnet_v1_50_url" !;
     s"tar xvf $dir/$resnet_v1_50_tar -C $dir" !;
 
-    s"wget -nv -P $dir $calibrateValTarUrl" !;
-    s"tar xvf $dir/$calibrateValTar -C $dir" !;
-
     s"wget -nv -P $dir $image_input_65_url" !;
     s"wget -nv -P $dir $image_input_970_url" !;
-
-    s"wget -nv -P $dir $opencvLibTarURL" !;
-    s"tar xvf $dir/$opencvLibTar -C $dir" !;
 
     s"wget -nv -P $dir $savedModelTarURL" !;
     s"tar xvf $dir/$savedModelTar -C $dir" !;
@@ -94,16 +90,13 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     s"ls -alh $dir" !;
 
     resnet_v1_50_path = s"$dir/resnet_v1_50_inference_graph"
-    resnet_v1_50_int8_path = s"$dir/resnet_v1_50_inference_graph-calibrated"
 
     resnet_v1_50_checkpointPath = s"$dir/resnet_v1_50.ckpt"
-    calibrateValFilePath = s"$dir/val_bmp_32/val.txt"
-    calibrateValDirPath = s"$dir/val_bmp_32/"
+    valDirPath = s"$dir/val_bmp_32/"
 
     image_input_65_filePath = s"$dir/ic_input_65"
     image_input_970_filePath = s"$dir/ic_input_970"
 
-    opencvLibPath = s"$dir/lib"
     savedModelPath = s"$dir/saved-model"
 
     // Optimize model
@@ -120,18 +113,8 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     // int8 optimized model
     resnet_v1_50_path = s"${tmpDir.getAbsolutePath}/${resnet_v1_50_modelType}" +
       s"_inference_graph"
-    InferenceModel.doCalibrateTF(
-      resnet_v1_50_path + ".xml",
-      "C",
-      calibrateValFilePath,
-      32,
-      opencvLibPath,
-      tmpDir.getAbsolutePath
-    )
-    resnet_v1_50_int8_path = s"${tmpDir.getAbsolutePath}/${resnet_v1_50_modelType}" +
-      s"_inference_graph-calibrated"
-    tmpDir.listFiles().foreach(file => println(file.getAbsoluteFile))
 
+    tmpDir.listFiles().foreach(file => println(file.getAbsoluteFile))
   }
 
   override def afterAll() {
@@ -224,57 +207,18 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     }
   }
 
-  test("openvino doLoadInt8 and PredictInt8(float)") {
-    val model = new InferenceModel(3)
-    model.doLoadOpenVINO(s"${resnet_v1_50_int8_path}.xml",
-      s"${resnet_v1_50_int8_path}.bin",
-      resnet_v1_50_inputShape.apply(0))
-    println(s"resnet_v1_50_model from tf loaded as $model")
-    model shouldNot be(null)
-    val indata1 = fromHWC2CHW(Source.fromFile(image_input_65_filePath)
-      .getLines().map(_.toFloat).toArray)
-    val indata2 = fromHWC2CHW(Source.fromFile(image_input_970_filePath)
-      .getLines().map(_.toFloat).toArray)
-    // 65's top1 is 65, 970's top1 is 795
-    val labels = Array(65f, 795f)
-    val data = indata1 ++ indata2 ++ indata1 ++ indata2
-    val input1 = new JTensor(data, resnet_v1_50_shape)
-    val input2 = new JTensor(data, resnet_v1_50_shape)
-    val inputs = Arrays.asList(
-      Arrays.asList({
-        input1
-      }),
-      Arrays.asList({
-        input2
-      }))
-
-    // Load float32 and predict int8 leads to 65 to wrong results
-    // PredictInt8
-    val resultsInt8: util.List[util.List[JTensor]] = model.doPredict(inputs)
-    val classesInt8 = resultsInt8.toArray().map(list => {
-      val inner = list.asInstanceOf[util.List[JTensor]].get(0)
-      val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
-      val class2 = inner.getData.slice(1000, 2000).zipWithIndex.maxBy(_._1)._2
-      println(s"(${class1}, ${class2})")
-      Array(class1.toFloat, class2.toFloat)
-    })
-    classesInt8.foreach { output =>
-      assert(almostEqual(output, labels, 0.1f))
-    }
-  }
-
   test("openvino resnet50 should predict image successfully") {
     val model = new InferenceModel(3)
-    model.doLoadOpenVINO(s"${resnet_v1_50_int8_path}.xml",
-      s"${resnet_v1_50_int8_path}.bin")
+    model.doLoadOpenVINO(s"${resnet_v1_50_path}.xml",
+      s"${resnet_v1_50_path}.bin")
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
 
     var indata1 = new Array[Float](3 * 224 * 224)
     var indata2 = new Array[Float](3 * 224 * 224)
-    OpenCVMat.toFloatPixels(OpenCVMat.read(calibrateValDirPath +
+    OpenCVMat.toFloatPixels(OpenCVMat.read(valDirPath +
       "ILSVRC2012_val_00000001.bmp"), indata1)
-    OpenCVMat.toFloatPixels(OpenCVMat.read(calibrateValDirPath +
+    OpenCVMat.toFloatPixels(OpenCVMat.read(valDirPath +
       "ILSVRC2012_val_00000002.bmp"), indata2)
     indata1 = fromHWC2CHW(indata1)
     indata2 = fromHWC2CHW(indata2)
@@ -290,7 +234,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
         input2
       }))
 
-    // PredictInt8
+    // Predict
     val results: util.List[util.List[JTensor]] = model.doPredict(inputs)
     val classes = results.toArray().map(list => {
       val inner = list.asInstanceOf[util.List[JTensor]].get(0)
@@ -306,8 +250,8 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
 
   test("openvino should handle wrong batchSize correctly") {
     val model = new InferenceModel(3)
-    model.doLoadOpenVINO(s"${resnet_v1_50_int8_path}.xml",
-      s"${resnet_v1_50_int8_path}.bin",
+    model.doLoadOpenVINO(s"${resnet_v1_50_path}.xml",
+      s"${resnet_v1_50_path}.bin",
       resnet_v1_50_inputShape.apply(0))
     println(s"resnet_v1_50_model from tf loaded as $model")
     model shouldNot be(null)
@@ -329,14 +273,14 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
         input2
       }))
 
-    val resultsInt8: util.List[util.List[JTensor]] = model.doPredict(inputs)
-    val classesInt8 = resultsInt8.toArray().map(list => {
+    val results: util.List[util.List[JTensor]] = model.doPredict(inputs)
+    val classes = results.toArray().map(list => {
       val inner = list.asInstanceOf[util.List[JTensor]].get(0)
       val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
       class1.toFloat
     })
-    assert(almostEqual(classesInt8, labels, 0.1f))
-    println(classesInt8.mkString(","))
+    assert(almostEqual(classes, labels, 0.1f))
+    println(classes.mkString(","))
   }
 
   def fromHWC2CHW(data: Array[Float]): Array[Float] = {

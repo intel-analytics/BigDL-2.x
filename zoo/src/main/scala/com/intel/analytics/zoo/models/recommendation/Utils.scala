@@ -197,6 +197,7 @@ object Utils {
     val indTensor = Tensor[Float](columnInfo.indicatorDims.sum).fill(0)
 
     // setup indicators
+    var acc = 0
     (0 to indCol - 1).map {
       i =>
         val index = r.getAs[Int](columnInfo.indicatorCols(i))
@@ -204,7 +205,8 @@ object Utils {
           index
         }
         else {
-          columnInfo.indicatorDims(i - 1)
+          acc = acc + columnInfo.indicatorDims(i - 1)
+          acc + index
         }
         indTensor.setValue(accIndex + 1, 1)
     }

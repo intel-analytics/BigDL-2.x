@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.utils
+package com.intel.analytics.zoo.serving
 
-import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.feature.image.OpenCVMethod
 import org.opencv.imgcodecs.Imgcodecs
 
-object ImageProcessing {
+class PreProcessing(s: String) {
+  def bytesToTensor(chwFlag: Boolean = true): Tensor[Float] = {
+    val b = java.util.Base64.getDecoder.decode(s)
 
-  def bytesToBGRTensor(bytes: Array[Byte], chwFlag: Boolean = true): Tensor[Float] = {
-    val mat = OpenCVMethod.fromImageBytes(bytes, Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
+    val mat = OpenCVMethod.fromImageBytes(b, Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
     val (height, width, channel) = (mat.height(), mat.width(), mat.channels())
 
     val data = new Array[Float](height * width * channel)
@@ -38,5 +39,15 @@ object ImageProcessing {
       imageTensor
     }
 
+  }
+}
+object PreProcessing {
+  def apply(s: String, chwFlag: Boolean = false, args: Array[Int] = Array()): Tensor[Float] = {
+    val cls = new PreProcessing(s)
+    val t = cls.bytesToTensor(chwFlag)
+    for (op <- args) {
+      // new processing features add to here
+    }
+    t
   }
 }

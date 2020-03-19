@@ -81,7 +81,10 @@ else
 fi
 
 # try to start tensorboard
-tensorboard --logdir . --port 6006 --host 0.0.0.0 &
+if [[ ! -e "TensorboardEventLogs" ]]; then
+    mkdir TensorboardEventLogs
+fi
+tensorboard --logdir ./TensorboardEventLogs --port 6006 --host 0.0.0.0 &
 
 # if jar paths are not set, try to use them in current directory
 if [ -z "${ZOO_JAR}" ]; then
