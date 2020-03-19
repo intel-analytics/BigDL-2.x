@@ -29,7 +29,7 @@ import redis.clients.jedis.Jedis
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
-
+import org.apache.spark.util.{LongAccumulator}
 
 object ClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -123,6 +123,9 @@ object ClusterServing {
     val inputThreshold = 0.6 * 0.8
     val cutRatio = 0.5
 
+    val acc = new LongAccumulator()
+    helper.sc.register(acc)
+
     val query = images.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
 
       /**
@@ -138,10 +141,8 @@ object ClusterServing {
 
       batchDF.persist()
 
-      val microBatchSize = batchDF.count()
-      logger.info("Micro batch size " + microBatchSize.toString)
 
-      if (microBatchSize != 0) {
+      if (!batchDF.isEmpty) {
         /**
          * The streaming may be triggered somehow and it is possible
          * to get an empty batch
@@ -151,7 +152,7 @@ object ClusterServing {
 
 
         val microBatchStart = System.nanoTime()
-
+        acc.reset()
         /**
          * Engine type controlling, for different engine type,
          * different partitioning and batching scheduling is used
@@ -166,6 +167,7 @@ object ClusterServing {
           batchDF.rdd.mapPartitions(pathBytes => {
             pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
               pathBytesBatch.indices.toParArray.map(i => {
+                acc.add(1)
                 val path = pathBytesBatch(i).getAs[String]("uri")
                 val tensors = PreProcessing(pathBytesBatch(i).getAs[String]("image"))
 
@@ -188,6 +190,7 @@ object ClusterServing {
           val pathBytesChunk = batchDF.rdd.mapPartitions(pathBytes => {
             pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
               pathBytesBatch.indices.toParArray.map(i => {
+                acc.add(1)
                 val row = pathBytesBatch(i)
                 val path = row.getAs[String]("uri")
                 val tensors = PreProcessing(row.getAs[String]("image"), chwFlag)
@@ -268,8 +271,6 @@ object ClusterServing {
               errFlag = true
               val errMsg = "not enough space in redis to write: " + e.toString
               logger.info(errMsg)
-              println(errMsg)
-
               Thread.sleep(3000)
             case e: java.lang.InterruptedException =>
               /**
@@ -277,13 +278,10 @@ object ClusterServing {
                * End the streaming until this micro batch process ends
                */
               logger.info("Stop signal received, will exit soon.")
-
             case e: Exception =>
               errFlag = true
               val errMsg = "unable to handle exception: " + e.toString
               logger.info(errMsg)
-              println(errMsg)
-
               Thread.sleep(3000)
 
           }
@@ -294,8 +292,8 @@ object ClusterServing {
          */
         val microBatchEnd = System.nanoTime()
 
-        AsyncUtils.writeServingSummay(model, batchDF,
-          microBatchStart, microBatchEnd, timeStamp, totalCnt)
+        AsyncUtils.writeServingSummay(model, acc.value,
+          microBatchStart, microBatchEnd, timeStamp, totalCnt, logger)
           .onComplete{
             case Success(value) =>
               timeStamp += value._1
