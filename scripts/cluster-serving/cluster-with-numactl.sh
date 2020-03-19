@@ -60,12 +60,12 @@ if [ -z "${SPARK_MASTER_WEBUI_PORT}" ]; then
 fi
 
 grep_port=`netstat -tlpn | awk '{print $4}' | grep "\b$SPARK_MASTER_PORT\b"`
-if [ -n "$grep_port" ]; then
+if [ "${_MODE}" == "start" ] && [ -n "$grep_port" ]; then
   echo "failed,Spark master port $SPARK_MASTER_PORT is in use"
   exit 1
 fi
 
-# Start master node
+# Start or stop master node
 "${SPARK_HOME}/sbin"/spark-daemon.sh "${_MODE}" org.apache.spark.deploy.master.Master spark-master --ip $SPARK_MASTER_HOST --port $SPARK_MASTER_PORT --webui-port $SPARK_MASTER_WEBUI_PORT
 
 # NOTE: This exact class name is matched downstream by SparkSubmit.
