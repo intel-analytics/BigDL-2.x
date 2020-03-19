@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.serving.utils
 
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
+import org.apache.log4j.Logger
 import org.apache.spark.sql.DataFrame
 
 import scala.concurrent.Future
@@ -28,11 +29,12 @@ object AsyncUtils {
                          start: Long,
                          end: Long,
                          timeStamp: Int,
-                         lastCnt: Int): Future[(Int, Int)] = Future{
+                         lastCnt: Int,
+                         logger: Logger): Future[(Int, Int)] = Future{
 
     val microBatchLatency = (end - start) / 1e9
     val microBatchThroughPut = (size / microBatchLatency).toFloat
-    println(s"Inferece end. Input size $size. " +
+    logger.info(s"Inferece end. Input size $size. " +
       s"Latency $microBatchLatency, Throughput $microBatchThroughPut")
 
     val totalCnt = lastCnt + size.toInt

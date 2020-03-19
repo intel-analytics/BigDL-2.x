@@ -274,8 +274,6 @@ object ClusterServing {
               errFlag = true
               val errMsg = "not enough space in redis to write: " + e.toString
               logger.info(errMsg)
-              println(errMsg)
-
               Thread.sleep(3000)
             case e: java.lang.InterruptedException =>
               /**
@@ -283,13 +281,10 @@ object ClusterServing {
                * End the streaming until this micro batch process ends
                */
               logger.info("Stop signal received, will exit soon.")
-
             case e: Exception =>
               errFlag = true
               val errMsg = "unable to handle exception: " + e.toString
               logger.info(errMsg)
-              println(errMsg)
-
               Thread.sleep(3000)
 
           }
@@ -301,7 +296,7 @@ object ClusterServing {
         val microBatchEnd = System.nanoTime()
 
         AsyncUtils.writeServingSummay(model, acc.value,
-          microBatchStart, microBatchEnd, timeStamp, totalCnt)
+          microBatchStart, microBatchEnd, timeStamp, totalCnt, logger)
           .onComplete{
             case Success(value) =>
               timeStamp += value._1
