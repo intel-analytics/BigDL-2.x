@@ -158,6 +158,7 @@ class MTNetForecaster(Forecaster):
         The original rolled features needs an extra step to process.
         This should be called before train_x, validation_x, and test_x
         @param x: the original samples from rolling
-        @return: a tuple (long_term_x, short_term_x) which are long term and short term history respectively
+        @return: a tuple (long_term_x, short_term_x) 
+                which are long term and short term history respectively
         """
         return self.internal._reshape_input_x(x)
