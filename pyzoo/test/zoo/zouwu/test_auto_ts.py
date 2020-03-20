@@ -17,24 +17,44 @@
 import pytest
 import numpy as np
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
-import tensorflow as tf
+
+from zoo.zouwu.autots.forecast import AutoTSTrainer
+
+from zoo.zouwu.autots.forecast import TSPipeline
+
 import pandas as pd
 
 
-class TestZouwuModelForecast(ZooTestCase):
+@pytest.mark.usefixtures("init_ray_context_fixture")
+class TestZouwuAutoTS(ZooTestCase):
 
     def setup_method(self, method):
-        tf.keras.backend.clear_session()
-        super(TestZouwuModelForecast, self).setup_method(method)
-        self.ft = TimeSequenceFeatureTransformer()
+        # super(TestZouwuAutoTS, self).setup_method(method)
         self.create_data()
 
-    def create_data(self):
+    def teardown_method(self, method):
         pass
 
-    def test_forecast(self):
-        pass
+    def create_data(self):
+        sample_num = np.random.randint(100, 200)
+        self.train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', periods=sample_num),
+                                      "value": np.random.randn(sample_num)})
+        val_sample_num = np.random.randint(20, 30)
+        self.validation_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', periods=val_sample_num),
+                                           "value": np.random.randn(val_sample_num)})
+
+    def test_autotrain(self):
+        horizon = np.random.randint(1, 6)
+        tsp = AutoTSTrainer(dt_col="datetime",
+                            target_col="value",
+                            horizon=horizon,
+                            extra_features_col=None
+                            )
+        pipeline = tsp.fit(self.train_df, self.validation_df)
+        assert isinstance(pipeline, TSPipeline)
+        assert pipeline.internal.config is not None
+        pipeline.evaluate(self.validation_df)
+        pipeline.predict(self.validation_df)
 
 
 if __name__ == "__main__":

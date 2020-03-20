@@ -21,17 +21,20 @@ from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 import tensorflow as tf
 import pandas as pd
 
-from zoo.zouwu.model.forcast import LSTMForecaster
-from zoo.zouwu.model.forcast import MTNetForecaster
+from zoo.zouwu.model.forecast import LSTMForecaster
+from zoo.zouwu.model.forecast import MTNetForecaster
 
 
 class TestZouwuModelForecast(ZooTestCase):
 
     def setup_method(self, method):
         tf.keras.backend.clear_session()
-        super(TestZouwuModelForecast, self).setup_method(method)
+        # super(TestZouwuModelForecast, self).setup_method(method)
         self.ft = TimeSequenceFeatureTransformer()
         self.create_data()
+
+    def teardown_method(self, method):
+        pass
 
     def create_data(self):
         def gen_train_sample(data, past_seq_len, future_seq_len):
@@ -44,7 +47,9 @@ class TestZouwuModelForecast(ZooTestCase):
             x = self.ft._roll_test(test_data, past_seq_len=past_seq_len)
             return x
 
-        look_back = 6
+        self.long_num = 6
+        self.time_step = 2
+        look_back = (self.long_num+1) * self.time_step
         look_forward = 1
         self.x_train, self.y_train = gen_train_sample(data=np.random.randn(64, 4),
                                                       past_seq_len=look_back,
@@ -68,18 +73,22 @@ class TestZouwuModelForecast(ZooTestCase):
 
     def test_forecast_mtnet(self):
         # TODO hacking to fix a bug
-        model = MTNetForecaster(horizon=1, feature_dim=self.x_train.shape[-1])
+        model = MTNetForecaster(horizon=1,
+                                feature_dim=self.x_train.shape[-1],
+                                lb_long_steps=self.long_num,
+                                lb_long_stepsize=self.time_step
+                                )
         x_train_long, x_train_short = model.preprocess_input(self.x_train)
-        x_val_long, x_val_short = model.preprocess_input(self.x_val), self.y_val
+        x_val_long, x_val_short = model.preprocess_input(self.x_val)
         x_test_long, x_test_short = model.preprocess_input(self.x_test)
 
         model.fit([x_train_long, x_train_short],
                   self.y_train,
-                  validation_data=([x_val_long, x_val_long], self.y_val),
-                  batch_size=8,
+                  validation_data=([x_val_long, x_val_short], self.y_val),
+                  batch_size=32,
                   distributed=False)
-        #model.evaluate([x_val_long, x_val_short], self.y_val)
-        #model.predict([x_test_long, x_test_short])
+        model.evaluate([x_val_long, x_val_short], self.y_val)
+        model.predict([x_test_long, x_test_short])
 
 
 if __name__ == "__main__":
