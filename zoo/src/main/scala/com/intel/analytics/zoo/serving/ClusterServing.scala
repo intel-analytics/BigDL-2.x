@@ -166,8 +166,10 @@ object ClusterServing {
            */
           batchDF.rdd.mapPartitions(pathBytes => {
             pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
+
+              acc.add(pathBytesBatch.size)
               pathBytesBatch.indices.toParArray.map(i => {
-                acc.add(1)
+
                 val path = pathBytesBatch(i).getAs[String]("uri")
                 val tensors = PreProcessing(pathBytesBatch(i).getAs[String]("image"))
 
@@ -190,7 +192,7 @@ object ClusterServing {
           val pathBytesChunk = batchDF.rdd.mapPartitions(pathBytes => {
             pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
               pathBytesBatch.indices.toParArray.map(i => {
-                acc.add(1)
+
                 val row = pathBytesBatch(i)
                 val path = row.getAs[String]("uri")
                 val tensors = PreProcessing(row.getAs[String]("image"), chwFlag)
@@ -208,7 +210,7 @@ object ClusterServing {
             }
             pathBytes.grouped(batchSize).flatMap(pathByteBatch => {
               val thisBatchSize = pathByteBatch.size
-
+              acc.add(thisBatchSize)
               (0 until thisBatchSize).toParArray
                 .foreach(i => t.select(1, i + 1).copy(pathByteBatch(i)._2))
 
@@ -292,12 +294,21 @@ object ClusterServing {
          */
         val microBatchEnd = System.nanoTime()
 
-        AsyncUtils.writeServingSummay(model, acc.value,
-          microBatchStart, microBatchEnd, timeStamp, totalCnt, logger)
+        val microBatchLatency = (microBatchEnd - microBatchStart) / 1e9
+        val microBatchThroughPut = (acc.value / microBatchLatency).toFloat
+        logger.info(s"Inferece end. Input size ${acc.value}. " +
+          s"Latency $microBatchLatency, Throughput $microBatchThroughPut")
+
+        totalCnt += acc.value.toInt
+
+        val lastTimeStamp = timeStamp
+        timeStamp += microBatchLatency.toInt + 1
+
+        AsyncUtils.writeServingSummay(model,
+          lastTimeStamp, timeStamp, totalCnt, microBatchThroughPut)
           .onComplete{
-            case Success(value) =>
-              timeStamp += value._1
-              totalCnt += value._2
+            case Success(_) => None
+
             case Failure(exception) => logger.info(s"$exception, " +
               s"write summary fails, please check.")
           }
