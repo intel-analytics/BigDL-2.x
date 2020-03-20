@@ -60,7 +60,8 @@ class AutoTSTrainer:
         @param validation_df: the validation dataframe (as pandas.dataframe)
         @param recipe: the configuration of searching
         @param metric: the evaluation metric to optimize
-        @param uncertainty: whether to enable uncertainty calculation (will output an uncertainty sigma)
+        @param uncertainty: whether to enable uncertainty calculation 
+                            (will output an uncertainty sigma)
         @param hdfs_url: the hdfs_url to use for storing trail and intermediate results
         @param distributed: whether to enable distributed training
         @return a TSPipeline
