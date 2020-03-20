@@ -25,26 +25,20 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object AsyncUtils {
   def writeServingSummay(model: InferenceModel,
-                         size: Long,
-                         start: Long,
-                         end: Long,
-                         timeStamp: Int,
-                         lastCnt: Int,
-                         logger: Logger): Future[(Int, Int)] = Future{
+                         timeStampStart: Int,
+                         timeStampEnd: Int,
+                         totalCnt: Int,
+                         throughPut: Float
+                         ): Future[Unit] = Future{
 
-    val microBatchLatency = (end - start) / 1e9
-    val microBatchThroughPut = (size / microBatchLatency).toFloat
-    logger.info(s"Inferece end. Input size $size. " +
-      s"Latency $microBatchLatency, Throughput $microBatchThroughPut")
 
-    val totalCnt = lastCnt + size.toInt
-    (timeStamp until timeStamp + microBatchLatency.toInt).foreach( time => {
+    (timeStampStart until timeStampEnd).foreach( time => {
       model.inferenceSummary.addScalar(
-        "Serving Throughput", microBatchThroughPut, time)
+        "Serving Throughput", throughPut, time)
       model.inferenceSummary.addScalar(
         "Total Records Number", totalCnt, time)
     })
-    (timeStamp, totalCnt)
+
   }
 
 }
