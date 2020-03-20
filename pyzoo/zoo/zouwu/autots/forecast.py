@@ -39,11 +39,12 @@ class AutoTSTrainer:
         @param target_col: the target column to forecast
         @param extra_features_col: extra feature columns
         """
-        self.internal = TimeSequencePredictor(dt_col=dt_col,
-                                              target_col=target_col,
-                                              future_seq_len=horizon,
-                                              extra_features_col=extra_features_col,
-                                              )
+        self.internal = TimeSequencePredictor(
+            dt_col=dt_col,
+            target_col=target_col,
+            future_seq_len=horizon,
+            extra_features_col=extra_features_col,
+        )
 
     def fit(self,
             train_df,
@@ -60,7 +61,7 @@ class AutoTSTrainer:
         @param validation_df: the validation dataframe (as pandas.dataframe)
         @param recipe: the configuration of searching
         @param metric: the evaluation metric to optimize
-        @param uncertainty: whether to enable uncertainty calculation 
+        @param uncertainty: whether to enable uncertainty calculation
                             (will output an uncertainty sigma)
         @param hdfs_url: the hdfs_url to use for storing trail and intermediate results
         @param distributed: whether to enable distributed training

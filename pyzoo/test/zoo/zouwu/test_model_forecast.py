@@ -39,10 +39,10 @@ class TestZouwuModelForecast(ZooTestCase):
     def create_data(self):
         def gen_train_sample(data, past_seq_len, future_seq_len):
             data = pd.DataFrame(data)
-            x, y = self.ft._roll_train(data, 
-                                       past_seq_len=past_seq_len, 
+            x, y = self.ft._roll_train(data,
+                                       past_seq_len=past_seq_len,
                                        future_seq_len=future_seq_len
-                                      )
+                                       )
             return x, y
 
         def gen_test_sample(data, past_seq_len):
@@ -52,11 +52,10 @@ class TestZouwuModelForecast(ZooTestCase):
 
         self.long_num = 6
         self.time_step = 2
-        look_back = (self.long_num+1) * self.time_step
+        look_back = (self.long_num + 1) * self.time_step
         look_forward = 1
-        self.x_train, self.y_train = gen_train_sample(data=np.random.randn(64, 4),
-                                                      past_seq_len=look_back,
-                                                      future_seq_len=look_forward)
+        self.x_train, self.y_train = gen_train_sample(data=np.random.randn(
+            64, 4), past_seq_len=look_back, future_seq_len=look_forward)
         self.x_val, self.y_val = gen_train_sample(data=np.random.randn(16, 4),
                                                   past_seq_len=look_back,
                                                   future_seq_len=look_forward)

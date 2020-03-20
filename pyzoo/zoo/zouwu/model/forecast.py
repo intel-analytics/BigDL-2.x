@@ -98,8 +98,9 @@ class LSTMForecaster(Forecaster):
         Build LSTM Model in tf.keras
         """
         # build model with TF/Keras
-        self.internal = LSTMKerasModel(check_optional_config=self.check_optional_config,
-                                       future_seq_len=self.horizon)
+        self.internal = LSTMKerasModel(
+            check_optional_config=self.check_optional_config,
+            future_seq_len=self.horizon)
         return self.internal._build(mc=self.uncertainty,
                                     **self.model_config)
 
@@ -148,8 +149,9 @@ class MTNetForecaster(Forecaster):
         @return: a tf.keras MTNet model
         """
         # TODO change this function call after MTNet fixes
-        self.internal = MTNetKerasModel(check_optional_config=self.check_optional_config,
-                                        future_seq_len=self.model_config.get('horizon'))
+        self.internal = MTNetKerasModel(
+            check_optional_config=self.check_optional_config,
+            future_seq_len=self.model_config.get('horizon'))
         self.internal.apply_config(config=self.model_config)
         return self.internal.build()
 
@@ -158,7 +160,7 @@ class MTNetForecaster(Forecaster):
         The original rolled features needs an extra step to process.
         This should be called before train_x, validation_x, and test_x
         @param x: the original samples from rolling
-        @return: a tuple (long_term_x, short_term_x) 
+        @return: a tuple (long_term_x, short_term_x)
                 which are long term and short term history respectively
         """
         return self.internal._reshape_input_x(x)
