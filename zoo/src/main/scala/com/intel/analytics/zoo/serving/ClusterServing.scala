@@ -305,7 +305,7 @@ object ClusterServing {
         timeStamp += microBatchLatency.toInt + 1
 
         AsyncUtils.writeServingSummay(model,
-          lastTimeStamp, timeStamp , totalCnt, microBatchThroughPut)
+          lastTimeStamp, timeStamp, totalCnt, microBatchThroughPut)
           .onComplete{
             case Success(_) => None
 
