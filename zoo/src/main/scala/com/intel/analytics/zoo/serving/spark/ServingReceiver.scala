@@ -37,16 +37,20 @@ class ServingReceiver ()
         false,
         new SimpleEntry("image_stream", StreamEntryID.UNRECEIVED_ENTRY)
       )
-
+      Thread.sleep(10)
       if (response != null) {
         for (streamMessages <- response) {
           println(s"receiving!!! ${streamMessages.getValue.size()}")
           val key = streamMessages.getKey
           val entries = streamMessages.getValue
-          val it = entries.map { e =>
-            (e.getFields.get("uri"), e.getFields.get("image"))
-          }
-          store(it.iterator)
+//          val it = entries.map { e =>
+//            (e.getFields.get("uri"), e.getFields.get("image"))
+//          }.toIterator
+//          store(it)
+          entries.foreach(e => {
+            val d = (e.getFields.get("uri"), e.getFields.get("image"))
+            store(d)
+          })
 //          var i = 0
 //          for (e <- entries) {
 //            var p = jedis.pipelined()
