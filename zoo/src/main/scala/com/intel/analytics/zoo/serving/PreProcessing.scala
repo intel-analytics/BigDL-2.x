@@ -42,7 +42,7 @@ class PreProcessing(s: String) {
   }
 }
 object PreProcessing {
-  def apply(s: String, chwFlag: Boolean = false, args: Array[Int] = Array()): Tensor[Float] = {
+  def apply(s: String, chwFlag: Boolean = true, args: Array[Int] = Array()): Tensor[Float] = {
     val cls = new PreProcessing(s)
     val t = cls.bytesToTensor(chwFlag)
     for (op <- args) {
