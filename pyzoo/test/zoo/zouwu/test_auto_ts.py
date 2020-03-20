@@ -37,12 +37,11 @@ class TestZouwuAutoTS(ZooTestCase):
 
     def create_data(self):
         sample_num = np.random.randint(100, 200)
-        self.train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', periods=sample_num),
-                                      "value": np.random.randn(sample_num)})
+        self.train_df = pd.DataFrame({"datetime": pd.date_range(
+            '1/1/2019', periods=sample_num), "value": np.random.randn(sample_num)})
         val_sample_num = np.random.randint(20, 30)
-        self.validation_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', 
-                                                       periods=val_sample_num),
-                                           "value": np.random.randn(val_sample_num)})
+        self.validation_df = pd.DataFrame({"datetime": pd.date_range(
+            '1/1/2019', periods=val_sample_num), "value": np.random.randn(val_sample_num)})
 
     def test_autotrain(self):
         horizon = np.random.randint(1, 6)
