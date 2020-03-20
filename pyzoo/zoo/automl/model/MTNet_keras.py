@@ -48,6 +48,7 @@ import tensorflow as tf
 from zoo.automl.common.metrics import Evaluator
 import pandas as pd
 from zoo.automl.model.abstract import BaseModel
+from zoo.automl.common.util import save_config
 
 
 class AttentionRNNWrapper(Wrapper):
@@ -235,13 +236,12 @@ class AttentionRNNWrapper(Wrapper):
 
 class MTNetKeras(BaseModel):
 
-    def __init__(self, check_optional_config=True, future_seq_len=1):
+    def __init__(self, check_optional_config=False, future_seq_len=1):
 
         """
         Constructor of MTNet model
         """
-        # self.config = config
-        # self._get_configs()
+        self.check_optional_config = check_optional_config
         self.config = None
         # config parameter
         self.time_step = None  # timestep
@@ -267,17 +267,18 @@ class MTNetKeras(BaseModel):
         self.mc = None
         self.epochs = None
 
-    def _get_configs(self, rs=False, config=None):
+    def apply_config(self, rs=False, config=None):
+        super()._check_config(**config)
         if rs:
             config_names = set(config.keys())
             assert config_names.issuperset(self.saved_configs)
             # assert config_names.issuperset(self.lr_decay_configs) or \
             #        config_names.issuperset(self.lr_configs)
-            self.epochs = config.get("epochs")
-            self.metrics = config.get("metrics")
-            self.mc = config.get("mc")
-            self.feature_num = config.get("feature_num")
-            self.output_dim = config.get("output_dim")
+        self.epochs = config.get("epochs")
+        self.metrics = config.get("metrics", ["mean_squared_error"])
+        self.mc = config.get("mc")
+        self.feature_num = config["feature_num"]
+        self.output_dim = config["output_dim"]
         self.time_step = config.get("time_step", 1)
         self.long_num = config.get("long_num", 7)
         self.ar_window = config.get("ar_window", 1)
@@ -302,17 +303,13 @@ class MTNetKeras(BaseModel):
         #     "Invalid configuration value. 'cnn_hid_size' must be equal to the last element of " \
         #     "'rnn_hid_sizes'"
 
-    def _get_len(self, x, y):
-        self.feature_num = x.shape[-1]
-        self.output_dim = y.shape[-1]
-
-    def _build_train(self, mc=False, metrics=None):
+    def build(self):
         """
         build MTNet model
         :param config:
         :return:
         """
-        training = True if mc else None
+        training = True if self.mc else None
         # long-term time series historical data inputs
         long_input = Input(shape=(self.long_num, self.time_step, self.feature_num))
         # short-term time series historical data
@@ -377,7 +374,7 @@ class MTNetKeras(BaseModel):
         #                    optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule))
 
         self.model.compile(loss="mae",
-                           metrics=metrics,
+                           metrics=self.metrics,
                            optimizer=tf.keras.optimizers.Adam(lr=self.lr))
 
         return self.model
@@ -434,49 +431,70 @@ class MTNetKeras(BaseModel):
             output = outputs[0]
         return output
 
-    def _gen_hist_inputs(self, x):
+    def _reshape_input_x(self, x):
         long_term = np.reshape(x[:, : self.time_step * self.long_num],
-                               [-1, self.long_num, self.time_step, self.feature_num])
+                               [-1, self.long_num, self.time_step, x.shape[-1]])
         short_term = np.reshape(x[:, self.time_step * self.long_num:],
-                                [-1, self.time_step, self.feature_num])
+                                [-1, self.time_step, x.shape[-1]])
         return long_term, short_term
 
-    def _pre_processing(self, x, y, validation_data):
-        self._get_len(x, y)
-        long_term, short_term = self._gen_hist_inputs(x)
+    def _pre_processing(self, x, validation_data=None):
+        long_term, short_term = self._reshape_input_x(x)
         if validation_data:
             val_x, val_y = validation_data
-            long_val, short_val = self._gen_hist_inputs(val_x)
+            long_val, short_val = self._reshape_input_x(val_x)
             validation_data = ([long_val, short_val], val_y)
-        return [long_term, short_term], y, validation_data
+        return [long_term, short_term], validation_data
 
-    def _get_attributes(self, mc, metrics, epochs, config):
-        # for incremental fitting after restore
+    def _add_config_attributes(self, config, **new_attributes):
+        # new_attributes are among ["metrics", "epochs", "mc", "feature_num", "output_dim"]
         if self.config is None:
             self.config = config
-            self._get_configs(config=self.config)
-        if self.mc != mc:
-            self.mc = mc
-        if self.metrics != metrics and metrics is not None:
-            self.metrics = metrics
-        if self.epochs != epochs:
-            self.epochs = epochs
-        if self.metrics is None:
-            self.metrics = ['mean_squared_error']
+        else:
+            if config:
+                raise ValueError("You can only pass new configuations for 'mc', 'epochs' and "
+                                 "'metrics' during incremental fitting. "
+                                 "Additional configs passed are {}".format(config))
+
+        if new_attributes["metrics"] is None:
+            del new_attributes["metrics"]
+        self.config.update(new_attributes)
+
+    def _check_input(self, x, y):
+        input_feature_num = x.shape[-1]
+        input_output_dim = y.shape[-1]
+        if input_feature_num is None:
+            raise ValueError("input x is None!")
+        if input_output_dim is None:
+            raise ValueError("input y is None!")
+
+        if self.feature_num is not None and self.feature_num != input_feature_num:
+            raise ValueError("input x has different feature number (the shape of last dimension) "
+                             "{} with the fitted model, which is {}."
+                             .format(input_feature_num, self.feature_num))
+        if self.output_dim is not None and self.output_dim != input_output_dim:
+            raise ValueError("input y has different prediction size (the shape of last dimension) "
+                             "of {} with the fitted model, which is {}."
+                             .format(input_output_dim, self.output_dim))
+        return input_feature_num, input_output_dim
 
     def fit_eval(self, x, y, validation_data=None, mc=False, metrics=None,
                  epochs=10, verbose=0, **config):
-        self._get_attributes(mc=mc, metrics=metrics, epochs=epochs, config=config)
-        x, y, validation_data = self._pre_processing(x, y, validation_data)
+        feature_num, output_dim = self._check_input(x, y)
+        self._add_config_attributes(config, epochs=epochs, mc=mc, metrics=metrics,
+                                    feature_num=feature_num, output_dim=output_dim)
+        self.apply_config(config=self.config)
+        processed_x, processed_validation_data = self._pre_processing(x, validation_data)
+
         # if model is not initialized, __build the model
         if self.model is None:
             st = time.time()
-            self._build_train(mc=self.mc, metrics=self.metrics)
+            self.build()
             end = time.time()
             print("Build model took {}s".format(end - st))
 
         st = time.time()
-        hist = self.model.fit(x, y, validation_data=validation_data,
+        hist = self.model.fit(processed_x, y, validation_data=processed_validation_data,
                               batch_size=self.batch_size,
                               epochs=self.epochs,
                               verbose=verbose)
@@ -507,7 +525,7 @@ class MTNetKeras(BaseModel):
         return [Evaluator.evaluate(m, y, y_pred, multioutput=multioutput) for m in metrics]
 
     def predict(self, x, mc=False):
-        input_x = self._gen_hist_inputs(x)
+        input_x = self._reshape_input_x(x)
         return self.model.predict(input_x)
 
     def predict_with_uncertainty(self, x, n_iter=100):
@@ -565,8 +583,8 @@ class MTNetKeras(BaseModel):
         :param config: the trial config
         """
         self.config = config
-        self._get_configs(rs=True, config=config)
-        self._build_train(mc=self.mc, metrics=self.metrics)
+        self.apply_config(rs=True, config=config)
+        self.build()
         self.model.load_weights(model_path)
 
     def _get_optional_parameters(self):
@@ -580,4 +598,7 @@ class MTNetKeras(BaseModel):
         }
 
     def _get_required_parameters(self):
-        return None
+        return {
+            "feature_num",
+            "output_dim"
+        }
