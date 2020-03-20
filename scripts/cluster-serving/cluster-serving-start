@@ -114,6 +114,7 @@ if [ "${params_performance_mode}" == "ON" ] && [ "${spark_master}" == "local[*]"
       spark_executor_cores=${PARAMS[1]}
       spark_num_executors=${PARAMS[2]}
       spark_total_executor_cores=${PARAMS[3]}
+      spark_driver_memory=${PARAMS[4]}
     elif [ $LENGTH -eq 2 ]; then
       echo ${PARAMS[1]}
     fi

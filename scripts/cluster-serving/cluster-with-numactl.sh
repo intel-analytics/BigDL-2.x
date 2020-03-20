@@ -120,7 +120,8 @@ _NUMA_NODE_NUM=`echo ${_NUMA_HARDWARE_INFO[0]} | sed -e "s/^available: \([0-9]*\
 _TOTAL_MEM=`grep MemTotal /proc/meminfo | awk '{print $2}'`
 # Memory size of each NUMA node = (Total memory size - 1g) / Num of NUMA nodes
 _1G=1048576
-_NUMA_MEM=$((((_TOTAL_MEM - _1G) / _1G) / $_NUMA_NODE_NUM))
+_MEMORY_FOR_DRIVER=2  # reserve 2g memory for the driver
+_NUMA_MEM=$((((_TOTAL_MEM - _1G - (_1G * _MEMORY_FOR_DRIVER)) / _1G) / $_NUMA_NODE_NUM))
   
 _WORKER_NAME_NO=1
 
@@ -159,5 +160,6 @@ for nnode in ${_NUMA_HARDWARE_INFO[@]}; do
 done
 
 if [ "${_MODE}" == "start" ]; then
-  echo "$MASTER,$_LENGTH,$((_WORKER_NAME_NO - 1)),$((_LENGTH * $((_WORKER_NAME_NO - 1))))"
+  # master, executor cores, executor num, total executor cores, driver memory
+  echo "$MASTER,$_LENGTH,$((_WORKER_NAME_NO - 1)),$((_LENGTH * $((_WORKER_NAME_NO - 1)))),${_MEMORY_FOR_DRIVER}g"
 fi
