@@ -20,20 +20,22 @@ from zoo.automl.model.MTNet_keras import MTNetKeras as MTNetKerasModel
 from zoo.automl.model.VanillaLSTM import VanillaLSTM as LSTMKerasModel
 from zoo.tfpark import KerasModel as TFParkKerasModel
 
-import functools
+import tensorflow as tf
 
 
 class Forecaster(TFParkKerasModel, metaclass=ABCMeta):
     """
     Base class for TFPark KerasModel based Forecast models.
     """
+
     def __init__(self):
         """
         Initializer.
         Turns the tf.keras model returned from _build into a tfpark.KerasModel
         """
-        self.model_ = self._build()
-        super().__init__(self.model_)
+        self.model = self._build()
+        assert (isinstance(self.model, tf.keras.Model))
+        super().__init__(self.model)
 
     @abstractmethod
     def _build(self):
@@ -77,7 +79,6 @@ class LSTMForecaster(Forecaster):
         self.horizon = horizon
         self.check_optional_config = False
         self.uncertainty = uncertainty
-        self.feature_dim = feature_dim
 
         self.model_config = {
             "lr": lr,
@@ -86,7 +87,10 @@ class LSTMForecaster(Forecaster):
             "lstm_2_units": lstm_2_units,
             "dropout_2": dropout_2,
             "metric": metric,
+            "feature_num": feature_dim
         }
+        self.internal = None
+
         super().__init__()
 
     def _build(self):
@@ -94,21 +98,22 @@ class LSTMForecaster(Forecaster):
         Build LSTM Model in tf.keras
         """
         # build model with TF/Keras
-        internal = LSTMKerasModel(check_optional_config=self.check_optional_config,
-                                  future_seq_len=self.horizon)
-        # TODO hacking to fix a problem, later set it into model_config
-        internal.feature_num = self.feature_dim
-        return internal._build(mc=self.uncertainty,
-                               **self.model_config)
+        self.internal = LSTMKerasModel(check_optional_config=self.check_optional_config,
+                                       future_seq_len=self.horizon)
+        return self.internal._build(mc=self.uncertainty,
+                                    **self.model_config)
 
 
 class MTNetForecaster(Forecaster):
     """
     MTNet Forecast Model
     """
+
     def __init__(self,
                  horizon=1,
                  feature_dim=1,
+                 lb_long_steps=1,
+                 lb_long_stepsize=1,
                  metric="mean_squared_error",
                  uncertainty: bool = False,
                  ):
@@ -116,6 +121,8 @@ class MTNetForecaster(Forecaster):
         Build a MTNet Forecast Model.
         @param horizon: the steps to look forward
         @param feature_dim: the dimension of input feature
+        @param lb_long_steps: the number of steps for the long-term memory series
+        @param lb_long_stepsize: the stepsize for long-term memory series
         @param metric: the metric for validation and evaluation
         @param uncertainty: whether to enable calculation of uncertainty
         """
@@ -125,8 +132,13 @@ class MTNetForecaster(Forecaster):
             "feature_num": feature_dim,
             "output_dim": horizon,
             "metrics": [metric],
+            "mc": uncertainty,
+            "time_step": lb_long_stepsize,
+            "long_num": lb_long_steps,
+            "past_seq_len": (lb_long_steps + 1) * lb_long_stepsize
+
         }
-        self.internal = None
+        self._internal = None
 
         super().__init__()
 
@@ -135,15 +147,11 @@ class MTNetForecaster(Forecaster):
         build a MTNet model in tf.keras
         @return: a tf.keras MTNet model
         """
-        #TODO change this function call after MTNet fixes
+        # TODO change this function call after MTNet fixes
         self.internal = MTNetKerasModel(check_optional_config=self.check_optional_config,
-                                   future_seq_len=self.model_config.get('horizon'))
-        self.internal._get_attributes(mc=self.mc,
-                                 metrics=self.model_config.get('metrics'),
-                                 epochs=1,
-                                 config=self.model_config)
-        return self.internal._build_train(mc=self.mc,
-                                     metrics=self.model_config.get('metrics'))
+                                        future_seq_len=self.model_config.get('horizon'))
+        self.internal.apply_config(config=self.model_config)
+        return self.internal.build()
 
     def preprocess_input(self, x):
         """
@@ -152,4 +160,4 @@ class MTNetForecaster(Forecaster):
         @param x: the original samples from rolling
         @return: a tuple (long_term_x, short_term_x) which are long term and short term history respectively
         """
-        return self.internal._gen_hist_inputs(x)
+        return self.internal._reshape_input_x(x)

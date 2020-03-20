@@ -16,7 +16,6 @@
 
 from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
 from zoo.automl.regression.time_sequence_predictor import SmokeRecipe
-from zoo.automl.pipeline.time_sequence import Pipeline as AutoMLPipeline
 from zoo.automl.regression.time_sequence_predictor import Recipe
 from zoo.automl.pipeline.time_sequence import load_ts_pipeline
 
@@ -25,6 +24,7 @@ class AutoTSTrainer:
     """
     The Automated Time Series Forecast Trainer
     """
+
     def __init__(self,
                  horizon=1,
                  dt_col="datetime",
@@ -33,10 +33,11 @@ class AutoTSTrainer:
                  ):
         """
         Initialize the AutoTS Trainer.
-        @param horizon:
-        @param dt_col:
-        @param target_col:
-        @param extra_features_col:
+
+        @param horizon: steps to look forward
+        @param dt_col: the datetime column
+        @param target_col: the target column to forecast
+        @param extra_features_col: extra feature columns
         """
         self.internal = TimeSequencePredictor(dt_col=dt_col,
                                               target_col=target_col,
@@ -72,7 +73,7 @@ class AutoTSTrainer:
                                          distributed=distributed,
                                          hdfs_url=hdfs_url)
         ppl = TSPipeline()
-        ppl.internal_ = zoo_pipeline
+        ppl.internal = zoo_pipeline
         return ppl
 
 
@@ -83,10 +84,11 @@ class TSPipeline:
 
     def __init__(self):
         """
-        Initializer. Usually not used by user directly. use
-        TSPipeline.
+        Initialize an emtpy TSPipeline.
+        Usually it is not called by user directly.
+        An TSPipeline either obtained from AutoTrainer.fit or load from file
         """
-        self.internal_ = None
+        self.internal = None
         self.uncertainty = False
 
     def save(self, pipeline_file):
@@ -95,7 +97,7 @@ class TSPipeline:
         @param pipeline_file: the file path
         @return:
         """
-        return self.internal_.save(pipeline_file)
+        return self.internal.save(pipeline_file)
 
     @staticmethod
     def load(pipeline_file):
@@ -105,7 +107,7 @@ class TSPipeline:
         @return:
         """
         tsppl = TSPipeline()
-        tsppl.internal_ = load_ts_pipeline(pipeline_file)
+        tsppl.internal = load_ts_pipeline(pipeline_file)
         return tsppl
 
     def fit(self,
@@ -115,7 +117,8 @@ class TSPipeline:
             epochs=1,
             **user_config):
         """
-        fit as used in normal model fitting
+        Incremental Fitting
+
         @param input_df: the input dataframe
         @param validation_df: the validation dataframe
         @param uncertainty: whether to calculate uncertainty
@@ -124,18 +127,20 @@ class TSPipeline:
         @return:
         """
         # TODO refactor automl.Pipeline fit methods to merge the two
+        # maybe use another method to apply configs.
+        # distinguish between incremental and fit from scratch
         self.uncertainty = uncertainty
         if user_config is not None:
-            self.internal_.fit_with_fixed_configs(input_df=input_df,
-                                                  validation_df=validation_df,
-                                                  mc=uncertainty,
-                                                  epoch_num=epochs,
-                                                  **user_config)
+            self.internal.fit_with_fixed_configs(input_df=input_df,
+                                                 validation_df=validation_df,
+                                                 mc=uncertainty,
+                                                 epoch_num=epochs,
+                                                 **user_config)
         else:
-            self.internal_.fit(input_df=input_df,
-                               validation_df=validation_df,
-                               mc=uncertainty,
-                               epoch_num=epochs)
+            self.internal.fit(input_df=input_df,
+                              validation_df=validation_df,
+                              mc=uncertainty,
+                              epoch_num=epochs)
 
     def predict(self, input_df):
         """
@@ -144,9 +149,9 @@ class TSPipeline:
         @return: the forecast results
         """
         if self.uncertainty is True:
-            return self.internal_.predict_with_uncertainty(input_df)
+            return self.internal.predict_with_uncertainty(input_df)
         else:
-            return self.internal_.predict(input_df)
+            return self.internal.predict(input_df)
 
     def evaluate(self,
                  input_df,
@@ -159,4 +164,4 @@ class TSPipeline:
         @param multioutput: output mode of multiple output, whether to aggregate
         @return: the evaluation results
         """
-        return self.internal_.evaluate(input_df, metrics, multioutput)
+        return self.internal.evaluate(input_df, metrics, multioutput)
