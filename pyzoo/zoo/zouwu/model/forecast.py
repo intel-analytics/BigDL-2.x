@@ -15,200 +15,141 @@
 #
 
 from abc import ABCMeta, abstractmethod
-from zoo.automl.model.Seq2Seq import LSTMSeq2Seq as BaseSeq2Seq
-from zoo.automl.model.VanillaLSTM import VanillaLSTM as BaseLSTM
-from zoo.tfpark import KerasModel
+
+from zoo.automl.model.MTNet_keras import MTNetKeras as MTNetKerasModel
+from zoo.automl.model.VanillaLSTM import VanillaLSTM as LSTMKerasModel
+from zoo.tfpark import KerasModel as TFParkKerasModel
 
 import functools
 
 
-class Forecaster:
+class Forecaster(TFParkKerasModel, metaclass=ABCMeta):
     """
-    Factory method for user to build or load models
+    Base class for TFPark KerasModel based Forecast models.
     """
-    @abstractmethod
     def __init__(self):
         """
-        Forecaster now serves as a factory class
+        Initializer.
+        Turns the tf.keras model returned from _build into a tfpark.KerasModel
         """
-        pass
-
-    @staticmethod
-    def load(model_file):
-        """
-        load a model from file, including format check
-        """
-        pass
-
-    @staticmethod
-    def build(model_type='lstm', horizon=1):
-        """
-        build a model from scratch
-        """
-        if model_type.lower() == 'lstm':
-            return LSTMModel() \
-                .set('horizon', horizon) \
-                .build()
-        elif model_type.lower() == 'seq2seq':
-            return Seq2SeqModel() \
-                .set('horizon', horizon) \
-                .build()
-        else:
-            raise ValueError("model_type should be either \"lstm\" or \"seq2seq\"")
-
-
-class BaseModel(metaclass=ABCMeta):
-    """
-    Base model for forecast models
-    """
-    def __init__(self, config=None):
-        if config is not None:
-            self.config = None
-        else:
-            self.config = {}
-
-    def set(self, config, value):
-        self.config[config] = value
+        self.model_ = self._build()
+        super().__init__(self.model_)
 
     @abstractmethod
-    def build(self):
-        pass
-
-    @abstractmethod
-    def train(self, train_x, train_y, validation_data, epochs, batch_size, distributed):
-        pass
-
-    @abstractmethod
-    def predict(self, x, distributed, batch_per_thread):
-        pass
-
-    @abstractmethod
-    def evaluate(self, x, y, metric, distributed, batch_per_thread):
-        pass
-
-
-class LSTMModel(BaseModel):
-    """
-    LSTM model
-    """
-    def __init__(self, horizon):
-        super(LSTMModel, self).__init__()
-        self.internal = None
-        self.model = None
-
-    def build(self):
+    def _build(self):
         """
-        Build model from scratch
+        Build a tf.keras model.
+        @param return: return a tf.keras model (compiled)
+        """
+        pass
+
+
+class LSTMForecaster(Forecaster):
+    """
+    Vanilla LSTM Forecaster
+    """
+
+    def __init__(self,
+                 horizon=1,
+                 feature_dim=1,
+                 lstm_1_units=16,
+                 dropout_1=0.2,
+                 lstm_2_units=8,
+                 dropout_2=0.2,
+                 metric="mean_squared_error",
+                 lr=0.001,
+                 uncertainty: bool = False
+                 ):
+        """
+        Build a LSTM Forecast Model.
+
+        @param horizon: steps to look forward
+        @param feature_dim: dimension of input feature
+        @param lstm_1_units: num of units for the 1st LSTM layer
+        @param dropout_1: p for the 1st dropout layer
+        @param lstm_2_units: num of units for the 2nd LSTM layer
+        @param dropout_2: p for the 2nd dropout layer
+        @param metric: the metric for validation and evaluation
+        @param lr: learning rate
+        @param uncertainty: whether to return uncertainty
+        """
+        #
+        self.horizon = horizon
+        self.check_optional_config = False
+        self.uncertainty = uncertainty
+        self.feature_dim = feature_dim
+
+        self.model_config = {
+            "lr": lr,
+            "lstm_1_units": lstm_1_units,
+            "dropout_1": dropout_1,
+            "lstm_2_units": lstm_2_units,
+            "dropout_2": dropout_2,
+            "metric": metric,
+        }
+        super().__init__()
+
+    def _build(self):
+        """
+        Build LSTM Model in tf.keras
         """
         # build model with TF/Keras
-        self.internal = BaseLSTM(check_optional_config=False, future_seq_len=self.config.get('horizon', 1))
-        internal_model = self.internal._build(mc=False, **self.config)
-        self.model = KerasModel(internal_model)
-        return self
-
-    def check_model(self, func):
-        """
-        decorator function for model validation check
-        """
-
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            # check model
-            if self.model is None:
-                raise Exception("model is not built properly, call build() before calling" + str(func.__name__))
-            res = func(*args, **kwargs)
-            return res
-
-        return wrapper
-
-    @check_model
-    def fit(self, train_x, train_y, validation_data=None, epochs=5, batch_size=64, distributed=False):
-        self.model.fit(train_x,
-                       train_y,
-                       validation_data=validation_data,
-                       epochs=epochs,
-                       batch_size=batch_size,
-                       distributed=True)
-        return self.model
-
-    @check_model
-    def evaluate(self, x, y, metric=['mse'], distributed=False, batch_per_thread=80):
-        return self.model.evaluate(x, y,
-                                   distributed=distributed,
-                                   batch_per_thread=batch_per_thread)
-
-    @check_model
-    def predict(self, x, distributed=False, batch_per_thread=80):
-        return self.model.predict(x,
-                                  distributed=distributed,
-                                  batch_per_thread=batch_per_thread)
+        internal = LSTMKerasModel(check_optional_config=self.check_optional_config,
+                                  future_seq_len=self.horizon)
+        # TODO hacking to fix a problem, later set it into model_config
+        internal.feature_num = self.feature_dim
+        return internal._build(mc=self.uncertainty,
+                               **self.model_config)
 
 
-class Seq2SeqModel(BaseModel):
+class MTNetForecaster(Forecaster):
     """
-    Sequence To Sequence Model
+    MTNet Forecast Model
     """
-    def __init__(self, config=None):
-        super(Seq2SeqModel,self).__init__(config)
+    def __init__(self,
+                 horizon=1,
+                 feature_dim=1,
+                 metric="mean_squared_error",
+                 uncertainty: bool = False,
+                 ):
+        """
+        Build a MTNet Forecast Model.
+        @param horizon: the steps to look forward
+        @param feature_dim: the dimension of input feature
+        @param metric: the metric for validation and evaluation
+        @param uncertainty: whether to enable calculation of uncertainty
+        """
+        self.check_optional_config = False
+        self.mc = uncertainty
+        self.model_config = {
+            "feature_num": feature_dim,
+            "output_dim": horizon,
+            "metrics": [metric],
+        }
         self.internal = None
-        self.model = None
 
-    def build(self):
-        # build model with TF/Keras
-        self.internal = BaseSeq2Seq(check_optional_config=False, future_seq_len=self.config.get('horizon', 1))
-        internal_model = self.internal._build_train(mc=False, **self.config)
-        # wrap keras model using TFPark, train and inference uses different part of model
-        self.model = KerasModel(internal_model)
-        return self
+        super().__init__()
 
-    def check_model(self, func):
+    def _build(self):
         """
-        decorator function for model validation check
+        build a MTNet model in tf.keras
+        @return: a tf.keras MTNet model
         """
+        #TODO change this function call after MTNet fixes
+        self.internal = MTNetKerasModel(check_optional_config=self.check_optional_config,
+                                   future_seq_len=self.model_config.get('horizon'))
+        self.internal._get_attributes(mc=self.mc,
+                                 metrics=self.model_config.get('metrics'),
+                                 epochs=1,
+                                 config=self.model_config)
+        return self.internal._build_train(mc=self.mc,
+                                     metrics=self.model_config.get('metrics'))
 
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            # check model
-            if self.model is None:
-                raise Exception("model is not built properly, call build() before calling" + str(func.__name__))
-            res = func(*args, **kwargs)
-            return res
-
-        return wrapper
-
-    @check_model
-    def fit(self, train_x, train_y, validation_data=None, epochs=5, batch_size=64):
-        self.model.fit(train_x,
-                       train_y,
-                       validation_data=validation_data,
-                       epochs=epochs,
-                       batch_size=batch_size,
-                       distributed=True)
-        return self.model
-
-    @check_model
-    def evaluate(self, x, y, metric, distributed, batch_per_thread):
-        # predict first then evaluate
-        pass
-
-    @check_model
-    def predict(self, x, distributed, batch_per_thread):
-        # TODO need to decouple 1) and 2) steps in LSTMSeq2Seq._decode_sequence in order to add 1.1) below.
-        #             1) build encoder and decoder model separately (in _decode_sequence)
-        #             1.1) wrap encoder/decoder model using TFPark (need to add here)
-        #             2) decode sequence using encoder and decoder model (in _decode_sequence)
-        # get encoder, decoder from TFPark Keras model and build inference
-        encoder, decoder = self.internal._build_inference(mc=False)
-        keras_encoder = KerasModel(encoder)
-        keras_decoder = KerasModel(decoder)
-        ## decode sequence here
-        # internal_model._decode_sequence(encoder, decoder, ...)
-        pass
-
-
-if __name__ == '__main__':
-    # ... preprocessing data ...
-    model = Forecaster.build(model_type='lstm',horizon=1)
-    model.train()
-    model.predict()
-    model.evaluate()
+    def preprocess_input(self, x):
+        """
+        The original rolled features needs an extra step to process.
+        This should be called before train_x, validation_x, and test_x
+        @param x: the original samples from rolling
+        @return: a tuple (long_term_x, short_term_x) which are long term and short term history respectively
+        """
+        return self.internal._gen_hist_inputs(x)
