@@ -64,9 +64,50 @@ mtnet_forecaster = MTNetForecaster(horizon=1,
        * ```(num of samples, horizon)``` if num_targets = 1 (fallback to univariant forecasting)
 
 ### Use AutoML for training time series pipeline
- ```
+
+* AutoTSTrainer accepts data frames as input. An exmaple data frame looks like below. 
+
+  |datetime|value|extra_feature_1|extra_feature_2|
+  | --------|----- |---| ---|
+  |2019-06-06|1.2|1|2|
+  |2019-06-07|2.3|0|2|
+  
+
+* Create an AutoTSTrainer. Specify below arguments in constructor. 
+    * ```dt_col```: the column specifying datetime 
+    * ```target_col```: target column to predict
+    * ```horizon``` : num of steps to look forward 
+    * ```extra_feature_col```: a list of columns which are also included in input as features except target column
+ ```python
+ from zoo.zouwu.autots.forecast import AutoTSTrainer
+
+ trainer = AutoTSTrainer(dt_col="datetime",
+                         target_col="value"
+                         horizon=1,
+                         extra_features_col=None)
+
  ```
  
+* Use ```AutoTSTrainer.fit``` on train data and validation data. A TSPipeline will be returned. 
+ ```python
+ ts_pipeline = trainer.fit(train_df, validation_df)
+ ```
+ * Use ```TSPipeline.fit/evaluate/predict``` to train pipeline (incremental fitting), evaluate or predict. 
+ ```python
+ #incremental fitting
+ ts_pipeline.fit(new_train_df, new_val_df, epochs=10)
+ #evaluate
+ ts_pipeline.evalute(val_df)
+ ts_pipeline.predict(test_df)
+ 
+ ```
+ * Use ```TSPipeline.save/load``` to load from file or save to file. 
+ ```python
+ from zoo.zouwu.autots.forecast import TSPipeline
+ loaded_ppl = TSPipeline.load(file)
+ # ... do sth. e.g. incremental fitting
+ loaded_ppl.save(another_file)
+ ```
 
 ## Example and References
 * Example notebook can be found in ```analytics-zoo/apps/zouwu/network_traffic```
