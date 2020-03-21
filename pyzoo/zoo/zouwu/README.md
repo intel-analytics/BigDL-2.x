@@ -65,14 +65,14 @@ mtnet_forecaster = MTNetForecaster(horizon=1,
 
 ### Use automated training to train a forecast pipeline and forecast
 
-The automated training in zouwu is built upon [Analytics Zoo AutoML module](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/automl), which uses [Ray Tune](https://github.com/ray-project/ray/tree/master/python/ray/tune) for hyper parameter tuning running on [Analytics Zoo RayOnSpark]().  
+The automated training in zouwu is built upon [Analytics Zoo AutoML module](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/automl), which uses [Ray Tune](https://github.com/ray-project/ray/tree/master/python/ray/tune) for hyper parameter tuning and runs on [Analytics Zoo RayOnSpark](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/).  
 
-The general workflow using automated training contains below 2 steps. 
-   1. create a ```AutoTSTrainer``` to train a ``TSPipeline```, save it to fine to use elsewhere if you wish.
+The general workflow using automated training contains below two steps. 
+   1. create a ```AutoTSTrainer``` to train a ``TSPipeline```, save it to file to use later or elsewhere if you wish.
    2. use ```TSPipeline``` to do prediction, evaluation, and incremental fitting as well. 
 
-Before using auto training (i.e. AutoTSTrainer), you need to initialize RayOnSpark as below.
-   * Run it in local mode
+You need to initialize RayOnSpark before using auto training (i.e. ```AutoTSTrainer```), and stop it after training finished. Using TSPipeline only does not need RayOnSpark. 
+   * init RayOnSpark in local mode
 ```python
 from zoo import init_spark_on_local
 from zoo.ray.util.raycontext import RayContext
@@ -80,7 +80,7 @@ sc = init_spark_on_local(cores=4)
 ray_ctx = RayContext(sc=sc)
 ray_ctx.init()
 ```
-   * Run it in distributed mode
+   * init RayOnSpark on yarn
    ```python
    from zoo import init_spark_on_yarn
 from zoo.ray.util.raycontext import RayContext
@@ -97,7 +97,7 @@ sc = init_spark_on_yarn(
 ray_ctx = RayContext(sc=sc, object_store_memory="5g")
 ray_ctx.init()
    ```
-   * After trainig, stop RayOnSpark. 
+   * After training, stop RayOnSpark. 
    ```python
    ray_ctx.stop()
    ```
