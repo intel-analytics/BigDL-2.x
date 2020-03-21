@@ -1,20 +1,21 @@
-# Project Zouwu - Time Series Solution for Telco on Analytics Zoo
+# Project Zouwu 
+Time Series Solution for Telco on Analytics Zoo
 
 
 ## Requirements
 * Python 3.6 or 3.7
-* PySpark verison 2.4.3
-* Ray version 0.7.0
-* Keras verison 1.2.2
-* Tensorflow version 1.15.0
+* PySpark 2.4.3
+* Ray 0.7.0
+* Keras 1.2.2
+* Tensorflow 1.15.0
 
 ## Install 
   * Download the Analytics Zoo source code (master). 
-  * Build a local ```.whl``` wih for Spark2.4.3 using command below. For detailed explaination of the options for ```bulid.sh``` script, refer to [AnalytisZoo Python Developer's guide](https://analytics-zoo.github.io/master/#DeveloperGuide/python/#build-whl-package-for-pip-install)
+  * Build a local ```.whl``` for Spark2.4.3 using command below. For detailed explaination of the options for ```bulid.sh``` script, refer to [AnalytisZoo Python Developer's guide](https://analytics-zoo.github.io/master/#DeveloperGuide/python/#build-whl-package-for-pip-install)
 ```bash
 bash analytics-zoo/pyzoo/dev/build.sh linux default -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.4+
 ```
-  * The succesfully built ```.whl``` file will locate in directory ```analytics-zoo/pyzoo/dist/```. Install the local .whl using below command. 
+  * The succesfully built ```.whl``` can be found in directory ```analytics-zoo/pyzoo/dist/```. Install the ```.whl``` locally using below command (VERSION and PLATFORM may vary according to platform and building options). 
 ```
 pip install analytics-zoo/pyzoo/dist/analytics_zoo-VERSION-py2.py3-none-PLATFORM_x86_64.whl
 ```
@@ -23,7 +24,7 @@ pip install analytics-zoo/pyzoo/dist/analytics_zoo-VERSION-py2.py3-none-PLATFORM
 
 Time series forecasting has many applications in telco. Accurate forecast of telco KPIs (e.g. traffic, utilizations, user experience, etc.) for communication networks ( 2G/3G/4G/5G/wired) can help predict network failures, allocate resource, or save energy. Time series forecasting can also be used for log and metric analysis for data center IT operations for telco. Metrics to be analyzed can be hardware or VM utilizations, database metrics or servce quality indicators. 
 
-We provide a [notebook](analytics-zoo/pyzoo/zoo/zouwu/use-case/network_traffic) to demonstrate a time series forecasting use case using a public telco dataset, i.e. the aggregated network traffic traces at the transit link of WIDE to the upstream ISP ([dataset link](http://mawi.wide.ad.jp/~agurim/dataset/)). In this reference case, we used aggregated traffic metrics (e.g. total bytes, average MBps) in the past to forecast the traffic in the furture. We demostrate how to do univariant forecasting (predict only 1 series), and multivariant forecasting (predicts more than 1 series at the same time) using zouwu.
+We provide a [notebook](https://github.com/shane-huang/analytics-zoo/blob/zouwu-readme-nb/pyzoo/zoo/zouwu/use-case/network_traffic/time_series_forecasting_network_traffic.ipynb) to demonstrate a time series forecasting use case using a public telco dataset, i.e. the aggregated network traffic traces at the transit link of WIDE to the upstream ISP ([dataset link](http://mawi.wide.ad.jp/~agurim/dataset/)). In this reference case, we used aggregated traffic metrics (e.g. total bytes, average MBps) in the past to forecast the traffic in the furture. We demostrate how to do univariant forecasting (predict only 1 series), and multivariant forecasting (predicts more than 1 series at the same time) using zouwu.
 
 ## Usage
 
@@ -73,7 +74,7 @@ mtnet_forecaster = MTNetForecaster(horizon=1,
 The automated training in zouwu is built upon [Analytics Zoo AutoML module](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/automl), which uses [Ray Tune](https://github.com/ray-project/ray/tree/master/python/ray/tune) for hyper parameter tuning and runs on [Analytics Zoo RayOnSpark](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/).  
 
 The general workflow using automated training contains below two steps. 
-   1. create a ```AutoTSTrainer``` to train a ``TSPipeline```, save it to file to use later or elsewhere if you wish.
+   1. create a ```AutoTSTrainer``` to train a ```TSPipeline```, save it to file to use later or elsewhere if you wish.
    2. use ```TSPipeline``` to do prediction, evaluation, and incremental fitting as well. 
 
 You need to initialize RayOnSpark before using auto training (i.e. ```AutoTSTrainer```), and stop it after training finished. Using TSPipeline only does not need RayOnSpark. 
