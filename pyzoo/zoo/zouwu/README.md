@@ -19,6 +19,11 @@ bash analytics-zoo/pyzoo/dev/build.sh linux default -Dspark.version=2.4.3 -Dbigd
 pip install analytics-zoo/pyzoo/dist/analytics_zoo-VERSION-py2.py3-none-PLATFORM_x86_64.whl
 ```
 
+## Reference Use Case
+
+Time series forecasting has many applications in telco. Accurate forecast of telco KPIs (e.g. traffic, utilizations, user experience, etc.) for communication networks ( 2G/3G/4G/5G/wired) can help predict network failures, allocate resource, or save energy. Time series forecasting can also be used for log and metric analysis for data center IT operations for telco. Metrics to be analyzed can be hardware or VM utilizations, database metrics or servce quality indicators. 
+
+We provide a [notebook](analytics-zoo/pyzoo/zoo/zouwu/use-case/network_traffic) to demonstrate a time series forecasting use case using a public telco dataset, i.e. the aggregated network traffic traces at the transit link of WIDE to the upstream ISP ([dataset link](http://mawi.wide.ad.jp/~agurim/dataset/)). In this reference case, we used aggregated traffic metrics (e.g. total bytes, average MBps) in the past to forecast the traffic in the furture. We demostrate how to do univariant forecasting (predict only 1 series), and multivariant forecasting (predicts more than 1 series at the same time) using zouwu.
 
 ## Usage
 
@@ -147,6 +152,5 @@ AutoTSTrainer and TSPipeline accepts data frames as input. An exmaple data frame
  loaded_ppl.save(another_file)
  ```
 
-## Example and References
-* Example notebook can be found in ```analytics-zoo/apps/zouwu/network_traffic```
+## References
 * MTNet paper [link](https://arxiv.org/abs/1809.02105)
