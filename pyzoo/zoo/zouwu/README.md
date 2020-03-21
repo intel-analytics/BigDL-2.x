@@ -24,7 +24,7 @@ pip install analytics-zoo/pyzoo/dist/analytics_zoo-VERSION-py2.py3-none-PLATFORM
 
 ### Forecast using Forecast Models (without AutoML)
 
-The forecast models all derive from [tfpark.KerasModels](https://analytics-zoo.github.io/master/#APIGuide/TFPark/model/). 
+The forecast models are all derived from [tfpark.KerasModels](https://analytics-zoo.github.io/master/#APIGuide/TFPark/model/). 
 
 1. To start, you need to create a forecast model. Specify ```horizon``` and ```feature_dim``` in constructor. 
     * horizon: steps to look forward
@@ -48,19 +48,19 @@ mtnet_forecaster = MTNetForecaster(horizon=1,
                         lb_long_stepsize=3
 ```
  
-2. Use ```forecaster.fit/evalute/predict``` the same as [tfpark.KerasModel](https://analytics-zoo.github.io/master/#APIGuide/TFPark/model/)
+2. Use ```forecaster.fit/evalute/predict``` in the same way as [tfpark.KerasModel](https://analytics-zoo.github.io/master/#APIGuide/TFPark/model/)
 
-3. The input data shape for ```fit/evaluation/predict``` are as below:
+3. For univariant forecasting, the input data shape for ```fit/evaluation/predict``` should match the arguments you used to create the forecaster. Specifically:
    * X shape should be ```(num of samples, lookback, feature_dim)```, for train, validation and test data
    * Y shape should be ```(num of samples, horizon)```, for train and validation data
 
-4. For multivariant forecasting (i.e. using ```MTNetForecaster```) where number of targets to predict >= 1
+4. For multivariant forecasting (i.e. using ```MTNetForecaster```) where number of targets to predict >= 1. The input data shape should match 
    * X shape should be ```(num of samples, lookback, feature_dim)```, for train, validation and test data
-       * Note that for MTNetForecaster, ```lookback``` should equal ```(lb_long_steps+1) * lb_long_stepsize```
+       * Note that for MTNetForecaster, ```lookback``` = ```(lb_long_steps+1) * lb_long_stepsize```
    * Y shape should be 
        * ```(num of samples, num_of_targets)``` if horizon = 1
        * ```(num of samples, num_of_targets, horizon)``` if horizon > 1 && num_targets > 1
-       * ```(num of samples, horizon) if num_targets = 1 (fallback to univariant forecasting)
+       * ```(num of samples, horizon)``` if num_targets = 1 (fallback to univariant forecasting)
 
 ### Use AutoML for training time series pipeline
  ```
