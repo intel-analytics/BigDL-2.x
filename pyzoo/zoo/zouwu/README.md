@@ -65,7 +65,7 @@ mtnet_forecaster = MTNetForecaster(horizon=1,
 
 ### Use AutoML for training time series pipeline
 
-* AutoTSTrainer accepts data frames as input. An exmaple data frame looks like below. 
+To use AutoML to train a forecast pipeline, you first create a AutoTSTrainer to train a TSPipeline, then you use TSPipeline to do prediction and evaluation, also incremental fitting. AutoTSTrainer and TSPipeline accepts data frames as input. An exmaple data frame looks like below. 
 
   |datetime|value|extra_feature_1|extra_feature_2|
   | --------|----- |---| ---|
@@ -73,7 +73,7 @@ mtnet_forecaster = MTNetForecaster(horizon=1,
   |2019-06-07|2.3|0|2|
   
 
-* Create an AutoTSTrainer. Specify below arguments in constructor. 
+1. Create an AutoTSTrainer. Specify below arguments in constructor. 
     * ```dt_col```: the column specifying datetime 
     * ```target_col```: target column to predict
     * ```horizon``` : num of steps to look forward 
@@ -88,11 +88,12 @@ mtnet_forecaster = MTNetForecaster(horizon=1,
 
  ```
  
-* Use ```AutoTSTrainer.fit``` on train data and validation data. A TSPipeline will be returned. 
+2. Use ```AutoTSTrainer.fit``` on train data and validation data. A TSPipeline will be returned. 
  ```python
  ts_pipeline = trainer.fit(train_df, validation_df)
  ```
- * Use ```TSPipeline.fit/evaluate/predict``` to train pipeline (incremental fitting), evaluate or predict. 
+
+3. Use ```TSPipeline.fit/evaluate/predict``` to train pipeline (incremental fitting), evaluate or predict. 
  ```python
  #incremental fitting
  ts_pipeline.fit(new_train_df, new_val_df, epochs=10)
@@ -101,7 +102,7 @@ mtnet_forecaster = MTNetForecaster(horizon=1,
  ts_pipeline.predict(test_df)
  
  ```
- * Use ```TSPipeline.save/load``` to load from file or save to file. 
+4. Use ```TSPipeline.save/load``` to load from file or save to file. 
  ```python
  from zoo.zouwu.autots.forecast import TSPipeline
  loaded_ppl = TSPipeline.load(file)
