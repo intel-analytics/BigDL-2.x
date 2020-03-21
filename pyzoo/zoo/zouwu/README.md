@@ -1,4 +1,4 @@
-# Project Zouwu - Telco Solution on Analytis Zoo
+# Project Zouwu - Time Series Solution for Telco on Analytics Zoo
 
 
 ## Requirements
@@ -22,11 +22,11 @@ pip install analytics-zoo/pyzoo/dist/analytics_zoo-VERSION-py2.py3-none-PLATFORM
 
 ## Usage
 
-### Forecast using Forecast Models (without AutoML)
+### Train forecast models and forecast (without AutoML)
 
 The forecast models are all derived from [tfpark.KerasModels](https://analytics-zoo.github.io/master/#APIGuide/TFPark/model/). 
 
-1. To start, you need to create a forecast model. Specify ```horizon``` and ```feature_dim``` in constructor. 
+1. To start, you need to create a forecast model first. Specify ```horizon``` and ```feature_dim``` in constructor. 
     * horizon: steps to look forward
     * feature_dim: dimension of input feature
 
@@ -63,17 +63,54 @@ mtnet_forecaster = MTNetForecaster(horizon=1,
        * ```(num of samples, num_of_targets, horizon)``` if horizon > 1 && num_targets > 1
        * ```(num of samples, horizon)``` if num_targets = 1 (fallback to univariant forecasting)
 
-### Use AutoML for training time series pipeline
+### Use automated training to train a forecast pipeline and forecast
 
-To use AutoML to train a forecast pipeline, you first create a AutoTSTrainer to train a TSPipeline, then you use TSPipeline to do prediction and evaluation, also incremental fitting. AutoTSTrainer and TSPipeline accepts data frames as input. An exmaple data frame looks like below. 
+The automated training in zouwu is built upon [Analytics Zoo AutoML module](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/automl), which uses [Ray Tune](https://github.com/ray-project/ray/tree/master/python/ray/tune) for hyper parameter tuning running on [Analytics Zoo RayOnSpark]().  
+
+The general workflow using automated training contains below 2 steps. 
+   1. create a ```AutoTSTrainer``` to train a ``TSPipeline```, save it to fine to use elsewhere if you wish.
+   2. use ```TSPipeline``` to do prediction, evaluation, and incremental fitting as well. 
+
+Before using auto training (i.e. AutoTSTrainer), you need to initialize RayOnSpark as below.
+   * Run it in local mode
+```python
+from zoo import init_spark_on_local
+from zoo.ray.util.raycontext import RayContext
+sc = init_spark_on_local(cores=4)
+ray_ctx = RayContext(sc=sc)
+ray_ctx.init()
+```
+   * Run it in distributed mode
+   ```python
+   from zoo import init_spark_on_yarn
+from zoo.ray.util.raycontext import RayContext
+slave_num = 2
+sc = init_spark_on_yarn(
+        hadoop_conf=args.hadoop_conf,
+        conda_name="ray36",
+        num_executor=slave_num,
+        executor_cores=4,
+        executor_memory="8g ",
+        driver_memory="2g",
+        driver_cores=4,
+        extra_executor_memory_for_ray="10g")
+ray_ctx = RayContext(sc=sc, object_store_memory="5g")
+ray_ctx.init()
+   ```
+   * After trainig, stop RayOnSpark. 
+   ```python
+   ray_ctx.stop()
+   ```
+
+AutoTSTrainer and TSPipeline accepts data frames as input. An exmaple data frame looks like below. 
 
   |datetime|value|extra_feature_1|extra_feature_2|
   | --------|----- |---| ---|
   |2019-06-06|1.2|1|2|
   |2019-06-07|2.3|0|2|
-  
+ 
 
-1. Create an AutoTSTrainer. Specify below arguments in constructor. 
+1. To create an AutoTSTrainer. Specify below arguments in constructor. See below example.
     * ```dt_col```: the column specifying datetime 
     * ```target_col```: target column to predict
     * ```horizon``` : num of steps to look forward 
