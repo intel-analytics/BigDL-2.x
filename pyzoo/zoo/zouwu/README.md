@@ -53,11 +53,12 @@ mtnet_forecaster = MTNetForecaster(horizon=1,
 3. For univariant forecasting, the input data shape for ```fit/evaluation/predict``` should match the arguments you used to create the forecaster. Specifically:
    * X shape should be ```(num of samples, lookback, feature_dim)```, for train, validation and test data
    * Y shape should be ```(num of samples, horizon)```, for train and validation data
+   *  ```feature_dim``` and ```horizon``` as specified in constructor, ```lookback``` is the number of time steps you want to look back in history.
 
-4. For multivariant forecasting (i.e. using ```MTNetForecaster```) where number of targets to predict >= 1. The input data shape should match 
+4. For multivariant forecasting (using ```MTNetForecaster```) where number of targets to predict (i.e. num_targets) >= 1, the input data shape should meet below criteria. 
    * X shape should be ```(num of samples, lookback, feature_dim)```, for train, validation and test data
-       * Note that for MTNetForecaster, ```lookback``` = ```(lb_long_steps+1) * lb_long_stepsize```
-   * Y shape should be 
+       * Note that for MTNetForecaster, ```lookback``` = ```(lb_long_steps+1) * lb_long_stepsize```, lb_long_steps and lb_long_stepsize as specified in MTNetForecaster constructor. 
+   * Y shape should be either one of below
        * ```(num of samples, num_of_targets)``` if horizon = 1
        * ```(num of samples, num_of_targets, horizon)``` if horizon > 1 && num_targets > 1
        * ```(num of samples, horizon)``` if num_targets = 1 (fallback to univariant forecasting)
