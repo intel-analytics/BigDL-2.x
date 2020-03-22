@@ -1,15 +1,19 @@
-# Project Zouwu 
-Time Series Solution for Telco on Analytics Zoo
+## Project Zouwu: Time Series Solution for Telco on Analytics Zoo
 
+Project Zouwu provides a reference solution that is designed and optimized for common time series applications in the Telco industry, including:
+* _Use case_ - reference time series use cases in the Telco industry (such as network traffic forcasting, etc.)
+* _Model_ - built-in deep learning models for time series analysis (such as LSTM and [MTNet](https://arxiv.org/abs/1809.02105))
+* _AutoTS_ - AutoML support for building end-to-end time series analysis pipelines (including automatic feature generation, model selection and hyperparameter tuning).
 
-## Requirements
+---
+### Requirements
 * Python 3.6 or 3.7
 * PySpark 2.4.3
 * Ray 0.7.0
 * Keras 1.2.2
 * Tensorflow 1.15.0
 
-## Install 
+### Install 
   * Download the Analytics Zoo source code (master). 
   * Build a local ```.whl``` for Spark2.4.3 using command below. For detailed explaination of the options for ```bulid.sh``` script, refer to [AnalytisZoo Python Developer's guide](https://analytics-zoo.github.io/master/#DeveloperGuide/python/#build-whl-package-for-pip-install)
 ```bash
@@ -20,17 +24,17 @@ bash analytics-zoo/pyzoo/dev/build.sh linux default -Dspark.version=2.4.3 -Dbigd
 pip install analytics-zoo/pyzoo/dist/analytics_zoo-VERSION-py2.py3-none-PLATFORM_x86_64.whl
 ```
 
-## Reference Use Case
+### Reference Use Case
 
 Time series forecasting has many applications in telco. Accurate forecast of telco KPIs (e.g. traffic, utilizations, user experience, etc.) for communication networks ( 2G/3G/4G/5G/wired) can help predict network failures, allocate resource, or save energy. Time series forecasting can also be used for log and metric analysis for data center IT operations for telco. Metrics to be analyzed can be hardware or VM utilizations, database metrics or servce quality indicators. 
 
-We provide a [notebook](https://github.com/shane-huang/analytics-zoo/blob/zouwu-readme-nb/pyzoo/zoo/zouwu/use-case/network_traffic/time_series_forecasting_network_traffic.ipynb) to demonstrate a time series forecasting use case using a public telco dataset, i.e. the aggregated network traffic traces at the transit link of WIDE to the upstream ISP ([dataset link](http://mawi.wide.ad.jp/~agurim/dataset/)). In this reference case, we used aggregated traffic metrics (e.g. total bytes, average MBps) in the past to forecast the traffic in the furture. We demostrate how to do univariant forecasting (predict only 1 series), and multivariant forecasting (predicts more than 1 series at the same time) using zouwu.
+We provide a [notebook](https://github.com/shane-huang/analytics-zoo/blob/zouwu-readme-nb/pyzoo/zoo/zouwu/use-case/network_traffic/time_series_forecasting_network_traffic.ipynb) to demonstrate a time series forecasting use case using a public telco dataset, i.e. the aggregated network traffic traces at the transit link of WIDE to the upstream ISP ([dataset link](http://mawi.wide.ad.jp/~agurim/dataset/)). In this reference case, we used aggregated traffic metrics (e.g. total bytes, average MBps) in the past to forecast the traffic in the furture. We demostrate how to do univariant forecasting (predict only 1 series), and multivariant forecasting (predicts more than 1 series at the same time) using Project Zouwu.
 
-## Usage
+### Usage
 
-### Train forecast models and forecast (without AutoML)
+#### Using built-in forecast models
 
-The forecast models are all derived from [tfpark.KerasModels](https://analytics-zoo.github.io/master/#APIGuide/TFPark/model/). 
+The built-in forecast models are all derived from [tfpark.KerasModels](https://analytics-zoo.github.io/master/#APIGuide/TFPark/model/). 
 
 1. To start, you need to create a forecast model first. Specify ```horizon``` and ```feature_dim``` in constructor. 
     * horizon: steps to look forward
@@ -69,7 +73,7 @@ mtnet_forecaster = MTNetForecaster(horizon=1,
        * ```(num of samples, num_of_targets, horizon)``` if horizon > 1 && num_targets > 1
        * ```(num of samples, horizon)``` if num_targets = 1 (fallback to univariant forecasting)
 
-### Use automated training to train a forecast pipeline and forecast
+#### Using AutoTS
 
 The automated training in zouwu is built upon [Analytics Zoo AutoML module](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/automl), which uses [Ray Tune](https://github.com/ray-project/ray/tree/master/python/ray/tune) for hyper parameter tuning and runs on [Analytics Zoo RayOnSpark](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/).  
 
@@ -152,6 +156,3 @@ AutoTSTrainer and TSPipeline accepts data frames as input. An exmaple data frame
  # ... do sth. e.g. incremental fitting
  loaded_ppl.save(another_file)
  ```
-
-## References
-* MTNet paper [link](https://arxiv.org/abs/1809.02105)
