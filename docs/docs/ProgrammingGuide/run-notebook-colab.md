@@ -33,6 +33,7 @@ Call `init_nncontext()` that will create a SparkContext with optimized performan
 
 ```python
 from zoo.common.nncontext import*
+
 sc = init_nncontext()
 ```
 
@@ -44,14 +45,15 @@ Adding /usr/local/lib/python3.6/dist-packages/zoo/share/lib/analytics-zoo-bigdl_
 Prepending /usr/local/lib/python3.6/dist-packages/zoo/share/conf/spark-analytics-zoo.conf to sys.path
 ```
 
-## Run Github Notebook on colaboratory
+## **Run Github Notebook on colaboratory**
 
 If you would like to open Analytics Zoo Notebook in a GitHub repo directly, the only thing you need to do is:
 
 - Open the Notebook file on GitHub in a browser (So the URL ends in *.ipynb*).
 
-- Change the URL from [https://github.com/full_path_to_the_notebook] to [https://colab.research.google.com/github/full_path_to_the_notebook]
+- Change the URL from https://github.com/full_path_to_the_notebook to https://colab.research.google.com/github/full_path_to_the_notebook
 
-  For example, change the URL of Analytics Zoo tutorial [https://github.com/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb] to [https://colab.research.google.com/github/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb] 
+  For example, change the URL of Analytics Zoo tutorial [https://github.com/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb](https://github.com/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb) 
+  to [https://colab.research.google.com/github/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb](https://colab.research.google.com/github/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb).
 
-Then, prepare the environment of Java8 and Analytics Zoo as described [above](#prepare-environment) at the beginning of the colab notebook. If you would like to save changes, you can make a copy to drive and run it within the instructions.
+Then, prepare the environment of Java8 and Analytics Zoo as described [above](#prepare-environment) at the beginning of the colab notebook. If you would like to save the changes, you can make a copy to drive and run it within the instructions.
