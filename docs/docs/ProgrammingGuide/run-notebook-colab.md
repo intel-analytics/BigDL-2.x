@@ -51,7 +51,7 @@ If you would like to open Analytics Zoo Notebook in a GitHub repo directly, the 
 
 - Open the Notebook file on GitHub in a browser (So the URL ends in *.ipynb*).
 
-- Change the URL from https://github.com/full_path_to_the_notebook to https://colab.research.google.com/github/full_path_to_the_notebook
+- Change the URL from [https://github.com/full_path_to_the_notebook]() to [https://colab.research.google.com/github/full_path_to_the_notebook]()
 
   For example, change the URL of Analytics Zoo tutorial [https://github.com/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb](https://github.com/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb) 
   to [https://colab.research.google.com/github/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb](https://colab.research.google.com/github/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb).
