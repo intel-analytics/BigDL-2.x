@@ -26,7 +26,7 @@ if [ -f "running" ]; then
     if [ "${params_performance_mode}" == "ON" ]; then
       if [ "${spark_master}" == "local[*]" ] || [ -z "${spark_master}"]; then
         echo "Stop standalone cluster..."
-        cluster-with-numactl.sh stop
+        cluster-with-numactl.sh stop || ./cluster-with-numactl.sh stop
       fi
     fi
 else

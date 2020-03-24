@@ -103,8 +103,12 @@ fi
 
 if [ "${params_performance_mode}" == "ON" ] && [ "${spark_master}" == "local[*]" ]; then
     echo -e "\033[36mPerformance mode is ON, Start standalone cluster... \033[0m"
+    if [ -f "cluster-with-numactl.sh" ]; then
+      OUTPUT=`./cluster-with-numactl.sh start | tail -1`
+    else
+      OUTPUT=`cluster-with-numactl.sh start | tail -1`
+    fi
     IFS=','
-    OUTPUT=`cluster-with-numactl.sh start | tail -1`
     PARAMS=($OUTPUT)
     unset IFS
     LENGTH=${#PARAMS[@]}
