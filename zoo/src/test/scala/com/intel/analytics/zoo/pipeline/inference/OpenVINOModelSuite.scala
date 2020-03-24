@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.pipeline.inference
 
 import java.io.File
+import java.nio.file.NoSuchFileException
 import java.util
 import java.util.{Arrays, Properties}
 
@@ -92,7 +93,6 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
         s"$faserrcnnModelPath.error.bin",
         DeviceType.CPU)
     }
-    assert(thrown.getMessage.contains("NoSuchFileException"))
   }
 
   // this method will be deprecated", "0.8.0")
