@@ -77,7 +77,6 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
 
   timing("prepare openvino scripts") {
     val ovtmpDir = Utils.createTmpDir("ZooVino").toFile()
-    ovtmpDir.deleteOnExit()
     openvinoTempDirPath = ovtmpDir.getCanonicalPath
     optimizeObjectDetectionSHPath = s"$openvinoTempDirPath$optimizeObjectDetectionRelativePath"
     optimizeImageClassificationSHPath =
