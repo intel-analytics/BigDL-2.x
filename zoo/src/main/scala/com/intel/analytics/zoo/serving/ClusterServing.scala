@@ -136,17 +136,26 @@ object ClusterServing {
       chwFlag, helper.dataShape(0), helper.dataShape(1), helper.dataShape(2),
       _modelType = helper.modelType)
 
-    val ssc = new StreamingContext(spark.sparkContext, new Duration(200))
+    val ssc = new StreamingContext(spark.sparkContext, new Duration(50))
     val acc = new LongAccumulator()
     helper.sc.register(acc)
 
-    val receiver = new ServingReceiver()
-    val images = ssc.receiverStream(receiver)
+//    val receiver = new ServingReceiver()
+//    val images = ssc.receiverStream(receiver)
 
-    //    val image = ssc.socketTextStream("localhost", 9999)
+//        val image = ssc.socketTextStream("localhost", 9999)
 
-//    val images = ssc.createRedisXStream(Seq(ConsumerConfig("image_stream", "group1", "cli1",
-//      batchSize = 512, block = 50)))
+    val images = ssc.createRedisXStream(Seq(ConsumerConfig("image_stream", "group1", "cli1")))
+
+//    val images = ssc.union(
+//      Seq(
+//        ssc.createRedisXStream(Seq(ConsumerConfig("image_stream", "group1", "cli1"))),
+//        ssc.createRedisXStream(Seq(ConsumerConfig("image_stream", "group1", "cli2"))),
+//        ssc.createRedisXStream(Seq(ConsumerConfig("image_stream", "group1", "cli3"))),
+//        ssc.createRedisXStream(Seq(ConsumerConfig("image_stream", "group1", "cli4"))),
+//        ssc.createRedisXStream(Seq(ConsumerConfig("image_stream", "group1", "cli5")))
+//      )
+//    )
 
     images.foreachRDD{ m =>
       /**
@@ -177,10 +186,10 @@ object ClusterServing {
         val preProcessed = x.mapPartitions(it => {
           it.grouped(serParams.coreNum).flatMap(itemBatch => {
             itemBatch.indices.toParArray.map(i => {
-              val uri = itemBatch(i)._1
-              val tensor = PreProcessing(itemBatch(i)._2)
-//              val uri = itemBatch(i).fields("uri")
-//              val tensor = PreProcessing(itemBatch(i).fields("image"))
+//              val uri = itemBatch(i)._1
+//              val tensor = PreProcessing(itemBatch(i)._2)
+              val uri = itemBatch(i).fields("uri")
+              val tensor = PreProcessing(itemBatch(i).fields("image"))
               (uri, tensor)
             })
           })
