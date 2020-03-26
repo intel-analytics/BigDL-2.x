@@ -29,10 +29,10 @@ from mxnet import gluon
 
 class MXNetRunner(object):
     """Manages a MXNet model for training."""
-    # Symbolic API doesn't need loss_creator?
-    # Users can specify train_function(not recommended) or use the default one.
-    def __init__(self, config, data_creator, model_creator,
-                 loss_creator=None, metrics_creator=None, train_function=None):
+    # Symbolic API doesn't need loss_creator. Loss is defined in model output.
+    # Users can specify train_function (not recommended) or use the default one.
+    def setup_distributed(self, env, config, data_creator, model_creator,
+                          loss_creator=None, metrics_creator=None, train_function=None):
         logging.basicConfig(level=logging.INFO)  # This can print log messages to console.
         self.config = config  # TODO: add check for config keys
         self.data_creator = data_creator
@@ -42,8 +42,6 @@ class MXNetRunner(object):
         self.train_function = train_function
         self.is_worker = False
         self.epoch = 0
-
-    def setup_distributed(self, env):
         env["DMLC_NODE_HOST"] = self.get_node_ip()
         if env["DMLC_ROLE"] == "worker":
             self.is_worker = True
@@ -214,7 +212,7 @@ class MXNetTrainer(object):
                  metrics_creator=None,
                  train_function=None,
                  # Specify cpu resources for actors so that two actors won't use the same raylet.
-                 worker_cpus=None):
+                 runner_cpus=None):
         self.config = config
         self.data_creator = data_creator
         self.model_creator = model_creator
@@ -223,21 +221,22 @@ class MXNetTrainer(object):
         self.train_function = train_function
         self.num_workers = config["num_workers"]
         self.num_servers = config["num_servers"] if "num_servers" in self.config else self.num_workers
-        self.num_runners = self.num_servers + self.num_workers
 
         # Generate actor class
-        Runner = ray.remote(num_cpus=worker_cpus)(MXNetRunner) if worker_cpus else ray.remote(MXNetRunner)
+        # Add a dummy custom resource for server to diff from worker
+        Worker = ray.remote(num_cpus=runner_cpus, resources={"_mxnet_worker": 1})(MXNetRunner) if runner_cpus \
+            else ray.remote(MXNetRunner)
+        Server = ray.remote(num_cpus=runner_cpus, resources={"_mxnet_server": 1})(MXNetRunner) if runner_cpus \
+            else ray.remote(MXNetRunner)
 
-        # Start runners
+        # Start runners: workers followed by serers
         self.runners = [
-            Runner.remote(
-                self.config,
-                self.data_creator,
-                self.model_creator,
-                self.loss_creator,
-                self.metrics_creator,
-                self.train_function)
-            for i in range(self.num_runners)
+            Worker.remote()
+            for i in range(self.num_workers)
+        ]
+        self.runners += [
+            Server.remote()
+            for i in range(self.num_servers)
         ]
 
         # Compute URL for initializing distributed setup
@@ -255,9 +254,13 @@ class MXNetTrainer(object):
             "DMLC_NUM_WORKER": str(self.num_workers),
         }
         envs = []
-        for i in range(self.num_workers + self.num_servers):
+        for i in range(self.num_workers):
             current_env = env.copy()
-            current_env['DMLC_ROLE'] = 'server' if i < self.num_servers else 'worker'
+            current_env['DMLC_ROLE'] = 'worker'
+            envs.append(current_env)
+        for i in range(self.num_servers):
+            current_env = env.copy()
+            current_env['DMLC_ROLE'] = 'server'
             envs.append(current_env)
 
         env['DMLC_ROLE'] = 'scheduler'
@@ -267,7 +270,12 @@ class MXNetTrainer(object):
         subprocess.Popen("python -c 'import mxnet'", shell=True, env=modified_env)
 
         ray.get([
-            runner.setup_distributed.remote(envs[i])
+            runner.setup_distributed.remote(envs[i], self.config,
+                self.data_creator,
+                self.model_creator,
+                self.loss_creator,
+                self.metrics_creator,
+                self.train_function)
             for i, runner in enumerate(self.runners)
         ])
 
