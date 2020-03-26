@@ -2,7 +2,7 @@
 
 model:
   # model path must be set
-  path: model
+  path: file:///home/litchy/models/tf_res50/
 data:
   # default, localhost:6379
   src:
@@ -11,10 +11,10 @@ data:
   # default, topN(1)
   filter:
 params:
+  core_number: 56
+  node_number: 1
   # default, 4
-  batch_size:
-  # default: OFF
-  performance_mode:
+  batch_size: 16
 redis:
   # default, 4g
   maxmem: 
