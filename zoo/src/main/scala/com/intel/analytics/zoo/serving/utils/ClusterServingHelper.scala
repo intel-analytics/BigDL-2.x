@@ -344,7 +344,7 @@ class ClusterServingHelper {
      * Currently support hdfs, s3
      */
     val scheme = location.split(":").head
-    val localModelPath = if (scheme == "file" || scheme.length == 0) {
+    val localModelPath = if (scheme == "file" || location.split(":").length <= 1) {
       location.split("file://").last
     } else {
       val path = Files.createTempDirectory("model")
