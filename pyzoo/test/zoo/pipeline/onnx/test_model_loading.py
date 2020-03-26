@@ -1392,7 +1392,7 @@ class TestModelLoading(OnnxTestCase):
             torch.nn.AdaptiveAvgPool2d((1, 1))
         )
         input_shape_with_batch = (1, 3, 224, 224)
-        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
+        self.compare_with_pytorch(pytorch_model, input_shape_with_batch, rtol=1e-4, atol=1e-4)
 
     def test_lrn_default(self):
         import math

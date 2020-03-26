@@ -14,12 +14,12 @@
 # limitations under the License.
 #
 import pytest
-
+from pyspark.ml.linalg import DenseVector
 from zoo.feature.common import ChainedPreprocessing, FeatureSet
 from zoo.feature.image import *
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.pipeline.api.keras.optimizers import Adam
-from zoo.pipeline.api.net import TFNet, TFOptimizer
+from zoo.tfpark import TFNet, TFOptimizer
 import tensorflow as tf
 import numpy as np
 import os
@@ -275,16 +275,71 @@ class TestTFDataset(ZooTestCase):
         train_path = os.path.join(resource_path, "tfrecord/mnist_train.tfrecord")
         test_path = os.path.join(resource_path, "tfrecord/mnist_test.tfrecord")
         dataset = TFDataset.from_tfrecord_file(self.sc, train_path,
-                                               batch_size=8,
+                                               batch_size=16,
                                                validation_file_path=test_path)
-        dataset = dataset.map(lambda x: parse_fn(x[0]))
-        flat = tf.layers.flatten(dataset.feature_tensors)
+        raw_bytes = dataset.tensors[0]
+        images, labels = parse_fn(raw_bytes)
+        flat = tf.layers.flatten(images)
         logits = tf.layers.dense(flat, 10)
-        labels = dataset.label_tensors
         loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
-
         opt = TFOptimizer.from_loss(loss, Adam())
         opt.optimize()
+
+    def test_tfdataset_with_tf_data_dataset(self):
+        dataset = tf.data.Dataset.from_tensor_slices((np.random.randn(100, 28, 28, 1),
+                                                      np.random.randint(0, 10, size=(100,))))
+        dataset = dataset.map(lambda feature, label: (tf.to_float(feature), label))
+        dataset = TFDataset.from_tf_data_dataset(dataset, batch_size=16)
+        seq = tf.keras.Sequential(
+            [tf.keras.layers.Flatten(input_shape=(28, 28, 1)),
+             tf.keras.layers.Dense(10, activation="softmax")])
+
+        seq.compile(optimizer=tf.keras.optimizers.RMSprop(),
+                    loss='sparse_categorical_crossentropy',
+                    metrics=['accuracy'])
+        model = KerasModel(seq)
+        model.fit(dataset)
+        dataset = tf.data.Dataset.from_tensor_slices((np.random.randn(100, 28, 28, 1),
+                                                      np.random.randint(0, 10, size=(100,))))
+        dataset = dataset.map(lambda feature, label: (tf.to_float(feature),
+                                                      label))
+        dataset = TFDataset.from_tf_data_dataset(dataset, batch_per_thread=16)
+        model.evaluate(dataset)
+        dataset = tf.data.Dataset.from_tensor_slices(np.random.randn(100, 28, 28, 1))
+        dataset = dataset.map(lambda data: tf.to_float(data))
+        dataset = TFDataset.from_tf_data_dataset(dataset, batch_per_thread=16)
+        model.predict(dataset).collect()
+
+    def test_tfdataset_with_dataframe(self):
+        rdd = self.sc.range(0, 1000)
+        df = rdd.map(lambda x: (DenseVector(np.random.rand(20).astype(np.float)),
+                                x % 10)).toDF(["feature", "label"])
+
+        train_df, val_df = df.randomSplit([0.7, 0.3])
+        dataset = TFDataset.from_dataframe(train_df,
+                                           feature_cols=["feature"],
+                                           labels_cols=["label"],
+                                           batch_size=32,
+                                           validation_df=val_df)
+
+        seq = tf.keras.Sequential(
+            [tf.keras.layers.Flatten(input_shape=(20,)),
+             tf.keras.layers.Dense(10, activation="softmax")])
+
+        seq.compile(optimizer=tf.keras.optimizers.RMSprop(),
+                    loss='sparse_categorical_crossentropy',
+                    metrics=['accuracy'])
+        model = KerasModel(seq)
+        model.fit(dataset)
+        dataset = TFDataset.from_dataframe(val_df,
+                                           feature_cols=["feature"],
+                                           batch_per_thread=32)
+        model.predict(dataset).collect()
+        dataset = TFDataset.from_dataframe(val_df,
+                                           feature_cols=["feature"],
+                                           labels_cols=["label"],
+                                           batch_per_thread=32)
+        model.evaluate(dataset)
 
 
 if __name__ == "__main__":

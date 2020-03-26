@@ -17,7 +17,7 @@ package com.intel.analytics.zoo.common
 
 import java.util
 
-import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDLKeras, Sample}
+import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, PythonBigDLKeras, Sample}
 import com.intel.analytics.bigdl.tensor.{DenseType, SparseType, Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.pipeline.api.Predictable
@@ -27,11 +27,12 @@ import java.util.{List => JList}
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dataset.{MiniBatch, SampleToMiniBatch}
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.optim.LocalPredictor
+import com.intel.analytics.bigdl.optim.{LocalPredictor, ValidationMethod}
 import com.intel.analytics.bigdl.utils.Table
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.feature.text.TextSet
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
+import com.intel.analytics.zoo.pipeline.api.net.TFNet
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -220,10 +221,31 @@ class PythonZoo[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBigDLK
     module.predictClasses(toJSample(x), batchPerThread, zeroBasedLabel).toJavaRDD()
   }
 
+  def tfnetEvaluate(model: AbstractModule[Activity, Activity, Float],
+                    valRDD: JavaRDD[MiniBatch[Float]],
+                    valMethods: JList[ValidationMethod[Float]])
+  : JList[EvaluatedResult] = {
+    val resultArray = TFNet.testMiniBatch(model, valRDD.rdd,
+      valMethods.asScala.toArray)
+    val testResultArray = resultArray.map { result =>
+      EvaluatedResult(result._1.result()._1, result._1.result()._2,
+        result._2.toString())
+    }
+    testResultArray.toList.asJava
+  }
 
   def setCoreNumber(num: Int): Unit = {
     EngineRef.setCoreNumber(num)
   }
 
 
+  def putLocalFileToRemote(localPath: String, remotePath: String,
+                           isOverwrite: Boolean = false): Unit = {
+    Utils.putLocalFileToRemote(localPath, remotePath, isOverwrite)
+  }
+
+  def getRemoteFileToLocal(remotePath: String, localPath: String,
+                           isOverwrite: Boolean = false): Unit = {
+    Utils.getRemoteFileToLocal(remotePath, localPath, isOverwrite)
+  }
 }

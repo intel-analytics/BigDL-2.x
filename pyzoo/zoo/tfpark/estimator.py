@@ -17,74 +17,35 @@ from tensorflow.python.util import function_utils
 import tensorflow as tf
 
 from bigdl.optim.optimizer import MaxIteration, Loss, TreeNNAccuracy
-from zoo.common import Sample
 from zoo.pipeline.api.keras import metrics
-from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFNet
-from zoo.pipeline.api.net.utils import to_bigdl_optim_method
+from zoo.tfpark.tfnet import TFNet
+from zoo.tfpark.tf_optimizer import TFOptimizer
+from zoo.tfpark.tf_dataset import TFDataset
 
 from zoo.util import nest
-import numpy as np
 import six
 import os
 
 
-def add_train_op(model_fn, features, labels, mode, params, config, optimizer):
-    model_fn_args = function_utils.fn_args(model_fn)
-    kwargs = {}
-    if 'labels' in model_fn_args:
-        kwargs['labels'] = labels
-    else:
-        if labels is not None:
-            raise ValueError(
-                'model_fn does not take labels, but input_fn returns labels.')
-    if 'mode' in model_fn_args:
-        kwargs['mode'] = mode
-    if 'params' in model_fn_args:
-        kwargs['params'] = params
-    if 'config' in model_fn_args:
-        kwargs['config'] = config
-
-    spec = model_fn(features=features, **kwargs)
-
-    if isinstance(spec, tf.estimator.EstimatorSpec):
-        train_op = spec.train_op
-    else:
-        train_op = None
-
-    if mode == tf.estimator.ModeKeys.TRAIN and train_op is None:
-        if optimizer is None:
-            raise ValueError("optimizer should be set when used for training. For example:" +
-                             " Estimator(model_fn, tf.train.AdamOptimizer())")
-        grads_and_vars = optimizer.compute_gradients(spec.loss)
-
-        vars_with_grad = [v for g, v in grads_and_vars if g is not None]
-        if not vars_with_grad:
-            raise ValueError(
-                "No gradients provided for any variable, check your graph for ops"
-                " that do not support gradients, between variables %s and loss %s." %
-                ([str(v) for _, v in grads_and_vars], spec.loss))
-
-        train_op = optimizer.apply_gradients(grads_and_vars,
-                                             global_step=tf.train.get_global_step())
-
-    return tf.estimator.EstimatorSpec(mode,
-                                      spec.predictions,
-                                      spec.loss,
-                                      train_op)
-
-
-class TFEstimatorSpec:
-
-    def __init__(self, mode, predictions=None, loss=None):
-        self.mode = mode
-        self.predictions = predictions
-        self.loss = loss
-
-
 class TFEstimator(object):
 
-    def __init__(self, model_fn, optimizer=None, model_dir=None, config=None,
-                 params=None, warm_start_from=None):
+    def __init__(self, estimator):
+        """
+        :param estimator: a tf.estimator.Estimator, in the estimator's model_fn,
+        ZooOptimizer must be used and only ZooOptimizer should be used to derive
+        the train_op.
+        """
+
+        self.estimator = estimator
+        self._model_fn = self.estimator.model_fn
+        self._model_dir = self.estimator.model_dir
+        self.config = self.estimator.config
+        self.params = self.estimator.params
+        self.tf_optimizer = None
+
+    @classmethod
+    def from_model_fn(cls, model_fn, model_dir=None, config=None,
+                      params=None, warm_start_from=None):
         """
         :param model_fn: Model function. Follows the signature:
 
@@ -111,9 +72,10 @@ class TFEstimator(object):
                     configuration such as `num_ps_replicas`, or `model_dir`.
 
             * Returns:
-                `zoo.tfpark.estimator.TFEstimatorSpec`
-        :param optimizer: the tf.train.Optimizer to be used in training,
-                         e.g. tf.train.AdamOptimizer()
+                `tf.estimator.EstimatorSpec`
+
+            For the train_op in tf.estimator.EstimatorSpec, it derive from and only from
+            `zoo.tfpark.ZooOptimizer`
         :param model_dir: Directory to save model parameters, graph and etc. This can
             also be used to load checkpoints from the directory into an estimator to
             continue training a previously saved model. If `PathLike` object, the
@@ -131,20 +93,9 @@ class TFEstimator(object):
                        warm-started, and it is assumed that vocabularies
                        and `tf.Tensor` names are unchanged.
         """
-
-        def tf_model_fn(features, labels, mode, params, config):
-            return add_train_op(model_fn, features, labels, mode, params, config, optimizer)
-
-        estimator = tf.estimator.Estimator(tf_model_fn, model_dir, config, params, warm_start_from)
-        self._model_fn = model_fn
-        self.optimizer = optimizer
-        self._model_dir = estimator.model_dir
-        self.estimator = estimator
-        self.config = config
-        self.params = params
-        self.tf_optimizer = None
-        self.gradient_clipping_norm = None
-        self.gradient_clipping_constant = None
+        estimator = tf.estimator.Estimator(model_fn, model_dir=model_dir, config=config,
+                                           params=params, warm_start_from=warm_start_from)
+        return cls(estimator)
 
     def _call_model_fn(self, features, labels, mode, config):
         model_fn_args = function_utils.fn_args(self._model_fn)
@@ -160,36 +111,7 @@ class TFEstimator(object):
 
         model_fn_results = self._model_fn(features=features, **kwargs)
 
-        if not isinstance(model_fn_results, TFEstimatorSpec):
-            raise ValueError('model_fn should return an TFEstimatorSpec.')
-
         return model_fn_results
-
-    def clear_gradient_clipping(self):
-        self.gradient_clipping_constant = None
-        self.gradient_clipping_norm = None
-
-    def set_constant_gradient_clipping(self, min, max):
-        """
-        Configure constant clipping settings.
-
-
-        :param min_value: the minimum value to clip by
-        :param max_value: the maxmimum value to clip by
-        """
-        self.gradient_clipping_constant = (min, max)
-
-    def set_gradient_clipping_by_l2_norm(self, clip_norm):
-        """
-        Configure L2 norm clipping settings.
-
-
-        :param clip_norm: gradient L2-Norm threshold
-        """
-        self.gradient_clipping_norm = clip_norm
-
-    def set_optimizer(self, optimizer):
-        self.optimizer = optimizer
 
     def train(self, input_fn, steps=None):
         """Trains a model given training data `input_fn`.
@@ -223,7 +145,6 @@ class TFEstimator(object):
                                            result.label_tensors,
                                            tf.estimator.ModeKeys.TRAIN,
                                            self.config)
-                optim_method = to_bigdl_optim_method(koptim_method=self.optimizer)
                 latest_checkpoint = self.estimator.latest_checkpoint()
 
                 with tf.Session() as sess:
@@ -234,12 +155,12 @@ class TFEstimator(object):
                         sess.run(tf.global_variables_initializer())
 
                     zoo_ckpt_path = os.path.join(self._model_dir, "analytics-zoo")
-                    opt = TFOptimizer.from_loss(spec.loss,
-                                                optim_method,
-                                                session=sess,
-                                                clip_norm=self.gradient_clipping_norm,
-                                                clip_value=self.gradient_clipping_constant,
-                                                model_dir=zoo_ckpt_path)
+
+                    opt = TFOptimizer.from_train_op(spec.train_op,
+                                                    spec.loss,
+                                                    sess=sess,
+                                                    dataset=result,
+                                                    model_dir=zoo_ckpt_path)
 
                     opt.optimize(MaxIteration(steps))
                     sess.run(assign_step, feed_dict={add_step_input: steps})
@@ -277,6 +198,7 @@ class TFEstimator(object):
         """
         if not all(isinstance(metric, six.string_types) for metric in eval_methods):
             raise ValueError("All metrics should be string types")
+        from tensorflow_estimator.python.estimator.canned import prediction_keys
         with tf.Graph().as_default() as g:
             result = self.estimator._call_input_fn(input_fn, tf.estimator.ModeKeys.EVAL)
             if isinstance(result, TFDataset):
@@ -296,23 +218,33 @@ class TFEstimator(object):
                     else:
                         sess.run(tf.global_variables_initializer())
                     inputs = nest.flatten(result._original_tensors[0])
-                    outputs = nest.flatten(spec.predictions)
+                    if isinstance(spec.predictions, dict):
+                        if "mae" in eval_methods:
+                            outputs = [
+                                spec.predictions[prediction_keys.PredictionKeys.PREDICTIONS]]
+                        else:
+                            outputs = [
+                                spec.predictions[prediction_keys.PredictionKeys.LOGITS]]
+                    else:
+                        outputs = nest.flatten(spec.predictions)
+                        if len(outputs) > 1:
+                            raise Exception("Evaluate on more than one output is not " +
+                                            "supported now")
                     tfnet = TFNet.from_session(sess, inputs=inputs, outputs=outputs)
 
-                    data = result.get_evaluation_data()
                     if result.batch_per_thread < 0:
                         batch_size = result.batch_size
                     else:
                         batch_size = result.batch_per_thread * result.get_num_partitions()
 
                     eval_methods = [self._to_bigdl_metric(m) for m in eval_methods]
-                    results = tfnet.evaluate(data, batch_size, eval_methods)
+                    results = tfnet.evaluate(result, batch_size, eval_methods)
                     final_result = dict([(r.method, r.result) for r in results])
                     return final_result
 
         return self.estimator.evaluate(input_fn, steps, checkpoint_path=checkpoint_path)
 
-    def predict(self, input_fn, checkpoint_path=None):
+    def predict(self, input_fn, predict_keys=None, checkpoint_path=None):
         """Outputs predictions for given features.
 
         :param input_fn: A function that constructs the features.
@@ -353,7 +285,10 @@ class TFEstimator(object):
                     else:
                         sess.run(tf.global_variables_initializer())
                     inputs = nest.flatten(result._original_tensors[0])
-                    outputs = nest.flatten(spec.predictions)
+                    if isinstance(spec.predictions, dict) and predict_keys is not None:
+                        outputs = [spec.predictions[key] for key in predict_keys]
+                    else:
+                        outputs = nest.flatten(spec.predictions)
                     tfnet = TFNet.from_session(sess, inputs=inputs, outputs=outputs)
                     predictions = tfnet.predict(result.get_prediction_data(), mini_batch=True)
 
@@ -361,13 +296,19 @@ class TFEstimator(object):
                     if isinstance(spec.predictions, dict):
                         # Given a list of outputs; return a dict of outputs.
                         def zip_key(outs, keys):
-                            assert len(outs) == len(keys)
+                            if isinstance(outs, list):
+                                error_msg = "output length is " \
+                                    + "{} but keys length is {}".format(len(outs), len(keys))
+                                assert len(outs) == len(keys), error_msg
+                            else:
+                                outs = [outs]
                             res_dict = {}
                             for out, key in zip(outs, keys):
                                 res_dict[key] = out
                             return res_dict
 
-                        pred_keys = sorted(spec.predictions.keys())
+                        pred_keys = sorted(spec.predictions.keys()) if not predict_keys \
+                            else predict_keys
                         predictions = predictions.map(lambda res: zip_key(res, pred_keys))
                     return predictions
 
@@ -385,8 +326,6 @@ class TFEstimator(object):
             return MAE()
         elif metric == "auc":
             return metrics.AUC()
-        elif metric == "loss":
-            return Loss()
         elif metric == "treennaccuracy":
             return TreeNNAccuracy()
         else:

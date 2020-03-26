@@ -9,25 +9,25 @@ Note: currently only **image classification** models are supported.
 
 This page contains the guide for you to run Analytics Zoo Cluster Serving, including following:
 
-* [Quick Start](#Quick-Start)
+* [Quick Start](#quick-start)
 
-* [Workflow Overview](#Workflow-Overview) 
+* [Workflow Overview](#workflow-overview) 
 
-* [Deploy Your Own Cluster Serving](#Deploy-Your-Own-Cluster-Serving)
+* [Deploy Your Own Cluster Serving](#deploy-your-own-cluster-serving)
 
-   1. [Installation](#1-Installation)
+   1. [Installation](#1-installation)
 
-   2. [Configuration](#2-Configuration) 
+   2. [Configuration](#2-configuration) 
    
-   3. [Launching Service](#3-Launching-Service)
+   3. [Launching Service](#3-launching-service)
    
-   4. [Model inference](#4-Model-inference)
+   4. [Model inference](#4-model-inference)
 
-* [Optional Operations](#Optional-Operations)
+* [Optional Operations](#optional-operations)
 
-     - [Update Model or Configurations](#Update-Model-or-Configurations)
+     - [Update Model or Configurations](#update-model-or-configurations)
 
-     - [Logs and Visualization](#Logs-and-Visualization)
+     - [Logs and Visualization](#logs-and-visualization)
 
 
 ## Quick Start
@@ -41,7 +41,7 @@ This section provides a quick start example for you to run Analytics Zoo Cluster
 
 Use one command to run Cluster Serving container.
 ```
-docker run -itd --name cluster-serving --net=host analytics-zoo/cluster-serving:0.7.0-spark_2.4.3
+docker run -itd --name cluster-serving --net=host intelanalytics/zoo-cluster-serving:0.7.0
 ```
 Log into the container using `docker exec -it cluster-serving bash`. 
 
@@ -66,9 +66,9 @@ image: dog1.jpeg, classification-result: class: 207's prob: 0.9226527
 ```
 Wow! You made it!
 
-Note that the Cluster Serving quick start example will run on your local node only. Check the [Deploy Your Own Cluster Serving](#Deploy-Your-Own-Cluster-Serving) section for how to configure and run Cluster Serving in a distributed fashion.
+Note that the Cluster Serving quick start example will run on your local node only. Check the [Deploy Your Own Cluster Serving](#deploy-your-own-cluster-serving) section for how to configure and run Cluster Serving in a distributed fashion.
 
-For more details, you could also see the log and performance by go to `localhost:6006` in your browser and refer to [Logs and Visualization](#Logs-and-Visualization), or view the source code of `quick_start.py` [here](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/serving/quick_start.py), or refer to [API Guide](APIGuide.md).
+For more details, you could also see the log and performance by go to `localhost:6006` in your browser and refer to [Logs and Visualization](#logs-and-visualization), or view the source code of `quick_start.py` [here](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/serving/quick_start.py), or refer to [API Guide](APIGuide.md).
 
 
 ## Workflow Overview
@@ -97,20 +97,30 @@ Cluster Serving will then read the requests from the Redis stream, run the distr
 
 ## Deploy your Own Cluster Serving
 ### 1. Installation
-It is recommended to install Cluster Serving by pulling the pre-built Docker image to your local node, which have packaged all the required dependencies. Alternatively, you may also manually install Cluster Serving (through either pip or direct downloading) as well as Redis and TensorBoard (for visualizing the serving status) on the local node.
+It is recommended to install Cluster Serving by pulling the pre-built Docker image to your local node, which have packaged all the required dependencies. Alternatively, you may also manually install Cluster Serving (through either pip or direct downloading) as well as Spark, Redis and TensorBoard (for visualizing the serving status) on the local node.
 #### Docker
 ```
-docker pull zoo-cluster-serving
+docker pull intelanalytics/zoo-cluster-serving
 ```
 then, (or directly run `docker run`, it will pull the image if it does not exist)
 ```
-docker run zoo-cluster-serving
+docker run --name cluster-serving --net=host -itd intelanalytics/zoo-cluster-serving:0.7.0 bash
 ```
-Go inside the container and continue to [Configuration](#2-Configuration).
-#### Manual installation
-Non-Docker users need to install [Redis](https://redis.io/topics/quickstart) and [TensorBoard](https://www.tensorflow.org/tensorboard/get_started).
+Log into the container
+```
+docker exec -it cluster-serving bash
+```
+`cd ./cluster-serving`, you can see all the environments are prepared.
+##### Yarn user
+For Yarn user using docker, you have to set additional config, thus you need to call following when starting the container
+```
+docker run --name cluster-serving --net=host -v /path/to/HADOOP_CONF_DIR:/opt/work/HADOOP_CONF_DIR -e HADOOP_CONF_DIR=/opt/work/HADOOP_CONF_DIR -itd intelanalytics/zoo-cluster-serving:0.7.0 bash
+```
 
-Please follow the installation instructions on Redis website. Make sure the environment variable `$REDIS_HOME` is set to the path where you install Redis, so that Cluster Serving can start or shutdown it. 
+#### Manual installation
+Non-Docker users need to install [Spark 2.4.3](https://archive.apache.org/dist/spark/spark-2.4.3/spark-2.4.3-bin-hadoop2.7.tgz), [Redis](https://redis.io/topics/quickstart) and [TensorBoard](https://www.tensorflow.org/tensorboard/get_started).
+
+After preparing dependencies above, make sure the environment variable `$SPARK_HOME` (/path/to/spark-SPARK_VERSION-bin-hadoop-HADOOP_VERSION), `$REDIS_HOME`(/path/to/redis-REDIS_VERSION) is set before following steps. 
 
 Cluster Sering use TensorBoard to visualize the serving status. Use `pip install tensorboard` to install TensorBoard.
 
@@ -125,12 +135,14 @@ Run `source analytics-zoo/bin/analytics-zoo-env.sh` to set environment.
 
 Go to `analytics-zoo/scripts/cluster-serving`, run `cluster-serving-init`.
 
+Run `export OMP_NUM_THREADS=all` if you want to use all cores on your machine to do inference in parallel manner.
 ##### Pip
 `pip install analytics-zoo`. And go to any directory, run `cluster-serving-init`.
 
+Run `export OMP_NUM_THREADS=all` if you want to use all cores on your machine to do inference in parallel manner.
 ### 2. Configuration
 #### How to Config
-After [Installation](#1-Installation), you will see a config file `config.yaml` in your current working directory. This file contains all the configurations that you can customize for your Cluster Serving. See an example of `config.yaml` below.
+After [Installation](#1-installation), you will see a config file `config.yaml` in your current working directory. This file contains all the configurations that you can customize for your Cluster Serving. See an example of `config.yaml` below.
 ```
 ## Analytics Zoo Cluster Serving Config Example
 
@@ -235,7 +247,7 @@ You can use following command to start Cluster Serving.
 ```
 cluster-serving-start
 ```
-This command will start Redis and TensorBoard if they are not running. Note that you need to provide `REDIS_HOME` environment variable as mentioned in [Installation](#1-Installation).
+This command will start Redis and TensorBoard if they are not running. Note that you need to provide `REDIS_HOME` environment variable as mentioned in [Installation](#1-installation).
 
 #### Stop
 You can use following command to stop Cluster Serving. Data in Redis and TensorBoard service will persist.
@@ -255,7 +267,9 @@ cluster-serving-shutdown
 
 If you are using Docker, you could also run `docker rm` to shutdown Cluster Serving.
 ### 4. Model Inference
-We support Python API for conducting inference with Data Pipeline in Cluster Serving. We provide basic usage here, for more details, please see [API Guide](APIGuide.md).
+We support Python API for conducting inference with Data Pipeline in Cluster Serving. The requirements of API are `opencv-python`, `pyyaml`, `redis`.
+
+We provide basic usage here, for more details, please see [API Guide](APIGuide.md).
 #### Input and Output API
 To input data to queue, you need a `InputQueue` instance, and using `enqueue` method by giving an image path or image ndarray. See following example.
 ```
@@ -275,7 +289,7 @@ img1_result = output_api.query('img1')
 all_result = output_api.dequeue() # the output queue is empty after this code
 ```
 #### Output Format
-Consider the code above, in [Input and Output API](#Input-and-Output-API) Section.
+Consider the code above, in [Input and Output API](#input-and-output-api) Section.
 ```
 img1_result = output_api.query('img1')
 ```

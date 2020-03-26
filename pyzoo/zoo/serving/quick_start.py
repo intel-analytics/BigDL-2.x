@@ -19,13 +19,12 @@ import os
 import cv2
 import json
 import time
+from optparse import OptionParser
 
 
-def run():
+def run(path):
     input_api = InputQueue()
-
-    base_path = os.path.abspath(
-        __file__ + "/../../../test/zoo/resources/serving_quick_start")
+    base_path = path
 
     if not base_path:
         raise EOFError("You have to set your image path")
@@ -39,17 +38,22 @@ def run():
         img = cv2.resize(img, (224, 224))
         input_api.enqueue_image(p, img)
 
-    time.sleep(5)
+    time.sleep(10)
 
     # get all result and dequeue
     result = output_api.dequeue()
     for k in result.keys():
         output = "image: " + k + ", classification-result:"
-        tmp_dict = json.loads(result[k])
-        for class_idx in tmp_dict.keys():
-            output += "class: " + class_idx + "'s prob: " + tmp_dict[class_idx]
+        tmp_list = json.loads(result[k])
+        for record in range(len(tmp_list)):
+            output += " class: " + str(tmp_list[record][0]) \
+                      + "'s prob: " + str(tmp_list[record][1])
         print(output)
 
 
 if __name__ == "__main__":
-    run()
+    parser = OptionParser()
+    parser.add_option("-i", "--image_path", dest="path", default="test_image")
+    import sys
+    (options, args) = parser.parse_args(sys.argv)
+    run(options.path)

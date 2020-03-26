@@ -214,17 +214,6 @@ then
     exit $exit_status
 fi
 
-echo "start example test for nnframes tensorflow SimpleTraining"
-export MASTER=local[1]
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/tensorflow/SimpleTraining.py
-exit_status=$?
-unset MASTER
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "nnframes tensorflow SimpleTraining failed"
-    exit $exit_status
-fi
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time5=$((now-start))
@@ -338,7 +327,7 @@ else
 fi
 
 export SPARK_DRIVER_MEMORY=20g
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/tf_optimizer/train_lenet.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/tf_optimizer/train.py
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
@@ -347,32 +336,13 @@ then
     exit $exit_status
 fi
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/tf_optimizer/evaluate_lenet.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/tf_optimizer/evaluate.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
     clear_up
     echo "tensorflow distributed_training evaluate_lenet failed"
-    exit $exit_status
-fi
-
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/tf_optimizer/train_mnist_keras.py
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "tensorflow distributed_training train_mnist_keras failed"
-    exit $exit_status
-fi
-
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/tf_optimizer/evaluate_mnist_keras.py
-
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "tensorflow distributed_training evaluate_mnist_keras failed"
     exit $exit_status
 fi
 
@@ -414,6 +384,19 @@ if [ $exit_status -ne 0 ];
 then
     clear_up
     echo "TFPark estimator estimator_inception failed"
+    exit $exit_status
+fi
+
+sed "s/MaxIteration(1000)/MaxIteration(5)/g;s/range(20)/range(2)/g" \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_train_and_evaluate.py \
+    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_train_tmp.py
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_train_tmp.py
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "TFPark gan gan_train failed"
     exit $exit_status
 fi
 

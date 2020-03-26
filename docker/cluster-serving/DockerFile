@@ -6,7 +6,7 @@ WORKDIR /opt/work
 
 ARG SPARK_VERSION=2.4.3 
 ARG BIGDL_VERSION=0.10.0
-ARG ANALYTICS_ZOO_VERSION=0.7.0-SNAPSHOT
+ARG ANALYTICS_ZOO_VERSION=0.8.0-SNAPSHOT
 
 ENV SPARK_HOME			/opt/work/spark-${SPARK_VERSION}
 ENV JAVA_HOME			/opt/jdk
@@ -15,7 +15,7 @@ ENV ANALYTICS_ZOO_HOME  	/opt/work/analytics-zoo
 ENV PATH			${JAVA_HOME}/bin:${ANALYTICS_ZOO_HOME}/bin/cluster-serving:${PATH}
 
 RUN apt-get update && \
-    apt-get install -y apt-utils vim curl nano wget unzip maven git && \
+    apt-get install -y apt-utils vim curl nano wget unzip maven git numactl && \
     apt-get install -y gcc g++ make && \
     apt-get install -y libsm6 libxext6 libxrender-dev
 
@@ -71,6 +71,8 @@ RUN chmod a+x ${ANALYTICS_ZOO_HOME}/bin/cluster-serving/*
 
 ENV PYTHONPATH 		${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip
 ENV REDIS_HOME 		/opt/work/redis-5.0.5
+
+ENV OMP_NUM_THREADS	all
 
 RUN cd cluster-serving && \
     cluster-serving-init && \

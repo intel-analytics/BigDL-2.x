@@ -14,17 +14,21 @@
 # limitations under the License.
 #
 
-from bigdl.optim.optimizer import MaxEpoch
-from tensorflow.python.keras.engine import training_utils
+import numpy as np
+import tensorflow.keras.backend as K
 from tensorflow.python.keras import models
+from tensorflow.python.keras.engine import training_utils
 
+from bigdl.optim.optimizer import MaxEpoch
+from zoo.common import load_from_file
+from zoo.common import save_file
 from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.pipeline.api.keras.utils import to_bigdl_metric
-from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFPredictor, TFNet
-import tensorflow.keras.backend as K
-import numpy as np
+from zoo.tfpark.tf_dataset import TFNdarrayDataset, TFDataset
 
-from zoo.pipeline.api.net.tf_dataset import TFNdarrayDataset
+from zoo.tfpark.tf_optimizer import TFOptimizer
+from zoo.tfpark.tf_predictor import TFPredictor
+from zoo.tfpark.tfnet import TFNet
 
 
 class KerasModel(object):
@@ -48,10 +52,16 @@ class KerasModel(object):
         self.model.set_weights(weights)
 
     def save_weights(self, filepath, overwrite=True, save_format=None):
-        self.model.save_weights(filepath, overwrite, save_format)
+
+        def save_func(file_path):
+            self.model.save_weights(file_path, overwrite, save_format)
+        save_file(save_func, filepath)
 
     def load_weights(self, filepath, by_name=False):
-        self.model.load_weights(filepath, by_name)
+
+        def load_func(file_path):
+            self.model.load_weights(file_path, by_name)
+        load_from_file(load_func, filepath)
 
     def save_model(self, path):
         """
@@ -59,7 +69,9 @@ class KerasModel(object):
 
         :param path: String. The path to save the model.
         """
-        self.model.save(path)
+        def save_func(file_path):
+            self.model.save(file_path)
+        save_file(save_func, path)
 
     @staticmethod
     def load_model(path):
@@ -69,7 +81,10 @@ class KerasModel(object):
         :param path: String. The path to the pre-defined model.
         :return: KerasModel.
         """
-        return KerasModel(models.load_model(path))
+        def load_func(file_path):
+            return models.load_model(file_path)
+        keras_model = load_from_file(load_func, path)
+        return KerasModel(keras_model)
 
     def set_train_summary(self, summary):
         """
@@ -220,9 +235,6 @@ class KerasModel(object):
         tfnet = TFNet.from_session(K.get_session(),
                                    inputs=self.model.inputs,
                                    outputs=self.model.outputs)
-
-        data = dataset.get_evaluation_data()
-
         if dataset.batch_per_thread < 0:
             batch_size = dataset.batch_size
         else:
@@ -231,7 +243,7 @@ class KerasModel(object):
         eval_methods = [to_bigdl_metric(m, self.model.loss)
                         for m in self.metrics_names]
 
-        results = tfnet.evaluate(data, batch_size, eval_methods)
+        results = tfnet.evaluate(dataset, batch_size, eval_methods)
         final_result = [r.result for r in results]
 
         return final_result
@@ -322,11 +334,11 @@ def _standarize_feature_label_dataset(dataset, model):
 
     def _process_labels(ys):
         if isinstance(ys, dict):
-            return {k: np.expand_dims(y, axis=1) if y.ndim == 0 else y for k, y in ys.items()}
+            return {k: np.expand_dims(y, axis=-1) if y.ndim == 0 else y for k, y in ys.items()}
         elif isinstance(ys, list):
-            return [np.expand_dims(y, axis=1) if y.ndim == 0 else y for y in ys]
+            return [np.expand_dims(y, axis=-1) if y.ndim == 0 else y for y in ys]
         else:
-            return np.expand_dims(ys, axis=1) if ys.ndim == 0 else ys
+            return np.expand_dims(ys, axis=-1) if ys.ndim == 0 else ys
 
     def _training_reorder(x, input_names, output_names):
         assert isinstance(x, tuple)
@@ -363,8 +375,9 @@ def _standarize_feature_dataset(dataset, model):
             return [x[name] for name in names]
         elif isinstance(x, list):
             return x
-        else:
-            return [x]
+        elif isinstance(x, tuple):
+            return list(x)
+        return [x]
 
     rdd = dataset.rdd.map(lambda sample: _reorder(sample, input_names))
     feature_schema = _reorder(dataset.tensor_structure[0], input_names)

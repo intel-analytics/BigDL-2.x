@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.tfpark
 
 import java.io.{File, FileInputStream, InputStream}
-import java.nio.FloatBuffer
+import java.nio._
 
 import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, AbstractModule, Activity}
@@ -60,14 +60,134 @@ object TFUtils {
     }
   }
 
-  private[zoo] def tf2bigdl(t: TTensor[_], output: Tensor[Float]) = {
+  private def decodeUVarInt64(bytes: Array[Byte], offset: Int): (Long, Int) = {
+    var shift = 0
+    var p = offset
+    var result: Long = 0
+    while (shift  <= 63 && p < bytes.length) {
+      val b = bytes(p)
+      p += 1
+      if ((b & 128) != 0) {
+        result |= ((b & 127) << shift)
+      } else {
+        result |= (b << shift)
+        return (result, p)
+      }
+
+      shift += 7
+    }
+    (result, p)
+  }
+
+  private def getOffsets(buffer: ByteBuffer, numElem: Int): Array[Int] = {
+    val offsetsBuffer = ByteBuffer.wrap(buffer.array()
+      .slice(buffer.arrayOffset(), numElem * 8))
+      .order(ByteOrder.nativeOrder())
+      .asLongBuffer()
+    val offsets = new Array[Long](numElem)
+    offsetsBuffer.get(offsets)
+    offsets.map(_.toInt)
+  }
+
+  private[zoo] def tf2bigdl(t: TTensor[_], output: Tensor[_]) = {
     val shape = t.shape().map(_.toInt)
     output.resize(shape)
-    val buffer = FloatBuffer.wrap(
-      output.storage().array(),
-      output.storageOffset() - 1,
-      shape.product)
-    t.writeTo(buffer)
+    val dataType = t.dataType()
+
+    val numericDataTypes = Set(DataType.FLOAT,
+      DataType.UINT8, DataType.INT32, DataType.INT64, DataType.DOUBLE)
+
+    if (dataType == DataType.STRING) {
+      val outputTensor = output.asInstanceOf[Tensor[Array[Byte]]]
+      require(t.numDimensions() <= 1, "only scalar or Vector string are supported")
+      val elements = t.numElements()
+      val buffer = ByteBuffer.allocate(t.numBytes())
+      t.writeTo(buffer)
+      val offsets = getOffsets(buffer, elements)
+      val storage = outputTensor.storage().array()
+      val strDataOffset = elements * 8
+      var i = 0
+      while (i < elements) {
+        val offset = buffer.arrayOffset() + offsets(i) + strDataOffset
+        val (strLen, strStart) = decodeUVarInt64(buffer.array(), offset)
+        storage(outputTensor.storageOffset() - 1 + i) = buffer.array()
+          .slice(strStart, strStart + strLen.toInt)
+        i += 1
+      }
+    } else if (numericDataTypes(dataType)) {
+      dataType match {
+        case DataType.FLOAT =>
+          val outputTensor = output.asInstanceOf[Tensor[Float]]
+          val buffer = FloatBuffer.wrap(
+            outputTensor.storage().array(),
+            outputTensor.storageOffset() - 1,
+            shape.product)
+          t.writeTo(buffer)
+        case DataType.UINT8 =>
+          val outputTensor = output.asInstanceOf[Tensor[Float]]
+          val arr = new Array[Byte](shape.product)
+          val buffer = ByteBuffer.wrap(arr)
+          t.writeTo(buffer)
+          byte2float(arr, outputTensor.storage().array(), outputTensor.storageOffset() - 1)
+        case DataType.INT32 =>
+          val outputTensor = output.asInstanceOf[Tensor[Float]]
+          val arr = new Array[Int](shape.product)
+          val buffer = IntBuffer.wrap(arr)
+          t.writeTo(buffer)
+          int2float(arr, outputTensor.storage().array(), outputTensor.storageOffset() - 1)
+        case DataType.INT64 =>
+          val outputTensor = output.asInstanceOf[Tensor[Float]]
+          val arr = new Array[Long](shape.product)
+          val buffer = LongBuffer.wrap(arr)
+          t.writeTo(buffer)
+          long2float(arr, outputTensor.storage().array(), outputTensor.storageOffset() - 1)
+        case DataType.DOUBLE =>
+          val outputTensor = output.asInstanceOf[Tensor[Float]]
+          val arr = new Array[Double](shape.product)
+          val buffer = DoubleBuffer.wrap(arr)
+          t.writeTo(buffer)
+          double2float(arr, outputTensor.storage().array(), outputTensor.storageOffset() - 1)
+      }
+
+    } else {
+      throw new Exception(s"data type ${dataType} are not supported")
+    }
+  }
+
+  private[zoo] def byte2float(src: Array[Byte], dest: Array[Float], offset: Int): Unit = {
+    val length = src.length
+    var i = 0
+    while (i < length) {
+      dest(offset + i) = src(i).toFloat
+      i += 1
+    }
+  }
+
+  private[zoo] def int2float(src: Array[Int], dest: Array[Float], offset: Int): Unit = {
+    val length = src.length
+    var i = 0
+    while (i < length) {
+      dest(offset + i) = src(i).toFloat
+      i += 1
+    }
+  }
+
+  private[zoo] def long2float(src: Array[Long], dest: Array[Float], offset: Int): Unit = {
+    val length = src.length
+    var i = 0
+    while (i < length) {
+      dest(offset + i) = src(i).toFloat
+      i += 1
+    }
+  }
+
+  private[zoo] def double2float(src: Array[Double], dest: Array[Float], offset: Int): Unit = {
+    val length = src.length
+    var i = 0
+    while (i < length) {
+      dest(offset + i) = src(i).toFloat
+      i += 1
+    }
   }
 
   def tfenum2datatype(enum: Int): DataType = {
@@ -237,6 +357,9 @@ class MergeFeatureLabelFeatureTransformer() extends Preprocessing[Any, Any] {
 
 case class TrainMeta(inputs: Array[String],
                      inputTypes: Array[Int],
+                     labels: Array[String],
+                     labelTypes: Array[Int],
+                     predictionOutputs: Array[String],
                      metricTensors: Array[String],
                      batchSizeTensor: String,
                      lossTensor: String,
@@ -254,6 +377,8 @@ case class TrainMeta(inputs: Array[String],
                      saveOp: String,
                      savePathPlaceholder: String,
                      updateOp: String,
+                     trainOp: Option[String],
+                     initOp: Option[String],
                      defaultTensorValue: Array[Array[Float]],
                      metricsNames: Array[String])
 

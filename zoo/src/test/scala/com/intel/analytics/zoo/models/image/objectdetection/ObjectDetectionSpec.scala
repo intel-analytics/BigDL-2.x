@@ -27,16 +27,19 @@ import scala.language.postfixOps
 import sys.process._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
+/*
+
 class ObjectDetectionSpec extends FlatSpec with Matchers with BeforeAndAfter {
   var sc : SparkContext = _
 
   before {
     val conf = new SparkConf().setAppName("Test ObjectDetector").setMaster("local[1]")
     sc = NNContext.initNNContext(conf)
-    val s = s"wget -O ./ssd.model https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/" +
-      "object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model" !!
-    val s2 = s"wget -O ./bigdl_ssd.model https://s3-ap-southeast-1.amazonaws.com/bigdl-models/" +
-      s"object-detection/bigdl_ssd-mobilenet-300x300_PASCAL_0.4.0.model" !!
+    val s = s"wget -q -O ./ssd.model https://s3-ap-southeast-1.amazonaws.com/" +
+      s"analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet" +
+      s"-300x300_PASCAL_0.1.0.model" !!
+    val s2 = s"wget -q -O ./bigdl_ssd.model https://s3-ap-southeast-1.amazonaws.com/" +
+      s"bigdl-models/object-detection/bigdl_ssd-mobilenet-300x300_PASCAL_0.4.0.model" !!
   }
 
   after {
@@ -103,7 +106,7 @@ class ObjectDetectionSpec extends FlatSpec with Matchers with BeforeAndAfter {
     "rm -rf ./ssd.model" !!
   }
 }
-
+*/
 class ObjectDetectorSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
     // TODO: Extract save and load from the above unit test

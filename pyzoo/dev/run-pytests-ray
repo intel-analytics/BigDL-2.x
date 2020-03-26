@@ -31,3 +31,19 @@ if [ $exit_status_2 -ne 0 ];
 then
     exit $exit_status_2
 fi
+
+echo "Running automl tests"
+python -m pytest -v ../test/zoo/automl
+exit_status_3=$?
+if [ $exit_status_3 -ne 0 ];
+then
+    exit $exit_status_3
+fi
+
+echo "Running zouwu tests"
+python -m pytest -v ../test/zoo/zouwu
+exit_status_4=$?
+if [ $exit_status_4 -ne 0 ];
+then
+    exit $exit_status_4
+fi

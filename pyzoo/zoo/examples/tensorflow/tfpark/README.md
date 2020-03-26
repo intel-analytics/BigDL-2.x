@@ -1,4 +1,4 @@
-# TFPark API
+# TFPark
 
 This is an example to demonstrate how to use Analytics-Zoo's TFPark API to run distributed
 Tensorflow and Keras on Spark/BigDL.
@@ -59,6 +59,7 @@ bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] k
 Using TFDataset as data input
 ```bash
 export MASTER=local[4]
+export SPARK_DRIVER_MEMORY=2g
 python estimator/estimator_dataset.py
 ```
 
@@ -79,6 +80,7 @@ IMAGE_PATH=... # file://... for local files and hdfs:// for hdfs files
 NUM_CLASSES=..
 
 export MASTER=local[4]
+export SPARK_DRIVER_MEMORY=10g
 python estimator/estimator_inception.py --image-path $IMAGE_PATH --num-classes $NUM_CLASSES
 ```
 
@@ -89,7 +91,7 @@ Using TFDataset as data input
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] estimator/estimator_dataset.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] --driver-memory 2g estimator/estimator_dataset.py
 ```
 
 Using FeatureSet as data input
@@ -113,19 +115,15 @@ IMAGE_PATH=... # file://... for local files and hdfs:// for hdfs files
 NUM_CLASSES=..
 
 
-bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] estimator/estimator_inception.py --image-path $IMAGE_PATH --num-classes $NUM_CLASSES
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] --driver-memory 10g estimator/estimator_inception.py --image-path $IMAGE_PATH --num-classes $NUM_CLASSES
 ```
 
 ## Run the Training Example using TFOptimizer after pip install
 
 ```bash
+export SPARK_MASTER=local[4]
+export SPARK_DRIVER_MEMORY=2g
 python tf_optimzer/train_lenet.py
-```
-
-For Keras users:
-
-```bash
-python tf_optimizer/train_mnist_keras.py
 ```
 
 ## Run the Training Example using TFOptimizer with prebuilt package
@@ -134,28 +132,15 @@ python tf_optimizer/train_mnist_keras.py
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] tf_optimizer/train_lenet.py
-```
-
-For Keras users:
-
-```bash
-export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
-export SPARK_HOME=... # the root directory of Spark
-
-bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] tf_optimizer/train_mnist_keras.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] --driver-memory 2g tf_optimizer/train_lenet.py
 ```
 
 ## Run the Evaluation Example using TFPredictor after pip install
 
 ```bash
+export SPARK_MASTER=local[4]
+export SPARK_DRIVER_MEMEORY=2g
 python tf_optimizer/evaluate_lenet.py
-```
-
-For Keras users:
-
-```bash
-python tf_optimizer/evaluate_mnist_keras.py
 ```
 
 ## Run the Evaluation Example using TFPredictor with prebuilt package
@@ -164,36 +149,24 @@ python tf_optimizer/evaluate_mnist_keras.py
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] tf_optimizer/evaluate_lenet.py
-```
-
-For Keras users:
-
-```bash
-export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
-export SPARK_HOME=... # the root directory of Spark
-
-bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] tf_optimizer/evaluate_mnist_keras.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] --driver-memory 2g tf_optimizer/evaluate_lenet.py
 ```
 
 ## Run the GAN example after pip install
 
-Please first install tensorflow_gan to run this example. (pip install tensorflow_gan==2.0.0)
+Please first install tensorflow_gan to run this example. (pip install tensorflow_probability==0.7.0 tensorflow_datasets==2.0.0 tensorflow_gan==2.0.0)
 
-### Training
+### Train and evaluation
 ```bash
-python gan/gan_train.py
+export MASTER=local[1]
+python gan/gan_train_and_evaluate.py
 ```
-The training program will generate a TensorFlow checkpoint at /tmp/gan_model
+The training program will generate a TensorFlow checkpoint at /tmp/gan_model and every 1000 steps will generate 50 hand-written
+digits and save them in a single image in the current directory.
 
-### Evaluation
-```bash
-python gan/gan_eval.py
-```
-The evaluation program will load the /tmp/gan_model checkpoint and will generate a few hand-written 
-digits and output an image like the following.
+The following is the generated image after 20000 steps.
 
-![gan](generated_digital_numbers_w_gan_better.png)
+![gan](./gan/image_20100.png)
 
 
 ## Run the GAN with prebuilt package
@@ -205,20 +178,12 @@ Please first install tensorflow_gan to run this example. (pip install tensorflow
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
 
-bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] gan/gan_train.py
-```
-The training program will generate a TensorFlow checkpoint at /tmp/gan_model
-
-
-### Evaluation
-```bash
-export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
-export SPARK_HOME=... # the root directory of Spark
-
-bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] gan/gan_eval.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[1] gan/gan_train_and_evaluate.py
 ```
 
-The evaluation program will load the /tmp/gan_model checkpoint and will generate a few hand-written 
-digits and output an image like the following.
+The training program will generate a TensorFlow checkpoint at /tmp/gan_model and every 1000 steps will generate 50 hand-written
+digits and save them in a single image in the current directory.
 
-![gan](generated_digital_numbers_w_gan_better.png)
+The following is the generated image after 20000 steps.
+
+![gan](./gan/image_20100.png)

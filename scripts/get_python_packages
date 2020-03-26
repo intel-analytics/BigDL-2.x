@@ -48,7 +48,14 @@ then
 fi
 
 echo "Fetching nlp-architect ${NLP_ARCHITECT_VERSION}"
-GET_COMMAND="wget -nc https://github.com/NervanaSystems/nlp-architect/archive/v${NLP_ARCHITECT_VERSION}.zip -P $DEST_DIR"
+if [ $FTP_URI ];
+then
+    PREFIX="$FTP_URI/nlp_architect"
+else
+    PREFIX=https://github.com/NervanaSystems/nlp-architect/archive
+
+fi
+GET_COMMAND="wget -nc $PREFIX/v${NLP_ARCHITECT_VERSION}.zip -P $DEST_DIR"
 echo "Running: $GET_COMMAND"
 $GET_COMMAND
 exit_status=$?
@@ -73,14 +80,14 @@ fi
 
 cd ${DEST_DIR}
 mkdir sources
-unzip bigdl-python-api-${BIGDL_VERSION}.zip -d sources
+unzip -q bigdl-python-api-${BIGDL_VERSION}.zip -d sources
 
-unzip v${NLP_ARCHITECT_VERSION}.zip -d sources
+unzip -q v${NLP_ARCHITECT_VERSION}.zip -d sources
 cd sources/nlp-architect-${NLP_ARCHITECT_VERSION}
 mv nlp_architect/ ../
 cd ${DEST_DIR}
 rm -rf sources/nlp-architect-${NLP_ARCHITECT_VERSION}
 
-unzip ${BERT_COMMIT_ID}.zip -d sources
+unzip -q ${BERT_COMMIT_ID}.zip -d sources
 cd sources
 mv bert-${BERT_COMMIT_ID}/ bert/

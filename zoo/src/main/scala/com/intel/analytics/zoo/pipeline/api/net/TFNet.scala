@@ -19,7 +19,10 @@ import java.io.{File, FileInputStream, InputStream}
 import java.nio._
 
 import com.intel.analytics.bigdl.Module
+import com.intel.analytics.bigdl.dataset.MiniBatch
+import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.optim.{ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.T
@@ -28,12 +31,12 @@ import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.zoo.pipeline.api.Predictable
 import com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder
 import com.intel.analytics.zoo.tfpark.{TFResourceManager, TFUtils}
+import org.apache.spark.rdd.RDD
 import org.tensorflow.framework.GraphDef
 import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
 
 import scala.collection.JavaConverters._
 import org.json4s._
-import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
 import scala.reflect.ClassTag
@@ -461,6 +464,31 @@ object TFNet {
     override def finalize(): Unit = {
       graph.close()
     }
+  }
+
+  def testMiniBatch(model: AbstractModule[Activity, Activity, Float],
+                    dataset: RDD[MiniBatch[Float]],
+                    vMethods: Array[ValidationMethod[Float]]
+                   ): Array[(ValidationResult, ValidationMethod[Float])] = {
+
+    val rdd = dataset
+    val modelBroad = ModelBroadcast[Float]().broadcast(rdd.sparkContext,
+      model)
+    val otherBroad = rdd.sparkContext.broadcast(vMethods)
+
+
+    rdd.mapPartitions(miniBatch => {
+      val localModel = modelBroad.value()
+      val localMethod = otherBroad.value.map(_.clone())
+      miniBatch.map(batch => {
+        val output = localModel.forward(batch.getInput())
+        localMethod.map(validation => {
+          validation(output, batch.getTarget())
+        })
+      })
+    }).reduce((left, right) => {
+      left.zip(right).map { case (l, r) => l + r }
+    }).zip(vMethods)
   }
 
   class TFGraphHolder(@transient var tfGraph: ClosableGraph, private var id: String)

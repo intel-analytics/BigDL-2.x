@@ -47,6 +47,11 @@ class GraphRunner(
             private val savePathPlaceholder: String,
             private val config: Array[Byte]) extends java.io.Serializable {
 
+  def makeCopy(): GraphRunner = {
+    new GraphRunner(graphDef, restoreOp, restorePathPlaceholder,
+      saveOp, savePathPlaceholder, config)
+  }
+
   @transient
   private lazy val tensorManager = new TFResourceManager()
 
@@ -54,6 +59,7 @@ class GraphRunner(
 
   @transient
   private[zoo] lazy val sess = {
+    assert(TFNetNative.isLoaded)
     val graph = new Graph()
     graph.importGraphDef(graphDef)
     val sess = new Session(graph, config)
@@ -78,12 +84,31 @@ class GraphRunner(
     pathTensor.close()
   }
 
+  def runTargets(targets: Vector[String]): Unit = {
+    run(Vector.empty, Vector.empty, Vector.empty,
+      Vector.empty, Vector.empty, Vector.empty, targets)
+  }
+
+  def runTargets(targets: Vector[String],
+                 inputs: Vector[Tensor[_]],
+                 inputTypes: Vector[DataType],
+                 inputNames: Vector[String]): Unit = {
+    run(inputs, inputNames, inputTypes, Vector.empty, Vector.empty, Vector.empty, targets)
+  }
+
+  def runOutputs(outputs: Vector[Tensor[_]],
+                 outputNames: Vector[String], outputTypes: Vector[DataType]): Unit = {
+    run(Vector.empty, Vector.empty, Vector.empty,
+      outputs, outputNames, outputTypes, Vector.empty)
+  }
+
   def run(input: Vector[Tensor[_]],
-          inputTypes: Vector[DataType],
-          output: Vector[Tensor[Float]],
           inputNames: Vector[String],
+          inputTypes: Vector[DataType],
+          output: Vector[Tensor[_]],
           outputNames: Vector[String],
-          targets: Vector[String]): Vector[Tensor[Float]] = {
+          outputTypes: Vector[DataType],
+          targets: Vector[String]): Unit = {
     Utils.timeIt("Graph Runner Run") {
       try {
         val runner = sess.runner()
@@ -109,7 +134,7 @@ class GraphRunner(
         }
 
         outputs.asScala.zipWithIndex.foreach { case (t, idx) =>
-          TFUtils.tf2bigdl(t.asInstanceOf[TTensor[Float]], output(idx))
+          TFUtils.tf2bigdl(t, output(idx))
         }
 
         // outputs is returned by tensorflow and cannot be freed using tensorManager
@@ -119,7 +144,6 @@ class GraphRunner(
         tensorManager.destructTFTensors()
       }
     }
-    output
   }
 
   private def emptyTFTensorArray(arr: mutable.Buffer[TTensor[_]]): Unit = {
@@ -144,4 +168,15 @@ class GraphRunner(
 object GraphRunner {
 
   assert(TFNetNative.isLoaded)
+
+  def apply(graphDef: Array[Byte],
+            restoreOp: String,
+            restorePathPlaceholder: String,
+            saveOp: String,
+            savePathPlaceholder: String,
+            config: Array[Byte]): GraphRunner = {
+    new GraphRunner(graphDef, restoreOp, restorePathPlaceholder,
+      saveOp, savePathPlaceholder, config)
+  }
+
 }

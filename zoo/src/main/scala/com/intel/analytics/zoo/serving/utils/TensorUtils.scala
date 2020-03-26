@@ -31,16 +31,4 @@ object TensorUtils {
     l.drop(n).foldLeft(l.take(n).sortWith(_._2 < _._2))(update).
       sortWith(_._2 > _._2)
   }
-
-  def main(args: Array[String]): Unit = {
-    val list = List(3.0f, 2, 8, 2, 9, 1, 5, 5, 9, 1, 7, 3, 4)
-    val t = Tensor[Float](4, 13)
-    val b = t.select(1, 1)
-    (0 until 13).map{ i =>
-      t.setValue(i + 1, list(i))
-    }
-    val a = getTopN(5, t)
-    a
-  }
-
 }

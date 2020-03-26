@@ -73,6 +73,54 @@ from_rdd(rdd, features, labels=None, batch_size=-1, batch_per_thread=-1, hard_co
 * **val_rdd**: validation data with the same structure of rdd
 
 
+### **from_string_rdd**
+
+Create a TFDataset from a RDD of strings. Each element in the RDD should be a single string.
+The returning TFDataset's feature_tensors has only one Tensor. the type of the Tensor
+is tf.string, and the shape is (None,). The returning don't have label_tensors. If the
+dataset is used for training, the label should be encoded in the string.
+
+**Python**
+```python
+from_string_rdd(string_rdd, batch_size=-1, batch_per_thread=-1, hard_code_batch_size=False, validation_string_rdd=None)
+```
+
+**Arguments**
+
+* **string_rdd**: the RDD of strings
+* **batch_size**: the batch size, used for training, should be a multiple of
+        total core num
+* **batch_per_thread**: the batch size for each thread, used for inference or evaluation
+* **hard_code_batch_size**: whether to hard code the batch_size into tensorflow graph,
+        if True, the static size of the first dimension of the resulting tensors is
+        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
+        it is None.
+* **validation_string_rdd**: the RDD of strings to be used in validation
+
+### **from_bytes_rdd**
+
+Create a TFDataset from a RDD of bytes. Each element is the RDD should be a bytes object.
+The returning TFDataset's feature_tensors has only one Tensor. the type of the Tensor
+is tf.string, and the shape is (None,). The returning don't have label_tensors. If the
+dataset is used for training, the label should be encoded in the bytes.
+
+**Python**
+```python
+from_bytes_rdd(bytes_rdd, batch_size=-1, batch_per_thread=-1, hard_code_batch_size=False, validation_bytes_rdd=None)
+```
+
+**Arguments**
+
+* **bytes_rdd**: the RDD of bytes
+* **batch_size**: the batch size, used for training, should be a multiple of
+        total core num
+* **batch_per_thread**: the batch size for each thread, used for inference or evaluation
+* **hard_code_batch_size**: whether to hard code the batch_size into tensorflow graph,
+        if True, the static size of the first dimension of the resulting tensors is
+        batch_size/total_core_num (training) or batch_per_thread for inference; if False,
+        it is None.
+* **validation_string_rdd**: the RDD of bytes to be used in validation
+
 ### **from_ndarrays**
 
 Create a TFDataset from a nested structure of numpy ndarrays. Each element
@@ -183,21 +231,31 @@ from_feature_set(dataset, features, labels=None, batch_size=-1, batch_per_thread
         it is None.
 * **validation_dataset**: The FeatureSet used for validation during training
 
-### **from_string_rdd**
+### **from_tf_data_dataset**
 
-Create a TFDataset from a RDD of strings. Each element is the RDD should be a single string.
-The returning TFDataset's feature_tensors has only one Tensor. the type of the Tensor
-is tf.string, and the shape is (None,). The returning don't have label_tensors. If the
-dataset is used for training, the label should be encoded in the string.
+Create a TFDataset from a tf.data.Dataset.
+
+The recommended way to create the dataset is to reading files in a shared file
+system (e.g. HDFS) that is accessible from every executor of this Spark Application.
+
+If the dataset is created by reading files in the local file system, then the
+files must exist in every executor in the exact same path. The path should be
+absolute path and relative path is not supported.
+
+A few kinds of dataset is not supported for now:
+1. dataset created from tf.data.Dataset.from_generators
+2. dataset with Dataset.batch operation.
+3. dataset with Dataset.repeat operation
+4. dataset contains tf.py_func, tf.py_function or tf.numpy_function
 
 **Python**
 ```python
-from_string_rdd(string_rdd, batch_size=-1, batch_per_thread=-1, hard_code_batch_size=False, validation_string_rdd=None)
+from_tf_data_dataset(dataset, batch_size=-1, batch_per_thread=-1, hard_code_batch_size=False, validation_dataset=None)
 ```
 
 **Arguments**
 
-* **string_rdd**: the RDD of strings
+* **dataset**: the tf.data.Dataset
 * **batch_size**: the batch size, used for training, should be a multiple of
         total core num
 * **batch_per_thread**: the batch size for each thread, used for inference or evaluation
@@ -205,23 +263,30 @@ from_string_rdd(string_rdd, batch_size=-1, batch_per_thread=-1, hard_code_batch_
         if True, the static size of the first dimension of the resulting tensors is
         batch_size/total_core_num (training) or batch_per_thread for inference; if False,
         it is None.
-* **validation_string_rdd**: the RDD of strings to be used in validation
+* **validation_dataset**: the dataset used for validation
 
-### **from_bytes_rdd**
+### **from_dataframe**
 
-Create a TFDataset from a RDD of bytes. Each element is the RDD should be a bytes object.
-The returning TFDataset's feature_tensors has only one Tensor. the type of the Tensor
-is tf.string, and the shape is (None,). The returning don't have label_tensors. If the
-dataset is used for training, the label should be encoded in the bytes.
+Create a TFDataset from a pyspark.sql.DataFrame.
 
 **Python**
 ```python
-from_bytes_rdd(bytes_rdd, batch_size=-1, batch_per_thread=-1, hard_code_batch_size=False, validation_bytes_rdd=None)
+from_dataframe(df, feature_cols, labels_cols=None, batch_size=-1, batch_per_thread=-1, hard_code_batch_size=False, validation_df=None)
 ```
 
 **Arguments**
 
-* **bytes_rdd**: the RDD of bytes
+* **df**: the DataFrame for the dataset
+* **feature_cols**: a list of string, indicating which columns are used as features.
+                    Currently supported types are FloatType, DoubleType, IntegerType,
+                    LongType, ArrayType (value should be numbers), DenseVector
+                    and SparseVector. For ArrayType, DenseVector and SparseVector,
+                    the element of the same column are assume to have the same size. 
+* **label_cols**: a list of string, indicating which columns are used as labels.
+                    Currently supported types are FloatType, DoubleType, IntegerType,
+                    LongType, ArrayType (value should be numbers), DenseVector
+                    and SparseVector. For ArrayType, DenseVector and SparseVector,
+                    the element of the same column are assume to have the same size.
 * **batch_size**: the batch size, used for training, should be a multiple of
         total core num
 * **batch_per_thread**: the batch size for each thread, used for inference or evaluation
@@ -229,4 +294,4 @@ from_bytes_rdd(bytes_rdd, batch_size=-1, batch_per_thread=-1, hard_code_batch_si
         if True, the static size of the first dimension of the resulting tensors is
         batch_size/total_core_num (training) or batch_per_thread for inference; if False,
         it is None.
-* **validation_string_rdd**: the RDD of bytes to be used in validation
+* **validation_df**: the DataFrame used for validation

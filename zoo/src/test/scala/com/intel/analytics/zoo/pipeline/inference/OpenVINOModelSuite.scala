@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.pipeline.inference
 
 import java.io.File
+import java.nio.file.NoSuchFileException
 import java.util
 import java.util.{Arrays, Properties}
 
@@ -29,6 +30,8 @@ import scala.io.Source
 import scala.language.postfixOps
 import sys.process._
 
+
+/*
 @OpenVinoTest
 class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
   with InferenceSupportive {
@@ -39,29 +42,14 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
   val url_ov_fasterrcnn_tests_inputdata1 = s"$s3DataUrl/inputdata_1"
   val url_ov_fasterrcnn_tests_inputdata2 = s"$s3DataUrl/inputdata_2"
 
-  var modelZooUrl = "http://download.tensorflow.org"
-  try {
-    val prop = new Properties()
-    prop.load(this.getClass.getResourceAsStream("/app.properties"))
-    modelZooUrl = prop.getProperty("data-store-url")
-  } catch {
-    case e: Exception =>
-      modelZooUrl = "http://download.tensorflow.org"
-  }
-
   val logger = LoggerFactory.getLogger(getClass)
   var tmpDir: File = _
 
-  val fasterrcnnModelUrl = s"$modelZooUrl" +
-    s"/models/object_detection/faster_rcnn_resnet101_coco_2018_01_28.tar.gz"
-  val fasterrcnnModelTar = fasterrcnnModelUrl.split("/").last
-  val fasterrcnnModelDir = fasterrcnnModelTar.replaceAll(".tar.gz", "")
+  val fasterrcnnModelUrl = "https://analytics-zoo-models.s3-ap-southeast-1.amazonaws.com/openvino/2018_R5/faster_rcnn_resnet101_coco"
   var fasterrcnnModel: OpenVINOModel = _
   val fasterrcnnInferenceModel: InferenceModel = new InferenceModel(3)
   val fasterrcnnInputShape = Array(1, 3, 600, 600)
-  var faserrcnnFrozenModelFilePath: String = _
-  var faserrcnnModelType: String = _
-  var faserrcnnPipelineConfigFilePath: String = _
+  var faserrcnnModelPath: String = _
   var fasterrcnnInputdata1FilePath: String = _
   var fasterrcnnInputdata2FilePath: String = _
 
@@ -73,17 +61,15 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     tmpDir = Utils.createTmpDir("ZooVino").toFile()
     val dir = new File(s"${tmpDir.getAbsolutePath}/OpenVinoInferenceModelSpec").getCanonicalPath
 
-    s"wget -P $dir $url_ov_fasterrcnn_tests_inputdata1" !;
-    s"wget -P $dir $url_ov_fasterrcnn_tests_inputdata2" !;
+    s"wget -nv -P $dir $url_ov_fasterrcnn_tests_inputdata1" !;
+    s"wget -nv -P $dir $url_ov_fasterrcnn_tests_inputdata2" !;
 
-    s"wget -P $dir $fasterrcnnModelUrl" !;
-    s"tar xvf $dir/$fasterrcnnModelTar -C $dir" !;
+    s"wget -nv -P $dir $fasterrcnnModelUrl.xml" !;
+    s"wget -nv -P $dir $fasterrcnnModelUrl.bin" !;
 
     s"ls -alh $dir" !;
 
-    faserrcnnFrozenModelFilePath = s"$dir/$fasterrcnnModelDir/frozen_inference_graph.pb"
-    faserrcnnModelType = "faster_rcnn_resnet101_coco"
-    faserrcnnPipelineConfigFilePath = s"$dir/$fasterrcnnModelDir/pipeline.config"
+    faserrcnnModelPath = s"$dir/faster_rcnn_resnet101_coco"
     fasterrcnnInputdata1FilePath = s"$dir/inputdata_1"
     fasterrcnnInputdata2FilePath = s"$dir/inputdata_2"
   }
@@ -94,39 +80,30 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
   }
 
   test("openvino model should be optimized") {
-    InferenceModel.doOptimizeTF(
-      faserrcnnFrozenModelFilePath,
-      faserrcnnModelType,
-      faserrcnnPipelineConfigFilePath,
-      null,
-      tmpDir.getAbsolutePath
-    )
+    fasterrcnnInferenceModel
+      .doLoadOpenVINO(s"$faserrcnnModelPath.xml",
+        s"$faserrcnnModelPath.bin")
     tmpDir.listFiles().foreach(file => println(file.getAbsoluteFile))
   }
 
   test("openvino model should throw exception if load failed") {
-    val thrown = intercept[InferenceRuntimeException] {
-      InferenceModelFactory.loadOpenVINOModelForTF(
-        faserrcnnFrozenModelFilePath + "error",
-        faserrcnnModelType,
-        faserrcnnPipelineConfigFilePath,
-        null)
+    val thrown = intercept[NoSuchFileException] {
+      InferenceModelFactory
+        .loadOpenVINOModelForIR(s"$faserrcnnModelPath.error.xml",
+        s"$faserrcnnModelPath.error.bin",
+        DeviceType.CPU)
     }
-    assert(thrown.getMessage.contains("Openvino optimize tf object detection model error"))
   }
 
+  // this method will be deprecated", "0.8.0")
   test("openvino object detection model should load successfully and predict correctly") {
-    fasterrcnnModel = InferenceModelFactory.loadOpenVINOModelForTF(
-      faserrcnnFrozenModelFilePath,
-      faserrcnnModelType,
-      faserrcnnPipelineConfigFilePath,
-      null)
-    fasterrcnnInferenceModel.doLoadTF(
-      faserrcnnFrozenModelFilePath,
-      faserrcnnModelType,
-      faserrcnnPipelineConfigFilePath,
-      null
-    )
+    fasterrcnnModel = InferenceModelFactory
+      .loadOpenVINOModelForIR(s"$faserrcnnModelPath.xml",
+        s"$faserrcnnModelPath.bin",
+        DeviceType.CPU)
+    fasterrcnnInferenceModel
+      .doLoadOpenVINO(s"$faserrcnnModelPath.xml",
+        s"$faserrcnnModelPath.bin")
 
     println(s"fasterrcnnModel from tensorflow pb loaded as $fasterrcnnModel")
     fasterrcnnModel shouldNot be(null)
@@ -177,3 +154,5 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     }
   }
 }
+*/
+

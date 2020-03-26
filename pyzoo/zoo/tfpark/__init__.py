@@ -14,5 +14,10 @@
 # limitations under the License.
 #
 
-from zoo.pipeline.api.net import TFDataset, TFOptimizer, TFPredictor
-from zoo.tfpark.model import KerasModel
+from .model import KerasModel
+from .estimator import TFEstimator
+from .tf_optimizer import TFOptimizer
+from .tf_dataset import TFDataset
+from .zoo_optimizer import ZooOptimizer
+from .tf_predictor import TFPredictor
+from .tfnet import TFNet
