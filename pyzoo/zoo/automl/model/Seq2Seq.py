@@ -233,7 +233,6 @@ class LSTMSeq2Seq(BaseModel):
             self._build_train(mc=mc, **config)
 
         # batch_size = config.get('batch_size', 64)
-        epochs = config.get('epochs', 10)
         # lr = self.lr
         # name = "seq2seq-batch_size-{}-epochs-{}-lr-{}-time-{}"\
         #     .format(batch_size, epochs, lr, time())
@@ -242,7 +241,7 @@ class LSTMSeq2Seq(BaseModel):
         hist = self.model.fit([x, decoder_input_data], y,
                               validation_data=validation_data,
                               batch_size=self.batch_size,
-                              epochs=epochs,
+                              epochs=config.get("epochs", 10),
                               verbose=verbose,
                               # callbacks=[tensorboard]
                               )
