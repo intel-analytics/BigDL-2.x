@@ -16,18 +16,15 @@ source ${ANALYTICS_ZOO_HOME}/bin/analytics-zoo-env.sh
 python3 ./cluster-serving-init &&
 echo "initialized env" &&
 ./cluster-serving-start &
-sleep 10
+sleep 20
 
-python3 ./cluster-serving-enqueue-test &
+python3 ./cluster-serving-enqueue-test
 
-./cluster-serving-stop
-sleep 10
-./cluster-serving-start &
 rm cat1.jpeg
 
 
 
-sleep 120
+sleep 60
 ./cluster-serving-stop
 
 echo "Benchmark test end, please check at cluster-serving.log"
