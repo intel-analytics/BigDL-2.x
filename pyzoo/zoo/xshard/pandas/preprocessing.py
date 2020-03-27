@@ -21,7 +21,7 @@ import random
 import os
 from pyspark.context import SparkContext
 from zoo.ray.util.raycontext import RayContext
-from zoo.xshard.shard import RayDataShard
+from zoo.xshard.shard import RayDataShards
 
 
 def read_csv(file_path, context):
@@ -43,29 +43,30 @@ def read_json(file_path, context):
 
 
 def read_csv_ray(context, file_path):
-    read_file_ray(context, file_path, "csv")
+    return read_file_ray(context, file_path, "csv")
 
 
 def read_json_ray(context, file_path):
-    read_file_ray(context, file_path, "json")
+    return read_file_ray(context, file_path, "json")
 
 
 def read_file_ray(context, file_path, file_type):
-    if len(file_path) == 1:
+    file_path_splits = file_path.split(',')
+    if len(file_path_splits) == 1:
         # only one file
         if os.path.splitext(file_path)[-1] == file_type:
             file_paths = file_path
         # directory
         else:
-            file_paths = [os.path.abspath(x) for x in os.listdir(file_path)]
+            file_paths = [os.path.join(file_path, file) for file in os.listdir(file_path)]
     else:
-        file_paths = file_path
-    # shuffle
-    shuffled_indexes = random.shuffle(range(len(file_paths)))
+        file_paths = file_path_splits
+
     num_executors = context.num_ray_nodes
     num_cores = context.ray_node_cpu_cores
     num_partitions = num_executors * num_cores
 
+    # split file paths into n chunks
     def chunk(ys, n):
         random.shuffle(ys)
         size = len(ys) // n
@@ -78,13 +79,15 @@ def read_file_ray(context, file_path, file_type):
             yield ys[c * size:(c + 1) * size] + extra
 
     partition_list = list(chunk(file_paths, num_partitions))
-    shards = [RayPandasShard(num_cpus=1).remote() for i in range(num_partitions)]
-    data_shard = RayDataShard(shards)
-    [shards[i].read_file_partitions(partition_list[i], file_type) for i in len(data_shard.shards)]
-    return data_shard
+    shards = [(RayPandasShard.remote()) for i in range(num_partitions)]
+    [shard.read_file_partitions.remote(partition_list[i], file_type)
+     for i, shard in enumerate(shards)]
+    data_shards = RayDataShards(shards)
+    return data_shards
 
 @ray.remote
 class RayPandasShard(object):
+
     def __init__(self, data=None):
         self.data = data
 
@@ -105,11 +108,20 @@ class RayPandasShard(object):
                     else:
                         raise Exception("Unsupported file type")
                     df_list.append(df)
+        else:
+            for path in paths:
+                if file_type == "json":
+                    df = pd.read_json(path, orient='columns', lines=True)
+                elif file_type == "csv":
+                    df = pd.read_csv(path)
+                else:
+                    raise Exception("Unsupported file type")
+                df_list.append(df)
         self.data = pd.concat(df_list)
         return self.data
 
     def apply(self, func):
-        return func(self.data)
+        self.data = func(self.data)
 
     def get_data(self):
         return self.data

@@ -18,9 +18,15 @@ from zoo import init_spark_on_local, init_spark_on_yarn
 from zoo.ray.util.raycontext import RayContext
 from zoo.xshard.pandas import read_csv, read_json
 
+
+def negative(df):
+    df["label"] = df["label"] * (-1)
+    return df
+
+
 if __name__ == "__main__":
 
-    sc = init_spark_on_local(cores="*")
+    sc = init_spark_on_local(cores="*", python_location="/home/jwang/miniconda3/envs/mxnet/bin/python")
     #sc = init_spark_on_yarn(
     #    hadoop_conf="/opt/work/hadoop-2.7.2/etc/hadoop",
     #    conda_name="mxnet",
@@ -47,4 +53,11 @@ if __name__ == "__main__":
     print("get shards:")
     print(shards)
     data = data_shard.collect_data()
-    print("collected data : %d" % data[0][1])
+    print("collected data : %s" % data[0].iloc[0])
+    data_shards_2 = data_shard.apply(negative)
+    shards2 = data_shards_2.get_shards()
+    print("get shards 2 :")
+    print(shards2)
+    data2 = data_shards_2.collect_data()
+    print("collected data : %s" % data2[0].iloc[0])
+
