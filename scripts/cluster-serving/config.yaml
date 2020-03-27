@@ -3,9 +3,9 @@
 model:
   # model path must be set
   path: model
-  # the inputs of the tensorflow saved model, separated by ","
+  # the inputs of the tensorflow model, separated by ","
   inputs:
-  # the outputs of the tensorflow saved model, separated by ","
+  # the outputs of the tensorflow model, separated by ","
   outputs:
 data:
   # default, localhost:6379

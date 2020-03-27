@@ -277,24 +277,22 @@ class ClusterServingHelper {
     val parallelNum = if (blasFlag) coreNum else 1
     val model = new InferenceModel(parallelNum)
 
+    modelInputs = modelInputs.filterNot((x: Char) => x.isWhitespace)
+    modelOutputs = modelOutputs.filterNot((x: Char) => x.isWhitespace)
+    val (inputs, outputs) = if (modelInputs != "" && modelOutputs != ""){
+      (modelInputs.split(","), modelOutputs.split(","))
+    } else {
+      (null, null)
+    }
+
     // quantize model would not bring any drawback here
     // but some test may fail at this place
     // perhaps machine not supporting DNN would not accept quantize
     modelType match {
       case "caffe" => model.doLoadCaffe(defPath, weightPath, blas = blasFlag)
       case "bigdl" => model.doLoadBigDL(weightPath, blas = blasFlag)
-
-      case "tensorflowFrozenModel" => model.doLoadTensorflow(weightPath, "frozenModel", coreNum, 1, true)
-      case "tensorflowSavedModel" => {
-        modelInputs = modelInputs.filterNot((x: Char) => x.isWhitespace)
-        modelOutputs = modelOutputs.filterNot((x: Char) => x.isWhitespace)
-        val (inputs, outputs) = if (modelInputs != "" && modelOutputs != ""){
-          (modelInputs.split(","), modelOutputs.split(","))
-        } else {
-          (null, null)
-        }
-        model.doLoadTensorflow(weightPath, "savedModel", inputs, outputs)
-      }
+      case "tensorflowFrozenModel" => model.doLoadTensorflow(weightPath, "frozenModel", inputs, outputs)
+      case "tensorflowSavedModel" => model.doLoadTensorflow(weightPath, "savedModel", inputs, outputs)
       case "pytorch" => model.doLoadPyTorch(weightPath)
       case "keras" => logError("Keras currently not supported in Cluster Serving")
       case "openvino" => model.doLoadOpenVINO(defPath, weightPath, batchSize)
