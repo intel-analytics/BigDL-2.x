@@ -7,6 +7,7 @@ rm -rf TensorboardEventLogs
 rm running &&
 echo "old logs removed"
 
+export ANALYTICS_ZOO_HOME=$(pwd)/../..
 if [ -z "${ANALYTICS_ZOO_HOME}" ]; then
     echo "You must set ANALYTICS_ZOO_HOME variable to run auto benchmark"
     exit 1
