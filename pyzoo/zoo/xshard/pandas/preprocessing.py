@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+import boto3
 import ray
 import pyarrow as pa
 import pandas as pd
@@ -58,7 +58,32 @@ def read_file_ray(context, file_path, file_type):
             file_paths = file_path
         # directory
         else:
-            file_paths = [os.path.join(file_path, file) for file in os.listdir(file_path)]
+            file_url_splits = file_path.split("://")
+            prefix = file_url_splits[0]
+            if prefix == "hdfs":
+                fs = pa.hdfs.connect()
+                server_address = file_url_splits[1].split('/')[0]
+                files = fs.ls(file_path)
+                file_paths = [os.path.join(server_address, file) for file in files]
+            elif prefix == "s3":
+                path_parts = file_url_splits[1].split('/')
+                bucket = path_parts.pop(0)
+                key = "/".join(path_parts)
+                access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
+                secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
+                s3_client = boto3.Session(
+                    aws_access_key_id=access_key_id,
+                    aws_secret_access_key=secret_access_key,
+                ).client('s3', verify=False)
+                keys = []
+                resp = s3_client.list_objects_v2(Bucket=bucket,
+                                                 Prefix=key)
+                for obj in resp['Contents']:
+                    keys.append(obj['Key'])
+                files = list(dict.fromkeys(keys))
+                file_paths = [os.path.join(file_path, file) for file in files]
+            else:
+                file_paths = [os.path.join(file_path, file) for file in os.listdir(file_path)]
     else:
         file_paths = file_path_splits
 
@@ -108,6 +133,25 @@ class RayPandasShard(object):
                     else:
                         raise Exception("Unsupported file type")
                     df_list.append(df)
+        elif prefix == "s3":
+            access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
+            secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
+            s3_client = boto3.Session(
+                aws_access_key_id=access_key_id,
+                aws_secret_access_key=secret_access_key,
+            ).client('s3', verify=False)
+            for path in paths:
+                path_parts = path.split("://")[1].split('/')
+                bucket = path_parts.pop(0)
+                key = "/".join(path_parts)
+                obj = s3_client.get_object(Bucket=bucket, Key=key)
+                if file_type == "json":
+                    df = pd.read_json(obj['Body'], orient='columns', lines=True)
+                elif file_type == "csv":
+                    df = pd.read_csv(obj['Body'])
+                else:
+                    raise Exception("Unsupported file type")
+                df_list.append(df)
         else:
             for path in paths:
                 if file_type == "json":
