@@ -111,7 +111,7 @@ class VanillaLSTM(BaseModel):
         hist = self.model.fit(x, y,
                               validation_data=validation_data,
                               batch_size=self.batch_size,
-                              epochs=config.get('epochs', 20),
+                              epochs=config.get("epochs", 10),
                               verbose=verbose
                               )
         # print(hist.history)
