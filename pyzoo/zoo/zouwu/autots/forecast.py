@@ -16,9 +16,7 @@
 
 from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
 from zoo.automl.regression.time_sequence_predictor import SmokeRecipe
-from zoo.automl.regression.time_sequence_predictor import GridRandomRecipe
 from zoo.automl.regression.time_sequence_predictor import Recipe
-
 from zoo.automl.pipeline.time_sequence import load_ts_pipeline
 
 
