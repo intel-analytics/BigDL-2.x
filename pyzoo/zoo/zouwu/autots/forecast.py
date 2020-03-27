@@ -16,7 +16,9 @@
 
 from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
 from zoo.automl.regression.time_sequence_predictor import SmokeRecipe
+from zoo.automl.regression.time_sequence_predictor import GridRandomRecipe
 from zoo.automl.regression.time_sequence_predictor import Recipe
+
 from zoo.automl.pipeline.time_sequence import load_ts_pipeline
 
 
@@ -132,7 +134,7 @@ class TSPipeline:
         # maybe use another method to apply configs.
         # distinguish between incremental and fit from scratch
         self.uncertainty = uncertainty
-        if user_config is not None:
+        if user_config:
             self.internal.fit_with_fixed_configs(input_df=input_df,
                                                  validation_df=validation_df,
                                                  mc=uncertainty,
