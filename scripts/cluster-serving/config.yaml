@@ -2,7 +2,7 @@
 
 model:
   # model path must be set
-  path: file:///home/litchy/models/tf_res50/
+  path: model
 data:
   # default, localhost:6379
   src:
