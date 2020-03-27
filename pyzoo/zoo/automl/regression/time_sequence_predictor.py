@@ -67,7 +67,7 @@ class SmokeRecipe(Recipe):
     def search_space(self, all_available_features):
         return {
             "selected_features": all_available_features,
-            "model": RandomSample(lambda spec: np.random.choice(["LSTM", "Seq2seq"], size=1)[0]),
+            "model": "LSTM",
             "lstm_1_units": RandomSample(lambda spec: np.random.choice([32, 64], size=1)[0]),
             "dropout_1": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
             "lstm_2_units": RandomSample(lambda spec: np.random.choice([32, 64], size=1)[0]),
@@ -159,7 +159,7 @@ class GridRandomRecipe(Recipe):
                     replace=False)),
 
             # --------- model related parameters
-            "model": GridSearch(["LSTM", "Seq2seq"]),
+            "model": "LSTM",
             "lr": 0.001,
             "lstm_1_units": GridSearch([16, 32]),
             "dropout_1": 0.2,
