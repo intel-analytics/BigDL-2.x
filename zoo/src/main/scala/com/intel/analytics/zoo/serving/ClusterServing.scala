@@ -73,7 +73,7 @@ object ClusterServing {
      * Note that currently CHW is commonly used
      * and HWC is often used in Tensorflow models
      */
-    val chwFlag = if (modelType == "tensorflow") {
+    val chwFlag = if (modelType.startsWith("tensorflow")) {
       false
     } else {
       true
@@ -229,7 +229,14 @@ object ClusterServing {
                 t.squeeze(1)
                 res
               } else {
-                localModel.doPredict(x).toTensor
+                val res = localModel.doPredict(x)
+                if (res.isTensor) {
+                  res.toTensor
+                } else {
+                  // TODO: Table support
+                  val probTensor: Tensor[Float] = res.toTable(2)
+                  probTensor.toTensor
+                }
               }
 
               (0 until thisBatchSize).toParArray.map(i => {

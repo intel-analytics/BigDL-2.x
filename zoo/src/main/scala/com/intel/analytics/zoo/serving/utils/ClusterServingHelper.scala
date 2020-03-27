@@ -286,8 +286,14 @@ class ClusterServingHelper {
 
       case "tensorflowFrozenModel" => model.doLoadTensorflow(weightPath, "frozenModel", coreNum, 1, true)
       case "tensorflowSavedModel" => {
-        model.doLoadTensorflow(weightPath, "savedModel", null,
-          null)
+        modelInputs = modelInputs.filterNot((x: Char) => x.isWhitespace)
+        modelOutputs = modelOutputs.filterNot((x: Char) => x.isWhitespace)
+        val (inputs, outputs) = if (modelInputs != "" && modelOutputs != ""){
+          (modelInputs.split(","), modelOutputs.split(","))
+        } else {
+          (null, null)
+        }
+        model.doLoadTensorflow(weightPath, "savedModel", inputs, outputs)
       }
       case "pytorch" => model.doLoadPyTorch(weightPath)
       case "keras" => logError("Keras currently not supported in Cluster Serving")
