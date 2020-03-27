@@ -24,7 +24,7 @@ rm cat1.jpeg
 
 
 
-sleep 60
+sleep 180
 ./cluster-serving-stop
 
 echo "Benchmark test end, please check at cluster-serving.log"

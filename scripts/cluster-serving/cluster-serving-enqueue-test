@@ -10,6 +10,6 @@ base_path = os.getcwd()
 arr = cv2.imread("cat1.jpeg")
 
 
-for i in range(5000):
+for i in range(10000):
     input_api.enqueue_image("x", arr)
 print("10000 images enqueued")
