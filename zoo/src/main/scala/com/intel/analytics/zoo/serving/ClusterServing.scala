@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
 import com.intel.analytics.zoo.serving.utils._
 import com.intel.analytics.zoo.serving.InferenceStrategy
-import com.intel.analytics.zoo.serving.spark.ServingReceiver
+import com.intel.analytics.zoo.serving.engine.ServingReceiver
 import com.redislabs.provider.redis.streaming.ConsumerConfig
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.broadcast.Broadcast

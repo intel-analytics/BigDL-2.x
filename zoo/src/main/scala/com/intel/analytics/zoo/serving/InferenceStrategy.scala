@@ -4,20 +4,26 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.spark.rdd.RDD
 import com.intel.analytics.zoo.serving.ClusterServing.{Params, Record}
+import com.intel.analytics.zoo.serving.pipeline.RedisPool
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.util.LongAccumulator
+import redis.clients.jedis.JedisPool
+
+import scala.collection.JavaConverters._
 
 
 object InferenceStrategy {
   var params: Params = null
   var bcModel: Broadcast[InferenceModel] = null
   var acc: LongAccumulator = null
+  @transient private lazy val redisPool = new JedisPool()
+
 
   def apply(_params: Params,
             _bcModel: Broadcast[InferenceModel],
             _acc: LongAccumulator,
             r: RDD[(String, Tensor[Float])],
-            strategy: String): RDD[Record] = {
+            strategy: String): Unit = {
     params = _params
     bcModel = _bcModel
     acc = _acc
@@ -36,7 +42,7 @@ object InferenceStrategy {
    *
    * Throughput will be normal but latency will be high
    */
-  def singleThreadInference(r: RDD[(String, Tensor[Float])]): RDD[Record] = {
+  def singleThreadInference(r: RDD[(String, Tensor[Float])]): Unit = {
     r.mapPartitions(it => {
       it.grouped(params.coreNum).flatMap(itemBatch => {
         itemBatch.indices.toParArray.map(i => {
@@ -48,7 +54,10 @@ object InferenceStrategy {
 
           val value = PostProcessing(result, params.filter)
 
-          Record(uri, value)
+          val hKey = "result:" + uri
+          val hValue = Map[String, String]("value", value).asJava
+          RedisPool.getRedisConnection(redisPool)
+            .hmset(hKey, hValue)
         })
       })
     })

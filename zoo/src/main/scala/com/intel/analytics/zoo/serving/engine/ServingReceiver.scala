@@ -1,4 +1,4 @@
-package com.intel.analytics.zoo.serving.spark
+package com.intel.analytics.zoo.serving.engine
 
 import java.util.AbstractMap.SimpleEntry
 
