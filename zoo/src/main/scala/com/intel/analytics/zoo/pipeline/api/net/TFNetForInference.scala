@@ -249,8 +249,9 @@ object TFNetForInference {
           s"using default signature <$DEFAULT_SIGNATURE>")
       }
 
-      val inputNameCandidate, outputNameCandidate = getInputOutputNames(metaGraphDef,
+      val (inputNameCandidate, outputNameCandidate) = getInputOutputNames(metaGraphDef,
         signature.getOrElse(DEFAULT_SIGNATURE))
+
       (inputs.getOrElse(inputNameCandidate), outputs.getOrElse(outputNameCandidate))
     } else {
       (inputs.get, outputs.get)
