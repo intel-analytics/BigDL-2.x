@@ -239,12 +239,8 @@ object ClusterServing {
               } else {
                 // result is table
                 val separator = ","
-                val res = if (modelType == "openvino") {
-                  // TODO: openvino Table support
-                  result.toTable
-                } else {
-                  result.toTable
-                }
+                // TODO: openvino Table support
+                val res = result.toTable
                 (0 until thisBatchSize).toParArray.map(i => {
                   val value = StringBuilder.newBuilder
                   value.append("[")
