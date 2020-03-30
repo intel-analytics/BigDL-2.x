@@ -88,9 +88,9 @@ object AnomalyDetection {
     val yPredict: RDD[Float] = predictions.map(x => x.toTensor.toArray()(0))
     val yTruth: RDD[Float] = testRdd.map(x => x.label.toArray()(0))
     val anomalies = AnomalyDetector.detectAnomalies(yTruth, yPredict, 50)
-    anomalies.take(6).foreach(a => println("XXX" + a))
+    anomalies.take(6).foreach(a => println("anomaly: " + a))
     println("detection finished...")
-    System.exit(0)
+    sc.stop()
   }
 
   def loadData(sqlContext: SQLContext, dataPath: String): DataFrame = {
