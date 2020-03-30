@@ -224,26 +224,40 @@ object ClusterServing {
                * original Tensor, thus if reuse of Tensor is needed,
                * have to squeeze it back.
                */
-              val result = if (modelType == "openvino") {
-                val res = localModel.doPredict(x).toTensor.squeeze()
-                t.squeeze(1)
-                res
-              } else {
-                val res = localModel.doPredict(x)
-                if (res.isTensor) {
-                  res.toTensor
+              val result = localModel.doPredict(x)
+              if (result.isTensor) {
+                val res = if (modelType == "openvino") {
+                  t.squeeze(1)
+                  result.toTensor.squeeze()
                 } else {
-                  // TODO: Table support
-                  val probTensor: Tensor[Float] = res.toTable(2)
-                  probTensor.toTensor
+                  result.toTensor
                 }
+                (0 until thisBatchSize).toParArray.map(i => {
+                  val value = PostProcessing(res.select(1, i + 1), filter)
+                  Record(pathByteBatch(i)._1, value)
+                })
+              } else {
+                // result is table
+                val separator = ","
+                val res = if (modelType == "openvino") {
+                  // TODO: openvino Table support
+                  result.toTable
+                } else {
+                  result.toTable
+                }
+                (0 until thisBatchSize).toParArray.map(i => {
+                  val value = StringBuilder.newBuilder
+                  value.append("[")
+                  res.keySet.foreach(key => {
+                    value.append(PostProcessing(
+                      res(key).asInstanceOf[Tensor[_]].toTensor.select(1, i + 1)))
+                    value.append(separator)
+                  })
+                  value.deleteCharAt(value.length - 1)
+                  value.append("]")
+                  Record(pathByteBatch(i)._1, value.toString())
+                })
               }
-
-              (0 until thisBatchSize).toParArray.map(i => {
-                val value = PostProcessing(result.select(1, i + 1), filter)
-                Record(pathByteBatch(i)._1, value)
-              })
-
             })
           })
         }
