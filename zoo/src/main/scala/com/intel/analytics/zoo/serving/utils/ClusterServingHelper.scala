@@ -67,7 +67,7 @@ class ClusterServingHelper {
   var sc: SparkContext = null
 
   var modelInputs: String = null
-  var modelOutputs:String = null
+  var modelOutputs: String = null
 
   var redisHost: String = null
   var redisPort: String = null
