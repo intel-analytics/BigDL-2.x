@@ -232,7 +232,7 @@ object TFNetForInference {
     val metaGraphDef = MetaGraphDef.parseFrom(savedModelBundle.metaGraphDef())
     val initOp = if (tableInitOp.isDefined) tableInitOp else getInitOp(metaGraphDef)
 
-    val (inputNames: Array[String], outputNames: Array[String]) = if (inputs.isEmpty || outputs.isEmpty) {
+    val (inputNames, outputNames) = if (inputs.isEmpty || outputs.isEmpty) {
 
       if (inputs.isEmpty) {
         logger.warn("Loading TensorFlow SavedModel: inputs is not defined, finding inputs " +
