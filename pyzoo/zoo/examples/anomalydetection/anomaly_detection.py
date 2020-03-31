@@ -71,5 +71,5 @@ if __name__ == "__main__":
     anomalies = AnomalyDetector.detect_anomalies(y_predict, y_truth, 50)
 
     print("anomalies: ", anomalies.take(10)[0:10])
-    print("finised...")
+    print("finished...")
     sc.stop()
