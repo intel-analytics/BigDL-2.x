@@ -92,3 +92,5 @@ print("Train finished.")
 print('Evaluating...')
 score = model.evaluate(val_rdd, batch_size=160)[0]
 print(score)
+print("finished...")
+sc.stop()
