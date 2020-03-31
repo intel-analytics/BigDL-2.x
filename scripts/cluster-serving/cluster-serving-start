@@ -118,6 +118,7 @@ if [ "${params_performance_mode}" == "ON" ] && [ "${spark_master}" == "local[*]"
       spark_num_executors=${PARAMS[2]}
       spark_total_executor_cores=${PARAMS[3]}
       spark_driver_memory=${PARAMS[4]}
+      export OMP_NUM_THREADS=${spark_executor_cores}
     elif [ $LENGTH -eq 2 ]; then
       echo -e "\033[31m${PARAMS[1]}, use local[*] instead \033[0m"
     fi
