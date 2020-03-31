@@ -73,7 +73,7 @@ object ClusterServing {
      * Note that currently CHW is commonly used
      * and HWC is often used in Tensorflow models
      */
-    val chwFlag = if (modelType == "tensorflow") {
+    val chwFlag = if (modelType.startsWith("tensorflow")) {
       false
     } else {
       true
@@ -224,19 +224,36 @@ object ClusterServing {
                * original Tensor, thus if reuse of Tensor is needed,
                * have to squeeze it back.
                */
-              val result = if (modelType == "openvino") {
-                val res = localModel.doPredict(x).toTensor.squeeze()
-                t.squeeze(1)
-                res
+              val result = localModel.doPredict(x)
+              if (result.isTensor) {
+                val res = if (modelType == "openvino") {
+                  t.squeeze(1)
+                  result.toTensor.squeeze()
+                } else {
+                  result.toTensor
+                }
+                (0 until thisBatchSize).toParArray.map(i => {
+                  val value = PostProcessing(res.select(1, i + 1), filter)
+                  Record(pathByteBatch(i)._1, value)
+                })
               } else {
-                localModel.doPredict(x).toTensor
+                // result is table
+                val separator = ","
+                // TODO: openvino Table support
+                val res = result.toTable
+                (0 until thisBatchSize).toParArray.map(i => {
+                  val value = StringBuilder.newBuilder
+                  value.append("[")
+                  res.keySet.foreach(key => {
+                    value.append(PostProcessing(
+                      res(key).asInstanceOf[Tensor[_]].toTensor.select(1, i + 1)))
+                    value.append(separator)
+                  })
+                  value.deleteCharAt(value.length - 1)
+                  value.append("]")
+                  Record(pathByteBatch(i)._1, value.toString())
+                })
               }
-
-              (0 until thisBatchSize).toParArray.map(i => {
-                val value = PostProcessing(result.select(1, i + 1), filter)
-                Record(pathByteBatch(i)._1, value)
-              })
-
             })
           })
         }

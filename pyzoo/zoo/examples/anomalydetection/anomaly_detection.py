@@ -70,4 +70,6 @@ if __name__ == "__main__":
     y_truth = test.map(lambda x: float(x.label.to_ndarray()[0]))
     anomalies = AnomalyDetector.detect_anomalies(y_predict, y_truth, 50)
 
-    print(anomalies.take(10)[0:10])
+    print("anomalies: ", anomalies.take(10)[0:10])
+    print("finished...")
+    sc.stop()
