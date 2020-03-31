@@ -23,6 +23,7 @@ import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSumm
 import com.intel.analytics.zoo.serving.utils._
 import com.intel.analytics.zoo.serving.InferenceStrategy
 import com.intel.analytics.zoo.serving.engine.ServingReceiver
+import com.intel.analytics.zoo.serving.pipeline.RedisUtils
 import com.redislabs.provider.redis.streaming.ConsumerConfig
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.broadcast.Broadcast
@@ -40,7 +41,7 @@ import scala.util.{Failure, Success}
 
 object ClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
-  Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.ERROR)
+  Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
 
 
   case class Record(uri: String, value: String)
@@ -140,12 +141,12 @@ object ClusterServing {
     val acc = new LongAccumulator()
     helper.sc.register(acc)
 
-//    val receiver = new ServingReceiver()
-//    val images = ssc.receiverStream(receiver)
+    val receiver = new ServingReceiver()
+    val images = ssc.receiverStream(receiver)
 
 //        val image = ssc.socketTextStream("localhost", 9999)
 
-    val images = ssc.createRedisXStream(Seq(ConsumerConfig("image_stream", "group1", "cli1")))
+//    val images = ssc.createRedisXStream(Seq(ConsumerConfig("image_stream", "group1", "cli1")))
 
 //    val images = ssc.union(
 //      Seq(
@@ -168,13 +169,7 @@ object ClusterServing {
         val x = m.coalesce(1)
         acc.reset()
 
-        val redisInfo = RedisUtils.getMapFromInfo(redisDB.info())
-
-        if (redisInfo("used_memory").toLong >=
-          redisInfo("maxmemory").toLong * inputThreshold) {
-          redisDB.xtrim("image_stream",
-            (redisDB.xlen("image_stream") * cutRatio).toLong, true)
-        }
+        RedisUtils.checkMemory(redisDB, inputThreshold, cutRatio)
         /**
          * The streaming may be triggered somehow and it is possible
          * to get an empty batch
@@ -186,10 +181,10 @@ object ClusterServing {
         val preProcessed = x.mapPartitions(it => {
           it.grouped(serParams.coreNum).flatMap(itemBatch => {
             itemBatch.indices.toParArray.map(i => {
-//              val uri = itemBatch(i)._1
-//              val tensor = PreProcessing(itemBatch(i)._2)
-              val uri = itemBatch(i).fields("uri")
-              val tensor = PreProcessing(itemBatch(i).fields("image"))
+              val uri = itemBatch(i)._1
+              val tensor = PreProcessing(itemBatch(i)._2)
+//              val uri = itemBatch(i).fields("uri")
+//              val tensor = PreProcessing(itemBatch(i).fields("image"))
               (uri, tensor)
             })
           })
@@ -215,59 +210,6 @@ object ClusterServing {
            * and minimizing the memory usage.
            */
           InferenceStrategy(serParams, bcModel, acc, preProcessed, "all")
-        }
-
-
-        /**
-         * Predict ends, start writing data to output queue
-         */
-        val resDf = spark.createDataFrame(postProcessed)
-
-        var errFlag: Boolean = true
-
-        /**
-         * Block the inference if there is no space to write
-         * Will continuously try write the result, if not, keep blocking
-         * The input stream may accumulate to very large because no records
-         * will be consumed, however the stream size would be controlled
-         * on Cluster Serving API side.
-         */
-        while (errFlag) {
-          try {
-            resDf.write
-              .format("org.apache.spark.sql.redis")
-              .option("table", "result")
-              .option("key.column", "uri")
-              .option("iterator.grouping.size", batchSize)
-              .mode(SaveMode.Append).save()
-
-            errFlag = false
-          }
-
-          catch {
-            case e: redis.clients.jedis.exceptions.JedisDataException =>
-              errFlag = true
-              val errMsg = "not enough space in redis to write: " + e.toString
-              logger.info(errMsg)
-              println(errMsg)
-
-              Thread.sleep(3000)
-            case e: java.lang.InterruptedException =>
-              /**
-               * If been interrupted by stop signal, do nothing
-               * End the streaming until this micro batch process ends
-               */
-              logger.info("Stop signal received, will exit soon.")
-
-            case e: Exception =>
-              errFlag = true
-              val errMsg = "unable to handle exception: " + e.toString
-              logger.info(errMsg)
-              println(errMsg)
-
-              Thread.sleep(3000)
-
-          }
         }
 
         /**

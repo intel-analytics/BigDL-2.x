@@ -40,17 +40,20 @@ class ServingReceiver ()
       Thread.sleep(10)
       if (response != null) {
         for (streamMessages <- response) {
-          println(s"receiving!!! ${streamMessages.getValue.size()}")
+//          println(s"receiving!!! ${streamMessages.getValue.size()}")
           val key = streamMessages.getKey
           val entries = streamMessages.getValue
 //          val it = entries.map { e =>
 //            (e.getFields.get("uri"), e.getFields.get("image"))
 //          }.toIterator
 //          store(it)
+          val ppl = jedis.pipelined()
           entries.foreach(e => {
             val d = (e.getFields.get("uri"), e.getFields.get("image"))
             store(d)
+            ppl.xack("image_stream", "serving", e.getID)
           })
+          ppl.sync()
 //          var i = 0
 //          for (e <- entries) {
 //            var p = jedis.pipelined()

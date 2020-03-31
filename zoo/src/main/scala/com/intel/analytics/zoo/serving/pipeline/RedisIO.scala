@@ -14,26 +14,19 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.utils
+package com.intel.analytics.zoo.serving.pipeline
 
-object RedisUtils {
-  def getMapFromInfo(info: String): Map[String, String] = {
-    var infoMap = Map[String, String]()
-    val tabs = info.split("#")
+import com.intel.analytics.zoo.serving.InferenceStrategy.redisPool
+import redis.clients.jedis.{Jedis, JedisPool, Pipeline}
 
-    for (tab <- tabs) {
-      if (tab.length > 0) {
-        val keys = tab.split("\r\n")
+import scala.collection.JavaConverters._
 
-        for (key <- keys) {
-          if (key.split(":").size == 2) {
-            infoMap += (key.split(":").head ->
-              key.split(":").last)
-          }
-        }
-      }
-    }
 
-    return infoMap
+object RedisIO {
+  def writeHashMap(ppl: Pipeline, key: String, value: String): Unit = {
+    val hKey = "result:" + key
+    val hValue = Map[String, String]("value" -> value).asJava
+    ppl.hmset(hKey, hValue)
+    println("write 1 to redis")
   }
 }
