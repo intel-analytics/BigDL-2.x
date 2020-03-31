@@ -1,22 +1,39 @@
+/*
+ * Copyright 2018 Analytics Zoo Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.spark.rdd.RDD
 import com.intel.analytics.zoo.serving.ClusterServing.{Params, Record}
-import com.intel.analytics.zoo.serving.pipeline.RedisPool
+import com.intel.analytics.zoo.serving.pipeline.{RedisIO, RedisPool}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.util.LongAccumulator
-import redis.clients.jedis.JedisPool
-
-import scala.collection.JavaConverters._
+import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig}
 
 
 object InferenceStrategy {
   var params: Params = null
   var bcModel: Broadcast[InferenceModel] = null
   var acc: LongAccumulator = null
-  @transient private lazy val redisPool = new JedisPool()
+  var db: Jedis = null
+//  val poolConfig = new JedisPoolConfig()
+//  poolConfig.setMaxTotal(128)
+  val redisPool = new JedisPool()
 
 
   def apply(_params: Params,
@@ -27,6 +44,8 @@ object InferenceStrategy {
     params = _params
     bcModel = _bcModel
     acc = _acc
+
+
     val result = strategy match {
       case "single" => singleThreadInference(r)
       case "all" => allThreadInference(r)
@@ -54,10 +73,7 @@ object InferenceStrategy {
 
           val value = PostProcessing(result, params.filter)
 
-          val hKey = "result:" + uri
-          val hValue = Map[String, String]("value", value).asJava
-          RedisPool.getRedisConnection(redisPool)
-            .hmset(hKey, hValue)
+
         })
       })
     })
@@ -68,7 +84,7 @@ object InferenceStrategy {
    * This is used for most of model, such as Tensorflow
    * Where lower level of parallelism is supported
    */
-  def allThreadInference(r: RDD[(String, Tensor[Float])]): RDD[Record] = {
+  def allThreadInference(r: RDD[(String, Tensor[Float])]): Unit = {
     r.mapPartitions(it => {
       val localModel = bcModel.value
       val t = if (params.chwFlag) {
@@ -104,14 +120,30 @@ object InferenceStrategy {
         } else {
           localModel.doPredict(x).toTensor[Float]
         }
+        db = null
+        while (db == null){
+          try {
+            db = redisPool.getResource
+          }
+          catch {
+            case e: Exception => Thread.sleep(100)
+          }
+          Thread.sleep(10)
+        }
 
+        val ppl = db.pipelined()
         (0 until thisBatchSize).toParArray.map(i => {
           val value = PostProcessing(result.select(1, i + 1), params.filter)
-          Record(pathByteBatch(i)._1, value)
-        })
+//          Record(pathByteBatch(i)._1, value)
 
+          RedisIO.writeHashMap(ppl, pathByteBatch(i)._1, value)
+
+        })
+//        ppl.sync()
+//        db.close()
+        None
       })
-    })
+    }).count()
   }
 
 }
