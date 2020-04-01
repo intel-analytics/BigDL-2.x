@@ -16,8 +16,8 @@
 
 
 from bigdl.optim.optimizer import Adam
-from keras.datasets import imdb
-from keras.preprocessing import sequence
+from zoo.pipeline.api.keras.datasets import imdb
+from tf.keras.preprocessing import sequence
 from zoo.pipeline.api.keras.models import Model
 from zoo.pipeline.api.keras.layers import *
 from zoo.common.nncontext import init_spark_conf
