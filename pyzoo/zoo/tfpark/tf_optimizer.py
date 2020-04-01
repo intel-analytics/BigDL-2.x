@@ -283,7 +283,8 @@ class TFModel(object):
     @staticmethod
     def export(model_dir, loss_tensor, sess, inputs, labels, predictions, grads, variables, graph,
                tensors_with_value, metrics, updates, train_op=None):
-        inputs, additional_inputs, additional_values = TFModel._expand_inputs(inputs, tensors_with_value, loss_tensor)
+        inputs, additional_inputs, additional_values = \
+            TFModel._expand_inputs(inputs, tensors_with_value, loss_tensor)
         metric_tensors, val_methods = TFModel._process_metrics(graph, metrics)
         grads = TFModel._process_grads(graph, grads)
 
