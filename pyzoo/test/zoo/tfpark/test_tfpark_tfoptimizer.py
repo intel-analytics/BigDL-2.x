@@ -90,10 +90,10 @@ class TestTFParkTFOptimizer(ZooTestCase):
             dataset = TFDataset.from_ndarrays((features, labels),
                                               batch_size=4,
                                               val_tensors=(features, labels))
-            is_training = tf.placeholder(dtype=tf.float, shape=())
+            is_training = tf.placeholder(dtype=tf.bool, shape=())
             feature_tensor, label_tensor = dataset.tensors
             features = tf.layers.dense(feature_tensor, 8)
-            features = tf.layers.dropout(features, is_training=is_training)
+            features = tf.layers.dropout(features, training=is_training)
             output = tf.layers.dense(features, 10)
             loss = tf.reduce_mean(tf.losses.
                                   sparse_softmax_cross_entropy(logits=output,
