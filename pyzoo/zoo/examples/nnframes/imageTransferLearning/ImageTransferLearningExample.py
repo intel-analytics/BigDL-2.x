@@ -28,17 +28,36 @@ from zoo.common.nncontext import *
 from zoo.feature.image import *
 from zoo.pipeline.nnframes import *
 
+from optparse import OptionParser
+
 if __name__ == "__main__":
 
-    if len(sys.argv) != 3:
-        print(sys.argv)
-        print("Need parameters: <modelPath> <imagePath>")
-        exit(-1)
+    parser = OptionParser()
+    parser.add_option("-m", dest="model_Path",
+                      help="Required. pretrained model path.")
+    parser.add_option("-f", dest="image_Path",
+                      help="training data path.")
+    parser.add_option("--b", "--batch_size", dest="batch_size", default="56",
+                      help="The number of samples per gradient update. Default is 56.")
+    parser.add_option("--nb_epoch", dest="nb_epoch", default="20",
+                      help="The number of iterations to train the model. Default is 20.")
+    parser.add_option("--r", "--learning_rate", dest="learning_rate", default="0.002",
+                      help="The learning rate for the model. Default is 0.002.")
+
+    (options, args) = parser.parse_args(sys.argv)
+
+    if not options.model_Path:
+        parser.print_help()
+        parser.error('modelPath is required')
+
+    if not options.image_Path:
+        parser.print_help()
+        parser.error('imagePath is required')
 
     sc = init_nncontext("ImageTransferLearningExample ")
 
-    model_path = sys.argv[1]
-    image_path = sys.argv[2]
+    model_path = options.image_path
+    image_path = options.model_path
     imageDF = NNImageReader.readImages(image_path, sc, resizeH=300, resizeW=300, image_codec=1)
 
     getName = udf(lambda row: os.path.basename(row[0]), StringType())
@@ -58,10 +77,10 @@ if __name__ == "__main__":
 
     lrModel = Sequential().add(Linear(1000, 2)).add(LogSoftMax())
     classifier = NNClassifier(lrModel, ClassNLLCriterion(), SeqToTensor([1000])) \
-        .setLearningRate(0.002) \
+        .setLearningRate(options.learning_rate) \
         .setOptimMethod(Adam()) \
-        .setBatchSize(32) \
-        .setMaxEpoch(20) \
+        .setBatchSize(options.batch_size) \
+        .setMaxEpoch(options.nb_epoch) \
         .setFeaturesCol("embedding") \
         .setCachingSample(False) \
 
@@ -76,3 +95,6 @@ if __name__ == "__main__":
     accuracy = evaluator.evaluate(predictionDF)
     # expected error should be less than 10%
     print("Test Error = %g " % (1.0 - accuracy))
+
+    print("finished...")
+    sc.stop()

@@ -27,19 +27,35 @@ from zoo.pipeline.api.keras.layers import Dense, Input, Flatten
 from zoo.pipeline.api.keras.models import *
 from zoo.pipeline.api.net import *
 from zoo.pipeline.nnframes import *
+from optparse import OptionParser
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 3:
-        print(sys.argv)
-        print("Need parameters: <modelPath> <imagePath>")
-        exit(-1)
+    parser = OptionParser()
+    parser.add_option("-m", dest="model_Path",
+                      help="Required. pretrained model path.")
+    parser.add_option("-f", dest="image_Path",
+                      help="training data path.")
+    parser.add_option("--b", "--batch_size", dest="batch_size", default="56",
+                      help="The number of samples per gradient update. Default is 56.")
+    parser.add_option("--nb_epoch", dest="nb_epoch", default="2",
+                      help="The number of iterations to train the model. Default is 2.")
+    parser.add_option("--r", "--learning_rate", dest="learning_rate", default="0.003",
+                      help="The learning rate for the model. Default is 0.003.")
+
+    (options, args) = parser.parse_args(sys.argv)
+
+    if not options.model_Path:
+        parser.print_help()
+        parser.error('modelPath is required')
+
+    if not options.image_Path:
+        parser.print_help()
+        parser.error('imagePath is required')
 
     sc = init_nncontext("ImageFineTuningExample")
 
-    model_path = sys.argv[1]
-    image_path = sys.argv[2]
-    imageDF = NNImageReader.readImages(image_path, sc, resizeH=300, resizeW=300, image_codec=1)
+    imageDF = NNImageReader.readImages(options.image_path, sc, resizeH=300, resizeW=300, image_codec=1)
 
     getName = udf(lambda row: os.path.basename(row[0]), StringType())
     getLabel = udf(lambda name: 1.0 if name.startswith('cat') else 2.0, DoubleType())
@@ -52,7 +68,7 @@ if __name__ == "__main__":
         [RowToImageFeature(), ImageResize(256, 256), ImageCenterCrop(224, 224),
          ImageChannelNormalize(123.0, 117.0, 104.0), ImageMatToTensor(), ImageFeatureToTensor()])
 
-    full_model = Net.load_bigdl(model_path)
+    full_model = Net.load_bigdl(options.model_path)
     # create a new model by remove layers after pool5/drop_7x7_s1
     model = full_model.new_graph(["pool5/drop_7x7_s1"])
     # freeze layers from input to pool4/3x3_s2 inclusive
@@ -66,9 +82,9 @@ if __name__ == "__main__":
     lrModel = Model(inputNode, logits)
 
     classifier = NNClassifier(lrModel, CrossEntropyCriterion(), transformer) \
-        .setLearningRate(0.003) \
-        .setBatchSize(32) \
-        .setMaxEpoch(2) \
+        .setLearningRate(options.learning_rate) \
+        .setBatchSize(options.batch_size) \
+        .setMaxEpoch(options.nb_epoch) \
         .setFeaturesCol("image") \
         .setCachingSample(False)
 
@@ -83,3 +99,6 @@ if __name__ == "__main__":
     accuracy = correct * 1.0 / overall
 
     print("Test Error = %g " % (1.0 - accuracy))
+
+    print("finished...")
+    sc.stop()
