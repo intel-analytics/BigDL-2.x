@@ -15,7 +15,7 @@
  */
 
 package com.intel.analytics.zoo.pipeline.inference
-
+/*
 import java.io.File
 import java.util.{Arrays, Properties}
 
@@ -27,7 +27,7 @@ import scala.io.Source
 import scala.language.postfixOps
 import scala.sys.process._
 
-/*
+
 @OpenVinoTest
 class OpenVINOModelDeprecatedSuite extends FunSuite with Matchers with BeforeAndAfterAll
   with InferenceSupportive {

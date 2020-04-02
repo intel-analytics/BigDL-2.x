@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
+/*
 import java.io.File
 import java.nio.file.NoSuchFileException
 import java.util
@@ -155,3 +156,4 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     }
   }
 }
+*/
