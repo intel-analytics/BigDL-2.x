@@ -573,7 +573,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/tmp.py
 
 now=$(date "+%s")
-time1=$((now-start))
+time15=$((now-start))
 echo "#15 attention time used:$time15 seconds"
 
 echo "#1 textclassification time used: $time1 seconds"

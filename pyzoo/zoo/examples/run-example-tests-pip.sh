@@ -614,7 +614,7 @@ fi
 
 unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
-time1=$((now-start))
+time15=$((now-start))
 echo "attention time used:$time15 seconds"
 
 # This should be done at the very end after all tests finish.
