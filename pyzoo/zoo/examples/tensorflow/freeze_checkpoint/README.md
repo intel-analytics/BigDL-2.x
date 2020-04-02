@@ -1,7 +1,6 @@
 ## Introduction
 
-This example demonstrates how to transform a TensorFlow checkpoint into a frozen model that can
- be used by TFNet.
+This example demonstrates how to transform a TensorFlow checkpoint into a frozen model that can be used by TFNet.
 
 ### Usage:
 
