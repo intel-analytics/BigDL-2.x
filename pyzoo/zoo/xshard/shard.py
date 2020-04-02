@@ -15,6 +15,7 @@
 #
 import ray
 
+
 class DataShards(object):
     def __init__(self, shards):
         pass
@@ -42,3 +43,18 @@ class RayDataShards(DataShards):
 
     def get_shards(self):
         return [shard.get_data.remote() for shard in self.shard_list]
+
+
+class ScDataShards(DataShards):
+    def __init__(self, shards):
+        self.shards = shards
+
+    def apply(self, func):
+        self.shards.map(func)
+        return self
+
+    def collect_data(self):
+        return self.shards.collect()
+
+    def get_shards(self):
+        return self.shards

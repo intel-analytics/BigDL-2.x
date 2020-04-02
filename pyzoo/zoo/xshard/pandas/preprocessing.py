@@ -19,16 +19,18 @@ import pyarrow as pa
 import pandas as pd
 import random
 import os
+from bigdl.util.common import get_node_and_core_number
 from pyspark.context import SparkContext
+from zoo.common import get_file_list
 from zoo.ray.util.raycontext import RayContext
-from zoo.xshard.shard import RayDataShards
+from zoo.xshard.shard import RayDataShards, ScDataShards
 
 
 def read_csv(file_path, context):
     if isinstance(context, RayContext):
         return read_csv_ray(context, file_path)
     elif isinstance(context, SparkContext):
-        pass
+        return read_csv_sc(context, file_path)
     else:
         raise Exception("Context type should be RayContext or SparkContext")
 
@@ -48,6 +50,14 @@ def read_csv_ray(context, file_path):
 
 def read_json_ray(context, file_path):
     return read_file_ray(context, file_path, "json")
+
+
+def read_csv_sc(context, file_path):
+    return read_file_sc(context, file_path, "csv")
+
+
+def read_json_sc(context, file_path):
+    return read_file_sc(context, file_path, "json")
 
 
 def read_file_ray(context, file_path, file_type):
@@ -110,6 +120,57 @@ def read_file_ray(context, file_path, file_type):
     data_shards = RayDataShards(shards)
     return data_shards
 
+
+def read_file_sc(context, file_path, file_type):
+    data_paths = get_file_list(file_path)
+    node_num, core_num = get_node_and_core_number()
+    rdd = context.parallelize(data_paths, node_num * 20)
+
+    if "hdfs" in file_path:
+        def loadFile(iterator):
+            import os
+            os.environ['HADOOP_HOME'] = '/opt/work/hadoop-2.7.2'
+            os.environ['ARROW_LIBHDFS_DIR'] = '/opt/work/hadoop-2.7.2/lib/native'
+
+            import sys
+            sys.path.append("/opt/work/hadoop-2.7.2/bin")
+
+            import pandas as pd
+            import pyarrow as pa
+            fs = pa.hdfs.connect()
+
+            for x in iterator:
+                with fs.open(x, 'rb') as f:
+                    if file_type == "csv":
+                        df = pd.read_csv(f, header=0)
+                    elif file_type == "json":
+                        df = pd.read_json(f, orient='columns', lines=True)
+                    else:
+                        raise Exception("Unsupported file type")
+                    yield df
+
+        pd_rdd = rdd.mapPartitions(loadFile)
+    elif "s3" in file_path:
+        # TODO: support s3 file
+        pass
+    else:
+        def loadFile(iterator):
+            import pandas as pd
+            for x in iterator:
+                if file_type == "csv":
+                    df = pd.read_csv(x, header=0)
+                elif file_type == "json":
+                    df = pd.read_json(orient='columns', lines=True)
+                else:
+                    raise Exception("Unsupported file type")
+                yield df
+
+        pd_rdd = rdd.mapPartitions(loadFile)
+
+    data_shards = ScDataShards(pd_rdd)
+    return data_shards
+
+
 @ray.remote
 class RayPandasShard(object):
 
@@ -169,5 +230,4 @@ class RayPandasShard(object):
 
     def get_data(self):
         return self.data
-
 
