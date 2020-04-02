@@ -14,17 +14,17 @@ ENV OMP_NUM_THREADS                     4
 ENV NOTEBOOK_PORT                       12345
 ENV NOTEBOOK_TOKEN                      1234qwer
 
-ENV RUNTIME_SPARK_MASTER            	local[4]
+ENV RUNTIME_SPARK_MASTER                local[4]
 ENV RUNTIME_K8S_SERVICE_ACCOUNT         spark
-ENV RUNTIME_K8S_SPARK_IMAGE		intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3
+ENV RUNTIME_K8S_SPARK_IMAGE             intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3
 ENV RUNTIME_DRIVER_HOST                 localhost
 ENV RUNTIME_DRIVER_PORT                 54321
 ENV RUNTIME_EXECUTOR_CORES              4
 ENV RUNTIME_EXECUTOR_MEMORY             20g
-ENV RUNTIME_EXECUTOR_INSTANCES		1
+ENV RUNTIME_EXECUTOR_INSTANCES          1
 ENV RUNTIME_TOTAL_EXECUTOR_CORES        4
-ENV RUNTIME_DRIVER_CORES            	4
-ENV RUNTIME_DRIVER_MEMORY           	10g
+ENV RUNTIME_DRIVER_CORES                4
+ENV RUNTIME_DRIVER_MEMORY               10g
 ENV RUNTIME_PERSISTENT_VOLUME_CLAIM     myvolumeclaim
 
 ENV SPARK_HOME                      	/opt/spark
