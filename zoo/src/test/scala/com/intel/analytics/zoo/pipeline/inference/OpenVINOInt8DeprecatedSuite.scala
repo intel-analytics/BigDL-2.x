@@ -32,7 +32,7 @@ import sys.env
 
 
 @OpenVinoTest
-class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
+class OpenVINOInt8DeprecatedSuite extends FunSuite with Matchers with BeforeAndAfterAll
   with InferenceSupportive {
 
   val s3Url = if (env.contains("FTP_URI")) {
