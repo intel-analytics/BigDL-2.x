@@ -27,13 +27,13 @@ ENV RUNTIME_DRIVER_CORES                4
 ENV RUNTIME_DRIVER_MEMORY               10g
 ENV RUNTIME_PERSISTENT_VOLUME_CLAIM     myvolumeclaim
 
-ENV SPARK_HOME                      	/opt/spark
-ENV HADOOP_CONF_DIR			/opt/hadoop-conf
-ENV ANALYTICS_ZOO_HOME              	/opt/analytics-zoo-${ANALYTICS_ZOO_VERSION}
-ENV JAVA_HOME				/opt/jdk
-ENV REDIS_HOME				/opt/redis-5.0.5
-ENV PYTHONPATH 				${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip:/opt/models/research/slim
-ENV PATH                            	${ANALYTICS_ZOO_HOME}/bin/cluster-serving:${JAVA_HOME}/bin:${PATH}
+ENV SPARK_HOME                          /opt/spark
+ENV HADOOP_CONF_DIR                     /opt/hadoop-conf
+ENV ANALYTICS_ZOO_HOME                  /opt/analytics-zoo-${ANALYTICS_ZOO_VERSION}
+ENV JAVA_HOME                           /opt/jdk
+ENV REDIS_HOME                          /opt/redis-5.0.5
+ENV PYTHONPATH                          ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip:/opt/models/research/slim
+ENV PATH                                ${ANALYTICS_ZOO_HOME}/bin/cluster-serving:${JAVA_HOME}/bin:${PATH}
 
 RUN apt-get update --fix-missing && \
     apt-get install -y apt-utils vim curl nano wget unzip maven git && \
