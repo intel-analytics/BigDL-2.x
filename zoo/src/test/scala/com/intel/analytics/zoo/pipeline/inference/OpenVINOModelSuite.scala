@@ -29,14 +29,18 @@ import org.slf4j.LoggerFactory
 import scala.io.Source
 import scala.language.postfixOps
 import sys.process._
-
+import sys.env
 
 
 @OpenVinoTest
 class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
   with InferenceSupportive {
 
-  val s3Url = "https://s3-ap-southeast-1.amazonaws.com"
+  val s3Url = if (env.contains("FTP_URI")) {
+    env("FTP_URI").toString
+  } else {
+    "https://s3-ap-southeast-1.amazonaws.com"
+  }
   val s3DataUrl = s"$s3Url" +
     s"/analytics-zoo-models/openvino/Tests_faster_rcnn_resnet101_coco_2018_01_28"
   val url_ov_fasterrcnn_tests_inputdata1 = s"$s3DataUrl/inputdata_1"

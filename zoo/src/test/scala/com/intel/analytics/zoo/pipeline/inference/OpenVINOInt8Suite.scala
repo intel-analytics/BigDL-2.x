@@ -28,13 +28,18 @@ import com.intel.analytics.zoo.common.Utils
 import scala.io.Source
 import scala.language.postfixOps
 import scala.sys.process._
+import sys.env
 
 
 @OpenVinoTest
 class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
   with InferenceSupportive {
 
-  val s3Url = "https://s3-ap-southeast-1.amazonaws.com"
+  val s3Url = if (env.contains("FTP_URI")) {
+    env("FTP_URI").toString
+  } else {
+    "https://s3-ap-southeast-1.amazonaws.com"
+  }
 
   val logger = LoggerFactory.getLogger(getClass)
   var tmpDir: File = _
