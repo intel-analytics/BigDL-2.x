@@ -120,27 +120,21 @@ object InferenceStrategy {
         } else {
           localModel.doPredict(x).toTensor[Float]
         }
-        db = null
-        while (db == null){
-          try {
-            db = redisPool.getResource
-          }
-          catch {
-            case e: Exception => Thread.sleep(100)
-          }
-          Thread.sleep(10)
-        }
 
+
+        db = RedisIO.getRedisClient()
         val ppl = db.pipelined()
+        val a = new Array[(String, String)](thisBatchSize)
         (0 until thisBatchSize).toParArray.map(i => {
           val value = PostProcessing(result.select(1, i + 1), params.filter)
-//          Record(pathByteBatch(i)._1, value)
-
-          RedisIO.writeHashMap(ppl, pathByteBatch(i)._1, value)
-
+          (pathByteBatch(i)._1, value)
+        }).copyToArray(a)
+        a.foreach(x => {
+          RedisIO.writeHashMap(ppl, x._1, x._2)
         })
-//        ppl.sync()
-//        db.close()
+
+        ppl.sync()
+        db.close()
         None
       })
     }).count()

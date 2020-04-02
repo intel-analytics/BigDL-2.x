@@ -16,17 +16,35 @@
 
 package com.intel.analytics.zoo.serving.pipeline
 
-import com.intel.analytics.zoo.serving.InferenceStrategy.redisPool
+import com.intel.analytics.zoo.serving.InferenceStrategy.{db, redisPool}
+import org.apache.log4j.Logger
+import redis.clients.jedis.exceptions.JedisConnectionException
 import redis.clients.jedis.{Jedis, JedisPool, Pipeline}
 
 import scala.collection.JavaConverters._
 
 
 object RedisIO {
+  val logger = Logger.getLogger(getClass)
+  def getRedisClient(): Jedis = {
+    db = null
+    while (db == null){
+      try {
+        db = redisPool.getResource
+      }
+      catch {
+        case e: JedisConnectionException =>
+          logger.info("Can not connect to Redis client, maybe max number of clients is reached." +
+            "Waiting, if you always receive this, please stop your service and report bug.")
+          Thread.sleep(100)
+      }
+      Thread.sleep(10)
+    }
+    return db
+  }
   def writeHashMap(ppl: Pipeline, key: String, value: String): Unit = {
     val hKey = "result:" + key
     val hValue = Map[String, String]("value" -> value).asJava
     ppl.hmset(hKey, hValue)
-    println("write 1 to redis")
   }
 }
