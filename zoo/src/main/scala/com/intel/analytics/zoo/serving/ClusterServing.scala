@@ -24,14 +24,14 @@ import com.intel.analytics.zoo.serving.utils._
 import com.intel.analytics.zoo.serving.InferenceStrategy
 import com.intel.analytics.zoo.serving.engine.ServingReceiver
 import com.intel.analytics.zoo.serving.pipeline.RedisUtils
-import com.redislabs.provider.redis.streaming.ConsumerConfig
+
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, SaveMode}
 import org.apache.spark.streaming.{Duration, StreamingContext}
 import redis.clients.jedis.Jedis
-import com.redislabs.provider.redis.streaming._
+
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.util.{DoubleAccumulator, LongAccumulator}
 
