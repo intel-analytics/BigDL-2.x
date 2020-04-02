@@ -28,13 +28,14 @@ from zoo.pipeline.api.keras.models import *
 from zoo.pipeline.api.net import *
 from zoo.pipeline.nnframes import *
 from optparse import OptionParser
+import sys
 
 if __name__ == "__main__":
 
     parser = OptionParser()
-    parser.add_option("-m", dest="model_Path",
+    parser.add_option("-m", dest="model_path",
                       help="Required. pretrained model path.")
-    parser.add_option("-f", dest="image_Path",
+    parser.add_option("-f", dest="image_path",
                       help="training data path.")
     parser.add_option("--b", "--batch_size", dest="batch_size", default="56",
                       help="The number of samples per gradient update. Default is 56.")
@@ -45,13 +46,13 @@ if __name__ == "__main__":
 
     (options, args) = parser.parse_args(sys.argv)
 
-    if not options.model_Path:
+    if not options.model_path:
         parser.print_help()
-        parser.error('modelPath is required')
+        parser.error('model_path is required')
 
-    if not options.image_Path:
+    if not options.image_path:
         parser.print_help()
-        parser.error('imagePath is required')
+        parser.error('image_path is required')
 
     sc = init_nncontext("ImageFineTuningExample")
 
