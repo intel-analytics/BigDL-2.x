@@ -15,7 +15,7 @@
  */
 
 package com.intel.analytics.zoo.pipeline.inference
-/*
+
 import java.io.{File, FileInputStream}
 import java.util
 import java.util.{Arrays, Properties}
@@ -39,8 +39,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
   val logger = LoggerFactory.getLogger(getClass)
   var tmpDir: File = _
 
-  val resnet_v1_50_url = "https://analytics-zoo-models.s3-ap-southeast-1.amazonaws.com" +
-    "/openvino/2018_R5/resnet_v1_50"
+  val resnet_v1_50_url = s"$s3Url/analytics-zoo-models/openvino/2018_R5/resnet_v1_50"
 
   val resnet_v1_50_inputShape = Array(4, 224, 224, 3)
   var resnet_v1_50_path: String = _
@@ -306,4 +305,3 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     }
   }
 }
-*/

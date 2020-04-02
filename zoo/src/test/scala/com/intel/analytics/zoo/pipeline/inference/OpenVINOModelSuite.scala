@@ -16,7 +16,6 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
-/*
 import java.io.File
 import java.nio.file.NoSuchFileException
 import java.util
@@ -46,8 +45,8 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
   val logger = LoggerFactory.getLogger(getClass)
   var tmpDir: File = _
 
-  val fasterrcnnModelUrl = "https://analytics-zoo-models.s3-ap-southeast-1.amazonaws.com" +
-      "/openvino/2018_R5/faster_rcnn_resnet101_coco"
+  val fasterrcnnModelUrl = s"$s3Url" +
+    s"/analytics-zoo-models/openvino/2018_R5/faster_rcnn_resnet101_coco"
   var fasterrcnnModel: OpenVINOModel = _
   val fasterrcnnInferenceModel: InferenceModel = new InferenceModel(3)
   val fasterrcnnInputShape = Array(1, 3, 600, 600)
@@ -156,4 +155,3 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     }
   }
 }
-*/

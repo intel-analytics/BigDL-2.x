@@ -15,7 +15,7 @@
  */
 
 package com.intel.analytics.zoo.pipeline.inference
-/*
+
 import java.io.File
 import java.util.{Arrays, Properties}
 
@@ -179,4 +179,3 @@ class OpenVINOModelDeprecatedSuite extends FunSuite with Matchers with BeforeAnd
     }
   }
 }
-*/
