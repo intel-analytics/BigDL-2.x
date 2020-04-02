@@ -20,16 +20,15 @@ import time
 import logging
 import subprocess
 import socket
-from contextlib import closing
-from dmlc_tracker.tracker import get_host_ip
 import ray.services
 import mxnet as mx
 from mxnet import gluon
+from contextlib import closing
+from dmlc_tracker.tracker import get_host_ip
 
 
 class MXNetRunner(object):
     """Manages a MXNet model for training."""
-    # Symbolic API doesn't need loss_creator. Loss is defined in model output.
     # Users can specify train_function (not recommended) or use the default one.
     def setup_distributed(self, env, config, data_creator, model_creator,
                           loss_creator=None, metrics_creator=None, train_function=None):
@@ -50,7 +49,7 @@ class MXNetRunner(object):
             os.environ.update(env)
             if "seed" in self.config:
                 mx.random.seed(self.config["seed"])
-            self.kv = mx.kv.create(self.config["kvstore"])
+            self.kv = mx.kv.create("dist_sync")
             data = self.data_creator(self.config, self.kv)
             if isinstance(data, tuple):
                 assert len(data) == 1 or len(data) == 2, "data_creator should return train data (and val data)"
@@ -81,8 +80,8 @@ class MXNetRunner(object):
             modified_env.update(env)
             subprocess.Popen("python -c 'import mxnet'", shell=True, env=modified_env)
 
-    def step(self):
-        """Runs a training epoch and updates the model parameters."""
+    def train(self, nb_epoch=1):
+        """Train the model and update the model parameters."""
         self.epoch += 1
         stats = dict()
         stats["epoch"] = self.epoch
@@ -154,28 +153,6 @@ class MXNetRunner(object):
             stats["epoch_time"] = epoch_time
         return stats
 
-    def validate(self):
-        # TODO: validate for symbolic API
-        stats = dict()
-        stats["epoch"] = self.epoch
-        if self.is_worker:
-            self.metrics.reset()
-            self.val_data.reset()
-            for batch in self.val_data:
-                data = gluon.utils.split_and_load(batch.data[0].astype("float32", copy=False),
-                                                  ctx_list=[mx.cpu()], batch_axis=0)
-                label = gluon.utils.split_and_load(batch.label[0].astype("float32", copy=False),
-                                                   ctx_list=[mx.cpu()], batch_axis=0)
-                outputs = [self.model(X) for X in data]
-                self.metrics.update(label, outputs)
-            names, accs = self.metrics.get()
-            if not isinstance(names, list):
-                names = [names]
-                accs = [accs]
-            for name, acc in zip(names, accs):
-                stats[name] = acc
-        return stats
-
     def shutdown(self):
         """Attempts to shut down the runner."""
         if self.is_worker:
@@ -204,15 +181,16 @@ def find_free_port():
 
 
 class MXNetTrainer(object):
+    # TODO: Add documentation.
     def __init__(self,
-                 config,
+                 config,  # Pass in some config, including initializer, batch_size, etc.
                  data_creator,
-                 model_creator,
-                 loss_creator=None,
+                 model_creator,  # Return a MXNET model defined with either symbolic or gluon API.
+                 loss_creator=None,  # No need for symbolic API. Loss is already defined as model output.
                  metrics_creator=None,
                  train_function=None,
-                 # Specify cpu resources for actors so that two actors won't use the same raylet.
-                 runner_cpus=None):
+                 # Specify cpu resources for actors if necessary.
+                 runner_cores=None):
         self.config = config
         self.data_creator = data_creator
         self.model_creator = model_creator
@@ -224,9 +202,9 @@ class MXNetTrainer(object):
 
         # Generate actor class
         # Add a dummy custom resource for server to diff from worker
-        Worker = ray.remote(num_cpus=runner_cpus, resources={"_mxnet_worker": 1})(MXNetRunner) if runner_cpus \
+        Worker = ray.remote(num_cpus=runner_cores, resources={"_mxnet_worker": 1})(MXNetRunner) if runner_cores \
             else ray.remote(MXNetRunner)
-        Server = ray.remote(num_cpus=runner_cpus, resources={"_mxnet_server": 1})(MXNetRunner) if runner_cpus \
+        Server = ray.remote(num_cpus=runner_cores, resources={"_mxnet_server": 1})(MXNetRunner) if runner_cores \
             else ray.remote(MXNetRunner)
 
         # Start runners: workers followed by serers
@@ -267,6 +245,7 @@ class MXNetTrainer(object):
         modified_env = os.environ.copy()
         modified_env.update(env)
         # Need to contain system env to run bash
+        # TODO: Need to kill this process manually?
         subprocess.Popen("python -c 'import mxnet'", shell=True, env=modified_env)
 
         ray.get([
@@ -279,14 +258,9 @@ class MXNetTrainer(object):
             for i, runner in enumerate(self.runners)
         ])
 
-    def train(self):
-        """Runs a training epoch."""
-        stats = ray.get([w.step.remote() for w in self.runners])
-        return stats
-
-    def validate(self):
-        """Evaluates the model on the validation data set."""
-        stats = ray.get([w.validate.remote() for w in self.runners])
+    def train(self, nb_epoch=1):
+        """Trains an MXNet model for several epochs."""
+        stats = ray.get([w.train.remote(nb_epoch) for w in self.runners])
         return stats
 
     def shutdown(self):
@@ -296,3 +270,4 @@ class MXNetTrainer(object):
             runner.__ray_terminate__.remote()
 
 # TODO: add model save and restore
+# TODO: add predict, evaluate
