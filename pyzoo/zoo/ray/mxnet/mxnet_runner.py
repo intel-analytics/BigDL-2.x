@@ -50,7 +50,8 @@ class MXNetRunner(object):
             self.kv = mx.kv.create("dist_sync")
             data = self.data_creator(self.config, self.kv)
             if isinstance(data, tuple):
-                assert len(data) == 1 or len(data) == 2, "data_creator should return train data (and val data)"
+                assert len(data) == 1 or len(data) == 2, \
+                    "data_creator should return train data (and val data)"
                 if len(data) == 1:
                     self.train_data, self.val_data = data[0], None
                 else:
@@ -83,7 +84,8 @@ class MXNetRunner(object):
         stats = dict()
         if self.is_worker:
             start_time = time.time()
-            if self.train_function:  # User want to specify their own training logic. Not recommended. Not tested.
+            # User want to specify their own training logic. Not recommended. Not tested.
+            if self.train_function:
                 self.train_function(self)
             elif self.trainer:  # Imperative API
                 for epoch in range(nb_epoch):
@@ -92,10 +94,10 @@ class MXNetRunner(object):
                         self.metrics.reset()  # metrics will accumulate for one batch
                     batch_start_time = time.time()
                     for i, batch in enumerate(self.train_data):
-                        # MXNet treats all CPUs on a single machine as a single device.
-                        # So whether you specify cpu(0) or cpu(), MXNet will use all CPU cores on the machine.
-                        data = gluon.utils.split_and_load(batch.data[0].astype("float32"), ctx_list=[mx.cpu()], batch_axis=0)
-                        label = gluon.utils.split_and_load(batch.label[0].astype("float32"), ctx_list=[mx.cpu()], batch_axis=0)
+                        data = gluon.utils.split_and_load(
+                            batch.data[0].astype("float32"), ctx_list=[mx.cpu()], batch_axis=0)
+                        label = gluon.utils.split_and_load(
+                            batch.label[0].astype("float32"), ctx_list=[mx.cpu()], batch_axis=0)
                         outputs = []
                         Ls = []
                         from mxnet import autograd as ag
@@ -111,11 +113,15 @@ class MXNetRunner(object):
                         self.trainer.step(batch.data[0].shape[0])
                         if self.metrics:
                             self.metrics.update(label, outputs)
-                        if "log_interval" in self.config and not (i + 1) % self.config["log_interval"]:
+                        if "log_interval" in self.config and \
+                                not (i + 1) % self.config["log_interval"]:
                             # This would print on driver for each pid.
                             print_output = ""
-                            print_output += 'Epoch[%d] Batch[%d]  Speed: %f samples/sec %s=%f' % (
-                                epoch, i, self.config["batch_size"] / (time.time() - batch_start_time), "loss", Ls[0].asnumpy().mean())
+                            print_output \
+                                += 'Epoch[%d] Batch[%d]  Speed: %f samples/sec %s=%f' \
+                                   % (epoch, i,
+                                      self.config["batch_size"] / (time.time() - batch_start_time),
+                                      "loss", Ls[0].asnumpy().mean())
                             if self.metrics:
                                 names, accs = self.metrics.get()
                                 if not isinstance(names, list):
@@ -135,7 +141,7 @@ class MXNetRunner(object):
             else:  # Symbolic API
                 # TODO: seems no history (i.e. validation accuracy) returned by fit?
                 self.model.fit(train_data=self.train_data,
-                               num_epoch=1 if "epochs" not in self.config else self.config["epochs"],
+                               num_epoch=nb_epoch,
                                initializer=self.config["init"],
                                kvstore=self.kv,
                                optimizer=self.config["optimizer"],
@@ -143,7 +149,8 @@ class MXNetRunner(object):
                                validation_metric=self.metrics,
                                eval_data=self.val_data,
                                batch_end_callback=None if "log_interval" not in self.config
-                               else mx.callback.Speedometer(self.config["batch_size"], self.config["log_interval"]),
+                               else mx.callback.Speedometer(self.config["batch_size"],
+                                                            self.config["log_interval"]),
                                epoch_end_callback=None if "model" not in self.config
                                else mx.callback.do_checkpoint(self.config["model"]))
             epoch_time = time.time() - start_time
@@ -182,8 +189,10 @@ class MXNetTrainer(object):
     def __init__(self,
                  config,  # Pass in some config, including initializer, batch_size, etc.
                  data_creator,
-                 model_creator,  # Return a MXNET model defined with either symbolic or gluon API.
-                 loss_creator=None,  # No need for symbolic API. Loss is already defined as model output.
+                 # Return a MXNET model defined with either symbolic or gluon API.
+                 model_creator,
+                 # No need for symbolic API. Loss is already defined as model output.
+                 loss_creator=None,
                  metrics_creator=None,
                  train_function=None,
                  # Specify cpu resources for actors if necessary.
@@ -195,14 +204,15 @@ class MXNetTrainer(object):
         self.metrics_creator = metrics_creator
         self.train_function = train_function
         self.num_workers = config["num_workers"]
-        self.num_servers = config["num_servers"] if "num_servers" in self.config else self.num_workers
+        self.num_servers = config["num_servers"] if "num_servers" in self.config \
+            else self.num_workers
 
         # Generate actor class
         # Add a dummy custom resource for server to diff from worker
-        Worker = ray.remote(num_cpus=runner_cores, resources={"_mxnet_worker": 1})(MXNetRunner) if runner_cores \
-            else ray.remote(MXNetRunner)
-        Server = ray.remote(num_cpus=runner_cores, resources={"_mxnet_server": 1})(MXNetRunner) if runner_cores \
-            else ray.remote(MXNetRunner)
+        Worker = ray.remote(num_cpus=runner_cores, resources={"_mxnet_worker": 1})(MXNetRunner) \
+            if runner_cores else ray.remote(MXNetRunner)
+        Server = ray.remote(num_cpus=runner_cores, resources={"_mxnet_server": 1})(MXNetRunner) \
+            if runner_cores else ray.remote(MXNetRunner)
 
         # Start runners: workers followed by serers
         self.runners = [

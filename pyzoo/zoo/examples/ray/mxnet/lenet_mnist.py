@@ -86,7 +86,8 @@ def create_config(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Train a LeNet model for handwritten digit recognition.')
+    parser = argparse.ArgumentParser(
+        description='Train a LeNet model for handwritten digit recognition.')
     parser.add_argument("--hadoop_conf", type=str,
                         help="turn on yarn mode by passing the path to the hadoop"
                              "Configuration folder. Otherwise, turn on local mode.")
