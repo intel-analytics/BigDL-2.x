@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
-
 import os
 import time
 import logging
@@ -40,7 +39,6 @@ class MXNetRunner(object):
         self.metrics_creator = metrics_creator
         self.train_function = train_function
         self.is_worker = False
-        self.epoch = 0
         env["DMLC_NODE_HOST"] = self.get_node_ip()
         if env["DMLC_ROLE"] == "worker":
             self.is_worker = True
@@ -82,52 +80,51 @@ class MXNetRunner(object):
 
     def train(self, nb_epoch=1):
         """Train the model and update the model parameters."""
-        self.epoch += 1
         stats = dict()
-        stats["epoch"] = self.epoch
         if self.is_worker:
             start_time = time.time()
             if self.train_function:  # User want to specify their own training logic. Not recommended. Not tested.
                 self.train_function(self)
             elif self.trainer:  # Imperative API
-                self.train_data.reset()
-                if self.metrics:
-                    self.metrics.reset()  # metrics will accumulate for one batch
-                batch_start_time = time.time()
-                for i, batch in enumerate(self.train_data):
-                    # MXNet treats all CPUs on a single machine as a single device.
-                    # So whether you specify cpu(0) or cpu(), MXNet will use all CPU cores on the machine.
-                    data = gluon.utils.split_and_load(batch.data[0].astype("float32"), ctx_list=[mx.cpu()], batch_axis=0)
-                    label = gluon.utils.split_and_load(batch.label[0].astype("float32"), ctx_list=[mx.cpu()], batch_axis=0)
-                    outputs = []
-                    Ls = []
-                    from mxnet import autograd as ag
-                    with ag.record():
-                        for x, y in zip(data, label):
-                            z = self.model(x)  # forward
-                            L = self.loss(z, y)
-                            # store the loss and do backward after we have done forward
-                            # on all GPUs for better speed on multiple GPUs.
-                            Ls.append(L)
-                            outputs.append(z)
-                        ag.backward(Ls)
-                    self.trainer.step(batch.data[0].shape[0])
+                for epoch in range(nb_epoch):
+                    self.train_data.reset()
                     if self.metrics:
-                        self.metrics.update(label, outputs)
-                    if "log_interval" in self.config and not (i + 1) % self.config["log_interval"]:
-                        # This would print on driver for each pid.
-                        print_output = ""
-                        print_output += 'Epoch[%d] Batch[%d]  Speed: %f samples/sec %s=%f' % (
-                            self.epoch, i, self.config["batch_size"] / (time.time() - batch_start_time), "loss", Ls[0].asnumpy().mean())
-                        if self.metrics:
-                            names, accs = self.metrics.get()
-                            if not isinstance(names, list):
-                                names = [names]
-                                accs = [accs]
-                            for name, acc in zip(names, accs):
-                                print_output += ' %s=%f' % (name, acc)
-                        print(print_output)
+                        self.metrics.reset()  # metrics will accumulate for one batch
                     batch_start_time = time.time()
+                    for i, batch in enumerate(self.train_data):
+                        # MXNet treats all CPUs on a single machine as a single device.
+                        # So whether you specify cpu(0) or cpu(), MXNet will use all CPU cores on the machine.
+                        data = gluon.utils.split_and_load(batch.data[0].astype("float32"), ctx_list=[mx.cpu()], batch_axis=0)
+                        label = gluon.utils.split_and_load(batch.label[0].astype("float32"), ctx_list=[mx.cpu()], batch_axis=0)
+                        outputs = []
+                        Ls = []
+                        from mxnet import autograd as ag
+                        with ag.record():
+                            for x, y in zip(data, label):
+                                z = self.model(x)  # forward
+                                L = self.loss(z, y)
+                                # store the loss and do backward after we have done forward
+                                # on all GPUs for better speed on multiple GPUs.
+                                Ls.append(L)
+                                outputs.append(z)
+                            ag.backward(Ls)
+                        self.trainer.step(batch.data[0].shape[0])
+                        if self.metrics:
+                            self.metrics.update(label, outputs)
+                        if "log_interval" in self.config and not (i + 1) % self.config["log_interval"]:
+                            # This would print on driver for each pid.
+                            print_output = ""
+                            print_output += 'Epoch[%d] Batch[%d]  Speed: %f samples/sec %s=%f' % (
+                                epoch, i, self.config["batch_size"] / (time.time() - batch_start_time), "loss", Ls[0].asnumpy().mean())
+                            if self.metrics:
+                                names, accs = self.metrics.get()
+                                if not isinstance(names, list):
+                                    names = [names]
+                                    accs = [accs]
+                                for name, acc in zip(names, accs):
+                                    print_output += ' %s=%f' % (name, acc)
+                            print(print_output)
+                        batch_start_time = time.time()
                 if self.metrics:
                     names, accs = self.metrics.get()
                     if not isinstance(names, list):

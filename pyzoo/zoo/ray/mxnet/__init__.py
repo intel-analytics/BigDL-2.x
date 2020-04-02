@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-from .mxnet_runner import *
+from .mxnet_runner import MXNetTrainer
