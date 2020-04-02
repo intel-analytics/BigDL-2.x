@@ -40,17 +40,32 @@ def ckpt_to_frozen_graph(options):
         saver = tf.train.Saver(var_list)
         saver.restore(sess, options.ckptPath)
 
-        export_tf(sess, options.outputDir, inputs=[graph.get_tensor_by_name(options.inputsName)],
-                  outputs=[graph.get_tensor_by_name(options.outputsName)])
+        input_names = options.inputsName.split(",")
+        output_names = options.outputsName.split(",")
+
+        input_tensors = [graph.get_tensor_by_name(name) for name in input_names]
+        output_tensors = [graph.get_tensor_by_name(name) for name in output_names]
+
+        export_tf(sess, options.outputDir, inputs=input_tensors, outputs=output_tensors)
 
 
 if __name__ == "__main__":
     parser = OptionParser()
-    parser.add_option("--pbPath", dest="pbPath", default="")
-    parser.add_option("--ckptPath", dest="ckptPath", default="")
-    parser.add_option("--inputsName", dest="inputsName", default="")
-    parser.add_option("--outputsName", dest="outputsName", default="")
+    parser.add_option("--pbPath", dest="pbPath",
+                      help="The path to a TensorFlow pb file")
+    parser.add_option("--ckptPath", dest="ckptPath",
+                      help="The path to a TensorFlow chekpoint file")
+    parser.add_option("--inputsName", dest="inputsName",
+                      help="A comma separated list of Tensor names as the model inputs, "
+                           "e.g. input_0:0,input_1:0.")
+    parser.add_option("--outputsName", dest="outputsName",
+                      help="A comma separated list of Tensor names as the model outputs, "
+                           "e.g. output_0:0,output_1:0.")
     parser.add_option("-o", "--outputDir", dest="outputDir", default=".")
     import sys
     (options, args) = parser.parse_args(sys.argv)
+    assert options.pbPath is not None, "--pbPath must be provided"
+    assert options.ckptPath is not None, "--ckptPath must be provided"
+    assert options.inputsName is not None, "--inputsName must be provided"
+    assert options.outputsName is not None, "--outputsName must be provided"
     ckpt_to_frozen_graph(options)
