@@ -21,4 +21,3 @@ import org.scalatest.{FlatSpec, Matchers}
 class PreProcessingSpec extends FlatSpec with Matchers {
   "base64 string to tensor" should "work" in {
   }
-}

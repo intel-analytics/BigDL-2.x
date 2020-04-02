@@ -22,4 +22,3 @@ class UtilsSpec extends FlatSpec with Matchers {
   "s3, hdfs, remote model read" should "work" in {
 
   }
-}

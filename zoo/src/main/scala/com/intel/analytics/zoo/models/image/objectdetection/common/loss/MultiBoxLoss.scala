@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.models.image.objectdetection.common.loss
 
 import com.intel.analytics.bigdl.nn.abstractnn.AbstractCriterion
-import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, LogSoftMax, SmoothL1Criterion}
+import com.intel.analytics.bigdl.nn.{ZooClassNLLCriterion, LogSoftMax, SmoothL1Criterion}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
@@ -47,7 +47,7 @@ class MultiBoxLoss[T: ClassTag](param: MultiBoxLossParam)
   private val confPreds: Tensor[Float] = Tensor[Float]()
   private val confGts: Tensor[Float] = Tensor[Float]()
   private val logSoftMax = LogSoftMax[Float]()
-  private val classNLLCriterion = ClassNLLCriterion[Float](sizeAverage = false)
+  private val classNLLCriterion = ZooClassNLLCriterion[Float](sizeAverage = false)
 
   private val locGradInput: Tensor[Float] = Tensor[Float]()
   private val confGradInput: Tensor[Float] = Tensor[Float]()

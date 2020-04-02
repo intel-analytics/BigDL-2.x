@@ -81,7 +81,10 @@ else
 fi
 
 # try to start tensorboard
-tensorboard --logdir . --port 6006 &
+if [[ ! -e "TensorboardEventLogs" ]]; then
+    mkdir TensorboardEventLogs
+fi
+tensorboard --logdir ./TensorboardEventLogs --port 6006 --host 0.0.0.0 &
 
 # if jar paths are not set, try to use them in current directory
 if [ -z "${ZOO_JAR}" ]; then
@@ -98,5 +101,27 @@ if [ -z "${SPARK_REDIS_JAR}" ]; then
     SPARK_REDIS_JAR=spark-redis-2.4.0-jar-with-dependencies.jar
 fi
 
+if [ "${params_performance_mode}" == "ON" ] && [ "${spark_master}" == "local[*]" ]; then
+    echo -e "\033[36mPerformance mode is ON, Start standalone cluster... \033[0m"
+    if [ -f "cluster-with-numactl.sh" ]; then
+      OUTPUT=`./cluster-with-numactl.sh start | tail -1`
+    else
+      OUTPUT=`cluster-with-numactl.sh start | tail -1`
+    fi
+    IFS=','
+    PARAMS=($OUTPUT)
+    unset IFS
+    LENGTH=${#PARAMS[@]}
+    if [ $LENGTH -gt 2 ]; then
+      spark_master=${PARAMS[0]}
+      spark_executor_cores=${PARAMS[1]}
+      spark_num_executors=${PARAMS[2]}
+      spark_total_executor_cores=${PARAMS[3]}
+      spark_driver_memory=${PARAMS[4]}
+      export OMP_NUM_THREADS=${spark_executor_cores}
+    elif [ $LENGTH -eq 2 ]; then
+      echo -e "\033[31m${PARAMS[1]}, use local[*] instead \033[0m"
+    fi
+fi
 
 ${SPARK_HOME}/bin/spark-submit --master ${spark_master} --driver-memory ${spark_driver_memory} --executor-memory ${spark_executor_memory} --num-executors ${spark_num_executors} --executor-cores ${spark_executor_cores} --total-executor-cores ${spark_total_executor_cores} --conf "spark.executor.extraJavaOptions=-Dbigdl.engineType=${params_engine_type}" --conf "spark.driver.extraJavaOptions=-Dbigdl.engineType=${params_engine_type}" --jars ${SPARK_REDIS_JAR},${BIGDL_JAR} --class com.intel.analytics.zoo.serving.ClusterServing ${ZOO_JAR} >> cluster-serving.log

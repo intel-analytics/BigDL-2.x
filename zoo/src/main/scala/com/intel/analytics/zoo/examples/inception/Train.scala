@@ -113,7 +113,7 @@ object TrainInceptionV1 {
         estimator.setConstantGradientClipping(param.gradientMin.get, param.gradientMax.get)
       }
 
-      estimator.train(trainSet, ClassNLLCriterion[Float](),
+      estimator.train(trainSet, ZooClassNLLCriterion[Float](),
         endTrigger = Some(endTrigger),
         checkPointTrigger = Some(checkpointTrigger),
         valSet, Array(new Top1Accuracy[Float], new Top5Accuracy[Float]))

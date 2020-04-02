@@ -21,10 +21,10 @@ import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
 import com.intel.analytics.zoo.serving.utils._
+
 import com.intel.analytics.zoo.serving.InferenceStrategy
 import com.intel.analytics.zoo.serving.engine.ServingReceiver
 import com.intel.analytics.zoo.serving.pipeline.RedisUtils
-
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
@@ -37,7 +37,7 @@ import org.apache.spark.util.{DoubleAccumulator, LongAccumulator}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
-
+import org.apache.spark.util.{LongAccumulator}
 
 object ClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -93,7 +93,7 @@ object ClusterServing {
      * Note that currently CHW is commonly used
      * and HWC is often used in Tensorflow models
      */
-    val chwFlag = if (modelType == "tensorflow") {
+    val chwFlag = if (modelType.startsWith("tensorflow")) {
       false
     } else {
       true
@@ -115,7 +115,7 @@ object ClusterServing {
     bcModel = helper.sc.broadcast(model)
 
     model.setInferenceSummary(
-      InferenceSummary(".", helper.dateTime + "-ClusterServing"))
+      InferenceSummary("./TensorboardEventLogs", helper.dateTime + "-ClusterServing"))
 
     val spark = helper.getSparkSession()
 
@@ -132,6 +132,10 @@ object ClusterServing {
     val inputThreshold = 0.6 * 0.8
     val cutRatio = 0.5
 
+    val acc = new LongAccumulator()
+    helper.sc.register(acc)
+
+    val query = images.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
 
     val serParams = new Params(helper.coreNum, helper.filter,
       chwFlag, helper.dataShape(0), helper.dataShape(1), helper.dataShape(2),
@@ -170,13 +174,13 @@ object ClusterServing {
         acc.reset()
 
         RedisUtils.checkMemory(redisDB, inputThreshold, cutRatio)
+
         /**
          * The streaming may be triggered somehow and it is possible
          * to get an empty batch
          *
          * If the batch is not empty, start preprocessing and predict here
          */
-
 
         val preProcessed = x.mapPartitions(it => {
           it.grouped(serParams.coreNum).flatMap(itemBatch => {
@@ -202,6 +206,7 @@ object ClusterServing {
            * batching is required if the machine has over about 30 cores.           *
            */
           InferenceStrategy(serParams, bcModel, acc, preProcessed, "single")
+
         } else {
           /**
            * In Normal mode, every model will use multiple thread to
@@ -209,7 +214,125 @@ object ClusterServing {
            * do sequential predict, maximizing the latency performance
            * and minimizing the memory usage.
            */
+<<<<<<< raw-streaming
           InferenceStrategy(serParams, bcModel, acc, preProcessed, "all")
+=======
+          val pathBytesChunk = batchDF.rdd.mapPartitions(pathBytes => {
+            pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
+              pathBytesBatch.indices.toParArray.map(i => {
+
+                val row = pathBytesBatch(i)
+                val path = row.getAs[String]("uri")
+                val tensors = PreProcessing(row.getAs[String]("image"), chwFlag)
+                (path, tensors)
+
+              })
+            })
+          })
+          pathBytesChunk.mapPartitions(pathBytes => {
+            val localModel = bcModel.value
+            val t = if (chwFlag) {
+              Tensor[Float](batchSize, C, H, W)
+            } else {
+              Tensor[Float](batchSize, H, W, C)
+            }
+            pathBytes.grouped(batchSize).flatMap(pathByteBatch => {
+              val thisBatchSize = pathByteBatch.size
+              acc.add(thisBatchSize)
+              (0 until thisBatchSize).toParArray
+                .foreach(i => t.select(1, i + 1).copy(pathByteBatch(i)._2))
+
+              val x = if (modelType == "openvino") {
+                t.addSingletonDimension()
+              } else {
+                t
+              }
+              /**
+               * addSingletonDimension method will modify the
+               * original Tensor, thus if reuse of Tensor is needed,
+               * have to squeeze it back.
+               */
+              val result = localModel.doPredict(x)
+              if (result.isTensor) {
+                val res = if (modelType == "openvino") {
+                  t.squeeze(1)
+                  result.toTensor.squeeze()
+                } else {
+                  result.toTensor
+                }
+                (0 until thisBatchSize).toParArray.map(i => {
+                  val value = PostProcessing(res.select(1, i + 1), filter)
+                  Record(pathByteBatch(i)._1, value)
+                })
+              } else {
+                // result is table
+                val separator = ","
+                // TODO: openvino Table support
+                val res = result.toTable
+                (0 until thisBatchSize).toParArray.map(i => {
+                  val value = StringBuilder.newBuilder
+                  value.append("[")
+                  res.keySet.foreach(key => {
+                    value.append(PostProcessing(
+                      res(key).asInstanceOf[Tensor[_]].toTensor.select(1, i + 1)))
+                    value.append(separator)
+                  })
+                  value.deleteCharAt(value.length - 1)
+                  value.append("]")
+                  Record(pathByteBatch(i)._1, value.toString())
+                })
+              }
+            })
+          })
+        }
+
+
+        /**
+         * Predict ends, start writing data to output queue
+         */
+        val resDf = spark.createDataFrame(resultPartitions)
+
+        var errFlag: Boolean = true
+
+        /**
+         * Block the inference if there is no space to write
+         * Will continuously try write the result, if not, keep blocking
+         * The input stream may accumulate to very large because no records
+         * will be consumed, however the stream size would be controlled
+         * on Cluster Serving API side.
+         */
+        while (errFlag) {
+          try {
+            resDf.write
+              .format("org.apache.spark.sql.redis")
+              .option("table", "result")
+              .option("key.column", "uri")
+              .option("iterator.grouping.size", batchSize)
+              .mode(SaveMode.Append).save()
+
+            errFlag = false
+          }
+
+          catch {
+            case e: redis.clients.jedis.exceptions.JedisDataException =>
+              errFlag = true
+              val errMsg = "not enough space in redis to write: " + e.toString
+              logger.info(errMsg)
+              Thread.sleep(3000)
+            case e: java.lang.InterruptedException =>
+              /**
+               * If been interrupted by stop signal, do nothing
+               * End the streaming until this micro batch process ends
+               */
+              logger.info("Stop signal received, will exit soon.")
+            case e: Exception =>
+              errFlag = true
+              val errMsg = "unable to handle exception: " + e.toString
+              logger.info(errMsg)
+              Thread.sleep(3000)
+
+          }
+>>>>>>> master
         }
 
         /**
@@ -218,12 +341,26 @@ object ClusterServing {
         val microBatchEnd = System.nanoTime()
         println(s"Currently recs in redis: ${redisDB.xlen("image_stream")}")
 
+<<<<<<< raw-streaming
         AsyncUtils.writeServingSummay(model, acc.value,
           microBatchStart, microBatchEnd, timeStamp, totalCnt)
+=======
+        val microBatchLatency = (microBatchEnd - microBatchStart) / 1e9
+        val microBatchThroughPut = (acc.value / microBatchLatency).toFloat
+        logger.info(s"Inferece end. Input size ${acc.value}. " +
+          s"Latency $microBatchLatency, Throughput $microBatchThroughPut")
+
+        totalCnt += acc.value.toInt
+
+        val lastTimeStamp = timeStamp
+        timeStamp += microBatchLatency.toInt + 1
+
+        AsyncUtils.writeServingSummay(model,
+          lastTimeStamp, timeStamp, totalCnt, microBatchThroughPut)
+>>>>>>> master
           .onComplete{
-            case Success(value) =>
-              timeStamp += value._1
-              totalCnt += value._2
+            case Success(_) => None
+
             case Failure(exception) => logger.info(s"$exception, " +
               s"write summary fails, please check.")
           }

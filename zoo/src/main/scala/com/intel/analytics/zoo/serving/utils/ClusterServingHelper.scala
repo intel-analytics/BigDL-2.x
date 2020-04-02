@@ -65,6 +65,9 @@ class ClusterServingHelper {
 
   var sc: SparkContext = null
 
+  var modelInputs: String = null
+  var modelOutputs: String = null
+
   var redisHost: String = null
   var redisPort: String = null
   var batchSize: Int = 4
@@ -110,7 +113,8 @@ class ClusterServingHelper {
     // parse model field
     val modelConfig = configList.get("model").asInstanceOf[HM]
     val modelFolder = getYaml(modelConfig, "path", null)
-
+    modelInputs = getYaml(modelConfig, "inputs", "")
+    modelOutputs = getYaml(modelConfig, "outputs", "")
 
     parseModelType(modelFolder)
 
@@ -129,7 +133,7 @@ class ClusterServingHelper {
       dataShape = dataShape :+ i.trim.toInt
     }
 
-    filter = getYaml(dataConfig, "filter", "topN:1")
+    filter = getYaml(dataConfig, "filter", "topN(1)")
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
     batchSize = getYaml(paramsConfig, "batch_size", "4").toInt
@@ -141,9 +145,6 @@ class ClusterServingHelper {
      * Once BigDL supports it, engine type could be set here
      * And also other frameworks supporting multiple engine type
      */
-    // engine Type need to be used on executor so do not set here
-//    engineType = getYaml(paramsConfig, "engine_type", "mklblas")
-    topN = getYaml(paramsConfig, "top_n", "1").toInt
 
     logFile = {
       val logF = new File("./cluster-serving.log")
@@ -212,12 +213,12 @@ class ClusterServingHelper {
     if (configValue == null) {
       if (default == null) throw new Error(configList.toString + key + " must be provided")
       else {
-        println(configList.toString + key + " is null, using default.")
+//        println(configList.toString + key + " is null, using default.")
         return default
       }
     }
     else {
-      println(configList.toString + key + " getted: " + configValue)
+//      println(configList.toString + key + " getted: " + configValue)
       logger.info(configList.toString + key + " getted: " + configValue)
       return configValue
     }
@@ -281,8 +282,17 @@ class ClusterServingHelper {
     modelType match {
       case "caffe" => model.doLoadCaffe(defPath, weightPath, blas = blasFlag)
       case "bigdl" => model.doLoadBigDL(weightPath, blas = blasFlag)
-
-      case "tensorflow" => model.doLoadTensorflow(weightPath, "frozenModel", coreNum, 1, true)
+      case "tensorflowFrozenModel" =>
+        model.doLoadTensorflow(weightPath, "frozenModel", coreNum, 1, true)
+      case "tensorflowSavedModel" =>
+        modelInputs = modelInputs.filterNot((x: Char) => x.isWhitespace)
+        modelOutputs = modelOutputs.filterNot((x: Char) => x.isWhitespace)
+        val (inputs, outputs) = if (modelInputs != "" && modelOutputs != "") {
+          (modelInputs.split(","), modelOutputs.split(","))
+        } else {
+          (null, null)
+        }
+        model.doLoadTensorflow(weightPath, "savedModel", inputs, outputs)
       case "pytorch" => model.doLoadPyTorch(weightPath)
       case "keras" => logError("Keras currently not supported in Cluster Serving")
       case "openvino" => model.doLoadOpenVINO(defPath, weightPath, batchSize)
@@ -346,7 +356,7 @@ class ClusterServingHelper {
      * Currently support hdfs, s3
      */
     val scheme = location.split(":").head
-    val localModelPath = if (scheme == "file" || scheme.length == 0) {
+    val localModelPath = if (scheme == "file" || location.split(":").length <= 1) {
       location.split("file://").last
     } else {
       val path = Files.createTempDirectory("model")
@@ -362,6 +372,8 @@ class ClusterServingHelper {
     weightPath = null
     defPath = null
 
+    var variablesPathExist = false
+
     kmpBlockTime = null
 
     import java.io.File
@@ -373,7 +385,7 @@ class ClusterServingHelper {
 
       for (file <- fileList) {
         val fName = file.getName
-        val fPath = new File(location, fName).toString
+        val fPath = new File(localModelPath, fName).toString
         if (fName.endsWith("caffemodel")) {
           throwOneModelError(true, false, true)
           weightPath = fPath
@@ -387,7 +399,11 @@ class ClusterServingHelper {
         else if (fName.endsWith("pb")) {
           throwOneModelError(true, false, true)
           weightPath = localModelPath
-          modelType = "tensorflow"
+          if (variablesPathExist) {
+            modelType = "tensorflowSavedModel"
+          } else {
+            modelType = "tensorflowFrozenModel"
+          }
         }
         else if (fName.endsWith("pt")) {
           throwOneModelError(true, false, true)
@@ -413,6 +429,13 @@ class ClusterServingHelper {
         else if (fName.endsWith("xml")) {
           throwOneModelError(false, true, false)
           defPath = fPath
+        }
+        else if (fName.equals("variables")) {
+          if (modelType != null && modelType.equals("tensorflowFrozenModel")) {
+            modelType = "tensorflowSavedModel"
+          } else {
+            variablesPathExist = true
+          }
         }
 
       }

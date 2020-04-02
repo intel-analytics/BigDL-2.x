@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.models.recommendation
 
 import java.net.URL
 
-import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.optim.{Adam, Optimizer, Top1Accuracy, Trigger}
 import com.intel.analytics.bigdl.tensor.Tensor
