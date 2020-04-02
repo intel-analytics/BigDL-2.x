@@ -31,6 +31,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCr
 import com.intel.analytics.zoo.pipeline.api.keras.python.PythonZooKeras
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import com.intel.analytics.zoo.pipeline.estimator.Estimator
+import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.functions.col
@@ -226,7 +227,11 @@ class NeuralCFSpec extends ZooSpecHelper {
     assert(Math.abs(accuracy - accuracyEst) < 0.1)
   }
 
-
+  "NeuralCF" should "inference Inference model" in {
+    val model = new InferenceModel(1)
+    model.doLoadBigDL("/home/yina/Documents/model/ncf.model")
+    print("load success")
+  }
 }
 
 class NeuralCFSerialTest extends ModuleSerializationTest {
