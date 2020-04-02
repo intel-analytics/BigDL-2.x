@@ -22,6 +22,7 @@ import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.log4j.Logger
 import scopt.OptionParser
+import sys.env
 
 
 case class ResNet50PerfParams(model: String = "",
@@ -65,6 +66,10 @@ object Perf {
         if (!scala.util.Properties.isMac) {
           System.setProperty("bigdl.engineType", "mkldnn")
         }
+      }
+      if (env.contains("OMP_NUM_THREADS")) {
+        val numCores = env("OMP_NUM_THREADS").toInt
+        System.setProperty("bigdl.mklNumThreads", numCores.toString)
       }
 
       val batchSize = param.batchSize

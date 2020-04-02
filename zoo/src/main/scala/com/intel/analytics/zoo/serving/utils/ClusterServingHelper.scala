@@ -38,6 +38,7 @@ import org.yaml.snakeyaml.Yaml
 import java.time.LocalDateTime
 
 import scala.reflect.ClassTag
+import scala.sys.env
 
 case class LoaderParams(modelFolder: String = null,
                         batchSize: Int = 4,
@@ -265,6 +266,13 @@ class ClusterServingHelper {
       .coalesce(EngineRef.getNodeNumber())
       .mapPartitions(v => Iterator.single(bcModel.value(false, true))).cache()
     cachedModel
+  }
+
+  def setNumberThreads(): Unit = {
+    if (env.contains("OMP_NUM_THREADS")) {
+      val numCores = env("OMP_NUM_THREADS").toInt
+      System.setProperty("bigdl.mklNumThreads", numCores.toString)
+    }
   }
 
   /**
