@@ -234,6 +234,7 @@ object NNContext {
       zooConf.setExecutorEnv("OMP_NUM_THREADS", ompNumThreads)
       zooConf.setExecutorEnv("spark.executor.extraJavaOptions",
         "-Dbigdl.mklNumThreads" + env("OMP_NUM_THREADS").toString)
+    }
   }
 
   def createSparkConf(existingConf: SparkConf = null) : SparkConf = {
