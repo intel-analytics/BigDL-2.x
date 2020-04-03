@@ -232,8 +232,8 @@ object NNContext {
       zooConf.setExecutorEnv("KMP_BLOCKTIME", kmpBlockTime)
       zooConf.setExecutorEnv("KMP_SETTINGS", kmpSettings)
       zooConf.setExecutorEnv("OMP_NUM_THREADS", ompNumThreads)
-      zooConf.setExecutorEnv("spark.executor.extraJavaOptions",
-        "-Dbigdl.mklNumThreads" + env("OMP_NUM_THREADS").toString)
+      zooConf.set("spark.executor.extraJavaOptions",
+        "-Dbigdl.mklNumThreads=" + ompNumThreads.toString)
     }
   }
 
