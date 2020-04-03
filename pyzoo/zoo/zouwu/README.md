@@ -10,8 +10,8 @@ Project Zouwu provides a reference solution that is designed and optimized for c
 * Python 3.6 or 3.7
 * PySpark 2.4.3
 * Ray 0.7.0
-* Keras 1.2.2
 * Tensorflow 1.15.0
+* Note that Keras is not needed to use Zouwu. But if you have Keras installed, make sure it is Keras 1.2.2. Other verisons might cause unexpected problems. 
 
 ### Install 
   * Download the Analytics Zoo source code (master). 
