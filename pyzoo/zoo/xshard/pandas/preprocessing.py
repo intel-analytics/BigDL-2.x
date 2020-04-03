@@ -13,15 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import os
 import boto3
 import ray
-import pyarrow as pa
 import pandas as pd
-import random
-import os
+import pyarrow as pa
 from pyspark.context import SparkContext
+
 from zoo.ray.util.raycontext import RayContext
 from zoo.xshard.shard import RayDataShards
+from zoo.xshard.utils import *
 
 
 def read_csv(file_path, context):
@@ -55,22 +56,22 @@ def read_file_ray(context, file_path, file_type):
     if len(file_path_splits) == 1:
         # only one file
         if os.path.splitext(file_path)[-1] == file_type:
-            file_paths = file_path
+            file_paths = [file_path]
         # directory
         else:
             file_url_splits = file_path.split("://")
             prefix = file_url_splits[0]
             if prefix == "hdfs":
                 fs = pa.hdfs.connect()
-                server_address = file_url_splits[1].split('/')[0]
                 files = fs.ls(file_path)
-                file_paths = [os.path.join(server_address, file) for file in files]
+                file_paths = [os.path.join(file_path, os.path.basename(file)) for file in files]
             elif prefix == "s3":
                 path_parts = file_url_splits[1].split('/')
                 bucket = path_parts.pop(0)
                 key = "/".join(path_parts)
-                access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
-                secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
+                env = context.ray_service.env
+                access_key_id = env["AWS_ACCESS_KEY_ID"]
+                secret_access_key = env["AWS_SECRET_ACCESS_KEY"]
                 s3_client = boto3.Session(
                     aws_access_key_id=access_key_id,
                     aws_secret_access_key=secret_access_key,
@@ -90,41 +91,31 @@ def read_file_ray(context, file_path, file_type):
     num_executors = context.num_ray_nodes
     num_cores = context.ray_node_cpu_cores
     num_partitions = num_executors * num_cores
-
-    # split file paths into n chunks
-    def chunk(ys, n):
-        random.shuffle(ys)
-        size = len(ys) // n
-        leftovers = ys[size * n:]
-        for c in range(n):
-            if leftovers:
-                extra = [leftovers.pop()]
-            else:
-                extra = []
-            yield ys[c * size:(c + 1) * size] + extra
-
-    partition_list = list(chunk(file_paths, num_partitions))
-    shards = [(RayPandasShard.remote()) for i in range(num_partitions)]
-    [shard.read_file_partitions.remote(partition_list[i], file_type)
-     for i, shard in enumerate(shards)]
+    # remove empty partitions
+    file_partition_list = [partition for partition
+                      in list(chunk(file_paths, num_partitions)) if partition]
+    shards = [RayPandasShard.remote() for i in range(len(file_partition_list))]
+    [shard.read_file_partitions.remote(file_partition_list[i], file_type)
+                         for i, shard in enumerate(shards)]
+    # shard_partitions = [[shard] for shard in shards]
     data_shards = RayDataShards(shards)
     return data_shards
 
+
 @ray.remote
 class RayPandasShard(object):
-
     def __init__(self, data=None):
         self.data = data
 
     def read_file_partitions(self, paths, file_type):
         df_list = []
         prefix = paths[0].split("://")[0]
+        import time
+        start = time.time()
         if prefix == "hdfs":
             fs = pa.hdfs.connect()
             print("Start loading files")
             for path in paths:
-                # For parquet files
-                # df = fs.read_parquet(path).to_pandas()
                 with fs.open(path, 'rb') as f:
                     if file_type == "json":
                         df = pd.read_json(f, orient='columns', lines=True)
@@ -162,12 +153,12 @@ class RayPandasShard(object):
                     raise Exception("Unsupported file type")
                 df_list.append(df)
         self.data = pd.concat(df_list)
+        end = time.time()
+        print("read shard time: ", end - start)
         return self.data
 
-    def apply(self, func):
-        self.data = func(self.data)
+    def apply(self, func, *args):
+        self.data = func(self.data, *args)
 
     def get_data(self):
         return self.data
-
-
