@@ -37,8 +37,8 @@ We provide a [notebook](https://github.com/shane-huang/analytics-zoo/blob/zouwu-
 The built-in forecast models are all derived from [tfpark.KerasModels](https://analytics-zoo.github.io/master/#APIGuide/TFPark/model/). 
 
 1. To start, you need to create a forecast model first. Specify ```horizon``` and ```feature_dim``` in constructor. 
-    * horizon: steps to look forward
-    * feature_dim: dimension of input feature
+    * ```horizon```: no. of steps to forecast
+    * ```feature_dim```: dimension of input feature
 
 Refer to API doc for detailed explaination of all arguments for each forecast model.
 Below are some example code to create forecast models.
@@ -60,28 +60,30 @@ mtnet_forecaster = MTNetForecaster(horizon=1,
  
 2. Use ```forecaster.fit/evalute/predict``` in the same way as [tfpark.KerasModel](https://analytics-zoo.github.io/master/#APIGuide/TFPark/model/)
 
-3. For univariant forecasting, the input data shape for ```fit/evaluation/predict``` should match the arguments you used to create the forecaster. Specifically:
-   * X shape should be ```(num of samples, lookback, feature_dim)```, for train, validation and test data
-   * Y shape should be ```(num of samples, horizon)```, for train and validation data
-   *  ```feature_dim``` and ```horizon``` as specified in constructor, ```lookback``` is the number of time steps you want to look back in history.
+3. For univariant forecasting (i.e. to predict one series at a time), you can use either ```LSTMForecaster``` or ```MTNetForecaster```. The input data shape for ```fit/evaluation/predict``` should match the arguments you used to create the forecaster. Specifically:
+   * X shape should be ```(num of samples, lookback, feature_dim)```
+   * Y shape should be ```(num of samples, horizon)```
+   * ```feature_dim``` is the number of features as specified in Forecaster constructors.
+   * ```horizon``` is the number of steps to look forward as specified in Forecaster constructors.
+   * ```lookback``` is the number of time steps you want to look back in history. 
 
-4. For multivariant forecasting (using ```MTNetForecaster```) where number of targets to predict (i.e. num_targets) >= 1, the input data shape should meet below criteria. 
-   * X shape should be ```(num of samples, lookback, feature_dim)```, for train, validation and test data
-       * Note that for MTNetForecaster, ```lookback``` = ```(lb_long_steps+1) * lb_long_stepsize```, lb_long_steps and lb_long_stepsize as specified in MTNetForecaster constructor. 
-   * Y shape should be either one of below
-       * ```(num of samples, num_of_targets)``` if horizon = 1
-       * ```(num of samples, num_of_targets, horizon)``` if horizon > 1 && num_targets > 1
-       * ```(num of samples, horizon)``` if num_targets = 1 (fallback to univariant forecasting)
+4. For multivariant forecasting (i.e. to predict several series at the same time), you have to use ```MTNetForecaster```. The input data shape should meet below criteria. Note for multivariant forecasting, horizon must be 1. 
+   * X shape should be ```(num of samples, lookback, feature_dim)```
+   *  Y shape should be ```(num of samples, num_of_targets)``` 
+   * ```lookback``` should equal ```(lb_long_steps+1) * lb_long_stepsize```, where ```lb_long_steps``` and ```lb_long_stepsize``` are as specified in ```MTNetForecaster``` constructor. 
+   * ```num_targets``` is the number of series to forecast at the same time
+       
 
 #### Using AutoTS
 
-The automated training in zouwu is built upon [Analytics Zoo AutoML module](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/automl), which uses [Ray Tune](https://github.com/ray-project/ray/tree/master/python/ray/tune) for hyper parameter tuning and runs on [Analytics Zoo RayOnSpark](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/).  
+The automated training in zouwu is built upon [Analytics Zoo AutoML module](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/automl) (refer to [AutoML ProgrammingGuide](https://analytics-zoo.github.io/master/#ProgrammingGuide/AutoML/overview/) and [AutoML APIGuide](https://analytics-zoo.github.io/master/#APIGuide/AutoML/time-sequence-predictor/) for details), which uses [Ray Tune](https://github.com/ray-project/ray/tree/master/python/ray/tune) for hyper parameter tuning and runs on [Analytics Zoo RayOnSpark](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/).  
 
 The general workflow using automated training contains below two steps. 
    1. create a ```AutoTSTrainer``` to train a ```TSPipeline```, save it to file to use later or elsewhere if you wish.
    2. use ```TSPipeline``` to do prediction, evaluation, and incremental fitting as well. 
 
-You need to initialize RayOnSpark before using auto training (i.e. ```AutoTSTrainer```), and stop it after training finished. Using TSPipeline only does not need RayOnSpark. 
+You'll need ```RayOnSpark``` for training with ```AutoTSTrainer```, so you have to init it before auto training, and stop it after training is completed. Note RayOnSpark is not needed if you just use TSPipeline for inference, evaluation or incremental training. 
+
    * init RayOnSpark in local mode
 ```python
 from zoo import init_spark_on_local
