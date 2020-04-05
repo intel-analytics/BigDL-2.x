@@ -13,7 +13,9 @@ Project Zouwu provides a reference solution that is designed and optimized for c
 * Tensorflow 1.15.0
 * aiohttp
 * setproctitle
-* scikit-learn
+* scikit-learn >=0.20.0
+* psutil
+* requests
 * featuretools
 * pandas
 * Note that Keras is not needed to use Zouwu. But if you have Keras installed, make sure it is Keras 1.2.2. Other verisons might cause unexpected problems. 
@@ -165,22 +167,23 @@ AutoTSTrainer and TSPipeline accepts data frames as input. An exmaple data frame
  ```
 ### built-in models vs. AutoTS
 
-Now we show some comparison results between manually tuned models vs. AutoTS, using network traffic forecasting as an example.  
+Here we show some comparison results between manually tuned built-in models vs. AutoTS, using [network traffic forecast case](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/zouwu/use-case/network_traffic) as an example.  In paritcular, we compare
+    * manually tuned built-in LSTMForecaster
+    * auto-tuned LSTM-based pipeline using AutoTS (obtained out of ~100 trials)
 
-We first trained an LSTMForecaster with 5 epochs (*Experiment 1*). Then we use AutoTS to train the model and find out the best configuration out of 120 trials (*Experiment 2*). The final best pipeline was acutally traied 50 epochs before it stops. To make the comparison fairer, we also train 50 epochs for LSTMForecaster with the same hyper parameters (*Experiment 3*). The time and accuracy results are as shown in below table. AutoTS achieves the best accuracy, while the time is still acceptable (on single node with 2 trials runing in parallel at the same time)  
+* Accuracy: manually tuned vs. AutoTS
 
-|Experiment No.|Model|Mean Squared Error (smaller the better)|Symmetric Mean Absolute Percentage Error (smaller the better)|Epochs|Training Time|
-|-|--|-----|----|---|----|
-|1|Manually Tuned (LSTMForecaster)|27277.36|18.22%|5|8.1s|
-|2|AutoTS (LSTMForecaster)|2792.22|5.80%|50|40mins (120 trails on single node w/ 2 parallel workers)|
-|3|Manually Tuned (LSTMForecaster)|6312.44|8.61%|50|1min 9s|
+|Model|Mean Squared Error (smaller the better)|Symmetric Mean Absolute Percentage Error (smaller the better)|Trained Epochs|
+|--|-----|----|---|
+|Manually Tuned LSTMForecaster|6312.44|8.61%|50|
+|AutoTS (LSTM model)|2792.22|5.80%|50|
 
 
-Below is a comparison between manually selected parameters and auto-tuned parameters form AutoTS. We can see the features selected by AutoTS make much sense in our case.  
+* Hyper parameters: manually selected vs. by AutoTS. We can see the features selected by AutoTS make much sense in our case.  
 
 ||features|Batch size|learning rate|lstm_units*|dropout_p*|Lookback|
 |--|--|--|-----|-----|-----|-----|
-|LSTMForecaster|year, month, week, day_of_week, hour|1024|0.001|32, 32|0.2, 0.2|55|
-|AutoTS|hour, is_weekday, is_awake|64|0.001|32, 64|0.2, 0.236|84|
+|Manually Tuned LSTMForecaster|year, month, week, day_of_week, hour|1024|0.001|32, 32|0.2, 0.2|55|
+|AutoTS (LSTM model)|hour, is_weekday, is_awake|64|0.001|32, 64|0.2, 0.236|84|
 
 _*_: There're 2 lstm layers and dropout in LSTM model, the hyper parameters in the table corresponds to the 1st and 2nd layer respectively. 
