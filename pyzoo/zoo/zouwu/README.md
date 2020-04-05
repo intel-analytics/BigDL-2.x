@@ -167,11 +167,11 @@ AutoTSTrainer and TSPipeline accepts data frames as input. An exmaple data frame
  ```
 ### built-in models vs. AutoTS
 
-Here we show some comparison results between manually tuned built-in models vs. AutoTS, using [network traffic forecast case](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/zouwu/use-case/network_traffic) as an example.  In paritcular, we compare
-    * manually tuned built-in LSTMForecaster
-    * auto-tuned LSTM-based pipeline using AutoTS (obtained out of ~100 trials)
+Here we show some comparison results between manually tuned built-in models vs. AutoTS, using [network traffic forecast case](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/zouwu/use-case/network_traffic) as an example.  In paritcular, we compare    
+*  manually tuned built-in LSTMForecaster
+*  auto-tuned LSTM-based pipeline using AutoTS (obtained out of ~100 trials)
 
-* Accuracy: manually tuned vs. AutoTS
+#### Accuracy: manually tuned vs. AutoTS
 
 |Model|Mean Squared Error (smaller the better)|Symmetric Mean Absolute Percentage Error (smaller the better)|Trained Epochs|
 |--|-----|----|---|
@@ -179,7 +179,7 @@ Here we show some comparison results between manually tuned built-in models vs. 
 |AutoTS (LSTM model)|2792.22|5.80%|50|
 
 
-* Hyper parameters: manually selected vs. by AutoTS. We can see the features selected by AutoTS make much sense in our case.  
+#### Hyper parameters: manually selected vs. by AutoTS. We can see the features selected by AutoTS make much sense in our case.  
 
 ||features|Batch size|learning rate|lstm_units*|dropout_p*|Lookback|
 |--|--|--|-----|-----|-----|-----|
