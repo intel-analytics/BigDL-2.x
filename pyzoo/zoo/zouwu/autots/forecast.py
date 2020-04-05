@@ -15,8 +15,7 @@
 #
 
 from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
-from zoo.automl.regression.time_sequence_predictor import SmokeRecipe
-from zoo.automl.regression.time_sequence_predictor import Recipe
+from zoo.automl.config.recipe import *
 from zoo.automl.pipeline.time_sequence import load_ts_pipeline
 
 
@@ -34,10 +33,10 @@ class AutoTSTrainer:
         """
         Initialize the AutoTS Trainer.
 
-        @param horizon: steps to look forward
-        @param dt_col: the datetime column
-        @param target_col: the target column to forecast
-        @param extra_features_col: extra feature columns
+        :param horizon: steps to look forward
+        :param dt_col: the datetime column
+        :param target_col: the target column to forecast
+        :param extra_features_col: extra feature columns
         """
         self.internal = TimeSequencePredictor(
             dt_col=dt_col,
@@ -57,15 +56,15 @@ class AutoTSTrainer:
             ):
         """
         Fit a time series forecasting pipeline w/ automl
-        @param train_df: the input dataframe (as pandas.dataframe)
-        @param validation_df: the validation dataframe (as pandas.dataframe)
-        @param recipe: the configuration of searching
-        @param metric: the evaluation metric to optimize
-        @param uncertainty: whether to enable uncertainty calculation
+        :param train_df: the input dataframe (as pandas.dataframe)
+        :param validation_df: the validation dataframe (as pandas.dataframe)
+        :param recipe: the configuration of searching
+        :param metric: the evaluation metric to optimize
+        :param uncertainty: whether to enable uncertainty calculation
                             (will output an uncertainty sigma)
-        @param hdfs_url: the hdfs_url to use for storing trail and intermediate results
-        @param distributed: whether to enable distributed training
-        @return a TSPipeline
+        :param hdfs_url: the hdfs_url to use for storing trail and intermediate results
+        :param distributed: whether to enable distributed training
+        :return a TSPipeline
         """
         zoo_pipeline = self.internal.fit(train_df,
                                          validation_df,
@@ -96,8 +95,8 @@ class TSPipeline:
     def save(self, pipeline_file):
         """
         save the pipeline to a file
-        @param pipeline_file: the file path
-        @return:
+        :param pipeline_file: the file path
+        :return:
         """
         return self.internal.save(pipeline_file)
 
@@ -105,8 +104,8 @@ class TSPipeline:
     def load(pipeline_file):
         """
         load pipeline from a file
-        @param pipeline_file: the pipeline file
-        @return:
+        :param pipeline_file: the pipeline file
+        :return: a TSPipeline object
         """
         tsppl = TSPipeline()
         tsppl.internal = load_ts_pipeline(pipeline_file)
@@ -121,12 +120,12 @@ class TSPipeline:
         """
         Incremental Fitting
 
-        @param input_df: the input dataframe
-        @param validation_df: the validation dataframe
-        @param uncertainty: whether to calculate uncertainty
-        @param epochs: number of epochs to train
-        @param user_config: user configurations
-        @return:
+        :param input_df: the input dataframe
+        :param validation_df: the validation dataframe
+        :param uncertainty: whether to calculate uncertainty
+        :param epochs: number of epochs to train
+        :param user_config: user configurations
+        :return:
         """
         # TODO refactor automl.Pipeline fit methods to merge the two
         # maybe use another method to apply configs.
@@ -147,8 +146,8 @@ class TSPipeline:
     def predict(self, input_df):
         """
         predict the result
-        @param input_df: the input dataframe
-        @return: the forecast results
+        :param input_df: the input dataframe
+        :return: the forecast results
         """
         if self.uncertainty is True:
             return self.internal.predict_with_uncertainty(input_df)
@@ -161,9 +160,9 @@ class TSPipeline:
                  multioutput='raw_values'):
         """
         evaluate the results
-        @param input_df: the input dataframe
-        @param metrics: the evaluation metrics
-        @param multioutput: output mode of multiple output, whether to aggregate
-        @return: the evaluation results
+        :param input_df: the input dataframe
+        :param metrics: the evaluation metrics
+        :param multioutput: output mode of multiple output, whether to aggregate
+        :return: the evaluation results
         """
         return self.internal.evaluate(input_df, metrics, multioutput)
