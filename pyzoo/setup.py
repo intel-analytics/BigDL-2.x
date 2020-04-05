@@ -49,7 +49,7 @@ TEMP_PATH = "zoo/share"
 analytics_zoo_home = os.path.abspath(__file__ + "/../../")
 SCRIPTS_TARGET = os.path.join(TEMP_PATH, "bin/cluster-serving")
 
-exclude_patterns = ["*__pycache__*", "*ipynb_checkpoints*"]
+exclude_patterns = ["*__pycache__*", "*ipynb_checkpoints*", "*zouwu.use-case*"]
 
 
 def get_analytics_zoo_packages():
