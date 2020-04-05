@@ -171,6 +171,8 @@ Here we show some comparison results between manually tuned built-in models vs. 
 *  manually tuned built-in LSTMForecaster
 *  auto-tuned LSTM-based pipeline using AutoTS (obtained out of ~100 trials)
 
+From below results, we can see that the features selected by AutoTS make much sense in our case, and AutoTS does achieved much better accuracy results than manually tuned model.
+
 #### Accuracy: manually tuned vs. AutoTS
 
 |Model|Mean Squared Error (smaller the better)|Symmetric Mean Absolute Percentage Error (smaller the better)|Trained Epochs|
@@ -179,7 +181,7 @@ Here we show some comparison results between manually tuned built-in models vs. 
 |AutoTS (LSTM model)|2792.22|5.80%|50|
 
 
-#### Hyper parameters: manually selected vs. by AutoTS. We can see the features selected by AutoTS make much sense in our case.  
+#### Hyper parameters: manually selected vs. by AutoTS. 
 
 ||features|Batch size|learning rate|lstm_units*|dropout_p*|Lookback|
 |--|--|--|-----|-----|-----|-----|
@@ -187,3 +189,5 @@ Here we show some comparison results between manually tuned built-in models vs. 
 |AutoTS (LSTM model)|hour, is_weekday, is_awake|64|0.001|32, 64|0.2, 0.236|84|
 
 _*_: There're 2 lstm layers and dropout in LSTM model, the hyper parameters in the table corresponds to the 1st and 2nd layer respectively. 
+
+
