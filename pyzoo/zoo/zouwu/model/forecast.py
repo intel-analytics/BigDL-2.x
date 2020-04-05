@@ -41,7 +41,7 @@ class Forecaster(TFParkKerasModel, metaclass=ABCMeta):
     def _build(self):
         """
         Build a tf.keras model.
-        @param return: return a tf.keras model (compiled)
+        :return: a tf.keras model (compiled)
         """
         pass
 
@@ -65,15 +65,15 @@ class LSTMForecaster(Forecaster):
         """
         Build a LSTM Forecast Model.
 
-        @param horizon: steps to look forward
-        @param feature_dim: dimension of input feature
-        @param lstm_1_units: num of units for the 1st LSTM layer
-        @param dropout_1: p for the 1st dropout layer
-        @param lstm_2_units: num of units for the 2nd LSTM layer
-        @param dropout_2: p for the 2nd dropout layer
-        @param metric: the metric for validation and evaluation
-        @param lr: learning rate
-        @param uncertainty: whether to return uncertainty
+        :param horizon: steps to look forward
+        :param feature_dim: dimension of input feature
+        :param lstm_1_units: num of units for the 1st LSTM layer
+        :param dropout_1: p for the 1st dropout layer
+        :param lstm_2_units: num of units for the 2nd LSTM layer
+        :param dropout_2: p for the 2nd dropout layer
+        :param metric: the metric for validation and evaluation
+        :param lr: learning rate
+        :param uncertainty: whether to return uncertainty
         """
         #
         self.horizon = horizon
@@ -120,12 +120,12 @@ class MTNetForecaster(Forecaster):
                  ):
         """
         Build a MTNet Forecast Model.
-        @param horizon: the steps to look forward
-        @param feature_dim: the dimension of input feature
-        @param lb_long_steps: the number of steps for the long-term memory series
-        @param lb_long_stepsize: the stepsize for long-term memory series
-        @param metric: the metric for validation and evaluation
-        @param uncertainty: whether to enable calculation of uncertainty
+        :param horizon: the steps to look forward
+        :param feature_dim: the dimension of input feature
+        :param lb_long_steps: the number of steps for the long-term memory series
+        :param lb_long_stepsize: the stepsize for long-term memory series
+        :param metric: the metric for validation and evaluation
+        :param uncertainty: whether to enable calculation of uncertainty
         """
         self.check_optional_config = False
         self.mc = uncertainty
@@ -146,7 +146,7 @@ class MTNetForecaster(Forecaster):
     def _build(self):
         """
         build a MTNet model in tf.keras
-        @return: a tf.keras MTNet model
+        :return: a tf.keras MTNet model
         """
         # TODO change this function call after MTNet fixes
         self.internal = MTNetKerasModel(
@@ -159,8 +159,8 @@ class MTNetForecaster(Forecaster):
         """
         The original rolled features needs an extra step to process.
         This should be called before train_x, validation_x, and test_x
-        @param x: the original samples from rolling
-        @return: a tuple (long_term_x, short_term_x)
+        :param x: the original samples from rolling
+        :return: a tuple (long_term_x, short_term_x)
                 which are long term and short term history respectively
         """
         return self.internal._reshape_input_x(x)

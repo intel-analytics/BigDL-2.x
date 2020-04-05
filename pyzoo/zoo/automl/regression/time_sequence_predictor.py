@@ -31,305 +31,7 @@ from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 from zoo.automl.model import TimeSequenceModel
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline, load_ts_pipeline
 from zoo.automl.common.util import *
-from abc import ABC, abstractmethod
-
-
-class Recipe(ABC):
-    @abstractmethod
-    def search_space(self, all_available_features):
-        pass
-
-    @abstractmethod
-    def runtime_params(self):
-        pass
-
-    def fixed_params(self):
-        return None
-
-    def search_algorithm_params(self):
-        return None
-
-    def search_algorithm(self):
-        return None
-
-    def scheduler_params(self):
-        pass
-
-
-class SmokeRecipe(Recipe):
-    """
-    A very simple Recipe for smoke test that runs one epoch and one iteration
-    with only 1 random sample.
-    """
-    def __init__(self):
-        pass
-
-    def search_space(self, all_available_features):
-        return {
-            "selected_features": all_available_features,
-            "model": "LSTM",
-            "lstm_1_units": RandomSample(lambda spec: np.random.choice([32, 64], size=1)[0]),
-            "dropout_1": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
-            "lstm_2_units": RandomSample(lambda spec: np.random.choice([32, 64], size=1)[0]),
-            "dropout_2": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
-            "lr": 0.001,
-            "batch_size": 1024,
-            "epochs": 1,
-            "past_seq_len": 2,
-        }
-
-    def runtime_params(self):
-        return {
-            "training_iteration": 1,
-            "num_samples": 1,
-        }
-
-
-class MTNetSmokeRecipe(Recipe):
-    """
-    A very simple Recipe for smoke test that runs one epoch and one iteration
-    with only 1 random sample.
-    """
-    def __init__(self):
-        pass
-
-    def search_space(self, all_available_features):
-        return {
-            "selected_features": all_available_features,
-            "model": "MTNet",
-            "lr": 0.001,
-            "batch_size": 16,
-            "epochs": 1,
-            "dropout": 0.2,
-            "time_step": RandomSample(lambda spec: np.random.choice([3, 4], size=1)[0]),
-            "filter_size": 2,
-            "long_num": RandomSample(lambda spec: np.random.choice([3, 4], size=1)[0]),
-            "ar_size": RandomSample(lambda spec: np.random.choice([2, 3], size=1)[0]),
-            "past_seq_len": RandomSample(lambda spec: (spec.config.long_num + 1)
-                                         * spec.config.time_step),
-        }
-
-    def runtime_params(self):
-        return {
-            "training_iteration": 1,
-            "num_samples": 1,
-        }
-
-
-class GridRandomRecipe(Recipe):
-    """
-    A recipe involves both grid search and random search.
-       tsp = TimeSequencePredictor(...,recipe = GridRandomRecipe(1))
-
-    @param num_rand_samples: number of hyper-param configurations sampled randomly
-    @param look_back: the length to look back, either a tuple with 2 int values,
-          which is in format is (min len, max len), or a single int, which is
-          a fixed length to look back.
-    """
-
-    def __init__(self, num_rand_samples=1, look_back=2):
-        self.num_samples = num_rand_samples
-        if isinstance(look_back, tuple) and len(look_back) == 2 and \
-                isinstance(look_back[0], int) and isinstance(look_back[1], int):
-            if look_back[1] < 2:
-                raise ValueError("The max look back value should be at least 2")
-            if look_back[0] < 2:
-                print("The input min look back value is smaller than 2. "
-                      "We sample from range (2, {}) instead.".format(look_back[1]))
-            self.past_seq_config = RandomSample(
-                lambda spec: np.random.randint(look_back[0], look_back[1]+1, size=1)[0])
-        elif isinstance(look_back, int):
-            if look_back < 2:
-                raise ValueError("look back value should not be smaller than 2. "
-                                 "Current value is ", look_back)
-            self.past_seq_config = look_back
-        else:
-            raise ValueError("look back is {}.\n "
-                             "look_back should be either a tuple with 2 int values:"
-                             " (min_len, max_len) or a single int"
-                             .format(look_back))
-
-    def search_space(self, all_available_features):
-        return {
-            # -------- feature related parameters
-            "selected_features": RandomSample(
-                lambda spec: np.random.choice(
-                    all_available_features,
-                    size=np.random.randint(low=3, high=len(all_available_features), size=1),
-                    replace=False)),
-
-            # --------- model related parameters
-            "model": "LSTM",
-            "lr": 0.001,
-            "lstm_1_units": GridSearch([16, 32]),
-            "dropout_1": 0.2,
-            "lstm_2_units": GridSearch([16, 32]),
-            "dropout_2": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
-            "batch_size": 1024,
-            "epochs": 5,
-            "past_seq_len": self.past_seq_config,
-        }
-
-    def runtime_params(self):
-        return {
-            "training_iteration": 10,
-            "num_samples": self.num_samples,
-        }
-
-
-class RandomRecipe(Recipe):
-    """
-    Pure random sample Recipe. Often used as baseline.
-       tsp = TimeSequencePredictor(...,recipe = RandomRecipe(5))
-
-    @param num_rand_samples: number of hyper-param configurations sampled randomly
-    @param look_back: the length to look back, either a tuple with 2 int values,
-          which is in format is (min len, max len), or a single int, which is
-          a fixed length to look back.
-    """
-
-    def __init__(self, num_rand_samples=1, look_back=2, reward_metric=-0.05):
-        self.num_samples = num_rand_samples
-        self.reward_metric = reward_metric
-        if isinstance(look_back, tuple) and len(look_back) == 2 and \
-                isinstance(look_back[0], int) and isinstance(look_back[1], int):
-            if look_back[1] < 2:
-                raise ValueError("The max look back value should be at least 2")
-            if look_back[0] < 2:
-                print("The input min look back value is smaller than 2. "
-                      "We sample from range (2, {}) instead.".format(look_back[1]))
-            self.past_seq_config = \
-                RandomSample(lambda spec:
-                             np.random.randint(look_back[0], look_back[1]+1, size=1)[0])
-        elif isinstance(look_back, int):
-            if look_back < 2:
-                raise ValueError("look back value should not be smaller than 2. "
-                                 "Current value is ", look_back)
-            self.past_seq_config = look_back
-        else:
-            raise ValueError("look back is {}.\n "
-                             "look_back should be either a tuple with 2 int values:"
-                             " (min_len, max_len) or a single int"
-                             .format(look_back))
-
-    def search_space(self, all_available_features):
-        return {
-            # -------- feature related parameters
-            "selected_features": RandomSample(
-                lambda spec: np.random.choice(
-                    all_available_features,
-                    size=np.random.randint(low=3, high=len(all_available_features), size=1))
-            ),
-
-            "model": RandomSample(lambda spec: np.random.choice(["LSTM", "Seq2seq"], size=1)[0]),
-            # --------- Vanilla LSTM model parameters
-            "lstm_1_units": RandomSample(lambda spec:
-                                         np.random.choice([8, 16, 32, 64, 128], size=1)[0]),
-            "dropout_1": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
-            "lstm_2_units": RandomSample(lambda spec:
-                                         np.random.choice([8, 16, 32, 64, 128], size=1)[0]),
-            "dropout_2": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
-
-            # ----------- Seq2Seq model parameters
-            "latent_dim": RandomSample(lambda spec:
-                                       np.random.choice([32, 64, 128, 256], size=1)[0]),
-            "dropout": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
-
-            # ----------- optimization parameters
-            "lr": RandomSample(lambda spec: np.random.uniform(0.001, 0.01)),
-            "batch_size": RandomSample(lambda spec:
-                                       np.random.choice([32, 64, 1024], size=1, replace=False)[0]),
-            "epochs": 5,
-            "past_seq_len": self.past_seq_config,
-        }
-
-    def runtime_params(self):
-        return {
-            "reward_metric": self.reward_metric,
-            "training_iteration": 10,
-            "num_samples": self.num_samples,
-        }
-
-
-class BayesRecipe(Recipe):
-    """
-    A Bayes search Recipe.
-       tsp = TimeSequencePredictor(...,recipe = BayesRecipe(5))
-
-    @param num_samples: number of hyper-param configurations sampled
-    @param look_back: the length to look back, either a tuple with 2 int values,
-          which is in format is (min len, max len), or a single int, which is
-          a fixed length to look back.
-    """
-    def __init__(self, num_samples=1, look_back=2, reward_metric=-0.05):
-        self.num_samples = num_samples
-        self.reward_metric = reward_metric
-        if isinstance(look_back, tuple) and len(look_back) == 2 and \
-                isinstance(look_back[0], int) and isinstance(look_back[1], int):
-            if look_back[1] < 2:
-                raise ValueError("The max look back value should be at least 2")
-            if look_back[0] < 2:
-                print("The input min look back value is smaller than 2. "
-                      "We sample from range (2, {}) instead.".format(look_back[1]))
-            self.bayes_past_seq_config = {"past_seq_len_float": look_back}
-            self.fixed_past_seq_config = {}
-        elif isinstance(look_back, int):
-            if look_back < 2:
-                raise ValueError("look back value should not be smaller than 2. "
-                                 "Current value is ", look_back)
-            self.bayes_past_seq_config = {}
-            self.fixed_past_seq_config = {"past_seq_len": look_back}
-        else:
-            raise ValueError("look back is {}.\n "
-                             "look_back should be either a tuple with 2 int values:"
-                             " (min_len, max_len) or a single int"
-                             .format(look_back))
-
-    def search_space(self, all_available_features):
-        feature_space = {"bayes_feature_{}".format(feature): (0.3, 1)
-                         for feature in all_available_features}
-        other_space = {
-            # --------- model parameters
-            "lstm_1_units_float": (8, 128),
-            "dropout_1": (0.2, 0.5),
-            "lstm_2_units_float": (8, 128),
-            "dropout_2": (0.2, 0.5),
-
-            # ----------- optimization parameters
-            "lr": (0.001, 0.01),
-            "batch_size_log": (5, 10),
-        }
-        total_space = other_space.copy()
-        total_space.update(feature_space)
-        total_space.update(self.bayes_past_seq_config)
-        return total_space
-
-    def fixed_params(self):
-        total_fixed_params = {
-            "epochs": 5,
-            # "batch_size": 1024,
-        }
-        total_fixed_params.update(self.fixed_past_seq_config)
-        return total_fixed_params
-
-    def runtime_params(self):
-        return {
-            "reward_metric": self.reward_metric,
-            "training_iteration": 5,
-            "num_samples": self.num_samples,
-        }
-
-    def search_algorithm_params(self):
-        return {
-            "utility_kwargs": {
-                "kind": "ucb",
-                "kappa": 2.5,
-                "xi": 0.0
-            }
-        }
-
-    def search_algorithm(self):
-        return 'BayesOpt'
+from zoo.automl.config.recipe import *
 
 
 class TimeSequencePredictor(object):
@@ -345,6 +47,7 @@ class TimeSequencePredictor(object):
         result = tsp.predict(test_df)
 
     """
+
     def __init__(self,
                  name="automl",
                  logs_dir="~/zoo_automl_logs",
@@ -415,13 +118,14 @@ class TimeSequencePredictor(object):
         else:
             remote_dir = None
 
-        self.pipeline = self._hp_search(input_df,
-                                        validation_df=validation_df,
-                                        metric=metric,
-                                        recipe=recipe,
-                                        mc=mc,
-                                        resources_per_trial=resources_per_trial,
-                                        remote_dir=remote_dir)
+        self.pipeline = self._hp_search(
+            input_df,
+            validation_df=validation_df,
+            metric=metric,
+            recipe=recipe,
+            mc=mc,
+            resources_per_trial=resources_per_trial,
+            remote_dir=remote_dir)
         return self.pipeline
 
     def evaluate(self,
@@ -460,20 +164,23 @@ class TimeSequencePredictor(object):
         return self.pipeline.predict(input_df)
 
     def _check_input_format(self, input_df):
-        if isinstance(input_df, list) and all([isinstance(d, pd.DataFrame) for d in input_df]):
+        if isinstance(input_df, list) and all(
+                [isinstance(d, pd.DataFrame) for d in input_df]):
             input_is_list = True
             return input_is_list
         elif isinstance(input_df, pd.DataFrame):
             input_is_list = False
             return input_is_list
         else:
-            raise ValueError("input_df should be a data frame or a list of data frames")
+            raise ValueError(
+                "input_df should be a data frame or a list of data frames")
 
     def _check_missing_col(self, input_df):
         cols_list = [self.dt_col, self.target_col]
         if self.extra_features_col is not None:
             if not isinstance(self.extra_features_col, (list,)):
-                raise ValueError("extra_features_col needs to be either None or a list")
+                raise ValueError(
+                    "extra_features_col needs to be either None or a list")
             cols_list.extend(self.extra_features_col)
 
         missing_cols = set(cols_list) - set(input_df.columns)
@@ -517,7 +224,9 @@ class TimeSequencePredictor(object):
             feature_list = ft.get_feature_list(input_df)
 
         # model = VanillaLSTM(check_optional_config=False)
-        model = TimeSequenceModel(check_optional_config=False, future_seq_len=self.future_seq_len)
+        model = TimeSequenceModel(
+            check_optional_config=False,
+            future_seq_len=self.future_seq_len)
 
         # prepare parameters for search engine
         search_space = recipe.search_space(feature_list)
@@ -551,7 +260,8 @@ class TimeSequencePredictor(object):
         # searcher.test_run()
         searcher.run()
 
-        best = searcher.get_best_trials(k=1)[0]  # get the best one trial, later could be n
+        # get the best one trial, later could be n
+        best = searcher.get_best_trials(k=1)[0]
         pipeline = self._make_pipeline(best,
                                        feature_transformers=ft,
                                        model=model,
