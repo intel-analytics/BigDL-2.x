@@ -27,7 +27,7 @@ class DataShards(object):
 
     def collect(self):
         pass
-    
+
 
 class RayDataShards(DataShards):
     def __init__(self, shard_list):

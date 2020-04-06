@@ -36,7 +36,10 @@ if __name__ == "__main__":
     sc = init_spark_on_local(cores="*")
 
     ray_ctx = RayContext(sc=sc,
-                     object_store_memory="10g")
+                        object_store_memory="10g",
+                        env={"AWS_ACCESS_KEY_ID":"AKIA2TEO6PMT6U3JVYFC",
+                          "AWS_SECRET_ACCESS_KEY":"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"}
+                         )
 
     ray_ctx.init(object_store_memory="10g")
 

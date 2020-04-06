@@ -14,10 +14,11 @@
 # limitations under the License.
 #
 import os
+
 import boto3
-import ray
 import pandas as pd
 import pyarrow as pa
+import ray
 from pyspark.context import SparkContext
 
 from zoo.ray.util.raycontext import RayContext
@@ -55,16 +56,19 @@ def read_file_ray(context, file_path, file_type):
     file_path_splits = file_path.split(',')
     if len(file_path_splits) == 1:
         # only one file
-        if os.path.splitext(file_path)[-1] == file_type:
+        if os.path.splitext(file_path)[-1] == "." + file_type:
             file_paths = [file_path]
         # directory
         else:
             file_url_splits = file_path.split("://")
             prefix = file_url_splits[0]
             if prefix == "hdfs":
+                server_address = file_url_splits[1].split('/')[0]
                 fs = pa.hdfs.connect()
                 files = fs.ls(file_path)
-                file_paths = [os.path.join(file_path, os.path.basename(file)) for file in files]
+                # only get json/csv files
+                files = [file for file in files if os.path.splitext(file)[1] == "." + file_type]
+                file_paths = ["hdfs://" + server_address + file for file in files]
             elif prefix == "s3":
                 path_parts = file_url_splits[1].split('/')
                 bucket = path_parts.pop(0)
@@ -82,7 +86,9 @@ def read_file_ray(context, file_path, file_type):
                 for obj in resp['Contents']:
                     keys.append(obj['Key'])
                 files = list(dict.fromkeys(keys))
-                file_paths = [os.path.join(file_path, file) for file in files]
+                # only get json/csv files
+                files = [file for file in files if os.path.splitext(file)[1] == "." + file_type]
+                file_paths = [os.path.join("s3://" + bucket, file) for file in files]
             else:
                 file_paths = [os.path.join(file_path, file) for file in os.listdir(file_path)]
     else:
@@ -93,10 +99,10 @@ def read_file_ray(context, file_path, file_type):
     num_partitions = num_executors * num_cores
     # remove empty partitions
     file_partition_list = [partition for partition
-                      in list(chunk(file_paths, num_partitions)) if partition]
+                           in list(chunk(file_paths, num_partitions)) if partition]
     shards = [RayPandasShard.remote() for i in range(len(file_partition_list))]
     [shard.read_file_partitions.remote(file_partition_list[i], file_type)
-                         for i, shard in enumerate(shards)]
+     for i, shard in enumerate(shards)]
     # shard_partitions = [[shard] for shard in shards]
     data_shards = RayDataShards(shards)
     return data_shards
