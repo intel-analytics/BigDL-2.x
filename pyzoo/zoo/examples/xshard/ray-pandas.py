@@ -14,10 +14,11 @@
 # limitations under the License.
 #
 
-from optparse import OptionParser
 import sys
-from zoo import init_spark_on_local, init_spark_on_yarn
+from optparse import OptionParser
+
 import zoo.xshard.pandas
+from zoo import init_spark_on_local
 from zoo.ray.util.raycontext import RayContext
 
 
@@ -36,9 +37,7 @@ if __name__ == "__main__":
     sc = init_spark_on_local(cores="*")
 
     ray_ctx = RayContext(sc=sc,
-                        object_store_memory="10g",
-                        env={"AWS_ACCESS_KEY_ID":"AKIA2TEO6PMT6U3JVYFC",
-                          "AWS_SECRET_ACCESS_KEY":"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"}
+                         object_store_memory="10g"
                          )
 
     ray_ctx.init(object_store_memory="10g")
@@ -69,4 +68,3 @@ if __name__ == "__main__":
     print(ids2)
     data2 = data_shards_2.collect()
     print("collected data : %s" % data2[0].iloc[0])
-

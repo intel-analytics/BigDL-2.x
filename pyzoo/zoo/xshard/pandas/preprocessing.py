@@ -16,9 +16,9 @@
 import os
 
 import boto3
+import ray
 import pandas as pd
 import pyarrow as pa
-import ray
 from pyspark.context import SparkContext
 
 from zoo.ray.util.raycontext import RayContext
