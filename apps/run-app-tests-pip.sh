@@ -603,24 +603,24 @@ echo "#16 ray paramater-server time used:$time16 seconds"
 echo "#17 start app test for zouwu-network-traffic-autots-forecasting"
 #timer
 start=$(date "+%s")
-${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_autots_forecasting
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_autots_forecasting
 
-FILENAME="${ANALYTICS_ZOO_HOME}/pyzoo/zoo/zouwu/use-case/network_traffic/data/data.csv"
+FILENAME="${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/data/data.csv"
 if [ -f "$FILENAME" ]
 then
    echo "$FILENAME already exists."
 else
    echo "Downloading network traffic data"
 
-   wget $FTP_URI/analytics-zoo-data/network-traffic/data/data.csv -P ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/zouwu/use-case/network_traffic/data
+   wget $FTP_URI/analytics-zoo-data/network-traffic/data/data.csv -P ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/data
 
    echo "Finished downloading network traffic data"
 fi
 
-sed -i '/get_ipython()/d; /plot./d; /plt./d' ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_autots_forecasting.py
-cd ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/zouwu/use-case/network_traffic/
+sed -i '/get_ipython()/d; /plot./d; /plt./d' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_autots_forecasting.py
+cd ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/
 
-python ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_autots_forecasting.py
+python ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_autots_forecasting.py
 cd -
 
 exit_status=$?
@@ -637,25 +637,25 @@ echo "#17 zouwu-network-traffic-autots-forecasting time used:$time17 seconds"
 echo "#18 start app test for zouwu-network-traffic-model-forecasting"
 #timer
 start=$(date "+%s")
-${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_model_forecasting
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_model_forecasting
 
-FILENAME="${ANALYTICS_ZOO_HOME}/pyzoo/zoo/zouwu/use-case/network_traffic/data/data.csv"
+FILENAME="${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/data/data.csv"
 if [ -f "$FILENAME" ]
 then
    echo "$FILENAME already exists."
 else
    echo "Downloading network traffic data"
 
-   wget $FTP_URI/analytics-zoo-data/network-traffic/data/data.csv -P ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/zouwu/use-case/network_traffic/data
+   wget $FTP_URI/analytics-zoo-data/network-traffic/data/data.csv -P ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/data
 
    echo "Finished downloading network traffic data"
 fi
 
-sed -i '/get_ipython()/d; /plot./d; /plt./d' ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_model_forecasting.py
-sed -i "s/epochs=20/epochs=2/g; s/epochs=10/epochs=2/g" ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_model_forecasting.py
-cd ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/zouwu/use-case/network_traffic/
+sed -i '/get_ipython()/d; /plot./d; /plt./d' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_model_forecasting.py
+sed -i "s/epochs=20/epochs=2/g; s/epochs=10/epochs=2/g" ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_model_forecasting.py
+cd ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/
 
-python ${ANALYTICS_ZOO_HOME}/pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_model_forecasting.py
+python ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_model_forecasting.py
 cd -
 
 exit_status=$?
