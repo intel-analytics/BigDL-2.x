@@ -13,3 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+import random
+
+
+# split list into n chunks
+def chunk(lst, n):
+    random.shuffle(lst)
+    size = len(lst) // n
+    leftovers = lst[size * n:]
+    for c in range(n):
+        if leftovers:
+            extra = [leftovers.pop()]
+        else:
+            extra = []
+        yield lst[c * size:(c + 1) * size] + extra
+
+
+def flatten(list_of_list):
+    flattend = [item for sublist in list_of_list for item in sublist]
+    return flattend

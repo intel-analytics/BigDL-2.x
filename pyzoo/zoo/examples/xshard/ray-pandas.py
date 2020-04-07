@@ -14,50 +14,57 @@
 # limitations under the License.
 #
 
-from zoo import init_spark_on_local, init_spark_on_yarn
+import sys
+from optparse import OptionParser
+
+import zoo.xshard.pandas
+from zoo import init_spark_on_local
 from zoo.ray.util.raycontext import RayContext
-from zoo.xshard.pandas import read_csv, read_json
 
 
-def negative(df):
-    df["label"] = df["label"] * (-1)
+def negative(df, column_name):
+    df[column_name] = df[column_name] * (-1)
     return df
 
 
 if __name__ == "__main__":
+    parser = OptionParser()
+    parser.add_option("-f", type=str, dest="file_path",
+                      help="The file path to be read")
 
-    sc = init_spark_on_local(cores="*", python_location="/home/jwang/miniconda3/envs/mxnet/bin/python")
-    #sc = init_spark_on_yarn(
-    #    hadoop_conf="/opt/work/hadoop-2.7.2/etc/hadoop",
-    #    conda_name="mxnet",
-    #    # 1 executor for ray head node. The remaining executors for raylets.
-    #    # Each executor is given enough cores to be placed on one node.
-    #    # Each MXNetRunner will run in one executor, namely one node.
-    #    num_executor=2*config["num_workers"],
-    #    executor_cores=44,
-    #    executor_memory="10g",
-    #    driver_memory="2g",
-    #    driver_cores=16,
-    #    extra_executor_memory_for_ray="5g",
-    #    extra_python_lib="mxnet_runner.py")
+    (options, args) = parser.parse_args(sys.argv)
+
+    sc = init_spark_on_local(cores="*")
+
     ray_ctx = RayContext(sc=sc,
-                     object_store_memory="5g",
-                     env={"OMP_NUM_THREADS": "1",
-                          "KMP_AFFINITY": "granularity=fine,compact,1,0"})
-    ray_ctx.init(object_store_memory="5g")
+                         object_store_memory="10g"
+                         )
+
+    ray_ctx.init(object_store_memory="10g")
 
     # read data
-    file_path ="/data/rbi/small/tlogFmt1214"
-    data_shard = read_json(file_path, ray_ctx)
-    shards = data_shard.get_shards()
-    print("get shards:")
-    print(shards)
-    data = data_shard.collect_data()
-    print("collected data : %s" % data[0].iloc[0])
-    data_shards_2 = data_shard.apply(negative)
-    shards2 = data_shards_2.get_shards()
-    print("get shards 2 :")
-    print(shards2)
-    data2 = data_shards_2.collect_data()
-    print("collected data : %s" % data2[0].iloc[0])
+    file_path = options.file_path
+    data_shard = zoo.xshard.pandas.read_json(file_path, ray_ctx)
 
+    # collect object ids for data
+    ids = data_shard.collect_ids()
+    print("get ids:")
+    print(ids)
+
+    # repartition
+    data_shard.repartition(2)
+    repartitioned_ids = data_shard.get_partitions()
+    print("get repartitioned ids:")
+    print(repartitioned_ids)
+
+    # collect data
+    data = data_shard.collect()
+    print("collected data : %s" % data[0].iloc[0])
+
+    # apply function on each element
+    data_shards_2 = data_shard.apply(negative, "label")
+    ids2 = data_shards_2.collect_ids()
+    print("get ids 2 :")
+    print(ids2)
+    data2 = data_shards_2.collect()
+    print("collected data : %s" % data2[0].iloc[0])
