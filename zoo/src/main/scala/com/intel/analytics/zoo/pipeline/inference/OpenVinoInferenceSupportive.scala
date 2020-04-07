@@ -113,6 +113,24 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
     logger.info("Extracting model-optimizer.tar.gz")
     s"tar -xzf ${moTarFile.getAbsolutePath} -C $openvinoTempDirPath" !;
 
+    val ieTarPath = "/inference-engine-bin.tar.gz"
+    val ieTarInputStream = scala.util.Properties.isMac match {
+      case true => OpenvinoNativeLoaderClass
+        .getResourceAsStream("/darwin-x86_64" + ieTarPath)
+      case false => OpenvinoNativeLoaderClass
+        .getResourceAsStream(ieTarPath)
+    }
+
+    val ieTarFile = writeFile(ieTarInputStream, openvinoTempDirPath, ieTarPath)
+    logger.info("Extracting inference-engine-bin.tar.gz")
+    s"tar -xzf ${ieTarFile.getAbsolutePath} -C $openvinoTempDirPath" !;
+
+    val igTarPath = "/inference-graphs.tar.gz"
+    val igTarInputStream = OpenvinoNativeLoaderClass.getResourceAsStream(igTarPath)
+    val igTarFile = writeFile(igTarInputStream, openvinoTempDirPath, igTarPath)
+    logger.info("Extracting inference-graphs.tar.gz")
+    s"tar -xzf ${igTarFile.getAbsolutePath} -C $openvinoTempDirPath" !;
+
     val pcTarPath = "/pipeline-configs.tar.gz"
     val pcTarInputStream = OpenvinoNativeLoaderClass.getResourceAsStream(pcTarPath)
     val pcTarFile = writeFile(pcTarInputStream, openvinoTempDirPath, pcTarPath)
