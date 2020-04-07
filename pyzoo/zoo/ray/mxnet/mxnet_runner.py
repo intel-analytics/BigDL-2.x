@@ -28,10 +28,10 @@ from dmlc_tracker.tracker import get_host_ip
 
 class MXNetRunner(object):
     """Manages a MXNet model for training."""
-    # Users can specify train_function (not recommended) or use the default one.
     def setup_distributed(self, env, config, data_creator, model_creator,
                           loss_creator=None, metrics_creator=None, train_function=None):
         logging.basicConfig(level=logging.INFO)  # This can print log messages to console.
+        self.logger = logging.getLogger()
         self.config = config  # TODO: add check for config keys
         self.data_creator = data_creator
         self.model_creator = model_creator
@@ -45,9 +45,10 @@ class MXNetRunner(object):
 
         if self.is_worker:
             os.environ.update(env)
+            self.kv = mx.kv.create("dist_sync")
+            # Set seed so that the model on each worker is initialized with the same weights
             if "seed" in self.config:
                 mx.random.seed(self.config["seed"])
-            self.kv = mx.kv.create("dist_sync")
             data = self.data_creator(self.config, self.kv)
             if isinstance(data, tuple):
                 assert len(data) == 1 or len(data) == 2, \
@@ -62,11 +63,13 @@ class MXNetRunner(object):
             if self.loss_creator:
                 self.loss = self.loss_creator(self.config)
             if self.val_data:
-                assert self.metrics_creator, "Metrics is needed for val data"
+                assert self.metrics_creator, \
+                    "Metrics not defined for validation, please specify metrics_creator"
                 self.metrics = self.metrics_creator(self.config)
             else:
                 self.metrics = None
             # For BaseModule, use symbolic API. Otherwise, use imperative API.
+            # TODO: change to Estimator API?
             if not isinstance(self.model, mx.module.BaseModule):
                 self.trainer = gluon.Trainer(self.model.collect_params(), self.config["optimizer"],
                                              optimizer_params=self.config["optimizer_params"],
@@ -75,8 +78,10 @@ class MXNetRunner(object):
                 self.trainer = None
         else:  # server
             # Need to use the environment on each raylet process for the correct python environment.
+            # TODO: Need to kill this process manually?
             modified_env = os.environ.copy()
             modified_env.update(env)
+            # For servers, just import mxnet and no need to do anything else
             subprocess.Popen("python -c 'import mxnet'", shell=True, env=modified_env)
 
     def train(self, nb_epoch=1):
@@ -105,8 +110,7 @@ class MXNetRunner(object):
                             for x, y in zip(data, label):
                                 z = self.model(x)  # forward
                                 L = self.loss(z, y)
-                                # store the loss and do backward after we have done forward
-                                # on all GPUs for better speed on multiple GPUs.
+                                # store the loss and do backward on a batch for better speed
                                 Ls.append(L)
                                 outputs.append(z)
                             ag.backward(Ls)
@@ -129,7 +133,7 @@ class MXNetRunner(object):
                                     accs = [accs]
                                 for name, acc in zip(names, accs):
                                     print_output += ' %s=%f' % (name, acc)
-                            print(print_output)
+                            self.logger.info(print_output)
                         batch_start_time = time.time()
                 if self.metrics:
                     names, accs = self.metrics.get()
@@ -145,6 +149,7 @@ class MXNetRunner(object):
                                initializer=self.config["init"],
                                kvstore=self.kv,
                                optimizer=self.config["optimizer"],
+                               # TODO: eval and validation metrics could be different
                                eval_metric=self.metrics,
                                validation_metric=self.metrics,
                                eval_data=self.val_data,
@@ -159,11 +164,12 @@ class MXNetRunner(object):
 
     def shutdown(self):
         """Attempts to shut down the runner."""
+        del self.logger
         if self.is_worker:
+            del self.kv
             del self.model
             del self.train_data
             del self.val_data
-            del self.kv
             del self.trainer
             del self.loss
         # TODO: also delete downloaded data as well?
@@ -194,6 +200,7 @@ class MXNetTrainer(object):
                  # No need for symbolic API. Loss is already defined as model output.
                  loss_creator=None,
                  metrics_creator=None,
+                 # Users can specify train_function (not recommended) or use the default one.
                  train_function=None,
                  # Specify cpu resources for actors if necessary.
                  runner_cores=None):
