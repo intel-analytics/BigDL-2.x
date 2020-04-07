@@ -22,7 +22,7 @@ from zoo.feature.image import *
 from zoo.pipeline.api.keras.metrics import *
 from zoo.pipeline.nnframes import *
 from zoo.tfpark import TFDataset, TFOptimizer
-from .nets import inception_v1
+from nets import inception_v1
 import tensorflow as tf
 
 slim = tf.contrib.slim
