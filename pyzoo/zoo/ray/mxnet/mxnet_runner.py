@@ -149,6 +149,7 @@ class MXNetRunner(object):
                                initializer=self.config["init"],
                                kvstore=self.kv,
                                optimizer=self.config["optimizer"],
+                               optimizer_params=self.config["optimizer_params"],
                                # TODO: eval and validation metrics could be different
                                eval_metric=self.metrics,
                                validation_metric=self.metrics,
