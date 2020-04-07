@@ -132,7 +132,7 @@ class TSPipeline:
         # maybe use another method to apply configs.
         # distinguish between incremental and fit from scratch
         self.uncertainty = uncertainty
-        if user_config is not None:
+        if user_config:
             self.internal.fit_with_fixed_configs(input_df=input_df,
                                                  validation_df=validation_df,
                                                  mc=uncertainty,

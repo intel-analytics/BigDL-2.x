@@ -72,7 +72,7 @@ class TimeSequenceModel(BaseModel):
         :return: the resulting metric
         """
         if not self.model:
-            self._sel_model(config)
+            self._sel_model(config, verbose=1)
 
         return self.model.fit_eval(x, y,
                                    validation_data=validation_data,
@@ -80,12 +80,13 @@ class TimeSequenceModel(BaseModel):
                                    verbose=verbose,
                                    **config)
 
-    def _sel_model(self, config):
+    def _sel_model(self, config, verbose=0):
         self.selected_model = config.get("model", "LSTM")
         self.model = MODEL_MAP[self.selected_model](
             check_optional_config=self.check_optional_config,
             future_seq_len=self.future_seq_len)
-        print(self.selected_model, "is selected.")
+        if verbose != 0:
+            print(self.selected_model, "is selected.")
 
     def evaluate(self, x, y, metric=['mse']):
         """
@@ -124,7 +125,7 @@ class TimeSequenceModel(BaseModel):
         assert "future_seq_len" in config
         assert "model" in config
         self.future_seq_len = config["future_seq_len"]
-        self._sel_model(config=config)
+        self._sel_model(config=config, verbose=0)
         # self._model_selection(future_seq_len=config["future_seq_len"], verbose=0)
         self.model.restore(model_path, **config)
 

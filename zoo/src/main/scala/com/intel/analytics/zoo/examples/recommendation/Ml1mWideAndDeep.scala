@@ -16,7 +16,6 @@
 
 package com.intel.analytics.zoo.examples.recommendation
 
-import com.intel.analytics.bigdl.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.{Adam, Top1Accuracy}
 import com.intel.analytics.zoo.common.NNContext

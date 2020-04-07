@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.dataset._
 import com.intel.analytics.bigdl.dataset.text.utils.SentenceToken
 import com.intel.analytics.bigdl.dataset.text._
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, RandomUniform, TimeDistributedMaskCriterion}
+import com.intel.analytics.bigdl.nn.{ZooClassNLLCriterion, RandomUniform, TimeDistributedMaskCriterion}
 import com.intel.analytics.bigdl.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.Adam
@@ -139,7 +139,7 @@ object Train {
       model.compile(
         optimizer = optimMethod,
         loss = TimeDistributedMaskCriterion(
-          ClassNLLCriterion(paddingValue = padId),
+          ZooClassNLLCriterion(paddingValue = padId),
           paddingValue = padId
         ))
 
