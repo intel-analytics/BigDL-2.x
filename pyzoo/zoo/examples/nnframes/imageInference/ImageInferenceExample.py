@@ -46,7 +46,7 @@ if __name__ == "__main__":
                       help="Required. pretrained model path.")
     parser.add_option("-f", dest="image_path",
                       help="training data path.")
-    parser.add_option("--b", "--batch_size", dest="batch_size", default="56",
+    parser.add_option("--b", "--batch_size", type=int, dest="batch_size", default="56",
                       help="The number of samples per gradient update. Default is 56.")
 
     (options, args) = parser.parse_args(sys.argv)

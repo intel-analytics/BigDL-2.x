@@ -29,7 +29,6 @@ from zoo.feature.image import *
 from zoo.pipeline.nnframes import *
 
 from optparse import OptionParser
-import sys
 
 if __name__ == "__main__":
 
@@ -38,11 +37,11 @@ if __name__ == "__main__":
                       help="Required. pretrained model path.")
     parser.add_option("-f", dest="image_path",
                       help="training data path.")
-    parser.add_option("--b", "--batch_size", dest="batch_size", default="56",
+    parser.add_option("--b", "--batch_size", type=int, dest="batch_size", default="56",
                       help="The number of samples per gradient update. Default is 56.")
-    parser.add_option("--nb_epoch", dest="nb_epoch", default="20",
+    parser.add_option("--nb_epoch", type=int, dest="nb_epoch", default="20",
                       help="The number of iterations to train the model. Default is 20.")
-    parser.add_option("--r", "--learning_rate", dest="learning_rate", default="0.002",
+    parser.add_option("--r", "--learning_rate", type=float, dest="learning_rate", default="0.002",
                       help="The learning rate for the model. Default is 0.002.")
 
     (options, args) = parser.parse_args(sys.argv)
@@ -57,9 +56,7 @@ if __name__ == "__main__":
 
     sc = init_nncontext("ImageTransferLearningExample ")
 
-    model_path = options.image_path
-    image_path = options.model_path
-    imageDF = NNImageReader.readImages(image_path, sc, resizeH=300, resizeW=300, image_codec=1)
+    imageDF = NNImageReader.readImages(options.image_path, sc, resizeH=300, resizeW=300, image_codec=1)
 
     getName = udf(lambda row: os.path.basename(row[0]), StringType())
     getLabel = udf(lambda name: 1.0 if name.startswith('cat') else 2.0, DoubleType())
@@ -72,7 +69,7 @@ if __name__ == "__main__":
         [RowToImageFeature(), ImageResize(256, 256), ImageCenterCrop(224, 224),
          ImageChannelNormalize(123.0, 117.0, 104.0), ImageMatToTensor(), ImageFeatureToTensor()])
 
-    preTrainedNNModel = NNModel(Model.loadModel(model_path), transformer) \
+    preTrainedNNModel = NNModel(Model.loadModel(options.model_path), transformer) \
         .setFeaturesCol("image") \
         .setPredictionCol("embedding")
 
