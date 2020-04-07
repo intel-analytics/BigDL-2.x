@@ -33,7 +33,7 @@ bash ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master $MASTER \
 --conf spark.executor.cores=1 \
 --total-executor-cores 4 \
---class com.intel.analytics.zoo.examples.tfpark.tfnet.Predict \
+--class com.intel.analytics.zoo.examples.tensorflow.tfnet.Predict \
 --image analytics-zoo-data/data/object-detection-coco \
 --model analytics-zoo-models/tfnet/tfnet/frozen_inference_graph.pb \
 --partition 4
