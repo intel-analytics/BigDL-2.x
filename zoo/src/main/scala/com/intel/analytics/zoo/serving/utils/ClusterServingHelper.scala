@@ -37,6 +37,8 @@ import org.apache.spark.sql.SparkSession
 import org.yaml.snakeyaml.Yaml
 import java.time.LocalDateTime
 
+import org.apache.spark.sql.types.DataType
+
 import scala.reflect.ClassTag
 
 case class LoaderParams(modelFolder: String = null,
@@ -57,8 +59,8 @@ case class Result(id: String, value: String)
 class ClusterServingHelper {
   type HM = LinkedHashMap[String, String]
 
-//  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
-  val configPath = "config.yaml"
+  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
+//  val configPath = "config.yaml"
 
   var lastModTime: String = null
   val logger: Logger = Logger.getLogger(getClass)
@@ -72,12 +74,12 @@ class ClusterServingHelper {
   var redisHost: String = null
   var redisPort: String = null
   var batchSize: Int = 4
-  var topN: Int = 1
   var nodeNum: Int = 1
   var coreNum: Int = 1
   var engineType: String = null
   var blasFlag: Boolean = false
 
+  var dataType: String = null
   var dataShape = Array[Int]()
   var filter: String = "topN"
 
@@ -127,9 +129,20 @@ class ClusterServingHelper {
       "and port are not valid, please check.")
     redisHost = redis.split(":").head.trim
     redisPort = redis.split(":").last.trim
-    val shape = getYaml(dataConfig, "image_shape", "3,224,224")
-    val shapeList = shape.split(",")
-    require(shapeList.size == 3, "Your data shape must has dimension as 3")
+    dataType = getYaml(dataConfig, "data_type", "image")
+    val shapeList = dataType match {
+      case "image" =>
+        val shape = getYaml(dataConfig, "image_shape", "3,224,224")
+        val shapeList = shape.split(",")
+        require(shapeList.size == 3, "Your data shape must has dimension as 3")
+        shapeList
+      case "tensor" =>
+        val shape = getYaml(dataConfig, "tensor_shape", null)
+        shape.split(",")
+      case _ =>
+        logError("Invalid data type, please check your data_type")
+        null
+    }
     for (i <- shapeList) {
       dataShape = dataShape :+ i.trim.toInt
     }

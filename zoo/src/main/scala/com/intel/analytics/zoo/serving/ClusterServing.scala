@@ -53,15 +53,23 @@ object ClusterServing {
      * Take them from helper in advance for later execution
      */
     val batchSize = helper.batchSize
-    val topN = helper.topN
     val coreNum = helper.coreNum
     val nodeNum = helper.nodeNum
     val modelType = helper.modelType
     val blasFlag = helper.blasFlag
+    val dataType =  helper.dataType
+    val dataShape = helper.dataShape
+//    val dataType = if (helper.dataType == "image") {
+//      DataType.IMAGE
+//    } else {
+//      DataType.TENSOR
+//    }
 
-    val C = helper.dataShape(0)
-    val W = helper.dataShape(1)
-    val H = helper.dataShape(2)
+    val (flagC, flagW, flagH, streamKey, dataField) = if (dataType == "image") {
+      (helper.dataShape(0), helper.dataShape(1), helper.dataShape(2), "image_stream", "image")
+    } else {
+      (0, 0, 0, "tensor_stream", "tensor")
+    }
 
     val filter = helper.filter
 
@@ -106,12 +114,12 @@ object ClusterServing {
     val images = spark
       .readStream
       .format("redis")
-      .option("stream.keys", "image_stream")
+      .option("stream.keys", streamKey)
       .option("stream.read.batch.size", batchSize)
       .option("stream.parallelism", nodeNum)
       .schema(StructType(Array(
         StructField("uri", StringType),
-        StructField("image", StringType)
+        StructField(dataField, StringType)
       )))
       .load()
 
@@ -171,7 +179,8 @@ object ClusterServing {
               pathBytesBatch.indices.toParArray.map(i => {
 
                 val path = pathBytesBatch(i).getAs[String]("uri")
-                val tensors = PreProcessing(pathBytesBatch(i).getAs[String]("image"))
+                val tensors = PreProcessing(pathBytesBatch(i).getAs[String](dataField), dataType,
+                  chwFlag)
 
                 val localPartitionModel = bcModel.value
                 val result = localPartitionModel.doPredict(tensors.addSingletonDimension()).toTensor
@@ -195,7 +204,8 @@ object ClusterServing {
 
                 val row = pathBytesBatch(i)
                 val path = row.getAs[String]("uri")
-                val tensors = PreProcessing(row.getAs[String]("image"), chwFlag)
+                val tensors = PreProcessing(pathBytesBatch(i).getAs[String](dataField), dataType,
+                  chwFlag)
                 (path, tensors)
 
               })
@@ -203,11 +213,17 @@ object ClusterServing {
           })
           pathBytesChunk.mapPartitions(pathBytes => {
             val localModel = bcModel.value
-            val t = if (chwFlag) {
-              Tensor[Float](batchSize, C, H, W)
+            val t = if (dataType == "image") {
+              if (chwFlag) {
+                Tensor[Float](batchSize, flagC, flagH, flagW)
+              } else {
+                Tensor[Float](batchSize, flagH, flagW, flagC)
+              }
             } else {
-              Tensor[Float](batchSize, H, W, C)
+              val sizes = batchSize +: dataShape
+              Tensor[Float](sizes)
             }
+
             pathBytes.grouped(batchSize).flatMap(pathByteBatch => {
               val thisBatchSize = pathByteBatch.size
               acc.add(thisBatchSize)

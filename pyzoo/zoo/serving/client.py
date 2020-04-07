@@ -48,6 +48,7 @@ class API:
                                     port=config['data']['port'], db=0)
         try:
             self.db.xgroup_create("image_stream", "serving")
+            self.db.xgroup_create("tensor_stream", "serving")
         except Exception:
             print("redis group exist, will not create new one")
 
@@ -106,12 +107,22 @@ class InputQueue(API):
 
         d = {"uri": uri, "image": img_encoded}
 
-        inf = self.db.info()
+        self.__enqueue_data("image_stream", d)
 
+    def enqueue_tensor(self, uri, data):
+        from pyspark.serializers import CloudPickleSerializer
+        bys = CloudPickleSerializer.dumps(CloudPickleSerializer, data)
+        tensor_encoded = self.base64_encode_image(bys)
+        d = {"uri": uri, "tensor": tensor_encoded}
+        self.__enqueue_data("tensor_stream", d)
+
+    def __enqueue_data(self, stream_name, data):
+        inf = self.db.info()
         try:
             if inf['used_memory'] >= inf['maxmemory'] * self.input_threshold:
                 raise redis.exceptions.ConnectionError
-            self.db.xadd("image_stream", d)
+            self.db.xadd(stream_name, data)
+            # TODO: check
             print("Write to Redis successful")
         except redis.exceptions.ConnectionError:
             print("Redis queue is full, please wait for inference "

@@ -37,6 +37,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import com.intel.analytics.bigdl.numeric.NumericFloat
+import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 
 
 class NeuralCFSpec extends ZooSpecHelper {
@@ -227,6 +228,7 @@ class NeuralCFSpec extends ZooSpecHelper {
     // the reference accuracy is 0.679
     assert(Math.abs(accuracy - accuracyEst) < 0.1)
   }
+
 
   "NeuralCF" should "inference Inference model" in {
     val model = new InferenceModel(1)

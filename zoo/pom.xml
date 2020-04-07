@@ -364,11 +364,11 @@
             <artifactId>snakeyaml</artifactId>
             <version>1.25</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>com.redislabs</groupId>-->
-            <!--<artifactId>spark-redis</artifactId>-->
-            <!--<version>2.4.0</version>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>com.redislabs</groupId>
+            <artifactId>spark-redis</artifactId>
+            <version>2.4.0</version>
+        </dependency>
     </dependencies>
 
     <build>

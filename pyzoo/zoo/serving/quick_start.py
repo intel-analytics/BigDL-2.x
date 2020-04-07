@@ -20,6 +20,9 @@ import cv2
 import json
 import time
 from optparse import OptionParser
+import numpy as np
+import pickle
+from bigdl.util.common import JTensor
 
 
 def run(path):
@@ -37,6 +40,11 @@ def run(path):
         img = cv2.imread(os.path.join(base_path, p))
         img = cv2.resize(img, (224, 224))
         input_api.enqueue_image(p, img)
+
+    # sample = np.random.rand(3, 2)
+    # print(sample)
+    # jtensor = JTensor.from_ndarray(sample)
+    # input_api.enqueue_tensor("test", jtensor)
 
     time.sleep(10)
 

@@ -28,6 +28,15 @@ import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL}
 import com.intel.analytics.bigdl.utils.T
 import org.apache.spark.bigdl.api.python.BigDLSerDe
 
+import java.io.FileOutputStream
+
+import com.intel.analytics.bigdl.dataset.Utils
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.numeric.NumericFloat
+import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL}
+import com.intel.analytics.bigdl.utils.T
+import org.apache.spark.bigdl.api.python.BigDLSerDe
+
 
 class UtilsSpec extends FlatSpec with Matchers {
   val path: String = getClass.getClassLoader.getResource("qa").getPath
