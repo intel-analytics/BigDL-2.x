@@ -103,6 +103,9 @@ if __name__ == "__main__":
             import socket
             return socket.gethostname()
 
+        # todo maybe create another process and
+        # set the env and run horovod in that process
+        # without polluting the process's environment
         def set_env(self, envs):
             import os
             os.environ.update(envs)
@@ -127,6 +130,8 @@ if __name__ == "__main__":
     global_rendezv = RendezvousServer(True)
     global_rendezv_port = global_rendezv.start_server(host_alloc_plan)
 
+    # todo args.iface should be inferenced automatically
+    # instead of letting user pass in
     driver_ip = _get_driver_ip([args.iface])
     envs = {
         "HOROVOD_GLOO_RENDEZVOUS_ADDR": driver_ip,
