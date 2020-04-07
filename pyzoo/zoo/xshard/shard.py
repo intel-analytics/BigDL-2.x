@@ -61,7 +61,7 @@ class RayDataShards(DataShards):
         return self.partition_id_list
 
 
-class ScDataShards(DataShards):
+class SparkDataShards(DataShards):
     def __init__(self, shards):
         self.shards = shards
 

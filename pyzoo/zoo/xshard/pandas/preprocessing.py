@@ -24,7 +24,7 @@ from pyspark.context import SparkContext
 
 from zoo.common import get_file_list
 from zoo.ray.util.raycontext import RayContext
-from zoo.xshard.shard import RayDataShards, ScDataShards
+from zoo.xshard.shard import RayDataShards, SparkDataShards
 from zoo.xshard.utils import *
 
 
@@ -55,7 +55,7 @@ def read_csv(file_path, context):
     if isinstance(context, RayContext):
         return read_csv_ray(context, file_path)
     elif isinstance(context, SparkContext):
-        return read_csv_sc(context, file_path)
+        return read_csv_spark(context, file_path)
     else:
         raise Exception("Context type should be RayContext or SparkContext")
 
@@ -77,12 +77,12 @@ def read_json_ray(context, file_path):
     return read_file_ray(context, file_path, "json")
 
 
-def read_csv_sc(context, file_path):
-    return read_file_sc(context, file_path, "csv")
+def read_csv_spark(context, file_path):
+    return read_file_spark(context, file_path, "csv")
 
 
-def read_json_sc(context, file_path):
-    return read_file_sc(context, file_path, "json")
+def read_json_spark(context, file_path):
+    return read_file_spark(context, file_path, "json")
 
 
 def read_file_ray(context, file_path, file_type):
@@ -123,7 +123,7 @@ def read_file_ray(context, file_path, file_type):
     return data_shards
 
 
-def read_file_sc(context, file_path, file_type):
+def read_file_spark(context, file_path, file_type):
     file_url_splits = file_path.split("://")
     prefix = file_url_splits[0]
     node_num, core_num = get_node_and_core_number()
@@ -184,7 +184,7 @@ def read_file_sc(context, file_path, file_type):
 
         pd_rdd = rdd.mapPartitions(loadFile)
 
-    data_shards = ScDataShards(pd_rdd)
+    data_shards = SparkDataShards(pd_rdd)
     return data_shards
 
 
