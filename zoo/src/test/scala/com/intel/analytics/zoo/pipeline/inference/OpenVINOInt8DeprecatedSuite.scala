@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
+/*
 import java.io.{File, FileInputStream}
 import java.util
 import java.util.{Arrays, Properties}
@@ -331,3 +332,4 @@ class OpenVINOInt8DeprecatedSuite extends FunSuite with Matchers with BeforeAndA
     }
   }
 }
+*/
