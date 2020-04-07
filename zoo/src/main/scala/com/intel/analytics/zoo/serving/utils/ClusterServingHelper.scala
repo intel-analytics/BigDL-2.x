@@ -288,10 +288,15 @@ class ClusterServingHelper {
       case "tensorflowSavedModel" =>
         modelInputs = modelInputs.filterNot((x: Char) => x.isWhitespace)
         modelOutputs = modelOutputs.filterNot((x: Char) => x.isWhitespace)
-        val (inputs, outputs) = if (modelInputs != "" && modelOutputs != "") {
-          (modelInputs.split(","), modelOutputs.split(","))
+        val inputs = if (modelInputs == "") {
+          null
         } else {
-          (null, null)
+          modelInputs.split(",")
+        }
+        val outputs = if (modelOutputs == "") {
+          null
+        } else {
+          modelOutputs.split(",")
         }
         model.doLoadTensorflow(weightPath, "savedModel", inputs, outputs)
       case "pytorch" => model.doLoadPyTorch(weightPath)
