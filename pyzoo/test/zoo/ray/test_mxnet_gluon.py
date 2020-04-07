@@ -31,10 +31,12 @@ np.random.seed(1337)  # for reproducibility
 def get_data_iters(config, kv):
     train_data = np.random.rand(200, 30)
     train_label = np.random.randint(0, 10, (200,))
-    train = mx.io.NDArrayIter(train_data, train_label, batch_size=config["batch_size"], shuffle=True)
+    train = mx.io.NDArrayIter(train_data, train_label,
+                              batch_size=config["batch_size"], shuffle=True)
     test_data = np.random.rand(80, 30)
     test_label = np.random.randint(0, 10, (80,))
-    test = mx.io.NDArrayIter(test_data, test_label, batch_size=config["batch_size"], shuffle=True)
+    test = mx.io.NDArrayIter(test_data, test_label,
+                             batch_size=config["batch_size"], shuffle=True)
     return train, test
 
 
