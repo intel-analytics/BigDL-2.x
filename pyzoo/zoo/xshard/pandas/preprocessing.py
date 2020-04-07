@@ -188,7 +188,7 @@ def read_file_sc(context, file_path, file_type):
     return data_shards
 
 
-# @ray.remote
+@ray.remote
 class RayPandasShard(object):
     def __init__(self, data=None):
         self.data = data
