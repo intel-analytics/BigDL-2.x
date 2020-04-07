@@ -37,15 +37,23 @@ def config_option_parser():
     parser = OptionParser()
     parser.add_option("-f", "--folder", type=str, dest="folder", default="",
                       help="url of hdf+s folder store the hadoop sequence files")
-    parser.add_option("--model", type=str, dest="model", default="", help="model snapshot location")
-    parser.add_option("--checkpoint", type=str, dest="checkpoint", default="", help="where to cache the model")
-    parser.add_option("-e", "--maxEpoch", type=int, dest="maxEpoch", default=0, help="epoch numbers")
-    parser.add_option("-i", "--maxIteration", type=int, dest="maxIteration", default=3100, help="iteration numbers")
-    parser.add_option("-l", "--learningRate", type=float, dest="learningRate", default=0.01, help="learning rate")
-    parser.add_option("--warmupEpoch", type=int, dest="warmupEpoch", default=0, help="warm up epoch numbers")
-    parser.add_option("--maxLr", type=float, dest="maxLr", default=0.0, help="max Lr after warm up")
+    parser.add_option("--model", type=str, dest="model", default="",
+                      help="model snapshot location")
+    parser.add_option("--checkpoint", type=str, dest="checkpoint", default="",
+                      help="where to cache the model")
+    parser.add_option("-e", "--maxEpoch", type=int, dest="maxEpoch", default=0,
+                      help="epoch numbers")
+    parser.add_option("-i", "--maxIteration", type=int, dest="maxIteration", default=3100,
+                      help="iteration numbers")
+    parser.add_option("-l", "--learningRate", type=float, dest="learningRate", default=0.01,
+                      help="learning rate")
+    parser.add_option("--warmupEpoch", type=int, dest="warmupEpoch", default=0,
+                      help="warm up epoch numbers")
+    parser.add_option("--maxLr", type=float, dest="maxLr", default=0.0,
+                      help="max Lr after warm up")
     parser.add_option("-b", "--batchSize", type=int, dest="batchSize", help="batch size")
-    parser.add_option("--weightDecay", type=float, dest="weightDecay", default=0.0001, help="weight decay")
+    parser.add_option("--weightDecay", type=float, dest="weightDecay", default=0.0001,
+                      help="weight decay")
     parser.add_option("--checkpointIteration", type=int, dest="checkpointIteration", default=620,
                       help="checkpoint interval of iterations")
     return parser
@@ -101,13 +109,15 @@ if __name__ == "__main__":
 
     is_training = tf.placeholder(dtype=tf.bool, shape=())
 
-    with slim.arg_scope(inception_v1.inception_v1_arg_scope(weight_decay=0.0, use_batch_norm=False)):
+    with slim.arg_scope(inception_v1.inception_v1_arg_scope(weight_decay=0.0,
+                                                            use_batch_norm=False)):
         logits, end_points = inception_v1.inception_v1(images,
                                                        dropout_keep_prob=0.6,
                                                        num_classes=1000,
                                                        is_training=is_training)
 
-    loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=zero_based_label))
+    loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits,
+                                                                 labels=zero_based_label))
 
     iterationPerEpoch = int(ceil(float(1281167) / options.batchSize))
     if options.maxEpoch:
