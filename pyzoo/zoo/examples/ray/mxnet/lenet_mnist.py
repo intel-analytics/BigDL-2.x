@@ -76,42 +76,42 @@ def create_config(args):
         "batch_size": args.batch_size,
         "optimizer": "sgd",
         "optimizer_params": {'learning_rate': args.lr},
+        "log_interval": args.log_interval,
         "seed": 42
     }
     if args.num_servers:
         config["num_servers"] = args.num_servers
-    if args.log_interval:
-        config["log_interval"] = args.log_interval
     return config
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Train a LeNet model for handwritten digit recognition.')
-    parser.add_argument("--hadoop_conf", type=str,
-                        help="turn on yarn mode by passing the path to the hadoop"
-                             "Configuration folder. Otherwise, turn on local mode.")
-    parser.add_argument("--conda_name", type=str,
-                        help="The name of conda environment.")
-    parser.add_argument("--executor_cores", type=int, default=8,
-                        help="The number of driver's cpu cores you want to use."
-                             "You can change it depending on your own cluster setting.")
+    parser.add_argument('--hadoop_conf', type=str,
+                        help='The path to the hadoop configuration folder. Required if you '
+                             'wish to run on yarn clusters. Otherwise, run in local mode.')
+    parser.add_argument('--conda_name', type=str,
+                        help='The name of conda environment. Required if you '
+                             'wish to run on yarn clusters.')
+    parser.add_argument('--executor_cores', type=int, default=4,
+                        help='The number of executor cores you want to use.')
     parser.add_argument('-n', '--num-workers', type=int, default=2,
-                        help='number of worker nodes to be launched')
+                        help='The number of MXNet workers to be launched.')
     parser.add_argument('-s', '--num-servers', type=int,
-                        help='number of server nodes to be launched, \
-                        in default it is equal to NUM_WORKERS')
+                        help='The number of MXNet servers to be launched. If not specified, '
+                        'default to be the number of workers.')
     parser.add_argument('-b', '--batch-size', type=int, default=100,
-                        help='training batch size per worker.')
+                        help='Training batch size for each worker.')
     parser.add_argument('-e', '--epochs', type=int, default=10,
-                        help='number of training epochs.')
+                        help='The number of training epochs.')
     parser.add_argument('--lr', type=float, default=0.02,
-                        help='learning rate. default is 0.02.')
+                        help='Learning rate for the LeNet model.')
     parser.add_argument('--log-interval', type=int, default=100,
-                        help='Number of batches to wait before logging.')
+                        help='The number of batches to wait before logging.')
     opt = parser.parse_args()
 
     if opt.hadoop_conf:
+        assert opt.conda_name is not None, "conda_name must be specified for yarn mode"
         sc = init_spark_on_yarn(
             hadoop_conf=opt.hadoop_conf,
             conda_name=opt.conda_name,
