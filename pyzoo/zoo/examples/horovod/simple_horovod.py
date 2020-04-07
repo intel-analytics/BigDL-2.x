@@ -49,7 +49,7 @@ def run_horovod():
     if hvd.rank() == 0:
         callbacks.append(tf.keras.callbacks.ModelCheckpoint('./checkpoint-{epoch}.h5'))
     verbose = 1 if hvd.rank() == 0 else 0
-    result = mnist_model.fit(dataset, steps_per_epoch=500 // hvd.size(), callbacks=callbacks, epochs=24, verbose=verbose)
+    result = mnist_model.fit(dataset, steps_per_epoch=500 // hvd.size(), callbacks=callbacks, epochs=5, verbose=verbose)
     return result
 
 parser = argparse.ArgumentParser()
