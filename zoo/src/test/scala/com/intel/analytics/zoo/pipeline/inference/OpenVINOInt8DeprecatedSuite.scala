@@ -64,7 +64,9 @@ class OpenVINOInt8DeprecatedSuite extends FunSuite with Matchers with BeforeAndA
   val resnet_v1_50_meanValues = Array(123.68f, 116.78f, 103.94f)
   val resnet_v1_50_scale = 1.0f
   var resnet_v1_50_path: String = _
-  var valDirPath: String = _
+  val valTarUrl = s"$s3Url/analytics-zoo-models/openvino/val_bmp_32.tar"
+  val valTar = valTarUrl.split("/").last
+  var valDir: String = _
 
   val resnet_v1_50_shape = Array(4, 3, 224, 224)
   val image_input_65_url = s"$s3Url/analytics-zoo-models/openvino/ic_input_65"
@@ -89,6 +91,9 @@ class OpenVINOInt8DeprecatedSuite extends FunSuite with Matchers with BeforeAndA
     s"wget -nv -P $dir $image_input_65_url" !;
     s"wget -nv -P $dir $image_input_970_url" !;
 
+    s"wget -nv -P $dir $valTarUrl" !;
+    s"tar xvf $dir/$valTar -C $dir" !;
+
     s"wget -nv -P $dir $savedModelTarURL" !;
     s"tar xvf $dir/$savedModelTar -C $dir" !;
 
@@ -97,7 +102,7 @@ class OpenVINOInt8DeprecatedSuite extends FunSuite with Matchers with BeforeAndA
     resnet_v1_50_path = s"$dir/resnet_v1_50_inference_graph"
 
     resnet_v1_50_checkpointPath = s"$dir/resnet_v1_50.ckpt"
-    valDirPath = s"$dir/val_bmp_32/"
+    valDir = s"$dir/val_bmp_32/"
 
     image_input_65_filePath = s"$dir/ic_input_65"
     image_input_970_filePath = s"$dir/ic_input_970"
@@ -221,9 +226,9 @@ class OpenVINOInt8DeprecatedSuite extends FunSuite with Matchers with BeforeAndA
 
     var indata1 = new Array[Float](3 * 224 * 224)
     var indata2 = new Array[Float](3 * 224 * 224)
-    OpenCVMat.toFloatPixels(OpenCVMat.read(valDirPath +
+    OpenCVMat.toFloatPixels(OpenCVMat.read(valDir +
       "ILSVRC2012_val_00000001.bmp"), indata1)
-    OpenCVMat.toFloatPixels(OpenCVMat.read(valDirPath +
+    OpenCVMat.toFloatPixels(OpenCVMat.read(valDir +
       "ILSVRC2012_val_00000002.bmp"), indata2)
     indata1 = fromHWC2CHW(indata1)
     indata2 = fromHWC2CHW(indata2)
