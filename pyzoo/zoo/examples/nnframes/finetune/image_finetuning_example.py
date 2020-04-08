@@ -55,7 +55,8 @@ if __name__ == "__main__":
 
     sc = init_nncontext("ImageFineTuningExample")
 
-    imageDF = NNImageReader.readImages(options.image_path, sc, resizeH=300, resizeW=300, image_codec=1)
+    imageDF = NNImageReader.readImages(options.image_path, sc, resizeH=300, resizeW=300,
+                                       image_codec=1)
 
     getName = udf(lambda row: os.path.basename(row[0]), StringType())
     getLabel = udf(lambda name: 1.0 if name.startswith('cat') else 2.0, DoubleType())
