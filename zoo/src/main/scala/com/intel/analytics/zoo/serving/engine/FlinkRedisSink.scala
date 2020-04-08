@@ -26,6 +26,7 @@ class FlinkRedisSink() extends RichSinkFunction[List[(String, String)]] {
     val ppl = db.pipelined()
     value.foreach(v => RedisIO.writeHashMap(ppl, v._1, v._2))
     ppl.sync()
+    db.close()
     params.logger.info(s"${value.size} records written to redis")
   }
 
