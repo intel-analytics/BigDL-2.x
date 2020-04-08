@@ -16,7 +16,7 @@ data:
   filter:
 params:
   # default, 4
-  batch_size:
+  core_number:
   # default: OFF
   performance_mode:
 redis:

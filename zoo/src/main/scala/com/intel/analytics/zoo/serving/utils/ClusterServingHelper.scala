@@ -77,6 +77,7 @@ class ClusterServingHelper {
   var coreNum: Int = 1
   var engineType: String = null
   var blasFlag: Boolean = false
+  var chwFlag: Boolean = true
 
   var dataShape = Array[Int]()
   var filter: String = "topN"
@@ -137,7 +138,7 @@ class ClusterServingHelper {
     filter = getYaml(dataConfig, "filter", "topN(1)")
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
-    batchSize = getYaml(paramsConfig, "batch_size", "4").toInt
+    coreNum = getYaml(paramsConfig, "core_number", "4").toInt
 
     /**
      * reserved here to change engine type
@@ -154,7 +155,9 @@ class ClusterServingHelper {
       }
       new FileWriter(logF, true)
     }
-
+    if (modelType.startsWith("tensorflow")) {
+      chwFlag = false
+    }
 
     if (modelType == "caffe" || modelType == "bigdl") {
       if (System.getProperty("bigdl.engineType", "mklblas")

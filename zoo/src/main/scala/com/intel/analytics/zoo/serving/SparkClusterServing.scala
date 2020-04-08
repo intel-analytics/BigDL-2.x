@@ -20,6 +20,7 @@ package com.intel.analytics.zoo.serving
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
+import com.intel.analytics.zoo.serving.pipeline.RedisUtils
 import com.intel.analytics.zoo.serving.utils._
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.broadcast.Broadcast
@@ -29,7 +30,7 @@ import redis.clients.jedis.Jedis
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
-import org.apache.spark.util.{LongAccumulator}
+import org.apache.spark.util.LongAccumulator
 
 object SparkClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
