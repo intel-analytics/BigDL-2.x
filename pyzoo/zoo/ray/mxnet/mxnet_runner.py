@@ -51,8 +51,8 @@ class MXNetRunner(object):
             data = self.data_creator(self.config, self.kv)
             if isinstance(data, tuple):
                 assert len(data) == 1 or len(data) == 2, \
-                    "data_creator should return either train_data only or a tuple of (train_data, val_data), " \
-                    "which can be directly fed to model training"
+                    "data_creator should return either train_data only or a tuple of " \
+                    "(train_data, val_data), which can be directly fed to model training"
                 if len(data) == 1:
                     self.train_data, self.val_data = data[0], None
                 else:
