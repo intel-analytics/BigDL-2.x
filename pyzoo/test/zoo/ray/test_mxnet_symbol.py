@@ -57,12 +57,11 @@ def get_metrics(config):
 
 class TestMXNetSymbol(TestCase):
     def test_symbol(self):
-        node_num = 4
-        sc = init_spark_on_local(cores=node_num)
+        sc = init_spark_on_local(cores=4)
         ray_ctx = RayContext(sc=sc, object_store_memory="1g")
         ray_ctx.init()
         config = {
-            "num_workers": 2,
+            "num_workers": 1,
             "batch_size": 32,
             "optimizer": "sgd",
             "init": mx.init.Xavier(),

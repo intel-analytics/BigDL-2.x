@@ -234,7 +234,6 @@ class MXNetTrainer(object):
             [runner.get_node_ip.remote() for runner in self.runners])
         ports = ray.get(
             [runner.find_free_port.remote() for runner in self.runners])
-        logging.basicConfig(level=logging.INFO)
         logger = logging.getLogger()
         logger.info(ips)
         logger.info(ports)
