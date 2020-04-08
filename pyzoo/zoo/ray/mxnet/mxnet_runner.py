@@ -29,7 +29,7 @@ from dmlc_tracker.tracker import get_host_ip
 class MXNetRunner(object):
     """Manages a MXNet model for training."""
     def setup_distributed(self, env, config, data_creator, model_creator,
-                          loss_creator=None, metrics_creator=None, train_function=None):
+                          loss_creator=None, metrics_creator=None):
         logging.basicConfig(level=logging.INFO)  # This can print log messages to console.
         self.logger = logging.getLogger()
         self.config = config  # TODO: add check for config keys
@@ -37,7 +37,6 @@ class MXNetRunner(object):
         self.model_creator = model_creator
         self.loss_creator = loss_creator
         self.metrics_creator = metrics_creator
-        self.train_function = train_function
         self.is_worker = False
         env["DMLC_NODE_HOST"] = self.get_node_ip()
         if env["DMLC_ROLE"] == "worker":
@@ -52,7 +51,8 @@ class MXNetRunner(object):
             data = self.data_creator(self.config, self.kv)
             if isinstance(data, tuple):
                 assert len(data) == 1 or len(data) == 2, \
-                    "data_creator should return train data (and val data)"
+                    "data_creator should return either train_data only or a tuple of (train_data, val_data), " \
+                    "which can be directly fed to model training"
                 if len(data) == 1:
                     self.train_data, self.val_data = data[0], None
                 else:
@@ -71,6 +71,7 @@ class MXNetRunner(object):
             # For BaseModule, use symbolic API. Otherwise, use imperative API.
             # TODO: change to Estimator API?
             if not isinstance(self.model, mx.module.BaseModule):
+                assert self.loss, "Loss not defined for gluon model, please specify loss_creator"
                 self.trainer = gluon.Trainer(self.model.collect_params(), self.config["optimizer"],
                                              optimizer_params=self.config["optimizer_params"],
                                              kvstore=self.kv)
@@ -89,10 +90,7 @@ class MXNetRunner(object):
         stats = dict()
         if self.is_worker:
             start_time = time.time()
-            # User want to specify their own training logic. Not recommended. Not tested.
-            if self.train_function:
-                self.train_function(self)
-            elif self.trainer:  # Imperative API
+            if self.trainer:  # Imperative API
                 for epoch in range(nb_epoch):
                     self.train_data.reset()
                     if self.metrics:
@@ -201,8 +199,6 @@ class MXNetTrainer(object):
                  # No need for symbolic API. Loss is already defined as model output.
                  loss_creator=None,
                  metrics_creator=None,
-                 # Users can specify train_function (not recommended) or use the default one.
-                 train_function=None,
                  # Specify cpu resources for actors if necessary.
                  runner_cores=None):
         self.config = config
@@ -210,7 +206,6 @@ class MXNetTrainer(object):
         self.model_creator = model_creator
         self.loss_creator = loss_creator
         self.metrics_creator = metrics_creator
-        self.train_function = train_function
         self.num_workers = config["num_workers"]
         self.num_servers = config["num_servers"] if "num_servers" in self.config \
             else self.num_workers
@@ -222,7 +217,7 @@ class MXNetTrainer(object):
         Server = ray.remote(num_cpus=runner_cores, resources={"_mxnet_server": 1})(MXNetRunner) \
             if runner_cores else ray.remote(MXNetRunner)
 
-        # Start runners: workers followed by serers
+        # Start runners: workers followed by servers
         self.runners = [
             Worker.remote()
             for i in range(self.num_workers)
@@ -237,8 +232,10 @@ class MXNetTrainer(object):
             [runner.get_node_ip.remote() for runner in self.runners])
         ports = ray.get(
             [runner.find_free_port.remote() for runner in self.runners])
-        print(ips)
-        print(ports)
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger()
+        logger.info(ips)
+        logger.info(ports)
 
         env = {
             "DMLC_PS_ROOT_URI": str(get_host_ip()),
@@ -268,8 +265,7 @@ class MXNetTrainer(object):
                 self.data_creator,
                 self.model_creator,
                 self.loss_creator,
-                self.metrics_creator,
-                self.train_function)
+                self.metrics_creator)
             for i, runner in enumerate(self.runners)
         ])
 
