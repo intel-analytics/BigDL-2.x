@@ -80,8 +80,7 @@ if __name__ == "__main__":
                                               ImageSetToSample(input_keys=["imageTensor"],
                                                                target_keys=["label"])])
     raw_train_data = get_inception_data(options.folder, sc, "train")
-    train_data = FeatureSet.image_frame(raw_train_data,
-                                        options.memoryType).transform(train_transformer)
+    train_data = FeatureSet.image_frame(raw_train_data).transform(train_transformer)
 
     val_transformer = ChainedPreprocessing([ImagePixelBytesToMat(),
                                             ImageResize(256, 256),
