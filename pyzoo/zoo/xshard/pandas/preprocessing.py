@@ -22,13 +22,21 @@ import pyarrow as pa
 from pyspark.context import SparkContext
 
 from zoo.ray.util.raycontext import RayContext
-from zoo.xshard.shard import RayDataShards
+from zoo.xshard.shard import RayDataShards, RayPartition
 from zoo.xshard.utils import *
 
 
 def read_csv(file_path, context):
+    """
+    Read csv files to DataShards
+    :param file_path: could be a csv file, multiple csv file paths seperated with comma,
+     a directory containing csv files.
+     Supported file systems are local file system,` hdfs`, and `s3`.
+    :param context: SparkContext or RayContext
+    :return: DataShards
+    """
     if isinstance(context, RayContext):
-        return read_csv_ray(context, file_path)
+        return read_file_ray(context, file_path, "csv")
     elif isinstance(context, SparkContext):
         pass
     else:
@@ -36,20 +44,20 @@ def read_csv(file_path, context):
 
 
 def read_json(file_path, context):
+    """
+    Read json files to DataShards
+    :param file_path: could be a json file, multiple json file paths seperated with comma,
+     a directory containing json files.
+     Supported file systems are local file system,` hdfs`, and `s3`.
+    :param context: SparkContext or RayContext
+    :return: DataShards
+    """
     if isinstance(context, RayContext):
-        return read_json_ray(context, file_path)
+        return read_file_ray(context, file_path, "json")
     elif isinstance(context, SparkContext):
         pass
     else:
         raise Exception("Context type should be RayContext or SparkContext")
-
-
-def read_csv_ray(context, file_path):
-    return read_file_ray(context, file_path, "csv")
-
-
-def read_json_ray(context, file_path):
-    return read_file_ray(context, file_path, "json")
 
 
 def read_file_ray(context, file_path, file_type):
@@ -90,7 +98,10 @@ def read_file_ray(context, file_path, file_type):
                 files = [file for file in files if os.path.splitext(file)[1] == "." + file_type]
                 file_paths = [os.path.join("s3://" + bucket, file) for file in files]
             else:
-                file_paths = [os.path.join(file_path, file) for file in os.listdir(file_path)]
+                # only get json/csv files
+                file_paths = [os.path.join(file_path, file)
+                              for file in os.listdir(file_path)
+                              if os.path.splitext(file)[1] == "." + file_type]
     else:
         file_paths = file_path_splits
 
@@ -100,24 +111,27 @@ def read_file_ray(context, file_path, file_type):
     # remove empty partitions
     file_partition_list = [partition for partition
                            in list(chunk(file_paths, num_partitions)) if partition]
+    # create shard actor to read data
     shards = [RayPandasShard.remote() for i in range(len(file_partition_list))]
     [shard.read_file_partitions.remote(file_partition_list[i], file_type)
      for i, shard in enumerate(shards)]
-    # shard_partitions = [[shard] for shard in shards]
-    data_shards = RayDataShards(shards)
+    # create initial partition
+    partitions = [RayPartition([shard]) for shard in shards]
+    data_shards = RayDataShards(partitions)
     return data_shards
 
 
 @ray.remote
 class RayPandasShard(object):
+    """
+    Actor to read csv/json file to Pandas DataFrame and manipulate data
+    """
     def __init__(self, data=None):
         self.data = data
 
     def read_file_partitions(self, paths, file_type):
         df_list = []
         prefix = paths[0].split("://")[0]
-        import time
-        start = time.time()
         if prefix == "hdfs":
             fs = pa.hdfs.connect()
             print("Start loading files")
@@ -159,8 +173,6 @@ class RayPandasShard(object):
                     raise Exception("Unsupported file type")
                 df_list.append(df)
         self.data = pd.concat(df_list)
-        end = time.time()
-        print("read shard time: ", end - start)
         return self.data
 
     def apply(self, func, *args):

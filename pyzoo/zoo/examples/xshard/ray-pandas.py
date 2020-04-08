@@ -17,13 +17,19 @@
 import sys
 from optparse import OptionParser
 
+import pandas as pd
+from bigdl.util.common import get_node_and_core_number
+from pyspark.sql import SQLContext
+
 import zoo.xshard.pandas
 from zoo import init_spark_on_local
 from zoo.ray.util.raycontext import RayContext
 
 
-def negative(df, column_name):
-    df[column_name] = df[column_name] * (-1)
+def process_feature(df, awake_begin=6, awake_end=23):
+    df['datetime'] = pd.to_datetime(df['timestamp'])
+    df['hours'] = df['datetime'].dt.hour
+    df['awake'] = (((df['hours'] >= awake_begin) & (df['hours'] <= awake_end)) | (df['hours'] == 0)).astype(int)
     return df
 
 
@@ -34,37 +40,39 @@ if __name__ == "__main__":
 
     (options, args) = parser.parse_args(sys.argv)
 
+    # Prepare csv files
+    df = pd.read_csv(options.file_path)
     sc = init_spark_on_local(cores="*")
+    sqlContext = SQLContext(sc)
+    num_nodes, num_cores = get_node_and_core_number()
+    df_spark = sqlContext.createDataFrame(df)
+    df_spark.printSchema()
+    df_spark.repartition(num_cores).write.\
+        format('json').mode("overwrite").save("/tmp/ray-pandas-example")
 
+    # init ray context
     ray_ctx = RayContext(sc=sc,
-                         object_store_memory="10g"
+                         object_store_memory="5g"
                          )
-
-    ray_ctx.init(object_store_memory="10g")
+    ray_ctx.init(object_store_memory="5g")
 
     # read data
-    file_path = options.file_path
-    data_shard = zoo.xshard.pandas.read_json(file_path, ray_ctx)
-
-    # collect object ids for data
-    ids = data_shard.collect_ids()
-    print("get ids:")
-    print(ids)
-
-    # repartition
-    data_shard.repartition(2)
-    repartitioned_ids = data_shard.get_partitions()
-    print("get repartitioned ids:")
-    print(repartitioned_ids)
+    data_shard = zoo.xshard.pandas.read_json("/tmp/ray-pandas-example", ray_ctx)
 
     # collect data
     data = data_shard.collect()
-    print("collected data : %s" % data[0].iloc[0])
+    print("collected data :")
+    print(data[0].head())
+
+    # repartition
+    data_shard.repartition(2)
+    partitions = data_shard.get_partitions()
+    partition_data = partitions[0].get_data()
+    print("get partitioned data:")
+    print(partition_data)
 
     # apply function on each element
-    data_shards_2 = data_shard.apply(negative, "label")
-    ids2 = data_shards_2.collect_ids()
-    print("get ids 2 :")
-    print(ids2)
+    data_shards_2 = data_shard.apply(process_feature, 6, 24)
     data2 = data_shards_2.collect()
-    print("collected data : %s" % data2[0].iloc[0])
+    print("collected new data :")
+    print(data2[0].head())
