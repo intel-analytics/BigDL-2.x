@@ -200,8 +200,7 @@ object ClusterServing {
 
                 val row = pathBytesBatch(i)
                 val path = row.getAs[String]("uri")
-                val tensors = PreProcessing(pathBytesBatch(i).getAs[String](dataField), dataType,
-                  chwFlag)
+                val tensors = PreProcessing(row.getAs[String](dataField), dataType, chwFlag)
                 (path, tensors)
 
               })

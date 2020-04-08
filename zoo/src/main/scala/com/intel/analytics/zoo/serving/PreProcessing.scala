@@ -38,9 +38,9 @@ class PreProcessing(s: String) {
         val imageTensor = Tensor[Float](data, Array(height, width, channel))
 
         if (chwFlag) {
-        imageTensor.transpose(1, 3).transpose(2, 3).contiguous()
+          imageTensor.transpose(1, 3).transpose(2, 3).contiguous()
         } else {
-        imageTensor
+          imageTensor
         }
       case "tensor" =>
         val tensorLoad = BigDLSerDe.loads(b)
