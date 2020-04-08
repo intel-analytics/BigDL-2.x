@@ -163,23 +163,12 @@ else
    # echo "Finished downloading images"
 fi
 
-# total batch size: 32 should be divided by total core number: 28
-sed "s/setBatchSize(32)/setBatchSize(56)/g" \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/image_finetuning_example.py \
-    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/tmp.py
-sed "s/setBatchSize(32)/setBatchSize(56)/g" \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/ImageTransferLearningExample.py \
-    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/tmp.py
-sed "s/setBatchSize(4)/setBatchSize(56)/g" \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/ImageInferenceExample.py \
-    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/tmp.py
-
 export SPARK_DRIVER_MEMORY=20g
 
 echo "start example test for nnframes imageInference"
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/tmp.py \
-    analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
-    hdfs://172.168.2.181:9000/kaggle/train_100
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/ImageTransferLearningExample.py \
+    -m analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
+    -f hdfs://172.168.2.181:9000/kaggle/train_100
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
@@ -190,9 +179,9 @@ then
 fi
 
 echo "start example test for nnframes finetune"
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/tmp.py \
-    analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
-    analytics-zoo-data/data/dogs-vs-cats/samples
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/image_finetuning_example.py \
+    -m analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
+    -f analytics-zoo-data/data/dogs-vs-cats/samples
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
@@ -202,9 +191,9 @@ then
     exit $exit_status
 fi
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/tmp.py \
-    analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
-    analytics-zoo-data/data/dogs-vs-cats/samples
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/ImageTransferLearningExample.py \
+    -m analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
+    -f analytics-zoo-data/data/dogs-vs-cats/samples
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
