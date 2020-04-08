@@ -62,6 +62,8 @@ class MXNetRunner(object):
             self.model = self.model_creator(self.config)
             if self.loss_creator:
                 self.loss = self.loss_creator(self.config)
+            else:
+                self.loss = None
             if self.val_data:
                 assert self.metrics_creator, \
                     "Metrics not defined for validation, please specify metrics_creator"
