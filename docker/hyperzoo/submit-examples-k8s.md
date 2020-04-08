@@ -1,10 +1,10 @@
 # Submit Analytics Zoo examples on k8s
 
 - [Prerequisites](#Prerequisites)
-- [Launch pre-built k8s image](launch-pre-built-k8s-image)
-- [Submit Analytics Zoo examples on k8s](Submit-analytics-zoo-examples-on-k8s)
-  - [Submit Analytics Zoo Scala examples on k8s](Submit-analytics-zoo-scala-examples-on k8s)
-  - [Submit Analytics Zoo python examples on k8s](Submit-analytics-zoo-python-examples-on-k8s)
+- [Launch pre-built k8s image](#launch-pre-built-k8s-image)
+- [Submit Analytics Zoo examples on k8s](#Submit-analytics-zoo-examples-on-k8s)
+  - [Submit Analytics Zoo Scala examples on k8s](#Submit-analytics-zoo-scala-examples-on-k8s)
+  - [Submit Analytics Zoo python examples on k8s](#Submit-analytics-zoo-python-examples-on-k8s)
 
 ## Prerequisites
 
@@ -102,7 +102,7 @@ Options:
 
 - --name: the Spark application name
 
-- -- conf: include container image to use for the Spark application, driver volumes name and path,  label of pods, spark driver and executor configuration.
+- -- conf: include container image to use for the Spark application, driver volumes name and path,  label of pods, spark driver and executor configuration, etc.
 
   see the [spark configuration page](https://spark.apache.org/docs/latest/configuration.html) and [spark on k8s configuration page](https://spark.apache.org/docs/latest/running-on-kubernetes.html#configuration) for more details.
 
@@ -146,18 +146,18 @@ $ kubectl delete pod -l <pod label>
 
 Here view each [Scala example](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples) running command. Please prepare the models or data according to related readme of each example.
 
-- [anomalydetection](anomalydetection)
-- [chatbot](chatbot)
-- [imageclassification](imageclassification)
-- [inception](inception)
-- [nnframes](nnframes)
-- [objectdetection](objectdetection)
-- [qaranker](qaranker)
-- [recommendation](recommendation)
-- [resnet](resnet)
-- [tensorflow/tfnet](tensorflow/tfnet)
-- [textclassification](textclassification)
-- [vnni](vnni)
+- [anomalydetection](#anomalydetection)
+- [chatbot](#chatbot)
+- [imageclassification](#imageclassification)
+- [inception](#inception)
+- [nnframes](#nnframes)
+- [objectdetection](#objectdetection)
+- [qaranker](#qaranker)
+- [recommendation](#recommendation)
+- [resnet](#resnet)
+- [tensorflow/tfnet](#tensorflow-tfnet)
+- [textclassification](#textclassification)
+- [vnni](#vnni)
 
 ##### anomalydetection
 
@@ -808,20 +808,20 @@ ${SPARK_HOME}/bin/spark-submit \
 
 Here view each [python example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples) running command. Please prepare the models or data according to related readme of each example.
 
-- [anomalydetection](anomalydetection)
-- [attention](attention)
-- [autograd](autograd)
-- [imageclassification](imageclassification)
-- [inception](inception)
-- [nnframes](nnframes)
-- [objectdetection](objectdetection)
-- [openvino](openvino)
-- [pytorch](pytorch)
-- [qaranker](qaranker)
-- [ray](ray)
-- [tensorflow](tensorflow)
-- [textclassification](textclassification)
-- [vnni/openvino](vnni/openvino)
+- [anomalydetection](#anomalydetection)
+- [attention](#attention)
+- [autograd](#autograd)
+- [imageclassification](#imageclassification)
+- [inception](#inception)
+- [nnframes](#nnframes)
+- [objectdetection](#objectdetection)
+- [openvino](#openvino)
+- [pytorch](#pytorch)
+- [qaranker](#qaranker)
+- [ray](#ray)
+- [tensorflow](#tensorflow)
+- [textclassification](#textclassification)
+- [vnni/openvino](#vnni-openvino)
 
 ##### anomalydetection
 
@@ -884,6 +884,7 @@ Here view each [python example](https://github.com/intel-analytics/analytics-zoo
   file:///opt/analytics-zoo-examples/python/attention/transformer.py 
 ```
 
+#### autograd
 ###### autograd custom
 
 ```bash
@@ -1700,7 +1701,7 @@ ${SPARK_HOME}/bin/spark-submit \
   --embedding_path /zoo/data/glove.6B
 ```
 
-##### openvino/vnni
+##### vnni/openvino
 
 ```bash
   ${SPARK_HOME}/bin/spark-submit \
