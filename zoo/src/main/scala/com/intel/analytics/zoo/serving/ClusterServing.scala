@@ -59,11 +59,6 @@ object ClusterServing {
     val blasFlag = helper.blasFlag
     val dataType =  helper.dataType
     val dataShape = helper.dataShape
-//    val dataType = if (helper.dataType == "image") {
-//      DataType.IMAGE
-//    } else {
-//      DataType.TENSOR
-//    }
 
     val (flagC, flagW, flagH, streamKey, dataField) = if (dataType == "image") {
       (helper.dataShape(0), helper.dataShape(1), helper.dataShape(2), "image_stream", "image")
@@ -111,7 +106,7 @@ object ClusterServing {
       s"${spark.conf.get("spark.redis.host")}:${spark.conf.get("spark.redis.port")}")
 
 
-    val images = spark
+    val inputData = spark
       .readStream
       .format("redis")
       .option("stream.keys", streamKey)
@@ -134,7 +129,7 @@ object ClusterServing {
     val acc = new LongAccumulator()
     helper.sc.register(acc)
 
-    val query = images.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
+    val query = inputData.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
 
       /**
        * This is reserved for future dynamic loading model
@@ -143,8 +138,8 @@ object ClusterServing {
 
       if (redisInfo("used_memory").toLong >=
         redisInfo("maxmemory").toLong * inputThreshold) {
-        redisDB.xtrim("image_stream",
-          (redisDB.xlen("image_stream") * cutRatio).toLong, true)
+        redisDB.xtrim(streamKey,
+          (redisDB.xlen(streamKey) * cutRatio).toLong, true)
       }
 
       batchDF.persist()
@@ -183,7 +178,8 @@ object ClusterServing {
                   chwFlag)
 
                 val localPartitionModel = bcModel.value
-                val result = localPartitionModel.doPredict(tensors.addSingletonDimension()).toTensor
+                val result = localPartitionModel.doPredict(tensors.addSingletonDimension())
+                  .toTensor.squeeze()
 
                 val value = PostProcessing(result, filter)
 

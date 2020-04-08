@@ -20,7 +20,6 @@ import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.feature.image.OpenCVMethod
-import com.intel.analytics.zoo.serving.DataType.DataType
 import org.apache.spark.bigdl.api.python.BigDLSerDe
 import org.opencv.imgcodecs.Imgcodecs
 
@@ -45,10 +44,13 @@ class PreProcessing(s: String) {
         }
       case "tensor" =>
         val tensorLoad = BigDLSerDe.loads(b)
-//        if (tensorLoad.isInstanceOf[JTensor]) {
-        val t = PythonBigDL.ofFloat().toTensor(tensorLoad.asInstanceOf[JTensor])
-        t
-//        }
+        tensorLoad match {
+          case jTensor: JTensor =>
+            PythonBigDL.ofFloat().toTensor(jTensor)
+          case _ =>
+            throw new Error("Unsupported dataType")
+        }
+      case _ => throw new Error("Unsupported dataType")
     }
 
     result
@@ -64,11 +66,4 @@ object PreProcessing {
     }
     t
   }
-}
-
-object DataType extends Enumeration {
-  type DataType = Value
-
-  val IMAGE = Value("Image")
-  val TENSOR = Value("Tensor")
 }

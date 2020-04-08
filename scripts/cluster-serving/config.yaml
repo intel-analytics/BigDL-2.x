@@ -10,8 +10,12 @@ model:
 data:
   # default, localhost:6379
   src:
+  # default, image (image & tensor are supported)
+  data_type:
   # default, 3, 224, 224
   image_shape:
+  # must be provided given data_type is tensor
+  tensor_shape:
   # default, topN(1)
   filter:
 params:

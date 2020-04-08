@@ -20,6 +20,8 @@ import yaml
 import redis
 import datetime
 import time
+import numpy as np
+from bigdl.util.common import JTensor
 
 
 class API:
@@ -110,6 +112,10 @@ class InputQueue(API):
         self.__enqueue_data("image_stream", d)
 
     def enqueue_tensor(self, uri, data):
+        if isinstance(data, np.ndarray):
+            data = JTensor.from_ndarray(data)
+        if not isinstance(data, JTensor):
+            raise Exception("Your input is invalid, only JTensor and ndarray are allowed.")
         from pyspark.serializers import CloudPickleSerializer
         bys = CloudPickleSerializer.dumps(CloudPickleSerializer, data)
         tensor_encoded = self.base64_encode_image(bys)

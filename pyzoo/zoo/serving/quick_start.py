@@ -29,22 +29,23 @@ def run(path):
     input_api = InputQueue()
     base_path = path
 
-    if not base_path:
-        raise EOFError("You have to set your image path")
+    # if not base_path:
+    #     raise EOFError("You have to set your image path")
     output_api = OutputQueue()
     output_api.dequeue()
-    path = os.listdir(base_path)
-    for p in path:
-        if not p.endswith("jpeg"):
-            continue
-        img = cv2.imread(os.path.join(base_path, p))
-        img = cv2.resize(img, (224, 224))
-        input_api.enqueue_image(p, img)
+    # path = os.listdir(base_path)
+    # for p in path:
+    #     if not p.endswith("jpeg"):
+    #         continue
+    #     img = cv2.imread(os.path.join(base_path, p))
+    #     img = cv2.resize(img, (224, 224))
+    #     input_api.enqueue_image(p, img)
 
-    # sample = np.random.rand(3, 2)
-    # print(sample)
-    # jtensor = JTensor.from_ndarray(sample)
-    # input_api.enqueue_tensor("test", jtensor)
+    for i in range(0, 1000):
+        sample = np.array([1, 1193])
+        print(sample)
+        jtensor = JTensor.from_ndarray(sample)
+        input_api.enqueue_tensor("test", jtensor)
 
     time.sleep(10)
 
