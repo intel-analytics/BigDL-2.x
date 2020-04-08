@@ -94,7 +94,7 @@ class RayServiceFuncGenerator(object):
         self.extra_params = extra_params
         self.verbose = verbose
         # _mxnet_worker and _mxnet_server are resource tags for distributed MXNet training only
-        # in order to diff worker from server
+        # in order to diff worker from server.
         # Leave some reserved custom resources free to avoid unknown crash due to resources.
         self.labels = \
             """--resources='{"_mxnet_worker": %s, "_mxnet_server": %s, "_reserved": %s}' """ \

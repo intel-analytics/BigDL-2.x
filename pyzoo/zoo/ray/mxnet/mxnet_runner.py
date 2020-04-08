@@ -213,7 +213,8 @@ class MXNetTrainer(object):
             else self.num_workers
 
         # Generate actor class
-        # Add a dummy custom resource for server to diff from worker
+        # Add a dummy custom resource to diff worker from server if runner_cores is specified
+        # so that we can place one worker and one server on a node for better performance.
         Worker = ray.remote(num_cpus=runner_cores, resources={"_mxnet_worker": 1})(MXNetRunner) \
             if runner_cores else ray.remote(MXNetRunner)
         Server = ray.remote(num_cpus=runner_cores, resources={"_mxnet_server": 1})(MXNetRunner) \

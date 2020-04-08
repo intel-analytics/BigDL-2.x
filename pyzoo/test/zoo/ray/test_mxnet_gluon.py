@@ -72,7 +72,7 @@ class TestMXNetGluon(TestCase):
         ray_ctx = RayContext(sc=sc, object_store_memory="1g")
         ray_ctx.init()
         resources = ray.available_resources()
-        # One ray head and one raylet; each will have one _mxnet_worker and one _mxnet_server
+        # One ray master and one raylet; each will have one _mxnet_worker and one _mxnet_server
         assert resources["_mxnet_worker"] == 2
         assert resources["_mxnet_server"] == 2
         config = {
