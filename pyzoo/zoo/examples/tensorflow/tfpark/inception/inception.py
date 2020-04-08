@@ -158,7 +158,8 @@ if __name__ == "__main__":
 
     optimizer.optimize(end_trigger=end_trigger, checkpoint_trigger=checkpoint_trigger)
 
-    saver = tf.train.Saver()
-    saver.save(optimizer.sess, options.checkpoint)
+    if options.checkpoint:
+        saver = tf.train.Saver()
+        saver.save(optimizer.sess, options.checkpoint)
 
     sc.stop()
