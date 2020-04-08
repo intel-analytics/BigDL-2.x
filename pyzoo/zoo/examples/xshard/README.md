@@ -13,6 +13,6 @@ Before you run the example, download the data(nyc_taxi.csv), and put into a dire
 You can easily use the following commands to run this example:
 ```bash
 export SPARK_DRIVER_MEMORY=4g
-nyc_path=the directory containing NBA nyc taxi data
+nyc_path=the file path of nyc_taxi.csv
 
 python ray-pandas.py -f ${nyc_path} 
