@@ -10,8 +10,15 @@ Project Zouwu provides a reference solution that is designed and optimized for c
 * Python 3.6 or 3.7
 * PySpark 2.4.3
 * Ray 0.7.0
-* Keras 1.2.2
 * Tensorflow 1.15.0
+* aiohttp
+* setproctitle
+* scikit-learn >=0.20.0
+* psutil
+* requests
+* featuretools
+* pandas
+* Note that Keras is not needed to use Zouwu. But if you have Keras installed, make sure it is Keras 1.2.2. Other verisons might cause unexpected problems. 
 
 ### Install 
   * Download the Analytics Zoo source code (master). 
@@ -37,8 +44,8 @@ We provide a [notebook](https://github.com/shane-huang/analytics-zoo/blob/zouwu-
 The built-in forecast models are all derived from [tfpark.KerasModels](https://analytics-zoo.github.io/master/#APIGuide/TFPark/model/). 
 
 1. To start, you need to create a forecast model first. Specify ```horizon``` and ```feature_dim``` in constructor. 
-    * horizon: steps to look forward
-    * feature_dim: dimension of input feature
+    * ```horizon```: no. of steps to forecast
+    * ```feature_dim```: dimension of input feature
 
 Refer to API doc for detailed explaination of all arguments for each forecast model.
 Below are some example code to create forecast models.
@@ -60,28 +67,30 @@ mtnet_forecaster = MTNetForecaster(horizon=1,
  
 2. Use ```forecaster.fit/evalute/predict``` in the same way as [tfpark.KerasModel](https://analytics-zoo.github.io/master/#APIGuide/TFPark/model/)
 
-3. For univariant forecasting, the input data shape for ```fit/evaluation/predict``` should match the arguments you used to create the forecaster. Specifically:
-   * X shape should be ```(num of samples, lookback, feature_dim)```, for train, validation and test data
-   * Y shape should be ```(num of samples, horizon)```, for train and validation data
-   *  ```feature_dim``` and ```horizon``` as specified in constructor, ```lookback``` is the number of time steps you want to look back in history.
+3. For univariant forecasting (i.e. to predict one series at a time), you can use either ```LSTMForecaster``` or ```MTNetForecaster```. The input data shape for ```fit/evaluation/predict``` should match the arguments you used to create the forecaster. Specifically:
+   * X shape should be ```(num of samples, lookback, feature_dim)```
+   * Y shape should be ```(num of samples, horizon)```
+   * ```feature_dim``` is the number of features as specified in Forecaster constructors.
+   * ```horizon``` is the number of steps to look forward as specified in Forecaster constructors.
+   * ```lookback``` is the number of time steps you want to look back in history. 
 
-4. For multivariant forecasting (using ```MTNetForecaster```) where number of targets to predict (i.e. num_targets) >= 1, the input data shape should meet below criteria. 
-   * X shape should be ```(num of samples, lookback, feature_dim)```, for train, validation and test data
-       * Note that for MTNetForecaster, ```lookback``` = ```(lb_long_steps+1) * lb_long_stepsize```, lb_long_steps and lb_long_stepsize as specified in MTNetForecaster constructor. 
-   * Y shape should be either one of below
-       * ```(num of samples, num_of_targets)``` if horizon = 1
-       * ```(num of samples, num_of_targets, horizon)``` if horizon > 1 && num_targets > 1
-       * ```(num of samples, horizon)``` if num_targets = 1 (fallback to univariant forecasting)
+4. For multivariant forecasting (i.e. to predict several series at the same time), you have to use ```MTNetForecaster```. The input data shape should meet below criteria. Note for multivariant forecasting, horizon must be 1. 
+   * X shape should be ```(num of samples, lookback, feature_dim)```
+   *  Y shape should be ```(num of samples, num_of_targets)``` 
+   * ```lookback``` should equal ```(lb_long_steps+1) * lb_long_stepsize```, where ```lb_long_steps``` and ```lb_long_stepsize``` are as specified in ```MTNetForecaster``` constructor. 
+   * ```num_targets``` is the number of series to forecast at the same time
+       
 
 #### Using AutoTS
 
-The automated training in zouwu is built upon [Analytics Zoo AutoML module](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/automl), which uses [Ray Tune](https://github.com/ray-project/ray/tree/master/python/ray/tune) for hyper parameter tuning and runs on [Analytics Zoo RayOnSpark](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/).  
+The automated training in zouwu is built upon [Analytics Zoo AutoML module](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/automl) (refer to [AutoML ProgrammingGuide](https://analytics-zoo.github.io/master/#ProgrammingGuide/AutoML/overview/) and [AutoML APIGuide](https://analytics-zoo.github.io/master/#APIGuide/AutoML/time-sequence-predictor/) for details), which uses [Ray Tune](https://github.com/ray-project/ray/tree/master/python/ray/tune) for hyper parameter tuning and runs on [Analytics Zoo RayOnSpark](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/).  
 
 The general workflow using automated training contains below two steps. 
    1. create a ```AutoTSTrainer``` to train a ```TSPipeline```, save it to file to use later or elsewhere if you wish.
    2. use ```TSPipeline``` to do prediction, evaluation, and incremental fitting as well. 
 
-You need to initialize RayOnSpark before using auto training (i.e. ```AutoTSTrainer```), and stop it after training finished. Using TSPipeline only does not need RayOnSpark. 
+You'll need ```RayOnSpark``` for training with ```AutoTSTrainer```, so you have to init it before auto training, and stop it after training is completed. Note RayOnSpark is not needed if you just use TSPipeline for inference, evaluation or incremental training. 
+
    * init RayOnSpark in local mode
 ```python
 from zoo import init_spark_on_local
@@ -156,3 +165,29 @@ AutoTSTrainer and TSPipeline accepts data frames as input. An exmaple data frame
  # ... do sth. e.g. incremental fitting
  loaded_ppl.save(another_file)
  ```
+### Built-in models vs. AutoTS
+
+Here we show some comparison results between manually tuned built-in models vs. AutoTS, using [network traffic forecast case](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/zouwu/use-case/network_traffic) as an example.  In paritcular, we compare    
+*  manually tuned built-in LSTMForecaster
+*  auto-tuned LSTM-based pipeline using AutoTS (obtained out of ~100 trials)
+
+From below results, we can see that the features selected by AutoTS make much sense in our case, and AutoTS does achieve much better accuracy results than manually tuned model.
+
+#### Accuracy: manually tuned vs. AutoTS
+
+|Model|Mean Squared Error (smaller is better)|Symmetric Mean Absolute Percentage Error (smaller is better)|Trained Epochs|
+|--|-----|----|---|
+|Manually Tuned LSTMForecaster|6312.44|8.61%|50|
+|AutoTS (LSTM model)|2792.22|5.80%|50|
+
+
+#### Hyper parameters: manually tuned vs. by AutoTS. 
+
+||features|Batch size|learning rate|lstm_units*|dropout_p*|Lookback|
+|--|--|--|-----|-----|-----|-----|
+|Manually Tuned LSTMForecaster|year, month, week, day_of_week, hour|1024|0.001|32, 32|0.2, 0.2|55|
+|AutoTS (LSTM model)|hour, is_weekday, is_awake|64|0.001|32, 64|0.2, 0.236|84|
+
+_*_: There're 2 lstm layers and dropout in LSTM model, the hyper parameters in the table corresponds to the 1st and 2nd layer respectively. 
+
+
