@@ -618,6 +618,8 @@ else
 fi
 
 sed -i '/get_ipython()/d; /plot./d; /plt./d' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_autots_forecasting.py
+sed -i '/init_spark_on_local/{:a;N;/ray_ctx.init/!ba;N;s/.*\n/import ray\nray.init(ignore_reinit_error=True)\n/};' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_autots_forecasting.py
+sed -i '/ray_ctx/d;/sc/d;' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_autots_forecasting.py
 cd ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/
 
 python ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_autots_forecasting.py
@@ -678,6 +680,9 @@ chmod +x ${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
 ${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
 
 sed -i '/get_ipython()/d;' ${ANALYTICS_ZOO_HOME}/apps/automl/nyc_taxi_dataset.py
+sed -i '/init_spark_on_local/{:a;N;/ray_ctx.init/!ba;N;s/.*\n/import ray\nray.init(ignore_reinit_error=True)\n/};' ${ANALYTICS_ZOO_HOME}/apps/automl/nyc_taxi_dataset.py
+sed -i '/ray_ctx/d;/sc/d;' ${ANALYTICS_ZOO_HOME}/apps/automl/nyc_taxi_dataset.py
+
 python ${ANALYTICS_ZOO_HOME}/apps/automl/nyc_taxi_dataset.py
 
 exit_status=$?
