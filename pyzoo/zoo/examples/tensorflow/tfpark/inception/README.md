@@ -1,19 +1,19 @@
 # Inception Model on Imagenet
-This example demonstrates how to use Analytics-zoo to train a TensorFlow [Inception v1](https://arxiv
-.org/abs/1409.4842) model on the [ImageNet](http://image-net.org/index) data.
+This example demonstrates how to use Analytics-zoo to train a TensorFlow [Inception v1](https://arxiv.org/abs/1409.4842) model on the [ImageNet](http://image-net.org/index) data.
 ## Get the JAR
 You can build one by refer to the
 [Build Page](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/#download-analytics-zoo-source) from the source code. We
 will release a pre-build package soon.
 
 ## Prepare the data
-You can download imagenet-2012 data from <http://image-net.org/download-images> and put them in this directory.
+You can download imagenet-2012 data from <http://image-net.org/download-images> and put them in the directory containing this readme.
  
 After you download the files(**ILSVRC2012_img_train.tar** and **ILSVRC2012_img_val.tar**), 
 run the following commands to prepare the data.
 
 The first arguments of `prepare_data.sh` is the output partition number and it is recommended to be the total
-number of available cores to be used in this job.
+number of available cores in the cluster (e.g. if you are going to specify --total-executor-cores 224 in the
+following submitting command, you should use 224 for this argument ) to be used in this job.
 
 ```bash
 bash prepare_data.sh $parition_num
