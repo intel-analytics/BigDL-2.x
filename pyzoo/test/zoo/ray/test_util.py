@@ -34,11 +34,11 @@ class TestUtil(TestCase):
     #     assert len(result[2]) == 2
     #     assert len(result[3]) == 2
 
-    def test_resource_to_bytes(self):
-        assert 10 == rutils.resourceToBytes("10b")
-        assert 10000 == rutils.resourceToBytes("10k")
-        assert 10000000 == rutils.resourceToBytes("10m")
-        assert 10000000000 == rutils.resourceToBytes("10g")
+    # def test_resource_to_bytes(self):
+    #     assert 10 == rutils.resourceToBytes("10b")
+    #     assert 10000 == rutils.resourceToBytes("10k")
+    #     assert 10000000 == rutils.resourceToBytes("10m")
+    #     assert 10000000000 == rutils.resourceToBytes("10g")
 
 
 if __name__ == "__main__":
