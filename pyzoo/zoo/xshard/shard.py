@@ -60,19 +60,6 @@ class RayDataShards(DataShards):
         [shard.apply.remote(func, *args) for shard in self.shard_list]
         return self
 
-    def apply_partition(self, func, *args):
-        """
-        Appy function on each partition in the DataShards
-        :param func: pre-processing function which process data on each partition.
-         In the function, partition data object should be the first argument.
-        :param args: rest arguments for the pre-processing function
-        :return: this DataShard
-        """
-        for partition in self.partitions:
-            new_data = __apply_partition__.remote(partition.get_data(), func, *args)
-            partition.data = new_data
-        return self
-
     def collect(self):
         """
         Returns a list that contains all of the elements in this DataShards
@@ -104,22 +91,6 @@ class RayPartition(object):
     """
     def __init__(self, shard_list):
         self.shard_list = shard_list
-        done_ids, undone_ids = ray.wait([shard.get_data.remote()
-                                         for shard in self.shard_list],
-                                        num_returns=len(self.shard_list))
-        assert len(undone_ids) == 0
-        self.data = done_ids
 
     def get_data(self):
-        """
-        Get the content of this partition
-        :return:
-        """
-        return self.data
-
-
-@ray.remote
-def __apply_partition__(data, func, *args):
-    elem_iterable = ray.get(data)
-    data = func(elem_iterable, *args)
-    return data
+        return [shard.get_data.remote() for shard in self.shard_list]

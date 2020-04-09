@@ -15,7 +15,6 @@
 #
 import os
 
-import boto3
 import ray
 import pandas as pd
 import pyarrow as pa
@@ -78,6 +77,7 @@ def read_file_ray(context, file_path, file_type):
                 files = [file for file in files if os.path.splitext(file)[1] == "." + file_type]
                 file_paths = ["hdfs://" + server_address + file for file in files]
             elif prefix == "s3":
+                import boto3
                 path_parts = file_url_splits[1].split('/')
                 bucket = path_parts.pop(0)
                 key = "/".join(path_parts)
@@ -145,6 +145,7 @@ class RayPandasShard(object):
                         raise Exception("Unsupported file type")
                     df_list.append(df)
         elif prefix == "s3":
+            import boto3
             access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
             secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
             s3_client = boto3.Session(
@@ -177,6 +178,7 @@ class RayPandasShard(object):
 
     def apply(self, func, *args):
         self.data = func(self.data, *args)
+        return self.data
 
     def get_data(self):
         return self.data

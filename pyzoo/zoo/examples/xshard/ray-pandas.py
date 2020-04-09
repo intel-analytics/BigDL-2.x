@@ -65,14 +65,17 @@ if __name__ == "__main__":
     print(data[0].head())
 
     # repartition
-    data_shard.repartition(2)
     partitions = data_shard.get_partitions()
-    partition_data = partitions[0].get_data()
-    print("get partitioned data:")
-    print(partition_data)
+    print("get %d partitions" % len(partitions))
+    data_shard.repartition(2)
+    new_partitions = data_shard.get_partitions()
+    print("get %d partitions after repartition" % len(new_partitions))
 
     # apply function on each element
     data_shards_2 = data_shard.apply(process_feature, 6, 24)
     data2 = data_shards_2.collect()
     print("collected new data :")
     print(data2[0].head())
+
+    ray_ctx.stop()
+    sc.stop()
