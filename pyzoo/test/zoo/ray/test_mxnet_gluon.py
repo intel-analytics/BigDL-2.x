@@ -22,8 +22,6 @@ import ray
 import mxnet as mx
 from mxnet import gluon
 from mxnet.gluon import nn
-from zoo import init_spark_on_local
-from zoo.ray.util.raycontext import RayContext
 from zoo.ray.mxnet import MXNetTrainer
 
 np.random.seed(1337)  # for reproducibility
@@ -68,9 +66,6 @@ def get_metrics(config):
 
 class TestMXNetGluon(TestCase):
     def test_gluon(self):
-        sc = init_spark_on_local(cores=8)
-        ray_ctx = RayContext(sc=sc, object_store_memory="1g")
-        ray_ctx.init()
         resources = ray.available_resources()
         # One ray master and one raylet; each will have one _mxnet_worker and one _mxnet_server
         assert resources["_mxnet_worker"] == 2
@@ -86,8 +81,6 @@ class TestMXNetGluon(TestCase):
         }
         trainer = MXNetTrainer(config, get_data_iters, get_model, get_loss, get_metrics)
         trainer.train(nb_epoch=2)
-        ray_ctx.stop()
-        sc.stop()
 
 
 if __name__ == "__main__":

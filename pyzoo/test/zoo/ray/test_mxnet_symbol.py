@@ -19,8 +19,6 @@ import numpy as np
 import pytest
 
 import mxnet as mx
-from zoo import init_spark_on_local
-from zoo.ray.util.raycontext import RayContext
 from zoo.ray.mxnet import MXNetTrainer
 
 np.random.seed(1337)  # for reproducibility
@@ -57,9 +55,6 @@ def get_metrics(config):
 
 class TestMXNetSymbol(TestCase):
     def test_symbol(self):
-        sc = init_spark_on_local(cores=4)
-        ray_ctx = RayContext(sc=sc, object_store_memory="1g")
-        ray_ctx.init()
         config = {
             "num_workers": 1,
             "batch_size": 32,
@@ -71,8 +66,6 @@ class TestMXNetSymbol(TestCase):
         }
         trainer = MXNetTrainer(config, get_data_iters, get_model, metrics_creator=get_metrics)
         trainer.train(nb_epoch=2)
-        ray_ctx.stop()
-        sc.stop()
 
 
 if __name__ == "__main__":
