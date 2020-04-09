@@ -15,6 +15,8 @@ The first arguments of `prepare_data.sh` is the output partition number and it i
 number of available cores in the cluster (e.g. if you are going to specify --total-executor-cores 224 in the
 following submitting command, you should use 224 for this argument ) to be used in this job.
 
+Please prepare at least 1 TB of space for this part.
+
 ```bash
 bash prepare_data.sh $parition_num
 ```

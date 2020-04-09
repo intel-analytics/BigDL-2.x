@@ -35,11 +35,9 @@ cd train
 echo "Extracting training images"
 tar -xvf $TRAIN_FILE
 
-mv $TRAIN_FILE ..
+mv $TRAIN_FILE ../
 
-find . -name "*.tar" | while read CLASS_NAME ; do mkdir -p
-"${CLASS_NAME%.tar}"; tar -xvf "${CLASS_NAME}" -C
-"${CLASS_NAME%.tar}"; done
+find . -name "*.tar" | while read CLASS_NAME ; do mkdir -p "${CLASS_NAME%.tar}"; tar -xvf "${CLASS_NAME}" -C "${CLASS_NAME%.tar}"; done
 
 cd ../
 mkdir val
@@ -47,15 +45,15 @@ mv $VAL_FILE val/
 cd val
 echo "Extracting validation images"
 tar -xvf $VAL_FILE
-cat classes.lst | while read CLASS_NAME;
+cat ../classes.lst | while read CLASS_NAME;
 do
     mkdir -p ${CLASS_NAME};
 done
-cat img_class.lst | while read PARAM;
+cat ../img_class.lst | while read PARAM;
 do
 mv ${PARAM/ n[0-9]*/} ${PARAM/ILSVRC*JPEG /};
 done
-mv $VAL_FILE ..
+mv $VAL_FILE ../
 
 cd ..
 rm -f train/*.tar
