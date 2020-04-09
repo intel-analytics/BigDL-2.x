@@ -68,7 +68,7 @@ def get_metrics(config):
 
 class TestMXNetGluon(TestCase):
     def test_gluon(self):
-        sc = init_spark_on_local(cores="*")
+        sc = init_spark_on_local(cores=8)
         ray_ctx = RayContext(sc=sc, object_store_memory="1g")
         ray_ctx.init()
         resources = ray.available_resources()
