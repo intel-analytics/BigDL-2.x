@@ -1,4 +1,3 @@
-# Analytics Zoo Docker User Guide 
 
 In order to simply the Analytics Zoo installation and configuration, Analytics Zoo docker images have been built and provided on [Docker Hub](https://hub.docker.com/r/intelanalytics/analytics-zoo). These docker images have been pre-built with all the dependencies and readily configured to run a bunch of Analytics Zoo examples out-of-box on Linux (such as Ubuntu, CentOS), MacOS or Windows. The pre-installed packages are listed at the end of this page. This document provides step-by-step instructions for users to easily start using the Analytics Zoo docker:
 
