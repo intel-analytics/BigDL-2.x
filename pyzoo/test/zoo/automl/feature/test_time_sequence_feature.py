@@ -22,6 +22,7 @@ import pytest
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.common.util import *
 from zoo.automl.feature.time_sequence import *
+from numpy.testing import assert_array_almost_equal
 
 
 class TestTimeSequenceFeature(ZooTestCase):
@@ -71,8 +72,6 @@ class TestTimeSequenceFeature(ZooTestCase):
                            past_seq_len,
                            len(config["selected_features"]) + 1)
         assert y.shape == (sample_num-past_seq_len, 1)
-        print(x[0, :, 0])
-        print(y[:, 0])
         assert np.mean(np.concatenate((x[0, :, 0], y[:, 0]), axis=None)) < 1e-5
 
     def test_fit_transform_df_list(self):
@@ -97,10 +96,12 @@ class TestTimeSequenceFeature(ZooTestCase):
                            past_seq_len,
                            len(config["selected_features"]) + 1)
         assert y.shape == (single_result_len*3, 1)
-        assert np.allclose(x[:single_result_len], x[single_result_len: 2*single_result_len])
-        assert np.allclose(x[:single_result_len], x[2*single_result_len:])
-        assert np.allclose(y[:single_result_len], y[single_result_len: 2*single_result_len])
-        assert np.allclose(y[:single_result_len], y[2*single_result_len:])
+        assert_array_almost_equal(x[:single_result_len],
+                                  x[single_result_len: 2*single_result_len], decimal=2)
+        assert_array_almost_equal(x[:single_result_len], x[2*single_result_len:], decimal=2)
+        assert_array_almost_equal(y[:single_result_len], y[single_result_len: 2*single_result_len],
+                                  decimal=2)
+        assert_array_almost_equal(y[:single_result_len], y[2*single_result_len:], decimal=2)
 
         assert np.mean(np.concatenate((x[0, :, 0], y[:single_result_len, 0]), axis=None)) < 1e-5
 
@@ -154,9 +155,7 @@ class TestTimeSequenceFeature(ZooTestCase):
                                                    overlap=10,
                                                    val_split_ratio=0.1,
                                                    test_split_ratio=0.1)
-        # print("Length of train_df is", len(train_df))
-        # print("Length of val_df is", len(val_df))
-        # print("Length of test_df is", len(test_df))
+
         feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
                                               target_col="values", drop_missing=True)
         with pytest.raises(ValueError, match=r".*past sequence length.*"):
@@ -171,8 +170,6 @@ class TestTimeSequenceFeature(ZooTestCase):
         out_x, out_y = feat.transform(test_df, is_train=False)
         assert len(out_x) == 1
         assert out_y is None
-
-        # test
 
     def test_fit_transform_input_data(self):
         # if there is NaN in data other than datetime, drop the training sample.
@@ -341,7 +338,7 @@ class TestTimeSequenceFeature(ZooTestCase):
 
             test_x, _ = new_ft.transform(df[:-future_seq_len], is_train=False)
 
-            assert np.array_equal(test_x, train_x)
+            assert_array_almost_equal(test_x, train_x, decimal=2)
 
         finally:
             shutil.rmtree(dirname)
@@ -365,9 +362,9 @@ class TestTimeSequenceFeature(ZooTestCase):
         train_x, train_y = feat.fit_transform(df, **config)
         y_unscale, y_unscale_1 = feat.post_processing(df, train_y, is_train=True)
         y_input = df[past_seq_len:][[value_col]].values
-        assert np.allclose(y_unscale, y_unscale_1), \
+        assert_array_almost_equal(y_unscale, y_unscale_1, decimal=2), \
             "y_unscale is {}, y_unscale_1 is {}".format(y_unscale, y_unscale_1)
-        assert np.array_equal(y_unscale, y_input), \
+        assert_array_almost_equal(y_unscale, y_input, decimal=2), \
             "y_unscale is {}, y_input is {}".format(y_unscale, y_input)
 
     def test_post_processing_train_df_list(self):
@@ -390,9 +387,9 @@ class TestTimeSequenceFeature(ZooTestCase):
         y_unscale, y_unscale_1 = feat.post_processing(df_list, train_y, is_train=True)
         y_input = df[past_seq_len:][[value_col]].values
         target_y = np.concatenate([y_input] * 3)
-        assert np.allclose(y_unscale, y_unscale_1), \
+        assert_array_almost_equal(y_unscale, y_unscale_1, decimal=2), \
             "y_unscale is {}, y_unscale_1 is {}".format(y_unscale, y_unscale_1)
-        assert np.array_equal(y_unscale, target_y), \
+        assert_array_almost_equal(y_unscale, target_y, decimal=2), \
             "y_unscale is {}, y_input is {}".format(y_unscale, target_y)
 
     def test_post_processing_test_1(self):
@@ -427,7 +424,8 @@ class TestTimeSequenceFeature(ZooTestCase):
             target_df = df[past_seq_len:].copy().reset_index(drop=True)
 
             assert output_value_df[dt_col].equals(target_df[dt_col])
-            assert np.allclose(output_value_df[value_col].values, target_df[value_col].values)
+            assert_array_almost_equal(output_value_df[value_col].values,
+                                      target_df[value_col].values, decimal=2)
 
         finally:
             shutil.rmtree(dirname)
@@ -467,8 +465,8 @@ class TestTimeSequenceFeature(ZooTestCase):
             assert output_value_df_list[0].equals(output_value_df_list[1])
             assert output_value_df_list[0].equals(output_value_df_list[2])
             assert output_value_df_list[0][dt_col].equals(target_df[dt_col])
-            assert np.allclose(output_value_df_list[0][value_col].values,
-                               target_df[value_col].values)
+            assert_array_almost_equal(output_value_df_list[0][value_col].values,
+                                      target_df[value_col].values, decimal=2)
 
         finally:
             shutil.rmtree(dirname)
@@ -510,9 +508,8 @@ class TestTimeSequenceFeature(ZooTestCase):
             target_value = feat._roll_test(target_df["values"], future_seq_len)
 
             assert output_value_df[dt_col].equals(target_df[:-future_seq_len+1][dt_col])
-            assert np.allclose(output_value, target_value), \
+            assert_array_almost_equal(output_value, target_value, decimal=2), \
                 "output_value is {}, target_value is {}".format(output_value, target_value)
-            # assert np.allclose(output_value_df[value_col].values, target_df[value_col].values)
 
         finally:
             shutil.rmtree(dirname)
