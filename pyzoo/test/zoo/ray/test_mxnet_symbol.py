@@ -71,6 +71,8 @@ class TestMXNetSymbol(TestCase):
         }
         trainer = MXNetTrainer(config, get_data_iters, get_model, metrics_creator=get_metrics)
         trainer.train(nb_epoch=2)
+        ray_ctx.stop()
+        sc.stop()
 
 
 if __name__ == "__main__":
