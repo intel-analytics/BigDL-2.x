@@ -35,11 +35,11 @@ export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project
 # You can uncomment the following line if hyper-threading is disabled in your cluster
 # export KMP_AFFINITY=granularity=fine,verbose,compact
-DATA_PATH=hdfs://path/to/sequence/files
-
+DATA_PATH=hdfs://[IP:port]/path/to/sequence/files
+mkdir -p /tmp/models/
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
 --master spark://xxx.xxx.xxx.xxx:xxxx \  
---executor-cores 28 \  
+--executor-cores 54 \  
 --total-executor-cores 224 \  
 --executor-memory 175G \ 
 --driver-memory 20G \ 
@@ -57,13 +57,13 @@ export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project
 # You can uncomment the following line if hyper-threading is disabled in your cluster
 # export KMP_AFFINITY=granularity=fine,verbose,compact
-DATA_PATH=hdfs://path/to/sequence/files
-
+DATA_PATH=hdfs://[IP:port]/path/to/sequence/files
+mkdir -p /tmp/models/
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
 --master yarn \
 --deploy-mode client \
---executor-cores 28 \
---num-executors 8 \ 
+--executor-cores 54 \
+--num-executors 4 \ 
 --executor-memory 175G \ 
 --driver-memory 20G \ 
 --conf spark.network.timeout=10000000  inception.py \ 
