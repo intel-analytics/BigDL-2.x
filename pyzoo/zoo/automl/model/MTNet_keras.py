@@ -491,7 +491,8 @@ class MTNetKeras(BaseModel):
             st = time.time()
             self.build()
             end = time.time()
-            print("Build model took {}s".format(end - st))
+            if verbose == 1:
+                print("Build model took {}s".format(end - st))
 
         st = time.time()
         hist = self.model.fit(processed_x, y, validation_data=processed_validation_data,
@@ -499,7 +500,8 @@ class MTNetKeras(BaseModel):
                               epochs=self.epochs,
                               verbose=verbose)
 
-        print("Fit model took {}s".format(time.time() - st))
+        if verbose == 1:
+            print("Fit model took {}s".format(time.time() - st))
         if validation_data is None:
             # get train metrics
             # results = self.model.evaluate(x, y)
