@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 import pytest
-import psutil
+
 sc = None
 ray_ctx = None
 
@@ -29,12 +29,3 @@ def rayonspark_fixture():
     yield
     ray_ctx.stop()
     sc.stop()
-    not_killed = []
-    total = []
-    for process_info in ray_ctx.ray_processesMonitor.process_infos:
-        for pid in process_info.pids:
-            total.append(pid)
-            if psutil.pid_exists(pid):
-                not_killed.append(pid)
-    print(len(total))
-    assert len(not_killed) == 0
