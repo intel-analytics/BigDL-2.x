@@ -47,17 +47,25 @@ class EuclideanDistance(Distance):
         return np.linalg.norm(x - y)
 
 
-class ThresholdFitter:
+class ThresholdEstimator:
+    """
+    An estimator to find the proper threshold.
+    """
     def fit(self,
             y,
             yhat,
-            mode="percentile"):
+            mode="uniform",
+            ratio=0.01
+            ):
         """
         fit the y and yhat and find the proper threshold
-        :param y:
-        :param yhat:
-        :param mode:
-        :return: threshold
+        :param y: actual values
+        :param yhat: predicted values
+        :param mode: types of ways to find threshold
+            "uniform" : fit data to a uniform distribution (the percentile way)
+            "gaussian": fit data to a gaussian distribution *TBD
+        :param ratio: the ratio of anomaly to consider as anomaly.
+        :return: the threshold
         """
         pass
 
