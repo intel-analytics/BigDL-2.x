@@ -15,12 +15,9 @@
 #
 from unittest import TestCase
 
-import numpy as np
 import pytest
 
 import zoo.ray.util.utils as rutils
-
-np.random.seed(1337)  # for reproducibility
 
 
 class TestUtil(TestCase):

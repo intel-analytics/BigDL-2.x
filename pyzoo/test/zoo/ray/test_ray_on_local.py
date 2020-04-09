@@ -29,7 +29,7 @@ class TestRayLocal(TestCase):
 
     def test_local(self):
         @ray.remote
-        class TestRay():
+        class TestRay:
             def hostname(self):
                 import socket
                 return socket.gethostname()
