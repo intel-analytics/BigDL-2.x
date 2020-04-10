@@ -18,20 +18,20 @@ Analytics Zoo applications can run on remote or cloud resources, such as YARN, K
 
 #### 3.1 Run on YARN
 
-- Check the [instructions](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-on-yarn-after-pip-install) for how to run Analytics Zoo applications on YARN with pip installation 
-- Check the [instructions](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-with-conda-environment-on-yarn) for how to run Analytics Zoo applications on YARN with conda installation
+- Check the [instructions](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-on-yarn-after-pip-install) for how to run Analytics Zoo applications on YARN with pip installation. 
+- Check the [instructions](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-with-conda-environment-on-yarn) for how to run Analytics Zoo applications on YARN with conda installation.
  
 #### 3.2 Run on K8s
 
-- Check the [instructions](https://analytics-zoo.github.io) for how to run Analytics Zoo applicaiton on K8s
+- Check the [instructions](https://analytics-zoo.github.io) for how to run Analytics Zoo applicaitons on K8s.
 
 #### 3.3 Run on Databricks
 
-- Check the [instructions](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/PlatformGuide/AnalyticsZoo-on-Databricks.md) for how to run Analytics Zoo applicaiton on Databricks
+- Check the [instructions](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/PlatformGuide/AnalyticsZoo-on-Databricks.md) for how to run Analytics Zoo applicaitons on Databricks.
 
 #### 3.4 Run on Google Dataproc
 
-- Check the [instructions](https://analytics-zoo.github.io/master/#ProgrammingGuide/run-on-dataproc/) for how to provision the Google Dataproc environment and runn Analytics Zoo applications 
+- Check the [instructions](https://analytics-zoo.github.io/master/#ProgrammingGuide/run-on-dataproc/) for how to provision the Google Dataproc environment and runn Analytics Zoo applications. 
 
 ## 4. Develop Analytics Zoo Applications
 Analytics Zoo provides rich APIs, built-in models and solutions for various needs of application development. 
@@ -45,14 +45,14 @@ Analytics Zoo provides rich APIs, built-in models and solutions for various need
 Pytorch users can user either: 
 
 - [NNFrame APIs](https://analytics-zoo.github.io/master/#APIGuide/PipelineAPI/nnframes/) to build and train PyTorch models along with Spark Dataframes and Spark ML Pipeline, or 
-- [Estimator APIs](https://analytics-zoo.github.io/master/#APIGuide/PipelineAPI/estimator/#estimator) to train and evaluate PyTorch models
+- [Estimator APIs](https://analytics-zoo.github.io/master/#APIGuide/PipelineAPI/estimator/#estimator) to train and evaluate PyTorch models.
 
 #### 4.3 BigDL
 
 BigDL users can use either: 
 
 - [NNFrame APIs](https://analytics-zoo.github.io/master/#APIGuide/PipelineAPI/nnframes/) to build deep learning models along with Spark Dataframes and Spark ML Pipeline, or 
-- [Keras-style APIs](https://analytics-zoo.github.io/master/#KerasStyleAPIGuide/Optimization/training/) to build deep learning pipeline
+- [Keras-style APIs](https://analytics-zoo.github.io/master/#KerasStyleAPIGuide/Optimization/training/) to build deep learning pipeline.
 
 #### 4.4 Cluster Serving
 
