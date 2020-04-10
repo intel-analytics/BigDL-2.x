@@ -23,6 +23,7 @@ class DataShards(object):
     """
     A collection of data which can be pre-processed parallelly.
     """
+
     def apply(self, func, *args):
         """
         Appy function on each element in the DataShards
@@ -57,7 +58,10 @@ class RayDataShards(DataShards):
         :param args: rest arguments for the pre-processing function
         :return: this DataShard
         """
-        [shard.apply.remote(func, *args) for shard in self.shard_list]
+        done_ids, undone_ids = ray.wait([shard.apply.remote(func, *args)
+                                         for shard in self.shard_list],
+                                        num_returns=len(self.shard_list))
+        assert len(undone_ids) == 0
         return self
 
     def collect(self):
@@ -89,6 +93,7 @@ class RayPartition(object):
     """
     Partition of RayDataShards
     """
+
     def __init__(self, shard_list):
         self.shard_list = shard_list
 

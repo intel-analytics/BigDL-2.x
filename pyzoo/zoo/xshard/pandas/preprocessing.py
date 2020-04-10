@@ -15,9 +15,9 @@
 #
 import os
 
-import ray
 import pandas as pd
 import pyarrow as pa
+import ray
 from pyspark.context import SparkContext
 
 from zoo.ray.util.raycontext import RayContext
@@ -113,8 +113,11 @@ def read_file_ray(context, file_path, file_type):
                            in list(chunk(file_paths, num_partitions)) if partition]
     # create shard actor to read data
     shards = [RayPandasShard.remote() for i in range(len(file_partition_list))]
-    [shard.read_file_partitions.remote(file_partition_list[i], file_type)
-     for i, shard in enumerate(shards)]
+    done_ids, undone_ids = \
+        ray.wait([shard.read_file_partitions.remote(file_partition_list[i], file_type)
+                  for i, shard in enumerate(shards)], num_returns=len(shards))
+    assert len(undone_ids) == 0
+
     # create initial partition
     partitions = [RayPartition([shard]) for shard in shards]
     data_shards = RayDataShards(partitions)
@@ -126,6 +129,7 @@ class RayPandasShard(object):
     """
     Actor to read csv/json file to Pandas DataFrame and manipulate data
     """
+
     def __init__(self, data=None):
         self.data = data
 
@@ -171,14 +175,14 @@ class RayPandasShard(object):
                 elif file_type == "csv":
                     df = pd.read_csv(path)
                 else:
-                    raise Exception("Unsupported file type")
+                    raise Exception("Unsuppo  rted file type")
                 df_list.append(df)
         self.data = pd.concat(df_list)
-        return self.data
+        return 0
 
     def apply(self, func, *args):
         self.data = func(self.data, *args)
-        return self.data
+        return 0
 
     def get_data(self):
         return self.data

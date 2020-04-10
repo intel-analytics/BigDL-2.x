@@ -1,7 +1,9 @@
 ---
+# **xShard: Data Parallel Pre-Processing for AI**
+
 ## **Introduction**
 
-xShard is a Data Parallel Pre-Processing for AI. 
+xShard is a Data Parallel Pre-Processing for AI in Analytics Zoo.
 
 It supports pre-processing from different data sources, like TensorFlow DataSet, PyTorch DataLoader, MXNet DataLoader, etc. and it supports different data format, like Pandas DataFrame, Numpy, Images, Parquet.
 
