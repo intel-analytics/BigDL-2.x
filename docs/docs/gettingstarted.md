@@ -34,8 +34,8 @@ Analytics Zoo applications can run on remote or cloud resources, such as YARN, K
 
 ### Run on YARN
 
-- Python users can follow these [instructions](PythonUserGuide/run.md) to run Analytics Zoo applications on YARN.
-- Scala users can follow these [instructions](ScalaUserGuide/run.md) to run Analytics Zoo applications on YARN.
+- Python users can follow the instructions in [Python User Guide](PythonUserGuide/run.md) to run Analytics Zoo applications on YARN.
+- Scala users can follow the instructions in [Scala User Guide](ScalaUserGuide/run.md) to run Analytics Zoo applications on YARN.
  
 ### Run on K8s
 
