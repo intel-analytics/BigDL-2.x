@@ -11,9 +11,7 @@ You can download imagenet-2012 data from <http://image-net.org/download-images> 
 After you download the files(**ILSVRC2012_img_train.tar** and **ILSVRC2012_img_val.tar**), 
 run the following commands to prepare the data.
 
-The first arguments of `prepare_data.sh` is the output partition number and it is recommended to be the total
-number of available cores in the cluster (e.g. if you are going to specify --total-executor-cores 224 in the
-following submitting command, you should use 224 for this argument ) to be used in this job.
+The first arguments of `prepare_data.sh` is the output partition number of the sequence files, which is recommended to be the number of cores of the machine executing this script.
 
 Please prepare at least 1 TB of space for this part.
 
