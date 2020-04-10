@@ -1,13 +1,13 @@
 ## Submit Analytics Zoo examples on k8s
 
-This page shows each Analytics Zoo [python example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples) and [scala example](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples) running command on K8s. Before start this page, you may refer to the instruction of pulling the pre-built k8s image.  
+This page shows each Analytics Zoo [python example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples) and [scala example](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples) running command on K8s. Before start this page, you may refer to the [instruction](README.md) of pulling the pre-built k8s image.  
 
-- [Submit Analytics Zoo python examples on k8s](Submit-Analytics-Zoo-python-examples-on-k8s)
-- [Submit Analytics Zoo scala examples on k8s](Submit-Analytics-Zoo-scala-examples-on-k8s)
+- [Submit Analytics Zoo python examples on k8s](#submit-analytics-zoo-python-examples-on-k8s)
+- [Submit Analytics Zoo scala examples on k8s](#submit-analytics-zoo-scala-examples-on-k8s)
 
 ### Submit Analytics Zoo python examples on k8s
 
-Here view each [python example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples) running command. Please prepare the models or data according to related readme of each example. 
+Look into [python example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples) running command here. Please prepare the models or data according to related readme of each example. 
 
 - [anomalydetection](#anomalydetection)
 - [attention](#attention)
@@ -21,7 +21,7 @@ Here view each [python example](https://github.com/intel-analytics/analytics-zoo
 - [qaranker](#qaranker)
 - [tensorflow](#tensorflow)
 - [textclassification](#textclassification)
-- [vnni/openvino](#vnni-openvino)
+- [vnniopenvino](#vnniopenvino)
 
 #### anomalydetection
 
@@ -336,7 +336,7 @@ Here view each [python example](https://github.com/intel-analytics/analytics-zoo
   --driver-cores ${RUNTIME_DRIVER_CORES} \
   --driver-memory ${RUNTIME_DRIVER_MEMORY} \
   --properties-file ${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf \
-  --py-files ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip,/opt/analytics-zoo-examples/python/anomalydetection/anomaly_detection.py \
+  --py-files ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip,/opt/analytics-zoo-examples/python/objectdetection/predict.py \
   --conf spark.driver.extraJavaOptions=-Dderby.stream.error.file=/tmp \
   --conf spark.sql.catalogImplementation='in-memory' \
   --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
@@ -477,10 +477,10 @@ Here view each [python example](https://github.com/intel-analytics/analytics-zoo
   --model /zoo/data/analytics-zoo-models/ssd_mobilenet_v1_coco_2017_11_17/frozen_inference_graph.pb
 ```
 
-###### tensorflow TFPark tf_optimizer train
+###### tensorflow tfpark estimator_inception
 
 ```bash
-  ${SPARK_HOME}/bin/spark-submit \
+${SPARK_HOME}/bin/spark-submit \
   --master ${RUNTIME_SPARK_MASTER} \
   --deploy-mode cluster \
   --conf spark.kubernetes.authenticate.driver.serviceAccountName=${RUNTIME_K8S_SERVICE_ACCOUNT} \
@@ -499,7 +499,37 @@ Here view each [python example](https://github.com/intel-analytics/analytics-zoo
   --driver-cores ${RUNTIME_DRIVER_CORES} \
   --driver-memory ${RUNTIME_DRIVER_MEMORY} \
   --properties-file ${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf \
-  --py-files ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip,/opt/analytics-zoo-examples/python/tfpark/tf_optimizer/train.py \
+  --py-files ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip,/opt/analytics-zoo-examples/python/tensorflow/tfpark/estimator/estimator_inception.py \
+  --conf spark.driver.extraJavaOptions=-Dderby.stream.error.file=/tmp \
+  --conf spark.sql.catalogImplementation='in-memory' \
+  --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
+  --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
+  file:///opt/analytics-zoo-examples/python/tensorflow/tfpark/estimator/estimator_inception.py --image-path /zoo/data/cat_dog --num-classes 2
+```
+
+###### tensorflow TFPark tf_optimizer train
+
+```bash
+  ${SPARK_HOME}/bin/spark-submit \
+  --master ${RUNTIME_SPARK_MASTER} \
+  --deploy-mode cluster \
+  --conf spark.kubernetes.authenticate.driver.serviceAccountName=${RUNTIME_K8S_SERVICE_ACCOUNT} \
+  --name analytics-zoo \
+  --conf spark.kubernetes.container.image=${RUNTIME_K8S_SPARK_IMAGE} \
+  --conf spark.executor.instances=${RUNTIME_EXECUTOR_INSTANCES} \
+  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
+  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
+  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
+  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
+  --conf spark.kubernetes.driver.label.az=true \
+  --conf spark.kubernetes.executor.label.az=true \
+  --executor-cores ${RUNTIME_EXECUTOR_CORES} \
+  --executor-memory 200g \
+  --total-executor-cores ${RUNTIME_TOTAL_EXECUTOR_CORES} \
+  --driver-cores ${RUNTIME_DRIVER_CORES} \
+  --driver-memory 200g \
+  --properties-file ${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf \
+  --py-files ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip,/opt/analytics-zoo-examples/python/tensorflow/tfpark/tf_optimizer/train.py \
   --conf spark.driver.extraJavaOptions=-Dderby.stream.error.file=/tmp \
   --conf spark.sql.catalogImplementation='in-memory' \
   --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
@@ -537,156 +567,6 @@ Here view each [python example](https://github.com/intel-analytics/analytics-zoo
   file:///opt/analytics-zoo-examples/python/tensorflow/tfpark/tf_optimizer/evaluate.py 1000
 ```
 
-###### tensorflow TFPark keras keras_dataset
-
-```bash
-  ${SPARK_HOME}/bin/spark-submit \
-  --master ${RUNTIME_SPARK_MASTER} \
-  --deploy-mode cluster \
-  --conf spark.kubernetes.authenticate.driver.serviceAccountName=${RUNTIME_K8S_SERVICE_ACCOUNT} \
-  --name analytics-zoo \
-  --conf spark.kubernetes.container.image=${RUNTIME_K8S_SPARK_IMAGE} \
-  --conf spark.executor.instances=${RUNTIME_EXECUTOR_INSTANCES} \
-  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
-  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
-  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
-  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
-  --conf spark.kubernetes.driver.label.az=true \
-  --conf spark.kubernetes.executor.label.az=true \
-  --executor-cores ${RUNTIME_EXECUTOR_CORES} \
-  --executor-memory ${RUNTIME_EXECUTOR_MEMORY} \
-  --total-executor-cores ${RUNTIME_TOTAL_EXECUTOR_CORES} \
-  --driver-cores ${RUNTIME_DRIVER_CORES} \
-  --driver-memory ${RUNTIME_DRIVER_MEMORY} \
-  --properties-file ${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf \
-  --py-files ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip,/opt/analytics-zoo-examples/python/tensorflow/tfpark/keras/keras_dataset.py \
-  --conf spark.driver.extraJavaOptions=-Dderby.stream.error.file=/tmp \
-  --conf spark.sql.catalogImplementation='in-memory' \
-  --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
-  --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
-  file:///opt/analytics-zoo-examples/python/tensorflow/tfpark/keras/keras_dataset.py 1
-```
-
-###### tensorflow tfpark keras keras_ndarray
-
-```bash
-  ${SPARK_HOME}/bin/spark-submit \
-  --master ${RUNTIME_SPARK_MASTER} \
-  --deploy-mode cluster \
-  --conf spark.kubernetes.authenticate.driver.serviceAccountName=${RUNTIME_K8S_SERVICE_ACCOUNT} \
-  --name analytics-zoo \
-  --conf spark.kubernetes.container.image=${RUNTIME_K8S_SPARK_IMAGE} \
-  --conf spark.executor.instances=${RUNTIME_EXECUTOR_INSTANCES} \
-  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
-  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
-  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
-  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
-  --conf spark.kubernetes.driver.label.az=true \
-  --conf spark.kubernetes.executor.label.az=true \
-  --executor-cores ${RUNTIME_EXECUTOR_CORES} \
-  --executor-memory ${RUNTIME_EXECUTOR_MEMORY} \
-  --total-executor-cores ${RUNTIME_TOTAL_EXECUTOR_CORES} \
-  --driver-cores ${RUNTIME_DRIVER_CORES} \
-  --driver-memory ${RUNTIME_DRIVER_MEMORY} \
-  --properties-file ${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf \
-  --py-files ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip,/opt/analytics-zoo-examples/python/tensorflow/tfpark/keras/keras_ndarray.py \
-  --conf spark.driver.extraJavaOptions=-Dderby.stream.error.file=/tmp \
-  --conf spark.sql.catalogImplementation='in-memory' \
-  --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
-  --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
-  file:///opt/analytics-zoo-examples/python/tensorflow/tensorflow/tfpark/keras/keras_ndarray.py 1
-```
-
-###### tensorflow tfpark estimator estimator_dataset
-
-```bash
-  ${SPARK_HOME}/bin/spark-submit \
-  --master ${RUNTIME_SPARK_MASTER} \
-  --deploy-mode cluster \
-  --conf spark.kubernetes.authenticate.driver.serviceAccountName=${RUNTIME_K8S_SERVICE_ACCOUNT} \
-  --name analytics-zoo \
-  --conf spark.kubernetes.container.image=${RUNTIME_K8S_SPARK_IMAGE} \
-  --conf spark.executor.instances=${RUNTIME_EXECUTOR_INSTANCES} \
-  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
-  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
-  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
-  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
-  --conf spark.kubernetes.driver.label.az=true \
-  --conf spark.kubernetes.executor.label.az=true \
-  --executor-cores ${RUNTIME_EXECUTOR_CORES} \
-  --executor-memory ${RUNTIME_EXECUTOR_MEMORY} \
-  --total-executor-cores ${RUNTIME_TOTAL_EXECUTOR_CORES} \
-  --driver-cores ${RUNTIME_DRIVER_CORES} \
-  --driver-memory ${RUNTIME_DRIVER_MEMORY} \
-  --properties-file ${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf \
-  --py-files ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip,/opt/analytics-zoo-examples/python/tensorflow/tfpark/estimator/estimator_dataset.py \
-  --conf spark.driver.extraJavaOptions=-Dderby.stream.error.file=/tmp \
-  --conf spark.sql.catalogImplementation='in-memory' \
-  --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
-  --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
-  file:///opt/analytics-zoo-examples/python/tensorflow/tfpark/estimator/estimator_dataset.py
-```
-
-###### tensorflow tfpark estimator estimator_inception
-
-```bash
-${SPARK_HOME}/bin/spark-submit \
-  --master ${RUNTIME_SPARK_MASTER} \
-  --deploy-mode cluster \
-  --conf spark.kubernetes.authenticate.driver.serviceAccountName=${RUNTIME_K8S_SERVICE_ACCOUNT} \
-  --name analytics-zoo \
-  --conf spark.kubernetes.container.image=${RUNTIME_K8S_SPARK_IMAGE} \
-  --conf spark.executor.instances=${RUNTIME_EXECUTOR_INSTANCES} \
-  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
-  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
-  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
-  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
-  --conf spark.kubernetes.driver.label.az=true \
-  --conf spark.kubernetes.executor.label.az=true \
-  --executor-cores ${RUNTIME_EXECUTOR_CORES} \
-  --executor-memory ${RUNTIME_EXECUTOR_MEMORY} \
-  --total-executor-cores ${RUNTIME_TOTAL_EXECUTOR_CORES} \
-  --driver-cores ${RUNTIME_DRIVER_CORES} \
-  --driver-memory ${RUNTIME_DRIVER_MEMORY} \
-  --properties-file ${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf \
-  --py-files ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip,/opt/analytics-zoo-examples/python/tensorflow/tfpark/estimator/estimator_inception.py \
-  --conf spark.driver.extraJavaOptions=-Dderby.stream.error.file=/tmp \
-  --conf spark.sql.catalogImplementation='in-memory' \
-  --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
-  --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
-  file:///opt/analytics-zoo-examples/python/tensorflow/tfpark/estimator/estimator_inception.py
-```
-
-###### tensorflow TFPark gan
-
-```bash
-${SPARK_HOME}/bin/spark-submit \
-  --master ${RUNTIME_SPARK_MASTER} \
-  --deploy-mode cluster \
-  --conf spark.kubernetes.authenticate.driver.serviceAccountName=${RUNTIME_K8S_SERVICE_ACCOUNT} \
-  --name analytics-zoo \
-  --conf spark.kubernetes.container.image=${RUNTIME_K8S_SPARK_IMAGE} \
-  --conf spark.executor.instances=${RUNTIME_EXECUTOR_INSTANCES} \
-  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
-  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
-  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
-  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
-  --conf spark.kubernetes.driver.label.az=true \
-  --conf spark.kubernetes.executor.label.az=true \
-  --executor-cores ${RUNTIME_EXECUTOR_CORES} \
-  --executor-memory ${RUNTIME_EXECUTOR_MEMORY} \
-  --total-executor-cores ${RUNTIME_TOTAL_EXECUTOR_CORES} \
-  --driver-cores ${RUNTIME_DRIVER_CORES} \
-  --driver-memory ${RUNTIME_DRIVER_MEMORY} \
-  --properties-file ${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf \
-  --py-files ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip,/opt/analytics-zoo-examples/python/tensorflow/tfpark/gan/gan_train_and_evaluate.py \
-  --conf spark.driver.extraJavaOptions=-Dderby.stream.error.file=/tmp \
-  --conf spark.sql.catalogImplementation='in-memory' \
-  --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
-  --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
-  file:///opt/analytics-zoo-examples/python/tensorflow/tfpark/gan/gan_train_and_evaluate.py
-```
-
 #### text classification
 
 ```bash
@@ -720,7 +600,7 @@ ${SPARK_HOME}/bin/spark-submit \
   --embedding_path /zoo/data/glove.6B
 ```
 
-#### vnni/openvino
+#### vnniopenvino
 
 ```bash
   ${SPARK_HOME}/bin/spark-submit \

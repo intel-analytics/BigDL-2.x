@@ -16,7 +16,7 @@ Analytics Zoo hyperzoo image has been built to easily run applications on Kubern
 - Pull an Analytics Zoo k8s image:
 
 ```bash
-sudo docker pull 10.239.47.32/intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17
+sudo docker pull intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17
 ```
 
 - Launch a k8s client container:
@@ -27,7 +27,7 @@ Please note the two different containers: **client container** is for user to su
 sudo docker run -itd --net=host \
     -v /etc/kubernetes:/etc/kubernetes \
     -v /root/.kube:/root/.kube \
-    10.239.47.32/intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17 bash
+    intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17 bash
 ```
 
 Note. To launch the client container, `-v /etc/kubernetes:/etc/kubernetes:` and `-v /root/.kube:/root/.kube` are required to specify the path of kube config and installation.
@@ -44,8 +44,8 @@ sudo docker run -itd --net=host \
     -e https_proxy=https://your-proxy-host:your-proxy-port \
     -e RUNTIME_SPARK_MASTER=k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port> \
     -e RUNTIME_K8S_SERVICE_ACCOUNT=account \
-    -e RUNTIME_K8S_SPARK_IMAGE=10.239.47.32/intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17 \
-    -e RUNTIME_PERSISTENT_VOLUME_CLAIM=nfsvolumeclaim \
+    -e RUNTIME_K8S_SPARK_IMAGE=intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17 \
+    -e RUNTIME_PERSISTENT_VOLUME_CLAIM=myvolumeclaim \
     -e RUNTIME_DRIVER_HOST=x.x.x.x \
     -e RUNTIME_DRIVER_PORT=54321 \
     -e RUNTIME_EXECUTOR_INSTANCES=1 \
@@ -54,7 +54,7 @@ sudo docker run -itd --net=host \
     -e RUNTIME_TOTAL_EXECUTOR_CORES=4 \
     -e RUNTIME_DRIVER_CORES=4 \
     -e RUNTIME_DRIVER_MEMORY=10g \
-    10.239.47.32/intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17 bash 
+    intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17 bash 
 ```
 
 - NotebookPort value 12345 is a user specified port number.
@@ -65,9 +65,9 @@ sudo docker run -itd --net=host \
 - RUNTIME_K8S_SERVICE_ACCOUNT is service account for driver pod. Please refer to k8s [RBAC](https://spark.apache.org/docs/latest/running-on-kubernetes.html#rbac).
 - RUNTIME_K8S_SPARK_IMAGE is the k8s image.
 - RUNTIME_PERSISTENT_VOLUME_CLAIM is to specify volume mount. We are supposed to use volume mount to store or receive data. Get ready with [Kubernetes Volumes](https://spark.apache.org/docs/latest/running-on-kubernetes.html#volume-mounts).
-- RUNTIME_DRIVER_HOST is to specify driver localhost.
-- RUNTIME_DRIVER_PORT is to specify port number.
-- Others are for spark configuration. The default values in this image are listed above. Replace the values as you need.
+- RUNTIME_DRIVER_HOST is to specify driver localhost (only required when submit jobs as kubernetes client mode). 
+- RUNTIME_DRIVER_PORT is to specify port number (only required when submit jobs as kubernetes client mode).
+- Other environment variables are for spark configuration setting. The default values in this image are listed above. Replace the values as you need.
 
 Once the container is created, launch the container by:
 
@@ -141,7 +141,7 @@ Options:
 - file://: local file path of the python example file in the client container.
 - --input_dir: input data path of the anomaly detection example. The data path is the mounted filesystem of the host. Refer to more details by [Kubernetes Volumes](https://spark.apache.org/docs/latest/running-on-kubernetes.html#using-kubernetes-volumes).
 
-See more [python examples](#submit-python-examples-on-k8s) running command on k8s.
+See more [python examples](submit-examples-on-k8s.md) running on k8s.
 
 #### Launch an Analytics Zoo scala example on k8s
 
@@ -189,7 +189,7 @@ Options:
 - --class: scala example class name.
 - --input_dir: input data path of the anomaly detection example. The data path is the mounted filesystem of the host. Refer to more details by [Kubernetes Volumes](https://spark.apache.org/docs/latest/running-on-kubernetes.html#using-kubernetes-volumes).
 
-See more [scala examples](#submit-python-examples-on-k8s) running command on k8s.
+See more [scala examples](submit-examples-on-k8s.md) running on k8s.
 
 #### Access logs to check result and clear pods 
 
@@ -219,4 +219,3 @@ Or clean up the entire spark application by pod label:
 $ kubectl delete pod -l <pod label>
 ```
 
-##### 
