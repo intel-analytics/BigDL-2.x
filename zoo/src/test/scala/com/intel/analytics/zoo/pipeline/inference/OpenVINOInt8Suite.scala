@@ -28,19 +28,23 @@ import com.intel.analytics.zoo.common.Utils
 import scala.io.Source
 import scala.language.postfixOps
 import scala.sys.process._
+import sys.env
 
 
-/*
 @OpenVinoTest
 class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
   with InferenceSupportive {
 
-  val s3Url = "https://s3-ap-southeast-1.amazonaws.com"
+  val s3Url = if (env.contains("FTP_URI")) {
+    env("FTP_URI").toString
+  } else {
+    "https://s3-ap-southeast-1.amazonaws.com"
+  }
 
   val logger = LoggerFactory.getLogger(getClass)
   var tmpDir: File = _
 
-  val resnet_v1_50_url = s"$s3Url/openvino/2018_R5/resnet_v1_50"
+  val resnet_v1_50_url = s"$s3Url/analytics-zoo-models/openvino/2018_R5/resnet_v1_50"
 
   val resnet_v1_50_inputShape = Array(4, 224, 224, 3)
   var resnet_v1_50_path: String = _
@@ -63,7 +67,10 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     tmpDir = Utils.createTmpDir("ZooVino").toFile()
     val dir = new File(s"${tmpDir.getAbsolutePath}/OpenVinoInt8Spec").getCanonicalPath
 
-    s"wget -nv -P $dir $resnet_v1_50_url" !;
+    s"wget -nv -P $dir ${resnet_v1_50_url}.xml" !;
+    s"wget -nv -P $dir ${resnet_v1_50_url}.bin" !;
+    s"wget -nv -P $dir ${resnet_v1_50_url}_i8.xml" !;
+    s"wget -nv -P $dir ${resnet_v1_50_url}_i8.bin" !;
 
     s"wget -nv -P $dir $valTarUrl" !;
     s"tar xvf $dir/$valTar -C $dir" !;
@@ -79,9 +86,9 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     image_input_970_filePath = s"$dir/ic_input_970"
 
     // int8 optimized model
-    resnet_v1_50_path = s"${tmpDir.getAbsolutePath}/resnet_v1_50"
+    resnet_v1_50_path = s"${dir}/resnet_v1_50"
 
-    resnet_v1_50_int8_path = s"${tmpDir.getAbsolutePath}/resnet_v1_50_i8"
+    resnet_v1_50_int8_path = s"${dir}/resnet_v1_50_i8"
     tmpDir.listFiles().foreach(file => println(file.getAbsoluteFile))
 
   }
@@ -303,4 +310,3 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     }
   }
 }
-*/

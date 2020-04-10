@@ -62,7 +62,7 @@ object ImageTransferLearning {
         .setPredictionCol("embedding")
 
       val lrModel = Sequential().add(Linear(1000, 2)).add(LogSoftMax())
-      val classifier = NNClassifier(lrModel, ClassNLLCriterion[Float](), Array(1000))
+      val classifier = NNClassifier(lrModel, ZooClassNLLCriterion[Float](), Array(1000))
         .setFeaturesCol("embedding")
         .setOptimMethod(new Adam[Float]())
         .setLearningRate(0.002)
@@ -77,6 +77,8 @@ object ImageTransferLearning {
       val evaluation = new MulticlassClassificationEvaluator().setPredictionCol("prediction")
         .setMetricName("weightedPrecision").evaluate(predictions)
       println("evaluation result on validationDF: " + evaluation)
+      println("finished...")
+      sc.stop()
     }
   }
 }

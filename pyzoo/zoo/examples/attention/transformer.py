@@ -16,8 +16,8 @@
 
 
 from bigdl.optim.optimizer import Adam
-from keras.datasets import imdb
-from keras.preprocessing import sequence
+from tensorflow.python.keras.datasets import imdb
+from tensorflow.python.keras.preprocessing import sequence
 from zoo.pipeline.api.keras.models import Model
 from zoo.pipeline.api.keras.layers import *
 from zoo.common.nncontext import init_spark_conf
@@ -82,7 +82,7 @@ model.compile(optimizer=Adam(),
               loss="sparse_categorical_crossentropy",
               metrics=['accuracy'])
 
-batch_size = 160
+batch_size = 128
 print('Train...')
 model.fit(train_rdd,
           batch_size=batch_size,
@@ -90,5 +90,8 @@ model.fit(train_rdd,
 print("Train finished.")
 
 print('Evaluating...')
-score = model.evaluate(val_rdd, batch_size=160)[0]
+score = model.evaluate(val_rdd, batch_size=128)[0]
 print(score)
+
+print("finished...")
+sc.stop()

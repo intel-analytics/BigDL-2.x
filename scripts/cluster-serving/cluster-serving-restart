@@ -1,4 +1,4 @@
 #!/bin/bash
 
-./stop-cluster-serving.sh &&
-./start-cluster-serving.sh
+./cluster-serving-stop || cluster-serving-stop &&
+./cluster-serving-start || cluster-serving-start

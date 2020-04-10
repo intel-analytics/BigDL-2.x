@@ -73,7 +73,7 @@ object ClusterServing {
      * Note that currently CHW is commonly used
      * and HWC is often used in Tensorflow models
      */
-    val chwFlag = if (modelType == "tensorflow") {
+    val chwFlag = if (modelType.startsWith("tensorflow")) {
       false
     } else {
       true
@@ -166,8 +166,10 @@ object ClusterServing {
            */
           batchDF.rdd.mapPartitions(pathBytes => {
             pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
+
+              acc.add(pathBytesBatch.size)
               pathBytesBatch.indices.toParArray.map(i => {
-                acc.add(1)
+
                 val path = pathBytesBatch(i).getAs[String]("uri")
                 val tensors = PreProcessing(pathBytesBatch(i).getAs[String]("image"))
 
@@ -190,7 +192,7 @@ object ClusterServing {
           val pathBytesChunk = batchDF.rdd.mapPartitions(pathBytes => {
             pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
               pathBytesBatch.indices.toParArray.map(i => {
-                acc.add(1)
+
                 val row = pathBytesBatch(i)
                 val path = row.getAs[String]("uri")
                 val tensors = PreProcessing(row.getAs[String]("image"), chwFlag)
@@ -208,7 +210,7 @@ object ClusterServing {
             }
             pathBytes.grouped(batchSize).flatMap(pathByteBatch => {
               val thisBatchSize = pathByteBatch.size
-
+              acc.add(thisBatchSize)
               (0 until thisBatchSize).toParArray
                 .foreach(i => t.select(1, i + 1).copy(pathByteBatch(i)._2))
 
@@ -222,19 +224,36 @@ object ClusterServing {
                * original Tensor, thus if reuse of Tensor is needed,
                * have to squeeze it back.
                */
-              val result = if (modelType == "openvino") {
-                val res = localModel.doPredict(x).toTensor.squeeze()
-                t.squeeze(1)
-                res
+              val result = localModel.doPredict(x)
+              if (result.isTensor) {
+                val res = if (modelType == "openvino") {
+                  t.squeeze(1)
+                  result.toTensor.squeeze()
+                } else {
+                  result.toTensor
+                }
+                (0 until thisBatchSize).toParArray.map(i => {
+                  val value = PostProcessing(res.select(1, i + 1), filter)
+                  Record(pathByteBatch(i)._1, value)
+                })
               } else {
-                localModel.doPredict(x).toTensor
+                // result is table
+                val separator = ","
+                // TODO: openvino Table support
+                val res = result.toTable
+                (0 until thisBatchSize).toParArray.map(i => {
+                  val value = StringBuilder.newBuilder
+                  value.append("[")
+                  res.keySet.foreach(key => {
+                    value.append(PostProcessing(
+                      res(key).asInstanceOf[Tensor[_]].toTensor.select(1, i + 1)))
+                    value.append(separator)
+                  })
+                  value.deleteCharAt(value.length - 1)
+                  value.append("]")
+                  Record(pathByteBatch(i)._1, value.toString())
+                })
               }
-
-              (0 until thisBatchSize).toParArray.map(i => {
-                val value = PostProcessing(result.select(1, i + 1), filter)
-                Record(pathByteBatch(i)._1, value)
-              })
-
             })
           })
         }
@@ -292,12 +311,21 @@ object ClusterServing {
          */
         val microBatchEnd = System.nanoTime()
 
-        AsyncUtils.writeServingSummay(model, acc.value,
-          microBatchStart, microBatchEnd, timeStamp, totalCnt, logger)
+        val microBatchLatency = (microBatchEnd - microBatchStart) / 1e9
+        val microBatchThroughPut = (acc.value / microBatchLatency).toFloat
+        logger.info(s"Inferece end. Input size ${acc.value}. " +
+          s"Latency $microBatchLatency, Throughput $microBatchThroughPut")
+
+        totalCnt += acc.value.toInt
+
+        val lastTimeStamp = timeStamp
+        timeStamp += microBatchLatency.toInt + 1
+
+        AsyncUtils.writeServingSummay(model,
+          lastTimeStamp, timeStamp, totalCnt, microBatchThroughPut)
           .onComplete{
-            case Success(value) =>
-              timeStamp += value._1
-              totalCnt += value._2
+            case Success(_) => None
+
             case Failure(exception) => logger.info(s"$exception, " +
               s"write summary fails, please check.")
           }

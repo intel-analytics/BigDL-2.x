@@ -79,6 +79,8 @@ object Predict {
         Utils.saveBytes(x._2, getOutPath(params.outputFolder, x._1, "jpg"), true)
       })
       logger.info(s"labeled images are saved to ${params.outputFolder}")
+      println("finished...")
+      sc.stop()
     }
   }
 

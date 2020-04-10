@@ -19,7 +19,7 @@
 import os
 import sys
 from shutil import copyfile, copytree, rmtree
-
+import fnmatch
 from setuptools import setup
 
 long_description = '''
@@ -49,14 +49,21 @@ TEMP_PATH = "zoo/share"
 analytics_zoo_home = os.path.abspath(__file__ + "/../../")
 SCRIPTS_TARGET = os.path.join(TEMP_PATH, "bin/cluster-serving")
 
+exclude_patterns = ["*__pycache__*", "*ipynb_checkpoints*", "*zouwu.use-case*"]
+
 
 def get_analytics_zoo_packages():
     analytics_zoo_python_home = analytics_zoo_home + "/pyzoo/zoo"
     analytics_zoo_packages = ['zoo.share']
     for dirpath, dirs, files in os.walk(analytics_zoo_python_home):
-        package = dirpath.split(analytics_zoo_home + "/pyzoo/")[1].replace('/', '.')
-        analytics_zoo_packages.append(package)
-        print(package)
+        package = dirpath.split(analytics_zoo_home +
+                                "/pyzoo/")[1].replace('/', '.')
+        if any(fnmatch.fnmatchcase(package, pat=pattern)
+                for pattern in exclude_patterns):
+            print("excluding", package)
+        else:
+            analytics_zoo_packages.append(package)
+            print("including", package)
     return analytics_zoo_packages
 
 
@@ -103,14 +110,19 @@ def init_env():
         if os.path.exists(TEMP_PATH):
             rmtree(TEMP_PATH)
         copytree(dist_source, TEMP_PATH)
-        copyfile(analytics_zoo_home + "/pyzoo/zoo/models/__init__.py", TEMP_PATH + "/__init__.py")
+        copyfile(
+            analytics_zoo_home +
+            "/pyzoo/zoo/models/__init__.py",
+            TEMP_PATH +
+            "/__init__.py")
     else:
         print("Do nothing for release installation")
 
 
 def setup_package():
     script_names = os.listdir(SCRIPTS_TARGET)
-    scripts = list(map(lambda script: os.path.join(SCRIPTS_TARGET, script), script_names))
+    scripts = list(map(lambda script: os.path.join(
+        SCRIPTS_TARGET, script), script_names))
 
     metadata = dict(
         name='analytics-zoo',
@@ -125,8 +137,8 @@ def setup_package():
         url='https://github.com/intel-analytics/analytics-zoo',
         packages=packages,
         install_requires=['pyspark==2.4.3', 'bigdl==0.10.0', 'conda-pack==0.3.1'],
-        extras_require={'ray': ['ray>=0.6.6', 'psutil', 'aiohttp', 'setproctitle'],
-                        'automl': ['tensorflow>=1.15.0,<2.0.0', 'ray==0.7.0', 'psutil', 'aiohttp',
+        extras_require={'ray': ['ray==0.7.2', 'psutil', 'aiohttp', 'setproctitle'],
+                        'automl': ['tensorflow>=1.15.0,<2.0.0', 'ray==0.7.2', 'psutil', 'aiohttp',
                                    'setproctitle', 'pandas', 'featuretools', 'scikit-learn',
                                    'requests', 'bayesian-optimization']},
         dependency_links=['https://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz'],

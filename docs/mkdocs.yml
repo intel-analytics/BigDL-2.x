@@ -12,12 +12,12 @@ extra:
 
 pages:
 - Overview: index.md 
+- Getting Started: gettingstarted.md
 - Releases: 
   - Download: release-download.md 
   - Documentation: release-docs.md
 - User Guide:
-  - Docker:
-    - Build & Use Docker Image: DockerUserGuide/index.md
+  - Docker User Guide: DockerUserGuide/index.md
   - Python:
     - Install: PythonUserGuide/install.md
     - Run: PythonUserGuide/run.md
@@ -43,6 +43,9 @@ pages:
   - PyTorch: ProgrammingGuide/pytorch.md
   - RayOnSpark: ProgrammingGuide/rayonspark.md
   - Cluster Serving: ClusterServingGuide/ProgrammingGuide.md
+  - AutoML:
+    - Overview: ProgrammingGuide/AutoML/overview.md
+    - Time Series Forecasting: ProgrammingGuide/AutoML/forecasting.md
   - Feature Engineering:
     - Working with Images: ProgrammingGuide/workingwithimages.md
     - Working with Texts: ProgrammingGuide/workingwithtexts.md
@@ -58,7 +61,7 @@ pages:
   - Visualization: ProgrammingGuide/visualization.md
   - Reference Use Cases: ProgrammingGuide/usercases-overview.md
   - Run on Google Cloud Dataproc: ProgrammingGuide/run-on-dataproc.md
-  - Ron on Google Colab: ProgrammingGuide/run-notebook-colab.md
+  - Run on Google Colab: ProgrammingGuide/run-notebook-colab.md
 - White Paper:
   - BigDL: wp-bigdl.md
 - API Guide:
@@ -79,6 +82,10 @@ pages:
     - Text Models: APIGuide/TFPark/text-models.md
     - BERT Classifier: APIGuide/TFPark/bert-classifier.md
   - Cluster Serving: ClusterServingGuide/APIGuide.md
+  - AutoML:
+    - TimeSequencePredictor: APIGuide/AutoML/time-sequence-predictor.md
+    - Recipe: APIGuide/AutoML/recipe.md
+    - TimeSequencePipeline: APIGuide/AutoML/time-sequence-pipeline.md
   - Feature Engineering:
     - FeatureSet: APIGuide/FeatureEngineering/featureset.md
     - Relation: APIGuide/FeatureEngineering/relation.md
@@ -132,6 +139,18 @@ pages:
 #    - Train, evaluate or predict a model: Keras2StyleAPIGuide/Optimization/training.md
 #    - Optimizers: Keras2StyleAPIGuide/Optimization/optimizer.md
 #    - Losses: Keras2StyleAPIGuide/Optimization/loss.md
+- Project Zouwu:
+  - Overview: Zouwu/overview.md
+  - Reference Use Cases:
+    - Network Traffic: Zouwu/UseCase/network-traffic.md
+  - Tutorial: Zouwu/tutorial.md 
+  - API:
+    - Built-in Models: 
+       - LSTMForecaster: Zouwu/API/LSTMForecaster.md
+       - MTNetForecaster: Zouwu/API/MTNetForecaster.md
+    - AutoTS: 
+       - AutoTSTrainer: Zouwu/API/AutoTSTrainer.md 
+       - TSPipeline: Zouwu/API/TSPipeline.md
 - Powered by: powered-by.md
 - Presentations: presentations.md
 - FAQ and Known Issues: known-issues.md
