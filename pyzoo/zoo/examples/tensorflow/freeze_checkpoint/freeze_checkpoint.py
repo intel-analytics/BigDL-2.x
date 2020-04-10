@@ -25,7 +25,9 @@ def ckpt_to_frozen_graph(options):
         graph_def = tf.GraphDef()
         graph_def.ParseFromString(f.read())
 
-        var_list_name = [node.name + ":0" for node in graph_def.node if node.op in ["Variable", "VariableV2", "VarHandleOp"]]
+        var_list_name = [node.name + ":0"
+                         for node in graph_def.node
+                         if node.op in ["Variable", "VariableV2", "VarHandleOp"]]
 
     # now build the graph in the memory and visualize it
     with tf.Session() as sess:
