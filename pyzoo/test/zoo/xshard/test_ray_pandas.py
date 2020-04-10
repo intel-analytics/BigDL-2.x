@@ -19,7 +19,7 @@ import os.path
 import numpy as np
 
 import pytest
-from test.zoo.xshard.conftest import ray_ctx
+from test.zoo.xshard.conftest import get_ray_ctx
 
 from zoo import init_spark_on_local
 from zoo.ray.util.raycontext import RayContext
@@ -27,13 +27,12 @@ from test.zoo.pipeline.utils.test_utils import ZooTestCase
 import zoo.xshard.pandas
 import ray
 
-np.random.seed(1337)  # for reproducibility
-
 
 class TestDataShards(ZooTestCase):
 
     def setup_method(self, method):
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
+        self.ray_ctx = get_ray_ctx()
 
     def teardown_method(self, method):
         """ teardown any state that was previously setup with a setup_method
@@ -43,7 +42,7 @@ class TestDataShards(ZooTestCase):
 
     # def test_read_local_csv(self):
     #     file_path = os.path.join(self.resource_path, "xshard")
-    #     data_shard = zoo.xshard.pandas.read_csv(file_path, ray_ctx)
+    #     data_shard = zoo.xshard.pandas.read_csv(file_path, self.ray_ctx)
     #     data = data_shard.collect()
     #     assert len(data) == 2, "number of shard should be 2"
     #     df = data[0]
