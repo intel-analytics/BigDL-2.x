@@ -3,22 +3,20 @@
 This document provides quick reference information regarding installing the Analytics Zoo, running the applications, and developing your own applications using the Analytics Zoo. 
 
 ## 1. Try Analytics Zoo
-Users can try Analytics Zoo with Docker and Google Colab environments without installing it in your local environment.
+Users can try Analytics Zoo with Docker and Google Colab environments without installing it in your local environment. For more information: 
 
 - Check the [Docker User Guide](https://analytics-zoo.github.io/master/#DockerUserGuide/)
-- Check the [Google Colab guide page](https://analytics-zoo.github.io/master/#ProgrammingGuide/run-notebook-colab/)
+- Check the [Google Colab Guide page](https://analytics-zoo.github.io/master/#ProgrammingGuide/run-notebook-colab/)
 
 ## 2. Install Analytics Zoo
-Analytics Zoo releases for installation are available for Python and Scala users. 
+Analytics Zoo releases for installation are available for Python and Scala users. For more information: 
 - Check the [Python User Guide](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) 
-- Check the [Scala User Guide](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/) for more information. 
+- Check the [Scala User Guide](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/) 
 
 ## 3. Run Analytics Zoo Applications
 Analytics Zoo applications can run on remote or cloud resources, such as YARN, K8s clusters, Databricks, or Google Dataproc. 
 
 - 3.1 Run on YARN
-
-Users can run Analytics Zoo applications on a YARN cluster. 
 
 Check the [instructions](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-on-yarn-after-pip-install) for running on YARN with pip installation 
 
@@ -34,8 +32,6 @@ Check the [instructions](https://github.com/intel-analytics/analytics-zoo/blob/m
 
 - 3.4 Run on Google Dataproc
 
-Users can also run Analytics Zoo applications with Google Dataproc: 
-
 Check the [instructions](https://analytics-zoo.github.io/master/#ProgrammingGuide/run-on-dataproc/) for how to provision the Google Dataproc environment and runn Analytics Zoo applications 
 
 ## 4. Develop Analytics Zoo Applications
@@ -43,23 +39,23 @@ Analytics Zoo provides rich APIs, built-in models and solutions for various need
 
 - 4.1 TensorFlow
 
-Analytics Zoo provides [TFPark APIs](https://analytics-zoo.github.io/master/#ProgrammingGuide/TFPark/tensorflow/) for TensorFlow model and AI pipeline development. 
+Check the [TFPark APIs](https://analytics-zoo.github.io/master/#ProgrammingGuide/TFPark/tensorflow/) for how to build and evaluate TensorFlow models, and develop training & inference pipeline with the TFPark APIs. 
 
 - 4.2 PyTorch
 
 Pytorch users can user either: 
 
-[NNFrame APIs](https://analytics-zoo.github.io/master/#APIGuide/PipelineAPI/nnframes/) to build and train PyTorch models along with Spark Dataframes and Spark ML Pipeline, or 
+* [NNFrame APIs](https://analytics-zoo.github.io/master/#APIGuide/PipelineAPI/nnframes/) to build and train PyTorch models along with Spark Dataframes and Spark ML Pipeline, or 
 
-[Estimator APIs](https://analytics-zoo.github.io/master/#APIGuide/PipelineAPI/estimator/#estimator) to train and evaluate PyTorch models
+* [Estimator APIs](https://analytics-zoo.github.io/master/#APIGuide/PipelineAPI/estimator/#estimator) to train and evaluate PyTorch models
 
 - 4.3 BigDL
 
 BigDL users can use either: 
 
-[NNFrame APIs](https://analytics-zoo.github.io/master/#APIGuide/PipelineAPI/nnframes/) to build deep learning models along with Spark Dataframes and Spark ML Pipeline, or 
+* [NNFrame APIs](https://analytics-zoo.github.io/master/#APIGuide/PipelineAPI/nnframes/) to build deep learning models along with Spark Dataframes and Spark ML Pipeline, or 
 
-High level [Keras-style APIs](https://analytics-zoo.github.io/master/#KerasStyleAPIGuide/Optimization/training/) to build deep learning training pipeline
+* High level [Keras-style APIs](https://analytics-zoo.github.io/master/#KerasStyleAPIGuide/Optimization/training/) to build deep learning training pipeline
 
 - 4.4 Cluster Serving
 
