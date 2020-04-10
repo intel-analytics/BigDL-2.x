@@ -9,7 +9,7 @@ Users can try Analytics Zoo with Docker and Google Colab environments without in
 - Check the [Google Colab Guide page](https://analytics-zoo.github.io/master/#ProgrammingGuide/run-notebook-colab/)
 
 ## 2. Install Analytics Zoo
-Analytics Zoo releases for installation are available for Python and Scala users. For more information: 
+Analytics Zoo installation methods are available for Python and Scala users. For more information: 
 - Check the [Python User Guide](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) 
 - Check the [Scala User Guide](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/) 
 
@@ -18,8 +18,8 @@ Analytics Zoo applications can run on remote or cloud resources, such as YARN, K
 
 #### 3.1 Run on YARN
 
-- Check the [instructions](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-on-yarn-after-pip-install) for running on YARN with pip installation 
-- Check the [instructions](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-with-conda-environment-on-yarn) for running on YARN with conda installation
+- Check the [instructions](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-on-yarn-after-pip-install) for how to run Analytics Zoo applications on YARN with pip installation 
+- Check the [instructions](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-with-conda-environment-on-yarn) for how to run Analytics Zoo applications on YARN with conda installation
  
 #### 3.2 Run on K8s
 
@@ -52,7 +52,7 @@ Pytorch users can user either:
 BigDL users can use either: 
 
 - [NNFrame APIs](https://analytics-zoo.github.io/master/#APIGuide/PipelineAPI/nnframes/) to build deep learning models along with Spark Dataframes and Spark ML Pipeline, or 
-- High level [Keras-style APIs](https://analytics-zoo.github.io/master/#KerasStyleAPIGuide/Optimization/training/) to build deep learning training pipeline
+- [Keras-style APIs](https://analytics-zoo.github.io/master/#KerasStyleAPIGuide/Optimization/training/) to build deep learning pipeline
 
 #### 4.4 Cluster Serving
 
