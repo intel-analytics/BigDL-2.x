@@ -5,7 +5,7 @@ Project Zouwu provides a reference solution that is designed and optimized for c
 * _Model_ - built-in deep learning models for time series analysis (such as LSTM and [MTNet](https://arxiv.org/abs/1809.02105))
 * _AutoTS_ - AutoML support for building end-to-end time series analysis pipelines (including automatic feature generation, model selection and hyperparameter tuning).
 
-For more details about how to use, tutorials and API docs, please refer to [Zouwu Documents] [Zouwu Tutorial](https://analytics-zoo.github.io/master/#Zouwu/overview) 
+For more details about how to use, tutorials and API docs, please refer to [Zouwu Documents](https://analytics-zoo.github.io/master/#Zouwu/overview) 
 
 ---
 ### Reference Use Case
