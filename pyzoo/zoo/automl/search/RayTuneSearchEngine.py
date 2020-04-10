@@ -90,7 +90,7 @@ class RayTuneSearchEngine(SearchEngine):
             raise ValueError("metric can only be \"mse\" or \"r2\"")
 
         if search_algorithm == 'BayesOpt':
-            # ray version 0.7.0
+            # ray version 0.7.2
             self.search_algorithm = BayesOptSearch(
                 self.search_space,
                 reward_attr="reward_metric",
