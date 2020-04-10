@@ -60,4 +60,4 @@ rm -f train/*.tar
 
 mkdir sequence
 echo "Generating sequence files"
-$ANALYTICS_ZOO_HOME/bin/spark-shell-with-zoo.sh --class com.intel.analytics.bigdl.models.utils.ImageNetSeqFileGenerator -f . -o ./sequence/ -p $1
+bash $ANALYTICS_ZOO_HOME/bin/spark-shell-with-zoo.sh --driver-memory 20g --class com.intel.analytics.bigdl.models.utils.ImageNetSeqFileGenerator -f . -o ./sequence/ -p $1
