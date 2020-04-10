@@ -59,8 +59,7 @@ if __name__ == "__main__":
 
         if options.output_tensors is None:
             outputs_keys = signature.outputs.keys()
-            output_names = [signature.outputs[
-                                key].name for key in outputs_keys]
+            output_names = [signature.outputs[key].name for key in outputs_keys]
             print("Found outputs in signature {}".format(options.signature))
             print("outputs are \n{}".format(signature.inputs))
         else:
