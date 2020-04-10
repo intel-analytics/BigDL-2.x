@@ -8,7 +8,7 @@ See [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/)
 Follow steps 1 to 4 [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/#steps-to-run-rayonspark) to prepare environment.
 
 You also need to install **Gym** in your conda environment via pip:
-```shell script
+```bash
 pip install gym gym[atari]
 ```
 
