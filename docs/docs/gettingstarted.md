@@ -12,10 +12,10 @@ Users can easily try Analytics Zoo with Docker or Google Colab without installin
 Analytics Zoo installation methods are available for Python and Scala users. 
 
 #### 2.1 Python
-- Check the [Python User Guide](PythonUserGuide/install.md) 
+- Check the [Python User Guide](PythonUserGuide/install.md) for how to install Analytics Zoo in Python program environment.
 
 #### 2.2 Scala
-- Check the [Scala User Guide](ScalaUserGuide/install.md) 
+- Check the [Scala User Guide](ScalaUserGuide/install.md) for how to install Analytics Zoo in Scala program environment.
 
 ## 3. Run Analytics Zoo Applications
 Analytics Zoo applications can run on remote or cloud resources, such as YARN, K8s clusters, Databricks, or Google Dataproc. 
