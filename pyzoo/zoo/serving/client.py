@@ -22,6 +22,10 @@ import datetime
 import time
 import numpy as np
 from bigdl.util.common import JTensor
+from pyspark.serializers import CloudPickleSerializer
+import json
+from json import JSONEncoder
+from numproto import ndarray_to_proto
 
 
 class API:
@@ -103,20 +107,31 @@ class InputQueue(API):
         # force resize here to avoid input image shape inconsistent
         # if the shape is consistent, it would not affect the data
         img = cv2.resize(img, (self.h, self.w))
-        data = cv2.imencode(".jpg", img)[1]
+        # print(img.shape)
 
-        img_encoded = self.base64_encode_image(data)
+        start = time.clock()
+        data = cv2.imencode(".jpg", img)[1]
+        # da = JTensor.from_ndarray(img)
+        # data = CloudPickleSerializer.dumps(CloudPickleSerializer, da)
+        # img_encoded = json.dumps(img.tolist())
+        img_encoded = ndarray_to_proto(img)
+        # print(img_encoded)
+        # print(encodedData)
+
+        # img_encoded = self.base64_encode_image(serialized)
 
         d = {"uri": uri, "image": img_encoded}
-
+        mid = time.clock()
+        print("encode time: %.2gs" % (mid-start))
         self.__enqueue_data("image_stream", d)
+        end = time.clock()
+        print("%.2gs" % (end-start))
 
     def enqueue_tensor(self, uri, data):
         if isinstance(data, np.ndarray):
             data = JTensor.from_ndarray(data)
         if not isinstance(data, JTensor):
             raise Exception("Your input is invalid, only JTensor and ndarray are allowed.")
-        from pyspark.serializers import CloudPickleSerializer
         bys = CloudPickleSerializer.dumps(CloudPickleSerializer, data)
         tensor_encoded = self.base64_encode_image(bys)
         d = {"uri": uri, "tensor": tensor_encoded}
@@ -143,6 +158,13 @@ class InputQueue(API):
     def base64_encode_image(img):
         # base64 encode the input NumPy array
         return base64.b64encode(img).decode("utf-8")
+
+
+class NumpyArrayEncoder(JSONEncoder):
+     def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return JSONEncoder.default(self, obj)
 
 
 class OutputQueue(API):

@@ -41,11 +41,11 @@ def run(path):
     #     img = cv2.resize(img, (224, 224))
     #     input_api.enqueue_image(p, img)
 
-    for i in range(0, 1000):
-        sample = np.array([1, 1193])
-        print(sample)
-        jtensor = JTensor.from_ndarray(sample)
-        input_api.enqueue_tensor("test", jtensor)
+    # for i in range(0, 1000):
+    sample = np.array([1, 1193])
+    print(sample)
+    jtensor = JTensor.from_ndarray(sample)
+    input_api.enqueue_tensor("test", jtensor)
 
     time.sleep(10)
 
