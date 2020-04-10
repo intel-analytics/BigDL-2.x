@@ -15,8 +15,6 @@
 #
 import os
 
-import pandas as pd
-import pyarrow as pa
 import ray
 from pyspark.context import SparkContext
 
@@ -71,6 +69,7 @@ def read_file_ray(context, file_path, file_type):
             prefix = file_url_splits[0]
             if prefix == "hdfs":
                 server_address = file_url_splits[1].split('/')[0]
+                import pyarrow as pa
                 fs = pa.hdfs.connect()
                 files = fs.ls(file_path)
                 # only get json/csv files
@@ -135,8 +134,10 @@ class RayPandasShard(object):
 
     def read_file_partitions(self, paths, file_type):
         df_list = []
+        import pandas as pd
         prefix = paths[0].split("://")[0]
         if prefix == "hdfs":
+            import pyarrow as pa
             fs = pa.hdfs.connect()
             print("Start loading files")
             for path in paths:
@@ -175,7 +176,7 @@ class RayPandasShard(object):
                 elif file_type == "csv":
                     df = pd.read_csv(path)
                 else:
-                    raise Exception("Unsuppo  rted file type")
+                    raise Exception("Unsupported file type")
                 df_list.append(df)
         self.data = pd.concat(df_list)
         return 0

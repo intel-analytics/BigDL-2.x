@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-import ray
-
 from zoo.xshard.utils import *
 
 
@@ -45,7 +43,6 @@ class RayDataShards(DataShards):
     """
     A collection of data which can be pre-processed parallelly on Ray
     """
-
     def __init__(self, partitions):
         self.partitions = partitions
         self.shard_list = flatten([partition.shard_list for partition in partitions])
@@ -58,6 +55,7 @@ class RayDataShards(DataShards):
         :param args: rest arguments for the pre-processing function
         :return: this DataShard
         """
+        import ray
         done_ids, undone_ids = ray.wait([shard.apply.remote(func, *args)
                                          for shard in self.shard_list],
                                         num_returns=len(self.shard_list))
@@ -69,6 +67,7 @@ class RayDataShards(DataShards):
         Returns a list that contains all of the elements in this DataShards
         :return: list of elements
         """
+        import ray
         return ray.get([shard.get_data.remote() for shard in self.shard_list])
 
     def repartition(self, num_partitions):
