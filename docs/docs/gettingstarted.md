@@ -42,7 +42,7 @@ Analytics Zoo provides comprehensive support for for building end-to-end, integr
 
 #### 4.1 TensorFlow
 
-- Check the [TFPark APIs](https://analytics-zoo.github.io/master/#ProgrammingGuide/TFPark/tensorflow/) for how to build and evaluate TensorFlow models, and develop training & inference pipeline with the TFPark APIs. 
+- TensorFlow users can leverage [TFPark APIs](ProgrammingGuide/TFPark/tensorflow.md) for distributed TensorFlow on Spark. 
 
 #### 4.2 PyTorch
 
