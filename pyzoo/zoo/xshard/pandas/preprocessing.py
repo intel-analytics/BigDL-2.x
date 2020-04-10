@@ -28,9 +28,9 @@ from zoo.xshard.utils import *
 def read_csv(file_path, context):
     """
     Read csv files to DataShards
-    :param file_path: could be a csv file, multiple csv file paths seperated with comma,
+    :param file_path: could be a csv file, multiple csv file paths separated by comma,
      a directory containing csv files.
-     Supported file systems are local file system,` hdfs`, and `s3`.
+     Supported file systems are local file system, hdfs, and s3.
     :param context: SparkContext or RayContext
     :return: DataShards
     """
@@ -45,9 +45,9 @@ def read_csv(file_path, context):
 def read_json(file_path, context):
     """
     Read json files to DataShards
-    :param file_path: could be a json file, multiple json file paths seperated with comma,
+    :param file_path: could be a json file, multiple json file paths separated by comma,
      a directory containing json files.
-     Supported file systems are local file system,` hdfs`, and `s3`.
+     Supported file systems are local file system, hdfs, and s3.
     :param context: SparkContext or RayContext
     :return: DataShards
     """

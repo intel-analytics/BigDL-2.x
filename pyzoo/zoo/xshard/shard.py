@@ -29,7 +29,7 @@ class DataShards(object):
         Appy function on each element in the DataShards
         :param func: pre-processing function
         :param args: arguments for the pre-processing function
-        :return: this DataShard
+        :return: DataShard
         """
         pass
 
