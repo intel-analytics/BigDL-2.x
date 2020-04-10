@@ -22,8 +22,8 @@ Analytics Zoo applications can run on remote or cloud resources, such as YARN, K
 
 #### 3.1 Run on YARN
 
-- Check the [instructions](PythonUserGuide/run.md/#run-on-yarn-after-pip-install) for how to run Analytics Zoo applications on YARN with pip installation. 
-- Check the [instructions](PythonUserGuide/run.md/#run-with-conda-environment-on-yarn) for how to run Analytics Zoo applications on YARN with conda installation.
+- Python users can follow these [instructions](PythonUserGuide/run.md) to run Analytics Zoo applications on YARN.
+- Scala users can follow these [instructions](ScalaUserGuide/run.md) to run Analytics Zoo applications on YARN.
  
 #### 3.2 Run on K8s
 
@@ -42,14 +42,14 @@ Analytics Zoo provides comprehensive support for for building end-to-end, integr
 
 #### 4.1 TensorFlow
 
-- TensorFlow users can leverage [TFPark APIs](ProgrammingGuide/TFPark/tensorflow.md) for distributed TensorFlow on Spark. 
+- TensorFlow users can leverage [TFPark APIs](ProgrammingGuide/TFPark/tensorflow.md) for running distributed TensorFlow on Spark. 
 
 #### 4.2 PyTorch
 
 Pytorch users can user either: 
 
 - [NNFrame APIs](APIGuide/PipelineAPI/nnframes.md) to run Spark ML Pipeline and Dataframe with PyTorch support, or 
-- [Estimator APIs](APIGuide/PipelineAPI/estimator.md/#estimator) to train and evaluate distributed PyTorch on Spark.
+- [Estimator APIs](APIGuide/PipelineAPI/estimator.md) to train and evaluate distributed PyTorch on Spark.
 
 #### 4.3 BigDL
 
@@ -60,11 +60,7 @@ BigDL users can use either:
 
 #### 4.4 Cluster Serving
 
-Analytics Zoo Cluster Serving is a real-time distributed serving solution for deep learning (including TF, PyTorch, Caffe, BigDL and OpenVINO). Cluster Serving has been available since the Analytics Zoo 0.7.0 release. 
-
-Follow the [Cluster Serving Program Guide](ClusterServingGuide/ProgrammingGuide.md) to understand the Cluster Serving architecture, workflow, how to use and customize Cluster Serving to your needs.  The [Cluster Serving API Guide](ClusterServingGuide/APIGuide.md) explains the APIs in more detail. 
+Analytics Zoo Cluster Serving is a real-time distributed serving solution for deep learning (including TF, PyTorch, Caffe, BigDL and OpenVINO). Follow the [Cluster Serving Program Guide](ClusterServingGuide/ProgrammingGuide.md) to run the Cluster Serving; the [Cluster Serving API Guide](ClusterServingGuide/APIGuide.md) explains the APIs in more detail. 
 
 #### 4.5 AutoML
-Analytics Zoo provides scalable AutoML support for time series prediction (including automatic feature generation, model selection and hyper-parameter tuning). AutoML framework has been supported in Analytics Zoo since 0.8.0 release. Check the [AutoML Overview](ProgrammingGuide/AutoML/overview.md) for a high level description of the AutoML framework.
-
-Analytics Zoo is also providing a reference use case with AutoML framework - Time Series Forecasting. Please check out the details in the [Program Guide](ProgrammingGuide/AutoML/forecasting.md) and [API Guide](APIGuide/AutoML/time-sequence-predictor.md). 
+Analytics Zoo provides scalable AutoML support for time series prediction (including automatic feature generation, model selection and hyper-parameter tuning). Check the [AutoML Overview](ProgrammingGuide/AutoML/overview.md) for a high level description of the AutoML framework. Please check out the details in the [Program Guide](ProgrammingGuide/AutoML/forecasting.md) and [API Guide](APIGuide/AutoML/time-sequence-predictor.md). 
