@@ -31,7 +31,7 @@ python -m pytest -v --doctest-modules ../zoo \
     --ignore=../zoo/ray/ \
     --ignore=../zoo/automl/ \
     --ignore=../zoo/zouwu/ \
-    --ignore=../test/zoo/xshard/
+    --ignore=../zoo/xshard/
 exit_status_1=$?
 if [ $exit_status_1 -ne 0 ];
 then
