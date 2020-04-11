@@ -13,8 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import pytest
 import os.path
+
+import pytest
 
 sc = None
 ray_ctx = None
@@ -29,13 +30,12 @@ def xshard_fixture():
     access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
     secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
     ray_ctx = RayContext(sc=sc,
-                              object_store_memory="1g",
-                              env={"AWS_ACCESS_KEY_ID": access_key_id,
+                         object_store_memory="1g",
+                         env={"AWS_ACCESS_KEY_ID": access_key_id,
                                    "AWS_SECRET_ACCESS_KEY": secret_access_key}
-                              )
+                        )
     ray_ctx = RayContext(sc=sc, object_store_memory="1g")
     ray_ctx.init()
-    # resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
     yield
     ray_ctx.stop()
     sc.stop()

@@ -13,23 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from unittest import TestCase
 
 import os.path
-import numpy as np
 
 import pytest
-from test.zoo.xshard.conftest import get_ray_ctx
-
-from zoo import init_spark_on_local
-from zoo.ray.util.raycontext import RayContext
-from test.zoo.pipeline.utils.test_utils import ZooTestCase
-import zoo.xshard.pandas
 import ray
+
+import zoo.xshard.pandas
+from test.zoo.pipeline.utils.test_utils import ZooTestCase
+from test.zoo.xshard.conftest import get_ray_ctx
 
 
 class TestDataShards(ZooTestCase):
-
     def setup_method(self, method):
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
         self.ray_ctx = get_ray_ctx()
@@ -66,7 +61,6 @@ class TestDataShards(ZooTestCase):
             df = data[0]
             assert "value" in df.columns, "value is not in columns"
 
-
     def test_repartition(self):
         file_path = os.path.join(self.resource_path, "xshard")
         data_shard = zoo.xshard.pandas.read_json(file_path, self.ray_ctx)
@@ -87,6 +81,7 @@ class TestDataShards(ZooTestCase):
         def negative(df, column_name):
             df[column_name] = df[column_name] * (-1)
             return df
+
         data_shard.apply(negative, "value")
         data2 = data_shard.collect()
         assert data2[0]["value"].values[0] < 0, "value should be negative"
