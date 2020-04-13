@@ -264,4 +264,3 @@ class RayPandasShard(object):
 
     def get_data(self):
         return self.data
-
