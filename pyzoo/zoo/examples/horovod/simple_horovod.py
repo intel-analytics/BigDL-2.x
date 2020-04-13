@@ -1,10 +1,8 @@
 import argparse
-import ray
 from zoo import init_spark_on_yarn
+from zoo.horovod.horovod_ray_runner import HorovodRayRunner
 from zoo.ray.util.raycontext import RayContext
-from horovod.run.gloo_run import RendezvousServer, _allocate
-from horovod.run import _get_driver_ip
-from horovod.run.common.util.config_parser import set_env_from_args
+
 
 def run_horovod():
     import tensorflow as tf
@@ -96,71 +94,8 @@ if __name__ == "__main__":
             object_store_memory=args.object_store_memory)
     ray_ctx.init()
 
-
-    @ray.remote(num_cpus=args.executor_cores)
-    class HorovodWorker():
-        def hostname(self):
-            import socket
-            return socket.gethostname()
-
-        # todo maybe create another process and
-        # set the env and run horovod in that process
-        # without polluting the process's environment
-        def set_env(self, envs):
-            import os
-            os.environ.update(envs)
-
-        def run(self, func):
-            return func()
-
-    actors = [HorovodWorker.remote() for i in range(0, args.slave_num)]
-    hosts = ray.get([actor.hostname.remote() for actor in actors])
-
-    host_to_size = {}
-    host_and_rank_to_actor_idx = {}
-    for i, host in enumerate(hosts):
-        if host not in host_to_size:
-            host_to_size[host] = 0
-        else:
-            host_to_size[host] = host_to_size[host] + 1
-        host_and_rank_to_actor_idx[(host, host_to_size[host])] = i
-
-    hosts_spec = ["{}:{}".format(key, host_to_size[key]) for key in host_to_size]
-    host_alloc_plan = _allocate(",".join(hosts_spec), args.slave_num)
-    global_rendezv = RendezvousServer(True)
-    global_rendezv_port = global_rendezv.start_server(host_alloc_plan)
-
-    # todo args.iface should be inferenced automatically
-    # instead of letting user pass in
-    driver_ip = _get_driver_ip([args.iface])
-    envs = {
-        "HOROVOD_GLOO_RENDEZVOUS_ADDR": driver_ip,
-        "HOROVOD_GLOO_RENDEZVOUS_PORT": global_rendezv_port,
-        "HOROVOD_CONTROLLER": "gloo",
-        "HOROVOD_CPU_OPERATIONS": "gloo",
-        "HOROVOD_GLOO_IFACE": args.iface,
-        "PYTHONUNBUFFERED": '1',
-    }
-
-    set_env_from_args(envs, args)
-
-    ids = []
-    for alloc_info in host_alloc_plan:
-        local_envs = envs.copy()
-        local_envs["HOROVOD_RANK"] = alloc_info.rank
-        local_envs["HOROVOD_SIZE"] = alloc_info.size
-        local_envs["HOROVOD_LOCAL_RANK"] = alloc_info.local_rank
-        local_envs["HOROVOD_LOCAL_SIZE"] = alloc_info.local_size
-        local_envs["HOROVOD_CROSS_RANK"] = alloc_info.cross_rank
-        local_envs["HOROVOD_CROSS_SIZE"] = alloc_info.cross_size
-
-        key = (alloc_info.host_name, alloc_info.local_rank)
-        actor = actors[host_and_rank_to_actor_idx[key]]
-        ids.append(actor.set_env.remote(local_envs))
-
-    ray.wait(ids)
-
-    results = ray.get([actor.run.remote(run_horovod) for actor in actors])
+    runner = HorovodRayRunner(ray_ctx)
+    runner.run(func=run_horovod)
 
 
 
