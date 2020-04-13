@@ -22,7 +22,7 @@ from mxnet import gluon
 from mxnet.test_utils import get_mnist_iterator
 from zoo import init_spark_on_local, init_spark_on_yarn
 from zoo.ray.util.raycontext import RayContext
-from zoo.ray.mxnet import MXNetTrainer
+from zoo.ray.mxnet import MXNetTrainer, create_trainer_config
 
 
 def get_data_iters(config, kv):
@@ -70,20 +70,6 @@ def get_metrics(config):
     return mx.metric.Accuracy()
 
 
-def create_config(args):
-    config = {
-        "num_workers": args.num_workers,
-        "batch_size": args.batch_size,
-        "optimizer": "sgd",
-        "optimizer_params": {'learning_rate': args.lr},
-        "log_interval": args.log_interval,
-        "seed": 42
-    }
-    if args.num_servers:
-        config["num_servers"] = args.num_servers
-    return config
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Train a LeNet model for handwritten digit recognition.')
@@ -122,8 +108,12 @@ if __name__ == '__main__':
     ray_ctx = RayContext(sc=sc)
     ray_ctx.init()
 
-    config = create_config(opt)
-    trainer = MXNetTrainer(config, get_data_iters, get_model, get_loss, get_metrics)
+    config = create_trainer_config(opt.batch_size, optimizer="sgd",
+                                   optimizer_params={'learning_rate': opt.lr},
+                                   log_interval=opt.log_interval, seed=42)
+    trainer = MXNetTrainer(config, data_creator=get_data_iters, model_creator=get_model,
+                           loss_creator=get_loss, metrics_creator=get_metrics,
+                           num_workers=opt.num_workers, num_servers=opt.num_servers)
     trainer.train(nb_epoch=opt.epochs)
     ray_ctx.stop()
     sc.stop()
