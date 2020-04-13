@@ -96,13 +96,3 @@ if __name__ == "__main__":
 
     runner = HorovodRayRunner(ray_ctx)
     runner.run(func=run_horovod)
-
-
-
-
-
-
-
-
-
-
