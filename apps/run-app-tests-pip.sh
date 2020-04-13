@@ -426,179 +426,179 @@ fi
 
 
 if [ $RUN_PART3 = 1 ]; then
-# echo "#10 start app test for using_variational_autoencoder_and_deep_feature_loss_to_generate_faces"
-# #timer
-# start=$(date "+%s")
-# ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces
-#  sed -i "s/data_files\[\:100000\]/data_files\[\:500\]/g; s/batch_size=batch_size/batch_size=100/g" ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
-# FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/analytics-zoo_vgg-16_imagenet_0.1.0.model"
-# if [ -f "$FILENAME" ]
-# then
-#    echo "$FILENAME already exists."
-# else
-#    echo "Downloading VGG model"
-#    wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ $FTP_URI/analytics-zoo-data/apps/variational-autoencoder/analytics-zoo_vgg-16_imagenet_0.1.0.model --no-host-directories
-#    echo "Finished"
-# fi
-#  FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip"
-# if [ -f "$FILENAME" ]
-# then
-#    echo "$FILENAME already exists."
-# else
-#    echo "Downloading celeba images"
-#    wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ $FTP_URI/analytics-zoo-data/apps/variational-autoencoder/img_align_celeba.zip --no-host-directories
-#    unzip -d ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip
-#    echo "Finished"
-# fi
-#  export SPARK_DRIVER_MEMORY=200g
-# python ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
-#  exit_status=$?
-# if [ $exit_status -ne 0 ];
-# then
-#     clear_up
-#     echo "using_variational_autoencoder_and_deep_feature_loss_to_generate_faces failed"
-#     exit $exit_status
-# fi
-# unset SPARK_DRIVER_MEMORY
-# now=$(date "+%s")
-# time10=$((now-start))
-# echo "#10 using_variational_autoencoder_and_deep_feature_loss_to_generate_faces time used:$time10 seconds"
-# 
-# echo "#11 start app test for recommendation-ncf"
-# start=$(date "+%s")
-# 
-# # Conversion to py file and data preparation
-# ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/ncf-explicit-feedback
-# sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g; s%sc.parallelize(movielens_data)%sc.parallelize(movielens_data[0:50000:])%g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/ncf-explicit-feedback.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/tmp.py
-# 
-# # Run the example
-# export SPARK_DRIVER_MEMORY=12g
-# python ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/tmp.py
-# 
-# exit_status=$?
-# if [ $exit_status -ne 0 ];
-# then
-#     clear_up
-#     echo "recommendation-ncf failed"
-#     exit $exit_status
-# fi
-# 
-# unset SPARK_DRIVER_MEMORY
-# now=$(date "+%s")
-# time11=$((now-start))
-# echo "#11 recommendation-ncf time used:$time11 seconds"
-# 
-# echo "#12 start app test for recommendation-wide-n-deep"
-# start=$(date "+%s")
-# 
-# # Conversion to py file and data preparation
-# ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep
-# sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g; s/batch_size = 8000/batch_size = 8008/g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
-# 
-# # Run the example
-# export SPARK_DRIVER_MEMORY=22g
-# python ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
-# 
-# exit_status=$?
-# if [ $exit_status -ne 0 ];
-# then
-#     clear_up
-#     echo "recommendation-wide-n-deep failed"
-#     exit $exit_status
-# fi
-# unset SPARK_DRIVER_MEMORY
-# now=$(date "+%s")
-# time12=$((now-start))
-# echo "#12 recommendation-wide-n-deep time used:$time12 seconds"
-# 
-# echo "#13 start app test for sentiment-analysis"
-# start=$(date "+%s")
-# 
-# # Conversion to py file and data preparation
-# ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment
-# sed "s/batch_size = 64/batch_size = 84/g" ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py >${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/tmp_test.py
-# FILENAME="/tmp/.bigdl/dataset/glove.6B.zip"
-# if [ -f "$FILENAME" ]
-# then
-#    echo "$FILENAME already exists."
-# else
-#    echo "Downloading glove6B"
-#    wget -P /tmp/.bigdl/dataset/ $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip
-#    echo "Finished"
-# fi
-# 
-# # Run the example
-# export SPARK_DRIVER_MEMORY=12g
-# python ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/tmp_test.py
-# 
-# exit_status=$?
-# if [ $exit_status -ne 0 ];
-# then
-#     clear_up
-#     echo "sentiment-analysis failed"
-#     exit $exit_status
-# fi
-# unset SPARK_DRIVER_MEMORY
-# now=$(date "+%s")
-# time13=$((now-start))
-# echo "#13 sentiment-analysis time used:$time13 seconds"
-# 
-# echo "#14 start app test for anomaly-detection-hd"
-# #timer
-# start=$(date "+%s")
-# chmod +x $ANALYTICS_ZOO_HOME/bin/data/HiCS/get_HiCS.sh
-# $ANALYTICS_ZOO_HOME/bin/data/HiCS/get_HiCS.sh
-# ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo
-# sed -i '/get_ipython()/d' ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py
-# sed -i '127,273d' ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py
-# python ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py
-# exit_status=$?
-# if [ $exit_status -ne 0 ];
-# then
-#     clear_up
-#     echo "anomaly-detection-hd failed"
-#     exit $exit_status
-# fi
-# now=$(date "+%s")
-# time14=$((now-start))
-# echo "#14 anomaly-detection-hd time used:$time14 seconds"
-# 
-# echo "#15 start app test for pytorch face-generation"
-# #timer
-# start=$(date "+%s")
-# ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generation
-# sed -i '/get_ipython()/d' ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generation.py
-# sed -i '/plt./d' ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generation.py
-# python ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generation.py
-# exit_status=$?
-# if [ $exit_status -ne 0 ];
-# then
-#     clear_up
-#     echo "pytorch face-generation failed"
-#     exit $exit_status
-# fi
-# now=$(date "+%s")
-# time15=$((now-start))
-# echo "#15 pytorch face-generation time used:$time15 seconds"
-# 
-# echo "#16 start app test for ray paramater-server"
-# #timer
-# start=$(date "+%s")
-# 
-# ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/ray/parameter_server/sharded_parameter_server
-# python ${ANALYTICS_ZOO_HOME}/apps/ray/parameter_server/sharded_parameter_server.py
-# 
-# exit_status=$?
-# if [ $exit_status -ne 0 ];
-# then
-#     clear_up
-#     echo "ray paramater-server failed"
-#     exit $exit_status
-# fi
-# now=$(date "+%s")
-# time16=$((now-start))
-# 
-# echo "#16 ray paramater-server time used:$time16 seconds"
+echo "#10 start app test for using_variational_autoencoder_and_deep_feature_loss_to_generate_faces"
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces
+ sed -i "s/data_files\[\:100000\]/data_files\[\:500\]/g; s/batch_size=batch_size/batch_size=100/g" ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/analytics-zoo_vgg-16_imagenet_0.1.0.model"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading VGG model"
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ $FTP_URI/analytics-zoo-data/apps/variational-autoencoder/analytics-zoo_vgg-16_imagenet_0.1.0.model --no-host-directories
+   echo "Finished"
+fi
+ FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading celeba images"
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ $FTP_URI/analytics-zoo-data/apps/variational-autoencoder/img_align_celeba.zip --no-host-directories
+   unzip -d ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip
+   echo "Finished"
+fi
+ export SPARK_DRIVER_MEMORY=200g
+python ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_and_deep_feature_loss_to_generate_faces.py
+ exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "using_variational_autoencoder_and_deep_feature_loss_to_generate_faces failed"
+    exit $exit_status
+fi
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time10=$((now-start))
+echo "#10 using_variational_autoencoder_and_deep_feature_loss_to_generate_faces time used:$time10 seconds"
+
+echo "#11 start app test for recommendation-ncf"
+start=$(date "+%s")
+
+# Conversion to py file and data preparation
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/ncf-explicit-feedback
+sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g; s%sc.parallelize(movielens_data)%sc.parallelize(movielens_data[0:50000:])%g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/ncf-explicit-feedback.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/tmp.py
+
+# Run the example
+export SPARK_DRIVER_MEMORY=12g
+python ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/tmp.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "recommendation-ncf failed"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time11=$((now-start))
+echo "#11 recommendation-ncf time used:$time11 seconds"
+
+echo "#12 start app test for recommendation-wide-n-deep"
+start=$(date "+%s")
+
+# Conversion to py file and data preparation
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep
+sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g; s/batch_size = 8000/batch_size = 8008/g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
+
+# Run the example
+export SPARK_DRIVER_MEMORY=22g
+python ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "recommendation-wide-n-deep failed"
+    exit $exit_status
+fi
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time12=$((now-start))
+echo "#12 recommendation-wide-n-deep time used:$time12 seconds"
+
+echo "#13 start app test for sentiment-analysis"
+start=$(date "+%s")
+
+# Conversion to py file and data preparation
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment
+sed "s/batch_size = 64/batch_size = 84/g" ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/sentiment.py >${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/tmp_test.py
+FILENAME="/tmp/.bigdl/dataset/glove.6B.zip"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading glove6B"
+   wget -P /tmp/.bigdl/dataset/ $FTP_URI/analytics-zoo-data/data/glove/glove.6B.zip
+   echo "Finished"
+fi
+
+# Run the example
+export SPARK_DRIVER_MEMORY=12g
+python ${ANALYTICS_ZOO_HOME}/apps/sentiment-analysis/tmp_test.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "sentiment-analysis failed"
+    exit $exit_status
+fi
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time13=$((now-start))
+echo "#13 sentiment-analysis time used:$time13 seconds"
+
+echo "#14 start app test for anomaly-detection-hd"
+#timer
+start=$(date "+%s")
+chmod +x $ANALYTICS_ZOO_HOME/bin/data/HiCS/get_HiCS.sh
+$ANALYTICS_ZOO_HOME/bin/data/HiCS/get_HiCS.sh
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo
+sed -i '/get_ipython()/d' ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py
+sed -i '127,273d' ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py
+python ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection-hd/autoencoder-zoo.py
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "anomaly-detection-hd failed"
+    exit $exit_status
+fi
+now=$(date "+%s")
+time14=$((now-start))
+echo "#14 anomaly-detection-hd time used:$time14 seconds"
+
+echo "#15 start app test for pytorch face-generation"
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generation
+sed -i '/get_ipython()/d' ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generation.py
+sed -i '/plt./d' ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generation.py
+python ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generation.py
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "pytorch face-generation failed"
+    exit $exit_status
+fi
+now=$(date "+%s")
+time15=$((now-start))
+echo "#15 pytorch face-generation time used:$time15 seconds"
+
+echo "#16 start app test for ray paramater-server"
+#timer
+start=$(date "+%s")
+
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/ray/parameter_server/sharded_parameter_server
+python ${ANALYTICS_ZOO_HOME}/apps/ray/parameter_server/sharded_parameter_server.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "ray paramater-server failed"
+    exit $exit_status
+fi
+now=$(date "+%s")
+time16=$((now-start))
+
+echo "#16 ray paramater-server time used:$time16 seconds"
 
 echo "#17 start app test for zouwu-network-traffic-autots-forecasting"
 #timer
