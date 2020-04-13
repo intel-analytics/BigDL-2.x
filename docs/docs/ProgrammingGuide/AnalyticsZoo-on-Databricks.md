@@ -16,25 +16,25 @@ Before you start this guide, make sure a Databricks workspace is ready and a clu
 
 1. Install libraries. Right-click the Workspace folder. Select **Create > Library**.
 
-<img src="../Image/PlatformGuide/create-library.png" >
+<img src="analytics-zoo/docs/docs/Image/PlatformGuide/create-library.png" >
 
 2. Install Analytics Zoo python environment using PyPI. 
 
-<img src="../Image/PlatformGuide/analytics-zoo-PyPI.PNG" width="380">
+<img src="analytics-zoo/docs/docs/Image/PlatformGuide/analytics-zoo-PyPI.PNG" width="380">
 
 3. Install Analytics Zoo prebuilt jar package. Download Analytics Zoo prebuilt release package from the [Release Page](https://analytics-zoo.github.io/master/#release-download/). Please note that you should choose the same spark version of package as your Databricks runtime version. Unzip it. Find the jar named "analytics-zoo-bigdl_*-spark_*-jar-with-dependencies.jar" in the lib directory. Drop the jar on Databricks.
 
-<img src="../Image/PlatformGuide/analytics-zoo-jar.PNG" width="600">
+<img src="analytics-zoo/docs/docs/Image/PlatformGuide/analytics-zoo-jar.PNG" width="600">
 
 4. Make sure the jar file and analytics-zoo installed using PyPI are installed on all clusters. In **Libraries** tab of your cluster, check installed libraries and click “Install automatically on all clusters” option in **Admin Settings**.
 
-<img src="../Image/PlatformGuide/install-on-allclusters.PNG" width="380">
+<img src="analytics-zoo/docs/docs/Image/PlatformGuide/install-on-allclusters.PNG" width="380">
 
 ### **Setting Spark configuration**
 
 On the cluster configuration page, click the **Advanced Options** toggle. Click the **Spark** tab. You can provide custom [Spark configuration properties](https://spark.apache.org/docs/latest/configuration.html) in a cluster configuration. Please set it according to your cluster resource and program needs.  
 
-<img src="../Image/PlatformGuide/spark-config-aws.png" >
+<img src="analytics-zoo/docs/docs/Image/PlatformGuide/spark-config-aws.png" >
 
 See below for an example of Spark config setting needed by Analytics Zoo. Here it sets 1 core and 6g memory per executor and driver. Note that "spark.cores.max" needs to be properly set below.
 
@@ -71,11 +71,11 @@ Prepending /databricks/python/lib/python3.5/site-packages/zoo/share/conf/spark-a
 
 If you would like to run a completed Analytics Zoo notebook, you can import an Analytics Zoo notebook from a URL directly. 
 
-<img src="../Image/PlatformGuide/import-notebook.png" >
+<img src="analytics-zoo/docs/docs/Image/PlatformGuide/import-notebook.png" >
 
 For example, you may import a simple [Analytics Zoo tutorials notebook](https://github.com/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb).
 
-<img src="../Image/PlatformGuide/import-zoo-notebook.PNG" width="400">
+<img src="analytics-zoo/docs/docs/Image/PlatformGuide/import-zoo-notebook.PNG" width="400">
 
 Note the above notebook runs on Spark local default; to make it run on Databricks cluster, please change the first Python cell in the notebook to:
 
