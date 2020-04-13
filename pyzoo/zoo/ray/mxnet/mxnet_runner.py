@@ -26,6 +26,7 @@ from zoo.ray.mxnet.utils import find_free_port
 
 class MXNetRunner(object):
     """Manages a MXNet model for training."""
+
     def setup_distributed(self, env, config, data_creator, model_creator,
                           loss_creator=None, metrics_creator=None):
         logging.basicConfig(level=logging.INFO)  # This can print log messages to console.
