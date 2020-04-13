@@ -56,7 +56,7 @@ class MXNetTrainer(object):
 
     :param num_workers: The number of workers for distributed training. Default is 1.
     :param num_servers: The number of servers for distributed training. Default is None and in this
-    case it will be equal to the number of workers.
+    case it would be equal to the number of workers.
     :param runner_cores: The number of CPU cores allocated for each MXNet worker and server.
     Default is None. You may need to specify this for better performance.
     """
