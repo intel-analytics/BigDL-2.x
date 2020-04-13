@@ -5,7 +5,7 @@ _A distributed **Automated Machine Learning** libary based on **ray** and **tens
 ---
 The figure below illustrates the architecture of the AutoML framework in Analytics Zoo.
 <div align="center">
-   <p align="center"> <img src="docs/docs/Image/automl_framework.png" height=320px; weight=718px;"><br></p>
+   <p align="center"> <img src="../../../docs/docs/Image/automl_framework.png" height=320px; weight=718px;"><br></p>
 </div>
 
 This library provides a framework and implementations for automatic feature engineering, model selection and hyper parameter optimization. It also provides a built-in automatically optimized model: _**TimeSequencePredictor**_ , which can be used for time series data analysis or anomaly detection. 
