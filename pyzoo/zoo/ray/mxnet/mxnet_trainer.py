@@ -60,16 +60,9 @@ class MXNetTrainer(object):
     :param runner_cores: The number of CPU cores allocated for each MXNet worker and server.
     Default is None. You may need to specify this for better performance.
     """
-    def __init__(self,
-                 config,  # Pass in some config, including initializer, batch_size, etc.
-                 data_creator,
-                 model_creator,
-                 loss_creator=None,
-                 metrics_creator=None,
-                 num_workers=1,
-                 num_servers=None,
-                 # Specify cpu resources for actors if necessary.
-                 runner_cores=None):
+    def __init__(self, config, data_creator, model_creator,
+                 loss_creator=None, metrics_creator=None,
+                 num_workers=1, num_servers=None, runner_cores=None):
         self.config = config
         self.data_creator = data_creator
         self.model_creator = model_creator
@@ -79,8 +72,9 @@ class MXNetTrainer(object):
         self.num_servers = num_servers if num_servers else self.num_workers
 
         # Generate actor class
-        # Add a dummy custom resource to diff worker from server if runner_cores is specified
-        # so that we can place one worker and one server on a node for better performance.
+        # Add a dummy custom resource: _mxnet_worker and _mxnet_server to diff worker from server
+        # if runner_cores is specified so that we can place one worker and one server on a node
+        # for better performance.
         Worker = ray.remote(num_cpus=runner_cores, resources={"_mxnet_worker": 1})(MXNetRunner) \
             if runner_cores else ray.remote(MXNetRunner)
         Server = ray.remote(num_cpus=runner_cores, resources={"_mxnet_server": 1})(MXNetRunner) \
