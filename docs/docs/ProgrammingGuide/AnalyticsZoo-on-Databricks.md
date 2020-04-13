@@ -1,4 +1,4 @@
-Databricks is a fast Apache Spark-based big data analysis platform. Analytics Zoo program can run easily on Databricks spark cluster for distributed training or inference. This guide will introduce how to prepare Analytics Zoo environment as well as starting an Analytics Zoo notebook on Databricks.
+Databricks is a fast Apache Spark based big data analysis platform. Analytics Zoo program can run easily on Databricks spark cluster for distributed training or inference. This guide will introduce how to prepare Analytics Zoo environment as well as starting an Analytics Zoo notebook on Databricks.
 
 - [Prerequisites](#Prerequisites)
 - [Installing Analytics Zoo libraries](#Installing-Analytics-Zoo-libraries)
