@@ -142,6 +142,7 @@ def _find_common_network_interface(host_to_size, host_rank_to_id, workers, setti
 
 class HorovodRayRunner:
 
+    # todo check whether horovod is built with gloo
     def __init__(self, ray_ctx, verbose=None, start_timeout=None):
 
         self.cores_per_node = ray_ctx.ray_node_cpu_cores
