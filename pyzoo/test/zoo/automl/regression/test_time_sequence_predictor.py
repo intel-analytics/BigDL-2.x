@@ -63,7 +63,7 @@ class TestTimeSequencePredictor(ZooTestCase):
                            recipe=LSTMGridRandomRecipe(
                                lstm_2_units=[4],
                                batch_size=[1024],
-                               num_rand_samples=1,
+                               num_rand_samples=5,
                                look_back=2,
                                training_iteration=1,
                                epochs=1))
