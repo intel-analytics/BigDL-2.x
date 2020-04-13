@@ -46,6 +46,10 @@ class API:
 
         self.db = redis.StrictRedis(host=config['data']['host'],
                                     port=config['data']['port'], db=0)
+        try:
+            self.db.xgroup_create("image_stream", "serving")
+        except Exception:
+            print("redis group exist, will not create new one")
 
         if not config['data']['image_shape']:
             self.data_shape = ["3", "224", "224"]

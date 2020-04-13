@@ -52,3 +52,5 @@ if __name__ == "__main__":
     sc = init_nncontext("TFNet Object Detection Example")
 
     predict(options.model_path, options.img_path, options.partition_num)
+    print("finished...")
+    sc.stop()

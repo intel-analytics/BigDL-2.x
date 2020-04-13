@@ -8,11 +8,8 @@ See [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/)
 ## Prepare environments
 Follow steps 1 to 4 [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/#steps-to-run-rayonspark) to prepare environment.
 
-You also need to install **TensorFlow** in your conda environment and make sure your pyspark version is above 2.4.0.
-
-Here we require ray above 0.7.2, and if you use ray 0.6.6, you may need to make changes to some APIs accordingly.
-```shell script
-pip install ray>=0.7.2
+You also need to install **TensorFlow** in your conda environment via pip:
+```bash
 pip install tensorflow
 ```
 

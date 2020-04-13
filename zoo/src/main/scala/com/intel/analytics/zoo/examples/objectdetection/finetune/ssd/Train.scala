@@ -146,6 +146,8 @@ object Train {
         Trigger.maxEpoch(param.maxEpoch), classes)
 
       model.saveModel(param.saveModelPath, overWrite = param.overWriteModel)
+      println("finished...")
+      sc.stop()
     })
   }
 

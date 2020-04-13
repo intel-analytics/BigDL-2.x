@@ -3,6 +3,10 @@
 model:
   # model path must be set
   path: model
+  # the inputs of the tensorflow model, separated by ","
+  inputs:
+  # the outputs of the tensorflow model, separated by ","
+  outputs:
 data:
   # default, localhost:6379
   src:
@@ -13,6 +17,8 @@ data:
 params:
   # default, 4
   batch_size:
+  # default: OFF
+  performance_mode:
 redis:
   # default, 4g
   maxmem: 

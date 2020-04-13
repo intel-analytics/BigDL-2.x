@@ -38,7 +38,9 @@ Path to the images.
 You can easily use the following commands to run this example:
     ```bash
     export SPARK_DRIVER_MEMORY=10g
-    python image_finetuning_example.py /tmp/zoo/bigdl_inception-v1_imagenet_0.4.0.model /tmp/zoo/dogs_cats/samples
+    python image_finetuning_example.py \
+    -m /tmp/zoo/bigdl_inception-v1_imagenet_0.4.0.model \
+    -f /tmp/zoo/dogs_cats/samples
     ```
     See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-after-pip-install) for more running guidance after pip install.
 
@@ -52,7 +54,8 @@ Run the following command for Spark local mode (`MASTER=local[*]`) or cluster mo
     --master local[2] \
     --driver-memory 10g \
     image_finetuning_example.py \
-    /tmp/zoo/bigdl_inception-v1_imagenet_0.4.0.model /tmp/zoo/dogs_cats/samples
+    -m /tmp/zoo/bigdl_inception-v1_imagenet_0.4.0.model \
+    -f /tmp/zoo/dogs_cats/samples
     ```
     See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-without-pip-install) for more running guidance without pip install.
 

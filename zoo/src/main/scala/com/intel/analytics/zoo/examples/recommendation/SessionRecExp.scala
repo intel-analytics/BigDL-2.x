@@ -121,6 +121,8 @@ object SessionRecExp {
 
     recommendations.take(20).map( x => println(x.toList))
 
+    println("finished...")
+    sc.stop()
   }
 
   def loadPublicData(sqlContext: SQLContext, params: SessionParams): (DataFrame, Int, Int) = {

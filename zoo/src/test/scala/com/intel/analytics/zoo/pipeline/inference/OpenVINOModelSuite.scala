@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.pipeline.inference
 
 import java.io.File
+import java.nio.file.NoSuchFileException
 import java.util
 import java.util.{Arrays, Properties}
 
@@ -28,14 +29,18 @@ import org.slf4j.LoggerFactory
 import scala.io.Source
 import scala.language.postfixOps
 import sys.process._
+import sys.env
 
 
-/*
 @OpenVinoTest
 class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
   with InferenceSupportive {
 
-  val s3Url = "https://s3-ap-southeast-1.amazonaws.com"
+  val s3Url = if (env.contains("FTP_URI")) {
+    env("FTP_URI").toString
+  } else {
+    "https://s3-ap-southeast-1.amazonaws.com"
+  }
   val s3DataUrl = s"$s3Url" +
     s"/analytics-zoo-models/openvino/Tests_faster_rcnn_resnet101_coco_2018_01_28"
   val url_ov_fasterrcnn_tests_inputdata1 = s"$s3DataUrl/inputdata_1"
@@ -45,7 +50,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
   var tmpDir: File = _
 
   val fasterrcnnModelUrl = s"$s3Url" +
-    s"/openvino/2018_R5/faster_rcnn_resnet101_coco"
+    s"/analytics-zoo-models/openvino/2018_R5/faster_rcnn_resnet101_coco"
   var fasterrcnnModel: OpenVINOModel = _
   val fasterrcnnInferenceModel: InferenceModel = new InferenceModel(3)
   val fasterrcnnInputShape = Array(1, 3, 600, 600)
@@ -87,13 +92,12 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
   }
 
   test("openvino model should throw exception if load failed") {
-    val thrown = intercept[InferenceRuntimeException] {
+    val thrown = intercept[NoSuchFileException] {
       InferenceModelFactory
-        .loadOpenVINOModelForIR(s"$faserrcnnModelPath.xml",
-        s"$faserrcnnModelPath.bin",
+        .loadOpenVINOModelForIR(s"$faserrcnnModelPath.error.xml",
+        s"$faserrcnnModelPath.error.bin",
         DeviceType.CPU)
     }
-    assert(thrown.getMessage.contains("Openvino optimize tf object detection model error"))
   }
 
   // this method will be deprecated", "0.8.0")
@@ -155,4 +159,3 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
     }
   }
 }
-*/
