@@ -249,7 +249,7 @@ class PythonZoo[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBigDLK
     Utils.getRemoteFileToLocal(remotePath, localPath, isOverwrite)
   }
 
-  def listPaths(path: String, recursive: Boolean=false): JList[String] = {
+  def listPaths(path: String, recursive: Boolean = false): JList[String] = {
     com.intel.analytics.zoo.common.Utils.listPaths(path, recursive).toList.asJava
   }
 }
