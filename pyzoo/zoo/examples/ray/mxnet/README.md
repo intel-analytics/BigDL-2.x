@@ -49,4 +49,7 @@ See [here](#Options) for more configurable options for this example.
 - `--executor_cores` The number of executor cpu cores you want to use. Default is 4.
 
 ## Results
-You can find the throughput and accuracy information from the log during the training process:
+You can find the accuracy information from the log during the training process:
+```
+
+```
