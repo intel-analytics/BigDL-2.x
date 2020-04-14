@@ -61,6 +61,9 @@ def config_option_parser():
                       help="a analytics zoo checkpoint path for resume training, usually contains"
                            + "a file named model.$iter_num and a file named"
                            + " optimMethod-TFParkTraining.$iter_num")
+    parser.add_option("--resumeTrainingVersion", type=int, dest="resumeTrainingVersion",
+                      default=None,
+                      help="the version of checkpoint file, should be the $iter_num in model.$iter_num")
     return parser
 
 if __name__ == "__main__":
@@ -162,7 +165,10 @@ if __name__ == "__main__":
                                       model_dir="/tmp/logs")
 
     if options.resumeTrainingCheckpoint is not None:
-        optimizer.load_zoo_checkpoint(options.resumeTrainingCheckpoint)
+        assert options.resumeTrainingVersion is not None,\
+            "--resumeTrainingVersion must be specified when --resumeTrainingCheckpoint is."
+        optimizer.load_zoo_checkpoint(options.resumeTrainingCheckpoint,
+                                      options.resumeTrainingVersion)
 
     optimizer.optimize(end_trigger=end_trigger, checkpoint_trigger=checkpoint_trigger)
 
