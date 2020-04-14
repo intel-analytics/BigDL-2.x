@@ -6,7 +6,7 @@ For the detail guide of xShard data preprocessing, please refer [here](https://a
 Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__.
 
 ## Data Preparation
-We use one of the datasets in Numenta Anomaly Benchmark (NAB[https://raw.githubusercontent.com/numenta/NAB/master/data/realKnownCause/nyc_taxi.csv]) for demo, i.e. NYC taxi passengers dataset, which contains 10320 records, each indicating the total number of taxi passengers in NYC at specific time. 
+We use one of the datasets in Numenta Anomaly Benchmark (NAB[https://raw.githubusercontent.com/numenta/NAB/master/data/realKnownCause/nyc_taxi.csv]) for demo. The NYC taxi passengers dataset contains 10320 records, each indicating the total number of taxi passengers in NYC at specific time. 
 Before you run the example, download the data(nyc_taxi.csv), and put into a directory.
 
 ## Run after pip install

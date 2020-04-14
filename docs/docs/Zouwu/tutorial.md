@@ -4,7 +4,7 @@ Zouw needs below requirements to run.
 
 * Python 3.6 or 3.7
 * PySpark 2.4.3
-* Ray 0.7.0
+* Ray 0.7.2
 * Tensorflow 1.15.0
 * aiohttp
 * setproctitle
@@ -85,7 +85,7 @@ You'll need ```RayOnSpark``` for training with ```AutoTSTrainer```, so you have 
 
 ```python
 from zoo import init_spark_on_local
-from zoo.ray.util.raycontext import RayContext
+from zoo.ray import RayContext
 sc = init_spark_on_local(cores=4)
 ray_ctx = RayContext(sc=sc)
 ray_ctx.init()
@@ -94,7 +94,7 @@ ray_ctx.init()
 
 ```python
 from zoo import init_spark_on_yarn
-from zoo.ray.util.raycontext import RayContext
+from zoo.ray import RayContext
 slave_num = 2
 sc = init_spark_on_yarn(
         hadoop_conf=args.hadoop_conf,

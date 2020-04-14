@@ -20,7 +20,7 @@ from pyspark.context import SparkContext
 from bigdl.util.common import get_node_and_core_number
 
 from zoo.common import get_file_list
-from zoo.ray.util.raycontext import RayContext
+from zoo.ray import RayContext
 from zoo.xshard.shard import RayDataShards, RayPartition, SparkDataShards
 from zoo.xshard.utils import *
 
