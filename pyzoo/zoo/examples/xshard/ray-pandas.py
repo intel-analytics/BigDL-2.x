@@ -23,7 +23,7 @@ from pyspark.sql import SQLContext
 
 import zoo.xshard.pandas
 from zoo import init_spark_on_local
-from zoo.ray.util.raycontext import RayContext
+from zoo.ray import RayContext
 
 
 def process_feature(df, awake_begin=6, awake_end=23):

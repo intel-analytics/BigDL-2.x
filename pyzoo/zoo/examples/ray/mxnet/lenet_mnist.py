@@ -17,11 +17,12 @@
 # Reference: https://mxnet.apache.org/api/python/docs/tutorials/packages/gluon/image/mnist.html
 
 import argparse
+
 import mxnet as mx
 from mxnet import gluon
 from mxnet.test_utils import get_mnist_iterator
 from zoo import init_spark_on_local, init_spark_on_yarn
-from zoo.ray.util.raycontext import RayContext
+from zoo.ray import RayContext
 from zoo.ray.mxnet import MXNetTrainer, create_trainer_config
 
 

@@ -24,7 +24,7 @@ ray_ctx = None
 @pytest.fixture(autouse=True, scope='package')
 def xshard_fixture():
     from zoo import init_spark_on_local
-    from zoo.ray.util.raycontext import RayContext
+    from zoo.ray import RayContext
     global ray_ctx
     sc = init_spark_on_local(cores=4, spark_log_level="INFO")
     access_key_id = os.getenv("AWS_ACCESS_KEY_ID")

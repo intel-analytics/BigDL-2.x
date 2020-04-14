@@ -18,7 +18,7 @@ import os
 import ray
 from pyspark.context import SparkContext
 
-from zoo.ray.util.raycontext import RayContext
+from zoo.ray import RayContext
 from zoo.xshard.shard import RayDataShards, RayPartition
 from zoo.xshard.utils import *
 
