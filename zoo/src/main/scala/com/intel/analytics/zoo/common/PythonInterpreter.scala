@@ -17,6 +17,7 @@ package com.intel.analytics.zoo.common
 
 import java.util.concurrent.{ExecutorService, Executors, ThreadFactory}
 
+import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.zoo.pipeline.api.net.NetUtils
 import jep.{JepConfig, JepException, NamingConventionClassEnquirer, SharedInterpreter}
 import org.apache.commons.lang.exception.ExceptionUtils
@@ -57,6 +58,8 @@ object PythonInterpreter {
     if (System.getenv("PYTHONHOME") == null) {
       throw new RuntimeException("PYTHONHOME is unset, please set PYTHONHOME first.")
     }
+    // Load TFNet before create interpreter, or the TFNet will throw an OMP error #13
+    TFNetNative.isLoaded
     val createInterp = () => {
       val config: JepConfig = new JepConfig()
         config.setClassEnquirer(new NamingConventionClassEnquirer())

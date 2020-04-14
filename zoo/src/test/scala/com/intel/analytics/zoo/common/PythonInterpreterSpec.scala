@@ -15,6 +15,7 @@
  */
 package com.intel.analytics.zoo.common
 
+import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.net.NetUtils
 import jep.{NDArray, SharedInterpreter}
@@ -29,6 +30,8 @@ class PythonInterpreterSpec extends ZooSpecHelper{
     } else {
       logger.info(s"use python home: ${System.getenv("PYTHONHOME")}")
       Logger.getLogger(PythonInterpreter.getClass()).setLevel(Level.DEBUG)
+      // Load TFNet before create interpreter, or the TFNet will throw an OMP error #13
+      TFNetNative.isLoaded
     }
   }
 
