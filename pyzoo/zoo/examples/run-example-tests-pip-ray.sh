@@ -33,7 +33,13 @@ time3=$?
 execute_ray_test multiagent_two_trainers ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py
 time4=$?
 
+# Remove the downloaded data to avoid failures
+if [ -d "data" ];
+then
+  rm -rf data
+fi
 execute_ray_test lenet_mnist ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/mxnet/lenet_mnist.py -e 1 -b 256
+rm -rf data
 time5=$?
 
 echo "#1 rl_pong time used:$time1 seconds"
