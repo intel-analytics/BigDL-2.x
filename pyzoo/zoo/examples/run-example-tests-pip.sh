@@ -166,7 +166,7 @@ fi
 export SPARK_DRIVER_MEMORY=20g
 
 echo "start example test for nnframes imageInference"
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/ImageTransferLearningExample.py \
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/ImageInferenceExample.py \
     -m analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
     -f hdfs://172.168.2.181:9000/kaggle/train_100
 
