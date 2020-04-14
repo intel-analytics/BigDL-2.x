@@ -38,7 +38,7 @@ See [here](#Options) for more configurable options for this example.
 - `-n` `--num_workers` The number of MXNet workers to be launched for distributed training. Default is 2.
 - `-s` `--num_servers` The number of MXNet servers to be launched for distributed training. If not specified, default to be equal to the number of workers.
 - `-b` `--batch_size` The number of samples per gradient update for each worker. Default is 100.
-- `-e` `--epochs` The number of epoch to train the model. Default is 10.
+- `-e` `--epochs` The number of epochs to train the model. Default is 10.
 - `-l` `--learning_rate` The learning rate for the TextClassifier model. Default is 0.01.
 - `--log_interval` The number of batches to wait before logging throughput and metrics information during the training process.
 

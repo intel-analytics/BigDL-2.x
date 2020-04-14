@@ -90,7 +90,7 @@ if __name__ == '__main__':
     parser.add_argument('-b', '--batch_size', type=int, default=100,
                         help='The number of samples per gradient update for each worker.')
     parser.add_argument('-e', '--epochs', type=int, default=10,
-                        help='The number of epoch to train the model.')
+                        help='The number of epochs to train the model.')
     parser.add_argument('-l', '--learning_rate', type=float, default=0.02,
                         help='Learning rate for the LeNet model.')
     parser.add_argument('--log_interval', type=int, default=100,
