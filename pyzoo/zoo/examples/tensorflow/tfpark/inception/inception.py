@@ -56,6 +56,11 @@ def config_option_parser():
                       help="weight decay")
     parser.add_option("--checkpointIteration", type=int, dest="checkpointIteration", default=620,
                       help="checkpoint interval of iterations")
+    parser.add_option("--resumeTrainingCheckpoint", type=str, dest="resumeTrainingCheckpoint",
+                      default=None,
+                      help="a analytics zoo checkpoint path for resume training, usually contains"
+                           + "a file named model.$iter_num and a file named"
+                           + " optimMethod-TFParkTraining.$iter_num")
     return parser
 
 if __name__ == "__main__":
@@ -155,6 +160,9 @@ if __name__ == "__main__":
                                       val_method=[Accuracy(), Top5Accuracy(), Loss()],
                                       tensor_with_value={is_training: [True, False]},
                                       model_dir="/tmp/logs")
+
+    if options.resumeTrainingCheckpoint is not None:
+        optimizer.load_zoo_checkpoint(options.resumeTrainingCheckpoint)
 
     optimizer.optimize(end_trigger=end_trigger, checkpoint_trigger=checkpoint_trigger)
 
