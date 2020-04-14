@@ -35,12 +35,17 @@ python lenet_mnist.py --hadoop_conf ...# path to your hadoop/yarn directory --co
 See [here](#Options) for more configurable options for this example.
 
 ## Options
-- `--num_workers` The number of workers. Default is 4.
+- `-n` `--num_workers` The number of MXNet workers to be launched for distributed training. Default is 2.
+- `-s` `--num_servers` The number of MXNet servers to be launched for distributed training. If not specified, default to be equal to the number of workers.
+- `-b` `--batch_size` The number of samples per gradient update for each worker. Default is 100.
+- `-e` `--epochs` The number of epoch to train the model. Default is 10.
+- `-l` `--learning_rate` The learning rate for the TextClassifier model. Default is 0.01.
+- `--log_interval` The number of batches to wait before logging throughput and metrics information during the training process.
 
 **Options for yarn only**
 - `--hadoop_conf` This option is **required** when you want to run on yarn. The path to your configuration folder of hadoop.
-- `--conda_name` This option is **required** when you want to run on yarn. Your conda environment's name.
-- `--executor_cores` The number of slave(executor)'s cpu cores you want to use. Default is 8.
-- `--executor_memory` The size of slave(executor)'s memory you want to use. Default is 10g.
-- `--driver_memory` The size of driver's memory you want to use. Default is 2g.
+- `--conda_name` This option is **required** when you want to run on yarn. The name of your conda environment.
+- `--executor_cores` The number of executor cpu cores you want to use. Default is 4.
 
+## Results
+You can find the throughput and accuracy information from the log during the training process:

@@ -65,7 +65,7 @@ See [here](#options) for more configurable options for this example.
 * `--answer_length` The sequence length of each answer. Default is 40.
 * `--partition_num` The number of partitions to cut the datasets into. Default is 4.
 * `-b` `--batch_size` The number of samples per gradient update. Default is 200.
-* `-e` `--nb_epoch` The number of iterations to train the model. Default is 30.
+* `-e` `--nb_epoch` The number of epochs to train the model. Default is 30.
 * `-l` `--learning_rate` The learning rate for the model. Default is 0.001.
 * `-m` `--model` Specify this option only if you want to load an existing KNRM model and in this case its path should be provided.
 
