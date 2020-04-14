@@ -62,6 +62,6 @@ You can find the accuracy information from the log during the training process:
 (pid=34395) INFO:root:[Epoch 6] validation: accuracy=0.982171  
 (pid=34361) INFO:root:[Epoch 6] validation: accuracy=0.957131  
 ```
-Note that the training and validation accuracy of each worker may slightly differ as the accuracy is calculated
- based on the own portion of the dataset for each worker.
+Note that the training and validation accuracy of each worker may slightly differ as the accuracy of each worker is calculated
+ based on the own portion of the whole dataset.
  
