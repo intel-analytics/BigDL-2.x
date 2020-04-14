@@ -91,7 +91,7 @@ class TFTrainingHelper(Layer):
         self.save_checkpoint()
         self.saver.restore(self.sess, os.path.join(self.export_dir, "model"))
 
-    def load_zoo_checkpoint(self, path):
+    def load_checkpoint(self, path):
         callZooFunc(self.bigdl_type, "loadZooCheckpoint", self.value, path)
 
 
@@ -399,11 +399,11 @@ class TFOptimizer:
             min_value, max_value = self.clip_constant
             self.estimator.set_constant_gradient_clipping(min_value, max_value)
 
-    def load_zoo_checkpoint(self, path, version):
+    def load_checkpoint(self, path, version):
         # todo make version optional
         model_path = os.path.join(path, "model.{}".format(version))
         optim_method_path = os.path.join(path, "optimMethod-TFParkTraining.{}".format(version))
-        self.tf_model.training_helper_layer.load_zoo_checkpoint(model_path)
+        self.tf_model.training_helper_layer.load_checkpoint(model_path)
         self.optim_method = OptimMethod.load(optim_method_path)
         self.estimator = Estimator(self.tf_model.training_helper_layer,
                                    self.optim_method,

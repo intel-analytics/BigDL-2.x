@@ -58,7 +58,7 @@ def config_option_parser():
                       help="checkpoint interval of iterations")
     parser.add_option("--resumeTrainingCheckpoint", type=str, dest="resumeTrainingCheckpoint",
                       default=None,
-                      help="a analytics zoo checkpoint path for resume training, usually contains"
+                      help="an analytics zoo checkpoint path for resume training, usually contains"
                            + "a file named model.$iter_num and a file named"
                            + " optimMethod-TFParkTraining.$iter_num")
     parser.add_option("--resumeTrainingVersion", type=int, dest="resumeTrainingVersion",
@@ -167,8 +167,8 @@ if __name__ == "__main__":
     if options.resumeTrainingCheckpoint is not None:
         assert options.resumeTrainingVersion is not None,\
             "--resumeTrainingVersion must be specified when --resumeTrainingCheckpoint is."
-        optimizer.load_zoo_checkpoint(options.resumeTrainingCheckpoint,
-                                      options.resumeTrainingVersion)
+        optimizer.load_checkpoint(options.resumeTrainingCheckpoint,
+                                  options.resumeTrainingVersion)
 
     optimizer.optimize(end_trigger=end_trigger, checkpoint_trigger=checkpoint_trigger)
 

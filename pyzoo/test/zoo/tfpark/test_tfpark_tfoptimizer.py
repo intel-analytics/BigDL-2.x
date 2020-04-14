@@ -148,7 +148,7 @@ class TestTFParkTFOptimizer(ZooTestCase):
 
                 assert ckpt_path is not None, "Cannot fine checkpoint file"
 
-                optimizer.load_zoo_checkpoint(ckpt_path, max(versions))
+                optimizer.load_checkpoint(ckpt_path, max(versions))
                 optimizer.optimize(end_trigger=MaxEpoch(1))
                 optimizer.sess.close()
             finally:
