@@ -5,7 +5,7 @@ MXNetTrainer implemented in Analytics Zoo on top of [RayOnSpark](https://analyti
 We use the LeNet model to train on MNIST dataset for handwritten digit recognition. 
 See [here](https://mxnet.apache.org/api/python/docs/tutorials/packages/gluon/image/mnist.html) for the original single-node version of this example provided by MXNet.
 
-In the distributed setting, the whole dataset is splitted into several parts and each MXNet worker takes a part of the data for data parallel training. 
+In the distributed setting, the whole MNIST dataset is splitted into several parts and each MXNet worker takes a part for data parallel training. 
 At the same time, MXNet servers are responsible for aggregating the parameters and send back to workers.
 
 ## Prepare environments
