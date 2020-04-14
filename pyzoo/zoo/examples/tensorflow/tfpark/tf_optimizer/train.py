@@ -47,7 +47,7 @@ def main(max_epoch, data_num):
     test_images_data = (test_images_data[:data_num] - mnist.TRAIN_MEAN) / mnist.TRAIN_STD
     test_labels_data = (test_labels_data[:data_num]).astype(np.int)
     dataset = TFDataset.from_ndarrays((train_images_data, train_labels_data),
-                                      batch_size=600,
+                                      batch_size=360,
                                       val_tensors=(test_images_data, test_labels_data))
 
     # construct the model from TFDataset
@@ -65,7 +65,7 @@ def main(max_epoch, data_num):
                                       metrics={"acc": acc},
                                       model_dir="/tmp/lenet/")
     # kick off training
-    optimizer.optimize(end_trigger=MaxEpoch(max_epoch)) # , checkpoint_trigger=SeveralIteration(1))
+    optimizer.optimize(end_trigger=MaxEpoch(max_epoch))
 
     saver = tf.train.Saver()
     saver.save(optimizer.sess, "/tmp/lenet/model")
@@ -74,7 +74,7 @@ def main(max_epoch, data_num):
 if __name__ == '__main__':
 
     max_epoch = 5
-    data_num = 600
+    data_num = 60000
 
     if len(sys.argv) > 1:
         max_epoch = int(sys.argv[1])
