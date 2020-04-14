@@ -22,7 +22,7 @@ _TimeSequencePredictor_ can be used to train a model on historical time sequence
   * Run ray on spark local mode, Example
 ```python
 from zoo import init_spark_on_local
-from zoo.ray import RayContext
+from zoo.ray.util.raycontext import RayContext
 sc = init_spark_on_local(cores=4)
 ray_ctx = RayContext(sc=sc)
 ray_ctx.init()
@@ -30,7 +30,7 @@ ray_ctx.init()
   * run ray on yarn cluster, Example  
 ```python
 from zoo import init_spark_on_yarn
-from zoo.ray import RayContext
+from zoo.ray.util.raycontext import RayContext
 slave_num = 2
 sc = init_spark_on_yarn(
         hadoop_conf=args.hadoop_conf,
