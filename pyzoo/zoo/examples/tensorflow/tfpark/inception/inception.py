@@ -63,7 +63,8 @@ def config_option_parser():
                            + " optimMethod-TFParkTraining.$iter_num")
     parser.add_option("--resumeTrainingVersion", type=int, dest="resumeTrainingVersion",
                       default=None,
-                      help="the version of checkpoint file, should be the $iter_num in model.$iter_num")
+                      help="the version of checkpoint file, should be the $iter_num"
+                           + " in model.$iter_num")
     return parser
 
 if __name__ == "__main__":
