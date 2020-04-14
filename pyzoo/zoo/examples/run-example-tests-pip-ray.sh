@@ -34,7 +34,7 @@ execute_ray_test multiagent_two_trainers ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/example
 time4=$?
 
 # Remove the downloaded data to avoid failures
-if [ -d "data" ];
+if [ -e "data" ];
 then
   rm -rf data
 fi
