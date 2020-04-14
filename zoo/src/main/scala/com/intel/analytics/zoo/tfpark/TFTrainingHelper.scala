@@ -287,7 +287,7 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
   def loadZooCheckpoint(path: String): Unit = {
     val module = Module.load(path).asInstanceOf[TFTrainingHelper]
     assert(module.graphRunner.graphDef.length == this.graphRunner.graphDef.length,
-      "cannot load checkpoint from anther graph")
+      "graphdef size is not equal, cannot load checkpoint from a different graph")
     this.parameters()._1.zip(module.parameters()._1).foreach { case (target, source) =>
       target.copy(source)
     }
