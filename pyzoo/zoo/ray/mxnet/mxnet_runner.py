@@ -136,7 +136,8 @@ class MXNetRunner(object):
                             self.logger.info(iteration_log)
                         batch_start_time = time.time()
                     # Epoch time log
-                    self.logger.info("Epoch [%d] time cost: %f" % (epoch, time.time() - epoch_start_time))
+                    self.logger.info("Epoch [%d] time cost: %f" %
+                                     (epoch, time.time() - epoch_start_time))
                     # Epoch metrics log on train data
                     if self.metrics:
                         epoch_train_log = "Epoch [%d] training: " % epoch
@@ -150,10 +151,12 @@ class MXNetRunner(object):
                         self.metrics.reset()
                         self.val_data.reset()
                         for batch in self.val_data:
-                            data = gluon.utils.split_and_load(batch.data[0].astype("float32", copy=False),
-                                                              ctx_list=[mx.cpu()], batch_axis=0)
-                            label = gluon.utils.split_and_load(batch.label[0].astype("float32", copy=False),
-                                                               ctx_list=[mx.cpu()], batch_axis=0)
+                            data = gluon.utils.split_and_load(
+                                batch.data[0].astype("float32", copy=False),
+                                ctx_list=[mx.cpu()], batch_axis=0)
+                            label = gluon.utils.split_and_load(
+                                batch.label[0].astype("float32", copy=False),
+                                ctx_list=[mx.cpu()], batch_axis=0)
                             outputs = [self.model(X) for X in data]
                             self.metrics.update(label, outputs)
                         epoch_val_log = "Epoch [%d] validation: " % epoch
