@@ -23,7 +23,7 @@ demonstrated in the example.
 
 #### Prepare environment
 
-You can refer to zouwu installation document [here](https://analytics-zoo.github.io/master/#Zouwu/tutorial/#install).
+You can refer to Zouwu installation document [here](https://analytics-zoo.github.io/master/#Zouwu/tutorial/#install).
 
 #### Prepare dataset
 * run `get_data.sh` to download the full dataset. It will download the monthly aggregated traffic data in year 2018 and 2019 (i.e "201801.agr", "201912.agr") into data folder. The raw data contains aggregated network traffic (average MBPs and total bytes) as well as other metrics.
