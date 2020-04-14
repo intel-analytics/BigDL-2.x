@@ -5,6 +5,8 @@ MXNetTrainer implemented in Analytics Zoo on top of [RayOnSpark](https://analyti
 We use the LeNet model to train on MNIST dataset for handwritten digit recognition. 
 See [here](https://mxnet.apache.org/api/python/docs/tutorials/packages/gluon/image/mnist.html) for the original single-node version of this example provided by MXNet.
 
+In the distributed setting, the whole dataset is splitted into several parts and each MXNet worker takes a part of the data for data parallel training. 
+At the same time, MXNet servers are responsible for aggregating the parameters and send back to workers.
 
 ## Prepare environments
 Follow steps 1 to 4 [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/#steps-to-run-rayonspark) 
@@ -63,5 +65,5 @@ You can find the accuracy information from the log during the training process:
 (pid=34361) INFO:root:[Epoch 6] validation: accuracy=0.957131  
 ```
 Note that the training and validation accuracy of each worker may slightly differ as the accuracy of each worker is calculated
- based on the own portion of the whole dataset.
+ based on its own portion of the whole dataset.
  
