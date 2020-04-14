@@ -136,11 +136,11 @@ class MXNetRunner(object):
                             self.logger.info(iteration_log)
                         batch_start_time = time.time()
                     # Epoch time log
-                    self.logger.info("Epoch [%d] time cost: %f" %
+                    self.logger.info("[Epoch %d] time cost: %f" %
                                      (epoch, time.time() - epoch_start_time))
                     # Epoch metrics log on train data
                     if self.metrics:
-                        epoch_train_log = "Epoch [%d] training: " % epoch
+                        epoch_train_log = "[Epoch %d] training: " % epoch
                         names, accs = self.metrics.get()
                         names, accs = to_list(names), to_list(accs)
                         for name, acc in zip(names, accs):
@@ -159,7 +159,7 @@ class MXNetRunner(object):
                                 ctx_list=[mx.cpu()], batch_axis=0)
                             outputs = [self.model(X) for X in data]
                             self.metrics.update(label, outputs)
-                        epoch_val_log = "Epoch [%d] validation: " % epoch
+                        epoch_val_log = "[Epoch %d] validation: " % epoch
                         names, accs = self.metrics.get()
                         names, accs = to_list(names), to_list(accs)
                         for name, acc in zip(names, accs):
@@ -168,9 +168,7 @@ class MXNetRunner(object):
                     # TODO: save checkpoints
                 if self.metrics:
                     names, accs = self.metrics.get()
-                    if not isinstance(names, list):
-                        names = [names]
-                        accs = [accs]
+                    names, accs = to_list(names), to_list(accs)
                     for name, acc in zip(names, accs):
                         stats[name] = acc
             else:  # Symbolic API

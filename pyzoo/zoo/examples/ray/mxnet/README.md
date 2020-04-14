@@ -51,5 +51,17 @@ See [here](#Options) for more configurable options for this example.
 ## Results
 You can find the accuracy information from the log during the training process:
 ```
-
+(pid=34395) INFO:root:Epoch[6] Batch[99]  Speed: 4513.416662 samples/sec  loss=0.893286  accuracy=0.961562
+(pid=34361) INFO:root:Epoch[6] Batch[99]  Speed: 4465.811376 samples/sec  loss=0.900434  accuracy=0.966484
+(pid=34395) INFO:root:Epoch[6] Batch[199]  Speed: 4877.452140 samples/sec  loss=0.875496  accuracy=0.964102
+(pid=34361) INFO:root:Epoch[6] Batch[199]  Speed: 4322.318930 samples/sec  loss=0.901634  accuracy=0.965000
+(pid=34395) INFO:root:[Epoch 6] time cost: 7.500912
+(pid=34395) INFO:root:[Epoch 6] training: accuracy=0.964410  
+(pid=34361) INFO:root:[Epoch 6] time cost: 7.522801
+(pid=34361) INFO:root:[Epoch 6] training: accuracy=0.965178  
+(pid=34395) INFO:root:[Epoch 6] validation: accuracy=0.982171  
+(pid=34361) INFO:root:[Epoch 6] validation: accuracy=0.957131  
 ```
+Note that the training and validation accuracy of each worker may slightly differ as the accuracy is calculated
+ based on the own portion of the dataset for each worker.
+ 
