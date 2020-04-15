@@ -18,20 +18,50 @@
 
 import argparse
 
-import mxnet as mx
-from mxnet import gluon
-from mxnet.test_utils import get_mnist_iterator
 from zoo import init_spark_on_local, init_spark_on_yarn
 from zoo.ray import RayContext
 from zoo.ray.mxnet import MXNetTrainer, create_trainer_config
 
 
 def get_data_iters(config, kv):
-    return get_mnist_iterator(config["batch_size"], (1, 28, 28),
-                              num_parts=kv.num_workers, part_index=kv.rank)
+    import os
+    import zipfile
+    import mxnet as mx
+    from bigdl.dataset.base import maybe_download
+
+    # In order to avoid conflict where multiple workers on the same node download and
+    # zip data under the same location, here we let each worker have its own folder.
+    # In practice, data is supposed to be stored on a file system accessible to workers on
+    # all nodes, for example, on HDFS or S3.
+    maybe_download("mnist.zip", "worker" + str(kv.rank),
+                   "http://data.mxnet.io/mxnet/data/mnist.zip")
+    if not os.path.isdir("worker" + str(kv.rank) + "/data"):
+        with zipfile.ZipFile("worker" + str(kv.rank) + "/mnist.zip") as zf:
+            zf.extractall("worker" + str(kv.rank) + "/data")
+    train_iter = mx.io.MNISTIter(
+        image="worker" + str(kv.rank) + "/data/train-images-idx3-ubyte",
+        label="worker" + str(kv.rank) + "/data/train-labels-idx1-ubyte",
+        input_shape=(1, 28, 28),
+        batch_size=config["batch_size"],
+        shuffle=True,
+        flat=False,
+        num_parts=kv.num_workers,
+        part_index=kv.rank)
+
+    val_iter = mx.io.MNISTIter(
+        image="worker" + str(kv.rank) + "/data/t10k-images-idx3-ubyte",
+        label="worker" + str(kv.rank) + "/data/t10k-labels-idx1-ubyte",
+        input_shape=(1, 28, 28),
+        batch_size=config["batch_size"],
+        flat=False,
+        num_parts=kv.num_workers,
+        part_index=kv.rank)
+    return train_iter, val_iter
 
 
 def get_model(config):
+    import mxnet as mx
+    from mxnet import gluon
     from mxnet.gluon import nn
     import mxnet.ndarray as F
 
@@ -64,16 +94,20 @@ def get_model(config):
 
 
 def get_loss(config):
+    from mxnet import gluon
     return gluon.loss.SoftmaxCrossEntropyLoss()
 
 
 def get_metrics(config):
+    import mxnet as mx
     return mx.metric.Accuracy()
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Train a LeNet model for handwritten digit recognition.')
+    parser.add_argument('--data_path', type=str, default="data",
+                        help='The path to download MNIST dataset.')
     parser.add_argument('--hadoop_conf', type=str,
                         help='The path to the hadoop configuration folder. Required if you '
                              'wish to run on yarn clusters. Otherwise, run in local mode.')
