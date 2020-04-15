@@ -204,7 +204,12 @@ else
    echo "Downloading images"
 
    wget $FTP_URI/analytics-zoo-data/imageClassification.tar.gz -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity
-   tar -zxvf ${ANALYTICS_ZOO_HOME}/apps/image-similarity/imageClassification.tar.gz -C ${ANALYTICS_ZOO_HOME}/apps/image-similarity
+   tar -zxvf ${ANALYTICS_ZOO_HOME}/apps/image-similarity/imageClassification.tar.gz -C ${ANALYTICS_ZOO_HOME}/apps/image-similarity-all
+   mkdir -p ${ANALYTICS_ZOO_HOME}/apps/image-similarity
+   cp ${ANALYTICS_ZOO_HOME}/apps/image-similarity-all/bathroom/000000*.jpg ${ANALYTICS_ZOO_HOME}/apps/image-similarity/bathroom/000000*.jpg
+   cp ${ANALYTICS_ZOO_HOME}/apps/image-similarity-all/bedroom/000000*.jpg ${ANALYTICS_ZOO_HOME}/apps/image-similarity/bedroom/000000*.jpg
+   cp ${ANALYTICS_ZOO_HOME}/apps/image-similarity-all/hourse/000000*.jpg ${ANALYTICS_ZOO_HOME}/apps/image-similarity/house/000000*.jpg
+   cp ${ANALYTICS_ZOO_HOME}/apps/image-similarity-all/kitchen/000000*.jpg ${ANALYTICS_ZOO_HOME}/apps/image-similarity/kitchen/000000*.jpg
 
    echo "Finished downloading images"
 fi
