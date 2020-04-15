@@ -1,5 +1,3 @@
----
-
 ## Analytics Zoo Examples
 
 ### TensorFlow
@@ -30,7 +28,6 @@
 
 * [Examples for Inference Model](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/model-inference-examples)
 
----
 
 ## Examples for Use Cases
 
