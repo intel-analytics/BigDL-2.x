@@ -16,6 +16,7 @@
 
 import math
 import numpy as np
+import pandas as pd
 
 from abc import ABCMeta, abstractmethod
 
@@ -54,8 +55,9 @@ class ThresholdEstimator:
     def fit(self,
             y,
             yhat,
-            mode="uniform",
-            ratio=0.01
+            mode="default",
+            ratio=0.01,
+            dist_measure=EuclideanDistance()
             ):
         """
         fit the y and yhat and find the proper threshold
@@ -67,7 +69,19 @@ class ThresholdEstimator:
         :param ratio: the ratio of anomaly to consider as anomaly.
         :return: the threshold
         """
-        pass
+        assert y.shape == yhat.shape
+        if len(y.shape) < 2 or (len(y.shape)==2 and y.shape[-1]==1):
+            if mode=="default":
+                diff = [dist_measure.distance(m, n) for m, n in zip (y, yhat)]
+                import pandas as pd
+                diff = pd.Series(diff)
+                number_of_outliers = int(ratio * len(diff))
+                threshold = diff.nlargest(number_of_outliers).min()
+                return threshold
+            else:
+                raise Exception("Does not support", mode)
+        else:
+            raise Exception("Does not support Sample with more than 1 dimension")
 
 
 class DetectorBase(metaclass=ABCMeta):
@@ -112,10 +126,12 @@ class ThresholdDetector(DetectorBase):
             4. a tuple (min, max) min and max tensors, same shape as y, yhat is ignored in this case
         :return: the anomaly values indexes in the samples, i.e. num_samples dimension.
         """
+        self.threshold = threshold
+        self.dist_measure=dist_measure
         if isinstance(threshold, int) or \
                 isinstance(threshold, float):
-            self._check_all_distance(y, yhat, threshold)
-        elif isinstance(threshold, np.array):
+            return self._check_all_distance(y, yhat)
+        elif isinstance(threshold, np.ndarray):
             if len(threshold.shape) == 2:
                 self._check_per_dim_distance(y, yhat, threshold)
             elif len(threshold.shape) == 1:
@@ -133,8 +149,13 @@ class ThresholdDetector(DetectorBase):
                 "threshold shape", str(threshold),
                 "is not valid")
 
-    def _check_all_distance(self, y, yhat, threshold):
-        pass
+    def _check_all_distance(self, y, yhat):
+        index = []
+        for i in range(y.shape[0]):
+            diff = self.dist_measure.distance(y[i], yhat[i])
+            if diff >= self.threshold:
+                index.append(i)
+        return index
 
     def _check_per_dim_distance(self, y, yhat, threshold):
         pass
