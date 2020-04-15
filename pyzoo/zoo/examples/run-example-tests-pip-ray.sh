@@ -38,7 +38,7 @@ if [ -e "data" ];
 then
   rm -rf data
 fi
-execute_ray_test lenet_mnist ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/mxnet/lenet_mnist.py -e 1 -b 256
+execute_ray_test lenet_mnist ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/mxnet/lenet_mnist.py -e 1 -b 256 -n 1
 rm -rf data
 time5=$?
 

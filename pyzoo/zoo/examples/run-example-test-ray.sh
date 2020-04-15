@@ -46,7 +46,7 @@ if [ -e "data" ];
 then
   rm -rf data
 fi
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/mxnet/lenet_mnist.py -e 1 -b 256
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/mxnet/lenet_mnist.py -e 1 -b 256 -n 1
 rm -rf data
 now=$(date "+%s")
 time5=$((now-start))
