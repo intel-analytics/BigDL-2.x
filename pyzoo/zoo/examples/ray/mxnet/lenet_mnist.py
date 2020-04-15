@@ -31,6 +31,10 @@ def get_data_iters(config, kv):
 
     # In order to avoid conflict where multiple workers on the same node download and
     # zip data under the same location, here we let each worker have its own folder.
+
+    # Not using mxnet.test_utils.get_mnist_iterator directly because data path is
+    # hard-coded in this function.
+
     # In practice, data is supposed to be stored on a file system accessible to workers on
     # all nodes, for example, on HDFS or S3.
     maybe_download("mnist.zip", "worker" + str(kv.rank),
@@ -38,6 +42,7 @@ def get_data_iters(config, kv):
     if not os.path.isdir("worker" + str(kv.rank) + "/data"):
         with zipfile.ZipFile("worker" + str(kv.rank) + "/mnist.zip") as zf:
             zf.extractall("worker" + str(kv.rank) + "/data")
+
     train_iter = mx.io.MNISTIter(
         image="worker" + str(kv.rank) + "/data/train-images-idx3-ubyte",
         label="worker" + str(kv.rank) + "/data/train-labels-idx1-ubyte",
@@ -47,7 +52,6 @@ def get_data_iters(config, kv):
         flat=False,
         num_parts=kv.num_workers,
         part_index=kv.rank)
-
     val_iter = mx.io.MNISTIter(
         image="worker" + str(kv.rank) + "/data/t10k-images-idx3-ubyte",
         label="worker" + str(kv.rank) + "/data/t10k-labels-idx1-ubyte",
@@ -106,8 +110,6 @@ def get_metrics(config):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Train a LeNet model for handwritten digit recognition.')
-    parser.add_argument('--data_path', type=str, default="data",
-                        help='The path to download MNIST dataset.')
     parser.add_argument('--hadoop_conf', type=str,
                         help='The path to the hadoop configuration folder. Required if you '
                              'wish to run on yarn clusters. Otherwise, run in local mode.')
