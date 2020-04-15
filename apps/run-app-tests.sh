@@ -36,7 +36,7 @@ fi
 
 if [ $RUN_PART1 = 1 ]; then
 echo "#1 start app test for anomaly-detection-nyc-taxi"
-timer
+#timer
 start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/anomaly-detection-nyc-taxi
 
