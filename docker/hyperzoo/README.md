@@ -248,7 +248,7 @@ Before starting the cluster serving job, please also modify the config.yaml to c
 nano /opt/cluster-serving/config.yaml
 ```
 
-After that, you can start the cluster-serving job:
+After that, you can start the cluster-serving job and submit the streaming job on K8S cluster:
 ```bash
 ${SPARK_HOME}/bin/spark-submit \
   --master ${RUNTIME_SPARK_MASTER} \
