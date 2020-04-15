@@ -36,160 +36,160 @@ fi
 
 if [ $RUN_PART1 = 1 ]; then
 echo "#1 start app test for anomaly-detection-nyc-taxi"
+timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/anomaly-detection-nyc-taxi
+
+chmod +x ${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
+
+${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
+sed "s/nb_epoch=30/nb_epoch=15/g" ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/anomaly-detection-nyc-taxi.py >${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/tmp_test.py
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-cores 2  \
+        --driver-memory 12g  \
+        --total-executor-cores 2  \
+        --executor-cores 2  \
+        --executor-memory 12g \
+        --conf spark.akka.frameSize=64 \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/tmp_test.py \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/tmp_test.py
+now=$(date "+%s")
+time1=$((now-start))
+rm ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/tmp_test.py
+echo "#1 anomaly-detection-nyc-taxi time used:$time1 seconds"
+
+echo "#2 start app test for object-detection"
 #timer
-#start=$(date "+%s")
-#${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/anomaly-detection-nyc-taxi
-#
-#chmod +x ${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
-#
-#${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
-#sed "s/nb_epoch=30/nb_epoch=15/g" ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/anomaly-detection-nyc-taxi.py >${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/tmp_test.py
-#${SPARK_HOME}/bin/spark-submit \
-#        --master ${MASTER} \
-#        --driver-cores 2  \
-#        --driver-memory 12g  \
-#        --total-executor-cores 2  \
-#        --executor-cores 2  \
-#        --executor-memory 12g \
-#        --conf spark.akka.frameSize=64 \
-#        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/tmp_test.py \
-#        --properties-file ${ANALYTICS_ZOO_CONF} \
-#        --jars ${ANALYTICS_ZOO_JAR} \
-#        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-#        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-#        ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/tmp_test.py
-#now=$(date "+%s")
-#time1=$((now-start))
-#rm ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/tmp_test.py
-#echo "#1 anomaly-detection-nyc-taxi time used:$time1 seconds"
-#
-#echo "#2 start app test for object-detection"
-##timer
-#start=$(date "+%s")
-#
-#${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/object-detection/object-detection
-#FILENAME="${ANALYTICS_ZOO_HOME}/apps/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model"
-#if [ -f "$FILENAME" ]
-#then
-#    echo "$FILENAME already exists"
-#else
-#    wget $FTP_URI/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
-#fi
-#if [ -f "$FILENAME" ]
-#then
-#    echo "$FILENAME already exists"
-#else
-#    wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
-#fi
-#FILENAME="${ANALYTICS_ZOO_HOME}/apps/object-detection/train_dog.mp4"
-#if [ -f "$FILENAME" ]
-#then
-#    echo "$FILENAME already exists"
-#else
-#    wget $FTP_URI/analytics-zoo-data/apps/object-detection/train_dog.mp4 -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
-#fi
-#if [ -f "$FILENAME" ]
-#then
-#    echo "$FILENAME already exists"
-#else
-#    wget https://s3.amazonaws.com/analytics-zoo-data/train_dog.mp4 -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
-#fi
-#
-#FILENAME="/root/.imageio/ffmpeg/ffmpeg-linux64-v3.3.1"
-#if [ -f "$FILENAME" ]
-#then
-#    echo "$FILENAME already exists"
-#else
-#    wget $FTP_URI/analytics-zoo-data/apps/object-detection/ffmpeg-linux64-v3.3.1 -P /root/.imageio/ffmpeg/
-#fi
-#
-#${SPARK_HOME}/bin/spark-submit \
-#        --master ${MASTER} \
-#        --driver-cores 2  \
-#        --driver-memory 12g  \
-#        --total-executor-cores 2  \
-#        --executor-cores 2  \
-#        --executor-memory 12g \
-#        --conf spark.akka.frameSize=64 \
-#        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/object-detection/object-detection.py  \
-#        --properties-file ${ANALYTICS_ZOO_CONF} \
-#        --jars ${ANALYTICS_ZOO_JAR} \
-#        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-#        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-#        ${ANALYTICS_ZOO_HOME}/apps/object-detection/object-detection.py
-#now=$(date "+%s")
-#time2=$((now-start))
-#echo "#2 object-detection time used:$time2 seconds"
-#
-#echo "#3 start app test for ncf-explicit-feedback"
-##timer
-#start=$(date "+%s")
-#${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/ncf-explicit-feedback
-#sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/ncf-explicit-feedback.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/tmp.py
-#${SPARK_HOME}/bin/spark-submit \
-#        --master ${MASTER} \
-#        --driver-cores 2  \
-#        --driver-memory 12g  \
-#        --total-executor-cores 2  \
-#        --executor-cores 2  \
-#        --executor-memory 12g \
-#        --conf spark.akka.frameSize=64 \
-#        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/tmp.py  \
-#        --properties-file ${ANALYTICS_ZOO_CONF} \
-#        --jars ${ANALYTICS_ZOO_JAR} \
-#        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-#        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-#        ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/tmp.py
-#now=$(date "+%s")
-#time3=$((now-start))
-#rm ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/tmp.py
-#echo "#3 ncf-explicit-feedback time used:$time3 seconds"
-#
-#echo "#4 start app test for wide_n_deep"
-##timer
-#start=$(date "+%s")
-#${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep
-#sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
-#${SPARK_HOME}/bin/spark-submit \
-#        --master ${MASTER} \
-#        --driver-cores 2  \
-#        --driver-memory 12g  \
-#        --total-executor-cores 2  \
-#        --executor-cores 2  \
-#        --executor-memory 12g \
-#        --conf spark.akka.frameSize=64 \
-#        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py  \
-#        --properties-file ${ANALYTICS_ZOO_CONF} \
-#        --jars ${ANALYTICS_ZOO_JAR} \
-#        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-#        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-#        ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
-#now=$(date "+%s")
-#time4=$((now-start))
-#rm ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
-#echo "#4 wide_n_deep time used:$time4 seconds"
-#
-#echo "#5 start app test for using_variational_autoencoder_to_generate_digital_numbers"
-##timer
-#start=$(date "+%s")
-#${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers
-#${SPARK_HOME}/bin/spark-submit \
-#        --master ${MASTER} \
-#        --driver-cores 2  \
-#        --driver-memory 12g  \
-#        --total-executor-cores 2  \
-#        --executor-cores 2  \
-#        --executor-memory 12g \
-#        --conf spark.akka.frameSize=64 \
-#        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers.py \
-#        --properties-file ${ANALYTICS_ZOO_CONF} \
-#        --jars ${ANALYTICS_ZOO_JAR} \
-#        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
-#        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-#        ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers.py
-#now=$(date "+%s")
-#time5=$((now-start))
-#echo "#5 using_variational_autoencoder_to_generate_digital_numbers time used:$time5 seconds"
+start=$(date "+%s")
+
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/object-detection/object-detection
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model"
+if [ -f "$FILENAME" ]
+then
+    echo "$FILENAME already exists"
+else
+    wget $FTP_URI/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
+fi
+if [ -f "$FILENAME" ]
+then
+    echo "$FILENAME already exists"
+else
+    wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
+fi
+FILENAME="${ANALYTICS_ZOO_HOME}/apps/object-detection/train_dog.mp4"
+if [ -f "$FILENAME" ]
+then
+    echo "$FILENAME already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/apps/object-detection/train_dog.mp4 -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
+fi
+if [ -f "$FILENAME" ]
+then
+    echo "$FILENAME already exists"
+else
+    wget https://s3.amazonaws.com/analytics-zoo-data/train_dog.mp4 -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
+fi
+
+FILENAME="/root/.imageio/ffmpeg/ffmpeg-linux64-v3.3.1"
+if [ -f "$FILENAME" ]
+then
+    echo "$FILENAME already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/apps/object-detection/ffmpeg-linux64-v3.3.1 -P /root/.imageio/ffmpeg/
+fi
+
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-cores 2  \
+        --driver-memory 12g  \
+        --total-executor-cores 2  \
+        --executor-cores 2  \
+        --executor-memory 12g \
+        --conf spark.akka.frameSize=64 \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/object-detection/object-detection.py  \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/object-detection/object-detection.py
+now=$(date "+%s")
+time2=$((now-start))
+echo "#2 object-detection time used:$time2 seconds"
+
+echo "#3 start app test for ncf-explicit-feedback"
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/ncf-explicit-feedback
+sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/ncf-explicit-feedback.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/tmp.py
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-cores 2  \
+        --driver-memory 12g  \
+        --total-executor-cores 2  \
+        --executor-cores 2  \
+        --executor-memory 12g \
+        --conf spark.akka.frameSize=64 \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/tmp.py  \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/tmp.py
+now=$(date "+%s")
+time3=$((now-start))
+rm ${ANALYTICS_ZOO_HOME}/apps/recommendation-ncf/tmp.py
+echo "#3 ncf-explicit-feedback time used:$time3 seconds"
+
+echo "#4 start app test for wide_n_deep"
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep
+sed "s/end_trigger=MaxEpoch(10)/end_trigger=MaxEpoch(5)/g" ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/wide_n_deep.py >${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-cores 2  \
+        --driver-memory 12g  \
+        --total-executor-cores 2  \
+        --executor-cores 2  \
+        --executor-memory 12g \
+        --conf spark.akka.frameSize=64 \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py  \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
+now=$(date "+%s")
+time4=$((now-start))
+rm ${ANALYTICS_ZOO_HOME}/apps/recommendation-wide-n-deep/tmp_test.py
+echo "#4 wide_n_deep time used:$time4 seconds"
+
+echo "#5 start app test for using_variational_autoencoder_to_generate_digital_numbers"
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers
+${SPARK_HOME}/bin/spark-submit \
+        --master ${MASTER} \
+        --driver-cores 2  \
+        --driver-memory 12g  \
+        --total-executor-cores 2  \
+        --executor-cores 2  \
+        --executor-memory 12g \
+        --conf spark.akka.frameSize=64 \
+        --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers.py \
+        --properties-file ${ANALYTICS_ZOO_CONF} \
+        --jars ${ANALYTICS_ZOO_JAR} \
+        --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+        ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers.py
+now=$(date "+%s")
+time5=$((now-start))
+echo "#5 using_variational_autoencoder_to_generate_digital_numbers time used:$time5 seconds"
 
 echo "#6 start app test for image-similarity"
 #timer
