@@ -8,7 +8,7 @@
 
 ### Distributed PyTorch on Spark
 
-* [Examples for distributed PyTorch](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/pytorch)
+* [Python examples](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/pytorch)
 
 ### Deep Learning using Spark Dataframe and ML Pipeline
 
@@ -18,11 +18,11 @@
 
 ### RayOnSpark
 
-* [Examples for RayOnSpark](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/ray)
+* [Python examples](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/ray)
 
 ### Cluster Serving
 
-* [Quick Start example for Cluster Serving](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/serving)
+* [Quick Start example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/serving)
 
 ### Inference Model
 
