@@ -1,20 +1,20 @@
 ## Analytics Zoo Examples
 
-### TensorFlow
+### Distributed TensorFlow on Spark
 
-* [Examples for distributed TensorFlow in Python](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/tensorflow/tfpark)
+* [Python examples](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/tensorflow/tfpark)
 
-* [Examples for distributed TensorFlow in Scala](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/tensorflow/tfnet)
+* [Scala examples](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/tensorflow/tfnet)
 
-### PyTorch
+### Distributed PyTorch on Spark
 
 * [Examples for distributed PyTorch](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/pytorch)
 
-### Spark ML
+### Deep Learning using Spark Dataframe and ML Pipeline
 
-* [Examples for Spark ML pipeline in Python](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/nnframes)
+* [Python examples](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/nnframes)
 
-* [Examples for Spark ML pipeline in Scala](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/nnframes)
+* [Scala examples](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/nnframes)
 
 ### RayOnSpark
 
