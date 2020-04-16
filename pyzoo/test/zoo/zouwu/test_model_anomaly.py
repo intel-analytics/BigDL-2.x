@@ -121,6 +121,18 @@ class TestZouwuModelAnomaly(ZooTestCase):
                                                               threshold_max))
         assert len(anomaly_indexes) == num_anomaly
 
+    def test_threshold_gaussian(self):
+        sample_num = 500
+        # actual value
+        y_test = np.full(sample_num, 2)
+        mu, sigma, ratio = 3, 0.1, 0.01
+        s = np.random.normal(mu, sigma, sample_num)
+        y = y_test + s
+
+        threshold = ThresholdEstimator().fit(y, y_test, mode="gaussian", ratio=ratio)
+        from scipy.stats import norm
+        assert abs(threshold-norm.ppf(1-ratio)*sigma+mu) < 0.02
+
 
 
 if __name__ == "__main__":

@@ -64,24 +64,23 @@ class ThresholdEstimator:
         :param y: actual values
         :param yhat: predicted values
         :param mode: types of ways to find threshold
-            "uniform" : fit data to a uniform distribution (the percentile way)
+            "default" : fit data to a uniform distribution (the percentile way)
             "gaussian": fit data to a gaussian distribution *TBD
         :param ratio: the ratio of anomaly to consider as anomaly.
         :return: the threshold
         """
         assert y.shape == yhat.shape
-        if len(y.shape) < 2 or (len(y.shape)==2 and y.shape[-1]==1):
-            if mode=="default":
-                diff = [dist_measure.distance(m, n) for m, n in zip (y, yhat)]
-                import pandas as pd
-                diff = pd.Series(diff)
-                number_of_outliers = int(ratio * len(diff))
-                threshold = diff.nlargest(number_of_outliers).min()
-                return threshold
-            else:
-                raise Exception("Does not support", mode)
+        diff = [dist_measure.distance(m, n) for m, n in zip(y, yhat)]
+        if mode=="default":
+            threshold=np.percentile(diff, ratio*100)
+            return threshold
+        elif mode=="gaussian":
+            from scipy.stats import norm
+            mu, sigma = norm.fit(diff)
+            t=norm.ppf(1-ratio)
+            return t*sigma+mu
         else:
-            raise Exception("Does not support Sample with more than 1 dimension")
+            raise Exception("Does not support", mode)
 
 
 class DetectorBase(metaclass=ABCMeta):
@@ -142,7 +141,8 @@ class ThresholdDetector(DetectorBase):
                         threshold.shape), "is not valid")
         elif isinstance(threshold, tuple) \
                 and len(threshold) == 2 \
-                and threshold.shape == y.shape:
+                and threshold[0].shape == y.shape[1:] \
+                and threshold[-1].shape == y.shape[1:]:
             return self._check_range(y, threshold)
         else:
             raise ValueError(
@@ -164,4 +164,8 @@ class ThresholdDetector(DetectorBase):
         pass
 
     def _check_range(self, y, threshold):
-        pass
+        min_diff = y - threshold[0]
+        anomaly_index = set(np.where(min_diff < 0)[0])
+        max_diff = y - threshold[1]
+        anomaly_index.update(np.where(max_diff > 0)[0])
+        return list(anomaly_index)
