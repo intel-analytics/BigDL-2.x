@@ -37,9 +37,11 @@ if sys.version >= '3':
 
 class TorchModel(Layer):
     """
-    TorchNet wraps a TorchScript model as a single layer, thus the Pytorch model can be used for
+    TorchModel wraps a PyTorch model as a single layer, thus the PyTorch model can be used for
     distributed inference or training.
-    :param path: path to the TorchScript model.
+    The implement of TorchModel is different from TorchNet, this TorchModel is running running
+    pytorch model in an embedding Cpython interpreter, while TorchNet transfer the pytorch model
+    to TorchScript and run with libtorch.
     """
 
     def __init__(self, module_bytes, weights, bigdl_type="float"):
@@ -50,6 +52,10 @@ class TorchModel(Layer):
 
     @staticmethod
     def from_pytorch(model):
+        """
+        Create a TorchNet directly from PyTorch model, e.g. model in torchvision.models.
+        :param model: a PyTorch model
+        """
         weights=[]
         for param in model.parameters():
             weights.append(param.view(-1))
@@ -61,8 +67,8 @@ class TorchModel(Layer):
 
 class TorchLoss(Criterion):
     """
-    TorchCriterion wraps a loss function for distributed inference or training.
-    Use TorchCriterion.from_pytorch to initialize.
+    TorchLoss wraps a loss function for distributed inference or training.
+    This TorchLoss should be used with TorchModel.
     """
 
     def __init__(self, criterion_bytes, bigdl_type="float"):
