@@ -23,14 +23,59 @@ import torch
 from pyspark import RDD
 
 from bigdl.nn.layer import Layer
+from bigdl.util.common import JTensor
+from bigdl.nn.criterion import Criterion
 from zoo import getOrCreateSparkContext
 from zoo.common.utils import callZooFunc
 from zoo.feature.image import ImageSet
-from zoo.tfpark.tfnet import to_sample_rdd
+from pyspark.serializers import CloudPickleSerializer
 
 if sys.version >= '3':
     long = int
     unicode = str
+
+
+class TorchModel(Layer):
+    """
+    TorchNet wraps a TorchScript model as a single layer, thus the Pytorch model can be used for
+    distributed inference or training.
+    :param path: path to the TorchScript model.
+    """
+
+    def __init__(self, module_bytes, weights, bigdl_type="float"):
+        weights = JTensor.from_ndarray(weights)
+        self.value = callZooFunc(
+            bigdl_type, self.jvm_class_constructor(), module_bytes, weights)
+        self.bigdl_type = bigdl_type
+
+    @staticmethod
+    def from_pytorch(model):
+        weights=[]
+        for param in model.parameters():
+            weights.append(param.view(-1))
+        flatten_weight = torch.nn.utils.parameters_to_vector(weights).data.numpy()
+        bys = CloudPickleSerializer.dumps(CloudPickleSerializer, model)
+        net = TorchModel(bys, flatten_weight)
+        return net
+
+
+class TorchLoss(Criterion):
+    """
+    TorchCriterion wraps a loss function for distributed inference or training.
+    Use TorchCriterion.from_pytorch to initialize.
+    """
+
+    def __init__(self, criterion_bytes, bigdl_type="float"):
+        """
+        :param bigdl_type:
+        """
+        super(TorchLoss, self).__init__(None, bigdl_type, criterion_bytes)
+
+    @staticmethod
+    def from_pytorch(criterion):
+        bys = CloudPickleSerializer.dumps(CloudPickleSerializer, criterion)
+        net = TorchLoss(bys)
+        return net
 
 
 class TorchNet(Layer):
