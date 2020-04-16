@@ -6,10 +6,12 @@ This Getting Started document provides quick reference information regarding ins
 
 
 ## **1. Try Analytics Zoo**
-Users can easily try Analytics Zoo with Docker or Google Colab with Analytics Zoo package pre-installed. For more information: 
+Users can easily try Analytics Zoo with Docker or Google Colab without installing it. For more information: 
 
 - Check the [Docker User Guide](DockerUserGuide/index.md)
 - Check the [Google Colab Guide page](ProgrammingGuide/run-notebook-colab.md)
+
+Please also check the Analytics Zoo [examples](examples.md) such as distributed TensorFlow, Spark ML pipeline, RayOnSpark, Cluster Serving etc.
 
 ---
 
@@ -30,7 +32,7 @@ Analytics Zoo installation methods are available for Python and Scala users.
 
 
 ## **3. Run Analytics Zoo Applications**
-Analytics Zoo applications can run on remote or cloud resources, such as YARN, K8s, Databricks, or Google Dataproc. Please check the Analytics Zoo [examples](examples.md) such as distributed TensorFlow, Spark ML pipeline, RayOnSpark, Cluster Serving etc. 
+Analytics Zoo applications can run on remote or cloud resources, such as YARN, K8s, Databricks, or Google Dataproc. 
 
 ### 3.1 Run on YARN
 
