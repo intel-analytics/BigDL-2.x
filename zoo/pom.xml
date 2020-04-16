@@ -351,7 +351,7 @@
         <dependency>
             <groupId>com.intel.analytics.zoo</groupId>
             <artifactId>${core.artifactId}</artifactId>
-            <version>0.8.0-SNAPSHOT</version>
+            <version>0.8.0</version>
             <type>${core.dependencyType}</type>
         </dependency>
         <dependency>
