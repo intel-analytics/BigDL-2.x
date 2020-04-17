@@ -157,10 +157,10 @@ class ThresholdDetector(DetectorBase):
         return index
 
     def _check_per_dim_distance(self, y, yhat, threshold):
-        pass
+        raise Exception("Does not support check per dim distance")
 
     def _check_per_sample_distance(self, y, yhat, threshold):
-        pass
+        raise Exception("Does not support check per sample distance")
 
     def _check_range(self, y, threshold):
         min_diff = y - threshold[0]
