@@ -26,7 +26,9 @@
 
 ### Inference Model
 
-* [Examples for Inference Model](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/model-inference-examples)
+* [Python examples](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/openvino)
+
+* [Scala examples](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/streaming)
 
 
 ## Examples for Use Cases
