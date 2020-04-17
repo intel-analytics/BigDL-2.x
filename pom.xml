@@ -7,7 +7,7 @@
     <groupId>com.intel.analytics.zoo</groupId>
     <artifactId>zoo-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.8.0-SNAPSHOT</version>
+    <version>0.9.0-SNAPSHOT</version>
 
     <name>zoo-parent</name>
     <description>A distributed analytics library for Apache Spark.</description>
