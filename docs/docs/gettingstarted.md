@@ -11,7 +11,7 @@ Users can easily try Analytics Zoo with Docker or Google Colab without installin
 - Check the [Docker User Guide](DockerUserGuide/index.md)
 - Check the [Google Colab Guide page](ProgrammingGuide/run-notebook-colab.md)
 
-Please also check the Analytics Zoo [examples](examples.md) such as distributed TensorFlow, Spark ML pipeline, RayOnSpark, Cluster Serving etc.
+Please also check the [examples](examples.md) for various Analytics Zoo features (such as distributed TensorFlow and PyTorch on Spark, DL support in Spark ML pipeline, RayOnSpark, Cluster Serving, AutoML, etc.)
 
 ---
 
