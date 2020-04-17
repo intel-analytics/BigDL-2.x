@@ -82,7 +82,6 @@ class ThresholdEstimator:
         else:
             raise Exception("Does not support", mode)
 
-
 class DetectorBase(metaclass=ABCMeta):
     """
     Base class for detector
