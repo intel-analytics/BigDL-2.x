@@ -62,7 +62,7 @@ See [here](#options) for more configurable options for this example.
 * `--encoderOutputDim` The output dimension of the encoder. Default is 256.
 * `--trainingSplit` The split portion of the data for training. Default is 0.8.
 * `-b` `--batchSize` The number of samples per gradient update. Default is 128.
-* `-e` `--nbEpoch` The number of iterations to train the model. Default is 20.
+* `-e` `--nbEpoch` The number of epochs to train the model. Default is 20.
 * `-l` `--learningRate` The learning rate for the TextClassifier model. Default is 0.01.
 * `-m` `--model` Specify this option only if you want to load an existing TextClassifier model and in this case its path should be provided.
 

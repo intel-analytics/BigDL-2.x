@@ -30,7 +30,6 @@ import argparse
 import gym
 import os
 
-import ray
 from ray.rllib.agents.dqn.dqn import DQNTrainer
 from ray.rllib.agents.dqn.dqn_policy import DQNTFPolicy
 from ray.rllib.agents.ppo.ppo import PPOTrainer
@@ -39,7 +38,7 @@ from ray.rllib.tests.test_multi_agent_env import MultiCartpole
 from ray.tune.logger import pretty_print
 from ray.tune.registry import register_env
 from zoo import init_spark_on_yarn, init_spark_on_local
-from zoo.ray.util.raycontext import RayContext
+from zoo.ray import RayContext
 os.environ["LANG"] = "C.UTF-8"
 
 parser = argparse.ArgumentParser()

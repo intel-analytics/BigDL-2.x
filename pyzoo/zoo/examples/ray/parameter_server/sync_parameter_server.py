@@ -18,15 +18,16 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-import os
-import argparse
-import numpy as np
 
-import ray
+import argparse
+import os
+
 import model
+import numpy as np
+import ray
 
 from zoo import init_spark_on_yarn, init_spark_on_local
-from zoo.ray.util.raycontext import RayContext
+from zoo.ray import RayContext
 
 os.environ["LANG"] = "C.UTF-8"
 parser = argparse.ArgumentParser(description="Run the synchronous parameter "
