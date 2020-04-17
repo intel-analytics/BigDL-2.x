@@ -2,7 +2,7 @@
 Based on Streaming example NetworkWordCount and Zoo text classification example. Network inputs (Strings) are pre-processed and classified by zoo. We applied a simple text classification model based on zoo example.
 
 ## Environment
-* Python 3.5/3.6
+* Python 3.6/3.7
 * Apache Spark 2.x (This version needs to be same with the version you use to build Analytics Zoo)
 * Analytics Zoo ([install analytics-zoo]((https://analytics-zoo.github.io/master/#PythonUserGuide/install/) ) via __pip__ or __download the prebuilt package__.)
 
