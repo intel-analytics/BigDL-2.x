@@ -55,13 +55,13 @@ class TestZouwuModelAnomaly(ZooTestCase):
         horizon = 1
 
         # generate dataframe
-        data = gen_data(feature_num=6, sample_num=100)
+        data = self.gen_data(feature_num=6, sample_num=100)
         # split train and test dataframes
-        train_df, test_df = train_test_split(data, test_num=20, look_back=look_back)
+        train_df, test_df = self.train_test_split(data, test_num=20, look_back=look_back)
 
         # roll data to generate model input
-        x_train, y_train = roll_data(dataset=train_df, look_back=look_back, target_col_indexes=[0])
-        x_test, y_test = roll_data(dataset=test_df, look_back=look_back, target_col_indexes=[0])
+        x_train, y_train = self.roll_data(dataset=train_df, look_back=look_back, target_col_indexes=[0])
+        x_test, y_test = self.roll_data(dataset=test_df, look_back=look_back, target_col_indexes=[0])
 
         # create model, train on train data and predict on test
         lstm_config = {"lstm_1_units": 32, "lstm_2_units": 32, "lr": 0.001}
