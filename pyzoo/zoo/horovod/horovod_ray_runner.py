@@ -92,7 +92,7 @@ def _launch_task_servers(all_host_names, host_rank_to_id, driver_addresses, sett
 
 def _find_common_network_interface(host_to_size, host_rank_to_id, workers, settings):
     all_host_names = [k for k in host_to_size]
-    driver = driver_service.HorovodRunDriverService(len(all_host_names), settings.key)
+    driver = driver_service.HorovodRunDriverService(len(all_host_names), settings.key, settings.nic)
 
     result_ids = _launch_task_servers(all_host_names, host_rank_to_id, driver.addresses(), settings, workers)
 
