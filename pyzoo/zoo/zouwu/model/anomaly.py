@@ -140,6 +140,7 @@ class ThresholdDetector(DetectorBase):
                         threshold.shape), "is not valid")
         elif isinstance(threshold, tuple) \
                 and len(threshold) == 2 \
+                and threshold[0] <= threshold[1] \
                 and threshold[0].shape == y.shape[1:] \
                 and threshold[-1].shape == y.shape[1:]:
             return self._check_range(y, threshold)
@@ -157,10 +158,10 @@ class ThresholdDetector(DetectorBase):
         return index
 
     def _check_per_dim_distance(self, y, yhat, threshold):
-        raise Exception("Does not support check per dim distance")
+        raise NotImplementedError("Does not support check per dim distance")
 
     def _check_per_sample_distance(self, y, yhat, threshold):
-        raise Exception("Does not support check per sample distance")
+        raise NotImplementedError("Does not support check per sample distance")
 
     def _check_range(self, y, threshold):
         min_diff = y - threshold[0]
