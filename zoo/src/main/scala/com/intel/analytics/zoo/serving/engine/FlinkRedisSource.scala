@@ -8,10 +8,11 @@ import org.apache.flink.streaming.api.functions.source.{RichSourceFunction, Sour
 import org.apache.log4j.Logger
 import redis.clients.jedis.{Jedis, JedisPool, StreamEntryID}
 import com.intel.analytics.zoo.serving.ClusterServing.params
+import com.intel.analytics.zoo.serving.utils.{FileUtils, SerParams}
 
 import scala.collection.JavaConversions._
 
-class FlinkRedisSource() extends RichSourceFunction[List[(String, String)]] {
+class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(String, String)]] {
   @volatile var isRunning = true
 
   var redisPool: JedisPool = null
@@ -31,9 +32,7 @@ class FlinkRedisSource() extends RichSourceFunction[List[(String, String)]] {
 
   }
 
-  override def run(sourceContext: SourceFunction.SourceContext[List[(String,String)]]): Unit =
-
-    while (isRunning){
+  override def run(sourceContext: SourceFunction.SourceContext[List[(String,String)]]): Unit = while (isRunning){
     val response = db.xreadGroup(
       "serving",
       "cli",
@@ -53,10 +52,13 @@ class FlinkRedisSource() extends RichSourceFunction[List[(String, String)]] {
       RedisUtils.checkMemory(db, 0.6, 0.5)
       Thread.sleep(10)
     }
+    if (FileUtils.checkStop()) {
+      isRunning = false
+    }
   }
 
   override def cancel(): Unit = {
-    db.close()
+    redisPool.close()
   }
 
 }

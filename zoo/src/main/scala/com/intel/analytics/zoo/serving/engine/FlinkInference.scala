@@ -8,14 +8,17 @@ import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.configuration.Configuration
 import com.intel.analytics.zoo.serving.{PostProcessing, PreProcessing}
 import com.intel.analytics.zoo.serving.ClusterServing.params
+import org.apache.log4j.Logger
 
 
-class FlinkInference extends RichMapFunction[List[(String, String)], List[(String, String)]] {
+class FlinkInference(params: SerParams) extends RichMapFunction[List[(String, String)], List[(String, String)]] {
   var model: InferenceModel = null
   var t: Tensor[Float] = null
+  var logger: Logger = null
 
   override def open(parameters: Configuration): Unit = {
     model = params.model
+    logger = Logger.getLogger(getClass)
     t = if (params.chwFlag) {
       Tensor[Float](params.coreNum, params.C, params.H, params.W)
     } else {
@@ -24,6 +27,7 @@ class FlinkInference extends RichMapFunction[List[(String, String)], List[(Strin
   }
 
   override def map(in: List[(String, String)]): List[(String, String)] = {
+    val t1 = System.nanoTime()
     val preProcessed = in.grouped(params.coreNum).flatMap(itemBatch => {
       itemBatch.indices.toParArray.map(i => {
         val uri = itemBatch(i)._1
@@ -35,8 +39,10 @@ class FlinkInference extends RichMapFunction[List[(String, String)], List[(Strin
     val postProcessed = preProcessed.grouped(params.coreNum).flatMap(pathByteBatch => {
       val thisBatchSize = pathByteBatch.size
 
-      (0 until thisBatchSize).toParArray
-        .foreach(i => t.select(1, i + 1).copy(pathByteBatch(i)._2))
+
+
+      (0 until thisBatchSize).toParArray.foreach(i =>
+        t.select(1, i + 1).copy(pathByteBatch(i)._2))
 
       val thisT = if (params.chwFlag) {
         t.resize(thisBatchSize, params.C, params.H, params.W)
@@ -64,7 +70,10 @@ class FlinkInference extends RichMapFunction[List[(String, String)], List[(Strin
         val value = PostProcessing(result.select(1, i + 1), params.filter)
         (pathByteBatch(i)._1, value)
       })
-    })
-    postProcessed.toList
+    }).toList
+
+    val t2 = System.nanoTime()
+    logger.info(s"${postProcessed.size} records backend time ${(t2 - t1) / 1e9} s")
+    postProcessed
   }
 }
