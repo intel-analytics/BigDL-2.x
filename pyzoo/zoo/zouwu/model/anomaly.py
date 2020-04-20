@@ -16,6 +16,7 @@
 
 import math
 import numpy as np
+import pandas as pd
 
 from abc import ABCMeta, abstractmethod
 
@@ -54,21 +55,32 @@ class ThresholdEstimator:
     def fit(self,
             y,
             yhat,
-            mode="uniform",
-            ratio=0.01
+            mode="default",
+            ratio=0.01,
+            dist_measure=EuclideanDistance()
             ):
         """
         fit the y and yhat and find the proper threshold
         :param y: actual values
         :param yhat: predicted values
         :param mode: types of ways to find threshold
-            "uniform" : fit data to a uniform distribution (the percentile way)
+            "default" : fit data to a uniform distribution (the percentile way)
             "gaussian": fit data to a gaussian distribution *TBD
         :param ratio: the ratio of anomaly to consider as anomaly.
         :return: the threshold
         """
-        pass
-
+        assert y.shape == yhat.shape
+        diff = [dist_measure.distance(m, n) for m, n in zip(y, yhat)]
+        if mode=="default":
+            threshold=np.percentile(diff, ratio*100)
+            return threshold
+        elif mode=="gaussian":
+            from scipy.stats import norm
+            mu, sigma = norm.fit(diff)
+            t=norm.ppf(1-ratio)
+            return t*sigma+mu
+        else:
+            raise Exception("Does not support", mode)
 
 class DetectorBase(metaclass=ABCMeta):
     """
@@ -96,7 +108,7 @@ class ThresholdDetector(DetectorBase):
                y,
                yhat=None,
                threshold=math.inf,
-               dist_measure: Distance = EuclideanDistance()):
+               dist_measure=EuclideanDistance()):
         """
         Detect anomalies. Each sample can have 1 or more dimensions.
         :param dist_measure:
@@ -112,10 +124,12 @@ class ThresholdDetector(DetectorBase):
             4. a tuple (min, max) min and max tensors, same shape as y, yhat is ignored in this case
         :return: the anomaly values indexes in the samples, i.e. num_samples dimension.
         """
+        self.threshold = threshold
+        self.dist_measure=dist_measure
         if isinstance(threshold, int) or \
                 isinstance(threshold, float):
-            self._check_all_distance(y, yhat, threshold)
-        elif isinstance(threshold, np.array):
+            return self._check_all_distance(y, yhat)
+        elif isinstance(threshold, np.ndarray):
             if len(threshold.shape) == 2:
                 self._check_per_dim_distance(y, yhat, threshold)
             elif len(threshold.shape) == 1:
@@ -126,21 +140,31 @@ class ThresholdDetector(DetectorBase):
                         threshold.shape), "is not valid")
         elif isinstance(threshold, tuple) \
                 and len(threshold) == 2 \
-                and threshold.shape == y.shape:
+                and threshold[0].shape == y.shape[1:] \
+                and threshold[-1].shape == y.shape[1:]:
             return self._check_range(y, threshold)
         else:
             raise ValueError(
                 "threshold shape", str(threshold),
                 "is not valid")
 
-    def _check_all_distance(self, y, yhat, threshold):
-        pass
+    def _check_all_distance(self, y, yhat):
+        index = []
+        for i in range(y.shape[0]):
+            diff = self.dist_measure.distance(y[i], yhat[i])
+            if diff >= self.threshold:
+                index.append(i)
+        return index
 
     def _check_per_dim_distance(self, y, yhat, threshold):
-        pass
+        raise Exception("Does not support check per dim distance")
 
     def _check_per_sample_distance(self, y, yhat, threshold):
-        pass
+        raise Exception("Does not support check per sample distance")
 
     def _check_range(self, y, threshold):
-        pass
+        min_diff = y - threshold[0]
+        anomaly_index = set(np.where(min_diff < 0)[0])
+        max_diff = y - threshold[1]
+        anomaly_index.update(np.where(max_diff > 0)[0])
+        return list(anomaly_index)
