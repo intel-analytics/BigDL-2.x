@@ -140,7 +140,7 @@ def _find_common_network_interface(host_to_size, host_rank_to_id, workers, setti
         driver.shutdown()
 
 
-class HorovodRayRunner:
+class HorovodRayTrainer:
 
     # todo check whether horovod is built with gloo
     def __init__(self, ray_ctx, verbose=None, start_timeout=None):
