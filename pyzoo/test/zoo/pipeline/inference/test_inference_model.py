@@ -97,27 +97,27 @@ class TestInferenceModel(ZooTestCase):
             extensions_config_path=None)
         model2.predict(input_data)
 
-    def test_load_tf_openvino_ic(self):
-        local_path = self.create_temp_dir()
-        print(local_path)
-        url = data_url + "/models/resnet_v1_50_2016_08_28.tar.gz"
-        file_abs_path = maybe_download("resnet_v1_50_2016_08_28.tar.gz", local_path, url)
-        tar = tarfile.open(file_abs_path, "r:gz")
-        print("Extracting %s to %s" % (file_abs_path, local_path))
-        tar.extractall(local_path)
-        tar.close()
-        model = InferenceModel(3)
-        model.load_tf_image_classification_as_openvino(
-            model_path=None,
-            image_classification_model_type="resnet_v1_50",
-            checkpoint_path=local_path + "/resnet_v1_50.ckpt",
-            input_shape=[4, 224, 224, 3],
-            if_reverse_input_channels=True,
-            mean_values=[123.68, 116.78, 103.94],
-            scale=1)
-        print(model)
-        input_data = np.random.random([4, 1, 224, 224, 3])
-        model.predict(input_data)
+    # def test_load_tf_openvino_ic(self):
+    #     local_path = self.create_temp_dir()
+    #     print(local_path)
+    #     url = data_url + "/models/resnet_v1_50_2016_08_28.tar.gz"
+    #     file_abs_path = maybe_download("resnet_v1_50_2016_08_28.tar.gz", local_path, url)
+    #     tar = tarfile.open(file_abs_path, "r:gz")
+    #     print("Extracting %s to %s" % (file_abs_path, local_path))
+    #     tar.extractall(local_path)
+    #     tar.close()
+    #     model = InferenceModel(3)
+    #     model.load_tf_image_classification_as_openvino(
+    #         model_path=None,
+    #         image_classification_model_type="resnet_v1_50",
+    #         checkpoint_path=local_path + "/resnet_v1_50.ckpt",
+    #         input_shape=[4, 224, 224, 3],
+    #         if_reverse_input_channels=True,
+    #         mean_values=[123.68, 116.78, 103.94],
+    #         scale=1)
+    #     print(model)
+    #     input_data = np.random.random([4, 1, 224, 224, 3])
+    #     model.predict(input_data)
 
 
 if __name__ == "__main__":
