@@ -16,17 +16,24 @@
 
 package com.intel.analytics.zoo.serving
 
-import com.intel.analytics.bigdl.python.api.{JTensor, PythonBigDL}
-import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import java.io.IOException
+
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.feature.image.OpenCVMethod
-import org.apache.spark.bigdl.api.python.BigDLSerDe
 import org.opencv.imgcodecs.Imgcodecs
+import org.apache.arrow.memory.RootAllocator
+import org.apache.arrow.vector.ipc.ArrowFileReader
+import org.apache.arrow.vector.util.ByteArrayReadableSeekableByteChannel
+
+import scala.collection.mutable.ArrayBuffer
+import scala.util.control.Breaks._
+import com.intel.analytics.bigdl.utils.T
 
 class PreProcessing(s: String) {
-  def bytesToTensor(dataType: String, chwFlag: Boolean = true): Tensor[Float] = {
+  def bytesToTensor(dataType: String, chwFlag: Boolean = true): Activity = {
     val b = java.util.Base64.getDecoder.decode(s)
-
     val result = dataType match {
       case "image" =>
         val mat = OpenCVMethod.fromImageBytes(b, Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
@@ -43,14 +50,53 @@ class PreProcessing(s: String) {
           imageTensor
         }
       case "tensor" =>
-        val tensorLoad = BigDLSerDe.loads(b)
-        tensorLoad match {
-          case jTensor: JTensor =>
-            PythonBigDL.ofFloat().toTensor(jTensor)
-          case _ =>
-            throw new Error("Unsupported dataType")
+        val alloc = new RootAllocator(Integer.MAX_VALUE)
+        val MAX_ALLOC = 3 * 1024 * 1024 * 1024L;
+        val alloc4tensor = alloc.newChildAllocator("tensor" , 0 , MAX_ALLOC);
+        val reader = new ArrowFileReader(new ByteArrayReadableSeekableByteChannel(b), alloc4tensor)
+
+        val dataList = new ArrayBuffer[Tensor[Float]]
+
+        try {
+          while (reader.loadNextBatch) {
+            var shape = new ArrayBuffer[Int]()
+            val vsr = reader.getVectorSchemaRoot
+            val accessor = vsr.getVector("0")
+            var idx = 0
+            val valueCount = accessor.getValueCount
+            breakable {
+              while (idx < valueCount) {
+                val data = accessor.getObject(idx).asInstanceOf[Float].toInt
+                idx += 1
+                if (data == Integer.MAX_VALUE) {
+                  break
+                }
+                shape += data
+              }
+            }
+            val storage = new Array[Float](valueCount - idx)
+
+            for (i <- idx until valueCount) {
+              storage(i-idx) = accessor.getObject(i).asInstanceOf[Float]
+            }
+
+            val dataTensor = Tensor[Float](storage, shape.toArray)
+            dataList += dataTensor
+          }
+        } catch {
+          case ex: IOException =>
+            // TODO
+        } finally {
+          reader.close()
         }
-      case _ => throw new Error("Unsupported dataType")
+
+        if (dataList.isEmpty) {
+          Tensor[Float]()
+        } else if (dataList.length == 1) {
+          dataList(0)
+        } else {
+          T.array(dataList.toArray)
+        }
     }
 
     result
@@ -58,9 +104,13 @@ class PreProcessing(s: String) {
 }
 object PreProcessing {
   def apply(s: String, dataType: String = "image", chwFlag: Boolean = true,
-            args: Array[Int] = Array()): Tensor[Float] = {
+            args: Array[Int] = Array()): Activity = {
     val cls = new PreProcessing(s)
+//    val startTime: Long = System.currentTimeMillis
     val t = cls.bytesToTensor(dataType, chwFlag)
+//    val endTime: Long = System.currentTimeMillis
+//    val diff = endTime - startTime
+//    System.out.println("time ：" + diff + "ms")
     for (op <- args) {
       // new processing features add to here
     }

@@ -41,11 +41,10 @@ def run(path):
     #     img = cv2.resize(img, (224, 224))
     #     input_api.enqueue_image(p, img)
 
-    # for i in range(0, 1000):
-    sample = np.array([1, 1193])
-    print(sample)
-    jtensor = JTensor.from_ndarray(sample)
-    input_api.enqueue_tensor("test", jtensor)
+    for i in range(0, 1000):
+        # sample = np.array([1, 1193])
+        sample = [np.array([0]), np.array([661]), np.array([0]), np.array([5]), np.array([0])]
+        input_api.enqueue_tensor("test", sample)
 
     time.sleep(10)
 
@@ -55,8 +54,9 @@ def run(path):
         output = "image: " + k + ", classification-result:"
         tmp_list = json.loads(result[k])
         for record in range(len(tmp_list)):
-            output += " class: " + str(tmp_list[record][0]) \
-                      + "'s prob: " + str(tmp_list[record][1])
+            # output += " class: " + str(tmp_list[record][0]) \
+            #           + "'s prob: " + str(tmp_list[record][1])
+            output += " result: " + str(tmp_list[record])
         print(output)
 
 

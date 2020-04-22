@@ -80,7 +80,7 @@ class ClusterServingHelper {
   var blasFlag: Boolean = false
 
   var dataType: String = null
-  var dataShape = Array[Int]()
+  var dataShape = Array[Array[Int]]()
   var filter: String = "topN"
 
   var logFile: FileWriter = null
@@ -133,18 +133,19 @@ class ClusterServingHelper {
     val shapeList = dataType match {
       case "image" =>
         val shape = getYaml(dataConfig, "image_shape", "3,224,224")
-        val shapeList = shape.split(",")
+        val shapeList = shape.split(",").map(x => x.trim.toInt)
         require(shapeList.size == 3, "Your data shape must has dimension as 3")
-        shapeList
+        Array(shapeList)
       case "tensor" =>
         val shape = getYaml(dataConfig, "tensor_shape", null)
-        shape.split(",")
+        shape.split("\\|")
+          .map(tensorShape => tensorShape.split(",").map(x => x.trim.toInt))
       case _ =>
         logError("Invalid data type, please check your data_type")
         null
     }
     for (i <- shapeList) {
-      dataShape = dataShape :+ i.trim.toInt
+      dataShape = dataShape :+ i
     }
 
     filter = getYaml(dataConfig, "filter", "topN(1)")

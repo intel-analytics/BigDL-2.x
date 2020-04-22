@@ -19,6 +19,7 @@ package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
 import com.intel.analytics.zoo.serving.utils._
 import org.apache.log4j.{Level, Logger}
@@ -29,7 +30,9 @@ import redis.clients.jedis.Jedis
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
-import org.apache.spark.util.{LongAccumulator}
+import org.apache.spark.util.LongAccumulator
+
+import scala.collection.mutable.ArrayBuffer
 
 object ClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -61,7 +64,8 @@ object ClusterServing {
     val dataShape = helper.dataShape
 
     val (flagC, flagW, flagH, streamKey, dataField) = if (dataType == "image") {
-      (helper.dataShape(0), helper.dataShape(1), helper.dataShape(2), "image_stream", "image")
+      (helper.dataShape(0)(0), helper.dataShape(0)(1), helper.dataShape(0)(2), "image_stream",
+        "image")
     } else {
       (0, 0, 0, "tensor_stream", "tensor")
     }
@@ -178,7 +182,8 @@ object ClusterServing {
                   chwFlag)
 
                 val localPartitionModel = bcModel.value
-                val result = localPartitionModel.doPredict(tensors.addSingletonDimension())
+                // TODO
+                val result = localPartitionModel.doPredict(tensors.toTensor.addSingletonDimension())
                   .toTensor.squeeze()
 
                 val value = PostProcessing(result, filter)
@@ -215,21 +220,51 @@ object ClusterServing {
                 Tensor[Float](batchSize, flagH, flagW, flagC)
               }
             } else {
-              val sizes = batchSize +: dataShape
-              Tensor[Float](sizes)
+              if (dataShape.length == 1) {
+                val sizes = batchSize +: dataShape(0)
+                Tensor[Float](sizes)
+              } else {
+                val dataList = new ArrayBuffer[Tensor[Float]]
+                for (shape <- dataShape) {
+                  val sizes = batchSize +: shape
+                  dataList += Tensor[Float](sizes)
+                }
+                T.array(dataList.toArray)
+              }
             }
 
             pathBytes.grouped(batchSize).flatMap(pathByteBatch => {
               val thisBatchSize = pathByteBatch.size
               acc.add(thisBatchSize)
-              (0 until thisBatchSize).toParArray
-                .foreach(i => t.select(1, i + 1).copy(pathByteBatch(i)._2))
-
-              val x = if (modelType == "openvino") {
-                t.addSingletonDimension()
+              val x = if (t.isTensor) {
+                val tTensor = t.toTensor
+                (0 until thisBatchSize).toParArray
+                  .foreach(i => tTensor.select(1, i + 1).copy(pathByteBatch(i)._2.toTensor))
+                if (modelType == "openvino") {
+                  tTensor.addSingletonDimension()
+                } else {
+                  tTensor
+                }
               } else {
-                t
+                val tTable = t.toTable
+                (0 until thisBatchSize).toParArray
+                  .foreach( i => {
+                    val dataTable = pathByteBatch(i)._2.toTable
+                    tTable.keySet.foreach(key => {
+                      tTable(key).asInstanceOf[Tensor[Float]].select(1, i + 1)
+                        .copy(dataTable(key).asInstanceOf[Tensor[Float]])
+                    })
+                  })
+                val se = tTable.toSeq
+                tTable
               }
+
+
+//              val x = if (modelType == "openvino") {
+//                t.addSingletonDimension()
+//              } else {
+//                t
+//              }
               /**
                * addSingletonDimension method will modify the
                * original Tensor, thus if reuse of Tensor is needed,
@@ -238,7 +273,11 @@ object ClusterServing {
               val result = localModel.doPredict(x)
               if (result.isTensor) {
                 val res = if (modelType == "openvino") {
-                  t.squeeze(1)
+                  // TODO: Activity support
+//                  t.squeeze(1)
+                  if (t.isTensor) {
+                    t.toTensor.squeeze(1)
+                  }
                   result.toTensor.squeeze()
                 } else {
                   result.toTensor
@@ -257,7 +296,7 @@ object ClusterServing {
                   value.append("[")
                   res.keySet.foreach(key => {
                     value.append(PostProcessing(
-                      res(key).asInstanceOf[Tensor[_]].toTensor.select(1, i + 1)))
+                      res(key).asInstanceOf[Tensor[Float]].select(1, i + 1)))
                     value.append(separator)
                   })
                   value.deleteCharAt(value.length - 1)

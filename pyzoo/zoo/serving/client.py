@@ -25,7 +25,9 @@ from bigdl.util.common import JTensor
 from pyspark.serializers import CloudPickleSerializer
 import json
 from json import JSONEncoder
-from numproto import ndarray_to_proto
+import ndarray_pb2
+import pyarrow as pa
+import pandas as pd
 
 
 class API:
@@ -107,35 +109,43 @@ class InputQueue(API):
         # force resize here to avoid input image shape inconsistent
         # if the shape is consistent, it would not affect the data
         img = cv2.resize(img, (self.h, self.w))
-        # print(img.shape)
-
-        start = time.clock()
         data = cv2.imencode(".jpg", img)[1]
-        # da = JTensor.from_ndarray(img)
-        # data = CloudPickleSerializer.dumps(CloudPickleSerializer, da)
-        # img_encoded = json.dumps(img.tolist())
-        img_encoded = ndarray_to_proto(img)
-        # print(img_encoded)
-        # print(encodedData)
 
-        # img_encoded = self.base64_encode_image(serialized)
+        img_encoded = self.base64_encode_image(data)
 
         d = {"uri": uri, "image": img_encoded}
-        mid = time.clock()
-        print("encode time: %.2gs" % (mid-start))
+
         self.__enqueue_data("image_stream", d)
-        end = time.clock()
-        print("%.2gs" % (end-start))
 
     def enqueue_tensor(self, uri, data):
+        # start = time.clock()
         if isinstance(data, np.ndarray):
-            data = JTensor.from_ndarray(data)
-        if not isinstance(data, JTensor):
-            raise Exception("Your input is invalid, only JTensor and ndarray are allowed.")
-        bys = CloudPickleSerializer.dumps(CloudPickleSerializer, data)
-        tensor_encoded = self.base64_encode_image(bys)
+            # tensor
+            data = [data]
+        if not isinstance(data, list):
+            raise Exception("Your input is invalid, only List of ndarray and ndarray are allowed.")
+
+        sink = pa.BufferOutputStream()
+        writer = None
+        for arr in data:
+            shape = np.array(arr.shape, dtype="float32")
+            arr = arr.astype("float32")
+            data = np.concatenate([shape, np.array([2147483647], dtype="float32"), arr.flatten()])
+            arrow_arr = pa.array(data)
+            batch = pa.RecordBatch.from_arrays([arrow_arr], ["0"])
+            if writer is None:
+                # initialize
+                writer = pa.RecordBatchFileWriter(sink, batch.schema)
+            writer.write_batch(batch)
+
+        writer.close()
+        buf = sink.getvalue()
+        b = buf.to_pybytes()
+        tensor_encoded = self.base64_encode_image(b)
         d = {"uri": uri, "tensor": tensor_encoded}
         self.__enqueue_data("tensor_stream", d)
+        # end = time.clock()
+        # print("%.2gs" % (end-start))
 
     def __enqueue_data(self, stream_name, data):
         inf = self.db.info()
