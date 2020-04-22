@@ -23,6 +23,7 @@ from horovod.run.common.util import settings as hvd_settings
 from horovod.run.common.util import timeout, secret
 from horovod.run.task import task_service
 
+
 def make_horovod_worker(cores_per_node):
 
     # todo how to make user func honor this resource restriction
@@ -94,7 +95,7 @@ def _find_common_network_interface(host_to_size, host_rank_to_id, workers, setti
     all_host_names = [k for k in host_to_size]
     driver = driver_service.HorovodRunDriverService(len(all_host_names), settings.key, settings.nic)
 
-    result_ids = _launch_task_servers(all_host_names, host_rank_to_id, driver.addresses(), settings, workers)
+    _launch_task_servers(all_host_names, host_rank_to_id, driver.addresses(), settings, workers)
 
     # the following code is copied and modified from horovod.run._driver_fn
     try:
@@ -186,6 +187,10 @@ class HorovodRayTrainer:
             "HOROVOD_GLOO_IFACE": iface,
             "PYTHONUNBUFFERED": '1',
         }
+
+        for key in os.environ:
+            if key.starswith("HOROVOD"):
+                common_envs[key] = os.environ[key]
 
         # todo support other Horovod envs
         self.per_worker_envs = [common_envs.copy() for _ in range(self.num_nodes)]

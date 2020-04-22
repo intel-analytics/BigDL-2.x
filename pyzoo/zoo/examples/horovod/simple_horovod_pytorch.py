@@ -1,3 +1,5 @@
+# This file is adapted from https://github.com/horovod/horovod/blob/master/examples/pytorch_mnist.py
+
 from __future__ import print_function
 import argparse
 import torch.nn as nn
@@ -7,15 +9,15 @@ from torchvision import datasets, transforms
 import torch.utils.data.distributed
 import horovod.torch as hvd
 
-# Temporary patch this script until the MNIST dataset download issue get resolved
-# https://github.com/pytorch/vision/issues/1938
-from zoo.horovod.horovod_ray_runner import HorovodRayTrainer
+from zoo.horovod.horovod_ray_trainer import HorovodRayTrainer
 
 from zoo import init_spark_on_yarn, init_spark_on_local
 from zoo.ray.util.raycontext import RayContext
 
 
 def run_horovod():
+    # Temporary patch this script until the MNIST dataset download issue get resolved
+    # https://github.com/pytorch/vision/issues/1938
     import urllib
     try:
         # For python 2
@@ -33,13 +35,11 @@ def run_horovod():
     test_batch_size = 1000
     epochs = 10
     lr = 0.01
-    momentum=0.5
+    momentum = 0.5
     seed = 43
     log_interval = 10
     fp16_allreduce = False
     use_adasum = False
-
-
 
     # Horovod: initialize library.
     hvd.init()
@@ -216,8 +216,6 @@ if __name__ == "__main__":
             sc=sc,
             object_store_memory=args.object_store_memory)
         ray_ctx.init()
-        ray_ctx.num_ray_nodes = 2
-        ray_ctx.ray_node_cpu_cores = ray_ctx.ray_node_cpu_cores // 2
 
     runner = HorovodRayTrainer(ray_ctx)
     runner.run(func=run_horovod)
