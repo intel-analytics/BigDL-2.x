@@ -18,16 +18,10 @@ import base64
 import cv2
 import yaml
 import redis
-import datetime
 import time
 import numpy as np
-from bigdl.util.common import JTensor
-from pyspark.serializers import CloudPickleSerializer
-import json
 from json import JSONEncoder
-import ndarray_pb2
 import pyarrow as pa
-import pandas as pd
 
 
 class API:
