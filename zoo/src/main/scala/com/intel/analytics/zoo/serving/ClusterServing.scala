@@ -9,8 +9,7 @@ import scala.collection.JavaConverters._
 
 object ClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
-  Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.ERROR)
-  Logger.getLogger("serving").setLevel(Level.INFO)
+  Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
   var params: SerParams = null
 
   def main(args: Array[String]): Unit = {

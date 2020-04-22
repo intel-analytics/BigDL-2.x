@@ -28,6 +28,8 @@ class FlinkInference(params: SerParams) extends RichMapFunction[List[(String, St
 
   override def map(in: List[(String, String)]): List[(String, String)] = {
     val t1 = System.nanoTime()
+
+
     val preProcessed = in.grouped(params.coreNum).flatMap(itemBatch => {
       itemBatch.indices.toParArray.map(i => {
         val uri = itemBatch(i)._1
@@ -38,8 +40,11 @@ class FlinkInference(params: SerParams) extends RichMapFunction[List[(String, St
 
     val postProcessed = preProcessed.grouped(params.coreNum).flatMap(pathByteBatch => {
       val thisBatchSize = pathByteBatch.size
-
-
+      val t = if (params.chwFlag) {
+        Tensor[Float](params.coreNum, params.C, params.H, params.W)
+      } else {
+        Tensor[Float](params.coreNum, params.H, params.W, params.C)
+      }
 
       (0 until thisBatchSize).toParArray.foreach(i =>
         t.select(1, i + 1).copy(pathByteBatch(i)._2))

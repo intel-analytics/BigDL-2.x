@@ -13,5 +13,4 @@ class SerParams(helper: ClusterServingHelper) extends Serializable {
   val W = helper.dataShape(2)
   val modelType = helper.modelType
   val model = helper.loadInferenceModel()
-  val logger = Logger.getLogger(getClass)
 }
