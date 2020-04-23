@@ -18,7 +18,7 @@
         <java.version>1.7</java.version>
         <javac.version>1.7</javac.version>
         <spark-scope>provided</spark-scope>
-        <spark-core-scope>provided</spark-core-scope>
+        <flink-scope>provided</flink-scope>
         <bigdl-scope>compile</bigdl-scope>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>2.11.8</scala.version>
@@ -119,6 +119,7 @@
             <id>serving</id>
             <properties>
                 <spark-scope>compile</spark-scope>
+                <flink-scope>compile</flink-scope>
             </properties>
         </profile>
 
@@ -375,16 +376,19 @@
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-scala_2.11</artifactId>
             <version>1.10.0</version>
+            <scope>${flink-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-streaming-scala_2.11</artifactId>
             <version>1.10.0</version>
+            <scope>${flink-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-clients_2.11</artifactId>
             <version>1.10.0</version>
+            <scope>${flink-scope}</scope>
         </dependency>
     </dependencies>
 
