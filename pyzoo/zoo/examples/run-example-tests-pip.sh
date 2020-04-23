@@ -52,9 +52,9 @@ if [ ! -d analytics-zoo-models ]
 then
     mkdir analytics-zoo-models
 fi
-if [ -f analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model ]
+if [ -f analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0.model ]
 then
-    echo "analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model already exists"
+    echo "analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0.model already exists"
 else
     wget $FTP_URI/analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model\
     -P analytics-zoo-models
