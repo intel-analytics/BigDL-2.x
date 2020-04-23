@@ -56,7 +56,7 @@ class TorchModel(Layer):
         Create a TorchNet directly from PyTorch model, e.g. model in torchvision.models.
         :param model: a PyTorch model
         """
-        weights=[]
+        weights = []
         for param in model.parameters():
             weights.append(param.view(-1))
         flatten_weight = torch.nn.utils.parameters_to_vector(weights).data.numpy()
