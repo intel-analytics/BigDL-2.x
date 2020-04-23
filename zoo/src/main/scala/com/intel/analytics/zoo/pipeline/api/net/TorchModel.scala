@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.api.net
 
+import java.util
 import java.util.UUID
 
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
@@ -25,6 +26,8 @@ import com.intel.analytics.zoo.common.PythonInterpreter
 import com.intel.analytics.zoo.feature.PythonLoaderFeatureSet
 import com.intel.analytics.zoo.pipeline.api.net.TorchModel.TorchModel2Holder
 import jep.{Jep, NDArray}
+
+import scala.collection.JavaConverters._
 
 import scala.reflect.ClassTag
 //TODO parameter length optional? Train function
@@ -59,7 +62,7 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
 
   val setWeightCode =
     s"""
-        |w = torch.Tensor(list(newWeight))
+        |w = torch.Tensor(newWeight)
         |torch.nn.utils.vector_to_parameters(w, ${getName()}.parameters())
         |
         |""".stripMargin
@@ -76,7 +79,7 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
     loaded
     val startTime = System.nanoTime()
     val forwardCode = if (train) {
-      PythonInterpreter.set("newWeight", weights.storage().array())
+      PythonInterpreter.set("newWeight", new NDArray[Array[Float]](weights.storage().array()))
       PythonInterpreter.exec(setWeightCode)
       println(s"setWeight time is ${(System.nanoTime() - startTime) / 1e9}")
       this.forwardCode
@@ -110,13 +113,16 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
         |grads=[]
         |for param in ${getName()}.parameters():
         |    grads.append(param.grad.view(-1))
-        |grad=torch.nn.utils.parameters_to_vector(grads)
         |""".stripMargin
     PythonInterpreter.exec(getWeightCode)
-    // TODO: just do a copy
-    val grad = PythonLoaderFeatureSet.ndArrayToTensor(
-      PythonInterpreter.getValue("grad.data.numpy()").asInstanceOf[NDArray[_]])
-    gradients.copy(grad)
+    val newGrads = PythonInterpreter.getValue[util.ArrayList[NDArray[Array[Float]]]](
+      "ptensor_to_numpy(grads)").asScala
+    var index = 0
+    newGrads.foreach{g =>
+      System.arraycopy(gradients.storage().array(), index,
+        g.getData(), 0, g.getDimensions()(0))
+      index += g.getDimensions()(0)
+    }
     println(s"backward total cost: ${(System.nanoTime() - startTime) / 1e9}")
     gradInput
   }
