@@ -513,8 +513,8 @@ else
      -P analytics-zoo-models
 fi
 
-mkdir output
-mkdir stream
+mkdir -p output
+mkdir -p stream
 export SPARK_DRIVER_MEMORY=2g
 while true
 do
