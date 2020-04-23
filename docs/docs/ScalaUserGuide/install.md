@@ -3,20 +3,20 @@
 You can download the Analytics Zoo release and nightly build from the [Release Page](../release-download.md)
 
 ---
-## **Link with 0.8.0 release**
+## **Link with a release**
 
 Currently, Analytics Zoo releases are hosted on maven central; here's an example to add the Analytics Zoo dependency to your own project:
 ```xml
 <dependency>
     <groupId>com.intel.analytics.zoo</groupId>
     <artifactId>analytics-zoo-bigdl_0.10.0-[spark_2.1.1|spark_2.2.0|spark_2.3.1|spark_2.4.3]</artifactId>
-    <version>0.8.0</version>
+    <version>${ANALYTICS_ZOO_VERSION}</version>
 </dependency>
 ```
 
 SBT developers can use
 ```sbt
-libraryDependencies += "com.intel.analytics.zoo" % "analytics-zoo-bigdl_0.10.0-[spark_2.1.1|spark_2.2.0|spark_2.3.1|spark_2.4.3]" % "0.8.0"
+libraryDependencies += "com.intel.analytics.zoo" % "analytics-zoo-bigdl_0.10.0-[spark_2.1.1|spark_2.2.0|spark_2.3.1|spark_2.4.3]" % "${ANALYTICS_ZOO_VERSION}"
 ```
 
 Remarks:

@@ -46,7 +46,7 @@ source activate zoo
 3) Install Analytics-Zoo into the created conda-env.
 
 ```
-pip install analytics-zoo==0.8.0
+pip install analytics-zoo==0.8.1-SNAPSHOT
 ```
 
 4) Download JDK8 and set the environment variable: JAVA_HOME (recommended).
