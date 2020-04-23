@@ -70,7 +70,6 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
   val forwardCode =
     s"""
        |input = data[0]
-       |target = data[1]
        |output = ${getName()}(input)
        |""".stripMargin
 

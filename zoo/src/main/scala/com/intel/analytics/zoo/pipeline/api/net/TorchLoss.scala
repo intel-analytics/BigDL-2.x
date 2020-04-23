@@ -40,7 +40,12 @@ class TorchLoss(private val criterionHolder: Array[Byte])
 
   override def updateOutput(input: Activity, target: Activity): Float = {
     loaded
-    PythonInterpreter.exec(s"loss = ${name}(output, target)")
+    val forwardCode =
+      s"""
+         |target = data[1]
+         |loss = ${name}(output, target)
+         |""".stripMargin
+    PythonInterpreter.exec(forwardCode)
     output = PythonInterpreter.getValue("loss.item()").asInstanceOf[Double].toFloat
     output
   }
