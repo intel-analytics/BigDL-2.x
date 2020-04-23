@@ -61,7 +61,7 @@ else
 fi
 export SPARK_DRIVER_MEMORY=10g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/imageclassification/predict.py \
-    -f hdfs://172.168.2.181:9000/kaggle/train_100 \
+    -f ${HDFS_URI}/kaggle/train_100 \
     --model analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0.model \
     --topN 5
 exit_status=$?
@@ -118,7 +118,7 @@ fi
 export SPARK_DRIVER_MEMORY=10g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/objectdetection/predict.py \
     analytics-zoo-models/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model \
-    hdfs://172.168.2.181:9000/kaggle/train_100 \
+    ${HDFS_URI}/kaggle/train_100 \
     /tmp
 exit_status=$?
 if [ $exit_status -ne 0 ];
@@ -168,7 +168,7 @@ export SPARK_DRIVER_MEMORY=20g
 echo "start example test for nnframes imageInference"
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/ImageInferenceExample.py \
     -m analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
-    -f hdfs://172.168.2.181:9000/kaggle/train_100
+    -f ${HDFS_URI}/kaggle/train_100
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
@@ -215,7 +215,7 @@ export SPARK_DRIVER_MEMORY=20g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/inception/inception.py \
    --maxIteration 20 \
    -b 8 \
-   -f hdfs://172.168.2.181:9000/imagenet-mini
+   -f ${HDFS_URI}/imagenet-mini
 exit_status=$?
 unset MASTER
 if [ $exit_status -ne 0 ];
@@ -292,7 +292,7 @@ else
 fi
 
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfnet/predict.py \
-    --image hdfs://172.168.2.181:9000/kaggle/train_100 \
+    --image ${HDFS_URI}/kaggle/train_100 \
     --model analytics-zoo-models/ssd_mobilenet_v1_coco_2017_11_17/frozen_inference_graph.pb
 
 exit_status=$?
