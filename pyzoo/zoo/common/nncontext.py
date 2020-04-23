@@ -73,7 +73,7 @@ def init_spark_on_yarn(hadoop_conf,
     :param extra_python_lib:
     :param penv_archive: Ideally, program would auto-pack the conda env which is specified by
            `conda_name`, but you can also pass the path to a packed file in "tar.gz" format here.
-    :param additional_archive: comma seperated additional archive that you want to upload and unpack on executor
+    :param additional_archive: comma seperated additional archives that you want to upload and unpack on executor
     :param hadoop_user_name: User name for running in yarn cluster. Default value is: root
     :param spark_yarn_archive conf value for spark.yarn.archive
     :param spark_log_level: Log level of Spark
