@@ -117,7 +117,7 @@ class RayServiceFuncGenerator(object):
 
     def _gen_master_command(self):
         command = "{} start --head " \
-                  "--include-webui --redis-port {} " \
+                  "--include-webui true --redis-port {} " \
                   "--redis-password {} --num-cpus {} {}". \
             format(self.ray_exec, self.redis_port, self.password,
                    self.ray_node_cpu_cores, self.labels)
@@ -133,7 +133,7 @@ class RayServiceFuncGenerator(object):
                             labels="",
                             object_store_memory=None,
                             extra_params=None):
-        command = "{} start --redis-address {} --redis-password  {} --num-cpus {} {}  ".format(
+        command = "{} start --address {} --redis-password  {} --num-cpus {} {}  ".format(
             ray_exec, redis_address, password, ray_node_cpu_cores, labels)
         return RayServiceFuncGenerator._enrich_command(command=command,
                                                        object_store_memory=object_store_memory,
@@ -338,10 +338,10 @@ class RayContext(object):
             self._start_restricted_worker(num_cores=num_cores,
                                           node_ip_address=node_ip)
             ray.shutdown()
-            ray.init(redis_address=self.redis_address,
+            ray.init(address=self.redis_address,
                      redis_password=self.ray_service.password,
                      node_ip_address=node_ip)
         else:
             ray.shutdown()
-            ray.init(redis_address=self.redis_address,
+            ray.init(address=self.redis_address,
                      redis_password=self.ray_service.password)
