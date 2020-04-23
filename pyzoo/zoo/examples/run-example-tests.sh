@@ -328,7 +328,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
 
 if [ -f analytics-zoo-models/resnet_50_saved_model.zip ]
 then
-   echo "analytics-zoo-models/reset_50_saved_model.zip already exists."
+   echo "analytics-zoo-models/resnet_50_saved_model.zip already exists."
 else
    wget -nv $FTP_URI/analytics-zoo-models/tensorflow/resnet_50_saved_model.zip \
     -P analytics-zoo-models
