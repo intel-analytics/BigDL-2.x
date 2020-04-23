@@ -255,7 +255,6 @@ object ClusterServing {
                         .copy(dataTable(key).asInstanceOf[Tensor[Float]])
                     })
                   })
-                val se = tTable.toSeq
                 tTable
               }
 

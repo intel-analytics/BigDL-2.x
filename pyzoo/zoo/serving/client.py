@@ -20,7 +20,6 @@ import yaml
 import redis
 import time
 import numpy as np
-from json import JSONEncoder
 import pyarrow as pa
 
 
@@ -162,13 +161,6 @@ class InputQueue(API):
     def base64_encode_image(img):
         # base64 encode the input NumPy array
         return base64.b64encode(img).decode("utf-8")
-
-
-class NumpyArrayEncoder(JSONEncoder):
-     def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return JSONEncoder.default(self, obj)
 
 
 class OutputQueue(API):
