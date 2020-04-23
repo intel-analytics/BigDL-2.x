@@ -51,7 +51,7 @@ class TorchLoss(private val criterionHolder: Array[Byte])
   }
 
   override def updateGradInput(input: Activity, target: Activity): Activity = {
-    //TODO: return a empty result
+    // TODO: return a empty result
     Tensor[Float]()
   }
 

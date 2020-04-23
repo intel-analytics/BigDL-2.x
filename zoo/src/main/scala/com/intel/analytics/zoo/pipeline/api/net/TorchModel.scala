@@ -30,7 +30,7 @@ import jep.{Jep, NDArray}
 import scala.collection.JavaConverters._
 
 import scala.reflect.ClassTag
-//TODO parameter length optional? Train function
+// TODO: parameter length optional? Train function
 class TorchModel private(private val modelHolder: TorchModel2Holder, init_weights: Array[Float])
   extends AbstractModule[Activity, Activity, Float]{
   import TorchModel._

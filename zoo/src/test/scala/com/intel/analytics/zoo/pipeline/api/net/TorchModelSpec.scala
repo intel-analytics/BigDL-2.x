@@ -80,7 +80,7 @@ class TorchModelSpec extends ZooSpecHelper{
 
     val w = PythonInterpreter.getValue[NDArray[Array[Float]]]("flatten_weight").getData()
     val bys = PythonInterpreter.getValue[Array[Byte]]("bym")
-    val model  = TorchModel(bys, w)
+    val model = TorchModel(bys, w)
     val c = PythonInterpreter.getValue[Array[Byte]]("byc")
     val criterion = TorchLoss(c)
 
@@ -113,7 +113,7 @@ class TorchModelSpec extends ZooSpecHelper{
     PythonInterpreter.exec(code)
     val w = PythonInterpreter.getValue[NDArray[Array[Float]]]("flatten_weight").getData()
     val bys = PythonInterpreter.getValue[Array[Byte]]("bym")
-    val model  = TorchModel(bys, w)
+    val model = TorchModel(bys, w)
 
     val genInputCode =
       """
