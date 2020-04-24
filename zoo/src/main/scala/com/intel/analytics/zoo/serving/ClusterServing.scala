@@ -28,9 +28,8 @@ object ClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
   var params: SerParams = null
-
-  def main(args: Array[String]): Unit = {
-    val helper = new ClusterServingHelper()
+  def run(configPath: String = null): Unit = {
+    val helper = new ClusterServingHelper(configPath)
     helper.initArgs()
     params = new SerParams(helper)
 
@@ -40,5 +39,9 @@ object ClusterServing {
       .addSink(new FlinkRedisSink(params)).setParallelism(1)
     serving.setParallelism(1)
     serving.execute("Cluster Serving - Flink")
+  }
+
+  def main(args: Array[String]): Unit = {
+    run()
   }
 }
