@@ -189,7 +189,7 @@ class HorovodRayTrainer:
         }
 
         for key in os.environ:
-            if key.starswith("HOROVOD"):
+            if key.startswith("HOROVOD"):
                 common_envs[key] = os.environ[key]
 
         # todo support other Horovod envs
