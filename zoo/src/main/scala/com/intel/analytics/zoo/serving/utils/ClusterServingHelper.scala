@@ -54,11 +54,15 @@ case class LoaderParams(modelFolder: String = null,
 
 case class Result(id: String, value: String)
 
-class ClusterServingHelper {
+class ClusterServingHelper(_configPath: String = null) {
   type HM = LinkedHashMap[String, String]
 
 //  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
-  val configPath = "config.yaml"
+  val configPath = if (_configPath != null) {
+    _configPath
+  } else {
+    "config.yaml"
+  }
 
   var lastModTime: String = null
   val logger: Logger = Logger.getLogger(getClass)
@@ -235,6 +239,8 @@ class ClusterServingHelper {
     if (kmpBlockTime != null) {
       conf.set("spark.executorEnv", "KMP_BLOCKTIME=" + kmpBlockTime)
     }
+    conf.setMaster("local[*]")
+
     sc = NNContext.initNNContext(conf)
     nodeNum = EngineRef.getNodeNumber()
     coreNum = EngineRef.getCoreNumber()

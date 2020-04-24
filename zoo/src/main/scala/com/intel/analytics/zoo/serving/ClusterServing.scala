@@ -41,10 +41,8 @@ object ClusterServing {
 
   case class Record(uri: String, value: String)
 
-
-  def main(args: Array[String]): Unit = {
-
-    val helper = new ClusterServingHelper()
+  def run(configPath: String = null): Unit = {
+    val helper = new ClusterServingHelper(configPath)
     helper.initArgs()
     helper.initContext()
 
@@ -330,8 +328,6 @@ object ClusterServing {
               s"write summary fails, please check.")
           }
 
-
-
       }
     }
 
@@ -348,5 +344,8 @@ object ClusterServing {
 
     assert(spark.streams.active.isEmpty)
     System.exit(0)
+  }
+  def main(args: Array[String]): Unit = {
+    run()
   }
 }
