@@ -41,9 +41,14 @@ object ClusterServing {
 
   case class Record(uri: String, value: String)
 
-  def run(configPath: String = null): Unit = {
+  def run(configPath: String = null, redisHost: String = null, redisPort: String = null): Unit = {
     val helper = new ClusterServingHelper(configPath)
+
     helper.initArgs()
+    if (redisHost != null) {
+      helper.redisHost = redisHost
+      helper.redisPort = redisPort
+    }
     helper.initContext()
 
     /**

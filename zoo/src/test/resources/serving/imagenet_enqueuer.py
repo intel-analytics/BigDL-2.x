@@ -45,6 +45,13 @@ if __name__ == "__main__":
 
     parser.add_option("--img_num", type=int, dest="img_num",
                       help="The total number of images you validate")
+
+    parser.add_option("--host", type=int, dest="host",
+                      help="The total number of images you validate")
+    parser.add_option("--port", type=int, dest="port",
+                      help="The total number of images you validate")
+
+
     (options, args) = parser.parse_args(sys.argv)
 
     val_img_path = options.img_path
@@ -54,7 +61,7 @@ if __name__ == "__main__":
 
     path_list = os.listdir(val_img_path)
 
-    input_api = InputQueue()
+    input_api = InputQueue(options.host, options.port)
 
     # push image in queue
     top1_dict = {}

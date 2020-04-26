@@ -28,42 +28,42 @@ class API:
     select data pipeline here, Redis/Kafka/...
     interface preserved for API class
     """
-    def __init__(self):
+    def __init__(self, host, port):
 
-        try:
-            file_path = "config.yaml"
-        except Exception:
-            raise EOFError("config file does not exist. Please check your config"
-                           "at analytics-zoo/docker/cluster-serving/config.yaml")
-        with open(file_path) as f:
-            config = yaml.load(f)
-            if not config['data']['src']:
-                host_port = ["localhost", "6379"]
-            else:
-                host_port = config['data']['src'].split(":")
-            config['data']['host'] = host_port[0]
-            config['data']['port'] = host_port[1]
+        # try:
+        #     file_path = "config.yaml"
+        #
+        #     with open(file_path) as f:
+        #         config = yaml.load(f)
+        #         if not config['data']['src']:
+        #             host_port = ["localhost", "6379"]
+        #         else:
+        #             host_port = config['data']['src'].split(":")
+        #         config['data']['host'] = host_port[0]
+        #         config['data']['port'] = host_port[1]
+        # except Exception as e:
+        #     print("config file does not exist in your current directory,"
+        #           "will use default value")
+        #
+        #
+        # self.db = redis.StrictRedis(host=config['data']['host'],
+        #                             port=config['data']['port'], db=0)
+        self.host = host
+        self.port = port
 
-        self.db = redis.StrictRedis(host=config['data']['host'],
-                                    port=config['data']['port'], db=0)
+        self.db = redis.StrictRedis(host=self.host, port=self.port, db=0)
+
         try:
             self.db.xgroup_create("image_stream", "serving")
         except Exception:
             print("redis group exist, will not create new one")
 
-        if not config['data']['image_shape']:
-            self.data_shape = ["3", "224", "224"]
-        else:
-            self.data_shape = config['data']['image_shape'].split(",")
-        for i in range(len(self.data_shape)):
-            self.data_shape[i] = int(self.data_shape[i])
-
 
 class InputQueue(API):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, host="localhost", port="6379", data_shape="3,224,224"):
+        super().__init__(host, port)
         self.c, self.h, self.w = None, None, None
-
+        self.data_shape = data_shape.split(",")
         # TODO: these params can be read from config in future
         self.input_threshold = 0.6
         self.interval_if_error = 1
@@ -71,6 +71,7 @@ class InputQueue(API):
 
     def data_shape_check(self):
         for num in self.data_shape:
+            num = int(num)
             if num <= 0:
                 raise Exception("Your image shape config is invalid, "
                                 "your config shape is" + str(self.data_shape)
@@ -107,11 +108,11 @@ class InputQueue(API):
         d = {"uri": uri, "image": img_encoded}
 
         inf = self.db.info()
-        try:
-            inf['maxmemory']
-        except Exception as e:
-            self.db.xadd("image_stream", d)
-            return
+        # try:
+        #     inf['maxmemory']
+        # except Exception as e:
+        #     self.db.xadd("image_stream", d)
+        #     return
 
         try:
             if inf['used_memory'] >= inf['maxmemory'] * self.input_threshold:
@@ -134,8 +135,8 @@ class InputQueue(API):
 
 
 class OutputQueue(API):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, host="localhost", port="6379"):
+        super().__init__(host, port)
 
     def dequeue(self):
         res_list = self.db.keys('result:*')

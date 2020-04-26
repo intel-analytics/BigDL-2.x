@@ -12,16 +12,17 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.util.Random
+
 class CorrectnessSpec extends FlatSpec with Matchers {
   val configPath = "/tmp/config.yaml"
+  var redisPort: String = null
   val logger = Logger.getLogger(getClass)
   def runServingBg(): Future[Unit] = Future {
-    ClusterServing.run(configPath)
+    ClusterServing.run(configPath, "172.168.2.102", "6379")
   }
   "Cluster Serving result" should "be correct" in {
-    val redisServer = new RedisServer()
-    redisServer.start()
-    val cli = new Jedis()
+    val cli = new Jedis("172.168.2.102", 6379)
 
     // call push method in python
     "wget -O /tmp/serving_val.tar http://10.239.45.10:8081/repository/raw/analytics-zoo-data/imagenet_1k.tar".!
@@ -35,7 +36,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
 
 
     val enqueueScriptPathCmd = "python3 " + getClass.getClassLoader.getResource("serving/enqueue_image_in_path.py").getPath +
-      " --img_path " + imagePath + " --img_num " + totalNum.toString
+      " --img_path " + imagePath + " --img_num " + totalNum.toString + " --host 172.168.2.102 --port 6379"
     val p = Process(enqueueScriptPathCmd, None
       ,
       "PYTHONPATH" -> "$PYTHONPATH:/home/litchy/pro/analytics-zoo/dist/lib/analytics-zoo-bigdl_0.10.0-spark_2.4.3-0.8.0-SNAPSHOT-python-api.zip",
@@ -71,7 +72,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
       top1_dict
     })
     // start check with txt file
-    redisServer.stop()
+
     logger.info("Redis server stopped")
     var cN = 0f
     var tN = 0f
