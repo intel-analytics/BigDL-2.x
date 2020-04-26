@@ -107,6 +107,11 @@ class InputQueue(API):
         d = {"uri": uri, "image": img_encoded}
 
         inf = self.db.info()
+        try:
+            inf['maxmemory']
+        except Exception as e:
+            self.db.xadd("image_stream", d)
+            return
 
         try:
             if inf['used_memory'] >= inf['maxmemory'] * self.input_threshold:

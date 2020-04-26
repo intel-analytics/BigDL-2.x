@@ -5,6 +5,7 @@ import org.scalatest.{FlatSpec, Matchers}
 
 import sys.process._
 import redis.clients.jedis.Jedis
+import redis.embedded.RedisServer
 
 import scala.io.Source
 import scala.collection.JavaConverters._
@@ -18,6 +19,8 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     ClusterServing.run(configPath)
   }
   "Cluster Serving result" should "be correct" in {
+    val redisServer = new RedisServer()
+    redisServer.start()
     val cli = new Jedis()
 
     // call push method in python
@@ -34,9 +37,9 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     val enqueueScriptPathCmd = "python3 " + getClass.getClassLoader.getResource("serving/enqueue_image_in_path.py").getPath +
       " --img_path " + imagePath + " --img_num " + totalNum.toString
     val p = Process(enqueueScriptPathCmd, None
-//      ,
-//      "PYTHONPATH" -> "$PYTHONPATH:/home/litchy/pro/analytics-zoo/dist/lib/analytics-zoo-bigdl_0.10.0-spark_2.4.3-0.8.0-SNAPSHOT-python-api.zip",
-//    "SPARK_HOME" -> "/home/litchy/Programs/spark-2.4.0-bin-hadoop2.7"
+      ,
+      "PYTHONPATH" -> "$PYTHONPATH:/home/litchy/pro/analytics-zoo/dist/lib/analytics-zoo-bigdl_0.10.0-spark_2.4.3-0.8.0-SNAPSHOT-python-api.zip",
+    "SPARK_HOME" -> "/home/litchy/Programs/spark-2.4.0-bin-hadoop2.7"
     )
     p.!
     ("rm -rf /tmp/" + imagePath + "*").!
@@ -68,6 +71,8 @@ class CorrectnessSpec extends FlatSpec with Matchers {
       top1_dict
     })
     // start check with txt file
+    redisServer.stop()
+    logger.info("Redis server stopped")
     var cN = 0f
     var tN = 0f
     for (line <- Source.fromFile(imagePath + ".txt").getLines()) {
@@ -81,6 +86,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     val acc = cN / tN
     logger.info(s"Top 1 Accuracy of serving, Openvino ResNet50 Model on ImageNet is ${acc}")
     assert(acc > 0.72)
+
   }
 
 
