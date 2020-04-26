@@ -121,6 +121,9 @@ object NeuralCFexample {
     userRecs.take(10).foreach(println)
     itemRecs.take(10).foreach(println)
     ncf.summary()
+
+    println("finished...")
+    sc.stop()
   }
 
   def loadPublicData(sqlContext: SQLContext, dataPath: String): (DataFrame, Int, Int) = {

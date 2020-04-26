@@ -57,5 +57,5 @@ See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-with
 ## Options
 * `--input_dir` This option is __required__. The path where NBA nyc_taxi.csv locates.
 * `-b` `--batch_size` The number of samples per gradient update. Default is 1024.
-* `--nb_epoch` The number of iterations to train the model. Default is 20.
+* `--nb_epoch` The number of epochs to train the model. Default is 20.
 * `--unroll_length` The length of precious values to predict future value. Default is 24.

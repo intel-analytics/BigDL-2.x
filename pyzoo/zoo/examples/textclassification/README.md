@@ -78,7 +78,7 @@ See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-with
 * `--encoder_output_dim` The output dimension of the encoder. Default is 256.
 * `--training_split` The split portion of the data for training. Default is 0.8.
 * `-b` `--batch_size` The number of samples per gradient update. Default is 128.
-* `-e` `--nb_epoch` The number of iterations to train the model. Default is 20.
+* `-e` `--nb_epoch` The number of epochs to train the model. Default is 20.
 * `-l` `--learning_rate` The learning rate for the TextClassifier model. Default is 0.01.
 * `--log_dir` The path to store training and validation summary. Default is `/tmp/.analytics-zoo`.
 * `-m` `--model` Specify this option only if you want to load an existing TextClassifier model and in this case its path should be provided.

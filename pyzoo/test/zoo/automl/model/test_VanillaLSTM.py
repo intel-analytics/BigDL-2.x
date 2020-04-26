@@ -19,6 +19,7 @@ import pytest
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.model.VanillaLSTM import *
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
+from numpy.testing import assert_array_almost_equal
 
 
 class TestVanillaLSTM(ZooTestCase):
@@ -89,7 +90,7 @@ class TestVanillaLSTM(ZooTestCase):
             save(dirname, model=self.model)
             restore(dirname, model=new_model, config=self.config)
             predict_after = new_model.predict(self.x_test)
-            assert np.allclose(predict_before, predict_after)
+            assert_array_almost_equal(predict_before, predict_after, decimal=2)
             new_config = {'epochs': 2}
             new_model.fit_eval(self.x_train, self.y_train, **new_config)
 

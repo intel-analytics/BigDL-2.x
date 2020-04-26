@@ -22,6 +22,7 @@ import pytest
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.model.Seq2Seq import *
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
+from numpy.testing import assert_array_almost_equal
 
 
 class TestSeq2Seq(ZooTestCase):
@@ -142,7 +143,7 @@ class TestSeq2Seq(ZooTestCase):
             save(dirname, model=self.model_1)
             restore(dirname, model=new_model_1, config=self.config)
             predict_1_after = new_model_1.predict(x_test_1)
-            assert np.allclose(predict_1_before, predict_1_after), \
+            assert_array_almost_equal(predict_1_before, predict_1_after, decimal=2), \
                 "Prediction values are not the same after restore: " \
                 "predict before is {}, and predict after is {}".format(predict_1_before,
                                                                        predict_1_after)
@@ -166,7 +167,7 @@ class TestSeq2Seq(ZooTestCase):
             save(dirname, model=self.model_2)
             restore(dirname, model=new_model_2, config=self.config)
             predict_2_after = new_model_2.predict(x_test_2)
-            assert np.allclose(predict_2_before, predict_2_after), \
+            assert_array_almost_equal(predict_2_before, predict_2_after, decimal=2), \
                 "Prediction values are not the same after restore: " \
                 "predict before is {}, and predict after is {}".format(predict_2_before,
                                                                        predict_2_after)

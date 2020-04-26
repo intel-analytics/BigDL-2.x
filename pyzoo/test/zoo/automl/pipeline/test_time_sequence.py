@@ -26,6 +26,8 @@ import numpy as np
 import pandas as pd
 import ray
 from pandas.util.testing import assert_frame_equal
+from numpy.testing import assert_array_almost_equal
+
 
 default_past_seq_len = 2
 
@@ -101,7 +103,8 @@ class TestTimeSequencePipeline(ZooTestCase):
             assert isinstance(new_pipeline.model, TimeSequenceModel)
             new_pipeline.describe()
             new_pred = new_pipeline.predict(test_df)
-            np.testing.assert_allclose(y_pred[target_col].values, new_pred[target_col].values)
+            assert_array_almost_equal(y_pred[target_col].values, new_pred[target_col].values,
+                                      decimal=2)
         finally:
             shutil.rmtree(dirname)
 
@@ -134,8 +137,8 @@ class TestTimeSequencePipeline(ZooTestCase):
         mse_pred_eval, rs_pred_eval = [Evaluator.evaluate(m, y_value, y_pred_value)
                                        for m in metrics]
         mse_eval, rs_eval = pipeline.evaluate(test_df, metrics)
-        assert np.array_equal(mse_pred_eval, mse_eval)
-        assert np.array_equal(rs_pred_eval, rs_eval)
+        assert_array_almost_equal(mse_pred_eval, mse_eval, decimal=2)
+        assert_array_almost_equal(rs_pred_eval, rs_eval, decimal=2)
 
     # def test_save_restore_future_more_1(self):
     #     target_col = "values"
@@ -156,7 +159,7 @@ class TestTimeSequencePipeline(ZooTestCase):
     #
     #         new_pred = new_pipeline.predict(test_df)
     #         columns = ["{}_{}".format(target_col, i) for i in range(future_seq_len)]
-    #         np.testing.assert_allclose(y_pred[columns].values, new_pred[columns].values)
+    #         assert_array_almost_equal(y_pred[columns].values, new_pred[columns].values, decimal=2)
     #
     #     finally:
     #         shutil.rmtree(dirname)
@@ -177,7 +180,7 @@ class TestTimeSequencePipeline(ZooTestCase):
         pipeline = tsp.fit(train_df_list, test_df_list)
         y_pred = pipeline.predict(test_df_list)
         assert len(y_pred) == df_num
-        assert_frame_equal(y_pred[0], y_pred[1], check_exact=False, check_less_precise=5)
+        assert_frame_equal(y_pred[0], y_pred[1], check_exact=False, check_less_precise=2)
         assert y_pred[0].shape == (test_sample_num - default_past_seq_len + 1,
                                    future_seq_len + 1)
 

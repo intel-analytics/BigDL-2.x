@@ -98,12 +98,6 @@ class ClusterServingHelper(_configPath: String = null) {
   var dirPath: String = null
 
   /**
-   * environment variables
-   */
-  var kmpBlockTime: String = null
-
-
-  /**
    * Initialize the parameters by loading config file
    * create log file, set backend engine type flag
    * create "running" flag, for listening the stop signal
@@ -236,9 +230,7 @@ class ClusterServingHelper(_configPath: String = null) {
     val conf = NNContext.createSparkConf().setAppName("Cluster Serving")
       .set("spark.redis.host", redisHost)
       .set("spark.redis.port", redisPort)
-    if (kmpBlockTime != null) {
-      conf.set("spark.executorEnv", "KMP_BLOCKTIME=" + kmpBlockTime)
-    }
+
     conf.setMaster("local[*]")
 
     sc = NNContext.initNNContext(conf)
@@ -386,8 +378,6 @@ class ClusterServingHelper(_configPath: String = null) {
 
     var variablesPathExist = false
 
-    kmpBlockTime = null
-
     import java.io.File
     val f = new File(localModelPath)
     val fileList = f.listFiles
@@ -436,7 +426,6 @@ class ClusterServingHelper(_configPath: String = null) {
           throwOneModelError(true, false, true)
           weightPath = fPath
           modelType = "openvino"
-          kmpBlockTime = "20"
         }
         else if (fName.endsWith("xml")) {
           throwOneModelError(false, true, false)
