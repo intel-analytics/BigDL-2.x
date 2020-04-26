@@ -312,7 +312,6 @@ class TestTFDataset(ZooTestCase):
 
     def check_dataset(self, create_ds):
 
-
         seq = tf.keras.Sequential(
             [tf.keras.layers.Flatten(input_shape=(20,)),
              tf.keras.layers.Dense(10, activation="softmax")])
