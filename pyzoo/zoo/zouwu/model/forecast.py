@@ -52,7 +52,7 @@ class LSTMForecaster(Forecaster):
     """
 
     def __init__(self,
-                 horizon=1,
+                 target_dim=1,
                  feature_dim=1,
                  lstm_1_units=16,
                  dropout_1=0.2,
@@ -65,7 +65,7 @@ class LSTMForecaster(Forecaster):
         """
         Build a LSTM Forecast Model.
 
-        :param horizon: steps to look forward
+        :param target_dim: dimension of model output
         :param feature_dim: dimension of input feature
         :param lstm_1_units: num of units for the 1st LSTM layer
         :param dropout_1: p for the 1st dropout layer
@@ -76,7 +76,7 @@ class LSTMForecaster(Forecaster):
         :param uncertainty: whether to return uncertainty
         """
         #
-        self.horizon = horizon
+        self.target_dim = target_dim
         self.check_optional_config = False
         self.uncertainty = uncertainty
 
@@ -100,7 +100,7 @@ class LSTMForecaster(Forecaster):
         # build model with TF/Keras
         self.internal = LSTMKerasModel(
             check_optional_config=self.check_optional_config,
-            future_seq_len=self.horizon)
+            future_seq_len=self.target_dim)
         return self.internal._build(mc=self.uncertainty,
                                     **self.model_config)
 
@@ -111,19 +111,23 @@ class MTNetForecaster(Forecaster):
     """
 
     def __init__(self,
-                 horizon=1,
+                 target_dim=1,
                  feature_dim=1,
                  lb_long_steps=1,
                  lb_long_stepsize=1,
+                 ar_window_size=1,
+                 cnn_kernel_size=1,
                  metric="mean_squared_error",
                  uncertainty: bool = False,
                  ):
         """
         Build a MTNet Forecast Model.
-        :param horizon: the steps to look forward
+        :param target_dim: the dimension of model output
         :param feature_dim: the dimension of input feature
         :param lb_long_steps: the number of steps for the long-term memory series
-        :param lb_long_stepsize: the stepsize for long-term memory series
+        :param lb_long_stepsize: the step size for long-term memory series
+        :param ar_window_size：the auto regression window size in MTNet
+        :param cnn_kernel_size: cnn filter height in MTNet
         :param metric: the metric for validation and evaluation
         :param uncertainty: whether to enable calculation of uncertainty
         """
@@ -131,11 +135,13 @@ class MTNetForecaster(Forecaster):
         self.mc = uncertainty
         self.model_config = {
             "feature_num": feature_dim,
-            "output_dim": horizon,
+            "output_dim": target_dim,
             "metrics": [metric],
             "mc": uncertainty,
             "time_step": lb_long_stepsize,
             "long_num": lb_long_steps,
+            "ar_window": ar_window_size,
+            "cnn_height": cnn_kernel_size,
             "past_seq_len": (lb_long_steps + 1) * lb_long_stepsize
 
         }
@@ -151,7 +157,7 @@ class MTNetForecaster(Forecaster):
         # TODO change this function call after MTNet fixes
         self.internal = MTNetKerasModel(
             check_optional_config=self.check_optional_config,
-            future_seq_len=self.model_config.get('horizon'))
+            future_seq_len=self.model_config.get('output_dim'))
         self.internal.apply_config(config=self.model_config)
         return self.internal.build()
 
