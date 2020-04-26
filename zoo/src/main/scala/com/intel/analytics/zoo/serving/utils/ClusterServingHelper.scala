@@ -239,7 +239,7 @@ class ClusterServingHelper(_configPath: String = null) {
     if (kmpBlockTime != null) {
       conf.set("spark.executorEnv", "KMP_BLOCKTIME=" + kmpBlockTime)
     }
-    conf.setMaster("local[*]")
+//    conf.setMaster("local[*]")
 
     sc = NNContext.initNNContext(conf)
     nodeNum = EngineRef.getNodeNumber()
