@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Analytics Zoo Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.intel.analytics.zoo.serving
 
 import org.apache.log4j.Logger
@@ -25,7 +41,8 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     val cli = new Jedis("172.168.2.102", 6379)
 
     // call push method in python
-    "wget -O /tmp/serving_val.tar http://10.239.45.10:8081/repository/raw/analytics-zoo-data/imagenet_1k.tar".!
+    ("wget -O /tmp/serving_val.tar http://10.239.45.10:8081" +
+      "/repository/raw/analytics-zoo-data/imagenet_1k.tar").!
     "tar -xvf /tmp/serving_val.tar -C /tmp/".!
     runServingBg().onComplete(_ => None)
 
@@ -35,12 +52,15 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     val totalNum = (lsCmd #| "wc").!!.split(" +").filter(_ != "").head.toInt
 
 
-    val enqueueScriptPathCmd = "python3 " + getClass.getClassLoader.getResource("serving/enqueue_image_in_path.py").getPath +
-      " --img_path " + imagePath + " --img_num " + totalNum.toString + " --host 172.168.2.102 --port 6379"
+    val enqueueScriptPathCmd = "python3 " +
+      getClass.getClassLoader.getResource("serving/enqueue_image_in_path.py").getPath +
+      " --img_path " + imagePath + " --img_num " +
+      totalNum.toString + " --host 172.168.2.102 --port 6379"
     val p = Process(enqueueScriptPathCmd, None
-      ,
-      "PYTHONPATH" -> "$PYTHONPATH:/home/litchy/pro/analytics-zoo/dist/lib/analytics-zoo-bigdl_0.10.0-spark_2.4.3-0.8.0-SNAPSHOT-python-api.zip",
-    "SPARK_HOME" -> "/home/litchy/Programs/spark-2.4.0-bin-hadoop2.7"
+//      ,
+//      "PYTHONPATH" -> "$PYTHONPATH:/home/litchy/pro/analytics-zoo/dist/lib/
+//            analytics-zoo-bigdl_0.10.0-spark_2.4.3-0.8.0-SNAPSHOT-python-api.zip",
+//    "SPARK_HOME" -> "/home/litchy/Programs/spark-2.4.0-bin-hadoop2.7"
     )
     p.!
     ("rm -rf /tmp/" + imagePath + "*").!
