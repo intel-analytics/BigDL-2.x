@@ -27,32 +27,22 @@ import json
 
 
 class TestTimeSequenceFeature(ZooTestCase):
-
     def setup_method(self, method):
-        self.create_data()
-        self.feat = TimeSequenceFeatureTransformer(dt_col="datetime",
-                                                   target_col="values",
-                                                   extra_features_col=["A", "B"],
-                                                   drop_missing=True)
+        pass
 
     def teardown_method(self, method):
         pass
 
-    def create_data(self):
-        self.sample_num = np.random.randint(6, 10)
-        self.past_seq_len = np.random.randint(2, 5)
-        dates = pd.date_range('1/1/2019', periods=self.sample_num)
-        data = np.random.randn(self.sample_num, 3)
-        self.df = pd.DataFrame({"datetime": dates, "values": data[:, 0],
-                           "A": data[:, 1], "B": data[:, 2]})
-        self.config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
-                                                        'IS_BUSY_HOURS(datetime)',
-                                                        'HOUR(datetime)',
-                                                        'A']),
-                       "past_seq_len": self.past_seq_len}
-
     def test_get_feature_list(self):
-        feature_list = self.feat.get_feature_list(self.df)
+        dates = pd.date_range('1/1/2019', periods=8)
+        data = np.random.randn(8, 3)
+        df = pd.DataFrame({"datetime": dates, "values": data[:, 0],
+                           "A": data[:, 1], "B": data[:, 2]})
+        feat = TimeSequenceFeatureTransformer(dt_col="datetime",
+                                              target_col="values",
+                                              extra_features_col=["A", "B"],
+                                              drop_missing=True)
+        feature_list = feat.get_feature_list(df)
         assert set(feature_list) == {'IS_AWAKE(datetime)',
                                      'IS_BUSY_HOURS(datetime)',
                                      'HOUR(datetime)',
@@ -64,52 +54,65 @@ class TestTimeSequenceFeature(ZooTestCase):
                                      'B'}
 
     def test_fit_transform(self):
-        x, y = self.feat.fit_transform(self.df, **self.config)
-        assert x.shape == (self.sample_num - self.past_seq_len,
-                           self.past_seq_len,
-                           len(self.config["selected_features"]) + 1)
-        assert y.shape == (self.sample_num - self.past_seq_len, 1)
+        sample_num = 8
+        past_seq_len = 2
+        dates = pd.date_range('1/1/2019', periods=sample_num)
+        data = np.random.randn(sample_num, 3)
+        df = pd.DataFrame({"datetime": dates, "values": data[:, 0],
+                           "A": data[:, 1], "B": data[:, 2]})
+        config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
+                                                   'IS_BUSY_HOURS(datetime)',
+                                                   'HOUR(datetime)',
+                                                   'A']),
+                  "past_seq_len": past_seq_len}
+        feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
+                                              target_col="values", drop_missing=True)
+        x, y = feat.fit_transform(df, **config)
+        assert x.shape == (sample_num - past_seq_len,
+                           past_seq_len,
+                           len(json.loads(config["selected_features"])) + 1)
+        assert y.shape == (sample_num - past_seq_len, 1)
         assert np.mean(np.concatenate((x[0, :, 0], y[:, 0]), axis=None)) < 1e-5
 
-    # def test_fit_transform_df_list(self):
-    #     sample_num = 8
-    #     past_seq_len = 2
-    #     dates = pd.date_range('1/1/2019', periods=sample_num)
-    #     data = np.random.randn(sample_num, 3)
-    #     df = pd.DataFrame({"datetime": dates, "values": data[:, 0],
-    #                        "A": data[:, 1], "B": data[:, 2]})
-    #     config = {"selected_features": ['IS_AWAKE(datetime)',
-    #                                     'IS_BUSY_HOURS(datetime)',
-    #                                     'HOUR(datetime)',
-    #                                     'A'],
-    #               "past_seq_len": past_seq_len}
-    #     feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
-    #                                           target_col="values", drop_missing=True)
-    #
-    #     df_list = [df]*3
-    #     x, y = feat.fit_transform(df_list, **config)
-    #     single_result_len = sample_num - past_seq_len
-    #     assert x.shape == (single_result_len*3,
-    #                        past_seq_len,
-    #                        len(config["selected_features"]) + 1)
-    #     assert y.shape == (single_result_len*3, 1)
-    #     assert_array_almost_equal(x[:single_result_len],
-    #                               x[single_result_len: 2*single_result_len], decimal=2)
-    #     assert_array_almost_equal(x[:single_result_len], x[2*single_result_len:], decimal=2)
-    #     assert_array_almost_equal(y[:single_result_len], y[single_result_len: 2*single_result_len],
-    #                               decimal=2)
-    #     assert_array_almost_equal(y[:single_result_len], y[2*single_result_len:], decimal=2)
-    #
-    #     assert np.mean(np.concatenate((x[0, :, 0], y[:single_result_len, 0]), axis=None)) < 1e-5
+    def test_fit_transform_df_list(self):
+        sample_num = 8
+        past_seq_len = 2
+        dates = pd.date_range('1/1/2019', periods=sample_num)
+        data = np.random.randn(sample_num, 3)
+        df = pd.DataFrame({"datetime": dates, "values": data[:, 0],
+                           "A": data[:, 1], "B": data[:, 2]})
+        config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
+                                                   'IS_BUSY_HOURS(datetime)',
+                                                   'HOUR(datetime)',
+                                                   'A']),
+                  "past_seq_len": past_seq_len}
+        feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
+                                              target_col="values", drop_missing=True)
+
+        df_list = [df] * 3
+        x, y = feat.fit_transform(df_list, **config)
+        single_result_len = sample_num - past_seq_len
+        assert x.shape == (single_result_len * 3,
+                           past_seq_len,
+                           len(json.loads(config["selected_features"])) + 1)
+        assert y.shape == (single_result_len * 3, 1)
+        assert_array_almost_equal(x[:single_result_len],
+                                  x[single_result_len: 2 * single_result_len], decimal=2)
+        assert_array_almost_equal(x[:single_result_len], x[2 * single_result_len:], decimal=2)
+        assert_array_almost_equal(y[:single_result_len], y[single_result_len: 2 * single_result_len],
+                                  decimal=2)
+        assert_array_almost_equal(y[:single_result_len], y[2 * single_result_len:], decimal=2)
+
+        assert np.mean(np.concatenate((x[0, :, 0], y[:single_result_len, 0]), axis=None)) < 1e-5
 
     def test_fit_transform_input_datetime(self):
         # if the type of input datetime is not datetime64, raise an error
         dates = pd.date_range('1/1/2019', periods=8)
         values = np.random.randn(8)
         df = pd.DataFrame({"datetime": dates.strftime('%m/%d/%Y'), "values": values})
-        config = {"selected_features": ['IS_AWAKE(datetime)',
-                                        'IS_BUSY_HOURS(datetime)',
-                                        'HOUR(datetime)'],
+        config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
+                                                   'IS_BUSY_HOURS(datetime)',
+                                                   'HOUR(datetime)']),
                   "past_seq_len": 2}
         feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
                                               target_col="values", drop_missing=True)
@@ -128,8 +131,8 @@ class TestTimeSequenceFeature(ZooTestCase):
         values = np.random.randn(8)
         df = pd.DataFrame({"datetime": dates, "values": values})
         config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
-                                        'IS_BUSY_HOURS(datetime)',
-                                        'HOUR(datetime)']),
+                                                   'IS_BUSY_HOURS(datetime)',
+                                                   'HOUR(datetime)']),
                   "past_seq_len": 2}
         feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
                                               target_col="values", drop_missing=True)
@@ -143,9 +146,9 @@ class TestTimeSequenceFeature(ZooTestCase):
         dates = pd.date_range('1/1/2019', periods=sample_num)
         values = np.random.randn(sample_num)
         df = pd.DataFrame({"datetime": dates, "values": values})
-        config = {"selected_features": ['IS_AWAKE(datetime)',
-                                        'IS_BUSY_HOURS(datetime)',
-                                        'HOUR(datetime)'],
+        config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
+                                                   'IS_BUSY_HOURS(datetime)',
+                                                   'HOUR(datetime)']),
                   "past_seq_len": past_seq_len}
         train_df, val_df, test_df = split_input_df(df,
                                                    ts_col="datetime",
@@ -177,9 +180,9 @@ class TestTimeSequenceFeature(ZooTestCase):
         df.loc[2, "values"] = None
         past_seq_len = 2
 
-        config = {"selected_features": ['IS_AWAKE(datetime)',
-                                        'IS_BUSY_HOURS(datetime)',
-                                        'HOUR(datetime)'],
+        config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
+                                                   'IS_BUSY_HOURS(datetime)',
+                                                   'HOUR(datetime)']),
                   "past_seq_len": past_seq_len}
         feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
                                               target_col="values", drop_missing=True)
@@ -188,7 +191,7 @@ class TestTimeSequenceFeature(ZooTestCase):
         # mask_x = [1, 0, 0, 1, 1, 1]
         # mask_y = [0, 1, 1, 1, 1, 1]
         # mask   = [0, 0, 0, 1, 1, 1]
-        assert x.shape == (3, past_seq_len, len(config["selected_features"]) + 1)
+        assert x.shape == (3, past_seq_len, len(json.loads(config["selected_features"])) + 1)
         assert y.shape == (3, 1)
 
     def test_transform_train_true(self):
@@ -201,10 +204,10 @@ class TestTimeSequenceFeature(ZooTestCase):
         val_df = df[train_sample_num:]
         past_seq_len = 2
 
-        config = {"selected_features": ['IS_AWAKE(datetime)',
-                                        'IS_BUSY_HOURS(datetime)',
-                                        'HOUR(datetime)',
-                                        "feature_1"],
+        config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
+                                                   'IS_BUSY_HOURS(datetime)',
+                                                   'HOUR(datetime)',
+                                                   "feature_1"]),
                   "past_seq_len": past_seq_len}
         feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
                                               target_col="values",
@@ -215,7 +218,7 @@ class TestTimeSequenceFeature(ZooTestCase):
         val_x, val_y = feat.transform(val_df, is_train=True)
         assert val_x.shape == (val_df.shape[0] - past_seq_len,
                                past_seq_len,
-                               len(config["selected_features"]) + 1)
+                               len(json.loads(config["selected_features"])) + 1)
         assert val_y.shape == (val_df.shape[0] - past_seq_len, 1)
 
     def test_transform_train_true_df_list(self):
@@ -228,10 +231,10 @@ class TestTimeSequenceFeature(ZooTestCase):
         val_df = df[train_sample_num:]
         past_seq_len = 2
 
-        config = {"selected_features": ['IS_AWAKE(datetime)',
-                                        'IS_BUSY_HOURS(datetime)',
-                                        'HOUR(datetime)',
-                                        "feature_1"],
+        config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
+                                                   'IS_BUSY_HOURS(datetime)',
+                                                   'HOUR(datetime)',
+                                                   "feature_1"]),
                   "past_seq_len": past_seq_len}
         feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
                                               target_col="values",
@@ -245,7 +248,7 @@ class TestTimeSequenceFeature(ZooTestCase):
         single_result_len = val_df.shape[0] - past_seq_len
         assert val_x.shape == (single_result_len * 3,
                                past_seq_len,
-                               len(config["selected_features"]) + 1)
+                               len(json.loads(config["selected_features"])) + 1)
         assert val_y.shape == (single_result_len * 3, 1)
 
     def test_transform_train_false(self):
@@ -258,10 +261,10 @@ class TestTimeSequenceFeature(ZooTestCase):
         test_df = df[train_sample_num:]
         past_seq_len = 2
 
-        config = {"selected_features": ['IS_AWAKE(datetime)',
-                                        'IS_BUSY_HOURS(datetime)',
-                                        'HOUR(datetime)',
-                                        "feature_1"],
+        config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
+                                                   'IS_BUSY_HOURS(datetime)',
+                                                   'HOUR(datetime)',
+                                                   "feature_1"]),
                   "past_seq_len": past_seq_len}
         feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
                                               target_col="values",
@@ -271,7 +274,7 @@ class TestTimeSequenceFeature(ZooTestCase):
         test_x, _ = feat.transform(test_df, is_train=False)
         assert test_x.shape == (test_df.shape[0] - past_seq_len + 1,
                                 past_seq_len,
-                                len(config["selected_features"]) + 1)
+                                len(json.loads(config["selected_features"])) + 1)
 
     def test_transform_train_false_df_list(self):
         num_samples = 16
@@ -283,10 +286,10 @@ class TestTimeSequenceFeature(ZooTestCase):
         test_df = df[train_sample_num:]
         past_seq_len = 2
 
-        config = {"selected_features": ['IS_AWAKE(datetime)',
-                                        'IS_BUSY_HOURS(datetime)',
-                                        'HOUR(datetime)',
-                                        "feature_1"],
+        config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
+                                                   'IS_BUSY_HOURS(datetime)',
+                                                   'HOUR(datetime)',
+                                                   "feature_1"]),
                   "past_seq_len": past_seq_len}
         feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
                                               target_col="values",
@@ -298,7 +301,7 @@ class TestTimeSequenceFeature(ZooTestCase):
         test_x, _ = feat.transform(test_df_list, is_train=False)
         assert test_x.shape == ((test_df.shape[0] - past_seq_len + 1) * 3,
                                 past_seq_len,
-                                len(config["selected_features"]) + 1)
+                                len(json.loads(config["selected_features"])) + 1)
 
     def test_save_restore(self):
         dates = pd.date_range('1/1/2019', periods=8)
@@ -315,7 +318,7 @@ class TestTimeSequenceFeature(ZooTestCase):
                                               drop_missing=drop_missing)
 
         feature_list = feat.get_feature_list(df)
-        config = {"selected_features": feature_list,
+        config = {"selected_features": json.dumps(feature_list),
                   "past_seq_len": 2
                   }
 
@@ -349,9 +352,9 @@ class TestTimeSequenceFeature(ZooTestCase):
 
         past_seq_len = 2
         future_seq_len = 1
-        config = {"selected_features": ['IS_AWAKE(datetime)',
-                                        'IS_BUSY_HOURS(datetime)',
-                                        'HOUR(datetime)'],
+        config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
+                                                   'IS_BUSY_HOURS(datetime)',
+                                                   'HOUR(datetime)']),
                   "past_seq_len": past_seq_len}
         feat = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len, dt_col="datetime",
                                               target_col="values", drop_missing=True)
@@ -360,9 +363,9 @@ class TestTimeSequenceFeature(ZooTestCase):
         y_unscale, y_unscale_1 = feat.post_processing(df, train_y, is_train=True)
         y_input = df[past_seq_len:][[value_col]].values
         assert_array_almost_equal(y_unscale, y_unscale_1, decimal=2), \
-            "y_unscale is {}, y_unscale_1 is {}".format(y_unscale, y_unscale_1)
+        "y_unscale is {}, y_unscale_1 is {}".format(y_unscale, y_unscale_1)
         assert_array_almost_equal(y_unscale, y_input, decimal=2), \
-            "y_unscale is {}, y_input is {}".format(y_unscale, y_input)
+        "y_unscale is {}, y_input is {}".format(y_unscale, y_input)
 
     def test_post_processing_train_df_list(self):
         dates = pd.date_range('1/1/2019', periods=8)
@@ -373,9 +376,9 @@ class TestTimeSequenceFeature(ZooTestCase):
 
         past_seq_len = 2
         future_seq_len = 1
-        config = {"selected_features": ['IS_AWAKE(datetime)',
-                                        'IS_BUSY_HOURS(datetime)',
-                                        'HOUR(datetime)'],
+        config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
+                                                   'IS_BUSY_HOURS(datetime)',
+                                                   'HOUR(datetime)']),
                   "past_seq_len": past_seq_len}
         feat = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len, dt_col="datetime",
                                               target_col="values", drop_missing=True)
@@ -385,9 +388,9 @@ class TestTimeSequenceFeature(ZooTestCase):
         y_input = df[past_seq_len:][[value_col]].values
         target_y = np.concatenate([y_input] * 3)
         assert_array_almost_equal(y_unscale, y_unscale_1, decimal=2), \
-            "y_unscale is {}, y_unscale_1 is {}".format(y_unscale, y_unscale_1)
+        "y_unscale is {}, y_unscale_1 is {}".format(y_unscale, y_unscale_1)
         assert_array_almost_equal(y_unscale, target_y, decimal=2), \
-            "y_unscale is {}, y_input is {}".format(y_unscale, target_y)
+        "y_unscale is {}, y_input is {}".format(y_unscale, target_y)
 
     def test_post_processing_test_1(self):
         dates = pd.date_range('1/1/2019', periods=8)
@@ -398,9 +401,9 @@ class TestTimeSequenceFeature(ZooTestCase):
 
         past_seq_len = 2
         future_seq_len = 1
-        config = {"selected_features": ['IS_AWAKE(datetime)',
-                                        'IS_BUSY_HOURS(datetime)',
-                                        'HOUR(datetime)'],
+        config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
+                                                   'IS_BUSY_HOURS(datetime)',
+                                                   'HOUR(datetime)']),
                   "past_seq_len": past_seq_len}
         feat = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len, dt_col="datetime",
                                               target_col="values", drop_missing=True)
@@ -436,9 +439,9 @@ class TestTimeSequenceFeature(ZooTestCase):
 
         past_seq_len = 2
         future_seq_len = 1
-        config = {"selected_features": ['IS_AWAKE(datetime)',
-                                        'IS_BUSY_HOURS(datetime)',
-                                        'HOUR(datetime)'],
+        config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
+                                                   'IS_BUSY_HOURS(datetime)',
+                                                   'HOUR(datetime)']),
                   "past_seq_len": past_seq_len}
         feat = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len, dt_col="datetime",
                                               target_col="values", drop_missing=True)
@@ -478,9 +481,9 @@ class TestTimeSequenceFeature(ZooTestCase):
 
         past_seq_len = 2
         future_seq_len = 2
-        config = {"selected_features": ['IS_AWAKE(datetime)',
-                                        'IS_BUSY_HOURS(datetime)',
-                                        'HOUR(datetime)'],
+        config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
+                                                   'IS_BUSY_HOURS(datetime)',
+                                                   'HOUR(datetime)']),
                   "past_seq_len": past_seq_len}
         feat = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len, dt_col="datetime",
                                               target_col="values", drop_missing=True)
@@ -496,7 +499,7 @@ class TestTimeSequenceFeature(ZooTestCase):
             test_df = df[:-future_seq_len]
             new_ft.transform(test_df, is_train=False)
             output_value_df = new_ft.post_processing(test_df, train_y, is_train=False)
-            assert output_value_df.shape == (sample_num-past_seq_len-future_seq_len+1,
+            assert output_value_df.shape == (sample_num - past_seq_len - future_seq_len + 1,
                                              future_seq_len + 1)
 
             columns = ["{}_{}".format(value_col, i) for i in range(future_seq_len)]
@@ -504,9 +507,9 @@ class TestTimeSequenceFeature(ZooTestCase):
             target_df = df[past_seq_len:].copy().reset_index(drop=True)
             target_value = feat._roll_test(target_df["values"], future_seq_len)
 
-            assert output_value_df[dt_col].equals(target_df[:-future_seq_len+1][dt_col])
+            assert output_value_df[dt_col].equals(target_df[:-future_seq_len + 1][dt_col])
             assert_array_almost_equal(output_value, target_value, decimal=2), \
-                "output_value is {}, target_value is {}".format(output_value, target_value)
+            "output_value is {}, target_value is {}".format(output_value, target_value)
 
         finally:
             shutil.rmtree(dirname)
