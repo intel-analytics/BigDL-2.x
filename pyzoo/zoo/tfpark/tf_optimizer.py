@@ -582,7 +582,7 @@ class TFOptimizer:
                 return model_shape[i].value is None
             else:
                 return dataset_shape[i].value == model_shape[i].value or \
-                       model_shape[i].value is None
+                    model_shape[i].value is None
 
     @classmethod
     def from_keras(cls, keras_model, dataset, optim_method=None, val_split=0.0,
@@ -609,7 +609,7 @@ class TFOptimizer:
             ("the keras model and TFDataset should have the same number of tensors" +
              " keras model has {} inputs " +
              "while TFDataset has {} inputs").format(len(model_inputs),
-                                                    len(flatten_inputs))
+                                                     len(flatten_inputs))
         for i in range(len(flatten_inputs)):
             if not TFOptimizer._shape_match(model_inputs[i].shape, flatten_inputs[i].shape):
                 raise ValueError(("The {}th input in keras model {}"
@@ -623,7 +623,7 @@ class TFOptimizer:
             ("the keras model and TFDataset should have the same number of tensors" +
              " keras model has {} targets " +
              "while TFDataset has {} labels").format(len(model_targets),
-                                                      len(flatten_inputs))
+                                                     len(flatten_inputs))
         # todo check targets shape, currently checking target shape will
         # cause too much false alarm.
 
