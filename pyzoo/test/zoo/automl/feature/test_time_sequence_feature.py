@@ -99,7 +99,8 @@ class TestTimeSequenceFeature(ZooTestCase):
         assert_array_almost_equal(x[:single_result_len],
                                   x[single_result_len: 2 * single_result_len], decimal=2)
         assert_array_almost_equal(x[:single_result_len], x[2 * single_result_len:], decimal=2)
-        assert_array_almost_equal(y[:single_result_len], y[single_result_len: 2 * single_result_len],
+        assert_array_almost_equal(y[:single_result_len],
+                                  y[single_result_len: 2 * single_result_len],
                                   decimal=2)
         assert_array_almost_equal(y[:single_result_len], y[2 * single_result_len:], decimal=2)
 
@@ -362,10 +363,10 @@ class TestTimeSequenceFeature(ZooTestCase):
         train_x, train_y = feat.fit_transform(df, **config)
         y_unscale, y_unscale_1 = feat.post_processing(df, train_y, is_train=True)
         y_input = df[past_seq_len:][[value_col]].values
-        assert_array_almost_equal(y_unscale, y_unscale_1, decimal=2), \
-        "y_unscale is {}, y_unscale_1 is {}".format(y_unscale, y_unscale_1)
-        assert_array_almost_equal(y_unscale, y_input, decimal=2), \
-        "y_unscale is {}, y_input is {}".format(y_unscale, y_input)
+        msg = "y_unscale is {}, y_unscale_1 is {}".format(y_unscale, y_unscale_1)
+        assert_array_almost_equal(y_unscale, y_unscale_1, decimal=2), msg
+        msg = "y_unscale is {}, y_input is {}".format(y_unscale, y_input)
+        assert_array_almost_equal(y_unscale, y_input, decimal=2), msg
 
     def test_post_processing_train_df_list(self):
         dates = pd.date_range('1/1/2019', periods=8)
@@ -387,10 +388,10 @@ class TestTimeSequenceFeature(ZooTestCase):
         y_unscale, y_unscale_1 = feat.post_processing(df_list, train_y, is_train=True)
         y_input = df[past_seq_len:][[value_col]].values
         target_y = np.concatenate([y_input] * 3)
-        assert_array_almost_equal(y_unscale, y_unscale_1, decimal=2), \
-        "y_unscale is {}, y_unscale_1 is {}".format(y_unscale, y_unscale_1)
-        assert_array_almost_equal(y_unscale, target_y, decimal=2), \
-        "y_unscale is {}, y_input is {}".format(y_unscale, target_y)
+        msg = "y_unscale is {}, y_unscale_1 is {}".format(y_unscale, y_unscale_1)
+        assert_array_almost_equal(y_unscale, y_unscale_1, decimal=2), msg
+        msg = "y_unscale is {}, y_input is {}".format(y_unscale, target_y)
+        assert_array_almost_equal(y_unscale, target_y, decimal=2), msg
 
     def test_post_processing_test_1(self):
         dates = pd.date_range('1/1/2019', periods=8)
@@ -508,8 +509,8 @@ class TestTimeSequenceFeature(ZooTestCase):
             target_value = feat._roll_test(target_df["values"], future_seq_len)
 
             assert output_value_df[dt_col].equals(target_df[:-future_seq_len + 1][dt_col])
-            assert_array_almost_equal(output_value, target_value, decimal=2), \
-            "output_value is {}, target_value is {}".format(output_value, target_value)
+            msg = "output_value is {}, target_value is {}".format(output_value, target_value)
+            assert_array_almost_equal(output_value, target_value, decimal=2), msg
 
         finally:
             shutil.rmtree(dirname)
