@@ -201,8 +201,20 @@ class TimeSequencePredictor(object):
                 for val_d in validation_df:
                     self._check_missing_col(val_d)
 
-        if not Evaluator.check_metric(metric):
+        allowed_fit_metrics = ["mse", "mae", "r2"]
+        if metric not in allowed_fit_metrics:
             raise ValueError("metric " + metric + " is not supported")
+
+    @staticmethod
+    def _get_metric_mode(metric):
+        max_mode_metrics = ["r2"]
+        min_mode_metrics = ["mse", "mae"]
+        if metric in min_mode_metrics:
+            return "min"
+        elif metric in max_mode_metrics:
+            return "max"
+        else:
+            return ValueError, "metric " + metric + " is not supported"
 
     def _hp_search(self,
                    input_df,
@@ -238,6 +250,7 @@ class TimeSequencePredictor(object):
         fixed_params = recipe.fixed_params()
         del stop['num_samples']
 
+        metric_mode = TimeSequencePredictor._get_metric_mode(metric)
         searcher = RayTuneSearchEngine(logs_dir=self.logs_dir,
                                        resources_per_trial=resources_per_trial,
                                        name=self.name,
@@ -249,20 +262,18 @@ class TimeSequencePredictor(object):
                          search_algorithm_params=search_algorithm_params,
                          search_algorithm=search_algorithm,
                          fixed_params=fixed_params,
-                         # feature_transformers=TimeSequenceFeatures,
                          feature_transformers=ft,
-                         # model=model,
                          future_seq_len=self.future_seq_len,
                          validation_df=validation_df,
                          metric=metric,
+                         metric_mode=metric_mode,
                          mc=mc,
                          num_samples=num_samples)
         # searcher.test_run()
-        searcher.run()
+        analysis = searcher.run()
 
-        # get the best one trial, later could be n
-        best = searcher.get_best_trials(k=1)[0]
-        pipeline = self._make_pipeline(best,
+        pipeline = self._make_pipeline(analysis,
+                                       metric_mode,
                                        feature_transformers=ft,
                                        model=model,
                                        remote_dir=remote_dir)
@@ -273,19 +284,25 @@ class TimeSequencePredictor(object):
         for name, value in best_config.items():
             print(name, ":", value)
 
-    def _make_pipeline(self, trial, feature_transformers, model, remote_dir):
-        isinstance(trial, TrialOutput)
-        config = convert_bayes_configs(trial.config).copy()
+    def _make_pipeline(self, analysis, metric_mode, feature_transformers, model, remote_dir):
+        metric = "reward_metric"
+        best_config = analysis.get_best_config(metric=metric, mode=metric_mode)
+        best_logdir = analysis.get_best_logdir(metric=metric, mode=metric_mode)
+        print("best log dir is ", best_logdir)
+        dataframe = analysis.dataframe(metric=metric, mode=metric_mode)
+        # print(dataframe)
+        model_path = os.path.join(best_logdir, dataframe["checkpoint"].iloc[0])
+        config = convert_bayes_configs(best_config).copy()
         self._print_config(config)
         if remote_dir is not None:
-            all_config = restore_hdfs(trial.model_path,
+            all_config = restore_hdfs(model_path,
                                       remote_dir,
                                       feature_transformers,
                                       model,
                                       # config)
                                       )
         else:
-            all_config = restore_zip(trial.model_path,
+            all_config = restore_zip(model_path,
                                      feature_transformers,
                                      model,
                                      # config)
