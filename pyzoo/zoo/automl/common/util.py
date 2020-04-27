@@ -258,6 +258,6 @@ def convert_bayes_configs(config):
         else:
             new_config[config_name] = config_value
     if selected_features:
-        new_config['selected_features'] = selected_features
+        new_config['selected_features'] = json.dumps(selected_features)
     # print("config after bayes conversion is ", new_config)
     return new_config
