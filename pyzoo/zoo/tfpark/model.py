@@ -117,15 +117,16 @@ class KerasModel(object):
         :param validation_data: Data on which to evaluate
             the loss and any model metrics at the end of each epoch.
             The model will not be trained on this data.
-            `validation_data` will override `validation_split`.
             `validation_data` could be:
               - tuple `(x_val, y_val)` of Numpy arrays or tensors
-              - `TFDataset`
         :param distributed: Boolean. Whether to do prediction in distributed mode or local mode.
                      Default is True. In local mode, x must be a Numpy array.
         """
         if isinstance(x, TFDataset):
             # todo check arguments
+            assert validation_data is None, "validation_data must be None when " \
+                                            "using TFDataset as input, please " \
+                                            "use set the validation data in TFDataset"
             if not x.has_batch:
                 raise ValueError("The batch_size of TFDataset must be " +
                                  "specified when used in KerasModel fit.")

@@ -476,7 +476,7 @@ class TFOptimizer:
 
     @classmethod
     def _from_grads(cls, loss, sess, inputs, labels, grads, variables, dataset, optim_method=None,
-                    val_split=0.0, clip_norm=None, clip_value=None,
+                    clip_norm=None, clip_value=None,
                     metrics=None, tensor_with_value=None, session_config=None,
                     model_dir=None, updates=None, train_op=None):
         graph = loss.graph
@@ -486,7 +486,7 @@ class TFOptimizer:
         tf_model = TFModel.create(loss, sess, inputs, labels, [], grads, variables, graph,
                                   tensor_with_value, session_config, metrics,
                                   updates, model_dir=None, train_op=train_op)
-        return cls(tf_model, optim_method, sess=sess, dataset=dataset, val_split=val_split,
+        return cls(tf_model, optim_method, sess=sess, dataset=dataset,
                    clip_norm=clip_norm, clip_value=clip_value, model_dir=model_dir)
 
     @classmethod
@@ -572,7 +572,6 @@ class TFOptimizer:
         :param keras_model: the tensorflow.keras model, which must be compiled.
         :param dataset: a TFDataset
         :param optim_method: the optimization method to be used, such as bigdl.optim.optimizer.Adam
-        :param val_split: Float between 0 and 1. Fraction of the training data to be used as
         validation data.
         :return:
         """
