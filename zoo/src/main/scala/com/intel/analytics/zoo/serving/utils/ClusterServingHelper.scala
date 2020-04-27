@@ -59,8 +59,8 @@ case class Result(id: String, value: String)
 class ClusterServingHelper {
   type HM = LinkedHashMap[String, String]
 
-  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
-//  val configPath = "config.yaml"
+//  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
+  val configPath = "config.yaml"
 
   var lastModTime: String = null
   val logger: Logger = Logger.getLogger(getClass)

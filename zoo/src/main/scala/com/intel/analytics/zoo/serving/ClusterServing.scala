@@ -182,11 +182,30 @@ object ClusterServing {
                   chwFlag)
 
                 val localPartitionModel = bcModel.value
-                // TODO
-                val result = localPartitionModel.doPredict(tensors.toTensor.addSingletonDimension())
-                  .toTensor.squeeze()
+                val result = if (tensors.isTensor) {
+                  localPartitionModel.doPredict(tensors.toTensor.addSingletonDimension())
+                } else {
+                  localPartitionModel.doPredict(tensors)
+                }
 
-                val value = PostProcessing(result, filter)
+                val value = if (result.isTensor) {
+                  val res = result.toTensor.squeeze()
+                  PostProcessing(res, filter)
+                } else {
+                  // result is table
+                  val separator = ","
+                  val res = result.toTable
+                  val valueBuf = StringBuilder.newBuilder
+                  valueBuf.append("[")
+                  res.keySet.foreach(key => {
+                    valueBuf.append(PostProcessing(
+                      res(key).asInstanceOf[Tensor[Float]].select(1, i + 1)))
+                    valueBuf.append(separator)
+                  })
+                  valueBuf.deleteCharAt(valueBuf.length - 1)
+                  valueBuf.append("]")
+                  valueBuf.toString()
+                }
 
                 Record(path, value)
               })
@@ -258,12 +277,6 @@ object ClusterServing {
                 tTable
               }
 
-
-//              val x = if (modelType == "openvino") {
-//                t.addSingletonDimension()
-//              } else {
-//                t
-//              }
               /**
                * addSingletonDimension method will modify the
                * original Tensor, thus if reuse of Tensor is needed,
@@ -273,7 +286,6 @@ object ClusterServing {
               if (result.isTensor) {
                 val res = if (modelType == "openvino") {
                   // TODO: Activity support
-//                  t.squeeze(1)
                   if (t.isTensor) {
                     t.toTensor.squeeze(1)
                   }
