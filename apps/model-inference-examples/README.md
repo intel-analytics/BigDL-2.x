@@ -61,8 +61,9 @@ For `SimpleDriver.java`, simply running it can get the prediction result in the 
 For `WebServiceDriver.java`, running it will start the web service application. To see the output, you can use tools such as `Postman` to send a POST request whose body contains an article text to the server's url followed with directory "/predict", (eg: localhost:8080/predict). Then the application will respond with the prediction result.
 
 ### Run flink examples in model-inference-flink
-#### Run on Flink Cluster
 **Run text classification example**
+ 
+Run on Flink Cluster
 
 1. you may start a flink cluster if there is no runing one:
     
@@ -106,4 +107,4 @@ Or can use another method which don't need to use nc commend.
 
 **Run image classification example**
 
-This is the example of real-time image classification streaming on Flink. Images will be predicted with pre-trained tensorflow model which is loaded as Analytics Zoo TFNet. To run this example or see more details, visit [here](model-inference-flink/src/main/scala/com/intel/analytics/zoo/apps/model/inference/flink/ImageClassification/README.md)
+This is the example of real-time image classification streaming on Flink. Images will be predicted with pre-trained tensorflow model which is loaded as Analytics Zoo TFNet. To run this example or see more details, visit [here](model-inference-flink/src/main/scala/com/intel/analytics/zoo/apps/model/inference/flink/ImageClassification/).

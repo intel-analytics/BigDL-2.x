@@ -45,7 +45,7 @@ sudo docker run -itd --net=host \
     -e https_proxy=https://your-proxy-host:your-proxy-port \
     -e RUNTIME_SPARK_MASTER=k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port> \
     -e RUNTIME_K8S_SERVICE_ACCOUNT=account \
-    -e RUNTIME_K8S_SPARK_IMAGE=intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17 \
+    -e RUNTIME_K8S_SPARK_IMAGE=intelanalytics/hyper-zoo:latest \
     -e RUNTIME_PERSISTENT_VOLUME_CLAIM=myvolumeclaim \
     -e RUNTIME_DRIVER_HOST=x.x.x.x \
     -e RUNTIME_DRIVER_PORT=54321 \
@@ -132,7 +132,7 @@ ${SPARK_HOME}/bin/spark-submit \
 
 Options:
 
-- --master: the spark mater, must be a URL with the format `k8s://<api_server_host>:<k8s-apiserver-port>`. 
+- --master: the spark mater, must be a URL with the format `k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port>`. 
 - --deploy-mode: submit application in cluster mode or client mode.
 - --name: the Spark application name.
 - --conf: require to specify k8s service account, container image to use for the Spark application, driver volumes name and path, label of pods, spark driver and executor configuration, etc.
@@ -178,7 +178,7 @@ ${SPARK_HOME}/bin/spark-submit \
 
 Options:
 
-- --master: the spark mater, must be a URL with the format `k8s://<api_server_host>:<k8s-apiserver-port>`. 
+- --master: the spark mater, must be a URL with the format `k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port>`. 
 - --deploy-mode: submit application in cluster mode or client mode.
 - --name: the Spark application name.
 - --conf: require to specify k8s service account, container image to use for the Spark application, driver volumes name and path, label of pods, spark driver and executor configuration, etc.
