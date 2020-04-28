@@ -61,7 +61,8 @@ class RayTuneSearchEngine(SearchEngine):
                 future_seq_len=1,
                 validation_df=None,
                 mc=False,
-                metric="mean_squared_error"):
+                metric="mse",
+                metric_mode="min"):
         """
         Do necessary preparations for the engine
         :param input_df:
@@ -80,41 +81,26 @@ class RayTuneSearchEngine(SearchEngine):
         self.search_space = self._prepare_tune_config(search_space)
         self.stop_criteria = stop
         self.num_samples = num_samples
-        if metric == "mse":
-            # mode = "min"
-            metric_op = -1
-        elif metric == "r2":
-            # mode = "max"
-            metric_op = 1
-        else:
-            raise ValueError("metric can only be \"mse\" or \"r2\"")
 
         if search_algorithm == 'BayesOpt':
-            # ray version 0.7.2
             self.search_algorithm = BayesOptSearch(
                 self.search_space,
-                reward_attr="reward_metric",
+                metric="reward_metric",
+                mode=metric_mode,
                 utility_kwargs=search_algorithm_params["utility_kwargs"]
             )
-            # ray version 0.7.3
-            # self.search_algorithm = BayesOptSearch(
-            #     self.search_space,
-            #     metric="reward_metric",
-            #     mode=mode,
-            #     utility_kwargs=search_algorithm_params["utility_kwargs"]
-            # )
         else:
             self.search_algorithm = None
         self.fixed_params = fixed_params
 
-        self.train_func = self._prepare_train_func(input_df,
-                                                   feature_transformers,
-                                                   # model,
-                                                   future_seq_len,
-                                                   validation_df,
-                                                   metric_op,
-                                                   mc,
-                                                   self.remote_dir)
+        self.train_func = self._prepare_train_func(input_df=input_df,
+                                                   feature_transformers=feature_transformers,
+                                                   future_seq_len=future_seq_len,
+                                                   validation_df=validation_df,
+                                                   metric=metric,
+                                                   metric_mode=metric_mode,
+                                                   mc=mc,
+                                                   remote_dir=self.remote_dir)
         # self.trainable_class = self._prepare_trainable_class(input_df,
         #                                                      feature_transformers,
         #                                                      # model,
@@ -130,7 +116,7 @@ class RayTuneSearchEngine(SearchEngine):
         """
         # function based
         if not self.search_algorithm:
-            trials = tune.run(
+            analysis = tune.run(
                 self.train_func,
                 name=self.name,
                 stop=self.stop_criteria,
@@ -141,7 +127,7 @@ class RayTuneSearchEngine(SearchEngine):
                 reuse_actors=True
             )
         else:
-            trials = tune.run(
+            analysis = tune.run(
                 self.train_func,
                 name=self.name,
                 config=self.fixed_params,
@@ -152,50 +138,8 @@ class RayTuneSearchEngine(SearchEngine):
                 verbose=1,
                 reuse_actors=True
             )
-        # class based
-        # if not self.search_algorithm:
-        #     trials = tune.run(
-        #         self.trainable_class,
-        #         name=self.name,
-        #         stop=self.stop_criteria,
-        #         config=self.search_space,
-        #         checkpoint_freq=1,
-        #         checkpoint_at_end=True,
-        #         resume="prompt",
-        #         # upload_dir="hdfs://172.16.0.103:9000/yushan",
-        #         # sync_function="source_path={source};"
-        #         #               "target_path={target};"
-        #         #               "if [[ $source_path == hdfs:* ]]; "
-        #         #               "then echo \"hadoop fs -get $source_path $target_path\"; "
-        #         #               "else echo \"hadoop fs -put $target_path $source_path\"; fi",
-        #         num_samples=self.num_samples,
-        #         resources_per_trial=self.resources_per_trail,
-        #         verbose=1,
-        #         reuse_actors=True
-        #     )
-        # else:
-        #     trials = tune.run(
-        #         self.trainable_class,
-        #         name=self.name,
-        #         config=self.fixed_params,
-        #         stop=self.stop_criteria,
-        #         search_alg=self.search_algorithm,
-        #         checkpoint_freq=1,
-        #         checkpoint_at_end=True,
-        #         resume="prompt",
-        #         # upload_dir="hdfs://172.16.0.103:9000/yushan",
-        #         # sync_function="source_path={source};"
-        #         #               "target_path={target};"
-        #         #               "if [[ $source_path == hdfs:* ]]; "
-        #         #               "then echo \"hadoop fs -get $source_path $target_path\"; "
-        #         #               "else echo \"hadoop fs -put $target_path $source_path\"; fi",
-        #         num_samples=self.num_samples,
-        #         resources_per_trial=self.resources_per_trail,
-        #         verbose=1,
-        #         reuse_actors=True
-        #         )
-        self.trials = trials
-        return self
+        self.trials = analysis.trials
+        return analysis
 
     def get_best_trials(self, k=1):
         sorted_trials = RayTuneSearchEngine._get_sorted_trials(self.trials, metric="reward_metric")
@@ -253,10 +197,10 @@ class RayTuneSearchEngine(SearchEngine):
     @staticmethod
     def _prepare_train_func(input_df,
                             feature_transformers,
-                            # model,
                             future_seq_len,
+                            metric,
+                            metric_mode,
                             validation_df=None,
-                            metric_op=1,
                             mc=False,
                             remote_dir=None
                             ):
@@ -266,7 +210,8 @@ class RayTuneSearchEngine(SearchEngine):
         :param feature_transformers: feature transformers
         :param model: model or model selector
         :param validation_df: validation dataframe
-        :param metric_op: the rewarding metric operation.
+        :param metric: the rewarding metric
+        :param metric_mode: the mode of rewarding metric. "min" or "max"
         :return: the train function
         """
         input_df_id = ray.put(input_df)
@@ -282,7 +227,7 @@ class RayTuneSearchEngine(SearchEngine):
         else:
             is_val_df_valid = False
 
-        def train_func(config, tune_reporter):
+        def train_func(config):
             # make a copy from global variables for trial to make changes
             global_ft = ray.get(ft_id)
             # global_model = ray.get(model_id)
@@ -295,7 +240,7 @@ class RayTuneSearchEngine(SearchEngine):
             global_input_df = ray.get(input_df_id)
             trial_input_df = deepcopy(global_input_df)
             config = convert_bayes_configs(config).copy()
-            # print("config is ", config)
+            print("config is ", config)
             (x_train, y_train) = trial_ft.fit_transform(trial_input_df, **config)
             # trial_ft.fit(trial_input_df, **config)
 
@@ -310,22 +255,16 @@ class RayTuneSearchEngine(SearchEngine):
             # callbacks = [TuneCallback(tune_reporter)]
             # fit model
             best_reward_m = -999
-            reward_m = -999
+            metric_op = 1 if metric_mode is "max" else -1
             for i in range(1, 101):
                 result = trial_model.fit_eval(x_train,
                                               y_train,
                                               validation_data=validation_data,
                                               mc=mc,
+                                              metric=metric,
                                               # verbose=1,
                                               **config)
                 reward_m = metric_op * result
-                # if metric == "mean_squared_error":
-                #     reward_m = (-1) * result
-                #     # print("running iteration: ",i)
-                # elif metric == "r_square":
-                #     reward_m = result
-                # else:
-                #     raise ValueError("metric can only be \"mean_squared_error\" or \"r_square\"")
                 ckpt_name = "best.ckpt"
                 if reward_m > best_reward_m:
                     best_reward_m = reward_m
@@ -333,22 +272,20 @@ class RayTuneSearchEngine(SearchEngine):
                     if remote_dir is not None:
                         upload_ppl_hdfs(remote_dir, ckpt_name)
 
-                tune_reporter(
-                    training_iteration=i,
-                    reward_metric=reward_m,
-                    checkpoint="best.ckpt"
-                )
+                tune.track.log(training_iteration=i,
+                               reward_metric=reward_m,
+                               checkpoint="best.ckpt")
 
         return train_func
 
     @staticmethod
     def _prepare_trainable_class(input_df,
                                  feature_transformers,
-                                 # model,
                                  future_seq_len,
+                                 metric,
+                                 metric_mode,
                                  validation_df=None,
-                                 metric_op=1,
-                                 # metric="mean_squared_error",
+                                 mc=False,
                                  remote_dir=None
                                  ):
         """
@@ -357,7 +294,8 @@ class RayTuneSearchEngine(SearchEngine):
         :param feature_transformers: feature transformers
         :param model: model or model selector
         :param validation_df: validation dataframe
-        :param metric_op: the rewarding metric operation.
+        :param metric: the rewarding metric
+        :param metric_mode: the mode of rewarding metric. "min" or "max"
         :return: the train function
         """
         input_df_id = ray.put(input_df)
@@ -404,6 +342,7 @@ class RayTuneSearchEngine(SearchEngine):
                 self.best_reward_m = -999
                 self.reward_m = -999
                 self.ckpt_name = "pipeline.ckpt"
+                self.metric_op = 1 if metric_mode is "max" else -1
 
             def _train(self):
                 # print("self.config in train is ", self.config)
@@ -411,7 +350,7 @@ class RayTuneSearchEngine(SearchEngine):
                                                    validation_data=self.validation_data,
                                                    # verbose=1,
                                                    **self.config)
-                self.reward_m = metric_op * result
+                self.reward_m = self.metric_op * result
                 # if metric == "mean_squared_error":
                 #     self.reward_m = (-1) * result
                 #     # print("running iteration: ",i)

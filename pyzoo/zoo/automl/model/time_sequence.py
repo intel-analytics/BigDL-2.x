@@ -55,7 +55,7 @@ class TimeSequenceModel(BaseModel):
     #         if verbose == 1:
     #             print("Model selection: LSTM Seq2Seq model is selected.")
 
-    def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, **config):
+    def fit_eval(self, x, y, validation_data=None, mc=False, metric="mse", verbose=0, **config):
         """
         fit for one iteration
         :param x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
@@ -68,6 +68,7 @@ class TimeSequenceModel(BaseModel):
         :param validation_data: tuple in format (x_test,y_test), data used for validation.
         If this is specified, validation result will be the optimization target for automl.
         Otherwise, train metric will be the optimization target.
+        :param metric:
         :param config: optimization hyper parameters
         :return: the resulting metric
         """
