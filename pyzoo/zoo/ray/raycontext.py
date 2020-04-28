@@ -317,8 +317,10 @@ class RayContext(object):
         return self
 
     def _start_restricted_worker(self, num_cores, node_ip_address):
+
         extra_param = {"node-ip-address": node_ip_address}
-        extra_param.update(self.extra_params)
+        if self.extra_params is not None:
+            extra_param.update(self.extra_params)
         command = RayServiceFuncGenerator._get_raylet_command(
             redis_address=self.redis_address,
             ray_exec="ray ",
