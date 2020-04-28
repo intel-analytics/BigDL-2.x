@@ -45,7 +45,7 @@ RUN apt-get update --fix-missing && \
     chgrp root /etc/passwd && chmod ug+rw /etc/passwd
 
 #java
-RUN wget http://enos.itcollege.ee/~jpoial/allalaadimised/jdk8/jdk-8u241-linux-x64.tar.gz && \
+RUN wget https://alm2-gerdal.s3.amazonaws.com/jdk-8u241-linux-x64.tar.gz && \
     gunzip jdk-8u241-linux-x64.tar.gz && \
     tar -xf jdk-8u241-linux-x64.tar -C /opt && \
     rm jdk-8u241-linux-x64.tar && \
@@ -81,13 +81,12 @@ RUN apt-get install -y python3-minimal && \
     pip install redis && \
     pip install keras && \
     pip install mxnet-mkl==1.6.0b20191025 && \
-    pip install ray==0.8.4 && \
+    pip install ray==0.7.2 && \
     pip install Pillow==6.1 && \
     pip install psutil aiohttp && \
     pip install gym gym[atari] && \
     pip install lz4 && \
-    pip install ray[rllib]==0.8.4 && \
-    pip install ray[tune]==0.8.4 && \
+    pip install ray[rllib] && \
     git clone https://github.com/tensorflow/models/ /opt/models
 
 #redis

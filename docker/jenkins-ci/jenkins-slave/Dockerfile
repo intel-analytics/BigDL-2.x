@@ -30,7 +30,7 @@ RUN apt-get update --fix-missing && \
     apt-get install -y libgtk2.0-dev
 
 #jdk8
-RUN wget http://enos.itcollege.ee/~jpoial/allalaadimised/jdk8/jdk-8u241-linux-x64.tar.gz && \
+RUN wget https://alm2-gerdal.s3.amazonaws.com/jdk-8u241-linux-x64.tar.gz && \
     gunzip jdk-8u241-linux-x64.tar.gz && \
     tar -xf jdk-8u241-linux-x64.tar -C /opt && \
     rm jdk-8u241-linux-x64.tar && \
@@ -106,7 +106,7 @@ RUN export TENSOR_FLOW_VERION=1.10.0 && \
     conda install -y -n py35 -c mingfeima mkldnn==0.16.1 && \
     conda install -y -n py35 -c pytorch pytorch-cpu==1.0.0 torchvision-cpu==0.2.1 && \
         /bin/bash -c "source activate py35 && \
-        pip install onnx==1.3.0 ray==0.8.4 ray[tune]==0.8.4 ray[rllib]==0.8.4 conda-pack==0.3.1 psutil==5.6.2 && \
+        pip install onnx==1.3.0 ray==0.7.2 conda-pack==0.3.1 psutil==5.6.2 && \
         pip install aiohttp==3.5.4 setproctitle==1.1.10 gym==0.14.0 && \
         pip install atari_py==0.2.6 lz4==2.1.10 && source deactivate" && \
 #py36
@@ -126,7 +126,7 @@ RUN export TENSOR_FLOW_VERION=1.10.0 && \
     conda install -y -n py36 -c mingfeima mkldnn==0.16.1 && \
     conda install -y -n py36 -c pytorch pytorch-cpu==1.0.0 torchvision-cpu==0.2.1 && \
         /bin/bash -c "source activate py36 && \
-        pip install onnx==1.3.0 ray==0.8.4 ray[tune]==0.8.4 ray[rllib]==0.8.4 conda-pack==0.3.1 psutil==5.6.2 && \
+        pip install onnx==1.3.0 ray==0.7.2 conda-pack==0.3.1 psutil==5.6.2 && \
         pip install aiohttp==3.5.4 setproctitle==1.1.10 gym==0.14.0 && \
         pip install atari_py==0.2.6 lz4==2.1.10 && source deactivate" && \
 #keras=2.1.6
