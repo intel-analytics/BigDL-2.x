@@ -86,7 +86,8 @@ RUN apt-get install -y python3-minimal && \
     pip install psutil aiohttp && \
     pip install gym gym[atari] && \
     pip install lz4 && \
-    pip install ray[rllib] && \
+    pip install ray[rllib]==0.8.4 && \
+    pip install ray[tune]==0.8.4 && \
     git clone https://github.com/tensorflow/models/ /opt/models
 
 #redis
