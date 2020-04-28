@@ -136,11 +136,6 @@ if __name__ == "__main__":
             "n_step": 3,
         })
 
-    # disable DQN exploration when used by the PPO trainer
-    ppo_trainer.optimizer.foreach_worker(
-        lambda ev: ev.for_policy(
-            lambda pi: pi.set_epsilon(0.0), policy_id="dqn_policy"))
-
     # You should see both the printed X and Y approach 200 as this trains:
     # info:
     #   policy_reward_mean:
