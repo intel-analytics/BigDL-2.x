@@ -38,8 +38,8 @@ with open(property_path) as f:
         if "data-store-url" in line:
             line = line.strip()
             data_url = line.split("=")[1].replace("\\", "")
-#if os.getenv('FTP_URI'):
-#    s3_url = os.getenv('FTP_URI')
+# if os.getenv('FTP_URI'):
+#     s3_url = os.getenv('FTP_URI')
 
 
 class TestInferenceModel(ZooTestCase):
