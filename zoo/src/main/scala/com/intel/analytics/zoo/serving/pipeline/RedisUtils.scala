@@ -33,7 +33,8 @@ object RedisUtils {
       while (cuttedRedisInfo("used_memory").toLong >=
         cuttedRedisInfo("maxmemory").toLong * inputThreshold) {
         logger.info(s"Used memory ${redisInfo("used_memory")}, " +
-          s"Max memory ${redisInfo("maxmemory")}. Your result field has exceeded the limit, please dequeue.")
+          s"Max memory ${redisInfo("maxmemory")}. " +
+          s"Your result field has exceeded the limit, please dequeue.")
         Thread.sleep(10000)
       }
     }

@@ -25,7 +25,8 @@ import org.apache.flink.configuration.Configuration
 import org.apache.log4j.Logger
 
 
-class FlinkInference(params: SerParams) extends RichMapFunction[List[(String, String)], List[(String, String)]] {
+class FlinkInference(params: SerParams)
+  extends RichMapFunction[List[(String, String)], List[(String, String)]] {
   var model: InferenceModel = null
   var t: Tensor[Float] = null
   var logger: Logger = null

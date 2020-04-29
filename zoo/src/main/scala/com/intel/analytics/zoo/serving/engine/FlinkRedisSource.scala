@@ -24,7 +24,7 @@ import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.source.{RichSourceFunction, SourceFunction}
 import redis.clients.jedis.{Jedis, JedisPool, StreamEntryID}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(String, String)]] {
   @volatile var isRunning = true
@@ -46,18 +46,19 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
 
   }
 
-  override def run(sourceContext: SourceFunction.SourceContext[List[(String,String)]]): Unit = while (isRunning){
+  override def run(sourceContext: SourceFunction
+    .SourceContext[List[(String, String)]]): Unit = while (isRunning) {
     val response = db.xreadGroup(
       "serving",
       "cli",
       512,
       50,
       false,
-      new SimpleEntry("image_stream", StreamEntryID.UNRECEIVED_ENTRY))
+      new SimpleEntry("image_stream", StreamEntryID.UNRECEIVED_ENTRY)).asScala
     if (response != null) {
       for (streamMessages <- response) {
         val key = streamMessages.getKey
-        val entries = streamMessages.getValue
+        val entries = streamMessages.getValue.asScala
         val it = entries.map(e => {
           (e.getFields.get("uri"), e.getFields.get("image"))
         }).toList
