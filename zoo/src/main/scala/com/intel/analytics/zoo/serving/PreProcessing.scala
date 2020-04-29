@@ -51,8 +51,8 @@ class PreProcessing(s: String) {
         }
       case "tensor" =>
         val alloc = new RootAllocator(Integer.MAX_VALUE)
-        val MAX_ALLOC = 3 * 1024 * 1024 * 1024L;
-        val alloc4tensor = alloc.newChildAllocator("tensor" , 0 , MAX_ALLOC);
+        val MAX_ALLOC = 3 * 1024 * 1024 * 1024L
+        val alloc4tensor = alloc.newChildAllocator("tensor", 0, MAX_ALLOC)
         val reader = new ArrowFileReader(new ByteArrayReadableSeekableByteChannel(b), alloc4tensor)
 
         val dataList = new ArrayBuffer[Tensor[Float]]

@@ -60,7 +60,7 @@ object ClusterServing {
     val nodeNum = helper.nodeNum
     val modelType = helper.modelType
     val blasFlag = helper.blasFlag
-    val dataType =  helper.dataType
+    val dataType = helper.dataType
     val dataShape = helper.dataShape
 
     val (flagC, flagW, flagH, streamKey, dataField) = if (dataType == "image") {
