@@ -583,11 +583,23 @@ class NNClassifierModel(NNModel, HasThreshold):
 
 class NNXGBoostClassifierModel:
 
-    def __init__(self, model, jvalue=None,
-                 bigdl_type="float"):
-        super(NNXGBoostClassifierModel, self).__init__(model, jvalue, bigdl_type)
+    def __init__(self, jvalue):
+        super(NNXGBoostClassifierModel, self).__init__()
+        assert jvalue is not None
+        self.value = jvalue
+
+    def setFeaturesCol(self, features):
+        callZooFunc("float", "setFeaturesNNXGBoostClassifierModel", self.value, features)
+
+    def setPredictionCol(self, prediction):
+        callZooFunc("float", "setPredictionNNXGBoostClassifierModel", self.value, prediction)
+
+    def transform(self, dataset):
+        # df = callZooFunc("float", "transformNNXGBoostClassifierModel2", self.value, dataset)
+        df = callZooFunc("float", "transformNNXGBoostClassifierModel", self.value, dataset)
+        return df
 
     @staticmethod
-    def load(path):
-        jvalue = callZooFunc("float", "loadNNXGBoostClassifierModel", path)
-        return NNClassifierModel(model=None, feature_preprocessing=None, jvalue=jvalue)
+    def loadModel(path, numClasses):
+        jvalue = callZooFunc("float", "loadNNXGBoostClassifierModel", path, numClasses)
+        return NNXGBoostClassifierModel(jvalue=jvalue)

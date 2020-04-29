@@ -237,4 +237,23 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   def nnReadCSV(path: String, sc: JavaSparkContext): DataFrame = {
     NNFileReader.readCSV(path, sc)
   }
+
+  def loadNNXGBoostClassifierModel(path: String, numClasses: Int): NNXGBoostClassifierModel = {
+    NNXGBoostClassifierModel.load(path, numClasses)
+  }
+
+  def setFeaturesNNXGBoostClassifierModel(model: NNXGBoostClassifierModel,
+                                          features: JList[String]): Unit = {
+    model.setFeaturesCol(features.asScala.toArray)
+  }
+
+  def setPredictionNNXGBoostClassifierModel(model: NNXGBoostClassifierModel,
+                                            prediction: String): Unit = {
+    model.setPredictionCol(prediction)
+  }
+
+  def transformNNXGBoostClassifierModel(model: NNXGBoostClassifierModel,
+                                        dataset: DataFrame): DataFrame = {
+    model.transform(dataset)
+  }
 }
