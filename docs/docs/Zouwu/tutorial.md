@@ -59,14 +59,14 @@ mtnet_forecaster = MTNetForecaster(target_dim=1,
 
 * **X** shape should be ```(num of samples, lookback, feature_dim)```
 * **Y** shape should be ```(num of samples, target_dim)```
-* Where, ```feature_dim``` is the number of features as specified in Forecaster constructors. ```target_dim``` is the number of series to forecast at the same time as specified in Forecaster constructors. ```target_dim``` should be 1 for univariate forecasting. ```lookback``` is the number of time steps you want to look back in history. 
+* Where, ```feature_dim``` is the number of features as specified in Forecaster constructors. ```lookback``` is the number of time steps you want to look back in history. ```target_dim``` is the number of series to forecast at the same time as specified in Forecaster constructors and should be 1 here. If you want to do multi-step forecasting and use the second dimension as no. of steps to look forward, you won't get error but the performance may be uncertain and we don't recommend using that way.
 
 
  4.For multivariant forecasting (i.e. to predict several series at the same time), you have to use **MTNetForecaster**. The input data shape should meet below criteria.  
 
 * **X** shape should be ```(num of samples, lookback, feature_dim)```
 * **Y** shape should be ```(num of samples, target_dim)``` 
-* Where ```lookback``` should equal ```(lb_long_steps+1) * lb_long_stepsize```, where ```lb_long_steps``` and ```lb_long_stepsize``` are as specified in ```MTNetForecaster``` constructor. 
+* Where ```lookback``` should equal ```(lb_long_steps+1) * lb_long_stepsize```, where ```lb_long_steps``` and ```lb_long_stepsize``` are as specified in ```MTNetForecaster``` constructor. ```target_dim``` should equal number of series in input.
 
 ---
 
