@@ -37,8 +37,6 @@ import org.apache.spark.sql.SparkSession
 import org.yaml.snakeyaml.Yaml
 import java.time.LocalDateTime
 
-import org.apache.spark.sql.types.DataType
-
 import scala.reflect.ClassTag
 
 case class LoaderParams(modelFolder: String = null,

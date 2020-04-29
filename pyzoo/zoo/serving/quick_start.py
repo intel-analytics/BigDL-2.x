@@ -20,9 +20,6 @@ import cv2
 import json
 import time
 from optparse import OptionParser
-import numpy as np
-import pickle
-from bigdl.util.common import JTensor
 
 
 def run(path):
@@ -34,19 +31,12 @@ def run(path):
     output_api = OutputQueue()
     output_api.dequeue()
     path = os.listdir(base_path)
-    for i in range(0, 1000):
-        for p in path:
-            if not p.endswith("jpeg"):
-                continue
-            img = cv2.imread(os.path.join(base_path, p))
-            img = cv2.resize(img, (224, 224))
-            input_api.enqueue_image(p, img)
-            # break
-
-    # for i in range(0, 1000):
-    #     sample = np.array([1, 1193])
-    #     # sample = [np.array([0]), np.array([661]), np.array([0]), np.array([5]), np.array([0])]
-    #     input_api.enqueue_tensor("test", sample)
+    for p in path:
+        if not p.endswith("jpeg"):
+            continue
+        img = cv2.imread(os.path.join(base_path, p))
+        img = cv2.resize(img, (224, 224))
+        input_api.enqueue_image(p, img)
 
     time.sleep(10)
 
@@ -56,9 +46,8 @@ def run(path):
         output = "image: " + k + ", classification-result:"
         tmp_list = json.loads(result[k])
         for record in range(len(tmp_list)):
-            # output += " class: " + str(tmp_list[record][0]) \
-            #           + "'s prob: " + str(tmp_list[record][1])
-            output += " result: " + str(tmp_list[record])
+            output += " class: " + str(tmp_list[record][0]) \
+                      + "'s prob: " + str(tmp_list[record][1])
         print(output)
 
 
