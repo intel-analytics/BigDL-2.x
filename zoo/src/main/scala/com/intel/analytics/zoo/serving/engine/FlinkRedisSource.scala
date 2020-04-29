@@ -54,9 +54,9 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
       512,
       50,
       false,
-      new SimpleEntry("image_stream", StreamEntryID.UNRECEIVED_ENTRY)).asScala
+      new SimpleEntry("image_stream", StreamEntryID.UNRECEIVED_ENTRY))
     if (response != null) {
-      for (streamMessages <- response) {
+      for (streamMessages <- response.asScala) {
         val key = streamMessages.getKey
         val entries = streamMessages.getValue.asScala
         val it = entries.map(e => {
