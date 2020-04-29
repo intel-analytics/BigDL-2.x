@@ -240,7 +240,7 @@ class RayTuneSearchEngine(SearchEngine):
             global_input_df = ray.get(input_df_id)
             trial_input_df = deepcopy(global_input_df)
             config = convert_bayes_configs(config).copy()
-            print("config is ", config)
+            # print("config is ", config)
             (x_train, y_train) = trial_ft.fit_transform(trial_input_df, **config)
             # trial_ft.fit(trial_input_df, **config)
 
