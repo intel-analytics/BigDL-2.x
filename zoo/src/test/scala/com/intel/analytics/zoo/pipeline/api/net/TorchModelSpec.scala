@@ -16,13 +16,14 @@
 package com.intel.analytics.zoo.pipeline.api.net
 
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.common.PythonInterpreter
+import com.intel.analytics.zoo.common.{PythonInterpreter, PythonInterpreterTest}
 import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import jep.NDArray
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
 
+@PythonInterpreterTest
 class TorchModelSpec extends ZooSpecHelper{
 
   protected def ifskipTest(): Unit = {
