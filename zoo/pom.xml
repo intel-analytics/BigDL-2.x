@@ -18,6 +18,7 @@
         <java.version>1.7</java.version>
         <javac.version>1.7</javac.version>
         <spark-scope>provided</spark-scope>
+        <flink-scope>provided</flink-scope>
         <bigdl-scope>compile</bigdl-scope>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>2.11.8</scala.version>
@@ -114,6 +115,14 @@
             </properties>
 
 
+        </profile>
+
+        <profile>
+            <id>serving</id>
+            <properties>
+                <spark-scope>compile</spark-scope>
+                <flink-scope>compile</flink-scope>
+            </properties>
         </profile>
 
         <profile>
@@ -285,12 +294,12 @@
             <scope>${spark-scope}</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_${scala.major.version}</artifactId>
-            <version>${spark.version}</version>
-            <scope>${spark-scope}</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.spark</groupId>-->
+<!--            <artifactId>spark-core_${scala.major.version}</artifactId>-->
+<!--            <version>${spark.version}</version>-->
+<!--            <scope>${spark-scope}</scope>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_${scala.major.version}</artifactId>
@@ -364,11 +373,30 @@
             <artifactId>snakeyaml</artifactId>
             <version>1.25</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>com.redislabs</groupId>-->
-            <!--<artifactId>spark-redis</artifactId>-->
-            <!--<version>2.4.0</version>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-scala_2.11</artifactId>
+            <version>1.10.0</version>
+            <scope>${flink-scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-streaming-scala_2.11</artifactId>
+            <version>1.10.0</version>
+            <scope>${flink-scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-clients_2.11</artifactId>
+            <version>1.10.0</version>
+            <scope>${flink-scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.openpnp</groupId>
+            <artifactId>opencv</artifactId>
+            <version>4.3.0-1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -397,11 +425,11 @@
         </resources>
         <pluginManagement>
             <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.0.0</version>
-                </plugin>
+<!--                <plugin>-->
+<!--                    <groupId>org.apache.maven.plugins</groupId>-->
+<!--                    <artifactId>maven-shade-plugin</artifactId>-->
+<!--                    <version>3.0.0</version>-->
+<!--                </plugin>-->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
@@ -500,9 +528,11 @@
                     <shadedArtifactAttached>false</shadedArtifactAttached>
                     <filters>
                         <filter>
-                            <artifact>com.google.protobuf</artifact>
+                            <artifact>*:*</artifact>
                             <excludes>
-                                <exclude>META-INF/maven/com.google.protobuf/protobuf-java/*</exclude>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
                             </excludes>
                         </filter>
                     </filters>
