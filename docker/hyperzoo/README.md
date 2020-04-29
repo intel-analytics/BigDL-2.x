@@ -17,7 +17,7 @@ Analytics Zoo hyperzoo image has been built to easily run applications on Kubern
 - Pull an Analytics Zoo k8s image:
 
 ```bash
-sudo docker pull intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17
+sudo docker pull intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3
 ```
 
 - Launch a k8s client container:
@@ -28,7 +28,7 @@ Please note the two different containers: **client container** is for user to su
 sudo docker run -itd --net=host \
     -v /etc/kubernetes:/etc/kubernetes \
     -v /root/.kube:/root/.kube \
-    intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17 bash
+    intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3 bash
 ```
 
 Note. To launch the client container, `-v /etc/kubernetes:/etc/kubernetes:` and `-v /root/.kube:/root/.kube` are required to specify the path of kube config and installation.
@@ -45,7 +45,7 @@ sudo docker run -itd --net=host \
     -e https_proxy=https://your-proxy-host:your-proxy-port \
     -e RUNTIME_SPARK_MASTER=k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port> \
     -e RUNTIME_K8S_SERVICE_ACCOUNT=account \
-    -e RUNTIME_K8S_SPARK_IMAGE=intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17 \
+    -e RUNTIME_K8S_SPARK_IMAGE=intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3 \
     -e RUNTIME_PERSISTENT_VOLUME_CLAIM=myvolumeclaim \
     -e RUNTIME_DRIVER_HOST=x.x.x.x \
     -e RUNTIME_DRIVER_PORT=54321 \
@@ -55,7 +55,7 @@ sudo docker run -itd --net=host \
     -e RUNTIME_TOTAL_EXECUTOR_CORES=4 \
     -e RUNTIME_DRIVER_CORES=4 \
     -e RUNTIME_DRIVER_MEMORY=10g \
-    intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17 bash 
+    intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3 bash 
 ```
 
 - NotebookPort value 12345 is a user specified port number.
