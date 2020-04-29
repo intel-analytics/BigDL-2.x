@@ -30,7 +30,7 @@ import jep.{Jep, NDArray}
 import scala.collection.JavaConverters._
 
 import scala.reflect.ClassTag
-// TODO: parameter length optional? Train function
+// TODO: support Train function
 class TorchModel private(private val modelHolder: TorchModel2Holder, init_weights: Array[Float])
   extends AbstractModule[Activity, Activity, Float]{
   import TorchModel._
@@ -69,14 +69,24 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
 
   val forwardCode =
     s"""
-       |input = data[0]
        |output = ${getName()}(input)
        |""".stripMargin
 
   override def updateOutput(input: Activity): Activity = {
-    // TODO: support data from input.
     loaded
     val startTime = System.nanoTime()
+    val dataExisted = PythonInterpreter.getValue[Boolean]("'data' in dir()")
+    if (dataExisted) {
+      PythonInterpreter.exec("input = data[0]")
+    } else {
+      // TODO: support table input
+      require(input.isTensor, "only support tensor input")
+      val i = input.toTensor[Float]
+      PythonInterpreter.set("nd_input",
+        new NDArray[Array[Float]](i.storage().array(), i.size(): _*))
+      PythonInterpreter.exec("input = torch.Tensor(nd_input)")
+    }
+
     val forwardCode = if (train) {
       PythonInterpreter.set("newWeight", new NDArray[Array[Float]](weights.storage().array()))
       PythonInterpreter.exec(setWeightCode)

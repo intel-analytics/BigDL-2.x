@@ -133,4 +133,33 @@ class TorchModelSpec extends ZooSpecHelper{
     output2 should be (Tensor[Float](4, 10).fill(-2.3025851f))
   }
 
+  "TorchModel" should "forward using scala input and target" in {
+    ifskipTest()
+    val code = lenet +
+      s"""
+         |model = LeNet()
+         |criterion = nn.CrossEntropyLoss()
+         |from pyspark.serializers import CloudPickleSerializer
+         |weights=[]
+         |for param in model.parameters():
+         |    weights.append(param.view(-1))
+         |flatten_weight = torch.nn.utils.parameters_to_vector(weights).data.numpy()
+         |bym = CloudPickleSerializer.dumps(CloudPickleSerializer, model)
+         |byc = CloudPickleSerializer.dumps(CloudPickleSerializer, criterion)
+         |""".stripMargin
+    PythonInterpreter.exec(code)
+
+    val w = PythonInterpreter.getValue[NDArray[Array[Float]]]("flatten_weight").getData()
+    val bys = PythonInterpreter.getValue[Array[Byte]]("bym")
+    val model = TorchModel(bys, w)
+    val c = PythonInterpreter.getValue[Array[Byte]]("byc")
+    val criterion = TorchLoss(c)
+
+    val input = Tensor[Float](4, 1, 28, 28).rand()
+    val target = Tensor[Float](Array(0f, 1f, 3f, 4f), Array(4))
+    model.forward(input)
+    criterion.forward(input, target)
+    val gradOutput = criterion.backward(input, target)
+    model.backward(input, gradOutput)
+  }
 }

@@ -20,6 +20,7 @@ import java.util.UUID
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractCriterion, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.common.PythonInterpreter
+import jep.NDArray
 
 
 class TorchLoss(private val criterionHolder: Array[Byte])
@@ -40,12 +41,19 @@ class TorchLoss(private val criterionHolder: Array[Byte])
 
   override def updateOutput(input: Activity, target: Activity): Float = {
     loaded
-    val forwardCode =
-      s"""
-         |target = data[1]
-         |loss = ${name}(output, target)
-         |""".stripMargin
-    PythonInterpreter.exec(forwardCode)
+    val dataExisted = PythonInterpreter.getValue[Boolean]("'data' in dir()")
+    if (dataExisted) {
+      PythonInterpreter.exec("target = data[1]")
+    } else {
+      // TODO: support table target
+      require(target.isTensor, "only support tensor target")
+      // TODO: detect type
+      val t = target.toTensor[Float]
+      PythonInterpreter.set("nd_target",
+        new NDArray[Array[Float]](t.storage().array(), t.size(): _*))
+      PythonInterpreter.exec("target = torch.Tensor(nd_target).long()")
+    }
+    PythonInterpreter.exec(s"loss = ${name}(output, target)")
     output = PythonInterpreter.getValue("loss.item()").asInstanceOf[Double].toFloat
     output
   }
