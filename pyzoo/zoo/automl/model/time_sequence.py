@@ -68,7 +68,7 @@ class TimeSequenceModel(BaseModel):
         :param validation_data: tuple in format (x_test,y_test), data used for validation.
         If this is specified, validation result will be the optimization target for automl.
         Otherwise, train metric will be the optimization target.
-        :param metric:
+        :param metric: the way to measure the performance of model
         :param config: optimization hyper parameters
         :return: the resulting metric
         """
