@@ -38,7 +38,7 @@ with open(property_path) as f:
         if "data-store-url" in line:
             line = line.strip()
             data_url = line.split("=")[1].replace("\\", "")
-
+s3_url="http://10.239.45.10:8081/repository/raw"
 
 class TestInferenceModel(ZooTestCase):
 
