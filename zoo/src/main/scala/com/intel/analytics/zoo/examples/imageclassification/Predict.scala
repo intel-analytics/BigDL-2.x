@@ -75,6 +75,8 @@ object Predict {
           logger.info(s"\t class : ${clsses(i)}, credit : ${probs(i)}")
         }
       })
+      println("finished...")
+      sc.stop()
     }
   }
 }

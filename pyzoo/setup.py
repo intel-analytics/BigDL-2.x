@@ -49,7 +49,7 @@ TEMP_PATH = "zoo/share"
 analytics_zoo_home = os.path.abspath(__file__ + "/../../")
 SCRIPTS_TARGET = os.path.join(TEMP_PATH, "bin/cluster-serving")
 
-exclude_patterns = ["*__pycache__*", "*ipynb_checkpoints*"]
+exclude_patterns = ["*__pycache__*", "*ipynb_checkpoints*", "*zouwu.use-case*"]
 
 
 def get_analytics_zoo_packages():
@@ -137,10 +137,10 @@ def setup_package():
         url='https://github.com/intel-analytics/analytics-zoo',
         packages=packages,
         install_requires=['pyspark==2.4.3', 'bigdl==0.10.0', 'conda-pack==0.3.1'],
-        extras_require={'ray': ['ray>=0.6.6', 'psutil', 'aiohttp', 'setproctitle'],
-                        'automl': ['tensorflow>=1.15.0,<2.0.0', 'ray==0.7.0', 'psutil', 'aiohttp',
-                                   'setproctitle', 'pandas', 'featuretools', 'scikit-learn',
-                                   'requests', 'bayesian-optimization']},
+        extras_require={'ray': ['ray==0.8.4', 'psutil', 'aiohttp', 'setproctitle'],
+                        'automl': ['tensorflow>=1.15.0,<2.0.0', 'ray[tune]==0.8.4', 'psutil',
+                                   'aiohttp', 'setproctitle', 'pandas', 'featuretools',
+                                   'scikit-learn', 'requests', 'bayesian-optimization']},
         dependency_links=['https://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz'],
         include_package_data=True,
         package_data={"zoo.share": ['lib/analytics-zoo*with-dependencies.jar', 'conf/*', 'bin/*',

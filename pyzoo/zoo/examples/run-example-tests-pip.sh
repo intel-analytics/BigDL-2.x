@@ -52,16 +52,16 @@ if [ ! -d analytics-zoo-models ]
 then
     mkdir analytics-zoo-models
 fi
-if [ -f analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model ]
+if [ -f analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0.model ]
 then
-    echo "analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model already exists"
+    echo "analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0.model already exists"
 else
     wget $FTP_URI/analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model\
     -P analytics-zoo-models
 fi
 export SPARK_DRIVER_MEMORY=10g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/imageclassification/predict.py \
-    -f hdfs://172.168.2.181:9000/kaggle/train_100 \
+    -f ${HDFS_URI}/kaggle/train_100 \
     --model analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0.model \
     --topN 5
 exit_status=$?
@@ -118,7 +118,7 @@ fi
 export SPARK_DRIVER_MEMORY=10g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/objectdetection/predict.py \
     analytics-zoo-models/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model \
-    hdfs://172.168.2.181:9000/kaggle/train_100 \
+    ${HDFS_URI}/kaggle/train_100 \
     /tmp
 exit_status=$?
 if [ $exit_status -ne 0 ];
@@ -163,23 +163,12 @@ else
    # echo "Finished downloading images"
 fi
 
-# total batch size: 32 should be divided by total core number: 28
-sed "s/setBatchSize(32)/setBatchSize(56)/g" \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/image_finetuning_example.py \
-    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/tmp.py
-sed "s/setBatchSize(32)/setBatchSize(56)/g" \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/ImageTransferLearningExample.py \
-    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/tmp.py
-sed "s/setBatchSize(4)/setBatchSize(56)/g" \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/ImageInferenceExample.py \
-    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/tmp.py
-
 export SPARK_DRIVER_MEMORY=20g
 
 echo "start example test for nnframes imageInference"
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/tmp.py \
-    analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
-    hdfs://172.168.2.181:9000/kaggle/train_100
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/ImageInferenceExample.py \
+    -m analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
+    -f ${HDFS_URI}/kaggle/train_100
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
@@ -190,9 +179,9 @@ then
 fi
 
 echo "start example test for nnframes finetune"
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/tmp.py \
-    analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
-    analytics-zoo-data/data/dogs-vs-cats/samples
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/image_finetuning_example.py \
+    -m analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
+    -f analytics-zoo-data/data/dogs-vs-cats/samples
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
@@ -202,9 +191,9 @@ then
     exit $exit_status
 fi
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/tmp.py \
-    analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
-    analytics-zoo-data/data/dogs-vs-cats/samples
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/ImageTransferLearningExample.py \
+    -m analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
+    -f analytics-zoo-data/data/dogs-vs-cats/samples
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
@@ -226,7 +215,7 @@ export SPARK_DRIVER_MEMORY=20g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/inception/inception.py \
    --maxIteration 20 \
    -b 8 \
-   -f hdfs://172.168.2.181:9000/imagenet-mini
+   -f ${HDFS_URI}/imagenet-mini
 exit_status=$?
 unset MASTER
 if [ $exit_status -ne 0 ];
@@ -303,7 +292,7 @@ else
 fi
 
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfnet/predict.py \
-    --image hdfs://172.168.2.181:9000/kaggle/train_100 \
+    --image ${HDFS_URI}/kaggle/train_100 \
     --model analytics-zoo-models/ssd_mobilenet_v1_coco_2017_11_17/frozen_inference_graph.pb
 
 exit_status=$?
@@ -524,8 +513,8 @@ else
      -P analytics-zoo-models
 fi
 
-mkdir output
-mkdir stream
+mkdir -p output
+mkdir -p stream
 export SPARK_DRIVER_MEMORY=2g
 while true
 do
@@ -596,6 +585,27 @@ unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time14=$((now-start))
 
+echo "#15 start example test for attention"
+start=$(date "+%s")
+sed "s/max_features = 20000/max_features = 200/g;s/max_len = 200/max_len = 20/g;s/hidden_size=128/hidden_size=8/g" \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/transformer.py \
+    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/tmp.py
+export SPARK_DRIVER_MEMORY=20g
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/tmp.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "attention failed"
+    exit $exit_status
+fi
+
+unset SPARK_DRIVER_MEMORY
+now=$(date "+%s")
+time15=$((now-start))
+echo "attention time used:$time15 seconds"
+
 # This should be done at the very end after all tests finish.
 clear_up
 
@@ -612,3 +622,4 @@ echo "#10 qaranker time used: $time10 seconds"
 echo "#12 vnni/openvino time used: $time12 seconds"
 echo "#13 streaming Object Detection time used: $time13 seconds"
 echo "#14 streaming text classification time used: $time14 seconds"
+echo "#15 start example test for attention time used: $time15 seconds"

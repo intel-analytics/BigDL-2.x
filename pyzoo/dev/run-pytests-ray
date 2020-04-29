@@ -23,9 +23,19 @@ cd "`dirname $0`"
 export PYSPARK_PYTHON=python
 export PYSPARK_DRIVER_PYTHON=python
 
+echo "Running RayOnSpark tests"
 python -m pytest -v ../test/zoo/ray/ \
        --ignore=../test/zoo/ray/integration/ \
+       --ignore=../test/zoo/ray/mxnet/ \
        --ignore=../test/zoo/ray/test_reinit_raycontext.py
+exit_status_1=$?
+if [ $exit_status_1 -ne 0 ];
+then
+    exit $exit_status_1
+fi
+
+echo "Running MXNetTrainer tests"
+python -m pytest -v ../test/zoo/ray/mxnet
 exit_status_2=$?
 if [ $exit_status_2 -ne 0 ];
 then
@@ -46,4 +56,12 @@ exit_status_4=$?
 if [ $exit_status_4 -ne 0 ];
 then
     exit $exit_status_4
+fi
+
+echo "Running xshard tests"
+python -m pytest -v ../test/zoo/xshard
+exit_status_5=$?
+if [ $exit_status_5 -ne 0 ];
+then
+    exit $exit_status_5
 fi

@@ -96,6 +96,8 @@ object Ml1mWideAndDeep {
     userRecs.take(10).foreach(println)
     itemRecs.take(10).foreach(println)
 
+    println("finished...")
+    sc.stop()
   }
 
   def loadPublicData(sqlContext: SQLContext, dataPath: String):

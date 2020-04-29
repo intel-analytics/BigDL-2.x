@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.tfpark
 
+import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
@@ -33,6 +34,8 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
                                     val checkpointPath: String,
                                     val inputs: Array[String],
                                     val inputTypes: Array[Int],
+                                    val additionalInputs: Array[String],
+                                    val additionalInputTypes: Array[Int],
                                     val labels: Array[String],
                                     val labelTypes: Array[Int],
                                     val predictionOutputs: Array[String],
@@ -50,6 +53,8 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
                                     val initOp: Option[String],
                                     val defaultTensorValue: Array[Array[Float]])
   extends AbstractModule[Activity, Activity, Float] {
+
+  this.setName("TFParkTraining")
 
   override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
     (weights, gradWeights)
@@ -259,8 +264,9 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
         (outputNames.toVector, graphOutputs.slice(0, outputNames.length))
       }
 
-      val inputTensorNames = inputs ++ labels
-      val inputTensorTypes = (inputTypes ++ labelTypes).toVector.map(TFUtils.tfenum2datatype)
+      val inputTensorNames = inputs ++ labels ++ additionalInputs
+      val inputTensorTypes = (inputTypes ++ labelTypes ++ additionalInputTypes)
+        .toVector.map(TFUtils.tfenum2datatype)
 
       val outputTypes = Vector.fill(names.length)(DataType.FLOAT)
       graphRunner.run(input = feeds.result(), inputNames = inputTensorNames.toVector,
@@ -276,6 +282,18 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
 
   override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
     gradInput
+  }
+
+  def loadZooCheckpoint(path: String): Unit = {
+    val module = Module.load(path).asInstanceOf[TFTrainingHelper]
+    assert(module.graphRunner.graphDef.length == this.graphRunner.graphDef.length,
+      "graphdef size is not equal, cannot load checkpoint from a different graph")
+    this.parameters()._1.zip(module.parameters()._1).foreach { case (target, source) =>
+      target.copy(source)
+    }
+    this.extraParameters.zip(module.extraParameters).foreach { case (target, source) =>
+      target.copy(source)
+    }
   }
 }
 
@@ -303,6 +321,8 @@ object TFTrainingHelper {
         checkpointPath,
         trainMeta.inputs,
         trainMeta.inputTypes,
+        trainMeta.additionalInputs,
+        trainMeta.additionalInputTypes,
         trainMeta.labels,
         trainMeta.labelTypes,
         trainMeta.predictionOutputs,
@@ -325,6 +345,8 @@ object TFTrainingHelper {
         checkpointPath,
         trainMeta.inputs,
         trainMeta.inputTypes,
+        trainMeta.additionalInputs,
+        trainMeta.additionalInputTypes,
         trainMeta.labels,
         trainMeta.labelTypes,
         trainMeta.predictionOutputs,

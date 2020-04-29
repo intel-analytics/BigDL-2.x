@@ -81,11 +81,11 @@ then
     mkdir analytics-zoo-models
 fi
 
-if [ -f analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model ]
+if [ -f analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0.model ]
 then
-    echo "analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model already exists"
+    echo "analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0.model already exists"
 else
-    wget -nv $FTP_URI/analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model\
+    wget -nv $FTP_URI/analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model \
     -P analytics-zoo-models
 fi
 
@@ -98,7 +98,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/imageclassification/predict.py \
-    -f hdfs://172.168.2.181:9000/kaggle/train_100 \
+    -f ${HDFS_URI}/kaggle/train_100 \
     --model analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0.model \
     --topN 5
 now=$(date "+%s")
@@ -125,7 +125,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/objectdetection/predict.py \
-    analytics-zoo-models/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model hdfs://172.168.2.181:9000/kaggle/train_100 /tmp
+    analytics-zoo-models/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model ${HDFS_URI}/kaggle/train_100 /tmp
 now=$(date "+%s")
 time4=$((now-start))
 
@@ -157,49 +157,42 @@ else
    cp analytics-zoo-data/data/dogs-vs-cats/train/dog.71* analytics-zoo-data/data/dogs-vs-cats/demo/dogs
    # echo "Finished downloading images"
 fi
-# total batch size: 32 should be divided by total core number: 28
-sed "s/setBatchSize(32)/setBatchSize(56)/g" \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/image_finetuning_example.py \
-    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/tmp.py
-sed "s/setBatchSize(32)/setBatchSize(56)/g" \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/ImageTransferLearningExample.py \
-    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/tmp.py
-sed "s/setBatchSize(4)/setBatchSize(56)/g" \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/ImageInferenceExample.py \
-    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/tmp.py
     
 echo "start example test for nnframes finetune"
 ${SPARK_HOME}/bin/spark-submit \
    --master local[2] \
    --driver-memory 10g \
-   --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/tmp.py \
+   --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/image_finetuning_example.py \
    --jars ${ANALYTICS_ZOO_JAR} \
    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/finetune/image_finetuning_example.py \
-   analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model analytics-zoo-data/data/dogs-vs-cats/samples
+   -m analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
+   -f analytics-zoo-data/data/dogs-vs-cats/samples
    
 echo "start example test for nnframes imageInference"
 ${SPARK_HOME}/bin/spark-submit \
    --master local[1] \
    --driver-memory 3g \
-   --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/tmp.py \
+   --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/ImageInferenceExample.py \
    --jars ${ANALYTICS_ZOO_JAR} \
    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-   ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/tmp.py \
-   analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model hdfs://172.168.2.181:9000/kaggle/train_100
+   ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/ImageInferenceExample.py \
+   -m analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
+   -f ${HDFS_URI}/kaggle/train_100
 
 echo "start example test for nnframes imageTransferLearning"
 ${SPARK_HOME}/bin/spark-submit \
    --master local[1] \
    --driver-memory 5g \
-   --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/tmp.py \
+   --py-files ${ANALYTICS_ZOO_PYZIP},${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/ImageTransferLearningExample.py \
    --jars ${ANALYTICS_ZOO_JAR} \
    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
-   ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/tmp.py\
-   analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model analytics-zoo-data/data/dogs-vs-cats/samples
+   ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageTransferLearning/ImageTransferLearningExample.py\
+   -m analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
+   -f analytics-zoo-data/data/dogs-vs-cats/samples
 
 
 now=$(date "+%s")
@@ -227,7 +220,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfnet/predict.py \
-    --image hdfs://172.168.2.181:9000/kaggle/train_100 \
+    --image ${HDFS_URI}/kaggle/train_100 \
     --model analytics-zoo-models/ssd_mobilenet_v1_coco_2017_11_17/frozen_inference_graph.pb
 
 echo "start example test for tfpark"
@@ -322,7 +315,34 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --driver-memory 20g \
     --executor-memory 20g \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_train_tmp.py
-    
+
+
+echo "start example test for TFPark inceptionv1 training 8"
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
+   --master local[4] \
+   --driver-memory 10g \
+   ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/inception/inception.py \
+   --maxIteration 20 \
+   -b 8 \
+   -f ${HDFS_URI}/imagenet-mini
+
+if [ -f analytics-zoo-models/resnet_50_saved_model.zip ]
+then
+   echo "analytics-zoo-models/resnet_50_saved_model.zip already exists."
+else
+   wget -nv $FTP_URI/analytics-zoo-models/tensorflow/resnet_50_saved_model.zip \
+    -P analytics-zoo-models
+   unzip analytics-zoo-models/resnet_50_saved_model.zip -d analytics-zoo-models/resnet_50_saved_model
+fi
+
+echo "start example test for TFPark freeze saved model 9"
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
+   --master local[4] \
+   --driver-memory 10g \
+   ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/freeze_saved_model/freeze.py \
+        --saved_model_path analytics-zoo-models/resnet_50_saved_model \
+        --output_path analytics-zoo-models/resnet_50_tfnet
+
 now=$(date "+%s")
 time6=$((now-start))
 
@@ -395,7 +415,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/inception/inception.py \
    --maxIteration 20 \
    -b 8 \
-   -f hdfs://172.168.2.181:9000/imagenet-mini
+   -f ${HDFS_URI}/imagenet-mini
 now=$(date "+%s")
 time9=$((now-start))
 
@@ -492,8 +512,8 @@ else
      -P analytics-zoo-models
 fi
 
-mkdir output
-mkdir stream
+mkdir -p output
+mkdir -p stream
 while true
 do
    temp1=$(find analytics-zoo-data/data/object-detection-coco -type f|wc -l)
@@ -557,6 +577,25 @@ done
 now=$(date "+%s")
 time14=$((now-start))
 
+echo "#15 start example test for attention"
+#timer
+start=$(date "+%s")
+sed "s/max_features = 20000/max_features = 100/g;s/max_len = 200/max_len = 10/g;s/hidden_size=128/hidden_size=8/g" \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/transformer.py \
+    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/tmp.py
+
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
+    --conf spark.executor.extraJavaOptions="-Xss512m" \
+    --conf spark.driver.extraJavaOptions="-Xss512m" \
+    --master ${MASTER} \
+    --driver-memory 20g \
+    --executor-memory 100g \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/tmp.py
+
+now=$(date "+%s")
+time15=$((now-start))
+echo "#15 attention time used:$time15 seconds"
+
 echo "#1 textclassification time used: $time1 seconds"
 echo "#2 autograd time used: $time2 seconds"
 echo "#3 image-classification time used: $time3 seconds"
@@ -571,3 +610,4 @@ echo "#11 openvino time used: $time11 seconds"
 echo "#12 vnni/openvino time used: $time12 seconds"
 echo "#13 streaming Object Detection time used: $time13 seconds"
 echo "#14 streaming text classification time used: $time14 seconds"
+echo "#15 attention time used:$time15 seconds"

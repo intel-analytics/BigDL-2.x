@@ -27,7 +27,7 @@ from bigdl.util.common import to_list, JavaValue
 
 from zoo.tfpark.zoo_optimizer import FakeOptimMethod
 from zoo.common.utils import callZooFunc
-from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss
+from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss, OptimMethod
 from zoo.pipeline.api.net.utils import find_placeholders, to_bigdl_optim_method, find_tensors
 from zoo.pipeline.estimator import Estimator
 from zoo.util import nest
@@ -91,6 +91,9 @@ class TFTrainingHelper(Layer):
         self.save_checkpoint()
         self.saver.restore(self.sess, os.path.join(self.export_dir, "model"))
 
+    def load_checkpoint(self, path):
+        callZooFunc(self.bigdl_type, "loadZooCheckpoint", self.value, path)
+
 
 def _to_operation_name(name):
     return name.split(":")[0]
@@ -122,9 +125,7 @@ class TFModel(object):
         if not isinstance(inputs, list):
             inputs = nest.flatten(inputs)
 
-        inputs = inputs + additional_inputs
-
-        return inputs, additional_values
+        return inputs, additional_inputs, additional_values
 
     @staticmethod
     def _process_session_config(session_config):
@@ -233,6 +234,7 @@ class TFModel(object):
                      extra_variable_assign_placeholders,
                      extra_variable_assign,
                      grads, update_op, train_op,
+                     additional_inputs,
                      additional_values):
         saver = tf.train.Saver()
         if not os.path.isdir(folder):
@@ -242,6 +244,8 @@ class TFModel(object):
         meta = {
             "inputs": [i.name for i in inputs],
             "input_types": [i.dtype.as_datatype_enum for i in inputs],
+            "additional_inputs": [i.name for i in additional_inputs],
+            "additional_input_types": [i.dtype.as_datatype_enum for i in additional_inputs],
             "labels": [l.name for l in labels],
             "label_types": [i.dtype.as_datatype_enum for i in labels],
             "predictions": [t.name for t in predictions] if predictions else [],
@@ -282,7 +286,8 @@ class TFModel(object):
     @staticmethod
     def export(model_dir, loss_tensor, sess, inputs, labels, predictions, grads, variables, graph,
                tensors_with_value, metrics, updates, train_op=None):
-        inputs, additional_values = TFModel._expand_inputs(inputs, tensors_with_value, loss_tensor)
+        inputs, additional_inputs, additional_values = \
+            TFModel._expand_inputs(inputs, tensors_with_value, loss_tensor)
         metric_tensors, val_methods = TFModel._process_metrics(graph, metrics)
         grads = TFModel._process_grads(graph, grads)
 
@@ -306,6 +311,7 @@ class TFModel(object):
                                  extra_variable_assign_placeholders,
                                  extra_variable_assign,
                                  grads, update_op, train_op,
+                                 additional_inputs,
                                  additional_values)
         return meta, saver, val_methods
 
@@ -336,7 +342,6 @@ class TFModel(object):
 class TFOptimizer:
     def __init__(self, tf_model, optim_method,
                  sess=None, dataset=None,
-                 val_split=0.0,
                  clip_norm=None, clip_value=None,
                  model_dir=None):
         """
@@ -371,21 +376,30 @@ class TFOptimizer:
 
         batch_size = self.dataset.batch_size
 
-        sample_rdd = self.dataset.get_training_data()
+        self.train_data = self.dataset.get_training_data()
+        self.val_data = self.dataset.get_validation_data()
 
-        if val_split != 0.0:
-            training_rdd, val_rdd = sample_rdd.randomSplit([1 - val_split, val_split])
-        else:
-            training_rdd = sample_rdd
-            val_rdd = self.dataset.get_validation_data()
-
-        self.training_rdd = training_rdd
-        self.val_rdd = val_rdd
         self.batch_size = batch_size
 
-        self.estimator = Estimator(self.tf_model.training_helper_layer, self.optim_method,
-                                   model_dir)
+        self.estimator = Estimator(self.tf_model.training_helper_layer,
+                                   self.optim_method,
+                                   self.model_dir)
 
+        if self.clip_norm:
+            self.estimator.set_l2_norm_gradient_clipping(self.clip_norm)
+        if self.clip_constant:
+            min_value, max_value = self.clip_constant
+            self.estimator.set_constant_gradient_clipping(min_value, max_value)
+
+    def load_checkpoint(self, path, version):
+        # todo make version optional
+        model_path = os.path.join(path, "model.{}".format(version))
+        optim_method_path = os.path.join(path, "optimMethod-TFParkTraining.{}".format(version))
+        self.tf_model.training_helper_layer.load_checkpoint(model_path)
+        self.optim_method = OptimMethod.load(optim_method_path)
+        self.estimator = Estimator(self.tf_model.training_helper_layer,
+                                   self.optim_method,
+                                   self.model_dir)
         if self.clip_norm:
             self.estimator.set_l2_norm_gradient_clipping(self.clip_norm)
         if self.clip_constant:
@@ -462,7 +476,7 @@ class TFOptimizer:
 
     @classmethod
     def _from_grads(cls, loss, sess, inputs, labels, grads, variables, dataset, optim_method=None,
-                    val_split=0.0, clip_norm=None, clip_value=None,
+                    clip_norm=None, clip_value=None,
                     metrics=None, tensor_with_value=None, session_config=None,
                     model_dir=None, updates=None, train_op=None):
         graph = loss.graph
@@ -471,13 +485,13 @@ class TFOptimizer:
 
         tf_model = TFModel.create(loss, sess, inputs, labels, [], grads, variables, graph,
                                   tensor_with_value, session_config, metrics,
-                                  updates, model_dir, train_op=train_op)
-        return cls(tf_model, optim_method, sess=sess, dataset=dataset, val_split=val_split,
-                   clip_norm=clip_norm, clip_value=clip_value)
+                                  updates, model_dir=None, train_op=train_op)
+        return cls(tf_model, optim_method, sess=sess, dataset=dataset,
+                   clip_norm=clip_norm, clip_value=clip_value, model_dir=model_dir)
 
     @classmethod
     def from_loss(cls, loss, optim_method, session=None, val_outputs=None,
-                  val_labels=None, val_method=None, val_split=0.0,
+                  val_labels=None, val_method=None,
                   clip_norm=None, clip_value=None, metrics=None,
                   tensor_with_value=None, session_config=None, model_dir=None, updates=None):
         """
@@ -491,8 +505,6 @@ class TFOptimizer:
         :param val_outputs: the validation output TensorFlow tensor to be used by val_methods
         :param val_labels: the validation label TensorFlow tensor to be used by val_methods
         :param val_method: the BigDL val_method(s) to be used.
-        :param val_split: Float between 0 and 1. Fraction of the training data to be used as
-        validation data.
         :param clip_norm: float >= 0. Gradients will be clipped when their L2 norm exceeds
         this value.
         :param clip_value: float >= 0. Gradients will be clipped when their absolute value
@@ -538,7 +550,7 @@ class TFOptimizer:
                 metrics['bigdl_metirc_' + str(i)] = BigDLMetric(method, val_outputs, val_labels)
 
         return TFOptimizer._from_grads(loss, sess, inputs, labels, grads, variables, dataset,
-                                       optim_method, val_split, clip_norm, clip_value,
+                                       optim_method, clip_norm, clip_value,
                                        metrics, tensor_with_value, session_config,
                                        model_dir, updates)
 
@@ -552,15 +564,24 @@ class TFOptimizer:
                        loss.graph, tensor_with_value, metrics, updates)
         logging.info("Exported TensorFlow model in {} for training".format(export_dir))
 
+    @staticmethod
+    def _shape_match(model_shape, dataset_shape):
+
+        for i in range(len(dataset_shape)):
+            if dataset_shape[i].value is None:
+                return model_shape[i].value is None
+            else:
+                return dataset_shape[i].value == model_shape[i].value or \
+                    model_shape[i].value is None
+
     @classmethod
-    def from_keras(cls, keras_model, dataset, optim_method=None, val_split=0.0,
+    def from_keras(cls, keras_model, dataset, optim_method=None,
                    session_config=None, model_dir=None):
         """
         Create a TFOptimizer from a tensorflow.keras model. The model must be compiled.
         :param keras_model: the tensorflow.keras model, which must be compiled.
         :param dataset: a TFDataset
         :param optim_method: the optimization method to be used, such as bigdl.optim.optimizer.Adam
-        :param val_split: Float between 0 and 1. Fraction of the training data to be used as
         validation data.
         :return:
         """
@@ -571,6 +592,29 @@ class TFOptimizer:
             model_targets = keras_model.targets
         else:
             model_targets = keras_model._targets
+
+        flatten_inputs = nest.flatten(dataset.feature_tensors)
+        assert len(model_inputs) == len(flatten_inputs), \
+            ("the keras model and TFDataset should have the same number of tensors" +
+             " keras model has {} inputs " +
+             "while TFDataset has {} inputs").format(len(model_inputs),
+                                                     len(flatten_inputs))
+        for i in range(len(flatten_inputs)):
+            if not TFOptimizer._shape_match(model_inputs[i].shape, flatten_inputs[i].shape):
+                raise ValueError(("The {}th input in keras model {}"
+                                  " does not match the TFDataset"
+                                  "input {}").format(i,
+                                                     model_inputs[i],
+                                                     flatten_inputs[i]))
+
+        flatten_targets = nest.flatten(dataset.label_tensors)
+        assert len(model_targets) == len(flatten_targets), \
+            ("the keras model and TFDataset should have the same number of tensors" +
+             " keras model has {} targets " +
+             "while TFDataset has {} labels").format(len(model_targets),
+                                                     len(flatten_inputs))
+        # todo check targets shape, currently checking target shape will
+        # cause too much false alarm.
 
         loss = keras_model.total_loss
         variables = keras_model._collected_trainable_weights
@@ -596,14 +640,14 @@ class TFOptimizer:
             optim_method = keras_optimizer
         optim_method = to_bigdl_optim_method(optim_method)
 
-        if keras_model.metrics and (dataset.get_validation_data() is not None or val_split != 0.0):
+        if keras_model.metrics and (dataset.get_validation_data() is not None):
             if isinstance(keras_model.metrics, dict):
                 raise ValueError(
                     "different metrics for different outputs are not supported right now")
 
-            if dataset.get_validation_data() is None and val_split == 0.0:
+            if dataset.get_validation_data() is None:
                 raise ValueError("Validation data is not specified. Please set " +
-                                 "val_rdd in TFDataset, or set val_split larger than zero")
+                                 "val_rdd in TFDataset")
 
             if len(keras_model.outputs) > 1:
                 if not all([name.endswith("loss") for name in keras_model.metrics_names]):
@@ -639,10 +683,10 @@ class TFOptimizer:
         tf_model = TFModel.create(loss, sess, model_inputs, model_targets, keras_model.outputs,
                                   grads, variables, loss.graph,
                                   tensor_with_value, session_config, metrics,
-                                  updates, model_dir)
+                                  updates, model_dir=None)
 
-        return cls(tf_model, optim_method, sess=sess, dataset=dataset, val_split=val_split,
-                   clip_norm=clip_norm, clip_value=clip_value)
+        return cls(tf_model, optim_method, sess=sess, dataset=dataset,
+                   clip_norm=clip_norm, clip_value=clip_value, model_dir=model_dir)
 
     def set_constant_gradient_clipping(self, min_value, max_value):
         """
@@ -672,15 +716,15 @@ class TFOptimizer:
         if checkpoint_trigger is None:
             checkpoint_trigger = EveryEpoch()
 
-        if self.tf_model.val_methods and self.val_rdd is not None:
-            self.estimator.train_minibatch(train_set=self.training_rdd,
+        if self.tf_model.val_methods and self.val_data is not None:
+            self.estimator.train_minibatch(train_set=self.train_data,
                                            criterion=self.tf_model.criterion,
                                            end_trigger=end_trigger,
                                            checkpoint_trigger=checkpoint_trigger,
-                                           validation_set=self.val_rdd,
+                                           validation_set=self.val_data,
                                            validation_method=self.tf_model.val_methods)
         else:
-            self.estimator.train_minibatch(train_set=self.training_rdd,
+            self.estimator.train_minibatch(train_set=self.train_data,
                                            criterion=self.tf_model.criterion,
                                            end_trigger=end_trigger)
 

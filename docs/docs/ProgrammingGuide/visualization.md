@@ -66,12 +66,7 @@ from zoo.tfpark import KerasModel
 from bigdl.optim.optimizer import TrainSummary, ValidationSummary
 
 model = [...new keras model]
-model = KerasModel(model)
-...
-log_dir = 'mylogdir'
-app_name = 'keras_model'
-model.set_train_summary(TrainSummary(log_dir, app_name))
-model.set_val_summary(ValidationSummary(log_dir, app_name))
+model = KerasModel(model, model_dir="mylogdir")
 ...
 model.fit(...)
 ```
@@ -80,14 +75,8 @@ model.fit(...)
 **python**
 ```python
 from zoo.tfpark.estimator import TFEstimator
-from bigdl.optim.optimizer import TrainSummary, ValidationSummary
 
-estimator = TFEstimator(...)
-...
-log_dir = 'mylogdir'
-app_name = 'estimator'
-estimator.set_train_summary(TrainSummary(log_dir, app_name))
-estimator.set_val_summary(ValidationSummary(log_dir, app_name))
+estimator = TFEstimator.from_model_fn(..., model_dir="mylogdir")
 ...
 estimator.train(...)
 ```
@@ -109,7 +98,7 @@ With the summary info generated, we can then use [TensorBoard](https://pypi.pyth
 
 Prerequisites:
 
-1. Python version: 3.5 or 3.6
+1. Python version: 3.6 or 3.7
 2. Pip version >= 9.0.1
 3. TensorFlow 1.13.1
 
@@ -162,6 +151,8 @@ As getting DISTRIBUTIONS and HISTOGRAMS may affect the training performance, so 
 ## Retrieving summary from build-in API
 
 You can use provided API to retrieve the summaries into readable format, and export them to other tools for further analysis or visualization.
+
+Please note this approach does not work for KerasModel and TFEstimator.
 
 * _**Example: Reading summary info in NNestimator**_ 
 
@@ -222,6 +213,8 @@ You can re-create the TrainingSummary and ValidationSummary with the same `logDi
 If you're using Jupyter notebook, you can also draw the training curves using popular plotting tools (e.g. matplotlib) and show the plots inline. 
 
 First, retrieve the summaries as instructed in [Retrieve Summary](#retrieving-summary-from-build-in-api). The retrieved summary is a list of tuples. Each tuple is a recorded event in format (iteration count, recorded value, timestamp). You can convert it to numpy array or dataframe to plot it. See example below:  
+
+Please note this approach does not work for KerasModel and TFEstimator.
 
 * _**Example: Plot the train/validation loss in Jupyter**_
 

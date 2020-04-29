@@ -12,23 +12,21 @@ extra:
 
 pages:
 - Overview: index.md 
+- Getting Started: gettingstarted.md
 - Releases: 
   - Download: release-download.md 
   - Documentation: release-docs.md
 - User Guide:
-  - Docker:
-    - Build & Use Docker Image: DockerUserGuide/index.md
+  - Docker User Guide: DockerUserGuide/index.md
   - Python:
     - Install: PythonUserGuide/install.md
     - Run: PythonUserGuide/run.md
-    - Examples: PythonUserGuide/examples.md
+    - Develop: DeveloperGuide/python.md
     - FAQ: PythonUserGuide/python-faq.md
   - Scala: 
     - Install: ScalaUserGuide/install.md
     - Run: ScalaUserGuide/run.md
-    - Examples: ScalaUserGuide/examples.md
-- Developer Guide:
-  - For Python Developers: DeveloperGuide/python.md
+  - Examples: examples.md
 - Programming Guide: 
   - Pipeline APIs:
     - DataFrame and ML Pipeline: ProgrammingGuide/nnframes.md
@@ -49,6 +47,7 @@ pages:
   - Feature Engineering:
     - Working with Images: ProgrammingGuide/workingwithimages.md
     - Working with Texts: ProgrammingGuide/workingwithtexts.md
+  - xShard:  ProgrammingGuide/xshard.md
   - Built-in Models:
     - Object Detection API: ProgrammingGuide/object-detection.md
     - Image Classification API: ProgrammingGuide/image-classification.md
@@ -61,6 +60,8 @@ pages:
   - Reference Use Cases: ProgrammingGuide/usercases-overview.md
   - Run on Google Cloud Dataproc: ProgrammingGuide/run-on-dataproc.md
   - Run on Google Colab: ProgrammingGuide/run-notebook-colab.md
+  - Run on Databricks: ProgrammingGuide/AnalyticsZoo-on-Databricks.md
+  - Run on Kubernetes cluster: ProgrammingGuide/k8s.md
 - White Paper:
   - BigDL: wp-bigdl.md
 - API Guide:
@@ -138,6 +139,19 @@ pages:
 #    - Train, evaluate or predict a model: Keras2StyleAPIGuide/Optimization/training.md
 #    - Optimizers: Keras2StyleAPIGuide/Optimization/optimizer.md
 #    - Losses: Keras2StyleAPIGuide/Optimization/loss.md
+- Project Zouwu:
+  - Overview: Zouwu/overview.md
+  - Reference Use Cases:
+    - Network Traffic: Zouwu/UseCase/network-traffic.md
+  - Tutorial: Zouwu/tutorial.md 
+  - API:
+    - Built-in Models: 
+       - LSTMForecaster: Zouwu/API/LSTMForecaster.md
+       - MTNetForecaster: Zouwu/API/MTNetForecaster.md
+    - AutoTS: 
+       - AutoTSTrainer: Zouwu/API/AutoTSTrainer.md 
+       - TSPipeline: Zouwu/API/TSPipeline.md
 - Powered by: powered-by.md
 - Presentations: presentations.md
+- Meetup & Webinar: meetup.md
 - FAQ and Known Issues: known-issues.md

@@ -94,12 +94,6 @@ class ClusterServingHelper {
   var dirPath: String = null
 
   /**
-   * environment variables
-   */
-  var kmpBlockTime: String = null
-
-
-  /**
    * Initialize the parameters by loading config file
    * create log file, set backend engine type flag
    * create "running" flag, for listening the stop signal
@@ -244,9 +238,6 @@ class ClusterServingHelper {
     val conf = NNContext.createSparkConf().setAppName("Cluster Serving")
       .set("spark.redis.host", redisHost)
       .set("spark.redis.port", redisPort)
-    if (kmpBlockTime != null) {
-      conf.set("spark.executorEnv", "KMP_BLOCKTIME=" + kmpBlockTime)
-    }
     sc = NNContext.initNNContext(conf)
     nodeNum = EngineRef.getNodeNumber()
     coreNum = EngineRef.getCoreNumber()
@@ -300,10 +291,15 @@ class ClusterServingHelper {
       case "tensorflowSavedModel" =>
         modelInputs = modelInputs.filterNot((x: Char) => x.isWhitespace)
         modelOutputs = modelOutputs.filterNot((x: Char) => x.isWhitespace)
-        val (inputs, outputs) = if (modelInputs != "" && modelOutputs != "") {
-          (modelInputs.split(","), modelOutputs.split(","))
+        val inputs = if (modelInputs == "") {
+          null
         } else {
-          (null, null)
+          modelInputs.split(",")
+        }
+        val outputs = if (modelOutputs == "") {
+          null
+        } else {
+          modelOutputs.split(",")
         }
         model.doLoadTensorflow(weightPath, "savedModel", inputs, outputs)
       case "pytorch" => model.doLoadPyTorch(weightPath)
@@ -387,8 +383,6 @@ class ClusterServingHelper {
 
     var variablesPathExist = false
 
-    kmpBlockTime = null
-
     import java.io.File
     val f = new File(localModelPath)
     val fileList = f.listFiles
@@ -437,7 +431,6 @@ class ClusterServingHelper {
           throwOneModelError(true, false, true)
           weightPath = fPath
           modelType = "openvino"
-          kmpBlockTime = "20"
         }
         else if (fName.endsWith("xml")) {
           throwOneModelError(false, true, false)
