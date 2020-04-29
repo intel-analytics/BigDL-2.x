@@ -140,7 +140,7 @@ def read_file_spark(context, file_path, file_type):
         data_paths = list_s3_file(file_url_splits, file_type)
     else:
         data_paths = get_file_list(file_path)
-    rdd = context.parallelize(data_paths, node_num * 20)
+    rdd = context.parallelize(data_paths, core_num * 2)
 
     if prefix == "hdfs":
         def loadFile(iterator):
