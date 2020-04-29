@@ -199,7 +199,7 @@ object ClusterServing {
                   valueBuf.append("[")
                   res.keySet.foreach(key => {
                     valueBuf.append(PostProcessing(
-                      res(key).asInstanceOf[Tensor[Float]].select(1, i + 1)))
+                      res(key).asInstanceOf[Tensor[Float]]))
                     valueBuf.append(separator)
                   })
                   valueBuf.deleteCharAt(valueBuf.length - 1)
