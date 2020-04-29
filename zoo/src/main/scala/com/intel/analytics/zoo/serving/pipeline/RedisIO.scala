@@ -27,7 +27,7 @@ object RedisIO {
   val logger = Logger.getLogger(getClass)
   def getRedisClient(redisPool: JedisPool): Jedis = {
     var db: Jedis = null
-    while (db == null){
+    while (db == null) {
       try {
         db = redisPool.getResource
       }
