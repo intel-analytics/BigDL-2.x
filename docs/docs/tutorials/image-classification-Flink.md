@@ -3,9 +3,9 @@
 - [Getting started this tutorial](#Getting-started-this-tutorial)  
   - [Summary](#Summary)
   - [Prerequisites](#Prerequisites)
-- [Loading and preprocessing images](#Loading-and-preprocessing-images)  
-  - [Knowing about dataset](#Knowing-about-dataset)
-  - [Preprocessing dataset](#preprocessing-dataset)
+- [Preparing model and data](#Preparing-model-and-data)  
+  - [Obtaining model](#Obtaining-model)
+  - [Loading and preprocessing images](#Loading-and-preprocessing-images)
 - [Starting the image classification program on Flink ](#Starting-the-image-classification-program-on-Flink)  
   - [Obtaining an execution environment](#Obtaining-an-execution-environment)  
   - [Creating DataStream](#creating-datastream)  
@@ -40,9 +40,19 @@ Let's get started this tutorial. We will use an example to introduce how to load
 
 - **Environment preparation**
 
-Make sure JDK 1.8, Scala 2.11/2.12, Flink 1.8.1, and Maven are installed. 
+Make sure JDK 1.8, Flink 1.8.1, and Maven are installed. 
 
-- **Model preparation**
+- **Building a project directory and installing Analytics Zoo** 
+
+The example project contains: a POM file which is used by Maven to build the project; the source directory, which is `src/main/scala`.
+
+Follow the [instructions](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/) to install analytics-zoo for Scala project. Specify dependencies in the POM file. See the example [pom.xml](https://github.com/intel-analytics/analytics-zoo/blob/master/apps/model-inference-examples/model-inference-flink/pom.xml) which is setting the required dependencies and configuration details of Analytics Zoo, Flink and scala for this project.
+
+If you import the example project in the IDE(eg: IDEA), select **New - Project** from existing source, look through the example project directory and click OK, then select open as project in the window pop out next, using maven to build up the project.
+
+## Preparing model and data
+
+### Obtaining model
 
 In the model repository of TensorFlow you can download multiple pre-trained weights of several different convolutional neural networks trained on ImageNet data. As mentioned above we are using a MobileNet in this tutorial. We can find them in the [MobileNet v1 description](https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet_v1.md#pre-trained-models) where we download [MobileNet_v1_1.0_224](http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_1.0_224.tgz). Extract it with tar xf mobilenet_v1_1.0_224.tgz. In the folder you can see multiple files. 
 
@@ -58,15 +68,7 @@ In the model repository of TensorFlow you can download multiple pre-trained weig
 
 We are only using mobilenet_v1_1.0_224_frozen.pb later. The details of input and output of the model can be viewed in mobilenet_v1_1.0_224_info.txt.
 
-- **Building a project directory and installing Analytics Zoo** 
-
-The example project contains: a POM file which is used by Maven to build the project; the source directory, which is `src/main/scala`.
-
-Follow the [instructions](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/) to install analytics-zoo for Scala project. Specify dependencies in the POM file. See the example [pom.xml](https://github.com/intel-analytics/analytics-zoo/blob/master/apps/model-inference-examples/model-inference-flink/pom.xml) which is setting the required dependencies and configuration details of Analytics Zoo, Flink and scala for this project.
-
-If you import the example project in the IDE(eg: IDEA), select **New - Project** from existing source, look through the example project directory and click OK, then select open as project in the window pop out next, using maven to build up the project.
-
-## Loading and preprocessing images
+### Loading and preprocessing images
 
 #### Knowing about dataset
 
@@ -88,7 +90,7 @@ First, let us load images from the image folder.
 val fileList = new File(imageDir).listFiles.toList
 ```
 
-A  ImageProcessor class is created to apply methods from `trait ImageProcessing` to implement image pre-processing. 
+A  ImageProcessor class is created to apply methods from `trait ImageProcessing` to implement image pre-processing. View the class [here](https://github.com/intel-analytics/analytics-zoo/blob/master/apps/model-inference-examples/model-inference-flink/src/main/scala/com/intel/analytics/zoo/apps/model/inference/flink/ImageClassification/ImageProcesser.scala).
 
 ```scala
 class ImageProcessor extends ImageProcessing {
@@ -297,7 +299,7 @@ Everything is ready. Let's run the following command with arguments to submit th
 ${FLINK_HOME}/bin/flink run \
     -m localhost:8081 -p 2 \
     -c com.intel.analytics.zoo.apps.model.inference.flink.ImageClassification.ImageClassificationStreaming  \
-    ${ANALYTICS_ZOO_HOME}/apps/model-inference-examples/model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar
+    ${ANALYTICS_ZOO_HOME}/apps/model-inference-examples/model-inference-flink/target/model-inference-flink-0.1.0-SNAPSHOT-jar-with-dependencies.jar \
     --modelPath ${MODEL_PATH} --modelType "frozenModel"  \
     --images ${IMAGE_PATH} --classes ${CLASSES_FILE} --output ${OUTPUT}
 ```
