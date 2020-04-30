@@ -24,7 +24,7 @@
 
 ### Summary
 
-This is the real-time image classification on Apache Flink streaming. Images extracted from ImageNet database will be predicted with pre-trained MobileNet_v1 model which is loaded by Analytics Zoo Inference model.
+This is the real-time image classification on Apache Flink streaming. Images extracted from ImageNet database will be predicted with pre-trained MobileNet_v1 model which is loaded by Analytics Zoo Inference Model.
 
 ImageNet is a large-scale database designed for use in visual object detection research. It has more than 14 million images among more than 20,000 categories, such as keyboard, mouse, pencil, and animals.
 
