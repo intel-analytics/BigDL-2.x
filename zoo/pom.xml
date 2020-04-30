@@ -19,6 +19,7 @@
         <javac.version>1.7</javac.version>
         <spark-scope>provided</spark-scope>
         <bigdl-scope>compile</bigdl-scope>
+        <scala-library-scope>provided</scala-library-scope>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>2.11.8</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
@@ -104,6 +105,69 @@
                 <scala.macros.version>2.1.0</scala.macros.version>
                 <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
             </properties>
+        </profile>
+
+        <profile>
+            <id>serving-frontend</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+            <properties>
+                <java.version>1.8</java.version>
+                <javac.version>1.8</javac.version>
+                <spark-version.project>2.4</spark-version.project>
+                <spark.version>2.4.3</spark.version>
+                <scala.major.version>2.11</scala.major.version>
+                <scala.version>2.11.8</scala.version>
+                <scala.macros.version>2.1.0</scala.macros.version>
+                <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
+                <scala-library-scope>compile</scala-library-scope>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>ch.qos.logback</groupId>
+                    <artifactId>logback-classic</artifactId>
+                    <version>1.1.2</version>
+                </dependency>
+                <dependency>
+                    <groupId>commons-lang</groupId>
+                    <artifactId>commons-lang</artifactId>
+                    <version>2.6</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.typesafe.akka</groupId>
+                    <artifactId>akka-http_2.11</artifactId>
+                    <version>10.1.11</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.typesafe.akka</groupId>
+                    <artifactId>akka-stream_2.11</artifactId>
+                    <version>2.5.26</version>
+                </dependency>
+                <dependency>
+                    <groupId>io.dropwizard.metrics</groupId>
+                    <artifactId>metrics-core</artifactId>
+                    <version>4.1.2</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                    <version>2.10.2</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.fasterxml.jackson.module</groupId>
+                    <artifactId>jackson-module-scala_2.11</artifactId>
+                    <version>2.10.2</version>
+                </dependency>
+            </dependencies>
         </profile>
 
         <profile>
@@ -270,7 +334,7 @@
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
             <version>${scala.version}</version>
-            <scope>${spark-scope}</scope>
+            <scope>${scala-library-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.scala-lang</groupId>
