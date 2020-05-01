@@ -104,7 +104,7 @@ class TestZouwuModelAnomaly(ZooTestCase):
     def test_threshold_case4(self):
         sample_num = 10
         feature_dim = 5
-        num_anomaly = 11
+        num_anomaly = 5
         # actual value
         y_test = np.zeros(sample_num * feature_dim)
 
@@ -129,7 +129,7 @@ class TestZouwuModelAnomaly(ZooTestCase):
 
         threshold = ThresholdEstimator().fit(y, y_test, mode="gaussian", ratio=ratio)
         from scipy.stats import norm
-        assert abs(threshold-norm.ppf(1-ratio)*sigma+mu) < 0.02
+        assert abs(threshold-(norm.ppf(1-ratio)*sigma+mu)) < 0.02
 
 
 if __name__ == "__main__":

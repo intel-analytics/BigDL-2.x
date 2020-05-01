@@ -72,7 +72,7 @@ class ThresholdEstimator:
         assert y.shape == yhat.shape
         diff = [dist_measure.distance(m, n) for m, n in zip(y, yhat)]
         if mode == "default":
-            threshold = np.percentile(diff, ratio*100)
+            threshold = np.percentile(diff, (1-ratio)*100)
             return threshold
         elif mode == "gaussian":
             from scipy.stats import norm
@@ -141,9 +141,8 @@ class ThresholdDetector(DetectorBase):
                         threshold.shape), "is not valid")
         elif isinstance(threshold, tuple) \
                 and len(threshold) == 2 \
-                and threshold[0] <= threshold[1] \
-                and threshold[0].shape == y.shape[1:] \
-                and threshold[-1].shape == y.shape[1:]:
+                and threshold[0].shape == y.shape \
+                and threshold[-1].shape == y.shape:
             return self._check_range(y, threshold)
         else:
             raise ValueError(
