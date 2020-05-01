@@ -71,16 +71,17 @@ class ThresholdEstimator:
         """
         assert y.shape == yhat.shape
         diff = [dist_measure.distance(m, n) for m, n in zip(y, yhat)]
-        if mode=="default":
-            threshold=np.percentile(diff, ratio*100)
+        if mode == "default":
+            threshold = np.percentile(diff, ratio*100)
             return threshold
-        elif mode=="gaussian":
+        elif mode == "gaussian":
             from scipy.stats import norm
             mu, sigma = norm.fit(diff)
-            t=norm.ppf(1-ratio)
+            t = norm.ppf(1-ratio)
             return t*sigma+mu
         else:
             raise Exception("Does not support", mode)
+
 
 class DetectorBase(metaclass=ABCMeta):
     """
@@ -125,7 +126,7 @@ class ThresholdDetector(DetectorBase):
         :return: the anomaly values indexes in the samples, i.e. num_samples dimension.
         """
         self.threshold = threshold
-        self.dist_measure=dist_measure
+        self.dist_measure = dist_measure
         if isinstance(threshold, int) or \
                 isinstance(threshold, float):
             return self._check_all_distance(y, yhat)

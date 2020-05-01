@@ -49,7 +49,6 @@ class TestZouwuModelAnomaly(ZooTestCase):
             Y.append(data[i + look_back][target_col_indexes])
         return np.array(X), np.array(Y)
 
-
     def test_app(self):
         look_back = 4
         horizon = 1
@@ -60,8 +59,10 @@ class TestZouwuModelAnomaly(ZooTestCase):
         train_df, test_df = self.train_test_split(data, test_num=20, look_back=look_back)
 
         # roll data to generate model input
-        x_train, y_train = self.roll_data(dataset=train_df, look_back=look_back, target_col_indexes=[0])
-        x_test, y_test = self.roll_data(dataset=test_df, look_back=look_back, target_col_indexes=[0])
+        x_train, y_train = self.roll_data(dataset=train_df, look_back=look_back,
+                                          target_col_indexes=[0])
+        x_test, y_test = self.roll_data(dataset=test_df, look_back=look_back,
+                                        target_col_indexes=[0])
 
         # create model, train on train data and predict on test
         lstm_config = {"lstm_1_units": 32, "lstm_2_units": 32, "lr": 0.001}
@@ -75,13 +76,14 @@ class TestZouwuModelAnomaly(ZooTestCase):
         anomaly_indexes = detector.detect(y=y_test,
                                           yhat=y_predict,
                                           threshold=threshold)
-        assert len(anomaly_indexes)==0
+        assert len(anomaly_indexes) == 0
 
-        # if user don't have a threshold, he can choose to use estimator to find a threshold first
-        ratio=0.1
+        # if user don't have a threshold, he can choose to use estimator
+        # to find a threshold first
+        ratio = 0.1
         threshold = ThresholdEstimator().fit(y=y_test, yhat=y_predict, ratio=ratio)
         fitted_anomaly_indexes = detector.detect(y=y_test, yhat=y_predict, threshold=threshold)
-        assert len(fitted_anomaly_indexes)==int(ratio * y_test.shape[0])
+        assert len(fitted_anomaly_indexes) == int(ratio * y_test.shape[0])
 
     def test_threshold_case1_multivariant(self):
         sample_num = 10
@@ -96,9 +98,7 @@ class TestZouwuModelAnomaly(ZooTestCase):
         y_test[gen_rand_indexes] = 10
         y_test = y_test.reshape((sample_num, feature_dim))
 
-        anomaly_indexes = ThresholdDetector().detect(y=y_test,
-                                                   yhat=y_pred,
-                                                   threshold=3)
+        anomaly_indexes = ThresholdDetector().detect(y=y_test, yhat=y_pred, threshold=3)
         assert len(anomaly_indexes) == num_anomaly
 
     def test_threshold_case4(self):
@@ -115,10 +115,8 @@ class TestZouwuModelAnomaly(ZooTestCase):
         # use threshold (-1, 1) for each dimension
         threshold_min = np.ones_like(y_test) * (-1)
         threshold_max = np.ones_like(y_test)
-        anomaly_indexes = ThresholdDetector().detect(y=y_test,
-                                                   yhat=None,
-                                                   threshold=(threshold_min,
-                                                              threshold_max))
+        anomaly_indexes = ThresholdDetector().detect(y=y_test, yhat=None,
+                                                     threshold=(threshold_min, threshold_max))
         assert len(anomaly_indexes) == num_anomaly
 
     def test_threshold_gaussian(self):
@@ -132,7 +130,6 @@ class TestZouwuModelAnomaly(ZooTestCase):
         threshold = ThresholdEstimator().fit(y, y_test, mode="gaussian", ratio=ratio)
         from scipy.stats import norm
         assert abs(threshold-norm.ppf(1-ratio)*sigma+mu) < 0.02
-
 
 
 if __name__ == "__main__":
