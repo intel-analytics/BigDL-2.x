@@ -55,7 +55,7 @@ if __name__ == "__main__":
     ray_ctx = RayContext(sc=sc,
                          object_store_memory="5g"
                          )
-    ray_ctx.init(object_store_memory="5g")
+    ray_ctx.init()
 
     # read data
     data_shard = zoo.xshard.pandas.read_json("/tmp/ray-pandas-example", ray_ctx)

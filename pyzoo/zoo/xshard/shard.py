@@ -98,3 +98,56 @@ class RayPartition(object):
 
     def get_data(self):
         return [shard.get_data.remote() for shard in self.shard_list]
+
+
+class RayPandasDataShards(RayDataShards):
+
+    def max(self, axis=None, skipna=None, level=None, numeric_only=None):
+        import ray
+        import pandas as pd
+        list_result = ray.get([shard.max.remote(axis, skipna, level, numeric_only)
+                               for shard in self.shard_list])
+        if isinstance(list_result[0], pd.Series):
+            df = pd.concat(list_result, axis=1)
+            result = df.max(axis=1)
+            return result
+        elif isinstance(list_result[0], pd.DataFrame):
+            result = list_result[0].copy()
+            for df in list_result[1:]:
+                for ind in df.index:
+                    # add new row to result dataframe
+                    if ind not in result.index:
+                        result.loc[ind] = df.loc[ind]
+                        continue
+                    else:
+                        for col in df.columns:
+                            result[col][ind] = max([result[col][ind], df[col][ind]])
+            return result
+        else:
+            # scalar
+            return max(list_result)
+
+    def min(self, axis=None, skipna=None, level=None, numeric_only=None):
+        import ray
+        import pandas as pd
+        list_result = ray.get([shard.min.remote(axis, skipna, level, numeric_only)
+                               for shard in self.shard_list])
+        if isinstance(list_result[0], pd.Series):
+            df = pd.concat(list_result, axis=1)
+            result = df.min(axis=1)
+            return result
+        elif isinstance(list_result[0], pd.DataFrame):
+            result = list_result[0].copy()
+            for df in list_result[1:]:
+                for ind in df.index:
+                    # add new row to result dataframe
+                    if ind not in result.index:
+                        result.loc[ind] = df.loc[ind]
+                        continue
+                    else:
+                        for col in df.columns:
+                            result[col][ind] = min([result[col][ind], df[col][ind]])
+            return result
+        else:
+            # scalar
+            return min(list_result)
