@@ -92,14 +92,14 @@ if __name__ == "__main__":
         parser.print_help()
         parser.error('file_path is required')
 
-    sc = init_nncontext("xgboost_inference")
+    sc = SparkContext.getOrCreate()
 
     file_path = options.file_path
     model_path = options.model_path
     num_classes = int(options.num_classes)
 
     predictionDF = inference(file_path, model_path, num_classes, sc)
-    predictionDF.show(20, False)
+    predictionDF.count()
 
     print("finished...")
     sc.stop()
