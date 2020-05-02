@@ -151,3 +151,20 @@ class RayPandasDataShards(RayDataShards):
         else:
             # scalar
             return min(list_result)
+
+
+class SparkDataShards(DataShards):
+    def __init__(self, rdd):
+        self.rdd = rdd
+
+    def apply(self, func, *args):
+        self.rdd.map(func)
+        return self
+
+    def collect(self):
+        return self.rdd.collect()
+
+    def repartition(self, num_partitions):
+        self.rdd.repartition(num_partitions)
+        return self
+

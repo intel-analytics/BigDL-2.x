@@ -35,14 +35,14 @@ class TestDataShards(ZooTestCase):
         """
         pass
 
-    # def test_read_local_csv(self):
-    #     file_path = os.path.join(self.resource_path, "xshard")
-    #     data_shard = zoo.xshard.pandas.read_csv(file_path, self.ray_ctx)
-    #     data = data_shard.collect()
-    #     assert len(data) == 2, "number of shard should be 2"
-    #     df = data[0]
-    #     assert "location" in df.columns, "location is not in columns"
-    #
+    def test_read_local_csv(self):
+        file_path = os.path.join(self.resource_path, "xshard")
+        data_shard = zoo.xshard.pandas.read_csv(file_path, self.ray_ctx)
+        data = data_shard.collect()
+        assert len(data) == 2, "number of shard should be 2"
+        df = data[0]
+        assert "location" in df.columns, "location is not in columns"
+
     # def test_read_local_json(self):
     #     file_path = os.path.join(self.resource_path, "xshard")
     #     data_shard = zoo.xshard.pandas.read_json(file_path, self.ray_ctx)
@@ -50,17 +50,17 @@ class TestDataShards(ZooTestCase):
     #     assert len(data) == 2, "number of shard should be 2"
     #     df = data[0]
     #     assert "value" in df.columns, "value is not in columns"
-    #
-    # def test_read_s3(self):
-    #     access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
-    #     secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-    #     if access_key_id and secret_access_key:
-    #         file_path = "s3://analytics-zoo-data/nyc_taxi.csv"
-    #         data_shard = zoo.xshard.pandas.read_csv(file_path, self.ray_ctx)
-    #         data = data_shard.collect()
-    #         df = data[0]
-    #         assert "value" in df.columns, "value is not in columns"
-    #
+
+    def test_read_s3(self):
+        access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
+        secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+        if access_key_id and secret_access_key:
+            file_path = "s3://analytics-zoo-data/nyc_taxi.csv"
+            data_shard = zoo.xshard.pandas.read_csv(file_path, self.ray_ctx)
+            data = data_shard.collect()
+            df = data[0]
+            assert "value" in df.columns, "value is not in columns"
+
     # def test_repartition(self):
     #     file_path = os.path.join(self.resource_path, "xshard")
     #     data_shard = zoo.xshard.pandas.read_json(file_path, self.ray_ctx)
@@ -71,7 +71,7 @@ class TestDataShards(ZooTestCase):
     #     assert len(partitions2) == 1, "number of partition should be 1"
     #     partition_data = ray.get(partitions2[0].get_data())
     #     assert len(partition_data) == 2, "partition 0 should have 2 objects"
-    #
+
     # def test_apply(self):
     #     file_path = os.path.join(self.resource_path, "xshard")
     #     data_shard = zoo.xshard.pandas.read_json(file_path, self.ray_ctx)
