@@ -152,7 +152,7 @@ class TestTimeSequenceFeature(ZooTestCase):
                                                    'HOUR(datetime)']),
                   "past_seq_len": past_seq_len}
         train_df, val_df, test_df = split_input_df(df,
-                                                   ts_col="datetime",
+                                                   dt_col="datetime",
                                                    overlap=10,
                                                    val_split_ratio=0.1,
                                                    test_split_ratio=0.1)

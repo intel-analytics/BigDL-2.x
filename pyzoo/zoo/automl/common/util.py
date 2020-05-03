@@ -26,7 +26,7 @@ IDENTIFIER_LEN = 27
 
 
 def split_input_df(input_df,
-                   ts_col="timestamp",
+                   dt_col="timestamp",
                    overlap=0,
                    val_split_ratio=0,
                    test_split_ratio=0.1):
@@ -36,7 +36,7 @@ def split_input_df(input_df,
     The dataframe is splitted in its originally order in timeline.
     e.g. |......... train_df(80%) ........ | ... val_df(10%) ...| ...test_df(10%)...|
     :param input_df: input dataframe to be splitted
-    :param ts_col: the time stamp column name
+    :param dt_col: the time stamp column name
     :param overlap: the overlap length between train_df and val_df as well as val_df and test_df.
                     You can set overlap value to the length of sequence you want to look back for
                     prediction. The default value is 0.
@@ -45,16 +45,10 @@ def split_input_df(input_df,
     :return:
     """
     # suitable to nyc taxi dataset.
-    df = input_df.copy()
+    df = input_df
 
-    inserted_col = "datetime"
-    if ts_col == "datetime":
-        inserted_col = "tmp_datetime"
-
-    df.insert(loc=0, column=inserted_col, value=pd.to_datetime(input_df[ts_col]))
-    # input_df["datetime"] = pd.to_datetime(input_df["timestamp"])
-    df.drop(columns=ts_col, inplace=True)
-    df.rename(columns={inserted_col: "datetime"}, inplace=True)
+    if not pd.api.types.is_datetime64_any_dtype(df[dt_col].dtypes):
+        raise ValueError("For dt_col in input_df, the column should be a datatime type")
 
     val_size = int(len(df) * val_split_ratio)
     test_size = int(len(df) * test_split_ratio)
