@@ -78,7 +78,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     ClusterServing.run(configPath)
   }
   "Cluster Serving result" should "be correct" in {
-    redisHost = "172.168.2.102"
+    redisHost = "172.168.2.104"
 //    nu.pattern.OpenCV.loadLocally()
     val cli = new Jedis(redisHost, redisPort.toInt)
     cli.flushAll()
