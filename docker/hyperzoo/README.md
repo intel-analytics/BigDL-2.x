@@ -20,6 +20,22 @@ Analytics Zoo hyperzoo image has been built to easily run applications on Kubern
 sudo docker pull intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17
 ```
 
+To speed up pulling the image, config the Docker daemon. Edit `/etc/docker/daemon.json` and add the registry-mirrors key and value:
+
+```bash
+{
+  "registry-mirrors": ["https://docker.mirrors.ustc.edu.cn/"]
+}
+```
+
+Restart dockerd：
+
+```bash
+sudo systemctl restart docker
+```
+
+Then pull the image.
+
 - Launch a k8s client container:
 
 Please note the two different containers: **client container** is for user to submit zoo jobs from here, since it contains all the required env and libs except hadoop/k8s configs; executor container is not need to create manually, which is scheduled by k8s at runtime.
