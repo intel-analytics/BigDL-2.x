@@ -30,8 +30,10 @@ class FlinkInference(params: SerParams)
   var model: InferenceModel = null
   var t: Tensor[Float] = null
   var logger: Logger = null
+  var inferenceCnt: Int = 0
 
   override def open(parameters: Configuration): Unit = {
+    inferenceCnt = 0
     model = params.model
     logger = Logger.getLogger(getClass)
     t = if (params.chwFlag) {
@@ -43,7 +45,6 @@ class FlinkInference(params: SerParams)
 
   override def map(in: List[(String, String)]): List[(String, String)] = {
     val t1 = System.nanoTime()
-
 
     val preProcessed = in.grouped(params.coreNum).flatMap(itemBatch => {
       itemBatch.indices.toParArray.map(i => {

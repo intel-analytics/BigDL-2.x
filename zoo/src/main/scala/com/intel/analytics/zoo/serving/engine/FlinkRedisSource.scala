@@ -73,6 +73,7 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
   }
 
   override def cancel(): Unit = {
+    db.close()
     redisPool.close()
   }
 

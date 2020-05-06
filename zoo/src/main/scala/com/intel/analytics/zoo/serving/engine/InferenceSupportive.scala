@@ -49,13 +49,17 @@ object InferenceSupportive {
        * original Tensor, thus if reuse of Tensor is needed,
        * have to squeeze it back.
        */
+//      println(s"preparing to predict")
       val result = if (params.modelType == "openvino") {
         val res = params.model.doPredict(x).toTensor[Float].squeeze()
         t.squeeze(1)
         res
       } else {
+//        println(s"tensor shape ${x.size(1)}, " +
+//          s"${x.size(2)}, ${x.size(3)}, ${x.size(4)}")
         params.model.doPredict(x).toTensor[Float]
       }
+//      println(s"predict end")
       (0 until thisBatchSize).toParArray.map(i => {
         val value = PostProcessing(result.select(1, i + 1), params.filter)
         (pathByteBatch(i)._1, value)

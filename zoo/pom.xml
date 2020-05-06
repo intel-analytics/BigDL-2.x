@@ -391,12 +391,7 @@
             <version>1.10.0</version>
             <scope>${flink-scope}</scope>
         </dependency>
-        <dependency>
-            <groupId>org.openpnp</groupId>
-            <artifactId>opencv</artifactId>
-            <version>4.3.0-1</version>
-            <scope>test</scope>
-        </dependency>
+
     </dependencies>
 
     <build>

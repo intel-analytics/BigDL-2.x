@@ -38,29 +38,34 @@ import scala.util.Random
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 import org.opencv.core._
+import org.apache.commons.io.FileUtils
+import com.intel.analytics.zoo.feature.image._
 
 class CorrectnessSpec extends FlatSpec with Matchers {
-  val configPath = "/tmp/config.yaml"
+//  val configPath = "/tmp/config.yaml"
+  val configPath = "/home/litchy/pro/analytics-zoo/config.yaml"
   var redisHost: String = "localhost"
   var redisPort: String = "6379"
   val logger = Logger.getLogger(getClass)
-  var idx = 0
-  def resize(source: BufferedImage, n: String): String = {
-
+  def resize(p: String): String = {
+    val source = ImageIO.read(new File(p))
     val outputImage: BufferedImage = new BufferedImage(224, 224, source.getType)
     val graphics2D: Graphics2D = outputImage.createGraphics
 
     graphics2D.drawImage(source, 0, 0, 224, 224, null)
     graphics2D.dispose()
-    idx += 1
-    ImageIO.write(outputImage, "jpg", new File("/home/litchy/tmp/" + n + "-x.jpg"))
+
     val byteStream = new ByteArrayOutputStream()
     ImageIO.write(outputImage, "jpg", byteStream)
     val dataStr = Base64.getEncoder.encodeToString(byteStream.toByteArray)
     dataStr
   }
   def getBase64FromPath(path: String): String = {
-    val img = Imgcodecs.imread(path)
+
+//    val img = Imgcodecs.imread(path)
+//
+    val b = FileUtils.readFileToByteArray(new File(path))
+    val img = OpenCVMethod.fromImageBytes(b, Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
     Imgproc.resize(img, img, new Size(224, 224))
     val matOfByte = new MatOfByte()
     Imgcodecs.imencode(".jpg", img, matOfByte)
@@ -73,9 +78,8 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     ClusterServing.run(configPath)
   }
   "Cluster Serving result" should "be correct" in {
-    //    val cli = new Jedis("172.168.2.102", 6379)
     redisHost = "172.168.2.102"
-    nu.pattern.OpenCV.loadLocally()
+//    nu.pattern.OpenCV.loadLocally()
     val cli = new Jedis(redisHost, redisPort.toInt)
     cli.flushAll()
 
@@ -102,7 +106,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
       val infoMap = Map[String, String]("uri" -> file.getName, "image" -> dataStr)
       cli.xadd("image_stream", StreamEntryID.NEW_ENTRY, infoMap.asJava)
       cn += 1
-      if (cn % 10 == 1) {
+      if (cn % 100 == 1) {
         logger.info(s"current xlen is ${cli.xlen("image_stream")}")
       }
     }
