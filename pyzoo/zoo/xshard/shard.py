@@ -22,11 +22,12 @@ class DataShards(object):
     A collection of data which can be pre-processed parallelly.
     """
 
-    def apply(self, func, *args):
+    def transform_shard(self, func, *args, **kwargs):
         """
         Appy function on each element in the DataShards
         :param func: pre-processing function
         :param args: arguments for the pre-processing function
+        :param kwargs: keyword arguments for the pre-processing function
         :return: DataShard
         """
         pass
@@ -47,16 +48,17 @@ class RayDataShards(DataShards):
         self.partitions = partitions
         self.shard_list = flatten([partition.shard_list for partition in partitions])
 
-    def apply(self, func, *args):
+    def transform_shard(self, func, *args, **kwargs):
         """
         Appy function on each element in the DataShards
         :param func: pre-processing function.
         In the function, the element object should be the first argument
         :param args: rest arguments for the pre-processing function
+        :param kwargs: keyword arguments for the pre-processing function
         :return: this DataShard
         """
         import ray
-        done_ids, undone_ids = ray.wait([shard.apply.remote(func, *args)
+        done_ids, undone_ids = ray.wait([shard.transform_shard(func, *args, **kwargs)
                                          for shard in self.shard_list],
                                         num_returns=len(self.shard_list))
         assert len(undone_ids) == 0
@@ -68,7 +70,7 @@ class RayDataShards(DataShards):
         :return: list of elements
         """
         import ray
-        return ray.get([shard.get_data.remote() for shard in self.shard_list])
+        return ray.get([shard.get_data() for shard in self.shard_list])
 
     def repartition(self, num_partitions):
         """
@@ -97,74 +99,21 @@ class RayPartition(object):
         self.shard_list = shard_list
 
     def get_data(self):
-        return [shard.get_data.remote() for shard in self.shard_list]
-
-
-class RayPandasDataShards(RayDataShards):
-
-    def max(self, axis=None, skipna=None, level=None, numeric_only=None):
-        import ray
-        import pandas as pd
-        list_result = ray.get([shard.max.remote(axis, skipna, level, numeric_only)
-                               for shard in self.shard_list])
-        if isinstance(list_result[0], pd.Series):
-            df = pd.concat(list_result, axis=1)
-            result = df.max(axis=1)
-            return result
-        elif isinstance(list_result[0], pd.DataFrame):
-            result = list_result[0].copy()
-            for df in list_result[1:]:
-                for ind in df.index:
-                    # add new row to result dataframe
-                    if ind not in result.index:
-                        result.loc[ind] = df.loc[ind]
-                        continue
-                    else:
-                        for col in df.columns:
-                            result[col][ind] = max([result[col][ind], df[col][ind]])
-            return result
-        else:
-            # scalar
-            return max(list_result)
-
-    def min(self, axis=None, skipna=None, level=None, numeric_only=None):
-        import ray
-        import pandas as pd
-        list_result = ray.get([shard.min.remote(axis, skipna, level, numeric_only)
-                               for shard in self.shard_list])
-        if isinstance(list_result[0], pd.Series):
-            df = pd.concat(list_result, axis=1)
-            result = df.min(axis=1)
-            return result
-        elif isinstance(list_result[0], pd.DataFrame):
-            result = list_result[0].copy()
-            for df in list_result[1:]:
-                for ind in df.index:
-                    # add new row to result dataframe
-                    if ind not in result.index:
-                        result.loc[ind] = df.loc[ind]
-                        continue
-                    else:
-                        for col in df.columns:
-                            result[col][ind] = min([result[col][ind], df[col][ind]])
-            return result
-        else:
-            # scalar
-            return min(list_result)
+        return [shard.get_data() for shard in self.shard_list]
 
 
 class SparkDataShards(DataShards):
     def __init__(self, rdd):
         self.rdd = rdd
 
-    def apply(self, func, *args):
-        self.rdd.map(func)
+    def transform_shard(self, func, *args, **kwargs):
+        self.rdd = self.rdd.map(func(*args, **kwargs))
         return self
 
     def collect(self):
         return self.rdd.collect()
 
     def repartition(self, num_partitions):
-        self.rdd.repartition(num_partitions)
+        self.rdd = self.rdd.repartition(num_partitions)
         return self
 

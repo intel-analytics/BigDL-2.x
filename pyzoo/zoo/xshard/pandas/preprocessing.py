@@ -21,11 +21,11 @@ from bigdl.util.common import get_node_and_core_number
 
 from zoo.common import get_file_list
 from zoo.ray import RayContext
-from zoo.xshard.shard import RayPandasDataShards, RayPartition, SparkDataShards
+from zoo.xshard.shard import RayPartition, SparkDataShards, RayDataShards
 from zoo.xshard.utils import *
 
 
-def read_csv(file_path, context, sep=',', header='infer', names=None, index_col=None):
+def read_csv(file_path, context, **kwargs):
     """
     Read csv files to DataShards
     :param file_path: could be a csv file, multiple csv file paths separated by comma,
@@ -35,14 +35,14 @@ def read_csv(file_path, context, sep=',', header='infer', names=None, index_col=
     :return: DataShards
     """
     if isinstance(context, RayContext):
-        return read_file_ray(context, file_path, "csv", sep, header, names, index_col)
+        return read_file_ray(context, file_path, "csv", **kwargs)
     elif isinstance(context, SparkContext):
-        return read_file_spark(context, file_path, "csv")
+        return read_file_spark(context, file_path, "csv", **kwargs)
     else:
         raise Exception("Context type should be RayContext or SparkContext")
 
 
-def read_json(file_path, context):
+def read_json(file_path, context, **kwargs):
     """
     Read json files to DataShards
     :param file_path: could be a json file, multiple json file paths separated by comma,
@@ -52,14 +52,14 @@ def read_json(file_path, context):
     :return: DataShards
     """
     if isinstance(context, RayContext):
-        return read_file_ray(context, file_path, "json")
+        return read_file_ray(context, file_path, "json", **kwargs)
     elif isinstance(context, SparkContext):
-        return read_file_spark(context, file_path, "json")
+        return read_file_spark(context, file_path, "json", **kwargs)
     else:
         raise Exception("Context type should be RayContext or SparkContext")
 
 
-def read_file_ray(context, file_path, file_type, sep, header, names, index_col):
+def read_file_ray(context, file_path, file_type, **kwargs):
     file_paths = []
     # extract all file paths
     if isinstance(file_path, list):
@@ -76,17 +76,17 @@ def read_file_ray(context, file_path, file_type, sep, header, names, index_col):
     # create shard actor to read data
     shards = [RayPandasShard.remote() for i in range(len(file_partition_list))]
     done_ids, undone_ids = \
-        ray.wait([shard.read_file_partitions.remote(file_partition_list[i], file_type, sep, header, names, index_col)
+        ray.wait([shard.read_file_partitions.remote(file_partition_list[i], file_type, **kwargs)
                   for i, shard in enumerate(shards)], num_returns=len(shards))
     assert len(undone_ids) == 0
 
     # create initial partition
-    partitions = [RayPartition([shard]) for shard in shards]
+    partitions = [RayPartition([PandasShard(shard)]) for shard in shards]
     data_shards = RayPandasDataShards(partitions)
     return data_shards
 
 
-def read_file_spark(context, file_path, file_type):
+def read_file_spark(context, file_path, file_type, **kwargs):
     file_url_splits = file_path.split("://")
     prefix = file_url_splits[0]
     node_num, core_num = get_node_and_core_number()
@@ -106,9 +106,9 @@ def read_file_spark(context, file_path, file_type):
             for x in iterator:
                 with fs.open(x, 'rb') as f:
                     if file_type == "csv":
-                        df = pd.read_csv(f, header=0)
+                        df = pd.read_csv(f, **kwargs)
                     elif file_type == "json":
-                        df = pd.read_json(f, orient='columns', lines=True)
+                        df = pd.read_json(f, **kwargs)
                     else:
                         raise Exception("Unsupported file type")
                     yield df
@@ -130,9 +130,9 @@ def read_file_spark(context, file_path, file_type):
                 key = "/".join(path_parts)
                 obj = s3_client.get_object(Bucket=bucket, Key=key)
                 if file_type == "json":
-                    df = pd.read_json(obj['Body'], orient='columns', lines=True)
+                    df = pd.read_json(obj['Body'], **kwargs)
                 elif file_type == "csv":
-                    df = pd.read_csv(obj['Body'])
+                    df = pd.read_csv(obj['Body'], **kwargs)
                 else:
                     raise Exception("Unsupported file type")
                 yield df
@@ -143,9 +143,9 @@ def read_file_spark(context, file_path, file_type):
             import pandas as pd
             for x in iterator:
                 if file_type == "csv":
-                    df = pd.read_csv(x, header=0)
+                    df = pd.read_csv(x, **kwargs)
                 elif file_type == "json":
-                    df = pd.read_json(orient='columns', lines=True)
+                    df = pd.read_json(x, **kwargs)
                 else:
                     raise Exception("Unsupported file type")
                 yield df
@@ -163,8 +163,14 @@ class RayPandasShard(object):
     """
     def __init__(self, data=None):
         self.data = data
+        self.row_length = None
+        self.column_width = None
+        self.row_start = 0
+        self.row_end = None
+        self.column_start = 0
+        self.column_end = None
 
-    def read_file_partitions(self, paths, file_type, sep, header, names, index_col):
+    def read_file_partitions(self, paths, file_type, **kwargs):
         df_list = []
         import pandas as pd
         prefix = paths[0].split("://")[0]
@@ -174,9 +180,9 @@ class RayPandasShard(object):
             for path in paths:
                 with fs.open(path, 'rb') as f:
                     if file_type == "json":
-                        df = pd.read_json(f, orient='columns', lines=True)
+                        df = pd.read_json(f, **kwargs)
                     elif file_type == "csv":
-                        df = pd.read_csv(f, sep=sep, header=header, names=names, index_col=index_col)
+                        df = pd.read_csv(f, **kwargs)
                     else:
                         raise Exception("Unsupported file type")
                     df_list.append(df)
@@ -194,35 +200,172 @@ class RayPandasShard(object):
                 key = "/".join(path_parts)
                 obj = s3_client.get_object(Bucket=bucket, Key=key)
                 if file_type == "json":
-                    df = pd.read_json(obj['Body'], orient='columns', lines=True)
+                    df = pd.read_json(obj['Body'], **kwargs)
                 elif file_type == "csv":
-                    df = pd.read_csv(obj['Body'], sep=sep, header=header, names=names, index_col=index_col)
+                    df = pd.read_csv(obj['Body'], **kwargs)
                 else:
                     raise Exception("Unsupported file type")
                 df_list.append(df)
         else:
             for path in paths:
                 if file_type == "json":
-                    df = pd.read_json(path, orient='columns', lines=True)
+                    df = pd.read_json(path, **kwargs)
                 elif file_type == "csv":
-                    df = pd.read_csv(path, sep=sep, header=header, names=names, index_col=index_col)
+                    df = pd.read_csv(path, **kwargs)
                 else:
                     raise Exception("Unsupported file type")
                 df_list.append(df)
         self.data = pd.concat(df_list)
         return 0
 
-    def apply(self, func, *args):
-        self.data = func(self.data, *args)
+    def transform_shard(self, func, *args, **kwargs):
+        data = self.get_data()
+        self.data = func(data, *args, **kwargs)
         return 0
 
-    def max(self, axis=None, skipna=None, level=None, numeric_only=None):
-        result = self.data.max(axis, skipna, level, numeric_only)
+    def max(self, axis=None, skipna=None, level=None, numeric_only=None, rows=None, columns=None, **kwargs):
+        data = self.get_data(rows, columns)
+        result = data.max(axis, skipna, level, numeric_only, **kwargs)
         return result
 
-    def min(self, axis=None, skipna=None, level=None, numeric_only=None):
-        result = self.data.min(axis, skipna, level, numeric_only)
+    def min(self, axis=None, skipna=None, level=None, numeric_only=None, rows=None, columns=None, **kwargs):
+        data = self.get_data(rows, columns)
+        result = data.min(axis, skipna, level, numeric_only, **kwargs)
         return result
+
+    def __getitem__(self, key, rows=None, columns=None):
+        result_indexes = None
+        result_columns = None
+        if isinstance(key, slice):
+            # select row
+            result_indexes = key
+        if isinstance(key, str):
+            # select column
+            result_columns = key
+        return result_indexes, result_columns
+
+    def train_test_split(self, test_size=None, random_seed=None, rows=None, columns=None):
+        data = self.get_data(rows, columns)
+        from numpy.random import seed, uniform
+        if seed is not None:
+            seed(random_seed)
+        if test_size is None:
+            ratio = 0.25
+            r = uniform(0, 1, data.index.size)
+        elif isinstance(test_size, float):
+            ratio = test_size
+            r = uniform(0, 1, data.index.size)
+        elif isinstance(test_size, int):
+            ratio = test_size
+            r = uniform(0, data.index.size, data.index.size)
+        train = data[r >= ratio]
+        test = data[r < ratio]
+        return train.index, test.index
+
+    def get_data(self, rows=None, columns=None):
+        if rows is None and columns is None:
+            # no need to slice, get whole data
+            return self.data
+        elif columns is None:
+            # slice rows
+            return self.data.loc[rows]
+        elif rows is None:
+            # slice columns
+            return self.data.loc[:, columns]
+        else:
+            return self.data.loc[rows, columns]
+
+
+class PandasShard(object):
+    def __init__(self, shard, rows=None, columns=None):
+        self.ray_shard = shard
+        self.rows = rows
+        self.columns = columns
+
+    def transform_shard(self, func, *args, **kwargs):
+        return self.ray_shard.transform_shard.remote(func, *args, **kwargs)
 
     def get_data(self):
-        return self.data
+        return self.ray_shard.get_data.remote(self.rows, self.columns)
+
+
+class RayPandasDataShards(RayDataShards):
+
+    def max(self, axis=None, skipna=None, level=None, numeric_only=None, **kwargs):
+        import ray
+        import pandas as pd
+        list_result = ray.get(
+            [shard.ray_shard.max.remote(axis, skipna, level, numeric_only,
+                                        rows=shard.rows, columns=shard.columns, **kwargs)
+             for shard in self.shard_list])
+        if isinstance(list_result[0], pd.Series):
+            df = pd.concat(list_result, axis=1)
+            result = df.max(axis=1)
+            return result
+        elif isinstance(list_result[0], pd.DataFrame):
+            result = list_result[0].copy()
+            for df in list_result[1:]:
+                for ind in df.index:
+                    # add new row  if not exist in result dataframe
+                    if ind not in result.index:
+                        result.loc[ind] = df.loc[ind]
+                        continue
+                    else:
+                        for col in df.columns:
+                            result[col][ind] = max([result[col][ind], df[col][ind]])
+            return result
+        else:
+            # scalar
+            return max(list_result)
+
+    def min(self, axis=None, skipna=None, level=None, numeric_only=None, **kwargs):
+        import ray
+        import pandas as pd
+        list_result = ray.get(
+            [shard.ray_shard.min.remote(axis, skipna, level, numeric_only,
+                                        rows=shard.rows, columns=shard.columns, **kwargs)
+             for shard in self.shard_list])
+        if isinstance(list_result[0], pd.Series):
+            df = pd.concat(list_result, axis=1)
+            result = df.min(axis=1)
+            return result
+        elif isinstance(list_result[0], pd.DataFrame):
+            result = list_result[0].copy()
+            for df in list_result[1:]:
+                for ind in df.index:
+                    # add new row to result dataframe
+                    if ind not in result.index:
+                        result.loc[ind] = df.loc[ind]
+                        continue
+                    else:
+                        for col in df.columns:
+                            result[col][ind] = min([result[col][ind], df[col][ind]])
+            return result
+        else:
+            # scalar
+            return min(list_result)
+
+    def train_test_split(self, test_size=None, random_seed=None):
+        train_partition_list = []
+        test_partition_list = []
+        for partition in self.partitions:
+            train_test_index_list = \
+                ray.get([shard.ray_shard.train_test_split.remote(test_size, random_seed, shard.rows, shard.columns)
+                         for shard in partition.shard_list])
+            train_partition = RayPartition([PandasShard(partition.shard_list[i].ray_shard, train_test_index[0])
+                                            for i, train_test_index in enumerate(train_test_index_list)])
+            train_partition_list.append(train_partition)
+            test_partition = RayPartition([PandasShard(partition.shard_list[i].ray_shard, train_test_index[1])
+                                           for i, train_test_index in enumerate(train_test_index_list)])
+            test_partition_list.append(test_partition)
+        return RayPandasDataShards(train_partition_list), RayPandasDataShards(test_partition_list)
+
+    def __getitem__(self, key):
+        result_partition_list = []
+        for partition in self.partitions:
+            index_column_list = ray.get([shard.ray_shard.__getitem__.remote(key, shard.rows, shard.columns)
+                                         for shard in partition.shard_list])
+            new_partition = RayPartition([PandasShard(partition.shard_list[i].ray_shard, index_column[0], index_column[1])
+                             for i, index_column in enumerate(index_column_list)])
+            result_partition_list.append(new_partition)
+        return RayPandasDataShards(result_partition_list)
