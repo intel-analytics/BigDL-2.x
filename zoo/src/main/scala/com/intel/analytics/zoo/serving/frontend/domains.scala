@@ -16,7 +16,43 @@
 
 package com.intel.analytics.zoo.serving.frontend
 
+import java.util.{HashMap, UUID}
+
 import com.codahale.metrics.Timer
+
+sealed trait ServingMessage
+case class PredictionInputMessage(input: PredictionInput) extends ServingMessage
+case class PredictionInputFlushMessage() extends ServingMessage
+case class PredictionOutputMessage(id: String) extends ServingMessage
+
+sealed trait PredictionInput {
+  def getId(): String
+  def toHash(): HashMap[String, String]
+}
+case class BytesPredictionInput(uuid: String, bytesStr: String) extends PredictionInput {
+  def this(str: String) = this(UUID.randomUUID().toString, str)
+  override def getId(): String = this.uuid
+  def toMap(): Map[String, String] = Map("uuid" -> uuid, "bytesStr" -> bytesStr)
+  override def toHash(): HashMap[String, String] = {
+    val hash = new HashMap[String, String]()
+    hash.put("uri", uuid)
+    hash.put("image", bytesStr)
+    hash
+  }
+}
+
+case class PredictionOutput[Type](uuid: String, result: Type)
+
+case class ServingResponse[Type](statusCode: Int, entity: Type) {
+  def this(tuple: (Int, Type)) = this(tuple._1, tuple._2)
+  override def toString: String = s"[$statusCode, $entity]"
+  def isSuccessful: Boolean = statusCode / 100 == 2
+}
+
+case class ServingRuntimeException(message: String = null, cause: Throwable = null)
+  extends RuntimeException(message, cause) {
+  def this(response: ServingResponse[String]) = this(JsonUtil.toJson(response), null)
+}
 
 case class ServingTimerMetrics(
     name: String,

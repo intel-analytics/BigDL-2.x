@@ -41,3 +41,9 @@ class JacksonJsonSerializer extends SerializeSuported {
     mapper.readValue[T](dest, clazz)
   }
 }
+
+object JsonUtil {
+  val jacksonJsonSerializer = new JacksonJsonSerializer()
+  def fromJson[T](clazz: Class[T], dest: String): T = jacksonJsonSerializer.deSerialize(clazz, dest)
+  def toJson(value: Object): String = jacksonJsonSerializer.serialize(value)
+}

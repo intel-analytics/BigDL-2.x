@@ -53,8 +53,10 @@ object FrontEndApp extends Supportive {
 
       val redisPutterName = s"redis-putter"
       val redisPutter = timing(s"$redisPutterName initialized.")() {
-        val redisPutterProps = Props(new RedisPutActor(arguments.redisHost,
-          arguments.redisPort, redisInputQueue, redisOutputQueue))
+        val redisPutterProps = Props(new RedisPutActor(
+          arguments.redisHost, arguments.redisPort,
+          redisInputQueue, redisOutputQueue,
+          arguments.timeWindow, arguments.countWindow))
         system.actorOf(redisPutterProps, name = redisPutterName)
       }
 
@@ -85,7 +87,6 @@ object FrontEndApp extends Supportive {
   val metrics = new MetricRegistry
   val overallRequestTimer = metrics.timer("zoo.serving.request.overall")
   val predictRequestTimer = metrics.timer("zoo.serving.request.predict")
-  val inferenceRequestTimer = metrics.timer("zoo.serving.request.inference")
   val putRedisTimer = metrics.timer("zoo.serving.redis.put")
   val getRedisTimer = metrics.timer("zoo.serving.redis.get")
   val waitRedisTimer = metrics.timer("zoo.serving.redis.wait")
@@ -105,8 +106,18 @@ object FrontEndApp extends Supportive {
           val timer = metrics.getTimers().get(key)
           ServingTimerMetrics(key.toString, timer)
         }).toList
-        println(servingMetrics)
         complete(jacksonJsonSerializer.serialize(servingMetrics))
+      }
+    } ~ (post & path("predict")) {
+      extractRequest {
+        request => {
+          println(request.entity.contentType, request.entity.dataBytes)
+          timing("predict")(overallRequestTimer, predictRequestTimer) {
+            silent("response complete")() {
+              complete(200, "")
+            }
+          }
+        }
       }
     }
   }
