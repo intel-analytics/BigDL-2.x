@@ -21,8 +21,8 @@ from bigdl.util.common import get_node_and_core_number
 
 from zoo.common import get_file_list
 from zoo.ray import RayContext
-from zoo.xshard.shard import RayDataShards, RayPartition, SparkDataShards
-from zoo.xshard.utils import *
+from zoo.orca.data.shard import RayDataShards, RayPartition, SparkDataShards
+from zoo.orca.data.utils import *
 
 
 def list_s3_file(file_path, file_type):

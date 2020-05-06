@@ -19,7 +19,7 @@ import os.path
 import pytest
 import ray
 
-import zoo.xshard.pandas
+import zoo.orca.data.pandas
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from test.zoo.xshard.conftest import get_ray_ctx
 
@@ -37,7 +37,7 @@ class TestDataShards(ZooTestCase):
 
     def test_read_local_csv(self):
         file_path = os.path.join(self.resource_path, "xshard")
-        data_shard = zoo.xshard.pandas.read_csv(file_path, self.ray_ctx)
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.ray_ctx)
         data = data_shard.collect()
         assert len(data) == 2, "number of shard should be 2"
         df = data[0]
@@ -45,7 +45,7 @@ class TestDataShards(ZooTestCase):
 
     def test_read_local_json(self):
         file_path = os.path.join(self.resource_path, "xshard")
-        data_shard = zoo.xshard.pandas.read_json(file_path, self.ray_ctx)
+        data_shard = zoo.orca.data.pandas.read_json(file_path, self.ray_ctx)
         data = data_shard.collect()
         assert len(data) == 2, "number of shard should be 2"
         df = data[0]
@@ -56,14 +56,14 @@ class TestDataShards(ZooTestCase):
         secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
         if access_key_id and secret_access_key:
             file_path = "s3://analytics-zoo-data/nyc_taxi.csv"
-            data_shard = zoo.xshard.pandas.read_csv(file_path, self.ray_ctx)
+            data_shard = zoo.orca.data.pandas.read_csv(file_path, self.ray_ctx)
             data = data_shard.collect()
             df = data[0]
             assert "value" in df.columns, "value is not in columns"
 
     def test_repartition(self):
         file_path = os.path.join(self.resource_path, "xshard")
-        data_shard = zoo.xshard.pandas.read_json(file_path, self.ray_ctx)
+        data_shard = zoo.orca.data.pandas.read_json(file_path, self.ray_ctx)
         partitions1 = data_shard.get_partitions()
         assert len(partitions1) == 2, "number of partition should be 2"
         data_shard.repartition(1)
@@ -74,7 +74,7 @@ class TestDataShards(ZooTestCase):
 
     def test_apply(self):
         file_path = os.path.join(self.resource_path, "xshard")
-        data_shard = zoo.xshard.pandas.read_json(file_path, self.ray_ctx)
+        data_shard = zoo.orca.data.pandas.read_json(file_path, self.ray_ctx)
         data = data_shard.collect()
         assert data[0]["value"].values[0] > 0, "value should be positive"
 

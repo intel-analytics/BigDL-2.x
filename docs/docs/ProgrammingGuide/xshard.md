@@ -20,9 +20,9 @@ DataShards is a collection of data in xShard API. In current version, the elemen
 
 You can read csv/json files/directory into DataShards with such APIs:
 ```
-zoo.xshard.pandas.read_csv(file_path, context)
+zoo.orca.data.pandas.read_csv(file_path, context)
 
-zoo.xshard.pandas.read_json(file_path, context)
+zoo.orca.data.pandas.read_json(file_path, context)
 ```
 * The `file_path` could be a csv/json file, multiple csv/json file paths seperated with comma, a directory containing csv/json files. Supported file systems are local file system,` hdfs`, and `s3`.
 * `context` is a Ray context.
