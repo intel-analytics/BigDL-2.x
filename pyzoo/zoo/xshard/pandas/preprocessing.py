@@ -163,12 +163,6 @@ class RayPandasShard(object):
     """
     def __init__(self, data=None):
         self.data = data
-        self.row_length = None
-        self.column_width = None
-        self.row_start = 0
-        self.row_end = None
-        self.column_start = 0
-        self.column_end = None
 
     def read_file_partitions(self, paths, file_type, **kwargs):
         df_list = []
