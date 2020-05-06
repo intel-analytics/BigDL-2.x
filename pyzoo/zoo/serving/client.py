@@ -123,7 +123,7 @@ class InputQueue(API):
         for arr in data:
             shape = np.array(arr.shape, dtype="float32")
             arr = arr.astype("float32")
-            data = np.concatenate([shape, np.array([2147483647], dtype="float32"), arr.flatten()])
+            data = np.concatenate([shape, np.array([-1], dtype="float32"), arr.flatten()])
             arrow_arr = pa.array(data)
             batch = pa.RecordBatch.from_arrays([arrow_arr], ["0"])
             if writer is None:

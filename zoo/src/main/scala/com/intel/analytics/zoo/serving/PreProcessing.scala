@@ -68,7 +68,7 @@ class PreProcessing(s: String) {
               while (idx < valueCount) {
                 val data = accessor.getObject(idx).asInstanceOf[Float].toInt
                 idx += 1
-                if (data == Integer.MAX_VALUE) {
+                if (data == -1) {
                   break
                 }
                 shape += data

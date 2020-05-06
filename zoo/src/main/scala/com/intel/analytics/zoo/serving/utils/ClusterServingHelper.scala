@@ -18,6 +18,7 @@
 package com.intel.analytics.zoo.serving.utils
 
 import java.io.{File, FileInputStream, FileWriter}
+import java.lang
 import java.nio.file.{Files, Path, Paths}
 
 import com.intel.analytics.bigdl.Module
@@ -38,6 +39,7 @@ import org.yaml.snakeyaml.Yaml
 import java.time.LocalDateTime
 
 import scala.reflect.ClassTag
+import scala.util.parsing.json._
 
 case class LoaderParams(modelFolder: String = null,
                         batchSize: Int = 4,
@@ -130,8 +132,32 @@ class ClusterServingHelper {
         Array(shapeList)
       case "tensor" =>
         val shape = getYaml(dataConfig, "tensor_shape", null)
-        shape.split("\\|")
-          .map(tensorShape => tensorShape.split(",").map(x => x.trim.toInt))
+        val jsonList: Option[Any] = JSON.parseFull(shape)
+        jsonList match {
+          case Some(list) =>
+            val l: List[Any] = list.asInstanceOf[List[Any]]
+            var isTable = true
+            val converted = l.map {
+              case x: lang.Double =>
+                isTable = false
+                x.asInstanceOf[Double].toInt
+              case tensorShape: List[Double] =>
+                tensorShape.map(x => x.toInt).toArray
+              case _ =>
+                logError("Invalid shape, please check your tensor_shape")
+                null
+            }
+
+            val result = if (isTable) {
+              converted.asInstanceOf[List[Array[Int]]].toArray
+            } else {
+              Array(converted.asInstanceOf[List[Int]].toArray)
+            }
+
+            result
+          case None => logError("Invalid shape format, please check your tensor_shape")
+            null
+        }
       case _ =>
         logError("Invalid data type, please check your data_type")
         null
@@ -210,8 +236,8 @@ class ClusterServingHelper {
    * @return
    */
   def getYaml(configList: HM, key: String, default: String): String = {
-
-    val configValue = if (configList.get(key).isInstanceOf[java.lang.Integer]) {
+    val configValue = if (configList.get(key).isInstanceOf[java.lang.Integer] ||
+      configList.get(key).isInstanceOf[java.util.ArrayList[Integer]]) {
       String.valueOf(configList.get(key))
     } else {
       configList.get(key)

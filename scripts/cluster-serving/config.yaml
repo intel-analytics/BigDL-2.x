@@ -14,7 +14,7 @@ data:
   data_type:
   # default, 3, 224, 224
   image_shape:
-  # must be provided given data_type is tensor. eg: 1,2 (tensor) 1,2|1|2,3 (table)
+  # must be provided given data_type is tensor. eg: [1,2] (tensor) [[1],[2,1,2],[3]] (table)
   tensor_shape:
   # default, topN(1)
   filter:
