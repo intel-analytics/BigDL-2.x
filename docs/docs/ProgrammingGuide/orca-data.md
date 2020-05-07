@@ -1,18 +1,18 @@
 ---
 ## **Introduction**
 
-Analytics Zoo xShard provides data-parallel pre-processing support for AI.
+Analytics Zoo orca data provides data-parallel pre-processing support for AI.
 
 It supports data pre-processing from different data sources, like TensorFlow DataSet, PyTorch DataLoader, MXNet DataLoader, etc. and it supports different data format, like Pandas DataFrame, Numpy, Images, Parquet.
 
 The backend distributed preprocessing engine can be [Spark](https://spark.apache.org/) or [Ray](https://github.com/ray-project/ray).
 
-In current version, xShard API only supports parallel pre-processing with Pandas DataFrame on Ray.
+In current version, orca data API only supports parallel pre-processing with Pandas DataFrame on Ray.
 
 ---
 ## **DataShards**
 
-DataShards is a collection of data in xShard API. In current version, the element in DataShards is a Pandas DataFrame.
+DataShards is a collection of data in orca data API. In current version, the element in DataShards is a Pandas DataFrame.
 
 ### **DataShards with Pandas DataFrame**
 
@@ -48,4 +48,4 @@ collect()
 ```
 This method returns a list that contains all of the elements in this DataShards.
 
-To get the more examples on xShard API, you can refert to [Example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/xshard)
+To get the more examples on orca data API, you can refert to [Example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/orca/data)

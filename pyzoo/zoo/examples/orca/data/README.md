@@ -1,6 +1,7 @@
 ## Summary
-This is the example to demonstrates how to use Analytics Zoo xShard data preprocesing APIs.
-For the detail guide of xShard data preprocessing, please refer [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/xshard)
+This is the example to demonstrates how to use Analytics Zoo orca data preprocesing APIs.
+For the detail guide of orca data preprocessing, please refer [here](https://analytics-zoo.github.io
+/master/#ProgrammingGuide/orca-data)
 
 ## Install Analytics Zoo
 Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__.
