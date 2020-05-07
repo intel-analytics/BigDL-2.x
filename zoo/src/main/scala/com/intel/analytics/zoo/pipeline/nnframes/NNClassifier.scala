@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.zoo.feature.common._
 import com.intel.analytics.zoo.pipeline.nnframes.NNModel.NNModelWriter
-import ml.dmlc.xgboost4j.scala.spark.{XGBoostClassificationModel, XGBoostWrapper}
+import ml.dmlc.xgboost4j.scala.spark.{XGBoostClassificationModel, XGBoostHelper}
 import org.apache.spark.ml.DefaultParamsWriterWrapper
 import org.apache.spark.ml.adapter.SchemaUtils
 import org.apache.spark.ml.feature.VectorAssembler
@@ -309,12 +309,13 @@ object NNClassifierModel extends MLReadable[NNClassifierModel[_]] {
   }
 }
 
-class NNXGBoostClassifierModel private[zoo] (
+class XGBClassifierModel private[zoo](
    val model: XGBoostClassificationModel) {
   private var featuresCols: Array[String] = null
   private var predictionCol: String = null
 
   def setFeaturesCol(featuresColName: Array[String]): this.type = {
+    require(featuresColName.length > 1, "Please set a valid feature columns")
     featuresCols = featuresColName
     this
   }
@@ -346,8 +347,8 @@ class NNXGBoostClassifierModel private[zoo] (
   }
 }
 
-object NNXGBoostClassifierModel {
-  def load(path: String, numClass: Int): NNXGBoostClassifierModel = {
-    new NNXGBoostClassifierModel(XGBoostWrapper.load(path, numClass))
+object XGBClassifierModel {
+  def load(path: String, numClass: Int): XGBClassifierModel = {
+    new XGBClassifierModel(XGBoostHelper.load(path, numClass))
   }
 }

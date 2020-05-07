@@ -226,7 +226,6 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def loadNNModel(path: String): NNModel[_] = {
     val loaded = NNModel.load(path)
-    println(loaded)
     loaded
   }
 
@@ -238,21 +237,21 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     NNFileReader.readCSV(path, sc)
   }
 
-  def loadNNXGBoostClassifierModel(path: String, numClasses: Int): NNXGBoostClassifierModel = {
-    NNXGBoostClassifierModel.load(path, numClasses)
+  def loadXGBClassifierModel(path: String, numClasses: Int): XGBClassifierModel = {
+    XGBClassifierModel.load(path, numClasses)
   }
 
-  def setFeaturesNNXGBoostClassifierModel(model: NNXGBoostClassifierModel,
+  def setFeaturesXGBClassifierModel(model: XGBClassifierModel,
                                           features: JList[String]): Unit = {
     model.setFeaturesCol(features.asScala.toArray)
   }
 
-  def setPredictionNNXGBoostClassifierModel(model: NNXGBoostClassifierModel,
+  def setPredictionXGBClassifierModel(model: XGBClassifierModel,
                                             prediction: String): Unit = {
     model.setPredictionCol(prediction)
   }
 
-  def transformNNXGBoostClassifierModel(model: NNXGBoostClassifierModel,
+  def transformXGBClassifierModel(model: XGBClassifierModel,
                                         dataset: DataFrame): DataFrame = {
     model.transform(dataset)
   }

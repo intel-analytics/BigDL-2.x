@@ -94,6 +94,16 @@ if __name__ == "__main__":
 
     sc = SparkContext.getOrCreate()
 
+
+    modelPath = "/home/ding/proj/analytics-zoo/pyzoo/test/zoo/resources/xgbclassifier/XGBClassifer.model"
+    filePath ="/home/ding/proj/analytics-zoo/pyzoo/test/zoo/resources/xgbclassifier/test.csv"
+    model = XGBClassifierModel.loadModel(modelPath, 2)
+
+    df = spark.read.csv(filePath)
+    predict = model.transform(df)
+    predict.show()
+
+
     file_path = options.file_path
     model_path = options.model_path
     num_classes = int(options.num_classes)
