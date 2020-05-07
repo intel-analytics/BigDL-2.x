@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     # read data
     data_shard = zoo.orca.data.pandas.read_json("/tmp/ray-pandas-example", ray_ctx,
-                                             orient='columns', lines=True)
+                                                orient='columns', lines=True)
 
     # collect data
     data = data_shard.collect()
