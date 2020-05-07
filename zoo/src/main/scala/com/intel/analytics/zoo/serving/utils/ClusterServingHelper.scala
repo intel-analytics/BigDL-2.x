@@ -115,6 +115,21 @@ class ClusterServingHelper {
 
     parseModelType(modelFolder)
 
+    /**
+     * reserved here to change engine type
+     * engine type should be able to change in run time
+     * but BigDL does not support this currently
+     * Once BigDL supports it, engine type could be set here
+     * And also other frameworks supporting multiple engine type
+     */
+
+    logFile = {
+      val logF = new File("./cluster-serving.log")
+      if (Files.exists(Paths.get("./cluster-serving.log"))) {
+        logF.createNewFile()
+      }
+      new FileWriter(logF, true)
+    }
 
     // parse data field
     val dataConfig = configList.get("data").asInstanceOf[HM]
@@ -144,7 +159,8 @@ class ClusterServingHelper {
               case tensorShape: List[Double] =>
                 tensorShape.map(x => x.toInt).toArray
               case _ =>
-                logError("Invalid shape, please check your tensor_shape")
+                logError(s"Invalid shape format, please check your tensor_shape, your input is " +
+                  s"${shape}")
                 null
             }
 
@@ -155,7 +171,8 @@ class ClusterServingHelper {
             }
 
             result
-          case None => logError("Invalid shape format, please check your tensor_shape")
+          case None => logError(s"Invalid shape format, please check your tensor_shape, your " +
+            s"input is ${shape}")
             null
         }
       case _ =>
@@ -170,22 +187,6 @@ class ClusterServingHelper {
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
     batchSize = getYaml(paramsConfig, "batch_size", "4").toInt
-
-    /**
-     * reserved here to change engine type
-     * engine type should be able to change in run time
-     * but BigDL does not support this currently
-     * Once BigDL supports it, engine type could be set here
-     * And also other frameworks supporting multiple engine type
-     */
-
-    logFile = {
-      val logF = new File("./cluster-serving.log")
-      if (Files.exists(Paths.get("./cluster-serving.log"))) {
-        logF.createNewFile()
-      }
-      new FileWriter(logF, true)
-    }
 
 
     if (modelType == "caffe" || modelType == "bigdl") {

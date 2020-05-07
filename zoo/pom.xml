@@ -372,12 +372,12 @@
         <dependency>
             <groupId>org.apache.arrow</groupId>
             <artifactId>arrow-vector</artifactId>
-            <version>0.10.0</version>
+            <version>0.16.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.arrow</groupId>
             <artifactId>arrow-memory</artifactId>
-            <version>0.10.0</version>
+            <version>0.16.0</version>
         </dependency>
     </dependencies>
 
@@ -522,14 +522,12 @@
                             <shadedPattern>com.intel.analytics.zoo.shaded.protobuf</shadedPattern>
                         </relocation>
                         <relocation>
-                            <pattern>io.netty:netty-buffer</pattern>
-                            <shadedPattern>com.intel.analytics.zoo.shaded.io
-                                .netty:netty-buffer</shadedPattern>
+                            <pattern>io.netty</pattern>
+                            <shadedPattern>com.intel.analytics.zoo.shaded.io.netty</shadedPattern>
                         </relocation>
                         <relocation>
-                            <pattern>io.netty:netty-common</pattern>
-                            <shadedPattern>com.intel.analytics.zoo.shaded.io
-                                .netty:netty-common</shadedPattern>
+                            <pattern>org.apache.arrow</pattern>
+                            <shadedPattern>com.intel.analytics.zoo.shaded.arrow</shadedPattern>
                         </relocation>
                         <!--<relocation>-->
                             <!--<pattern>org.tensorflow</pattern>-->
@@ -546,6 +544,8 @@
                                 <includes>
                                     <include>org.spark-project.spark:unused</include>
                                     <include>com.google.protobuf</include>
+                                    <include>io.netty</include>
+                                    <include>org.apache.arrow</include>
                                     <!--<include>${tf-shade}</include>-->
                                 </includes>
                             </artifactSet>
