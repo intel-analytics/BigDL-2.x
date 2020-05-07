@@ -105,12 +105,12 @@ class SparkDataShards(DataShards):
         self.rdd = rdd
 
     def apply(self, func, *args):
-        self.rdd.map(func)
+        self.rdd = self.rdd.map(func(*args))
         return self
 
     def collect(self):
         return self.rdd.collect()
 
     def repartition(self, num_partitions):
-        self.rdd.repartition(num_partitions)
+        self.rdd = self.rdd.repartition(num_partitions)
         return self

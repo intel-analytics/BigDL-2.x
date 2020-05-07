@@ -21,6 +21,17 @@ import zoo.orca.data.pandas
 from zoo.common.nncontext import init_nncontext
 
 
+def process_feature(awake_begin=6, awake_end=23):
+    def process(df):
+        import pandas as pd
+        df['datetime'] = pd.to_datetime(df['timestamp'])
+        df['hours'] = df['datetime'].dt.hour
+        df['awake'] = (((df['hours'] >= awake_begin) & (df['hours'] <= awake_end))
+                       | (df['hours'] == 0)).astype(int)
+        return df
+    return process
+
+
 if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("-f", type=str, dest="file_path",
@@ -39,7 +50,6 @@ if __name__ == "__main__":
     data_shard.repartition(2)
 
     # apply function on each element
-    from ray_pandas import process_feature
     data_shards_2 = data_shard.apply(process_feature)
     data2 = data_shard.collect()
 

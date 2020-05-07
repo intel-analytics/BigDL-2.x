@@ -45,7 +45,8 @@ class TestDataShards(ZooTestCase):
 
     def test_read_local_json(self):
         file_path = os.path.join(self.resource_path, "orca/data")
-        data_shard = zoo.orca.data.pandas.read_json(file_path, self.ray_ctx)
+        data_shard = zoo.orca.data.pandas.read_json(file_path, self.ray_ctx,
+                                                 orient='columns', lines=True)
         data = data_shard.collect()
         assert len(data) == 2, "number of shard should be 2"
         df = data[0]
@@ -74,7 +75,8 @@ class TestDataShards(ZooTestCase):
 
     def test_apply(self):
         file_path = os.path.join(self.resource_path, "orca/data")
-        data_shard = zoo.orca.data.pandas.read_json(file_path, self.ray_ctx)
+        data_shard = zoo.orca.data.pandas.read_json(file_path, self.ray_ctx,
+                                                 orient='columns', lines=True)
         data = data_shard.collect()
         assert data[0]["value"].values[0] > 0, "value should be positive"
 
@@ -85,6 +87,14 @@ class TestDataShards(ZooTestCase):
         data_shard.apply(negative, "value")
         data2 = data_shard.collect()
         assert data2[0]["value"].values[0] < 0, "value should be negative"
+
+    def test_read_csv_with_args(self):
+        file_path = os.path.join(self.resource_path, "orca/data")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.ray_ctx, sep=',', header=0)
+        data = data_shard.collect()
+        assert len(data) == 2, "number of shard should be 2"
+        df = data[0]
+        assert "location" in df.columns, "location is not in columns"
 
 
 if __name__ == "__main__":
