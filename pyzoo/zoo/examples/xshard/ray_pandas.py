@@ -58,7 +58,8 @@ if __name__ == "__main__":
     ray_ctx.init()
 
     # read data
-    data_shard = zoo.xshard.pandas.read_json("/tmp/ray-pandas-example", ray_ctx, orient='columns', lines=True)
+    data_shard = zoo.xshard.pandas.read_json("/tmp/ray-pandas-example", ray_ctx,
+                                             orient='columns', lines=True)
 
     # collect data
     data = data_shard.collect()

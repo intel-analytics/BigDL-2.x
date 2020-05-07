@@ -45,7 +45,8 @@ class TestDataShards(ZooTestCase):
 
     def test_read_local_json(self):
         file_path = os.path.join(self.resource_path, "xshard")
-        data_shard = zoo.xshard.pandas.read_json(file_path, self.ray_ctx, orient='columns', lines=True)
+        data_shard = zoo.xshard.pandas.read_json(file_path, self.ray_ctx,
+                                                 orient='columns', lines=True)
         data = data_shard.collect()
         assert len(data) == 2, "number of shard should be 2"
         df = data[0]
@@ -74,7 +75,8 @@ class TestDataShards(ZooTestCase):
 
     def test_apply(self):
         file_path = os.path.join(self.resource_path, "xshard")
-        data_shard = zoo.xshard.pandas.read_json(file_path, self.ray_ctx, orient='columns', lines=True)
+        data_shard = zoo.xshard.pandas.read_json(file_path, self.ray_ctx,
+                                                 orient='columns', lines=True)
         data = data_shard.collect()
         assert data[0]["value"].values[0] > 0, "value should be positive"
 
