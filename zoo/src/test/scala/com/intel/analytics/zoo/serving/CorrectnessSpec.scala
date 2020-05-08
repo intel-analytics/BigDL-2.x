@@ -106,31 +106,11 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     val f = new File(imagePath)
     val fileList = f.listFiles
     logger.info(s"${fileList.size} images about to enqueue...")
-    var cn: Int = 0
 
-//    (0 until 10).foreach(i => {
-//      val dataStr = getBase64FromPath(
-//        "/home/litchy/tmp/imagenet_1k/ILSVRC2012_val_00000034.JPEG")
-//      val infoMap = Map[String, String]("uri" -> i.toString, "image" -> dataStr)
-//      cli.xadd("image_stream", StreamEntryID.NEW_ENTRY, infoMap.asJava)
-//    })
-//
-//    (10 until 100).foreach(i => {
-//      val dataStr = resize(
-//        "/home/litchy/tmp/imagenet_1k/ILSVRC2012_val_00000765.JPEG")
-////      val dataStr = resize(
-////        "/home/litchy/tmp/imagenet_1k/ILSVRC2012_val_00000034.JPEG")
-//      val infoMap = Map[String, String]("uri" -> i.toString, "image" -> dataStr)
-//      cli.xadd("image_stream", StreamEntryID.NEW_ENTRY, infoMap.asJava)
-//    })
-//
     for (file <- fileList) {
-//      assert(file.getName.endsWith(".JPEG"))
       val dataStr = getBase64FromPath(file.getAbsolutePath)
       val infoMap = Map[String, String]("uri" -> file.getName, "image" -> dataStr)
       cli.xadd("image_stream", StreamEntryID.NEW_ENTRY, infoMap.asJava)
-//      logger.info(s"${file.getName} added to stream")
-//      Thread.sleep(200)
     }
 
     //    val enqueueScriptPathCmd = "python3 " +
@@ -196,7 +176,4 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     assert(acc > 0.71)
 
   }
-
-
-
 }
