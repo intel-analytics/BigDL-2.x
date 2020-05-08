@@ -26,7 +26,7 @@ from test.zoo.orca.data.conftest import get_ray_ctx
 
 class TestDataShards(ZooTestCase):
     def setup_method(self, method):
-        self.resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
+        self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
         self.ray_ctx = get_ray_ctx()
 
     def teardown_method(self, method):
