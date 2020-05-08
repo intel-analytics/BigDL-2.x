@@ -151,11 +151,10 @@ class TestTimeSequenceFeature(ZooTestCase):
                                                    'IS_BUSY_HOURS(datetime)',
                                                    'HOUR(datetime)']),
                   "past_seq_len": past_seq_len}
-        train_df, val_df, test_df = split_input_df(df,
-                                                   dt_col="datetime",
-                                                   overlap=10,
-                                                   val_split_ratio=0.1,
-                                                   test_split_ratio=0.1)
+        train_df, val_df, test_df = train_val_test_split(df,
+                                                         val_ratio=0.1,
+                                                         test_ratio=0.1,
+                                                         look_back=10)
 
         feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
                                               target_col="values", drop_missing=True)

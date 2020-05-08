@@ -27,29 +27,23 @@ class TestUtil(ZooTestCase):
     def teardown_method(self, method):
         pass
 
-    def test_split_input_df(self):
-        # correct case
+    def test_train_val_test_split(self):
+        # length test
         sample_num = 100
-        overlap_num = 10
+        look_back = 10
+        horizon = 1
         dates = pd.date_range('1/1/2020', periods=sample_num)
         values = np.random.randn(sample_num)
-        df = pd.DataFrame({"timestamp": dates, "values": values})
-        train_df, val_df, test_df = split_input_df(df,
-                                                   dt_col="timestamp",
-                                                   overlap=overlap_num,
-                                                   val_split_ratio=0.1,
-                                                   test_split_ratio=0.1)
+        df = pd.DataFrame({"values": values}, index=dates)
+        train_df, val_df, test_df = train_val_test_split(df,
+                                                         val_ratio=0.1,
+                                                         test_ratio=0.1,
+                                                         look_back=look_back,
+                                                         horizon=horizon)
         assert len(train_df) == sample_num * 0.8
-        assert len(val_df) == sample_num * 0.1 + overlap_num
-        assert len(test_df) == sample_num * 0.1 + overlap_num
-        assert "timestamp" in df.columns
-        # error case
-        dates_err = np.random.randn(sample_num)
-        df_err = pd.DataFrame({"timestamp": dates_err, "values": values})
-        with pytest.raises(ValueError):
-            _, _, _ = split_input_df(df_err,
-                                     dt_col="timestamp",
-                                     overlap=overlap_num,
-                                     val_split_ratio=0.1,
-                                     test_split_ratio=0.1)
+        assert len(val_df) == sample_num * 0.1 + look_back + horizon - 1
+        assert len(test_df) == sample_num * 0.1 + look_back + horizon - 1
+        # index test
+        assert pd.api.types.is_datetime64_any_dtype(test_df.index.dtype)
+        assert pd.api.types.is_datetime64_any_dtype(val_df.index.dtype)
 
