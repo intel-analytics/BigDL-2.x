@@ -33,9 +33,9 @@ elif [ $1 = 3 ]; then
 	RUN_PART3=1
 	RUN_PART4=0
 elif [ $1 = 4 ]; then
-        RUN_PART1=0
-        RUN_PART2=0
-        RUN_PART3=0
+	RUN_PART1=0
+	RUN_PART2=0
+	RUN_PART3=0
 	RUN_PART4=1
 else
 	RUN_PART1=1
