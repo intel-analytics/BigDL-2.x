@@ -64,7 +64,7 @@ class TestZouwuModelForecast(ZooTestCase):
 
     def test_forecast_lstm(self):
         # TODO hacking to fix a bug
-        model = LSTMForecaster(horizon=1, feature_dim=self.x_train.shape[-1])
+        model = LSTMForecaster(target_dim=1, feature_dim=self.x_train.shape[-1])
         model.fit(self.x_train,
                   self.y_train,
                   validation_data=(self.x_val, self.y_val),
@@ -75,7 +75,7 @@ class TestZouwuModelForecast(ZooTestCase):
 
     def test_forecast_mtnet(self):
         # TODO hacking to fix a bug
-        model = MTNetForecaster(horizon=1,
+        model = MTNetForecaster(target_dim=1,
                                 feature_dim=self.x_train.shape[-1],
                                 lb_long_steps=self.long_num,
                                 lb_long_stepsize=self.time_step

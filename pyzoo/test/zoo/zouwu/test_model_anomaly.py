@@ -51,7 +51,6 @@ class TestZouwuModelAnomaly(ZooTestCase):
 
     def test_app(self):
         look_back = 4
-        horizon = 1
 
         # generate dataframe
         data = self.gen_data(feature_num=6, sample_num=100)
@@ -66,7 +65,7 @@ class TestZouwuModelAnomaly(ZooTestCase):
 
         # create model, train on train data and predict on test
         lstm_config = {"lstm_1_units": 32, "lstm_2_units": 32, "lr": 0.001}
-        forecaster = LSTMForecaster(horizon=horizon, feature_dim=x_train.shape[-1], **lstm_config)
+        forecaster = LSTMForecaster(target_dim=1, feature_dim=x_train.shape[-1], **lstm_config)
         forecaster.fit(x=x_train, y=y_train, batch_size=1024, epochs=50, distributed=False)
         y_predict = forecaster.predict(x_test)
 
