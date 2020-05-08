@@ -55,4 +55,3 @@ class TorchModel(Layer):
         bys = CloudPickleSerializer.dumps(CloudPickleSerializer, model)
         net = TorchModel(bys, flatten_weight)
         return net
-
