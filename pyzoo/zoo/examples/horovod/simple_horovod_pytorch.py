@@ -1,18 +1,19 @@
 # This file is adapted from https://github.com/horovod/horovod/blob/master/examples/pytorch_mnist.py
 
 from __future__ import print_function
+
 import argparse
+
+import horovod.torch as hvd
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torchvision import datasets, transforms
 import torch.utils.data.distributed
-import horovod.torch as hvd
-
-from zoo.horovod.horovod_ray_trainer import HorovodRayTrainer
+from torchvision import datasets, transforms
+from zoo.ray import RayContext
 
 from zoo import init_spark_on_yarn, init_spark_on_local
-from zoo.ray.util.raycontext import RayContext
+from zoo.orca.learn import HorovodRayTrainer
 
 
 def run_horovod():
