@@ -20,13 +20,18 @@ import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.server.Directives.complete
 import akka.http.scaladsl.server.Directives.path
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import akka.pattern.ask
 import com.codahale.metrics.MetricRegistry
 import org.slf4j.LoggerFactory
+
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
 
 object FrontEndApp extends Supportive {
   override val logger = LoggerFactory.getLogger(getClass)
@@ -40,7 +45,6 @@ object FrontEndApp extends Supportive {
 
   val redisInputQueue = "image_stream"
   val redisOutputQueue = "result:"
-
 
   def main(args: Array[String]): Unit = {
     timing(s"$name started successfully.")() {
@@ -79,8 +83,81 @@ object FrontEndApp extends Supportive {
         querierQueue
       }
 
-      Http().bindAndHandle(route, arguments.interface, arguments.port)
+      def processBytesPredictionInput(input: BytesPredictionInput): PredictionOutput[String] = {
+        timing("put message send")() {
+          val message = PredictionInputMessage(input)
+          redisPutter ! message
+        }
+        val result = timing("response waiting")() {
+          val key = input.getId()
+          val queryMessage = PredictionQueryMessage(key)
+          val querier = timing("querier take")() {
+            querierQueue.take()
+          }
+          val result = timing(s"query message wait for key $key")() {
+            Await.result(querier ? queryMessage, timeout.duration).asInstanceOf[String]
+          }
+          timing("querier back")() {
+            querierQueue.offer(querier)
+          }
+          PredictionOutput(key, result)
+        }
+        result
+      }
 
+      val route = timing("initialize http route")() {
+        path("") {
+          timing("welcome")(overallRequestTimer) {
+            complete("welcome to " + name)
+          }
+        } ~ (get & path("metrics")) {
+          timing("metrics")(overallRequestTimer, metricsRequestTimer) {
+            val keys = metrics.getTimers().keySet()
+            val servingMetrics = keys.toArray.map(key => {
+              val timer = metrics.getTimers().get(key)
+              ServingTimerMetrics(key.toString, timer)
+            }).toList
+            complete(jacksonJsonSerializer.serialize(servingMetrics))
+          }
+        } ~ (post & path("predict") & extract(_.request.entity.contentType) & entity(as[String])) {
+          (contentType, content) => {
+            contentType.mediaType match {
+              case MediaTypes.`text/plain` =>
+                timing("predict")(overallRequestTimer, predictRequestTimer) {
+                  val input = timing("parse raw")() {
+                    BytesPredictionInput(content)
+                  }
+                  val output = processBytesPredictionInput(input)
+                  val result = Predictions(output)
+                  timing("response complete")() {
+                    complete(200, result.toString)
+                  }
+                }
+              case MediaTypes.`application/json` =>
+                timing("predict")(overallRequestTimer, predictRequestTimer) {
+                  val input = timing("parse json")() {
+                    BytesPredictionInput(content)
+                  }
+                  silent("response complete")() {
+                    complete(200, "?????????????")
+                  }
+                }
+              case _ => silent("response complete")() {
+                val error = ServingError("Unsupported Media Type," +
+                  " only support text/plain for raw" +
+                  " and application/json for json")
+                complete(415, error.toString)
+              }
+            }
+          }
+        }
+      }
+
+
+
+      Http().bindAndHandle(route, arguments.interface, arguments.port)
+      system.scheduler.schedule(10 milliseconds, 10 milliseconds,
+        redisPutter, PredictionInputFlushMessage())(system.dispatcher)
     }
   }
 
@@ -93,34 +170,6 @@ object FrontEndApp extends Supportive {
   val metricsRequestTimer = metrics.timer("zoo.serving.request.metrics")
 
   val jacksonJsonSerializer = new JacksonJsonSerializer()
-
-  val route = timing("initialize http route")() {
-    path("") {
-      timing("welcome")(overallRequestTimer) {
-        complete("welcome to " + name)
-      }
-    } ~ (get & path("metrics")) {
-      timing("metrics")(overallRequestTimer, metricsRequestTimer) {
-        val keys = metrics.getTimers().keySet()
-        val servingMetrics = keys.toArray.map(key => {
-          val timer = metrics.getTimers().get(key)
-          ServingTimerMetrics(key.toString, timer)
-        }).toList
-        complete(jacksonJsonSerializer.serialize(servingMetrics))
-      }
-    } ~ (post & path("predict")) {
-      extractRequest {
-        request => {
-          println(request.entity.contentType, request.entity.dataBytes)
-          timing("predict")(overallRequestTimer, predictRequestTimer) {
-            silent("response complete")() {
-              complete(200, "")
-            }
-          }
-        }
-      }
-    }
-  }
 
   val argumentsParser = new scopt.OptionParser[FrontEndAppArguments]("AZ Serving") {
     head("Analytics Zoo Serving Frontend")

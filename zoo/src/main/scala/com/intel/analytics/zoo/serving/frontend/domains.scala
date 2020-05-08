@@ -18,19 +18,21 @@ package com.intel.analytics.zoo.serving.frontend
 
 import java.util.{HashMap, UUID}
 
+import akka.actor.ActorRef
 import com.codahale.metrics.Timer
 
 sealed trait ServingMessage
 case class PredictionInputMessage(input: PredictionInput) extends ServingMessage
 case class PredictionInputFlushMessage() extends ServingMessage
-case class PredictionOutputMessage(id: String) extends ServingMessage
+case class PredictionQueryMessage(id: String) extends ServingMessage
+case class PredictionQueryWithTargetMessage(query: PredictionQueryMessage, target: ActorRef)
+  extends ServingMessage
 
 sealed trait PredictionInput {
   def getId(): String
   def toHash(): HashMap[String, String]
 }
 case class BytesPredictionInput(uuid: String, bytesStr: String) extends PredictionInput {
-  def this(str: String) = this(UUID.randomUUID().toString, str)
   override def getId(): String = this.uuid
   def toMap(): Map[String, String] = Map("uuid" -> uuid, "bytesStr" -> bytesStr)
   override def toHash(): HashMap[String, String] = {
@@ -40,8 +42,34 @@ case class BytesPredictionInput(uuid: String, bytesStr: String) extends Predicti
     hash
   }
 }
+object BytesPredictionInput {
+  def apply(str: String): BytesPredictionInput =
+    BytesPredictionInput(UUID.randomUUID().toString, str)
+}
 
 case class PredictionOutput[Type](uuid: String, result: Type)
+
+class ImageFeature(val b64: String)
+
+case class Instances(instances: List[Map[String, Any]])
+object Instances{
+  def apply(instances: Map[String, Any]*): Instances = {
+    Instances(instances.toList)
+  }
+}
+
+case class Predictions[Type](predictions: Array[Type]) {
+  override def toString: String = JsonUtil.toJson(this)
+}
+object Predictions {
+  def apply[T](output: PredictionOutput[T])(implicit m: Manifest[T]): Predictions[T] = {
+    Predictions(Array(output.result))
+  }
+  def apply[T](outputs: List[PredictionOutput[T]])(implicit m: Manifest[T]): Predictions[T] = {
+    Predictions(outputs.map(_.result).toArray)
+  }
+}
+
 
 case class ServingResponse[Type](statusCode: Int, entity: Type) {
   def this(tuple: (Int, Type)) = this(tuple._1, tuple._2)
@@ -52,6 +80,10 @@ case class ServingResponse[Type](statusCode: Int, entity: Type) {
 case class ServingRuntimeException(message: String = null, cause: Throwable = null)
   extends RuntimeException(message, cause) {
   def this(response: ServingResponse[String]) = this(JsonUtil.toJson(response), null)
+}
+
+case class ServingError(error: String) {
+  override def toString: String = JsonUtil.toJson(this)
 }
 
 case class ServingTimerMetrics(

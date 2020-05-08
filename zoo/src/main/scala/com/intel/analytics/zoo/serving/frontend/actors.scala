@@ -17,7 +17,6 @@
 package com.intel.analytics.zoo.serving.frontend
 
 import java.util
-import java.util.Map
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{Actor, ActorRef}
@@ -26,6 +25,7 @@ import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig}
 
 import scala.collection.mutable.{Set => MutableSet}
 import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
 import akka.pattern.ask
 import akka.util.Timeout
 
@@ -106,7 +106,7 @@ class RedisPutActor(
         t.xadd(queue, null, hash)
       })
       t.exec()
-      logger.info(s"${System.currentTimeMillis}, ${inputs.map(_.getId).mkString(",")}")
+      // logger.info(s"${System.currentTimeMillis}, ${inputs.map(_.getId).mkString(",")}")
       inputs.clear()
     }
   }
@@ -121,7 +121,7 @@ class RedisGetActor(
   val jedis = retrieveJedis(redisHost, redisPort)
 
   override def receive: Receive = {
-    case message: PredictionOutputMessage =>
+    case message: PredictionQueryMessage =>
       val result = get(redisOutputQueue, message.id)
       if (null != result && !result.isEmpty) {
         sender() ! result.toString
@@ -145,12 +145,20 @@ class QueryActor(redisGetActor: ActorRef) extends JedisEnabledActor {
   implicit val timeout: Timeout = Timeout(100, TimeUnit.SECONDS)
 
   override def receive: Receive = {
-    case message: PredictionOutputMessage =>
-      var result = ""
-      timing(s"$actorName waiting")(FrontEndApp.waitRedisTimer) {
-        while ("" == result) {
-          result = Await.result(redisGetActor ? message, timeout.duration).asInstanceOf[String]
-        }
+    case query: PredictionQueryMessage =>
+      val target = sender()
+      val message = PredictionQueryWithTargetMessage(query, target)
+      // context.system.scheduler.scheduleOnce(10 milliseconds, self, message)
+      self ! message
+    case message: PredictionQueryWithTargetMessage =>
+      val result = silent("query to redisGetActor")() {
+        Await.result(redisGetActor ? message.query, timeout.duration).asInstanceOf[String]
+      }
+      // println(System.currentTimeMillis(), message.query.id, result)
+      if("" == result) {
+        context.system.scheduler.scheduleOnce(10 milliseconds, self, message)
+      } else {
+        message.target ! result
       }
   }
 }
