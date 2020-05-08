@@ -233,10 +233,6 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     NNClassifierModel.load(path)
   }
 
-  def nnReadCSV(path: String, sc: JavaSparkContext): DataFrame = {
-    NNFileReader.readCSV(path, sc)
-  }
-
   def loadXGBClassifierModel(path: String, numClasses: Int): XGBClassifierModel = {
     XGBClassifierModel.load(path, numClasses)
   }
