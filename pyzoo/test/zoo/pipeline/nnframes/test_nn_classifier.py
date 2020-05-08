@@ -712,9 +712,15 @@ class TestNNClassifer():
         filePath = path + "test.csv"
         model = XGBClassifierModel.loadModel(modelPath, 2)
 
-        df = spark.read.csv(filePath)
+        from pyspark.sql import SparkSession
+
+        spark = SparkSession \
+            .builder \
+            .getOrCreate()
+        df = spark.read.csv(filePath, sep=",", inferSchema=True, header=True)
+        model.setFeaturesCol(["age", "gender", "jointime", "star"])
         predict = model.transform(df)
-        predict.show()
+        predict.count()
 
 
 if __name__ == "__main__":

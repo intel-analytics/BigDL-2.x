@@ -325,7 +325,10 @@ class XGBClassifierModel private[zoo](
     this
   }
 
-  def setInferBatchSize(value: Int) = model.setInferBatchSize(value)
+  def setInferBatchSize(value: Int): this.type = {
+    model.setInferBatchSize(value)
+    this
+  }
 
   def transform(dataset: DataFrame): DataFrame = {
     require(featuresCols!=None, "Please set feature columns before transform")
