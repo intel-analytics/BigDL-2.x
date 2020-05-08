@@ -35,6 +35,7 @@ class FlinkInference(params: SerParams)
   override def open(parameters: Configuration): Unit = {
     inferenceCnt = 0
     model = params.model
+//    println("in open method, ", model)
     logger = Logger.getLogger(getClass)
     t = if (params.chwFlag) {
       Tensor[Float](params.coreNum, params.C, params.H, params.W)

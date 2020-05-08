@@ -42,8 +42,8 @@ import org.apache.commons.io.FileUtils
 import com.intel.analytics.zoo.feature.image._
 
 class CorrectnessSpec extends FlatSpec with Matchers {
-//  val configPath = "/tmp/config.yaml"
-  val configPath = "/home/litchy/pro/analytics-zoo/config.yaml"
+  val configPath = "/tmp/config.yaml"
+//  val configPath = "/home/litchy/pro/analytics-zoo/config.yaml"
   var redisHost: String = "localhost"
   var redisPort: String = "6379"
   val logger = Logger.getLogger(getClass)
@@ -57,6 +57,9 @@ class CorrectnessSpec extends FlatSpec with Matchers {
 
     val byteStream = new ByteArrayOutputStream()
     ImageIO.write(outputImage, "jpg", byteStream)
+
+//    val f = new File("/home/litchy/tmp/034.jpg")
+//    ImageIO.write(outputImage, "jpg", f)
     val dataStr = Base64.getEncoder.encodeToString(byteStream.toByteArray)
     dataStr
   }
@@ -65,7 +68,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
 //    val img = Imgcodecs.imread(path)
 //
     val b = FileUtils.readFileToByteArray(new File(path))
-    val img = OpenCVMethod.fromImageBytes(b, Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
+    val img = OpenCVMethod.fromImageBytes(b, Imgcodecs.CV_LOAD_IMAGE_COLOR)
     Imgproc.resize(img, img, new Size(224, 224))
     val matOfByte = new MatOfByte()
     Imgcodecs.imencode(".jpg", img, matOfByte)
@@ -79,18 +82,22 @@ class CorrectnessSpec extends FlatSpec with Matchers {
   }
   "Cluster Serving result" should "be correct" in {
     redisHost = "172.168.2.104"
-//    nu.pattern.OpenCV.loadLocally()
     val cli = new Jedis(redisHost, redisPort.toInt)
+
     cli.flushAll()
 
     cli.xgroupCreate("image_stream", "serving",
       new StreamEntryID(0, 0), true)
     Thread.sleep(3000)
+
+
     ("wget -O /tmp/serving_val.tar http://10.239.45.10:8081" +
       "/repository/raw/analytics-zoo-data/imagenet_1k.tar").!
     "tar -xvf /tmp/serving_val.tar -C /tmp/".!
     runServingBg().onComplete(_ => None)
+    Thread.sleep(10000)
     val imagePath = "/tmp/imagenet_1k"
+//    val imagePath = "/home/litchy/tmp/imagenet_1k"
     val lsCmd = "ls " + imagePath
 
     val totalNum = (lsCmd #| "wc").!!.split(" +").filter(_ != "").head.toInt
@@ -100,20 +107,31 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     val fileList = f.listFiles
     logger.info(s"${fileList.size} images about to enqueue...")
     var cn: Int = 0
-    for (file <- fileList) {
-      val dataStr = getBase64FromPath(file.getAbsolutePath)
 
+//    (0 until 10).foreach(i => {
+//      val dataStr = getBase64FromPath(
+//        "/home/litchy/tmp/imagenet_1k/ILSVRC2012_val_00000034.JPEG")
+//      val infoMap = Map[String, String]("uri" -> i.toString, "image" -> dataStr)
+//      cli.xadd("image_stream", StreamEntryID.NEW_ENTRY, infoMap.asJava)
+//    })
+//
+//    (10 until 100).foreach(i => {
+//      val dataStr = resize(
+//        "/home/litchy/tmp/imagenet_1k/ILSVRC2012_val_00000765.JPEG")
+////      val dataStr = resize(
+////        "/home/litchy/tmp/imagenet_1k/ILSVRC2012_val_00000034.JPEG")
+//      val infoMap = Map[String, String]("uri" -> i.toString, "image" -> dataStr)
+//      cli.xadd("image_stream", StreamEntryID.NEW_ENTRY, infoMap.asJava)
+//    })
+//
+    for (file <- fileList) {
+//      assert(file.getName.endsWith(".JPEG"))
+      val dataStr = getBase64FromPath(file.getAbsolutePath)
       val infoMap = Map[String, String]("uri" -> file.getName, "image" -> dataStr)
       cli.xadd("image_stream", StreamEntryID.NEW_ENTRY, infoMap.asJava)
-      cn += 1
-      if (cn % 100 == 1) {
-        logger.info(s"current xlen is ${cli.xlen("image_stream")}")
-      }
+//      logger.info(s"${file.getName} added to stream")
+//      Thread.sleep(200)
     }
-    // call push method in python
-
-
-
 
     //    val enqueueScriptPathCmd = "python3 " +
     //      getClass.getClassLoader.getResource("serving/enqueue_image_in_path.py").getPath +
@@ -130,14 +148,15 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     "rm -rf /tmp/serving_val_*".!
     "rm -rf /tmp/config.yaml".!
     // check if record is enough
-    var cnt = 0
+    var cnt: Int = 0
     var res_length: Int = 0
     while (res_length != totalNum) {
       val res_list = cli.keys("result:*")
       res_length = res_list.size()
-      Thread.sleep(5000)
+      Thread.sleep(10000)
       cnt += 1
-      if (cnt >= 100) {
+      if (cnt >= 50 || (cnt >= 25 && res_length == 0)) {
+        logger.info(s"count is ${cnt}")
         throw new Error("validation fails, data maybe lost")
       }
       logger.info(s"Current records in Redis:${res_length}")
@@ -162,10 +181,15 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     for (line <- Source.fromFile(imagePath + ".txt").getLines()) {
       val key = line.split(" ").head
       val cls = line.split(" ").tail(0)
-      if (top1_dict(key) == cls) {
-        cN += 1
+      try {
+        if (top1_dict(key) == cls) {
+          cN += 1
+        }
+        tN += 1
       }
-      tN += 1
+      catch {
+        case _ => None
+      }
     }
     val acc = cN / tN
     logger.info(s"Top 1 Accuracy of serving, Openvino ResNet50 Model on ImageNet is ${acc}")

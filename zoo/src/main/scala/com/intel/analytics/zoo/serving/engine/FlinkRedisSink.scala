@@ -36,7 +36,7 @@ class FlinkRedisSink(params: SerParams) extends RichSinkFunction[List[(String, S
   }
 
   override def close(): Unit = {
-//    db.close()
+    redisPool.close()
   }
 
 

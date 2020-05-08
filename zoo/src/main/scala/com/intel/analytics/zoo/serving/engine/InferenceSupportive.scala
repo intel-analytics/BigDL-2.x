@@ -55,8 +55,6 @@ object InferenceSupportive {
         t.squeeze(1)
         res
       } else {
-//        println(s"tensor shape ${x.size(1)}, " +
-//          s"${x.size(2)}, ${x.size(3)}, ${x.size(4)}")
         params.model.doPredict(x).toTensor[Float]
       }
 //      println(s"predict end")

@@ -32,7 +32,7 @@ object ClusterServing {
     val helper = new ClusterServingHelper(configPath)
     helper.initArgs()
     params = new SerParams(helper)
-
+//    println(params.model)
     val serving = StreamExecutionEnvironment.getExecutionEnvironment
     serving.addSource(new FlinkRedisSource(params))
       .map(new FlinkInference(params))
