@@ -41,6 +41,7 @@ class TorchLoss(private val criterionHolder: Array[Byte])
 
   override def updateOutput(input: Activity, target: Activity): Float = {
     loaded
+    // data is come from FeatureSet.
     val dataExisted = PythonInterpreter.getValue[Boolean]("'data' in dir()")
     if (dataExisted) {
       PythonInterpreter.exec("target = data[1]")

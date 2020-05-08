@@ -74,7 +74,9 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
 
   override def updateOutput(input: Activity): Activity = {
     loaded
+    // TODO: delete this time counting
     val startTime = System.nanoTime()
+    // data is come from FeatureSet.
     val dataExisted = PythonInterpreter.getValue[Boolean]("'data' in dir()")
     if (dataExisted) {
       PythonInterpreter.exec("input = data[0]")
@@ -148,6 +150,15 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
 
   override def evaluate(): this.type = {
     super.evaluate()
+    PythonInterpreter.set("newWeight", new NDArray[Array[Float]](weights.storage().array()))
+    PythonInterpreter.exec(setWeightCode)
+    PythonInterpreter.exec(s"${getName()}.eval()")
+    this
+  }
+
+  override def training(): this.type = {
+    super.training()
+    PythonInterpreter.exec(s"${getName()}.train()")
     this
   }
 
