@@ -708,7 +708,7 @@ class TestNNClassifer():
     def test_XGBClassifierModel_predict(self):
         resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
         path = os.path.join(self.resource_path, "xgbclassifier")
-        modelPath = path + "XGBClassifier.model"
+        modelPath = path + "XGBClassifier.bin"
         filePath = path + "test.csv"
         model = XGBClassifierModel.loadModel(modelPath, 2)
 

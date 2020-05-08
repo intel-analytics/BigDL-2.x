@@ -582,6 +582,10 @@ class NNClassifierModel(NNModel, HasThreshold):
 
 
 class XGBClassifierModel:
+    '''
+    XGBClassifierModel is a trained XGBoost classification model. The prediction column
+    will have the prediction results.
+    '''
 
     def __init__(self, jvalue):
         super(XGBClassifierModel, self).__init__()
@@ -600,5 +604,10 @@ class XGBClassifierModel:
 
     @staticmethod
     def loadModel(path, numClasses):
+        """
+        load a pretrained XGBoostClassificationModel
+        :param path: pretrained model path
+        :param numClasses: number of classes for classification
+        """
         jvalue = callZooFunc("float", "loadXGBClassifierModel", path, numClasses)
         return XGBClassifierModel(jvalue=jvalue)

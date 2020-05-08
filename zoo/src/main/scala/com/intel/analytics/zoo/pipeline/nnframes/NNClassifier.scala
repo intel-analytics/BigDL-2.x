@@ -309,6 +309,12 @@ object NNClassifierModel extends MLReadable[NNClassifierModel[_]] {
   }
 }
 
+/**
+ * [[XGBClassifierModel]] is a trained XGBoost classification model.
+ * The prediction column will have the prediction results.
+ *
+ * @param model trained XGBoostClassificationModel to use in prediction.
+ */
 class XGBClassifierModel private[zoo](
    val model: XGBoostClassificationModel) {
   private var featuresCols: Array[String] = null
