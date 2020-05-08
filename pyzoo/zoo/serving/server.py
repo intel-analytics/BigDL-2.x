@@ -31,7 +31,7 @@ class ClusterServing:
             __file__ + "/../../share/bin/cluster-serving/config.yaml")
         self.zoo_jar = 'zoo.jar'
         self.bigdl_jar = 'bigdl.jar'
-        self.spark_redis_jar = 'spark-redis-2.4.0-jar-with-dependencies.jar'
+        # self.spark_redis_jar = 'spark-redis-2.4.0-jar-with-dependencies.jar'
 
         self.download_spark_redis_jar()
         self.copy_config()
