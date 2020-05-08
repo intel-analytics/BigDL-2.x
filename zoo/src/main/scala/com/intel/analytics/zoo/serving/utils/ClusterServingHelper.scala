@@ -295,7 +295,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
         model.doLoadTensorflow(weightPath, "savedModel", inputs, outputs)
       case "pytorch" => model.doLoadPyTorch(weightPath)
       case "keras" => logError("Keras currently not supported in Cluster Serving")
-      case "openvino" => model.doLoadOpenVINO(defPath, weightPath, batchSize)
+      case "openvino" => model.doLoadOpenVINO(defPath, weightPath, coreNum)
       case _ => logError("Invalid model type, please check your model directory")
     }
     model
