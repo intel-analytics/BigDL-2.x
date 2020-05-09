@@ -32,7 +32,6 @@ def train_val_test_split(df,
                          horizon=1):
     """
     split input dataframe into train_df, val_df and test_df according to split ratio.
-    covert pandas timestamp to datetime.
     The dataframe is splitted in its originally order in timeline.
     e.g. |......... train_df(80%) ........ | ... val_df(10%) ...| ...test_df(10%)...|
     :param df: dataframe to be splitted
