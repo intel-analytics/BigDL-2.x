@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
-from zoo.pipeline.api.net.torch_net import TorchModel, TorchLoss
+from zoo.pipeline.api.torch import TorchModel, TorchLoss
 from zoo.pipeline.estimator import *
 from bigdl.optim.optimizer import SGD, Adam
 from zoo.common.nncontext import *
@@ -94,27 +94,28 @@ def main():
                        ])),
         batch_size=args.test_batch_size, shuffle=True)
 
-    num_executors = 1
-    num_cores_per_executor = 1
-    hadoop_conf_dir = os.environ.get('HADOOP_CONF_DIR')
-    init_spark_on_yarn(
-        hadoop_conf=hadoop_conf_dir,
-        conda_name=os.environ["ZOO_CONDA_NAME"],  # The name of the created conda-env
-        num_executor=num_executors,
-        executor_cores=num_cores_per_executor,
-        executor_memory="2g",
-        driver_memory="10g",
-        driver_cores=1,
-        spark_conf={"spark.rpc.message.maxSize": "1024",
-                    "spark.task.maxFailures":  "1",
-                    "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"})
+    sc = init_spark_on_local(cores=1, conf={"spark.driver.memory": "20g"})
+    # num_executors = 1
+    # num_cores_per_executor = 1
+    # hadoop_conf_dir = os.environ.get('HADOOP_CONF_DIR')
+    # init_spark_on_yarn(
+    #     hadoop_conf=hadoop_conf_dir,
+    #     conda_name=os.environ["ZOO_CONDA_NAME"],  # The name of the created conda-env
+    #     num_executor=num_executors,
+    #     executor_cores=num_cores_per_executor,
+    #     executor_memory="2g",
+    #     driver_memory="10g",
+    #     driver_cores=1,
+    #     spark_conf={"spark.rpc.message.maxSize": "1024",
+    #                 "spark.task.maxFailures":  "1",
+    #                 "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"})
 
     model = Net()
     criterion = nn.NLLLoss()
     # optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
 
     model.train()
-    adam = Adam(1e-2)
+    adam = Adam(1e-3)
     zooModel = TorchModel.from_pytorch(model)
     zooCriterion = TorchLoss.from_pytorch(criterion)
     # from bigdl.models.lenet.lenet5 import build_model
@@ -127,14 +128,16 @@ def main():
     # from bigdl.nn.criterion import ClassNLLCriterion
     # zooCriterion = ClassNLLCriterion()
     estimator = Estimator(zooModel, optim_methods=adam)
-    train_featureSet = FeatureSet.data_loader(train_loader)
-    test_featureSet = FeatureSet.data_loader(test_loader)
+    # train_featureSet = FeatureSet.data_loader(train_loader)
+    # test_featureSet = FeatureSet.data_loader(test_loader)
+    train_featureSet = FeatureSet.pytorch_dataset(train_loader.dataset, train_loader.batch_size, True)
+    test_featureSet = FeatureSet.pytorch_dataset(test_loader.dataset, test_loader.batch_size, False)
     # c = train_featureSet.to_dataset().size()
     # print(c)
     # print(test_featureSet.to_dataset().size())
     # estimator.evaluate_minibatch(train_featureSet, [Accuracy()])
     from bigdl.optim.optimizer import MaxEpoch, EveryEpoch, MaxIteration
-    estimator.train_minibatch(train_featureSet, zooCriterion, end_trigger=MaxEpoch(3), checkpoint_trigger=EveryEpoch(),
+    estimator.train_minibatch(train_featureSet, zooCriterion, end_trigger=MaxEpoch(1), checkpoint_trigger=EveryEpoch(),
                               validation_set=test_featureSet, validation_method=[Accuracy()])
 
 if __name__ == '__main__':

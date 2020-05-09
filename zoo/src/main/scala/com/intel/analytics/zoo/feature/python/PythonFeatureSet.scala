@@ -174,8 +174,4 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
       "ptensor_to_numpy(data[0])", "ptensor_to_numpy(data[1])", -1, imports)
   }
 
-  def size(featureSet: DataSet[MiniBatch[Float]]): Long = {
-    featureSet.size()
-  }
-
 }

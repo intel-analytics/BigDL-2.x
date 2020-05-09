@@ -124,16 +124,20 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
         |grads=[]
         |for param in ${getName()}.parameters():
         |    grads.append(param.grad.view(-1))
+        |grad=torch.nn.utils.parameters_to_vector(grads)
         |""".stripMargin
     PythonInterpreter.exec(getWeightCode)
-    val newGrads = PythonInterpreter.getValue[util.ArrayList[NDArray[Array[Float]]]](
-      "ptensor_to_numpy(grads)").asScala
-    var index = 0
-    newGrads.foreach{g =>
-      System.arraycopy(gradients.storage().array(), index,
-        g.getData(), 0, g.getDimensions()(0))
-      index += g.getDimensions()(0)
-    }
+//    val newGrads = PythonInterpreter.getValue[util.ArrayList[NDArray[Array[Float]]]](
+//      "ptensor_to_numpy(grads)").asScala
+//    var index = 0
+//    newGrads.foreach{g =>
+//      System.arraycopy(gradients.storage().array(), index,
+//        g.getData(), 0, g.getDimensions()(0))
+//      index += g.getDimensions()(0)
+//    }
+    val grad = PythonLoaderFeatureSet.ndArrayToTensor(
+      PythonInterpreter.getValue("grad.data.numpy()").asInstanceOf[NDArray[_]])
+    gradients.copy(grad)
     println(s"backward total cost: ${(System.nanoTime() - startTime) / 1e9}")
     gradInput
   }
