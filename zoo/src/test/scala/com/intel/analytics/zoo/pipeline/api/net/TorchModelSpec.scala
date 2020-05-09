@@ -37,7 +37,6 @@ class TorchModelSpec extends ZooSpecHelper{
       TFNetNative.isLoaded
     }
   }
-
   val lenet =
     s"""
        |import torch
@@ -146,6 +145,7 @@ class TorchModelSpec extends ZooSpecHelper{
          |flatten_weight = torch.nn.utils.parameters_to_vector(weights).data.numpy()
          |bym = CloudPickleSerializer.dumps(CloudPickleSerializer, model)
          |byc = CloudPickleSerializer.dumps(CloudPickleSerializer, criterion)
+         |del data
          |""".stripMargin
     PythonInterpreter.exec(code)
 
