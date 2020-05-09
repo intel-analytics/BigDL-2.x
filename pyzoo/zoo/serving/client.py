@@ -111,7 +111,6 @@ class InputQueue(API):
         self.__enqueue_data("image_stream", d)
 
     def enqueue_tensor(self, uri, data):
-        # start = time.clock()
         if isinstance(data, np.ndarray):
             # tensor
             data = [data]
@@ -120,11 +119,12 @@ class InputQueue(API):
 
         sink = pa.BufferOutputStream()
         writer = None
-        for arr in data:
-            shape = np.array(arr.shape, dtype="float32")
-            arr = arr.astype("float32")
-            data = np.concatenate([shape, np.array([-1], dtype="float32"), arr.flatten()])
-            arrow_arr = pa.array(data)
+        for d in data:
+            shape = np.array(d.shape, dtype="float32")
+            d = d.astype("float32").flatten()
+            len_arr = np.array([len(shape), len(d)], dtype="float32")
+            data_arr = np.concatenate([len_arr, shape, d])
+            arrow_arr = pa.array(data_arr)
             batch = pa.RecordBatch.from_arrays([arrow_arr], ["0"])
             if writer is None:
                 # initialize
@@ -137,8 +137,6 @@ class InputQueue(API):
         tensor_encoded = self.base64_encode_image(b)
         d = {"uri": uri, "tensor": tensor_encoded}
         self.__enqueue_data("tensor_stream", d)
-        # end = time.clock()
-        # print("%.2gs" % (end-start))
 
     def __enqueue_data(self, stream_name, data):
         inf = self.db.info()
@@ -146,7 +144,6 @@ class InputQueue(API):
             if inf['used_memory'] >= inf['maxmemory'] * self.input_threshold:
                 raise redis.exceptions.ConnectionError
             self.db.xadd(stream_name, data)
-            # TODO: check
             print("Write to Redis successful")
         except redis.exceptions.ConnectionError:
             print("Redis queue is full, please wait for inference "

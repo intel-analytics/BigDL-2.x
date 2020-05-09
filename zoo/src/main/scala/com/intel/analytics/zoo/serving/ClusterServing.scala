@@ -63,7 +63,7 @@ object ClusterServing {
     val dataType = helper.dataType
     val dataShape = helper.dataShape
 
-    val (flagC, flagW, flagH, streamKey, dataField) = if (dataType == "image") {
+    val (flagC, flagW, flagH, streamKey, dataField) = if (dataType == DataType.IMAGE) {
       (helper.dataShape(0)(0), helper.dataShape(0)(1), helper.dataShape(0)(2), "image_stream",
         "image")
     } else {
@@ -232,7 +232,7 @@ object ClusterServing {
           })
           pathBytesChunk.mapPartitions(pathBytes => {
             val localModel = bcModel.value
-            val t = if (dataType == "image") {
+            val t = if (dataType == DataType.IMAGE) {
               if (chwFlag) {
                 Tensor[Float](batchSize, flagC, flagH, flagW)
               } else {
@@ -243,12 +243,7 @@ object ClusterServing {
                 val sizes = batchSize +: dataShape(0)
                 Tensor[Float](sizes)
               } else {
-                val dataList = new ArrayBuffer[Tensor[Float]]
-                for (shape <- dataShape) {
-                  val sizes = batchSize +: shape
-                  dataList += Tensor[Float](sizes)
-                }
-                T.array(dataList.toArray)
+                T.array(dataShape.map(shape => Tensor[Float](batchSize +: shape)))
               }
             }
 

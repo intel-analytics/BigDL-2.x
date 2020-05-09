@@ -26,16 +26,19 @@ import org.opencv.imgcodecs.Imgcodecs
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.ipc.ArrowFileReader
 import org.apache.arrow.vector.util.ByteArrayReadableSeekableByteChannel
+import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
-import scala.util.control.Breaks._
 import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.zoo.serving.DataType.DataTypeEnumVal
 
 class PreProcessing(s: String) {
-  def bytesToTensor(dataType: String, chwFlag: Boolean = true): Activity = {
+  val logger = Logger.getLogger(getClass)
+
+  def bytesToTensor(dataType: DataTypeEnumVal, chwFlag: Boolean = true): Activity = {
     val b = java.util.Base64.getDecoder.decode(s)
     val result = dataType match {
-      case "image" =>
+      case DataType.IMAGE =>
         val mat = OpenCVMethod.fromImageBytes(b, Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
         val (height, width, channel) = (mat.height(), mat.width(), mat.channels())
 
@@ -49,7 +52,7 @@ class PreProcessing(s: String) {
         } else {
           imageTensor
         }
-      case "tensor" =>
+      case DataType.TENSOR =>
         val alloc = new RootAllocator(Integer.MAX_VALUE)
         val MAX_ALLOC = 3 * 1024 * 1024 * 1024L
         val alloc4tensor = alloc.newChildAllocator("tensor", 0, MAX_ALLOC)
@@ -59,33 +62,27 @@ class PreProcessing(s: String) {
 
         try {
           while (reader.loadNextBatch) {
-            var shape = new ArrayBuffer[Int]()
             val vsr = reader.getVectorSchemaRoot
-            val accessor = vsr.getVector("0")
-            var idx = 0
-            val valueCount = accessor.getValueCount
-            breakable {
-              while (idx < valueCount) {
-                val data = accessor.getObject(idx).asInstanceOf[Float].toInt
-                idx += 1
-                if (data == -1) {
-                  break
-                }
-                shape += data
-              }
-            }
-            val storage = new Array[Float](valueCount - idx)
+            val arrowVector = vsr.getVector("0")
+            val shapeLen = arrowVector.getObject(0).asInstanceOf[Float].toInt
+            val dataLen = arrowVector.getObject(1).asInstanceOf[Float].toInt
+            val shape = new Array[Int](shapeLen)
+            val storage = new Array[Float](dataLen)
 
-            for (i <- idx until valueCount) {
-              storage(i-idx) = accessor.getObject(i).asInstanceOf[Float]
+            for (i <- 0 until shapeLen) {
+              shape(i) = arrowVector.getObject(i + 2).asInstanceOf[Float].toInt
             }
 
-            val dataTensor = Tensor[Float](storage, shape.toArray)
+            for (i <- 0 until dataLen) {
+              storage(i) = arrowVector.getObject(i + 2 + shapeLen).asInstanceOf[Float]
+            }
+
+            val dataTensor = Tensor[Float](storage, shape)
             dataList += dataTensor
           }
         } catch {
           case ex: IOException =>
-            // TODO
+            logger.warn(ex.getMessage)
         } finally {
           reader.close()
         }
@@ -103,14 +100,10 @@ class PreProcessing(s: String) {
   }
 }
 object PreProcessing {
-  def apply(s: String, dataType: String = "image", chwFlag: Boolean = true,
+  def apply(s: String, dataType: DataTypeEnumVal = DataType.IMAGE, chwFlag: Boolean = true,
             args: Array[Int] = Array()): Activity = {
     val cls = new PreProcessing(s)
-//    val startTime: Long = System.currentTimeMillis
     val t = cls.bytesToTensor(dataType, chwFlag)
-//    val endTime: Long = System.currentTimeMillis
-//    val diff = endTime - startTime
-//    System.out.println("time ：" + diff + "ms")
     for (op <- args) {
       // new processing features add to here
     }

@@ -38,6 +38,9 @@ import org.apache.spark.sql.SparkSession
 import org.yaml.snakeyaml.Yaml
 import java.time.LocalDateTime
 
+import com.intel.analytics.zoo.serving.DataType
+import com.intel.analytics.zoo.serving.DataType.DataTypeEnumVal
+
 import scala.reflect.ClassTag
 import scala.util.parsing.json._
 
@@ -79,8 +82,8 @@ class ClusterServingHelper {
   var engineType: String = null
   var blasFlag: Boolean = false
 
-  var dataType: String = null
-  var dataShape = Array[Array[Int]]()
+  var dataType: DataTypeEnumVal = null
+  var dataShape: Array[Array[Int]] = Array[Array[Int]]()
   var filter: String = "topN"
 
   var logFile: FileWriter = null
@@ -138,39 +141,41 @@ class ClusterServingHelper {
       "and port are not valid, please check.")
     redisHost = redis.split(":").head.trim
     redisPort = redis.split(":").last.trim
-    dataType = getYaml(dataConfig, "data_type", "image")
-    val shapeList = dataType match {
+    val dataTypeStr = getYaml(dataConfig, "data_type", "image")
+    dataType = dataTypeStr match {
       case "image" =>
+        DataType.IMAGE
+      case "tensor" =>
+        DataType.TENSOR
+      case _ =>
+        logError("Invalid data type, please check your data_type")
+        null
+    }
+    val shapeList = dataType match {
+      case DataType.IMAGE =>
         val shape = getYaml(dataConfig, "image_shape", "3,224,224")
         val shapeList = shape.split(",").map(x => x.trim.toInt)
         require(shapeList.size == 3, "Your data shape must has dimension as 3")
         Array(shapeList)
-      case "tensor" =>
+      case DataType.TENSOR =>
         val shape = getYaml(dataConfig, "tensor_shape", null)
         val jsonList: Option[Any] = JSON.parseFull(shape)
         jsonList match {
           case Some(list) =>
             val l: List[Any] = list.asInstanceOf[List[Any]]
-            var isTable = true
-            val converted = l.map {
-              case x: lang.Double =>
-                isTable = false
-                x.asInstanceOf[Double].toInt
-              case tensorShape: List[Double] =>
-                tensorShape.map(x => x.toInt).toArray
+            val converted = l.head match {
+              case _: lang.Double =>
+                List(l.map(_.asInstanceOf[Double].toInt).toArray)
+              case _: List[Double] =>
+                l.map(tensorShape => tensorShape.asInstanceOf[List[Double]].map(x => x.toInt)
+                  .toArray)
               case _ =>
                 logError(s"Invalid shape format, please check your tensor_shape, your input is " +
                   s"${shape}")
                 null
             }
 
-            val result = if (isTable) {
-              converted.asInstanceOf[List[Array[Int]]].toArray
-            } else {
-              Array(converted.asInstanceOf[List[Int]].toArray)
-            }
-
-            result
+            converted.asInstanceOf[List[Array[Int]]].toArray
           case None => logError(s"Invalid shape format, please check your tensor_shape, your " +
             s"input is ${shape}")
             null
