@@ -200,15 +200,15 @@ class RayContext(object):
 
         :param sc: An instance of SparkContext.
         :param redis_port: redis port for the "head" node.
-               The value would be randomly picked if not specified.
+        The value would be randomly picked if not specified.
         :param password: Password for the redis. Default to be "123456" if not specified.
         :param object_store_memory: The memory size for ray object_store in string.
-               This can be specified in bytes(b), kilobytes(k), megabytes(m) or gigabytes(g).
-               For example, 50b, 100k, 250m, 30g.
+        This can be specified in bytes(b), kilobytes(k), megabytes(m) or gigabytes(g).
+        For example, 50b, 100k, 250m, 30g.
         :param verbose: True for more logs when starting ray. Default is False.
         :param env: The environment variable dict for running ray processes. Default is None.
         :param extra_params: The key value dict for extra options to launch ray.
-                             For example, extra_params={"temp-dir": "/tmp/ray/"}
+        For example, extra_params={"temp-dir": "/tmp/ray/"}
         """
         assert sc is not None, "sc cannot be None, please create a SparkContext first"
         self.sc = sc
@@ -301,7 +301,7 @@ class RayContext(object):
         Initiate the ray cluster.
 
         :param driver_cores: The number of cores for the raylet on driver for Spark cluster mode.
-                             Default is 0 and in this case the local driver wouldn't have any ray workload.
+        Default is 0 and in this case the local driver wouldn't have any ray workload.
         """
         self.stopped = False
         if self.is_local:
