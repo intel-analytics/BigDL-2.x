@@ -13,7 +13,7 @@ from torchvision import datasets, transforms
 from zoo.ray import RayContext
 
 from zoo import init_spark_on_yarn, init_spark_on_local
-from zoo.orca.learn import HorovodRayTrainer
+from zoo.orca.learn.horovod import HorovodRayTrainer
 
 
 def run_horovod():
@@ -128,7 +128,7 @@ def run_horovod():
                 # this worker's partition.
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     epoch, batch_idx * len(data), len(train_sampler),
-                           100. * batch_idx / len(train_loader), loss.item()))
+                    100. * batch_idx / len(train_loader), loss.item()))
 
     def metric_average(val, name):
         tensor = torch.tensor(val)
