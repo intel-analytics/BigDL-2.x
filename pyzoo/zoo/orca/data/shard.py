@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.xshard.utils import *
+from zoo.orca.data.utils import *
 
 
 class DataShards(object):
