@@ -17,10 +17,10 @@ Analytics Zoo hyperzoo image has been built to easily run applications on Kubern
 - Pull an Analytics Zoo k8s image:
 
 ```bash
-sudo docker pull intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17
+sudo docker pull intelanalytics/hyper-zoo:latest
 ```
 
-To speed up pulling the image, config the Docker daemon. Edit `/etc/docker/daemon.json` and add the registry-mirrors key and value:
+To speed up pulling the image, config docker. If the docker version is higher than 1.12, config the Docker daemon. Edit `/etc/docker/daemon.json` and add the registry-mirrors key and value. Here is an example to use ustc mirror. You can also choose others instead:
 
 ```bash
 {
@@ -34,6 +34,10 @@ Restart dockerd：
 sudo systemctl restart docker
 ```
 
+If your docker version is between 1.8 and 1.11, find the docker configuration which location depends on the operation system. Edit and add like `DOCKER_OPTS="--registry-mirror=http://hub-mirror.c.163.com"`. Restart docker `sudo service docker restart`.
+
+If you would like to speed up pulling this image on mac or windows, config docker by referencing [here](http://guide.daocloud.io/dcs/docker-9153151.html).
+
 Then pull the image.
 
 - Launch a k8s client container:
@@ -44,7 +48,7 @@ Please note the two different containers: **client container** is for user to su
 sudo docker run -itd --net=host \
     -v /etc/kubernetes:/etc/kubernetes \
     -v /root/.kube:/root/.kube \
-    intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17 bash
+    intelanalytics/hyper-zoo:latest bash
 ```
 
 Note. To launch the client container, `-v /etc/kubernetes:/etc/kubernetes:` and `-v /root/.kube:/root/.kube` are required to specify the path of kube config and installation.
@@ -61,7 +65,7 @@ sudo docker run -itd --net=host \
     -e https_proxy=https://your-proxy-host:your-proxy-port \
     -e RUNTIME_SPARK_MASTER=k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port> \
     -e RUNTIME_K8S_SERVICE_ACCOUNT=account \
-    -e RUNTIME_K8S_SPARK_IMAGE=intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17 \
+    -e RUNTIME_K8S_SPARK_IMAGE=intelanalytics/hyper-zoo:latest \
     -e RUNTIME_PERSISTENT_VOLUME_CLAIM=myvolumeclaim \
     -e RUNTIME_DRIVER_HOST=x.x.x.x \
     -e RUNTIME_DRIVER_PORT=54321 \
@@ -71,7 +75,7 @@ sudo docker run -itd --net=host \
     -e RUNTIME_TOTAL_EXECUTOR_CORES=4 \
     -e RUNTIME_DRIVER_CORES=4 \
     -e RUNTIME_DRIVER_MEMORY=10g \
-    intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3-0.17 bash 
+    intelanalytics/hyper-zoo:latest bash 
 ```
 
 - NotebookPort value 12345 is a user specified port number.
