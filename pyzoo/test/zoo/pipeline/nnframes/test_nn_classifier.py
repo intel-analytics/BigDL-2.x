@@ -706,7 +706,7 @@ class TestNNClassifer():
             raise ValueError("we do not find this error, test failed")
 
     def test_XGBClassifierModel_predict(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
         path = os.path.join(resource_path, "xgbclassifier/")
         modelPath = path + "XGBClassifier.bin"
         filePath = path + "test.csv"
