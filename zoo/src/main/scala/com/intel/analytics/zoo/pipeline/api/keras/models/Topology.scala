@@ -20,6 +20,7 @@ import java.io.{File, FilenameFilter}
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
+import com.intel.analytics.bigdl.mkl.MKL
 import com.intel.analytics.bigdl.dataset.{MiniBatch, _}
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.{DataSet, _}
@@ -965,7 +966,11 @@ private[zoo] object InternalOptimizerUtil {
   def setExecutorMklThread(cachedModels: RDD[_]): Unit = {
     cachedModels.mapPartitions{_ =>
       val numCores = scala.sys.env("OMP_NUM_THREADS").toInt
-      EngineRef.getDefaultThreadPool().setMKLThread(numCores)
+      System.setProperty("bigdl.mklNumThreads", numCores.toString)
+      //System.setProperty("bigdl.utils.Engine.defaultPoolSize",
+      //  "1")
+      //EngineRef.getDefaultThreadPool().setMKLThread(numCores)
+      //MKL.setNumThreads(numCores)
       Iterator.single(1)
     }.count()
   }
@@ -1107,12 +1112,18 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
      * Currently, we only provide single model + multi OMP threads for torchnet model.
      * TODO: support tfnet.
      */
-    val torchNetOptimize = TorchNet.isTorchNet(model)
+    logger.info(s"${model} isTorchnet is ${TorchNet.isTorchNet(model)}")
+    println(s"${model} isTorchnet is ${TorchNet.isTorchNet(model)}")
+    val torchNetOptimize = true
     val modelPerExecutor = if (torchNetOptimize) {
       require(EngineRef.getEngineType() != MklDnn, "torchnet shouldn't use MKLDNN engine.")
       val numOmpThread = distDataset.originRDD().sparkContext
         .getConf.get("spark.executorEnv.OMP_NUM_THREADS").toInt
       logger.info(s"torchnet will use ${numOmpThread} OMP threads.")
+      //System.setProperty("bigdl.ModelBroadcastFactory",
+      //  "com.intel.analytics.zoo.pipeline.api.net.TorchNet2BroadcastFactory")
+      System.setProperty("bigdl.utils.Engine.defaultPoolSize",
+        "1")
       1
     } else {
       EngineRef.getCoreNumber()
@@ -1155,15 +1166,14 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
 //      LarsSGD.containsLarsSGD(optimMethods).foreach(weightDecay =>
 //        parameterProcessors.append(new LarsProcessor(parameterSplits, weightDecay))
 //      )
-
+      if (torchNetOptimize) {
+        InternalOptimizerUtil.setExecutorMklThread(distDataset.originRDD())
+      }
       val modelsAndBroadcast = InternalOptimizerUtil.initThreadModels[T](
         trainingModel, distDataset, criterion, state,
         Int.box(nodeNumber), Int.box(modelPerExecutor), Boolean.box(checkSingleton),
         allReduceParameter, parameterSplits, validationMethods, optimMethods, parameterProcessors)
       cachedModels = modelsAndBroadcast._1
-      if (torchNetOptimize) {
-        InternalOptimizerUtil.setExecutorMklThread(cachedModels)
-      }
       modelBroadcast = modelsAndBroadcast._2
     }
 

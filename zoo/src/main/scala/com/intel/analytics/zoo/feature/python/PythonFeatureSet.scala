@@ -107,4 +107,75 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
       "data", "", totalSize, imports)
   }
 
+  def createFeatureSetFromPytorch(
+        dataset: Array[Byte],
+        batchSize: Int,
+        shuffle: Boolean,
+        totalSize: Int): FeatureSet[MiniBatch[Float]] = {
+    val nodeNumber = EngineRef.getNodeNumber()
+    // set a random seed to make sure shuffle is the same in each executor
+    val imports = s"""
+                     |from zoo.util.nest import ptensor_to_numpy
+                     |import torch
+                     |from torch.utils.data import DataLoader
+                     |
+                     |""".stripMargin
+
+    def getIterator(iterName: String, loaderName: String): String = {
+      val s = if(shuffle) {
+        "True"
+      } else {
+        "False"
+      }
+      s"""
+         |${loaderName}_loader = DataLoader(${loaderName}, batch_size=${batchSize}, shuffle=$s, num_workers=0)
+         |${iterName} = enumerate(${loaderName}_loader)
+         |""".stripMargin
+    }
+
+    def getNext(iterName: String): String = {
+      s"""
+         |index, data = next(${iterName})
+         |""".stripMargin
+    }
+
+    FeatureSet.python[MiniBatch[Float]](dataset, getIterator, getNext,
+      "ptensor_to_numpy(data[0])", "ptensor_to_numpy(data[1])", totalSize, imports)
+  }
+
+  def size(featureSet: DataSet[MiniBatch[Float]]): Long = {
+    featureSet.size()
+  }
+
+  def createFeatureSetFromPytorchLoader(
+        dataset: Array[Byte]): FeatureSet[MiniBatch[Float]] = {
+    val nodeNumber = EngineRef.getNodeNumber()
+    // set a random seed to make sure shuffle is the same in each executor
+    val imports = s"""
+                     |from zoo.util.nest import ptensor_to_numpy
+                     |import torch
+                     |from torch.utils.data import DataLoader
+                     |
+                     |""".stripMargin
+
+    def getIterator(iterName: String, loaderName: String): String = {
+      s"""
+         |${iterName} = enumerate(${loaderName})
+         |""".stripMargin
+    }
+
+    def getNext(iterName: String): String = {
+      s"""
+         |index, data = next(${iterName})
+         |""".stripMargin
+    }
+
+    FeatureSet.python[MiniBatch[Float]](dataset, getIterator, getNext,
+      "ptensor_to_numpy(data[0])", "ptensor_to_numpy(data[1])", -1, imports)
+  }
+
+  def size(featureSet: DataSet[MiniBatch[Float]]): Long = {
+    featureSet.size()
+  }
+
 }

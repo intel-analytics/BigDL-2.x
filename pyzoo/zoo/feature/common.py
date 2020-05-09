@@ -361,6 +361,37 @@ class FeatureSet(DataSet):
         jvalue = callZooFunc(bigdl_type, "createFeatureSetFromTfDataset", func, total_size)
         return cls(jvalue=jvalue)
 
+    @classmethod
+    def pytorch_dataset(cls, dataset, batch_size, shuffle=False, bigdl_type="float"):
+        """
+        :param dataset: a pytorch dataset
+        :param bigdl_type: numeric type
+        :return: A feature set
+        """
+        import pickle
+        import torchnet as tnt
+        from bigdl.util.common import get_node_and_core_number
+        worker_num = get_node_and_core_number()[0]
+        if worker_num == 1:
+            by = bytearray(pickle.dumps(dataset))
+        else:
+            partitions = {i: 1.0 / worker_num for i in range(0, worker_num)}
+            split_dataset = tnt.dataset.SplitDataset(dataset, partitions)
+            by = bytearray(pickle.dumps(split_dataset))
+        jvalue = callZooFunc(bigdl_type, "createFeatureSetFromPytorch", by, batch_size, shuffle, len(dataset))
+        return cls(jvalue=jvalue)
+
+    @classmethod
+    def pytorch_dataloader(cls, dataloader, bigdl_type="float"):
+        """
+        :param dataset: a pytorch dataset
+        :param bigdl_type: numeric type
+        :return: A feature set
+        """
+        bys = CloudPickleSerializer.dumps(CloudPickleSerializer, dataloader)
+        jvalue = callZooFunc(bigdl_type, "createFeatureSetFromPytorchLoader", bys)
+        return cls(jvalue=jvalue)
+
     def transform(self, transformer):
         """
         Helper function to transform the data type in the data set.
@@ -369,6 +400,10 @@ class FeatureSet(DataSet):
         """
         jvalue = callZooFunc(self.bigdl_type, "transformFeatureSet", self.value, transformer)
         return FeatureSet(jvalue=jvalue)
+
+    def size(self):
+        jvalue = callZooFunc(self.bigdl_type, "size", self.value)
+        return jvalue
 
     def to_dataset(self):
         """
