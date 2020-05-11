@@ -14,5 +14,5 @@
 # limitations under the License.
 #
 
-from zoo.xshard.pandas.preprocessing import read_csv
-from zoo.xshard.pandas.preprocessing import read_json
+from .torch_loss import TorchLoss
+from .torch_model import TorchModel

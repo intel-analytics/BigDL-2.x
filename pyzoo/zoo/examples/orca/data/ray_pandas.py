@@ -21,7 +21,7 @@ import pandas as pd
 from bigdl.util.common import get_node_and_core_number
 from pyspark.sql import SQLContext
 
-import zoo.xshard.pandas
+import zoo.orca.data.pandas
 from zoo import init_spark_on_local
 from zoo.ray import RayContext
 
@@ -58,8 +58,8 @@ if __name__ == "__main__":
     ray_ctx.init()
 
     # read data
-    data_shard = zoo.xshard.pandas.read_json("/tmp/ray-pandas-example", ray_ctx,
-                                             orient='columns', lines=True)
+    data_shard = zoo.orca.data.pandas.read_json("/tmp/ray-pandas-example", ray_ctx,
+                                                orient='columns', lines=True)
 
     # collect data
     data = data_shard.collect()

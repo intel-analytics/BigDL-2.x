@@ -22,7 +22,7 @@ ray_ctx = None
 
 
 @pytest.fixture(autouse=True, scope='package')
-def xshard_fixture():
+def orca_data_fixture():
     from zoo import init_spark_on_local
     from zoo.ray import RayContext
     global ray_ctx
