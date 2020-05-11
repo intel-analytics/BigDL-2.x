@@ -53,7 +53,3 @@ def orca_data_fixture():
 
 def get_ray_ctx():
     return ray_ctx
-
-
-def get_sc():
-    return sc
