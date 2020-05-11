@@ -141,7 +141,7 @@ class ClusterServingHelper {
       "and port are not valid, please check.")
     redisHost = redis.split(":").head.trim
     redisPort = redis.split(":").last.trim
-    val dataTypeStr = getYaml(dataConfig, "data_type", "image")
+    val dataTypeStr = getYaml(dataConfig, "data_type", "image").toLowerCase()
     dataType = dataTypeStr match {
       case "image" =>
         DataType.IMAGE
@@ -175,7 +175,7 @@ class ClusterServingHelper {
                 null
             }
 
-            converted.asInstanceOf[List[Array[Int]]].toArray
+            converted.toArray
           case None => logError(s"Invalid shape format, please check your tensor_shape, your " +
             s"input is ${shape}")
             null
