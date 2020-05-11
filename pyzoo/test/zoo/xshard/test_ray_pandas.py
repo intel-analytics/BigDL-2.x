@@ -96,6 +96,10 @@ class TestDataShards(ZooTestCase):
         df = data[0]
         assert "location" in df.columns, "location is not in columns"
 
+    def test_partition_by(self):
+        file_path = os.path.join(self.resource_path, "xshard")
+        data_shard = zoo.xshard.pandas.read_csv(file_path, self.ray_ctx)
+        data_shard
 
 if __name__ == "__main__":
     pytest.main([__file__])

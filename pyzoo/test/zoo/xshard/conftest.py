@@ -34,7 +34,6 @@ def xshard_fixture():
                          env={"AWS_ACCESS_KEY_ID": access_key_id,
                               "AWS_SECRET_ACCESS_KEY": secret_access_key}
                          )
-    ray_ctx = RayContext(sc=sc, object_store_memory="1g")
     ray_ctx.init()
     yield
     ray_ctx.stop()
@@ -54,3 +53,7 @@ def xshard_fixture():
 
 def get_ray_ctx():
     return ray_ctx
+
+
+def get_sc():
+    return sc

@@ -16,6 +16,7 @@
 
 import random
 import ray
+from functools import reduce
 from pyspark.context import SparkContext
 
 from bigdl.util.common import get_node_and_core_number
@@ -64,9 +65,9 @@ def read_file_ray(context, file_path, file_type, **kwargs):
     file_paths = []
     # extract all file paths
     if isinstance(file_path, list):
-        [file_paths.extend(extract_one_path(path, file_type, context)) for path in file_path]
+        [file_paths.extend(extract_one_path(path, file_type, context.env)) for path in file_path]
     else:
-        file_paths = extract_one_path(file_path, file_type, context)
+        file_paths = extract_one_path(file_path, file_type, context.env)
 
     num_executors = context.num_ray_nodes
     num_cores = context.ray_node_cpu_cores
@@ -95,11 +96,13 @@ def read_file_spark(context, file_path, file_type, **kwargs):
     prefix = file_url_splits[0]
     node_num, core_num = get_node_and_core_number()
 
-    if prefix == "s3":
-        data_paths = list_s3_file(file_url_splits[1], file_type, os.environ)
+    file_paths = []
+    if isinstance(file_path, list):
+        [file_paths.extend(extract_one_path(path, file_type, os.environ)) for path in file_path]
     else:
-        data_paths = get_file_list(file_path)
-    rdd = context.parallelize(data_paths, node_num * core_num)
+        file_paths = extract_one_path(file_path, file_type, os.environ)
+
+    rdd = context.parallelize(file_paths, node_num * core_num)
 
     if prefix == "hdfs":
         def loadFile(iterator):
@@ -156,7 +159,7 @@ def read_file_spark(context, file_path, file_type, **kwargs):
 
         pd_rdd = rdd.mapPartitions(loadFile)
 
-    data_shards = SparkDataShards(pd_rdd)
+    data_shards = SparkPandasDataShards(pd_rdd)
     return data_shards
 
 
@@ -222,3 +225,39 @@ class RayPandasShard(object):
 
     def get_data(self):
         return self.data
+
+
+class SparkPandasDataShards(SparkDataShards):
+    def partition_by(self, cols, num_partitions=None):
+        # if partition by a column
+        if isinstance(cols, str):
+            # change data to key value pair
+            rdd = self.rdd.flatMap(
+                lambda df: df.apply(lambda row: (row[cols], row.values.tolist()), axis=1)
+                .values.tolist())
+            partitioned_rdd = rdd.partitionBy(num_partitions)
+        elif isinstance(cols, list):
+            # change data to key value pairs
+            rdd = self.rdd.flatMap(
+                lambda df: df.apply(
+                    lambda row:
+                    (reduce(lambda col1, col2: str(row[col1])+ "_" + str(row[col2]), cols),
+                     row.values.tolist()), axis=1).values.tolist())
+            partitioned_rdd = rdd.partitionBy(num_partitions)
+        else:
+            raise Exception("only column name or list of column name are support")
+
+        columns = self.rdd.first().columns
+
+        def merge(iterator):
+            data = [value[1] for value in list(iterator)]
+            import pandas as pd
+            if data:
+                df = pd.DataFrame(data=data, columns=columns)
+                return [df]
+            else:
+                # no data in this partition
+                return []
+        # merge records to df in each partition
+        self.rdd = partitioned_rdd.mapPartitions(merge)
+        return self
