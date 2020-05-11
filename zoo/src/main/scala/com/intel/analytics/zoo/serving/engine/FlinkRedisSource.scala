@@ -22,6 +22,7 @@ import com.intel.analytics.zoo.serving.pipeline.{RedisIO, RedisUtils}
 import com.intel.analytics.zoo.serving.utils.{FileUtils, SerParams}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.source.{RichSourceFunction, SourceFunction}
+import org.apache.log4j.Logger
 import redis.clients.jedis.{Jedis, JedisPool, StreamEntryID}
 
 import scala.collection.JavaConverters._
@@ -31,9 +32,11 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
 
   var redisPool: JedisPool = null
   var db: Jedis = null
+  var logger: Logger = null
 
 
   override def open(parameters: Configuration): Unit = {
+    logger = Logger.getLogger(getClass)
     redisPool = new JedisPool(params.redisHost, params.redisPort)
     db = RedisIO.getRedisClient(redisPool)
     try {
@@ -48,6 +51,8 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
 
   override def run(sourceContext: SourceFunction
     .SourceContext[List[(String, String)]]): Unit = while (isRunning) {
+//    logger.info(s">>> get from source begin ${System.currentTimeMillis()} ms")
+    val start = System.nanoTime()
     val response = db.xreadGroup(
       "serving",
       "cli",
@@ -55,6 +60,7 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
       50,
       false,
       new SimpleEntry("image_stream", StreamEntryID.UNRECEIVED_ENTRY))
+//    logger.info(s">>> get from source readed redis ${System.currentTimeMillis()} ms")
     if (response != null) {
       for (streamMessages <- response.asScala) {
         val key = streamMessages.getKey
@@ -65,11 +71,13 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
         sourceContext.collect(it)
       }
       RedisUtils.checkMemory(db, 0.6, 0.5)
-      Thread.sleep(10)
+
     }
     if (FileUtils.checkStop()) {
       isRunning = false
     }
+//    val end = System.nanoTime()
+//    logger.info(s">>> get from source end ${System.currentTimeMillis()} ms")
   }
 
   override def cancel(): Unit = {
