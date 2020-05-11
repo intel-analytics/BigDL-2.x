@@ -14,17 +14,27 @@ Analytics Zoo hyperzoo image has been built to easily run applications on Kubern
 
 #### Launch pre-built hyperzoo k8s image
 
-- Pull an Analytics Zoo k8s image:
+1. Pull an Analytics Zoo k8s image:
 
 ```bash
 sudo docker pull intelanalytics/hyper-zoo:latest
 ```
 
-To speed up pulling the image in China, add a registry's mirror. If the docker version is higher than 1.12, config the docker daemon. Edit `/etc/docker/daemon.json` and add the registry-mirrors key and value:
+- Speed up pulling image by adding mirrors
+
+To speed up pulling the image from dockerhub, add a registry's mirror. If the docker version is higher than 1.12, config the docker daemon. Edit `/etc/docker/daemon.json` and add the registry-mirrors key and value:
 
 ```bash
 {
   "registry-mirrors": ["https://<my-docker-mirror-host>"]
+}
+```
+
+For example, add the ustc mirror in China. 
+
+```bash
+{
+  "registry-mirrors": ["https://docker.mirrors.ustc.edu.cn"]
 }
 ```
 
@@ -37,11 +47,15 @@ sudo systemctl restart docker
 
 If your docker version is between 1.8 and 1.11, find the docker configuration which location depends on the operation system. Edit and add `DOCKER_OPTS="--registry-mirror=https://<my-docker-mirror-host>"`. Restart docker `sudo service docker restart`.
 
-If you would like to speed up pulling this image on mac or windows, config docker by referencing [here](http://guide.daocloud.io/dcs/docker-9153151.html).
+If you would like to speed up pulling this image on mac or windows, find the docker setting and config registry-mirrors section by adding mirror host.
 
-Then pull the image.
+Then pull the image. It will be faster.
 
-- Launch a k8s client container:
+```bash
+sudo docker pull intelanalytics/hyper-zoo:latest
+```
+
+2. Launch a k8s client container:
 
 Please note the two different containers: **client container** is for user to submit zoo jobs from here, since it contains all the required env and libs except hadoop/k8s configs; executor container is not need to create manually, which is scheduled by k8s at runtime.
 
