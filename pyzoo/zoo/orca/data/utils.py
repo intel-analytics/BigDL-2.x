@@ -43,8 +43,6 @@ def list_s3_file(file_path, file_type, env):
     access_key_id = env["AWS_ACCESS_KEY_ID"]
     secret_access_key = env["AWS_SECRET_ACCESS_KEY"]
 
-    # access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
-    # secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
     import boto3
     s3_client = boto3.Session(
         aws_access_key_id=access_key_id,

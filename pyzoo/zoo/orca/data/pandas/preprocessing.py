@@ -21,7 +21,6 @@ from pyspark.context import SparkContext
 
 from bigdl.util.common import get_node_and_core_number
 
-from zoo.common import get_file_list
 from zoo.ray import RayContext
 from zoo.orca.data.shard import RayDataShards, RayPartition, SparkDataShards
 from zoo.orca.data.utils import *
@@ -231,11 +230,13 @@ class SparkPandasDataShards(SparkDataShards):
     def partition_by(self, cols, num_partitions=None):
         # if partition by a column
         if isinstance(cols, str):
-            # change data to key value pair
+            # change data to key value pairs
             rdd = self.rdd.flatMap(
                 lambda df: df.apply(lambda row: (row[cols], row.values.tolist()), axis=1)
                 .values.tolist())
+            # partition with key
             partitioned_rdd = rdd.partitionBy(num_partitions)
+        # partition by column list
         elif isinstance(cols, list):
             # change data to key value pairs
             rdd = self.rdd.flatMap(
@@ -243,6 +244,7 @@ class SparkPandasDataShards(SparkDataShards):
                     lambda row:
                     (reduce(lambda col1, col2: str(row[col1])+ "_" + str(row[col2]), cols),
                      row.values.tolist()), axis=1).values.tolist())
+            # partition with key
             partitioned_rdd = rdd.partitionBy(num_partitions)
         else:
             raise Exception("only column name or list of column name are support")
