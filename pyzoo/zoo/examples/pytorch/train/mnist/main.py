@@ -71,15 +71,13 @@ def main():
     # partitioner = {'1': 0.1, '2': 0.5}
     # sdata_set = SplitDataset(data_set, partitioner)
     # sdata_set.select('1')
-    # train_loader = torch.utils.data.DataLoader(
+    # train_loader = torch.utils.py.data.DataLoader(
     #     sdata_set,
     #     batch_size=args.batch_size, shuffle=True)
     # print(len(train_loader))
     # a = enumerate(train_loader)
     # print(next(a))
 
-
-    kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
     train_loader = torch.utils.data.DataLoader(
         datasets.MNIST('/tmp/data', train=True, download=True,
                        transform=transforms.Compose([
@@ -94,21 +92,21 @@ def main():
                        ])),
         batch_size=args.test_batch_size, shuffle=True)
 
-    sc = init_spark_on_local(cores=1, conf={"spark.driver.memory": "20g"})
-    # num_executors = 1
-    # num_cores_per_executor = 1
-    # hadoop_conf_dir = os.environ.get('HADOOP_CONF_DIR')
-    # init_spark_on_yarn(
-    #     hadoop_conf=hadoop_conf_dir,
-    #     conda_name=os.environ["ZOO_CONDA_NAME"],  # The name of the created conda-env
-    #     num_executor=num_executors,
-    #     executor_cores=num_cores_per_executor,
-    #     executor_memory="2g",
-    #     driver_memory="10g",
-    #     driver_cores=1,
-    #     spark_conf={"spark.rpc.message.maxSize": "1024",
-    #                 "spark.task.maxFailures":  "1",
-    #                 "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"})
+    # sc = init_spark_on_local(cores=1, conf={"spark.driver.memory": "20g"})
+    num_executors = 3
+    num_cores_per_executor = 4
+    hadoop_conf_dir = os.environ.get('HADOOP_CONF_DIR')
+    init_spark_on_yarn(
+        hadoop_conf=hadoop_conf_dir,
+        conda_name=os.environ["ZOO_CONDA_NAME"],  # The name of the created conda-env
+        num_executor=num_executors,
+        executor_cores=num_cores_per_executor,
+        executor_memory="2g",
+        driver_memory="10g",
+        driver_cores=1,
+        spark_conf={"spark.rpc.message.maxSize": "1024",
+                    "spark.task.maxFailures":  "1",
+                    "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"})
 
     model = Net()
     criterion = nn.NLLLoss()
@@ -130,14 +128,14 @@ def main():
     estimator = Estimator(zooModel, optim_methods=adam)
     # train_featureSet = FeatureSet.data_loader(train_loader)
     # test_featureSet = FeatureSet.data_loader(test_loader)
-    train_featureSet = FeatureSet.pytorch_dataset(train_loader.dataset, train_loader.batch_size, True)
-    test_featureSet = FeatureSet.pytorch_dataset(test_loader.dataset, test_loader.batch_size, False)
+    train_featureSet = FeatureSet.pytorch_dataloader(train_loader)
+    test_featureSet = FeatureSet.pytorch_dataloader(test_loader)
     # c = train_featureSet.to_dataset().size()
     # print(c)
     # print(test_featureSet.to_dataset().size())
     # estimator.evaluate_minibatch(train_featureSet, [Accuracy()])
     from bigdl.optim.optimizer import MaxEpoch, EveryEpoch, MaxIteration
-    estimator.train_minibatch(train_featureSet, zooCriterion, end_trigger=MaxEpoch(1), checkpoint_trigger=EveryEpoch(),
+    estimator.train_minibatch(train_featureSet, zooCriterion, end_trigger=MaxEpoch(3), checkpoint_trigger=EveryEpoch(),
                               validation_set=test_featureSet, validation_method=[Accuracy()])
 
 if __name__ == '__main__':

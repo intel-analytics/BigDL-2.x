@@ -160,6 +160,11 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
 
     def getIterator(iterName: String, loaderName: String): String = {
       s"""
+         |if '${loaderName}_epoch' not in dir():
+         |  ${loaderName}_epoch = 1
+         |else:
+         |  ${loaderName}_epoch += 1
+         |${loaderName}_sampler.set_epoch(${loaderName}_epoch)
          |${iterName} = enumerate(${loaderName})
          |""".stripMargin
     }

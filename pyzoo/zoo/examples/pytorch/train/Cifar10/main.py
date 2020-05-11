@@ -106,12 +106,12 @@ def main():
     
     trainset = torchvision.datasets.CIFAR10(root='/tmp/cifar10', train=True,
                                             download=True, transform=transform)
-    # train_loader = torch.utils.data.DataLoader(trainset, batch_size=100,
+    # train_loader = torch.utils.py.data.DataLoader(trainset, batch_size=100,
     #                                           shuffle=True, num_workers=0)
     
     valset = torchvision.datasets.CIFAR10(root='/tmp/cifar10', train=False,
                                            download=True, transform=transforms.ToTensor())
-    # val_loader = torch.utils.data.DataLoader(valset, batch_size=100,
+    # val_loader = torch.utils.py.data.DataLoader(valset, batch_size=100,
     #                                      shuffle=False, num_workers=0)
     # 3x3 convolution
     def conv3x3(in_channels, out_channels, stride=1):

@@ -363,7 +363,20 @@ object PythonLoaderFeatureSet{
       val pytorchSelect = if(nodeNumber == 1) {
         ""
       } else {
-        s"${localLoaderName}.select(${partId})"
+        s"""
+           |from torch.utils.data.distributed import DistributedSampler
+           |from torch.utils.data.sampler import RandomSampler
+           |if isinstance(${localLoaderName}.sampler, RandomSampler):
+           |    shuffle=True
+           |else:
+           |    shuffle=False
+           |${localLoaderName}_sampler = DistributedSampler(${localLoaderName}.dataset,
+           |                                                ${nodeNumber}, ${partId},
+           |                                                shuffle)
+           |${localLoaderName} = torch.utils.data.DataLoader(${localLoaderName}.dataset,
+           |                                                 ${localLoaderName}.batch_size,
+           |                                                 sampler=${localLoaderName}_sampler)
+           |""".stripMargin
       }
 
       val load = s"""
