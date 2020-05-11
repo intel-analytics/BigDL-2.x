@@ -35,7 +35,7 @@ sudo systemctl daemon-reload
 sudo systemctl restart docker
 ```
 
-If your docker version is between 1.8 and 1.11, find the docker configuration which location depends on the operation system. Edit and add like `DOCKER_OPTS="--registry-mirror=https://<my-docker-mirror-host>"`. Restart docker `sudo service docker restart`.
+If your docker version is between 1.8 and 1.11, find the docker configuration which location depends on the operation system. Edit and add `DOCKER_OPTS="--registry-mirror=https://<my-docker-mirror-host>"`. Restart docker `sudo service docker restart`.
 
 If you would like to speed up pulling this image on mac or windows, config docker by referencing [here](http://guide.daocloud.io/dcs/docker-9153151.html).
 
