@@ -20,21 +20,22 @@ Analytics Zoo hyperzoo image has been built to easily run applications on Kubern
 sudo docker pull intelanalytics/hyper-zoo:latest
 ```
 
-To speed up pulling the image, config docker. If the docker version is higher than 1.12, config the Docker daemon. Edit `/etc/docker/daemon.json` and add the registry-mirrors key and value. Here is an example to use ustc mirror. You can also choose others instead:
+To speed up pulling the image in China, add a registry's mirror. If the docker version is higher than 1.12, config the docker daemon. Edit `/etc/docker/daemon.json` and add the registry-mirrors key and value:
 
 ```bash
 {
-  "registry-mirrors": ["https://docker.mirrors.ustc.edu.cn/"]
+  "registry-mirrors": ["https://<my-docker-mirror-host>"]
 }
 ```
 
-Restart dockerd：
+Flush changes and restart docker：
 
 ```bash
+sudo systemctl daemon-reload
 sudo systemctl restart docker
 ```
 
-If your docker version is between 1.8 and 1.11, find the docker configuration which location depends on the operation system. Edit and add like `DOCKER_OPTS="--registry-mirror=http://hub-mirror.c.163.com"`. Restart docker `sudo service docker restart`.
+If your docker version is between 1.8 and 1.11, find the docker configuration which location depends on the operation system. Edit and add like `DOCKER_OPTS="--registry-mirror=https://<my-docker-mirror-host>"`. Restart docker `sudo service docker restart`.
 
 If you would like to speed up pulling this image on mac or windows, config docker by referencing [here](http://guide.daocloud.io/dcs/docker-9153151.html).
 
