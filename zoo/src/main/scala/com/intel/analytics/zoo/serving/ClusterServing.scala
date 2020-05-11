@@ -17,12 +17,14 @@
 
 package com.intel.analytics.zoo.serving
 
+
 import com.intel.analytics.zoo.serving.engine.{FlinkInference, FlinkRedisSink, FlinkRedisSource}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams}
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.log4j.{Level, Logger}
 
 import scala.collection.JavaConverters._
+
 
 object ClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -31,6 +33,7 @@ object ClusterServing {
   def run(configPath: String = "config.yaml"): Unit = {
     val helper = new ClusterServingHelper(configPath)
     helper.initArgs()
+
     params = new SerParams(helper)
 //    println(params.model)
     val serving = StreamExecutionEnvironment.getExecutionEnvironment
@@ -40,7 +43,6 @@ object ClusterServing {
     serving.setParallelism(1)
     serving.execute("Cluster Serving - Flink")
   }
-
   def main(args: Array[String]): Unit = {
     run()
   }

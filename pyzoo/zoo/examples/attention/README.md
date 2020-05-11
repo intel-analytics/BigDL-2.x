@@ -8,8 +8,6 @@ In this example, we show how to resolve the sentimental analysis task with IMDB 
 ## Install or download Analytics Zoo
 Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) to install analytics-zoo via __pip__ or __download the prebuilt package__.
 
-NOTE: Please install `keras2` in your environment as we uses keras dataset api to download and process training data. `keras2` can be installed easily via pip.
-
 ## Run with prebuilt package
 We recommend to run this example in a cluster instead of local mode to get better performance. Also please set stack size to a large number to avoid StackOverflow exception:
 

@@ -13,17 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
 
+import random
 import ray
 from pyspark.context import SparkContext
 
+from bigdl.util.common import get_node_and_core_number
+
+from zoo.common import get_file_list
 from zoo.ray import RayContext
-from zoo.xshard.shard import RayDataShards, RayPartition
-from zoo.xshard.utils import *
+from zoo.orca.data.shard import RayDataShards, RayPartition, SparkDataShards
+from zoo.orca.data.utils import *
 
 
-def read_csv(file_path, context):
+def read_csv(file_path, context, **kwargs):
     """
     Read csv files to DataShards
     :param file_path: could be a csv file, multiple csv file paths separated by comma,
@@ -33,14 +36,14 @@ def read_csv(file_path, context):
     :return: DataShards
     """
     if isinstance(context, RayContext):
-        return read_file_ray(context, file_path, "csv")
+        return read_file_ray(context, file_path, "csv", **kwargs)
     elif isinstance(context, SparkContext):
-        pass
+        return read_file_spark(context, file_path, "csv", **kwargs)
     else:
         raise Exception("Context type should be RayContext or SparkContext")
 
 
-def read_json(file_path, context):
+def read_json(file_path, context, **kwargs):
     """
     Read json files to DataShards
     :param file_path: could be a json file, multiple json file paths separated by comma,
@@ -50,70 +53,34 @@ def read_json(file_path, context):
     :return: DataShards
     """
     if isinstance(context, RayContext):
-        return read_file_ray(context, file_path, "json")
+        return read_file_ray(context, file_path, "json", **kwargs)
     elif isinstance(context, SparkContext):
-        pass
+        return read_file_spark(context, file_path, "json", **kwargs)
     else:
         raise Exception("Context type should be RayContext or SparkContext")
 
 
-def read_file_ray(context, file_path, file_type):
-    file_path_splits = file_path.split(',')
-    if len(file_path_splits) == 1:
-        # only one file
-        if os.path.splitext(file_path)[-1] == "." + file_type:
-            file_paths = [file_path]
-        # directory
-        else:
-            file_url_splits = file_path.split("://")
-            prefix = file_url_splits[0]
-            if prefix == "hdfs":
-                server_address = file_url_splits[1].split('/')[0]
-                import pyarrow as pa
-                fs = pa.hdfs.connect()
-                files = fs.ls(file_path)
-                # only get json/csv files
-                files = [file for file in files if os.path.splitext(file)[1] == "." + file_type]
-                file_paths = ["hdfs://" + server_address + file for file in files]
-            elif prefix == "s3":
-                import boto3
-                path_parts = file_url_splits[1].split('/')
-                bucket = path_parts.pop(0)
-                key = "/".join(path_parts)
-                env = context.ray_service.env
-                access_key_id = env["AWS_ACCESS_KEY_ID"]
-                secret_access_key = env["AWS_SECRET_ACCESS_KEY"]
-                s3_client = boto3.Session(
-                    aws_access_key_id=access_key_id,
-                    aws_secret_access_key=secret_access_key,
-                ).client('s3', verify=False)
-                keys = []
-                resp = s3_client.list_objects_v2(Bucket=bucket,
-                                                 Prefix=key)
-                for obj in resp['Contents']:
-                    keys.append(obj['Key'])
-                files = list(dict.fromkeys(keys))
-                # only get json/csv files
-                files = [file for file in files if os.path.splitext(file)[1] == "." + file_type]
-                file_paths = [os.path.join("s3://" + bucket, file) for file in files]
-            else:
-                # only get json/csv files
-                file_paths = [os.path.join(file_path, file)
-                              for file in os.listdir(file_path)
-                              if os.path.splitext(file)[1] == "." + file_type]
+def read_file_ray(context, file_path, file_type, **kwargs):
+    file_paths = []
+    # extract all file paths
+    if isinstance(file_path, list):
+        [file_paths.extend(extract_one_path(path, file_type, context)) for path in file_path]
     else:
-        file_paths = file_path_splits
+        file_paths = extract_one_path(file_path, file_type, context)
 
     num_executors = context.num_ray_nodes
     num_cores = context.ray_node_cpu_cores
     num_partitions = num_executors * num_cores
+
+    # split files to partitions
+    random.shuffle(file_paths)
     # remove empty partitions
     file_partition_list = [partition for partition
                            in list(chunk(file_paths, num_partitions)) if partition]
     # create shard actor to read data
     shards = [RayPandasShard.remote() for i in range(len(file_partition_list))]
     done_ids, undone_ids = \
-        ray.wait([shard.read_file_partitions.remote(file_partition_list[i], file_type)
+        ray.wait([shard.read_file_partitions.remote(file_partition_list[i], file_type, **kwargs)
                   for i, shard in enumerate(shards)], num_returns=len(shards))
     assert len(undone_ids) == 0
 
@@ -123,29 +90,97 @@ def read_file_ray(context, file_path, file_type):
     return data_shards
 
 
+def read_file_spark(context, file_path, file_type, **kwargs):
+    file_url_splits = file_path.split("://")
+    prefix = file_url_splits[0]
+    node_num, core_num = get_node_and_core_number()
+
+    if prefix == "s3":
+        data_paths = list_s3_file(file_url_splits[1], file_type, os.environ)
+    else:
+        data_paths = get_file_list(file_path)
+    rdd = context.parallelize(data_paths, node_num * core_num)
+
+    if prefix == "hdfs":
+        def loadFile(iterator):
+            import pandas as pd
+            import pyarrow as pa
+            fs = pa.hdfs.connect()
+
+            for x in iterator:
+                with fs.open(x, 'rb') as f:
+                    if file_type == "csv":
+                        df = pd.read_csv(f, **kwargs)
+                    elif file_type == "json":
+                        df = pd.read_json(f, **kwargs)
+                    else:
+                        raise Exception("Unsupported file type")
+                    yield df
+
+        pd_rdd = rdd.mapPartitions(loadFile)
+    elif prefix == "s3":
+        def loadFile(iterator):
+            access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
+            secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
+            import boto3
+            import pandas as pd
+            s3_client = boto3.Session(
+                aws_access_key_id=access_key_id,
+                aws_secret_access_key=secret_access_key,
+            ).client('s3', verify=False)
+            for x in iterator:
+                path_parts = x.split("://")[1].split('/')
+                bucket = path_parts.pop(0)
+                key = "/".join(path_parts)
+                obj = s3_client.get_object(Bucket=bucket, Key=key)
+                if file_type == "json":
+                    df = pd.read_json(obj['Body'], **kwargs)
+                elif file_type == "csv":
+                    df = pd.read_csv(obj['Body'], **kwargs)
+                else:
+                    raise Exception("Unsupported file type")
+                yield df
+
+        pd_rdd = rdd.mapPartitions(loadFile)
+    else:
+        def loadFile(iterator):
+            import pandas as pd
+            for x in iterator:
+                if file_type == "csv":
+                    df = pd.read_csv(x, **kwargs)
+                elif file_type == "json":
+                    df = pd.read_json(x, **kwargs)
+                else:
+                    raise Exception("Unsupported file type")
+                yield df
+
+        pd_rdd = rdd.mapPartitions(loadFile)
+
+    data_shards = SparkDataShards(pd_rdd)
+    return data_shards
+
+
 @ray.remote
 class RayPandasShard(object):
     """
     Actor to read csv/json file to Pandas DataFrame and manipulate data
     """
-
     def __init__(self, data=None):
         self.data = data
 
-    def read_file_partitions(self, paths, file_type):
+    def read_file_partitions(self, paths, file_type, **kwargs):
         df_list = []
         import pandas as pd
         prefix = paths[0].split("://")[0]
         if prefix == "hdfs":
             import pyarrow as pa
             fs = pa.hdfs.connect()
-            print("Start loading files")
             for path in paths:
                 with fs.open(path, 'rb') as f:
                     if file_type == "json":
-                        df = pd.read_json(f, orient='columns', lines=True)
+                        df = pd.read_json(f, **kwargs)
                     elif file_type == "csv":
-                        df = pd.read_csv(f)
+                        df = pd.read_csv(f, **kwargs)
                     else:
                         raise Exception("Unsupported file type")
                     df_list.append(df)
@@ -163,18 +198,18 @@ class RayPandasShard(object):
                 key = "/".join(path_parts)
                 obj = s3_client.get_object(Bucket=bucket, Key=key)
                 if file_type == "json":
-                    df = pd.read_json(obj['Body'], orient='columns', lines=True)
+                    df = pd.read_json(obj['Body'], **kwargs)
                 elif file_type == "csv":
-                    df = pd.read_csv(obj['Body'])
+                    df = pd.read_csv(obj['Body'], **kwargs)
                 else:
                     raise Exception("Unsupported file type")
                 df_list.append(df)
         else:
             for path in paths:
                 if file_type == "json":
-                    df = pd.read_json(path, orient='columns', lines=True)
+                    df = pd.read_json(path, **kwargs)
                 elif file_type == "csv":
-                    df = pd.read_csv(path)
+                    df = pd.read_csv(path, **kwargs)
                 else:
                     raise Exception("Unsupported file type")
                 df_list.append(df)
