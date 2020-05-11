@@ -19,6 +19,7 @@ package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
 import com.intel.analytics.zoo.serving.utils._
 import org.apache.log4j.{Level, Logger}
@@ -29,7 +30,9 @@ import redis.clients.jedis.Jedis
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
-import org.apache.spark.util.{LongAccumulator}
+import org.apache.spark.util.LongAccumulator
+
+import scala.collection.mutable.ArrayBuffer
 
 object ClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
@@ -53,15 +56,19 @@ object ClusterServing {
      * Take them from helper in advance for later execution
      */
     val batchSize = helper.batchSize
-    val topN = helper.topN
     val coreNum = helper.coreNum
     val nodeNum = helper.nodeNum
     val modelType = helper.modelType
     val blasFlag = helper.blasFlag
+    val dataType = helper.dataType
+    val dataShape = helper.dataShape
 
-    val C = helper.dataShape(0)
-    val W = helper.dataShape(1)
-    val H = helper.dataShape(2)
+    val (flagC, flagW, flagH, streamKey, dataField) = if (dataType == DataType.IMAGE) {
+      (helper.dataShape(0)(0), helper.dataShape(0)(1), helper.dataShape(0)(2), "image_stream",
+        "image")
+    } else {
+      (0, 0, 0, "tensor_stream", "tensor")
+    }
 
     val filter = helper.filter
 
@@ -103,15 +110,15 @@ object ClusterServing {
       s"${spark.conf.get("spark.redis.host")}:${spark.conf.get("spark.redis.port")}")
 
 
-    val images = spark
+    val inputData = spark
       .readStream
       .format("redis")
-      .option("stream.keys", "image_stream")
+      .option("stream.keys", streamKey)
       .option("stream.read.batch.size", batchSize)
       .option("stream.parallelism", nodeNum)
       .schema(StructType(Array(
         StructField("uri", StringType),
-        StructField("image", StringType)
+        StructField(dataField, StringType)
       )))
       .load()
 
@@ -126,7 +133,7 @@ object ClusterServing {
     val acc = new LongAccumulator()
     helper.sc.register(acc)
 
-    val query = images.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
+    val query = inputData.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
 
       /**
        * This is reserved for future dynamic loading model
@@ -135,8 +142,8 @@ object ClusterServing {
 
       if (redisInfo("used_memory").toLong >=
         redisInfo("maxmemory").toLong * inputThreshold) {
-        redisDB.xtrim("image_stream",
-          (redisDB.xlen("image_stream") * cutRatio).toLong, true)
+        redisDB.xtrim(streamKey,
+          (redisDB.xlen(streamKey) * cutRatio).toLong, true)
       }
 
       batchDF.persist()
@@ -171,12 +178,34 @@ object ClusterServing {
               pathBytesBatch.indices.toParArray.map(i => {
 
                 val path = pathBytesBatch(i).getAs[String]("uri")
-                val tensors = PreProcessing(pathBytesBatch(i).getAs[String]("image"))
+                val tensors = PreProcessing(pathBytesBatch(i).getAs[String](dataField), dataType,
+                  chwFlag)
 
                 val localPartitionModel = bcModel.value
-                val result = localPartitionModel.doPredict(tensors.addSingletonDimension()).toTensor
+                val result = if (tensors.isTensor) {
+                  localPartitionModel.doPredict(tensors.toTensor.addSingletonDimension())
+                } else {
+                  localPartitionModel.doPredict(tensors)
+                }
 
-                val value = PostProcessing(result, filter)
+                val value = if (result.isTensor) {
+                  val res = result.toTensor.squeeze()
+                  PostProcessing(res, filter)
+                } else {
+                  // result is table
+                  val separator = ","
+                  val res = result.toTable
+                  val valueBuf = StringBuilder.newBuilder
+                  valueBuf.append("[")
+                  res.keySet.foreach(key => {
+                    valueBuf.append(PostProcessing(
+                      res(key).asInstanceOf[Tensor[Float]]))
+                    valueBuf.append(separator)
+                  })
+                  valueBuf.deleteCharAt(valueBuf.length - 1)
+                  valueBuf.append("]")
+                  valueBuf.toString()
+                }
 
                 Record(path, value)
               })
@@ -195,7 +224,7 @@ object ClusterServing {
 
                 val row = pathBytesBatch(i)
                 val path = row.getAs[String]("uri")
-                val tensors = PreProcessing(row.getAs[String]("image"), chwFlag)
+                val tensors = PreProcessing(row.getAs[String](dataField), dataType, chwFlag)
                 (path, tensors)
 
               })
@@ -203,22 +232,46 @@ object ClusterServing {
           })
           pathBytesChunk.mapPartitions(pathBytes => {
             val localModel = bcModel.value
-            val t = if (chwFlag) {
-              Tensor[Float](batchSize, C, H, W)
+            val t = if (dataType == DataType.IMAGE) {
+              if (chwFlag) {
+                Tensor[Float](batchSize, flagC, flagH, flagW)
+              } else {
+                Tensor[Float](batchSize, flagH, flagW, flagC)
+              }
             } else {
-              Tensor[Float](batchSize, H, W, C)
+              if (dataShape.length == 1) {
+                val sizes = batchSize +: dataShape(0)
+                Tensor[Float](sizes)
+              } else {
+                T.array(dataShape.map(shape => Tensor[Float](batchSize +: shape)))
+              }
             }
+
             pathBytes.grouped(batchSize).flatMap(pathByteBatch => {
               val thisBatchSize = pathByteBatch.size
               acc.add(thisBatchSize)
-              (0 until thisBatchSize).toParArray
-                .foreach(i => t.select(1, i + 1).copy(pathByteBatch(i)._2))
-
-              val x = if (modelType == "openvino") {
-                t.addSingletonDimension()
+              val x = if (t.isTensor) {
+                val tTensor = t.toTensor
+                (0 until thisBatchSize).toParArray
+                  .foreach(i => tTensor.select(1, i + 1).copy(pathByteBatch(i)._2.toTensor))
+                if (modelType == "openvino") {
+                  tTensor.addSingletonDimension()
+                } else {
+                  tTensor
+                }
               } else {
-                t
+                val tTable = t.toTable
+                (0 until thisBatchSize).toParArray
+                  .foreach( i => {
+                    val dataTable = pathByteBatch(i)._2.toTable
+                    tTable.keySet.foreach(key => {
+                      tTable(key).asInstanceOf[Tensor[Float]].select(1, i + 1)
+                        .copy(dataTable(key).asInstanceOf[Tensor[Float]])
+                    })
+                  })
+                tTable
               }
+
               /**
                * addSingletonDimension method will modify the
                * original Tensor, thus if reuse of Tensor is needed,
@@ -227,7 +280,10 @@ object ClusterServing {
               val result = localModel.doPredict(x)
               if (result.isTensor) {
                 val res = if (modelType == "openvino") {
-                  t.squeeze(1)
+                  // TODO: Activity support
+                  if (t.isTensor) {
+                    t.toTensor.squeeze(1)
+                  }
                   result.toTensor.squeeze()
                 } else {
                   result.toTensor
@@ -246,7 +302,7 @@ object ClusterServing {
                   value.append("[")
                   res.keySet.foreach(key => {
                     value.append(PostProcessing(
-                      res(key).asInstanceOf[Tensor[_]].toTensor.select(1, i + 1)))
+                      res(key).asInstanceOf[Tensor[Float]].select(1, i + 1)))
                     value.append(separator)
                   })
                   value.deleteCharAt(value.length - 1)
