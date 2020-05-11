@@ -37,11 +37,12 @@ class FlinkInference(params: SerParams)
     model = params.model
 //    println("in open method, ", model)
     logger = Logger.getLogger(getClass)
-    t = if (params.chwFlag) {
-      Tensor[Float](params.coreNum, params.C, params.H, params.W)
-    } else {
-      Tensor[Float](params.coreNum, params.H, params.W, params.C)
-    }
+//    t = if (params.chwFlag) {
+//
+//      Tensor[Float](params.coreNum, params.C, params.H, params.W)
+//    } else {
+//      Tensor[Float](params.coreNum, params.H, params.W, params.C)
+//    }
   }
 
   override def map(in: List[(String, String)]): List[(String, String)] = {
@@ -50,7 +51,7 @@ class FlinkInference(params: SerParams)
     val preProcessed = in.grouped(params.coreNum).flatMap(itemBatch => {
       itemBatch.indices.toParArray.map(i => {
         val uri = itemBatch(i)._1
-        val tensor = PreProcessing(itemBatch(i)._2)
+        val tensor = PreProcessing(itemBatch(i)._2).toTensor[Float]
         (uri, tensor)
       })
     })

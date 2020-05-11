@@ -56,7 +56,7 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
     val response = db.xreadGroup(
       "serving",
       "cli",
-      512,
+      params.coreNum,
       50,
       false,
       new SimpleEntry("image_stream", StreamEntryID.UNRECEIVED_ENTRY))

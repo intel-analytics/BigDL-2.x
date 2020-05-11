@@ -301,6 +301,11 @@
 <!--            <scope>${spark-scope}</scope>-->
 <!--        </dependency>-->
         <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-actor_2.11</artifactId>
+            <version>2.5.21</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_${scala.major.version}</artifactId>
             <version>${spark.version}</version>
@@ -411,6 +416,7 @@
             <artifactId>arrow-memory</artifactId>
             <version>0.16.0</version>
         </dependency>
+
     </dependencies>
 
     <build>
