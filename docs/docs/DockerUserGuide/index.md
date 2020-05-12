@@ -61,7 +61,7 @@ If you would like to speed up pulling this image on MacOS or Windows, find the d
 Then pull the image. It will be faster.
 
 ```bash
-sudo docker pull intelanalytics/hyper-zoo:latest
+sudo docker pull intelanalytics/analytics-zoo:latest
 ```
 
 ### 2. Launch Analytics Zoo Docker container
@@ -299,4 +299,4 @@ The Analytics-Zoo Docker images have been pre-built with below packages:
 
 ---
 
-In addition to the general Analytics Zoo docker image introduced in this page, the Analytics Zoo hyperzoo image is also provided, which is added K8s and cluster serving support. To learn about the hyperzoo imgae, visit [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/k8s/).
+In addition to the general Analytics Zoo docker image introduced in this page, the Analytics Zoo hyperzoo image is also pre-built, which is added K8s and cluster serving support. To learn about the hyperzoo imgae, visit [here](https://analytics-zoo.github.io/master/#ProgrammingGuide/k8s/).
