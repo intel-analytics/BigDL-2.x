@@ -13,7 +13,7 @@ Analytics Zoo hyperzoo image has been built to easily run applications on Kubern
 
 #### Launch pre-built hyperzoo k8s image
 
-1. Pull an Analytics Zoo k8s image:
+1. Pull an Analytics Zoo hyperzoo image from [dockerhub](https://hub.docker.com/r/intelanalytics/hyper-zoo/tags):
 
 ```bash
 sudo docker pull intelanalytics/hyper-zoo:latest
@@ -21,7 +21,7 @@ sudo docker pull intelanalytics/hyper-zoo:latest
 
 - Speed up pulling image by adding mirrors
 
-To speed up pulling the image from dockerhub, add a registry's mirror. If the docker version is higher than 1.12, config the docker daemon. Edit `/etc/docker/daemon.json` and add the registry-mirrors key and value:
+To speed up pulling the image from dockerhub in China, add a registry's mirror. For Linux OS (CentOS, Ubuntu etc), if the docker version is higher than 1.12, config the docker daemon. Edit `/etc/docker/daemon.json` and add the registry-mirrors key and value:
 
 ```bash
 {
@@ -46,7 +46,7 @@ sudo systemctl restart docker
 
 If your docker version is between 1.8 and 1.11, find the docker configuration which location depends on the operation system. Edit and add `DOCKER_OPTS="--registry-mirror=https://<my-docker-mirror-host>"`. Restart docker `sudo service docker restart`.
 
-If you would like to speed up pulling this image on mac or windows, find the docker setting and config registry-mirrors section by adding mirror host.
+If you would like to speed up pulling this image on MacOS or Windows, find the docker setting and config registry-mirrors section by specifying mirror host. Restart docker. 
 
 Then pull the image. It will be faster.
 
