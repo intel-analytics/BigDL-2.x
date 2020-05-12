@@ -490,14 +490,7 @@ class PythonLoaderFeatureSet[T: ClassTag](
                   throw e
                 }
             }
-            val inputs = if (inputName != "") {
-              toArrayTensor(PythonInterpreter.getValue[AnyRef](inputName))
-            } else {
-              // TODO: find true size
-              val batchSize = PythonInterpreter.getValue(s"${localLoaderName}.batch_size")
-                  .asInstanceOf[Long].toInt
-              Array(Tensor[Float](batchSize))
-            }
+            val inputs = toArrayTensor(PythonInterpreter.getValue[AnyRef](inputName))
             val miniBatch = if (targetName != "") {
               val targets = toArrayTensor(PythonInterpreter.getValue(targetName))
               MiniBatch[Float](inputs, targets)
@@ -539,14 +532,7 @@ class PythonLoaderFeatureSet[T: ClassTag](
             if (!alreadyNext) {
               PythonInterpreter.exec(nextCode)
             }
-            val inputs = if (inputName != "") {
-              toArrayTensor(PythonInterpreter.getValue(inputName))
-            } else {
-              // TODO: find true size
-              val batchSize = PythonInterpreter.getValue(s"${localLoaderName}.batch_size")
-                .asInstanceOf[Long].toInt
-              Array(Tensor[Float](batchSize))
-            }
+            val inputs = toArrayTensor(PythonInterpreter.getValue(inputName))
             val miniBatch = if (targetName != "") {
               val targets = toArrayTensor(PythonInterpreter.getValue(targetName))
               MiniBatch[Float](inputs, targets)

@@ -381,10 +381,6 @@ class FeatureSet(DataSet):
         jvalue = callZooFunc(self.bigdl_type, "transformFeatureSet", self.value, transformer)
         return FeatureSet(jvalue=jvalue)
 
-    def size(self):
-        jvalue = callZooFunc(self.bigdl_type, "size", self.value)
-        return jvalue
-
     def to_dataset(self):
         """
         To BigDL compatible DataSet
