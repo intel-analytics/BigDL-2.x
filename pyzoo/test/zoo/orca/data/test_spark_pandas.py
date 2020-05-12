@@ -108,13 +108,6 @@ class TestDataShards(ZooTestCase):
         partitions = data_shard.rdd.glom().collect()
         assert len(partitions) == 3
 
-    def test_partition_by_multi_column(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
-        data_shard.partition_by(cols=["location", "sale_price"])
-        partitions = data_shard.rdd.glom().collect()
-        assert len(partitions) == 4
-
 
 if __name__ == "__main__":
     pytest.main([__file__])
