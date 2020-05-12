@@ -59,11 +59,11 @@ case class LoaderParams(modelFolder: String = null,
 
 case class Result(id: String, value: String)
 
-class ClusterServingHelper {
+class ClusterServingHelper(_configPath: String = "config.yaml") {
   type HM = LinkedHashMap[String, String]
 
 //  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
-  val configPath = "config.yaml"
+  val configPath = _configPath
 
   var lastModTime: String = null
   val logger: Logger = Logger.getLogger(getClass)
@@ -81,6 +81,7 @@ class ClusterServingHelper {
   var coreNum: Int = 1
   var engineType: String = null
   var blasFlag: Boolean = false
+  var chwFlag: Boolean = true
 
   var dataType: DataTypeEnumVal = null
   var dataShape: Array[Array[Int]] = Array[Array[Int]]()
@@ -118,6 +119,7 @@ class ClusterServingHelper {
 
     parseModelType(modelFolder)
 
+
     /**
      * reserved here to change engine type
      * engine type should be able to change in run time
@@ -134,6 +136,9 @@ class ClusterServingHelper {
       new FileWriter(logF, true)
     }
 
+    if (modelType.startsWith("tensorflow")) {
+      chwFlag = false
+    }
     // parse data field
     val dataConfig = configList.get("data").asInstanceOf[HM]
     val redis = getYaml(dataConfig, "src", "localhost:6379")
@@ -191,8 +196,7 @@ class ClusterServingHelper {
     filter = getYaml(dataConfig, "filter", "topN(1)")
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
-    batchSize = getYaml(paramsConfig, "batch_size", "4").toInt
-
+    coreNum = getYaml(paramsConfig, "core_number", "4").toInt
 
     if (modelType == "caffe" || modelType == "bigdl") {
       if (System.getProperty("bigdl.engineType", "mklblas")
@@ -336,7 +340,7 @@ class ClusterServingHelper {
         model.doLoadTensorflow(weightPath, "savedModel", inputs, outputs)
       case "pytorch" => model.doLoadPyTorch(weightPath)
       case "keras" => logError("Keras currently not supported in Cluster Serving")
-      case "openvino" => model.doLoadOpenVINO(defPath, weightPath, batchSize)
+      case "openvino" => model.doLoadOpenVINO(defPath, weightPath, coreNum)
       case _ => logError("Invalid model type, please check your model directory")
     }
     model
