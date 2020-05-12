@@ -46,7 +46,7 @@ class TestDataShards(ZooTestCase):
     def test_read_local_json(self):
         file_path = os.path.join(self.resource_path, "orca/data")
         data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc,
-                                                 orient='columns', lines=True)
+                                                    orient='columns', lines=True)
         data = data_shard.collect()
         assert len(data) == 2, "number of shard should be 2"
         df = data[0]
@@ -74,7 +74,7 @@ class TestDataShards(ZooTestCase):
     def test_apply(self):
         file_path = os.path.join(self.resource_path, "orca/data")
         data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc,
-                                                 orient='columns', lines=True)
+                                                    orient='columns', lines=True)
         data = data_shard.collect()
         assert data[0]["value"].values[0] > 0, "value should be positive"
 
@@ -82,6 +82,7 @@ class TestDataShards(ZooTestCase):
             def process(df):
                 df[column_name] = df[column_name] * (-1)
                 return df
+
             return process
 
         data_shard.apply(negative, "value")
@@ -114,6 +115,12 @@ class TestDataShards(ZooTestCase):
         data_shard.partition_by(cols=["location", "sale_price"])
         partitions = data_shard.rdd.glom().collect()
         assert len(partitions) == 4
+
+    def test_unique(self):
+        file_path = os.path.join(self.resource_path, "orca/data")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        location_list = data_shard['location'].unique()
+        assert len(location_list) == 6
 
 
 if __name__ == "__main__":

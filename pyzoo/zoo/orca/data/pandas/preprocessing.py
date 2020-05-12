@@ -15,15 +15,15 @@
 #
 
 import random
-import ray
 from functools import reduce
+
+import ray
+from bigdl.util.common import get_node_and_core_number
 from pyspark.context import SparkContext
 
-from bigdl.util.common import get_node_and_core_number
-
-from zoo.ray import RayContext
 from zoo.orca.data.shard import RayDataShards, RayPartition, SparkDataShards
 from zoo.orca.data.utils import *
+from zoo.ray import RayContext
 
 
 def read_csv(file_path, context, **kwargs):
@@ -167,6 +167,7 @@ class RayPandasShard(object):
     """
     Actor to read csv/json file to Pandas DataFrame and manipulate data
     """
+
     def __init__(self, data=None):
         self.data = data
 
@@ -227,13 +228,18 @@ class RayPandasShard(object):
 
 
 class SparkPandasDataShards(SparkDataShards):
+    def __init__(self, rdd, rows=None, cols=None):
+        self.rdd = rdd
+        self.rows = rows
+        self.cols = cols
+
     def partition_by(self, cols, num_partitions=None):
         # if partition by a column
         if isinstance(cols, str):
             # change data to key value pairs
             rdd = self.rdd.flatMap(
                 lambda df: df.apply(lambda row: (row[cols], row.values.tolist()), axis=1)
-                .values.tolist())
+                    .values.tolist())
             # partition with key
             partitioned_rdd = rdd.partitionBy(num_partitions)
         # partition by column list
@@ -242,7 +248,7 @@ class SparkPandasDataShards(SparkDataShards):
             rdd = self.rdd.flatMap(
                 lambda df: df.apply(
                     lambda row:
-                    (reduce(lambda col1, col2: str(row[col1])+ "_" + str(row[col2]), cols),
+                    (reduce(lambda col1, col2: str(row[col1]) + "_" + str(row[col2]), cols),
                      row.values.tolist()), axis=1).values.tolist())
             # partition with key
             partitioned_rdd = rdd.partitionBy(num_partitions)
@@ -260,6 +266,37 @@ class SparkPandasDataShards(SparkDataShards):
             else:
                 # no data in this partition
                 return []
+
         # merge records to df in each partition
         self.rdd = partitioned_rdd.mapPartitions(merge)
         return self
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            # select row
+            self.rows = key
+        if isinstance(key, str):
+            # select column
+            self.cols = key
+        return self
+
+    @staticmethod
+    def _get_data(df, rows=None, columns=None):
+        if rows is None and columns is None:
+            # no need to slice, get whole data
+            return df
+        elif columns is None:
+            # slice rows
+            return df.loc[rows]
+        elif rows is None:
+            # slice columns
+            return df.loc[:, columns]
+        else:
+            return df.loc[rows, columns]
+
+    def unique(self):
+        # rdd = self.rdd.map(lambda df: self._get_data(df, self.rows, self.cols).unique())
+        rdd = self.rdd.map(lambda df: self._get_data(columns='location').unique().tolist())
+        data1 = rdd.collect()
+        result = rdd.reduce(lambda list1, list2: list(set(list1 + list2)))
+        return result
