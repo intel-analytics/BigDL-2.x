@@ -57,7 +57,7 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
       "serving",
       "cli",
       params.coreNum,
-      50,
+      1,
       false,
       new SimpleEntry("image_stream", StreamEntryID.UNRECEIVED_ENTRY))
 //    logger.info(s">>> get from source readed redis ${System.currentTimeMillis()} ms")

@@ -27,15 +27,21 @@ object RedisIO {
   val logger = Logger.getLogger(getClass)
   def getRedisClient(redisPool: JedisPool): Jedis = {
     var db: Jedis = null
+    var cnt: Int = 0
     while (db == null) {
       try {
         db = redisPool.getResource
       }
       catch {
         case e: JedisConnectionException =>
-          logger.info("Can not connect to Redis client, maybe max number of clients is reached." +
+          logger.info(s"Redis client can not connect to ${redisPool.}, maybe max number of clients is reached." +
             "Waiting, if you always receive this, please stop your service and report bug.")
-          Thread.sleep(100)
+          e.printStackTrace()
+          cnt += 1
+          if (cnt >= 10) {
+            throw new Error("can not get redis from the pool")
+          }
+          Thread.sleep(500)
       }
       Thread.sleep(10)
     }
