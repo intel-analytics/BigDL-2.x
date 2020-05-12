@@ -216,7 +216,7 @@ class RayPandasShard(object):
         self.data = pd.concat(df_list)
         return 0
 
-    def transform_shard(self, func, *args):
+    def transform(self, func, *args):
         self.data = func(self.data, *args)
         return 0
 

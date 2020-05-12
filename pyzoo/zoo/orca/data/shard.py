@@ -56,7 +56,7 @@ class RayDataShards(DataShards):
         :return: this DataShard
         """
         import ray
-        done_ids, undone_ids = ray.wait([shard.transform_shard.remote(func, *args)
+        done_ids, undone_ids = ray.wait([shard.transform.remote(func, *args)
                                          for shard in self.shard_list],
                                         num_returns=len(self.shard_list))
         assert len(undone_ids) == 0
