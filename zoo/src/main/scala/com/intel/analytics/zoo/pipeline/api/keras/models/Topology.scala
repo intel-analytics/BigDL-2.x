@@ -1113,15 +1113,12 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
      * TODO: support tfnet.
      */
     logger.info(s"${model} isTorchnet is ${TorchNet.isTorchNet(model)}")
-    println(s"${model} isTorchnet is ${TorchNet.isTorchNet(model)}")
-    val torchNetOptimize = true
+    val torchNetOptimize = TorchNet.isTorchNet(model)
     val modelPerExecutor = if (torchNetOptimize) {
       require(EngineRef.getEngineType() != MklDnn, "torchnet shouldn't use MKLDNN engine.")
       val numOmpThread = distDataset.originRDD().sparkContext
         .getConf.get("spark.executorEnv.OMP_NUM_THREADS").toInt
       logger.info(s"torchnet will use ${numOmpThread} OMP threads.")
-      //System.setProperty("bigdl.ModelBroadcastFactory",
-      //  "com.intel.analytics.zoo.pipeline.api.net.TorchNet2BroadcastFactory")
       System.setProperty("bigdl.utils.Engine.defaultPoolSize",
         "1")
       1

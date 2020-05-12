@@ -358,8 +358,8 @@ object PythonLoaderFeatureSet{
       PythonInterpreter.set("pyjarray", bcDataSet.value)
 
       val localLoaderName = getLocalLoader(loaderName)
-      // when nodeNumber == 1, we use the origin dataset.
-      // when nodeNumber > 1, we split origin dataset.
+      // when nodeNumber == 1, we use the origin dataloader.
+      // when nodeNumber > 1, we use Sampler.
       val pytorchSelect = if(nodeNumber == 1) {
         ""
       } else {
@@ -382,7 +382,7 @@ object PythonLoaderFeatureSet{
       val load = s"""
         |by${partId} = bytes(b % 256 for b in pyjarray)
         |func${partId} = CloudPickleSerializer.loads(CloudPickleSerializer, by${partId})
-        |if(callable(func${partId})):
+        |if(callable(func${partId})): # tf dataset
         |  ${localLoaderName} = func${partId}().shard(${nodeNumber}, ${partId})
         |else:  #pytorch dataset
         |  ${localLoaderName} = func${partId}

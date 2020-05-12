@@ -93,8 +93,8 @@ def main():
         batch_size=args.test_batch_size, shuffle=False)
 
     # sc = init_spark_on_local(cores=1, conf={"spark.driver.memory": "20g"})
-    num_executors = 3
-    num_cores_per_executor = 4
+    num_executors = 1
+    num_cores_per_executor = 1
     hadoop_conf_dir = os.environ.get('HADOOP_CONF_DIR')
     init_spark_on_yarn(
         hadoop_conf=hadoop_conf_dir,

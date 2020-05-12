@@ -25,8 +25,8 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFeatureToMiniBatch}
 import com.intel.analytics.bigdl.utils.Table
-import com.intel.analytics.zoo.common.{PythonZoo}
-import com.intel.analytics.zoo.feature.{FeatureSet}
+import com.intel.analytics.zoo.common.PythonZoo
+import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.pipeline.estimator.Estimator
 
 import scala.reflect.ClassTag
@@ -106,14 +106,6 @@ class PythonEstimator[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
     estimator.train(trainSet, criterion,
       Option(endTrigger), Option(checkPointTrigger),
       validationSet, Option(validationMethod).map(_.asScala.toArray).orNull)
-  }
-
-  def estimatorEvaluateMiniBatch(
-      estimator: Estimator[T],
-      validationMiniBatch: FeatureSet[MiniBatch[T]],
-      validationMethod: JList[ValidationMethod[T]]
-      ): Map[ValidationMethod[T], ValidationResult] = {
-    estimator.evaluate(validationMiniBatch, validationMethod.asScala.toArray)
   }
 
   def estimatorTrainImageFeature(estimator: Estimator[T],
