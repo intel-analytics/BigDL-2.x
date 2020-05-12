@@ -128,8 +128,10 @@ class SparkDataShards(DataShards):
                 rdd = self.rdd.flatMap(
                     lambda df: df.apply(lambda row: (row[cols], row.values.tolist()), axis=1)
                     .values.tolist())
+                
+                partition_num = self.rdd.getNumPartitions() if not num_partitions else num_partitions
                 # partition with key
-                partitioned_rdd = rdd.partitionBy(num_partitions)
+                partitioned_rdd = rdd.partitionBy(partition_num)
             else:
                 raise Exception("Only support partition by a column name")
 
