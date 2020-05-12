@@ -150,8 +150,8 @@ if __name__ == '__main__':
                                    optimizer_params={'learning_rate': opt.learning_rate},
                                    log_interval=opt.log_interval, seed=42)
     trainer = Estimator(config, data_creator=get_data_iters, model_creator=get_model,
-                           loss_creator=get_loss, metrics_creator=get_metrics,
-                           num_workers=opt.num_workers, num_servers=opt.num_servers)
+                        loss_creator=get_loss, metrics_creator=get_metrics,
+                        num_workers=opt.num_workers, num_servers=opt.num_servers)
     trainer.train(nb_epoch=opt.epochs)
     ray_ctx.stop()
     sc.stop()
