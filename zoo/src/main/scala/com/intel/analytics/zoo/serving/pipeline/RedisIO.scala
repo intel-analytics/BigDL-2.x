@@ -26,11 +26,11 @@ import scala.collection.JavaConverters._
 object RedisIO {
   val logger = Logger.getLogger(getClass)
   def getRedisClient(redisPool: JedisPool): Jedis = {
-    var db: Jedis = null
+    var jedis: Jedis = null
     var cnt: Int = 0
-    while (db == null) {
+    while (jedis == null) {
       try {
-        db = redisPool.getResource
+        jedis = redisPool.getResource
       }
       catch {
         case e: JedisConnectionException =>
@@ -45,7 +45,7 @@ object RedisIO {
       }
       Thread.sleep(10)
     }
-    return db
+    return jedis
   }
   def writeHashMap(ppl: Pipeline, key: String, value: String): Unit = {
     val hKey = "result:" + key

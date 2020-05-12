@@ -27,7 +27,7 @@ import redis.clients.jedis.{Jedis, JedisPool}
 
 class FlinkRedisSink(params: SerParams) extends RichSinkFunction[List[(String, String)]] {
   var redisPool: JedisPool = null
-  var db: Jedis = null
+  var jedis: Jedis = null
   var logger: Logger = null
   override def open(parameters: Configuration): Unit = {
     redisPool = new JedisPool(params.redisHost, params.redisPort)
@@ -42,11 +42,11 @@ class FlinkRedisSink(params: SerParams) extends RichSinkFunction[List[(String, S
 
   override def invoke(value: List[(String, String)]): Unit = {
 //    logger.info(s"Preparing to write result to redis")
-    db = RedisIO.getRedisClient(redisPool)
-    val ppl = db.pipelined()
+    jedis = RedisIO.getRedisClient(redisPool)
+    val ppl = jedis.pipelined()
     value.foreach(v => RedisIO.writeHashMap(ppl, v._1, v._2))
     ppl.sync()
-    db.close()
+    jedis.close()
     logger.info(s"${value.size} records written to redis")
 
   }

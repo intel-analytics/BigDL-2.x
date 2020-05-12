@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.serving.engine
 
 import java.util.AbstractMap.SimpleEntry
+import java.util.UUID
 
 import com.intel.analytics.zoo.serving.pipeline.{RedisIO, RedisUtils}
 import com.intel.analytics.zoo.serving.utils.{FileUtils, SerParams}
@@ -31,16 +32,16 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
   @volatile var isRunning = true
 
   var redisPool: JedisPool = null
-  var db: Jedis = null
+  var jedis: Jedis = null
   var logger: Logger = null
 
 
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
     redisPool = new JedisPool(params.redisHost, params.redisPort)
-    db = RedisIO.getRedisClient(redisPool)
+    jedis = RedisIO.getRedisClient(redisPool)
     try {
-      db.xgroupCreate("image_stream", "serving",
+      jedis.xgroupCreate("image_stream", "serving",
         new StreamEntryID(0, 0), true)
     } catch {
       case e: Exception =>
@@ -53,9 +54,11 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
     .SourceContext[List[(String, String)]]): Unit = while (isRunning) {
 //    logger.info(s">>> get from source begin ${System.currentTimeMillis()} ms")
     val start = System.nanoTime()
-    val response = db.xreadGroup(
-      "serving",
-      "cli",
+    val groupName = "serving"
+    val consumerName = "consumer-" + UUID.randomUUID().toString
+    val response = jedis.xreadGroup(
+      groupName,
+      consumerName,
       params.coreNum,
       1,
       false,
@@ -70,7 +73,7 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
         }).toList
         sourceContext.collect(it)
       }
-      RedisUtils.checkMemory(db, 0.6, 0.5)
+      RedisUtils.checkMemory(jedis, 0.6, 0.5)
 
     }
     if (FileUtils.checkStop()) {
@@ -81,7 +84,7 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
   }
 
   override def cancel(): Unit = {
-    db.close()
+    jedis.close()
     redisPool.close()
   }
 
