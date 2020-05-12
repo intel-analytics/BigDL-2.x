@@ -16,7 +16,12 @@
 
 package com.intel.analytics.zoo.serving
 
-import com.intel.analytics.zoo.serving.frontend._
+import java.util.concurrent.{CountDownLatch, Executors}
+
+import com.google.common.util.concurrent.RateLimiter
+import com.intel.analytics.zoo.serving.http._
+import com.netflix.concurrency.limits.executors.BlockingAdaptiveExecutor
+import com.netflix.concurrency.limits.limiter.SimpleLimiter
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter with Supportive {
@@ -40,6 +45,50 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
       JsonUtil.fromJson(classOf[Instances], json)
     }
     println(obj)
+  }
+
+  "RateLimiter" should "work" in {
+    val rateLimiter = RateLimiter.create(5)
+    val executorService = Executors.newFixedThreadPool(5)
+    val nTasks = 100
+    val countDownLatch = new CountDownLatch(nTasks)
+    val start = System.currentTimeMillis()
+    List.range(0, nTasks).map(i => {
+      executorService.submit(new Runnable {
+        override def run(): Unit = {
+          rateLimiter.acquire(1)
+          Thread.sleep(1000)
+          println(Thread.currentThread().getName() + " gets job " + i + " done")
+          countDownLatch.countDown()
+        }
+      })
+    })
+    executorService.shutdown();
+    countDownLatch.await();
+    val end = System.currentTimeMillis();
+    println("10 jobs gets done by 5 threads concurrently in " + (end - start) + " milliseconds")
+
+    val executor = new BlockingAdaptiveExecutor(
+      SimpleLimiter.newBuilder()
+        .build())
+
+    val countDownLatch2 = new CountDownLatch(nTasks)
+    val start2 = System.currentTimeMillis()
+    List.range(0, nTasks).map(i => {
+      executor.execute(new Runnable {
+        override def run(): Unit = {
+          Thread.sleep(1000)
+          println(Thread.currentThread().getName() + " gets job " + i + " done")
+          countDownLatch2.countDown()
+        }
+      })
+    })
+    countDownLatch2.await();
+    val end2 = System.currentTimeMillis();
+    println("10 jobs gets done by 5 threads concurrently in " + (end2 - start2) + " milliseconds")
+
+
+
   }
 
 }

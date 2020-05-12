@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.serving
 import java.util
 import java.util.{AbstractMap, UUID}
 
-import com.intel.analytics.zoo.serving.frontend.{BytesPredictionInput, Supportive}
+import com.intel.analytics.zoo.serving.http.{BytesPredictionInput, Supportive}
 import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, StreamEntryID}
 
 import scala.collection.JavaConverters._
@@ -35,12 +35,16 @@ object MockClusterServing extends App with Supportive {
   val redisInputQueue = "image_stream"
   val redisOutputQueue = "result:"
 
-  var redisStreamBatchCount = 32
+  var redisStreamBatchCount = 56
   var redisStreamBlockMillis = 1
   val stream = new AbstractMap.SimpleImmutableEntry[String, StreamEntryID](
     redisInputQueue, StreamEntryID.UNRECEIVED_ENTRY)
   val groupName = "consumer_group"
   val consumerName = s"consumer_${UUID.randomUUID().toString}"
+
+  timing("flushall")() {
+    jedis.flushAll()
+  }
 
   timing(s"$this create redis consumer group")() {
     createConsumerGroupIfNotExist(jedis, redisInputQueue, groupName, StreamEntryID.LAST_ENTRY)
@@ -89,7 +93,12 @@ object MockClusterServing extends App with Supportive {
     if (items.size != 0) {
       timing(s"$this [PUT] ${items.size} results to redis")() {
         val pipeline = jedis.pipelined()
-        Thread.sleep(100)
+        if(items.size < 10) {
+          Thread.sleep(50)
+        } else {
+          val time = (items.size / 10) * 100
+          Thread.sleep(time)
+        }
         items.map(item => {
           val key = s"${redisOutputQueue}${item.getId()}"
           val value = new util.HashMap[String, String]()

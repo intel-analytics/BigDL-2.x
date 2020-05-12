@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.serving
 
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{CountDownLatch, Executors, TimeUnit}
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -24,7 +24,9 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import com.intel.analytics.zoo.serving.frontend.Supportive
+import com.codahale.metrics.MetricRegistry
+import com.intel.analytics.zoo.serving.http.FrontEndApp.metrics
+import com.intel.analytics.zoo.serving.http.{JsonUtil, ServingTimerMetrics, Supportive}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Await
@@ -77,13 +79,56 @@ object MockServingHttpClient extends App with Supportive {
     // val rawResponse = handle(rawRequest)
     // println(s"$rawResponse")
 
-    val wrongResponse = handle(wrongRequest)
-    println(s"$wrongResponse")
+    // val wrongResponse = handle(wrongRequest)
+    // println(s"$wrongResponse")
 
-    val jsonResponse = handle(jsonRequest)
-    println(s"$jsonResponse")
+    // val jsonResponse = handle(jsonRequest)
+    // println(s"$jsonResponse")
 
-    system.terminate()
+    val metrics = new MetricRegistry
+    val timer = metrics.timer("timer")
+    val n = 1000
+    val nTasks = 1000 * n
+    val parallism = 50
+    val executorService = Executors.newFixedThreadPool(parallism)
+    val countDownLatch = new CountDownLatch(3000)
+    var num = 0
+    val start = System.currentTimeMillis()
+    val results = average(s"$nTasks tasks with $parallism parallism")(nTasks)() {
+      val results = List.range(0, nTasks).map(i => {
+        val task = new Runnable {
+          var result = 0
+          override def run(): Unit = {
+            val rawResponse = silent("")(timer) {
+              handle(rawRequest)
+            }
+            rawResponse._1 / 100 == 2 match {
+              case true => result = 1; countDownLatch.countDown()
+              case false => result = 0
+            }
+            println(s"################ $i: $rawResponse, $result")
+          }
+        }
+        executorService.submit(task)
+        task
+      })
+      executorService.shutdown()
+      countDownLatch.await()
+      results.map(_.result)
+    }
+    val end = System.currentTimeMillis()
+    val keys = metrics.getTimers().keySet()
+    val servingMetrics = keys.toArray.map(key => {
+      val timer = metrics.getTimers().get(key)
+      ServingTimerMetrics(key.toString, timer)
+    }).toList
+    println(JsonUtil.toJson(servingMetrics))
+    val successed = results.filter(_ == 1).size
+    val failed = results.filter(_ == 0).size
+    println(s"successed throughput: ${successed * 1000.0 / (end - start)}, $successed, $failed")
+
+
+    // system.terminate()
   }
 
   def handle(request: HttpRequest): (Int, String) = {
