@@ -30,10 +30,11 @@ import argparse
 import gym
 import os
 
+
 from ray.rllib.agents.dqn.dqn import DQNTrainer
 from ray.rllib.agents.dqn.dqn_policy import DQNTFPolicy
 from ray.rllib.agents.ppo.ppo import PPOTrainer
-from ray.rllib.agents.ppo.ppo_policy import PPOTFPolicy
+from ray.rllib.agents.ppo.ppo_tf_policy import PPOTFPolicy
 from ray.rllib.tests.test_multi_agent_env import MultiCartpole
 from ray.tune.logger import pretty_print
 from ray.tune.registry import register_env
@@ -134,11 +135,6 @@ if __name__ == "__main__":
             "gamma": 0.95,
             "n_step": 3,
         })
-
-    # disable DQN exploration when used by the PPO trainer
-    ppo_trainer.optimizer.foreach_worker(
-        lambda ev: ev.for_policy(
-            lambda pi: pi.set_epsilon(0.0), policy_id="dqn_policy"))
 
     # You should see both the printed X and Y approach 200 as this trains:
     # info:

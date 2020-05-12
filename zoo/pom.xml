@@ -304,6 +304,16 @@
             <scope>${bigdl-scope}</scope>
         </dependency>
         <dependency>
+            <groupId>ml.dmlc</groupId>
+            <artifactId>xgboost4j</artifactId>
+            <version>0.90</version>
+        </dependency>
+        <dependency>
+            <groupId>ml.dmlc</groupId>
+            <artifactId>xgboost4j-spark</artifactId>
+            <version>0.90</version>
+        </dependency>
+        <dependency>
             <groupId>org.spark-project.spark</groupId>
             <artifactId>unused</artifactId>
             <version>1.0.0</version>
@@ -369,6 +379,16 @@
             <!--<artifactId>spark-redis</artifactId>-->
             <!--<version>2.4.0</version>-->
         <!--</dependency>-->
+        <dependency>
+            <groupId>org.apache.arrow</groupId>
+            <artifactId>arrow-vector</artifactId>
+            <version>0.16.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.arrow</groupId>
+            <artifactId>arrow-memory</artifactId>
+            <version>0.16.0</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -511,6 +531,14 @@
                             <pattern>com.google.protobuf</pattern>
                             <shadedPattern>com.intel.analytics.zoo.shaded.protobuf</shadedPattern>
                         </relocation>
+                        <relocation>
+                            <pattern>io.netty</pattern>
+                            <shadedPattern>com.intel.analytics.zoo.shaded.io.netty</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>org.apache.arrow</pattern>
+                            <shadedPattern>com.intel.analytics.zoo.shaded.arrow</shadedPattern>
+                        </relocation>
                         <!--<relocation>-->
                             <!--<pattern>org.tensorflow</pattern>-->
                             <!--<shadedPattern>com.intel.analytics.zoo.shaded.tensorflow</shadedPattern>-->
@@ -526,6 +554,8 @@
                                 <includes>
                                     <include>org.spark-project.spark:unused</include>
                                     <include>com.google.protobuf</include>
+                                    <include>io.netty</include>
+                                    <include>org.apache.arrow</include>
                                     <!--<include>${tf-shade}</include>-->
                                 </includes>
                             </artifactSet>

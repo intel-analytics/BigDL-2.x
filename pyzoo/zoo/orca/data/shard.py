@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.xshard.utils import *
+from zoo.orca.data.utils import *
 
 
 class DataShards(object):
@@ -98,3 +98,19 @@ class RayPartition(object):
 
     def get_data(self):
         return [shard.get_data.remote() for shard in self.shard_list]
+
+
+class SparkDataShards(DataShards):
+    def __init__(self, rdd):
+        self.rdd = rdd
+
+    def apply(self, func, *args):
+        self.rdd = self.rdd.map(func(*args))
+        return self
+
+    def collect(self):
+        return self.rdd.collect()
+
+    def repartition(self, num_partitions):
+        self.rdd = self.rdd.repartition(num_partitions)
+        return self

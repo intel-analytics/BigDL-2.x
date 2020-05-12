@@ -14,11 +14,12 @@
 # limitations under the License.
 #
 
-import multiprocessing
+
 import os
-import random
 import re
+import random
 import signal
+import multiprocessing
 
 from pyspark import BarrierTaskContext
 from zoo.ray.process import session_execute, ProcessMonitor
@@ -30,7 +31,6 @@ class JVMGuard:
     """
     The registered pids would be put into the killing list of Spark Executor.
     """
-
     @staticmethod
     def register_pids(pids):
         import traceback
@@ -117,7 +117,7 @@ class RayServiceFuncGenerator(object):
 
     def _gen_master_command(self):
         command = "{} start --head " \
-                  "--include-webui --redis-port {} " \
+                  "--include-webui true --redis-port {} " \
                   "--redis-password {} --num-cpus {} {}". \
             format(self.ray_exec, self.redis_port, self.password,
                    self.ray_node_cpu_cores, self.labels)
@@ -133,7 +133,7 @@ class RayServiceFuncGenerator(object):
                             labels="",
                             object_store_memory=None,
                             extra_params=None):
-        command = "{} start --redis-address {} --redis-password  {} --num-cpus {} {}  ".format(
+        command = "{} start --address {} --redis-password  {} --num-cpus {} {}  ".format(
             ray_exec, redis_address, password, ray_node_cpu_cores, labels)
         return RayServiceFuncGenerator._enrich_command(command=command,
                                                        object_store_memory=object_store_memory,
@@ -191,19 +191,24 @@ class RayContext(object):
     def __init__(self, sc, redis_port=None, password="123456", object_store_memory=None,
                  verbose=False, env=None, extra_params=None):
         """
-        The RayContext would init a ray cluster on top of the configuration of SparkContext.
-        For spark cluster mode: The number of raylets is equal to number of executors.
-        For Spark local mode: The number of raylets is controlled by local_ray_node_num.
-        CPU cores for each is raylet equals to spark_cores/local_ray_node_num.
-        :param sc:
+        The RayContext would initiate a ray cluster on top of the configuration of SparkContext.
+        After creating RayContext, call the init method to set up the cluster.
+
+        - For Spark local mode: The total available cores is equal to Spark local cores.
+        - For Spark cluster mode: The number of raylets is equal to number of executors.
+        The number of available cores for each raylet is equal to executor cores.
+
+        :param sc: An instance of SparkContext.
         :param redis_port: redis port for the "head" node.
-               The value would be randomly picked if not specified.
-        :param password: [optional] password for the redis.
-        :param object_store_memory: Memory size for the object_store.
-        :param verbose: True for more logs.
-        :param env: The environment variable dict for running Ray.
-        :param extra_params: key value dictionary for extra options to launch Ray.
-                             i.e extra_params={"temp-dir": "/tmp/ray2/"}
+        The value would be randomly picked if not specified.
+        :param password: Password for the redis. Default to be "123456" if not specified.
+        :param object_store_memory: The memory size for ray object_store in string.
+        This can be specified in bytes(b), kilobytes(k), megabytes(m) or gigabytes(g).
+        For example, 50b, 100k, 250m, 30g.
+        :param verbose: True for more logs when starting ray. Default is False.
+        :param env: The environment variable dict for running ray processes. Default is None.
+        :param extra_params: The key value dict for extra options to launch ray.
+        For example, extra_params={"temp-dir": "/tmp/ray/"}
         """
         assert sc is not None, "sc cannot be None, please create a SparkContext first"
         self.sc = sc
@@ -269,7 +274,7 @@ class RayContext(object):
 
     def purge(self):
         """
-        Invoke ray stop to clean ray processes
+        Invoke ray stop to clean ray processes.
         """
         if self.stopped:
             print("This instance has been stopped.")
@@ -291,7 +296,13 @@ class RayContext(object):
         else:
             return int(local_symbol)
 
-    def init(self):
+    def init(self, driver_cores=0):
+        """
+        Initiate the ray cluster.
+
+        :param driver_cores: The number of cores for the raylet on driver for Spark cluster mode.
+        Default is 0 and in this case the local driver wouldn't have any ray workload.
+        """
         self.stopped = False
         if self.is_local:
             if self.env:
@@ -302,7 +313,7 @@ class RayContext(object):
                      resources=self.extra_params)
         else:
             self._start_cluster()
-            self._start_driver()
+            self._start_driver(num_cores=driver_cores)
 
     def _start_cluster(self):
         print("Start to launch ray on cluster")
@@ -316,14 +327,18 @@ class RayContext(object):
         self.redis_address = self.ray_processesMonitor.master.master_addr
         return self
 
-    def _start_restricted_worker(self, num_cores=0):
+    def _start_restricted_worker(self, num_cores, node_ip_address):
+
+        extra_param = {"node-ip-address": node_ip_address}
+        if self.extra_params is not None:
+            extra_param.update(self.extra_params)
         command = RayServiceFuncGenerator._get_raylet_command(
             redis_address=self.redis_address,
             ray_exec="ray ",
             password=self.redis_password,
             ray_node_cpu_cores=num_cores,
             object_store_memory=self.object_store_memory,
-            extra_params=self.extra_params)
+            extra_params=extra_param)
         print("Executing command: {}".format(command))
         process_info = session_execute(command=command, fail_fast=True)
         ProcessMonitor.register_shutdown_hook(pgid=process_info.pgid)
@@ -332,7 +347,15 @@ class RayContext(object):
         print("Start to launch ray driver on local")
         import ray
         if not self.is_local:
-            self._start_restricted_worker(num_cores=num_cores)
-        ray.shutdown()
-        ray.init(redis_address=self.redis_address,
-                 redis_password=self.ray_service.password)
+            import ray.services
+            node_ip = ray.services.get_node_ip_address(self.redis_address)
+            self._start_restricted_worker(num_cores=num_cores,
+                                          node_ip_address=node_ip)
+            ray.shutdown()
+            ray.init(address=self.redis_address,
+                     redis_password=self.ray_service.password,
+                     node_ip_address=node_ip)
+        else:
+            ray.shutdown()
+            ray.init(address=self.redis_address,
+                     redis_password=self.ray_service.password)
