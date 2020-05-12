@@ -34,7 +34,7 @@ object RedisIO {
       }
       catch {
         case e: JedisConnectionException =>
-          logger.info(s"Redis client can not connect to ${redisPool.}, maybe max number of clients is reached." +
+          logger.info(s"Redis client can not connect, maybe max number of clients is reached." +
             "Waiting, if you always receive this, please stop your service and report bug.")
           e.printStackTrace()
           cnt += 1
