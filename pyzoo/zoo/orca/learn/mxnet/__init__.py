@@ -13,3 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+from .estimator import Estimator
+from .utils import create_trainer_config

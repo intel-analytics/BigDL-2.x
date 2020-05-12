@@ -19,13 +19,13 @@ import logging
 import subprocess
 import ray.services
 from dmlc_tracker.tracker import get_host_ip
-from zoo.ray.mxnet.mxnet_runner import MXNetRunner
-from zoo.ray.mxnet.utils import find_free_port
+from zoo.orca.learn.mxnet.mxnet_runner import MXNetRunner
+from zoo.orca.learn.mxnet.utils import find_free_port
 
 
-class MXNetTrainer(object):
+class Estimator(object):
     """
-    MXNetTrainer provides an automatic setup for synchronous distributed MXNet training.
+    MXNet Estimator provides an automatic setup for synchronous distributed MXNet training.
 
     :param config: A dictionary for training configurations. Keys must include the following:
     batch_size, optimizer, optimizer_params, log_interval.
