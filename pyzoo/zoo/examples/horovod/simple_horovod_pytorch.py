@@ -219,4 +219,4 @@ if __name__ == "__main__":
         ray_ctx.init()
 
     runner = HorovodRayTrainer(ray_ctx)
-    runner.run(func=run_horovod)
+    runner.train(func=run_horovod)

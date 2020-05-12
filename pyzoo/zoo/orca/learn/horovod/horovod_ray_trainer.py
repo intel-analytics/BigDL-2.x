@@ -205,6 +205,6 @@ class HorovodRayTrainer:
             local_envs["HOROVOD_CROSS_RANK"] = str(alloc_info.cross_rank)
             local_envs["HOROVOD_CROSS_SIZE"] = str(alloc_info.cross_size)
 
-    def run(self, func):
+    def train(self, func):
         ray.wait([self.remote_workers[i].run.remote(self.per_worker_envs[i], func)
                   for i in range(self.num_nodes)])
