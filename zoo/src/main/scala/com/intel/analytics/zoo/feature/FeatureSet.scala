@@ -366,13 +366,13 @@ object PythonLoaderFeatureSet{
         s"""
            |from torch.utils.data.distributed import DistributedSampler
            |from torch.utils.data.sampler import RandomSampler
+           |from zoo.pipeline.api.torch.utils import DistributedSequentialSampler
            |if isinstance(${localLoaderName}.sampler, RandomSampler):
-           |    shuffle=True
+           |    ${localLoaderName}_sampler=DistributedSampler(${localLoaderName}.dataset,
+           |                                                  ${nodeNumber}, ${partId}, True)
            |else:
-           |    shuffle=False
-           |${localLoaderName}_sampler = DistributedSampler(${localLoaderName}.dataset,
-           |                                                ${nodeNumber}, ${partId},
-           |                                                shuffle)
+           |    ${localLoaderName}_sampler=DistributedSequentialSampler(${localLoaderName}.dataset,
+           |                                                  ${nodeNumber}, ${partId})
            |${localLoaderName} = torch.utils.data.DataLoader(${localLoaderName}.dataset,
            |                                                 ${localLoaderName}.batch_size,
            |                                                 sampler=${localLoaderName}_sampler)

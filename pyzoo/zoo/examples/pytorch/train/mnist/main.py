@@ -90,7 +90,7 @@ def main():
                            transforms.ToTensor(),
                            transforms.Normalize((0.1307,), (0.3081,))
                        ])),
-        batch_size=args.test_batch_size, shuffle=True)
+        batch_size=args.test_batch_size, shuffle=False)
 
     # sc = init_spark_on_local(cores=1, conf={"spark.driver.memory": "20g"})
     num_executors = 3
