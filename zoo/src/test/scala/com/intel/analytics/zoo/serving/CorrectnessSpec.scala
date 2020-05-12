@@ -135,7 +135,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
       res_length = res_list.size()
       Thread.sleep(10000)
       cnt += 1
-      if (cnt >= 50 || (cnt >= 25 && res_length == 0)) {
+      if (cnt >= 150 || (cnt >= 25 && res_length == 0)) {
         logger.info(s"count is ${cnt}")
         throw new Error("validation fails, data maybe lost")
       }
