@@ -97,25 +97,6 @@ class TestDataShards(ZooTestCase):
         df = data[0]
         assert "location" in df.columns, "location is not in columns"
 
-    def test_partition_by_single_column(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
-        data_shard.partition_by(cols="location")
-        partitions = data_shard.rdd.glom().collect()
-        assert len(partitions) == 4
-
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
-        data_shard.partition_by(cols="location", num_partitions=3)
-        partitions = data_shard.rdd.glom().collect()
-        assert len(partitions) == 3
-
-    def test_partition_by_multi_column(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
-        data_shard.partition_by(cols=["location", "sale_price"])
-        partitions = data_shard.rdd.glom().collect()
-        assert len(partitions) == 4
-
     def test_unique(self):
         file_path = os.path.join(self.resource_path, "orca/data")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)

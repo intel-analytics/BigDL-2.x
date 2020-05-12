@@ -114,3 +114,18 @@ class SparkDataShards(DataShards):
     def repartition(self, num_partitions):
         self.rdd = self.rdd.repartition(num_partitions)
         return self
+
+    def __getitem__(self, key):
+        rdd = self.rdd.map(lambda data: data[key])
+        return SparkDataShards(rdd)
+
+    def unique(self):
+        data = self.rdd.first()
+        import pandas as pd
+        if isinstance(data, pd.Series) or isinstance(data, pd.Index):
+            rdd = self.rdd.map(lambda x: x.unique().tolist())
+            result = rdd.reduce(lambda list1, list2: list(set(list1 + list2)))
+            return result
+        else:
+            # we may support numpy or other types later
+            raise Exception("Currently only support unique() on Datashards of Pandas Series or Index")

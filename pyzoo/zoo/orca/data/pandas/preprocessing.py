@@ -158,7 +158,7 @@ def read_file_spark(context, file_path, file_type, **kwargs):
 
         pd_rdd = rdd.mapPartitions(loadFile)
 
-    data_shards = SparkPandasDataShards(pd_rdd)
+    data_shards = SparkDataShards(pd_rdd)
     return data_shards
 
 
@@ -225,78 +225,3 @@ class RayPandasShard(object):
 
     def get_data(self):
         return self.data
-
-
-class SparkPandasDataShards(SparkDataShards):
-    def __init__(self, rdd, rows=None, cols=None):
-        self.rdd = rdd
-        self.rows = rows
-        self.cols = cols
-
-    def partition_by(self, cols, num_partitions=None):
-        # if partition by a column
-        if isinstance(cols, str):
-            # change data to key value pairs
-            rdd = self.rdd.flatMap(
-                lambda df: df.apply(lambda row: (row[cols], row.values.tolist()), axis=1)
-                    .values.tolist())
-            # partition with key
-            partitioned_rdd = rdd.partitionBy(num_partitions)
-        # partition by column list
-        elif isinstance(cols, list):
-            # change data to key value pairs
-            rdd = self.rdd.flatMap(
-                lambda df: df.apply(
-                    lambda row:
-                    (reduce(lambda col1, col2: str(row[col1]) + "_" + str(row[col2]), cols),
-                     row.values.tolist()), axis=1).values.tolist())
-            # partition with key
-            partitioned_rdd = rdd.partitionBy(num_partitions)
-        else:
-            raise Exception("only column name or list of column name are support")
-
-        columns = self.rdd.first().columns
-
-        def merge(iterator):
-            data = [value[1] for value in list(iterator)]
-            import pandas as pd
-            if data:
-                df = pd.DataFrame(data=data, columns=columns)
-                return [df]
-            else:
-                # no data in this partition
-                return []
-
-        # merge records to df in each partition
-        self.rdd = partitioned_rdd.mapPartitions(merge)
-        return self
-
-    def __getitem__(self, key):
-        if isinstance(key, slice):
-            # select row
-            self.rows = key
-        if isinstance(key, str):
-            # select column
-            self.cols = key
-        return self
-
-    @staticmethod
-    def _get_data(df, rows=None, columns=None):
-        if rows is None and columns is None:
-            # no need to slice, get whole data
-            return df
-        elif columns is None:
-            # slice rows
-            return df.loc[rows]
-        elif rows is None:
-            # slice columns
-            return df.loc[:, columns]
-        else:
-            return df.loc[rows, columns]
-
-    def unique(self):
-        # rdd = self.rdd.map(lambda df: self._get_data(df, self.rows, self.cols).unique())
-        rdd = self.rdd.map(lambda df: self._get_data(columns='location').unique().tolist())
-        data1 = rdd.collect()
-        result = rdd.reduce(lambda list1, list2: list(set(list1 + list2)))
-        return result
