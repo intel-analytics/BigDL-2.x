@@ -141,8 +141,15 @@ class TFEstimator(object):
                 if not result.has_batch:
                     raise ValueError("The batch_size of TFDataset must be " +
                                      "specified when used for training.")
-                spec = self._call_model_fn(result.feature_tensors,
-                                           result.label_tensors,
+                tensors = result.tensors
+                if isinstance(tensors, tuple) and len(tensors) == 2:
+                    feature_tensor = tensors[0]
+                    label_tensor = tensors[1]
+                else:
+                    feature_tensor = tensors
+                    label_tensor = None
+                spec = self._call_model_fn(feature_tensor,
+                                           label_tensor,
                                            tf.estimator.ModeKeys.TRAIN,
                                            self.config)
                 latest_checkpoint = self.estimator.latest_checkpoint()
