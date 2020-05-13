@@ -66,9 +66,9 @@ class RedisPutActor(
         val interval = now - start
         val setSize = set.size
         if (setSize != 0) {
-          logger.info(s"$actorName flush inpus with $interval, $setSize")
+          logger.info(s"$actorName flush inpus with interval:$interval, size:$setSize")
           if (interval >= timeWindow || setSize >= countWindow) {
-            silent(s"$actorName put message process")() {
+            timing(s"$actorName put message process")() {
               putInTransaction(redisInputQueue, set)
             }
             start = System.currentTimeMillis()

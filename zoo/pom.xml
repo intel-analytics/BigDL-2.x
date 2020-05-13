@@ -173,9 +173,10 @@
                     <version>29.0-jre</version>
                 </dependency>
                 <dependency>
-                    <groupId>com.netflix.concurrency-limits</groupId>
-                    <artifactId>concurrency-limits-core</artifactId>
-                    <version>0.3.6</version>
+                    <groupId>com.github.fppt</groupId>
+                    <artifactId>jedis-mock</artifactId>
+                    <version>0.1.16</version>
+                    <scope>test</scope>
                 </dependency>
             </dependencies>
         </profile>
