@@ -24,7 +24,7 @@ class DataShards(object):
 
     def transform_shard(self, func, *args):
         """
-        Apply function on each element in the DataShards
+        Transform each shard in the DataShards using func
         :param func: pre-processing function
         :param args: arguments for the pre-processing function
         :return: DataShard
@@ -49,7 +49,7 @@ class RayDataShards(DataShards):
 
     def transform_shard(self, func, *args):
         """
-        Apply function on each element in the DataShards
+        Transform each shard in the DataShards using func
         :param func: pre-processing function.
         In the function, the element object should be the first argument
         :param args: rest arguments for the pre-processing function
