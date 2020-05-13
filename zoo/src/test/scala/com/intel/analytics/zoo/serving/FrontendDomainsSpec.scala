@@ -16,7 +16,8 @@
 
 package com.intel.analytics.zoo.serving
 
-import java.util.UUID
+import java.nio.file.{Files, Paths}
+import java.util.{Base64, UUID}
 
 import com.intel.analytics.zoo.serving.http._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
@@ -32,12 +33,16 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
   "Feature" should "serialized and deserialized as json" in {
     val image1 = new ImageFeature("aW1hZ2UgYnl0ZXM=")
     val image2 = new ImageFeature("YXdlc29tZSBpbWFnZSBieXRlcw==")
-    val instance1 = Map("image" -> image1, "caption" -> "seaside")
-    val instance2 = Map("image" -> image2, "caption" -> "montians")
-    val inputs = Instances(instance1, instance2)
+    val image3Path = getClass().getClassLoader()
+      .getResource("imagenet/n02110063/n02110063_15462.JPEG").getFile()
+    val byteArray = Files.readAllBytes(Paths.get(image3Path))
+    val image3 = new ImageFeature(Base64.getEncoder().encodeToString(byteArray))
+    val instance3 = Map("image" -> image3, "caption" -> "dog")
+    val inputs = Instances(List.range(0, 2).map(i => instance3))
     val json = timing("serialize")() {
       JsonUtil.toJson(inputs)
     }
+    println(json)
     val obj = timing("deserialize")() {
       JsonUtil.fromJson(classOf[Instances], json)
     }
@@ -47,7 +52,7 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
   "BytesPredictionInput" should "works well" in {
     val bytesStr = "aW1hZ2UgYnl0ZXM="
     val input = BytesPredictionInput(bytesStr)
-    input.toHash().get("bytesStr") should equal(bytesStr)
+    input.toHash().get("image") should equal(bytesStr)
   }
 
   "PredictionOutput" should "works well" in {

@@ -49,9 +49,8 @@ class FrontendActorsSpec extends FlatSpec with Matchers with BeforeAndAfter with
   val input1 = BytesPredictionInput("aW1hZ2UgYnl0ZXM=")
   val input2 = BytesPredictionInput("aW1hZ2UgYnl0ZXM=")
   val input3 = BytesPredictionInput("aW1hZ2UgYnl0ZXM=")
-  val inputMessage1 = PredictionInputMessage(input1)
-  val inputMessage2 = PredictionInputMessage(input2)
-  val inputMessage3 = PredictionInputMessage(input3)
+  val inputMessage1 = PredictionInputMessage(Seq(input1, input2))
+  val inputMessage2 = PredictionInputMessage(input3)
   val flushMessage = PredictionInputFlushMessage()
 
   before {
@@ -106,38 +105,40 @@ class FrontendActorsSpec extends FlatSpec with Matchers with BeforeAndAfter with
     querierQueue.size() should be (1)
     redisPutter ! inputMessage1
     redisPutter ! inputMessage2
-    redisPutter ! inputMessage3
     // redisPutter ! flushMessage
 
     // mock the cluster serving doing stuff
-    mockClusterServing(inputMessage1, inputMessage2, inputMessage3)
+    mockClusterServing(inputMessage1, inputMessage2)
 
-    List(inputMessage1, inputMessage2, inputMessage3).foreach(message => {
-      val input = message.input
-      val key = input.getId()
-      val queryMessage = PredictionQueryMessage(key)
+    List(inputMessage1, inputMessage2).foreach(message => {
+      val inputs = message.inputs
+      val ids = inputs.map(_.getId())
+      val queryMessage = PredictionQueryMessage(ids)
       val querier = silent("querier take")() {
         querierQueue.take()
       }
-      val result = timing(s"query message wait for key $key")() {
-        Await.result(querier ? queryMessage, timeout.duration).asInstanceOf[String]
+      val result = timing(s"query message wait for key $ids")() {
+        Await.result(querier ? queryMessage, timeout.duration)
+          .asInstanceOf[Seq[(String, util.Map[String, String])]]
       }
       silent("querier back")() {
         querierQueue.offer(querier)
       }
-      // println(result)
-      result should be ("{result=mock-result}")
+      println(result)
+      result.size should be (message.inputs.size)
     })
   }
 
   def mockClusterServing(messages: PredictionInputMessage*): Any = {
     messages.foreach(message => {
-      val item = message.input
-      val key = s"${redisOutputQueue}${item.getId()}"
-      val value = new util.HashMap[String, String]()
-      value.put("result", "mock-result")
-      // println(key, value)
-      jedis.hmset(key, value)
+      val items = message.inputs
+      items.foreach(item => {
+        val key = s"${redisOutputQueue}${item.getId()}"
+        val value = new util.HashMap[String, String]()
+        value.put("result", "mock-result")
+        println(key, value)
+        jedis.hmset(key, value)
+      })
     })
   }
 

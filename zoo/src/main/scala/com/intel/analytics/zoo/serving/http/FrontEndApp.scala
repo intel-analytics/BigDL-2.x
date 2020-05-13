@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.serving.http
 
+import java.util
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
 
 import akka.actor.{ActorRef, ActorSystem, Props}
@@ -87,24 +88,26 @@ object FrontEndApp extends Supportive {
         querierQueue
       }
 
-      def processBytesPredictionInput(input: BytesPredictionInput): PredictionOutput[String] = {
+      def processBytesPredictionInput(inputs: Seq[BytesPredictionInput]):
+      Seq[PredictionOutput[String]] = {
         silent("put message send")() {
-          val message = PredictionInputMessage(input)
+          val message = PredictionInputMessage(inputs)
           redisPutter ! message
         }
         val result = silent("response waiting")() {
-          val key = input.getId()
-          val queryMessage = PredictionQueryMessage(key)
+          val ids = inputs.map(_.getId())
+          val queryMessage = PredictionQueryMessage(ids)
           val querier = silent("querier take")() {
             querierQueue.take()
           }
-          val result = timing(s"query message wait for key $key")() {
-            Await.result(querier ? queryMessage, timeout.duration).asInstanceOf[String]
+          val results = timing(s"query message wait for key $ids")() {
+            Await.result(querier ? queryMessage, timeout.duration)
+              .asInstanceOf[Seq[(String, util.Map[String, String])]]
           }
           silent("querier back")() {
             querierQueue.offer(querier)
           }
-          PredictionOutput(key, result)
+          results.map(r => PredictionOutput(r._1, r._2.toString))
         }
         result
       }
@@ -144,8 +147,8 @@ object FrontEndApp extends Supportive {
                     val input = silent("parse raw")() {
                       BytesPredictionInput(content)
                     }
-                    val output = processBytesPredictionInput(input)
-                    val result = Predictions(output)
+                    val outputs = processBytesPredictionInput(Seq(input))
+                    val result = Predictions(outputs)
                     silent("response complete")() {
                       complete(200, result.toString)
                     }
@@ -153,10 +156,17 @@ object FrontEndApp extends Supportive {
                 case MediaTypes.`application/json` =>
                   timing("predict")(overallRequestTimer, predictRequestTimer) {
                     val input = timing("parse json")() {
-                      BytesPredictionInput(content)
+                      val instances = JsonUtil.fromJson(classOf[Instances], content)
+                      instances.instances.map(instance => {
+                        val image = instance.get("image").get
+                          .asInstanceOf[Map[String, String]].get("b64").get
+                        BytesPredictionInput(image)
+                      })
                     }
+                    val outputs = processBytesPredictionInput(input)
+                    val result = Predictions(outputs)
                     silent("response complete")() {
-                      complete(200, "?????????????")
+                      complete(200, result.toString)
                     }
                   }
                 case _ => silent("response complete")() {

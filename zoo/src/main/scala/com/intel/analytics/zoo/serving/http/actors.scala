@@ -52,24 +52,24 @@ class RedisPutActor(
   val jedis = retrieveJedis(redisHost, redisPort)
 
   var start = System.currentTimeMillis()
-  val set = MutableSet[PredictionInput]()
+  val cache = MutableSet[PredictionInput]()
 
   override def receive: Receive = {
     case message: PredictionInputMessage =>
-      silent(s"$actorName input message process, ${set.size}")() {
-        val predictionInput = message.input
-        set.add(predictionInput)
+      silent(s"$actorName input message process, ${cache.size}")() {
+        val predictionInputs = message.inputs
+        predictionInputs.foreach(cache.add(_))
       }
     case mesage: PredictionInputFlushMessage =>
-      silent(s"$actorName flush message process, ${set.size}")() {
+      silent(s"$actorName flush message process, ${cache.size}")() {
         val now = System.currentTimeMillis()
         val interval = now - start
-        val setSize = set.size
+        val setSize = cache.size
         if (setSize != 0) {
           logger.info(s"$actorName flush inpus with interval:$interval, size:$setSize")
           if (interval >= timeWindow || setSize >= countWindow) {
             timing(s"$actorName put message process")() {
-              putInTransaction(redisInputQueue, set)
+              putInTransaction(redisInputQueue, cache)
             }
             start = System.currentTimeMillis()
           }
@@ -122,18 +122,20 @@ class RedisGetActor(
 
   override def receive: Receive = {
     case message: PredictionQueryMessage =>
-      val result = get(redisOutputQueue, message.id)
-      if (null != result && !result.isEmpty) {
-        sender() ! result.toString
+      val results = get(redisOutputQueue, message.ids)
+      if (null != results && results.size == message.ids.size) {
+        sender() ! results
       } else {
-        sender() ! ""
+        sender() ! Seq[(String, util.Map[String, String])]()
       }
   }
 
-  def get(queue: String, id: String): util.Map[String, String] = {
+  def get(queue: String, ids: Seq[String]): Seq[(String, util.Map[String, String])] = {
     silent(s"$actorName get response from redis")(FrontEndApp.getRedisTimer) {
-      val key = s"$queue$id"
-      jedis.hgetAll(key)
+      ids.map(id => {
+        val key = s"$queue$id"
+        (id, jedis.hgetAll(key))
+      }).filter(!_._2.isEmpty)
     }
   }
 }
@@ -151,14 +153,15 @@ class QueryActor(redisGetActor: ActorRef) extends JedisEnabledActor {
       // context.system.scheduler.scheduleOnce(10 milliseconds, self, message)
       self ! message
     case message: PredictionQueryWithTargetMessage =>
-      val result = silent("query to redisGetActor")() {
-        Await.result(redisGetActor ? message.query, timeout.duration).asInstanceOf[String]
+      val results = silent("query to redisGetActor")() {
+        Await.result(redisGetActor ? message.query, timeout.duration)
+          .asInstanceOf[Seq[(String, util.Map[String, String])]]
       }
       // println(System.currentTimeMillis(), message.query.id, result)
-      if("" == result) {
+      if(results.size == 0) {
         context.system.scheduler.scheduleOnce(10 milliseconds, self, message)
       } else {
-        message.target ! result
+        message.target ! results
       }
   }
 }

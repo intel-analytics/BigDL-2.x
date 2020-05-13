@@ -22,11 +22,16 @@ import akka.actor.ActorRef
 import com.codahale.metrics.Timer
 
 sealed trait ServingMessage
-case class PredictionInputMessage(input: PredictionInput) extends ServingMessage
+case class PredictionInputMessage(inputs: Seq[PredictionInput]) extends ServingMessage
 case class PredictionInputFlushMessage() extends ServingMessage
-case class PredictionQueryMessage(id: String) extends ServingMessage
+case class PredictionQueryMessage(ids: Seq[String]) extends ServingMessage
 case class PredictionQueryWithTargetMessage(query: PredictionQueryMessage, target: ActorRef)
   extends ServingMessage
+
+object PredictionInputMessage {
+  def apply(input: PredictionInput): PredictionInputMessage =
+    PredictionInputMessage(Seq(input))
+}
 
 sealed trait PredictionInput {
   def getId(): String
@@ -66,6 +71,9 @@ object Predictions {
     Predictions(Array(output.result))
   }
   def apply[T](outputs: List[PredictionOutput[T]])(implicit m: Manifest[T]): Predictions[T] = {
+    Predictions(outputs.map(_.result).toArray)
+  }
+  def apply[T](outputs: Seq[PredictionOutput[T]])(implicit m: Manifest[T]): Predictions[T] = {
     Predictions(outputs.map(_.result).toArray)
   }
 }
