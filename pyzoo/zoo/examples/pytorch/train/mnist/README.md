@@ -30,6 +30,7 @@ You can easily use the following commands to run this example:
 
 - Run with Yarn Client mode, upload data to hdfs first, export env `HADOOP_CONF_DIR` and `ZOO_CONDA_NAME`:  
     ```bash
+    conda activate zoo
     hdfs dfs -put /tmp/zoo/dogs_cats dogs_cats 
     export HADOOP_CONF_DIR=[path to your hadoop conf directory who has yarn-site.xml]
     export ZOO_CONDA_NAME=zoo #conda environment name you just prepared above
