@@ -967,10 +967,6 @@ private[zoo] object InternalOptimizerUtil {
     cachedModels.mapPartitions{_ =>
       val numCores = scala.sys.env("OMP_NUM_THREADS").toInt
       System.setProperty("bigdl.mklNumThreads", numCores.toString)
-      //System.setProperty("bigdl.utils.Engine.defaultPoolSize",
-      //  "1")
-      //EngineRef.getDefaultThreadPool().setMKLThread(numCores)
-      //MKL.setNumThreads(numCores)
       Iterator.single(1)
     }.count()
   }
@@ -1119,8 +1115,6 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
       val numOmpThread = distDataset.originRDD().sparkContext
         .getConf.get("spark.executorEnv.OMP_NUM_THREADS").toInt
       logger.info(s"torchnet will use ${numOmpThread} OMP threads.")
-//      System.setProperty("bigdl.utils.Engine.defaultPoolSize",
-//        "1")
       1
     } else {
       EngineRef.getCoreNumber()
