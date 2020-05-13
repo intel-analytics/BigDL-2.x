@@ -128,8 +128,9 @@ class SparkDataShards(DataShards):
                 rdd = self.rdd.flatMap(
                     lambda df: df.apply(lambda row: (row[cols], row.values.tolist()), axis=1)
                     .values.tolist())
-                
-                partition_num = self.rdd.getNumPartitions() if not num_partitions else num_partitions
+
+                partition_num = self.rdd.getNumPartitions() if not num_partitions \
+                    else num_partitions
                 # partition with key
                 partitioned_rdd = rdd.partitionBy(partition_num)
             else:
@@ -147,4 +148,5 @@ class SparkDataShards(DataShards):
             self.rdd = partitioned_rdd.mapPartitions(merge)
             return self
         else:
-            raise Exception("Currently only support partition by for Datashards of Pandas DataFrame")
+            raise Exception("Currently only support partition by for Datashards"
+                            " of Pandas DataFrame")
