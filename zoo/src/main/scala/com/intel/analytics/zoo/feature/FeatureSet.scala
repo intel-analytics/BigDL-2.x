@@ -360,7 +360,7 @@ object PythonLoaderFeatureSet{
       val localLoaderName = getLocalLoader(loaderName)
       // when nodeNumber == 1, we use the origin dataloader.
       // when nodeNumber > 1, we use Sampler.
-      val pytorchSelect = if(nodeNumber == 1) {
+      val pytorchSelect = if (nodeNumber == 1) {
         ""
       } else {
         s"""

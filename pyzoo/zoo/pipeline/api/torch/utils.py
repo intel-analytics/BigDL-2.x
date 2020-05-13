@@ -13,12 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import sys
 from torch.utils.data.sampler import Sampler
 import math
 
 
 class DistributedSequentialSampler(Sampler):
+    """
+    A sequential sampler used in FeatureSet.
+    """
     def __init__(self, dataset, num_replicas, rank):
         self.dataset = dataset
         self.num_samples = int(math.floor(len(self.dataset) * 1.0 / num_replicas))
