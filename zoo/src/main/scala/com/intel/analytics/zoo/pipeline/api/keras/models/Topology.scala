@@ -1119,8 +1119,8 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
       val numOmpThread = distDataset.originRDD().sparkContext
         .getConf.get("spark.executorEnv.OMP_NUM_THREADS").toInt
       logger.info(s"torchnet will use ${numOmpThread} OMP threads.")
-      System.setProperty("bigdl.utils.Engine.defaultPoolSize",
-        "1")
+//      System.setProperty("bigdl.utils.Engine.defaultPoolSize",
+//        "1")
       1
     } else {
       EngineRef.getCoreNumber()
