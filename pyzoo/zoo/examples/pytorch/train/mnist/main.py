@@ -35,13 +35,13 @@ def main():
     # Training settings
     parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
     parser.add_argument('--batch-size', type=int, default=256, metavar='N',
-                        help='input batch size for training (default: 64)')
+                        help='input batch size for training (default: 256)')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=10, metavar='N',
-                        help='number of epochs to train (default: 10)')
-    parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
-                        help='learning rate (default: 0.01)')
+    parser.add_argument('--epochs', type=int, default=2, metavar='N',
+                        help='number of epochs to train (default: 2)')
+    parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
+                        help='learning rate (default: 0.001)')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
     parser.add_argument('--save-model', action='store_true', default=False,
@@ -88,7 +88,7 @@ def main():
     model.train()
     criterion = nn.NLLLoss()
 
-    adam = Adam(1e-3)
+    adam = Adam(args.lr)
     zoo_model = TorchModel.from_pytorch(model)
     zoo_criterion = TorchLoss.from_pytorch(criterion)
     zoo_estimator = Estimator(zoo_model, optim_methods=adam)
@@ -96,7 +96,7 @@ def main():
     test_featureset = FeatureSet.pytorch_dataloader(test_loader)
     from bigdl.optim.optimizer import MaxEpoch, EveryEpoch
     zoo_estimator.train_minibatch(train_featureset, zoo_criterion,
-                                  end_trigger=MaxEpoch(3),
+                                  end_trigger=MaxEpoch(args.epochs),
                                   checkpoint_trigger=EveryEpoch(),
                                   validation_set=test_featureset,
                                   validation_method=[Accuracy()])
