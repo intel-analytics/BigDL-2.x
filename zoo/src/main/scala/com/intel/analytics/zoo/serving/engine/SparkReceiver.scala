@@ -22,11 +22,11 @@ import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.receiver.Receiver
 import redis.clients.jedis.{Jedis, StreamEntryID}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 
 class ServingReceiver ()
-  extends Receiver[(String, String)](StorageLevel.MEMORY_ONLY){
+  extends Receiver[(String, String)](StorageLevel.MEMORY_ONLY) {
 
   override def onStart(): Unit = {
     val jedis = new Jedis("localhost", 6379)
@@ -52,13 +52,13 @@ class ServingReceiver ()
         50,
         false,
         new SimpleEntry("image_stream", StreamEntryID.UNRECEIVED_ENTRY)
-      )
+      ).asScala
       Thread.sleep(10)
       if (response != null) {
         for (streamMessages <- response) {
           //          println(s"receiving!!! ${streamMessages.getValue.size()}")
           val key = streamMessages.getKey
-          val entries = streamMessages.getValue
+          val entries = streamMessages.getValue.asScala
           //          val it = entries.map { e =>
           //            (e.getFields.get("uri"), e.getFields.get("image"))
           //          }.toIterator
