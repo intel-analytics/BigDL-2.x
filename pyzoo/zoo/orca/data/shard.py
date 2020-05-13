@@ -117,9 +117,10 @@ class SparkDataShards(DataShards):
 
     def partition_by(self, cols, num_partitions=None):
         import pandas as pd
-        data = self.rdd.first()
-        if isinstance(data, pd.DataFrame):
-            columns = data.columns
+        class_name, columns = self.rdd.map(
+            lambda data: (get_class_name(data), data.columns) if isinstance(data, pd.DataFrame)
+            else (get_class_name(data), None)).first()
+        if class_name == 'pandas.core.frame.DataFrame':
             # if partition by a column
             if isinstance(cols, str):
                 if cols not in columns:
