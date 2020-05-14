@@ -84,8 +84,15 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
       // TODO: support table input
       require(input.isTensor, "only support tensor input")
       val i = input.toTensor[Float]
-      PythonInterpreter.set("nd_input",
-        new NDArray[Array[Float]](i.storage().array(), i.size(): _*))
+      if (i.nElement() == i.storage().array().length) {
+        PythonInterpreter.set("nd_input",
+          new NDArray[Array[Float]](i.storage().array(), i.size(): _*))
+      } else {
+        // The last mini batch during evaluation is smaller.
+        PythonInterpreter.set("nd_input",
+          new NDArray[Array[Float]](i.storage().array().slice(
+            i.storageOffset() - 1, i.nElement()), i.size(): _*))
+      }
       PythonInterpreter.exec("input = torch.Tensor(nd_input)")
     }
 

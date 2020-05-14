@@ -50,9 +50,16 @@ class TorchLoss(private val criterionHolder: Array[Byte])
       require(target.isTensor, "only support tensor target")
       // TODO: detect type
       val t = target.toTensor[Float]
-      PythonInterpreter.set("nd_target",
-        new NDArray[Array[Float]](t.storage().array(), t.size(): _*))
-      PythonInterpreter.exec("target = torch.Tensor(nd_target).long()")
+      if (t.nElement() == t.storage().array().length) {
+        PythonInterpreter.set("nd_target",
+          new NDArray[Array[Float]](t.storage().array(), t.size(): _*))
+      } else {
+        // The last mini batch during evaluation is smaller.
+        PythonInterpreter.set("nd_target",
+          new NDArray[Array[Float]](t.storage().array().slice(
+            t.storageOffset() - 1, t.nElement()), t.size(): _*))
+      }
+      PythonInterpreter.exec("target = torch.Tensor(nd_target)")
     }
     PythonInterpreter.exec(s"loss = ${name}(output, target)")
     output = PythonInterpreter.getValue("loss.item()").asInstanceOf[Double].toFloat
