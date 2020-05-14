@@ -22,9 +22,9 @@ class DataShards(object):
     A collection of data which can be pre-processed parallelly.
     """
 
-    def apply(self, func, *args):
+    def transform_shard(self, func, *args):
         """
-        Appy function on each element in the DataShards
+        Transform each shard in the DataShards using func
         :param func: pre-processing function
         :param args: arguments for the pre-processing function
         :return: DataShard
@@ -47,16 +47,16 @@ class RayDataShards(DataShards):
         self.partitions = partitions
         self.shard_list = flatten([partition.shard_list for partition in partitions])
 
-    def apply(self, func, *args):
+    def transform_shard(self, func, *args):
         """
-        Appy function on each element in the DataShards
+        Transform each shard in the DataShards using func
         :param func: pre-processing function.
         In the function, the element object should be the first argument
         :param args: rest arguments for the pre-processing function
         :return: this DataShard
         """
         import ray
-        done_ids, undone_ids = ray.wait([shard.apply.remote(func, *args)
+        done_ids, undone_ids = ray.wait([shard.transform.remote(func, *args)
                                          for shard in self.shard_list],
                                         num_returns=len(self.shard_list))
         assert len(undone_ids) == 0
@@ -104,7 +104,7 @@ class SparkDataShards(DataShards):
     def __init__(self, rdd):
         self.rdd = rdd
 
-    def apply(self, func, *args):
+    def transform_shard(self, func, *args):
         self.rdd = self.rdd.map(func(*args))
         return self
 
@@ -115,11 +115,44 @@ class SparkDataShards(DataShards):
         self.rdd = self.rdd.repartition(num_partitions)
         return self
 
-    def __getitem__(self, key):
-        rdd = self.rdd.map(lambda data: data[key])
-        return SparkDataShards(rdd)
+    def partition_by(self, cols, num_partitions=None):
+        import pandas as pd
+        class_name, columns = self.rdd.map(
+            lambda data: (get_class_name(data), data.columns) if isinstance(data, pd.DataFrame)
+            else (get_class_name(data), None)).first()
+        if class_name == 'pandas.core.frame.DataFrame':
+            # if partition by a column
+            if isinstance(cols, str):
+                if cols not in columns:
+                    raise Exception("The partition column is not in the DataFrame")
+                # change data to key value pairs
+                rdd = self.rdd.flatMap(
+                    lambda df: df.apply(lambda row: (row[cols], row.values.tolist()), axis=1)
+                    .values.tolist())
 
-    def unique(self):
+                partition_num = self.rdd.getNumPartitions() if not num_partitions \
+                    else num_partitions
+                # partition with key
+                partitioned_rdd = rdd.partitionBy(partition_num)
+            else:
+                raise Exception("Only support partition by a column name")
+
+            def merge(iterator):
+                data = [value[1] for value in list(iterator)]
+                if data:
+                    df = pd.DataFrame(data=data, columns=columns)
+                    return [df]
+                else:
+                    # no data in this partition
+                    return []
+            # merge records to df in each partition
+            self.rdd = partitioned_rdd.mapPartitions(merge)
+            return self
+        else:
+            raise Exception("Currently only support partition by for Datashards"
+                            " of Pandas DataFrame")
+
+    def unique(self, key):
         data = self.rdd.first()
         import pandas as pd
         if isinstance(data, pd.Series) or isinstance(data, pd.Index):

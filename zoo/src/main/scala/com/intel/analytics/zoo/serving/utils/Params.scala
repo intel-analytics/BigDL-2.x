@@ -16,24 +16,15 @@
 
 package com.intel.analytics.zoo.serving.utils
 
-object RedisUtils {
-  def getMapFromInfo(info: String): Map[String, String] = {
-    var infoMap = Map[String, String]()
-    val tabs = info.split("#")
-
-    for (tab <- tabs) {
-      if (tab.length > 0) {
-        val keys = tab.split("\r\n")
-
-        for (key <- keys) {
-          if (key.split(":").size == 2) {
-            infoMap += (key.split(":").head ->
-              key.split(":").last)
-          }
-        }
-      }
-    }
-
-    return infoMap
-  }
+class SerParams(helper: ClusterServingHelper) extends Serializable {
+  var redisHost = helper.redisHost
+  var redisPort = helper.redisPort.toInt
+  val coreNum = helper.coreNum
+  val filter = helper.filter
+  val chwFlag = helper.chwFlag
+  val C = helper.dataShape(0)(0)
+  val H = helper.dataShape(0)(1)
+  val W = helper.dataShape(0)(2)
+  val modelType = helper.modelType
+  val model = helper.loadInferenceModel()
 }

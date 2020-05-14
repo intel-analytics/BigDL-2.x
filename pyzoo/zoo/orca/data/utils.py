@@ -69,3 +69,10 @@ def extract_one_path(file_path, file_type, env):
     # only get json/csv files
     file_paths = [file for file in file_paths if os.path.splitext(file)[1] == "." + file_type]
     return file_paths
+
+
+def get_class_name(obj):
+    module = obj.__class__.__module__
+    if module is None or module == str.__class__.__module__:
+        return obj.__class__.__name__
+    return module + '.' + obj.__class__.__name__

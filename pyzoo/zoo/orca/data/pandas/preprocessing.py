@@ -15,7 +15,6 @@
 #
 
 import random
-from functools import reduce
 
 import ray
 from bigdl.util.common import get_node_and_core_number
@@ -219,7 +218,7 @@ class RayPandasShard(object):
         self.data = pd.concat(df_list)
         return 0
 
-    def apply(self, func, *args):
+    def transform(self, func, *args):
         self.data = func(self.data, *args)
         return 0
 

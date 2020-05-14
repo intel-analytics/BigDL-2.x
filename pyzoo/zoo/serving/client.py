@@ -36,14 +36,21 @@ class API:
         except Exception:
             raise EOFError("config file does not exist. Please check your config"
                            "at analytics-zoo/docker/cluster-serving/config.yaml")
-        with open(file_path) as f:
-            config = yaml.load(f)
-            if not config['data']['src']:
-                host_port = ["localhost", "6379"]
-            else:
-                host_port = config['data']['src'].split(":")
-            config['data']['host'] = host_port[0]
-            config['data']['port'] = host_port[1]
+
+        try:
+            with open(file_path) as f:
+                config = yaml.load(f)
+                if not config['data']['src']:
+                    host_port = ["localhost", "6379"]
+                else:
+                    host_port = config['data']['src'].split(":")
+                config['data']['host'] = host_port[0]
+                config['data']['port'] = host_port[1]
+        except Exception:
+            config = {}
+            config['data'] = {}
+            config['data']['host'], config['data']['port'] = "localhost", "6379"
+            config['data']['image_shape'] = None
 
         self.db = redis.StrictRedis(host=config['data']['host'],
                                     port=config['data']['port'], db=0)

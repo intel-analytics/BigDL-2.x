@@ -25,13 +25,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object AsyncUtils {
   def writeServingSummay(model: InferenceModel,
-                         timeStampStart: Int,
-                         timeStampEnd: Int,
+                         timeStampStart: Long,
+                         timeStampEnd: Long,
                          totalCnt: Int,
                          throughPut: Float
                          ): Future[Unit] = Future{
-
-
     (timeStampStart until timeStampEnd).foreach( time => {
       model.inferenceSummary.addScalar(
         "Serving Throughput", throughPut, time)
