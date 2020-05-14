@@ -113,7 +113,7 @@ class TFEstimator(object):
 
         return model_fn_results
 
-    def train(self, input_fn, steps=None):
+    def train(self, input_fn, steps=None, session_config=None):
         """Trains a model given training data `input_fn`.
 
         :param input_fn: A function that constructs the input data for evaluation. The
@@ -167,7 +167,8 @@ class TFEstimator(object):
                                                     spec.loss,
                                                     sess=sess,
                                                     dataset=result,
-                                                    model_dir=zoo_ckpt_path)
+                                                    model_dir=zoo_ckpt_path,
+                                                    session_config=session_config)
 
                     opt.optimize(MaxIteration(steps))
                     sess.run(assign_step, feed_dict={add_step_input: steps})
