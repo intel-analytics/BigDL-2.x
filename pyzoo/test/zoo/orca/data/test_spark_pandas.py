@@ -84,7 +84,7 @@ class TestSparkDataShards(ZooTestCase):
                 return df
             return process
 
-        data_shard.apply(negative, "value")
+        data_shard.transform_shard(negative, "value")
         data2 = data_shard.collect()
         assert data2[0]["value"].values[0] < 0, "value should be negative"
 
