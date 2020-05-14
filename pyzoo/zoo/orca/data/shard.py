@@ -117,10 +117,10 @@ class SparkDataShards(DataShards):
 
     def partition_by(self, cols, num_partitions=None):
         import pandas as pd
-        class_name, columns = self.rdd.map(
-            lambda data: (get_class_name(data), data.columns) if isinstance(data, pd.DataFrame)
-            else (get_class_name(data), None)).first()
-        if class_name == 'pandas.core.frame.DataFrame':
+        elem_class, columns = self.rdd.map(
+            lambda data: (type(data), data.columns) if isinstance(data, pd.DataFrame)
+            else (type(data), None)).first()
+        if issubclass(elem_class, pd.DataFrame):
             # if partition by a column
             if isinstance(cols, str):
                 if cols not in columns:
@@ -153,12 +153,21 @@ class SparkDataShards(DataShards):
                             " of Pandas DataFrame")
 
     def unique(self, key):
-        data = self.rdd.first()
         import pandas as pd
-        if isinstance(data, pd.Series) or isinstance(data, pd.Index):
-            rdd = self.rdd.map(lambda x: x.unique().tolist())
-            result = rdd.reduce(lambda list1, list2: list(set(list1 + list2)))
-            return result
+        elem_class, columns = self.rdd.map(
+            lambda data: (type(data), data.columns) if isinstance(data, pd.DataFrame)
+            else (type(data), None)).first()
+        if issubclass(elem_class, pd.DataFrame):
+            import numpy as np
+            if key is None:
+                raise Exception("Cannot apply unique operation on Datashards of Pandas Dataframe"
+                                " without column name")
+            if key in columns:
+                rdd = self.rdd.map(lambda df: df[key].unique().tolist())
+                result = rdd.reduce(lambda list1, list2: np.array(list(set(list1 + list2))))
+                return result
+            else:
+                raise Exception("The select key is not in the DataFrame in this Datashards")
         else:
             # we may support numpy or other types later
-            raise Exception("Currently only support unique() on Datashards of Pandas Series or Index")
+            raise Exception("Currently only support unique() on Datashards of Pandas DataFrame")
