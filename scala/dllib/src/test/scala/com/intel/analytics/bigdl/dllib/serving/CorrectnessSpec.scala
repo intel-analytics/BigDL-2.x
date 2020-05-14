@@ -45,7 +45,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
   val configPath = "/tmp/config.yaml"
 //  val configPath = "/home/litchy/pro/analytics-zoo/config.yaml"
   var redisHost: String = "localhost"
-  var redisPort: String = "6379"
+  var redisPort: Int = 6379
   val logger = Logger.getLogger(getClass)
   def resize(p: String): String = {
     val source = ImageIO.read(new File(p))
@@ -78,11 +78,12 @@ class CorrectnessSpec extends FlatSpec with Matchers {
 
 
   def runServingBg(): Future[Unit] = Future {
-    ClusterServing.run(configPath)
+    ClusterServing.run(configPath, redisHost, redisPort)
   }
   "Cluster Serving result" should "be correct" in {
-    redisHost = "172.168.2.104"
-    val cli = new Jedis(redisHost, redisPort.toInt)
+    redisHost = "10.239.47.210"
+    redisPort = 16380
+    val cli = new Jedis(redisHost, redisPort)
 
     cli.flushAll()
 
