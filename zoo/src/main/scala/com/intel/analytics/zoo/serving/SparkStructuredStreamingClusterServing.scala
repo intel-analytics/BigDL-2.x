@@ -35,7 +35,7 @@ import org.apache.spark.util.LongAccumulator
 
 import scala.collection.mutable.ArrayBuffer
 
-object SparkStructuredStreamingServing {
+object SparkStructuredStreamingClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("akka").setLevel(Level.ERROR)
   Logger.getLogger("breeze").setLevel(Level.ERROR)
@@ -398,7 +398,7 @@ object SparkStructuredStreamingServing {
      */
     val servingQuery = query.start()
 
-    ClusterServingManager.listenTermination(helper, servingQuery)
+//    ClusterServingManager.listenTermination(helper, servingQuery)
 
     servingQuery.awaitTermination()
 
