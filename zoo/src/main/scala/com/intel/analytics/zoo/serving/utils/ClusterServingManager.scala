@@ -21,6 +21,8 @@ import java.util.concurrent.Executors
 import org.apache.spark.sql.streaming._
 import java.util.concurrent.TimeUnit.SECONDS
 
+import org.apache.spark.streaming.StreamingContext
+
 object ClusterServingManager {
   /**
    * A Runnable that check the stop signal of serving
@@ -30,7 +32,7 @@ object ClusterServingManager {
    * @return
    */
   def queryTerminator(helper: ClusterServingHelper,
-                      query: StreamingQuery): Runnable = new Runnable {
+                      query: StreamingContext): Runnable = new Runnable {
     override def run(): Unit = {
       if (helper.checkStop()) {
         query.stop()
@@ -46,7 +48,7 @@ object ClusterServingManager {
    * @return
    */
   def listenTermination(helper: ClusterServingHelper,
-                        query: StreamingQuery): Unit = {
+                        query: StreamingContext): Unit = {
     Executors.newSingleThreadScheduledExecutor.scheduleWithFixedDelay(
       queryTerminator(helper, query), 1, 1, SECONDS
     )
