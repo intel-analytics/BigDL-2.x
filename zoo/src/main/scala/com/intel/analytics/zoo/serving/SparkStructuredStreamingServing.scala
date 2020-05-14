@@ -399,7 +399,7 @@ object SparkStructuredStreamingServing {
      */
     val servingQuery = query.start()
 
-    ClusterServingManager.listenTermination(helper, servingQuery)
+//    ClusterServingManager.listenTermination(helper, servingQuery)
 
     servingQuery.awaitTermination()
 
