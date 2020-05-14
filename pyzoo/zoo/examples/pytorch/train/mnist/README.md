@@ -24,6 +24,7 @@ You can run this example on local mode and yarn client mode.
 You can easily use the following commands to run this example:
     ```bash
     conda activate zoo
+    export PYTHONHOME=[conda install path]/envs/zoo # use command "conda env list" to find the path of PYTHONEHOME.
     export ZOO_NUM_MKLTHREADS=4
     python main.py
     ```
