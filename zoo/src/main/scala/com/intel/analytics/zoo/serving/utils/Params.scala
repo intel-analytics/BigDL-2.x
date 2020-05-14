@@ -17,8 +17,8 @@
 package com.intel.analytics.zoo.serving.utils
 
 class SerParams(helper: ClusterServingHelper) extends Serializable {
-  val redisHost = helper.redisHost
-  val redisPort = helper.redisPort.toInt
+  var redisHost = helper.redisHost
+  var redisPort = helper.redisPort.toInt
   val coreNum = helper.coreNum
   val filter = helper.filter
   val chwFlag = helper.chwFlag

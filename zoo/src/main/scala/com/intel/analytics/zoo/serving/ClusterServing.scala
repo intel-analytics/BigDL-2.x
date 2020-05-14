@@ -30,11 +30,16 @@ object ClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
   var params: SerParams = null
-  def run(configPath: String = "config.yaml"): Unit = {
+  def run(configPath: String = "config.yaml", redisHost: String = null, redisPort: Int = -1): Unit = {
     val helper = new ClusterServingHelper(configPath)
     helper.initArgs()
-
     params = new SerParams(helper)
+    if (redisHost != null) {
+      params.redisHost = redisHost
+    }
+    if (redisPort != -1) {
+      params.redisPort = redisPort
+    }
 //    println(params.model)
     val serving = StreamExecutionEnvironment.getExecutionEnvironment
     serving.addSource(new FlinkRedisSource(params))
@@ -45,5 +50,6 @@ object ClusterServing {
   }
   def main(args: Array[String]): Unit = {
     run()
+//    run(redisHost = "10.239.47.210", redisPort = 16380)
   }
 }
