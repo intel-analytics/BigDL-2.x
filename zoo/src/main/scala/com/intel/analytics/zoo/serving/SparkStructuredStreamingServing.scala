@@ -56,7 +56,6 @@ object SparkStructuredStreamingServing {
      * Variables need to be serialized are listed below
      * Take them from helper in advance for later execution
      */
-    val batchSize = helper.batchSize
     val coreNum = helper.coreNum
     val nodeNum = helper.nodeNum
     val modelType = helper.modelType
@@ -115,7 +114,7 @@ object SparkStructuredStreamingServing {
       .readStream
       .format("redis")
       .option("stream.keys", streamKey)
-      .option("stream.read.batch.size", batchSize)
+      .option("stream.read.batch.size", coreNum)
       .option("stream.parallelism", nodeNum)
       .schema(StructType(Array(
         StructField("uri", StringType),
@@ -235,20 +234,20 @@ object SparkStructuredStreamingServing {
             val localModel = bcModel.value
             val t = if (dataType == DataType.IMAGE) {
               if (chwFlag) {
-                Tensor[Float](batchSize, flagC, flagH, flagW)
+                Tensor[Float](coreNum, flagC, flagH, flagW)
               } else {
-                Tensor[Float](batchSize, flagH, flagW, flagC)
+                Tensor[Float](coreNum, flagH, flagW, flagC)
               }
             } else {
               if (dataShape.length == 1) {
-                val sizes = batchSize +: dataShape(0)
+                val sizes = coreNum +: dataShape(0)
                 Tensor[Float](sizes)
               } else {
-                T.array(dataShape.map(shape => Tensor[Float](batchSize +: shape)))
+                T.array(dataShape.map(shape => Tensor[Float](coreNum +: shape)))
               }
             }
 
-            pathBytes.grouped(batchSize).flatMap(pathByteBatch => {
+            pathBytes.grouped(coreNum).flatMap(pathByteBatch => {
               val thisBatchSize = pathByteBatch.size
               acc.add(thisBatchSize)
               val x = if (t.isTensor) {
@@ -336,7 +335,7 @@ object SparkStructuredStreamingServing {
               .format("org.apache.spark.sql.redis")
               .option("table", "result")
               .option("key.column", "uri")
-              .option("iterator.grouping.size", batchSize)
+              .option("iterator.grouping.size", coreNum)
               .mode(SaveMode.Append).save()
 
             errFlag = false
