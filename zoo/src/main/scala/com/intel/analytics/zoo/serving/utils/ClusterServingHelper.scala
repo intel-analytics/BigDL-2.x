@@ -18,6 +18,7 @@
 package com.intel.analytics.zoo.serving.utils
 
 import java.io.{File, FileInputStream, FileWriter}
+import java.lang
 import java.nio.file.{Files, Path, Paths}
 
 import com.intel.analytics.bigdl.Module
@@ -37,7 +38,11 @@ import org.apache.spark.sql.SparkSession
 import org.yaml.snakeyaml.Yaml
 import java.time.LocalDateTime
 
+import com.intel.analytics.zoo.serving.DataType
+import com.intel.analytics.zoo.serving.DataType.DataTypeEnumVal
+
 import scala.reflect.ClassTag
+import scala.util.parsing.json._
 
 case class LoaderParams(modelFolder: String = null,
                         batchSize: Int = 4,
@@ -54,11 +59,11 @@ case class LoaderParams(modelFolder: String = null,
 
 case class Result(id: String, value: String)
 
-class ClusterServingHelper {
+class ClusterServingHelper(_configPath: String = "config.yaml") {
   type HM = LinkedHashMap[String, String]
 
 //  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
-  val configPath = "config.yaml"
+  val configPath = _configPath
 
   var lastModTime: String = null
   val logger: Logger = Logger.getLogger(getClass)
@@ -72,13 +77,14 @@ class ClusterServingHelper {
   var redisHost: String = null
   var redisPort: String = null
   var batchSize: Int = 4
-  var topN: Int = 1
   var nodeNum: Int = 1
   var coreNum: Int = 1
   var engineType: String = null
   var blasFlag: Boolean = false
+  var chwFlag: Boolean = true
 
-  var dataShape = Array[Int]()
+  var dataType: DataTypeEnumVal = null
+  var dataShape: Array[Array[Int]] = Array[Array[Int]]()
   var filter: String = "topN"
 
   var logFile: FileWriter = null
@@ -114,25 +120,6 @@ class ClusterServingHelper {
     parseModelType(modelFolder)
 
 
-    // parse data field
-    val dataConfig = configList.get("data").asInstanceOf[HM]
-    val redis = getYaml(dataConfig, "src", "localhost:6379")
-    require(redis.split(":").length == 2, "Your redis host " +
-      "and port are not valid, please check.")
-    redisHost = redis.split(":").head.trim
-    redisPort = redis.split(":").last.trim
-    val shape = getYaml(dataConfig, "image_shape", "3,224,224")
-    val shapeList = shape.split(",")
-    require(shapeList.size == 3, "Your data shape must has dimension as 3")
-    for (i <- shapeList) {
-      dataShape = dataShape :+ i.trim.toInt
-    }
-
-    filter = getYaml(dataConfig, "filter", "topN(1)")
-
-    val paramsConfig = configList.get("params").asInstanceOf[HM]
-    batchSize = getYaml(paramsConfig, "batch_size", "4").toInt
-
     /**
      * reserved here to change engine type
      * engine type should be able to change in run time
@@ -149,6 +136,67 @@ class ClusterServingHelper {
       new FileWriter(logF, true)
     }
 
+    if (modelType.startsWith("tensorflow")) {
+      chwFlag = false
+    }
+    // parse data field
+    val dataConfig = configList.get("data").asInstanceOf[HM]
+    val redis = getYaml(dataConfig, "src", "localhost:6379")
+    require(redis.split(":").length == 2, "Your redis host " +
+      "and port are not valid, please check.")
+    redisHost = redis.split(":").head.trim
+    redisPort = redis.split(":").last.trim
+    val dataTypeStr = getYaml(dataConfig, "data_type", "image").toLowerCase()
+    dataType = dataTypeStr match {
+      case "image" =>
+        DataType.IMAGE
+      case "tensor" =>
+        DataType.TENSOR
+      case _ =>
+        logError("Invalid data type, please check your data_type")
+        null
+    }
+    val shapeList = dataType match {
+      case DataType.IMAGE =>
+        val shape = getYaml(dataConfig, "image_shape", "3,224,224")
+        val shapeList = shape.split(",").map(x => x.trim.toInt)
+        require(shapeList.size == 3, "Your data shape must has dimension as 3")
+        Array(shapeList)
+      case DataType.TENSOR =>
+        val shape = getYaml(dataConfig, "tensor_shape", null)
+        val jsonList: Option[Any] = JSON.parseFull(shape)
+        jsonList match {
+          case Some(list) =>
+            val l: List[Any] = list.asInstanceOf[List[Any]]
+            val converted = l.head match {
+              case _: lang.Double =>
+                List(l.map(_.asInstanceOf[Double].toInt).toArray)
+              case _: List[Double] =>
+                l.map(tensorShape => tensorShape.asInstanceOf[List[Double]].map(x => x.toInt)
+                  .toArray)
+              case _ =>
+                logError(s"Invalid shape format, please check your tensor_shape, your input is " +
+                  s"${shape}")
+                null
+            }
+
+            converted.toArray
+          case None => logError(s"Invalid shape format, please check your tensor_shape, your " +
+            s"input is ${shape}")
+            null
+        }
+      case _ =>
+        logError("Invalid data type, please check your data_type")
+        null
+    }
+    for (i <- shapeList) {
+      dataShape = dataShape :+ i
+    }
+
+    filter = getYaml(dataConfig, "filter", "topN(1)")
+
+    val paramsConfig = configList.get("params").asInstanceOf[HM]
+    coreNum = getYaml(paramsConfig, "core_number", "4").toInt
 
     if (modelType == "caffe" || modelType == "bigdl") {
       if (System.getProperty("bigdl.engineType", "mklblas")
@@ -198,8 +246,8 @@ class ClusterServingHelper {
    * @return
    */
   def getYaml(configList: HM, key: String, default: String): String = {
-
-    val configValue = if (configList.get(key).isInstanceOf[java.lang.Integer]) {
+    val configValue = if (configList.get(key).isInstanceOf[java.lang.Integer] ||
+      configList.get(key).isInstanceOf[java.util.ArrayList[Integer]]) {
       String.valueOf(configList.get(key))
     } else {
       configList.get(key)
@@ -292,7 +340,7 @@ class ClusterServingHelper {
         model.doLoadTensorflow(weightPath, "savedModel", inputs, outputs)
       case "pytorch" => model.doLoadPyTorch(weightPath)
       case "keras" => logError("Keras currently not supported in Cluster Serving")
-      case "openvino" => model.doLoadOpenVINO(defPath, weightPath, batchSize)
+      case "openvino" => model.doLoadOpenVINO(defPath, weightPath, coreNum)
       case _ => logError("Invalid model type, please check your model directory")
     }
     model

@@ -17,6 +17,8 @@
 
 package com.intel.analytics.zoo.serving.utils
 
+import java.nio.file.{Files, Paths}
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 
@@ -34,5 +36,16 @@ object FileUtils {
 
     val dstPath = new Path(dst)
     fs.copyToLocalFile(srcPath, dstPath)
+  }
+  /**
+   * Check stop signal, return true if signal detected
+   * @return
+   */
+  def checkStop(): Boolean = {
+    if (!Files.exists(Paths.get("running"))) {
+      return true
+    }
+    return false
+
   }
 }

@@ -1,0 +1,127 @@
+#!/bin/bash
+
+# check if started
+if [ -f "running" ]; then
+    echo "Serving is already running!"
+    exit 1
+fi
+
+# parse config file
+function parse_yaml {
+   local prefix=$2
+   local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+   sed -ne "s|^\($s\):|\1|" \
+        -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
+        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
+   awk -F$fs '{
+      indent = length($1)/2;
+      vname[indent] = $2;
+      for (i in vname) {if (i > indent) {delete vname[i]}}
+      if (length($3) > 0) {
+         vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+         printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
+      }
+   }'
+}
+
+parse_yaml config.yaml
+eval $(parse_yaml config.yaml)
+
+if [ -z "${spark_master}" ]; then
+    echo "master of spark cluster not set, using default value local[*]"
+    spark_master=local[*]
+fi
+if [ -z "${spark_driver_memory}" ]; then
+    echo "spark driver memory not set, using default value 4g"
+    spark_driver_memory=4g
+fi
+if [ -z "${spark_executor_memory}" ]; then
+    echo "spark executor memory not set, using default value 1g"
+    spark_executor_memory=1g
+fi
+if [ -z "${spark_num_executors}" ]; then
+    echo "spark num-executors not set, using default value 1"
+    spark_num_executors=1
+fi
+if [ -z "${spark_executor_cores}" ]; then
+    echo "spark executor-cores not set, using default value 4"
+    spark_executor_cores=4
+fi
+if [ -z "${spark_total_executor_cores}" ]; then
+    echo "spark executor-cores not set, using default value 4"
+    spark_total_executor_cores=4
+fi
+
+if [ -z "${params_engine_type}" ]; then
+    params_engine_type=mklblas
+fi
+
+if [ -z "${redis_maxmem}" ]; then
+    echo "Redis maxmemory is not set, using default value 8G"
+    redis_maxmem=8G
+fi
+
+# try to start redis server
+if [ -z "${REDIS_HOME}" ]; then
+    echo "REDIS_HOME variable is not set, skip redis start. Note that you need to set it otherwise Cluster Serving would not start or stop Redis for you."
+else
+    ${REDIS_HOME}/src/redis-server > redis.log &
+    echo "redis server started, please check log in redis.log" && sleep 1
+
+    # sleep for 1 sec to ensure server is ready and client could connect
+    ${REDIS_HOME}/src/redis-cli config set stop-writes-on-bgsave-error no
+    ${REDIS_HOME}/src/redis-cli config set save ""
+
+    ${REDIS_HOME}/src/redis-cli config set maxmemory ${redis_maxmem}
+    echo "redis config maxmemory set to ${redis_maxmem}"
+    # bind can not be set after redis starts
+    # /opt/work/redis-5.0.5/src/redis-cli config set bind "0.0.0.0"
+    ${REDIS_HOME}/src/redis-cli config set protected-mode no
+    ${REDIS_HOME}/src/redis-cli config set maxclients 10000
+fi
+
+# try to start tensorboard
+if [[ ! -e "TensorboardEventLogs" ]]; then
+    mkdir TensorboardEventLogs
+fi
+tensorboard --logdir ./TensorboardEventLogs --port 6006 --host 0.0.0.0 &
+
+# if jar paths are not set, try to use them in current directory
+if [ -z "${ZOO_JAR}" ]; then
+    ZOO_JAR=zoo.jar
+fi
+if [ -z "${BIGDL_JAR}" ]; then
+  if [ -f "bigdl.jar" ]; then
+      BIGDL_JAR=bigdl.jar
+  else
+      BIGDL_JAR=
+  fi
+fi
+if [ -z "${SPARK_REDIS_JAR}" ]; then
+    SPARK_REDIS_JAR=spark-redis-2.4.0-jar-with-dependencies.jar
+fi
+
+if [ "${params_performance_mode}" == "ON" ] && [ "${spark_master}" == "local[*]" ]; then
+    echo -e "\033[36mPerformance mode is ON, Start standalone cluster... \033[0m"
+    if [ -f "cluster-with-numactl.sh" ]; then
+      OUTPUT=`./cluster-with-numactl.sh start | tail -1`
+    else
+      OUTPUT=`cluster-with-numactl.sh start | tail -1`
+    fi
+    IFS=','
+    PARAMS=($OUTPUT)
+    unset IFS
+    LENGTH=${#PARAMS[@]}
+    if [ $LENGTH -gt 2 ]; then
+      spark_master=${PARAMS[0]}
+      spark_executor_cores=${PARAMS[1]}
+      spark_num_executors=${PARAMS[2]}
+      spark_total_executor_cores=${PARAMS[3]}
+      spark_driver_memory=${PARAMS[4]}
+      export OMP_NUM_THREADS=${spark_executor_cores}
+    elif [ $LENGTH -eq 2 ]; then
+      echo -e "\033[31m${PARAMS[1]}, use local[*] instead \033[0m"
+    fi
+fi
+
+${SPARK_HOME}/bin/spark-submit --master ${spark_master} --driver-memory ${spark_driver_memory} --executor-memory ${spark_executor_memory} --num-executors ${spark_num_executors} --executor-cores ${spark_executor_cores} --total-executor-cores ${spark_total_executor_cores} --conf "spark.executor.extraJavaOptions=-Dbigdl.engineType=${params_engine_type}" --conf "spark.driver.extraJavaOptions=-Dbigdl.engineType=${params_engine_type}" --jars ${SPARK_REDIS_JAR},${BIGDL_JAR} --class com.intel.analytics.zoo.serving.SparkStructuredStreamingClusterServing ${ZOO_JAR} >> cluster-serving.log
