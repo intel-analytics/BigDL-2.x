@@ -31,7 +31,7 @@ def test_estimator_model_fn(estimator_for_spark_fixture):
         feat = tf.stack([user, item], axis=1)
         logits = tf.layers.dense(tf.to_float(feat), 2)
 
-        if mode == tf.estimator.ModeKeys.EVAL or mode == tf.estimator.ModeKeys.TRAIN:
+        if mode == tf.estimator.ModeKeys.TRAIN:
             labels = labels['label']
             loss = tf.reduce_mean(
                 tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
@@ -51,10 +51,46 @@ def test_estimator_model_fn(estimator_for_spark_fixture):
             labels=["label"],
             steps=100,
             batch_size=8)
-    result = est.evaluate(data_shard,
-                          features=["user", "item"],
-                          labels=["label"],
-                          eval_methods=["acc"])
-    print(result)
     predictions = est.predict(data_shard, features=["user", "item"]).collect()
     print(predictions)
+
+
+def test_estimator_pre_built_graph(estimator_for_spark_fixture):
+
+    user = tf.placeholder(dtype=tf.int32, shape=(None,))
+    item = tf.placeholder(dtype=tf.int32, shape=(None,))
+    label = tf.placeholder(dtype=tf.int32, shape=(None,))
+
+    feat = tf.stack([user, item], axis=1)
+    logits = tf.layers.dense(tf.to_float(feat), 2)
+
+    loss = tf.reduce_mean(
+                tf.losses.sparse_softmax_cross_entropy(logits=logits,
+                                                       labels=label))
+
+    train_op = ZooOptimizer(tf.train.AdamOptimizer()).minimize(loss)
+
+    sc = estimator_for_spark_fixture
+
+    file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+
+    est = Estimator.from_pre_built_graph(
+        inputs={"user": user, "item": item},
+        labels={"label": label},
+        outputs=[logits],
+        loss=loss,
+        train_op=train_op,
+        metrics={"loss": loss})
+    est.fit(data_shard=data_shard,
+            features=["user", "item"],
+            labels=["label"],
+            batch_size=8,
+            steps=10,
+            validation_data_shard=data_shard)
+    predictions = est.predict(data_shard, features=["user", "item"]).collect()
+    print(predictions)
+
+if __name__ == "__main__":
+    import pytest
+    pytest.main([__file__])

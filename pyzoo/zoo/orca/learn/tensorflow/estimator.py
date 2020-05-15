@@ -15,20 +15,19 @@
 #
 from bigdl.optim.optimizer import MaxIteration
 from zoo.orca.data.shard import SparkDataShards
-from zoo.tfpark import TFEstimator, TFOptimizer, TFNet
+from zoo.tfpark import TFEstimator, TFOptimizer, TFPredictor, TFNet
 import pandas as pd
+import tensorflow as tf
 
 from zoo.tfpark.tf_dataset import TFDataset
+from zoo.util import nest
 
 
 class Estimator(object):
-    def fit(self, data, features, labels, steps, batch_size):
+    def fit(self, data, features, labels, steps, batch_size, **kwargs):
         pass
 
     def predict(self, data, features, **kwargs):
-        pass
-
-    def evaluate(self, data, features, labels, eval_methods, checkpoint_path):
         pass
 
     @staticmethod
@@ -45,9 +44,28 @@ class Estimator(object):
                                         warm_start_from=warm_start_from)
         return TFEstimatorWrapper(est)
 
+    @staticmethod
+    def from_pre_built_graph(*, inputs, outputs,
+                             labels, loss, train_op,
+                             metrics=None, updates=None,
+                             sess=None, model_dir=None, backend="spark"):
+        assert backend == "spark", "only spark backend is supported for now"
+        if sess is None:
+            sess = tf.Session()
+            sess.run(tf.global_variables_initializer())
+
+        return TFOptimizerWrapper(inputs=inputs,
+                                  outputs=outputs,
+                                  labels=labels,
+                                  loss=loss, train_op=train_op,
+                                  metrics=metrics, updates=updates,
+                                  sess=sess,
+                                  model_dir=model_dir)
+
 
 def _data_shard_to_tf_dataset(data_shard, feature_cols, label_cols,
-                              batch_size=-1, batch_per_thread=-1):
+                              batch_size=-1, batch_per_thread=-1,
+                              validation_data_shard=None):
     first_data = data_shard.rdd.first()
 
     assert isinstance(first_data, pd.DataFrame)
@@ -88,11 +106,15 @@ def _data_shard_to_tf_dataset(data_shard, feature_cols, label_cols,
     def df_to_list(df):
         return [select(row) for _, row in df.iterrows()]
 
+    val_rdd = None if validation_data_shard is None \
+        else validation_data_shard.rdd.flatMap(df_to_list)
+
     dataset = TFDataset.from_rdd(data_shard.rdd.flatMap(df_to_list),
                                  features=feature_spec,
                                  labels=label_spec,
                                  batch_size=batch_size,
-                                 batch_per_thread=batch_per_thread)
+                                 batch_per_thread=batch_per_thread,
+                                 val_rdd=val_rdd)
 
     return dataset
 
@@ -120,6 +142,7 @@ class TFOptimizerWrapper(Estimator):
 
     def fit(self, data_shard, features, labels, steps,
             batch_size=32,
+            validation_data_shard=None,
             feed_dict=None,
             session_config=None):
 
@@ -129,7 +152,8 @@ class TFOptimizerWrapper(Estimator):
         dataset = _data_shard_to_tf_dataset(data_shard,
                                             feature_cols=features,
                                             label_cols=labels,
-                                            batch_size=batch_size)
+                                            batch_size=batch_size,
+                                            validation_data_shard=validation_data_shard)
 
         if feed_dict is not None:
             tensor_with_value = {key: (value, value) for key, value in feed_dict.items()}
@@ -138,6 +162,8 @@ class TFOptimizerWrapper(Estimator):
 
         optimizer = TFOptimizer.from_train_op(
             train_op=self.train_op,
+            inputs=self.inputs,
+            labels=self.labels,
             loss=self.loss, metrics=self.metrics,
             updates=self.updates, sess=self.sess,
             dataset=dataset,
@@ -148,16 +174,16 @@ class TFOptimizerWrapper(Estimator):
         optimizer.optimize(end_trigger=MaxIteration(steps))
         return self
 
-    def evaluate(self, data_shard, features, labels,
-                 eval_methods, batch_size=32, checkpoint_path=None,
-                 feed_dict=None, session_config=None):
-        # eval_methods
-        # key: string
-        # value: a tf scala tensor that belongs to the current graph
+    def predict(self, data_shard, features, batch_size=32):
+        dataset = _data_shard_to_tf_dataset(data_shard,
+                                            feature_cols=features,
+                                            label_cols=None,
+                                            batch_per_thread=batch_size)
 
-
-        # todo how to handle feed_dict
-        TFNet.from_session(sess=self.sess, inputs=self.inputs + self.labels, )
+        flat_inputs = nest.flatten(self.inputs)
+        flat_outputs = nest.flatten(self.outputs)
+        tfnet = TFNet.from_session(sess=self.sess, inputs=flat_inputs, outputs=flat_outputs)
+        return tfnet.predict(dataset)
 
 
 class TFEstimatorWrapper(Estimator):
@@ -165,7 +191,7 @@ class TFEstimatorWrapper(Estimator):
 
         self.tfpark_estimator = tfpark_estimator
 
-    def fit(self, data_shard, features, labels, steps, batch_size=32):
+    def fit(self, data_shard, features, labels, steps, batch_size=32, **kwargs):
 
         def input_fn():
             return _data_shard_to_tf_dataset(data_shard,
@@ -175,21 +201,6 @@ class TFEstimatorWrapper(Estimator):
 
         self.tfpark_estimator.train(input_fn, steps)
         return self
-
-    def evaluate(self, data_shard, features, labels,
-                 eval_methods, batch_size=32, checkpoint_path=None):
-
-        # eval_methods
-        # key: string
-        # value: a function that takes predictions and labels and return a scala tensor
-
-        def input_fn():
-            return _data_shard_to_tf_dataset(data_shard,
-                                             feature_cols=features,
-                                             label_cols=labels,
-                                             batch_per_thread=batch_size)
-
-        return self.tfpark_estimator.evaluate(input_fn, eval_methods, checkpoint_path)
 
     def predict(self, data_shard, features, batch_size=32, checkpoint_path=None, predict_keys=None):
         def input_fn():
