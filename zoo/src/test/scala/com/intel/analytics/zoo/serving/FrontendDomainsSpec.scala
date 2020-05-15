@@ -22,6 +22,9 @@ import java.util.{Base64, UUID}
 import com.intel.analytics.zoo.serving.http._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
+import scala.collection.immutable.TreeMap
+import scala.collection.mutable
+
 class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter with Supportive {
 
   "ServingError" should "serialized as json" in {
@@ -37,7 +40,7 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
       .getResource("imagenet/n02110063/n02110063_15462.JPEG").getFile()
     val byteArray = Files.readAllBytes(Paths.get(image3Path))
     val image3 = new ImageFeature(Base64.getEncoder().encodeToString(byteArray))
-    val instance3 = Map("image" -> image3, "caption" -> "dog")
+    val instance3 = mutable.LinkedHashMap[String, Any]("image" -> image3, "caption" -> "dog")
     val inputs = Instances(List.range(0, 2).map(i => instance3))
     val json = timing("serialize")() {
       JsonUtil.toJson(inputs)
@@ -61,5 +64,102 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
     val out = PredictionOutput(uuid, result)
     out.uuid should be (uuid)
     out.result should be (result)
+  }
+
+  val instancesJson = """{
+                        |"instances": [
+                        |   {
+                        |     "tag": "foo",
+                        |     "signal": [1, 2, 3, 4, 5],
+                        |     "sensor": [[1, 2], [3, 4]]
+                        |   },
+                        |   {
+                        |     "tag": "bar",
+                        |     "signal": [3, 4, 1, 2, 5],
+                        |     "sensor": [[4, 5], [6, 8]]
+                        |   }
+                        |]
+                        |}
+                        |""".stripMargin
+  "Instances" should "works well" in {
+    val instances = JsonUtil.fromJson(classOf[Instances], instancesJson)
+    instances.instances.size should be (2)
+
+    val intScalar = 12345
+    val floatScalar = 3.14159
+    val stringScalar = "hello, world. hello, arrow."
+    val intTensor = List(1, 2, 3, 4, 5)
+    val floatTensor = List(0.5f, 0.7f, 4.678f, 8.9f, 9.8765f)
+    val stringTensor = List("come", "on", "united")
+    val intTensor2 = List(List(1, 2), List(3, 4), List(5, 6))
+    val floatTensor2 =
+      List(
+        List(
+          List(.2f, .3f),
+          List(.5f, .6f)),
+        List(
+          List(.2f, .3f),
+          List(.5f, .6f)))
+    val stringTensor2 =
+      List(
+        List(
+          List(
+            List("come", "on", "united"),
+            List("come", "on", "united"),
+            List("come", "on", "united"),
+            List("come", "on", "united")),
+          List(
+            List("come", "on", "united"),
+            List("come", "on", "united"),
+            List("come", "on", "united"),
+            List("come", "on", "united"))
+        ),
+        List(
+          List(
+            List("come", "on", "united"),
+            List("come", "on", "united"),
+            List("come", "on", "united"),
+            List("come", "on", "united")),
+          List(
+            List("come", "on", "united"),
+            List("come", "on", "united"),
+            List("come", "on", "united"),
+            List("come", "on", "united"))
+        )
+      )
+    val instance = mutable.LinkedHashMap(
+      "intScalar" -> intScalar,
+      "floatScalar" -> floatScalar,
+      "stringScalar" -> stringScalar,
+      "intTensor" -> intTensor,
+      "floatTensor" -> floatTensor,
+      "stringTensor" -> stringTensor,
+      "intTensor2" -> intTensor2,
+      "floatTensor2" -> floatTensor2,
+      "stringTensor2" -> stringTensor2
+    )
+    val instances2 = Instances(instance)
+    val json2 = JsonUtil.toJson(instances2)
+    println(json2)
+    val instances3 = JsonUtil.fromJson(classOf[Instances], json2)
+    val tensors = instances3.constructTensors()
+    val schemas = instances3.makeSchema(tensors)
+    println(tensors)
+    println(schemas)
+
+    val (shape1, data1) = Instances.transferListToTensor(intTensor)
+    shape1.reduce(_*_) should be (data1.size)
+    val (shape2, data2) = Instances.transferListToTensor(intTensor2)
+    shape2.reduce(_*_) should be (data2.size)
+    val (shape3, data3) = Instances.transferListToTensor(floatTensor2)
+    shape3.reduce(_*_) should be (data3.size)
+    val (shape4, data4) = Instances.transferListToTensor(stringTensor2)
+    shape4.reduce(_*_) should be (data4.size)
+
+    val arrowBytes = instances3.toArrow()
+    println(arrowBytes)
+    println(arrowBytes.length)
+
+    Instances.fromArrow(arrowBytes)
   }
 }
