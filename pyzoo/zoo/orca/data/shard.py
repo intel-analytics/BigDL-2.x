@@ -162,8 +162,10 @@ class SparkDataShards(DataShards):
                 raise Exception("Cannot apply unique operation on Datashards of Pandas Dataframe"
                                 " without column name")
             if key in columns:
-                rdd = self.rdd.map(lambda df: df[key].unique().tolist())
-                result = rdd.reduce(lambda list1, list2: pd.unique(list1 + list2))
+                rdd = self.rdd.map(lambda df: df[key].unique())
+                import numpy as np
+                result = rdd.reduce(lambda list1, list2: pd.unique(np.concatenate((list1, list2),
+                                                                                  axis=0)))
                 return result
             else:
                 raise Exception("The select key is not in the DataFrame in this Datashards")
