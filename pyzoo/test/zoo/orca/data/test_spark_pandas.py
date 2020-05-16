@@ -111,7 +111,11 @@ class TestSparkDataShards(ZooTestCase):
     def test_unique(self):
         file_path = os.path.join(self.resource_path, "orca/data")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        import time
+        start = time.time()
         location_list = data_shard.unique("location")
+        end = time.time()
+        print("duration: ", end - start)
         assert len(location_list) == 6
 
 

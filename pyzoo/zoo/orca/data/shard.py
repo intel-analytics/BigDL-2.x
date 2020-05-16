@@ -158,13 +158,12 @@ class SparkDataShards(DataShards):
             lambda data: (type(data), data.columns) if isinstance(data, pd.DataFrame)
             else (type(data), None)).first()
         if issubclass(elem_class, pd.DataFrame):
-            import numpy as np
             if key is None:
                 raise Exception("Cannot apply unique operation on Datashards of Pandas Dataframe"
                                 " without column name")
             if key in columns:
                 rdd = self.rdd.map(lambda df: df[key].unique().tolist())
-                result = rdd.reduce(lambda list1, list2: np.array(list(set(list1 + list2))))
+                result = rdd.reduce(lambda list1, list2: pd.unique(list1 + list2))
                 return result
             else:
                 raise Exception("The select key is not in the DataFrame in this Datashards")
