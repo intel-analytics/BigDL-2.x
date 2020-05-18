@@ -20,7 +20,7 @@ import argparse
 
 from zoo import init_spark_on_local, init_spark_on_yarn
 from zoo.ray import RayContext
-from zoo.ray.mxnet import MXNetTrainer, create_trainer_config
+from zoo.orca.learn.mxnet import MXNetTrainer, create_trainer_config
 
 
 def get_data_iters(config, kv):

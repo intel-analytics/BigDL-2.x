@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 
 import mxnet as mx
-from zoo.ray.mxnet import MXNetTrainer, create_trainer_config
+from zoo.orca.learn.mxnet import MXNetTrainer, create_trainer_config
 
 np.random.seed(1337)  # for reproducibility
 
