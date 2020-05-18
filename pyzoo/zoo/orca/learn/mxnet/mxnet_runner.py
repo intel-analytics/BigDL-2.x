@@ -20,7 +20,9 @@ import logging
 import subprocess
 import ray.services
 import mxnet as mx
+import numpy as np
 from mxnet import gluon
+from functools import reduce
 from zoo.ray.utils import to_list
 from zoo.orca.learn.mxnet.utils import find_free_port
 
@@ -51,17 +53,38 @@ class MXNetRunner(object):
             # Set seed so that the model on each worker is initialized with the same weights
             if "seed" in self.config:
                 mx.random.seed(self.config["seed"])
-            data = self.data_creator(self.config, self.kv)
-            if isinstance(data, tuple):
-                assert len(data) == 1 or len(data) == 2, \
-                    "data_creator should return either train_data only or a tuple of " \
-                    "(train_data, val_data), which can be directly fed to model training"
-                if len(data) == 1:
-                    self.train_data, self.val_data = data[0], None
-                else:
-                    self.train_data, self.val_data = data
-            else:  # Only return one object, supposed to be train data.
-                self.train_data, self.val_data = data, None
+
+            if isinstance(data_creator, tuple):
+                # XShard (train_data, test_data) input
+                # retrieve train data
+                train_data, test_data = data_creator
+                train_partition_data = ray.get(train_data[self.kv.rank].get_data())
+                train_data_label = get_data_label(train_partition_data)
+                self.train_data = mx.io.ResizeIter(
+                    mx.io.NDArrayIter(data=train_data_label['data'],
+                                      label=train_data_label['label'],
+                                      batch_size=config["batch_size"],
+                                      shuffle=True), size=3268)
+                # retrieve val data
+                val_partition_data = ray.get(test_data[self.kv.rank].get_data())
+                val_data_label = get_data_label(val_partition_data)
+                self.val_data = mx.io.NDArrayIter(data=val_data_label['data'],
+                                                  label=val_data_label['label'],
+                                                  batch_size=config["batch_size"],
+                                                  shuffle=True)
+            else:
+                data = self.data_creator(self.config, self.kv)
+                if isinstance(data, tuple):
+                    assert len(data) == 1 or len(data) == 2, \
+                        "data_creator should return either train_data only or a tuple of " \
+                        "(train_data, val_data), which can be directly fed to model training"
+                    if len(data) == 1:
+                        self.train_data, self.val_data = data[0], None
+                    else:
+                        self.train_data, self.val_data = data
+                else:  # Only return one object, supposed to be train data.
+                    self.train_data, self.val_data = data, None
+
             self.model = self.model_creator(self.config)
             if self.loss_creator:
                 self.loss = self.loss_creator(self.config)
@@ -194,6 +217,28 @@ class MXNetRunner(object):
             stats["epoch_time"] = epoch_time
         return stats
 
+    def validate(self):
+        # TODO: validate for symbolic API
+        stats = dict()
+        stats["epoch"] = self.epoch
+        if self.is_worker:
+            self.metrics.reset()
+            self.val_data.reset()
+            for batch in self.val_data:
+                data = gluon.utils.split_and_load(batch.data[0].astype("float32", copy=False),
+                                                  ctx_list=[mx.cpu()], batch_axis=0)
+                label = gluon.utils.split_and_load(batch.label[0].astype("float32", copy=False),
+                                                   ctx_list=[mx.cpu()], batch_axis=0)
+                outputs = [self.model(X) for X in data]
+                self.metrics.update(label, outputs)
+            names, accs = self.metrics.get()
+            if not isinstance(names, list):
+                names = [names]
+                accs = [accs]
+            for name, acc in zip(names, accs):
+                stats[name] = acc
+        return stats
+
     def shutdown(self):
         """Attempts to shut down the runner."""
         del self.logger
@@ -213,3 +258,23 @@ class MXNetRunner(object):
     def find_free_port(self):
         """Finds a free port on the current node."""
         return find_free_port()
+
+
+def get_data_label(partition_data):
+    def combine(dict1, dict2):
+        return {key: np.concatenate((value, dict2[key]), axis=0)
+                for (key, value) in dict1.items()}
+
+    data_list = [data['data'] for data in partition_data]
+    label_list = [data['label'] for data in partition_data]
+    if isinstance(partition_data[0]['data'], dict):
+        data = reduce(lambda dict1, dict2: combine(dict1, dict2), data_list)
+    elif isinstance(partition_data[0]['data'], np.ndarray):
+        data = reduce(lambda array1, array2: np.concatenate((array1, array2), axis=0),
+                      data_list)
+    if isinstance(partition_data[0]['label'], dict):
+        label = reduce(lambda dict1, dict2: combine(dict1, dict2), label_list)
+    elif isinstance(partition_data[0]['label'], np.ndarray):
+        label = reduce(lambda array1, array2: np.concatenate((array1, array2), axis=0),
+                       label_list)
+    return {'data': data, 'label': label}
