@@ -24,10 +24,10 @@ from zoo.util import nest
 
 
 class Estimator(object):
-    def fit(self, data, features, labels, steps, batch_size, **kwargs):
+    def fit(self, data, steps, batch_size, **kwargs):
         pass
 
-    def predict(self, data, features, **kwargs):
+    def predict(self, data, **kwargs):
         pass
 
     @staticmethod
@@ -63,53 +63,44 @@ class Estimator(object):
                                   model_dir=model_dir)
 
 
-def _data_shard_to_tf_dataset(data_shard, feature_cols, label_cols,
+def _data_shard_to_tf_dataset(data_shard,
                               batch_size=-1, batch_per_thread=-1,
                               validation_data_shard=None):
+    # todo data_shard.head ?
     first_data = data_shard.rdd.first()
-
-    assert isinstance(first_data, pd.DataFrame)
-    dtypes = list(first_data.dtypes)
-    names = list(first_data.columns)
-
-    name2idx = {name: idx for idx, name in enumerate(names)}
-
-    for feat in feature_cols:
-        if feat not in name2idx:
-            raise ValueError("Could not find feature column {} in DataShard".format(feat))
-
-    if label_cols is not None:
-        for label in label_cols:
-            if label not in name2idx:
-                raise ValueError("Could not find label column {} in DataShard".format(label))
 
     assert batch_size != -1 or batch_per_thread != -1, \
         "one of batch_size and batch_per_thread should be specified"
 
     import tensorflow as tf
-    feature_spec = {feat: (tf.dtypes.as_dtype(dtypes[name2idx[feat]]), ())
-                    for feat in feature_cols}
-    if label_cols is not None:
-        label_spec = {label: (tf.dtypes.as_dtype(dtypes[name2idx[label]]), ())
-                      for label in label_cols}
+    feature_spec = [(tf.dtypes.as_dtype(feat.dtype), feat.shape[1:])
+                    for feat in first_data["x"]]
+    if "y" in first_data:
+        label_spec = [(tf.dtypes.as_dtype(label.dtype), label.shape[1:])
+                      for label in first_data["y"]]
     else:
         label_spec = None
 
-    def select(row):
-        features = {feat: row[feat] for feat in feature_cols}
-        if label_cols is not None:
-            labels = {label: row[label] for label in label_cols}
-            return (features, labels)
-        else:
-            return (features,)
+    # todo this might be very slow
+    def flatten(data):
+        features = data["x"]
 
-    def df_to_list(df):
-        return [select(row) for _, row in df.iterrows()]
+        has_label = "y" in data
+        labels = data["y"] if has_label else None
+        length = features[0].shape[0]
+
+        for i in range(length):
+            fs = [feat[i] for feat in features]
+            if has_label:
+                ls = [l[i] for l in labels]
+                yield (fs, ls)
+            else:
+                yield (fs,)
 
     val_rdd = None if validation_data_shard is None \
-        else validation_data_shard.rdd.flatMap(df_to_list)
+        else validation_data_shard.rdd.flatMap(flatten)
 
-    dataset = TFDataset.from_rdd(data_shard.rdd.flatMap(df_to_list),
+    dataset = TFDataset.from_rdd(data_shard.rdd.flatMap(flatten),
                                  features=feature_spec,
                                  labels=label_spec,
                                  batch_size=batch_size,
@@ -140,18 +131,13 @@ class TFOptimizerWrapper(Estimator):
         self.sess = sess
         self.model_dir = model_dir
 
-    def fit(self, data_shard, features, labels, steps,
+    def fit(self, data_shard, steps,
             batch_size=32,
             validation_data_shard=None,
             feed_dict=None,
             session_config=None):
 
-        # todo 1. input keys should match features
-        # todo 2. labels keys should match labels
-
         dataset = _data_shard_to_tf_dataset(data_shard,
-                                            feature_cols=features,
-                                            label_cols=labels,
                                             batch_size=batch_size,
                                             validation_data_shard=validation_data_shard)
 
@@ -174,10 +160,8 @@ class TFOptimizerWrapper(Estimator):
         optimizer.optimize(end_trigger=MaxIteration(steps))
         return self
 
-    def predict(self, data_shard, features, batch_size=32):
+    def predict(self, data_shard, batch_size=32):
         dataset = _data_shard_to_tf_dataset(data_shard,
-                                            feature_cols=features,
-                                            label_cols=None,
                                             batch_per_thread=batch_size)
 
         flat_inputs = nest.flatten(self.inputs)
@@ -191,22 +175,18 @@ class TFEstimatorWrapper(Estimator):
 
         self.tfpark_estimator = tfpark_estimator
 
-    def fit(self, data_shard, features, labels, steps, batch_size=32, **kwargs):
+    def fit(self, data_shard, steps, batch_size=32, **kwargs):
 
         def input_fn():
             return _data_shard_to_tf_dataset(data_shard,
-                                             feature_cols=features,
-                                             label_cols=labels,
                                              batch_size=batch_size)
 
         self.tfpark_estimator.train(input_fn, steps)
         return self
 
-    def predict(self, data_shard, features, batch_size=32, checkpoint_path=None, predict_keys=None):
+    def predict(self, data_shard, batch_size=32, checkpoint_path=None, predict_keys=None):
         def input_fn():
             return _data_shard_to_tf_dataset(data_shard,
-                                             feature_cols=features,
-                                             label_cols=None,
                                              batch_per_thread=batch_size)
 
         predictions = self.tfpark_estimator.predict(input_fn,

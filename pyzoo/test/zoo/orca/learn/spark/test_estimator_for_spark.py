@@ -25,14 +25,14 @@ resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
 def test_estimator_model_fn(estimator_for_spark_fixture):
     def model_fn(features, labels, mode):
-        user = features['user']
-        item = features['item']
+        user = features[0]
+        item = features[1]
 
         feat = tf.stack([user, item], axis=1)
         logits = tf.layers.dense(tf.to_float(feat), 2)
 
         if mode == tf.estimator.ModeKeys.TRAIN:
-            labels = labels['label']
+            labels = labels[0]
             loss = tf.reduce_mean(
                 tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
             train_op = ZooOptimizer(tf.train.AdamOptimizer()).minimize(loss)
@@ -45,13 +45,34 @@ def test_estimator_model_fn(estimator_for_spark_fixture):
 
     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
     data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+
+    def transform():
+        def trans(df):
+            result = {
+                "x": [df['user'].to_numpy(), df['item'].to_numpy()],
+                "y": [df['label']]
+            }
+            return result
+        return trans
+
+    data_shard.apply(transform)
     est = Estimator.from_model_fn(model_fn, backend="spark")
     est.fit(data_shard,
-            features=["user", "item"],
-            labels=["label"],
-            steps=100,
+            steps=10,
             batch_size=8)
-    predictions = est.predict(data_shard, features=["user", "item"]).collect()
+
+    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+
+    def transform():
+        def trans(df):
+            result = {
+                "x": [df['user'].to_numpy(), df['item'].to_numpy()],
+            }
+            return result
+        return trans
+
+    data_shard.apply(transform)
+    predictions = est.predict(data_shard).collect()
     print(predictions)
 
 
@@ -75,20 +96,41 @@ def test_estimator_pre_built_graph(estimator_for_spark_fixture):
     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
     data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
 
+    def transform():
+        def trans(df):
+            result = {
+                "x": [df['user'].to_numpy(), df['item'].to_numpy()],
+                "y": [df['label']]
+            }
+            return result
+        return trans
+
+    data_shard.apply(transform)
+
     est = Estimator.from_pre_built_graph(
-        inputs={"user": user, "item": item},
-        labels={"label": label},
+        inputs=[user, item],
+        labels=[label],
         outputs=[logits],
         loss=loss,
         train_op=train_op,
         metrics={"loss": loss})
     est.fit(data_shard=data_shard,
-            features=["user", "item"],
-            labels=["label"],
             batch_size=8,
             steps=10,
             validation_data_shard=data_shard)
-    predictions = est.predict(data_shard, features=["user", "item"]).collect()
+
+    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+
+    def transform():
+        def trans(df):
+            result = {
+                "x": [df['user'].to_numpy(), df['item'].to_numpy()],
+            }
+            return result
+        return trans
+
+    data_shard.apply(transform)
+    predictions = est.predict(data_shard).collect()
     print(predictions)
 
 if __name__ == "__main__":
