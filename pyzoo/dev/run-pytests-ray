@@ -33,7 +33,7 @@ then
     exit $exit_status_1
 fi
 
-echo "Running MXNet Estimator tests"
+echo "Running MXNetTrainer tests"
 python -m pytest -v ../test/zoo/orca/learn/mxnet
 exit_status_2=$?
 if [ $exit_status_2 -ne 0 ];

@@ -20,7 +20,7 @@ import argparse
 
 from zoo import init_spark_on_local, init_spark_on_yarn
 from zoo.ray import RayContext
-from zoo.orca.learn.mxnet import Estimator, create_trainer_config
+from zoo.orca.learn.mxnet import MXNetTrainer, create_trainer_config
 
 
 def get_data_iters(config, kv):
@@ -149,9 +149,9 @@ if __name__ == '__main__':
     config = create_trainer_config(opt.batch_size, optimizer="sgd",
                                    optimizer_params={'learning_rate': opt.learning_rate},
                                    log_interval=opt.log_interval, seed=42)
-    trainer = Estimator(config, data_creator=get_data_iters, model_creator=get_model,
-                        loss_creator=get_loss, metrics_creator=get_metrics,
-                        num_workers=opt.num_workers, num_servers=opt.num_servers)
+    trainer = MXNetTrainer(config, data_creator=get_data_iters, model_creator=get_model,
+                           loss_creator=get_loss, metrics_creator=get_metrics,
+                           num_workers=opt.num_workers, num_servers=opt.num_servers)
     trainer.train(nb_epoch=opt.epochs)
     ray_ctx.stop()
     sc.stop()

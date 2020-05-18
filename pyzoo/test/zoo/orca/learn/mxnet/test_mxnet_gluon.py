@@ -22,7 +22,7 @@ import ray
 import mxnet as mx
 from mxnet import gluon
 from mxnet.gluon import nn
-from zoo.orca.learn.mxnet import Estimator, create_trainer_config
+from zoo.orca.learn.mxnet import MXNetTrainer, create_trainer_config
 
 np.random.seed(1337)  # for reproducibility
 
@@ -68,7 +68,7 @@ class TestMXNetGluon(TestCase):
     def test_gluon(self):
         config = create_trainer_config(batch_size=32, log_interval=2, optimizer="adam",
                                        optimizer_params={'learning_rate': 0.02})
-        trainer = Estimator(config, get_data_iters, get_model, get_loss, get_metrics, num_workers=2)
+        trainer = MXNetTrainer(config, get_data_iters, get_model, get_loss, get_metrics, num_workers=2)
         trainer.train(nb_epoch=2)
 
 

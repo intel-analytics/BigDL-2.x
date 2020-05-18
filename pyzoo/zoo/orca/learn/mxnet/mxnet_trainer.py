@@ -23,9 +23,9 @@ from zoo.orca.learn.mxnet.mxnet_runner import MXNetRunner
 from zoo.orca.learn.mxnet.utils import find_free_port
 
 
-class Estimator(object):
+class MXNetTrainer(object):
     """
-    MXNet Estimator provides an automatic setup for synchronous distributed MXNet training.
+    MXNetTrainer provides an automatic setup for synchronous distributed MXNet training.
 
     :param config: A dictionary for training configurations. Keys must include the following:
     batch_size, optimizer, optimizer_params, log_interval.
