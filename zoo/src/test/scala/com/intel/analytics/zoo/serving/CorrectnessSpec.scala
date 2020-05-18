@@ -41,6 +41,8 @@ import org.opencv.core._
 import org.apache.commons.io.FileUtils
 import com.intel.analytics.zoo.feature.image._
 
+import sys.env
+
 class CorrectnessSpec extends FlatSpec with Matchers {
   val configPath = "/tmp/config.yaml"
 //  val configPath = "/home/litchy/pro/analytics-zoo/config.yaml"
@@ -81,8 +83,8 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     ClusterServing.run(configPath, redisHost, redisPort)
   }
   "Cluster Serving result" should "be correct" in {
-    redisHost = "10.239.47.210"
-    redisPort = 16380
+    redisHost = env.getOrElse("REDIS_HOST", "localhost")
+    redisPort = env.getOrElse("REDIS_PORT", "6379").toInt
     val cli = new Jedis(redisHost, redisPort)
 
     cli.flushAll()
