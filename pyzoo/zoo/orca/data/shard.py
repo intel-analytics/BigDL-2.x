@@ -174,6 +174,12 @@ class SparkDataShards(DataShards):
             raise Exception("Currently only support unique() on Datashards of Pandas DataFrame")
 
     def split(self):
+        """
+        Split SparkDataShards into multiple SparkDataShards.
+        Each element in the SparkDataShards needs be a list or tuple with same length.
+        :return: Splits of SparkDataShards. If element in the input SparkDataShard is not
+                list or tuple, return list of input SparkDataShards.
+        """
         # get number of splits
         list_split_length = self.rdd.map(lambda data: len(data) if isinstance(data, list) or
                                          isinstance(data, tuple) else 1).collect()
