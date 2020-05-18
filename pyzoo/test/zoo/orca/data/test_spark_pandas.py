@@ -28,6 +28,7 @@ class TestSparkDataShards(ZooTestCase):
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
         sparkConf = init_spark_conf().setMaster("local[4]").setAppName("testSparkDataShards")
         self.sc = init_nncontext(sparkConf)
+        self.file_path = os.path.join(self.resource_path, "orca/data")
 
     def teardown_method(self, method):
         """ teardown any state that was previously setup with a setup_method
@@ -36,16 +37,14 @@ class TestSparkDataShards(ZooTestCase):
         self.sc.stop()
 
     def test_read_local_csv(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        data_shard = zoo.orca.data.pandas.read_csv(self.file_path, self.sc)
         data = data_shard.collect()
         assert len(data) == 2, "number of shard should be 2"
         df = data[0]
         assert "location" in df.columns, "location is not in columns"
 
     def test_read_local_json(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
-        data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc,
+        data_shard = zoo.orca.data.pandas.read_json(self.file_path, self.sc,
                                                     orient='columns', lines=True)
         data = data_shard.collect()
         assert len(data) == 2, "number of shard should be 2"
@@ -63,8 +62,7 @@ class TestSparkDataShards(ZooTestCase):
             assert "value" in df.columns, "value is not in columns"
 
     def test_repartition(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
-        data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc)
+        data_shard = zoo.orca.data.pandas.read_json(self.file_path, self.sc)
         partitions_num_1 = data_shard.rdd.getNumPartitions()
         assert partitions_num_1 == 4, "number of partition should be 4"
         data_shard.repartition(1)
@@ -72,8 +70,7 @@ class TestSparkDataShards(ZooTestCase):
         assert partitions_num_2 == 1, "number of partition should be 1"
 
     def test_apply(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
-        data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc,
+        data_shard = zoo.orca.data.pandas.read_json(self.file_path, self.sc,
                                                     orient='columns', lines=True)
         data = data_shard.collect()
         assert data[0]["value"].values[0] > 0, "value should be positive"
@@ -89,30 +86,41 @@ class TestSparkDataShards(ZooTestCase):
         assert data2[0]["value"].values[0] < 0, "value should be negative"
 
     def test_read_csv_with_args(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc, sep=',', header=0)
+        data_shard = zoo.orca.data.pandas.read_csv(self.file_path, self.sc, sep=',', header=0)
         data = data_shard.collect()
         assert len(data) == 2, "number of shard should be 2"
         df = data[0]
         assert "location" in df.columns, "location is not in columns"
 
     def test_partition_by_single_column(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        data_shard = zoo.orca.data.pandas.read_csv(self.file_path, self.sc)
         data_shard.partition_by(cols="location")
         partitions = data_shard.rdd.glom().collect()
         assert len(partitions) == 4
 
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        data_shard = zoo.orca.data.pandas.read_csv(self.file_path, self.sc)
         data_shard.partition_by(cols="location", num_partitions=3)
         partitions = data_shard.rdd.glom().collect()
         assert len(partitions) == 3
 
     def test_unique(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        data_shard = zoo.orca.data.pandas.read_csv(self.file_path, self.sc)
         location_list = data_shard.unique("location")
         assert len(location_list) == 6
+
+    def test_split(self):
+        data_shard = zoo.orca.data.pandas.read_csv(self.file_path, self.sc)
+        def split():
+            def process(df):
+                return df[0:-1], df[-1:]
+            return process
+        data_shard.transform_shard(split)
+        shards_splits = data_shard.split()
+        assert len(shards_splits) == 2
+        data1 = shards_splits[0].collect()
+        data2 = shards_splits[1].collect()
+        assert len(data1[0].index) > 1
+        assert len(data2[0].index) == 1
 
 
 if __name__ == "__main__":

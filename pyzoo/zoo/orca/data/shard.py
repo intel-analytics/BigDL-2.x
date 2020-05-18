@@ -172,3 +172,23 @@ class SparkDataShards(DataShards):
         else:
             # we may support numpy or other types later
             raise Exception("Currently only support unique() on Datashards of Pandas DataFrame")
+
+    def split(self):
+        # get number of splits
+        list_split_length = self.rdd.map(lambda data: len(data) if isinstance(data, list) or
+                                         isinstance(data, tuple) else 1).collect()
+        # check if each element has same splits
+        if list_split_length.count(list_split_length[0]) != len(list_split_length):
+            raise Exception("Cannot split since some element in DataShards has different splits")
+        else:
+            if list_split_length[0] > 1:
+                def get_data(order):
+                    def transform(data):
+                        return data[order]
+                    return transform
+                return [SparkDataShards(self.rdd.map(get_data(i)))
+                        for i in range(list_split_length[0])]
+            else:
+                return [self]
+
+
