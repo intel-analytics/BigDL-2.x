@@ -30,12 +30,8 @@ object ClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
   var params: SerParams = null
-<<<<<<<<< Temporary merge branch 1
-  def run(configPath: String = "config.yaml", redisHost: String = null, redisPort: Int = -1): Unit = {
-=========
   def run(configPath: String = "config.yaml",
           redisHost: String = null, redisPort: Int = -1): Unit = {
->>>>>>>>> Temporary merge branch 2
     val helper = new ClusterServingHelper(configPath)
     helper.initArgs()
     params = new SerParams(helper)
