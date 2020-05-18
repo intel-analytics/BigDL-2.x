@@ -83,8 +83,16 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     ClusterServing.run(configPath, redisHost, redisPort)
   }
   "Cluster Serving result" should "be correct" in {
-    redisHost = env.getOrElse("REDIS_HOST", "localhost")
-    redisPort = env.getOrElse("REDIS_PORT", "6379").toInt
+    redisHost = if (env.contains("REDIS_HOST")) {
+      env("REDIS_HOST").toString
+    } else {
+      "localhost"
+    }
+    redisPort = if (env.contains("REDIS_PORT")) {
+      env("REDIS_PORT").toInt
+    } else {
+      6379
+    }
     val cli = new Jedis(redisHost, redisPort)
 
     cli.flushAll()
