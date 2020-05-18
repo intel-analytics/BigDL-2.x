@@ -24,7 +24,7 @@ class XShards(object):
 
     def transform_shard(self, func, *args):
         """
-        Transform each shard in the DataShards using func
+        Transform each shard in the XShards using func
         :param func: pre-processing function
         :param args: arguments for the pre-processing function
         :return: DataShard
