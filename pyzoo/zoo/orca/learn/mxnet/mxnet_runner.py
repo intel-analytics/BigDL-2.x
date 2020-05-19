@@ -30,15 +30,14 @@ from zoo.orca.learn.mxnet.utils import find_free_port
 class MXNetRunner(object):
     """Manages a MXNet model for training."""
 
-    def setup_distributed(self, env, config, data_creator, model_creator,
-                          loss_creator=None, metrics_creator=None):
+    def setup_distributed(self, env, config, train_data, model_creator, loss_creator=None,
+                          metrics_creator=None, test_data=None, train_resize_size=3268):
         logging.basicConfig(level=logging.INFO)  # This can print log messages to console.
         self.logger = logging.getLogger()
         assert isinstance(config, dict), "config must be a dict"
         for param in ["batch_size", "optimizer", "optimizer_params", "log_interval"]:
             assert param in config, param + " must be specified in config"
         self.config = config
-        self.data_creator = data_creator
         self.model_creator = model_creator
         self.loss_creator = loss_creator
         self.metrics_creator = metrics_creator
@@ -54,17 +53,28 @@ class MXNetRunner(object):
             if "seed" in self.config:
                 mx.random.seed(self.config["seed"])
 
-            if isinstance(data_creator, tuple):
-                # XShard (train_data, test_data) input
+            if isinstance(train_data, tuple):
+                # normal data train_data: (train_data, train_label)
+                train_data, train_label = train_data
+                self.train_data = mx.io.NDArrayIter(train_data, train_label,
+                                                    batch_size=config["batch_size"], shuffle=True)
+                if test_data is not None:
+                    test_data, test_label = test_data
+                    self.val_data = mx.io.NDArrayIter(test_data, test_label,
+                                                       batch_size=config["batch_size"],
+                                                       shuffle=True)
+                else:
+                    self.val_data = None
+            else:
+                # XShard input
                 # retrieve train data
-                train_data, test_data = data_creator
                 train_partition_data = ray.get(train_data[self.kv.rank].get_data())
                 train_data_label = get_data_label(train_partition_data)
                 self.train_data = mx.io.ResizeIter(
                     mx.io.NDArrayIter(data=train_data_label['data'],
                                       label=train_data_label['label'],
                                       batch_size=config["batch_size"],
-                                      shuffle=True), size=3268)
+                                      shuffle=True), train_resize_size)
                 # retrieve val data
                 val_partition_data = ray.get(test_data[self.kv.rank].get_data())
                 val_data_label = get_data_label(val_partition_data)
@@ -72,18 +82,6 @@ class MXNetRunner(object):
                                                   label=val_data_label['label'],
                                                   batch_size=config["batch_size"],
                                                   shuffle=True)
-            else:
-                data = self.data_creator(self.config, self.kv)
-                if isinstance(data, tuple):
-                    assert len(data) == 1 or len(data) == 2, \
-                        "data_creator should return either train_data only or a tuple of " \
-                        "(train_data, val_data), which can be directly fed to model training"
-                    if len(data) == 1:
-                        self.train_data, self.val_data = data[0], None
-                    else:
-                        self.train_data, self.val_data = data
-                else:  # Only return one object, supposed to be train data.
-                    self.train_data, self.val_data = data, None
 
             self.model = self.model_creator(self.config)
             if self.loss_creator:

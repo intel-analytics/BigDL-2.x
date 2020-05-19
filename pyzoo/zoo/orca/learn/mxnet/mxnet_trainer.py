@@ -60,16 +60,19 @@ class MXNetTrainer(object):
     :param runner_cores: The number of CPU cores allocated for each MXNet worker and server.
     Default is None. You may need to specify this for better performance.
     """
-    def __init__(self, config, data_creator, model_creator,
+    def __init__(self, config, train_data, model_creator,
                  loss_creator=None, metrics_creator=None,
-                 num_workers=1, num_servers=None, runner_cores=None):
+                 num_workers=1, num_servers=None, runner_cores=None,
+                 test_data=None, train_resize_size=3268):
         self.config = config
-        self.data_creator = data_creator
+        self.train_data = train_data
+        self.test_data = test_data
         self.model_creator = model_creator
         self.loss_creator = loss_creator
         self.metrics_creator = metrics_creator
         self.num_workers = num_workers
         self.num_servers = num_servers if num_servers else self.num_workers
+        self.train_resize_size = train_resize_size
 
         # Generate actor class
         # Add a dummy custom resource: _mxnet_worker and _mxnet_server to diff worker from server
@@ -124,10 +127,12 @@ class MXNetTrainer(object):
 
         ray.get([
             runner.setup_distributed.remote(envs[i], self.config,
-                self.data_creator,
+                self.train_data,
                 self.model_creator,
                 self.loss_creator,
-                self.metrics_creator)
+                self.metrics_creator,
+                self.test_data,
+                self.train_resize_size)
             for i, runner in enumerate(self.runners)
         ])
 
