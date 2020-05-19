@@ -22,7 +22,7 @@ import ray.services
 import mxnet as mx
 from mxnet import gluon
 from zoo.ray.utils import to_list
-from zoo.ray.mxnet.utils import find_free_port
+from zoo.orca.learn.mxnet.utils import find_free_port
 
 
 class MXNetRunner(object):

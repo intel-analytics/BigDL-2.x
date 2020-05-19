@@ -31,9 +31,8 @@ import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import java.util.LinkedHashMap
 
 import org.apache.log4j.Logger
-import scopt.OptionParser
 import org.apache.spark.rdd.RDD
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.yaml.snakeyaml.Yaml
 import java.time.LocalDateTime
@@ -43,21 +42,6 @@ import com.intel.analytics.zoo.serving.DataType.DataTypeEnumVal
 
 import scala.reflect.ClassTag
 import scala.util.parsing.json._
-
-case class LoaderParams(modelFolder: String = null,
-                        batchSize: Int = 4,
-                        topN: Int = 1,
-                        redis: String = "localhost:6379",
-                        dataShape: String = "3, 224, 224",
-
-                        // not used temporarily
-                        modelType: String = null,
-                        isInt8: Boolean = false,
-                        outputPath: String = "",
-                        task: String = "image-classification")
-
-
-case class Result(id: String, value: String)
 
 class ClusterServingHelper(_configPath: String = "config.yaml") {
   type HM = LinkedHashMap[String, String]
@@ -76,7 +60,6 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
 
   var redisHost: String = null
   var redisPort: String = null
-  var batchSize: Int = 4
   var nodeNum: Int = 1
   var coreNum: Int = 1
   var engineType: String = null
@@ -276,7 +259,6 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
       .set("spark.redis.port", redisPort)
     sc = NNContext.initNNContext(conf)
     nodeNum = EngineRef.getNodeNumber()
-    coreNum = EngineRef.getCoreNumber()
 
   }
 
