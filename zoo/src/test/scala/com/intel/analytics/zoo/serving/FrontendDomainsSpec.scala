@@ -22,15 +22,17 @@ import java.util.{Base64, UUID}
 import com.intel.analytics.zoo.serving.http._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
-import scala.collection.immutable.TreeMap
 import scala.collection.mutable
+import scala.util.Random
 
 class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter with Supportive {
+
+  val random = new Random()
 
   "ServingError" should "serialized as json" in {
     val message = "contentType not supported"
     val error = ServingError(message)
-    error.toString should include (s""""error" : "$message"""")
+    error.toString should include(s""""error" : "$message"""")
   }
 
   "Feature" should "serialized and deserialized as json" in {
@@ -49,7 +51,7 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
     val obj = timing("deserialize")() {
       JsonUtil.fromJson(classOf[Instances], json)
     }
-    obj.instances.size should be (2)
+    obj.instances.size should be(2)
   }
 
   "BytesPredictionInput" should "works well" in {
@@ -62,34 +64,35 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
     val uuid = UUID.randomUUID().toString
     val result = "mock-result"
     val out = PredictionOutput(uuid, result)
-    out.uuid should be (uuid)
-    out.result should be (result)
+    out.uuid should be(uuid)
+    out.result should be(result)
   }
 
-  val instancesJson = """{
-                        |"instances": [
-                        |   {
-                        |     "tag": "foo",
-                        |     "signal": [1, 2, 3, 4, 5],
-                        |     "sensor": [[1, 2], [3, 4]]
-                        |   },
-                        |   {
-                        |     "tag": "bar",
-                        |     "signal": [3, 4, 1, 2, 5],
-                        |     "sensor": [[4, 5], [6, 8]]
-                        |   }
-                        |]
-                        |}
-                        |""".stripMargin
+  val instancesJson =
+    """{
+      |"instances": [
+      |   {
+      |     "tag": "foo",
+      |     "signal": [1, 2, 3, 4, 5],
+      |     "sensor": [[1, 2], [3, 4]]
+      |   },
+      |   {
+      |     "tag": "bar",
+      |     "signal": [3, 4, 1, 2, 5],
+      |     "sensor": [[4, 5], [6, 8]]
+      |   }
+      |]
+      |}
+      |""".stripMargin
   "Instances" should "works well" in {
     val instances = JsonUtil.fromJson(classOf[Instances], instancesJson)
-    instances.instances.size should be (2)
+    instances.instances.size should be(2)
 
     val intScalar = 12345
     val floatScalar = 3.14159
     val stringScalar = "hello, world. hello, arrow."
-    val intTensor = List(1, 2, 3, 4, 5)
-    val floatTensor = List(0.5f, 0.7f, 4.678f, 8.9f, 9.8765f)
+    val intTensor = List.range(0, 1000).map(i => random.nextInt(10000))
+    val floatTensor = List.range(0, 1000).map(i => random.nextFloat())
     val stringTensor = List("come", "on", "united")
     val intTensor2 = List(List(1, 2), List(3, 4), List(5, 6))
     val floatTensor2 =
@@ -138,28 +141,92 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
       "floatTensor2" -> floatTensor2,
       "stringTensor2" -> stringTensor2
     )
-    val instances2 = Instances(instance)
-    val json2 = JsonUtil.toJson(instances2)
-    println(json2)
-    val instances3 = JsonUtil.fromJson(classOf[Instances], json2)
+
+    val instances2 = Instances(instance, instance)
+
+    val json2 = timing("json serialization")() {
+      JsonUtil.toJson(instances2)
+    }
+    val instances3 = timing("json deserialization")() {
+      JsonUtil.fromJson(classOf[Instances], json2)
+    }
+    println("json: " + json2)
+    println("json serialized size: " + json2.getBytes.length)
+
     val tensors = instances3.constructTensors()
     val schemas = instances3.makeSchema(tensors)
-    println(tensors)
-    println(schemas)
 
     val (shape1, data1) = Instances.transferListToTensor(intTensor)
-    shape1.reduce(_*_) should be (data1.size)
+    shape1.reduce(_ * _) should be(data1.size)
     val (shape2, data2) = Instances.transferListToTensor(intTensor2)
-    shape2.reduce(_*_) should be (data2.size)
+    shape2.reduce(_ * _) should be(data2.size)
     val (shape3, data3) = Instances.transferListToTensor(floatTensor2)
-    shape3.reduce(_*_) should be (data3.size)
+    shape3.reduce(_ * _) should be(data3.size)
     val (shape4, data4) = Instances.transferListToTensor(stringTensor2)
-    shape4.reduce(_*_) should be (data4.size)
+    shape4.reduce(_ * _) should be(data4.size)
 
-    val arrowBytes = instances3.toArrow()
-    println(arrowBytes)
-    println(arrowBytes.length)
+    val arrowBytes = timing("arrow serialization")() {
+      instances3.toArrow()
+    }
+    println("arrow serialized size: ", arrowBytes.length)
+    val instances4 = timing("arrow deserialization")() {
+      Instances.fromArrow(arrowBytes)
+    }
+    instances4.instances(0).get("intScalar") should be(Some(12345))
+    instances4.instances(0).get("floatScalar") should be(Some(3.14159f))
+    instances4.instances(0).get("stringScalar") should be(Some("hello, world. hello, arrow."))
+  }
 
-    Instances.fromArrow(arrowBytes)
+  "Instances" should "works well too" in {
+    List.range(0, 10).foreach(i => {
+      val image3Path = getClass().getClassLoader()
+        .getResource("imagenet/n02110063/n02110063_15462.JPEG").getFile()
+      val byteArray = Files.readAllBytes(Paths.get(image3Path))
+      val b64 = Base64.getEncoder().encodeToString(byteArray)
+      val instance = mutable.LinkedHashMap("image" -> b64)
+        .asInstanceOf[mutable.LinkedHashMap[String, Any]]
+      val instances = Instances(List.range(0, 1).map(i => instance))
+
+      val json = timing("json serialization")() {
+        JsonUtil.toJson(instances)
+      }
+      val instances2 = timing("json deserialization")() {
+        JsonUtil.fromJson(classOf[Instances], json)
+        json
+      }
+      // println("json: " + json)
+      println("json serialized size: " + json.getBytes.length)
+
+      val arrowBytes = timing("arrow serialization")() {
+        instances.toArrow()
+      }
+      val instances3 = timing("arrow deserialization")() {
+        Instances.fromArrow(arrowBytes)
+      }
+      println("arrow serialized size: " + arrowBytes.length)
+
+      val data = List.range(0, 224).map(i => random.nextFloat())
+      val data2 = List.range(0, 224).map(i => data)
+      val data3 = List.range(0, 3).map(data2)
+      val instance2 = mutable.LinkedHashMap(
+        "feature" -> data3
+      ).asInstanceOf[mutable.LinkedHashMap[String, Any]]
+      val instances4 = Instances(List.range(0, 1).map(i => instance2))
+      val json2 = timing("json serialization")() {
+        JsonUtil.toJson(instances4)
+      }
+      val instances5 = timing("json deserialization")() {
+        JsonUtil.fromJson(classOf[Instances], json2)
+        json2
+      }
+      println("json serialized size: " + json2.getBytes.length)
+      val arrowBytes2 = timing("arrow serialization")() {
+        instances4.toArrow()
+      }
+      val instances6 = timing("arrow deserialization")() {
+        Instances.fromArrow(arrowBytes2)
+      }
+      println("arrow serialized size: " + arrowBytes2.length)
+    })
   }
 }

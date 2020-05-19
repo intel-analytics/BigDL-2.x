@@ -43,7 +43,7 @@ object FrontEndApp extends Supportive {
   implicit val executionContext = system.dispatcher
   implicit val timeout: Timeout = Timeout(100, TimeUnit.SECONDS)
 
-  val redisInputQueue = "image_stream"
+  val redisInputQueue = "serving_stream"
   val redisOutputQueue = "result:"
 
   def main(args: Array[String]): Unit = {

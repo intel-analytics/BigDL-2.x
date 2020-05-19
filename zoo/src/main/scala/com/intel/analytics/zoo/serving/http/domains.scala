@@ -86,6 +86,8 @@ object Conventions {
   val ARROW_BINARY = new ArrowType.Binary()
 }
 
+case class SparseTensor[T](shape: Array[Int], indices: Array[Array[Int]], values: Array[T])
+
 case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
   def constructTensors(): Seq[mutable.LinkedHashMap[String, (mutable.ArrayBuffer[Int], Any)]] = {
     instances.map(instance => {
@@ -199,7 +201,6 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
     arrowStreamWriter.start()
     for (i <- 0 until tensors.size) {
       val map = tensors(i)
-      println("###", i, map)
       vectorSchemaRoot.setRowCount(1)
       map.map(sample => {
         val key = sample._1
@@ -208,14 +209,17 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
         fieldVector.setInitialCapacity(1)
         fieldVector.allocateNew()
         val minorType = fieldVector.getMinorType()
-        println("$$$$", i, minorType, tensor)
         minorType match {
           case MinorType.INT =>
             fieldVector.asInstanceOf[IntVector].setSafe(0, tensor._2.asInstanceOf[Int])
             fieldVector.setValueCount(1)
           case MinorType.FLOAT4 =>
-            fieldVector.asInstanceOf[Float4Vector]
-              .setSafe(0, tensor._2.asInstanceOf[Double].toFloat)
+            tensor._2.isInstanceOf[Float] match {
+              case true => fieldVector.asInstanceOf[Float4Vector]
+                .setSafe(0, tensor._2.asInstanceOf[Float])
+              case false => fieldVector.asInstanceOf[Float4Vector]
+                .setSafe(0, tensor._2.asInstanceOf[Double].toFloat)
+            }
             fieldVector.setValueCount(1)
           case MinorType.VARBINARY =>
             val varBinaryVector = fieldVector.asInstanceOf[VarBinaryVector]
@@ -249,12 +253,24 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
                 dataIntVector.setValueCount(dataSize)
               case MinorType.FLOAT4 =>
                 val dataFloatVector = dataDataVector.asInstanceOf[Float4Vector]
-                val datas = data.asInstanceOf[ArrayBuffer[Double]]
-                val dataSize = datas.size
-                for (j <- 0 until dataSize) {
-                  dataFloatVector.setSafe(j, datas(j).toFloat)
+                val dataBuffer = data.asInstanceOf[ArrayBuffer[_]]
+                dataBuffer.size > 0 match {
+                  case true =>
+                    val dataSample = dataBuffer(0)
+                    val dataSize = dataBuffer.size
+                    for (j <- 0 until dataSize) {
+                      dataBuffer(j).isInstanceOf[Float] match {
+                        case true =>
+                          dataFloatVector.setSafe(j, dataBuffer(j).asInstanceOf[Float])
+                          dataFloatVector.setValueCount(dataSize)
+                        case false =>
+                          dataFloatVector.setSafe(j, dataBuffer(j).asInstanceOf[Double].toFloat)
+                          dataFloatVector.setValueCount(dataSize)
+                      }
+                    }
+                  case false =>
                 }
-                dataFloatVector.setValueCount(dataSize)
+
               case MinorType.VARBINARY =>
                 val varBinaryVector = dataDataVector.asInstanceOf[VarBinaryVector]
                 val datas = data.asInstanceOf[ArrayBuffer[String]]
@@ -270,9 +286,7 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
           case _ =>
         }
       })
-      println("before", arrowStreamWriter.bytesWritten())
       arrowStreamWriter.writeBatch()
-      println("after", arrowStreamWriter.bytesWritten())
     }
     arrowStreamWriter.end()
     arrowStreamWriter.close()
@@ -284,12 +298,16 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
 }
 
 object Instances {
+  def apply(instance: mutable.LinkedHashMap[String, Any]): Instances = {
+    Instances(List(instance))
+  }
+
   def apply(instances: mutable.LinkedHashMap[String, Any]*): Instances = {
     Instances(instances.toList)
   }
 
-  def fromArrow(arrowBytes: Array[Byte]): Unit = {
-    val instances = new util.LinkedList[mutable.LinkedHashMap[String, Any]]
+  def fromArrow(arrowBytes: Array[Byte]): Instances = {
+    val instances = new mutable.ArrayBuffer[mutable.LinkedHashMap[String, Any]]()
 
     val byteArrayInputStream = new ByteArrayInputStream(arrowBytes)
     val rootAllocator = new RootAllocator(Integer.MAX_VALUE)
@@ -300,7 +318,6 @@ object Instances {
     while(arrowStreamReader.loadNextBatch()) {
       val map = new mutable.LinkedHashMap[String, Any]()
       fieldVectors.toArray().map(fieldVector => {
-        println(fieldVector.getClass)
         val (name, value) =
           if (fieldVector.isInstanceOf[IntVector]) {
           val vector = fieldVector.asInstanceOf[IntVector]
@@ -354,10 +371,9 @@ object Instances {
           map.put(name, value)
         }
       })
-      instances.add(map)
+      instances.append(map)
     }
-
-    println(instances)
+    new Instances(instances.toList)
   }
 
   def transferListToTensor(value: Any): (mutable.ArrayBuffer[Int], mutable.ArrayBuffer[Any]) = {
