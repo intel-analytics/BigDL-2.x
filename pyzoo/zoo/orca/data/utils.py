@@ -70,6 +70,7 @@ def extract_one_path(file_path, file_type, env):
     file_paths = [file for file in file_paths if os.path.splitext(file)[1] == "." + file_type]
     return file_paths
 
+
 def open_text(path):
     # Return a list of lines
     if path.startswith("hdfs"):  # hdfs://url:port/file_path
