@@ -86,7 +86,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     redisHost = if (env.contains("REDIS_HOST")) {
       env("REDIS_HOST").toString
     } else {
-      "localhost"
+      throw new Error("REDIS_HOST variable must be set")
     }
     redisPort = if (env.contains("REDIS_PORT")) {
       env("REDIS_PORT").toInt
