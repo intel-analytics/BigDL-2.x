@@ -19,8 +19,8 @@ import logging
 import subprocess
 import ray.services
 from dmlc_tracker.tracker import get_host_ip
-from zoo.ray.mxnet.mxnet_runner import MXNetRunner
-from zoo.ray.mxnet.utils import find_free_port
+from zoo.orca.learn.mxnet.mxnet_runner import MXNetRunner
+from zoo.orca.learn.mxnet.utils import find_free_port
 
 
 class MXNetTrainer(object):
