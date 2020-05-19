@@ -175,9 +175,9 @@ class SparkDataShards(DataShards):
 
     def split(self):
         """
-        Split SparkDataShards into multiple SparkDataShards.
-        Each element in the SparkDataShards needs be a list or tuple with same length.
-        :return: Splits of SparkDataShards. If element in the input SparkDataShard is not
+        Split SparkXShards into multiple SparkXShards.
+        Each element in the SparkXShards needs be a list or tuple with same length.
+        :return: Splits of SparkXShards. If element in the input SparkDataShard is not
                 list or tuple, return list of input SparkDataShards.
         """
         # get number of splits
@@ -185,7 +185,8 @@ class SparkDataShards(DataShards):
                                          isinstance(data, tuple) else 1).collect()
         # check if each element has same splits
         if list_split_length.count(list_split_length[0]) != len(list_split_length):
-            raise Exception("Cannot split since some element in DataShards has different splits")
+            raise Exception("Cannot split this XShards because its partitions "
+                            "have different split length")
         else:
             if list_split_length[0] > 1:
                 def get_data(order):
