@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from bigdl.optim.optimizer import MaxIteration
+from bigdl.optim.optimizer import MaxIteration, SGD
 from zoo.orca.data.shard import SparkDataShards
 from zoo.tfpark import TFEstimator, TFOptimizer, TFPredictor, TFNet
 import pandas as pd
@@ -24,29 +24,15 @@ from zoo.util import nest
 
 
 class Estimator(object):
-    def fit(self, data, steps, batch_size, **kwargs):
+    def fit(self, data, steps, **kwargs):
         pass
 
     def predict(self, data, **kwargs):
         pass
 
     @staticmethod
-    def from_model_fn(model_fn,
-                      model_dir=None,
-                      config=None,
-                      params=None,
-                      warm_start_from=None, backend="spark"):
-        assert backend == "spark", "only spark backend is supported for now"
-        est = TFEstimator.from_model_fn(model_fn,
-                                        model_dir=model_dir,
-                                        config=config,
-                                        params=params,
-                                        warm_start_from=warm_start_from)
-        return TFEstimatorWrapper(est)
-
-    @staticmethod
     def from_pre_built_graph(*, inputs, outputs,
-                             labels, loss, train_op,
+                             labels, loss,
                              metrics=None, updates=None,
                              sess=None, model_dir=None, backend="spark"):
         assert backend == "spark", "only spark backend is supported for now"
@@ -57,7 +43,7 @@ class Estimator(object):
         return TFOptimizerWrapper(inputs=inputs,
                                   outputs=outputs,
                                   labels=labels,
-                                  loss=loss, train_op=train_op,
+                                  loss=loss,
                                   metrics=metrics, updates=updates,
                                   sess=sess,
                                   model_dir=model_dir)
@@ -117,25 +103,28 @@ def _rdd_to_data_shard(rdd):
 
 class TFOptimizerWrapper(Estimator):
 
-    def __init__(self, inputs, outputs, labels, loss,
-                 train_op, metrics,
+    def __init__(self, *, inputs, outputs, labels, loss,
+                 metrics,
                  updates, sess,
                  model_dir):
         self.inputs = inputs
         self.outputs = outputs
         self.labels = labels
         self.loss = loss
-        self.train_op = train_op
         self.metrics = metrics
         self.updates = updates
         self.sess = sess
         self.model_dir = model_dir
 
     def fit(self, data_shard, steps,
+            optim_method=None,
             batch_size=32,
             validation_data_shard=None,
             feed_dict=None,
             session_config=None):
+
+        if optim_method is None:
+            optim_method = SGD()
 
         dataset = _data_shard_to_tf_dataset(data_shard,
                                             batch_size=batch_size,
@@ -146,13 +135,13 @@ class TFOptimizerWrapper(Estimator):
         else:
             tensor_with_value = None
 
-        optimizer = TFOptimizer.from_train_op(
-            train_op=self.train_op,
-            inputs=self.inputs,
-            labels=self.labels,
-            loss=self.loss, metrics=self.metrics,
-            updates=self.updates, sess=self.sess,
+        optimizer = TFOptimizer.from_loss(
+            loss=self.loss,
+            optim_method=optim_method,
+            inputs=(self.inputs, self.labels),
             dataset=dataset,
+            metrics=self.metrics,
+            updates=self.updates, session=self.sess,
             tensor_with_value=tensor_with_value,
             session_config=session_config,
             model_dir=self.model_dir)
@@ -168,29 +157,3 @@ class TFOptimizerWrapper(Estimator):
         flat_outputs = nest.flatten(self.outputs)
         tfnet = TFNet.from_session(sess=self.sess, inputs=flat_inputs, outputs=flat_outputs)
         return tfnet.predict(dataset)
-
-
-class TFEstimatorWrapper(Estimator):
-    def __init__(self, tfpark_estimator):
-
-        self.tfpark_estimator = tfpark_estimator
-
-    def fit(self, data_shard, steps, batch_size=32, **kwargs):
-
-        def input_fn():
-            return _data_shard_to_tf_dataset(data_shard,
-                                             batch_size=batch_size)
-
-        self.tfpark_estimator.train(input_fn, steps)
-        return self
-
-    def predict(self, data_shard, batch_size=32, checkpoint_path=None, predict_keys=None):
-        def input_fn():
-            return _data_shard_to_tf_dataset(data_shard,
-                                             batch_per_thread=batch_size)
-
-        predictions = self.tfpark_estimator.predict(input_fn,
-                                                    predict_keys=predict_keys,
-                                                    checkpoint_path=checkpoint_path)
-        # todo predictions is rdd, maybe change to DataShard?
-        return predictions

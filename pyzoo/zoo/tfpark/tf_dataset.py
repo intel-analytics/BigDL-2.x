@@ -163,12 +163,12 @@ class TFDataset(object):
         else:
             if self.batch_per_thread > 0:
                 self.output_shapes = nest.pack_sequence_as(
-                    self.tensor_structure, [[self.batch_per_thread] + t.shape
+                    self.tensor_structure, [[self.batch_per_thread] + list(t.shape)
                                             if t is not None else None
                                             for t in nest.flatten(self.tensor_structure)])
             else:
                 self.output_shapes = nest.pack_sequence_as(
-                    self.tensor_structure, [[self.batch_size // self.total_core_num] + t.shape
+                    self.tensor_structure, [[self.batch_size // self.total_core_num] + list(t.shape)
                                             if t is not None else None
                                             for t in nest.flatten(self.tensor_structure)])
 
