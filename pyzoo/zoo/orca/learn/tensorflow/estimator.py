@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from bigdl.optim.optimizer import MaxIteration, SGD
-from zoo.orca.data.shard import SparkDataShards
+from zoo.orca.data.shard import SparkXShards
 from zoo.tfpark import TFEstimator, TFOptimizer, TFPredictor, TFNet
 import pandas as pd
 import tensorflow as tf

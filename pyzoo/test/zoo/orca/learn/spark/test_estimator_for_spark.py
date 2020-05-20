@@ -40,16 +40,14 @@ def test_estimator_pre_built_graph(estimator_for_spark_fixture):
     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
     data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
 
-    def transform():
-        def trans(df):
-            result = {
-                "x": [df['user'].to_numpy(), df['item'].to_numpy()],
-                "y": [df['label']]
-            }
-            return result
-        return trans
+    def transform(df):
+        result = {
+            "x": [df['user'].to_numpy(), df['item'].to_numpy()],
+            "y": [df['label']]
+        }
+        return result
 
-    data_shard.apply(transform)
+    data_shard.transform_shard(transform)
 
     est = Estimator.from_pre_built_graph(
         inputs=[user, item],
@@ -65,15 +63,13 @@ def test_estimator_pre_built_graph(estimator_for_spark_fixture):
 
     data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
 
-    def transform():
-        def trans(df):
-            result = {
-                "x": [df['user'].to_numpy(), df['item'].to_numpy()],
-            }
-            return result
-        return trans
+    def transform(df):
+        result = {
+            "x": [df['user'].to_numpy(), df['item'].to_numpy()],
+        }
+        return result
 
-    data_shard.apply(transform)
+    data_shard.transform_shard(transform)
     predictions = est.predict(data_shard).collect()
     print(predictions)
 
