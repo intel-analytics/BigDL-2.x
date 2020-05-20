@@ -94,16 +94,17 @@ class InferenceModel(JavaValue):
                     self.value, model_path, model_type, intra_op_parallelism_threads,
                     inter_op_parallelism_threads, use_per_session_threads)
 
-    def load_tensorflow(self, model_path, model_type, inputs, outputs, intra_op_parallelism_threads=1,
+    def load_tensorflow(self, model_path, model_type,
+                        inputs, outputs, intra_op_parallelism_threads=1,
                         inter_op_parallelism_threads=1, use_per_session_threads=True):
          """
          Load an TensorFlow model using tensorflow.
 
-         :param model_path: Array[String]. The file path to the TensorFlow model.
-         :param model_type: Array[String]. The type of the tensorflow model file: "frozenModel" or
+         :param model_path: String. The file path to the TensorFlow model.
+         :param model_type: String. The type of the tensorflow model file: "frozenModel" or
           "savedModel".
-         :param inputs: String. the inputs of the model.
-         inputs outputs: String. the outputs of the model.
+         :param inputs: Array[String]. the inputs of the model.
+         inputs outputs: Array[String]. the outputs of the model.
          :param intra_op_parallelism_threads: Int. The number of intraOpParallelismThreads.
                                                  Default is 1.
          :param inter_op_parallelism_threads: Int. The number of interOpParallelismThreads.
@@ -111,7 +112,8 @@ class InferenceModel(JavaValue):
          :param use_per_session_threads: Boolean. Whether to use perSessionThreads. Default is True.
             """
          callZooFunc(self.bigdl_type, "inferenceModelLoadTensorFlow",
-                     self.value, model_path, model_type, inputs, outputs, intra_op_parallelism_threads,
+                     self.value, model_path, model_type,
+                     inputs, outputs, intra_op_parallelism_threads,
                      inter_op_parallelism_threads, use_per_session_threads)
 
     # deprecated in "0.8.0"
