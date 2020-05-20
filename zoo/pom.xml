@@ -106,6 +106,13 @@
                 <scala.macros.version>2.1.0</scala.macros.version>
                 <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
             </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-all</artifactId>
+                    <version>4.1.27.Final</version>
+                </dependency>
+            </dependencies>
         </profile>
 
         <profile>
@@ -132,9 +139,6 @@
                 <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
                 <scala-library-scope>compile</scala-library-scope>
             </properties>
-            <dependencies>
-
-            </dependencies>
         </profile>
 
         <profile>
@@ -494,11 +498,6 @@
             <artifactId>flink-clients_2.11</artifactId>
             <version>1.10.0</version>
             <scope>${flink-scope}</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
-            <version>4.1.27.Final</version>
         </dependency>
     </dependencies>
 
