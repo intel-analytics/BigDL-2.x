@@ -46,7 +46,7 @@ class PyTorchTrainer(object):
                                             data_loader_args=data_loader_args)
 
     def train(self, nb_epoch=1):
-        """Trains an MXNet model for several epochs."""
+        """Trains a PyTorch model for several epochs."""
         for i in range(nb_epoch):
             stats = ray.get(self.trainer.train.remote())
         return stats
