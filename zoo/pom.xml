@@ -18,6 +18,7 @@
         <java.version>1.7</java.version>
         <javac.version>1.7</javac.version>
         <spark-scope>provided</spark-scope>
+        <flink-scope>provided</flink-scope>
         <bigdl-scope>compile</bigdl-scope>
         <scala-library-scope>provided</scala-library-scope>
         <scala.major.version>2.11</scala.major.version>
@@ -140,6 +141,14 @@
             <properties>
                 <bigdl-scope>provided</bigdl-scope>
                 <tf-shade>org.tensorflow</tf-shade>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>serving</id>
+            <properties>
+                <spark-scope>compile</spark-scope>
+                <flink-scope>compile</flink-scope>
             </properties>
         </profile>
 
@@ -312,11 +321,21 @@
             <scope>${spark-scope}</scope>
         </dependency>
 
+<!--        <dependency>-->
+<!--            <groupId>org.apache.spark</groupId>-->
+<!--            <artifactId>spark-core_${scala.major.version}</artifactId>-->
+<!--            <version>${spark.version}</version>-->
+<!--            <scope>${spark-scope}</scope>-->
+<!--        </dependency>-->
         <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_${scala.major.version}</artifactId>
-            <version>${spark.version}</version>
-            <scope>${spark-scope}</scope>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-actor_2.11</artifactId>
+            <version>2.5.21</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-scala_2.11</artifactId>
+            <version>2.6.7.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -329,6 +348,16 @@
             <artifactId>${bigdl.artifactId}</artifactId>
             <version>${bigdl.version}</version>
             <scope>${bigdl-scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>ml.dmlc</groupId>
+            <artifactId>xgboost4j</artifactId>
+            <version>0.90</version>
+        </dependency>
+        <dependency>
+            <groupId>ml.dmlc</groupId>
+            <artifactId>xgboost4j-spark</artifactId>
+            <version>0.90</version>
         </dependency>
         <dependency>
             <groupId>org.spark-project.spark</groupId>
@@ -391,11 +420,6 @@
             <artifactId>snakeyaml</artifactId>
             <version>1.25</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>com.redislabs</groupId>-->
-            <!--<artifactId>spark-redis</artifactId>-->
-            <!--<version>2.4.0</version>-->
-        <!--</dependency>-->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
@@ -438,12 +462,12 @@
         </dependency>
         <dependency>
             <groupId>org.apache.arrow</groupId>
-            <artifactId>arrow-memory</artifactId>
+            <artifactId>arrow-vector</artifactId>
             <version>0.17.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.arrow</groupId>
-            <artifactId>arrow-vector</artifactId>
+            <artifactId>arrow-memory</artifactId>
             <version>0.17.0</version>
         </dependency>
         <dependency>
@@ -456,6 +480,24 @@
             <artifactId>jedis-mock</artifactId>
             <version>0.1.16</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-scala_2.11</artifactId>
+            <version>1.10.0</version>
+            <scope>${flink-scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-streaming-scala_2.11</artifactId>
+            <version>1.10.0</version>
+            <scope>${flink-scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-clients_2.11</artifactId>
+            <version>1.10.0</version>
+            <scope>${flink-scope}</scope>
         </dependency>
     </dependencies>
 
@@ -588,9 +630,11 @@
                     <shadedArtifactAttached>false</shadedArtifactAttached>
                     <filters>
                         <filter>
-                            <artifact>com.google.protobuf</artifact>
+                            <artifact>*:*</artifact>
                             <excludes>
-                                <exclude>META-INF/maven/com.google.protobuf/protobuf-java/*</exclude>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
                             </excludes>
                         </filter>
                     </filters>
@@ -598,6 +642,14 @@
                         <relocation>
                             <pattern>com.google.protobuf</pattern>
                             <shadedPattern>com.intel.analytics.zoo.shaded.protobuf</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>io.netty</pattern>
+                            <shadedPattern>com.intel.analytics.zoo.shaded.io.netty</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>org.apache.arrow</pattern>
+                            <shadedPattern>com.intel.analytics.zoo.shaded.arrow</shadedPattern>
                         </relocation>
                         <!--<relocation>-->
                             <!--<pattern>org.tensorflow</pattern>-->
@@ -614,6 +666,8 @@
                                 <includes>
                                     <include>org.spark-project.spark:unused</include>
                                     <include>com.google.protobuf</include>
+                                    <include>io.netty</include>
+                                    <include>org.apache.arrow</include>
                                     <!--<include>${tf-shade}</include>-->
                                 </includes>
                             </artifactSet>
