@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-from .pytorch_trainer import TorchTrainer
+from .pytorch_trainer import PyTorchTrainer
