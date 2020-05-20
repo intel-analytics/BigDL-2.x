@@ -193,7 +193,7 @@ class SparkXShards(XShards):
                     def transform(data):
                         return data[order]
                     return transform
-                return [SparkDataShards(self.rdd.map(get_data(i)))
+                return [SparkXShards(self.rdd.map(get_data(i)))
                         for i in range(list_split_length[0])]
             else:
                 return [self]
