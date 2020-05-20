@@ -54,10 +54,10 @@ def test_estimator_pre_built_graph(estimator_for_spark_fixture):
         labels=[label],
         outputs=[logits],
         loss=loss,
+        optimizer=SGD(),
         metrics={"loss": loss})
     est.fit(data_shard=data_shard,
             batch_size=8,
-            optim_method=SGD(),
             steps=10,
             validation_data_shard=data_shard)
 

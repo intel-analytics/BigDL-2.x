@@ -32,7 +32,7 @@ class Estimator(object):
 
     @staticmethod
     def from_pre_built_graph(*, inputs, outputs,
-                             labels, loss,
+                             labels, loss, optimizer,
                              metrics=None, updates=None,
                              sess=None, model_dir=None, backend="spark"):
         assert backend == "spark", "only spark backend is supported for now"
@@ -44,6 +44,7 @@ class Estimator(object):
                                   outputs=outputs,
                                   labels=labels,
                                   loss=loss,
+                                  optimizer=optimizer,
                                   metrics=metrics, updates=updates,
                                   sess=sess,
                                   model_dir=model_dir)
@@ -104,6 +105,7 @@ def _rdd_to_data_shard(rdd):
 class TFOptimizerWrapper(Estimator):
 
     def __init__(self, *, inputs, outputs, labels, loss,
+                 optimizer,
                  metrics,
                  updates, sess,
                  model_dir):
@@ -111,20 +113,17 @@ class TFOptimizerWrapper(Estimator):
         self.outputs = outputs
         self.labels = labels
         self.loss = loss
+        self.optimizer= optimizer
         self.metrics = metrics
         self.updates = updates
         self.sess = sess
         self.model_dir = model_dir
 
     def fit(self, data_shard, steps,
-            optim_method=None,
             batch_size=32,
             validation_data_shard=None,
             feed_dict=None,
             session_config=None):
-
-        if optim_method is None:
-            optim_method = SGD()
 
         dataset = _data_shard_to_tf_dataset(data_shard,
                                             batch_size=batch_size,
@@ -137,7 +136,7 @@ class TFOptimizerWrapper(Estimator):
 
         optimizer = TFOptimizer.from_loss(
             loss=self.loss,
-            optim_method=optim_method,
+            optim_method=self.optimizer,
             inputs=(self.inputs, self.labels),
             dataset=dataset,
             metrics=self.metrics,
