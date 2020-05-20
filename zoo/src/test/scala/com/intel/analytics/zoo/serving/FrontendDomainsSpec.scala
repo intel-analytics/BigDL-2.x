@@ -47,7 +47,7 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
     val json = timing("serialize")() {
       JsonUtil.toJson(inputs)
     }
-    println(json)
+    // println(json)
     val obj = timing("deserialize")() {
       JsonUtil.fromJson(classOf[Instances], json)
     }
@@ -150,8 +150,8 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
     val instances3 = timing("json deserialization")() {
       JsonUtil.fromJson(classOf[Instances], json2)
     }
-    println("json: " + json2)
-    println("json serialized size: " + json2.getBytes.length)
+    // println("json: " + json2)
+    // println("json serialized size: " + json2.getBytes.length)
 
     val tensors = instances3.constructTensors()
     val schemas = instances3.makeSchema(tensors)
@@ -168,7 +168,8 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
     val arrowBytes = timing("arrow serialization")() {
       instances3.toArrow()
     }
-    println("arrow serialized size: ", arrowBytes.length)
+    // println("arrow:" + new String(arrowBytes))
+    // println("arrow serialized size: ", arrowBytes.length)
     val instances4 = timing("arrow deserialization")() {
       Instances.fromArrow(arrowBytes)
     }
@@ -194,7 +195,7 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
         JsonUtil.fromJson(classOf[Instances], json)
         json
       }
-      // println("json: " + json)
+      println("json: " + json)
       println("json serialized size: " + json.getBytes.length)
 
       val arrowBytes = timing("arrow serialization")() {
@@ -203,6 +204,7 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
       val instances3 = timing("arrow deserialization")() {
         Instances.fromArrow(arrowBytes)
       }
+      println("arrow: " + new String(arrowBytes))
       println("arrow serialized size: " + arrowBytes.length)
 
       val data = List.range(0, 224).map(i => random.nextFloat())
@@ -217,8 +219,8 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
       }
       val instances5 = timing("json deserialization")() {
         JsonUtil.fromJson(classOf[Instances], json2)
-        json2
       }
+      println("json: " + json2)
       println("json serialized size: " + json2.getBytes.length)
       val arrowBytes2 = timing("arrow serialization")() {
         instances4.toArrow()
@@ -226,6 +228,7 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
       val instances6 = timing("arrow deserialization")() {
         Instances.fromArrow(arrowBytes2)
       }
+      println("arrow: " + new String(arrowBytes2))
       println("arrow serialized size: " + arrowBytes2.length)
     })
   }
