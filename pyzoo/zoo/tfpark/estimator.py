@@ -113,7 +113,7 @@ class TFEstimator(object):
 
         return model_fn_results
 
-    def train(self, input_fn, steps=None, session_config=None):
+    def train(self, input_fn, steps=None):
         """Trains a model given training data `input_fn`.
 
         :param input_fn: A function that constructs the input data for evaluation. The
@@ -141,15 +141,8 @@ class TFEstimator(object):
                 if not result.has_batch:
                     raise ValueError("The batch_size of TFDataset must be " +
                                      "specified when used for training.")
-                tensors = result.tensors
-                if isinstance(tensors, tuple) and len(tensors) == 2:
-                    feature_tensor = tensors[0]
-                    label_tensor = tensors[1]
-                else:
-                    feature_tensor = tensors
-                    label_tensor = None
-                spec = self._call_model_fn(feature_tensor,
-                                           label_tensor,
+                spec = self._call_model_fn(result.feature_tensors,
+                                           result.label_tensors,
                                            tf.estimator.ModeKeys.TRAIN,
                                            self.config)
                 latest_checkpoint = self.estimator.latest_checkpoint()
@@ -167,8 +160,7 @@ class TFEstimator(object):
                                                     spec.loss,
                                                     sess=sess,
                                                     dataset=result,
-                                                    model_dir=zoo_ckpt_path,
-                                                    session_config=session_config)
+                                                    model_dir=zoo_ckpt_path)
 
                     opt.optimize(MaxIteration(steps))
                     sess.run(assign_step, feed_dict={add_step_input: steps})
