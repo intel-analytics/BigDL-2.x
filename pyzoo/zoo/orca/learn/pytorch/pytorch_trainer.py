@@ -14,32 +14,32 @@
 # limitations under the License.
 #
 
-from ray.util.sgd.torch import TorchTrainer as RaySGDTorchTrainer
+from ray.util.sgd.torch import TorchTrainer
 
 
-class TorchTrainer(object):
+class PyTorchTrainer(object):
     def __init__(self, model_creator, data_creator, optimizer_creator,
                  loss_creator=None, scheduler_creator=None, training_operator_cls=None,
                  initialization_hook=None, config=None, num_workers=1,
                  use_fp16=False, use_tqdm=False,
                  scheduler_step_freq="batch", num_replicas=None,
                  batch_size=None, data_loader_args=None):
-        self.trainer = RaySGDTorchTrainer(model_creator=model_creator,
-                                          data_creator=data_creator,
-                                          optimizer_creator=optimizer_creator,
-                                          loss_creator=loss_creator,
-                                          scheduler_creator=scheduler_creator,
-                                          training_operator_cls=training_operator_cls,
-                                          initialization_hook=initialization_hook,
-                                          config=config,
-                                          num_workers=num_workers,
-                                          backend="gloo",
-                                          use_fp16=use_fp16,
-                                          use_tqdm=use_tqdm,
-                                          scheduler_step_freq=scheduler_step_freq,
-                                          num_replicas=num_replicas,
-                                          batch_size=batch_size,
-                                          data_loader_args=data_loader_args)
+        self.trainer = TorchTrainer(model_creator=model_creator,
+                                    data_creator=data_creator,
+                                    optimizer_creator=optimizer_creator,
+                                    loss_creator=loss_creator,
+                                    scheduler_creator=scheduler_creator,
+                                    training_operator_cls=training_operator_cls,
+                                    initialization_hook=initialization_hook,
+                                    config=config,
+                                    num_workers=num_workers,
+                                    backend="gloo",
+                                    use_fp16=use_fp16,
+                                    use_tqdm=use_tqdm,
+                                    scheduler_step_freq=scheduler_step_freq,
+                                    num_replicas=num_replicas,
+                                    batch_size=batch_size,
+                                    data_loader_args=data_loader_args)
 
     def train(self, nb_epoch=1):
         """Trains an MXNet model for several epochs."""
