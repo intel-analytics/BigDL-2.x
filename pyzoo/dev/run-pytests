@@ -32,8 +32,7 @@ python -m pytest -v --doctest-modules ../zoo \
     --ignore=../zoo/automl/ \
     --ignore=../zoo/zouwu/ \
     --ignore=../zoo/orca/data/ \
-    --ignore=../zoo/orca/learn/mxnet \
-    --ignore=../zoo/orca/learn/horovod/
+    --ignore=../zoo/orca/learn/
 exit_status_1=$?
 if [ $exit_status_1 -ne 0 ];
 then
