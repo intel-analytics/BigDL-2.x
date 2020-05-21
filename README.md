@@ -14,14 +14,14 @@ Analytics Zoo seamless scales TensorFlow, Keras and PyTorch to distributed big d
    <p align="center"> <img src="docs/docs/Image/blockdiagram.jpg" height=240px; weight=718px;"><br></p>
 </div>
 
-- **End-to-end pipelines for applying AI models (TensorFlow, PyTorch, OpenVINO, etc.) to distributed big data**
+- **End-to-end pipeline for applying AI models (TensorFlow, PyTorch, OpenVINO, etc.) to distributed big data**
   - Write [TensorFlow](https://analytics-zoo.github.io/master/#ProgrammingGuide/TFPark/tensorflow/) or [PyTorch](https://analytics-zoo.github.io/master/#ProgrammingGuide/pytorch/) inline with Spark code for distributed training and inference.
   - Native deep learning (TensorFlow/Keras/PyTorch/BigDL) support in [Spark ML](https://analytics-zoo.github.io/master/#ProgrammingGuide/nnframes) Pipelines.
-  - Directly run [Ray](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/) programs on big data cluster through RayOnSpark. 
+  - Directly run [Ray](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/) programs on big data cluster through __RayOnSpark__. 
   - Plain Java/Python APIs for (TensorFlow/PyTorch/BigDL/OpenVINO) [Model Inference](https://analytics-zoo.github.io/master/#ProgrammingGuide/inference). 
 
 - **High-Level ML Workflow for automating machine learning tasks**
-  - [Cluster Serving](https://analytics-zoo.github.io/master/#ClusterServingGuide/ProgrammingGuide) for automatically distributed model (TensorFlow/PyTorch/Caffe/BigDL/OpenVINO) inference . 
+  - [Cluster Serving](https://analytics-zoo.github.io/master/#ClusterServingGuide/ProgrammingGuide) for automatically distributed (TensorFlow/PyTorch/Caffe/OpenVINO) model inference . 
   - Scalable [AutoML](https://github.com/intel-analytics/analytics-zoo/blob/automl/pyzoo/zoo/automl/README.md) for time series prediction.
 
 - **Built-in Algorithms and Models** for [Recommendation](https://analytics-zoo.github.io/master/#APIGuide/Models/recommendation/), [Time Series](https://analytics-zoo.github.io/master/#APIGuide/Models/anomaly-detection/), [Computer Vision](https://analytics-zoo.github.io/master/#APIGuide/Models/object-detection/) and [NLP]( https://analytics-zoo.github.io/master/#APIGuide/Models/text-matching/) applications.
@@ -31,10 +31,10 @@ Analytics Zoo seamless scales TensorFlow, Keras and PyTorch to distributed big d
 # <font size="6">Why use Analytics Zoo? </font>
 
 You may want to develop your AI solutions using Analytics Zoo if:
-- You want to easily prototype the entire end-to-end pipeline that applies AI models (e.g., TensorFlow, Keras, PyTorch, BigDL, OpenVINO, etc.) to production big data.
-- You want to transparently scale your AI applications from a laptop to large clusters with "zero" code changes.
+- You want to easily apply AI models (e.g., TensorFlow, Keras, PyTorch, BigDL, OpenVINO, etc.) to distributed big data.
+- You want to transparently scale your AI applications from a single laptop to large clusters with "zero" code changes.
 - You want to deploy your AI pipelines to existing YARN or K8S clusters *WITHOUT* any modifications to the clusters.
-- You want to automate the process of applying machine learning (such as feature engineering, hyperparameter tuning, model selection and distributed inference). 
+- You want to automate the process of applying machine learning (such as feature engineering, hyperparameter tuning, model selection, distributed inference, etc.). 
 
 
 ---
