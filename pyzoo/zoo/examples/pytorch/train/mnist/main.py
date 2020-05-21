@@ -52,9 +52,9 @@ def main():
     parser.add_argument('--dir', default='/tmp/data', metavar='N',
                         help='the folder store mnist data')
     parser.add_argument('--batch-size', type=int, default=256, metavar='N',
-                        help='input batch size for training (default: 256)')
+                        help='input batch size for training per executor(default: 256)')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
-                        help='input batch size for testing (default: 1000)')
+                        help='input batch size for testing per executor(default: 1000)')
     parser.add_argument('--epochs', type=int, default=2, metavar='N',
                         help='number of epochs to train (default: 2)')
     parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
