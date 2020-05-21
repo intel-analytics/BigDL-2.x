@@ -17,7 +17,7 @@ Analytics Zoo seamless scales TensorFlow, Keras and PyTorch to distributed big d
 - **End-to-end pipeline for applying AI models (TensorFlow, PyTorch, OpenVINO, etc.) to distributed big data**
   - Write [TensorFlow](https://analytics-zoo.github.io/master/#ProgrammingGuide/TFPark/tensorflow/) or [PyTorch](https://analytics-zoo.github.io/master/#ProgrammingGuide/pytorch/) inline with Spark code for distributed training and inference.
   - Native deep learning (TensorFlow/Keras/PyTorch/BigDL) support in [Spark ML](https://analytics-zoo.github.io/master/#ProgrammingGuide/nnframes) Pipelines.
-  - Directly run [Ray](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/) programs on big data cluster through __RayOnSpark__. 
+  - Directly run [Ray](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/) programs on big data cluster through _RayOnSpark_. 
   - Plain Java/Python APIs for (TensorFlow/PyTorch/BigDL/OpenVINO) [Model Inference](https://analytics-zoo.github.io/master/#ProgrammingGuide/inference). 
 
 - **High-Level ML Workflow for automating machine learning tasks**
