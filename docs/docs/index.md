@@ -23,7 +23,7 @@ Analytics Zoo seamless scales TensorFlow, Keras and PyTorch to distributed big d
   - [Cluster Serving](ClusterServingGuide/ProgrammingGuide.md) for automatically distributed (TensorFlow/PyTorch/Caffe/OpenVINO) model inference . 
   - Scalable [AutoML](ProgrammingGuide/AutoML/overview.md) for time series prediction.
 
-- **Built-in models** for [Recommendation](APIGuide/Models/recommendation.md), [Time Series](APIGuide/Models/anomaly-detection.md), [Computer Vision](APIGuide/Models/object-detection.md) and [NLP]( APIGuide/Models/text-matching.md) applications.
+- **Built-in models** for [Recommendation](APIGuide/Models/recommendation.md), [Time Series](APIGuide/Models/anomaly-detection.md), [Computer Vision](APIGuide/Models/object-detection.md) and [NLP](APIGuide/Models/text-matching.md) applications.
 
 ---
 
@@ -45,5 +45,4 @@ You may want to develop your AI solutions using Analytics Zoo if:
 * Visit the [Document Website](https://analytics-zoo.github.io/) ([mirror](https://analytics-zoo.gitee.io/) in China) for more information on Analytics Zoo.
 * Check the [Powered By](https://analytics-zoo.github.io/master/#powered-by/) & [Presentations](https://analytics-zoo.github.io/master/#presentations/) pages for real-world applications using Analytics Zoo.
 * Join the [Google Group](https://groups.google.com/forum/#!forum/bigdl-user-group) (or subscribe to the [Mail List](mailto:bigdl-user-group+subscribe@googlegroups.com)) for more questions and discussions on Analytics Zoo.
-
 
