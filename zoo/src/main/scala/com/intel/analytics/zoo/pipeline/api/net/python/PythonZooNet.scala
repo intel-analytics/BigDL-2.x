@@ -176,11 +176,6 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
     TorchModel(model, weights.storage)
   }
 
-  def getWeight(model: Module[T]): JTensor = {
-    val w = model.parameters()._1(0).storage().array().map(ev.toType[Float](_))
-    JTensor(w, Array(w.length), "float")
-  }
-
   def createTorchLoss(criterion: Array[Byte]): TorchLoss = {
     TorchLoss(criterion)
   }

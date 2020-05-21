@@ -38,7 +38,6 @@ class TorchModel(Layer):
 
     def __init__(self, module_bytes, weights, bigdl_type="float"):
         weights = JTensor.from_ndarray(weights)
-        self.module_bytes = module_bytes
         self.value = callZooFunc(
             bigdl_type, self.jvm_class_constructor(), module_bytes, weights)
         self.bigdl_type = bigdl_type
@@ -56,14 +55,3 @@ class TorchModel(Layer):
         bys = CloudPickleSerializer.dumps(CloudPickleSerializer, model)
         net = TorchModel(bys, flatten_weight)
         return net
-
-    def to_pytorch(self):
-        """
-        Convert to pytorch model
-        :return: a pytorch model
-        """
-        new_weight = callZooFunc(self.bigdl_type, "getWeight", self.value).to_ndarray()
-        m = CloudPickleSerializer.loads(CloudPickleSerializer, self.module_bytes)
-        w = torch.Tensor(new_weight)
-        torch.nn.utils.vector_to_parameters(w, m.parameters())
-        return m

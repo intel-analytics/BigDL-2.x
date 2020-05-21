@@ -34,4 +34,4 @@ JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.estimator.python
 for clz in creator_classes:
     JavaCreator.add_creator_class(clz)
 
-__version__ = "0.9.0.dev1"
+__version__ = "0.9.0.dev0"
