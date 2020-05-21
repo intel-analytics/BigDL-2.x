@@ -370,7 +370,7 @@ class FeatureSet(DataSet):
         :return: A feature set
         """
         bys = CloudPickleSerializer.dumps(CloudPickleSerializer, dataloader)
-        jvalue = callZooFunc(bigdl_type, "createFeatureSetFromPytorch", bys)
+        jvalue = callZooFunc(bigdl_type, "createFeatureSetFromPyTorch", bys)
         return cls(jvalue=jvalue)
 
     def transform(self, transformer):

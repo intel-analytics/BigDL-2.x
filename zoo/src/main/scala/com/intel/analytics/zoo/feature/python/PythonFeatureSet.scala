@@ -114,7 +114,7 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
       "data", "", totalSize, imports)
   }
 
-  def createFeatureSetFromPytorch(
+  def createFeatureSetFromPyTorch(
         dataloader: Array[Byte]): FeatureSet[MiniBatch[Float]] = {
     val imports = s"""
                      |from zoo.util.nest import ptensor_to_numpy
