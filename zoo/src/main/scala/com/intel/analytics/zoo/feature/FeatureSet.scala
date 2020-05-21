@@ -329,7 +329,7 @@ class CachedDistributedFeatureSet[T: ClassTag]
   }
 }
 
-object PythonLoaderFeatureSet{
+object PythonFeatureSet{
   // One partition one loader
   protected def getLocalLoader(loaderName: String): String = {
     s"${loaderName}_${TaskContext.getPartitionId()}"
@@ -339,8 +339,9 @@ object PythonLoaderFeatureSet{
     s"${loaderName}_iter_${train}"
   }
 
-  protected def loadPytorchLoader(
+  protected def loadPythonSet(
       loaderName: String,
+      getLoader: (Int, Int, String) => String,
       dataset: Array[Byte],
       imports: String,
       interpRdd: RDD[Int]): Unit = {
@@ -358,37 +359,8 @@ object PythonLoaderFeatureSet{
       PythonInterpreter.set("pyjarray", bcDataSet.value)
 
       val localLoaderName = getLocalLoader(loaderName)
-      // when nodeNumber == 1, we use the origin dataloader.
-      // when nodeNumber > 1, we use Sampler.
-      val pytorchSelect = if (nodeNumber == 1) {
-        ""
-      } else {
-        s"""
-           |from torch.utils.data.distributed import DistributedSampler
-           |from torch.utils.data.sampler import RandomSampler
-           |from zoo.pipeline.api.torch.utils import DistributedSequentialSampler
-           |if isinstance(${localLoaderName}.sampler, RandomSampler):
-           |    ${localLoaderName}_sampler=DistributedSampler(${localLoaderName}.dataset,
-           |                                                  ${nodeNumber}, ${partId}, True)
-           |else:
-           |    ${localLoaderName}_sampler=DistributedSequentialSampler(${localLoaderName}.dataset,
-           |                                                  ${nodeNumber}, ${partId})
-           |${localLoaderName} = torch.utils.data.DataLoader(${localLoaderName}.dataset,
-           |                                                 ${localLoaderName}.batch_size,
-           |                                                 sampler=${localLoaderName}_sampler)
-           |""".stripMargin
-      }
 
-      val load = s"""
-        |by${partId} = bytes(b % 256 for b in pyjarray)
-        |func${partId} = CloudPickleSerializer.loads(CloudPickleSerializer, by${partId})
-        |if(callable(func${partId})): # tf dataset
-        |  ${localLoaderName} = func${partId}().shard(${nodeNumber}, ${partId})
-        |else:  #pytorch dataset
-        |  ${localLoaderName} = func${partId}
-        |  ${pytorchSelect}
-        |""".stripMargin
-
+      val load = getLoader(nodeNumber, partId, localLoaderName)
       PythonInterpreter.exec(load)
       Iterator.single(1)
     }.count()
@@ -440,19 +412,20 @@ object PythonLoaderFeatureSet{
   }
 }
 
-class PythonLoaderFeatureSet[T: ClassTag](
+class PythonFeatureSet[T: ClassTag](
     dataset: Array[Byte],
+    getLoader: (Int, Int, String) => String,
     getIterator: (String, String) => String,
     getNext: (String) => String,
     inputName: String,
     targetName: String = "",
     totalSize: Int,
     imports: String = "") extends DistributedFeatureSet[T] {
-  import PythonLoaderFeatureSet._
+  import PythonFeatureSet._
   protected val namePostfix = Integer.toHexString(java.util.UUID.randomUUID().hashCode())
   protected val loaderName = s"loader${namePostfix}"
 
-  loadPytorchLoader(loaderName, dataset, imports, cachedRdd)
+  loadPythonSet(loaderName, dataset, imports, cachedRdd)
 
   override def originRDD(): RDD[_] = {
     cachedRdd
@@ -665,13 +638,14 @@ object FeatureSet {
   val logger: Logger = LoggerFactory.getLogger(this.getClass)
   private[zoo] def python[T: ClassTag](
       dataset: Array[Byte],
+      getLoader: (Int, Int, String) => String,
       getIterator: (String, String) => String,
       getNext: (String) => String,
       inputName: String,
       targetName: String,
       totalSize: Int,
-      imports: String = ""): PythonLoaderFeatureSet[T] = {
-    new PythonLoaderFeatureSet[T](dataset, getIterator, getNext,
+      imports: String = ""): PythonFeatureSet[T] = {
+    new PythonFeatureSet[T](dataset, getLoader, getIterator, getNext,
       inputName, targetName, totalSize, imports)
   }
 

@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.{QuantizedTensor, QuantizedType, Storage, Tensor}
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.PythonInterpreter
-import com.intel.analytics.zoo.feature.PythonLoaderFeatureSet
+import com.intel.analytics.zoo.feature.PythonFeatureSet
 import com.intel.analytics.zoo.pipeline.api.net.TorchModel.TorchModel2Holder
 import jep.{Jep, NDArray}
 
@@ -106,7 +106,7 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
     }
     PythonInterpreter.exec(forwardCode)
     println(s"run forward cost: ${(System.nanoTime() - startTime) / 1e9}")
-    val outputNd = PythonLoaderFeatureSet.toArrayTensor(
+    val outputNd = PythonFeatureSet.toArrayTensor(
       PythonInterpreter.getValue[NDArray[_]]("ptensor_to_numpy(output.data)"))
     if (outputNd.length == 1) {
       output = outputNd(0)
@@ -142,7 +142,7 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
 //        g.getData(), 0, g.getDimensions()(0))
 //      index += g.getDimensions()(0)
 //    }
-    val grad = PythonLoaderFeatureSet.ndArrayToTensor(
+    val grad = PythonFeatureSet.ndArrayToTensor(
       PythonInterpreter.getValue("grad.data.numpy()").asInstanceOf[NDArray[_]])
     gradients.copy(grad)
     println(s"backward total cost: ${(System.nanoTime() - startTime) / 1e9}")

@@ -62,9 +62,8 @@ class TorchModel(Layer):
         Convert to pytorch model
         :return: a pytorch model
         """
-        new_weight = self.get_weights()
-        assert(len(new_weight) == 1, "TorchModel's weights should be one tensor")
+        new_weight = callZooFunc(self.bigdl_type, "getWeight", self.value).to_ndarray()
         m = CloudPickleSerializer.loads(CloudPickleSerializer, self.module_bytes)
-        w = torch.Tensor(new_weight[0])
+        w = torch.Tensor(new_weight)
         torch.nn.utils.vector_to_parameters(w, m.parameters())
         return m

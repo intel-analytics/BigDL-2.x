@@ -96,6 +96,13 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
          |${iterName} = ${loaderName}.make_one_shot_iterator()
          |""".stripMargin
     }
+    def getLoader(nodeNumber: Int, partId: Int, localLoaderName: String): String = {
+      s"""
+         |by${partId} = bytes(b % 256 for b in pyjarray)
+         |func${partId} = CloudPickleSerializer.loads(CloudPickleSerializer, by${partId})
+         |${localLoaderName} = func${partId}().shard(${nodeNumber}, ${partId})
+         |""".stripMargin
+    }
     def getNext(iterName: String): String = {
       s"""
         |data = sess.run(${iterName}.get_next())
@@ -103,7 +110,7 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
         |""".stripMargin
     }
     FeatureSet.python[MiniBatch[Float]](dataset,
-      getIterator, getNext,
+      getLoader, getIterator, getNext,
       "data", "", totalSize, imports)
   }
 
@@ -133,7 +140,47 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
          |""".stripMargin
     }
 
-    FeatureSet.python[MiniBatch[Float]](dataloader, getIterator, getNext,
+    def getLoader(nodeNumber: Int, partId: Int, localLoaderName: String): String = {
+      val load = s"""
+                    |by${partId} = bytes(b % 256 for b in pyjarray)
+                    |func${partId} = CloudPickleSerializer.loads(CloudPickleSerializer, by${partId})
+                    |${localLoaderName} = func${partId}
+                    |""".stripMargin
+      // when nodeNumber == 1, we use the origin dataloader.
+      // when nodeNumber > 1, we use Sampler.
+      if (nodeNumber == 1) {
+        load
+      } else {
+        load +
+        s"""
+           |from torch.utils.data.distributed import DistributedSampler
+           |from torch.utils.data.sampler import RandomSampler
+           |from zoo.pipeline.api.torch.utils import DistributedSequentialSampler
+           |from torch.utils.data import DataLoader
+           |if isinstance(${localLoaderName}.sampler, RandomSampler):
+           |    ${localLoaderName}_sampler=DistributedSampler(${localLoaderName}.dataset,
+           |                                                  ${nodeNumber}, ${partId}, True)
+           |else:
+           |    ${localLoaderName}_sampler=DistributedSequentialSampler(${localLoaderName}.dataset,
+           |                                                  ${nodeNumber}, ${partId})
+           |
+           |data_loader_args = {
+           |                "dataset": ${localLoaderName}.dataset,
+           |                "batch_size": ${localLoaderName}.batch_size,
+           |                "shuffle": False,
+           |                "num_workers": 0,
+           |                "collate_fn": ${localLoaderName}.collate_fn,
+           |                "drop_last": ${localLoaderName}.drop_last,
+           |                "timeout": ${localLoaderName}.timeout,
+           |                "worker_init_fn": ${localLoaderName}.worker_init_fn,
+           |                "sampler": ${localLoaderName}_sampler
+           |            }
+           |${localLoaderName} = DataLoader(**data_loader_args)
+           |""".stripMargin
+      }
+    }
+
+    FeatureSet.python[MiniBatch[Float]](dataloader, getLoader, getIterator, getNext,
       "ptensor_to_numpy(data[0])", "ptensor_to_numpy(data[1])", -1, imports)
   }
 
