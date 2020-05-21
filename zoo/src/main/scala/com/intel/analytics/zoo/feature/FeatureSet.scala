@@ -425,7 +425,7 @@ class PythonFeatureSet[T: ClassTag](
   protected val namePostfix = Integer.toHexString(java.util.UUID.randomUUID().hashCode())
   protected val loaderName = s"loader${namePostfix}"
 
-  loadPythonSet(loaderName, dataset, imports, cachedRdd)
+  loadPythonSet(loaderName, getLoader, dataset, imports, cachedRdd)
 
   override def originRDD(): RDD[_] = {
     cachedRdd
