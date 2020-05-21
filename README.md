@@ -2,30 +2,29 @@
    <p align="center"> <img src="https://github.com/analytics-zoo/analytics-zoo.github.io/blob/master/img/logo.jpg" height=240px; weight=320px;"><br></p>
 </div>
       
-_A unified Data Analytics and AI platform for **distributed TensorFlow, Keras, PyTorch, Apache Spark/Flink and Ray**_
+_A unified Data Analytics and AI platform for **distributed TensorFlow, PyTorch and Keras on Apache Spark/Flink & Ray**_
 
 ---
 
 # <font size="6"> What is Analytics Zoo? </font>
 
-Analytics Zoo provides a unified data analytics and AI platform that seamlessly unites TensorFlow, Keras, PyTorch, Spark, Flink and Ray programs into an integrated pipeline, which can transparently scale from a laptop to large clusters to process production big data.
+Analytics Zoo seamless scales TensorFlow, Keras and PyTorch to distributed big data (using Spark, Flink & Ray).
 
 <div align="center">
    <p align="center"> <img src="docs/docs/Image/blockdiagram.jpg" height=240px; weight=718px;"><br></p>
 </div>
 
-
-- **Integrated Analytics and AI Pipelines** for easily prototyping and deploying end-to-end AI applications. 
+- **End-to-end pipelines for applying AI models (TensorFlow, PyTorch, OpenVINO, etc.) to distributed big data**
   - Write [TensorFlow](https://analytics-zoo.github.io/master/#ProgrammingGuide/TFPark/tensorflow/) or [PyTorch](https://analytics-zoo.github.io/master/#ProgrammingGuide/pytorch/) inline with Spark code for distributed training and inference.
   - Native deep learning (TensorFlow/Keras/PyTorch/BigDL) support in [Spark ML](https://analytics-zoo.github.io/master/#ProgrammingGuide/nnframes) Pipelines.
-  - Directly run Ray programs on big data cluster through [RayOnSpark](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/). 
+  - Directly run [Ray](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/) programs on big data cluster through RayOnSpark. 
   - Plain Java/Python APIs for (TensorFlow/PyTorch/BigDL/OpenVINO) [Model Inference](https://analytics-zoo.github.io/master/#ProgrammingGuide/inference). 
 
-- High-Level **ML Workflow** that automates the process of building large-scale machine learning applications.
-  - Automatically distributed [Cluster Serving](https://analytics-zoo.github.io/master/#ClusterServingGuide/ProgrammingGuide) (for TensorFlow/PyTorch/Caffe/BigDL/OpenVINO models) with a simple pub/sub API. 
-  - Scalable [AutoML](https://github.com/intel-analytics/analytics-zoo/blob/automl/pyzoo/zoo/automl/README.md) for time series prediction (that automatically generates features, selects models and tunes hyperparameters).
+- **High-Level ML Workflow for automating machine learning tasks**
+  - [Cluster Serving](https://analytics-zoo.github.io/master/#ClusterServingGuide/ProgrammingGuide) for automatically distributed model (TensorFlow/PyTorch/Caffe/BigDL/OpenVINO) inference . 
+  - Scalable [AutoML](https://github.com/intel-analytics/analytics-zoo/blob/automl/pyzoo/zoo/automl/README.md) for time series prediction.
 
-- **Built-in Algorithms and Models** for [Recommendation](https://analytics-zoo.github.io/master/#APIGuide/Models/recommendation/), [Time Series](https://analytics-zoo.github.io/master/#APIGuide/Models/anomaly-detection/), [Computer Vision](https://analytics-zoo.github.io/master/#APIGuide/Models/object-detection/) and [NLP](https://analytics-zoo.github.io/master/#APIGuide/Models/seq2seq/) applications.
+- **Built-in Algorithms and Models** for [Recommendation](https://analytics-zoo.github.io/master/#APIGuide/Models/recommendation/), [Time Series](https://analytics-zoo.github.io/master/#APIGuide/Models/anomaly-detection/), [Computer Vision](https://analytics-zoo.github.io/master/#APIGuide/Models/object-detection/) and [NLP]( https://analytics-zoo.github.io/master/#APIGuide/Models/text-matching/) applications.
 
 ---
 
@@ -42,8 +41,8 @@ You may want to develop your AI solutions using Analytics Zoo if:
 
 # <font size="6">How to use Analytics Zoo? </font>
 
-- Quick start with Analytics Zoo using the pre-built [Docker Image](https://analytics-zoo.github.io/master/#DockerUserGuide/index).
-- Refer to the [Python](https://analytics-zoo.github.io/master/#PythonUserGuide/install/) and [Scala](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/) installation guides to install Analytics Zoo.
-- Visit the [Document Website](https://analytics-zoo.github.io/) for more information on Analytics Zoo.
+- Check out the [Getting Started page](https://analytics-zoo.github.io/master/#gettingstarted/) for a quick overview of how to use Analytics Zoo.
+- Refer to the [Python](https://analytics-zoo.github.io/master/#PythonUserGuide/install/), [Scala](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/) and [Docker](https://analytics-zoo.github.io/master/#DockerUserGuide/) guides to install Analytics Zoo.
+- Visit the [Document Website](https://analytics-zoo.github.io/) ([mirror](https://analytics-zoo.gitee.io/) in China) for more information on Analytics Zoo.
 - Check the [Powered By](https://analytics-zoo.github.io/master/#powered-by/) & [Presentations](https://analytics-zoo.github.io/master/#presentations/) pages for real-world applications using Analytics Zoo.
 - Join the [Google Group](https://groups.google.com/forum/#!forum/bigdl-user-group) (or subscribe to the [Mail List](mailto:bigdl-user-group+subscribe@googlegroups.com)) for more questions and discussions on Analytics Zoo.
