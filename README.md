@@ -20,11 +20,11 @@ Analytics Zoo seamless scales TensorFlow, Keras and PyTorch to distributed big d
   * Directly run [Ray](https://analytics-zoo.github.io/master/#ProgrammingGuide/rayonspark/) programs on big data cluster through _RayOnSpark_. 
   * Plain Java/Python APIs for (TensorFlow/PyTorch/BigDL/OpenVINO) [Model Inference](https://analytics-zoo.github.io/master/#ProgrammingGuide/inference). 
 
-* **High-Level ML Workflow for automating machine learning tasks**
+* **High-level ML workflow for automating machine learning tasks**
   * [Cluster Serving](https://analytics-zoo.github.io/master/#ClusterServingGuide/ProgrammingGuide) for automatically distributed (TensorFlow/PyTorch/Caffe/OpenVINO) model inference . 
   * Scalable [AutoML](https://analytics-zoo.github.io/master/#ProgrammingGuide/AutoML/overview/) for time series prediction.
 
-* **Built-in Algorithms and Models** for [Recommendation](https://analytics-zoo.github.io/master/#APIGuide/Models/recommendation/), [Time Series](https://analytics-zoo.github.io/master/#APIGuide/Models/anomaly-detection/), [Computer Vision](https://analytics-zoo.github.io/master/#APIGuide/Models/object-detection/) and [NLP]( https://analytics-zoo.github.io/master/#APIGuide/Models/text-matching/) applications.
+* **Built-in models** for [Recommendation](https://analytics-zoo.github.io/master/#APIGuide/Models/recommendation/), [Time Series](https://analytics-zoo.github.io/master/#APIGuide/Models/anomaly-detection/), [Computer Vision](https://analytics-zoo.github.io/master/#APIGuide/Models/object-detection/) and [NLP]( https://analytics-zoo.github.io/master/#APIGuide/Models/text-matching/) applications.
 
 ---
 
