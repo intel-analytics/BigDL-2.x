@@ -4,7 +4,7 @@ _A unified Data Analytics and AI platform for **distributed TensorFlow, Keras an
 
 ---
 
-# <font size="6"> What is Analytics Zoo? </font>
+# <font size="6"><b>What is Analytics Zoo?</b></font>
 
 Analytics Zoo seamless scales TensorFlow, Keras and PyTorch to distributed big data (using Spark, Flink & Ray).
 
@@ -27,7 +27,7 @@ Analytics Zoo seamless scales TensorFlow, Keras and PyTorch to distributed big d
 
 ---
 
-# <font size="6">Why use Analytics Zoo? </font>
+# <font size="6"><b>Why use Analytics Zoo?</b></font>
 
 You may want to develop your AI solutions using Analytics Zoo if:
 * You want to easily apply AI models (e.g., TensorFlow, Keras, PyTorch, BigDL, OpenVINO, etc.) to distributed big data.
@@ -37,12 +37,10 @@ You may want to develop your AI solutions using Analytics Zoo if:
 
 ---
 
-# <font size="6">How to use Analytics Zoo? </font>
-
+# <font size="6"><b>How to use Analytics Zoo?</b></font>
 
 * Check out the [Getting Started page](gettingstarted.md) for a quick overview of how to use Analytics Zoo.
 * Refer to the [Python](PythonUserGuide/install.md), [Scala](ScalaUserGuide/install.md) and [Docker](DockerUserGuide/index.md) guides to install Analytics Zoo.
 * Visit the [Document Website](https://analytics-zoo.github.io/) ([mirror](https://analytics-zoo.gitee.io/) in China) for more information on Analytics Zoo.
 * Check the [Powered By](https://analytics-zoo.github.io/master/#powered-by/) & [Presentations](https://analytics-zoo.github.io/master/#presentations/) pages for real-world applications using Analytics Zoo.
 * Join the [Google Group](https://groups.google.com/forum/#!forum/bigdl-user-group) (or subscribe to the [Mail List](mailto:bigdl-user-group+subscribe@googlegroups.com)) for more questions and discussions on Analytics Zoo.
-

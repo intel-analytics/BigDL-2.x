@@ -16,22 +16,32 @@ set -e
 RUN_PART1=0
 RUN_PART2=0
 RUN_PART3=0
+RUN_PART4=0
 if [ $1 = 1 ]; then
 	RUN_PART1=1
 	RUN_PART2=0
 	RUN_PART3=0
+	RUN_PART4=0
 elif [ $1 = 2 ]; then
 	RUN_PART1=0
 	RUN_PART2=1
 	RUN_PART3=0
+	RUN_PART4=0
 elif [ $1 = 3 ]; then
 	RUN_PART1=0
 	RUN_PART2=0
 	RUN_PART3=1
+	RUN_PART4=0
+elif [ $1 = 4 ]; then
+	RUN_PART1=0
+	RUN_PART2=0
+	RUN_PART3=0
+	RUN_PART4=1
 else
 	RUN_PART1=1
 	RUN_PART2=1
 	RUN_PART3=1
+	RUN_PART4=1
 fi
 
 
@@ -93,12 +103,12 @@ then
 else
     wget https://s3.amazonaws.com/analytics-zoo-data/train_dog.mp4 -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
 fi
-FILENAME="/root/.imageio/ffmpeg/ffmpeg-linux64-v3.3.1"
+FILENAME="~/.imageio/ffmpeg/ffmpeg-linux64-v3.3.1"
 if [ -f "$FILENAME" ]
 then
     echo "$FILENAME already exists"
 else
-    wget $FTP_URI/analytics-zoo-data/apps/object-detection/ffmpeg-linux64-v3.3.1 -P /root/.imageio/ffmpeg/
+    wget $FTP_URI/analytics-zoo-data/apps/object-detection/ffmpeg-linux64-v3.3.1 -P ~/.imageio/ffmpeg/
 fi
 
 # Run the example 
@@ -143,7 +153,7 @@ then
 else
    echo "Downloading places365 deploy model"
    
-   wget https://analytics-zoo-data.s3.amazonaws.com/deploy_googlenet_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365
+   wget $FTP_URI/analytics-zoo-models/image-similarity/deploy_googlenet_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365
    
    echo "Finished downloading model"
 fi
@@ -154,7 +164,7 @@ then
 else
    echo "Downloading places365 weight model"
    
-   wget http://places2.csail.mit.edu/models_places365/googlenet_places365.caffemodel -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365
+   wget $FTP_URI/analytics-zoo-models/image-similarity/googlenet_places365.caffemodel -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/googlenet_places365
    
    echo "Finished downloading model"
 fi
@@ -165,7 +175,7 @@ then
 else
    echo "Downloading VGG deploy model"
    
-   wget https://analytics-zoo-data.s3.amazonaws.com/deploy_vgg16_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
+   wget $FTP_URI/analytics-zoo-models/image-similarity/deploy_vgg16_places365.prototxt -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
    
    echo "Finished downloading model"
 fi
@@ -176,7 +186,7 @@ then
 else
    echo "Downloading VGG weight model"
    
-   wget http://places2.csail.mit.edu/models_places365/vgg16_places365.caffemodel -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
+   wget $FTP_URI/analytics-zoo-models/image-classification/vgg16_places365.caffemodel  -P ${ANALYTICS_ZOO_HOME}/apps/image-similarity/vgg_16_places365
    
    echo "Finished downloading model"
 fi
@@ -344,8 +354,8 @@ else
     touch ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/inception.py
     echo "from nets.inception_v1 import inception_v1" >> ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/inception.py
     echo "from nets.inception_v1 import inception_v1_arg_scope" >> ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/inception.py
-    wget https://analytics-zoo-data.s3.amazonaws.com/inception_utils.py -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/
-    wget https://analytics-zoo-data.s3.amazonaws.com/inception_v1.py -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/
+    wget $FTP_URI/analytics-zoo-models/image-classification/inception_utils.py -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/
+    wget $FTP_URI/analytics-zoo-models/image-classification/inception_v1.py -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/models/research/slim/nets/
    
    echo "Finished downloading model"
 fi
@@ -356,7 +366,7 @@ then
 else
    echo "Downloading inception_v1 checkpoint"
    
-   wget http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint
+   wget $FTP_URI/analytics-zoo-models/image-classification/inception_v1_2016_08_28.tar.gz -P ${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint
    tar -zxvf ${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint/inception_v1_2016_08_28.tar.gz -C ${ANALYTICS_ZOO_HOME}/apps/tfnet/checkpoint
    
    echo "Finished downloading checkpoint"
@@ -404,7 +414,7 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading celeba images"
-   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/img_align_celeba.zip --no-host-directories
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ $FTP_URI/analytics-zoo-data/apps/variational-autoencoder/img_align_celeba.zip --no-host-directories
    unzip -d ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip
    echo "Finished"
 fi
@@ -437,7 +447,7 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading VGG model"
-   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/analytics-zoo_vgg-16_imagenet_0.1.0.model --no-host-directories
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ $FTP_URI/analytics-zoo-data/apps/variational-autoencoder/analytics-zoo_vgg-16_imagenet_0.1.0.model --no-host-directories
    echo "Finished"
 fi
  FILENAME="${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip"
@@ -446,7 +456,7 @@ then
    echo "$FILENAME already exists."
 else
    echo "Downloading celeba images"
-   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ftp://zoo:1234qwer@10.239.47.211/analytics-zoo-data/apps/variational-autoencoder/img_align_celeba.zip --no-host-directories
+   wget -P ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ $FTP_URI/analytics-zoo-data/apps/variational-autoencoder/img_align_celeba.zip --no-host-directories
    unzip -d ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/ ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/img_align_celeba.zip
    echo "Finished"
 fi
@@ -581,6 +591,10 @@ now=$(date "+%s")
 time15=$((now-start))
 echo "#15 pytorch face-generation time used:$time15 seconds"
 
+fi
+
+
+if [ $RUN_PART4 = 1 ]; then
 echo "#16 start app test for ray paramater-server"
 #timer
 start=$(date "+%s")
@@ -599,6 +613,98 @@ now=$(date "+%s")
 time16=$((now-start))
 
 echo "#16 ray paramater-server time used:$time16 seconds"
+
+echo "#17 start app test for zouwu-network-traffic-autots-forecasting"
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_autots_forecasting
+
+FILENAME="${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/data/data.csv"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading network traffic data"
+
+   wget $FTP_URI/analytics-zoo-data/network-traffic/data/data.csv -P ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/data
+
+   echo "Finished downloading network traffic data"
+fi
+
+sed -i '/get_ipython()/d; /plot./d; /plt./d' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_autots_forecasting.py
+cd ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/
+
+python ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_autots_forecasting.py
+cd -
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "zouwu network-traffic-autots-forecasting failed"
+    exit $exit_status
+fi
+now=$(date "+%s")
+time17=$((now-start))
+echo "#17 zouwu-network-traffic-autots-forecasting time used:$time17 seconds"
+
+echo "#18 start app test for zouwu-network-traffic-model-forecasting"
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_model_forecasting
+
+FILENAME="${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/data/data.csv"
+if [ -f "$FILENAME" ]
+then
+   echo "$FILENAME already exists."
+else
+   echo "Downloading network traffic data"
+
+   wget $FTP_URI/analytics-zoo-data/network-traffic/data/data.csv -P ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/data
+
+   echo "Finished downloading network traffic data"
+fi
+
+sed -i '/get_ipython()/d; /plot./d; /plt./d' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_model_forecasting.py
+sed -i "s/epochs=20/epochs=2/g; s/epochs=10/epochs=2/g; s/epochs=50/epochs=2/g" ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_model_forecasting.py
+cd ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/
+
+python ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_model_forecasting.py
+cd -
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "zouwu network-traffic-model-forecasting failed"
+    exit $exit_status
+fi
+now=$(date "+%s")
+time18=$((now-start))
+echo "#18 zouwu-network-traffic-model-forecasting time used:$time18 seconds"
+
+echo "#19 start app test for automl-nyc-taxi"
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/automl/nyc_taxi_dataset
+
+chmod +x ${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
+${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
+
+sed -i '/get_ipython()/d;' ${ANALYTICS_ZOO_HOME}/apps/automl/nyc_taxi_dataset.py
+
+python ${ANALYTICS_ZOO_HOME}/apps/automl/nyc_taxi_dataset.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "automl nyc-taxi failed"
+    exit $exit_status
+fi
+now=$(date "+%s")
+time19=$((now-start))
+echo "#19 automl-nyc-taxi time used:$time19 seconds"
 
 fi
 

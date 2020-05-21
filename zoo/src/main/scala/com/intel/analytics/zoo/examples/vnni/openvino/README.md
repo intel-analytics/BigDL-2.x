@@ -20,7 +20,7 @@ Note that all paths used in this example should be full path, e.g., `/root/model
 
 ---
 ### Prepare OpenVINO Model
-TensorFlow models cannot be directly loaded by OpenVINO. It should be converted to OpenVINO optimized model and int8 optimized model first. You can use [OpenVINO toolkit](https://docs.openvinotoolkit.org/2018_R5/_docs_MO_DG_prepare_model_convert_model_Convert_Model_From_TensorFlow.html) to finish this job. With the help of [OpenVINO Open Model Zoo](https://github.com/opencv/open_model_zoo), you can download and optimize Tensorflow models into OpenVINO model, then further convert them into OpenVINO int8 models.
+TensorFlow models cannot be directly loaded by OpenVINO. It should be converted to OpenVINO optimized model and int8 optimized model first. You can use [OpenVINO toolkit](https://docs.openvinotoolkit.org/2020.2/_docs_MO_DG_prepare_model_convert_model_Convert_Model_From_TensorFlow.html) to finish this job. With the help of [OpenVINO Open Model Zoo](https://github.com/opencv/open_model_zoo), you can download and optimize Tensorflow models into OpenVINO model, then further convert them into OpenVINO int8 models.
 
 __Sample Result files in MODEL_PATH__:
 ```

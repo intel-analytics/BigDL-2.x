@@ -66,7 +66,7 @@ class TestZouwuAutoTS(ZooTestCase):
         pipeline = tsp.fit(self.train_df,
                            self.validation_df,
                            recipe=LSTMGridRandomRecipe(
-                               num_rand_samples=1,
+                               num_rand_samples=5,
                                batch_size=[1024],
                                lstm_2_units=[8],
                                training_iteration=1,

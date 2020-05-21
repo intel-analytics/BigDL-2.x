@@ -81,11 +81,11 @@ then
     mkdir analytics-zoo-models
 fi
 
-if [ -f analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model ]
+if [ -f analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0.model ]
 then
-    echo "analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model already exists"
+    echo "analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0.model already exists"
 else
-    wget -nv $FTP_URI/analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model\
+    wget -nv $FTP_URI/analytics-zoo-models/image-classification/analytics-zoo_squeezenet_imagenet_0.1.0.model \
     -P analytics-zoo-models
 fi
 
@@ -98,7 +98,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/imageclassification/predict.py \
-    -f hdfs://172.168.2.181:9000/kaggle/train_100 \
+    -f ${HDFS_URI}/kaggle/train_100 \
     --model analytics-zoo-models/analytics-zoo_squeezenet_imagenet_0.1.0.model \
     --topN 5
 now=$(date "+%s")
@@ -125,7 +125,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/objectdetection/predict.py \
-    analytics-zoo-models/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model hdfs://172.168.2.181:9000/kaggle/train_100 /tmp
+    analytics-zoo-models/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model ${HDFS_URI}/kaggle/train_100 /tmp
 now=$(date "+%s")
 time4=$((now-start))
 
@@ -180,7 +180,7 @@ ${SPARK_HOME}/bin/spark-submit \
    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/nnframes/imageInference/ImageInferenceExample.py \
    -m analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
-   -f hdfs://172.168.2.181:9000/kaggle/train_100
+   -f ${HDFS_URI}/kaggle/train_100
 
 echo "start example test for nnframes imageTransferLearning"
 ${SPARK_HOME}/bin/spark-submit \
@@ -220,7 +220,7 @@ ${SPARK_HOME}/bin/spark-submit \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfnet/predict.py \
-    --image hdfs://172.168.2.181:9000/kaggle/train_100 \
+    --image ${HDFS_URI}/kaggle/train_100 \
     --model analytics-zoo-models/ssd_mobilenet_v1_coco_2017_11_17/frozen_inference_graph.pb
 
 echo "start example test for tfpark"
@@ -324,15 +324,15 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/inception/inception.py \
    --maxIteration 20 \
    -b 8 \
-   -f hdfs://172.168.2.181:9000/imagenet-mini
+   -f ${HDFS_URI}/imagenet-mini
 
 if [ -f analytics-zoo-models/resnet_50_saved_model.zip ]
 then
-   echo "analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model already exists."
+   echo "analytics-zoo-models/resnet_50_saved_model.zip already exists."
 else
-   wget -nv $FTP_URI/analytics-zoo-models/tensorflow/reset_50_saved_model.zip \
+   wget -nv $FTP_URI/analytics-zoo-models/tensorflow/resnet_50_saved_model.zip \
     -P analytics-zoo-models
-   unzip analytics-zoo-models/reset_50_saved_model.zip -d analytics-zoo-models/reset_50_saved_model
+   unzip analytics-zoo-models/resnet_50_saved_model.zip -d analytics-zoo-models/resnet_50_saved_model
 fi
 
 echo "start example test for TFPark freeze saved model 9"
@@ -340,8 +340,8 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
    --master local[4] \
    --driver-memory 10g \
    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/freeze_saved_model/freeze.py \
-        --saved_model_path analytics-zoo-models/reset_50_saved_model \
-        --output_path analytics-zoo-models/reset_50_tfnet
+        --saved_model_path analytics-zoo-models/resnet_50_saved_model \
+        --output_path analytics-zoo-models/resnet_50_tfnet
 
 now=$(date "+%s")
 time6=$((now-start))
@@ -415,7 +415,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/inception/inception.py \
    --maxIteration 20 \
    -b 8 \
-   -f hdfs://172.168.2.181:9000/imagenet-mini
+   -f ${HDFS_URI}/imagenet-mini
 now=$(date "+%s")
 time9=$((now-start))
 
@@ -512,8 +512,8 @@ else
      -P analytics-zoo-models
 fi
 
-mkdir output
-mkdir stream
+mkdir -p output
+mkdir -p stream
 while true
 do
    temp1=$(find analytics-zoo-data/data/object-detection-coco -type f|wc -l)

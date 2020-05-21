@@ -18,8 +18,9 @@ import base64
 import cv2
 import yaml
 import redis
-import datetime
 import time
+import numpy as np
+import pyarrow as pa
 
 
 class API:
@@ -35,19 +36,27 @@ class API:
         except Exception:
             raise EOFError("config file does not exist. Please check your config"
                            "at analytics-zoo/docker/cluster-serving/config.yaml")
-        with open(file_path) as f:
-            config = yaml.load(f)
-            if not config['data']['src']:
-                host_port = ["localhost", "6379"]
-            else:
-                host_port = config['data']['src'].split(":")
-            config['data']['host'] = host_port[0]
-            config['data']['port'] = host_port[1]
+
+        try:
+            with open(file_path) as f:
+                config = yaml.load(f)
+                if not config['data']['src']:
+                    host_port = ["localhost", "6379"]
+                else:
+                    host_port = config['data']['src'].split(":")
+                config['data']['host'] = host_port[0]
+                config['data']['port'] = host_port[1]
+        except Exception:
+            config = {}
+            config['data'] = {}
+            config['data']['host'], config['data']['port'] = "localhost", "6379"
+            config['data']['image_shape'] = None
 
         self.db = redis.StrictRedis(host=config['data']['host'],
                                     port=config['data']['port'], db=0)
         try:
             self.db.xgroup_create("image_stream", "serving")
+            self.db.xgroup_create("tensor_stream", "serving")
         except Exception:
             print("redis group exist, will not create new one")
 
@@ -106,12 +115,42 @@ class InputQueue(API):
 
         d = {"uri": uri, "image": img_encoded}
 
-        inf = self.db.info()
+        self.__enqueue_data("image_stream", d)
 
+    def enqueue_tensor(self, uri, data):
+        if isinstance(data, np.ndarray):
+            # tensor
+            data = [data]
+        if not isinstance(data, list):
+            raise Exception("Your input is invalid, only List of ndarray and ndarray are allowed.")
+
+        sink = pa.BufferOutputStream()
+        writer = None
+        for d in data:
+            shape = np.array(d.shape, dtype="float32")
+            d = d.astype("float32").flatten()
+            len_arr = np.array([len(shape), len(d)], dtype="float32")
+            data_arr = np.concatenate([len_arr, shape, d])
+            arrow_arr = pa.array(data_arr)
+            batch = pa.RecordBatch.from_arrays([arrow_arr], ["0"])
+            if writer is None:
+                # initialize
+                writer = pa.RecordBatchFileWriter(sink, batch.schema)
+            writer.write_batch(batch)
+
+        writer.close()
+        buf = sink.getvalue()
+        b = buf.to_pybytes()
+        tensor_encoded = self.base64_encode_image(b)
+        d = {"uri": uri, "tensor": tensor_encoded}
+        self.__enqueue_data("tensor_stream", d)
+
+    def __enqueue_data(self, stream_name, data):
+        inf = self.db.info()
         try:
             if inf['used_memory'] >= inf['maxmemory'] * self.input_threshold:
                 raise redis.exceptions.ConnectionError
-            self.db.xadd("image_stream", d)
+            self.db.xadd(stream_name, data)
             print("Write to Redis successful")
         except redis.exceptions.ConnectionError:
             print("Redis queue is full, please wait for inference "

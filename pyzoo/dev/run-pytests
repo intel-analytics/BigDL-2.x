@@ -30,7 +30,9 @@ python -m pytest -v --doctest-modules ../zoo \
     --ignore=../zoo/examples \
     --ignore=../zoo/ray/ \
     --ignore=../zoo/automl/ \
-    --ignore=../zoo/zouwu/
+    --ignore=../zoo/zouwu/ \
+    --ignore=../zoo/orca/data/ \
+    --ignore=../zoo/orca/learn/
 exit_status_1=$?
 if [ $exit_status_1 -ne 0 ];
 then
@@ -58,7 +60,9 @@ if [[ $py_version == *"Python 2.7"* ]]; then
        --ignore=../test/zoo/pipeline/inference/ \
        --ignore=../test/zoo/tfpark/test_text_models.py \
        --ignore=../test/zoo/ray/ \
-       --ignore=../test/zoo/zouwu/
+       --ignore=../test/zoo/zouwu/ \
+       --ignore=../test/zoo/orca/data/ \
+       --ignore=../test/zoo/orca/learn/
     exit_status_2=$?
     if [ $exit_status_2 -ne 0 ];
     then
@@ -83,7 +87,9 @@ else
        --ignore=../test/zoo/pipeline/autograd/ \
        --ignore=../test/zoo/ray/integration/ \
        --ignore=../test/zoo/ray/ \
-       --ignore=../test/zoo/zouwu/
+       --ignore=../test/zoo/zouwu/ \
+       --ignore=../test/zoo/orca/data/ \
+       --ignore=../test/zoo/orca/learn/
     exit_status_3=$?
     if [ $exit_status_3 -ne 0 ];
     then

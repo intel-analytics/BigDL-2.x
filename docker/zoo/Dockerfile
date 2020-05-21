@@ -20,7 +20,7 @@ MAINTAINER The Analytics-Zoo Authors https://github.com/intel-analytics/analytic
 
 WORKDIR /opt/work
 
-ARG ANALYTICS_ZOO_VERSION=0.8.0-SNAPSHOT
+ARG ANALYTICS_ZOO_VERSION=0.9.0-SNAPSHOT
 ARG BIGDL_VERSION=0.10.0
 ARG SPARK_VERSION=2.4.3
 ARG RUNTIME_SPARK_MASTER=local[4]
@@ -48,11 +48,11 @@ RUN apt-get update --fix-missing && \
     apt-get install -y libsm6
 
 #java
-RUN wget https://build.funtoo.org/distfiles/oracle-java/jdk-8u152-linux-x64.tar.gz && \
-    gunzip jdk-8u152-linux-x64.tar.gz && \
-    tar -xf jdk-8u152-linux-x64.tar -C /opt && \
-    rm jdk-8u152-linux-x64.tar && \
-    ln -s /opt/jdk1.8.0_152 /opt/jdk
+RUN wget http://enos.itcollege.ee/~jpoial/allalaadimised/jdk8/jdk-8u241-linux-x64.tar.gz && \
+    gunzip jdk-8u241-linux-x64.tar.gz && \
+    tar -xf jdk-8u241-linux-x64.tar -C /opt && \
+    rm jdk-8u241-linux-x64.tar && \
+    ln -s /opt/jdk1.8.0_241 /opt/jdk
 
 #python
 RUN apt-get install -y python3-minimal && \

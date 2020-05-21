@@ -40,8 +40,8 @@ From below results, we can see that the features selected by AutoTS make much se
 
 ||features|Batch size|learning rate|lstm_units*|dropout_p*|Lookback|
 |--|--|--|-----|-----|-----|-----|
-|Manually Tuned LSTMForecaster|year, month, week, day_of_week, hour|1024|0.001|32, 32|0.2, 0.2|55|
-|AutoTS (LSTM model)|hour, is_weekday, is_awake|64|0.001|32, 64|0.2, 0.236|84|
+|Manually Tuned LSTMForecaster|year, month, week, day_of_week, hour|1024|0.001|32, 32|0.2, 0.2|84|
+|AutoTS (LSTM model)|hour, is_weekday, is_awake|64|0.001|32, 64|0.2, 0.236|55|
 
 _*_: There're 2 lstm layers and dropout in LSTM model, the hyper parameters in the table corresponds to the 1st and 2nd layer respectively. 
 

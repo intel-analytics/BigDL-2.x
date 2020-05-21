@@ -33,13 +33,12 @@ from zoo.tfpark.tfnet import TFNet
 
 class KerasModel(object):
 
-    def __init__(self, model):
+    def __init__(self, model, model_dir=None):
         """
         :param model: a compiled keras model
         """
         self.model = model
-        self.train_summary = None
-        self.val_summary = None
+        self.model_dir = model_dir
 
     @property
     def metrics_names(self):
@@ -86,28 +85,11 @@ class KerasModel(object):
         keras_model = load_from_file(load_func, path)
         return KerasModel(keras_model)
 
-    def set_train_summary(self, summary):
-        """
-        Set training summary for visualization.
-
-        :param summary: bigdl.optim.optimizer.TrainSummary
-        """
-        self.train_summary = summary
-
-    def set_val_summary(self, summary):
-        """
-        Set validation summary for visualization.
-
-        :param summary: bigdl.optim.optimizer.ValidationSummary
-        """
-        self.val_summary = summary
-
     def fit(self,
             x=None,
             y=None,
             batch_size=None,
             epochs=1,
-            validation_split=0.,
             validation_data=None,
             distributed=False,
             **kwargs
@@ -132,55 +114,44 @@ class KerasModel(object):
         :param epochs: Integer. Number of epochs to train the model.
             An epoch is an iteration over the entire `x` and `y`
             data provided.
-        :param validation_split: Float between 0 and 1.
-            Fraction of the training data to be used as validation data.
-            The model will set apart this fraction of the training data,
-            will not train on it, and will evaluate
-            the loss and any model metrics
-            on this data at the end of each epoch.
         :param validation_data: Data on which to evaluate
             the loss and any model metrics at the end of each epoch.
             The model will not be trained on this data.
-            `validation_data` will override `validation_split`.
             `validation_data` could be:
               - tuple `(x_val, y_val)` of Numpy arrays or tensors
-              - `TFDataset`
         :param distributed: Boolean. Whether to do prediction in distributed mode or local mode.
                      Default is True. In local mode, x must be a Numpy array.
         """
         if isinstance(x, TFDataset):
             # todo check arguments
+            assert validation_data is None, "validation_data must be None when " \
+                                            "using TFDataset as input, please " \
+                                            "use set the validation data in TFDataset"
             if not x.has_batch:
                 raise ValueError("The batch_size of TFDataset must be " +
                                  "specified when used in KerasModel fit.")
             if isinstance(x, TFNdarrayDataset):
                 x = _standarize_feature_label_dataset(x, self.model)
-            self._fit_distributed(x, validation_split, epochs, **kwargs)
+            self._fit_distributed(x, epochs, **kwargs)
 
         elif distributed:
             dataset = TFDataset.from_ndarrays((x, y), val_tensors=validation_data,
                                               batch_size=batch_size)
-            self._fit_distributed(dataset, validation_split, epochs, **kwargs)
+            self._fit_distributed(dataset, epochs, **kwargs)
 
         else:
             self.model.fit(x=x,
                            y=y,
                            batch_size=batch_size,
                            epochs=epochs,
-                           validation_split=validation_split,
                            validation_data=validation_data,
                            **kwargs
                            )
 
-    def _fit_distributed(self, dataset, validation_split, epochs, **kwargs):
+    def _fit_distributed(self, dataset, epochs, **kwargs):
         self.tf_optimizer = TFOptimizer.from_keras(self.model, dataset,
-                                                   val_split=validation_split, **kwargs)
-
-        if self.train_summary is not None:
-            self.tf_optimizer.set_train_summary(self.train_summary)
-
-        if self.val_summary is not None:
-            self.tf_optimizer.set_val_summary(self.val_summary)
+                                                   model_dir=self.model_dir,
+                                                   **kwargs)
 
         self.tf_optimizer.optimize(MaxEpoch(epochs))
 

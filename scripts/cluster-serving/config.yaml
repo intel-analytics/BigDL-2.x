@@ -10,13 +10,17 @@ model:
 data:
   # default, localhost:6379
   src:
+  # default, image (image & tensor are supported)
+  data_type:
   # default, 3, 224, 224
   image_shape:
+  # must be provided given data_type is tensor. eg: [1,2] (tensor) [[1],[2,1,2],[3]] (table)
+  tensor_shape:
   # default, topN(1)
   filter:
 params:
   # default, 4
-  batch_size:
+  core_number:
   # default: OFF
   performance_mode:
 redis:
@@ -24,7 +28,7 @@ redis:
   maxmem: 
 spark:
   # default, local[*]
-  master: 
+  master:
   # default, 4g
   driver_memory:
   # default, 1g

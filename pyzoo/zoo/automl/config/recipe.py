@@ -17,6 +17,8 @@
 from abc import ABCMeta, abstractmethod
 from zoo.automl.search.abstract import *
 import numpy as np
+from ray import tune
+import json
 
 
 class Recipe(metaclass=ABCMeta):
@@ -67,12 +69,12 @@ class SmokeRecipe(Recipe):
 
     def search_space(self, all_available_features):
         return {
-            "selected_features": all_available_features,
+            "selected_features": json.dumps(all_available_features),
             "model": "LSTM",
-            "lstm_1_units": RandomSample(lambda spec: np.random.choice([32, 64], size=1)[0]),
-            "dropout_1": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
-            "lstm_2_units": RandomSample(lambda spec: np.random.choice([32, 64], size=1)[0]),
-            "dropout_2": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
+            "lstm_1_units": tune.choice([32, 64]),
+            "dropout_1": tune.uniform(0.2, 0.5),
+            "lstm_2_units": tune.choice([32, 64]),
+            "dropout_2": tune.uniform(0.2, 0.5),
             "lr": 0.001,
             "batch_size": 1024,
             "epochs": 1,
@@ -91,18 +93,18 @@ class MTNetSmokeRecipe(Recipe):
 
     def search_space(self, all_available_features):
         return {
-            "selected_features": all_available_features,
+            "selected_features": json.dumps(all_available_features),
             "model": "MTNet",
             "lr": 0.001,
             "batch_size": 16,
             "epochs": 1,
             "dropout": 0.2,
-            "time_step": RandomSample(lambda spec: np.random.choice([3, 4], size=1)[0]),
+            "time_step": tune.choice([3, 4]),
             "filter_size": 2,
-            "long_num": RandomSample(lambda spec: np.random.choice([3, 4], size=1)[0]),
-            "ar_size": RandomSample(lambda spec: np.random.choice([2, 3], size=1)[0]),
-            "past_seq_len": RandomSample(lambda spec: (spec.config.long_num + 1)
-                                         * spec.config.time_step),
+            "long_num": tune.choice([3, 4]),
+            "ar_size": tune.choice([2, 3]),
+            "past_seq_len": tune.sample_from(lambda spec:
+                                             (spec.config.long_num + 1) * spec.config.time_step),
         }
 
 
@@ -136,9 +138,7 @@ class PastSeqParamHandler(object):
                     "The input min look back value is smaller than 2. "
                     "We sample from range (2, {}) instead.".format(
                         look_back[1]))
-            past_seq_config = RandomSample(
-                lambda spec: np.random.randint(
-                    look_back[0], look_back[1] + 1, size=1)[0])
+            past_seq_config = tune.randint(look_back[0], look_back[1] + 1)
         elif isinstance(look_back, int):
             if look_back < 2:
                 raise ValueError(
@@ -184,30 +184,31 @@ class GridRandomRecipe(Recipe):
     def search_space(self, all_available_features):
         return {
             # -------- feature related parameters
-            "selected_features": RandomSample(
-                lambda spec: np.random.choice(
-                    all_available_features,
-                    size=np.random.randint(
-                        low=3, high=len(all_available_features), size=1),
-                    replace=False)),
+            "selected_features": tune.sample_from(lambda spec:
+                                                  json.dumps(
+                                                      list(np.random.choice(
+                                                          all_available_features,
+                                                          size=np.random.randint(
+                                                              low=3,
+                                                              high=len(all_available_features)),
+                                                          replace=False)))),
 
             # -------- model selection TODO add MTNet
-            "model": RandomSample(lambda spec: np.random.choice(["LSTM", "Seq2seq"], size=1)[0]),
+            "model": tune.choice(["LSTM", "Seq2seq"]),
 
             # --------- Vanilla LSTM model parameters
-            "lstm_1_units": GridSearch([16, 32]),
+            "lstm_1_units": tune.grid_search([16, 32]),
             "dropout_1": 0.2,
-            "lstm_2_units": GridSearch([16, 32]),
-            "dropout_2": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
+            "lstm_2_units": tune.grid_search([16, 32]),
+            "dropout_2": tune.uniform(0.2, 0.5),
 
             # ----------- Seq2Seq model parameters
-            "latent_dim": GridSearch([32, 64]),
-            "dropout": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
+            "latent_dim": tune.grid_search([32, 64]),
+            "dropout": tune.uniform(0.2, 0.5),
 
             # ----------- optimization parameters
-            "lr": RandomSample(lambda spec: np.random.uniform(0.001, 0.01)),
-            "batch_size": RandomSample(lambda spec:
-                                       np.random.choice([32, 64], size=1, replace=False)[0]),
+            "lr": tune.uniform(0.001, 0.01),
+            "batch_size": tune.choice([32, 64], replace=False),
             "epochs": self.epochs,
             "past_seq_len": self.past_seq_config,
         }
@@ -248,27 +249,26 @@ class LSTMGridRandomRecipe(Recipe):
         # -- model params
         self.past_seq_config = PastSeqParamHandler.get_past_seq_config(
             look_back)
-        self.lstm_1_units_config = RandomSample(
-            lambda spec: np.random.choice(
-                lstm_1_units, size=1)[0])
-        self.lstm_2_units_config = GridSearch(lstm_2_units)
-        self.dropout_2_config = RandomSample(
-            lambda spec: np.random.uniform(0.2, 0.5))
+        self.lstm_1_units_config = tune.choice(lstm_1_units)
+        self.lstm_2_units_config = tune.grid_search(lstm_2_units)
+        self.dropout_2_config = tune.uniform(0.2, 0.5)
 
         # -- optimization params
-        self.lr = RandomSample(lambda spec: np.random.uniform(0.001, 0.01))
-        self.batch_size = GridSearch(batch_size)
+        self.lr = tune.uniform(0.001, 0.01)
+        self.batch_size = tune.grid_search(batch_size)
         self.epochs = epochs
 
     def search_space(self, all_available_features):
         return {
             # -------- feature related parameters
-            "selected_features": RandomSample(
-                lambda spec: np.random.choice(
-                    all_available_features,
-                    size=np.random.randint(
-                        low=3, high=len(all_available_features), size=1),
-                    replace=False)),
+            "selected_features": tune.sample_from(lambda spec:
+                                                  json.dumps(
+                                                      list(np.random.choice(
+                                                          all_available_features,
+                                                          size=np.random.randint(
+                                                              low=3,
+                                                              high=len(all_available_features)),
+                                                          replace=False)))),
 
             "model": "LSTM",
 
@@ -317,33 +317,30 @@ class MTNetGridRandomRecipe(Recipe):
         self.training_iteration = training_iteration
 
         # -- optimization params
-        self.lr = RandomSample(lambda spec: np.random.uniform(0.001, 0.01))
-        self.batch_size = self.batch_size = GridSearch(batch_size)
+        self.lr = tune.uniform(0.001, 0.01)
+        self.batch_size = self.batch_size = tune.grid_search(batch_size)
         self.epochs = epochs
 
         # ---- model params
-        self.dropout = RandomSample(
-            lambda spec: np.random.uniform(0.2, 0.5))
-        self.time_step = RandomSample(
-            lambda spec: np.random.choice(time_step, size=1)[0])
-        self.filter_size = RandomSample(
-            lambda spec: np.random.choice(filter_size, size=1)[0])
-        self.long_num = RandomSample(
-            lambda spec: np.random.choice(long_num, size=1)[0])
-        self.ar_size = RandomSample(
-            lambda spec: np.random.choice(ar_size, size=1)[0])
-        self.past_seq_len = RandomSample(
+        self.dropout = tune.uniform(0.2, 0.5)
+        self.time_step = tune.choice(time_step)
+        self.filter_size = tune.choice(filter_size)
+        self.long_num = tune.choice(long_num,)
+        self.ar_size = tune.choice(ar_size)
+        self.past_seq_len = tune.sample_from(
             lambda spec: (
                 spec.config.long_num + 1) * spec.config.time_step)
 
     def search_space(self, all_available_features):
         return {
-            "selected_features": RandomSample(
-                lambda spec: np.random.choice(
-                    all_available_features,
-                    size=np.random.randint(
-                        low=3, high=len(all_available_features), size=1),
-                    replace=False)),
+            "selected_features": tune.sample_from(lambda spec:
+                                                  json.dumps(
+                                                      list(np.random.choice(
+                                                          all_available_features,
+                                                          size=np.random.randint(
+                                                              low=3,
+                                                              high=len(all_available_features)),
+                                                          replace=False)))),
 
             "model": "MTNet",
             "lr": self.lr,
@@ -389,32 +386,32 @@ class RandomRecipe(Recipe):
             look_back)
 
     def search_space(self, all_available_features):
+        import random
         return {
             # -------- feature related parameters
-            "selected_features": RandomSample(
-                lambda spec: np.random.choice(
-                    all_available_features,
-                    size=np.random.randint(low=3, high=len(all_available_features), size=1))
-            ),
+            "selected_features": tune.sample_from(lambda spec:
+                                                  json.dumps(
+                                                      list(np.random.choice(
+                                                          all_available_features,
+                                                          size=np.random.randint(
+                                                              low=3,
+                                                              high=len(all_available_features)),
+                                                          replace=False)))),
 
-            "model": RandomSample(lambda spec: np.random.choice(["LSTM", "Seq2seq"], size=1)[0]),
+            "model": tune.choice(["LSTM", "Seq2seq"]),
             # --------- Vanilla LSTM model parameters
-            "lstm_1_units": RandomSample(lambda spec:
-                                         np.random.choice([8, 16, 32, 64, 128], size=1)[0]),
-            "dropout_1": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
-            "lstm_2_units": RandomSample(lambda spec:
-                                         np.random.choice([8, 16, 32, 64, 128], size=1)[0]),
-            "dropout_2": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
+            "lstm_1_units": tune.choice([8, 16, 32, 64, 128]),
+            "dropout_1": tune.uniform(0.2, 0.5),
+            "lstm_2_units": tune.choice([8, 16, 32, 64, 128]),
+            "dropout_2": tune.uniform(0.2, 0.5),
 
             # ----------- Seq2Seq model parameters
-            "latent_dim": RandomSample(lambda spec:
-                                       np.random.choice([32, 64, 128, 256], size=1)[0]),
-            "dropout": RandomSample(lambda spec: np.random.uniform(0.2, 0.5)),
+            "latent_dim": tune.choice([32, 64, 128, 256]),
+            "dropout": tune.uniform(0.2, 0.5),
 
             # ----------- optimization parameters
-            "lr": RandomSample(lambda spec: np.random.uniform(0.001, 0.01)),
-            "batch_size": RandomSample(lambda spec:
-                                       np.random.choice([32, 64, 1024], size=1, replace=False)[0]),
+            "lr": tune.uniform(0.001, 0.01),
+            "batch_size": tune.choice([32, 64, 1024], replace=False),
             "epochs": self.epochs,
             "past_seq_len": self.past_seq_config,
         }

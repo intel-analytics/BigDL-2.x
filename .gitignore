@@ -33,7 +33,6 @@ dependency-reduced-pom.xml
 .DS_Store
 
 # data files
-*.csv
 model*.[0-9]*
 state*.[0-9]*
 

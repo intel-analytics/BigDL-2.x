@@ -29,7 +29,7 @@ if __name__ == "__main__":
     parser.add_option("-b", "--batch_size", dest="batch_size", default="1024",
                       help="The number of samples per gradient update. Default is 1024.")
     parser.add_option("--nb_epoch", dest="nb_epoch", default="20",
-                      help="The number of iterations to train the model. Default is 20.")
+                      help="The number of epochs to train the model. Default is 20.")
     parser.add_option("--unroll_len", dest="unroll_len", default="24",
                       help="The length of precious values to predict future value. Default is 24.")
 
