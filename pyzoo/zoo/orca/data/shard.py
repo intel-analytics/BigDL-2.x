@@ -17,14 +17,14 @@
 from zoo.orca.data.utils import *
 
 
-class DataShards(object):
+class XShards(object):
     """
     A collection of data which can be pre-processed parallelly.
     """
 
     def transform_shard(self, func, *args):
         """
-        Transform each shard in the DataShards using func
+        Transform each shard in the XShards using func
         :param func: pre-processing function
         :param args: arguments for the pre-processing function
         :return: DataShard
@@ -33,13 +33,13 @@ class DataShards(object):
 
     def collect(self):
         """
-        Returns a list that contains all of the elements in this DataShards
+        Returns a list that contains all of the elements in this XShards
         :return: list of elements
         """
         pass
 
 
-class RayDataShards(DataShards):
+class RayXShards(XShards):
     """
     A collection of data which can be pre-processed parallelly on Ray
     """
@@ -49,7 +49,7 @@ class RayDataShards(DataShards):
 
     def transform_shard(self, func, *args):
         """
-        Transform each shard in the DataShards using func
+        Transform each shard in the XShards using func
         :param func: pre-processing function.
         In the function, the element object should be the first argument
         :param args: rest arguments for the pre-processing function
@@ -64,7 +64,7 @@ class RayDataShards(DataShards):
 
     def collect(self):
         """
-        Returns a list that contains all of the elements in this DataShards
+        Returns a list that contains all of the elements in this XShards
         :return: list of elements
         """
         import ray
@@ -72,9 +72,9 @@ class RayDataShards(DataShards):
 
     def repartition(self, num_partitions):
         """
-        Repartition DataShards.
+        Repartition XShards.
         :param num_partitions: number of partitions
-        :return: this DataShards
+        :return: this XShards
         """
         shards_partitions = list(chunk(self.shard_list, num_partitions))
         self.partitions = [RayPartition(shards) for shards in shards_partitions]
@@ -82,7 +82,7 @@ class RayDataShards(DataShards):
 
     def get_partitions(self):
         """
-        Return partition list of the DataShards
+        Return partition list of the XShards
         :return: partition list
         """
         return self.partitions
@@ -90,7 +90,7 @@ class RayDataShards(DataShards):
 
 class RayPartition(object):
     """
-    Partition of RayDataShards
+    Partition of RayXShards
     """
 
     def __init__(self, shard_list):
@@ -100,12 +100,12 @@ class RayPartition(object):
         return [shard.get_data.remote() for shard in self.shard_list]
 
 
-class SparkDataShards(DataShards):
+class SparkXShards(XShards):
     def __init__(self, rdd):
         self.rdd = rdd
 
     def transform_shard(self, func, *args):
-        self.rdd = self.rdd.map(func(*args))
+        self.rdd = self.rdd.map(lambda data: func(data, *args))
         return self
 
     def collect(self):
@@ -117,10 +117,10 @@ class SparkDataShards(DataShards):
 
     def partition_by(self, cols, num_partitions=None):
         import pandas as pd
-        class_name, columns = self.rdd.map(
-            lambda data: (get_class_name(data), data.columns) if isinstance(data, pd.DataFrame)
-            else (get_class_name(data), None)).first()
-        if class_name == 'pandas.core.frame.DataFrame':
+        elem_class, columns = self.rdd.map(
+            lambda data: (type(data), data.columns) if isinstance(data, pd.DataFrame)
+            else (type(data), None)).first()
+        if issubclass(elem_class, pd.DataFrame):
             # if partition by a column
             if isinstance(cols, str):
                 if cols not in columns:
@@ -149,5 +149,26 @@ class SparkDataShards(DataShards):
             self.rdd = partitioned_rdd.mapPartitions(merge)
             return self
         else:
-            raise Exception("Currently only support partition by for Datashards"
+            raise Exception("Currently only support partition by for XShards"
                             " of Pandas DataFrame")
+
+    def unique(self, key):
+        import pandas as pd
+        elem_class, columns = self.rdd.map(
+            lambda data: (type(data), data.columns) if isinstance(data, pd.DataFrame)
+            else (type(data), None)).first()
+        if issubclass(elem_class, pd.DataFrame):
+            if key is None:
+                raise Exception("Cannot apply unique operation on Datashards of Pandas Dataframe"
+                                " without column name")
+            if key in columns:
+                rdd = self.rdd.map(lambda df: df[key].unique())
+                import numpy as np
+                result = rdd.reduce(lambda list1, list2: pd.unique(np.concatenate((list1, list2),
+                                                                                  axis=0)))
+                return result
+            else:
+                raise Exception("The select key is not in the DataFrame in this Datashards")
+        else:
+            # we may support numpy or other types later
+            raise Exception("Currently only support unique() on Datashards of Pandas DataFrame")

@@ -41,6 +41,8 @@ import org.opencv.core._
 import org.apache.commons.io.FileUtils
 import com.intel.analytics.zoo.feature.image._
 
+import sys.env
+
 class CorrectnessSpec extends FlatSpec with Matchers {
   val configPath = "/tmp/config.yaml"
 //  val configPath = "/home/litchy/pro/analytics-zoo/config.yaml"
@@ -81,100 +83,95 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     ClusterServing.run(configPath, redisHost, redisPort)
   }
   "Cluster Serving result" should "be correct" in {
-//    redisHost = "10.239.47.210"
-//    redisPort = 16380
-//    val cli = new Jedis(redisHost, redisPort)
-//
-//    cli.flushAll()
-//
-//    cli.xgroupCreate("image_stream", "serving",
-//      new StreamEntryID(0, 0), true)
-//    Thread.sleep(3000)
-//
-//
-//    ("wget -O /tmp/serving_val.tar http://10.239.45.10:8081" +
-//      "/repository/raw/analytics-zoo-data/imagenet_1k.tar").!
-//    "tar -xvf /tmp/serving_val.tar -C /tmp/".!
-//    runServingBg().onComplete(_ => None)
-//    Thread.sleep(10000)
-//    val imagePath = "/tmp/imagenet_1k"
-////    val imagePath = "/home/litchy/tmp/imagenet_1k"
-//    val lsCmd = "ls " + imagePath
-//
-//    val totalNum = (lsCmd #| "wc").!!.split(" +").filter(_ != "").head.toInt
-//
-//    // enqueue image
-//    val f = new File(imagePath)
-//    val fileList = f.listFiles
-//    logger.info(s"${fileList.size} images about to enqueue...")
-//
-//    for (file <- fileList) {
-//      val dataStr = getBase64FromPath(file.getAbsolutePath)
-//      val infoMap = Map[String, String]("uri" -> file.getName, "image" -> dataStr)
-//      cli.xadd("image_stream", StreamEntryID.NEW_ENTRY, infoMap.asJava)
-//    }
-//
-//    //    val enqueueScriptPathCmd = "python3 " +
-//    //      getClass.getClassLoader.getResource("serving/enqueue_image_in_path.py").getPath +
-//    //      " --img_path " + imagePath + " --img_num " +
-//    //      totalNum.toString + " --host 172.168.2.102 --port 6379"
-//    //    val p = Process(enqueueScriptPathCmd, None
-//    //      ,
-//    //      "PYTHONPATH" -> "$PYTHONPATH:/home/litchy/pro/analytics-zoo/dist/lib/
-//    //            analytics-zoo-bigdl_0.10.0-spark_2.4.3-0.8.0-SNAPSHOT-python-api.zip",
-//    //    "SPARK_HOME" -> "/home/litchy/Programs/spark-2.4.0-bin-hadoop2.7"
-//    //    )
-//    //    p.!
-//    ("rm -rf /tmp/" + imagePath + "*").!
-//    "rm -rf /tmp/serving_val_*".!
-//    "rm -rf /tmp/config.yaml".!
-//    // check if record is enough
-//    var cnt: Int = 0
-//    var res_length: Int = 0
-//    while (res_length != totalNum) {
-//      val res_list = cli.keys("result:*")
-//      res_length = res_list.size()
-//      Thread.sleep(10000)
-//      cnt += 1
-//      if (cnt >= 150 || (cnt >= 25 && res_length == 0)) {
-//        logger.info(s"count is ${cnt}")
-//        throw new Error("validation fails, data maybe lost")
-//      }
-//      logger.info(s"Current records in Redis:${res_length}")
-//
-//    }
-//    // record enough start validation,
-//    // generate key first
-//    var top1_dict = Map[String, String]()
-//    val res_list = cli.keys("result:*")
-//    res_list.asScala.foreach(key => {
-//      val res = cli.hgetAll(key).get("value")
-//
-//      val cls = res.substring(2, res.length - 2).split(",").head
-//      top1_dict += (key.stripPrefix("result:") -> cls)
-//      top1_dict
-//    })
-//    // start check with txt file
-//
-//    logger.info("Redis server stopped")
-//    var cN = 0f
-//    var tN = 0f
-//    for (line <- Source.fromFile(imagePath + ".txt").getLines()) {
-//      val key = line.split(" ").head
-//      val cls = line.split(" ").tail(0)
-//      try {
-//        if (top1_dict(key) == cls) {
-//          cN += 1
-//        }
-//        tN += 1
-//      }
-//      catch {
-//        case _ => None
-//      }
-//    }
-//    val acc = cN / tN
-//    logger.info(s"Top 1 Accuracy of serving, Openvino ResNet50 Model on ImageNet is ${acc}")
-//    assert(acc > 0.71)
+//     redisHost = if (env.contains("REDIS_HOST")) {
+//       env("REDIS_HOST").toString
+//     } else {
+//       throw new Error("REDIS_HOST variable must be set")
+//     }
+//     redisPort = if (env.contains("REDIS_PORT")) {
+//       env("REDIS_PORT").toInt
+//     } else {
+//       6379
+//     }
+//     val cli = new Jedis(redisHost, redisPort)
+
+//     cli.flushAll()
+
+//     cli.xgroupCreate("image_stream", "serving",
+//       new StreamEntryID(0, 0), true)
+//     Thread.sleep(3000)
+
+
+//     ("wget -O /tmp/serving_val.tar http://10.239.45.10:8081" +
+//       "/repository/raw/analytics-zoo-data/imagenet_1k.tar").!
+//     "tar -xvf /tmp/serving_val.tar -C /tmp/".!
+//     runServingBg().onComplete(_ => None)
+//     Thread.sleep(10000)
+//     val imagePath = "/tmp/imagenet_1k"
+//     val lsCmd = "ls " + imagePath
+
+//     val totalNum = (lsCmd #| "wc").!!.split(" +").filter(_ != "").head.toInt
+
+//     // enqueue image
+//     val f = new File(imagePath)
+//     val fileList = f.listFiles
+//     logger.info(s"${fileList.size} images about to enqueue...")
+
+//     for (file <- fileList) {
+//       val dataStr = getBase64FromPath(file.getAbsolutePath)
+//       val infoMap = Map[String, String]("uri" -> file.getName, "image" -> dataStr)
+//       cli.xadd("image_stream", StreamEntryID.NEW_ENTRY, infoMap.asJava)
+//     }
+//     ("rm -rf /tmp/" + imagePath + "*").!
+//     "rm -rf /tmp/serving_val_*".!
+//     "rm -rf /tmp/config.yaml".!
+//     // check if record is enough
+//     var cnt: Int = 0
+//     var res_length: Int = 0
+//     while (res_length != totalNum) {
+//       val res_list = cli.keys("result:*")
+//       res_length = res_list.size()
+//       Thread.sleep(10000)
+//       cnt += 1
+//       if (cnt >= 150 || (cnt >= 25 && res_length == 0)) {
+//         logger.info(s"count is ${cnt}")
+//         throw new Error("validation fails, data maybe lost")
+//       }
+//       logger.info(s"Current records in Redis:${res_length}")
+
+//     }
+//     // record enough start validation,
+//     // generate key first
+//     var top1_dict = Map[String, String]()
+//     val res_list = cli.keys("result:*")
+//     res_list.asScala.foreach(key => {
+//       val res = cli.hgetAll(key).get("value")
+
+//       val cls = res.substring(2, res.length - 2).split(",").head
+//       top1_dict += (key.stripPrefix("result:") -> cls)
+//       top1_dict
+//     })
+//     // start check with txt file
+
+//     logger.info("Redis server stopped")
+//     var cN = 0f
+//     var tN = 0f
+//     for (line <- Source.fromFile(imagePath + ".txt").getLines()) {
+//       val key = line.split(" ").head
+//       val cls = line.split(" ").tail(0)
+//       try {
+//         if (top1_dict(key) == cls) {
+//           cN += 1
+//         }
+//         tN += 1
+//       }
+//       catch {
+//         case _ => None
+//       }
+//     }
+//     val acc = cN / tN
+//     logger.info(s"Top 1 Accuracy of serving, Openvino ResNet50 Model on ImageNet is ${acc}")
+//     assert(acc > 0.71)
 
   }
 }

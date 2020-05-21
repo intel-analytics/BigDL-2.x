@@ -23,10 +23,10 @@ from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.common.nncontext import *
 
 
-class TestSparkDataShards(ZooTestCase):
+class TestSparkXShards(ZooTestCase):
     def setup_method(self, method):
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
-        sparkConf = init_spark_conf().setMaster("local[4]").setAppName("testSparkDataShards")
+        sparkConf = init_spark_conf().setMaster("local[4]").setAppName("testSparkXShards")
         self.sc = init_nncontext(sparkConf)
 
     def teardown_method(self, method):
@@ -78,11 +78,9 @@ class TestSparkDataShards(ZooTestCase):
         data = data_shard.collect()
         assert data[0]["value"].values[0] > 0, "value should be positive"
 
-        def negative(column_name):
-            def process(df):
-                df[column_name] = df[column_name] * (-1)
-                return df
-            return process
+        def negative(df, column_name):
+            df[column_name] = df[column_name] * (-1)
+            return df
 
         data_shard.transform_shard(negative, "value")
         data2 = data_shard.collect()
@@ -107,6 +105,12 @@ class TestSparkDataShards(ZooTestCase):
         data_shard.partition_by(cols="location", num_partitions=3)
         partitions = data_shard.rdd.glom().collect()
         assert len(partitions) == 3
+
+    def test_unique(self):
+        file_path = os.path.join(self.resource_path, "orca/data")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        location_list = data_shard.unique("location")
+        assert len(location_list) == 6
 
 
 if __name__ == "__main__":
