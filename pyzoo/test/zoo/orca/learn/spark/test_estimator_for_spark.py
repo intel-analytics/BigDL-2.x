@@ -22,7 +22,7 @@ from zoo.orca.learn.tensorflow.estimator import Estimator
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
 
-def test_estimator_pre_built_graph(estimator_for_spark_fixture):
+def test_estimator_graph(estimator_for_spark_fixture):
     from bigdl.optim.optimizer import SGD
     import zoo.orca.data.pandas
 
@@ -43,13 +43,13 @@ def test_estimator_pre_built_graph(estimator_for_spark_fixture):
     def transform(df):
         result = {
             "x": [df['user'].to_numpy(), df['item'].to_numpy()],
-            "y": [df['label']]
+            "y": df['label'].to_numpy()
         }
         return result
 
     data_shard.transform_shard(transform)
 
-    est = Estimator.from_pre_built_graph(
+    est = Estimator.from_graph(
         inputs=[user, item],
         labels=[label],
         outputs=[logits],
@@ -72,6 +72,7 @@ def test_estimator_pre_built_graph(estimator_for_spark_fixture):
     data_shard.transform_shard(transform)
     predictions = est.predict(data_shard).collect()
     print(predictions)
+
 
 if __name__ == "__main__":
     import pytest

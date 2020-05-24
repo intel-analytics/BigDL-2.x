@@ -519,7 +519,7 @@ class TFOptimizer:
         """
         sess = TFOptimizer._get_or_create_session(session)
         grads, variables = TFOptimizer._get_vars_grads(loss)
-        
+
         if dataset is None and inputs is None:
             dataset = TFOptimizer._get_dataset_from_loss(loss)
             inputs = dataset._original_tensors

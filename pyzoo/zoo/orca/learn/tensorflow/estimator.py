@@ -31,10 +31,10 @@ class Estimator(object):
         pass
 
     @staticmethod
-    def from_pre_built_graph(*, inputs, outputs,
-                             labels, loss, optimizer,
-                             metrics=None, updates=None,
-                             sess=None, model_dir=None, backend="spark"):
+    def from_graph(*, inputs, outputs,
+                   labels, loss, optimizer,
+                   metrics=None, updates=None,
+                   sess=None, model_dir=None, backend="spark"):
         assert backend == "spark", "only spark backend is supported for now"
         if sess is None:
             sess = tf.Session()
@@ -54,19 +54,51 @@ def _data_shard_to_tf_dataset(data_shard,
                               batch_size=-1, batch_per_thread=-1,
                               validation_data_shard=None):
     # todo data_shard.head ?
-    first_data = data_shard.rdd.first()
+    import numpy as np
+
+    def to_list(data):
+        result = {}
+        assert isinstance(data, dict), "each shard should be an dict"
+        assert "x" in data, "key x should in each shard"
+        x = data["x"]
+        if isinstance(x, np.ndarray):
+            new_x = [x]
+        elif isinstance(x, list) and all([isinstance(xi, np.ndarray) for xi in x]):
+            new_x = x
+        else:
+            raise ValueError("value of x should be a ndarray or a list of ndarrays")
+        result["x"] = new_x
+        if "y" in data:
+            y = data["y"]
+            if isinstance(y, np.ndarray):
+                new_y = [y]
+            elif isinstance(y, list) and all([isinstance(yi, np.ndarray) for yi in y]):
+                new_y = y
+            else:
+                raise ValueError("value of x should be a ndarray or a list of ndarrays")
+            result["y"] = new_y
+        return result
+
+    data_shard = data_shard.transform_shard(to_list)
+
+    def get_spec(data):
+        feature_spec = [(feat.dtype, feat.shape[1:])
+                        for feat in data["x"]]
+        if "y" in data:
+            label_spec = [(label.dtype, label.shape[1:])
+                          for label in data["y"]]
+        else:
+            label_spec = None
+        return (feature_spec, label_spec)
+
+    (feature_spec, label_spec) = data_shard.rdd.map(get_spec).first()
+
+    feature_spec = [(tf.dtypes.as_dtype(spec[0]), spec[1]) for spec in feature_spec]
+    label_spec = [(tf.dtypes.as_dtype(spec[0]), spec[1]) for spec in label_spec] \
+        if label_spec is not None else None
 
     assert batch_size != -1 or batch_per_thread != -1, \
         "one of batch_size and batch_per_thread should be specified"
-
-    import tensorflow as tf
-    feature_spec = [(tf.dtypes.as_dtype(feat.dtype), feat.shape[1:])
-                    for feat in first_data["x"]]
-    if "y" in first_data:
-        label_spec = [(tf.dtypes.as_dtype(label.dtype), label.shape[1:])
-                      for label in first_data["y"]]
-    else:
-        label_spec = None
 
     # todo this might be very slow
     def flatten(data):
@@ -97,11 +129,6 @@ def _data_shard_to_tf_dataset(data_shard,
     return dataset
 
 
-def _rdd_to_data_shard(rdd):
-    rdd.mapPartitions()
-    return SparkDataShards(rdd)
-
-
 class TFOptimizerWrapper(Estimator):
 
     def __init__(self, *, inputs, outputs, labels, loss,
@@ -113,7 +140,7 @@ class TFOptimizerWrapper(Estimator):
         self.outputs = outputs
         self.labels = labels
         self.loss = loss
-        self.optimizer= optimizer
+        self.optimizer = optimizer
         self.metrics = metrics
         self.updates = updates
         self.sess = sess
