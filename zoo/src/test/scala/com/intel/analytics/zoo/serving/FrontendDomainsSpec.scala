@@ -229,7 +229,8 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
         Instances.fromArrow(arrowBytes2)
       }
       // println("arrow: " + new String(arrowBytes2))
-      println("arrow serialized size: " + arrowBytes2.length)
+      // println("arrow serialized size: " + arrowBytes2.length)
     })
   }
+
 }

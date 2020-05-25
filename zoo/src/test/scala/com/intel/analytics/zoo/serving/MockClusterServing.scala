@@ -17,9 +17,9 @@
 package com.intel.analytics.zoo.serving
 
 import java.util
-import java.util.{AbstractMap, UUID}
+import java.util.{AbstractMap, Base64, UUID}
 
-import com.intel.analytics.zoo.serving.http.{BytesPredictionInput, Supportive}
+import com.intel.analytics.zoo.serving.http._
 import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, StreamEntryID}
 
 import scala.collection.JavaConverters._
@@ -60,7 +60,7 @@ object MockClusterServing extends App with Supportive {
     }
   }
 
-  def source(): List[BytesPredictionInput] = {
+  def source(): List[PredictionInput] = {
     silent(s"$this get result from redis")()  {
       val range = silent(s"$this xread from redis")() {
         jedis.xreadGroup(groupName, consumerName,
@@ -74,9 +74,11 @@ object MockClusterServing extends App with Supportive {
           entries.asScala.toList.map(entry => {
             val id = entry.getID
             val fields = entry.getFields
-            val image = fields.get("image")
+            val data = fields.get("data")
+            val bytes = Base64.getDecoder.decode(data)
+            val instances = Instances.fromArrow(bytes)
             val uri = fields.get("uri")
-            val item = BytesPredictionInput(uri, image)
+            val item = InstancesPredictionInput(uri, instances)
             item
           })
         }
@@ -89,7 +91,7 @@ object MockClusterServing extends App with Supportive {
     }
   }
 
-  def sink(items: List[BytesPredictionInput]): Unit = {
+  def sink(items: List[PredictionInput]): Unit = {
     if (items.size != 0) {
       timing(s"$this [PUT] ${items.size} results to redis")() {
         val pipeline = jedis.pipelined()

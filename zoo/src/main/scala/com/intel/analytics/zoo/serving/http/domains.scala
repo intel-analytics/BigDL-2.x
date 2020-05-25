@@ -66,14 +66,29 @@ case class BytesPredictionInput(uuid: String, bytesStr: String) extends Predicti
   override def toHash(): HashMap[String, String] = {
     val hash = new HashMap[String, String]()
     hash.put("uri", uuid)
-    hash.put("image", bytesStr)
+    hash.put("data", bytesStr)
     hash
   }
 }
-
 object BytesPredictionInput {
   def apply(str: String): BytesPredictionInput =
     BytesPredictionInput(UUID.randomUUID().toString, str)
+}
+
+case class InstancesPredictionInput(uuid: String, instances: Instances) extends PredictionInput {
+  override def getId(): String = this.uuid
+  override def toHash(): HashMap[String, String] = {
+    val hash = new HashMap[String, String]()
+    val bytes = instances.toArrow()
+    val b64 = java.util.Base64.getEncoder.encodeToString(bytes)
+    hash.put("uri", uuid)
+    hash.put("data", b64)
+    hash
+  }
+}
+object InstancesPredictionInput {
+  def apply(instances: Instances): InstancesPredictionInput =
+    InstancesPredictionInput(UUID.randomUUID().toString, instances)
 }
 
 case class PredictionOutput[Type](uuid: String, result: Type)
