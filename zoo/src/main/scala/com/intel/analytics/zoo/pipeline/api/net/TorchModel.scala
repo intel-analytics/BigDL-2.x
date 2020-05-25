@@ -134,6 +134,7 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
         |grad=torch.nn.utils.parameters_to_vector(grads)
         |""".stripMargin
     PythonInterpreter.exec(getWeightCode)
+    // TODO: Optimize this
 //    val newGrads = PythonInterpreter.getValue[util.ArrayList[NDArray[Array[Float]]]](
 //      "ptensor_to_numpy(grads)").asScala
 //    var index = 0
