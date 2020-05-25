@@ -63,7 +63,7 @@ class MXNetTrainer(object):
     def __init__(self, config, train_data, model_creator,
                  loss_creator=None, metrics_creator=None,
                  num_workers=1, num_servers=None, runner_cores=None,
-                 test_data=None, train_resize_size=3268):
+                 test_data=None, train_resize_size=None):
         self.config = config
         self.train_data = train_data
         self.test_data = test_data

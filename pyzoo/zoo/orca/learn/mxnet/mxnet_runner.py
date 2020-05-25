@@ -25,13 +25,14 @@ from mxnet import gluon
 from functools import reduce
 from zoo.ray.utils import to_list
 from zoo.orca.learn.mxnet.utils import find_free_port
+from zoo.orca.data.shard import XShards
 
 
 class MXNetRunner(object):
     """Manages a MXNet model for training."""
 
     def setup_distributed(self, env, config, train_data, model_creator, loss_creator=None,
-                          metrics_creator=None, test_data=None, train_resize_size=3268):
+                          metrics_creator=None, test_data=None, train_resize_size=None):
         logging.basicConfig(level=logging.INFO)  # This can print log messages to console.
         self.logger = logging.getLogger()
         assert isinstance(config, dict), "config must be a dict"
@@ -53,35 +54,35 @@ class MXNetRunner(object):
             if "seed" in self.config:
                 mx.random.seed(self.config["seed"])
 
-            if isinstance(train_data, tuple):
-                # normal data train_data: (train_data, train_label)
-                train_data, train_label = train_data
-                self.train_data = mx.io.NDArrayIter(train_data, train_label,
-                                                    batch_size=config["batch_size"], shuffle=True)
-                if test_data is not None:
-                    test_data, test_label = test_data
-                    self.val_data = mx.io.NDArrayIter(test_data, test_label,
-                                                       batch_size=config["batch_size"],
-                                                       shuffle=True)
-                else:
-                    self.val_data = None
-            else:
+            if isinstance(train_data, XShards):
                 # XShard input
                 # retrieve train data
+                train_data = train_data.get_partitions()
                 train_partition_data = ray.get(train_data[self.kv.rank].get_data())
-                train_data_label = get_data_label(train_partition_data)
-                self.train_data = mx.io.ResizeIter(
-                    mx.io.NDArrayIter(data=train_data_label['data'],
-                                      label=train_data_label['label'],
-                                      batch_size=config["batch_size"],
-                                      shuffle=True), train_resize_size)
+                data, label = get_data_label(train_partition_data)
+                self.train_data = mx.io.NDArrayIter(data=data, label=label,
+                                                    batch_size=config["batch_size"],
+                                                    shuffle=True)
+                if train_resize_size is not None:
+                    self.train_data = mx.io.ResizeIter(self.train_data, train_resize_size)
                 # retrieve val data
-                val_partition_data = ray.get(test_data[self.kv.rank].get_data())
-                val_data_label = get_data_label(val_partition_data)
-                self.val_data = mx.io.NDArrayIter(data=val_data_label['data'],
-                                                  label=val_data_label['label'],
-                                                  batch_size=config["batch_size"],
-                                                  shuffle=True)
+                if test_data is None:
+                    self.val_data = None
+                else:
+                    test_data = test_data.get_partitions()
+                    val_partition_data = ray.get(test_data[self.kv.rank].get_data())
+                    val_data, val_label = get_data_label(val_partition_data)
+                    self.val_data = mx.io.NDArrayIter(data=val_data,
+                                                      label=val_label,
+                                                      batch_size=config["batch_size"],
+                                                      shuffle=True)
+            else:
+                # data_creator
+                self.train_data = train_data(self.config, self.kv)
+                if test_data is not None:
+                    self.val_data = test_data(self.config, self.kv)
+                else:
+                    self.val_data = None
 
             self.model = self.model_creator(self.config)
             if self.loss_creator:
@@ -215,28 +216,6 @@ class MXNetRunner(object):
             stats["epoch_time"] = epoch_time
         return stats
 
-    def validate(self):
-        # TODO: validate for symbolic API
-        stats = dict()
-        stats["epoch"] = self.epoch
-        if self.is_worker:
-            self.metrics.reset()
-            self.val_data.reset()
-            for batch in self.val_data:
-                data = gluon.utils.split_and_load(batch.data[0].astype("float32", copy=False),
-                                                  ctx_list=[mx.cpu()], batch_axis=0)
-                label = gluon.utils.split_and_load(batch.label[0].astype("float32", copy=False),
-                                                   ctx_list=[mx.cpu()], batch_axis=0)
-                outputs = [self.model(X) for X in data]
-                self.metrics.update(label, outputs)
-            names, accs = self.metrics.get()
-            if not isinstance(names, list):
-                names = [names]
-                accs = [accs]
-            for name, acc in zip(names, accs):
-                stats[name] = acc
-        return stats
-
     def shutdown(self):
         """Attempts to shut down the runner."""
         del self.logger
@@ -275,4 +254,4 @@ def get_data_label(partition_data):
     elif isinstance(partition_data[0]['label'], np.ndarray):
         label = reduce(lambda array1, array2: np.concatenate((array1, array2), axis=0),
                        label_list)
-    return {'data': data, 'label': label}
+    return data, label
