@@ -28,7 +28,6 @@ import scala.concurrent.duration.Duration
 
 object PythonInterpreter {
   protected val logger = Logger.getLogger(this.getClass)
-  logger.setLevel(Level.DEBUG)
 
   private var threadPool: ExecutorService = null
 

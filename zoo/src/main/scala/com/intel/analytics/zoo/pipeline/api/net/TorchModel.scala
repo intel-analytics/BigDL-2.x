@@ -76,10 +76,10 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
     loaded
     // TODO: delete this time counting
     val startTime = System.nanoTime()
-    // data is come from FeatureSet.
-    val dataExisted = PythonInterpreter.getValue[Boolean]("'data' in dir()")
+    // _data is come from FeatureSet.
+    val dataExisted = PythonInterpreter.getValue[Boolean]("'_data' in dir()")
     if (dataExisted) {
-      PythonInterpreter.exec("input = data[0]")
+      PythonInterpreter.exec("input = _data[0]")
     } else {
       // TODO: support table input
       require(input.isTensor, "only support tensor input")

@@ -135,8 +135,9 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
     }
 
     def getNext(iterName: String): String = {
+      // _index and _data will used in TorchModel and TorchLoss
       s"""
-         |index, data = next(${iterName})
+         |_index, _data = next(${iterName})
          |""".stripMargin
     }
 
@@ -157,6 +158,8 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
            |from torch.utils.data.sampler import RandomSampler
            |from zoo.pipeline.api.torch.utils import DistributedSequentialSampler
            |from torch.utils.data import DataLoader
+           |import math
+           |
            |if isinstance(${localLoaderName}.sampler, RandomSampler):
            |    ${localLoaderName}_sampler=DistributedSampler(${localLoaderName}.dataset,
            |                                                  ${nodeNumber}, ${partId}, True)
@@ -164,9 +167,11 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
            |    ${localLoaderName}_sampler=DistributedSequentialSampler(${localLoaderName}.dataset,
            |                                                  ${nodeNumber}, ${partId})
            |
+           |bs_node = int(math.ceil(${localLoaderName}.batch_size / node_num))
+           |
            |data_loader_args = {
            |                "dataset": ${localLoaderName}.dataset,
-           |                "batch_size": ${localLoaderName}.batch_size,
+           |                "batch_size": bs_node,
            |                "shuffle": False,
            |                "num_workers": 0,
            |                "collate_fn": ${localLoaderName}.collate_fn,

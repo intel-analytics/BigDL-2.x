@@ -19,7 +19,7 @@ import math
 
 class DistributedSequentialSampler(Sampler):
     """
-    A sequential sampler used in FeatureSet.
+    A sequential sampler used in FeatureSet when get (train=false) iterator .
     """
     def __init__(self, dataset, num_replicas, rank):
         self.dataset = dataset

@@ -41,10 +41,10 @@ class TorchLoss(private val criterionHolder: Array[Byte])
 
   override def updateOutput(input: Activity, target: Activity): Float = {
     loaded
-    // data is come from FeatureSet.
-    val dataExisted = PythonInterpreter.getValue[Boolean]("'data' in dir()")
+    // _data is come from FeatureSet.
+    val dataExisted = PythonInterpreter.getValue[Boolean]("'_data' in dir()")
     if (dataExisted) {
-      PythonInterpreter.exec("target = data[1]")
+      PythonInterpreter.exec("target = _data[1]")
     } else {
       // TODO: support table target
       require(target.isTensor, "only support tensor target")
