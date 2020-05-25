@@ -72,6 +72,7 @@ class InputQueue(API):
     def __init__(self):
         super().__init__()
         self.c, self.h, self.w = None, None, None
+        self.stream_name = "serving_stream"
 
         # TODO: these params can be read from config in future
         self.input_threshold = 0.6
@@ -93,15 +94,82 @@ class InputQueue(API):
                 self.w = num
         return
 
-    def enqueue_image(self, uri, img):
+    def enqueue(self, uri, **data):
+        sink = pa.BufferOutputStream()
+        field_list = []
+        data_list = []
+        for key, value in data.items():
+
+            if isinstance(value, str):
+                # str value will be considered as image path
+                field = pa.field(key, pa.string())
+                data = self.encode_image(value)
+                field_list.append(field)
+                data = pa.array(data)
+                data_list.append(data)
+
+            elif isinstance(value, np.ndarray):
+                # ndarray value will be considered as tensor
+                data_field = pa.field("data", pa.list_(pa.float32()))
+                shape_field = pa.field("shape", pa.list_(pa.int32()))
+                tensor_type = pa.struct([data_field, shape_field])
+                field = pa.field(uri, tensor_type)
+
+                shape = np.array(value.shape)
+                d = value.astype("float32").flatten()
+                data = pa.array([{'data': d}, {'shape': shape}],
+                                type=tensor_type)
+                field_list.append(field)
+                data_list.append(data)
+
+            elif isinstance(value, list):
+                # list will be considered as sparse tensor
+                assert len(list) == 3, "Sparse Tensor must have list of ndarray" \
+                                       "with length 3, which represent " \
+                                       "indices, values, shape respectively"
+                indices_field = pa.field("indices", pa.list_(pa.int32()))
+                indices_shape_field = pa.field("indices_shape", pa.list_(pa.int32()))
+                value_field = pa.field("value", pa.list_(pa.float32()))
+                shape_field = pa.field("shape", pa.list_(pa.int32()))
+                sparse_tensor_type = pa.struct(
+                    [indices_field, indices_shape_field,  value_field, shape_field])
+                field = pa.field(uri, sparse_tensor_type)
+
+                shape = value[2]
+                values = value[1]
+                indices = value[0].astype("float32").flatten()
+                indices_shape = value[0].shape
+                data = pa.array([{'indices': indices},
+                                 {'indices_shape': indices_shape},
+                                 {'values': values},
+                                 {'shape': shape}], type=sparse_tensor_type)
+                field_list.append(field)
+                data_list.append(data)
+            else:
+                raise TypeError("Your request does not match any schema, "
+                                "please check.")
+        schema = pa.schema(field_list)
+        batch = pa.RecordBatch.from_arrays(
+            data_list, schema)
+
+        writer = pa.RecordBatchStreamWriter(sink, batch.schema)
+        writer.write_batch(batch)
+        writer.close()
+        buf = sink.getvalue()
+        b = buf.to_pybytes()
+        b64str = self.base64_encode_image(b)
+        d = {"uri": uri, "data": b64str}
+        self.__enqueue_data(d)
+
+    def encode_image(self, img):
         """
         :param id: String you use to identify this record
         :param data: Data, ndarray type
         :return:
         """
         if isinstance(img, str):
-            img = cv2.imread(str)
-            if not img:
+            img = cv2.imread(img)
+            if not isinstance(img, np.ndarray):
                 print("You have pushed an image with path: ",
                       img, "the path is invalid, skipped.")
                 return
@@ -110,12 +178,20 @@ class InputQueue(API):
         # if the shape is consistent, it would not affect the data
         img = cv2.resize(img, (self.h, self.w))
         data = cv2.imencode(".jpg", img)[1]
-
         img_encoded = self.base64_encode_image(data)
-
-        d = {"uri": uri, "image": img_encoded}
-
-        self.__enqueue_data("image_stream", d)
+        return img_encoded
+        # arrow_b64string = pa.array(img_encoded)
+        #
+        # sink = pa.BufferOutputStream()
+        # schema = pa.schema([pa.field("data", pa.string())])
+        # batch = pa.RecordBatch.from_arrays(
+        #     [arrow_b64string], schema)
+        # writer = pa.RecordBatchFileWriter(sink, batch.schema)
+        # writer.write_batch(batch)
+        #
+        # d = {"uri": uri, "data": img_encoded}
+        #
+        # self.__enqueue_data(d)
 
     def enqueue_tensor(self, uri, data):
         if isinstance(data, np.ndarray):
@@ -127,12 +203,21 @@ class InputQueue(API):
         sink = pa.BufferOutputStream()
         writer = None
         for d in data:
-            shape = np.array(d.shape, dtype="float32")
+            shape = np.array(d.shape)
             d = d.astype("float32").flatten()
-            len_arr = np.array([len(shape), len(d)], dtype="float32")
-            data_arr = np.concatenate([len_arr, shape, d])
-            arrow_arr = pa.array(data_arr)
-            batch = pa.RecordBatch.from_arrays([arrow_arr], ["0"])
+
+            data_field = pa.field("data", pa.list_(pa.float32()))
+            shape_field = pa.field("shape", pa.list_(pa.int64()))
+            tensor_type = pa.struct([data_field, shape_field])
+
+            tensor = pa.array([{'data': d}, {'shape': shape}],
+                              type=tensor_type)
+
+            tensor_field = pa.field(uri, tensor_type)
+            schema = pa.schema([tensor_field])
+
+            batch = pa.RecordBatch.from_arrays(
+                [tensor], schema)
             if writer is None:
                 # initialize
                 writer = pa.RecordBatchFileWriter(sink, batch.schema)
@@ -142,15 +227,15 @@ class InputQueue(API):
         buf = sink.getvalue()
         b = buf.to_pybytes()
         tensor_encoded = self.base64_encode_image(b)
-        d = {"uri": uri, "tensor": tensor_encoded}
-        self.__enqueue_data("tensor_stream", d)
+        d = {"uri": uri, "data": tensor_encoded}
+        self.__enqueue_data(d)
 
-    def __enqueue_data(self, stream_name, data):
+    def __enqueue_data(self, data):
         inf = self.db.info()
         try:
             if inf['used_memory'] >= inf['maxmemory'] * self.input_threshold:
                 raise redis.exceptions.ConnectionError
-            self.db.xadd(stream_name, data)
+            self.db.xadd(self.stream_name, data)
             print("Write to Redis successful")
         except redis.exceptions.ConnectionError:
             print("Redis queue is full, please wait for inference "
