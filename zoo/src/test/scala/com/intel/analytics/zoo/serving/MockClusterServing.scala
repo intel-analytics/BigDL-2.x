@@ -83,6 +83,7 @@ object MockClusterServing extends App with Supportive {
           })
         }
         println(s"${items.size} items read from redis")
+        println(s"${items} read from redis")
         items
       }
       else {

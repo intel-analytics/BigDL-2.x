@@ -48,11 +48,11 @@ object MockServingHttpClient extends App with Supportive {
       |{
       |  "instances": [
       |    {
-      |      "image": { "aW1hZ2UgYnl0ZXM=" },
+      |      "image": "aW1hZ2UgYnl0ZXM=",
       |      "caption": "seaside"
       |    },
       |    {
-      |      "image": { "YXdlc29tZSBpbWFnZSBieXRlcw==" },
+      |      "image": "YXdlc29tZSBpbWFnZSBieXRlcw==",
       |      "caption": "mountains"
       |    }
       |  ]

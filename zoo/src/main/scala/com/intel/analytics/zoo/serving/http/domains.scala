@@ -24,7 +24,7 @@ import akka.actor.ActorRef
 import com.codahale.metrics.Timer
 import com.google.common.collect.ImmutableList
 import org.apache.arrow.memory.RootAllocator
-import org.apache.arrow.vector.complex.{DenseUnionVector, FixedSizeListVector, StructVector, UnionVector}
+import org.apache.arrow.vector.complex._
 import org.apache.arrow.vector.dictionary.DictionaryProvider
 import org.apache.arrow.vector.ipc.{ArrowStreamReader, ArrowStreamWriter}
 import org.apache.arrow.vector.types.{FloatingPointPrecision, UnionMode}
@@ -141,13 +141,13 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
           shapeList.add(new Field("", FieldType.nullable(Conventions.ARROW_INT), null))
           val shapeField =
             new Field("shape",
-              FieldType.nullable(new ArrowType.FixedSizeList(shapeSize)), shapeList)
+              FieldType.nullable(new ArrowType.List()), shapeList)
           val dataSize = data.asInstanceOf[ArrayBuffer[_]].size
           val dataList = new util.ArrayList[Field]()
           dataList.add(new Field("", FieldType.nullable(Conventions.ARROW_INT), null))
           val dataField =
             new Field("data",
-              FieldType.nullable(new ArrowType.FixedSizeList(dataSize)), dataList)
+              FieldType.nullable(new ArrowType.List()), dataList)
           val tensorFieldList = new util.ArrayList[Field]()
           tensorFieldList.add(shapeField)
           tensorFieldList.add(dataField)
@@ -163,13 +163,13 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
           shapeList.add(new Field("", FieldType.nullable(Conventions.ARROW_INT), null))
           val shapeField =
             new Field("shape",
-              FieldType.nullable(new ArrowType.FixedSizeList(shapeSize)), shapeList)
+              FieldType.nullable(new ArrowType.List()), shapeList)
           val dataSize = data.asInstanceOf[ArrayBuffer[_]].size
           val dataList = new util.ArrayList[Field]()
           dataList.add(new Field("", FieldType.nullable(Conventions.ARROW_FLOAT), null))
           val dataField =
             new Field("data",
-              FieldType.nullable(new ArrowType.FixedSizeList(dataSize)), dataList)
+              FieldType.nullable(new ArrowType.List()), dataList)
           val tensorFieldList = new util.ArrayList[Field]()
           tensorFieldList.add(shapeField)
           tensorFieldList.add(dataField)
@@ -185,13 +185,13 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
           shapeList.add(new Field("", FieldType.nullable(Conventions.ARROW_INT), null))
           val shapeField =
             new Field("shape",
-              FieldType.nullable(new ArrowType.FixedSizeList(shapeSize)), shapeList)
+              FieldType.nullable(new ArrowType.List()), shapeList)
           val dataSize = data.asInstanceOf[ArrayBuffer[_]].size
           val dataList = new util.ArrayList[Field]()
           dataList.add(new Field("", FieldType.nullable(Conventions.ARROW_BINARY), null))
           val dataField =
             new Field("data",
-              FieldType.nullable(new ArrowType.FixedSizeList(dataSize)), dataList)
+              FieldType.nullable(new ArrowType.List()), dataList)
           val tensorFieldList = new util.ArrayList[Field]()
           tensorFieldList.add(shapeField)
           tensorFieldList.add(dataField)
@@ -249,8 +249,8 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
             val structVector = fieldVector.asInstanceOf[StructVector]
             val shapeVector = structVector.getChild("shape")
             val dataVector = structVector.getChild("data")
-            val shapeDataVector = shapeVector.asInstanceOf[FixedSizeListVector].getDataVector
-            val dataDataVector = dataVector.asInstanceOf[FixedSizeListVector].getDataVector
+            val shapeDataVector = shapeVector.asInstanceOf[ListVector].getDataVector
+            val dataDataVector = dataVector.asInstanceOf[ListVector].getDataVector
             val shapeSize = shape.size
             val shapeIntVector = shapeDataVector.asInstanceOf[IntVector]
             for(j <- 0 until shapeSize) {
@@ -347,8 +347,8 @@ object Instances {
             val structVector = fieldVector.asInstanceOf[StructVector]
             val shapeVector = structVector.getChild("shape")
             val dataVector = structVector.getChild("data")
-            val shapeDataVector = shapeVector.asInstanceOf[FixedSizeListVector].getDataVector
-            val dataDataVector = dataVector.asInstanceOf[FixedSizeListVector].getDataVector
+            val shapeDataVector = shapeVector.asInstanceOf[ListVector].getDataVector
+            val dataDataVector = dataVector.asInstanceOf[ListVector].getDataVector
             val shape = new ArrayBuffer[Int]()
             val shapeIntVector = shapeDataVector.asInstanceOf[IntVector]
             for(i <- 0 until shapeDataVector.getValueCount) {

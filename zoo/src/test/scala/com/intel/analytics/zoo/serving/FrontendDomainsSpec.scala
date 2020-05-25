@@ -230,6 +230,30 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
       }
       // println("arrow: " + new String(arrowBytes2))
       // println("arrow serialized size: " + arrowBytes2.length)
+
+      val tensorFloat = List(
+        List(1, 2),
+        List(3, 4)
+      )
+      val instanceExample = mutable.LinkedHashMap("tensor" -> tensorFloat)
+        .asInstanceOf[mutable.LinkedHashMap[String, Any]]
+      val instancesExample = Instances(instanceExample)
+      val arrowBytesExample = timing("arrow serialization")() {
+        instancesExample.toArrow()
+      }
+      val b64Example = Base64.getEncoder().encodeToString(arrowBytesExample)
+      // println("XXXXXXXXXXXXXXXXX:\n" + new String(arrowBytesExample))
+      // println("arrow:\n " + b64Example)
+
+      val arrowBytesPath = getClass().getClassLoader()
+        .getResource("serving/arrowBytes").getFile()
+      val b64f = scala.io.Source.fromFile(arrowBytesPath).mkString
+      val bytes = java.util.Base64.getDecoder.decode(b64f)
+      println(new String(bytes))
+      val instancesEx = timing("arrow deserialization")() {
+        Instances.fromArrow(bytes)
+      }
+      println(instancesEx)
     })
   }
 
