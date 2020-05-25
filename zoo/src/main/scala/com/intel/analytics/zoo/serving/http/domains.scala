@@ -27,11 +27,10 @@ import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.complex._
 import org.apache.arrow.vector.dictionary.DictionaryProvider
 import org.apache.arrow.vector.ipc.{ArrowStreamReader, ArrowStreamWriter}
-import org.apache.arrow.vector.types.{FloatingPointPrecision, UnionMode}
+import org.apache.arrow.vector.types.FloatingPointPrecision
 import org.apache.arrow.vector.types.Types.MinorType
-import org.apache.arrow.vector.types.pojo.ArrowType.ArrowTypeID
 import org.apache.arrow.vector.types.pojo.{ArrowType, Field, FieldType, Schema}
-import org.apache.arrow.vector.{FieldVector, Float4Vector, IntVector, VarBinaryVector, VectorSchemaRoot}
+import org.apache.arrow.vector._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -99,6 +98,7 @@ object Conventions {
   val ARROW_INT = new ArrowType.Int(32, true)
   val ARROW_FLOAT = new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE)
   val ARROW_BINARY = new ArrowType.Binary()
+  val ARROW_UTF8 = new ArrowType.Utf8
 }
 
 case class SparseTensor[T](shape: Array[Int], indices: Array[Array[Int]], values: Array[T])
@@ -188,7 +188,8 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
               FieldType.nullable(new ArrowType.List()), shapeList)
           val dataSize = data.asInstanceOf[ArrayBuffer[_]].size
           val dataList = new util.ArrayList[Field]()
-          dataList.add(new Field("", FieldType.nullable(Conventions.ARROW_BINARY), null))
+          // dataList.add(new Field("", FieldType.nullable(Conventions.ARROW_BINARY), null))
+          dataList.add(new Field("", FieldType.nullable(Conventions.ARROW_UTF8), null))
           val dataField =
             new Field("data",
               FieldType.nullable(new ArrowType.List()), dataList)
@@ -197,7 +198,8 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
           tensorFieldList.add(dataField)
           new Field(key, FieldType.nullable(new ArrowType.Struct()), tensorFieldList)
         } else {
-          new Field(key, FieldType.nullable(Conventions.ARROW_BINARY), null)
+          // new Field(key, FieldType.nullable(Conventions.ARROW_BINARY), null)
+          new Field(key, FieldType.nullable(Conventions.ARROW_UTF8), null)
         }
         childrenBuilder.add(field)
       }
@@ -235,6 +237,11 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
               case false => fieldVector.asInstanceOf[Float4Vector]
                 .setSafe(0, tensor._2.asInstanceOf[Double].toFloat)
             }
+            fieldVector.setValueCount(1)
+          case MinorType.VARCHAR =>
+            val varCharVector = fieldVector.asInstanceOf[VarCharVector]
+            val bytes = tensor._2.asInstanceOf[String].getBytes
+            varCharVector.setSafe(0, bytes)
             fieldVector.setValueCount(1)
           case MinorType.VARBINARY =>
             val varBinaryVector = fieldVector.asInstanceOf[VarBinaryVector]
@@ -285,7 +292,16 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
                     }
                   case false =>
                 }
-
+              case MinorType.VARCHAR =>
+                val varCharVector = dataDataVector.asInstanceOf[VarBinaryVector]
+                val datas = data.asInstanceOf[ArrayBuffer[String]]
+                val dataSize = datas.size
+                for (j <- 0 until dataSize) {
+                  val bytes = datas(j).getBytes
+                  varCharVector.setIndexDefined(j)
+                  varCharVector.setSafe(j, bytes)
+                }
+                varCharVector.setValueCount(dataSize)
               case MinorType.VARBINARY =>
                 val varBinaryVector = dataDataVector.asInstanceOf[VarBinaryVector]
                 val datas = data.asInstanceOf[ArrayBuffer[String]]
@@ -340,6 +356,9 @@ object Instances {
         } else if (fieldVector.isInstanceOf[Float4Vector]) {
             val vector = fieldVector.asInstanceOf[Float4Vector]
             (vector.getName, vector.getObject(0))
+          } else if (fieldVector.isInstanceOf[VarCharVector]) {
+            val vector = fieldVector.asInstanceOf[VarCharVector]
+            (vector.getName, new String(vector.getObject(0).getBytes))
           } else if (fieldVector.isInstanceOf[VarBinaryVector]) {
             val vector = fieldVector.asInstanceOf[VarBinaryVector]
             (vector.getName, new String(vector.getObject(0).asInstanceOf[Array[Byte]]))
@@ -367,6 +386,14 @@ object Instances {
                 val dataFloatVector = dataDataVector.asInstanceOf[Float4Vector]
                 for(i <- 0 until dataFloatVector.getValueCount) {
                   data.append(dataFloatVector.getObject(i).asInstanceOf[Float])
+                }
+                data
+              case MinorType.VARCHAR =>
+                val data = new ArrayBuffer[String]()
+                val dataVarCharVector = dataDataVector.asInstanceOf[VarCharVector]
+                for(i <- 0 until dataVarCharVector.getValueCount) {
+                  data.append(
+                    new String(dataVarCharVector.getObject(i).getBytes))
                 }
                 data
               case MinorType.VARBINARY =>
