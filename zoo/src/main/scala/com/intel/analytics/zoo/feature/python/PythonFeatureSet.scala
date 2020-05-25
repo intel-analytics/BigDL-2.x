@@ -147,12 +147,7 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
                     |func${partId} = CloudPickleSerializer.loads(CloudPickleSerializer, by${partId})
                     |${localLoaderName} = func${partId}
                     |""".stripMargin
-      // when nodeNumber == 1, we use the origin dataloader.
-      // when nodeNumber > 1, we use Sampler.
-      if (nodeNumber == 1) {
-        load
-      } else {
-        load +
+      load +
         s"""
            |from torch.utils.data.distributed import DistributedSampler
            |from torch.utils.data.sampler import RandomSampler
@@ -167,7 +162,7 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
            |    ${localLoaderName}_sampler=DistributedSequentialSampler(${localLoaderName}.dataset,
            |                                                  ${nodeNumber}, ${partId})
            |
-           |bs_node = int(math.ceil(${localLoaderName}.batch_size / node_num))
+           |bs_node = int(math.ceil(${localLoaderName}.batch_size / ${nodeNumber}))
            |
            |data_loader_args = {
            |                "dataset": ${localLoaderName}.dataset,
@@ -182,11 +177,10 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
            |            }
            |${localLoaderName} = DataLoader(**data_loader_args)
            |""".stripMargin
-      }
     }
 
     FeatureSet.python[MiniBatch[Float]](dataloader, getLoader, getIterator, getNext,
-      "ptensor_to_numpy(data[0])", "ptensor_to_numpy(data[1])", -1, imports)
+      "ptensor_to_numpy(_data[0])", "ptensor_to_numpy(_data[1])", -1, imports)
   }
 
 }
