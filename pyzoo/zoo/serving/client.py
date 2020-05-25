@@ -104,11 +104,13 @@ class InputQueue(API):
 
             if isinstance(value, str):
                 # str value will be considered as image path
-                field = pa.field(key, pa.string())
+                # field = pa.field(key, pa.string())
                 data = self.encode_image(value)
-                b = bytes(data, "utf-8")
-                data = pa.array(data)
-                ba = pa.array(b, type=pa.binary())
+
+                field = pa.field(key, pa.binary(len(data)))
+                data = pa.array(data, type=pa.binary())
+                # data = pa.array(data)
+
                 field_list.append(field)
                 data_list.append(data)
 
