@@ -45,6 +45,7 @@ object FrontEndApp extends Supportive {
 
   val redisInputQueue = "serving_stream"
   val redisOutputQueue = "result:"
+  logger.debug(s"will connect redis with queues: $redisInputQueue, $redisOutputQueue")
 
   def main(args: Array[String]): Unit = {
     timing(s"$name started successfully.")() {
