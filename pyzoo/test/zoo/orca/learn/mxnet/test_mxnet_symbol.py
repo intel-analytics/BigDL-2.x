@@ -24,7 +24,7 @@ from zoo.orca.learn.mxnet import MXNetTrainer, create_trainer_config
 np.random.seed(1337)  # for reproducibility
 
 
-def get_train_data_iters(config, kv):
+def get_train_data_iter(config, kv):
     train_data = np.random.rand(200, 30)
     train_label = np.random.randint(0, 10, (200,))
     train = mx.io.NDArrayIter({"input": train_data}, {"label": train_label},
@@ -32,7 +32,7 @@ def get_train_data_iters(config, kv):
     return train
 
 
-def get_test_data_iters(config, kv):
+def get_test_data_iter(config, kv):
     test_data = np.random.rand(80, 30)
     test_label = np.random.randint(0, 10, (80,))
     test = mx.io.NDArrayIter({"input": test_data}, {"label": test_label},
@@ -60,8 +60,8 @@ def get_metrics(config):
 class TestMXNetSymbol(TestCase):
     def test_symbol(self):
         config = create_trainer_config(batch_size=32, log_interval=2, seed=42)
-        trainer = MXNetTrainer(config, get_train_data_iters, get_model, metrics_creator=get_metrics,
-                               test_data=get_test_data_iters)
+        trainer = MXNetTrainer(config, get_train_data_iter, get_model, metrics_creator=get_metrics,
+                               test_data=get_test_data_iter)
         trainer.train(nb_epoch=2)
 
 
