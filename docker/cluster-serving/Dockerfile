@@ -52,7 +52,7 @@ RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SP
     rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz
 
 
-ADD ../zoo/download-analytics-zoo.sh /opt/work/scripts/
+ADD download-analytics-zoo.sh /opt/work/scripts/
 RUN chmod a+x /opt/work/scripts/*.*
 
 RUN /opt/work/scripts/download-analytics-zoo.sh
@@ -64,9 +64,9 @@ RUN mkdir -p cluster-serving/model && \
 
 ADD resources/test_image/*.* /opt/work/cluster-serving/test_image/
 ADD resources/model/*.* /opt/work/cluster-serving/model/
-ADD ../../pyzoo/zoo/serving/quick_start.py /opt/work/cluster-serving/
-ADD ../../zoo/src/test/resources/serving /opt/work/perf/
-ADD ../../pyzoo/zoo/examples/tensorflow/freeze_checkpoint.py /opt/work
+ADD quick_start.py /opt/work/cluster-serving/
+ADD perf /opt/work/perf/
+ADD freeze_checkpoint.py /opt/work
 
 RUN chmod a+x ${ANALYTICS_ZOO_HOME}/bin/cluster-serving/*
 
