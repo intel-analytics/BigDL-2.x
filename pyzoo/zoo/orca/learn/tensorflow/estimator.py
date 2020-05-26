@@ -153,11 +153,15 @@ class TFOptimizerWrapper(Estimator):
             session_config=None):
         import bigdl
 
-        assert self.labels is not None, "labels should not be None when used for training"
-        assert self.loss is not None, "loss should not be None when used for training"
-        assert self.optimizer is not None, "optimizer should not None when used for training"
+        assert self.labels is not None, \
+            "labels is None; it should not be None when used for training"
+        assert self.loss is not None, \
+            "loss is None, it should not be None when used for training"
+        assert self.optimizer is not None, \
+            "optimizer is None, it not None when used for training"
         assert isinstance(self.optimizer, bigdl.optim.optimizer.OptimMethod), \
-            "optimizer should be an instance of bigdl.optim.optimizer.OptimMethod"
+            "optimizer is of type {}, ".format(type(self.optimizer)) + \
+            "it should be an instance of bigdl.optim.optimizer.OptimMethod"
 
         dataset = _xshards_to_tf_dataset(data_shard,
                                          batch_size=batch_size,
@@ -183,7 +187,8 @@ class TFOptimizerWrapper(Estimator):
         return self
 
     def predict(self, data_shard, batch_size=32):
-        assert self.outputs is not None, "outputs should not be None when used for training"
+        assert self.outputs is not None, \
+            "output is None, it should not be None when used for training"
         dataset = _xshards_to_tf_dataset(data_shard,
                                          batch_per_thread=batch_size)
 
