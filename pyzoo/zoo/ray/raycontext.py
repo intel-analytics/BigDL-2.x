@@ -308,12 +308,12 @@ class RayContext(object):
             if self.env:
                 os.environ.update(self.env)
             import ray
-            ray.init(num_cpus=self.ray_node_cpu_cores,
-                     object_store_memory=self.object_store_memory,
-                     resources=self.extra_params)
+            return ray.init(num_cpus=self.ray_node_cpu_cores,
+                            object_store_memory=self.object_store_memory,
+                            resources=self.extra_params)
         else:
             self._start_cluster()
-            self._start_driver(num_cores=driver_cores)
+            return self._start_driver(num_cores=driver_cores)
 
     def _start_cluster(self):
         print("Start to launch ray on cluster")
@@ -345,17 +345,11 @@ class RayContext(object):
 
     def _start_driver(self, num_cores=0):
         print("Start to launch ray driver on local")
-        import ray
-        if not self.is_local:
-            import ray.services
-            node_ip = ray.services.get_node_ip_address(self.redis_address)
-            self._start_restricted_worker(num_cores=num_cores,
-                                          node_ip_address=node_ip)
-            ray.shutdown()
-            ray.init(address=self.redis_address,
-                     redis_password=self.ray_service.password,
-                     node_ip_address=node_ip)
-        else:
-            ray.shutdown()
-            ray.init(address=self.redis_address,
-                     redis_password=self.ray_service.password)
+        import ray.services
+        node_ip = ray.services.get_node_ip_address(self.redis_address)
+        self._start_restricted_worker(num_cores=num_cores,
+                                      node_ip_address=node_ip)
+        ray.shutdown()
+        return ray.init(address=self.redis_address,
+                        redis_password=self.ray_service.password,
+                        node_ip_address=node_ip)
