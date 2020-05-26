@@ -26,7 +26,6 @@ from bigdl.nn.layer import Layer
 from zoo import getOrCreateSparkContext
 from zoo.common.utils import callZooFunc
 from zoo.feature.image import ImageSet
-from zoo.tfpark.tfnet import to_sample_rdd
 
 if sys.version >= '3':
     long = int
@@ -113,6 +112,7 @@ class TorchNet(Layer):
             return ImageSet(results)
         if distributed:
             if isinstance(x, np.ndarray):
+                from zoo.tfpark.tfnet import to_sample_rdd
                 data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]), getOrCreateSparkContext())
             elif isinstance(x, RDD):
                 data_rdd = x
