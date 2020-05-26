@@ -1,0 +1,84 @@
+FROM ubuntu:18.04
+
+MAINTAINER The Analytics Zoo Authors https://github.com/intel-analytics/analytics-zoo
+
+WORKDIR /opt/work
+
+ARG SPARK_VERSION=2.4.3 
+ARG BIGDL_VERSION=0.10.0
+ARG ANALYTICS_ZOO_VERSION=0.9.0-SNAPSHOT
+
+ENV SPARK_HOME			/opt/work/spark-${SPARK_VERSION}
+ENV JAVA_HOME			/opt/jdk
+ENV ANALYTICS_ZOO_VERSION 	${ANALYTICS_ZOO_VERSION}
+ENV ANALYTICS_ZOO_HOME  	/opt/work/analytics-zoo
+ENV PATH			${JAVA_HOME}/bin:${ANALYTICS_ZOO_HOME}/bin/cluster-serving:${PATH}
+
+RUN apt-get update && \
+    apt-get install -y apt-utils vim curl nano wget unzip maven git numactl net-tools && \
+    apt-get install -y gcc g++ make && \
+    apt-get install -y libsm6 libxext6 libxrender-dev
+
+#python
+RUN apt-get install -y python3-minimal && \
+    apt-get install -y build-essential python3 python3-setuptools python3-dev python3-pip && \
+    pip3 install --upgrade pip && \
+    pip install --upgrade setuptools && \
+    pip install tensorboard && \
+    pip install opencv-python && \
+    pip install pyyaml && \
+    pip install redis
+
+#java
+RUN wget http://enos.itcollege.ee/~jpoial/allalaadimised/jdk8/jdk-8u241-linux-x64.tar.gz && \
+    gunzip jdk-8u241-linux-x64.tar.gz && \
+    tar -xf jdk-8u241-linux-x64.tar -C /opt && \
+    rm jdk-8u241-linux-x64.tar && \
+    ln -s /opt/jdk1.8.0_241 /opt/jdk
+
+#redis
+RUN wget http://download.redis.io/releases/redis-5.0.5.tar.gz && \
+    tar xzf redis-5.0.5.tar.gz && \
+    rm redis-5.0.5.tar.gz && \
+    cd redis-5.0.5 && \
+    make && \
+    echo "bind 0.0.0.0" >> /opt/work/redis-5.0.5/redis.conf && \
+    cd ..
+
+#spark
+RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
+    tar -zxvf spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
+    mv spark-${SPARK_VERSION}-bin-hadoop2.7 spark-${SPARK_VERSION} && \
+    rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz
+
+
+ADD download-analytics-zoo.sh /opt/work/scripts/
+RUN chmod a+x /opt/work/scripts/*.*
+
+RUN /opt/work/scripts/download-analytics-zoo.sh
+
+RUN mkdir -p cluster-serving/model && \    
+    cd cluster-serving && \
+    wget https://oss.sonatype.org/content/repositories/public/com/redislabs/spark-redis/2.4.0/spark-redis-2.4.0-jar-with-dependencies.jar && \
+    cd ..
+
+ADD resources/test_image/*.* /opt/work/cluster-serving/test_image/
+#ADD resources/model/*.* /opt/work/cluster-serving/model/
+ADD quick_start.py /opt/work/cluster-serving/
+ADD perf /opt/work/perf/
+ADD freeze_checkpoint.py /opt/work
+
+RUN chmod a+x ${ANALYTICS_ZOO_HOME}/bin/cluster-serving/*
+
+ENV PYTHONPATH 		${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip
+ENV REDIS_HOME 		/opt/work/redis-5.0.5
+
+ENV OMP_NUM_THREADS	all
+
+RUN cd cluster-serving && \
+    cluster-serving-init && \
+    cd ..
+
+CMD ["bash"]
+
+
