@@ -236,7 +236,7 @@ object TorchNet {
   }
 
   def isTorchNet(module: Module[_]): Boolean = {
-    module.isInstanceOf[TorchNet]
+    module.isInstanceOf[TorchNet] || module.isInstanceOf[TorchModel]
   }
 }
 
