@@ -23,7 +23,7 @@ from zoo.ray import RayContext
 from zoo.orca.learn.mxnet import MXNetTrainer, create_trainer_config
 
 
-def get_data_iters(config, kv):
+def get_train_data_iter(config, kv):
     import os
     import zipfile
     import mxnet as mx
@@ -52,6 +52,21 @@ def get_data_iters(config, kv):
         flat=False,
         num_parts=kv.num_workers,
         part_index=kv.rank)
+    return train_iter
+
+
+def get_test_data_iter(config, kv):
+    import os
+    import zipfile
+    import mxnet as mx
+    from bigdl.dataset.base import maybe_download
+
+    maybe_download("mnist.zip", "worker" + str(kv.rank),
+                   "http://data.mxnet.io/mxnet/data/mnist.zip")
+    if not os.path.isdir("worker" + str(kv.rank) + "/data"):
+        with zipfile.ZipFile("worker" + str(kv.rank) + "/mnist.zip") as zf:
+            zf.extractall("worker" + str(kv.rank) + "/data")
+
     val_iter = mx.io.MNISTIter(
         image="worker" + str(kv.rank) + "/data/t10k-images-idx3-ubyte",
         label="worker" + str(kv.rank) + "/data/t10k-labels-idx1-ubyte",
@@ -60,7 +75,7 @@ def get_data_iters(config, kv):
         flat=False,
         num_parts=kv.num_workers,
         part_index=kv.rank)
-    return train_iter, val_iter
+    return val_iter
 
 
 def get_model(config):
@@ -149,9 +164,10 @@ if __name__ == '__main__':
     config = create_trainer_config(opt.batch_size, optimizer="sgd",
                                    optimizer_params={'learning_rate': opt.learning_rate},
                                    log_interval=opt.log_interval, seed=42)
-    trainer = MXNetTrainer(config, data_creator=get_data_iters, model_creator=get_model,
+    trainer = MXNetTrainer(config, train_data=get_train_data_iter, model_creator=get_model,
                            loss_creator=get_loss, metrics_creator=get_metrics,
-                           num_workers=opt.num_workers, num_servers=opt.num_servers)
+                           num_workers=opt.num_workers, num_servers=opt.num_servers,
+                           test_data=get_test_data_iter)
     trainer.train(nb_epoch=opt.epochs)
     ray_ctx.stop()
     sc.stop()

@@ -238,20 +238,30 @@ class MXNetRunner(object):
 
 
 def get_data_label(partition_data):
-    def combine(dict1, dict2):
+    def combine_dict(dict1, dict2):
         return {key: np.concatenate((value, dict2[key]), axis=0)
                 for (key, value) in dict1.items()}
 
-    data_list = [data['data'] for data in partition_data]
-    label_list = [data['label'] for data in partition_data]
-    if isinstance(partition_data[0]['data'], dict):
-        data = reduce(lambda dict1, dict2: combine(dict1, dict2), data_list)
-    elif isinstance(partition_data[0]['data'], np.ndarray):
+    def combine_list(list1, list2):
+        return [np.concatenate((list1[index], list2[index]), axis=0)
+                for index in range(0, len(list1))]
+
+    data_list = [data['x'] for data in partition_data]
+    label_list = [data['y'] for data in partition_data]
+    if isinstance(partition_data[0]['x'], dict):
+        data = reduce(lambda dict1, dict2: combine_dict(dict1, dict2), data_list)
+    elif isinstance(partition_data[0]['x'], np.ndarray):
         data = reduce(lambda array1, array2: np.concatenate((array1, array2), axis=0),
                       data_list)
-    if isinstance(partition_data[0]['label'], dict):
-        label = reduce(lambda dict1, dict2: combine(dict1, dict2), label_list)
-    elif isinstance(partition_data[0]['label'], np.ndarray):
+    elif isinstance(partition_data[0]['x'], list):
+        data = reduce(lambda list1, list2: combine_list(list1, list2), data_list)
+
+    if isinstance(partition_data[0]['y'], dict):
+        label = reduce(lambda dict1, dict2: combine_dict(dict1, dict2), label_list)
+    elif isinstance(partition_data[0]['y'], np.ndarray):
         label = reduce(lambda array1, array2: np.concatenate((array1, array2), axis=0),
                        label_list)
+    elif isinstance(partition_data[0]['y'], list):
+        label = reduce(lambda list1, list2: combine_list(list1, list2), data_list)
+
     return data, label
