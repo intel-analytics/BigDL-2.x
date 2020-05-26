@@ -43,10 +43,6 @@ object FrontEndApp extends Supportive {
   implicit val executionContext = system.dispatcher
   implicit val timeout: Timeout = Timeout(100, TimeUnit.SECONDS)
 
-  val redisInputQueue = "serving_stream"
-  val redisOutputQueue = "result:"
-  logger.debug(s"will connect redis with queues: $redisInputQueue, $redisOutputQueue")
-
   def main(args: Array[String]): Unit = {
     timing(s"$name started successfully.")() {
       val arguments = timing("parse arguments")() {
@@ -65,7 +61,7 @@ object FrontEndApp extends Supportive {
       val redisPutter = timing(s"$redisPutterName initialized.")() {
         val redisPutterProps = Props(new RedisPutActor(
           arguments.redisHost, arguments.redisPort,
-          redisInputQueue, redisOutputQueue,
+          arguments.redisInputQueue, arguments.redisOutputQueue,
           arguments.timeWindow, arguments.countWindow))
         system.actorOf(redisPutterProps, name = redisPutterName)
       }
@@ -73,7 +69,7 @@ object FrontEndApp extends Supportive {
       val redisGetterName = s"redis-getter"
       val redisGetter = timing(s"$redisGetterName initialized.")() {
         val redisGetterProps = Props(new RedisGetActor(arguments.redisHost,
-          arguments.redisPort, redisInputQueue, redisOutputQueue))
+          arguments.redisPort, arguments.redisInputQueue, arguments.redisOutputQueue))
         system.actorOf(redisGetterProps, name = redisGetterName)
       }
 
@@ -89,7 +85,7 @@ object FrontEndApp extends Supportive {
         querierQueue
       }
 
-      def processBytesPredictionInput(inputs: Seq[BytesPredictionInput]):
+      def processPredictionInput(inputs: Seq[PredictionInput]):
       Seq[PredictionOutput[String]] = {
         silent("put message send")() {
           val message = PredictionInputMessage(inputs)
@@ -142,40 +138,22 @@ object FrontEndApp extends Supportive {
               val error = ServingError("limited")
               complete(500, error.toString)
             } else {
-              contentType.mediaType match {
-                case MediaTypes.`text/plain` =>
-                  timing("predict")(overallRequestTimer, predictRequestTimer) {
-                    val input = silent("parse raw")() {
-                      BytesPredictionInput(content)
-                    }
-                    val outputs = processBytesPredictionInput(Seq(input))
-                    val result = Predictions(outputs)
-                    silent("response complete")() {
-                      complete(200, result.toString)
-                    }
-                  }
-                case MediaTypes.`application/json` =>
-                  timing("predict")(overallRequestTimer, predictRequestTimer) {
-                    val input = timing("parse json")() {
-                      val instances = JsonUtil.fromJson(classOf[Instances], content)
-                      instances.instances.map(instance => {
-                        val image = instance.get("image").get
-                          .asInstanceOf[Map[String, String]].get("b64").get
-                        BytesPredictionInput(image)
-                      })
-                    }
-                    val outputs = processBytesPredictionInput(input)
-                    val result = Predictions(outputs)
-                    silent("response complete")() {
-                      complete(200, result.toString)
-                    }
-                  }
-                case _ => silent("response complete")() {
-                  val error = ServingError("Unsupported Media Type," +
-                    " only support text/plain for raw" +
-                    " and application/json for json")
-                  complete(415, error.toString)
+              try {
+                 val instances = timing("json deserialization")() {
+                  JsonUtil.fromJson(classOf[Instances], content)
                 }
+                 val inputs = instances.instances.map(instance => {
+                   InstancesPredictionInput(Instances(instance))
+                 })
+                 val outputs = processPredictionInput(inputs)
+                 val result = Predictions(outputs)
+                 silent("response complete")() {
+                   complete(200, result.toString)
+                 }
+              } catch {
+                case e =>
+                  val error = ServingError("Wrong content format")
+                  complete(400, error.toString)
               }
             }
           }
@@ -213,6 +191,12 @@ object FrontEndApp extends Supportive {
     opt[Int]('r', "redisPort")
       .action((x, c) => c.copy(redisPort = x))
       .text("port of redis")
+    opt[String]('h', "redisInputQueue")
+      .action((x, c) => c.copy(redisInputQueue = x))
+      .text("input queue of redis")
+    opt[String]('h', "redisOutputQueue")
+      .action((x, c) => c.copy(redisOutputQueue = x))
+      .text("output queue  of redis")
     opt[Int]('s', "parallelism")
       .action((x, c) => c.copy(parallelism = x))
       .text("parallelism of frontend")
@@ -239,6 +223,8 @@ case class FrontEndAppArguments(
     port: Int = 10020,
     redisHost: String = "localhost",
     redisPort: Int = 6379,
+    redisInputQueue: String = "serving_stream",
+    redisOutputQueue: String = "result:",
     parallelism: Int = 1000,
     timeWindow: Int = 0,
     countWindow: Int = 56,
