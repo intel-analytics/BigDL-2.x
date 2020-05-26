@@ -63,7 +63,7 @@ RUN mkdir -p cluster-serving/model && \
     cd ..
 
 ADD resources/test_image/*.* /opt/work/cluster-serving/test_image/
-ADD resources/model/*.* /opt/work/cluster-serving/model/
+#ADD resources/model/*.* /opt/work/cluster-serving/model/
 ADD quick_start.py /opt/work/cluster-serving/
 ADD perf /opt/work/perf/
 ADD freeze_checkpoint.py /opt/work
