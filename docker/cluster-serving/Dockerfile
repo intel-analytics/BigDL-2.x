@@ -24,7 +24,6 @@ RUN apt-get install -y python3-minimal && \
     apt-get install -y build-essential python3 python3-setuptools python3-dev python3-pip && \
     pip3 install --upgrade pip && \
     pip install --upgrade setuptools && \
-
     pip install tensorboard && \
     pip install opencv-python && \
     pip install pyyaml && \
@@ -53,7 +52,7 @@ RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SP
     rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz
 
 
-ADD scripts/*.* /opt/work/scripts/
+ADD ../zoo/download-analytics-zoo.sh /opt/work/scripts/
 RUN chmod a+x /opt/work/scripts/*.*
 
 RUN /opt/work/scripts/download-analytics-zoo.sh
