@@ -66,8 +66,8 @@ RUN mkdir -p cluster-serving/model && \
 ADD resources/test_image/*.* /opt/work/cluster-serving/test_image/
 ADD resources/model/*.* /opt/work/cluster-serving/model/
 ADD quick_start.py /opt/work/cluster-serving/
-ADD perf /opt/work/perf/
-ADD freeze_checkpoint.py /opt/work
+ADD ../../zoo/src/test/resources/serving /opt/work/perf/
+ADD ../../pyzoo/zoo/examples/tensorflow/freeze_checkpoint.py /opt/work
 
 RUN chmod a+x ${ANALYTICS_ZOO_HOME}/bin/cluster-serving/*
 
