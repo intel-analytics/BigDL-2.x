@@ -57,7 +57,7 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
   "BytesPredictionInput" should "works well" in {
     val bytesStr = "aW1hZ2UgYnl0ZXM="
     val input = BytesPredictionInput(bytesStr)
-    input.toHash().get("image") should equal(bytesStr)
+    input.toHash().get("data") should equal(bytesStr)
   }
 
   "PredictionOutput" should "works well" in {
@@ -249,10 +249,12 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
         .getResource("serving/arrowBytes").getFile()
       val b64f = scala.io.Source.fromFile(arrowBytesPath).mkString
       val bytes = java.util.Base64.getDecoder.decode(b64f)
-      println(new String(bytes))
+      // println(new String(bytes))
       val instancesEx = timing("arrow deserialization")() {
         Instances.fromArrow(bytes)
       }
+      instancesEx.instances.size should be (1)
+      instancesEx.instances(0).get("my-instance").size should be (1)
       println(instancesEx)
     })
   }

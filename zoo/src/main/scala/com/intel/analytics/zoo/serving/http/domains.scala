@@ -293,7 +293,7 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
                   case false =>
                 }
               case MinorType.VARCHAR =>
-                val varCharVector = dataDataVector.asInstanceOf[VarBinaryVector]
+                val varCharVector = dataDataVector.asInstanceOf[VarCharVector]
                 val datas = data.asInstanceOf[ArrayBuffer[String]]
                 val dataSize = datas.size
                 for (j <- 0 until dataSize) {
