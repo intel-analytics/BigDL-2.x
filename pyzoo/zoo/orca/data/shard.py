@@ -198,4 +198,3 @@ class SparkXShards(XShards):
             else:
                 return [self]
 
-

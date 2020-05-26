@@ -31,9 +31,9 @@ python -m pytest -v --doctest-modules ../zoo \
     --ignore=../zoo/ray/ \
     --ignore=../zoo/automl/ \
     --ignore=../zoo/zouwu/ \
+    --ignore=../test/zoo/pipeline/api/torch/ \
     --ignore=../zoo/orca/data/ \
-    --ignore=../zoo/orca/learn/mxnet \
-    --ignore=../zoo/orca/learn/horovod/
+    --ignore=../zoo/orca/learn/
 exit_status_1=$?
 if [ $exit_status_1 -ne 0 ];
 then
@@ -62,6 +62,7 @@ if [[ $py_version == *"Python 2.7"* ]]; then
        --ignore=../test/zoo/tfpark/test_text_models.py \
        --ignore=../test/zoo/ray/ \
        --ignore=../test/zoo/zouwu/ \
+       --ignore=../test/zoo/pipeline/api/torch/ \
        --ignore=../test/zoo/orca/data/ \
        --ignore=../test/zoo/orca/learn/
     exit_status_2=$?
@@ -89,6 +90,7 @@ else
        --ignore=../test/zoo/ray/integration/ \
        --ignore=../test/zoo/ray/ \
        --ignore=../test/zoo/zouwu/ \
+       --ignore=../test/zoo/pipeline/api/torch/ \
        --ignore=../test/zoo/orca/data/ \
        --ignore=../test/zoo/orca/learn/
     exit_status_3=$?
