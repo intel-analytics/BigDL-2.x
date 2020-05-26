@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.serving.engine
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import com.intel.analytics.zoo.serving.PreProcessing
+import com.intel.analytics.zoo.serving.{PostProcessing, PreProcessing}
 import com.intel.analytics.zoo.serving.utils.SerParams
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.configuration.Configuration
@@ -31,18 +31,15 @@ class FlinkInference(params: SerParams)
   var t: Tensor[Float] = null
   var logger: Logger = null
   var inferenceCnt: Int = 0
+  var pre: PreProcessing = null
+  var post: PostProcessing = null
 
   override def open(parameters: Configuration): Unit = {
     inferenceCnt = 0
     model = params.model
 //    println("in open method, ", model)
     logger = Logger.getLogger(getClass)
-//    t = if (params.chwFlag) {
-//
-//      Tensor[Float](params.coreNum, params.C, params.H, params.W)
-//    } else {
-//      Tensor[Float](params.coreNum, params.H, params.W, params.C)
-//    }
+    pre = new PreProcessing(params)
   }
 
   override def map(in: List[(String, String)]): List[(String, String)] = {
@@ -51,8 +48,8 @@ class FlinkInference(params: SerParams)
     val preProcessed = in.grouped(params.coreNum).flatMap(itemBatch => {
       itemBatch.indices.toParArray.map(i => {
         val uri = itemBatch(i)._1
-        val tensor = PreProcessing(itemBatch(i)._2).toTensor[Float]
-        (uri, tensor)
+        val input = pre.decodeArrowBase64(itemBatch(i)._2)
+        (uri, input)
       })
     })
 

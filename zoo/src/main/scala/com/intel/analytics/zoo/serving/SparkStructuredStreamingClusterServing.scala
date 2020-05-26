@@ -23,6 +23,7 @@ import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
 import com.intel.analytics.zoo.serving.utils._
 import com.intel.analytics.zoo.serving.pipeline._
+import com.intel.analytics.zoo.serving.preprocessing.DataType
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
@@ -132,7 +133,8 @@ object SparkStructuredStreamingClusterServing {
 
     val acc = new LongAccumulator()
     helper.sc.register(acc)
-
+    val param = new SerParams(helper)
+    val pre = new PreProcessing(param)
     val query = inputData.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
 
       /**
@@ -178,8 +180,7 @@ object SparkStructuredStreamingClusterServing {
               pathBytesBatch.indices.toParArray.map(i => {
 
                 val path = pathBytesBatch(i).getAs[String]("uri")
-                val tensors = PreProcessing(pathBytesBatch(i).getAs[String](dataField), dataType,
-                  chwFlag)
+                val tensors = pre.decodeBase64(pathBytesBatch(i).getAs[String](dataField))
 
                 val localPartitionModel = bcModel.value
                 val result = if (tensors.isTensor) {
@@ -224,7 +225,7 @@ object SparkStructuredStreamingClusterServing {
 
                 val row = pathBytesBatch(i)
                 val path = row.getAs[String]("uri")
-                val tensors = PreProcessing(row.getAs[String](dataField), dataType, chwFlag)
+                val tensors = pre.decodeBase64(row.getAs[String](dataField))
                 (path, tensors)
 
               })

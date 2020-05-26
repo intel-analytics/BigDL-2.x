@@ -52,10 +52,10 @@ class API:
             config['data']['host'], config['data']['port'] = "localhost", "6379"
             config['data']['image_shape'] = None
 
-        # self.db = redis.StrictRedis(host=config['data']['host'],
-        #                             port=config['data']['port'], db=0)
-        self.db = redis.StrictRedis(host="10.239.47.210",
-                                    port="16380", db=0)
+        self.db = redis.StrictRedis(host=config['data']['host'],
+                                    port=config['data']['port'], db=0)
+        # self.db = redis.StrictRedis(host="10.239.47.210",
+        #                             port="16380", db=0)
         try:
             self.db.xgroup_create("image_stream", "serving")
             self.db.xgroup_create("tensor_stream", "serving")
@@ -104,13 +104,11 @@ class InputQueue(API):
 
             if isinstance(value, str):
                 # str value will be considered as image path
-                # field = pa.field(key, pa.string())
+                field = pa.field(key, pa.string())
                 data = self.encode_image(value)
-
-                field = pa.field(key, pa.binary(len(data)))
-                data = pa.array(data, type=pa.binary())
-                # data = pa.array(data)
-
+                # b = bytes(data, "utf-8")
+                data = pa.array([data])
+                # ba = pa.array(b, type=pa.binary())
                 field_list.append(field)
                 data_list.append(data)
 

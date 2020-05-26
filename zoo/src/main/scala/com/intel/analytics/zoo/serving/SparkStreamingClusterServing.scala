@@ -110,6 +110,7 @@ object SparkStreamingClusterServing {
     val jedis = new Jedis(serParams.redisHost, serParams.redisPort)
     val ssc = new StreamingContext(spark.sparkContext, new Duration(50))
 
+    val pre = new PreProcessing(serParams)
     val receiver = new ServingReceiver()
     val images = ssc.receiverStream(receiver)
 
@@ -138,7 +139,7 @@ object SparkStreamingClusterServing {
             acc.add(itemBatch.size)
             itemBatch.indices.toParArray.map(i => {
               val uri = itemBatch(i)._1
-              val tensor = PreProcessing(itemBatch(i)._2).toTensor[Float]
+              val tensor = pre.decodeBase64(itemBatch(i)._2).toTensor[Float]
               (uri, tensor)
             })
           })
