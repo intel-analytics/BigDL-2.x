@@ -14,5 +14,4 @@
 # limitations under the License.
 #
 
-from .mxnet_trainer import MXNetTrainer
-from .utils import create_trainer_config
+from .pytorch_trainer import PyTorchTrainer

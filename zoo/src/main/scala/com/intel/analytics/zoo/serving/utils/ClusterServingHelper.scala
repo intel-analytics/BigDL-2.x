@@ -31,9 +31,8 @@ import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import java.util.LinkedHashMap
 
 import org.apache.log4j.Logger
-import scopt.OptionParser
 import org.apache.spark.rdd.RDD
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.yaml.snakeyaml.Yaml
 import java.time.LocalDateTime
@@ -44,26 +43,11 @@ import com.intel.analytics.zoo.serving.DataType.DataTypeEnumVal
 import scala.reflect.ClassTag
 import scala.util.parsing.json._
 
-case class LoaderParams(modelFolder: String = null,
-                        batchSize: Int = 4,
-                        topN: Int = 1,
-                        redis: String = "localhost:6379",
-                        dataShape: String = "3, 224, 224",
-
-                        // not used temporarily
-                        modelType: String = null,
-                        isInt8: Boolean = false,
-                        outputPath: String = "",
-                        task: String = "image-classification")
-
-
-case class Result(id: String, value: String)
-
-class ClusterServingHelper {
+class ClusterServingHelper(_configPath: String = "config.yaml") {
   type HM = LinkedHashMap[String, String]
 
 //  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
-  val configPath = "config.yaml"
+  val configPath = _configPath
 
   var lastModTime: String = null
   val logger: Logger = Logger.getLogger(getClass)
@@ -76,11 +60,11 @@ class ClusterServingHelper {
 
   var redisHost: String = null
   var redisPort: String = null
-  var batchSize: Int = 4
   var nodeNum: Int = 1
   var coreNum: Int = 1
   var engineType: String = null
   var blasFlag: Boolean = false
+  var chwFlag: Boolean = true
 
   var dataType: DataTypeEnumVal = null
   var dataShape: Array[Array[Int]] = Array[Array[Int]]()
@@ -118,6 +102,7 @@ class ClusterServingHelper {
 
     parseModelType(modelFolder)
 
+
     /**
      * reserved here to change engine type
      * engine type should be able to change in run time
@@ -134,6 +119,9 @@ class ClusterServingHelper {
       new FileWriter(logF, true)
     }
 
+    if (modelType.startsWith("tensorflow")) {
+      chwFlag = false
+    }
     // parse data field
     val dataConfig = configList.get("data").asInstanceOf[HM]
     val redis = getYaml(dataConfig, "src", "localhost:6379")
@@ -191,8 +179,7 @@ class ClusterServingHelper {
     filter = getYaml(dataConfig, "filter", "topN(1)")
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
-    batchSize = getYaml(paramsConfig, "batch_size", "4").toInt
-
+    coreNum = getYaml(paramsConfig, "core_number", "4").toInt
 
     if (modelType == "caffe" || modelType == "bigdl") {
       if (System.getProperty("bigdl.engineType", "mklblas")
@@ -272,7 +259,6 @@ class ClusterServingHelper {
       .set("spark.redis.port", redisPort)
     sc = NNContext.initNNContext(conf)
     nodeNum = EngineRef.getNodeNumber()
-    coreNum = EngineRef.getCoreNumber()
 
   }
 
@@ -336,7 +322,7 @@ class ClusterServingHelper {
         model.doLoadTensorflow(weightPath, "savedModel", inputs, outputs)
       case "pytorch" => model.doLoadPyTorch(weightPath)
       case "keras" => logError("Keras currently not supported in Cluster Serving")
-      case "openvino" => model.doLoadOpenVINO(defPath, weightPath, batchSize)
+      case "openvino" => model.doLoadOpenVINO(defPath, weightPath, coreNum)
       case _ => logError("Invalid model type, please check your model directory")
     }
     model
