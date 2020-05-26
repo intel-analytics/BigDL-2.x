@@ -31,8 +31,8 @@ class Estimator(object):
         pass
 
     @staticmethod
-    def from_graph(*, inputs, outputs,
-                   labels, loss, optimizer,
+    def from_graph(*, inputs, outputs=None,
+                   labels=None, loss=None, optimizer=None,
                    metrics=None, updates=None,
                    sess=None, model_dir=None, backend="spark"):
         assert backend == "spark", "only spark backend is supported for now"
@@ -50,13 +50,13 @@ class Estimator(object):
                                   model_dir=model_dir)
 
 
-def _data_shard_to_tf_dataset(data_shard,
-                              batch_size=-1, batch_per_thread=-1,
-                              validation_data_shard=None):
+def _xshards_to_tf_dataset(data_shard,
+                           batch_size=-1, batch_per_thread=-1,
+                           validation_data_shard=None):
     # todo data_shard.head ?
     import numpy as np
 
-    def to_list(data):
+    def check_data_type_and_to_list(data):
         result = {}
         assert isinstance(data, dict), "each shard should be an dict"
         assert "x" in data, "key x should in each shard"
@@ -79,9 +79,8 @@ def _data_shard_to_tf_dataset(data_shard,
             result["y"] = new_y
         return result
 
-    data_shard = data_shard.transform_shard(to_list)
-
     def get_spec(data):
+        data = check_data_type_and_to_list(data)
         feature_spec = [(feat.dtype, feat.shape[1:])
                         for feat in data["x"]]
         if "y" in data:
@@ -102,6 +101,7 @@ def _data_shard_to_tf_dataset(data_shard,
 
     # todo this might be very slow
     def flatten(data):
+        data = check_data_type_and_to_list(data)
         features = data["x"]
 
         has_label = "y" in data
@@ -151,10 +151,17 @@ class TFOptimizerWrapper(Estimator):
             validation_data_shard=None,
             feed_dict=None,
             session_config=None):
+        import bigdl
 
-        dataset = _data_shard_to_tf_dataset(data_shard,
-                                            batch_size=batch_size,
-                                            validation_data_shard=validation_data_shard)
+        assert self.labels is not None, "labels should not be None when used for training"
+        assert self.loss is not None, "loss should not be None when used for training"
+        assert self.optimizer is not None, "optimizer should not None when used for training"
+        assert isinstance(self.optimizer, bigdl.optim.optimizer.OptimMethod), \
+            "optimizer should be an instance of bigdl.optim.optimizer.OptimMethod"
+
+        dataset = _xshards_to_tf_dataset(data_shard,
+                                         batch_size=batch_size,
+                                         validation_data_shard=validation_data_shard)
 
         if feed_dict is not None:
             tensor_with_value = {key: (value, value) for key, value in feed_dict.items()}
@@ -176,8 +183,9 @@ class TFOptimizerWrapper(Estimator):
         return self
 
     def predict(self, data_shard, batch_size=32):
-        dataset = _data_shard_to_tf_dataset(data_shard,
-                                            batch_per_thread=batch_size)
+        assert self.outputs is not None, "outputs should not be None when used for training"
+        dataset = _xshards_to_tf_dataset(data_shard,
+                                         batch_per_thread=batch_size)
 
         flat_inputs = nest.flatten(self.inputs)
         flat_outputs = nest.flatten(self.outputs)

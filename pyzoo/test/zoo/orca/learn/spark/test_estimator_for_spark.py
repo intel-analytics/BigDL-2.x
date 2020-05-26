@@ -22,21 +22,26 @@ from zoo.orca.learn.tensorflow.estimator import Estimator
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
 
+class SimpleModel(object):
+
+    def __init__(self):
+        self.user = tf.placeholder(dtype=tf.int32, shape=(None,))
+        self.item = tf.placeholder(dtype=tf.int32, shape=(None,))
+        self.label = tf.placeholder(dtype=tf.int32, shape=(None,))
+
+        feat = tf.stack([self.user, self.item], axis=1)
+        self.logits = tf.layers.dense(tf.to_float(feat), 2)
+
+        self.loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=self.logits, labels=self.label))
+
+
 def test_estimator_graph(estimator_for_spark_fixture):
     from bigdl.optim.optimizer import SGD
     import zoo.orca.data.pandas
 
-    user = tf.placeholder(dtype=tf.int32, shape=(None,))
-    item = tf.placeholder(dtype=tf.int32, shape=(None,))
-    label = tf.placeholder(dtype=tf.int32, shape=(None,))
-
-    feat = tf.stack([user, item], axis=1)
-    logits = tf.layers.dense(tf.to_float(feat), 2)
-
-    loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=label))
-
     sc = estimator_for_spark_fixture
 
+    model = SimpleModel()
     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
     data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
 
@@ -47,15 +52,15 @@ def test_estimator_graph(estimator_for_spark_fixture):
         }
         return result
 
-    data_shard.transform_shard(transform)
+    data_shard = data_shard.transform_shard(transform)
 
     est = Estimator.from_graph(
-        inputs=[user, item],
-        labels=[label],
-        outputs=[logits],
-        loss=loss,
+        inputs=[model.user, model.item],
+        labels=[model.label],
+        outputs=[model.logits],
+        loss=model.loss,
         optimizer=SGD(),
-        metrics={"loss": loss})
+        metrics={"loss": model.loss})
     est.fit(data_shard=data_shard,
             batch_size=8,
             steps=10,
@@ -69,7 +74,61 @@ def test_estimator_graph(estimator_for_spark_fixture):
         }
         return result
 
-    data_shard.transform_shard(transform)
+    data_shard = data_shard.transform_shard(transform)
+    predictions = est.predict(data_shard).collect()
+    print(predictions)
+
+
+def test_estimator_graph_fit(estimator_for_spark_fixture):
+    from bigdl.optim.optimizer import SGD
+    import zoo.orca.data.pandas
+
+    model = SimpleModel()
+    sc = estimator_for_spark_fixture
+    file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+
+    def transform(df):
+        result = {
+            "x": [df['user'].to_numpy(), df['item'].to_numpy()],
+            "y": df['label'].to_numpy()
+        }
+        return result
+
+    data_shard = data_shard.transform_shard(transform)
+
+    est = Estimator.from_graph(
+        inputs=[model.user, model.item],
+        labels=[model.label],
+        loss=model.loss,
+        optimizer=SGD(),
+        metrics={"loss": model.loss})
+    est.fit(data_shard=data_shard,
+            batch_size=8,
+            steps=10,
+            validation_data_shard=data_shard)
+
+
+def test_estimator_graph_predict(estimator_for_spark_fixture):
+    import zoo.orca.data.pandas
+
+    sc = estimator_for_spark_fixture
+
+    model = SimpleModel()
+    file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+
+    est = Estimator.from_graph(
+        inputs=[model.user, model.item],
+        outputs=[model.logits])
+
+    def transform(df):
+        result = {
+            "x": [df['user'].to_numpy(), df['item'].to_numpy()],
+        }
+        return result
+
+    data_shard = data_shard.transform_shard(transform)
     predictions = est.predict(data_shard).collect()
     print(predictions)
 
