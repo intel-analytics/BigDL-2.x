@@ -171,14 +171,14 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
 //        logError("Invalid data type, please check your data_type")
 //        null
 //    }
-    val shapeStr = getYaml(dataConfig, "shape", null)
+    val shapeStr = getYaml(dataConfig, "shape", "3,224,224")
     require(shapeStr != null, "data shape in config must be specified.")
 //    val shapeList = shape.split(",").map(x => x.trim.toInt)
 //    for (i <- shapeList) {
 //      dataShape = dataShape :+ i
 //    }
     dataShape = ConfigUtils.parseShape(shapeStr)
-    val typeStr = getYaml(dataConfig, "type", null)
+    val typeStr = getYaml(dataConfig, "type", "image")
     require(typeStr != null, "data type in config must be specified.")
     dataType = ConfigUtils.parseType(typeStr)
 

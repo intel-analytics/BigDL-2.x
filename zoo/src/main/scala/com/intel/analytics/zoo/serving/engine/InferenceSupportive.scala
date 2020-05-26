@@ -80,12 +80,12 @@ object InferenceSupportive {
     params: SerParams): Activity = {
     val thisBatchSize = seq.size
 
-    val kvTuples = seq.head._2.toTable.keySet.foreach(key => {
-
-    })
-    val t = T.array(params.dataShape.map(shape => {
-      Tensor[Float](params.coreNum +: shape)
-    }))
+    val inputSample = seq.head._2.toTable
+    val kvTuples = inputSample.keySet.map(key => {
+      (key, Tensor[Float](params.coreNum +:
+        inputSample(key).asInstanceOf[Tensor[Float]].size()))
+    }).toList
+    val t = T(kvTuples.head, kvTuples.tail:_*)
     (0 until thisBatchSize).toParArray.foreach(i => {
       val dataTable = seq(i)._2.toTable
       t.keySet.foreach(key => {
