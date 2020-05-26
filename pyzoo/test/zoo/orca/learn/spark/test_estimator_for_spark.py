@@ -32,7 +32,8 @@ class SimpleModel(object):
         feat = tf.stack([self.user, self.item], axis=1)
         self.logits = tf.layers.dense(tf.to_float(feat), 2)
 
-        self.loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=self.logits, labels=self.label))
+        self.loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=self.logits,
+                                                                          labels=self.label))
 
 
 def test_estimator_graph(estimator_for_spark_fixture):
