@@ -115,7 +115,7 @@ class TestSparkXShards(ZooTestCase):
     def test_split(self):
         file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
-        data_shard.transform_shard(lambda  df: (df[0:-1], df[-1:]))
+        data_shard.transform_shard(lambda df: (df[0:-1], df[-1:]))
         shards_splits = data_shard.split()
         assert len(shards_splits) == 2
         data1 = shards_splits[0].collect()

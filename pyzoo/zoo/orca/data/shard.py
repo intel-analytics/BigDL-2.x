@@ -197,4 +197,3 @@ class SparkXShards(XShards):
                         for i in range(list_split_length[0])]
             else:
                 return [self]
-
