@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.zoo.serving.http.Instances
 import com.intel.analytics.zoo.serving.utils.ConfigUtils
 import org.scalatest.{FlatSpec, Matchers}
 

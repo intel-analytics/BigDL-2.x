@@ -117,7 +117,7 @@ class InputQueue(API):
                 data_field = pa.field("data", pa.list_(pa.float32()))
                 shape_field = pa.field("shape", pa.list_(pa.int32()))
                 tensor_type = pa.struct([data_field, shape_field])
-                field = pa.field(uri, tensor_type)
+                field = pa.field(key, tensor_type)
 
                 shape = np.array(value.shape)
                 d = value.astype("float32").flatten()
@@ -131,13 +131,13 @@ class InputQueue(API):
                 assert len(value) == 3, "Sparse Tensor must have list of ndarray" \
                                        "with length 3, which represent " \
                                        "indices, values, shape respectively"
-                indices_field = pa.field("indices", pa.list_(pa.int32()))
-                indices_shape_field = pa.field("indices_shape", pa.list_(pa.int32()))
-                value_field = pa.field("value", pa.list_(pa.float32()))
+                indices_field = pa.field("indiceData", pa.list_(pa.int32()))
+                indices_shape_field = pa.field("indiceShape", pa.list_(pa.int32()))
+                value_field = pa.field("data", pa.list_(pa.float32()))
                 shape_field = pa.field("shape", pa.list_(pa.int32()))
                 sparse_tensor_type = pa.struct(
                     [indices_field, indices_shape_field,  value_field, shape_field])
-                field = pa.field(uri, sparse_tensor_type)
+                field = pa.field(key, sparse_tensor_type)
 
                 shape = value[2]
                 values = value[1]
@@ -145,7 +145,7 @@ class InputQueue(API):
                 indices_shape = value[0].shape
                 data = pa.array([{'indiceData': indices},
                                  {'indiceShape': indices_shape},
-                                 {'values': values},
+                                 {'data': values},
                                  {'shape': shape}], type=sparse_tensor_type)
                 field_list.append(field)
                 data_list.append(data)
