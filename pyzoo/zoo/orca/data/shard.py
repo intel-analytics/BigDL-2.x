@@ -197,3 +197,8 @@ class SparkXShards(XShards):
                         for i in range(list_split_length[0])]
             else:
                 return [self]
+
+    def __len__(self):
+        length = self.rdd.map(lambda data: len(data) if hasattr(data, '__len__') else 1)\
+                .reduce(lambda l1, l2: l1 + l2)
+        return length

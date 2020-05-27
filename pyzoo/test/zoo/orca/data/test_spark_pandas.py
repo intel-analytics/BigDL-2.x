@@ -123,6 +123,11 @@ class TestSparkXShards(ZooTestCase):
         assert len(data1[0].index) > 1
         assert len(data2[0].index) == 1
 
+    def test_len(self):
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        assert len(data_shard) == 14
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
