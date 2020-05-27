@@ -173,7 +173,7 @@ class InputQueue(API):
         """
         if isinstance(img, str):
             img = cv2.imread(img)
-            if not isinstance(img, np.ndarray):
+            if img.size == 0:
                 print("You have pushed an image with path: ",
                       img, "the path is invalid, skipped.")
                 return
