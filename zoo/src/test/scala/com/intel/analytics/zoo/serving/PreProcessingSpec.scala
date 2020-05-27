@@ -41,7 +41,7 @@ class PreProcessingSpec extends FlatSpec with Matchers {
     T(t: _*)
   }
   "table copy" should "work" in {
-    val arr = Array(1,2,3)
+    val arr = Array(1, 2, 3)
     def cp(t1: Int, t2: Int, t3: Int, t4: Int): Unit = {
       None
     }
