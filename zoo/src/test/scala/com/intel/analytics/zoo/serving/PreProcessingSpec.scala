@@ -34,10 +34,17 @@ class PreProcessingSpec extends FlatSpec with Matchers {
     val a = Array(3, 224, 224)
   }
   "generate table" should "work" in {
-    val t = List((1,2))
-    def T(tuples: Tuple2[Any, Any]*): Unit = {
+    val t = List((1, 2))
+    def T(tuples: (Any, Any)*): Unit = {
       tuples
     }
-    T(t:_*)
+    T(t: _*)
+  }
+  "table copy" should "work" in {
+    val arr = Array(1,2,3)
+    def cp(t1: Int, t2: Int, t3: Int, t4: Int): Unit = {
+      None
+    }
+
   }
 }

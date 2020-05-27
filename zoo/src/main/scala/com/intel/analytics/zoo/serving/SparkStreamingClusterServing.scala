@@ -61,11 +61,6 @@ object SparkStreamingClusterServing {
      * Note that currently CHW is commonly used
      * and HWC is often used in Tensorflow models
      */
-    val chwFlag = if (modelType.startsWith("tensorflow")) {
-      false
-    } else {
-      true
-    }
 
     val logger = helper.logger
 
@@ -110,7 +105,7 @@ object SparkStreamingClusterServing {
     val jedis = new Jedis(serParams.redisHost, serParams.redisPort)
     val ssc = new StreamingContext(spark.sparkContext, new Duration(50))
 
-    val pre = new PreProcessing(serParams)
+
     val receiver = new ServingReceiver()
     val images = ssc.receiverStream(receiver)
 
@@ -135,11 +130,12 @@ object SparkStreamingClusterServing {
          */
 
         val preProcessed = x.mapPartitions(it => {
+          val pre = new PreProcessing(serParams)
           it.grouped(serParams.coreNum).flatMap(itemBatch => {
             acc.add(itemBatch.size)
             itemBatch.indices.toParArray.map(i => {
               val uri = itemBatch(i)._1
-              val tensor = pre.decodeBase64(itemBatch(i)._2).toTensor[Float]
+              val tensor = pre.decodeArrowBase64(itemBatch(i)._2)
               (uri, tensor)
             })
           })
@@ -191,7 +187,7 @@ object SparkStreamingClusterServing {
          * Count the statistical data and write to summary
          */
         val microBatchEnd = System.nanoTime()
-        println(s"Currently recs in redis: ${jedis.xlen("image_stream")}")
+        println(s"Currently recs in redis: ${jedis.xlen("serving_stream")}")
         val microBatchLatency = (microBatchEnd - microBatchStart) / 1e9
         val microBatchThroughPut = (acc.value / microBatchLatency).toFloat
         logger.info(s"Inferece end. Input size ${acc.value}. " +

@@ -96,6 +96,14 @@ object InferenceSupportive {
         }
       })
     })
+    t.keySet.foreach(key => {
+      val singleTensorSize = inputSample(key).asInstanceOf[Tensor[Float]].size()
+      var newSize = Array(thisBatchSize)
+      for (elem <- singleTensorSize) {
+        newSize = newSize :+ elem
+      }
+      t(key).asInstanceOf[Tensor[Float]].resize(newSize)
+    })
     if (params.dataShape.length == 1) {
       t.keySet.foreach(key => {
         return t(key).asInstanceOf[Tensor[Float]]

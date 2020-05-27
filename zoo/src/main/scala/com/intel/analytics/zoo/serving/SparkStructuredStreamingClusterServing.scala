@@ -21,6 +21,7 @@ import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
+import com.intel.analytics.zoo.serving.engine.InferenceSupportive
 import com.intel.analytics.zoo.serving.utils._
 import com.intel.analytics.zoo.serving.pipeline._
 import com.intel.analytics.zoo.serving.preprocessing.DataType
@@ -65,10 +66,10 @@ object SparkStructuredStreamingClusterServing {
     val dataShape = helper.dataShape
 
     val (flagC, flagW, flagH, streamKey, dataField) = if (dataType == DataType.IMAGE) {
-      (helper.dataShape(0)(0), helper.dataShape(0)(1), helper.dataShape(0)(2), "image_stream",
-        "image")
+      (helper.dataShape(0)(0), helper.dataShape(0)(1), helper.dataShape(0)(2), "serving_stream",
+        "data")
     } else {
-      (0, 0, 0, "tensor_stream", "tensor")
+      (0, 0, 0, "serving_stream", "data")
     }
 
     val filter = helper.filter
@@ -127,25 +128,25 @@ object SparkStructuredStreamingClusterServing {
     var timeStamp: Int = 0
 
     // redis stream control
-    val redisDB = new Jedis(helper.redisHost, helper.redisPort.toInt)
+    val jedis = new Jedis(helper.redisHost, helper.redisPort.toInt)
     val inputThreshold = 0.6 * 0.8
     val cutRatio = 0.5
 
     val acc = new LongAccumulator()
     helper.sc.register(acc)
-    val param = new SerParams(helper)
-    val pre = new PreProcessing(param)
+    val serParams = new SerParams(helper)
+
     val query = inputData.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
 
       /**
        * This is reserved for future dynamic loading model
        */
-      val redisInfo = RedisUtils.getMapFromInfo(redisDB.info())
+      val redisInfo = RedisUtils.getMapFromInfo(jedis.info())
 
       if (redisInfo("used_memory").toLong >=
         redisInfo("maxmemory").toLong * inputThreshold) {
-        redisDB.xtrim(streamKey,
-          (redisDB.xlen(streamKey) * cutRatio).toLong, true)
+        jedis.xtrim(streamKey,
+          (jedis.xlen(streamKey) * cutRatio).toLong, true)
       }
 
       batchDF.persist()
@@ -158,60 +159,47 @@ object SparkStructuredStreamingClusterServing {
          *
          * If the batch is not empty, start preprocessing and predict here
          */
-
-
         val microBatchStart = System.nanoTime()
         acc.reset()
+        RedisUtils.checkMemory(jedis, inputThreshold, cutRatio)
+
+        /**
+         * The streaming may be triggered somehow and it is possible
+         * to get an empty batch
+         *
+         * If the batch is not empty, start preprocessing and predict here
+         */
+        val x = batchDF.rdd
+        val preProcessed = x.mapPartitions(it => {
+          val pre = new PreProcessing(serParams)
+          it.grouped(serParams.coreNum).flatMap(itemBatch => {
+            acc.add(itemBatch.size)
+            itemBatch.indices.toParArray.map(i => {
+              val uri = itemBatch(i).getAs[String]("uri")
+              val tensor = pre.decodeArrowBase64(itemBatch(i).getAs[String]("data"))
+              (uri, tensor)
+            })
+          })
+        })
+
         /**
          * Engine type controlling, for different engine type,
          * different partitioning and batching scheduling is used
          */
-        val resultPartitions = if (blasFlag) {
+        val postProcessed = if (blasFlag) {
           /**
            * In BLAS mode, every model could predict only using
            * a single thread, besides, batch size usually is not
            * over 64 in serving to achieve good latency. Thus, no
            * batching is required if the machine has over about 30 cores.           *
            */
-          batchDF.rdd.mapPartitions(pathBytes => {
-            pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
-
-              acc.add(pathBytesBatch.size)
-              pathBytesBatch.indices.toParArray.map(i => {
-
-                val path = pathBytesBatch(i).getAs[String]("uri")
-                val tensors = pre.decodeBase64(pathBytesBatch(i).getAs[String](dataField))
-
-                val localPartitionModel = bcModel.value
-                val result = if (tensors.isTensor) {
-                  localPartitionModel.doPredict(tensors.toTensor.addSingletonDimension())
-                } else {
-                  localPartitionModel.doPredict(tensors)
-                }
-
-                val value = if (result.isTensor) {
-                  val res = result.toTensor.squeeze()
-                  PostProcessing(res, filter)
-                } else {
-                  // result is table
-                  val separator = ","
-                  val res = result.toTable
-                  val valueBuf = StringBuilder.newBuilder
-                  valueBuf.append("[")
-                  res.keySet.foreach(key => {
-                    valueBuf.append(PostProcessing(
-                      res(key).asInstanceOf[Tensor[Float]]))
-                    valueBuf.append(separator)
-                  })
-                  valueBuf.deleteCharAt(valueBuf.length - 1)
-                  valueBuf.append("]")
-                  valueBuf.toString()
-                }
-
-                Record(path, value)
-              })
+          preProcessed.mapPartitions(it => {
+            it.grouped(serParams.coreNum).flatMap(itemBatch => {
+              InferenceSupportive.multiThreadInference(itemBatch.toIterator, serParams)
             })
           })
+
+
         } else {
           /**
            * In Normal mode, every model will use multiple thread to
@@ -219,107 +207,17 @@ object SparkStructuredStreamingClusterServing {
            * do sequential predict, maximizing the latency performance
            * and minimizing the memory usage.
            */
-          val pathBytesChunk = batchDF.rdd.mapPartitions(pathBytes => {
-            pathBytes.grouped(coreNum).flatMap(pathBytesBatch => {
-              pathBytesBatch.indices.toParArray.map(i => {
-
-                val row = pathBytesBatch(i)
-                val path = row.getAs[String]("uri")
-                val tensors = pre.decodeBase64(row.getAs[String](dataField))
-                (path, tensors)
-
-              })
-            })
-          })
-          pathBytesChunk.mapPartitions(pathBytes => {
-            val localModel = bcModel.value
-            val t = if (dataType == DataType.IMAGE) {
-              if (chwFlag) {
-                Tensor[Float](coreNum, flagC, flagH, flagW)
-              } else {
-                Tensor[Float](coreNum, flagH, flagW, flagC)
-              }
-            } else {
-              if (dataShape.length == 1) {
-                val sizes = coreNum +: dataShape(0)
-                Tensor[Float](sizes)
-              } else {
-                T.array(dataShape.map(shape => Tensor[Float](coreNum +: shape)))
-              }
-            }
-
-            pathBytes.grouped(coreNum).flatMap(pathByteBatch => {
-              val thisBatchSize = pathByteBatch.size
-              acc.add(thisBatchSize)
-              val x = if (t.isTensor) {
-                val tTensor = t.toTensor
-                (0 until thisBatchSize).toParArray
-                  .foreach(i => tTensor.select(1, i + 1).copy(pathByteBatch(i)._2.toTensor))
-                if (modelType == "openvino") {
-                  tTensor.addSingletonDimension()
-                } else {
-                  tTensor
-                }
-              } else {
-                val tTable = t.toTable
-                (0 until thisBatchSize).toParArray
-                  .foreach( i => {
-                    val dataTable = pathByteBatch(i)._2.toTable
-                    tTable.keySet.foreach(key => {
-                      tTable(key).asInstanceOf[Tensor[Float]].select(1, i + 1)
-                        .copy(dataTable(key).asInstanceOf[Tensor[Float]])
-                    })
-                  })
-                tTable
-              }
-
-              /**
-               * addSingletonDimension method will modify the
-               * original Tensor, thus if reuse of Tensor is needed,
-               * have to squeeze it back.
-               */
-              val result = localModel.doPredict(x)
-              if (result.isTensor) {
-                val res = if (modelType == "openvino") {
-                  // TODO: Activity support
-                  if (t.isTensor) {
-                    t.toTensor.squeeze(1)
-                  }
-                  result.toTensor.squeeze()
-                } else {
-                  result.toTensor
-                }
-                (0 until thisBatchSize).toParArray.map(i => {
-                  val value = PostProcessing(res.select(1, i + 1), filter)
-                  Record(pathByteBatch(i)._1, value)
-                })
-              } else {
-                // result is table
-                val separator = ","
-                // TODO: openvino Table support
-                val res = result.toTable
-                (0 until thisBatchSize).toParArray.map(i => {
-                  val value = StringBuilder.newBuilder
-                  value.append("[")
-                  res.keySet.foreach(key => {
-                    value.append(PostProcessing(
-                      res(key).asInstanceOf[Tensor[Float]].select(1, i + 1)))
-                    value.append(separator)
-                  })
-                  value.deleteCharAt(value.length - 1)
-                  value.append("]")
-                  Record(pathByteBatch(i)._1, value.toString())
-                })
-              }
+          preProcessed.mapPartitions(it => {
+            it.grouped(serParams.coreNum).flatMap(itemBatch => {
+              InferenceSupportive.multiThreadInference(itemBatch.toIterator, serParams)
             })
           })
         }
-
-
+        val resRdd = postProcessed.map(x => Record(x._1, x._2))
         /**
          * Predict ends, start writing data to output queue
          */
-        val resDf = spark.createDataFrame(resultPartitions)
+        val resDf = spark.createDataFrame(resRdd)
 
         var errFlag: Boolean = true
 

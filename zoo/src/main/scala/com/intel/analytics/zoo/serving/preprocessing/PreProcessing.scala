@@ -71,7 +71,7 @@ class PreProcessing(param: SerParams) {
           (kv._1, kv._2.asInstanceOf[Tensor[Float]])
         }
       }).toList
-      Seq(T(oneInsMap.head, oneInsMap.tail:_*))
+      Seq(T(oneInsMap.head, oneInsMap.tail: _*))
     })
     kvMap.head
   }
@@ -100,12 +100,27 @@ class PreProcessing(param: SerParams) {
 
   def decodeBase64(s: String): Activity = {
 
+    def decodeImage(idx: Int = 0): Tensor[Float] = {
+      val mat = OpenCVMethod.fromImageBytes(byteBuffer, Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
+      val (height, width, channel) = (mat.height(), mat.width(), mat.channels())
 
+      OpenCVMat.toFloatPixels(mat, arrayBuffer(idx))
+
+      val imageTensor = Tensor[Float](arrayBuffer(idx), Array(height, width, channel))
+      if (param.chwFlag) {
+        tensorBuffer(idx) = imageTensor.transpose(1, 3)
+          .transpose(2, 3).contiguous()
+      } else {
+        tensorBuffer(idx) = imageTensor
+      }
+      imageTensor
+    }
     def decodeTensor1(idx: Int, sparse: Boolean = false): Unit = {
       val alloc = new RootAllocator(Integer.MAX_VALUE)
       val MAX_ALLOC = 3 * 1024 * 1024 * 1024L
       val alloc4tensor = alloc.newChildAllocator("tensor", 0, MAX_ALLOC)
-      val reader = new ArrowFileReader(new ByteArrayReadableSeekableByteChannel(byteBuffer), alloc4tensor)
+      val reader = new ArrowFileReader(
+        new ByteArrayReadableSeekableByteChannel(byteBuffer), alloc4tensor)
       try {
         while (reader.loadNextBatch) {
           val vsr = reader.getVectorSchemaRoot
@@ -160,8 +175,9 @@ class PreProcessing(param: SerParams) {
     require(encodedList.length == tensorBuffer.length,
       "your input parameter length does not match your config.")
     (0 until encodedList.length).foreach(i => {
+      byteBuffer = java.util.Base64.getDecoder.decode(encodedList(i))
       param.dataType(i) match {
-        case DataType.IMAGE => decodeImage("", i)
+        case DataType.IMAGE => decodeImage(i)
         case DataType.TENSOR => decodeTensor1(i)
         case DataType.SPARSETENSOR => decodeTensor1(i, true)
       }
