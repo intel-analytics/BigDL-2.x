@@ -28,7 +28,7 @@ def get_train_data_iter(config, kv):
     from filelock import FileLock
     with FileLock("data.lock"):
         iters = get_mnist_iterator(config["batch_size"], (1, 28, 28),
-                                  num_parts=kv.num_workers, part_index=kv.rank)
+                                   num_parts=kv.num_workers, part_index=kv.rank)
         return iters[0]
 
 
@@ -37,7 +37,7 @@ def get_test_data_iter(config, kv):
     from filelock import FileLock
     with FileLock("data.lock"):
         iters = get_mnist_iterator(config["batch_size"], (1, 28, 28),
-                                  num_parts=kv.num_workers, part_index=kv.rank)
+                                   num_parts=kv.num_workers, part_index=kv.rank)
         return iters[1]
 
 

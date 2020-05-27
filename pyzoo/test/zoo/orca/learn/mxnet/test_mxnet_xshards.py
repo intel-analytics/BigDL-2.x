@@ -101,8 +101,8 @@ class TestMXNetXShards(TestCase):
                                                          orient='records', lines=False)
         test_data_shard.transform_shard(prepare_data_symbol)
         config = create_trainer_config(batch_size=32, log_interval=1, seed=42)
-        trainer = MXNetTrainer(config, train_data_shard, get_symbol_model, metrics_creator=get_metrics,
-                               test_data=test_data_shard)
+        trainer = MXNetTrainer(config, train_data_shard, get_symbol_model,
+                               metrics_creator=get_metrics, test_data=test_data_shard)
         trainer.train(nb_epoch=2)
 
     def test_xshards_gluon(self):
