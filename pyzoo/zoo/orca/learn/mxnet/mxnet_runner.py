@@ -71,6 +71,8 @@ class MXNetRunner(object):
                 if test_data is None:
                     self.val_data = None
                 else:
+                    assert isinstance(test_data, XShards), "Test data should be an instance of " \
+                                                           "XShards, please check your input"
                     test_data = test_data.get_partitions()
                     val_partition_data = ray.get(test_data[self.kv.rank].get_data())
                     val_data, val_label = get_data_label(val_partition_data)
@@ -80,8 +82,12 @@ class MXNetRunner(object):
                                                       shuffle=True)
             else:
                 # data_creator
+                assert callable(train_data), "Train data should be an instance of xShards or " \
+                                             "a callable function, please check your input"
                 self.train_data = train_data(self.config, self.kv)
                 if test_data is not None:
+                    assert callable(test_data), "Test data should be an instance of xShards or " \
+                                                "a callable function, please check your input"
                     self.val_data = test_data(self.config, self.kv)
                 else:
                     self.val_data = None
@@ -91,6 +97,10 @@ class MXNetRunner(object):
                 self.loss = self.loss_creator(self.config)
             else:
                 self.loss = None
+            if self.eval_metircs_creator:
+                self.eval_metrics = self.eval_metircs_creator(self.config)
+            else:
+                self.eval_metrics = None
             if self.val_data:
                 assert self.validation_metrics_creator, \
                     "Metrics not defined for validation, please specify metrics_creator"
@@ -106,13 +116,6 @@ class MXNetRunner(object):
                                              kvstore=self.kv)
             else:  # Trainer is not needed for symbolic API.
                 self.trainer = None
-
-            if self.eval_metircs_creator:
-                self.eval_metrics = self.eval_metircs_creator(self.config)
-            elif self.trainer:
-                self.eval_metrics = None
-            else:
-                self.eval_metrics = 'acc'
         else:  # server
             # Need to use the environment on each raylet process for the correct python environment.
             # TODO: Need to kill this process manually?
@@ -207,6 +210,8 @@ class MXNetRunner(object):
                 if "init" not in self.config:
                     from mxnet.initializer import Uniform
                     self.config["init"] = Uniform(0.01)  # This is the default value for MXNet
+                if self.eval_metrics is None:
+                    self.eval_metrics = 'acc'
                 self.model.fit(train_data=self.train_data,
                                num_epoch=nb_epoch,
                                initializer=self.config["init"],
