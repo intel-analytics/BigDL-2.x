@@ -459,7 +459,7 @@ class TFOptimizer:
         grads, variables = TFOptimizer._get_vars_grads_from_train_op(train_op)
         if dataset is None:
             dataset = TFOptimizer._get_dataset_from_loss(loss)
-        _ = dataset.tensors # trigger create tensors if not available
+        _ = dataset.tensors  # trigger create tensors if not available
         dataset_inputs = dataset._original_tensors
         if isinstance(dataset_inputs, tuple) and len(dataset_inputs) == 2:
             if inputs is None:
