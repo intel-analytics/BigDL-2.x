@@ -85,7 +85,7 @@ object InferenceSupportive {
       (key, Tensor[Float](params.coreNum +:
         inputSample(key).asInstanceOf[Tensor[Float]].size()))
     }).toList
-    val t = T(kvTuples.head, kvTuples.tail:_*)
+    val t = T(kvTuples.head, kvTuples.tail: _*)
     (0 until thisBatchSize).toParArray.foreach(i => {
       val dataTable = seq(i)._2.toTable
       t.keySet.foreach(key => {
