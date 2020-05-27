@@ -128,7 +128,7 @@ class InputQueue(API):
 
             elif isinstance(value, list):
                 # list will be considered as sparse tensor
-                assert len(list) == 3, "Sparse Tensor must have list of ndarray" \
+                assert len(value) == 3, "Sparse Tensor must have list of ndarray" \
                                        "with length 3, which represent " \
                                        "indices, values, shape respectively"
                 indices_field = pa.field("indices", pa.list_(pa.int32()))
@@ -143,8 +143,8 @@ class InputQueue(API):
                 values = value[1]
                 indices = value[0].astype("float32").flatten()
                 indices_shape = value[0].shape
-                data = pa.array([{'indices': indices},
-                                 {'indices_shape': indices_shape},
+                data = pa.array([{'indiceData': indices},
+                                 {'indiceShape': indices_shape},
                                  {'values': values},
                                  {'shape': shape}], type=sparse_tensor_type)
                 field_list.append(field)
