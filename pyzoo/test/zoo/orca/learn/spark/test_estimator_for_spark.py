@@ -139,7 +139,7 @@ def test_estimator_graph_predict(estimator_for_spark_fixture):
 
 def test_estimator_graph_fit_dataset(estimator_for_spark_fixture):
     import zoo.orca.data.pandas
-
+    tf.reset_default_graph()
     model = SimpleModel()
     sc = estimator_for_spark_fixture
     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
@@ -170,6 +170,7 @@ def test_estimator_graph_fit_dataset(estimator_for_spark_fixture):
 def test_estimator_graph_predict_dataset(estimator_for_spark_fixture):
 
     sc = estimator_for_spark_fixture
+    tf.reset_default_graph()
 
     model = SimpleModel()
     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
