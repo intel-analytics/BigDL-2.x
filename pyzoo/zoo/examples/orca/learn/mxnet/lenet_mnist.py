@@ -128,9 +128,9 @@ if __name__ == '__main__':
                                    optimizer_params={'learning_rate': opt.learning_rate},
                                    log_interval=opt.log_interval, seed=42)
     trainer = MXNetTrainer(config, train_data=get_train_data_iter, model_creator=get_model,
-                           loss_creator=get_loss, metrics_creator=get_metrics,
+                           loss_creator=get_loss, validation_metrics_creator=get_metrics,
                            num_workers=opt.num_workers, num_servers=opt.num_servers,
-                           test_data=get_test_data_iter)
+                           test_data=get_test_data_iter, eval_metrics_creator=get_metrics)
     trainer.train(nb_epoch=opt.epochs)
     ray_ctx.stop()
     sc.stop()
