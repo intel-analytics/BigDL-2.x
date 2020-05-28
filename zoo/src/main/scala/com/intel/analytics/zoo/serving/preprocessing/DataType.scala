@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.utils
+package com.intel.analytics.zoo.serving.preprocessing
 
-class SerParams(helper: ClusterServingHelper) extends Serializable {
-  var redisHost = helper.redisHost
-  var redisPort = helper.redisPort.toInt
-  val coreNum = helper.coreNum
-  val filter = helper.filter
-  val chwFlag = helper.chwFlag
-  val C = helper.dataShape(0)(0)
-  val H = helper.dataShape(0)(1)
-  val W = helper.dataShape(0)(2)
-  val modelType = helper.modelType
-  val model = helper.loadInferenceModel()
+object DataType extends Enumeration{
+  val IMAGE = value("IMAGE", 0)
+  val TENSOR = value("TENSOR", 1)
+  val SPARSETENSOR = value("SPARSETENSOR", 2)
+
+  class DataTypeEnumVal(name: String, val value: Int) extends Val(nextId, name)
+
+  protected final def value(name: String, value: Int): DataTypeEnumVal =
+    new DataTypeEnumVal(name, value)
 }
