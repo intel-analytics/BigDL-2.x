@@ -378,6 +378,188 @@ All the supported parameter are listed here:
 
 **User can adjust these options to tune the performance of the HTTP server.**
 
+#### RESTful API
+This part describes these API endpoints and an end-to-end example on usage. 
+The requests and responses are in JSON format. The composition of them depends on the requests type or verb. See the APIs for details.
+In case of error, all APIs will return a JSON object in the response body with error as key and the error message as the value:
+```
+{
+  "error": <error message string>
+}
+```
+##### Predict API
+URL
+```
+POST http://host:port/predict
+```
+Request Example for images as inputs:
+```
+curl -d \
+'{
+  "instances": [
+    {
+      "image": "/9j/4AAQSkZJRgABAQEASABIAAD/7RcEUGhvdG9za..."
+    },
+    {
+      "image": "/9j/4AAQSkZJRgABAQEASABIAAD/7RcEUGhvdG9za..."
+    },
+    {
+      "image": "/9j/4AAQSkZJRgABAQEASABIAAD/7RcEUGhvdG9za..."
+    },
+    {
+      "image": "/9j/4AAQSkZJRgABAQEASABIAAD/7RcEUGhvdG9za..."
+    },
+    {
+      "image": "/9j/4AAQSkZJRgABAQEASABIAAD/7RcEUGhvdG9za..."
+    }
+  ]
+}' \
+-X POST http://172.168.0.109:10020/predict
+```
+Response Example
+```
+{
+  "predictions": [
+    "{value=[[903,0.1306194]]}",
+    "{value=[[903,0.1306194]]}",
+    "{value=[[903,0.1306194]]}",
+    "{value=[[903,0.1306194]]}",
+    "{value=[[903,0.1306194]]}"
+  ]
+}
+```
+Request Example for tensor as inputs:
+```
+curl -d \
+'{
+  "instances" : [ {
+    "ids" : [ 100.0, 88.0 ]
+  }, {
+    "ids" : [ 100.0, 88.0 ]
+  }, {
+    "ids" : [ 100.0, 88.0 ]
+  }, {
+    "ids" : [ 100.0, 88.0 ]
+  }, {
+    "ids" : [ 100.0, 88.0 ]
+  } ]
+}' \
+-X POST http://172.168.0.109:10020/predict
+```
+Response Example
+```
+{
+  "predictions": [
+    "{value=[[1,0.6427843]]}",
+    "{value=[[1,0.6427843]]}",
+    "{value=[[1,0.6427843]]}",
+    "{value=[[1,0.6427843]]}",
+    "{value=[[1,0.6427842]]}"
+  ]
+}
+```
+
+##### Metrics API
+URL
+```
+GET http://host:port/metrics
+```
+Response example:
+```
+[
+  {
+    name: "zoo.serving.redis.get",
+    count: 810,
+    meanRate: 12.627772820651845,
+    min: 0,
+    max: 25,
+    mean: 0.9687099303718213,
+    median: 0.928579,
+    stdDev: 0.8150031623593447,
+    _75thPercentile: 1.000047,
+    _95thPercentile: 1.141443,
+    _98thPercentile: 1.268665,
+    _99thPercentile: 1.608387,
+    _999thPercentile: 25.874584
+  },
+  {
+    name: "zoo.serving.redis.put",
+    count: 192,
+    meanRate: 2.9928448518681816,
+    min: 4,
+    max: 207,
+    mean: 8.470988823179553,
+    median: 6.909573,
+    stdDev: 13.269285415774808,
+    _75thPercentile: 8.262833,
+    _95thPercentile: 14.828704,
+    _98thPercentile: 18.860232,
+    _99thPercentile: 19.825203,
+    _999thPercentile: 207.541874
+  },
+  {
+    name: "zoo.serving.redis.wait",
+    count: 192,
+    meanRate: 2.992786169232195,
+    min: 82,
+    max: 773,
+    mean: 93.03099107296806,
+    median: 88.952799,
+    stdDev: 45.54085374821418,
+    _75thPercentile: 91.893393,
+    _95thPercentile: 118.370628,
+    _98thPercentile: 119.941905,
+    _99thPercentile: 121.158649,
+    _999thPercentile: 773.497556
+  },
+  {
+    name: "zoo.serving.request.metrics",
+    count: 1,
+    meanRate: 0.015586927261874562,
+    min: 18,
+    max: 18,
+    mean: 18.232472,
+    median: 18.232472,
+    stdDev: 0,
+    _75thPercentile: 18.232472,
+    _95thPercentile: 18.232472,
+    _98thPercentile: 18.232472,
+    _99thPercentile: 18.232472,
+    _999thPercentile: 18.232472
+  },
+  {
+    name: "zoo.serving.request.overall",
+    count: 385,
+    meanRate: 6.000929977336221,
+    min: 18,
+    max: 894,
+    mean: 94.5795886310155,
+    median: 89.946348,
+    stdDev: 49.63620144068503,
+    _75thPercentile: 93.851032,
+    _95thPercentile: 121.148026,
+    _98thPercentile: 123.118267,
+    _99thPercentile: 124.053326,
+    _999thPercentile: 894.004612
+  },
+  {
+    name: "zoo.serving.request.predict",
+    count: 192,
+    meanRate: 2.9925722215434205,
+    min: 85,
+    max: 894,
+    mean: 96.63308151066575,
+    median: 92.323305,
+    stdDev: 53.17110030594844,
+    _75thPercentile: 94.839714,
+    _95thPercentile: 122.564496,
+    _98thPercentile: 123.974892,
+    _99thPercentile: 125.636335,
+    _999thPercentile: 894.062819
+  }
+]
+```
+
 ## Optional Operations
 ### Update Model or Configurations
 To update your model, you could replace your model file in your model directory, and restart Cluster Serving by `cluster-serving-restart`. Note that you could also change your configurations in `config.yaml` and restart serving.
