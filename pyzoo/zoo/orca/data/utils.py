@@ -16,6 +16,7 @@
 import os
 
 from zoo.common import get_file_list
+import numpy as np
 
 
 # split list into n chunks
@@ -138,3 +139,71 @@ def open_image(path):
         return Image.open(BytesIO(data["Body"].read()))
     else:  # Local path
         return Image.open(path)
+
+
+def check_data_type_and_to_list(data):
+    result = {}
+    assert isinstance(data, dict), "each shard should be an dict"
+    assert "x" in data, "key x should in each shard"
+    x = data["x"]
+    if isinstance(x, np.ndarray):
+        new_x = [x]
+    elif isinstance(x, list) and all([isinstance(xi, np.ndarray) for xi in x]):
+        new_x = x
+    else:
+        raise ValueError("value of x should be a ndarray or a list of ndarrays")
+    result["x"] = new_x
+    if "y" in data:
+        y = data["y"]
+        if isinstance(y, np.ndarray):
+            new_y = [y]
+        elif isinstance(y, list) and all([isinstance(yi, np.ndarray) for yi in y]):
+            new_y = y
+        else:
+            raise ValueError("value of x should be a ndarray or a list of ndarrays")
+        result["y"] = new_y
+    return result
+
+
+def get_spec(data):
+    data = check_data_type_and_to_list(data)
+    feature_spec = [(feat.dtype, feat.shape[1:])
+                    for feat in data["x"]]
+    if "y" in data:
+        label_spec = [(label.dtype, label.shape[1:])
+                      for label in data["y"]]
+    else:
+        label_spec = None
+    return feature_spec, label_spec
+
+
+# todo this might be very slow
+def flatten_xy(data):
+    data = check_data_type_and_to_list(data)
+    features = data["x"]
+
+    has_label = "y" in data
+    labels = data["y"] if has_label else None
+    length = features[0].shape[0]
+
+    for i in range(length):
+        fs = [feat[i] for feat in features]
+        if has_label:
+            ls = [l[i] for l in labels]
+            yield (fs, ls)
+        else:
+            yield (fs,)
+
+
+# todo this might be very slow
+def to_sample(data):
+    from bigdl.util.common import Sample
+    data = check_data_type_and_to_list(data)
+    features = data["x"]
+    labels = data["y"]
+    length = features[0].shape[0]
+
+    for i in range(length):
+        fs = [feat[i] for feat in features]
+        ls = [l[i] for l in labels]
+        yield Sample.from_ndarray(np.array(fs), np.array(ls))
