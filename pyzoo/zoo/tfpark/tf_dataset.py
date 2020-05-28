@@ -764,7 +764,8 @@ class TFDataDataset(TFDataset):
 
     def get_prediction_data(self):
         jvalue = callZooFunc("float", "createMiniBatchRDDFromTFDataset",
-                             self.graph_def, self._train_init_op_name, self._train_output_names,
+                             self.graph_def, self._train_init_op_name, self.table_init_name,
+                             self._train_output_names,
                              self.output_types, self.shard_index.name)
         rdd = jvalue.value().toJavaRDD()
         return rdd
@@ -773,7 +774,8 @@ class TFDataDataset(TFDataset):
 
         feature_length = len(nest.flatten(self.tensor_structure[0]))
         jvalue = callZooFunc("float", "createMiniBatchRDDFromTFDatasetEval",
-                             self.graph_def, self._train_init_op_name, self._train_output_names,
+                             self.graph_def, self._train_init_op_name, self.table_init_name,
+                             self._train_output_names,
                              self.output_types, self.shard_index.name, feature_length)
         rdd = jvalue.value().toJavaRDD()
         return rdd
@@ -787,7 +789,8 @@ class TFDataDataset(TFDataset):
     def get_validation_data(self):
         if self.validation_dataset is not None:
             jvalue = callZooFunc("float", "createTFDataFeatureSet",
-                                 self.graph_def, self._val_init_op_name, self._val_output_names,
+                                 self.graph_def, self._val_init_op_name, self.table_init_name,
+                                 self._val_output_names,
                                  self.output_types, self.shard_index.name)
             return FeatureSet(jvalue=jvalue)
         return None
