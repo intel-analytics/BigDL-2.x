@@ -37,8 +37,8 @@ import org.apache.spark.sql.SparkSession
 import org.yaml.snakeyaml.Yaml
 import java.time.LocalDateTime
 
-import com.intel.analytics.zoo.serving.DataType
-import com.intel.analytics.zoo.serving.DataType.DataTypeEnumVal
+import com.intel.analytics.zoo.serving.preprocessing.DataType
+import com.intel.analytics.zoo.serving.preprocessing.DataType.DataTypeEnumVal
 
 import scala.reflect.ClassTag
 import scala.util.parsing.json._
@@ -57,6 +57,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
 
   var modelInputs: String = null
   var modelOutputs: String = null
+  var inferenceMode: String = null
 
   var redisHost: String = null
   var redisPort: String = null
@@ -66,7 +67,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
   var blasFlag: Boolean = false
   var chwFlag: Boolean = true
 
-  var dataType: DataTypeEnumVal = null
+  var dataType: Array[DataTypeEnumVal] = null
   var dataShape: Array[Array[Int]] = Array[Array[Int]]()
   var filter: String = "topN"
 
@@ -99,6 +100,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     val modelFolder = getYaml(modelConfig, "path", null)
     modelInputs = getYaml(modelConfig, "inputs", "")
     modelOutputs = getYaml(modelConfig, "outputs", "")
+    inferenceMode = getYaml(modelConfig, "mode", "single")
 
     parseModelType(modelFolder)
 
@@ -129,52 +131,59 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
       "and port are not valid, please check.")
     redisHost = redis.split(":").head.trim
     redisPort = redis.split(":").last.trim
-    val dataTypeStr = getYaml(dataConfig, "data_type", "image").toLowerCase()
-    dataType = dataTypeStr match {
-      case "image" =>
-        DataType.IMAGE
-      case "tensor" =>
-        DataType.TENSOR
-      case _ =>
-        logError("Invalid data type, please check your data_type")
-        null
-    }
-    val shapeList = dataType match {
-      case DataType.IMAGE =>
-        val shape = getYaml(dataConfig, "image_shape", "3,224,224")
-        val shapeList = shape.split(",").map(x => x.trim.toInt)
-        require(shapeList.size == 3, "Your data shape must has dimension as 3")
-        Array(shapeList)
-      case DataType.TENSOR =>
-        val shape = getYaml(dataConfig, "tensor_shape", null)
-        val jsonList: Option[Any] = JSON.parseFull(shape)
-        jsonList match {
-          case Some(list) =>
-            val l: List[Any] = list.asInstanceOf[List[Any]]
-            val converted = l.head match {
-              case _: lang.Double =>
-                List(l.map(_.asInstanceOf[Double].toInt).toArray)
-              case _: List[Double] =>
-                l.map(tensorShape => tensorShape.asInstanceOf[List[Double]].map(x => x.toInt)
-                  .toArray)
-              case _ =>
-                logError(s"Invalid shape format, please check your tensor_shape, your input is " +
-                  s"${shape}")
-                null
-            }
+    //    dataType = dataTypeStr match {
+//      case "image" =>
+//        DataType.IMAGE
+//      case "tensor" =>
+//        DataType.TENSOR
+//      case _ =>
+//        logError("Invalid data type, please check your data_type")
+//        null
+//    }
+//    val shapeList = dataType match {
+//      case DataType.IMAGE =>
+//        val shape = getYaml(dataConfig, "image_shape", "3,224,224")
+//        val shapeList = shape.split(",").map(x => x.trim.toInt)
+//        require(shapeList.size == 3, "Your data shape must has dimension as 3")
+//        Array(shapeList)
+//      case DataType.TENSOR =>
+//        val shape = getYaml(dataConfig, "tensor_shape", null)
+//        val jsonList: Option[Any] = JSON.parseFull(shape)
+//        jsonList match {
+//          case Some(list) =>
+//            val l: List[Any] = list.asInstanceOf[List[Any]]
+//            val converted = l.head match {
+//              case _: lang.Double =>
+//                List(l.map(_.asInstanceOf[Double].toInt).toArray)
+//              case _: List[Double] =>
+//                l.map(tensorShape => tensorShape.asInstanceOf[List[Double]].map(x => x.toInt)
+//                  .toArray)
+//              case _ =>
+//                logError(s"Invalid shape format, please check your tensor_shape, your input is " +
+//                  s"${shape}")
+//                null
+//            }
+//
+//            converted.toArray
+//          case None => logError(s"Invalid shape format, please check your tensor_shape, your " +
+//            s"input is ${shape}")
+//            null
+//        }
+//      case _ =>
+//        logError("Invalid data type, please check your data_type")
+//        null
+//    }
+    val shapeStr = getYaml(dataConfig, "shape", "3,224,224")
+    require(shapeStr != null, "data shape in config must be specified.")
+//    val shapeList = shape.split(",").map(x => x.trim.toInt)
+//    for (i <- shapeList) {
+//      dataShape = dataShape :+ i
+//    }
+    dataShape = ConfigUtils.parseShape(shapeStr)
+    val typeStr = getYaml(dataConfig, "type", "image")
+    require(typeStr != null, "data type in config must be specified.")
+    dataType = ConfigUtils.parseType(typeStr)
 
-            converted.toArray
-          case None => logError(s"Invalid shape format, please check your tensor_shape, your " +
-            s"input is ${shape}")
-            null
-        }
-      case _ =>
-        logError("Invalid data type, please check your data_type")
-        null
-    }
-    for (i <- shapeList) {
-      dataShape = dataShape :+ i
-    }
 
     filter = getYaml(dataConfig, "filter", "topN(1)")
 
