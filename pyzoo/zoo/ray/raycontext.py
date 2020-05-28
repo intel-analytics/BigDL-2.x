@@ -304,8 +304,8 @@ class RayContext(object):
         Default is 0 and in this case the local driver wouldn't have any ray workload.
 
         :return The dictionary of address information about the ray cluster.
-        Information contains node_ip_address, redis_address, object_store_address, raylet_socket_name,
-        webui_url and session_dir.
+        Information contains node_ip_address, redis_address, object_store_address,
+        raylet_socket_name, webui_url and session_dir.
         """
         self.stopped = False
         if self.is_local:
