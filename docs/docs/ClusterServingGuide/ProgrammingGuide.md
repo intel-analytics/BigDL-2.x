@@ -23,6 +23,8 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
    
    4. [Model inference](#4-model-inference)
 
+   5. [HTTP Server](#5-http-server)
+
 * [Optional Operations](#optional-operations)
 
      - [Update Model or Configurations](#update-model-or-configurations)
@@ -331,6 +333,8 @@ Where `n` is the number of `top_n` in your configuration file. This string could
 import json
 result_class_prob_map = json.loads(img1_result)
 ```
+
+### 5. HTTP Server
 
 ## Optional Operations
 ### Update Model or Configurations
