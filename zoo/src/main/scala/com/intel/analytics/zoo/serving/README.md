@@ -162,7 +162,7 @@ java -jar analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ZOO_VERS
 ```
 And check the status of the HTTP server with:
 ```
-curl  http://${BINDED_HOST_IP}:10020/
+curl  http://${BINDED_HOST_IP}:${BINDED_HOST_PORT}/
 ```
 If you get a response like "welcome to analytics zoo web serving frontend", that means the HTTP server is started successfully.
 #### Start options
@@ -171,18 +171,18 @@ Users can pass options to the HTTP server when start it:
 java -jar analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ZOO_VERSION}-http.jar --redisHost="172.16.0.109"
 ```
 All the supported options are listed here:
-* interface: the binded server interface, default is "0.0.0.0"
-* port: the binded server port, default is 10020
-* redisHost: the host IP of redis server, default is "localhost"
-* redisPort: the host port of redis server, default is 6379
-* redisInputQueue: the input queue of redis server, default is "serving_stream"
-* redisOutputQueue: the output queue of redis server, default is "result:" 
-* parallelism: the parallelism of requests processing, default is 1000
-* timeWindow: the timeWindow wait to pub inputs to redis, default is 0
-* countWindow: the timeWindow wait to ub inputs to redis, default is 56
-* tokenBucketEnabled: the switch to enable/disable RateLimiter, default is false
-* tokensPerSecond: the rate of permits per second, default is 100
-* tokenAcquireTimeout: acquires a permit from this RateLimiter if it can be obtained without exceeding the specified timeout(ms), default is 100
+* **interface**: the binded server interface, default is "0.0.0.0"
+* **port**: the binded server port, default is 10020
+* **redisHost**: the host IP of redis server, default is "localhost"
+* **redisPort**: the host port of redis server, default is 6379
+* **redisInputQueue**: the input queue of redis server, default is "serving_stream"
+* **redisOutputQueue**: the output queue of redis server, default is "result:" 
+* **parallelism**: the parallelism of requests processing, default is 1000
+* **timeWindow**: the timeWindow wait to pub inputs to redis, default is 0
+* **countWindow**: the timeWindow wait to ub inputs to redis, default is 56
+* **tokenBucketEnabled**: the switch to enable/disable RateLimiter, default is false
+* **tokensPerSecond**: the rate of permits per second, default is 100
+* **tokenAcquireTimeout**: acquires a permit from this RateLimiter if it can be obtained without exceeding the specified timeout(ms), default is 100
 
 
 ## FAQ
