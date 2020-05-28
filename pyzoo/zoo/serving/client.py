@@ -114,23 +114,29 @@ class InputQueue(API):
 
             elif isinstance(value, np.ndarray):
                 # ndarray value will be considered as tensor
+                indices_field = pa.field("indiceData", pa.list_(pa.int32()))
+                indices_shape_field = pa.field("indiceShape", pa.list_(pa.int32()))
                 data_field = pa.field("data", pa.list_(pa.float32()))
                 shape_field = pa.field("shape", pa.list_(pa.int32()))
-                tensor_type = pa.struct([data_field, shape_field])
+                tensor_type = pa.struct(
+                    [indices_field, indices_shape_field, data_field, shape_field])
                 field = pa.field(key, tensor_type)
 
                 shape = np.array(value.shape)
                 d = value.astype("float32").flatten()
-                data = pa.array([{'data': d}, {'shape': shape}],
-                                type=tensor_type)
+                # data = pa.array([{'data': d}, {'shape': shape}, {}],
+                #                 type=tensor_type)
+                data = pa.array([{'indiceData': []},
+                                 {'indiceShape': []},
+                                 {'data': d},
+                                 {'shape': shape}], type=tensor_type)
                 field_list.append(field)
                 data_list.append(data)
 
             elif isinstance(value, list):
                 # list will be considered as sparse tensor
                 assert len(value) == 3, "Sparse Tensor must have list of ndarray" \
-                                       "with length 3, which represent " \
-                                       "indices, values, shape respectively"
+                    "with length 3, which represent indices, values, shape respectively"
                 indices_field = pa.field("indiceData", pa.list_(pa.int32()))
                 indices_shape_field = pa.field("indiceShape", pa.list_(pa.int32()))
                 value_field = pa.field("data", pa.list_(pa.float32()))

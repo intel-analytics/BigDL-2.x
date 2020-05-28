@@ -23,29 +23,24 @@ import com.intel.analytics.zoo.serving.PostProcessing
 import com.intel.analytics.zoo.serving.utils.SerParams
 
 object InferenceSupportive {
+  def singleThreadInference(preProcessed: Iterator[(String, Activity)],
+                           params: SerParams): Iterator[(String, String)] = {
+    val postProcessed = preProcessed.grouped(params.coreNum).flatMap(pathByteBatch => {
+      val thisBatchSize = pathByteBatch.size
+      (0 until params.coreNum).map(idx => {
+        val t = pathByteBatch(idx)._2
+        val result = params.model.doPredict(t)
+        val value = PostProcessing(result.toTensor[Float])
+        (pathByteBatch(idx)._1, value)
+      })
+    })
+    postProcessed
+  }
   def multiThreadInference(preProcessed: Iterator[(String, Activity)],
                            params: SerParams): Iterator[(String, String)] = {
     val postProcessed = preProcessed.grouped(params.coreNum).flatMap(pathByteBatch => {
       val thisBatchSize = pathByteBatch.size
-//      val t = if (params.chwFlag) {
-//        Tensor[Float](params.coreNum, params.C, params.H, params.W)
-//      } else {
-//        Tensor[Float](params.coreNum, params.H, params.W, params.C)
-//      }
-//
-//      (0 until thisBatchSize).toParArray.foreach(i =>
-//        t.select(1, i + 1).copy(pathByteBatch(i)._2))
-//
-//      val thisT = if (params.chwFlag) {
-//        t.resize(thisBatchSize, params.C, params.H, params.W)
-//      } else {
-//        t.resize(thisBatchSize, params.H, params.W, params.C)
-//      }
-//      val x = if (params.modelType == "openvino") {
-//        thisT.addSingletonDimension()
-//      } else {
-//        thisT
-//      }
+
       val t = batchInput(pathByteBatch, params)
       /**
        * addSingletonDimension method will modify the

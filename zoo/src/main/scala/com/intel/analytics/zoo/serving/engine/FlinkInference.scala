@@ -52,9 +52,11 @@ class FlinkInference(params: SerParams)
         (uri, input)
       })
     })
-
-    val postProcessed = InferenceSupportive.multiThreadInference(preProcessed, params).toList
-
+    val postProcessed = if (params.inferenceMode == "single") {
+      InferenceSupportive.singleThreadInference(preProcessed, params).toList
+    } else {
+      InferenceSupportive.multiThreadInference(preProcessed, params).toList
+    }
     val t2 = System.nanoTime()
     logger.info(s"${postProcessed.size} records backend time ${(t2 - t1) / 1e9} s")
     postProcessed

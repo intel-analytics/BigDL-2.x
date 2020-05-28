@@ -57,6 +57,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
 
   var modelInputs: String = null
   var modelOutputs: String = null
+  var inferenceMode: String = null
 
   var redisHost: String = null
   var redisPort: String = null
@@ -99,6 +100,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     val modelFolder = getYaml(modelConfig, "path", null)
     modelInputs = getYaml(modelConfig, "inputs", "")
     modelOutputs = getYaml(modelConfig, "outputs", "")
+    inferenceMode = getYaml(modelConfig, "mode", "single")
 
     parseModelType(modelFolder)
 

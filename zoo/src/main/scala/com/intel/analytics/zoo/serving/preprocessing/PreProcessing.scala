@@ -41,14 +41,14 @@ class PreProcessing(param: SerParams) {
   var tensorBuffer: Array[Tensor[Float]] = null
   var arrayBuffer: Array[Array[Float]] = null
 
-  require(param.dataShape.length == param.dataType.length,
-    "Data shape length must be identical to data type length," +
-      "and match each other respectively")
+//  require(param.dataShape.length == param.dataType.length,
+//    "Data shape length must be identical to data type length," +
+//      "and match each other respectively")
 
   var byteBuffer: Array[Byte] = null
 
-  tensorBuffer = new Array[Tensor[Float]](param.dataShape.length)
-  createBuffer()
+//  tensorBuffer = new Array[Tensor[Float]](param.dataShape.length)
+//  createBuffer()
 
   def createBuffer(): Unit = {
     arrayBuffer = new Array[Array[Float]](param.dataShape.length)
@@ -65,13 +65,14 @@ class PreProcessing(param: SerParams) {
       val oneInsMap = insMap.map(kv => {
         if (kv._2.isInstanceOf[String]) {
           (kv._1, decodeImage(kv._2.asInstanceOf[String]))
-        } else if (kv._2.isInstanceOf[(ArrayBuffer[Int], ArrayBuffer[Any])]) {
-          (kv._1, decodeTensor(kv._2.asInstanceOf[(ArrayBuffer[Int], ArrayBuffer[Float])]))
         } else {
-          (kv._1, kv._2.asInstanceOf[Tensor[Float]])
+          (kv._1, decodeTensor(kv._2.asInstanceOf[(
+            ArrayBuffer[Int], ArrayBuffer[Float], ArrayBuffer[Int], ArrayBuffer[Int])]))
         }
       }).toList
-      Seq(T(oneInsMap.head, oneInsMap.tail: _*))
+//      Seq(T(oneInsMap.head, oneInsMap.tail: _*))
+      val arr = oneInsMap.map(x => x._2)
+      Seq(T.array(arr.toArray))
     })
     kvMap.head
   }
@@ -91,10 +92,30 @@ class PreProcessing(param: SerParams) {
     }
     imageTensor
   }
-  def decodeTensor(info: (ArrayBuffer[Int], ArrayBuffer[Float])): Tensor[Float] = {
+  def decodeTensor(info: (ArrayBuffer[Int], ArrayBuffer[Float],
+    ArrayBuffer[Int], ArrayBuffer[Int])): Tensor[Float] = {
     val data = info._2.toArray
     val shape = info._1.toArray
-    Tensor[Float](data, shape)
+    if (info._3.size == 0) {
+      Tensor[Float](data, shape)
+    } else {
+      val indiceData = info._4.toArray
+      val indiceShape = info._3.toArray
+      var indice = new Array[Array[Int]](0)
+      val colLength = indiceShape(1)
+      var arr: Array[Int] = null
+      (0 until indiceData.length).foreach(i => {
+        if (i % colLength == 0) {
+          arr = new Array[Int](colLength)
+        }
+        arr(i % colLength) = indiceData(i)
+        if ((i + 1) % colLength == 0) {
+          indice = indice :+ arr
+        }
+      })
+      Tensor.sparse(indice, data, shape)
+    }
+
   }
 
 

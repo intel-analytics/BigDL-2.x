@@ -25,6 +25,7 @@ class SerParams(helper: ClusterServingHelper) extends Serializable {
 //  val C = helper.dataShape(0)(0)
 //  val H = helper.dataShape(0)(0)
 //  val W = helper.dataShape(0)(0)
+  val inferenceMode = helper.inferenceMode
   val dataShape = helper.dataShape
   val dataType = helper.dataType
   val modelType = helper.modelType
