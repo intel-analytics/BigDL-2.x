@@ -21,7 +21,6 @@ import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.server.Directives.{complete, path, _}
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
@@ -97,7 +96,8 @@ object FrontEndApp extends Supportive {
           val querier = silent("querier take")() {
             querierQueue.take()
           }
-          val results = timing(s"query message wait for key $ids")() {
+          val results = timing(s"query message wait for key $ids")(
+            overallRequestTimer, waitRedisTimer) {
             Await.result(querier ? queryMessage, timeout.duration)
               .asInstanceOf[Seq[(String, util.Map[String, String])]]
           }
@@ -139,17 +139,19 @@ object FrontEndApp extends Supportive {
               complete(500, error.toString)
             } else {
               try {
-                 val instances = timing("json deserialization")() {
-                  JsonUtil.fromJson(classOf[Instances], content)
+                val result = timing("predict")(overallRequestTimer, predictRequestTimer) {
+                  val instances = timing("json deserialization")() {
+                    JsonUtil.fromJson(classOf[Instances], content)
+                  }
+                  val inputs = instances.instances.map(instance => {
+                    InstancesPredictionInput(Instances(instance))
+                  })
+                  val outputs = processPredictionInput(inputs)
+                  Predictions(outputs)
                 }
-                 val inputs = instances.instances.map(instance => {
-                   InstancesPredictionInput(Instances(instance))
-                 })
-                 val outputs = processPredictionInput(inputs)
-                 val result = Predictions(outputs)
-                 silent("response complete")() {
-                   complete(200, result.toString)
-                 }
+                silent("response complete")() {
+                  complete(200, result.toString)
+                }
               } catch {
                 case e =>
                   val error = ServingError("Wrong content format")
