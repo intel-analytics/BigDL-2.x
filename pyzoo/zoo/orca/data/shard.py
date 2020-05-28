@@ -38,6 +38,13 @@ class XShards(object):
         """
         pass
 
+    def num_partitions(self):
+        """
+        return the number of partitions in this XShards
+        :return: an int
+        """
+        pass
+
 
 class RayXShards(XShards):
     """
@@ -69,6 +76,9 @@ class RayXShards(XShards):
         """
         import ray
         return ray.get([shard.get_data.remote() for shard in self.shard_list])
+
+    def num_partitions(self):
+        return len(self.partitions)
 
     def repartition(self, num_partitions):
         """
@@ -110,6 +120,9 @@ class SparkXShards(XShards):
 
     def collect(self):
         return self.rdd.collect()
+
+    def num_partitions(self):
+        return self.rdd.getNumPartitions()
 
     def repartition(self, num_partitions):
         self.rdd = self.rdd.repartition(num_partitions)
@@ -213,3 +226,11 @@ class SparkXShards(XShards):
                     raise Exception("Invalid key for this XShards")
             return self.rdd.map(lambda data: len(data[key]) if hasattr(data[key], '__len__')
                                 else 1).reduce(lambda l1, l2: l1 + l2)
+
+    def save_pickle(self, path, batchSize=10):
+        self.rdd.saveAsPickleFile(path, batchSize)
+        return self
+
+    @classmethod
+    def load_pickle(cls, path, sc, minPartitions=None):
+        return SparkXShards(sc.pickleFile(path, minPartitions))

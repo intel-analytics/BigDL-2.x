@@ -8,7 +8,8 @@ import time
 input_api = InputQueue()
 base_path = os.getcwd()
 arr = cv2.imread("cat1.jpeg")
-
+input_api.enqueue_image("x", arr)
+time.sleep(5)
 
 for i in range(10000):
     input_api.enqueue_image("x", arr)

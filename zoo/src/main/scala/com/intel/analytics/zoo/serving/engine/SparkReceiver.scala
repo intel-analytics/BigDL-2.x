@@ -25,61 +25,47 @@ import redis.clients.jedis.{Jedis, StreamEntryID}
 import scala.collection.JavaConverters._
 
 
-class ServingReceiver ()
+class ServingReceiver (redisHost: String = "localhost", redisPort: Int = 6379)
   extends Receiver[(String, String)](StorageLevel.MEMORY_ONLY) {
 
   override def onStart(): Unit = {
-    val jedis = new Jedis("localhost", 6379)
+    val jedis = new Jedis(redisHost, redisPort)
     try {
-      jedis.xgroupCreate("image_stream", "serving",
+      jedis.xgroupCreate("serving_stream", "serving",
         new StreamEntryID(0, 0), true)
     } catch {
       case e: Exception =>
         println(s"$e exist group")
     }
-    jedis.xreadGroup(
-      "serving",
-      "cli",
-      512,
-      50,
-      false,
-      new SimpleEntry("image_stream", new StreamEntryID(0, 0)))
+//    jedis.xreadGroup(
+//      "serving",
+//      "cli",
+//      64,
+//      1,
+//      false,
+//      new SimpleEntry("serving_stream", new StreamEntryID(0, 0)))
     while (!isStopped) {
       val response = jedis.xreadGroup(
         "serving",
         "cli",
-        512,
-        50,
+        64,
+        1,
         false,
-        new SimpleEntry("image_stream", StreamEntryID.UNRECEIVED_ENTRY)
-      ).asScala
+        new SimpleEntry("serving_stream", StreamEntryID.UNRECEIVED_ENTRY)
+      )
       Thread.sleep(10)
       if (response != null) {
-        for (streamMessages <- response) {
+        for (streamMessages <- response.asScala) {
           //          println(s"receiving!!! ${streamMessages.getValue.size()}")
           val key = streamMessages.getKey
           val entries = streamMessages.getValue.asScala
-          //          val it = entries.map { e =>
-          //            (e.getFields.get("uri"), e.getFields.get("image"))
-          //          }.toIterator
-          //          store(it)
           val ppl = jedis.pipelined()
           entries.foreach(e => {
-            val d = (e.getFields.get("uri"), e.getFields.get("image"))
+            val d = (e.getFields.get("uri"), e.getFields.get("data"))
             store(d)
             ppl.xack("image_stream", "serving", e.getID)
           })
           ppl.sync()
-          //          var i = 0
-          //          for (e <- entries) {
-          //            var p = jedis.pipelined()
-          //              p.xack("image_stream", "serving", e.getID)
-          //            i = i + 1
-          //            if (i % 1 == 0) {
-          //              p.sync()
-          //              p = jedis.pipelined()
-          //            }
-          //          }
         }
       }
     }
