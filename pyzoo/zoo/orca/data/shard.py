@@ -115,8 +115,7 @@ class SparkXShards(XShards):
         self.rdd = rdd
 
     def transform_shard(self, func, *args):
-        self.rdd = self.rdd.map(lambda data: func(data, *args))
-        return self
+        return SparkXShards(self.rdd.map(lambda data: func(data, *args)))
 
     def collect(self):
         return self.rdd.collect()
