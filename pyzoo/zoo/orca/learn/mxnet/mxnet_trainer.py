@@ -50,7 +50,7 @@ class MXNetTrainer(object):
     :param loss_creator: A function that takes config as argument and returns an MXNet loss.
     This is not needed for symbolic API where loss is already defined as model output.
 
-    :param train_resize_batch_num: The number of batches per epoch to resize to. Default is None,
+    :param train_resize_batch_num: The number of batches per epoch to resize to. Default is None.
     You might need to specify this if the size of train_data for each worker varies.
 
     :param eval_metrics_creator: A function that takes config as argument and returns one or

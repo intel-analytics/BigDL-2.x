@@ -72,9 +72,10 @@ class TestMXNetGluon(TestCase):
     def test_gluon(self):
         config = create_trainer_config(batch_size=32, log_interval=2, optimizer="adam",
                                        optimizer_params={'learning_rate': 0.02})
-        trainer = MXNetTrainer(config, get_train_data_iter, get_model, get_loss, get_metrics,
-                               num_workers=2, test_data=get_test_data_iter,
-                               eval_metrics_creator=get_metrics)
+        trainer = MXNetTrainer(config, get_train_data_iter, get_model, get_loss,
+                               eval_metrics_creator=get_metrics,
+                               validation_metrics_creator=get_metrics,
+                               num_workers=2, test_data=get_test_data_iter)
         trainer.train(nb_epoch=2)
 
 
