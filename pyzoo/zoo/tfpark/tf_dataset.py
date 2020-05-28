@@ -780,8 +780,8 @@ class TFDataDataset(TFDataset):
 
     def get_training_data(self):
         jvalue = callZooFunc("float", "createTFDataFeatureSet",
-                             self.graph_def, self._train_init_op_name, self.table_init_name, self._train_output_names,
-                             self.output_types, self.shard_index.name)
+                             self.graph_def, self._train_init_op_name, self.table_init_name,
+                             self._train_output_names, self.output_types, self.shard_index.name)
         return FeatureSet(jvalue=jvalue)
 
     def get_validation_data(self):
