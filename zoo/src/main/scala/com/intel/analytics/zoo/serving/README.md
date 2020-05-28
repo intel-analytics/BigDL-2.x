@@ -194,6 +194,77 @@ In case of error, all APIs will return a JSON object in the response body with e
 }
 ```
 ##### Predict API
+URL
+```
+POST http://host:port/predict
+```
+Request Example for images as inputs:
+```
+curl -d \
+'{
+  "instances": [
+    {
+      "image": "/9j/4AAQSkZJRgABAQEASABIAAD/7RcEUGhvdG9za..."
+    },
+    {
+      "image": "/9j/4AAQSkZJRgABAQEASABIAAD/7RcEUGhvdG9za..."
+    },
+    {
+      "image": "/9j/4AAQSkZJRgABAQEASABIAAD/7RcEUGhvdG9za..."
+    },
+    {
+      "image": "/9j/4AAQSkZJRgABAQEASABIAAD/7RcEUGhvdG9za..."
+    },
+    {
+      "image": "/9j/4AAQSkZJRgABAQEASABIAAD/7RcEUGhvdG9za..."
+    }
+  ]
+}' \
+-X POST http://172.168.0.109:10020/predict
+```
+Response Example
+```
+{
+  "predictions": [
+    "{value=[[903,0.1306194]]}",
+    "{value=[[903,0.1306194]]}",
+    "{value=[[903,0.1306194]]}",
+    "{value=[[903,0.1306194]]}",
+    "{value=[[903,0.1306194]]}"
+  ]
+}
+```
+Request Example for tensor as inputs:
+```
+curl -d \
+'{
+  "instances" : [ {
+    "ids" : [ 100.0, 88.0 ]
+  }, {
+    "ids" : [ 100.0, 88.0 ]
+  }, {
+    "ids" : [ 100.0, 88.0 ]
+  }, {
+    "ids" : [ 100.0, 88.0 ]
+  }, {
+    "ids" : [ 100.0, 88.0 ]
+  } ]
+}' \
+-X POST http://172.168.0.109:10020/predict
+```
+Response Example
+```
+{
+  "predictions": [
+    "{value=[[1,0.6427843]]}",
+    "{value=[[1,0.6427843]]}",
+    "{value=[[1,0.6427843]]}",
+    "{value=[[1,0.6427843]]}",
+    "{value=[[1,0.6427842]]}"
+  ]
+}
+```
+
 ##### Metrics API
 URL
 ```
