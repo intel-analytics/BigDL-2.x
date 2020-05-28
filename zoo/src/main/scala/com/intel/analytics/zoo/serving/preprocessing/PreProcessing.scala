@@ -47,8 +47,8 @@ class PreProcessing(param: SerParams) {
 
   var byteBuffer: Array[Byte] = null
 
-//  tensorBuffer = new Array[Tensor[Float]](param.dataShape.length)
-//  createBuffer()
+  tensorBuffer = new Array[Tensor[Float]](param.dataShape.length)
+  createBuffer()
 
   def createBuffer(): Unit = {
     arrayBuffer = new Array[Array[Float]](param.dataShape.length)
@@ -90,7 +90,7 @@ class PreProcessing(param: SerParams) {
     } else {
       tensorBuffer(idx) = imageTensor
     }
-    imageTensor
+    tensorBuffer(idx)
   }
   def decodeTensor(info: (ArrayBuffer[Int], ArrayBuffer[Float],
     ArrayBuffer[Int], ArrayBuffer[Int])): Tensor[Float] = {
