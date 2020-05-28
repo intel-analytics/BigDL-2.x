@@ -335,6 +335,47 @@ result_class_prob_map = json.loads(img1_result)
 ```
 
 ### 5. HTTP Server
+We provide a HTTP server to support RESTful HTTP requests. User can submit HTTP requests to the HTTP server through RESTful APIs. The HTTP server will parse the input requests and pub them to Redis input queues, and also retrieve the output results and render them as json results in HTTP responses. The serving backend will leverage the cluster serving.
+
+### Start the HTTP Server
+User can download a analytics-zoo-${VERSION}-http.jar from the Nexus Repository with GAVP: 
+```
+<groupId>com.intel.analytics.zoo</groupId>
+<artifactId>analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}</artifactId>
+<version>${ZOO_VERSION}</version>
+```
+User can also build from the source code:
+```
+mvn clean package -P spark_2.4+ -Dmaven.test.skip=true
+```
+After that, start the HTTP server with below command.
+```
+java -jar analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ZOO_VERSION}-http.jar
+```
+And check the status of the HTTP server with:
+```
+curl  http://${BINDED_HOST_IP}:${BINDED_HOST_PORT}/
+```
+If you get a response like "welcome to analytics zoo web serving frontend", that means the HTTP server is started successfully.
+#### Start options
+User can pass options to the HTTP server when start it:
+```
+java -jar analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ZOO_VERSION}-http.jar --redisHost="172.16.0.109"
+```
+All the supported parameter are listed here:
+* **interface**: the binded server interface, default is "0.0.0.0"
+* **port**: the binded server port, default is 10020
+* **redisHost**: the host IP of redis server, default is "localhost"
+* **redisPort**: the host port of redis server, default is 6379
+* **redisInputQueue**: the input queue of redis server, default is "serving_stream"
+* **redisOutputQueue**: the output queue of redis server, default is "result:" 
+* **parallelism**: the parallelism of requests processing, default is 1000
+* **timeWindow**: the timeWindow wait to pub inputs to redis, default is 0
+* **countWindow**: the timeWindow wait to ub inputs to redis, default is 56
+* **tokenBucketEnabled**: the switch to enable/disable RateLimiter, default is false
+* **tokensPerSecond**: the rate of permits per second, default is 100
+* **tokenAcquireTimeout**: acquires a permit from this RateLimiter if it can be obtained without exceeding the specified timeout(ms), default is 100
+User can adjust these options to tune the performance of the HTTP server. 
 
 ## Optional Operations
 ### Update Model or Configurations
