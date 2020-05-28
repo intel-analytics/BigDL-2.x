@@ -379,7 +379,7 @@ All the supported parameter are listed here:
 **User can adjust these options to tune the performance of the HTTP server.**
 
 #### RESTful API
-This part describes these API endpoints and an end-to-end example on usage. 
+This part describes API endpoints and end-to-end examples on usage. 
 The requests and responses are in JSON format. The composition of them depends on the requests type or verb. See the APIs for details.
 In case of error, all APIs will return a JSON object in the response body with error as key and the error message as the value:
 ```
@@ -457,6 +457,34 @@ Response Example
     "{value=[[1,0.6427842]]}"
   ]
 }
+```
+Another request example for composition of scalars and tensors.
+```
+curl -d \
+ '{
+  "instances" : [ {
+    "intScalar" : 12345,
+    "floatScalar" : 3.14159,
+    "stringScalar" : "hello, world. hello, arrow.",
+    "intTensor" : [ 7756, 9549, 1094, 9808, 4959, 3831, 3926, 6578, 1870, 1741 ],
+    "floatTensor" : [ 0.6804766, 0.30136853, 0.17394465, 0.44770062, 0.20275897, 0.32762378, 0.45966738, 0.30405098, 0.62053126, 0.7037923 ],
+    "stringTensor" : [ "come", "on", "united" ],
+    "intTensor2" : [ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ] ],
+    "floatTensor2" : [ [ [ 0.2, 0.3 ], [ 0.5, 0.6 ] ], [ [ 0.2, 0.3 ], [ 0.5, 0.6 ] ] ],
+    "stringTensor2" : [ [ [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ], [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ] ], [ [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ], [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ] ] ]
+  }, {
+    "intScalar" : 12345,
+    "floatScalar" : 3.14159,
+    "stringScalar" : "hello, world. hello, arrow.",
+    "intTensor" : [ 7756, 9549, 1094, 9808, 4959, 3831, 3926, 6578, 1870, 1741 ],
+    "floatTensor" : [ 0.6804766, 0.30136853, 0.17394465, 0.44770062, 0.20275897, 0.32762378, 0.45966738, 0.30405098, 0.62053126, 0.7037923 ],
+    "stringTensor" : [ "come", "on", "united" ],
+    "intTensor2" : [ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ] ],
+    "floatTensor2" : [ [ [ 0.2, 0.3 ], [ 0.5, 0.6 ] ], [ [ 0.2, 0.3 ], [ 0.5, 0.6 ] ] ],
+    "stringTensor2" : [ [ [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ], [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ] ], [ [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ], [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ] ] ]
+  } ]
+}' \
+-X POST http://172.168.0.109:10020/predict
 ```
 
 ##### Metrics API
