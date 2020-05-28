@@ -67,7 +67,7 @@ class TestSparkXShards(ZooTestCase):
         data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc)
         partitions_num_1 = data_shard.rdd.getNumPartitions()
         assert partitions_num_1 == 4, "number of partition should be 4"
-        data_shard.repartition(1)
+        data_shard = data_shard.repartition(1)
         partitions_num_2 = data_shard.rdd.getNumPartitions()
         assert partitions_num_2 == 1, "number of partition should be 1"
 
@@ -82,7 +82,7 @@ class TestSparkXShards(ZooTestCase):
             df[column_name] = df[column_name] * (-1)
             return df
 
-        data_shard.transform_shard(negative, "value")
+        data_shard = data_shard.transform_shard(negative, "value")
         data2 = data_shard.collect()
         assert data2[0]["value"].values[0] < 0, "value should be negative"
 
@@ -97,12 +97,12 @@ class TestSparkXShards(ZooTestCase):
     def test_partition_by_single_column(self):
         file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
-        data_shard.partition_by(cols="location")
+        data_shard = data_shard.partition_by(cols="location")
         partitions = data_shard.rdd.glom().collect()
         assert len(partitions) == 4
 
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
-        data_shard.partition_by(cols="location", num_partitions=3)
+        data_shard = data_shard.partition_by(cols="location", num_partitions=3)
         partitions = data_shard.rdd.glom().collect()
         assert len(partitions) == 3
 
@@ -115,7 +115,7 @@ class TestSparkXShards(ZooTestCase):
     def test_split(self):
         file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
-        data_shard.transform_shard(lambda df: (df[0:-1], df[-1:]))
+        data_shard = data_shard.transform_shard(lambda df: (df[0:-1], df[-1:]))
         shards_splits = data_shard.split()
         assert len(shards_splits) == 2
         data1 = shards_splits[0].collect()
@@ -126,7 +126,29 @@ class TestSparkXShards(ZooTestCase):
     def test_len(self):
         file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
-        assert len(data_shard) == 14
+        assert data_shard.len() == 14
+        assert data_shard.len('ID') == 14
+        with self.assertRaises(Exception) as context:
+            data_shard.len('abc')
+        self.assertTrue('Invalid key for this XShards' in str(context.exception))
+
+        def to_dict(df):
+            return {'ID': df['ID'].to_numpy(), 'location': df['location'].to_numpy()}
+        data_shard = data_shard.transform_shard(to_dict)
+        assert data_shard.len('ID') == 14
+        assert data_shard.len() == 4
+        with self.assertRaises(Exception) as context:
+            data_shard.len('abc')
+        self.assertTrue('Invalid key for this XShards' in str(context.exception))
+
+        def to_number(d):
+            return 4
+        data_shard = data_shard.transform_shard(to_number)
+        assert data_shard.len() == 2
+        with self.assertRaises(Exception) as context:
+            data_shard.len('abc')
+        self.assertTrue('No selection operation available for this XShards' in
+                        str(context.exception))
 
 
 if __name__ == "__main__":

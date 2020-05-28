@@ -159,7 +159,7 @@ class SparkXShards(XShards):
             else (type(data), None)).first()
         if issubclass(elem_class, pd.DataFrame):
             if key is None:
-                raise Exception("Cannot apply unique operation on Datashards of Pandas Dataframe"
+                raise Exception("Cannot apply unique operation on XShards of Pandas Dataframe"
                                 " without column name")
             if key in columns:
                 rdd = self.rdd.map(lambda df: df[key].unique())
@@ -168,10 +168,10 @@ class SparkXShards(XShards):
                                                                                   axis=0)))
                 return result
             else:
-                raise Exception("The select key is not in the DataFrame in this Datashards")
+                raise Exception("The select key is not in the DataFrame in this XShards")
         else:
             # we may support numpy or other types later
-            raise Exception("Currently only support unique() on Datashards of Pandas DataFrame")
+            raise Exception("Currently only support unique() on XShards of Pandas DataFrame")
 
     def split(self):
         """
@@ -198,7 +198,18 @@ class SparkXShards(XShards):
             else:
                 return [self]
 
-    def __len__(self):
-        length = self.rdd.map(lambda data: len(data) if hasattr(data, '__len__') else 1)\
+    def len(self, key=None):
+        if key is None:
+            return self.rdd.map(lambda data: len(data) if hasattr(data, '__len__') else 1)\
                 .reduce(lambda l1, l2: l1 + l2)
-        return length
+        else:
+            first = self.rdd.first()
+            if not hasattr(first, '__getitem__'):
+                raise Exception("No selection operation available for this XShards")
+            else:
+                try:
+                    data = first[key]
+                except:
+                    raise Exception("Invalid key for this XShards")
+            return self.rdd.map(lambda data: len(data[key]) if hasattr(data[key], '__len__')
+                                else 1).reduce(lambda l1, l2: l1 + l2)
