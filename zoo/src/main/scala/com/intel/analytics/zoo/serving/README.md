@@ -187,7 +187,7 @@ All the supported parameter are listed here:
 **User can adjust these options to tune the performance of the HTTP server.**
 
 #### RESTful API
-This part describes these API endpoints and an end-to-end example on usage. 
+This part describes API endpoints and end-to-end examples on usage. 
 The requests and responses are in JSON format. The composition of them depends on the requests type or verb. See the APIs for details.
 In case of error, all APIs will return a JSON object in the response body with error as key and the error message as the value:
 ```
