@@ -222,7 +222,7 @@ curl -d \
     }
   ]
 }' \
--X POST http://172.168.0.109:10020/predict
+-X POST http://host:port/predict
 ```
 Response Example
 ```
@@ -252,7 +252,7 @@ curl -d \
     "ids" : [ 100.0, 88.0 ]
   } ]
 }' \
--X POST http://172.168.0.109:10020/predict
+-X POST http://host:port/predict
 ```
 Response Example
 ```
@@ -293,9 +293,30 @@ curl -d \
     "stringTensor2" : [ [ [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ], [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ] ], [ [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ], [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ] ] ]
   } ]
 }' \
--X POST http://172.168.0.109:10020/predict
+-X POST http://host:port/predict
 ```
-
+Another request example for composition of sparse and dense tensors.
+```
+curl -d \
+'{
+  "instances" : [ {
+    "sparseTensor" : {
+      "shape" : [ 100, 10000, 10 ],
+      "data" : [ 0.2, 0.5, 3.45, 6.78 ],
+      "indices" : [ [ 1, 1, 1 ], [ 2, 2, 2 ], [ 3, 3, 3 ], [ 4, 4, 4 ] ]
+    },
+    "intTensor2" : [ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ] ]
+  }, {
+    "sparseTensor" : {
+      "shape" : [ 100, 10000, 10 ],
+      "data" : [ 0.2, 0.5, 3.45, 6.78 ],
+      "indices" : [ [ 1, 1, 1 ], [ 2, 2, 2 ], [ 3, 3, 3 ], [ 4, 4, 4 ] ]
+    },
+    "intTensor2" : [ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ] ]
+  } ]
+}' \
+-X POST http://host:port/predict
+```
 
 ##### Metrics API
 URL
