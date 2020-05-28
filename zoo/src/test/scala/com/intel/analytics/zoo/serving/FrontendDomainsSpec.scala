@@ -176,6 +176,12 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
     instances4.instances(0).get("intScalar") should be(Some(12345))
     instances4.instances(0).get("floatScalar") should be(Some(3.14159f))
     instances4.instances(0).get("stringScalar") should be(Some("hello, world. hello, arrow."))
+    println(instances4.instances(0).get("intTensor"))
+    println(instances4.instances(0).get("floatTensor"))
+    println(instances4.instances(0).get("stringTensor"))
+    println(instances4.instances(0).get("intTensor2"))
+    println(instances4.instances(0).get("floatTensor2"))
+    println(instances4.instances(0).get("stringTensor2"))
   }
 
   "Instances" should "works well too" in {
@@ -254,9 +260,41 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
         Instances.fromArrow(bytes)
       }
       instancesEx.instances.size should be (1)
-      instancesEx.instances(0).get("my-instance").size should be (1)
-      println(instancesEx)
+      instancesEx.instances(0).get("my-img").size should be (1)
+      // println(instancesEx)
     })
+  }
+
+  "sparse tensor" should "work" in {
+    val shape = List(100, 10000, 10)
+    val values = List(0.2f, 0.5f, 3.45f, 6.78f)
+    val indices = List(List(1, 1, 1), List(2, 2, 2), List(3, 3, 3), List(4, 4, 4))
+    val sparseTensor = SparseTensor(shape, values, indices)
+    val intTensor2 = List(List(1, 2), List(3, 4), List(5, 6))
+    val instance = mutable.LinkedHashMap(
+      "sparseTensor" -> sparseTensor,
+      "intTensor2" -> intTensor2
+    ).asInstanceOf[mutable.LinkedHashMap[String, Any]]
+    val instances = Instances(instance, instance)
+
+    val json = timing("json serialization")() {
+      JsonUtil.toJson(instances)
+    }
+    // println(json)
+    val instances2 = timing("json deserialization")() {
+      JsonUtil.fromJson(classOf[Instances], json)
+    }
+    // println(instances2)
+    // println("json serialized size: " + json.getBytes.length)
+
+    val arrowBytes = timing("arrow serialization")() {
+      instances.toArrow()
+    }
+    val instances3 = timing("arrow deserialization")() {
+      Instances.fromArrow(arrowBytes)
+    }
+    // println(instances3)
+    // println("arrow serialized size: " + arrowBytes.length)
   }
 
 }

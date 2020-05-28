@@ -13,5 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import pytest
 
-from zoo.orca.data.shard import XShards, RayXShards, SparkXShards
+
+@pytest.fixture(autouse=True, scope='package')
+def estimator_for_spark_fixture():
+    from zoo import init_spark_on_local
+    sc = init_spark_on_local(cores=4, spark_log_level="INFO")
+    yield sc
+    sc.stop()

@@ -452,17 +452,27 @@ class TFOptimizer:
         return grads, variables
 
     @classmethod
-    def from_train_op(cls, train_op, loss, metrics=None, updates=None, sess=None, dataset=None,
-                      tensor_with_value=None, session_config=None, model_dir=None):
+    def from_train_op(cls, train_op, loss, *, inputs=None, labels=None, metrics=None, updates=None,
+                      sess=None, dataset=None, tensor_with_value=None, session_config=None,
+                      model_dir=None):
         sess = TFOptimizer._get_or_create_session(sess)
         grads, variables = TFOptimizer._get_vars_grads_from_train_op(train_op)
         if dataset is None:
             dataset = TFOptimizer._get_dataset_from_loss(loss)
-        inputs = dataset._original_tensors
-        if isinstance(inputs, tuple) and len(inputs) == 2:
-            inputs, labels = inputs
+        _ = dataset.tensors  # trigger create tensors if not available
+        dataset_inputs = dataset._original_tensors
+        if isinstance(dataset_inputs, tuple) and len(dataset_inputs) == 2:
+            if inputs is None:
+                inputs = dataset_inputs[0]
+
+            if labels is None:
+                labels = dataset_inputs[1]
         else:
-            labels = []
+            if inputs is None:
+                inputs = dataset_inputs
+
+            if labels is None:
+                labels = []
 
         inputs = nest.flatten(inputs)
         labels = nest.flatten(labels)
@@ -490,8 +500,8 @@ class TFOptimizer:
                    clip_norm=clip_norm, clip_value=clip_value, model_dir=model_dir)
 
     @classmethod
-    def from_loss(cls, loss, optim_method, session=None, val_outputs=None,
-                  val_labels=None, val_method=None,
+    def from_loss(cls, loss, optim_method, session=None, inputs=None, dataset=None,
+                  val_outputs=None, val_labels=None, val_method=None,
                   clip_norm=None, clip_value=None, metrics=None,
                   tensor_with_value=None, session_config=None, model_dir=None, updates=None):
         """
@@ -519,8 +529,15 @@ class TFOptimizer:
         """
         sess = TFOptimizer._get_or_create_session(session)
         grads, variables = TFOptimizer._get_vars_grads(loss)
-        dataset = TFOptimizer._get_dataset_from_loss(loss)
-        inputs = dataset._original_tensors
+
+        if dataset is None and inputs is None:
+            dataset = TFOptimizer._get_dataset_from_loss(loss)
+            inputs = dataset._original_tensors
+        else:
+            if inputs is None:
+                raise ValueError("please specify inputs")
+            _ = dataset.tensors  # trigger creating placeholders
+
         if isinstance(inputs, tuple) and len(inputs) == 2:
             inputs, labels = inputs
         else:
