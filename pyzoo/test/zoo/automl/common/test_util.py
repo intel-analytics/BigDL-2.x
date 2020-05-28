@@ -46,4 +46,3 @@ class TestUtil(ZooTestCase):
         # index test
         assert pd.api.types.is_datetime64_any_dtype(test_df.index.dtype)
         assert pd.api.types.is_datetime64_any_dtype(val_df.index.dtype)
-
