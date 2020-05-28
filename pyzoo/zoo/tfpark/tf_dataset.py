@@ -755,6 +755,8 @@ class TFDataDataset(TFDataset):
             self._val_init_op_name = self.validation_iterator.initializer.name
             self._val_output_names = [op.name for op in self.validation_next_ops]
 
+        self.table_init_name = tf.tables_initializer().name
+
         self.sequential_order = sequential_order
         self.shuffle = shuffle
         self.graph = self.train_next_ops[0].graph
@@ -778,7 +780,7 @@ class TFDataDataset(TFDataset):
 
     def get_training_data(self):
         jvalue = callZooFunc("float", "createTFDataFeatureSet",
-                             self.graph_def, self._train_init_op_name, self._train_output_names,
+                             self.graph_def, self._train_init_op_name, self.table_init_name, self._train_output_names,
                              self.output_types, self.shard_index.name)
         return FeatureSet(jvalue=jvalue)
 
