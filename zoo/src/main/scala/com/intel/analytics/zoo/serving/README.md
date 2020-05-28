@@ -8,7 +8,7 @@ To start Analytics Zoo Cluster Serving, you need the following steps (add links 
 1. [Configuration]()
 2. [Start the Serving]()
 3. [Data I/O]()
-4. [Data I/O with HTTP]()
+4. [Data I/O with HTTP](#Data-I/O-with-HTTP)
 
 We suggest you refer to following Quick Start to begin your first practice.
 ## Quick Start
