@@ -375,7 +375,8 @@ All the supported parameter are listed here:
 * **tokenBucketEnabled**: the switch to enable/disable RateLimiter, default is false
 * **tokensPerSecond**: the rate of permits per second, default is 100
 * **tokenAcquireTimeout**: acquires a permit from this RateLimiter if it can be obtained without exceeding the specified timeout(ms), default is 100
-User can adjust these options to tune the performance of the HTTP server. 
+
+**User can adjust these options to tune the performance of the HTTP server.**
 
 ## Optional Operations
 ### Update Model or Configurations

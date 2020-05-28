@@ -144,7 +144,7 @@ d = output_api.dequeue()
 where `uri` is String type used as data identifier and `data` is `np.ndarray` type, `d` is a Python dict storing the result, format is in `key: class index, value: class probability`
 
 ## Data I/O with HTTP
-User can also submit requests to a HTTP server through RESTful APIs. The HTTP server will parse the input requests and pub to Redis input queues, and also retrieve the output results and render them as json results as a HTTP responses. The backend serving will leverage the cluster serving.
+User can also submit requests to a HTTP server through RESTful APIs. The HTTP server will parse the input requests and pub them to Redis input queues, and also retrieve the output results and render them as json results in HTTP responses. The serving backend will leverage the cluster serving.
 ### Start the HTTP Server
 User can download a analytics-zoo-${VERSION}-http.jar from the Nexus Repository with GAVP: 
 ```
@@ -183,7 +183,9 @@ All the supported parameter are listed here:
 * **tokenBucketEnabled**: the switch to enable/disable RateLimiter, default is false
 * **tokensPerSecond**: the rate of permits per second, default is 100
 * **tokenAcquireTimeout**: acquires a permit from this RateLimiter if it can be obtained without exceeding the specified timeout(ms), default is 100
-User can adjust these options to tune the performance of the HTTP server. 
+
+**User can adjust these options to tune the performance of the HTTP server.**
+
 #### RESTful API
 This part describes these API endpoints and an end-to-end example on usage. 
 The requests and responses are in JSON format. The composition of them depends on the requests type or verb. See the APIs for details.
