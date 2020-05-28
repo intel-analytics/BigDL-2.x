@@ -302,18 +302,23 @@ class RayContext(object):
 
         :param driver_cores: The number of cores for the raylet on driver for Spark cluster mode.
         Default is 0 and in this case the local driver wouldn't have any ray workload.
+
+        :return The dictionary of address information about the ray cluster.
+        Information contains node_ip_address, redis_address, object_store_address, raylet_socket_name,
+        webui_url and session_dir.
         """
         self.stopped = False
         if self.is_local:
             if self.env:
                 os.environ.update(self.env)
             import ray
-            return ray.init(num_cpus=self.ray_node_cpu_cores,
-                            object_store_memory=self.object_store_memory,
-                            resources=self.extra_params)
+            self.address_info = ray.init(num_cpus=self.ray_node_cpu_cores,
+                                         object_store_memory=self.object_store_memory,
+                                         resources=self.extra_params)
         else:
             self._start_cluster()
-            return self._start_driver(num_cores=driver_cores)
+            self.address_info = self._start_driver(num_cores=driver_cores)
+        return self.address_info
 
     def _start_cluster(self):
         print("Start to launch ray on cluster")
