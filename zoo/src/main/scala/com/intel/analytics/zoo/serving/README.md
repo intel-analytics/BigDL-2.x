@@ -5,10 +5,10 @@ Analytics Zoo Cluster Serving is a multi-model supporting and highly scalable se
 Currently the data pipeline platforms we support include: Redis
 
 To start Analytics Zoo Cluster Serving, you need the following steps (add links later)
-1. [Configuration]()
-2. [Start the Serving]()
-3. [Data I/O]()
-4. [Data I/O with HTTP](#Data-I/O-with-HTTP)
+1. [Configuration](#configuration)
+2. [Start the Serving](#start-the-serving)
+3. [Data I/O](#data-io)
+4. [Data I/O with HTTP](#data-io-with-http)
 
 We suggest you refer to following Quick Start to begin your first practice.
 ## Quick Start
