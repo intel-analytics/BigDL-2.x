@@ -147,29 +147,29 @@ where `uri` is String type used as data identifier and `data` is `np.ndarray` ty
 Users can also submit requests to a HTTP server through RESTful APIs. The HTTP server will parse the input requests and pub to Redis input queues, and also retrieve the output results and render them as json results as a HTTP responses. The backend serving will leverage the cluster serving.
 ### Start the HTTP Server
 Users can download a analytics-zoo-${VERSION}-http.jar from the Nexus Repository with GAVP: 
-'''
+```
 <groupId>com.intel.analytics.zoo</groupId>
 <artifactId>analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}</artifactId>
 <version>${ZOO_VERSION}</version>
-'''
+```
 Users can also build from the source code:
-'''
+```
 mvn clean package -P spark_2.4+ -Dmaven.test.skip=true
-'''
+```
 After that, start the HTTP server with below command.
-'''
+```
 java -jar analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ZOO_VERSION}-http.jar
-'''
+```
 And check the status of the HTTP server with:
-'''
+```
 curl  http://${BINDED_HOST_IP}:10020/
-'''
+```
 If you get a response like "welcome to analytics zoo web serving frontend", that means the HTTP server is started successfully.
 #### Start options
 Users can pass options to the HTTP server when start it:
-'''
+```
 java -jar analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ZOO_VERSION}-http.jar --redisHost="172.16.0.109"
-'''
+```
 All the supported options are listed here:
 * interface: the binded server interface, default is "0.0.0.0"
 * port: the binded server port, default is 10020
