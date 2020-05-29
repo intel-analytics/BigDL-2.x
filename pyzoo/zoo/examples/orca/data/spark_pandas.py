@@ -45,7 +45,7 @@ if __name__ == "__main__":
     data = data_shard.collect()
 
     # repartition
-    data_shard.repartition(2)
+    data_shard = data_shard.repartition(2)
 
     # apply function on each element
     trans_data_shard = data_shard.transform_shard(process_feature)

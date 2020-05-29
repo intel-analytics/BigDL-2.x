@@ -69,8 +69,8 @@ class TestSparkXShards(ZooTestCase):
         data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc)
         partitions_num_1 = data_shard.rdd.getNumPartitions()
         assert partitions_num_1 == 4, "number of partition should be 4"
-        data_shard.repartition(1)
-        partitions_num_2 = data_shard.rdd.getNumPartitions()
+        partitioned_shard = data_shard.repartition(1)
+        partitions_num_2 = partitioned_shard.rdd.getNumPartitions()
         assert partitions_num_2 == 1, "number of partition should be 1"
 
     def test_apply(self):
@@ -99,13 +99,13 @@ class TestSparkXShards(ZooTestCase):
     def test_partition_by_single_column(self):
         file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
-        data_shard.partition_by(cols="location")
-        partitions = data_shard.rdd.glom().collect()
+        partitioned_shard = data_shard.partition_by(cols="location")
+        partitions = partitioned_shard.rdd.glom().collect()
         assert len(partitions) == 4
 
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
-        data_shard.partition_by(cols="location", num_partitions=3)
-        partitions = data_shard.rdd.glom().collect()
+        partitioned_shard = data_shard.partition_by(cols="location", num_partitions=3)
+        partitions = partitioned_shard.rdd.glom().collect()
         assert len(partitions) == 3
 
     def test_unique(self):
