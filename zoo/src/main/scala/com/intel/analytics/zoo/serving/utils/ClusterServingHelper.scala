@@ -100,7 +100,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     val modelFolder = getYaml(modelConfig, "path", null)
     modelInputs = getYaml(modelConfig, "inputs", "")
     modelOutputs = getYaml(modelConfig, "outputs", "")
-    inferenceMode = getYaml(modelConfig, "mode", "single")
+    inferenceMode = getYaml(modelConfig, "mode", "")
 
     parseModelType(modelFolder)
 
