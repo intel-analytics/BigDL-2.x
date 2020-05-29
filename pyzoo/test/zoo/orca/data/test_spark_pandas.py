@@ -161,7 +161,7 @@ class TestSparkXShards(ZooTestCase):
         shards = zoo.orca.data.SparkXShards.load_pickle(path, self.sc)
         assert isinstance(shards, zoo.orca.data.SparkXShards)
         shutil.rmtree(temp)
-        
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
