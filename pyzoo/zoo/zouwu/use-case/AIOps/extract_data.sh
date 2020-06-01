@@ -17,7 +17,7 @@ then
    exit
 fi
 
-echo "Extrat m_1932"
+echo "Extract m_1932"
 grep m_1932 machine_usage.csv > m_1932.csv
 
 echo "Finished"
