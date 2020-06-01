@@ -105,7 +105,8 @@
                 <scala.version>2.11.8</scala.version>
                 <scala.macros.version>2.1.0</scala.macros.version>
                 <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
-                <scala-library-scope>compile</scala-library-scope>
+<!--                <scala-library-scope>compile</scala-library-scope>-->
+                <spark-scope>compile</spark-scope>
             </properties>
             <dependencies>
                 <dependency>
@@ -126,14 +127,6 @@
             <properties>
                 <bigdl-scope>provided</bigdl-scope>
                 <tf-shade>org.tensorflow</tf-shade>
-            </properties>
-        </profile>
-
-        <profile>
-            <id>serving</id>
-            <properties>
-                <spark-scope>compile</spark-scope>
-                <flink-scope>compile</flink-scope>
             </properties>
         </profile>
 
@@ -291,7 +284,7 @@
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
             <version>${scala.version}</version>
-            <scope>${scala-library-scope}</scope>
+            <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.scala-lang</groupId>
@@ -460,19 +453,16 @@
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-scala_2.11</artifactId>
             <version>1.10.0</version>
-            <scope>${flink-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-streaming-scala_2.11</artifactId>
             <version>1.10.0</version>
-            <scope>${flink-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-clients_2.11</artifactId>
             <version>1.10.0</version>
-            <scope>${flink-scope}</scope>
         </dependency>
     </dependencies>
 
@@ -648,6 +638,18 @@
                     </execution>
 
                     <execution>
+                        <id>serving</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>serving</shadedClassifierName>
+                        </configuration>
+                    </execution>
+
+                    <execution>
                         <id>without-spark</id>
                         <phase>package</phase>
                         <goals>
@@ -656,6 +658,19 @@
                         <configuration>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>jar-with-dependencies</shadedClassifierName>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>org.apache.flink:flink-scala_2.11</exclude>
+                                    <exclude>org.apache.flink:flink-streaming-scala_2.11</exclude>
+                                    <exclude>org.apache.flink:flink-clients_2.11</exclude>
+                                    <exclude>org.apache.spark:spark-mllib_${scala.major.version}</exclude>
+                                    <exclude>org.scala-lang:scala-compiler</exclude>
+                                    <exclude>org.scala-lang:scala-reflect</exclude>
+                                    <exclude>org.scala-lang:scala-library</exclude>
+                                    <exclude>org.scala-lang:scala-actors</exclude>
+                                    <exclude>org.scala-lang:scalap</exclude>
+                                </excludes>
+                            </artifactSet>
                         </configuration>
                     </execution>
 
