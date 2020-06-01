@@ -319,7 +319,6 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_${scala.major.version}</artifactId>
             <version>${spark.version}</version>
-            <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.intel.analytics.bigdl</groupId>
@@ -453,19 +452,16 @@
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-scala_2.11</artifactId>
             <version>1.10.0</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-streaming-scala_2.11</artifactId>
             <version>1.10.0</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-clients_2.11</artifactId>
             <version>1.10.0</version>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 
@@ -666,7 +662,7 @@
                                     <exclude>org.apache.flink:flink-scala_2.11</exclude>
                                     <exclude>org.apache.flink:flink-streaming-scala_2.11</exclude>
                                     <exclude>org.apache.flink:flink-clients_2.11</exclude>
-                                    <exclude>org.apache.spark:spark-mllib_${scala.major.version}</exclude>
+                                    <exclude>org.apache.spark:spark-mllib_2.11</exclude>
                                     <exclude>org.scala-lang:scala-compiler</exclude>
                                     <exclude>org.scala-lang:scala-reflect</exclude>
                                     <exclude>org.scala-lang:scala-library</exclude>
