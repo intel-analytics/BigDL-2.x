@@ -41,7 +41,7 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
     redisPool = new JedisPool(params.redisHost, params.redisPort)
     jedis = RedisIO.getRedisClient(redisPool)
     try {
-      jedis.xgroupCreate("image_stream", "serving",
+      jedis.xgroupCreate("serving_stream", "serving",
         new StreamEntryID(0, 0), true)
     } catch {
       case e: Exception =>
@@ -62,14 +62,14 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
       params.coreNum,
       1,
       false,
-      new SimpleEntry("image_stream", StreamEntryID.UNRECEIVED_ENTRY))
+      new SimpleEntry("serving_stream", StreamEntryID.UNRECEIVED_ENTRY))
 //    logger.info(s">>> get from source readed redis ${System.currentTimeMillis()} ms")
     if (response != null) {
       for (streamMessages <- response.asScala) {
         val key = streamMessages.getKey
         val entries = streamMessages.getValue.asScala
         val it = entries.map(e => {
-          (e.getFields.get("uri"), e.getFields.get("image"))
+          (e.getFields.get("uri"), e.getFields.get("data"))
         }).toList
         sourceContext.collect(it)
       }

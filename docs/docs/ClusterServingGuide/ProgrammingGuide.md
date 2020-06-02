@@ -156,8 +156,12 @@ model:
 data:
   # default, localhost:6379
   src:
+  # default, image (image & tensor are supported)
+  data_type: 
   # default, 3,224,224
   image_shape:
+  # must be provided given data_type is tensor. eg: [1,2] (tensor) [[1],[2,1,2],[3]] (table)
+  tensor_shape: 
   # default, topN(1)
   filter:
 params:
@@ -243,7 +247,9 @@ Put the model in any of your local directory, and set `model:/path/to/dir`.
 The field `data` contains your input data configuration.
 
 * src: the queue you subscribe for your input data, e.g. a default config of Redis on local machine is `localhost:6379`. Note that please use the host address in your network instead of localhost or 127.0.0.1 when you run serving in cluster, and make sure other nodes in cluster could also recognize this address.
-* image_shape: the shape of your input data, e.g. a default config for pretrained imagenet is `3,224,224`. You should use the same shape of data which trained your model. In TensorFlow the format is usually HWC and in other models the format is usually CHW.
+* data_type: the type of your input data. image and tensor are supported.
+* image_shape: the shape of your image input data, e.g. a default config for pretrained imagenet is `3,224,224`. You should use the same shape of data which trained your model. In TensorFlow the format is usually HWC and in other models the format is usually CHW.
+* tensor_shape: the shape of your tensor(ndarray) or table(list of ndarray) input data. e.g. [1,2] (tensor) [[1],[2,1,2],[3]] (table) **note:** tensor_shape must be provided given data_type is tensor
 * filter: the top N classes in the prediction result. **note:** if the top-N number is larger than model output size of the the final layer, it would just return all the outputs.
 
 The field `params` contains your inference parameter configuration.
@@ -270,6 +276,8 @@ cluster-serving-start
 ```
 This command will start Redis and TensorBoard if they are not running. Note that you need to provide `REDIS_HOME` environment variable as mentioned in [Installation](#1-installation).
 
+**NOTE:** If your input data_type is tensor(ndarray), you should run `spark-structured-streaming-cluster-serving-start` instead.
+
 #### Stop
 You can use following command to stop Cluster Serving. Data in Redis and TensorBoard service will persist.
 ```
@@ -290,18 +298,27 @@ If you are using Docker, you could also run `docker rm` to shutdown Cluster Serv
 ### 4. Model Inference
 We support Python API for conducting inference with Data Pipeline in Cluster Serving. The requirements of API are `opencv-python`, `pyyaml`, `redis`.
 
-We provide basic usage here, for more details, please see [API Guide](APIGuide.md).
+We provide some basic usages here, for more details, please see [API Guide](APIGuide.md).
 #### Input and Output API
-To input data to queue, you need a `InputQueue` instance, and using `enqueue` method by giving an image path or image ndarray. See following example.
+To input data to queue, you need a `InputQueue` instance, and using `enqueue` method, for each input, give a key correspond to your model or give arbitrary key if your model does not care about it.
+
+To enqueue an image
 ```
 from zoo.serving.client import InputQueue
 input_api = InputQueue()
-input_api.enqueue_image('my-image1', 'path/to/image1')
-
-import cv2
-image2 = cv2.imread('path/to/image2')
-input_api.enqueue_image('my-image2', image2)
+input_api.enqueue('my-image1', user_define_key='path/to/image1')
 ```
+To enqueue an instance containing 1 image and 2 ndarray
+```
+from zoo.serving.client import InputQueue
+import numpy as np
+input_api = InputQueue()
+t1 = np.array([1,2])
+t2 = np.array([[1,2], [3,4]])
+input_api.enqueue_image('my-instance', img='path/to/image', tensor1=t1, tensor2=t2)
+```
+There are 3 types of inputs in total, image, tensor, sparse tensor, which could represents nearly all types of models. For more details of usage, go to [API Guide](APIGuide.md)
+
 To get data from queue, you need a `OutputQueue` instance, and using `query` or `dequeue` method. The `query` method takes image uri as parameter and returns the corresponding result. The `dequeue` method takes no parameter and just returns all results and also delete them in data queue. See following example.
 ```
 from zoo.serving.client import OutputQueue
@@ -333,7 +350,14 @@ To update your model, you could replace your model file in your model directory,
 We use log to save Cluster Serving information and error. To see log, please refer to `cluster-serving.log`.
 
 #### Visualization
-TensorBoard is integrated into Cluster Serving. TensorBoard service is started with Cluster Serving. Once your serving starts, you can go to `localhost:6006` to see visualization of your serving.
+To visualize Cluster Serving performance, go to your flink job UI, default `localhost:8081`, and go to Cluster Serving job -> metrics. Add `numRecordsOut` to see total record number and `numRecordsOutPerSecond` to see throughput.
+
+See example of visualization:
+
+![Example Chart](serving-visualization.png)
+
+##### Spark Streaming Visualization
+TensorBoard is integrated into Spark Streaming Cluster Serving. TensorBoard service is started with Cluster Serving. Once your serving starts, you can go to `localhost:6006` to see visualization of your serving.
 
 Analytics Zoo Cluster Serving provides 2 attributes in Tensorboard so far, `Serving Throughput` and `Total Records Number`.
 

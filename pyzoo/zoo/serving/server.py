@@ -81,6 +81,8 @@ class ClusterServing:
             print("spark-redis jar already exist.")
 
     def copy_config(self):
+        if os.path.exists("config.yaml"):
+            return
         print("Trying to find config file in ", self.conf_path)
         if not os.path.exists(self.conf_path):
             print('WARNING: Config file does not exist in your pip directory,'

@@ -15,18 +15,20 @@
 #
 
 import os.path
+import shutil
 
 import pytest
 
+import zoo.orca.data
 import zoo.orca.data.pandas
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.common.nncontext import *
 
 
-class TestSparkDataShards(ZooTestCase):
+class TestSparkXShards(ZooTestCase):
     def setup_method(self, method):
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
-        sparkConf = init_spark_conf().setMaster("local[4]").setAppName("testSparkDataShards")
+        sparkConf = init_spark_conf().setMaster("local[4]").setAppName("testSparkXShards")
         self.sc = init_nncontext(sparkConf)
 
     def teardown_method(self, method):
@@ -36,7 +38,7 @@ class TestSparkDataShards(ZooTestCase):
         self.sc.stop()
 
     def test_read_local_csv(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
         data = data_shard.collect()
         assert len(data) == 2, "number of shard should be 2"
@@ -44,7 +46,7 @@ class TestSparkDataShards(ZooTestCase):
         assert "location" in df.columns, "location is not in columns"
 
     def test_read_local_json(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
+        file_path = os.path.join(self.resource_path, "orca/data/json")
         data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc,
                                                     orient='columns', lines=True)
         data = data_shard.collect()
@@ -63,33 +65,31 @@ class TestSparkDataShards(ZooTestCase):
             assert "value" in df.columns, "value is not in columns"
 
     def test_repartition(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
+        file_path = os.path.join(self.resource_path, "orca/data/json")
         data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc)
         partitions_num_1 = data_shard.rdd.getNumPartitions()
         assert partitions_num_1 == 4, "number of partition should be 4"
-        data_shard.repartition(1)
-        partitions_num_2 = data_shard.rdd.getNumPartitions()
+        partitioned_shard = data_shard.repartition(1)
+        partitions_num_2 = partitioned_shard.rdd.getNumPartitions()
         assert partitions_num_2 == 1, "number of partition should be 1"
 
     def test_apply(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
+        file_path = os.path.join(self.resource_path, "orca/data/json")
         data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc,
                                                     orient='columns', lines=True)
         data = data_shard.collect()
         assert data[0]["value"].values[0] > 0, "value should be positive"
 
-        def negative(column_name):
-            def process(df):
-                df[column_name] = df[column_name] * (-1)
-                return df
-            return process
+        def negative(df, column_name):
+            df[column_name] = df[column_name] * (-1)
+            return df
 
-        data_shard.transform_shard(negative, "value")
-        data2 = data_shard.collect()
+        trans_data_shard = data_shard.transform_shard(negative, "value")
+        data2 = trans_data_shard.collect()
         assert data2[0]["value"].values[0] < 0, "value should be negative"
 
     def test_read_csv_with_args(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc, sep=',', header=0)
         data = data_shard.collect()
         assert len(data) == 2, "number of shard should be 2"
@@ -97,16 +97,87 @@ class TestSparkDataShards(ZooTestCase):
         assert "location" in df.columns, "location is not in columns"
 
     def test_partition_by_single_column(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
-        data_shard.partition_by(cols="location")
-        partitions = data_shard.rdd.glom().collect()
+        partitioned_shard = data_shard.partition_by(cols="location")
+        partitions = partitioned_shard.rdd.glom().collect()
         assert len(partitions) == 4
 
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
-        data_shard.partition_by(cols="location", num_partitions=3)
-        partitions = data_shard.rdd.glom().collect()
+        partitioned_shard = data_shard.partition_by(cols="location", num_partitions=3)
+        partitions = partitioned_shard.rdd.glom().collect()
         assert len(partitions) == 3
+
+    def test_unique(self):
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        location_list = data_shard.unique("location")
+        assert len(location_list) == 6
+
+    def test_split(self):
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        trans_data_shard = data_shard.transform_shard(lambda df: (df[0:-1], df[-1:]))
+        shards_splits = trans_data_shard.split()
+        assert len(shards_splits) == 2
+        data1 = shards_splits[0].collect()
+        data2 = shards_splits[1].collect()
+        assert len(data1[0].index) > 1
+        assert len(data2[0].index) == 1
+
+    def test_len(self):
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        assert data_shard.len() == 14
+        assert data_shard.len('ID') == 14
+        with self.assertRaises(Exception) as context:
+            data_shard.len('abc')
+        self.assertTrue('Invalid key for this XShards' in str(context.exception))
+
+        def to_dict(df):
+            return {'ID': df['ID'].to_numpy(), 'location': df['location'].to_numpy()}
+        data_shard = data_shard.transform_shard(to_dict)
+        assert data_shard.len('ID') == 14
+        assert data_shard.len() == 4
+        with self.assertRaises(Exception) as context:
+            data_shard.len('abc')
+        self.assertTrue('Invalid key for this XShards' in str(context.exception))
+
+        def to_number(d):
+            return 4
+        data_shard = data_shard.transform_shard(to_number)
+        assert data_shard.len() == 2
+        with self.assertRaises(Exception) as context:
+            data_shard.len('abc')
+        self.assertTrue('No selection operation available for this XShards' in
+                        str(context.exception))
+
+    def test_save(self):
+        temp = tempfile.mkdtemp()
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        path = os.path.join(temp, "data.pkl")
+        data_shard.save_pickle(path)
+        shards = zoo.orca.data.SparkXShards.load_pickle(path, self.sc)
+        assert isinstance(shards, zoo.orca.data.SparkXShards)
+        shutil.rmtree(temp)
+
+    def test_transform(self):
+        def trans_func(df):
+            data1 = {'ID': df['ID'].values, 'price': df['sale_price'].values}
+            data2 = {'location': df['location'].values}
+            return {'x': data1, 'y': data2}
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        transformed_data_shard = data_shard.transform_shard(trans_func)
+        data = data_shard.collect()
+        assert len(data) == 2, "number of shard should be 2"
+        df = data[0]
+        assert "location" in df.columns, "location is not in columns"
+        trans_data = transformed_data_shard.collect()
+        assert len(trans_data) == 2, "number of shard should be 2"
+        trans_dict = trans_data[0]
+        assert "x" in trans_dict, "x is not in the dictionary"
 
 
 if __name__ == "__main__":

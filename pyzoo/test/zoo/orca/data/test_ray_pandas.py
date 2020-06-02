@@ -24,7 +24,7 @@ from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from test.zoo.orca.data.conftest import get_ray_ctx
 
 
-class TestRayDataShards(ZooTestCase):
+class TestRayXShards(ZooTestCase):
     def setup_method(self, method):
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
         self.ray_ctx = get_ray_ctx()
@@ -36,7 +36,7 @@ class TestRayDataShards(ZooTestCase):
         pass
 
     def test_read_local_csv(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.ray_ctx)
         data = data_shard.collect()
         assert len(data) == 2, "number of shard should be 2"
@@ -44,7 +44,7 @@ class TestRayDataShards(ZooTestCase):
         assert "location" in df.columns, "location is not in columns"
 
     def test_read_local_json(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
+        file_path = os.path.join(self.resource_path, "orca/data/json")
         data_shard = zoo.orca.data.pandas.read_json(file_path, self.ray_ctx, orient='columns',
                                                     lines=True)
         data = data_shard.collect()
@@ -63,7 +63,7 @@ class TestRayDataShards(ZooTestCase):
             assert "value" in df.columns, "value is not in columns"
 
     def test_repartition(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
+        file_path = os.path.join(self.resource_path, "orca/data/json")
         data_shard = zoo.orca.data.pandas.read_json(file_path, self.ray_ctx)
         partitions1 = data_shard.get_partitions()
         assert len(partitions1) == 2, "number of partition should be 2"
@@ -74,7 +74,7 @@ class TestRayDataShards(ZooTestCase):
         assert len(partition_data) == 2, "partition 0 should have 2 objects"
 
     def test_transform_shard(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
+        file_path = os.path.join(self.resource_path, "orca/data/json")
         data_shard = zoo.orca.data.pandas.read_json(file_path, self.ray_ctx, orient='columns',
                                                     lines=True)
         data = data_shard.collect()
@@ -89,7 +89,7 @@ class TestRayDataShards(ZooTestCase):
         assert data2[0]["value"].values[0] < 0, "value should be negative"
 
     def test_read_csv_with_args(self):
-        file_path = os.path.join(self.resource_path, "orca/data")
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.ray_ctx, sep=',', header=0)
         data = data_shard.collect()
         assert len(data) == 2, "number of shard should be 2"

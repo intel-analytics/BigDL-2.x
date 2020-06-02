@@ -29,7 +29,7 @@ import scala.collection.JavaConverters._
 object ClusterServing {
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
-  var params: SerParams = null  
+  var params: SerParams = null
   def run(configPath: String = "config.yaml",
           redisHost: String = null, redisPort: Int = -1): Unit = {
     val helper = new ClusterServingHelper(configPath)
@@ -45,7 +45,7 @@ object ClusterServing {
     val serving = StreamExecutionEnvironment.getExecutionEnvironment
     serving.addSource(new FlinkRedisSource(params))
       .map(new FlinkInference(params))
-      .addSink(new FlinkRedisSink(params)).setParallelism(1)
+      .addSink(new FlinkRedisSink(params))
     serving.setParallelism(1)
     serving.execute("Cluster Serving - Flink")
   }
