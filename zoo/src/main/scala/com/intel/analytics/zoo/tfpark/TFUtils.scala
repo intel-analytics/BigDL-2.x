@@ -197,7 +197,7 @@ object TFUtils {
       i += 1
     }
   }
-  
+
   def tfenum2datatype(enum: Int): DataType = {
     enum match {
       case 1 => DataType.FLOAT
