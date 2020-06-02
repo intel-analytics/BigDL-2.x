@@ -35,7 +35,7 @@ class BaseModel(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def evaluate(self, x, y, metric=None):
+    def evaluate(self, x, y, metric=None, **config):
         """
         Evaluate the model
         :param x: input
@@ -46,7 +46,7 @@ class BaseModel(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def predict(self, x, mc=False):
+    def predict(self, x, mc=False, **config):
         """
         Prediction.
         :param x: input
@@ -55,7 +55,7 @@ class BaseModel(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def save(self, model_path, config_path):
+    def save(self, model_path, config_path, **config):
         """
         save model to file.
         :param model_path: the model file path to be saved to.

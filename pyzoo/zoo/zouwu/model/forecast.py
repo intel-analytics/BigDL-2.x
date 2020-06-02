@@ -18,12 +18,134 @@ from abc import ABCMeta, abstractmethod
 
 from zoo.automl.model.MTNet_keras import MTNetKeras as MTNetKerasModel
 from zoo.automl.model.VanillaLSTM import VanillaLSTM as LSTMKerasModel
+from zoo.automl.model.DTCNMF_pytorch import DTCNMFPytorch as DTCNMFModel
 from zoo.tfpark import KerasModel as TFParkKerasModel
 
 import tensorflow as tf
 
 
-class Forecaster(TFParkKerasModel, metaclass=ABCMeta):
+class Forecaster(metaclass=ABCMeta):
+    @abstractmethod
+    def fit(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def evaluate(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def predict(self, **kwargs):
+        pass
+
+
+class DTCNMFForecaster(Forecaster):
+    def __init__(self,
+                 vbsize,
+                 hbsize,
+                 num_channels_X,
+                 num_channels_Y,
+                 kernel_size,
+                 dropout,
+                 rank,
+                 kernel_size_Y,
+                 val_len,
+                 end_index,
+                 normalize,
+                 start_date,
+                 freq,
+                 use_time,
+                 dti,
+                 svd,
+                 period,
+                 forward_cov):
+        """
+        Initialize
+        :param vbsize:
+        :param hbsize:
+        :param num_channels_X:
+        :param num_channels_Y:
+        :param kernel_size:
+        :param dropout:
+        :param rank:
+        :param kernel_size_Y:
+        :param val_len:
+        :param end_index:
+        :param normalize:
+        :param start_date:
+        :param freq:
+        :param use_time:
+        :param dti:
+        :param svd:
+        :param period:
+        :param forward_cov:
+        """
+        self.internal = DTCNMFModel()
+        self.internal.set_params(vbsize=vbsize,
+                                 hbsize=hbsize,
+                                 num_channels_X=num_channels_X,
+                                 num_channels_Y=num_channels_Y,
+                                 kernel_size=kernel_size,
+                                 dropout=dropout,
+                                 rank=rank,
+                                 kernel_size_Y=kernel_size_Y,
+                                 val_len=val_len,
+                                 end_index=end_index,
+                                 normalize=normalize,
+                                 start_date=start_date,
+                                 freq=freq,
+                                 use_time=use_time,
+                                 dti=dti,
+                                 svd=svd,
+                                 period=period,
+                                 forward_cov=forward_cov)
+        self.internal.build()
+
+    def fit(self,
+            x,
+            covariates=None,
+            lr=0.005,
+            incremental=True):
+        """
+        fit the model
+        :param x: the input
+        :param covariates: the global covariates
+        :param lr: learning rate
+        :param incremental: if the fit is incremental
+        :return:
+        """
+        if incremental:
+            self.internal.fit_incremental(x)
+        else:
+            self.internal.fit_eval(x)
+
+    def evaluate(self,
+                 x,
+                 metric=['mae'],
+                 covariates=None,
+                 ):
+        """
+        evaluate the model
+        :param covariates: global covariates
+        :param x: the input
+        :param metric: the metrics
+        :return:
+        """
+        self.internal.evaluate(x, metric=metric)
+
+    def predict(self,
+                x,
+                covariates=None,
+                ):
+        """
+        predict
+        :param x: the input
+        :param covariates: the global covariates
+        :return:
+        """
+        self.internal.predict(x)
+
+
+class TFParkForecaster(TFParkKerasModel, Forecaster, metaclass=ABCMeta):
     """
     Base class for TFPark KerasModel based Forecast models.
     """
@@ -46,7 +168,7 @@ class Forecaster(TFParkKerasModel, metaclass=ABCMeta):
         pass
 
 
-class LSTMForecaster(Forecaster):
+class LSTMForecaster(TFParkForecaster):
     """
     Vanilla LSTM Forecaster
     """
@@ -105,7 +227,7 @@ class LSTMForecaster(Forecaster):
                                     **self.model_config)
 
 
-class MTNetForecaster(Forecaster):
+class MTNetForecaster(TFParkForecaster):
     """
     MTNet Forecast Model
     """
