@@ -17,14 +17,14 @@
 from zoo.orca.data.utils import *
 
 
-class DataShards(object):
+class XShards(object):
     """
     A collection of data which can be pre-processed parallelly.
     """
 
     def transform_shard(self, func, *args):
         """
-        Transform each shard in the DataShards using func
+        Transform each shard in the XShards using func
         :param func: pre-processing function
         :param args: arguments for the pre-processing function
         :return: DataShard
@@ -33,13 +33,20 @@ class DataShards(object):
 
     def collect(self):
         """
-        Returns a list that contains all of the elements in this DataShards
+        Returns a list that contains all of the elements in this XShards
         :return: list of elements
         """
         pass
 
+    def num_partitions(self):
+        """
+        return the number of partitions in this XShards
+        :return: an int
+        """
+        pass
 
-class RayDataShards(DataShards):
+
+class RayXShards(XShards):
     """
     A collection of data which can be pre-processed parallelly on Ray
     """
@@ -49,7 +56,7 @@ class RayDataShards(DataShards):
 
     def transform_shard(self, func, *args):
         """
-        Transform each shard in the DataShards using func
+        Transform each shard in the XShards using func
         :param func: pre-processing function.
         In the function, the element object should be the first argument
         :param args: rest arguments for the pre-processing function
@@ -64,17 +71,20 @@ class RayDataShards(DataShards):
 
     def collect(self):
         """
-        Returns a list that contains all of the elements in this DataShards
+        Returns a list that contains all of the elements in this XShards
         :return: list of elements
         """
         import ray
         return ray.get([shard.get_data.remote() for shard in self.shard_list])
 
+    def num_partitions(self):
+        return len(self.partitions)
+
     def repartition(self, num_partitions):
         """
-        Repartition DataShards.
+        Repartition XShards.
         :param num_partitions: number of partitions
-        :return: this DataShards
+        :return: this XShards
         """
         shards_partitions = list(chunk(self.shard_list, num_partitions))
         self.partitions = [RayPartition(shards) for shards in shards_partitions]
@@ -82,7 +92,7 @@ class RayDataShards(DataShards):
 
     def get_partitions(self):
         """
-        Return partition list of the DataShards
+        Return partition list of the XShards
         :return: partition list
         """
         return self.partitions
@@ -90,7 +100,7 @@ class RayDataShards(DataShards):
 
 class RayPartition(object):
     """
-    Partition of RayDataShards
+    Partition of RayXShards
     """
 
     def __init__(self, shard_list):
@@ -100,27 +110,28 @@ class RayPartition(object):
         return [shard.get_data.remote() for shard in self.shard_list]
 
 
-class SparkDataShards(DataShards):
+class SparkXShards(XShards):
     def __init__(self, rdd):
         self.rdd = rdd
 
     def transform_shard(self, func, *args):
-        self.rdd = self.rdd.map(func(*args))
-        return self
+        return SparkXShards(self.rdd.map(lambda data: func(data, *args)))
 
     def collect(self):
         return self.rdd.collect()
 
+    def num_partitions(self):
+        return self.rdd.getNumPartitions()
+
     def repartition(self, num_partitions):
-        self.rdd = self.rdd.repartition(num_partitions)
-        return self
+        return SparkXShards(self.rdd.repartition(num_partitions))
 
     def partition_by(self, cols, num_partitions=None):
         import pandas as pd
-        class_name, columns = self.rdd.map(
-            lambda data: (get_class_name(data), data.columns) if isinstance(data, pd.DataFrame)
-            else (get_class_name(data), None)).first()
-        if class_name == 'pandas.core.frame.DataFrame':
+        elem_class, columns = self.rdd.map(
+            lambda data: (type(data), data.columns) if isinstance(data, pd.DataFrame)
+            else (type(data), None)).first()
+        if issubclass(elem_class, pd.DataFrame):
             # if partition by a column
             if isinstance(cols, str):
                 if cols not in columns:
@@ -146,8 +157,77 @@ class SparkDataShards(DataShards):
                     # no data in this partition
                     return []
             # merge records to df in each partition
-            self.rdd = partitioned_rdd.mapPartitions(merge)
-            return self
+            return SparkXShards(partitioned_rdd.mapPartitions(merge))
         else:
-            raise Exception("Currently only support partition by for Datashards"
+            raise Exception("Currently only support partition by for XShards"
                             " of Pandas DataFrame")
+
+    def unique(self, key):
+        import pandas as pd
+        elem_class, columns = self.rdd.map(
+            lambda data: (type(data), data.columns) if isinstance(data, pd.DataFrame)
+            else (type(data), None)).first()
+        if issubclass(elem_class, pd.DataFrame):
+            if key is None:
+                raise Exception("Cannot apply unique operation on XShards of Pandas Dataframe"
+                                " without column name")
+            if key in columns:
+                rdd = self.rdd.map(lambda df: df[key].unique())
+                import numpy as np
+                result = rdd.reduce(lambda list1, list2: pd.unique(np.concatenate((list1, list2),
+                                                                                  axis=0)))
+                return result
+            else:
+                raise Exception("The select key is not in the DataFrame in this XShards")
+        else:
+            # we may support numpy or other types later
+            raise Exception("Currently only support unique() on XShards of Pandas DataFrame")
+
+    def split(self):
+        """
+        Split SparkXShards into multiple SparkXShards.
+        Each element in the SparkXShards needs be a list or tuple with same length.
+        :return: Splits of SparkXShards. If element in the input SparkDataShard is not
+                list or tuple, return list of input SparkDataShards.
+        """
+        # get number of splits
+        list_split_length = self.rdd.map(lambda data: len(data) if isinstance(data, list) or
+                                         isinstance(data, tuple) else 1).collect()
+        # check if each element has same splits
+        if list_split_length.count(list_split_length[0]) != len(list_split_length):
+            raise Exception("Cannot split this XShards because its partitions "
+                            "have different split length")
+        else:
+            if list_split_length[0] > 1:
+                def get_data(order):
+                    def transform(data):
+                        return data[order]
+                    return transform
+                return [SparkXShards(self.rdd.map(get_data(i)))
+                        for i in range(list_split_length[0])]
+            else:
+                return [self]
+
+    def len(self, key=None):
+        if key is None:
+            return self.rdd.map(lambda data: len(data) if hasattr(data, '__len__') else 1)\
+                .reduce(lambda l1, l2: l1 + l2)
+        else:
+            first = self.rdd.first()
+            if not hasattr(first, '__getitem__'):
+                raise Exception("No selection operation available for this XShards")
+            else:
+                try:
+                    data = first[key]
+                except:
+                    raise Exception("Invalid key for this XShards")
+            return self.rdd.map(lambda data: len(data[key]) if hasattr(data[key], '__len__')
+                                else 1).reduce(lambda l1, l2: l1 + l2)
+
+    def save_pickle(self, path, batchSize=10):
+        self.rdd.saveAsPickleFile(path, batchSize)
+        return self
+
+    @classmethod
+    def load_pickle(cls, path, sc, minPartitions=None):
+        return SparkXShards(sc.pickleFile(path, minPartitions))

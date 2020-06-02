@@ -48,15 +48,19 @@ def list_s3_file(file_path, file_type, env):
         aws_access_key_id=access_key_id,
         aws_secret_access_key=secret_access_key,
     ).client('s3', verify=False)
-    keys = []
-    resp = s3_client.list_objects_v2(Bucket=bucket,
-                                     Prefix=key)
-    for obj in resp['Contents']:
-        keys.append(obj['Key'])
-    # only get json/csv files
-    files = [file for file in keys if os.path.splitext(file)[1] == "." + file_type]
-    file_paths = [os.path.join("s3://" + bucket, file) for file in files]
-    return file_paths
+    # file
+    if os.path.splitext(file_path)[1] != '':
+        return ["s3://" + file_path]
+    else:
+        keys = []
+        resp = s3_client.list_objects_v2(Bucket=bucket,
+                                         Prefix=key)
+        for obj in resp['Contents']:
+            keys.append(obj['Key'])
+        # only get json/csv files
+        files = [file for file in keys if os.path.splitext(file)[1] == "." + file_type]
+        file_paths = [os.path.join("s3://" + bucket, file) for file in files]
+        return file_paths
 
 
 def extract_one_path(file_path, file_type, env):
@@ -64,15 +68,73 @@ def extract_one_path(file_path, file_type, env):
     prefix = file_url_splits[0]
     if prefix == "s3":
         file_paths = list_s3_file(file_url_splits[1], file_type, env)
+    elif prefix == "hdfs":
+        import pyarrow as pa
+        fs = pa.hdfs.connect()
+        if fs.isfile(file_path):
+            return [file_path]
+        else:
+            file_paths = get_file_list(file_path)
+            # only get json/csv files
+            file_paths = [file for file in file_paths
+                          if os.path.splitext(file)[1] == "." + file_type]
     else:
-        file_paths = get_file_list(file_path)
-    # only get json/csv files
-    file_paths = [file for file in file_paths if os.path.splitext(file)[1] == "." + file_type]
+        if os.path.isfile(file_path):
+            return [file_path]
+        else:
+            file_paths = get_file_list(file_path)
+            # only get json/csv files
+            file_paths = [file for file in file_paths
+                          if os.path.splitext(file)[1] == "." + file_type]
     return file_paths
 
 
-def get_class_name(obj):
-    module = obj.__class__.__module__
-    if module is None or module == str.__class__.__module__:
-        return obj.__class__.__name__
-    return module + '.' + obj.__class__.__name__
+def open_text(path):
+    # Return a list of lines
+    if path.startswith("hdfs"):  # hdfs://url:port/file_path
+        import pyarrow as pa
+        fs = pa.hdfs.connect()
+        with fs.open(path, 'rb') as f:
+            lines = f.read().decode("utf-8").split("\n")
+    elif path.startswith("s3"):  # s3://bucket/file_path
+        access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
+        secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
+        import boto3
+        s3_client = boto3.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key).client('s3', verify=False)
+        path_parts = path.split("://")[1].split('/')
+        bucket = path_parts.pop(0)
+        key = "/".join(path_parts)
+        data = s3_client.get_object(Bucket=bucket, Key=key)
+        lines = data["Body"].read().decode("utf-8").split("\n")
+    else:  # Local path
+        lines = []
+        for line in open(path):
+            lines.append(line)
+    return [line.strip() for line in lines]
+
+
+def open_image(path):
+    from PIL import Image
+    if path.startswith("hdfs"):  # hdfs://url:port/file_path
+        import pyarrow as pa
+        from io import BytesIO
+        fs = pa.hdfs.connect()
+        with fs.open(path, 'rb') as f:
+            return Image.open(BytesIO(f.read()))
+    elif path.startswith("s3"):  # s3://bucket/file_path
+        access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
+        secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
+        import boto3
+        from io import BytesIO
+        s3_client = boto3.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key).client('s3', verify=False)
+        path_parts = path.split("://")[1].split('/')
+        bucket = path_parts.pop(0)
+        key = "/".join(path_parts)
+        data = s3_client.get_object(Bucket=bucket, Key=key)
+        return Image.open(BytesIO(data["Body"].read()))
+    else:  # Local path
+        return Image.open(path)

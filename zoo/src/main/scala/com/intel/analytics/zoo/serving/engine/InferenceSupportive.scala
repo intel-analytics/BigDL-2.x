@@ -16,34 +16,32 @@
 
 package com.intel.analytics.zoo.serving.engine
 
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.serving.PostProcessing
 import com.intel.analytics.zoo.serving.utils.SerParams
 
 object InferenceSupportive {
-  def multiThreadInference(preProcessed: Iterator[(String, Tensor[Float])],
+  def singleThreadInference(preProcessed: Iterator[(String, Activity)],
                            params: SerParams): Iterator[(String, String)] = {
     val postProcessed = preProcessed.grouped(params.coreNum).flatMap(pathByteBatch => {
       val thisBatchSize = pathByteBatch.size
-      val t = if (params.chwFlag) {
-        Tensor[Float](params.coreNum, params.C, params.H, params.W)
-      } else {
-        Tensor[Float](params.coreNum, params.H, params.W, params.C)
-      }
+      (0 until params.coreNum).toParArray.map(idx => {
+        val t = pathByteBatch(idx)._2
+        val result = params.model.doPredict(t)
+        val value = PostProcessing(result.toTensor[Float])
+        (pathByteBatch(idx)._1, value)
+      })
+    })
+    postProcessed
+  }
+  def multiThreadInference(preProcessed: Iterator[(String, Activity)],
+                           params: SerParams): Iterator[(String, String)] = {
+    val postProcessed = preProcessed.grouped(params.coreNum).flatMap(pathByteBatch => {
+      val thisBatchSize = pathByteBatch.size
 
-      (0 until thisBatchSize).toParArray.foreach(i =>
-        t.select(1, i + 1).copy(pathByteBatch(i)._2))
-
-      val thisT = if (params.chwFlag) {
-        t.resize(thisBatchSize, params.C, params.H, params.W)
-      } else {
-        t.resize(thisBatchSize, params.H, params.W, params.C)
-      }
-      val x = if (params.modelType == "openvino") {
-        thisT.addSingletonDimension()
-      } else {
-        thisT
-      }
+      val t = batchInput(pathByteBatch, params)
       /**
        * addSingletonDimension method will modify the
        * original Tensor, thus if reuse of Tensor is needed,
@@ -51,11 +49,19 @@ object InferenceSupportive {
        */
 //      println(s"preparing to predict")
       val result = if (params.modelType == "openvino") {
-        val res = params.model.doPredict(x).toTensor[Float].squeeze()
-        t.squeeze(1)
-        res
+        val res = params.model.doPredict(t).toTensor[Float].squeeze()
+        if (t.isTensor) {
+          t.toTensor[Float].squeeze(1)
+        }
+        else if (t.isTable) {
+          val dataTable = t.toTable
+          dataTable.keySet.foreach(key => {
+            dataTable(key).asInstanceOf[Tensor[Float]].squeeze(1)
+          })
+        }
+        res.squeeze(1)
       } else {
-        params.model.doPredict(x).toTensor[Float]
+        params.model.doPredict(t).toTensor[Float]
       }
 //      println(s"predict end")
       (0 until thisBatchSize).toParArray.map(i => {
@@ -65,5 +71,39 @@ object InferenceSupportive {
     })
     postProcessed
   }
+  def batchInput(seq: Seq[(String, Activity)],
+    params: SerParams): Activity = {
+    val thisBatchSize = seq.size
 
+    val inputSample = seq.head._2.toTable
+    val kvTuples = inputSample.keySet.map(key => {
+      (key, Tensor[Float](params.coreNum +:
+        inputSample(key).asInstanceOf[Tensor[Float]].size()))
+    }).toList
+    val t = T(kvTuples.head, kvTuples.tail: _*)
+    (0 until thisBatchSize).toParArray.foreach(i => {
+      val dataTable = seq(i)._2.toTable
+      t.keySet.foreach(key => {
+        t(key).asInstanceOf[Tensor[Float]].select(1, i + 1)
+          .copy(dataTable(key).asInstanceOf[Tensor[Float]])
+        if (params.modelType == "openvino") {
+          t(key).asInstanceOf[Tensor[Float]].addSingletonDimension()
+        }
+      })
+    })
+    t.keySet.foreach(key => {
+      val singleTensorSize = inputSample(key).asInstanceOf[Tensor[Float]].size()
+      var newSize = Array(thisBatchSize)
+      for (elem <- singleTensorSize) {
+        newSize = newSize :+ elem
+      }
+      t(key).asInstanceOf[Tensor[Float]].resize(newSize)
+    })
+    if (params.dataShape.length == 1) {
+      t.keySet.foreach(key => {
+        return t(key).asInstanceOf[Tensor[Float]]
+      })
+    }
+    t
+  }
 }
