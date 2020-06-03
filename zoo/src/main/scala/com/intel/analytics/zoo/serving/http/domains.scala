@@ -436,7 +436,6 @@ object Instances {
     val rootAllocator = new RootAllocator(Integer.MAX_VALUE)
     val arrowStreamReader = new ArrowStreamReader(byteArrayInputStream, rootAllocator)
     val root = arrowStreamReader.getVectorSchemaRoot()
-    println("::::", root.getSchema)
     val fieldVectors: util.List[FieldVector] = root.getFieldVectors
 
     while(arrowStreamReader.loadNextBatch()) {
