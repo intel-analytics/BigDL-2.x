@@ -117,8 +117,8 @@ class SparkXShards(XShards):
 
     def transform_shard(self, func, *args):
         transformed_shard = SparkXShards(self.rdd.map(lambda data: func(data, *args)))
+        transformed_shard.compute()
         self.uncache()
-        transformed_shard.rdd.count()
         return transformed_shard
 
     def collect(self):
@@ -134,6 +134,10 @@ class SparkXShards(XShards):
 
     def is_cached(self):
         return self.rdd.is_cached
+
+    def compute(self):
+        self.rdd.count()
+        return self
 
     def num_partitions(self):
         return self.rdd.getNumPartitions()
@@ -175,8 +179,8 @@ class SparkXShards(XShards):
                     return []
             # merge records to df in each partition
             partitioned_shard = SparkXShards(partitioned_rdd.mapPartitions(merge))
+            partitioned_shard.compute()
             self.uncache()
-            partitioned_shard.rdd.count()
             return partitioned_shard
         else:
             raise Exception("Currently only support partition by for XShards"
@@ -225,9 +229,9 @@ class SparkXShards(XShards):
                     return transform
                 split_shard_list = [SparkXShards(self.rdd.map(get_data(i)))
                                     for i in range(list_split_length[0])]
-                self.uncache()
                 for shard in split_shard_list:
-                    shard.rdd.count()
+                    shard.compute()
+                self.uncache()
                 return split_shard_list
             else:
                 return [self]
