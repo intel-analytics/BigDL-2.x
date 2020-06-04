@@ -39,6 +39,7 @@ class Adam(OptimMethod, ZooKerasCreator):
                  epsilon=1e-8,
                  decay=0.0,
                  schedule=None,
+                 weight_decay=0.0,
                  bigdl_type="float"):
         """
         :param lr learning rate
@@ -60,6 +61,7 @@ class Adam(OptimMethod, ZooKerasCreator):
             beta_2,
             epsilon,
             decay,
+            weight_decay,
             schedule if (schedule) else Default()
         )
         self.bigdl_type = bigdl_type

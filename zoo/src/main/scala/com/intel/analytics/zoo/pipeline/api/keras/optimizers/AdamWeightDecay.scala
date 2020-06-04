@@ -93,6 +93,7 @@ class AdamWeightDecay[@specialized(Float, Double) T: ClassTag](
     val (_s, _r, _denom) = (state.get[Tensor[T]]("s").get, state.get[Tensor[T]]("r").get,
       state.get[Tensor[T]]("denom").get.resizeAs(dfdx))
 
+
     /**
      * m_t = beta_1 * m_t-1 + (1 - beta_1) * g_t
      * v_t = beta_2 * v_t-1 + (1 - beta_2) * g_t * g_t
@@ -107,10 +108,6 @@ class AdamWeightDecay[@specialized(Float, Double) T: ClassTag](
     _denom.add(ev.fromType(eps), buffer)
 
     val update = _s / (_denom)
-
-    if(weightDecay > 0) {
-      update.add(parameter * (ev.fromType(weightDecay)))
-    }
 
     val currentLR = updateHyperParameter(timestep)
     val lrScheduled = if (total != -1) {
