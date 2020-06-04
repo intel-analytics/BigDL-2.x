@@ -188,6 +188,8 @@ class RayServiceFuncGenerator(object):
 
 
 class RayContext(object):
+    _active_ray_context = None
+
     def __init__(self, sc, redis_port=None, password="123456", object_store_memory=None,
                  verbose=False, env=None, extra_params=None):
         """
@@ -245,6 +247,7 @@ class RayContext(object):
             print("Start to launch the JVM guarding process")
             init_executor_gateway(sc)
             print("JVM guarding process has been successfully launched")
+        RayContext._active_ray_context = self
 
     def _gather_cluster_ips(self):
         total_cores = int(self.num_ray_nodes) * int(self.ray_node_cpu_cores)
