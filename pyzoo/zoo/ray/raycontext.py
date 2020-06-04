@@ -336,7 +336,7 @@ class RayContext(object):
         if self._address_info:
             return self._address_info
         else:
-            raise Exception("Ray cluster hasn't been initiated yet. Please call RayContext.init first")
+            raise Exception("Ray cluster hasn't been initiated yet. Please call init first")
 
     def _start_cluster(self):
         print("Start to launch ray on cluster")
