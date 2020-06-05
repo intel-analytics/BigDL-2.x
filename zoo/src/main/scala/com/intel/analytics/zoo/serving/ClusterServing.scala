@@ -51,6 +51,5 @@ object ClusterServing {
   }
   def main(args: Array[String]): Unit = {
     run()
-//    run(redisHost = "10.239.47.210", redisPort = 16380)
   }
 }
