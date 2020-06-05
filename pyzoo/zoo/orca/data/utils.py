@@ -161,3 +161,41 @@ def load_numpy(path):
         return np.load(BytesIO(data["Body"].read()))
     else:  # Local path
         return np.load(path)
+
+
+def read_pd_hdfs_file_list(iterator, file_type, **kwargs):
+    import pyarrow as pa
+    fs = pa.hdfs.connect()
+
+    for x in iterator:
+        with fs.open(x, 'rb') as f:
+            df = read_pd_file(f, file_type, **kwargs)
+            yield df
+
+
+def read_pd_s3_file_list(iterator, file_type, **kwargs):
+    access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
+    secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
+    import boto3
+    s3_client = boto3.Session(
+        aws_access_key_id=access_key_id,
+        aws_secret_access_key=secret_access_key,
+    ).client('s3', verify=False)
+    for x in iterator:
+        path_parts = x.split("://")[1].split('/')
+        bucket = path_parts.pop(0)
+        key = "/".join(path_parts)
+        obj = s3_client.get_object(Bucket=bucket, Key=key)
+        df = read_pd_file(obj['Body'], file_type, **kwargs)
+        yield df
+
+
+def read_pd_file(path, file_type, **kwargs):
+    import pandas as pd
+    if file_type == "csv":
+        df = pd.read_csv(path, **kwargs)
+    elif file_type == "json":
+        df = pd.read_json(path, **kwargs)
+    else:
+        raise Exception("Unsupported file type")
+    return df

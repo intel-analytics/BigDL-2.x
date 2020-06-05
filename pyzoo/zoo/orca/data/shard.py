@@ -144,50 +144,14 @@ class RayShard(object):
         self.data = data
 
     def read_file_partitions(self, paths, file_type, **kwargs):
-        df_list = []
         import pandas as pd
         prefix = paths[0].split("://")[0]
         if prefix == "hdfs":
-            import pyarrow as pa
-            fs = pa.hdfs.connect()
-            for path in paths:
-                with fs.open(path, 'rb') as f:
-                    if file_type == "json":
-                        df = pd.read_json(f, **kwargs)
-                    elif file_type == "csv":
-                        df = pd.read_csv(f, **kwargs)
-                    else:
-                        raise Exception("Unsupported file type")
-                    df_list.append(df)
+            df_list = read_pd_hdfs_file_list(paths, file_type, **kwargs)
         elif prefix == "s3":
-            import boto3
-            access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
-            secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
-            s3_client = boto3.Session(
-                aws_access_key_id=access_key_id,
-                aws_secret_access_key=secret_access_key,
-            ).client('s3', verify=False)
-            for path in paths:
-                path_parts = path.split("://")[1].split('/')
-                bucket = path_parts.pop(0)
-                key = "/".join(path_parts)
-                obj = s3_client.get_object(Bucket=bucket, Key=key)
-                if file_type == "json":
-                    df = pd.read_json(obj['Body'], **kwargs)
-                elif file_type == "csv":
-                    df = pd.read_csv(obj['Body'], **kwargs)
-                else:
-                    raise Exception("Unsupported file type")
-                df_list.append(df)
+            df_list = read_pd_s3_file_list(paths, file_type, **kwargs)
         else:
-            for path in paths:
-                if file_type == "json":
-                    df = pd.read_json(path, **kwargs)
-                elif file_type == "csv":
-                    df = pd.read_csv(path, **kwargs)
-                else:
-                    raise Exception("Unsupported file type")
-                df_list.append(df)
+            df_list = [read_pd_file(path, file_type, **kwargs) for path in paths]
         self.data = pd.concat(df_list)
         return 0
 
