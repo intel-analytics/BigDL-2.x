@@ -69,6 +69,7 @@ class Adam(OptimMethod, ZooKerasCreator):
 
 class AdamWeightDecay(OptimMethod, ZooKerasCreator):
     """
+    Implements BERT version of Adam algorithm.
     >>> adam = AdamWeightDecay()
     creating: createZooKerasAdamWeightDecay
     """
