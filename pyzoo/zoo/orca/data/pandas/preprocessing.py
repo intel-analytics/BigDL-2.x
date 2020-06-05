@@ -16,7 +16,6 @@
 
 import random
 
-import ray
 from bigdl.util.common import get_node_and_core_number
 from pyspark.context import SparkContext
 
@@ -76,6 +75,7 @@ def read_file_ray(context, file_path, file_type, **kwargs):
     # remove empty partitions
     file_partition_list = [partition for partition
                            in list(chunk(file_paths, num_partitions)) if partition]
+    import ray
     # create shard actor to read data
     Shard = ray.remote(RayPandasShard)
     shards = [Shard.remote() for i in range(len(file_partition_list))]
