@@ -81,8 +81,8 @@ class Adam[@specialized(Float, Double) T: ClassTag](
 
     val clr = - this.schedule.currentRate
 
-    if(weightDecay > 0) {
-      dfdx.add(parameter * (ev.fromType(weightDecay)))
+    if(wDecay > 0) {
+      dfdx.add(parameter * (ev.fromType(wDecay)))
     }
 
     /**
