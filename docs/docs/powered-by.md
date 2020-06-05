@@ -20,13 +20,15 @@ Learning on Apache Spark and Analytics Zoo](https://www.dellemc.com/resources/en
 * __JD__
 <br>[Object Detection and Image Feature Extraction at JD.com](https://software.intel.com/en-us/articles/building-large-scale-image-feature-extraction-with-bigdl-at-jdcom)
 * __MasterCard__
-</br> [Learning with Analytic Zoo Optimizes Mastercard Recommender AI Service](https://software.intel.com/en-us/articles/deep-learning-with-analytic-zoo-optimizes-mastercard-recommender-ai-service)
+</br> [Deep Learning with Analytic Zoo Optimizes Mastercard Recommender AI Service](https://software.intel.com/en-us/articles/deep-learning-with-analytic-zoo-optimizes-mastercard-recommender-ai-service)
 * __Microsoft Azure__
 <br>[Use Analytics Zoo to Inject AI Into Customer Service Platforms on Microsoft Azure: Part 1]( https://software.intel.com/en-us/use-analytics-zoo-to-inject-ai-into-customer-service-platforms-on-microsoft-azure-part-1)
 <br>[Use Analytics Zoo to Inject AI Into Customer Service Platforms on Microsoft Azure: Part 2](https://www.infoq.com/articles/analytics-zoo-qa-module/?from=timeline&isappinstalled=0)
 * __Midea__
 <br>[Industrial Inspection Platform in Midea and KUKA: Using Distributed TensorFlow on Analytics Zoo](https://software.intel.com/en-us/articles/industrial-inspection-platform-in-midea-and-kuka-using-distributed-tensorflow-on-analytics) 
 <br>[Ability to add "eyes" and "brains" to smart manufacturing](https://www.intel.cn/content/www/cn/zh/analytics/artificial-intelligence/midea-case-study.html) (in Chinese)
+* __MLSListings__
+<br>[Image Similarity-Based House Recommendations and Search](https://software.intel.com/content/www/us/en/develop/articles/using-bigdl-to-build-image-similarity-based-house-recommendations.html)
 * __NeuSoft/BMW__
 <br>[Neusoft RealSight APM partners with Intel to create an application performance management platform with active defense capabilities](https://platform.neusoft.com/2020/01/17/xw-intel.html) (in Chinese)
 * __Office Depot__

@@ -85,12 +85,11 @@ class PreProcessing(param: SerParams) {
 
     val imageTensor = Tensor[Float](arrayBuffer(idx), Array(height, width, channel))
     if (param.chwFlag) {
-      tensorBuffer(idx) = imageTensor.transpose(1, 3)
+      imageTensor.transpose(1, 3)
         .transpose(2, 3).contiguous()
     } else {
-      tensorBuffer(idx) = imageTensor
+      imageTensor
     }
-    imageTensor
   }
   def decodeTensor(info: (ArrayBuffer[Int], ArrayBuffer[Float],
     ArrayBuffer[Int], ArrayBuffer[Int])): Tensor[Float] = {
