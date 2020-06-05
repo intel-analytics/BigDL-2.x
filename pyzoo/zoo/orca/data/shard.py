@@ -114,7 +114,7 @@ class SparkXShards(XShards):
     def __init__(self, rdd):
         self.rdd = rdd
         self.user_cached = False
-        self.cache()
+        self.rdd.cache()
 
     def transform_shard(self, func, *args):
         transformed_shard = SparkXShards(self.rdd.map(lambda data: func(data, *args)))
