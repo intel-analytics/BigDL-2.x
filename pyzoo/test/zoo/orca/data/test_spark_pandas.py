@@ -69,9 +69,12 @@ class TestSparkXShards(ZooTestCase):
         data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc)
         partitions_num_1 = data_shard.rdd.getNumPartitions()
         assert partitions_num_1 == 4, "number of partition should be 4"
+        data_shard.cache()
         partitioned_shard = data_shard.repartition(1)
-        assert not data_shard.is_cached(), "data_shard should be uncached"
+        assert data_shard.is_cached(), "data_shard should be cached"
         assert partitioned_shard.is_cached(), "partitioned_shard should be cached"
+        data_shard.uncache()
+        assert not data_shard.is_cached(), "data_shard should be uncached"
         partitions_num_2 = partitioned_shard.rdd.getNumPartitions()
         assert partitions_num_2 == 1, "number of partition should be 1"
 
