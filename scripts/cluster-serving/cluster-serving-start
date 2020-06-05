@@ -107,7 +107,7 @@ fi
 
 if [ -z "$1" ]; then
     echo "Using default setting, starting Cluster Serving with Flink backend"
-    ${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p 1 all-in-one.jar
+    ${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p 1 zoo.jar
 else
     if [ "${params_performance_mode}" == "ON" ] && [ "${spark_master}" == "local[*]" ]; then
      echo -e "\033[36mPerformance mode is ON, Start standalone cluster... \033[0m"
