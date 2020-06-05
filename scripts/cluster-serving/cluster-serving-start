@@ -96,7 +96,7 @@ if [ -z "${BIGDL_JAR}" ]; then
       mkdir tmp
       (cd tmp; unzip -uo ../zoo.jar)
       (cd tmp; unzip -uo ../bigdl.jar)
-      jar -cvf zoo.jar -C tmp .
+      jar -cvf all-in-one.jar -C tmp .
   else
       BIGDL_JAR=
   fi
