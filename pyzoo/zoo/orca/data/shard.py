@@ -97,31 +97,6 @@ class RayXShards(XShards):
         """
         return self.partitions
 
-    def max(self, **kwargs):
-        import ray
-        import pandas as pd
-        list_result = ray.get(
-            [shard.max.remote(**kwargs) for shard in self.shard_list])
-        if isinstance(list_result[0], pd.Series):
-            df = pd.concat(list_result, axis=1)
-            result = df.max(axis=1)
-            return result
-        elif isinstance(list_result[0], pd.DataFrame):
-            result = list_result[0].copy()
-            for df in list_result[1:]:
-                for ind in df.index:
-                    # add new row  if not exist in result dataframe
-                    if ind not in result.index:
-                        result.loc[ind] = df.loc[ind]
-                        continue
-                    else:
-                        for col in df.columns:
-                            result[col][ind] = max([result[col][ind], df[col][ind]])
-            return result
-        else:
-            # scalar
-            return max(list_result)
-
 
 class RayPartition(object):
     """
@@ -161,13 +136,6 @@ class RayShard(object):
 
     def get_data(self):
         return self.data
-
-    def max(self, **kwargs):
-        import pandas as pd
-        if isinstance(self.data, pd.Series) or isinstance(self.data, pd.DataFrame):
-            return self.data.max(**kwargs)
-        raise Exception("Only support max on Pandas DataFrame or Series")
-
 
 
 class SparkXShards(XShards):
@@ -291,3 +259,16 @@ class SparkXShards(XShards):
     @classmethod
     def load_pickle(cls, path, sc, minPartitions=None):
         return SparkXShards(sc.pickleFile(path, minPartitions))
+
+    def _utility(self, func, *args, **kwargs):
+        def utility_func(func, *args, **kwargs):
+            exception = None
+            try:
+                result = func(*args, **kwargs)
+            except Exception as e:
+                exception = e
+                result = None
+            return {'result': result, 'exception': exception}
+        result_rdd = self.rdd.map(lambda x: utility_func(func, *args, **kwargs))
+        return result_rdd
+
