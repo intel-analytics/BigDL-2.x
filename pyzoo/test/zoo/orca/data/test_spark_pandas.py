@@ -65,7 +65,7 @@ class TestSparkXShards(ZooTestCase):
             assert "value" in df.columns, "value is not in columns"
 
     def test_repartition(self):
-        file_path = os.path.join(self.resource_path, "orca/data/json")
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc)
         partitions_num_1 = data_shard.rdd.getNumPartitions()
         assert partitions_num_1 == 4, "number of partition should be 4"
