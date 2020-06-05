@@ -96,6 +96,51 @@ class TestRayXShards(ZooTestCase):
         df = data[0]
         assert "location" in df.columns, "location is not in columns"
 
+    def test_max_single_index(self):
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.ray_ctx)
+        max = data_shard.max()
+        assert max.loc['ID'] == 101472
+        assert max.loc['sale_price'] == 475000
+        assert max.loc['location'] == 130
+        # max on pandas series
+        shard2 = data_shard.transform_shard(lambda x: x['sale_price'])
+        assert shard2.max() == 475000
+        # max on other type
+        shard3 = shard2.transform_shard(lambda x: x[0])
+        with self.assertRaises(Exception) as context:
+            shard3.max()
+        self.assertTrue('Only support max on Pandas DataFrame or Series"' in
+                        str(context.exception))
+
+    def test_max_multi_index(self):
+        import tempfile
+        import pandas as pd
+        idx = pd.MultiIndex.from_arrays([
+            ['warm', 'warm', 'cold', 'cold'],
+            ['dog', 'falcon', 'fish', 'spider']],
+            names=['blooded', 'animal'])
+        df1 = pd.DataFrame({'legs':[4, 2, 0, 8]}, index=idx)
+        dir = tempfile.TemporaryDirectory()
+        file_path_1 = os.path.join(dir.name, "animal1.csv")
+        df1.to_csv(file_path_1)
+
+        idx = pd.MultiIndex.from_arrays([
+            ['warm', 'warm', 'cold', 'cold', 'neutral'],
+            ['chicken', 'cat', 'dolphin', 'bee', 'dinosaur']],
+            names=['blooded', 'animal'])
+        df2 = pd.DataFrame({'legs': [2, 4, 0, 6, 4]}, index=idx)
+        file_path_2 = os.path.join(dir.name, "animal2.csv")
+        df2.to_csv(file_path_2)
+        data_shard = zoo.orca.data.pandas.read_csv(dir.name, self.ray_ctx, index_col=['blooded', 'animal'])
+        max = data_shard.max(level='blooded')
+        assert max.loc['warm', 'legs'] == 4
+        assert max.loc['cold', 'legs'] == 8
+        assert max.loc['neutral', 'legs'] == 4
+        os.remove(file_path_1)
+        os.remove(file_path_2)
+        dir.cleanup()
+            
 
 if __name__ == "__main__":
     pytest.main([__file__])

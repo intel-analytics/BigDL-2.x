@@ -16,12 +16,11 @@
 
 import random
 
-import ray
 from bigdl.util.common import get_node_and_core_number
 from pyspark.context import SparkContext
 
 from zoo.ray import RayContext
-from zoo.orca.data.shard import RayXShards, RayPartition, SparkXShards
+from zoo.orca.data.shard import RayXShards, RayPartition, RayShard, SparkXShards
 from zoo.orca.data.utils import *
 
 
@@ -76,8 +75,10 @@ def read_file_ray(context, file_path, file_type, **kwargs):
     # remove empty partitions
     file_partition_list = [partition for partition
                            in list(chunk(file_paths, num_partitions)) if partition]
+    import ray
     # create shard actor to read data
-    shards = [RayPandasShard.remote() for i in range(len(file_partition_list))]
+    Shard = ray.remote(RayShard)
+    shards = [Shard.remote() for i in range(len(file_partition_list))]
     done_ids, undone_ids = \
         ray.wait([shard.read_file_partitions.remote(file_partition_list[i], file_type, **kwargs)
                   for i, shard in enumerate(shards)], num_returns=len(shards))
@@ -159,68 +160,3 @@ def read_file_spark(context, file_path, file_type, **kwargs):
 
     data_shards = SparkXShards(pd_rdd)
     return data_shards
-
-
-@ray.remote
-class RayPandasShard(object):
-    """
-    Actor to read csv/json file to Pandas DataFrame and manipulate data
-    """
-
-    def __init__(self, data=None):
-        self.data = data
-
-    def read_file_partitions(self, paths, file_type, **kwargs):
-        df_list = []
-        import pandas as pd
-        prefix = paths[0].split("://")[0]
-        if prefix == "hdfs":
-            import pyarrow as pa
-            fs = pa.hdfs.connect()
-            for path in paths:
-                with fs.open(path, 'rb') as f:
-                    if file_type == "json":
-                        df = pd.read_json(f, **kwargs)
-                    elif file_type == "csv":
-                        df = pd.read_csv(f, **kwargs)
-                    else:
-                        raise Exception("Unsupported file type")
-                    df_list.append(df)
-        elif prefix == "s3":
-            import boto3
-            access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
-            secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
-            s3_client = boto3.Session(
-                aws_access_key_id=access_key_id,
-                aws_secret_access_key=secret_access_key,
-            ).client('s3', verify=False)
-            for path in paths:
-                path_parts = path.split("://")[1].split('/')
-                bucket = path_parts.pop(0)
-                key = "/".join(path_parts)
-                obj = s3_client.get_object(Bucket=bucket, Key=key)
-                if file_type == "json":
-                    df = pd.read_json(obj['Body'], **kwargs)
-                elif file_type == "csv":
-                    df = pd.read_csv(obj['Body'], **kwargs)
-                else:
-                    raise Exception("Unsupported file type")
-                df_list.append(df)
-        else:
-            for path in paths:
-                if file_type == "json":
-                    df = pd.read_json(path, **kwargs)
-                elif file_type == "csv":
-                    df = pd.read_csv(path, **kwargs)
-                else:
-                    raise Exception("Unsupported file type")
-                df_list.append(df)
-        self.data = pd.concat(df_list)
-        return 0
-
-    def transform(self, func, *args):
-        self.data = func(self.data, *args)
-        return 0
-
-    def get_data(self):
-        return self.data

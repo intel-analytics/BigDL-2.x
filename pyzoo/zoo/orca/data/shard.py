@@ -97,6 +97,31 @@ class RayXShards(XShards):
         """
         return self.partitions
 
+    def max(self, **kwargs):
+        import ray
+        import pandas as pd
+        list_result = ray.get(
+            [shard.max.remote(**kwargs) for shard in self.shard_list])
+        if isinstance(list_result[0], pd.Series):
+            df = pd.concat(list_result, axis=1)
+            result = df.max(axis=1)
+            return result
+        elif isinstance(list_result[0], pd.DataFrame):
+            result = list_result[0].copy()
+            for df in list_result[1:]:
+                for ind in df.index:
+                    # add new row  if not exist in result dataframe
+                    if ind not in result.index:
+                        result.loc[ind] = df.loc[ind]
+                        continue
+                    else:
+                        for col in df.columns:
+                            result[col][ind] = max([result[col][ind], df[col][ind]])
+            return result
+        else:
+            # scalar
+            return max(list_result)
+
 
 class RayPartition(object):
     """
@@ -108,6 +133,77 @@ class RayPartition(object):
 
     def get_data(self):
         return [shard.get_data.remote() for shard in self.shard_list]
+
+
+class RayShard(object):
+    """
+    Actor to manipulate data
+    """
+
+    def __init__(self, data=None):
+        self.data = data
+
+    def read_file_partitions(self, paths, file_type, **kwargs):
+        df_list = []
+        import pandas as pd
+        prefix = paths[0].split("://")[0]
+        if prefix == "hdfs":
+            import pyarrow as pa
+            fs = pa.hdfs.connect()
+            for path in paths:
+                with fs.open(path, 'rb') as f:
+                    if file_type == "json":
+                        df = pd.read_json(f, **kwargs)
+                    elif file_type == "csv":
+                        df = pd.read_csv(f, **kwargs)
+                    else:
+                        raise Exception("Unsupported file type")
+                    df_list.append(df)
+        elif prefix == "s3":
+            import boto3
+            access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
+            secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
+            s3_client = boto3.Session(
+                aws_access_key_id=access_key_id,
+                aws_secret_access_key=secret_access_key,
+            ).client('s3', verify=False)
+            for path in paths:
+                path_parts = path.split("://")[1].split('/')
+                bucket = path_parts.pop(0)
+                key = "/".join(path_parts)
+                obj = s3_client.get_object(Bucket=bucket, Key=key)
+                if file_type == "json":
+                    df = pd.read_json(obj['Body'], **kwargs)
+                elif file_type == "csv":
+                    df = pd.read_csv(obj['Body'], **kwargs)
+                else:
+                    raise Exception("Unsupported file type")
+                df_list.append(df)
+        else:
+            for path in paths:
+                if file_type == "json":
+                    df = pd.read_json(path, **kwargs)
+                elif file_type == "csv":
+                    df = pd.read_csv(path, **kwargs)
+                else:
+                    raise Exception("Unsupported file type")
+                df_list.append(df)
+        self.data = pd.concat(df_list)
+        return 0
+
+    def transform(self, func, *args):
+        self.data = func(self.data, *args)
+        return 0
+
+    def get_data(self):
+        return self.data
+
+    def max(self, **kwargs):
+        import pandas as pd
+        if isinstance(self.data, pd.Series) or isinstance(self.data, pd.DataFrame):
+            return self.data.max(**kwargs)
+        raise Exception("Only support max on Pandas DataFrame or Series")
+
 
 
 class SparkXShards(XShards):
