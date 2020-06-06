@@ -199,3 +199,9 @@ def read_pd_file(path, file_type, **kwargs):
     else:
         raise Exception("Unsupported file type")
     return df
+
+
+def get_class_name(obj):
+    if obj.__class__.__module__ != 'builtins':
+        return '.'.join([obj.__class__.__module__, obj.__class__.__name__])
+    return obj.__class__.__name__

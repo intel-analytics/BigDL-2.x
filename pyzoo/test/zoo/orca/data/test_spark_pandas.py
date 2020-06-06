@@ -66,7 +66,8 @@ class TestSparkXShards(ZooTestCase):
 
     def test_repartition(self):
         file_path = os.path.join(self.resource_path, "orca/data/json")
-        data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc)
+        data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc,
+                                                    orient='columns', lines=True)
         partitions_num_1 = data_shard.rdd.getNumPartitions()
         assert partitions_num_1 == 4, "number of partition should be 4"
         data_shard.cache()
@@ -191,6 +192,18 @@ class TestSparkXShards(ZooTestCase):
         assert len(trans_data) == 2, "number of shard should be 2"
         trans_dict = trans_data[0]
         assert "x" in trans_dict, "x is not in the dictionary"
+
+    def test_utility(self):
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
+        shards = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+
+        def get_item(data, key):
+            return data[key]
+        result1 = shards._utility(get_item, 'location')
+        import pandas as pd
+        assert isinstance(result1.first(), pd.Series)
+        result2 = shards._utility(get_item, 'abc')
+        assert isinstance(result2.first(), KeyError)
 
 
 if __name__ == "__main__":
