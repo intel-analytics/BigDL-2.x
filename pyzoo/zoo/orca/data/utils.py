@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 import os
+import numpy as np
 
 from zoo.common import get_file_list
 
@@ -161,3 +162,87 @@ def load_numpy(path):
         return np.load(BytesIO(data["Body"].read()))
     else:  # Local path
         return np.load(path)
+
+
+def check_type_and_convert(data, tuple_allowed=True, list_allowed=True):
+    result = {}
+    assert isinstance(data, dict), "each shard should be an dict"
+    assert "x" in data, "key x should in each shard"
+    x = data["x"]
+    if isinstance(x, np.ndarray):
+        new_x = [x]
+    elif isinstance(x, tuple) and all([isinstance(xi, np.ndarray) for xi in x]):
+        if tuple_allowed:
+            new_x = x
+        elif list_allowed:
+            new_x = list(x)
+        else:
+            raise ValueError("value of x should be a ndarray")
+    elif isinstance(x, list) and all([isinstance(xi, np.ndarray) for xi in x]):
+        if list_allowed:
+            new_x = x
+        elif tuple_allowed:
+            new_x = tuple(x)
+        else:
+            raise ValueError("value of x should be a ndarray")
+    else:
+        raise ValueError("value of x should be a ndarray, "
+                         "a tuple of ndarrays or a list of ndarrays")
+    result["x"] = new_x
+    if "y" in data:
+        y = data["y"]
+        if isinstance(y, np.ndarray):
+            new_y = [y]
+        elif isinstance(y, tuple) and all([isinstance(yi, np.ndarray) for yi in y]):
+            if tuple_allowed:
+                new_y = y
+            elif list_allowed:
+                new_y = list(y)
+            else:
+                raise ValueError("value of y should be a ndarray")
+        elif isinstance(y, list) and all([isinstance(yi, np.ndarray) for yi in y]):
+            if list_allowed:
+                new_y = y
+            elif tuple_allowed:
+                new_y = list(y)
+            else:
+                raise ValueError("value of y should be a ndarray")
+        else:
+            raise ValueError("value of y should be a ndarray, "
+                             "a tuple of ndarrays or a list of ndarrays")
+        result["y"] = new_y
+    return result
+
+
+def get_spec(tuple_allowed=True, list_allowed=True):
+    def _get_spec(data):
+        data = check_type_and_convert(data, tuple_allowed, list_allowed)
+        feature_spec = [(feat.dtype, feat.shape[1:])
+                        for feat in data["x"]]
+        if "y" in data:
+            label_spec = [(label.dtype, label.shape[1:])
+                          for label in data["y"]]
+        else:
+            label_spec = None
+        return feature_spec, label_spec
+    return _get_spec
+
+
+# todo this might be very slow
+def flatten_xy(tuple_allowed=True, list_allowed=True):
+    def _flatten_xy(data):
+        data = check_type_and_convert(data, tuple_allowed, list_allowed)
+        features = data["x"]
+
+        has_label = "y" in data
+        labels = data["y"] if has_label else None
+        length = features[0].shape[0]
+
+        for i in range(length):
+            fs = [feat[i] for feat in features]
+            if has_label:
+                ls = [l[i] for l in labels]
+                yield (fs, ls)
+            else:
+                yield (fs,)
+    return _flatten_xy

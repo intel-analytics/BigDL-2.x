@@ -51,43 +51,9 @@ def _xshards_to_tf_dataset(data_shard,
                            batch_size=-1, batch_per_thread=-1,
                            validation_data_shard=None):
     # todo data_shard.head ?
-    import numpy as np
+    from zoo.orca.data.utils import get_spec, flatten_xy
 
-    def check_data_type_and_to_list(data):
-        result = {}
-        assert isinstance(data, dict), "each shard should be an dict"
-        assert "x" in data, "key x should in each shard"
-        x = data["x"]
-        if isinstance(x, np.ndarray):
-            new_x = [x]
-        elif isinstance(x, tuple) and all([isinstance(xi, np.ndarray) for xi in x]):
-            new_x = x
-        else:
-            raise ValueError("value of x should be a ndarray or a tuple of ndarrays")
-        result["x"] = new_x
-        if "y" in data:
-            y = data["y"]
-            if isinstance(y, np.ndarray):
-                new_y = [y]
-            elif isinstance(y, tuple) and all([isinstance(yi, np.ndarray) for yi in y]):
-                new_y = y
-            else:
-                raise ValueError("value of x should be a ndarray or a tuple of ndarrays")
-            result["y"] = new_y
-        return result
-
-    def get_spec(data):
-        data = check_data_type_and_to_list(data)
-        feature_spec = [(feat.dtype, feat.shape[1:])
-                        for feat in data["x"]]
-        if "y" in data:
-            label_spec = [(label.dtype, label.shape[1:])
-                          for label in data["y"]]
-        else:
-            label_spec = None
-        return (feature_spec, label_spec)
-
-    (feature_spec, label_spec) = data_shard.rdd.map(get_spec).first()
+    (feature_spec, label_spec) = data_shard.rdd.map(get_spec(True, False)).first()
 
     feature_spec = [(tf.dtypes.as_dtype(spec[0]), spec[1]) for spec in feature_spec]
     label_spec = [(tf.dtypes.as_dtype(spec[0]), spec[1]) for spec in label_spec] \
@@ -96,27 +62,10 @@ def _xshards_to_tf_dataset(data_shard,
     assert batch_size != -1 or batch_per_thread != -1, \
         "one of batch_size and batch_per_thread should be specified"
 
-    # todo this might be very slow
-    def flatten(data):
-        data = check_data_type_and_to_list(data)
-        features = data["x"]
-
-        has_label = "y" in data
-        labels = data["y"] if has_label else None
-        length = features[0].shape[0]
-
-        for i in range(length):
-            fs = [feat[i] for feat in features]
-            if has_label:
-                ls = [l[i] for l in labels]
-                yield (fs, ls)
-            else:
-                yield (fs,)
-
     val_rdd = None if validation_data_shard is None \
-        else validation_data_shard.rdd.flatMap(flatten)
+        else validation_data_shard.rdd.flatMap(flatten_xy(True, False))
 
-    dataset = TFDataset.from_rdd(data_shard.rdd.flatMap(flatten),
+    dataset = TFDataset.from_rdd(data_shard.rdd.flatMap(flatten_xy(True, False)),
                                  features=feature_spec,
                                  labels=label_spec,
                                  batch_size=batch_size,
