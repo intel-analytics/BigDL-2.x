@@ -211,6 +211,7 @@ class LSTMForecaster(TFParkForecaster):
                  dropout_2=0.2,
                  metric="mean_squared_error",
                  lr=0.001,
+                 loss="mse",
                  uncertainty: bool = False
                  ):
         """
@@ -225,6 +226,7 @@ class LSTMForecaster(TFParkForecaster):
         :param metric: the metric for validation and evaluation
         :param lr: learning rate
         :param uncertainty: whether to return uncertainty
+        :param loss: the target function you want to optimize on
         """
         #
         self.target_dim = target_dim
@@ -238,7 +240,8 @@ class LSTMForecaster(TFParkForecaster):
             "lstm_2_units": lstm_2_units,
             "dropout_2": dropout_2,
             "metric": metric,
-            "feature_num": feature_dim
+            "feature_num": feature_dim,
+            "loss": loss
         }
         self.internal = None
 
@@ -264,10 +267,16 @@ class MTNetForecaster(TFParkForecaster):
     def __init__(self,
                  target_dim=1,
                  feature_dim=1,
-                 lb_long_steps=1,
-                 lb_long_stepsize=1,
+                 long_series_num=1,
+                 series_length=1,
                  ar_window_size=1,
-                 cnn_kernel_size=1,
+                 cnn_height=1,
+                 cnn_hid_size=32,
+                 rnn_hid_sizes=[16, 32],
+                 lr=0.001,
+                 loss="mae",
+                 cnn_dropout=0.2,
+                 rnn_dropout=0.2,
                  metric="mean_squared_error",
                  uncertainty: bool = False,
                  ):
@@ -275,12 +284,18 @@ class MTNetForecaster(TFParkForecaster):
         Build a MTNet Forecast Model.
         :param target_dim: the dimension of model output
         :param feature_dim: the dimension of input feature
-        :param lb_long_steps: the number of steps for the long-term memory series
-        :param lb_long_stepsize: the step size for long-term memory series
-        :param ar_window_size：the auto regression window size in MTNet
-        :param cnn_kernel_size: cnn filter height in MTNet
+        :param long_series_num: the number of series for the long-term memory series
+        :param series_length: the series size for long-term and short-term memory series
+        :param ar_window_size: the auto regression window size in MTNet
+        :param cnn_hid_size: the hidden layer unit for cnn in encoder
+        :param rnn_hid_sizes: the hidden layers unit for rnn in encoder
+        :param cnn_height: cnn filter height in MTNet
         :param metric: the metric for validation and evaluation
         :param uncertainty: whether to enable calculation of uncertainty
+        :param lr: learning rate
+        :param loss: the target function you want to optimize on
+        :param cnn_dropout: the dropout possibility for cnn in encoder
+        :param rnn_dropout: the dropout possibility for rnn in encoder
         """
         self.check_optional_config = False
         self.mc = uncertainty
@@ -289,12 +304,17 @@ class MTNetForecaster(TFParkForecaster):
             "output_dim": target_dim,
             "metrics": [metric],
             "mc": uncertainty,
-            "time_step": lb_long_stepsize,
-            "long_num": lb_long_steps,
+            "time_step": series_length,
+            "long_num": long_series_num,
             "ar_window": ar_window_size,
-            "cnn_height": cnn_kernel_size,
-            "past_seq_len": (lb_long_steps + 1) * lb_long_stepsize
-
+            "cnn_height": cnn_height,
+            "past_seq_len": (long_series_num + 1) * series_length,
+            "cnn_hid_size": cnn_hid_size,
+            "rnn_hid_sizes": rnn_hid_sizes,
+            "lr": lr,
+            "cnn_dropout": cnn_dropout,
+            "rnn_dropout": rnn_dropout,
+            "loss": loss
         }
         self._internal = None
 

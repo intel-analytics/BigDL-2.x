@@ -254,14 +254,16 @@ class MTNetKeras(BaseModel):
         # last size is equal to en_conv_hidden_size, should be a list
         self.rnn_hid_sizes = None
         self.last_rnn_size = None
-        self.dropout = None
+        self.cnn_dropout = None
+        self.rnn_dropout = None
         self.lr = None
         self.batch_size = None
+        self.loss = None
 
         self.saved_configs = {"cnn_height", "long_num", "time_step", "ar_window",
-                              "cnn_hid_size", "rnn_hid_sizes", "dropout", "lr", "batch_size",
+                              "cnn_hid_size", "rnn_hid_sizes", "cnn_dropout", "rnn_dropout", "lr", "batch_size",
                               "epochs", "metrics", "mc",
-                              "feature_num", "output_dim"}
+                              "feature_num", "output_dim", "loss"}
         self.model = None
         self.metrics = None
         self.mc = None
@@ -286,8 +288,9 @@ class MTNetKeras(BaseModel):
         self.cnn_hid_size = config.get("cnn_hid_size", 32)
         self.rnn_hid_sizes = config.get("rnn_hid_sizes", [16, 32])
         self.last_rnn_size = self.rnn_hid_sizes[-1]
-        self.dropout = config.get("dropout", 0.2)
-
+        self.rnn_dropout = config.get("rnn_dropout", 0.2)
+        self.cnn_dropout = config.get("cnn_dropout", 0.2)
+        self.loss = config.get('loss', "mae")
         self.batch_size = config.get("batch_size", 64)
         self.lr = config.get('lr', 0.001)
         self._check_configs()
@@ -373,7 +376,7 @@ class MTNetKeras(BaseModel):
         #                    metrics=metrics,
         #                    optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule))
 
-        self.model.compile(loss="mae",
+        self.model.compile(loss=self.loss,
                            metrics=self.metrics,
                            optimizer=tf.keras.optimizers.Adam(lr=self.lr))
 
@@ -403,13 +406,13 @@ class MTNetKeras(BaseModel):
                          kernel_initializer=TruncatedNormal(stddev=0.1),
                          bias_initializer=Constant(0.1),
                          activation="relu")(reshaped_input)
-        cnn_out = Dropout(self.dropout)(cnn_out, training=training)
+        cnn_out = Dropout(self.cnn_dropout)(cnn_out, training=training)
 
         rnn_input = Lambda(lambda x:
                            K.reshape(x, (-1, num, Tc, self.cnn_hid_size)),)(cnn_out)
 
         # use AttentionRNNWrapper
-        rnn_cells = [GRUCell(h_size, activation="relu", dropout=self.dropout)
+        rnn_cells = [GRUCell(h_size, activation="relu", dropout=self.rnn_dropout)
                      for h_size in self.rnn_hid_sizes]
 
         attention_rnn = AttentionRNNWrapper(RNN(rnn_cells),
@@ -548,7 +551,8 @@ class MTNetKeras(BaseModel):
                           "ar_window": self.ar_window,
                           "cnn_hid_size": self.cnn_hid_size,
                           "rnn_hid_sizes": self.rnn_hid_sizes,
-                          "dropout": self.dropout,
+                          "cnn_dropout": self.cnn_dropout,
+                          "rnn_dropout": self.rnn_dropout,
                           "lr": self.lr,
                           "batch_size": self.batch_size,
                           # for fit eval
@@ -558,6 +562,7 @@ class MTNetKeras(BaseModel):
                           "mc": self.mc,
                           "feature_num": self.feature_num,
                           "output_dim": self.output_dim,
+                          "loss": self.loss
                           }
         assert set(config_to_save.keys()) == self.saved_configs, \
             "The keys in config_to_save is not the same as self.saved_configs." \
@@ -592,11 +597,16 @@ class MTNetKeras(BaseModel):
     def _get_optional_parameters(self):
         return {
             "batch_size",
-            "dropout",
+            "cnn_dropout",
+            "rnn_dropout",
             "time_step",
             "filter_size",
             "long_num",
             "ar_size",
+            "loss",
+            "cnn_hid_size",
+            "rnn_hid_sizes",
+            "lr"
         }
 
     def _get_required_parameters(self):
