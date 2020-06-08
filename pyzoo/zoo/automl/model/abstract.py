@@ -35,7 +35,7 @@ class BaseModel(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def evaluate(self, x, y, metric=None, **config):
+    def evaluate(self, x, y, metric=None):
         """
         Evaluate the model
         :param x: input
@@ -46,7 +46,7 @@ class BaseModel(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def predict(self, x, mc=False, **config):
+    def predict(self, x, mc=False):
         """
         Prediction.
         :param x: input
