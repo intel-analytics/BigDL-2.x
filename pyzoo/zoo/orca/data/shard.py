@@ -15,6 +15,7 @@
 #
 
 from zoo.orca.data.utils import *
+import os
 
 
 class XShards(object):
@@ -114,8 +115,14 @@ class SparkXShards(XShards):
     def __init__(self, rdd):
         self.rdd = rdd
         self.user_cached = False
+        self.eager = True
+        if os.getenv("EAGER_EXECUTION"):
+            eager_execution = os.getenv("EAGER_EXECUTION").lower()
+            if eager_execution == "false":
+                self.eager = False
         self.rdd.cache()
-        self.compute()
+        if self.eager:
+            self.compute()
 
     def transform_shard(self, func, *args):
         transformed_shard = SparkXShards(self.rdd.map(lambda data: func(data, *args)))
