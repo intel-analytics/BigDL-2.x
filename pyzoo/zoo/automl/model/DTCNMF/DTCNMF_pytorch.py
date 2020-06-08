@@ -14,6 +14,8 @@
 #
 from abc import ABC
 
+from zoo.automl.model.DTCNMF.DeepGLO import *
+
 from zoo.automl.common.metrics import Evaluator
 import pandas as pd
 from zoo.automl.model.abstract import BaseModel
@@ -33,10 +35,10 @@ class DTCNMFPytorch(BaseModel):
         """
         # models
         self.model_init = False
-        self.X = None  # latent x vectors from Matrix Factorization
-        self.F = None  # latent f vectors from Matrix Factorization
-        self.XseqM = None  # a TCN model for latent vectors X
-        self.YseqM = None  # a TCN model for Y
+        # self.X = None  # latent x vectors from Matrix Factorization
+        # self.F = None  # latent f vectors from Matrix Factorization
+        # self.XseqM = None  # a TCN model for latent vectors X
+        # self.YseqM = None  # a TCN model for Y
 
     def set_params(self, **config):
         self.vbsize = config.get("vbsize", None),
@@ -47,6 +49,7 @@ class DTCNMFPytorch(BaseModel):
         self.dropout = config.get("dropout", None)
         self.rank = config.get("rank", None)
         self.kernel_size_Y = config.get("kernel_size_Y", None)
+        self.lr = config.get("learning_rate", None)
         self.val_len = config.get("val_len", None)
         self.end_index = config.get("end_index", None)
         self.normalize = config.get("normalize", None)
@@ -57,18 +60,45 @@ class DTCNMFPytorch(BaseModel):
         self.svd = config.get("svd", None)
         self.period = config.get("period", None)
         self.forward_cov = config.get("forward_cov", None)
+        self.y_iters = config.get("max_y_iterations", None)
+        self.init_epoch = config.get("init_XF_epoch", None)
+        self.max_FX_epoch = config.get("max_FX_epoch", None)
+        self.max_TCN_epoch = config.get("max_TCN_epoch", None)
 
-    def build(self, mc=False, **config):
+    def _build(self, **config):
         """
-        build the models and initialize.
-        :param mc: mc dropout, Ignored.
+        build the models and initialize.        
         :param config: hyper parameters for building the model
         :return:
         """
         # TODO build model and initialize
+        super()._check_config(**config)
+        self.model = DeepGLO(
+            vbsize=config.get('vbsize', 128),
+            hbsize=config.get('hbsize', 256),
+            num_channels_X=config.get('num_channels_X', [32, 32, 32, 32, 32, 1]),
+            num_channels_Y=config.get('num_channels_Y', [16, 16, 16, 16, 16, 1]),
+            kernel_size=config.get('kernel_size', 7),
+            dropout=config.get('dropout', 0.1),
+            rank=config.get('rank', 64),
+            kernel_size_Y=config.get('kernel_size_Y', 7),
+            lr=config.get('lr', 0.0005),
+            val_len=config.get('val_len', 24),
+            end_index=config.get('end_index', -24),
+            normalize=config.get('normalize', False),
+            start_date=config.get('start_date', "2020-4-1"),
+            freq=config.get('freq', "1H"),
+            covariates=config.get('covariates', None),
+            use_time=config.get('use_time', True),
+            dti=config.get('dti', None),
+            svd=config.get('svd', None),
+            period=config.get('period', 24),
+            forward_cov=config.get('forward_cov', False),
+        )
         self.model_init = True
 
-    def fit_eval(self, x, y=None, validation_data=None, mc=False, verbose=0, **config):
+
+    def fit_eval(self, x, y=None, verbose=0, **config):
         """
         Fit on the training data from scratch.
         Since the rolling process is very customized in this model,
@@ -77,16 +107,17 @@ class DTCNMFPytorch(BaseModel):
         :param x: training data, an array in shape (nd, Td),
             nd is the number of series, Td is the time dimension
         :param y: None. target is extracted from x directly
-        :param validation_data: None. validation set is extracted from x directly
-        :param mc: mc dropout
         :param verbose:
         :param config:
         :return: the evaluation metric value
         """
         if not self.model_init:
-            self.build(mc=mc, **config)
-        # TODO train_all_models
-        pass
+            self._build(**config)
+        self.model.train_all_models(x, y_iters=config.get("y_iters", 300),
+                            init_epochs=config.get("init_epochs", 100),
+                            max_FX_epoch=config.get("max_FX_epoch", 300),
+                            max_TCN_epoch=config.get("max_TCN_epoch", 300))
+        return self.model.Yseq.val_loss
 
     def fit_incremental(self, x, **config):
         """
