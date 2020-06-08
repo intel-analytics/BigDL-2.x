@@ -111,15 +111,20 @@ class RayPartition(object):
         return [shard.get_data.remote() for shard in self.shard_list]
 
 
+def get_eager_mode():
+    is_eager = True
+    if os.getenv("EAGER_EXECUTION"):
+        eager_execution = os.getenv("EAGER_EXECUTION").lower()
+        if eager_execution == "false":
+            is_eager = False
+    return is_eager
+
+
 class SparkXShards(XShards):
     def __init__(self, rdd):
         self.rdd = rdd
         self.user_cached = False
-        self.eager = True
-        if os.getenv("EAGER_EXECUTION"):
-            eager_execution = os.getenv("EAGER_EXECUTION").lower()
-            if eager_execution == "false":
-                self.eager = False
+        self.eager = get_eager_mode()
         self.rdd.cache()
         if self.eager:
             self.compute()
