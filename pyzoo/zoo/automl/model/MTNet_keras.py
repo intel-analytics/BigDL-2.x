@@ -261,7 +261,8 @@ class MTNetKeras(BaseModel):
         self.loss = None
 
         self.saved_configs = {"cnn_height", "long_num", "time_step", "ar_window",
-                              "cnn_hid_size", "rnn_hid_sizes", "cnn_dropout", "rnn_dropout", "lr", "batch_size",
+                              "cnn_hid_size", "rnn_hid_sizes", "cnn_dropout",
+                              "rnn_dropout", "lr", "batch_size",
                               "epochs", "metrics", "mc",
                               "feature_num", "output_dim", "loss"}
         self.model = None
