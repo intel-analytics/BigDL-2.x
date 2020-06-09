@@ -22,7 +22,6 @@ import ray.services
 import mxnet as mx
 import numpy as np
 from mxnet import gluon
-from functools import reduce
 from zoo.ray.utils import to_list
 from zoo.orca.learn.mxnet.utils import find_free_port
 from zoo.orca.data.shard import XShards
@@ -57,11 +56,13 @@ class MXNetRunner(object):
                 mx.random.seed(self.config["seed"])
 
             if isinstance(train_data, XShards):
+                from zoo.orca.data.utils import ray_partition_get_data_label
                 # XShard input
                 # retrieve train data
                 train_data = train_data.get_partitions()
                 train_partition_data = ray.get(train_data[self.kv.rank].get_data())
-                data, label = get_data_label(train_partition_data)
+                data, label = ray_partition_get_data_label(train_partition_data,
+                                                           tuple_allowed=False, list_allowed=True)
                 self.train_data = mx.io.NDArrayIter(data=data, label=label,
                                                     batch_size=config["batch_size"],
                                                     shuffle=True)
@@ -75,7 +76,9 @@ class MXNetRunner(object):
                                                            "XShards, please check your input"
                     test_data = test_data.get_partitions()
                     val_partition_data = ray.get(test_data[self.kv.rank].get_data())
-                    val_data, val_label = get_data_label(val_partition_data)
+                    val_data, val_label = ray_partition_get_data_label(val_partition_data,
+                                                                       tuple_allowed=False,
+                                                                       list_allowed=True)
                     self.val_data = mx.io.NDArrayIter(data=val_data,
                                                       label=val_label,
                                                       batch_size=config["batch_size"],
@@ -248,33 +251,3 @@ class MXNetRunner(object):
     def find_free_port(self):
         """Finds a free port on the current node."""
         return find_free_port()
-
-
-def get_data_label(partition_data):
-    def combine_dict(dict1, dict2):
-        return {key: np.concatenate((value, dict2[key]), axis=0)
-                for (key, value) in dict1.items()}
-
-    def combine_list(list1, list2):
-        return [np.concatenate((list1[index], list2[index]), axis=0)
-                for index in range(0, len(list1))]
-
-    data_list = [data['x'] for data in partition_data]
-    label_list = [data['y'] for data in partition_data]
-    if isinstance(partition_data[0]['x'], dict):
-        data = reduce(lambda dict1, dict2: combine_dict(dict1, dict2), data_list)
-    elif isinstance(partition_data[0]['x'], np.ndarray):
-        data = reduce(lambda array1, array2: np.concatenate((array1, array2), axis=0),
-                      data_list)
-    elif isinstance(partition_data[0]['x'], list):
-        data = reduce(lambda list1, list2: combine_list(list1, list2), data_list)
-
-    if isinstance(partition_data[0]['y'], dict):
-        label = reduce(lambda dict1, dict2: combine_dict(dict1, dict2), label_list)
-    elif isinstance(partition_data[0]['y'], np.ndarray):
-        label = reduce(lambda array1, array2: np.concatenate((array1, array2), axis=0),
-                       label_list)
-    elif isinstance(partition_data[0]['y'], list):
-        label = reduce(lambda list1, list2: combine_list(list1, list2), data_list)
-
-    return data, label
