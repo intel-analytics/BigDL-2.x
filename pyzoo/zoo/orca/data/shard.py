@@ -273,10 +273,9 @@ class SparkXShards(XShards):
         return self
 
     @classmethod
-    def load_pickle(cls, path, sc=None, minPartitions=None):
+    def load_pickle(cls, path, minPartitions=None):
         from pyspark.context import SparkContext
-        if not sc:
-            sc = SparkContext.getOrCreate()
+        sc = SparkContext.getOrCreate()
         return SparkXShards(sc.pickleFile(path, minPartitions))
 
     def __del__(self):
