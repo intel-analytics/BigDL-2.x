@@ -203,5 +203,6 @@ class VanillaLSTM(BaseModel):
             'metric',
             'lr',
             'epochs',
-            'batch_size'
+            'batch_size',
+            'loss'
         }
