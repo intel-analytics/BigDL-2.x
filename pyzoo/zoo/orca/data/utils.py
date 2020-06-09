@@ -204,7 +204,7 @@ def check_type_and_convert(data, tuple_allowed=True, list_allowed=True):
             if list_allowed:
                 new_y = y
             elif tuple_allowed:
-                new_y = list(y)
+                new_y = tuple(y)
             else:
                 raise ValueError("value of y should be a ndarray")
         else:
