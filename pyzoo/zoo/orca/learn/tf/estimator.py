@@ -15,11 +15,12 @@
 #
 from bigdl.optim.optimizer import MaxIteration, SGD
 from zoo.orca.data.shard import SparkXShards
-from zoo.tfpark import TFEstimator, TFOptimizer, TFPredictor, TFNet
+from zoo.orca.data.tf.data import Dataset, TFDataDataset2
+from zoo.tfpark import TFEstimator, TFOptimizer, TFPredictor, TFNet, ZooOptimizer
 import pandas as pd
 import tensorflow as tf
 
-from zoo.tfpark.tf_dataset import TFDataset
+from zoo.tfpark.tf_dataset import TFDataset, TensorMeta
 from zoo.util import nest
 
 
@@ -36,10 +37,6 @@ class Estimator(object):
                    metrics=None, updates=None,
                    sess=None, model_dir=None, backend="spark"):
         assert backend == "spark", "only spark backend is supported for now"
-        if sess is None:
-            sess = tf.Session()
-            sess.run(tf.global_variables_initializer())
-
         return TFOptimizerWrapper(inputs=inputs,
                                   outputs=outputs,
                                   labels=labels,
@@ -63,19 +60,19 @@ def _xshards_to_tf_dataset(data_shard,
         x = data["x"]
         if isinstance(x, np.ndarray):
             new_x = [x]
-        elif isinstance(x, list) and all([isinstance(xi, np.ndarray) for xi in x]):
+        elif isinstance(x, tuple) and all([isinstance(xi, np.ndarray) for xi in x]):
             new_x = x
         else:
-            raise ValueError("value of x should be a ndarray or a list of ndarrays")
+            raise ValueError("value of x should be a ndarray or a tuple of ndarrays")
         result["x"] = new_x
         if "y" in data:
             y = data["y"]
             if isinstance(y, np.ndarray):
                 new_y = [y]
-            elif isinstance(y, list) and all([isinstance(yi, np.ndarray) for yi in y]):
+            elif isinstance(y, tuple) and all([isinstance(yi, np.ndarray) for yi in y]):
                 new_y = y
             else:
-                raise ValueError("value of x should be a ndarray or a list of ndarrays")
+                raise ValueError("value of x should be a ndarray or a tuple of ndarrays")
             result["y"] = new_y
         return result
 
@@ -140,18 +137,29 @@ class TFOptimizerWrapper(Estimator):
         self.outputs = outputs
         self.labels = labels
         self.loss = loss
-        self.optimizer = optimizer
+        if optimizer is not None:
+            assert isinstance(optimizer, tf.train.Optimizer), \
+                "optimizer is of type {}, ".format(type(self.optimizer)) + \
+                "it should be an instance of tf.train.Optimizer"
+            self.optimizer = ZooOptimizer(optimizer)
+            self.train_op = self.optimizer.minimize(self.loss)
+        else:
+            self.optimizer = None
+            self.train_op = None
         self.metrics = metrics
         self.updates = updates
-        self.sess = sess
+        if sess is None:
+            self.sess = tf.Session()
+            self.sess.run(tf.global_variables_initializer())
+        else:
+            self.sess = sess
         self.model_dir = model_dir
 
-    def fit(self, data_shard, steps,
+    def fit(self, data, steps,
             batch_size=32,
-            validation_data_shard=None,
+            validation_data=None,
             feed_dict=None,
             session_config=None):
-        import bigdl
 
         assert self.labels is not None, \
             "labels is None; it should not be None in training"
@@ -159,26 +167,32 @@ class TFOptimizerWrapper(Estimator):
             "loss is None; it should not be None in training"
         assert self.optimizer is not None, \
             "optimizer is None; it not None in training"
-        assert isinstance(self.optimizer, bigdl.optim.optimizer.OptimMethod), \
-            "optimizer is of type {}, ".format(type(self.optimizer)) + \
-            "it should be an instance of bigdl.optim.optimizer.OptimMethod"
 
-        dataset = _xshards_to_tf_dataset(data_shard,
-                                         batch_size=batch_size,
-                                         validation_data_shard=validation_data_shard)
+        if isinstance(data, SparkXShards):
+            dataset = _xshards_to_tf_dataset(data,
+                                             batch_size=batch_size,
+                                             validation_data_shard=validation_data)
+        elif isinstance(data, Dataset):
+            dataset = TFDataDataset2(data, batch_size=batch_size,
+                                     batch_per_thread=-1,
+                                     validation_dataset=validation_data)
+        else:
+            raise ValueError("data type {} is not supported; "
+                             "it must be created by zoo.orca.data.package")
 
         if feed_dict is not None:
             tensor_with_value = {key: (value, value) for key, value in feed_dict.items()}
         else:
             tensor_with_value = None
 
-        optimizer = TFOptimizer.from_loss(
+        optimizer = TFOptimizer.from_train_op(
+            train_op=self.train_op,
             loss=self.loss,
-            optim_method=self.optimizer,
-            inputs=(self.inputs, self.labels),
+            inputs=self.inputs,
+            labels=self.labels,
             dataset=dataset,
             metrics=self.metrics,
-            updates=self.updates, session=self.sess,
+            updates=self.updates, sess=self.sess,
             tensor_with_value=tensor_with_value,
             session_config=session_config,
             model_dir=self.model_dir)
@@ -186,11 +200,18 @@ class TFOptimizerWrapper(Estimator):
         optimizer.optimize(end_trigger=MaxIteration(steps))
         return self
 
-    def predict(self, data_shard, batch_size=32):
+    def predict(self, data, batch_size=32):
         assert self.outputs is not None, \
             "output is None, it should not be None in prediction"
-        dataset = _xshards_to_tf_dataset(data_shard,
-                                         batch_per_thread=batch_size)
+
+        if isinstance(data, SparkXShards):
+            dataset = _xshards_to_tf_dataset(data,
+                                             batch_per_thread=batch_size)
+        elif isinstance(data, Dataset):
+            dataset = TFDataDataset2(data, batch_size=-1,
+                                     batch_per_thread=batch_size)
+        else:
+            raise ValueError("data must be a SparkXShards or an orca.data.tf.Dataset")
 
         flat_inputs = nest.flatten(self.inputs)
         flat_outputs = nest.flatten(self.outputs)

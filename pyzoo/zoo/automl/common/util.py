@@ -25,46 +25,39 @@ import json
 IDENTIFIER_LEN = 27
 
 
-def split_input_df(input_df,
-                   ts_col="timestamp",
-                   overlap=0,
-                   val_split_ratio=0,
-                   test_split_ratio=0.1):
+def train_val_test_split(df,
+                         val_ratio=0,
+                         test_ratio=0.1,
+                         look_back=0,
+                         horizon=1):
     """
     split input dataframe into train_df, val_df and test_df according to split ratio.
-    covert pandas timestamp to datetime.
     The dataframe is splitted in its originally order in timeline.
     e.g. |......... train_df(80%) ........ | ... val_df(10%) ...| ...test_df(10%)...|
-    :param input_df: input dataframe to be splitted
-    :param ts_col: the time stamp column name
-    :param overlap: the overlap length between train_df and val_df as well as val_df and test_df.
-                    You can set overlap value to the length of sequence you want to look back for
-                    prediction. The default value is 0.
-    :param val_split_ratio: validation ratio
-    :param test_split_ratio: test ratio
+    :param df: dataframe to be splitted
+    :param val_ratio: validation ratio
+    :param test_ratio: test ratio
+    :param look_back: the length to look back
+    :param horizon: num of steps to look forward
     :return:
     """
     # suitable to nyc taxi dataset.
-    df = input_df.copy()
 
-    inserted_col = "datetime"
-    if ts_col == "datetime":
-        inserted_col = "tmp_datetime"
+    total_num = df.index.size
+    test_num = int(total_num * test_ratio)
+    val_num = int(total_num * val_ratio)
 
-    df.insert(loc=0, column=inserted_col, value=pd.to_datetime(input_df[ts_col]))
-    # input_df["datetime"] = pd.to_datetime(input_df["timestamp"])
-    df.drop(columns=ts_col, inplace=True)
-    df.rename(columns={inserted_col: "datetime"}, inplace=True)
+    test_split_index = test_num + look_back + horizon - 1
+    val_split_index = test_split_index + val_num
 
-    val_size = int(len(df) * val_split_ratio)
-    test_size = int(len(df) * test_split_ratio)
+    train_df = df.iloc[:-(test_num + val_num)]
+    val_df = df.iloc[-val_split_index: -test_num]
+    test_df = df.iloc[-test_split_index:]
 
-    train_df = df.iloc[:-(test_size + val_size)]
-    val_df = df.iloc[-(test_size + val_size + overlap):-test_size]
-    test_df = df.iloc[-(test_size + overlap):]
+    if not pd.api.types.is_datetime64_any_dtype(df.index.dtype):
+        val_df = val_df.reset_index(drop=True)
+        test_df = test_df.reset_index(drop=True)
 
-    val_df = val_df.reset_index(drop=True)
-    test_df = test_df.reset_index(drop=True)
     return train_df, val_df, test_df
 
 

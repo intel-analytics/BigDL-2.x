@@ -15,6 +15,7 @@
 #
 
 from zoo.orca.data.utils import *
+import os
 
 
 class XShards(object):
@@ -35,6 +36,13 @@ class XShards(object):
         """
         Returns a list that contains all of the elements in this XShards
         :return: list of elements
+        """
+        pass
+
+    def num_partitions(self):
+        """
+        return the number of partitions in this XShards
+        :return: an int
         """
         pass
 
@@ -70,6 +78,9 @@ class RayXShards(XShards):
         import ray
         return ray.get([shard.get_data.remote() for shard in self.shard_list])
 
+    def num_partitions(self):
+        return len(self.partitions)
+
     def repartition(self, num_partitions):
         """
         Repartition XShards.
@@ -100,20 +111,60 @@ class RayPartition(object):
         return [shard.get_data.remote() for shard in self.shard_list]
 
 
+def get_eager_mode():
+    is_eager = True
+    if os.getenv("EAGER_EXECUTION"):
+        eager_execution = os.getenv("EAGER_EXECUTION").lower()
+        if eager_execution == "false":
+            is_eager = False
+    return is_eager
+
+
 class SparkXShards(XShards):
     def __init__(self, rdd):
         self.rdd = rdd
+        self.user_cached = False
+        self.eager = get_eager_mode()
+        self.rdd.cache()
+        if self.eager:
+            self.compute()
 
     def transform_shard(self, func, *args):
-        self.rdd = self.rdd.map(lambda data: func(data, *args))
-        return self
+        transformed_shard = SparkXShards(self.rdd.map(lambda data: func(data, *args)))
+        self._uncache()
+        return transformed_shard
 
     def collect(self):
         return self.rdd.collect()
 
-    def repartition(self, num_partitions):
-        self.rdd = self.rdd.repartition(num_partitions)
+    def cache(self):
+        self.user_cached = True
+        self.rdd.cache()
         return self
+
+    def uncache(self):
+        self.user_cached = False
+        self.rdd.unpersist()
+        return self
+
+    def _uncache(self):
+        if not self.user_cached:
+            self.uncache()
+
+    def is_cached(self):
+        return self.rdd.is_cached
+
+    def compute(self):
+        self.rdd.count()
+        return self
+
+    def num_partitions(self):
+        return self.rdd.getNumPartitions()
+
+    def repartition(self, num_partitions):
+        repartitioned_shard = SparkXShards(self.rdd.repartition(num_partitions))
+        self._uncache()
+        return repartitioned_shard
 
     def partition_by(self, cols, num_partitions=None):
         import pandas as pd
@@ -146,8 +197,9 @@ class SparkXShards(XShards):
                     # no data in this partition
                     return []
             # merge records to df in each partition
-            self.rdd = partitioned_rdd.mapPartitions(merge)
-            return self
+            partitioned_shard = SparkXShards(partitioned_rdd.mapPartitions(merge))
+            self._uncache()
+            return partitioned_shard
         else:
             raise Exception("Currently only support partition by for XShards"
                             " of Pandas DataFrame")
@@ -159,7 +211,7 @@ class SparkXShards(XShards):
             else (type(data), None)).first()
         if issubclass(elem_class, pd.DataFrame):
             if key is None:
-                raise Exception("Cannot apply unique operation on Datashards of Pandas Dataframe"
+                raise Exception("Cannot apply unique operation on XShards of Pandas Dataframe"
                                 " without column name")
             if key in columns:
                 rdd = self.rdd.map(lambda df: df[key].unique())
@@ -168,10 +220,10 @@ class SparkXShards(XShards):
                                                                                   axis=0)))
                 return result
             else:
-                raise Exception("The select key is not in the DataFrame in this Datashards")
+                raise Exception("The select key is not in the DataFrame in this XShards")
         else:
             # we may support numpy or other types later
-            raise Exception("Currently only support unique() on Datashards of Pandas DataFrame")
+            raise Exception("Currently only support unique() on XShards of Pandas DataFrame")
 
     def split(self):
         """
@@ -193,15 +245,39 @@ class SparkXShards(XShards):
                     def transform(data):
                         return data[order]
                     return transform
-                return [SparkXShards(self.rdd.map(get_data(i)))
-                        for i in range(list_split_length[0])]
+                split_shard_list = [SparkXShards(self.rdd.map(get_data(i)))
+                                    for i in range(list_split_length[0])]
+                self._uncache()
+                return split_shard_list
             else:
                 return [self]
+
+    def len(self, key=None):
+        if key is None:
+            return self.rdd.map(lambda data: len(data) if hasattr(data, '__len__') else 1)\
+                .reduce(lambda l1, l2: l1 + l2)
+        else:
+
+            def get_len(data):
+                assert hasattr(data, '__getitem__'), \
+                    "No selection operation available for this XShards"
+                try:
+                    value = data[key]
+                except:
+                    raise Exception("Invalid key for this XShards")
+                return len(value) if hasattr(value, '__len__') else 1
+            return self.rdd.map(get_len).reduce(lambda l1, l2: l1 + l2)
 
     def save_pickle(self, path, batchSize=10):
         self.rdd.saveAsPickleFile(path, batchSize)
         return self
 
     @classmethod
-    def load_pickle(cls, path, sc, minPartitions=None):
+    def load_pickle(cls, path, sc=None, minPartitions=None):
+        from pyspark.context import SparkContext
+        if not sc:
+            sc = SparkContext.getOrCreate()
         return SparkXShards(sc.pickleFile(path, minPartitions))
+
+    def __del__(self):
+        self.uncache()

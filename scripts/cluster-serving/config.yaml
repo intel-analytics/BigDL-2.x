@@ -1,8 +1,10 @@
 ## Analytics-zoo Cluster Serving
 
 model:
-  # model path must be set
+  # model path must be provided
   path: model
+  # mode, default is recommended, if error is raised, set single
+  mode:
   # the inputs of the tensorflow model, separated by ","
   inputs:
   # the outputs of the tensorflow model, separated by ","
@@ -10,12 +12,10 @@ model:
 data:
   # default, localhost:6379
   src:
-  # default, image (image & tensor are supported)
-  data_type:
-  # default, 3, 224, 224
-  image_shape:
-  # must be provided given data_type is tensor. eg: [1,2] (tensor) [[1],[2,1,2],[3]] (table)
-  tensor_shape:
+  # shape must be provided, e.g, [[1,2],[3,224,224],[3,4]], if only one input brackets could be omitted
+  shape: [3,224,224]
+  # type must be provided, e.g, [image, tensor, sparse_tensor, tensor], if only one input brackets could be omitted
+  type: image
   # default, topN(1)
   filter:
 params:
@@ -28,7 +28,7 @@ redis:
   maxmem: 
 spark:
   # default, local[*]
-  master:
+  master: 
   # default, 4g
   driver_memory:
   # default, 1g

@@ -45,12 +45,11 @@ object ClusterServing {
     val serving = StreamExecutionEnvironment.getExecutionEnvironment
     serving.addSource(new FlinkRedisSource(params))
       .map(new FlinkInference(params))
-      .addSink(new FlinkRedisSink(params)).setParallelism(1)
+      .addSink(new FlinkRedisSink(params))
     serving.setParallelism(1)
     serving.execute("Cluster Serving - Flink")
   }
   def main(args: Array[String]): Unit = {
     run()
-//    run(redisHost = "10.239.47.210", redisPort = 16380)
   }
 }

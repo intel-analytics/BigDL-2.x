@@ -16,10 +16,10 @@
 
 import os.path
 
-from zoo.orca.data.utils import open_image, open_text
+from zoo.orca.data.file import open_image, open_text, load_numpy
 
 
-class TestDataUtils:
+class TestFile:
     def setup_method(self, method):
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
 
@@ -46,3 +46,16 @@ class TestDataUtils:
         if access_key_id and secret_access_key:
             file_path = "s3://analytics-zoo-data/dogs-vs-cats/samples/cat.7000.jpg"
             image = open_image(file_path)
+
+    def test_load_local_numpy(self):
+        file_path = os.path.join(self.resource_path, "orca/data/random.npy")
+        res = load_numpy(file_path)
+        assert res.shape == (2, 5)
+
+    def test_load_s3_numpy(self):
+        access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
+        secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+        if access_key_id and secret_access_key:
+            file_path = "s3://analytics-zoo-data/hyperseg/VGGcompression/core1.npy"
+            res = load_numpy(file_path)
+            assert res.shape == (32, 64, 3, 3)
