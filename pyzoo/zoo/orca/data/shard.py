@@ -15,6 +15,7 @@
 #
 
 from zoo.orca.data.utils import *
+from zoo.common.nncontext import init_nncontext
 import os
 
 
@@ -275,7 +276,11 @@ class SparkXShards(XShards):
     @classmethod
     def load_pickle(cls, path, minPartitions=None):
         from pyspark.context import SparkContext
-        sc = SparkContext.getOrCreate()
+        with SparkContext._lock:
+            if SparkContext._active_spark_context is None:
+                sc = init_nncontext()
+            else:
+                sc = SparkContext._active_spark_context
         return SparkXShards(sc.pickleFile(path, minPartitions))
 
     def __del__(self):
