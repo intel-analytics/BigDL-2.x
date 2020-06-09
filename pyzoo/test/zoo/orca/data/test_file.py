@@ -102,4 +102,3 @@ class TestFile:
             bucket = path_parts.pop(0)
             key = "/".join(path_parts)
             s3_client.delete_object(Bucket=bucket, Key=key)
-
