@@ -72,8 +72,8 @@ class PythonTFPark[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
     new TFValidationMethod(valMethod, name, outputIndices, labelIndices)
   }
 
-  def createStatelessMetric(name: String, idx: Int): StatelessMetric = {
-    new StatelessMetric(name, idx)
+  def createStatelessMetric(name: String, idx: Int, countIdx: Int): StatelessMetric = {
+    new StatelessMetric(name, idx, countIdx)
   }
 
   def createGanOptimMethod(dOptim: OptimMethod[T],

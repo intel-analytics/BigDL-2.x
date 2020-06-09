@@ -72,13 +72,11 @@ def evaluate_metrics(inputs, sess, dataset, metrics):
     else:
         batch_size = dataset.batch_per_thread * dataset.get_num_partitions()
 
-    outputs, eval_methods = TFModel._process_metrics(inputs[0].graph,
-                                                     metrics=metrics)
-
     real_batch_size = tf.shape(inputs[0])[0]
 
-    outputs.append(real_batch_size)
-    outputs.append(real_batch_size)  # this is a dummy tensor
+    outputs, eval_methods = TFModel._process_metrics(inputs[0].graph,
+                                                     metrics=metrics,
+                                                     real_batch_size=real_batch_size)
 
     tfnet = TFNet.from_session(sess, inputs=inputs, outputs=outputs)
 
