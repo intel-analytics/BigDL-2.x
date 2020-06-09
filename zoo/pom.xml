@@ -665,6 +665,8 @@
                                 <excludes>
                                     <exclude>org.apache.flink:*</exclude>
                                     <exclude>org.apache.spark:*</exclude>
+                                    <exclude>org.apache.hadoop:*</exclude>
+                                    <exclude>org.apache.parquet:*</exclude>
                                     <exclude>org.scala-lang:scala-compiler</exclude>
                                     <exclude>org.scala-lang:scala-reflect</exclude>
                                     <exclude>org.scala-lang:scala-library</exclude>
@@ -698,6 +700,8 @@
                                 <excludes>
                                     <exclude>org.apache.flink:*</exclude>
                                     <exclude>org.apache.spark:*</exclude>
+                                    <exclude>org.apache.hadoop:*</exclude>
+                                    <exclude>org.apache.parquet:*</exclude>
                                     <exclude>org.scala-lang:scala-compiler</exclude>
                                     <exclude>org.scala-lang:scala-reflect</exclude>
                                     <exclude>org.scala-lang:scala-actors</exclude>
