@@ -20,15 +20,15 @@ from tensorflow.python.keras import models
 from tensorflow.python.keras.engine import training_utils
 
 from bigdl.optim.optimizer import MaxEpoch
+
+from zoo.tfpark.utils import evaluate_string_metrics
 from zoo.common import load_from_file
 from zoo.common import save_file
 from zoo.common.nncontext import getOrCreateSparkContext
-from zoo.pipeline.api.keras.utils import to_bigdl_metric
 from zoo.tfpark.tf_dataset import TFNdarrayDataset, TFDataset
 
-from zoo.tfpark.tf_optimizer import TFOptimizer, TFModel, BigDLMetric
+from zoo.tfpark.tf_optimizer import TFOptimizer
 from zoo.tfpark.tf_predictor import TFPredictor
-from zoo.tfpark.tfnet import TFNet
 
 
 class KerasModel(object):
@@ -212,33 +212,13 @@ class KerasModel(object):
         else:
             model_targets = self.model._targets
 
-        metrics = {}
-        for i, metric in enumerate(self.metrics_names):
-            if metric == "loss":
-                metrics["loss"] = self.model.total_loss
-            else:
-                method = to_bigdl_metric(metric, self.model.loss)
-                metrics[metric] = BigDLMetric(method,
-                                              self.model.outputs,
-                                              model_targets)
-
-        outputs, eval_methods = TFModel._process_metrics(model_targets[0].graph, metrics=metrics)
-
-        outputs.append(self.real_batch_size)
-        outputs.append(self.model.total_loss)
-
-        tfnet = TFNet.from_session(K.get_session(),
-                                   inputs=self.model.inputs + model_targets,
-                                   outputs=outputs)
-        if dataset.batch_per_thread < 0:
-            batch_size = dataset.batch_size
-        else:
-            batch_size = dataset.batch_per_thread * dataset.get_num_partitions()
-
-        results = tfnet.evaluate(dataset, batch_size, eval_methods)
-        final_result = dict([(r.method, r.result) for r in results])
-
-        return final_result
+        return evaluate_string_metrics(sess=K.get_session(),
+                                       string_metrics=self.metrics_names,
+                                       dataset=dataset,
+                                       inputs=self.model.inputs + model_targets,
+                                       targets=model_targets,
+                                       outputs=self.model.outputs,
+                                       loss=self.model.total_loss)
 
     def predict(self,
                 x,

@@ -17,9 +17,11 @@ from tensorflow.python.util import function_utils
 import tensorflow as tf
 
 from bigdl.optim.optimizer import MaxIteration, Loss, TreeNNAccuracy
+
+from zoo.tfpark.utils import evaluate_string_metrics
 from zoo.pipeline.api.keras import metrics
 from zoo.tfpark.tfnet import TFNet
-from zoo.tfpark.tf_optimizer import TFOptimizer, BigDLMetric, TFModel
+from zoo.tfpark.tf_optimizer import TFOptimizer
 from zoo.tfpark.tf_dataset import TFDataset
 
 from zoo.util import nest
@@ -217,7 +219,6 @@ class TFEstimator(object):
                         saver.restore(sess, checkpoint_path)
                     else:
                         sess.run(tf.global_variables_initializer())
-                    inputs = nest.flatten(result._original_tensors)
                     if isinstance(spec.predictions, dict):
                         if "mae" in eval_methods:
                             outputs = [
@@ -231,35 +232,18 @@ class TFEstimator(object):
                             raise Exception("Evaluate on more than one output is not " +
                                             "supported now")
 
-                    if result.batch_per_thread < 0:
-                        batch_size = result.batch_size
+                    all_inputs = result._original_tensors
+                    if isinstance(all_inputs, tuple) and len(all_inputs) == 2:
+                        targets = nest.flatten(all_inputs[1])
                     else:
-                        batch_size = result.batch_per_thread * result.get_num_partitions()
-
-                    metrics = {}
-                    for i, metric in enumerate(eval_methods):
-                        if metric == "loss":
-                            metrics["loss"] = spec.loss
-                        else:
-                            method = TFEstimator._to_bigdl_metric(metric)
-                            targets = nest.flatten(result._original_tensors[1])
-                            metrics[metric] = BigDLMetric(method,
-                                                          outputs,
-                                                          targets)
-
-                    outputs, eval_methods = TFModel._process_metrics(outputs[0].graph,
-                                                                     metrics=metrics)
-
-                    real_batch_size = tf.shape(inputs[0])[0]
-
-                    outputs.append(real_batch_size)
-                    outputs.append(spec.loss)
-
-                    tfnet = TFNet.from_session(sess, inputs=inputs, outputs=outputs)
-
-                    results = tfnet.evaluate(result, batch_size, eval_methods)
-                    final_result = dict([(r.method, r.result) for r in results])
-                    return final_result
+                        targets = None
+                    return evaluate_string_metrics(sess=sess,
+                                                   string_metrics=eval_methods,
+                                                   dataset=result,
+                                                   inputs=nest.flatten(all_inputs),
+                                                   targets=targets,
+                                                   outputs=outputs,
+                                                   loss=spec.loss)
 
         return self.estimator.evaluate(input_fn, steps, checkpoint_path=checkpoint_path)
 

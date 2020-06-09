@@ -14,13 +14,14 @@
 # limitations under the License.
 #
 from bigdl.optim.optimizer import MaxIteration, SGD
+
+from zoo.tfpark.utils import evaluate_metrics
 from zoo.orca.data.shard import SparkXShards
 from zoo.orca.data.tf.data import Dataset, TFDataDataset2
-from zoo.tfpark import TFEstimator, TFOptimizer, TFPredictor, TFNet, ZooOptimizer
-import pandas as pd
+from zoo.tfpark import TFOptimizer, TFNet, ZooOptimizer
 import tensorflow as tf
 
-from zoo.tfpark.tf_dataset import TFDataset, TensorMeta
+from zoo.tfpark.tf_dataset import TFDataset
 from zoo.tfpark.tf_optimizer import TFModel
 from zoo.util import nest
 
@@ -225,13 +226,7 @@ class TFOptimizerWrapper(Estimator):
 
         flat_inputs = nest.flatten(self.inputs)
         flat_labels = nest.flatten(self.labels)
-        tensors, val_methods = TFModel._process_metrics(tf.get_default_graph(), self.metrics)
-        tfnet = TFNet.from_session(sess=self.sess,
-                                   inputs=flat_inputs + flat_labels,
-                                   outputs=tensors + [self.real_batch_size, self.loss])
 
-        results = tfnet.evaluate(dataset,
-                                 dataset.batch_per_thread * dataset.get_num_partitions(),
-                                 val_methods)
-        results = dict([(r.method, r.result) for r in results])
-        return results
+        return evaluate_metrics(flat_inputs + flat_labels,
+                                sess=self.sess,
+                                dataset=dataset, metrics=self.metrics)
