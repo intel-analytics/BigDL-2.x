@@ -89,12 +89,10 @@ class MXNetTrainer(object):
 
         from zoo.orca.data import RayXShards, SparkXShards
         if isinstance(train_data, SparkXShards):
-            from zoo.ray import RayContext
-            ray_ctx = RayContext.get()
-            train_data = train_data.repartition(self.num_workers).to_ray(ray_ctx)
+            train_data = train_data.repartition(self.num_workers).to_ray()
             if test_data:
                 assert isinstance(test_data, SparkXShards)
-                test_data = test_data.repartition(self.num_workers).to_ray(ray_ctx)
+                test_data = test_data.repartition(self.num_workers).to_ray()
         if isinstance(train_data, RayXShards):
             if train_data.num_partitions() != self.num_workers:
                 train_data.repartition(self.num_workers)

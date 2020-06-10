@@ -307,7 +307,9 @@ class SparkXShards(XShards):
     def __del__(self):
         self.uncache()
 
-    def to_ray(self, ray_ctx):
+    def to_ray(self):
+        from zoo.ray import RayContext
+        ray_ctx = RayContext.get()
         object_store_address = ray_ctx.address_info["object_store_address"]
 
         # TODO: Handle failure when doing this?
