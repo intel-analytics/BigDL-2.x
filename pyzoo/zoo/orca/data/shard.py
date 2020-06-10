@@ -104,17 +104,19 @@ class RayXShards(XShards):
         Sort Ray actors and RayPartitions by node_ip so that each actor is colocated
         with the data partition on the same node.
         """
-        import ray
-        actor_ips = ray.get([actor.get_node_ip.remote() for actor in actors])
-        actor_zip_ips = list(zip(actors, actor_ips))
-        actor_zip_ips.sort(key=lambda x: x[1])
         if self.partitions[0].node_ip:
-            self.partitions.sort(key=lambda partition: partition.node_ip)
+            # Assume that the partitions are already sorted by node_ip
+            import ray
+            actor_ips = ray.get([actor.get_node_ip.remote() for actor in actors])
+            actor_zip_ips = list(zip(actors, actor_ips))
+            actor_zip_ips.sort(key=lambda x: x[1])
             for i in range(len(actors)):
                 actor_ip = actor_zip_ips[i][1]
                 partition_ip = self.partitions[i].node_ip
                 assert actor_ip == partition_ip
-        return [actor_ip[0] for actor_ip in actor_zip_ips]
+            return [actor_ip[0] for actor_ip in actor_zip_ips]
+        else:
+            return actors
 
 
 class RayPartition(object):
@@ -327,6 +329,7 @@ class SparkXShards(XShards):
         self.uncache()
         # Sort the data according to the node_ips.
         object_id_node_ips.sort(key=lambda x: x[1])
-        partitions = [RayPartition([id_ip[0]], node_ip=id_ip[1], object_store_address=object_store_address)
+        partitions = [RayPartition(shard_list=[id_ip[0]], node_ip=id_ip[1],
+                                   object_store_address=object_store_address)
                       for id_ip in object_id_node_ips]
         return RayXShards(partitions)

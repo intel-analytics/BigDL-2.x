@@ -69,8 +69,8 @@ class MXNetRunner(object):
                 if test_data is None:
                     self.val_data = None
                 else:
-                    assert isinstance(test_data, RayXShards), "Test data should be an instance of " \
-                                                           "RayXShards, please check your input"
+                    assert isinstance(test_data, RayXShards),\
+                        "Test data should be an instance of RayXShards, please check your input"
                     test_data_partition = test_data.get_partitions()[self.kv.rank]
                     val_partition_data = test_data_partition.get_data()
                     val_data, val_label = get_data_label(val_partition_data)
@@ -241,13 +241,13 @@ class MXNetRunner(object):
 
     def get_node_ip(self):
         """Returns the IP address of the current node."""
-        if not self.node_ip:
+        if "node_ip" not in self.__dict__:
             self.node_ip = ray.services.get_node_ip_address()
         return self.node_ip
 
     def find_free_port(self):
         """Finds a free port on the current node."""
-        if not self.port:
+        if "port" not in self.__dict__:
             from zoo.orca.learn.mxnet.utils import find_free_port
             self.port = find_free_port()
         return self.port

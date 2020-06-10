@@ -79,8 +79,6 @@ class MXNetTrainer(object):
                  test_data=None, validation_metrics_creator=None,
                  num_workers=1, num_servers=None, runner_cores=None):
         self.config = config
-        self.train_data = train_data
-        self.test_data = test_data
         self.model_creator = model_creator
         self.loss_creator = loss_creator
         self.validation_metrics_creator = validation_metrics_creator
@@ -91,17 +89,21 @@ class MXNetTrainer(object):
 
         from zoo.orca.data import RayXShards, SparkXShards
         if isinstance(train_data, SparkXShards):
-            assert isinstance(test_data, SparkXShards)
             from zoo.ray import RayContext
             ray_ctx = RayContext.get()
             train_data = train_data.repartition(self.num_workers).to_ray(ray_ctx)
-            test_data = test_data.repartition(self.num_workers).to_ray(ray_ctx)
+            if test_data:
+                assert isinstance(test_data, SparkXShards)
+                test_data = test_data.repartition(self.num_workers).to_ray(ray_ctx)
         if isinstance(train_data, RayXShards):
-            assert isinstance(test_data, RayXShards)
             if train_data.num_partitions() != self.num_workers:
                 train_data.repartition(self.num_workers)
-            if test_data.num_partitions() != self.num_workers:
-                test_data.repartition(self.num_workers)
+            if test_data:
+                assert isinstance(test_data, RayXShards)
+                if test_data.num_partitions() != self.num_workers:
+                    test_data.repartition(self.num_workers)
+        self.train_data = train_data
+        self.test_data = test_data
 
         # Generate actor class
         # Add a dummy custom resource: _mxnet_worker and _mxnet_server to diff worker from server
@@ -122,8 +124,8 @@ class MXNetTrainer(object):
             for i in range(self.num_servers)
         ]
 
-        if isinstance(train_data, RayXShards):
-            self.workers = train_data.colocate_actors(self.workers)
+        if isinstance(self.train_data, RayXShards):
+            self.workers = self.train_data.colocate_actors(self.workers)
         self.runners = self.workers + self.servers
 
         env = {
