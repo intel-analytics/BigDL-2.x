@@ -23,54 +23,6 @@ from zoo.models.image.objectdetection import *
 
 sc = init_nncontext("Object Detection Example", redirect_spark_log=False)
 
-import pandas as pd
-import numpy as np
-
-def load_mat():
-    Ymats=dict()
-    with open('/home/ding/proj/deepglo/datasets/ymat_asiainfo.npy', 'rb') as f:
-        for kpi_name in ['kpi0','kpi1','kpi2','kpi3','kpi4','kpi5','kpi6','kpi7']:
-    	    Ymats[kpi_name] = np.load(f)
-    return Ymats
-
-# config = {
-#     'epochs': 1,
-#     "lr": 0.001,
-#     "lstm_1_units": 16,
-#     "dropout_1": 0.2,
-#     "lstm_2_units": 10,
-#     "dropout_2": 0.2,
-#     "batch_size": 32,
-# }
-# from zoo.automl.model.VanillaLSTM import *
-# from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
-# train_data = pd.DataFrame(data=np.random.randn(64, 4))
-# val_data = pd.DataFrame(data=np.random.randn(16, 4))
-# test_data = pd.DataFrame(data=np.random.randn(16, 4))
-#
-# future_seq_len = 1
-# past_seq_len = 6
-# tsft = TimeSequenceFeatureTransformer()
-# x_train, y_train = tsft._roll_train(train_data,past_seq_len=past_seq_len,future_seq_len=future_seq_len)
-# model = VanillaLSTM(check_optional_config=False, future_seq_len=future_seq_len)
-# model.fit_eval(x_train,y_train,**config)
-
-
-from zoo.automl.model.DTCNMF.DTCNMF_pytorch import DTCNMFPytorch
-config = {
-    'y_iters': 1,
-    "init_epochs": 1,
-    "max_FX_epoch": 1,
-    "max_TCN_epoch": 1
-}
-model = DTCNMFPytorch()
-Ymats = load_mat()
-Ymat = Ymats["kpi2"]
-t = model.fit_eval(Ymat, **config)
-
-
-
-
 parser = argparse.ArgumentParser()
 parser.add_argument('model_path', help="Path where the model is stored")
 parser.add_argument('img_path', help="Path where the images are stored")
