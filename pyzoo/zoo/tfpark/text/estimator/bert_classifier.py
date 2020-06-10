@@ -46,7 +46,7 @@ def make_bert_classifier_model_fn(optimizer):
             one_hot_labels = tf.one_hot(labels, depth=params["num_classes"], dtype=tf.float32)
             per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
             loss = tf.reduce_mean(per_example_loss)
-            if mode == tf.estimator.ModeKeys.PREDICT or mode == tf.estimator.ModeKeys.EVAL:
+            if mode == tf.estimator.ModeKeys.PREDICT:
                 return tf.estimator.EstimatorSpec(mode=mode, predictions=probabilities)
             elif mode == tf.estimator.ModeKeys.EVAL:
                 return tf.estimator.EstimatorSpec(mode=mode, predictions=probabilities, loss=loss)
