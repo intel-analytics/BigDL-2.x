@@ -92,6 +92,15 @@ class TestZouwuModelForecast(ZooTestCase):
         model.evaluate([x_val_long, x_val_short], self.y_val)
         model.predict([x_test_long, x_test_short])
 
+    def test_forecast_tcmf(self):
+        from zoo.zouwu.model.forecast import TCMFForecaster
+        model = TCMFForecaster(max_y_iterations=1,
+                               init_XF_epoch=1,
+                               max_FX_epoch=1,
+                               max_TCN_epoch=1)
+        x = np.random.rand(1000,720)
+        model.fit(x)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

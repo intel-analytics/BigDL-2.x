@@ -18,7 +18,6 @@ from abc import ABCMeta, abstractmethod
 
 from zoo.automl.model.MTNet_keras import MTNetKeras as MTNetKerasModel
 from zoo.automl.model.VanillaLSTM import VanillaLSTM as LSTMKerasModel
-from zoo.automl.model.DTCNMF_pytorch import DTCNMFPytorch as DTCNMFModel
 from zoo.tfpark import KerasModel as TFParkKerasModel
 
 import tensorflow as tf
@@ -38,26 +37,32 @@ class Forecaster(metaclass=ABCMeta):
         pass
 
 
-class DTCNMFForecaster(Forecaster):
+class TCMFForecaster(Forecaster):
     def __init__(self,
-                 vbsize,
-                 hbsize,
-                 num_channels_X,
-                 num_channels_Y,
-                 kernel_size,
-                 dropout,
-                 rank,
-                 kernel_size_Y,
-                 val_len,
-                 end_index,
-                 normalize,
-                 start_date,
-                 freq,
-                 use_time,
-                 dti,
-                 svd,
-                 period,
-                 forward_cov):
+                 vbsize=128,
+                 hbsize=256,
+                 num_channels_X=[32, 32, 32, 32, 32, 1],
+                 num_channels_Y=[16, 16, 16, 16, 16, 1],
+                 kernel_size=7,
+                 dropout=0.1,
+                 rank=64,
+                 kernel_size_Y=7,
+                 learning_rate=0.0005,
+                 val_len=24,
+                 end_index=-24,
+                 normalize=False,
+                 start_date="2020-4-1",
+                 freq="1H",
+                 covariates=None,
+                 use_time=True,
+                 dti=None,
+                 svd=None,
+                 period=24,
+                 forward_cov=None,
+                 max_y_iterations=300,
+                 init_XF_epoch=100,
+                 max_FX_epoch=300,
+                 max_TCN_epoch=300):
         """
         Initialize
         :param vbsize:
@@ -68,6 +73,7 @@ class DTCNMFForecaster(Forecaster):
         :param dropout:
         :param rank:
         :param kernel_size_Y:
+        :param learning_rate:
         :param val_len:
         :param end_index:
         :param normalize:
@@ -78,33 +84,48 @@ class DTCNMFForecaster(Forecaster):
         :param svd:
         :param period:
         :param forward_cov:
+        :param max_y_iterations,
+        :param init_XF_epoch,
+        :param max_FX_epoch,
+        :param max_TCN_epoch
         """
-        self.internal = DTCNMFModel()
-        self.internal.set_params(vbsize=vbsize,
-                                 hbsize=hbsize,
-                                 num_channels_X=num_channels_X,
-                                 num_channels_Y=num_channels_Y,
-                                 kernel_size=kernel_size,
-                                 dropout=dropout,
-                                 rank=rank,
-                                 kernel_size_Y=kernel_size_Y,
-                                 val_len=val_len,
-                                 end_index=end_index,
-                                 normalize=normalize,
-                                 start_date=start_date,
-                                 freq=freq,
-                                 use_time=use_time,
-                                 dti=dti,
-                                 svd=svd,
-                                 period=period,
-                                 forward_cov=forward_cov)
-        self.internal.build()
+        self.internal = None
+        self.config = {
+            "vbsize" : vbsize ,
+            "hbsize" : hbsize,
+            "num_channels_X" : num_channels_X,
+            "num_channels_Y" : num_channels_Y,
+            "kernel_size" : kernel_size,
+            "dropout" : dropout,
+            "rank" : rank,
+            "kernel_size_Y" : kernel_size_Y,
+            "learning_rate" : learning_rate,
+            "val_len" : val_len,
+            "end_index" : end_index,
+            "normalize" : normalize,
+            "start_date" : start_date,
+            "freq" : freq,
+            "covariates" : covariates,
+            "use_time" : use_time,
+            "dti" : dti,
+            "svd" : svd,
+            "period" : period,
+            "forward_cov" : forward_cov,
+            "max_y_iterations" : max_y_iterations,
+            "init_XF_epoch" : init_XF_epoch,
+            "max_FX_epoch" : max_FX_epoch,
+            "max_TCN_epoch" : max_TCN_epoch
+        }
+        self.model = self._build()
+
+    def _build(self):
+        from zoo.automl.model.TCMF.TCMF import TCMF
+        self.internal = TCMF()
+        return self.internal._build(**self.config)
 
     def fit(self,
             x,
-            covariates=None,
-            lr=0.005,
-            incremental=True):
+            incremental=False):
         """
         fit the model
         :param x: the input

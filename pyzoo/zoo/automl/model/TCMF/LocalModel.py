@@ -15,8 +15,8 @@ import itertools
 import torch.nn.functional as F
 
 
-from zoo.automl.model.DTCNMF.data_loader import *
-from zoo.automl.model.DTCNMF.time import *
+from zoo.automl.model.TCMF.data_loader import *
+from zoo.automl.model.TCMF.time import *
 
 import random
 import pickle
