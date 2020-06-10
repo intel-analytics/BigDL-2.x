@@ -291,11 +291,15 @@ class SparkXShards(XShards):
     def to_ray(self, ray_ctx):
         object_store_address = ray_ctx.address_info["object_store_address"]
 
+        # TODO: Handle failure when doing this?
+        # TODO: delete the data in the plasma?
         def put_to_plasma(splitIndex, iterator):
             import random
             import pyarrow.plasma as plasma
             from zoo.orca.data.utils import get_node_ip
-
+            # mapPartition would set the same random seed for each partition?
+            # Here use the partition index to override the random seed so that there won't be
+            # identical object_ids in plasma.
             random.seed(splitIndex)
             res = list(iterator)
             client = plasma.connect(object_store_address)
@@ -303,6 +307,8 @@ class SparkXShards(XShards):
             yield object_id, get_node_ip()
 
         object_id_node_ips = self.rdd.mapPartitionsWithIndex(put_to_plasma).collect()
+        self.uncache()
+        # Sort the data according to the node_ips.
         object_id_node_ips.sort(key=lambda x: x[1])
         partitions = [RayPartition([id_ip[0]], node_ip=id_ip[1], object_store_address=object_store_address)
                       for id_ip in object_id_node_ips]
