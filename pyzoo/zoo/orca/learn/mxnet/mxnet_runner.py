@@ -241,13 +241,15 @@ class MXNetRunner(object):
 
     def get_node_ip(self):
         """Returns the IP address of the current node."""
-        self.node_ip = ray.services.get_node_ip_address()
+        if not self.node_ip:
+            self.node_ip = ray.services.get_node_ip_address()
         return self.node_ip
 
     def find_free_port(self):
         """Finds a free port on the current node."""
-        from zoo.orca.learn.mxnet.utils import find_free_port
-        self.port = find_free_port()
+        if not self.port:
+            from zoo.orca.learn.mxnet.utils import find_free_port
+            self.port = find_free_port()
         return self.port
 
 
