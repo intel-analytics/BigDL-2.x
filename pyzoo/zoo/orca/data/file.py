@@ -137,6 +137,7 @@ def makedirs(path):
     else:
         return os.makedirs(path)
 
+
 def write_text(path, text):
     if path.startswith("hdfs"):  # hdfs://url:port/file_path
         import pyarrow as pa
@@ -145,7 +146,7 @@ def write_text(path, text):
             result = f.write(text.encode('utf-8'))
             f.close()
             return result
-    elif path.startswith("s3"): # s3://bucket/file_path
+    elif path.startswith("s3"):   # s3://bucket/file_path
         access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
         secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
         import boto3
