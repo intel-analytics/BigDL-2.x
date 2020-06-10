@@ -18,6 +18,7 @@ For the detailed algorithm description, please refer to [here](../Algorithm/LSTM
 - **`dropout_2`**: Specify the fraction of the input units to drop for the 2nd dropout layer. This value defaults to 0.2.
 - **`metric`**: Specify the metric for validation and evaluation. This value defaults to MSE.
 - **`lr`**: Specify the learning rate. This value defaults to 0.001.
+- **`loss`**: Specify the target function you want to optimize on. This value defaults to "mse".
 - **`uncertainty`**: Specify whether the forecaster can perform the calculation of uncertainty.
 
 ### \__init__
@@ -31,8 +32,9 @@ LSTMForecaster(target_dim=1,
                dropout_2=0.2,
                metric="mean_squared_error",
                lr=0.001,
+               loss="mse",
                uncertainty: bool = False
-            )
+               )
 ```
 
 ### fit, evaluate, predict
