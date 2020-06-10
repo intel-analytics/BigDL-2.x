@@ -21,7 +21,7 @@ from zoo.common.nncontext import init_nncontext
 from zoo.models.image.objectdetection import *
 
 
-sc = init_nncontext("Object Detection Example")
+sc = init_nncontext("Object Detection Example", redirect_spark_log=False)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('model_path', help="Path where the model is stored")
