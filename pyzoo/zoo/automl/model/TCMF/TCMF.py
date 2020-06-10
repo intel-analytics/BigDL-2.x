@@ -14,7 +14,7 @@
 #
 from abc import ABC
 
-from zoo.automl.model.DTCNMF.DeepGLO import *
+from zoo.automl.model.TCMF.DeepGLO import *
 
 from zoo.automl.common.metrics import Evaluator
 import pandas as pd
@@ -22,12 +22,12 @@ from zoo.automl.model.abstract import BaseModel
 from zoo.automl.common.util import save_config
 
 
-class DTCNMFPytorch(BaseModel):
+class TCMF(BaseModel):
     """
     MF regularized TCN + TCN. This version is not for automated searching yet.
     """
 
-    def __init__(self, check_optional_config=False, future_seq_len=1):
+    def __init__(self):
         """
         Initialize hyper parameters
         :param check_optional_config:
@@ -35,35 +35,32 @@ class DTCNMFPytorch(BaseModel):
         """
         # models
         self.model_init = False
-        # self.X = None  # latent x vectors from Matrix Factorization
-        # self.F = None  # latent f vectors from Matrix Factorization
-        # self.XseqM = None  # a TCN model for latent vectors X
-        # self.YseqM = None  # a TCN model for Y
 
     def set_params(self, **config):
-        self.vbsize = config.get("vbsize", None),
-        self.hbsize = config.get("hbsize", None),
-        self.num_channels_X = config.get("num_channels_X", None)
-        self.num_channels_Y = config.get("num_channels_Y", None)
-        self.kernel_size = config.get("kernel_size", None)
-        self.dropout = config.get("dropout", None)
-        self.rank = config.get("rank", None)
-        self.kernel_size_Y = config.get("kernel_size_Y", None)
-        self.lr = config.get("learning_rate", None)
-        self.val_len = config.get("val_len", None)
-        self.end_index = config.get("end_index", None)
-        self.normalize = config.get("normalize", None)
-        self.start_date = config.get("start_date", None)
-        self.freq = config.get("freq", None)
-        self.use_time = config.get("use_time", None)
+        self.vbsize = config.get("vbsize", 128)
+        self.hbsize = config.get("hbsize", 256)
+        self.num_channels_X = config.get("num_channels_X", [32, 32, 32, 32, 32, 1])
+        self.num_channels_Y = config.get("num_channels_Y", [16, 16, 16, 16, 16, 1])
+        self.kernel_size = config.get("kernel_size", 7)
+        self.dropout = config.get("dropout", 0.1)
+        self.rank = config.get("rank", 64)
+        self.kernel_size_Y = config.get("kernel_size_Y", 7)
+        self.lr = config.get("learning_rate", 0.0005)
+        self.val_len = config.get("val_len", 24)
+        self.end_index = config.get("end_index", -24)
+        self.normalize = config.get("normalize", False)
+        self.start_date = config.get("start_date", "2020-4-1")
+        self.freq = config.get("freq", "1H")
+        self.covariates = config.get('covariates', None)
+        self.use_time = config.get("use_time", True)
         self.dti = config.get("dti", None)
         self.svd = config.get("svd", None)
-        self.period = config.get("period", None)
+        self.period = config.get("period", 24)
         self.forward_cov = config.get("forward_cov", None)
-        self.y_iters = config.get("max_y_iterations", None)
-        self.init_epoch = config.get("init_XF_epoch", None)
-        self.max_FX_epoch = config.get("max_FX_epoch", None)
-        self.max_TCN_epoch = config.get("max_TCN_epoch", None)
+        self.y_iters = config.get("max_y_iterations", 300)
+        self.init_epoch = config.get("init_XF_epoch", 100)
+        self.max_FX_epoch = config.get("max_FX_epoch", 300)
+        self.max_TCN_epoch = config.get("max_TCN_epoch", 300)
 
     def _build(self, **config):
         """
@@ -71,32 +68,30 @@ class DTCNMFPytorch(BaseModel):
         :param config: hyper parameters for building the model
         :return:
         """
-        # TODO build model and initialize
-        super()._check_config(**config)
+        self.set_params(**config)
         self.model = DeepGLO(
-            vbsize=config.get('vbsize', 128),
-            hbsize=config.get('hbsize', 256),
-            num_channels_X=config.get('num_channels_X', [32, 32, 32, 32, 32, 1]),
-            num_channels_Y=config.get('num_channels_Y', [16, 16, 16, 16, 16, 1]),
-            kernel_size=config.get('kernel_size', 7),
-            dropout=config.get('dropout', 0.1),
-            rank=config.get('rank', 64),
-            kernel_size_Y=config.get('kernel_size_Y', 7),
-            lr=config.get('lr', 0.0005),
-            val_len=config.get('val_len', 24),
-            end_index=config.get('end_index', -24),
-            normalize=config.get('normalize', False),
-            start_date=config.get('start_date', "2020-4-1"),
-            freq=config.get('freq', "1H"),
-            covariates=config.get('covariates', None),
-            use_time=config.get('use_time', True),
-            dti=config.get('dti', None),
-            svd=config.get('svd', None),
-            period=config.get('period', 24),
-            forward_cov=config.get('forward_cov', False),
+            vbsize=self.vbsize,
+            hbsize=self.hbsize,
+            num_channels_X=self.num_channels_X,
+            num_channels_Y=self.num_channels_Y,
+            kernel_size=self.kernel_size,
+            dropout=self.dropout,
+            rank=self.rank,
+            kernel_size_Y=self.kernel_size_Y,
+            lr=self.lr,
+            val_len=self.val_len,
+            end_index=self.end_index,
+            normalize=self.normalize,
+            start_date=self.start_date,
+            freq=self.freq,
+            covariates=self.covariates,
+            use_time=self.use_time,
+            dti=self.dti,
+            svd=self.svd,
+            period=self.period,
+            forward_cov=self.forward_cov
         )
         self.model_init = True
-
 
     def fit_eval(self, x, y=None, verbose=0, **config):
         """
@@ -108,18 +103,17 @@ class DTCNMFPytorch(BaseModel):
             nd is the number of series, Td is the time dimension
         :param y: None. target is extracted from x directly
         :param verbose:
-        :param config:
         :return: the evaluation metric value
         """
         if not self.model_init:
             self._build(**config)
-        self.model.train_all_models(x, y_iters=config.get("y_iters", 300),
-                            init_epochs=config.get("init_epochs", 100),
-                            max_FX_epoch=config.get("max_FX_epoch", 300),
-                            max_TCN_epoch=config.get("max_TCN_epoch", 300))
+        self.model.train_all_models(x, y_iters=self.y_iters,
+                            init_epochs=self.init_epoch,
+                            max_FX_epoch=self.max_FX_epoch,
+                            max_TCN_epoch=self.max_TCN_epoch)
         return self.model.Yseq.val_loss
 
-    def fit_incremental(self, x, **config):
+    def fit_incremental(self, x):
         """
         Incremental fitting given a pre-trained model.
         :param x: incremental data
