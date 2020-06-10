@@ -104,7 +104,6 @@ class RayPartition(object):
     """
     Partition of RayXShards
     """
-
     def __init__(self, shard_list, node_ip=None, object_store_address=None):
         self.shard_list = shard_list
         self.node_ip = node_ip
@@ -294,20 +293,14 @@ class SparkXShards(XShards):
 
         def put_to_plasma(splitIndex, iterator):
             import random
-            import socket
             import pyarrow.plasma as plasma
+            from zoo.orca.data.utils import get_node_ip
 
             random.seed(splitIndex)
             res = list(iterator)
             client = plasma.connect(object_store_address)
             object_id = client.put(res)
-            # Not directly calling ray.services.get_node_ip_address()
-            # since this would introduce ray overhead.
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            node_ip = s.getsockname()[0]
-            s.close()
-            yield object_id, node_ip
+            yield object_id, get_node_ip()
 
         object_id_node_ips = self.rdd.mapPartitionsWithIndex(put_to_plasma).collect()
         object_id_node_ips.sort(key=lambda x: x[1])

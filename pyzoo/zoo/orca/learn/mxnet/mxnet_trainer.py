@@ -125,7 +125,7 @@ class MXNetTrainer(object):
         worker_ips = ray.get(
             [runner.get_node_ip.remote() for runner in self.workers])
         server_ips = ray.get(
-            [runner.get_node_ip.remote() for runner in self.workers])
+            [runner.get_node_ip.remote() for runner in self.servers])
         # Sort workers based on their node ips
         worker_and_ips = list(zip(self.workers, worker_ips))
         worker_and_ips.sort(key=lambda x: x[1])
@@ -135,7 +135,7 @@ class MXNetTrainer(object):
 
         logger = logging.getLogger()
         logger.info("Worker ips: ", worker_ips)
-        logger.info("Server ips: ", worker_ips)
+        logger.info("Server ips: ", server_ips)
 
         env = {
             "DMLC_PS_ROOT_URI": str(get_host_ip()),
