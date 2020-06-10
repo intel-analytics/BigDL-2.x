@@ -161,9 +161,9 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
            |from torch.utils.data import DataLoader
            |import math
            |
-           |${localLoaderName}_random_sampler=DistributedSampler(${localLoaderName}.dataset,
+           |${localLoaderName}_rand_sampler=DistributedSampler(${localLoaderName}.dataset,
            |                                              ${nodeNumber}, ${partId}, True)
-           |${localLoaderName}_sequence_sampler=DistributedSequentialSampler(${localLoaderName}.dataset,
+           |${localLoaderName}_seq_sampler=DistributedSequentialSampler(${localLoaderName}.dataset,
            |                                              ${nodeNumber}, ${partId})
            |
            |bs_node = int(math.ceil(${localLoaderName}.batch_size / ${nodeNumber}))
@@ -177,10 +177,10 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
            |                "drop_last": ${localLoaderName}.drop_last,
            |                "timeout": ${localLoaderName}.timeout,
            |                "worker_init_fn": ${localLoaderName}.worker_init_fn,
-           |                "sampler": ${localLoaderName}_random_sampler
+           |                "sampler": ${localLoaderName}_rand_sampler
            |            }
            |${localLoaderName}${trainPostfix} = DataLoader(**data_loader_args)
-           |data_loader_args["sampler"] = ${localLoaderName}_sequence_sampler
+           |data_loader_args["sampler"] = ${localLoaderName}_seq_sampler
            |${localLoaderName}${evalPostfix} = DataLoader(**data_loader_args)
            |""".stripMargin
     }
