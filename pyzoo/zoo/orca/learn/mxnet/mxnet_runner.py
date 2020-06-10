@@ -58,8 +58,6 @@ class MXNetRunner(object):
             if isinstance(train_data, RayXShards):
                 # Retrieve train data for RayXShards
                 train_data_partition = train_data.get_partitions()[self.kv.rank]
-                if train_data_partition.node_ip:
-                    assert self.node_ip == train_data_partition.node_ip
                 train_partition_data = train_data_partition.get_data()
                 data, label = get_data_label(train_partition_data)
                 self.train_data = mx.io.NDArrayIter(data=data, label=label,
@@ -74,8 +72,6 @@ class MXNetRunner(object):
                     assert isinstance(test_data, RayXShards), "Test data should be an instance of " \
                                                            "RayXShards, please check your input"
                     test_data_partition = test_data.get_partitions()[self.kv.rank]
-                    if test_data_partition.node_ip:
-                        assert self.node_ip == test_data_partition.node_ip
                     val_partition_data = test_data_partition.get_data()
                     val_data, val_label = get_data_label(val_partition_data)
                     self.val_data = mx.io.NDArrayIter(data=val_data,

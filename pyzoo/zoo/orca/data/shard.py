@@ -99,6 +99,23 @@ class RayXShards(XShards):
         """
         return self.partitions
 
+    def colocate_actors(self, actors):
+        """
+        Sort Ray actors and RayPartitions by node_ip so that each actor is colocated
+        with the data partition on the same node.
+        """
+        import ray
+        actor_ips = ray.get([actor.get_node_ip.remote() for actor in actors])
+        actor_zip_ips = list(zip(actors, actor_ips))
+        actor_zip_ips.sort(key=lambda x: x[1])
+        if self.partitions[0].node_ip:
+            self.partitions.sort(key=lambda partition: partition.node_ip)
+            for i in range(len(actors)):
+                actor_ip = actor_zip_ips[i][1]
+                partition_ip = self.partitions[i].node_ip
+                assert actor_ip == partition_ip
+        return [actor_ip[0] for actor_ip in actor_zip_ips]
+
 
 class RayPartition(object):
     """

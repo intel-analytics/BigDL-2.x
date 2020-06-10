@@ -15,7 +15,6 @@
 #
 
 import os
-import logging
 import subprocess
 import ray.services
 from dmlc_tracker.tracker import get_host_ip
@@ -99,8 +98,10 @@ class MXNetTrainer(object):
             test_data = test_data.repartition(self.num_workers).to_ray(ray_ctx)
         if isinstance(train_data, RayXShards):
             assert isinstance(test_data, RayXShards)
-            assert train_data.get_partitions() == self.num_workers
-            assert test_data.get_partitions() == self.num_workers
+            if train_data.num_partitions() != self.num_workers:
+                train_data.repartition(self.num_workers)
+            if test_data.num_partitions() != self.num_workers:
+                test_data.repartition(self.num_workers)
 
         # Generate actor class
         # Add a dummy custom resource: _mxnet_worker and _mxnet_server to diff worker from server
@@ -121,21 +122,9 @@ class MXNetTrainer(object):
             for i in range(self.num_servers)
         ]
 
-        # Compute URL for initializing distributed setup
-        worker_ips = ray.get(
-            [runner.get_node_ip.remote() for runner in self.workers])
-        server_ips = ray.get(
-            [runner.get_node_ip.remote() for runner in self.servers])
-        # Sort workers based on their node ips
-        worker_and_ips = list(zip(self.workers, worker_ips))
-        worker_and_ips.sort(key=lambda x: x[1])
-        self.workers = [worker_ip[0] for worker_ip in worker_and_ips]
-        worker_ips = [worker_ip[1] for worker_ip in worker_and_ips]
+        if isinstance(train_data, RayXShards):
+            self.workers = train_data.colocate_actors(self.workers)
         self.runners = self.workers + self.servers
-
-        logger = logging.getLogger()
-        logger.info("Worker ips: ", worker_ips)
-        logger.info("Server ips: ", server_ips)
 
         env = {
             "DMLC_PS_ROOT_URI": str(get_host_ip()),

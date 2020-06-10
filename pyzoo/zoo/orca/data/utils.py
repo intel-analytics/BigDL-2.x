@@ -91,8 +91,8 @@ def extract_one_path(file_path, file_type, env):
 
 def get_node_ip():
     """
-    This utility function is ported from ray to get the ip of the current node.
-    In the settings Ray is not involved, calling ray.services.get_node_ip_address would introduce Ray overhead.
+    This utility function is ported from ray to get the ip of the current node. In the settings
+    where Ray is not involved, calling ray.services.get_node_ip_address would introduce Ray overhead.
     """
     import socket
     import errno
