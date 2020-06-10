@@ -137,7 +137,6 @@ def makedirs(path):
     else:
         return os.makedirs(path)
 
-
 def write_text(path, text):
     if path.startswith("hdfs"):  # hdfs://url:port/file_path
         import pyarrow as pa

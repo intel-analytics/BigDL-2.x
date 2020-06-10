@@ -18,7 +18,11 @@ import os.path
 import shutil
 import tempfile
 
+<<<<<<< HEAD
 from zoo.orca.data.file import open_image, open_text, load_numpy, exists, makedirs, write_text
+=======
+from zoo.orca.data.file import open_image, open_text, load_numpy, exists, makedirs
+>>>>>>> 99bb88c918d708f7655ade60ec34bb1b07347869
 
 
 class TestFile:
