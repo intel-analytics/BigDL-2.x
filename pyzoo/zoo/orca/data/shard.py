@@ -105,11 +105,19 @@ class RayPartition(object):
     Partition of RayXShards
     """
 
-    def __init__(self, shard_list):
+    def __init__(self, shard_list, node_ip=None, object_store_address=None):
         self.shard_list = shard_list
+        self.node_ip = node_ip
+        self.object_store_address = object_store_address
 
     def get_data(self):
-        return [shard.get_data.remote() for shard in self.shard_list]
+        import ray
+        if isinstance(self.shard_list[0], ray.actor.ActorHandle):
+            return ray.get([shard.get_data.remote() for shard in self.shard_list])
+        else:
+            import pyarrow.plasma as plasma
+            client = plasma.connect(self.object_store_address)
+            return client.get(self.shard_list)
 
 
 def get_eager_mode():
@@ -280,3 +288,29 @@ class SparkXShards(XShards):
 
     def __del__(self):
         self.uncache()
+
+    def to_ray(self, ray_ctx):
+        object_store_address = ray_ctx.address_info["object_store_address"]
+
+        def put_to_plasma(splitIndex, iterator):
+            import random
+            import socket
+            import pyarrow.plasma as plasma
+
+            random.seed(splitIndex)
+            res = list(iterator)
+            client = plasma.connect(object_store_address)
+            object_id = client.put(res)
+            # Not directly calling ray.services.get_node_ip_address()
+            # since this would introduce ray overhead.
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            node_ip = s.getsockname()[0]
+            s.close()
+            yield object_id, node_ip
+
+        object_id_node_ips = self.rdd.mapPartitionsWithIndex(put_to_plasma).collect()
+        object_id_node_ips.sort(key=lambda x: x[1])
+        partitions = [RayPartition([id_ip[0]], node_ip=id_ip[1], object_store_address=object_store_address)
+                      for id_ip in object_id_node_ips]
+        return RayXShards(partitions)

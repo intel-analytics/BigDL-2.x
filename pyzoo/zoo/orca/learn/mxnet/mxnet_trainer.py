@@ -90,6 +90,18 @@ class MXNetTrainer(object):
         self.num_servers = num_servers if num_servers else self.num_workers
         self.train_resize_batch_num = train_resize_batch_num
 
+        from zoo.orca.data import RayXShards, SparkXShards
+        if isinstance(train_data, SparkXShards):
+            assert isinstance(test_data, SparkXShards)
+            from zoo.ray import RayContext
+            ray_ctx = RayContext.get()
+            train_data = train_data.repartition(self.num_workers).to_ray(ray_ctx)
+            test_data = test_data.repartition(self.num_workers).to_ray(ray_ctx)
+        if isinstance(train_data, RayXShards):
+            assert isinstance(test_data, RayXShards)
+            assert train_data.get_partitions() == self.num_workers
+            assert test_data.get_partitions() == self.num_workers
+
         # Generate actor class
         # Add a dummy custom resource: _mxnet_worker and _mxnet_server to diff worker from server
         # if runner_cores is specified so that we can place one worker and one server on a node
@@ -100,23 +112,30 @@ class MXNetTrainer(object):
             if runner_cores else ray.remote(MXNetRunner)
 
         # Start runners: workers followed by servers
-        self.runners = [
+        self.workers = [
             Worker.remote()
             for i in range(self.num_workers)
         ]
-        self.runners += [
+        self.servers = [
             Server.remote()
             for i in range(self.num_servers)
         ]
 
         # Compute URL for initializing distributed setup
-        ips = ray.get(
-            [runner.get_node_ip.remote() for runner in self.runners])
-        ports = ray.get(
-            [runner.find_free_port.remote() for runner in self.runners])
+        worker_ips = ray.get(
+            [runner.get_node_ip.remote() for runner in self.workers])
+        server_ips = ray.get(
+            [runner.get_node_ip.remote() for runner in self.workers])
+        # Sort workers based on their node ips
+        worker_and_ips = list(zip(self.workers, worker_ips))
+        worker_and_ips.sort(key=lambda x: x[1])
+        self.workers = [worker_ip[0] for worker_ip in worker_and_ips]
+        worker_ips = [worker_ip[1] for worker_ip in worker_and_ips]
+        self.runners = self.workers + self.servers
+
         logger = logging.getLogger()
-        logger.info(ips)
-        logger.info(ports)
+        logger.info("Worker ips: ", worker_ips)
+        logger.info("Server ips: ", worker_ips)
 
         env = {
             "DMLC_PS_ROOT_URI": str(get_host_ip()),
