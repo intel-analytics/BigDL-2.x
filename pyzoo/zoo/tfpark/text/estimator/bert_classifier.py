@@ -51,7 +51,8 @@ def make_bert_classifier_model_fn(optimizer):
                 per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
                 loss = tf.reduce_mean(per_example_loss)
                 if mode == tf.estimator.ModeKeys.EVAL:
-                    return tf.estimator.EstimatorSpec(mode=mode, predictions=probabilities, loss=loss)
+                    return tf.estimator.EstimatorSpec(mode=mode, predictions=probabilities,
+                                                      loss=loss)
                 else:
                     train_op = ZooOptimizer(optimizer).minimize(loss)
                     return tf.estimator.EstimatorSpec(mode=mode, train_op=train_op, loss=loss)
