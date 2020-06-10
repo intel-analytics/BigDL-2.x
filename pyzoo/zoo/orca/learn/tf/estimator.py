@@ -14,15 +14,13 @@
 # limitations under the License.
 #
 from bigdl.optim.optimizer import MaxIteration, SGD
-
-from zoo.tfpark.utils import evaluate_metrics
 from zoo.orca.data.shard import SparkXShards
 from zoo.orca.data.tf.data import Dataset, TFDataDataset2
-from zoo.tfpark import TFOptimizer, TFNet, ZooOptimizer
+from zoo.tfpark import TFEstimator, TFOptimizer, TFPredictor, TFNet, ZooOptimizer
+import pandas as pd
 import tensorflow as tf
 
-from zoo.tfpark.tf_dataset import TFDataset
-from zoo.tfpark.tf_optimizer import TFModel
+from zoo.tfpark.tf_dataset import TFDataset, TensorMeta
 from zoo.util import nest
 
 
@@ -128,20 +126,6 @@ def _xshards_to_tf_dataset(data_shard,
     return dataset
 
 
-def _to_dataset(data, batch_size, batch_per_thread):
-    if isinstance(data, SparkXShards):
-        dataset = _xshards_to_tf_dataset(data,
-                                         batch_size=batch_size,
-                                         batch_per_thread=batch_per_thread)
-    elif isinstance(data, Dataset):
-        dataset = TFDataDataset2(data, batch_size=batch_size,
-                                 batch_per_thread=batch_per_thread)
-    else:
-        raise ValueError("data must be a SparkXShards or an orca.data.tf.Dataset")
-
-    return dataset
-
-
 class TFOptimizerWrapper(Estimator):
 
     def __init__(self, *, inputs, outputs, labels, loss,
@@ -170,7 +154,6 @@ class TFOptimizerWrapper(Estimator):
         else:
             self.sess = sess
         self.model_dir = model_dir
-        self.real_batch_size = tf.shape(self.inputs[0])[0]
 
     def fit(self, data, steps,
             batch_size=32,
@@ -185,7 +168,17 @@ class TFOptimizerWrapper(Estimator):
         assert self.optimizer is not None, \
             "optimizer is None; it not None in training"
 
-        dataset = _to_dataset(data, batch_size=batch_size, batch_per_thread=-1)
+        if isinstance(data, SparkXShards):
+            dataset = _xshards_to_tf_dataset(data,
+                                             batch_size=batch_size,
+                                             validation_data_shard=validation_data)
+        elif isinstance(data, Dataset):
+            dataset = TFDataDataset2(data, batch_size=batch_size,
+                                     batch_per_thread=-1,
+                                     validation_dataset=validation_data)
+        else:
+            raise ValueError("data type {} is not supported; "
+                             "it must be created by zoo.orca.data.package")
 
         if feed_dict is not None:
             tensor_with_value = {key: (value, value) for key, value in feed_dict.items()}
@@ -211,22 +204,16 @@ class TFOptimizerWrapper(Estimator):
         assert self.outputs is not None, \
             "output is None, it should not be None in prediction"
 
-        dataset = _to_dataset(data, batch_size=-1, batch_per_thread=batch_size)
+        if isinstance(data, SparkXShards):
+            dataset = _xshards_to_tf_dataset(data,
+                                             batch_per_thread=batch_size)
+        elif isinstance(data, Dataset):
+            dataset = TFDataDataset2(data, batch_size=-1,
+                                     batch_per_thread=batch_size)
+        else:
+            raise ValueError("data must be a SparkXShards or an orca.data.tf.Dataset")
 
         flat_inputs = nest.flatten(self.inputs)
         flat_outputs = nest.flatten(self.outputs)
         tfnet = TFNet.from_session(sess=self.sess, inputs=flat_inputs, outputs=flat_outputs)
         return tfnet.predict(dataset)
-
-    def evaluate(self, data, batch_size=32):
-        assert self.metrics is not None, \
-            "output is None, it should not be None in prediction"
-
-        dataset = _to_dataset(data, batch_size=-1, batch_per_thread=batch_size)
-
-        flat_inputs = nest.flatten(self.inputs)
-        flat_labels = nest.flatten(self.labels)
-
-        return evaluate_metrics(flat_inputs + flat_labels,
-                                sess=self.sess,
-                                dataset=dataset, metrics=self.metrics)
