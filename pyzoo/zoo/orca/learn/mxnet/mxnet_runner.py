@@ -57,8 +57,7 @@ class MXNetRunner(object):
             from zoo.orca.data import RayXShards
             if isinstance(train_data, RayXShards):
                 # Retrieve train data for RayXShards
-                train_data_partition = train_data.get_partitions()[self.kv.rank]
-                train_partition_data = train_data_partition.get_data()
+                train_partition_data = train_data.get_partitions()[self.kv.rank].get_data()
                 data, label = get_data_label(train_partition_data)
                 self.train_data = mx.io.NDArrayIter(data=data, label=label,
                                                     batch_size=config["batch_size"],
@@ -71,8 +70,7 @@ class MXNetRunner(object):
                 else:
                     assert isinstance(test_data, RayXShards),\
                         "Test data should be an instance of RayXShards, please check your input"
-                    test_data_partition = test_data.get_partitions()[self.kv.rank]
-                    val_partition_data = test_data_partition.get_data()
+                    val_partition_data = test_data.get_partitions()[self.kv.rank].get_data()
                     val_data, val_label = get_data_label(val_partition_data)
                     self.val_data = mx.io.NDArrayIter(data=val_data,
                                                       label=val_label,
