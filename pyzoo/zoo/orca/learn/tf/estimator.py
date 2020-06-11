@@ -170,7 +170,6 @@ class TFOptimizerWrapper(Estimator):
         else:
             self.sess = sess
         self.model_dir = model_dir
-        self.real_batch_size = tf.shape(self.inputs[0])[0]
 
     def fit(self, data, steps,
             batch_size=32,
