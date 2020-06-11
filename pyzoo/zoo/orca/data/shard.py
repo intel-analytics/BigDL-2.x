@@ -334,6 +334,8 @@ class SparkXShards(XShards):
                 yield object_id, get_node_ip()
             return f
 
+        # Generate a random string here to make sure that when this method is called twice, the
+        # seeds to generate plasma ObjectID are different.
         random_str = ''.join(
             [random.choice(string.ascii_letters + string.digits) for i in range(32)])
         object_id_node_ips = self.rdd.mapPartitionsWithIndex(put_to_plasma(random_str)).collect()
