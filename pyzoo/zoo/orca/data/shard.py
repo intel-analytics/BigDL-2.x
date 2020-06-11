@@ -50,7 +50,7 @@ class XShards(object):
 
 class RayXShards(XShards):
     """
-    A collection of data which can be pre-processed parallelly on Ray
+    A collection of data which can be pre-processed in parallel on Ray
     """
     def __init__(self, partitions):
         self.partitions = partitions
@@ -129,9 +129,13 @@ class RayPartition(object):
         self.object_store_address = object_store_address
 
     def get_data(self):
-        import ray
-        if isinstance(self.shard_list[0], ray.actor.ActorHandle):
+        # For partitions read by Ray, shard_list is a list of Ray actors.
+        # Each Ray actor contains a partition of data.
+        if isinstance(self.shard_list, list):
+            import ray
             return ray.get([shard.get_data.remote() for shard in self.shard_list])
+        # For partitions transfromed from Spark, shard_list is a single plasma ObjectID.
+        # The ObjectID would contain a list of data.
         else:
             import pyarrow.plasma as plasma
             client = plasma.connect(self.object_store_address)
@@ -308,30 +312,35 @@ class SparkXShards(XShards):
         self.uncache()
 
     def to_ray(self):
+        import random
+        import string
         from zoo.ray import RayContext
         ray_ctx = RayContext.get()
         object_store_address = ray_ctx.address_info["object_store_address"]
 
         # TODO: Handle failure when doing this?
         # TODO: delete the data in the plasma?
-        def put_to_plasma(splitIndex, iterator):
-            import random
-            import pyarrow.plasma as plasma
-            from zoo.orca.data.utils import get_node_ip
-            # mapPartition would set the same random seed for each partition?
-            # Here use the partition index to override the random seed so that there won't be
-            # identical object_ids in plasma.
-            random.seed(splitIndex)
-            res = list(iterator)
-            client = plasma.connect(object_store_address)
-            object_id = client.put(res)
-            yield object_id, get_node_ip()
+        def put_to_plasma(seed):
+            def f(index, iterator):
+                import pyarrow.plasma as plasma
+                from zoo.orca.data.utils import get_node_ip
+                # mapPartition would set the same random seed for each partition?
+                # Here use the partition index to override the random seed so that there won't be
+                # identical object_ids in plasma.
+                random.seed(seed+str(index))
+                res = list(iterator)
+                client = plasma.connect(object_store_address)
+                object_id = client.put(res)
+                yield object_id, get_node_ip()
+            return f
 
-        object_id_node_ips = self.rdd.mapPartitionsWithIndex(put_to_plasma).collect()
+        random_str = ''.join(
+            [random.choice(string.ascii_letters + string.digits) for i in range(32)])
+        object_id_node_ips = self.rdd.mapPartitionsWithIndex(put_to_plasma(random_str)).collect()
         self.uncache()
         # Sort the data according to the node_ips.
         object_id_node_ips.sort(key=lambda x: x[1])
-        partitions = [RayPartition(shard_list=[id_ip[0]], node_ip=id_ip[1],
+        partitions = [RayPartition(shard_list=id_ip[0], node_ip=id_ip[1],
                                    object_store_address=object_store_address)
                       for id_ip in object_id_node_ips]
         return RayXShards(partitions)

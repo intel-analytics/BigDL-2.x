@@ -30,9 +30,11 @@ def chunk(lst, n):
         yield lst[c * size:(c + 1) * size] + extra
 
 
-def flatten(list_of_list):
-    flattend = [item for sublist in list_of_list for item in sublist]
-    return flattend
+def flatten(list_input):
+    if any(isinstance(i, list) for i in list_input):
+        return [item for sublist in list_input for item in sublist]
+    else:
+        return list_input
 
 
 def list_s3_file(file_path, file_type, env):
