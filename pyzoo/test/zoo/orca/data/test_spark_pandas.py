@@ -90,7 +90,7 @@ class TestSparkXShards(ZooTestCase):
             df[column_name] = df[column_name] * (-1)
             return df
 
-        trans_data_shard = data_shard.transform_shard(negative, "value")
+        trans_data_shard = data_shard.transform_shard(negative, False, None, "value")
         data2 = trans_data_shard.collect()
         assert data2[0]["value"].values[0] < 0, "value should be negative"
 
@@ -192,6 +192,22 @@ class TestSparkXShards(ZooTestCase):
         assert len(trans_data) == 2, "number of shard should be 2"
         trans_dict = trans_data[0]
         assert "x" in trans_dict, "x is not in the dictionary"
+
+    def test_transform_broadcast(self):
+        def negative(df, column_name, minus_val):
+            df[column_name] = df[column_name] * (-1)
+            df[column_name] = df[column_name] - minus_val
+            return df
+
+        file_path = os.path.join(self.resource_path, "orca/data/json")
+        data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc,
+                                                    orient='columns', lines=True)
+        data = data_shard.collect()
+        assert data[0]["value"].values[0] > 0, "value should be positive"
+        trans_shard = data_shard.transform_shard(negative, True, self.sc, "value", 2)
+        data2 = trans_shard.collect()
+        assert data2[0]["value"].values[0] < 0, "value should be negative"
+        assert data[0]["value"].values[0] + data2[0]["value"].values[0] == -2, "value should be -2"
 
 
 if __name__ == "__main__":
