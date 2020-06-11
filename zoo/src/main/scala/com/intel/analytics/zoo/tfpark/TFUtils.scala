@@ -96,7 +96,7 @@ object TFUtils {
     val dataType = t.dataType()
 
     val numericDataTypes = Set(DataType.FLOAT,
-      DataType.UINT8, DataType.INT32, DataType.INT64, DataType.DOUBLE)
+      DataType.UINT8, DataType.INT32, DataType.INT64, DataType.DOUBLE, DataType.BOOL)
 
     if (dataType == DataType.STRING) {
       val outputTensor = output.asInstanceOf[Tensor[Array[Byte]]]
@@ -148,6 +148,13 @@ object TFUtils {
           val buffer = DoubleBuffer.wrap(arr)
           t.writeTo(buffer)
           double2float(arr, outputTensor.storage().array(), outputTensor.storageOffset() - 1)
+        case DataType.BOOL =>
+          val outputTensor = output.asInstanceOf[Tensor[Float]]
+          val arr = new Array[Byte](t.numBytes())
+          assert(t.numBytes() == shape.product, "sanity check")
+          val buffer = ByteBuffer.wrap(arr)
+          t.writeTo(buffer)
+          byte2float(arr, outputTensor.storage().array(), outputTensor.storageOffset() - 1)
       }
 
     } else {
@@ -304,13 +311,13 @@ class TFValidationMethod(val valMethod: ValidationMethod[Float],
   }
 }
 
-class StatelessMetric(name: String, idx: Int) extends ValidationMethod[Float] {
+class StatelessMetric(name: String, idx: Int, countIdx: Int) extends ValidationMethod[Float] {
   override def apply(output: Activity, target: Activity): ValidationResult = {
     // the output layout [grads..., metrics]
     val outputT = output.toTable
 
     val value = outputT[Tensor[Float]](idx + 1).value()
-    val count = outputT[Tensor[Float]](outputT.length() - 1).value().toInt
+    val count = outputT[Tensor[Float]](countIdx + 1).value().toInt
 
     new ContiguousResult(value * count, count, name)
   }
