@@ -17,29 +17,21 @@
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.automl.model.DTCNMF.DTCNMF_pytorch import DTCNMFPytorch
+from zoo.automl.model.TCMF.TCMF import TCMF
 from numpy.testing import assert_array_almost_equal
 
 
-class TestVanillaLSTM(ZooTestCase):
-
-    def load_mat():
-        Ymats=dict()
-        with open('/home/ding/proj/deepglo/datasets/ymat_asiainfo.npy', 'rb') as f:
-            for kpi_name in ['kpi0','kpi1','kpi2','kpi3','kpi4','kpi5','kpi6','kpi7']:
-                Ymats[kpi_name] = np.load(f)
-        return Ymats
+class TestTCMF(ZooTestCase):
 
     def setup_method(self, method):
         self.config = {
-            'y_iters': 1,
-            "init_epochs": 1,
-            "max_FX_epoch": 1,
-            "max_TCN_epoch": 1
+                 "max_y_iterations": 1,
+                 "init_XF_epoch": 1,
+                 "max_FX_epoch": 1,
+                 "max_TCN_epoch": 1
         }
-        self.model = DTCNMFPytorch()
-        Ymats = load_mat()
-        self.Ymat = Ymats["kpi2"]
+        self.model = TCMF()
+        self.Ymat = np.random.rand(1000,720)
 
     def teardown_method(self, method):
         pass

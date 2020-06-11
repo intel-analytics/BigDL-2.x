@@ -18,8 +18,8 @@ import copy
 import os
 import gc
 
-from zoo.automl.model.DTCNMF.data_loader import *
-from zoo.automl.model.DTCNMF.LocalModel import *
+from zoo.automl.model.TCMF.data_loader import *
+from zoo.automl.model.TCMF.LocalModel import *
 
 from sklearn.decomposition import NMF
 
