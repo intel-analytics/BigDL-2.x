@@ -145,7 +145,8 @@ class SparkXShards(XShards):
 
     def uncache(self):
         self.user_cached = False
-        self.rdd.unpersist()
+        if self.is_cached():
+            self.rdd.unpersist()
         return self
 
     def _uncache(self):
