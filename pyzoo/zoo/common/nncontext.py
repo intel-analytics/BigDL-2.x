@@ -19,9 +19,11 @@ import warnings
 import multiprocessing
 import os
 
+import subprocess
+import pyspark.java_gateway
 
 def init_spark_on_local(cores=2, conf=None, python_location=None, spark_log_level="WARN",
-                        redirect_spark_log=True):
+                        redirect_spark_log=True, capture_output=False):
     """
     Create a SparkContext with Zoo configuration in local machine.
     :param cores: The default value is 2 and you can also set it to *
@@ -36,7 +38,8 @@ def init_spark_on_local(cores=2, conf=None, python_location=None, spark_log_leve
     sparkrunner = SparkRunner(spark_log_level=spark_log_level,
                               redirect_spark_log=redirect_spark_log)
     return sparkrunner.init_spark_on_local(cores=cores, conf=conf,
-                                           python_location=python_location)
+                                           python_location=python_location,
+                                           capture_output=capture_output)
 
 
 def init_spark_on_yarn(hadoop_conf,
@@ -55,7 +58,8 @@ def init_spark_on_yarn(hadoop_conf,
                        spark_log_level="WARN",
                        redirect_spark_log=True,
                        jars=None,
-                       spark_conf=None):
+                       spark_conf=None,
+                       capture_output=False):
     """
     Create a SparkContext with Zoo configuration on Yarn cluster on "Yarn-client" mode.
     You should create a conda env and install the python dependencies in that env.
@@ -102,11 +106,36 @@ def init_spark_on_yarn(hadoop_conf,
         hadoop_user_name=hadoop_user_name,
         spark_yarn_archive=spark_yarn_archive,
         jars=jars,
-        spark_conf=spark_conf)
+        spark_conf=spark_conf,
+        capture_output=capture_output)
     return sc
 
 
-def init_nncontext(conf=None, redirect_spark_log=True):
+## The following function copied from
+## https://github.com/Valassis-Digital-Media/spylon-kernel/blob/master/
+## spylon_kernel/scala_interpreter.py
+def _read_stream(fd, fn):
+    """Reads bytes from a file descriptor, utf-8 decodes them, and passes them
+    to the provided callback function on the next IOLoop tick.
+    Assumes fd.read will block and should be used in a thread.
+    Parameters
+    ----------
+    fd : file
+        File descriptor to read
+    fn : callable(str) -> None
+        Callback function that handles chunks of text
+    """
+    while True:
+        # Specify a max read size so the read doesn't block indefinitely
+        # Using a value less than the typical default max pipe size
+        # and greater than a single system page.
+        buff = fd.read(8192)
+        if buff:
+            fn(buff.decode('utf-8'))
+
+import threading
+import sys
+def init_nncontext(conf=None, redirect_spark_log=True, capture_output=False):
     """
     Creates or gets a SparkContext with optimized configuration for BigDL performance.
     The method will also initialize the BigDL engine.
@@ -117,10 +146,55 @@ def init_nncontext(conf=None, redirect_spark_log=True):
 
     :param conf: User defined Spark conf
     """
+
+    ## The following code copied and modified from
+    ## https://github.com/Valassis-Digital-Media/spylon-kernel/blob/master/
+    ## spylon_kernel/scala_interpreter.py
+    if capture_output:
+        import subprocess
+        import pyspark.java_gateway
+        spark_jvm_proc = None
+        def Popen(*args, **kwargs):
+            """Wraps subprocess.Popen to force stdout and stderr from the child process
+            to pipe to this process without buffering.
+            """
+            nonlocal spark_jvm_proc
+            # Override these in kwargs to avoid duplicate value errors
+            # Set streams to unbuffered so that we read whatever bytes are available
+            # when ready, https://docs.python.org/3.6/library/subprocess.html#popen-constructor
+            kwargs['bufsize'] = 0
+            # Capture everything from stdout for display in the notebook
+            kwargs['stdout'] = subprocess.PIPE
+            # Optionally capture stderr, otherwise it'll go to the kernel log
+            kwargs['stderr'] = subprocess.PIPE
+            spark_jvm_proc = subprocess.Popen(*args, **kwargs)
+            return spark_jvm_proc
+        pyspark.java_gateway.Popen = Popen
+
     if isinstance(conf, six.string_types):
         sc = getOrCreateSparkContext(conf=None, appName=conf)
     else:
         sc = getOrCreateSparkContext(conf=conf)
+
+    if capture_output:
+        if spark_jvm_proc.stdout is not None:
+            stdout_reader = threading.Thread(target=_read_stream,
+                daemon=True,
+                kwargs=dict(
+                    fd=spark_jvm_proc.stdout,
+                    fn=sys.stdout.write
+                )
+            )
+            stdout_reader.start()
+        if spark_jvm_proc.stderr is not None:
+            stderr_reader = threading.Thread(target=_read_stream,
+                daemon=True,
+                kwargs=dict(
+                    fd=spark_jvm_proc.stderr,
+                    fn=sys.stderr.write
+                )
+            )
+            stderr_reader.start()
     check_version()
     if redirect_spark_log:
         redire_spark_logs()
@@ -135,6 +209,7 @@ def getOrCreateSparkContext(conf=None, appName=None):
     :param conf: combining bigdl configs into spark conf
     :return: SparkContext
     """
+
     with SparkContext._lock:
         if SparkContext._active_spark_context is None:
             spark_conf = init_spark_conf() if conf is None else conf

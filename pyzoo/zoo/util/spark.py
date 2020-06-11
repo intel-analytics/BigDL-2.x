@@ -79,12 +79,13 @@ class SparkRunner:
         print("Packing has been completed: {}".format(tmp_path))
         return tmp_path
 
-    def _create_sc(self, submit_args, conf):
+    def _create_sc(self, submit_args, conf, capture_output):
         from pyspark.sql import SparkSession
         print("pyspark_submit_args is: {}".format(submit_args))
         os.environ['PYSPARK_SUBMIT_ARGS'] = submit_args
         zoo_conf = init_spark_conf(conf)
-        sc = init_nncontext(conf=zoo_conf, redirect_spark_log=self.redirect_spark_log)
+        sc = init_nncontext(conf=zoo_conf, redirect_spark_log=self.redirect_spark_log,
+                            capture_output=capture_output)
         sc.setLogLevel(self.spark_log_level)
 
         return sc
@@ -131,14 +132,15 @@ class SparkRunner:
                                                self._get_bigdl_classpath_jar_name_on_driver()[1])
                 ]
 
-    def init_spark_on_local(self, cores, conf=None, python_location=None):
+    def init_spark_on_local(self, cores, conf=None, python_location=None, capture_output=False):
         print("Start to getOrCreate SparkContext")
         if 'PYSPARK_PYTHON' not in os.environ:
             os.environ['PYSPARK_PYTHON'] = \
                 python_location if python_location else self._detect_python_location()
         master = "local[{}]".format(cores)
         zoo_conf = init_spark_conf(conf).setMaster(master)
-        sc = init_nncontext(conf=zoo_conf, redirect_spark_log=self.redirect_spark_log)
+        sc = init_nncontext(conf=zoo_conf, redirect_spark_log=self.redirect_spark_log,
+                            capture_output=capture_output)
         sc.setLogLevel(self.spark_log_level)
         print("Successfully got a SparkContext")
         return sc
@@ -158,7 +160,8 @@ class SparkRunner:
                            hadoop_user_name="root",
                            spark_yarn_archive=None,
                            spark_conf=None,
-                           jars=None):
+                           jars=None,
+                           capture_output=False):
         os.environ["HADOOP_CONF_DIR"] = hadoop_conf
         os.environ['HADOOP_USER_NAME'] = hadoop_user_name
         os.environ['PYSPARK_PYTHON'] = "{}/bin/python".format(self.PYTHON_ENV)
@@ -217,7 +220,7 @@ class SparkRunner:
 
             for item in spark_conf.items():
                 conf[str(item[0])] = str(item[1])
-            sc = self._create_sc(submit_args, conf)
+            sc = self._create_sc(submit_args, conf, capture_output)
         finally:
             if conda_name and penv_archive and pack_env:
                 os.remove(penv_archive)
