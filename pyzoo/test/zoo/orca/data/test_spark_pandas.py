@@ -195,8 +195,8 @@ class TestSparkXShards(ZooTestCase):
 
     def test_transform_broadcast(self):
         def negative(df, column_name, minus_val):
-            df[column_name] = df[column_name] * (-1)
-            df[column_name] = df[column_name] - minus_val
+            df[column_name.value] = df[column_name.value] * (-1)
+            df[column_name.value] = df[column_name.value] - minus_val.value
             return df
 
         file_path = os.path.join(self.resource_path, "orca/data/json")
