@@ -13,14 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# Some portions of this file Copyright (c) 2017, Maxpoint
+# and licensed under the BSD license.
+#
 
 from bigdl.util.common import *
 import warnings
 import multiprocessing
 import os
 
-import subprocess
-import pyspark.java_gateway
+import threading
+import sys
+
 
 def init_spark_on_local(cores=2, conf=None, python_location=None, spark_log_level="WARN",
                         redirect_spark_log=True, capture_output=False):
@@ -32,6 +36,8 @@ def init_spark_on_local(cores=2, conf=None, python_location=None, spark_log_leve
     :param python_location: The path to your running python executable.
     :param spark_log_level: Log level of Spark
     :param redirect_spark_log: Redirect the Spark log to local file or not.
+    :param capture_output: if true, the stdour and stderr of spark-driver jvm will be redirected
+                           to the current python process
     :return:
     """
     from zoo.util.spark import SparkRunner
@@ -86,6 +92,8 @@ def init_spark_on_yarn(hadoop_conf,
     :param jars: Comma-separated list of jars to include on the driver and executor classpaths.
     :param spark_conf: You can append extra spark conf here in key value format.
                        i.e spark_conf={"spark.executor.extraJavaOptions": "-XX:+PrintGCDetails"}
+    :param capture_output: if true, the stdour and stderr of spark-driver jvm will be redirected
+                           to the current python process
     :return: SparkContext
     """
     from zoo.util.spark import SparkRunner
@@ -111,9 +119,9 @@ def init_spark_on_yarn(hadoop_conf,
     return sc
 
 
-## The following function copied from
-## https://github.com/Valassis-Digital-Media/spylon-kernel/blob/master/
-## spylon_kernel/scala_interpreter.py
+# The following function copied from
+# https://github.com/Valassis-Digital-Media/spylon-kernel/blob/master/
+# spylon_kernel/scala_interpreter.py
 def _read_stream(fd, fn):
     """Reads bytes from a file descriptor, utf-8 decodes them, and passes them
     to the provided callback function on the next IOLoop tick.
@@ -133,8 +141,7 @@ def _read_stream(fd, fn):
         if buff:
             fn(buff.decode('utf-8'))
 
-import threading
-import sys
+
 def init_nncontext(conf=None, redirect_spark_log=True, capture_output=False):
     """
     Creates or gets a SparkContext with optimized configuration for BigDL performance.
@@ -145,15 +152,18 @@ def init_nncontext(conf=None, redirect_spark_log=True, capture_output=False):
     or properties file, and init BigDL engine manually.
 
     :param conf: User defined Spark conf
+    :param capture_output: if true, the stdour and stderr of spark-driver jvm will be redirected
+                           to the current python process
     """
 
-    ## The following code copied and modified from
-    ## https://github.com/Valassis-Digital-Media/spylon-kernel/blob/master/
-    ## spylon_kernel/scala_interpreter.py
+    # The following code copied and modified from
+    # https://github.com/Valassis-Digital-Media/spylon-kernel/blob/master/
+    # spylon_kernel/scala_interpreter.py
     if capture_output:
         import subprocess
         import pyspark.java_gateway
         spark_jvm_proc = None
+
         def Popen(*args, **kwargs):
             """Wraps subprocess.Popen to force stdout and stderr from the child process
             to pipe to this process without buffering.
@@ -169,6 +179,7 @@ def init_nncontext(conf=None, redirect_spark_log=True, capture_output=False):
             kwargs['stderr'] = subprocess.PIPE
             spark_jvm_proc = subprocess.Popen(*args, **kwargs)
             return spark_jvm_proc
+
         pyspark.java_gateway.Popen = Popen
 
     if isinstance(conf, six.string_types):
@@ -179,21 +190,17 @@ def init_nncontext(conf=None, redirect_spark_log=True, capture_output=False):
     if capture_output:
         if spark_jvm_proc.stdout is not None:
             stdout_reader = threading.Thread(target=_read_stream,
-                daemon=True,
-                kwargs=dict(
-                    fd=spark_jvm_proc.stdout,
-                    fn=sys.stdout.write
-                )
-            )
+                                             daemon=True,
+                                             kwargs=dict(
+                                                 fd=spark_jvm_proc.stdout,
+                                                 fn=sys.stdout.write))
             stdout_reader.start()
         if spark_jvm_proc.stderr is not None:
             stderr_reader = threading.Thread(target=_read_stream,
-                daemon=True,
-                kwargs=dict(
-                    fd=spark_jvm_proc.stderr,
-                    fn=sys.stderr.write
-                )
-            )
+                                             daemon=True,
+                                             kwargs=dict(
+                                                 fd=spark_jvm_proc.stderr,
+                                                 fn=sys.stderr.write))
             stderr_reader.start()
     check_version()
     if redirect_spark_log:
