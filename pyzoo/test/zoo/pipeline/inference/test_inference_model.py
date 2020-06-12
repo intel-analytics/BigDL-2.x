@@ -17,6 +17,7 @@
 import os
 import pytest
 import numpy as np
+import warnings
 
 from bigdl.dataset.base import maybe_download
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
@@ -38,7 +39,7 @@ with open(property_path) as f:
         if "data-store-url" in line:
             line = line.strip()
             data_url = line.split("=")[1].replace("\\", "")
-print("Data_URL", data_url)
+warnings.warn("Data_URL" + data_url)
 
 
 class TestInferenceModel(ZooTestCase):
