@@ -133,11 +133,11 @@ class SparkXShards(XShards):
     def transform_shard(self, func, broadcast_args=False, sc=None, *args):
         if broadcast_args:
             assert sc is not None, "Spark context should be provided"
-            broadcast_args = tuple(map(lambda arg: sc.broadcast(arg), args))
+            broadcast_args = sc.broadcast(args)
             transformed_shard = SparkXShards(self.rdd.map(lambda data: func(data,
-                                                                            *broadcast_args)))
+                                                                            *broadcast_args.value)))
             if self.eager:
-                map(lambda bcarg: bcarg.unpersist(), broadcast_args)
+                broadcast_args.unpersist()
         else:
             transformed_shard = SparkXShards(self.rdd.map(lambda data: func(data, *args)))
         self._uncache()
