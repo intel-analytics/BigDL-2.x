@@ -66,6 +66,9 @@ def read_file_ray(context, file_path, file_type, **kwargs):
     else:
         file_paths = extract_one_path(file_path, file_type, context.env)
 
+    if not file_paths:
+        raise Exception("The file path is invalid/empty or does not include csv/json files")
+
     num_executors = context.num_ray_nodes
     num_cores = context.ray_node_cpu_cores
     num_partitions = num_executors * num_cores
