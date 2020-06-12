@@ -41,11 +41,10 @@ transform_shard(func, *args)
 
 ##### SparkXShard
 ```
-transform_shard(func, broadcast_args=False, sc=None, *args)
+transform_shard(func, broadcast_args=False, *args)
 ```
 * `func` is your pre-processing function. In this function, you can do the pre-processing on a Pandas DataFrame, then return the processed object.
 * `broadcast_args` should be True if you want to broadcast args.
-* `sc` is spark context, should be provided if `broadcast_args=True`
 * `args` are the augurments for the pre-processing function.
 
 This method would parallelly pre-process each element in the XShards with the customized function, and return a new XShards after transformation.
