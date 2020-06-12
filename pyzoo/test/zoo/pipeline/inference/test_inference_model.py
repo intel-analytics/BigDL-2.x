@@ -38,8 +38,8 @@ with open(property_path) as f:
         if "data-store-url" in line:
             line = line.strip()
             data_url = line.split("=")[1].replace("\\", "")
-
 print("Data_URL", data_url)
+
 
 class TestInferenceModel(ZooTestCase):
 
