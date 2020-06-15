@@ -98,7 +98,7 @@ class TestZouwuModelForecast(ZooTestCase):
                                init_XF_epoch=1,
                                max_FX_epoch=1,
                                max_TCN_epoch=1)
-        x = np.random.rand(1000,720)
+        x = np.random.rand(1000, 720)
         model.fit(x)
 
 

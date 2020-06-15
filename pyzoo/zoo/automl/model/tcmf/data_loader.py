@@ -45,7 +45,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import torch, h5py
+import torch
+import h5py
 import numpy as np
 from scipy.io import loadmat
 
@@ -59,7 +60,8 @@ import itertools
 from sklearn.preprocessing import normalize
 import datetime
 import json
-import os, sys
+import os
+import sys
 import pandas as pd
 import pyarrow.parquet as pq
 
@@ -83,13 +85,15 @@ class data_loader(object):
         """
         Argeuments:
         Ymat: time-series matrix n*T
-        covariates: global covariates common for all time series r*T, where r is the number of covariates
+        covariates: global covariates common for all time series r*T, where r is the number of
+            covariates
         Ycov: per time-series covariates n*l*T, l such covariates per time-series
         All of the above arguments are numpy arrays
         vbsize: vertical batch size
         hbsize: horizontal batch size
         end_index: training and validation set is only from 0:end_index
-        val_len: validation length. The last 'val_len' time-points for every time-series is the validation set
+        val_len: validation length. The last 'val_len' time-points for every time-series is the
+            validation set
         shuffle: data is shuffles if True (this is deprecated and set to False)
         """
         n, T = Ymat.shape
@@ -110,7 +114,8 @@ class data_loader(object):
     def next_batch(self, option=1):
         """
         Arguments:
-        option = 1 means data is returned as pytorch tensor of shape nd*cd*td where nd is vbsize, hb is hsize and cd is the number os channels (depends on covariates) 
+        option = 1 means data is returned as pytorch tensor of shape nd*cd*td where nd is vbsize,
+            hb is hsize and cd is the number os channels (depends on covariates)
         option = 0 is deprecated
         Returns:
         inp: input batch
@@ -139,17 +144,17 @@ class data_loader(object):
             pr_vindex = self.vindex
 
         data = self.Ymat[
-            int(pr_vindex) : int(pr_vindex + self.vbsize),
-            int(pr_hindex) : int(min(self.end_index, pr_hindex + self.hbsize)),
+            int(pr_vindex): int(pr_vindex + self.vbsize),
+            int(pr_hindex): int(min(self.end_index, pr_hindex + self.hbsize)),
         ]
         out_data = self.Ymat[
-            int(pr_vindex) : int(pr_vindex + self.vbsize),
-            int(pr_hindex + 1) : int(min(self.end_index, pr_hindex + self.hbsize) + 1),
+            int(pr_vindex): int(pr_vindex + self.vbsize),
+            int(pr_hindex + 1): int(min(self.end_index, pr_hindex + self.hbsize) + 1),
         ]
         nd, Td = data.shape
         if self.covariates is not None:
             covs = self.covariates[
-                :, int(pr_hindex) : int(min(self.end_index, pr_hindex + self.hbsize))
+                :, int(pr_hindex): int(min(self.end_index, pr_hindex + self.hbsize))
             ]
             rcovs = np.repeat(
                 covs.reshape(1, covs.shape[0], covs.shape[1]), repeats=nd, axis=0
@@ -157,9 +162,9 @@ class data_loader(object):
 
         if self.Ycov is not None:
             ycovs = self.Ycov[
-                int(pr_vindex) : int(pr_vindex + self.vbsize),
+                int(pr_vindex): int(pr_vindex + self.vbsize),
                 :,
-                int(pr_hindex) : int(min(self.end_index, pr_hindex + self.hbsize)),
+                int(pr_hindex): int(min(self.end_index, pr_hindex + self.hbsize)),
             ]
         if option == 1:
             inp = torch.from_numpy(data).view(1, nd, Td)
@@ -190,26 +195,25 @@ class data_loader(object):
         n, T = self.Ymat.shape
         index = self.val_index
         in_data = self.Ymat[
-            int(index) : int(index + self.vbsize),
-            int(self.end_index) : int(self.end_index + self.val_len),
+            int(index): int(index + self.vbsize),
+            int(self.end_index): int(self.end_index + self.val_len),
         ]
         out_data = self.Ymat[
-            int(index) : int(index + self.vbsize),
-            int(self.end_index + 1) : int(self.end_index + self.val_len + 1),
+            int(index): int(index + self.vbsize),
+            int(self.end_index + 1): int(self.end_index + self.val_len + 1),
         ]
         nd, Td = in_data.shape
         if self.covariates is not None:
             covs = self.covariates[
-                :, int(self.end_index) : int(self.end_index + self.val_len)
+                :, int(self.end_index): int(self.end_index + self.val_len)
             ]
             rcovs = np.repeat(
                 covs.reshape(1, covs.shape[0], covs.shape[1]), repeats=nd, axis=0
             )
         if self.Ycov is not None:
             ycovs = self.Ycov[
-                int(index) : int(index + self.vbsize),
-                :,
-                int(self.end_index) : int(self.end_index + self.val_len),
+                int(index): int(index + self.vbsize), :,
+                int(self.end_index): int(self.end_index + self.val_len),
             ]
         if option == 1:
             inp = torch.from_numpy(in_data).view(1, nd, Td)

@@ -45,7 +45,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import torch, h5py
+import torch
+import h5py
 import numpy as np
 from scipy.io import loadmat
 from torch.nn.utils import weight_norm
@@ -152,8 +153,8 @@ class TemporalBlock(nn.Module):
 
             self.conv1.weight[:, 0, :] += (
                 1.0 / self.kernel_size
-            )  ###new initialization scheme
-            self.conv2.weight += 1.0 / self.kernel_size  ###new initialization scheme
+            )  # new initialization scheme
+            self.conv2.weight += 1.0 / self.kernel_size  # new initialization scheme
 
             nn.init.normal_(self.conv1.bias, std=1e-6)
             nn.init.normal_(self.conv2.bias, std=1e-6)
@@ -234,8 +235,8 @@ class TemporalBlock_last(nn.Module):
 
             self.conv1.weight[:, 0, :] += (
                 1.0 / self.kernel_size
-            )  ###new initialization scheme
-            self.conv2.weight += 1.0 / self.kernel_size  ###new initialization scheme
+            )  # new initialization scheme
+            self.conv2.weight += 1.0 / self.kernel_size  # new initialization scheme
 
             nn.init.normal_(self.conv1.bias, std=1e-6)
             nn.init.normal_(self.conv2.bias, std=1e-6)
@@ -338,11 +339,15 @@ class LocalModel(object):
         end_index: no data is touched fro training or validation beyond end_index
         normalize: normalize dataset before training or not
         start_data: start data in YYYY-MM-DD format (give a random date if unknown)
-        freq: "H" hourly, "D": daily and for rest see here: https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
-        covariates: global covariates common for all time series r*T, where r is the number of covariates
+        freq: "H" hourly, "D": daily and for rest see here:
+            https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
+            # timeseries-offset-aliases
+        covariates: global covariates common for all time series r*T,
+        where r is the number of covariates
         Ycov: per time-series covariates n*l*T, l such covariates per time-series
         use_time: if false, default trime-covriates are not used
-        dti: date time object can be explicitly supplied here, leave None if default options are to be used
+        dti: date time object can be explicitly supplied here, leave None if default options are
+            to be used
         """
         self.start_date = start_date
         if use_time:
@@ -374,8 +379,8 @@ class LocalModel(object):
         self.kernel_size = kernel_size
         if normalize:
             Y = Ymat
-            m = np.mean(Y[:, 0 : self.end_index], axis=1)
-            s = np.std(Y[:, 0 : self.end_index], axis=1)
+            m = np.mean(Y[:, 0: self.end_index], axis=1)
+            s = np.std(Y[:, 0: self.end_index], axis=1)
             # s[s == 0] = 1.0
             s += 1.0
             Y = (Y - m[:, None]) / s[:, None]
@@ -515,10 +520,10 @@ class LocalModel(object):
         inp = self.convert_to_input(data)
         if covariates is not None:
             cov = self.convert_covariates(data, covariates)
-            inp = torch.cat((inp, cov[:, :, 0 : inp.size(2)]), 1)
+            inp = torch.cat((inp, cov[:, :, 0: inp.size(2)]), 1)
         if ycovs is not None:
             ycovs = self.convert_ycovs(data, ycovs)
-            inp = torch.cat((inp, ycovs[:, :, 0 : inp.size(2)]), 1)
+            inp = torch.cat((inp, ycovs[:, :, 0: inp.size(2)]), 1)
 
         inp = inp.cpu()
         cov = cov.cpu()
@@ -613,14 +618,14 @@ class LocalModel(object):
         rg = 1 + 2 * (self.kernel_size - 1) * 2 ** (len(self.num_channels) - 1)
         self.seq = self.seq.eval()
         if self.covariates is not None:
-            covs = self.covariates[:, last_step - rg : last_step + tau]
+            covs = self.covariates[:, last_step - rg: last_step + tau]
         else:
             covs = None
         if self.Ycov is not None:
-            ycovs = self.Ycov[:, :, last_step - rg : last_step + tau]
+            ycovs = self.Ycov[:, :, last_step - rg: last_step + tau]
         else:
             ycovs = None
-        data_in = Ymat[:, last_step - rg : last_step]
+        data_in = Ymat[:, last_step - rg: last_step]
         out = self.predict_future(
             data_in,
             covariates=covs,
@@ -633,7 +638,7 @@ class LocalModel(object):
         actual_values = []
         S = out[:, -tau::]
         predicted_values += [S]
-        R = Ymat[:, last_step : last_step + tau]
+        R = Ymat[:, last_step: last_step + tau]
         actual_values += [R]
         print("Current window wape:{}".format(wape(S, R)))
 
@@ -641,14 +646,14 @@ class LocalModel(object):
             last_step += tau
             rg = 1 + 2 * (self.kernel_size - 1) * 2 ** (len(self.num_channels) - 1)
             if self.covariates is not None:
-                covs = self.covariates[:, last_step - rg : last_step + tau]
+                covs = self.covariates[:, last_step - rg: last_step + tau]
             else:
                 covs = None
             if self.Ycov is not None:
-                ycovs = self.Ycov[:, :, last_step - rg : last_step + tau]
+                ycovs = self.Ycov[:, :, last_step - rg: last_step + tau]
             else:
                 ycovs = None
-            data_in = Ymat[:, last_step - rg : last_step]
+            data_in = Ymat[:, last_step - rg: last_step]
             out = self.predict_future(
                 data_in,
                 covariates=covs,
@@ -659,7 +664,7 @@ class LocalModel(object):
             )
             S = out[:, -tau::]
             predicted_values += [S]
-            R = Ymat[:, last_step : last_step + tau]
+            R = Ymat[:, last_step: last_step + tau]
             actual_values += [R]
             print("Current window wape:{}".format(wape(S, R)))
 
@@ -674,7 +679,7 @@ class LocalModel(object):
         dic["rmse"] = np.sqrt(((predicted - actual) ** 2).mean())
         dic["nrmse"] = dic["rmse"] / np.sqrt(((actual) ** 2).mean())
 
-        baseline = Ymat[:, Ymat.shape[1] - n * tau - tau : Ymat.shape[1] - tau]
+        baseline = Ymat[:, Ymat.shape[1] - n * tau - tau: Ymat.shape[1] - tau]
         dic["baseline_wape"] = wape(baseline, actual)
         dic["baseline_mape"] = mape(baseline, actual)
         dic["baseline_smape"] = smape(baseline, actual)

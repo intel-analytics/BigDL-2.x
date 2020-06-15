@@ -25,14 +25,14 @@ class TestTCMF(ZooTestCase):
 
     def setup_method(self, method):
         self.config = {
-                 "max_y_iterations": 1,
-                 "init_XF_epoch": 1,
-                 "max_FX_epoch": 1,
-                 "max_TCN_epoch": 1,
-                 "alt_iters": 2,
+            "max_y_iterations": 1,
+            "init_XF_epoch": 1,
+            "max_FX_epoch": 1,
+            "max_TCN_epoch": 1,
+            "alt_iters": 2,
         }
         self.model = TCMF()
-        self.Ymat = np.random.rand(1000,720)
+        self.Ymat = np.random.rand(1000, 720)
 
     def teardown_method(self, method):
         pass
