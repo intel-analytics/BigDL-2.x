@@ -19,6 +19,7 @@ from abc import ABCMeta, abstractmethod
 from zoo.automl.model.MTNet_keras import MTNetKeras as MTNetKerasModel
 from zoo.automl.model.VanillaLSTM import VanillaLSTM as LSTMKerasModel
 from zoo.tfpark import KerasModel as TFParkKerasModel
+from zoo.automl.model import TCMF
 
 import tensorflow as tf
 
@@ -119,7 +120,6 @@ class TCMFForecaster(Forecaster):
         self.model = self._build()
 
     def _build(self):
-        from zoo.automl.model.TCMF.TCMF import TCMF
         self.internal = TCMF()
         return self.internal._build(**self.config)
 
