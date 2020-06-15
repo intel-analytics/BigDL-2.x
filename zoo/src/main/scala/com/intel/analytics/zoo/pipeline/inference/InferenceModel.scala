@@ -31,9 +31,9 @@ import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 class InferenceModel(private var autoScalingEnabled: Boolean = true,
-                                  private var concurrentNum: Int = 20,
-                                  private var originalModel: AbstractModel = null,
-                                  private[inference] var modelQueue:
+                     private var concurrentNum: Int = 20,
+                     private var originalModel: AbstractModel = null,
+                     private[inference] var modelQueue:
                      LinkedBlockingQueue[AbstractModel] = null)
   extends InferenceSupportive with Serializable {
 
