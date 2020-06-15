@@ -32,22 +32,27 @@ After calling these APIs, you would get a XShards of Pandas DataFrame.
 #### **Pre-processing on XShards**
 
 You can do pre-processing with your customized function on XShards using below API:
-##### RayXShard
 ```
 transform_shard(func, *args)
 ```
 * `func` is your pre-processing function. In this function, you can do the pre-processing on a Pandas DataFrame, then return the processed object. 
 * `args` are the augurments for the pre-processing function.
 
-##### SparkXShard
-```
-transform_shard(func, broadcast_args=False, *args)
-```
-* `func` is your pre-processing function. In this function, you can do the pre-processing on a Pandas DataFrame, then return the processed object.
-* `broadcast_args` should be True if you want to broadcast args.
-* `args` are the augurments for the pre-processing function.
-
 This method would parallelly pre-process each element in the XShards with the customized function, and return a new XShards after transformation.
+
+##### **SharedValue**
+SharedValue can be used to give every node a copy of a large input dataset in an efficient manner.
+This is an example of using SharedValue:
+```
+def func(df, item_set)
+   item_set = item_set.value
+   ....
+
+item_set= ...
+item_set= orca.data.SharedValue(item_set, sc)
+full_data.transform_shard(func, item_set)
+```
+
 
 #### **Get all the elements in XShards**
 
