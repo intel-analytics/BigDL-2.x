@@ -91,7 +91,7 @@ class TestZouwuAutoTS(ZooTestCase):
                                time_step=[5],
                                long_num=[2],
                                batch_size=[1024],
-                               cnn_hid_size=[32,50],
+                               cnn_hid_size=[32, 50],
                                training_iteration=1,
                                epochs=1
                            ))
