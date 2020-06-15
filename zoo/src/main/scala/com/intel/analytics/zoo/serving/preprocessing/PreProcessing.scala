@@ -62,19 +62,30 @@ class PreProcessing(param: SerParams) {
     val instance = Instances.fromArrow(byteBuffer)
 
     val kvMap = instance.instances.flatMap(insMap => {
-      val oneInsMap = insMap.map(kv => {
-        if (kv._2.isInstanceOf[String]) {
+      val oneInsMap = insMap.map(kv =>
+        if (kv._1.contains("string")) {
+          (kv._1, decodeString(kv._2.asInstanceOf[String]))
+        }
+        else if (kv._2.isInstanceOf[String]) {
           (kv._1, decodeImage(kv._2.asInstanceOf[String]))
         } else {
           (kv._1, decodeTensor(kv._2.asInstanceOf[(
             ArrayBuffer[Int], ArrayBuffer[Float], ArrayBuffer[Int], ArrayBuffer[Int])]))
-        }
-      }).toList
+        }).toList
 //      Seq(T(oneInsMap.head, oneInsMap.tail: _*))
       val arr = oneInsMap.map(x => x._2)
       Seq(T.array(arr.toArray))
     })
     kvMap.head
+  }
+  def decodeString(s: String): Tensor[String] = {
+
+    val eleList = s.split("\\|")
+    val tensor = Tensor[String](eleList.length)
+    (1 to eleList.length).foreach(i => {
+      tensor.setValue(i, eleList(i - 1))
+    })
+    tensor
   }
   def decodeImage(s: String, idx: Int = 0): Tensor[Float] = {
     byteBuffer = java.util.Base64.getDecoder.decode(s)
