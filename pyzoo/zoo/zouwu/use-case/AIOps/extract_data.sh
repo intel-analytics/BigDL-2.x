@@ -17,6 +17,14 @@ then
    exit
 fi
 
+FILENAME="./machine_usage.csv"
+if [ ! -f "$FILENAME" ]
+then
+   echo "$FILENAME doesn't exists."
+   bash ./get_data.sh
+   exit
+fi
+
 echo "Extract m_1932"
 grep m_1932 machine_usage.csv > m_1932.csv
 
