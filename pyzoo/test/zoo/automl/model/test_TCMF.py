@@ -17,8 +17,7 @@
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.automl.model.TCMF.TCMF import TCMF
-from numpy.testing import assert_array_almost_equal
+from zoo.automl.model.TCMF import TCMF
 
 
 class TestTCMF(ZooTestCase):
