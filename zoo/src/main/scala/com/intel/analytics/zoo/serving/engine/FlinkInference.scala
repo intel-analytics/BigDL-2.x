@@ -36,8 +36,6 @@ class FlinkInference(params: SerParams)
 
   override def open(parameters: Configuration): Unit = {
     inferenceCnt = 0
-    model = params.model
-//    println("in open method, ", model)
     logger = Logger.getLogger(getClass)
     pre = new PreProcessing(params)
   }
