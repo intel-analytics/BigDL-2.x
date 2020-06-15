@@ -28,7 +28,8 @@ class TestTCMF(ZooTestCase):
                  "max_y_iterations": 1,
                  "init_XF_epoch": 1,
                  "max_FX_epoch": 1,
-                 "max_TCN_epoch": 1
+                 "max_TCN_epoch": 1,
+                 "alt_iters": 2,
         }
         self.model = TCMF()
         self.Ymat = np.random.rand(1000,720)
