@@ -119,7 +119,7 @@ class TCMFForecaster(Forecaster):
         self.model = self._build()
 
     def _build(self):
-        from zoo.automl.model.TCMF.TCMF import TCMF
+        from zoo.automl.model.TCMF import TCMF
         self.internal = TCMF()
         return self.internal._build(**self.config)
 
