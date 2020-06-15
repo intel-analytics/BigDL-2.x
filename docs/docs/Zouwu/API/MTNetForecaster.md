@@ -16,12 +16,12 @@ For the detailed algorithm description, please refer to [here](../Algorithm/MTNe
 - **`feature_dim`**: Specify the number of variables we have in the input data. i.e. the the dimension of model input feature. This value defaults to 1.
 - **`long_series_num`**: Specify the number of long-term historical data series. This value defaults to 1. Typically, as stated in the [paper](https://arxiv.org/abs/1809.02105), the value is set to 7.
 - **`series_length`**: Specify the length of long-term historical data series, which is equal to the length of short-term data series. This value defaults to 1. The value should be larger or equal to 1.
-- **`ar_window_size`**: Specify the auto regression window size in MTNet. This value defaults to 1. The value should smaller or equal to `series_length`.
-- **`cnn_height`**: Specify convolutional layer filter height in MTNet's encoder. This value defaults to 1. 
+- **`ar_window_size`**: Specify the auto regression window size in MTNet. This value defaults to 1. Since the parameter is along the time dimension, the value should be smaller or equal to `series_length`.
+- **`cnn_height`**: Specify convolutional layer filter height in MTNet's encoder. This value defaults to 1. Since the parameter is along the time dimension, the value should be smaller or equal to `series_length`.
 - **`cnn_hid_size`**: Specify the convolutional layer filter number in MTNet's encoder. This value defaults to 32. Typically, as stated in the [paper](https://arxiv.org/abs/1809.02105), the value is grid searched in {32, 50, 100}.
-- **`rnn_hid_size`**: Specify the the hidden RNN layers unit number in MTNet's encoder. This value defaults to [16, 32] as a stacked RNN.  Typically, as stated in the [paper](https://arxiv.org/abs/1809.02105), the value is grid searched in {32, 50, 100}. This param should be set as a list.
+- **`rnn_hid_size`**: Specify the the hidden RNN layers unit number in MTNet's encoder. This value defaults to [16, 32] as a stacked RNN.  Typically, as stated in the [paper](https://arxiv.org/abs/1809.02105), the value is grid searched in {32, 50, 100} for each layer. This parameter should be set as a list.
 - **`lr`**: Specify the learning rate. This value defaults to 0.001.
-- **`loss`**: Specify the target function you want to optimize on. This value defaults to "mae" 
+- **`loss`**: Specify the target function you want to optimize on. This value defaults to MAE. 
 - **`metric`**: Specify the metric for validation and evaluation. This value defaults to MSE.
 - **`cnn_dropout`**: Specify the dropout close possibility for CNN in encoder. This value defaults to 0.2, as stated in the [paper](https://arxiv.org/abs/1809.02105).
 - **`rnn_dropout`**: Specify the dropout close possibility for RNN in encoder. This value defaults to 0.2, as stated in the [paper](https://arxiv.org/abs/1809.02105).
