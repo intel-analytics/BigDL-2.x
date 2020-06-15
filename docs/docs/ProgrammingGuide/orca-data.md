@@ -49,7 +49,7 @@ def func(df, item_set)
    ....
 
 item_set= ...
-item_set= orca.data.SharedValue(item_set, sc)
+item_set= orca.data.SharedValue(item_set)
 full_data.transform_shard(func, item_set)
 ```
 

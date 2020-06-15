@@ -355,12 +355,10 @@ class SparkXShards(XShards):
 
 
 class SharedValue(object):
-    def __init__(self, data, sc):
-        if isinstance(sc, SparkContext):
-            self.broadcast_data = sc.broadcast(data)
-            self._value = None
-        else:
-            raise Exception("sc type should be SparkContext")
+    def __init__(self, data):
+        sc = init_nncontext()
+        self.broadcast_data = sc.broadcast(data)
+        self._value = None
 
     @property
     def value(self):

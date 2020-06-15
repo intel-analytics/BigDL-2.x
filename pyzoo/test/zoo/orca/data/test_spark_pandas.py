@@ -209,7 +209,7 @@ class TestSparkXShards(ZooTestCase):
         assert data[0]["value"].values[0] > 0, "value should be positive"
         col_name = "value"
         minus_val = 2
-        minus_val_shared_value = SharedValue(minus_val, self.sc)
+        minus_val_shared_value = SharedValue(minus_val)
         trans_shard = data_shard.transform_shard(negative, col_name,
                                                  minus_val_shared_value)
         data2 = trans_shard.collect()
