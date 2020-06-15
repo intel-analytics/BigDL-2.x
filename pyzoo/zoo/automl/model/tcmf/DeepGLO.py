@@ -46,7 +46,8 @@
 
 
 from __future__ import print_function
-import torch, h5py
+import torch
+import h5py
 import numpy as np
 from scipy.io import loadmat
 from torch.nn.utils import weight_norm
@@ -81,6 +82,7 @@ torch.manual_seed(111)
 random.seed(111)
 
 import logging
+
 
 def get_model(A, y, lamb=0):
     """
@@ -175,12 +177,12 @@ class DeepGLO(object):
             1 + 2 * (self.kernel_size - 1) * 2 ** (len(self.num_channels_X) - 1),
             1 + 2 * (self.kernel_size_Y - 1) * 2 ** (len(self.num_channels_Y) - 1),
         )
-        X = self.X[:, last_step - rg : last_step]
+        X = self.X[:, last_step - rg: last_step]
         X = self.tensor2d_to_temporal(X)
         outX = self.predict_future(model=self.Xseq, inp=X, future=future)
         outX = self.temporal_to_tensor2d(outX)
         Xf = outX[:, -future::]
-        Yn = self.Ymat[:, last_step : last_step + future]
+        Yn = self.Ymat[:, last_step: last_step + future]
         Yn = torch.from_numpy(Yn).float()
         self.Xseq = self.Xseq.cpu()
 
@@ -213,8 +215,8 @@ class DeepGLO(object):
         return Xn.detach()
 
     def step_factX_loss(self, inp, out, last_vindex, last_hindex, reg=0.0):
-        Xout = self.X[:, last_hindex + 1 : last_hindex + 1 + out.size(2)]
-        Fout = self.F[self.D.I[last_vindex : last_vindex + out.size(0)], :]
+        Xout = self.X[:, last_hindex + 1: last_hindex + 1 + out.size(2)]
+        Fout = self.F[self.D.I[last_vindex: last_vindex + out.size(0)], :]
         Xout = Variable(Xout, requires_grad=True)
         out = self.temporal_to_tensor2d(out)
         optim_X = optim.Adam(params=[Xout], lr=self.lr)
@@ -227,12 +229,12 @@ class DeepGLO(object):
         loss.backward()
         optim_X.step()
         # Xout = torch.clamp(Xout, min=0)
-        self.X[:, last_hindex + 1 : last_hindex + 1 + inp.size(2)] = Xout.cpu().detach()
+        self.X[:, last_hindex + 1: last_hindex + 1 + inp.size(2)] = Xout.cpu().detach()
         return loss
 
     def step_factF_loss(self, inp, out, last_vindex, last_hindex, reg=0.0):
-        Xout = self.X[:, last_hindex + 1 : last_hindex + 1 + out.size(2)]
-        Fout = self.F[self.D.I[last_vindex : last_vindex + out.size(0)], :]
+        Xout = self.X[:, last_hindex + 1: last_hindex + 1 + out.size(2)]
+        Fout = self.F[self.D.I[last_vindex: last_vindex + out.size(0)], :]
         Fout = Variable(Fout, requires_grad=True)
         optim_F = optim.Adam(params=[Fout], lr=self.lr)
         out = self.temporal_to_tensor2d(out)
@@ -245,13 +247,13 @@ class DeepGLO(object):
         loss.backward()
         optim_F.step()
         self.F[
-            self.D.I[last_vindex : last_vindex + inp.size(0)], :
+            self.D.I[last_vindex: last_vindex + inp.size(0)], :
         ] = Fout.cpu().detach()
         return loss
 
     def step_temporal_loss_X(self, inp, last_vindex, last_hindex):
-        Xin = self.X[:, last_hindex : last_hindex + inp.size(2)]
-        Xout = self.X[:, last_hindex + 1 : last_hindex + 1 + inp.size(2)]
+        Xin = self.X[:, last_hindex: last_hindex + inp.size(2)]
+        Xout = self.X[:, last_hindex + 1: last_hindex + 1 + inp.size(2)]
         for p in self.Xseq.parameters():
             p.requires_grad = False
         Xin = Variable(Xin, requires_grad=True)
@@ -266,7 +268,7 @@ class DeepGLO(object):
         optim_out.step()
         # Xout = torch.clamp(Xout, min=0)
         temp = self.temporal_to_tensor2d(Xout.detach())
-        self.X[:, last_hindex + 1 : last_hindex + 1 + inp.size(2)] = temp
+        self.X[:, last_hindex + 1: last_hindex + 1 + inp.size(2)] = temp
         return loss
 
     def predict_future_batch(self, model, inp, future=10):
@@ -291,11 +293,11 @@ class DeepGLO(object):
         inp = inp.cpu()
         ids = np.arange(0, n, bsize)
         ids = list(ids) + [n]
-        out = self.predict_future_batch(model, inp[ids[0] : ids[1], :, :], future)
+        out = self.predict_future_batch(model, inp[ids[0]: ids[1], :, :], future)
 
         for i in range(1, len(ids) - 1):
             temp = self.predict_future_batch(
-                model, inp[ids[i] : ids[i + 1], :, :], future
+                model, inp[ids[i]: ids[i + 1], :, :], future
             )
             out = np.vstack([out, temp])
 
@@ -303,7 +305,7 @@ class DeepGLO(object):
         return self.tensor2d_to_temporal(out)
 
     def predict_global(
-          self, ind, last_step=100, future=10, normalize=False, bsize=90
+        self, ind, last_step=100, future=10, normalize=False, bsize=90
     ):
 
         if ind is None:
@@ -317,7 +319,7 @@ class DeepGLO(object):
             1 + 2 * (self.kernel_size - 1) * 2 ** (len(self.num_channels_X) - 1),
             1 + 2 * (self.kernel_size_Y - 1) * 2 ** (len(self.num_channels_Y) - 1),
         )
-        X = self.X[:, last_step - rg : last_step]
+        X = self.X[:, last_step - rg: last_step]
         n = X.size(0)
         T = X.size(1)
         X = self.tensor2d_to_temporal(X)
@@ -348,7 +350,6 @@ class DeepGLO(object):
             return Y
 
     def train_Xseq(self, Ymat, num_epochs=20, early_stop=False, tenacity=3):
-    # def train_Xseq(self, Ymat, num_epochs=1, early_stop=False, tenacity=3):
         seq = self.Xseq
         num_channels = self.num_channels_X
         kernel_size = self.kernel_size
@@ -411,7 +412,7 @@ class DeepGLO(object):
             if iter_count % mod >= 0:
                 l1 = self.step_factX_loss(inp, out, last_vindex, last_hindex, reg=reg_X)
                 l_X = l_X + [l1.cpu().item()]
-            if seed == False and iter_count % mod == 1:
+            if seed is False and iter_count % mod == 1:
                 l2 = self.step_temporal_loss_X(inp, last_vindex, last_hindex)
                 l_X_temporal = l_X_temporal + [l2.cpu().item()]
             iter_count = iter_count + 1
@@ -431,8 +432,8 @@ class DeepGLO(object):
                     last_step=self.end_index - self.val_len,
                     future=self.val_len,
                 )
-                R = self.Ymat[ind, self.end_index - self.val_len : self.end_index]
-                S = inp[:, -self.val_len : :]
+                R = self.Ymat[ind, self.end_index - self.val_len: self.end_index]
+                S = inp[:, -self.val_len::]
                 ve = np.abs(R - S).mean() / np.abs(R).mean()
                 # print("Validation Loss (Global): ", ve)
                 print("Validation Loss (Global):{}".format(ve))
@@ -477,11 +478,11 @@ class DeepGLO(object):
 
             Xin = self.tensor2d_to_temporal(self.X[:, last_hindex: last_hindex + inp.size(2)]).cpu()
             Xout = self.temporal_to_tensor2d(self.Xseq(Xin)).cpu()
-            Fout = self.F[self.D.I[last_vindex : last_vindex + out.size(0)], :]
+            Fout = self.F[self.D.I[last_vindex: last_vindex + out.size(0)], :]
             output = np.array(torch.matmul(Fout, Xout).detach())
             Ycov[
-                last_vindex : last_vindex + output.shape[0],
-                last_hindex + 1 : last_hindex + 1 + output.shape[1],
+                last_vindex: last_vindex + output.shape[0],
+                last_hindex + 1: last_hindex + 1 + output.shape[1],
             ] = output
 
         for p in self.Xseq.parameters():
@@ -499,11 +500,10 @@ class DeepGLO(object):
                 Ycov_wc[:, 0, 0:-1] = Ycov[:, 1::]
             else:
                 Ycov_wc[:, 0, :] = Ycov
-            Ycov_wc[:, 1, self.period - 1 : :] = Ymat_now[:, 0 : -(self.period - 1)]
+            Ycov_wc[:, 1, self.period - 1::] = Ymat_now[:, 0: -(self.period - 1)]
         return Ycov_wc
 
     def train_Yseq(self, num_epochs=20, early_stop=False, tenacity=7):
-    # def train_Yseq(self, num_epochs=1, early_stop=False, tenacity=7):
         Ycov = self.create_Ycov()
         self.Yseq = LocalModel(
             self.Ymat,
@@ -632,7 +632,7 @@ class DeepGLO(object):
             1 + 2 * (self.kernel_size - 1) * 2 ** (len(self.num_channels_X) - 1),
             1 + 2 * (self.kernel_size_Y - 1) * 2 ** (len(self.num_channels_Y) - 1),
         )
-        covs = self.Yseq.covariates[:, last_step - rg : last_step + future]
+        covs = self.Yseq.covariates[:, last_step - rg: last_step + future]
         # print(covs.shape)
         yc = self.predict_global(
             ind=ind,
@@ -656,13 +656,13 @@ class DeepGLO(object):
             period = self.period
             while last_step + future - (period - 1) > last_step + 1:
                 period += self.period
-            ycovs[:, 1, period - 1 : :] = self.Ymat[
-                :, last_step - rg : last_step + future - (period - 1)
-            ]  ### this seems like we are looking ahead, but it will not use the last coordinate, which is the only new point added
-        # print(ycovs.shape)
+            # this seems like we are looking ahead, but it will not use the last coordinate,
+            # which is the only new point added
+            ycovs[:, 1, period - 1::] = self.Ymat[
+                :, last_step - rg: last_step + future - (period - 1)]
 
         Y = self.Yseq.predict_future(
-            data_in=self.Ymat[ind, last_step - rg : last_step],
+            data_in=self.Ymat[ind, last_step - rg: last_step],
             covariates=covs,
             ycovs=ycovs,
             future=future,
@@ -700,7 +700,7 @@ class DeepGLO(object):
         S_g = out_global[:, -tau::]
         predicted_values += [S]
         predicted_values_global += [S_g]
-        R = Ymat[:, self.end_index : self.end_index + tau]
+        R = Ymat[:, self.end_index: self.end_index + tau]
         actual_values += [R]
         print("Current window wape:{}".format(wape(S, R)))
 
@@ -734,7 +734,7 @@ class DeepGLO(object):
             S_g = out_global[:, -tau::]
             predicted_values += [S]
             predicted_values_global += [S_g]
-            R = Ymat[:, self.end_index : self.end_index + tau]
+            R = Ymat[:, self.end_index: self.end_index + tau]
             actual_values += [R]
             print("Current window wape:{}".format(wape(S, R)))
 
@@ -757,7 +757,7 @@ class DeepGLO(object):
         dic["rmse_global"] = np.sqrt(((predicted_global - actual) ** 2).mean())
         dic["nrmse_global"] = dic["rmse"] / np.sqrt(((actual) ** 2).mean())
 
-        baseline = Ymat[:, Ymat.shape[1] - n * tau - tau : Ymat.shape[1] - tau]
+        baseline = Ymat[:, Ymat.shape[1] - n * tau - tau: Ymat.shape[1] - tau]
         dic["baseline_wape"] = wape(baseline, actual)
         dic["baseline_mape"] = mape(baseline, actual)
         dic["baseline_smape"] = smape(baseline, actual)
@@ -765,4 +765,3 @@ class DeepGLO(object):
         self.end_index = prev_index
 
         return dic
-

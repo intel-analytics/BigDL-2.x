@@ -92,30 +92,30 @@ class TCMFForecaster(Forecaster):
         """
         self.internal = None
         self.config = {
-            "vbsize" : vbsize ,
-            "hbsize" : hbsize,
-            "num_channels_X" : num_channels_X,
-            "num_channels_Y" : num_channels_Y,
-            "kernel_size" : kernel_size,
-            "dropout" : dropout,
-            "rank" : rank,
-            "kernel_size_Y" : kernel_size_Y,
-            "learning_rate" : learning_rate,
-            "val_len" : val_len,
-            "end_index" : end_index,
-            "normalize" : normalize,
-            "start_date" : start_date,
-            "freq" : freq,
-            "covariates" : covariates,
-            "use_time" : use_time,
-            "dti" : dti,
-            "svd" : svd,
-            "period" : period,
-            "forward_cov" : forward_cov,
-            "max_y_iterations" : max_y_iterations,
-            "init_XF_epoch" : init_XF_epoch,
-            "max_FX_epoch" : max_FX_epoch,
-            "max_TCN_epoch" : max_TCN_epoch
+            "vbsize": vbsize,
+            "hbsize": hbsize,
+            "num_channels_X": num_channels_X,
+            "num_channels_Y": num_channels_Y,
+            "kernel_size": kernel_size,
+            "dropout": dropout,
+            "rank": rank,
+            "kernel_size_Y": kernel_size_Y,
+            "learning_rate": learning_rate,
+            "val_len": val_len,
+            "end_index": end_index,
+            "normalize": normalize,
+            "start_date": start_date,
+            "freq": freq,
+            "covariates": covariates,
+            "use_time": use_time,
+            "dti": dti,
+            "svd": svd,
+            "period": period,
+            "forward_cov": forward_cov,
+            "max_y_iterations": max_y_iterations,
+            "init_XF_epoch": init_XF_epoch,
+            "max_FX_epoch": max_FX_epoch,
+            "max_TCN_epoch": max_TCN_epoch
         }
         self.model = self._build()
 
@@ -184,7 +184,7 @@ class TFParkForecaster(TFParkKerasModel, Forecaster, metaclass=ABCMeta):
     def _build(self):
         """
         Build a tf.keras model.
-        :return: a tf.keras model (compiled)
+       :return: a tf.keras model (compiled)
         """
         pass
 
@@ -295,7 +295,7 @@ class MTNetForecaster(TFParkForecaster):
     def _build(self):
         """
         build a MTNet model in tf.keras
-        :return: a tf.keras MTNet model
+       :return: a tf.keras MTNet model
         """
         # TODO change this function call after MTNet fixes
         self.internal = MTNetKerasModel(
