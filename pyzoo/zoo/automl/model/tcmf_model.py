@@ -65,7 +65,7 @@ class TCMF(BaseModel):
 
     def _build(self, **config):
         """
-        build the models and initialize.        
+        build the models and initialize.
         :param config: hyper parameters for building the model
         :return:
         """
