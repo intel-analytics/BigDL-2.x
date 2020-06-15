@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from py4j.protocol import Py4JError
 
 from zoo.orca.data.utils import *
 from zoo.common.nncontext import init_nncontext
@@ -51,7 +52,7 @@ class XShards(object):
 
 class RayXShards(XShards):
     """
-    A collection of data which can be pre-processed parallelly on Ray
+    A collection of data which can be pre-processed in parallel on Ray
     """
     def __init__(self, partitions):
         self.partitions = partitions
@@ -100,17 +101,47 @@ class RayXShards(XShards):
         """
         return self.partitions
 
+    def colocate_actors(self, actors):
+        """
+        Sort Ray actors and RayPartitions by node_ip so that each actor is colocated
+        with the data partition on the same node.
+        """
+        if self.partitions[0].node_ip:
+            # Assume that the partitions are already sorted by node_ip
+            import ray
+            actor_ips = ray.get([actor.get_node_ip.remote() for actor in actors])
+            actor_zip_ips = list(zip(actors, actor_ips))
+            actor_zip_ips.sort(key=lambda x: x[1])
+            for i in range(len(actors)):
+                actor_ip = actor_zip_ips[i][1]
+                partition_ip = self.partitions[i].node_ip
+                assert actor_ip == partition_ip
+            return [actor_ip[0] for actor_ip in actor_zip_ips]
+        else:
+            return actors
+
 
 class RayPartition(object):
     """
     Partition of RayXShards
     """
-
-    def __init__(self, shard_list):
+    def __init__(self, shard_list, node_ip=None, object_store_address=None):
         self.shard_list = shard_list
+        self.node_ip = node_ip
+        self.object_store_address = object_store_address
 
     def get_data(self):
-        return [shard.get_data.remote() for shard in self.shard_list]
+        # For partitions read by Ray, shard_list is a list of Ray actors.
+        # Each Ray actor contains a partition of data.
+        if isinstance(self.shard_list, list):
+            import ray
+            return ray.get([shard.get_data.remote() for shard in self.shard_list])
+        # For partitions transfromed from Spark, shard_list is a single plasma ObjectID.
+        # The ObjectID would contain a list of data.
+        else:
+            import pyarrow.plasma as plasma
+            client = plasma.connect(self.object_store_address)
+            return client.get(self.shard_list)
 
 
 def get_eager_mode():
@@ -146,7 +177,11 @@ class SparkXShards(XShards):
 
     def uncache(self):
         self.user_cached = False
-        self.rdd.unpersist()
+        if self.is_cached():
+            try:
+                self.rdd.unpersist()
+            except Py4JError:
+                print("Try to unpersist an uncached rdd")
         return self
 
     def _uncache(self):
@@ -281,6 +316,42 @@ class SparkXShards(XShards):
 
     def __del__(self):
         self.uncache()
+
+    def to_ray(self):
+        import random
+        import string
+        from zoo.ray import RayContext
+        ray_ctx = RayContext.get()
+        object_store_address = ray_ctx.address_info["object_store_address"]
+
+        # TODO: Handle failure when doing this?
+        # TODO: delete the data in the plasma?
+        def put_to_plasma(seed):
+            def f(index, iterator):
+                import pyarrow.plasma as plasma
+                from zoo.orca.data.utils import get_node_ip
+                # mapPartition would set the same random seed for each partition?
+                # Here use the partition index to override the random seed so that there won't be
+                # identical object_ids in plasma.
+                random.seed(seed+str(index))
+                res = list(iterator)
+                client = plasma.connect(object_store_address)
+                object_id = client.put(res)
+                yield object_id, get_node_ip()
+            return f
+
+        # Generate a random string here to make sure that when this method is called twice, the
+        # seeds to generate plasma ObjectID are different.
+        random_str = ''.join(
+            [random.choice(string.ascii_letters + string.digits) for i in range(32)])
+        object_id_node_ips = self.rdd.mapPartitionsWithIndex(put_to_plasma(random_str)).collect()
+        self.uncache()
+        # Sort the data according to the node_ips.
+        object_id_node_ips.sort(key=lambda x: x[1])
+        partitions = [RayPartition(shard_list=id_ip[0], node_ip=id_ip[1],
+                                   object_store_address=object_store_address)
+                      for id_ip in object_id_node_ips]
+        return RayXShards(partitions)
 
 
 class SharedValue(object):
