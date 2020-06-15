@@ -601,7 +601,7 @@ class MTNetKeras(BaseModel):
             "cnn_dropout",
             "rnn_dropout",
             "time_step",
-            "filter_size",
+            "cnn_height",
             "long_num",
             "ar_size",
             "loss",
