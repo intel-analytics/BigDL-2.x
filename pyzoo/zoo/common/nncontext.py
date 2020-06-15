@@ -27,7 +27,7 @@ import sys
 
 
 def init_spark_on_local(cores=2, conf=None, python_location=None, spark_log_level="WARN",
-                        redirect_spark_log=True, capture_output=False):
+                        redirect_spark_log=True):
     """
     Create a SparkContext with Zoo configuration in local machine.
     :param cores: The default value is 2 and you can also set it to *
@@ -36,16 +36,13 @@ def init_spark_on_local(cores=2, conf=None, python_location=None, spark_log_leve
     :param python_location: The path to your running python executable.
     :param spark_log_level: Log level of Spark
     :param redirect_spark_log: Redirect the Spark log to local file or not.
-    :param capture_output: if true, the stdour and stderr of spark-driver jvm will be redirected
-                           to the current python process
     :return:
     """
     from zoo.util.spark import SparkRunner
     sparkrunner = SparkRunner(spark_log_level=spark_log_level,
                               redirect_spark_log=redirect_spark_log)
     return sparkrunner.init_spark_on_local(cores=cores, conf=conf,
-                                           python_location=python_location,
-                                           capture_output=capture_output)
+                                           python_location=python_location)
 
 
 def init_spark_on_yarn(hadoop_conf,
@@ -64,8 +61,7 @@ def init_spark_on_yarn(hadoop_conf,
                        spark_log_level="WARN",
                        redirect_spark_log=True,
                        jars=None,
-                       spark_conf=None,
-                       capture_output=False):
+                       spark_conf=None):
     """
     Create a SparkContext with Zoo configuration on Yarn cluster on "Yarn-client" mode.
     You should create a conda env and install the python dependencies in that env.
@@ -92,8 +88,6 @@ def init_spark_on_yarn(hadoop_conf,
     :param jars: Comma-separated list of jars to include on the driver and executor classpaths.
     :param spark_conf: You can append extra spark conf here in key value format.
                        i.e spark_conf={"spark.executor.extraJavaOptions": "-XX:+PrintGCDetails"}
-    :param capture_output: if true, the stdour and stderr of spark-driver jvm will be redirected
-                           to the current python process
     :return: SparkContext
     """
     from zoo.util.spark import SparkRunner
@@ -114,9 +108,34 @@ def init_spark_on_yarn(hadoop_conf,
         hadoop_user_name=hadoop_user_name,
         spark_yarn_archive=spark_yarn_archive,
         jars=jars,
-        spark_conf=spark_conf,
-        capture_output=capture_output)
+        spark_conf=spark_conf)
     return sc
+
+
+class ZooContextMeta(type):
+
+    _log_output = False
+
+    @property
+    def log_output(cls):
+        """
+        Whether to redirect Spark driver JVM's stdout and stderr to the current
+        python process. This is useful when running Analytics Zoo in jupyter notebook.
+        Default to False. Needs to be set before initializing SparkContext.
+        """
+        return cls._log_output
+
+    @log_output.setter
+    def log_output(cls, value):
+        if SparkContext._active_spark_context is not None:
+            raise AttributeError("log_output cannot be set after SparkContext is created."
+                                 " Please set it before init_nncontext, init_spark_on_local"
+                                 "or init_spark_on_yarn")
+        cls._log_output = value
+
+
+class ZooContext(metaclass=ZooContextMeta):
+    pass
 
 
 # The following function copied from
@@ -142,7 +161,7 @@ def _read_stream(fd, fn):
             fn(buff.decode('utf-8'))
 
 
-def init_nncontext(conf=None, redirect_spark_log=True, capture_output=False):
+def init_nncontext(conf=None, redirect_spark_log=True):
     """
     Creates or gets a SparkContext with optimized configuration for BigDL performance.
     The method will also initialize the BigDL engine.
@@ -152,14 +171,12 @@ def init_nncontext(conf=None, redirect_spark_log=True, capture_output=False):
     or properties file, and init BigDL engine manually.
 
     :param conf: User defined Spark conf
-    :param capture_output: if true, the stdour and stderr of spark-driver jvm will be redirected
-                           to the current python process
     """
 
     # The following code copied and modified from
     # https://github.com/Valassis-Digital-Media/spylon-kernel/blob/master/
     # spylon_kernel/scala_interpreter.py
-    if capture_output:
+    if ZooContext.log_output:
         import subprocess
         import pyspark.java_gateway
         spark_jvm_proc = None
@@ -187,7 +204,7 @@ def init_nncontext(conf=None, redirect_spark_log=True, capture_output=False):
     else:
         sc = getOrCreateSparkContext(conf=conf)
 
-    if capture_output:
+    if ZooContext.log_output:
         if spark_jvm_proc.stdout is not None:
             stdout_reader = threading.Thread(target=_read_stream,
                                              daemon=True,
