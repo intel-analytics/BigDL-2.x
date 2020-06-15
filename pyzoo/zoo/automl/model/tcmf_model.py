@@ -126,31 +126,57 @@ class TCMF(BaseModel):
         # TODO incrementally train models
         pass
 
-    def predict(self, x, mc=False, ):
+    def predict(self, x=None, horizon=24, mc=False, ):
         """
-
-        :param x:
+        Predict horizon time-points ahead the input x in fit_eval
+        :param x: We don't support input x currently.
+        :param horizon: horizon length to predict
         :param mc:
         :return:
         """
-        # TODO predict on new data
-        pass
+        assert x is None, "We don't support input x directly."
+        assert self.model, "You should call fit_eval first before calling predict"
+        out = self.model.predict_horizon(
+            future=horizon,
+            bsize=8000,
+            normalize=False,
+        )
+        return out[:, -horizon::]
 
-    def evaluate(self, x, y, metric=None):
+    def evaluate(self, x=None, y=None, metrics=None):
         """
-        Evaluate on x, y
-        :param x: input
-        :param y: target
-        :param metric: a list of metrics in string format
+        Evaluate on the prediction results and y. We predict horizon time-points ahead the input x
+        in fit_eval before evaluation, where the horizon length equals the second dimension size of
+        y.
+        :param x: We don't support input x currently.
+        :param y: target. We interpret the second dimension of y as the horizon length for
+            evaluation.
+        :param metrics: a list of metrics in string format
         :return: a list of metric evaluation results
         """
-        pass
+        assert x is None, "We don't support input x directly."
+        assert self.model, "You should call fit_eval first before calling evaluate"
+        assert y is not None, "Input invalid y of None"
+        if len(y.shape) == 1:
+            y = np.expand_dims(y, axis=1)
+            horizon = 1
+        else:
+            horizon = y.shape[1]
+        result = self.predict(horizon=horizon)
 
-    def save(self, model_path, config_path):
-        raise NotImplementedError
+        if y.shape[1] == 1:
+            multioutput = 'uniform_average'
+        else:
+            multioutput = 'raw_values'
+        return [Evaluator.evaluate(m, y, result, multioutput=multioutput) for m in metrics]
 
-    def restore(self, model_path, **config):
-        raise NotImplementedError
+    def save(self, model_file):
+        pickle.dump(self.model, open(model_file, "wb"))
+
+    def restore(self, model_file):
+        with open(model_file, 'rb') as f:
+            self.model = pickle.load(f)
+        self.model_init = True
 
     def _get_optional_parameters(self):
         return {}
