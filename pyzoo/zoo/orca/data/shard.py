@@ -17,6 +17,7 @@
 from zoo.orca.data.utils import *
 from zoo.common.nncontext import init_nncontext
 import os
+from pyspark.context import SparkContext
 
 
 class XShards(object):
@@ -130,16 +131,8 @@ class SparkXShards(XShards):
         if self.eager:
             self.compute()
 
-    def transform_shard(self, func, broadcast_args=False, *args):
-        if broadcast_args:
-            sc = self.rdd.context
-            broadcast_args = sc.broadcast(args)
-            transformed_shard = SparkXShards(self.rdd.map(lambda data: func(data,
-                                                                            *broadcast_args.value)))
-            if self.eager:
-                broadcast_args.unpersist()
-        else:
-            transformed_shard = SparkXShards(self.rdd.map(lambda data: func(data, *args)))
+    def transform_shard(self, func, *args):
+        transformed_shard = SparkXShards(self.rdd.map(lambda data: func(data, *args)))
         self._uncache()
         return transformed_shard
 
@@ -288,3 +281,20 @@ class SparkXShards(XShards):
 
     def __del__(self):
         self.uncache()
+
+
+class SharedValue(object):
+    def __init__(self, data, sc):
+        if isinstance(sc, SparkContext):
+            self.broadcast_data = sc.broadcast(data)
+            self._value = None
+        else:
+            raise Exception("sc type should be SparkContext")
+
+    @property
+    def value(self):
+        self._value = self.broadcast_data.value
+        return self._value
+
+    def unpersist(self):
+        self.broadcast_data.unpersist()

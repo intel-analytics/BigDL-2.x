@@ -21,6 +21,7 @@ import pytest
 
 import zoo.orca.data
 import zoo.orca.data.pandas
+from zoo.orca.data.shard import SharedValue
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.common.nncontext import *
 
@@ -90,7 +91,7 @@ class TestSparkXShards(ZooTestCase):
             df[column_name] = df[column_name] * (-1)
             return df
 
-        trans_data_shard = data_shard.transform_shard(negative, False, "value")
+        trans_data_shard = data_shard.transform_shard(negative, "value")
         data2 = trans_data_shard.collect()
         assert data2[0]["value"].values[0] < 0, "value should be negative"
 
@@ -196,7 +197,7 @@ class TestSparkXShards(ZooTestCase):
     def test_transform_broadcast(self):
         def negative(df, column_name, minus_val):
             df[column_name] = df[column_name] * (-1)
-            df[column_name] = df[column_name] - minus_val
+            df[column_name] = df[column_name] - minus_val.value
             return df
 
         file_path = os.path.join(self.resource_path, "orca/data/json")
@@ -204,7 +205,11 @@ class TestSparkXShards(ZooTestCase):
                                                     orient='columns', lines=True)
         data = data_shard.collect()
         assert data[0]["value"].values[0] > 0, "value should be positive"
-        trans_shard = data_shard.transform_shard(negative, True, "value", 2)
+        col_name = "value"
+        minus_val = 2
+        minus_val_shared_value = SharedValue(minus_val, self.sc)
+        trans_shard = data_shard.transform_shard(negative, col_name,
+                                                 minus_val_shared_value)
         data2 = trans_shard.collect()
         assert data2[0]["value"].values[0] < 0, "value should be negative"
         assert data[0]["value"].values[0] + data2[0]["value"].values[0] == -2, "value should be -2"
