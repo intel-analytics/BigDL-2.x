@@ -14,7 +14,7 @@
 #
 from abc import ABC
 
-from zoo.automl.model.TCMF.DeepGLO import *
+from zoo.automl.model.tcmf.DeepGLO import *
 
 from zoo.automl.common.metrics import Evaluator
 import pandas as pd
