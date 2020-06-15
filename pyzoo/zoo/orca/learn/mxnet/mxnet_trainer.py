@@ -128,7 +128,7 @@ class MXNetTrainer(object):
             if self.test_data:
                 test_data_list = self.test_data.get_partitions()
             else:
-                test_data_list = [self.test_data] * self.num_workers
+                test_data_list = [None] * self.num_workers
         else:
             assert callable(self.train_data),\
                 "train_data should be either an instance of XShards or a callable function"
