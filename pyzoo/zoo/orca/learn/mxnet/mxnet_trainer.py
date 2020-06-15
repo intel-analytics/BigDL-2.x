@@ -130,12 +130,12 @@ class MXNetTrainer(object):
             else:
                 test_data_list = [self.test_data] * self.num_workers
         else:
-            assert callable(self.train_data), "train_data should be either an instance of XShards or " \
-                                              "a callable function, please check your input"
+            assert callable(self.train_data),\
+                "train_data should be either an instance of XShards or a callable function"
             train_data_list = [self.train_data] * self.num_workers
             if self.test_data:
-                assert callable(self.test_data), "test_data should be either an instance of XShards or " \
-                                                 "a callable function, please check your input"
+                assert callable(self.test_data),\
+                    "test_data should be either an instance of XShards or a callable function"
             test_data_list = [self.test_data] * self.num_workers
         self.runners = self.workers + self.servers
         # For servers, data is not used and thus just input a None value.
