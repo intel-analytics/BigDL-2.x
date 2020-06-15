@@ -65,8 +65,8 @@ import copy
 import os
 import gc
 
-from zoo.automl.model.TCMF.data_loader import *
-from zoo.automl.model.TCMF.LocalModel import *
+from zoo.automl.model.tcmf.data_loader import *
+from zoo.automl.model.tcmf.LocalModel import *
 
 from sklearn.decomposition import NMF
 

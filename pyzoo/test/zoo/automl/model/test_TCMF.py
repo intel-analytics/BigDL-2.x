@@ -17,7 +17,8 @@
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.automl.model.TCMF import TCMF
+from zoo.automl.model import TCMF
+import numpy as np
 
 
 class TestTCMF(ZooTestCase):
@@ -36,7 +37,7 @@ class TestTCMF(ZooTestCase):
         pass
 
     def test_fit_eval(self):
-        print("fit_eval:", self.model.fit_eval(self.Ymat,
+        print("fit_eval:", self.model.fit_eval(self.Ymat, y=None,
                                                **self.config))
 
     def test_evaluate(self):
