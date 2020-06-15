@@ -57,6 +57,7 @@ class TCMF(BaseModel):
         self.svd = config.get("svd", None)
         self.period = config.get("period", 24)
         self.forward_cov = config.get("forward_cov", None)
+        self.alt_iters = config.get("alt_iters", 10)
         self.y_iters = config.get("max_y_iterations", 300)
         self.init_epoch = config.get("init_XF_epoch", 100)
         self.max_FX_epoch = config.get("max_FX_epoch", 300)
@@ -107,10 +108,12 @@ class TCMF(BaseModel):
         """
         if not self.model_init:
             self._build(**config)
-        self.model.train_all_models(x, y_iters=self.y_iters,
-                            init_epochs=self.init_epoch,
-                            max_FX_epoch=self.max_FX_epoch,
-                            max_TCN_epoch=self.max_TCN_epoch)
+        self.model.train_all_models(x,
+                                    alt_iters=self.alt_iters,
+                                    y_iters=self.y_iters,
+                                    init_epochs=self.init_epoch,
+                                    max_FX_epoch=self.max_FX_epoch,
+                                    max_TCN_epoch=self.max_TCN_epoch)
         return self.model.Yseq.val_loss
 
     def fit_incremental(self, x):
