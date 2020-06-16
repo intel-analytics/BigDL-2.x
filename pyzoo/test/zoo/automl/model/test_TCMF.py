@@ -26,8 +26,8 @@ from numpy.testing import assert_array_almost_equal
 class TestTCMF(ZooTestCase):
 
     def setup_method(self, method):
-        seq_len = 720
-        self.num_samples = 1000
+        seq_len = 480
+        self.num_samples = 300
         self.config = {
             "max_y_iterations": 1,
             "init_XF_epoch": 1,
@@ -39,7 +39,8 @@ class TestTCMF(ZooTestCase):
         self.Ymat = np.random.rand(self.num_samples, seq_len)
 
     def teardown_method(self, method):
-        pass
+        del self.model
+        del self.Ymat
 
     def test_fit_predict_evaluate(self):
         self.model.fit_eval(x=self.Ymat, y=None, **self.config)

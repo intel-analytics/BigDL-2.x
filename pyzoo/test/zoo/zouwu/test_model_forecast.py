@@ -99,10 +99,10 @@ class TestZouwuModelForecast(ZooTestCase):
                                max_FX_epoch=1,
                                max_TCN_epoch=1,
                                alt_iters=2)
-        x = np.random.rand(1000, 720)
+        x = np.random.rand(300, 480)
         model.fit(x)
         model.predict(x=None, horizon=24)
-        target_value = np.random.rand(1000, 24)
+        target_value = np.random.rand(300, 24)
         model.evaluate(x=None, target_value=target_value, metric=['mse'])
 
 
