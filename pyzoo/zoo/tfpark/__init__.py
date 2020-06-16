@@ -16,27 +16,25 @@
 
 
 def check_tf_version():
-    import os
     import logging
-    do_check = True
-    if "ANALYTICS_ZOO_TF_CHECK" in os.environ and os.environ["ANALYTICS_ZOO_TF_CHECK"] == "false":
-        do_check = False
-    if do_check:
+    try:
         import tensorflow as tf
-        v_str = tf.__version__
-        major, minor, patch = v_str.split(".")
-        if v_str != "1.15.0":
-            if int(major) == 1:
-                logging.warning("\n######################### WARNING ##########################\n"
-                                "\nAnalytics Zoo TFPark has only been tested on TensorFlow 1.15.0,"
-                                " but your current TensorFlow installation is {}.".format(v_str) +
-                                "\nYou may encounter some version incompatibility issues. "
-                                "\n##############################################################")
-            else:
-                message = "Analytics Zoo TFPark only supports TensorFlow 1.15.0, " + \
-                          "but your current TensorFlow installation is {}".format(v_str) + \
-                          "\nYou can export ANALYTICS_ZOO_TF_CHECK=false to disable this check."
-                raise RuntimeError(message)
+    except Exception as e:
+        raise RuntimeError("Importing TensorFlow failed, please install tensorflow 1.15.0.", e)
+
+    v_str = tf.__version__
+    major, minor, patch = v_str.split(".")
+    if v_str != "1.15.0":
+        if int(major) == 1:
+            logging.warning("\n######################### WARNING ##########################\n"
+                            "\nAnalytics Zoo TFPark has only been tested on TensorFlow 1.15.0,"
+                            " but your current TensorFlow installation is {}.".format(v_str) +
+                            "\nYou may encounter some version incompatibility issues. "
+                            "\n##############################################################")
+        else:
+            message = "Currently Analytics Zoo TFPark only supports TensorFlow 1.15.0, " + \
+                      "but your current TensorFlow installation is {}".format(v_str)
+            raise RuntimeError(message)
 
 check_tf_version()
 
