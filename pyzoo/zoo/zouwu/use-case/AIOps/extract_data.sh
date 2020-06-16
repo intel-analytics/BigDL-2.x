@@ -22,7 +22,6 @@ if [ ! -f "$FILENAME" ]
 then
    echo "$FILENAME doesn't exists."
    bash ./get_data.sh
-   exit
 fi
 
 echo "Extract m_1932"
