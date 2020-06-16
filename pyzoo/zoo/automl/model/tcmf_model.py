@@ -48,7 +48,6 @@ class TCMF(BaseModel):
         self.kernel_size_Y = config.get("kernel_size_Y", 7)
         self.lr = config.get("learning_rate", 0.0005)
         self.val_len = config.get("val_len", 24)
-        self.end_index = config.get("end_index", -24)
         self.normalize = config.get("normalize", False)
         self.start_date = config.get("start_date", "2020-4-1")
         self.freq = config.get("freq", "1H")
@@ -82,7 +81,6 @@ class TCMF(BaseModel):
             kernel_size_Y=self.kernel_size_Y,
             lr=self.lr,
             val_len=self.val_len,
-            end_index=self.end_index,
             normalize=self.normalize,
             start_date=self.start_date,
             freq=self.freq,

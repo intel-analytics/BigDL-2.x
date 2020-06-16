@@ -532,7 +532,7 @@ class DeepGLO(object):
         self, Ymat, init_epochs=100, alt_iters=10, y_iters=200, tenacity=7, mod=5,
             max_FX_epoch=300, max_TCN_epoch=300
     ):
-        self.end_index += Ymat.shape[1]
+        self.end_index = Ymat.shape[1]
 
         if self.normalize:
             self.s = np.std(Ymat[:, 0:self.end_index], axis=1)
