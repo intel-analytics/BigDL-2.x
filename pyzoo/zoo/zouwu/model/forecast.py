@@ -63,7 +63,8 @@ class TCMFForecaster(Forecaster):
                  max_y_iterations=300,
                  init_XF_epoch=100,
                  max_FX_epoch=300,
-                 max_TCN_epoch=300):
+                 max_TCN_epoch=300,
+                 alt_iters=10):
         """
         Initialize
         :param vbsize:
@@ -88,7 +89,8 @@ class TCMFForecaster(Forecaster):
         :param max_y_iterations,
         :param init_XF_epoch,
         :param max_FX_epoch,
-        :param max_TCN_epoch
+        :param max_TCN_epoch,
+        :param alt_iters
         """
         self.internal = None
         self.config = {
@@ -115,7 +117,8 @@ class TCMFForecaster(Forecaster):
             "max_y_iterations": max_y_iterations,
             "init_XF_epoch": init_XF_epoch,
             "max_FX_epoch": max_FX_epoch,
-            "max_TCN_epoch": max_TCN_epoch
+            "max_TCN_epoch": max_TCN_epoch,
+            "alt_iters": alt_iters,
         }
         self.model = self._build()
 
@@ -140,30 +143,35 @@ class TCMFForecaster(Forecaster):
             self.internal.fit_eval(x)
 
     def evaluate(self,
-                 x,
+                 target_value,
+                 x=None,
                  metric=['mae'],
                  covariates=None,
                  ):
         """
         evaluate the model
+        :param target_value: target value for evaluation. We interpret its second dimension of
+        as the horizon length for evaluation.
         :param covariates: global covariates
         :param x: the input
         :param metric: the metrics
         :return:
         """
-        self.internal.evaluate(x, metric=metric)
+        self.internal.evaluate(y=target_value, x=x, metrics=metric)
 
     def predict(self,
-                x,
+                x=None,
+                horizon=24,
                 covariates=None,
                 ):
         """
         predict
-        :param x: the input
+        :param x: the input. We don't support input x directly
+        :param horizon: horizon length to look forward.
         :param covariates: the global covariates
         :return:
         """
-        self.internal.predict(x)
+        self.internal.predict(x=x, horizon=horizon)
 
 
 class TFParkForecaster(TFParkKerasModel, Forecaster, metaclass=ABCMeta):
