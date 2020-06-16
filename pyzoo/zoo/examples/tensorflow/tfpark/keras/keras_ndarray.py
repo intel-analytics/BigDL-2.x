@@ -15,10 +15,11 @@
 #
 import sys
 
+import tensorflow as tf
 from zoo import init_nncontext
 from bigdl.dataset import mnist
 from zoo.tfpark import KerasModel
-import tensorflow as tf
+
 
 def main(max_epoch):
     _ = init_nncontext()
