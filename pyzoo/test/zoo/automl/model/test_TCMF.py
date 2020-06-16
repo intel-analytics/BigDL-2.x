@@ -55,6 +55,22 @@ class TestTCMF(ZooTestCase):
         assert len(evaluate_result[0]) == horizon
         assert len(evaluate_result[1]) == horizon
 
+    def test_predict_evaluate_error(self):
+        with pytest.raises(ValueError):
+            self.model.predict(x=1)
+
+        with pytest.raises(ValueError):
+            self.model.evaluate(x=1, y=np.random.rand(self.num_samples, 24))
+
+        with pytest.raises(ValueError):
+            self.model.evaluate(x=None, y=None)
+
+        with pytest.raises(Exception):
+            self.model.predict(x=None)
+
+        with pytest.raises(Exception):
+            self.model.evaluate(x=None, y=np.random.rand(self.num_samples, 24))
+
     def test_save_restore(self):
         self.model.fit_eval(x=self.Ymat, y=None, **self.config)
         horizon = 24

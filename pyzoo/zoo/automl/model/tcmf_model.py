@@ -34,6 +34,7 @@ class TCMF(BaseModel):
         :param future_seq_len:
         """
         # models
+        self.model = None
         self.model_init = False
 
     def set_params(self, **config):
@@ -134,8 +135,10 @@ class TCMF(BaseModel):
         :param mc:
         :return:
         """
-        assert x is None, "We don't support input x directly."
-        assert self.model, "You should call fit_eval first before calling predict"
+        if x is not None:
+            raise ValueError("We don't support input x directly.")
+        if self.model is None:
+            raise Exception("Needs to call fit_eval or restore first before calling predict")
         out = self.model.predict_horizon(
             future=horizon,
             bsize=8000,
@@ -154,9 +157,12 @@ class TCMF(BaseModel):
         :param metrics: a list of metrics in string format
         :return: a list of metric evaluation results
         """
-        assert x is None, "We don't support input x directly."
-        assert self.model, "You should call fit_eval first before calling evaluate"
-        assert y is not None, "Input invalid y of None"
+        if x is not None:
+            raise ValueError("We don't support input x directly.")
+        if y is None:
+            raise ValueError("Input invalid y of None")
+        if self.model is None:
+            raise Exception("Needs to call fit_eval or restore first before calling predict")
         if len(y.shape) == 1:
             y = np.expand_dims(y, axis=1)
             horizon = 1
