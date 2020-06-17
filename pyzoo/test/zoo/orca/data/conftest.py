@@ -27,7 +27,7 @@ def orca_data_fixture():
     from zoo import init_spark_on_local
     from zoo.ray import RayContext
     global ray_ctx
-    ZooContext.orca_eager_mode = True
+    ZooContext._orca_eager_mode = True
     sc = init_spark_on_local(cores=4, spark_log_level="INFO")
     access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
     secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")

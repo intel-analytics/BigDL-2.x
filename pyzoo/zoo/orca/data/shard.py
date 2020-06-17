@@ -147,7 +147,7 @@ class SparkXShards(XShards):
     def __init__(self, rdd):
         self.rdd = rdd
         self.user_cached = False
-        self.eager = ZooContext.orca_eager_mode
+        self.eager = ZooContext._orca_eager_mode
         self.rdd.cache()
         if self.eager:
             self.compute()
