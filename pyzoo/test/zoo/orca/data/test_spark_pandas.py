@@ -21,6 +21,7 @@ import pytest
 
 import zoo.orca.data
 import zoo.orca.data.pandas
+from zoo.orca.data.shard import SharedValue
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.common.nncontext import *
 
@@ -44,6 +45,10 @@ class TestSparkXShards(ZooTestCase):
         assert len(data) == 2, "number of shard should be 2"
         df = data[0]
         assert "location" in df.columns, "location is not in columns"
+        file_path = os.path.join(self.resource_path, "abc")
+        with self.assertRaises(Exception) as context:
+            xshards = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        self.assertTrue('The file path is invalid/empty' in str(context.exception))
 
     def test_read_local_json(self):
         file_path = os.path.join(self.resource_path, "orca/data/json")
@@ -129,6 +134,8 @@ class TestSparkXShards(ZooTestCase):
         assert trans_data_shard.is_cached(), "trans_data_shard should be cached"
         shards_splits = trans_data_shard.split()
         assert not trans_data_shard.is_cached(), "shards_splits should be uncached"
+        trans_data_shard.uncache()
+        del trans_data_shard
         assert len(shards_splits) == 2
         assert shards_splits[0].is_cached(), "shards in shards_splits should be cached"
         data1 = shards_splits[0].collect()
@@ -169,7 +176,7 @@ class TestSparkXShards(ZooTestCase):
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
         path = os.path.join(temp, "data.pkl")
         data_shard.save_pickle(path)
-        shards = zoo.orca.data.SparkXShards.load_pickle(path, self.sc)
+        shards = zoo.orca.data.SparkXShards.load_pickle(path)
         assert isinstance(shards, zoo.orca.data.SparkXShards)
         shutil.rmtree(temp)
 
@@ -192,6 +199,26 @@ class TestSparkXShards(ZooTestCase):
         assert len(trans_data) == 2, "number of shard should be 2"
         trans_dict = trans_data[0]
         assert "x" in trans_dict, "x is not in the dictionary"
+
+    def test_transform_broadcast(self):
+        def negative(df, column_name, minus_val):
+            df[column_name] = df[column_name] * (-1)
+            df[column_name] = df[column_name] - minus_val.value
+            return df
+
+        file_path = os.path.join(self.resource_path, "orca/data/json")
+        data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc,
+                                                    orient='columns', lines=True)
+        data = data_shard.collect()
+        assert data[0]["value"].values[0] > 0, "value should be positive"
+        col_name = "value"
+        minus_val = 2
+        minus_val_shared_value = SharedValue(minus_val)
+        trans_shard = data_shard.transform_shard(negative, col_name,
+                                                 minus_val_shared_value)
+        data2 = trans_shard.collect()
+        assert data2[0]["value"].values[0] < 0, "value should be negative"
+        assert data[0]["value"].values[0] + data2[0]["value"].values[0] == -2, "value should be -2"
 
     def test_utility(self):
         file_path = os.path.join(self.resource_path, "orca/data/csv")

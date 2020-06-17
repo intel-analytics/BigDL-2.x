@@ -30,9 +30,11 @@ def chunk(lst, n):
         yield lst[c * size:(c + 1) * size] + extra
 
 
-def flatten(list_of_list):
-    flattend = [item for sublist in list_of_list for item in sublist]
-    return flattend
+def flatten(list_input):
+    if any(isinstance(i, list) for i in list_input):
+        return [item for sublist in list_input for item in sublist]
+    else:
+        return list_input
 
 
 def list_s3_file(file_path, file_type, env):
@@ -88,81 +90,6 @@ def extract_one_path(file_path, file_type, env):
                           if os.path.splitext(file)[1] == "." + file_type]
     return file_paths
 
-
-def open_text(path):
-    # Return a list of lines
-    if path.startswith("hdfs"):  # hdfs://url:port/file_path
-        import pyarrow as pa
-        fs = pa.hdfs.connect()
-        with fs.open(path, 'rb') as f:
-            lines = f.read().decode("utf-8").split("\n")
-    elif path.startswith("s3"):  # s3://bucket/file_path
-        access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
-        secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
-        import boto3
-        s3_client = boto3.Session(
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key).client('s3', verify=False)
-        path_parts = path.split("://")[1].split('/')
-        bucket = path_parts.pop(0)
-        key = "/".join(path_parts)
-        data = s3_client.get_object(Bucket=bucket, Key=key)
-        lines = data["Body"].read().decode("utf-8").split("\n")
-    else:  # Local path
-        lines = []
-        for line in open(path):
-            lines.append(line)
-    return [line.strip() for line in lines]
-
-
-def open_image(path):
-    from PIL import Image
-    if path.startswith("hdfs"):  # hdfs://url:port/file_path
-        import pyarrow as pa
-        fs = pa.hdfs.connect()
-        with fs.open(path, 'rb') as f:
-            return Image.open(f)
-    elif path.startswith("s3"):  # s3://bucket/file_path
-        access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
-        secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
-        import boto3
-        from io import BytesIO
-        s3_client = boto3.Session(
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key).client('s3', verify=False)
-        path_parts = path.split("://")[1].split('/')
-        bucket = path_parts.pop(0)
-        key = "/".join(path_parts)
-        data = s3_client.get_object(Bucket=bucket, Key=key)
-        return Image.open(BytesIO(data["Body"].read()))
-    else:  # Local path
-        return Image.open(path)
-
-
-def load_numpy(path):
-    import numpy as np
-    if path.startswith("hdfs"):  # hdfs://url:port/file_path
-        import pyarrow as pa
-        fs = pa.hdfs.connect()
-        with fs.open(path, 'rb') as f:
-            return np.load(f)
-    elif path.startswith("s3"):  # s3://bucket/file_path
-        access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
-        secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
-        import boto3
-        from io import BytesIO
-        s3_client = boto3.Session(
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key).client('s3', verify=False)
-        path_parts = path.split("://")[1].split('/')
-        bucket = path_parts.pop(0)
-        key = "/".join(path_parts)
-        data = s3_client.get_object(Bucket=bucket, Key=key)
-        return np.load(BytesIO(data["Body"].read()))
-    else:  # Local path
-        return np.load(path)
-
-
 def read_pd_hdfs_file_list(iterator, file_type, **kwargs):
     import pyarrow as pa
     fs = pa.hdfs.connect()
@@ -205,3 +132,30 @@ def get_class_name(obj):
     if obj.__class__.__module__ != 'builtins':
         return '.'.join([obj.__class__.__module__, obj.__class__.__name__])
     return obj.__class__.__name__
+
+
+def get_node_ip():
+    """
+    This function is ported from ray to get the ip of the current node. In the settings where
+    Ray is not involved, calling ray.services.get_node_ip_address would introduce Ray overhead.
+    """
+    import socket
+    import errno
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # This command will raise an exception if there is no internet connection.
+        s.connect(("8.8.8.8", 80))
+        node_ip_address = s.getsockname()[0]
+    except OSError as e:
+        node_ip_address = "127.0.0.1"
+        # [Errno 101] Network is unreachable
+        if e.errno == errno.ENETUNREACH:
+            try:
+                # try get node ip address from host name
+                host_name = socket.getfqdn(socket.gethostname())
+                node_ip_address = socket.gethostbyname(host_name)
+            except Exception:
+                pass
+    finally:
+        s.close()
+    return node_ip_address
