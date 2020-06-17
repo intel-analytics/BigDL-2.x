@@ -145,7 +145,6 @@ class DeepGLO(object):
         self.end_index = end_index
         self.normalize = normalize
         self.svd = svd
-        self.logger = logging.getLogger()
 
     def tensor2d_to_temporal(self, T):
         T = T.view(1, T.size(0), T.size(1))
@@ -533,7 +532,7 @@ class DeepGLO(object):
         self, Ymat, init_epochs=100, alt_iters=10, y_iters=200, tenacity=7, mod=5,
             max_FX_epoch=300, max_TCN_epoch=300
     ):
-        self.end_index += Ymat.shape[1]
+        self.end_index = Ymat.shape[1]
 
         if self.normalize:
             self.s = np.std(Ymat[:, 0:self.end_index], axis=1)
@@ -615,6 +614,93 @@ class DeepGLO(object):
 
         self.num_epochs = y_iters
         self.train_Yseq(num_epochs=y_iters, early_stop=True, tenacity=tenacity)
+
+    def get_time_covs(self, start_date, num_ts):
+        if self.use_time:
+            time = TimeCovariates(
+                start_date=start_date,
+                freq=self.freq,
+                normalized=True,
+                num_ts=num_ts
+            )
+            if self.dti is not None:
+                time.dti = self.dti
+            time_covariates = time.get_covariates()
+            if self.covariates is None:
+                covariates = time_covariates
+            else:
+                covariates = np.vstack([time_covariates, self.covariates])
+        else:
+            covariates = self.covariates
+        return covariates
+
+    def get_prediction_time_covs(self, rg, horizon):
+        covs_past = self.Yseq.covariates[:, -rg:]
+        future_start_date = pd.Timestamp(self.start_date) + pd.Timedelta('1h') * self.Ymat.shape[1]
+        covs_future = self.get_time_covs(start_date=future_start_date, num_ts=horizon)
+        covs = np.concatenate([covs_past, covs_future], axis=1)
+        return covs
+
+    def predict_horizon(
+            self, ind=None, future=10, normalize=False, bsize=90
+    ):
+
+        if ind is None:
+            ind = np.arange(self.Ymat.shape[0])
+
+        self.Xseq = self.Xseq
+
+        self.Yseq.seq = self.Yseq.seq.eval()
+        self.Xseq = self.Xseq.eval()
+
+        rg = max(
+            1 + 2 * (self.kernel_size - 1) * 2 ** (len(self.num_channels_X) - 1),
+            1 + 2 * (self.kernel_size_Y - 1) * 2 ** (len(self.num_channels_Y) - 1),
+        )
+        covs = self.get_prediction_time_covs(rg, future)
+        last_step = self.Ymat.shape[1]
+
+        yc = self.predict_global(
+            ind=ind,
+            last_step=last_step,
+            future=future,
+            normalize=False,
+            bsize=bsize,
+        )
+
+        if self.period is None:
+            ycovs = np.zeros(shape=[yc.shape[0], 1, yc.shape[1]])
+            if self.forward_cov:
+                ycovs[:, 0, 0:-1] = yc[:, 1::]
+            else:
+                ycovs[:, 0, :] = yc
+        else:
+            ycovs = np.zeros(shape=[yc.shape[0], 2, yc.shape[1]])
+            if self.forward_cov:
+                ycovs[:, 0, 0:-1] = yc[:, 1::]
+            else:
+                ycovs[:, 0, :] = yc
+            period = self.period
+            while last_step + future - (period - 1) > last_step + 1:
+                period += self.period
+            # The last coordinate is not used.
+            ycovs[:, 1, period - 1: -1:] = self.Ymat[:, last_step - rg: last_step]
+
+        Y = self.Yseq.predict_future(
+            data_in=self.Ymat[ind, last_step - rg: last_step],
+            covariates=covs,
+            ycovs=ycovs,
+            future=future,
+            bsize=bsize,
+            normalize=False,
+        )
+
+        if normalize:
+            Y = Y - self.mini
+            Y = Y * self.s[ind, None] + self.m[ind, None]
+            return Y
+        else:
+            return Y
 
     def predict(
         self, ind=None, last_step=100, future=10, normalize=False, bsize=90
