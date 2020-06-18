@@ -85,15 +85,8 @@ __Options:__
 __Sample console log output__:
 ```
 ......
-Iteration:72, batch 32, takes 3975255716 ns, throughput is 8.05 imgs/sec
-Iteration:73, batch 32, takes 3979834893 ns, throughput is 8.04 imgs/sec
-Iteration:74, batch 32, takes 4013645682 ns, throughput is 7.97 imgs/sec
-Iteration:75, batch 32, takes 3971038685 ns, throughput is 8.06 imgs/sec
-Iteration:76, batch 32, takes 3959817210 ns, throughput is 8.08 imgs/sec
+Iteration:72, batch 32, takes XXX ns, throughput is XXX imgs/sec
 ......
-Iteration:20, latency for a single image is126.146056ms
-Iteration:21, latency for a single image is127.221073ms
-Iteration:22, latency for a single image is125.411726ms
-Iteration:23, latency for a single image is123.577596ms
+Iteration:20, latency for a single image is XXX ms
 ......
 ```
