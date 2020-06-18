@@ -307,14 +307,19 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     val parallelNum = if (blasFlag) coreNum else 1
     val model = new InferenceModel(parallelNum)
 
-    // quantize model would not bring any drawback here
-    // but some test may fail at this place
-    // perhaps machine not supporting DNN would not accept quantize
+    // Used for Tensorflow Model, it could not have intraThreadNum > 2^8
+    // in some models, thus intraThreadNum should be limited
+    val maxParallel = if (coreNum <= 64) {
+      coreNum
+    } else {
+      64
+    }
+
     modelType match {
       case "caffe" => model.doLoadCaffe(defPath, weightPath, blas = blasFlag)
       case "bigdl" => model.doLoadBigDL(weightPath, blas = blasFlag)
       case "tensorflowFrozenModel" =>
-        model.doLoadTensorflow(weightPath, "frozenModel", 1, 1, true)
+        model.doLoadTensorflow(weightPath, "frozenModel", maxParallel, 1, true)
       case "tensorflowSavedModel" =>
         modelInputs = modelInputs.filterNot((x: Char) => x.isWhitespace)
         modelOutputs = modelOutputs.filterNot((x: Char) => x.isWhitespace)
