@@ -144,13 +144,14 @@ class RayPartition(object):
 
 
 class SparkXShards(XShards):
-    def __init__(self, rdd, eager=None):
+    def __init__(self, rdd, transient=False):
         self.rdd = rdd
         self.user_cached = False
-        self.eager = eager
-        if self.eager is None:
+        if transient:
+            self.eager = False
+        else:
             self.eager = ZooContext._orca_eager_mode
-        self.rdd.cache()
+            self.rdd.cache()
         if self.eager:
             self.compute()
         self.type = {}
@@ -320,7 +321,7 @@ class SparkXShards(XShards):
             except:
                 raise Exception("Invalid key for this XShards")
             return value
-        return SparkXShards(self.rdd.map(get_data), eager=False)
+        return SparkXShards(self.rdd.map(get_data), transient=True)
 
     # Tested on pyarrow 0.17.0; 0.16.0 would get errors.
     def to_ray(self):

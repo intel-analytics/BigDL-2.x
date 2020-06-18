@@ -226,7 +226,7 @@ class TestSparkXShards(ZooTestCase):
                                                     orient='columns', lines=True)
         selected_shard = data_shard["value"]
         assert data_shard.is_cached(), "data_shard should be cached"
-        assert selected_shard.is_cached(), "selected_shard should be cached"
+        assert not selected_shard.is_cached(), "selected_shard should not be cached"
         data1 = data_shard.collect()
         data2 = selected_shard.collect()
         assert data1[0]["value"].values[0] == data2[0][0], "value should be same"
