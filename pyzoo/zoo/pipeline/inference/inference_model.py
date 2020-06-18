@@ -25,7 +25,7 @@ class InferenceModel(JavaValue):
     """
     Model for thread-safe inference.
     To do inference, you need to first initiate an InferenceModel instance, then call
-    load|load_caffe|load_tf|load_openvino to load a pre-trained model, and finally call predict.
+    load|load_caffe|load_openvino to load a pre-trained model, and finally call predict.
 
     # Arguments
     supported_concurrent_num: Int. How many concurrent threads to invoke. Default is 1.
