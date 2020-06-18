@@ -13,8 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from py4j.protocol import Py4JError
 
 from zoo.orca.data.utils import *
+from zoo.common.nncontext import init_nncontext
+from zoo import ZooContext
 
 
 class XShards(object):
@@ -48,7 +51,7 @@ class XShards(object):
 
 class RayXShards(XShards):
     """
-    A collection of data which can be pre-processed parallelly on Ray
+    A collection of data which can be pre-processed in parallel on Ray
     """
     def __init__(self, partitions):
         self.partitions = partitions
@@ -97,24 +100,58 @@ class RayXShards(XShards):
         """
         return self.partitions
 
+    def colocate_actors(self, actors):
+        """
+        Sort Ray actors and RayPartitions by node_ip so that each actor is colocated
+        with the data partition on the same node.
+        """
+        if self.partitions[0].node_ip:
+            # Assume that the partitions are already sorted by node_ip
+            import ray
+            actor_ips = ray.get([actor.get_node_ip.remote() for actor in actors])
+            actor_zip_ips = list(zip(actors, actor_ips))
+            actor_zip_ips.sort(key=lambda x: x[1])
+            for i in range(len(actors)):
+                actor_ip = actor_zip_ips[i][1]
+                partition_ip = self.partitions[i].node_ip
+                assert actor_ip == partition_ip
+            return [actor_ip[0] for actor_ip in actor_zip_ips]
+        else:
+            return actors
+
 
 class RayPartition(object):
     """
     Partition of RayXShards
     """
-
-    def __init__(self, shard_list):
+    def __init__(self, shard_list, node_ip=None, object_store_address=None):
         self.shard_list = shard_list
+        self.node_ip = node_ip
+        self.object_store_address = object_store_address
 
     def get_data(self):
-        return [shard.get_data.remote() for shard in self.shard_list]
+        # For partitions read by Ray, shard_list is a list of Ray actors.
+        # Each Ray actor contains a partition of data.
+        if isinstance(self.shard_list, list):
+            import ray
+            return ray.get([shard.get_data.remote() for shard in self.shard_list])
+        # For partitions transfromed from Spark, shard_list is a single plasma ObjectID.
+        # The ObjectID would contain a list of data.
+        else:
+            import pyarrow.plasma as plasma
+            client = plasma.connect(self.object_store_address)
+            return client.get(self.shard_list)
 
 
 class SparkXShards(XShards):
     def __init__(self, rdd):
         self.rdd = rdd
         self.user_cached = False
+        self.eager = ZooContext._orca_eager_mode
         self.rdd.cache()
+        if self.eager:
+            self.compute()
+        self.type = {}
 
     def transform_shard(self, func, *args):
         transformed_shard = SparkXShards(self.rdd.map(lambda data: func(data, *args)))
@@ -131,7 +168,11 @@ class SparkXShards(XShards):
 
     def uncache(self):
         self.user_cached = False
-        self.rdd.unpersist()
+        if self.is_cached():
+            try:
+                self.rdd.unpersist()
+            except Py4JError:
+                print("Try to unpersist an uncached rdd")
         return self
 
     def _uncache(self):
@@ -140,6 +181,10 @@ class SparkXShards(XShards):
 
     def is_cached(self):
         return self.rdd.is_cached
+
+    def compute(self):
+        self.rdd.count()
+        return self
 
     def num_partitions(self):
         return self.rdd.getNumPartitions()
@@ -150,14 +195,12 @@ class SparkXShards(XShards):
         return repartitioned_shard
 
     def partition_by(self, cols, num_partitions=None):
-        import pandas as pd
-        elem_class, columns = self.rdd.map(
-            lambda data: (type(data), data.columns) if isinstance(data, pd.DataFrame)
-            else (type(data), None)).first()
-        if issubclass(elem_class, pd.DataFrame):
+        if self._get_class_name() == 'pandas.core.frame.DataFrame':
+            import pandas as pd
+            schema = self._get_schema()
             # if partition by a column
             if isinstance(cols, str):
-                if cols not in columns:
+                if cols not in schema['columns']:
                     raise Exception("The partition column is not in the DataFrame")
                 # change data to key value pairs
                 rdd = self.rdd.flatMap(
@@ -174,7 +217,7 @@ class SparkXShards(XShards):
             def merge(iterator):
                 data = [value[1] for value in list(iterator)]
                 if data:
-                    df = pd.DataFrame(data=data, columns=columns)
+                    df = pd.DataFrame(data=data, columns=schema['columns'])
                     return [df]
                 else:
                     # no data in this partition
@@ -188,15 +231,13 @@ class SparkXShards(XShards):
                             " of Pandas DataFrame")
 
     def unique(self, key):
-        import pandas as pd
-        elem_class, columns = self.rdd.map(
-            lambda data: (type(data), data.columns) if isinstance(data, pd.DataFrame)
-            else (type(data), None)).first()
-        if issubclass(elem_class, pd.DataFrame):
+        if self._get_class_name() == 'pandas.core.frame.DataFrame':
             if key is None:
                 raise Exception("Cannot apply unique operation on XShards of Pandas Dataframe"
                                 " without column name")
-            if key in columns:
+            import pandas as pd
+            schema = self._get_schema()
+            if key in schema['columns']:
                 rdd = self.rdd.map(lambda df: df[key].unique())
                 import numpy as np
                 result = rdd.reduce(lambda list1, list2: pd.unique(np.concatenate((list1, list2),
@@ -249,15 +290,101 @@ class SparkXShards(XShards):
                 except:
                     raise Exception("Invalid key for this XShards")
                 return len(value) if hasattr(value, '__len__') else 1
-            return self.rdd.map(get_len).reduce(lambda l1, l2: l1 + l2)
+            ret = self._for_each(lambda data: get_len(data))
+            first = ret.first()
+            if not isinstance(first, Exception):
+                return ret.reduce(lambda l1, l2: l1 + l2)
+            else:
+                raise first
 
     def save_pickle(self, path, batchSize=10):
         self.rdd.saveAsPickleFile(path, batchSize)
         return self
 
     @classmethod
-    def load_pickle(cls, path, sc, minPartitions=None):
+    def load_pickle(cls, path, minPartitions=None):
+        sc = init_nncontext()
         return SparkXShards(sc.pickleFile(path, minPartitions))
 
     def __del__(self):
         self.uncache()
+
+    # Tested on pyarrow 0.17.0; 0.16.0 would get errors.
+    def to_ray(self):
+        import random
+        import string
+        from zoo.ray import RayContext
+        ray_ctx = RayContext.get()
+        object_store_address = ray_ctx.address_info["object_store_address"]
+
+        # TODO: Handle failure when doing this?
+        # TODO: delete the data in the plasma?
+        def put_to_plasma(seed):
+            def f(index, iterator):
+                import pyarrow.plasma as plasma
+                from zoo.orca.data.utils import get_node_ip
+                # mapPartition would set the same random seed for each partition?
+                # Here use the partition index to override the random seed so that there won't be
+                # identical object_ids in plasma.
+                random.seed(seed+str(index))
+                res = list(iterator)
+                client = plasma.connect(object_store_address)
+                object_id = client.put(res)
+                yield object_id, get_node_ip()
+            return f
+
+        # Generate a random string here to make sure that when this method is called twice, the
+        # seeds to generate plasma ObjectID are different.
+        random_str = ''.join(
+            [random.choice(string.ascii_letters + string.digits) for i in range(32)])
+        object_id_node_ips = self.rdd.mapPartitionsWithIndex(put_to_plasma(random_str)).collect()
+        self.uncache()
+        # Sort the data according to the node_ips.
+        object_id_node_ips.sort(key=lambda x: x[1])
+        partitions = [RayPartition(shard_list=id_ip[0], node_ip=id_ip[1],
+                                   object_store_address=object_store_address)
+                      for id_ip in object_id_node_ips]
+        return RayXShards(partitions)
+
+    def _for_each(self, func, *args, **kwargs):
+        def utility_func(x, func, *args, **kwargs):
+            try:
+                result = func(x, *args, **kwargs)
+            except Exception as e:
+                return e
+            return result
+        result_rdd = self.rdd.map(lambda x: utility_func(x, func, *args, **kwargs))
+        return result_rdd
+
+    def _get_schema(self):
+        if 'schema' in self.type:
+            return self.type['schema']
+        else:
+            if self._get_class_name() == 'pandas.core.frame.DataFrame':
+                import pandas as pd
+                columns, dtypes = self.rdd.map(lambda x: (x.columns, x.dtypes)).first()
+                self.type['schema'] = {'columns': columns, 'dtype': dtypes}
+                return self.type['schema']
+            return None
+
+    def _get_class_name(self):
+        if 'class_name' in self.type:
+            return self.type['class_name']
+        else:
+            self.type['class_name'] = self._for_each(get_class_name).first()
+            return self.type['class_name']
+
+
+class SharedValue(object):
+    def __init__(self, data):
+        sc = init_nncontext()
+        self.broadcast_data = sc.broadcast(data)
+        self._value = None
+
+    @property
+    def value(self):
+        self._value = self.broadcast_data.value
+        return self._value
+
+    def unpersist(self):
+        self.broadcast_data.unpersist()
