@@ -154,10 +154,12 @@ def get_eager_mode():
 
 
 class SparkXShards(XShards):
-    def __init__(self, rdd):
+    def __init__(self, rdd, eager=None):
         self.rdd = rdd
         self.user_cached = False
-        self.eager = get_eager_mode()
+        self.eager = eager
+        if self.eager is None:
+            self.eager = get_eager_mode()
         self.rdd.cache()
         if self.eager:
             self.compute()
@@ -316,6 +318,17 @@ class SparkXShards(XShards):
 
     def __del__(self):
         self.uncache()
+
+    def __getitem__(self, key):
+        def get_data(data):
+            assert hasattr(data, '__getitem__'), \
+                "No selection operation available for this XShards"
+            try:
+                value = data[key]
+            except:
+                raise Exception("Invalid key for this XShards")
+            return value
+        return SparkXShards(self.rdd.map(get_data), eager=False)
 
     # Tested on pyarrow 0.17.0; 0.16.0 would get errors.
     def to_ray(self):
