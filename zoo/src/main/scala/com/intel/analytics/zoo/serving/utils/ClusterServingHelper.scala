@@ -314,7 +314,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
       case "caffe" => model.doLoadCaffe(defPath, weightPath, blas = blasFlag)
       case "bigdl" => model.doLoadBigDL(weightPath, blas = blasFlag)
       case "tensorflowFrozenModel" =>
-        model.doLoadTensorflow(weightPath, "frozenModel", coreNum, 1, true)
+        model.doLoadTensorflow(weightPath, "frozenModel", 1, 1, true)
       case "tensorflowSavedModel" =>
         modelInputs = modelInputs.filterNot((x: Char) => x.isWhitespace)
         modelOutputs = modelOutputs.filterNot((x: Char) => x.isWhitespace)
