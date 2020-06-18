@@ -4,11 +4,17 @@ For Python users, Analytics Zoo can be installed either [from pip](#install-from
 
 ---
 ## **Install the latest nightly build wheels for pip**
-You can find the list of the latest nightly build wheels for pip [here](https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/zoo-py/). 
-Choose a wheel for your platform and install it using the following command:
+You can find the list of the latest nightly build wheels for pip [here](https://sourceforge.net/projects/analytics-zoo/files/zoo-py/). 
+Choose a wheel with timestamp for your platform and click to download it to your local repository.
+
+Note that if you are using Linux, you need to choose the file `analytics_zoo-VERSION-TIMESTAMP-py2.py3-none-manylinux1_x86_64.whl`.
+If you are using Mac, choose `analytics_zoo-VERSION-TIMESTAMP-py2.py3-none-macosx_10_11_x86_64.whl` instead. 
+
+After downloading the target wheel file, go to the download directory and run the following command:
 ```bash
-pip install -U [link to wheel]
+pip install analytics_zoo-*-py2.py3-none-*_x86_64.whl
 ```
+See [here](#install-from-pip-for-local-usage) for some remarks with regard to pip install.
 
 ---
 ## **Install from pip for local usage**
