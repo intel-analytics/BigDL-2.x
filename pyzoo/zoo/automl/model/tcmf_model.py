@@ -34,6 +34,7 @@ class TCMF(BaseModel):
         :param future_seq_len:
         """
         # models
+        self.model = None
         self.model_init = False
 
     def set_params(self, **config):
@@ -47,7 +48,6 @@ class TCMF(BaseModel):
         self.kernel_size_Y = config.get("kernel_size_Y", 7)
         self.lr = config.get("learning_rate", 0.0005)
         self.val_len = config.get("val_len", 24)
-        self.end_index = config.get("end_index", -24)
         self.normalize = config.get("normalize", False)
         self.start_date = config.get("start_date", "2020-4-1")
         self.freq = config.get("freq", "1H")
@@ -81,7 +81,6 @@ class TCMF(BaseModel):
             kernel_size_Y=self.kernel_size_Y,
             lr=self.lr,
             val_len=self.val_len,
-            end_index=self.end_index,
             normalize=self.normalize,
             start_date=self.start_date,
             freq=self.freq,
@@ -126,31 +125,62 @@ class TCMF(BaseModel):
         # TODO incrementally train models
         pass
 
-    def predict(self, x, mc=False, ):
+    def predict(self, x=None, horizon=24, mc=False, ):
         """
-
-        :param x:
+        Predict horizon time-points ahead the input x in fit_eval
+        :param x: We don't support input x currently.
+        :param horizon: horizon length to predict
         :param mc:
         :return:
         """
-        # TODO predict on new data
-        pass
+        if x is not None:
+            raise ValueError("We don't support input x directly.")
+        if self.model is None:
+            raise Exception("Needs to call fit_eval or restore first before calling predict")
+        out = self.model.predict_horizon(
+            future=horizon,
+            bsize=8000,
+            normalize=False,
+        )
+        return out[:, -horizon::]
 
-    def evaluate(self, x, y, metric=None):
+    def evaluate(self, x=None, y=None, metrics=None):
         """
-        Evaluate on x, y
-        :param x: input
-        :param y: target
-        :param metric: a list of metrics in string format
+        Evaluate on the prediction results and y. We predict horizon time-points ahead the input x
+        in fit_eval before evaluation, where the horizon length equals the second dimension size of
+        y.
+        :param x: We don't support input x currently.
+        :param y: target. We interpret the second dimension of y as the horizon length for
+            evaluation.
+        :param metrics: a list of metrics in string format
         :return: a list of metric evaluation results
         """
-        pass
+        if x is not None:
+            raise ValueError("We don't support input x directly.")
+        if y is None:
+            raise ValueError("Input invalid y of None")
+        if self.model is None:
+            raise Exception("Needs to call fit_eval or restore first before calling predict")
+        if len(y.shape) == 1:
+            y = np.expand_dims(y, axis=1)
+            horizon = 1
+        else:
+            horizon = y.shape[1]
+        result = self.predict(horizon=horizon)
 
-    def save(self, model_path, config_path):
-        raise NotImplementedError
+        if y.shape[1] == 1:
+            multioutput = 'uniform_average'
+        else:
+            multioutput = 'raw_values'
+        return [Evaluator.evaluate(m, y, result, multioutput=multioutput) for m in metrics]
 
-    def restore(self, model_path, **config):
-        raise NotImplementedError
+    def save(self, model_file):
+        pickle.dump(self.model, open(model_file, "wb"))
+
+    def restore(self, model_file):
+        with open(model_file, 'rb') as f:
+            self.model = pickle.load(f)
+        self.model_init = True
 
     def _get_optional_parameters(self):
         return {}

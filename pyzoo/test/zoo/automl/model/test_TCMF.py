@@ -19,11 +19,15 @@ import pytest
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.model import TCMF
 import numpy as np
+import os
+from numpy.testing import assert_array_almost_equal
 
 
 class TestTCMF(ZooTestCase):
 
     def setup_method(self, method):
+        seq_len = 480
+        self.num_samples = 300
         self.config = {
             "max_y_iterations": 1,
             "init_XF_epoch": 1,
@@ -32,23 +36,57 @@ class TestTCMF(ZooTestCase):
             "alt_iters": 2,
         }
         self.model = TCMF()
-        self.Ymat = np.random.rand(1000, 720)
+        self.Ymat = np.random.rand(self.num_samples, seq_len)
 
     def teardown_method(self, method):
-        pass
+        del self.model
+        del self.Ymat
 
-    def test_fit_eval(self):
-        print("fit_eval:", self.model.fit_eval(self.Ymat, y=None,
-                                               **self.config))
+    def test_fit_predict_evaluate(self):
+        self.model.fit_eval(x=self.Ymat, y=None, **self.config)
+        # test predict
+        horizon = 24
+        result = self.model.predict(x=None, horizon=horizon)
+        assert result.shape[1] == horizon
+        # test evaluate
+        target = np.random.rand(self.num_samples, horizon)
+        evaluate_result = self.model.evaluate(y=target, metrics=['mae', 'smape'])
+        assert len(evaluate_result) == 2
+        assert len(evaluate_result[0]) == horizon
+        assert len(evaluate_result[1]) == horizon
 
-    def test_evaluate(self):
-        pass
+    def test_predict_evaluate_error(self):
+        with pytest.raises(ValueError):
+            self.model.predict(x=1)
 
-    def test_predict(self):
-        pass
+        with pytest.raises(ValueError):
+            self.model.evaluate(x=1, y=np.random.rand(self.num_samples, 24))
+
+        with pytest.raises(ValueError):
+            self.model.evaluate(x=None, y=None)
+
+        with pytest.raises(Exception):
+            self.model.predict(x=None)
+
+        with pytest.raises(Exception):
+            self.model.evaluate(x=None, y=np.random.rand(self.num_samples, 24))
 
     def test_save_restore(self):
-        pass
+        self.model.fit_eval(x=self.Ymat, y=None, **self.config)
+        horizon = 24
+        result_save = self.model.predict(x=None, horizon=horizon)
+        model_file = "tmp.pkl"
+        self.model.save(model_file)
+        assert os.path.isfile(model_file)
+        new_model = TCMF()
+        new_model.restore(model_file)
+        assert new_model.model
+        result_restore = new_model.predict(x=None, horizon=horizon)
+        assert_array_almost_equal(result_save, result_restore, decimal=2), \
+            "Prediction values are not the same after restore: " \
+            "predict before is {}, and predict after is {}".format(result_save, result_restore)
+        os.remove(model_file)
+
 
 if __name__ == '__main__':
     pytest.main([__file__])

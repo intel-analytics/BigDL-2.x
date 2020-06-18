@@ -235,6 +235,18 @@ class TestSparkXShards(ZooTestCase):
             data_shard.len('abc')
         self.assertTrue('Invalid key for this XShards' in str(context.exception))
 
+    def test_for_each(self):
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
+        shards = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+
+        def get_item(data, key):
+            return data[key]
+        result1 = shards._for_each(get_item, 'location')
+        import pandas as pd
+        assert isinstance(result1.first(), pd.Series)
+        result2 = shards._for_each(get_item, 'abc')
+        assert isinstance(result2.first(), KeyError)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
