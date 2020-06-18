@@ -64,7 +64,17 @@ class TorchModel(Layer):
         """
         new_weight = self.get_weights()
         assert(len(new_weight) == 1, "TorchModel's weights should be one tensor")
+        # set weights
         m = CloudPickleSerializer.loads(CloudPickleSerializer, self.module_bytes)
         w = torch.Tensor(new_weight[0])
         torch.nn.utils.vector_to_parameters(w, m.parameters())
+
+        # set running mean and running var
+        new_extra_params = callZooFunc(self.bigdl_type, "getModuleExtraParameters", self.value)
+        idx = 0
+        for named_buffer in m.named_buffers():
+            name = named_buffer[0].split(".")[-1]
+            if name == 'running_mean' or name == 'running_var':
+                named_buffer[1].copy_(torch.Tensor(new_extra_params[idx].to_ndarray()))
+                idx += 1
         return m
