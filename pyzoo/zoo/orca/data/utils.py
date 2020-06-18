@@ -90,6 +90,7 @@ def extract_one_path(file_path, file_type, env):
                           if os.path.splitext(file)[1] == "." + file_type]
     return file_paths
 
+
 def read_pd_hdfs_file_list(iterator, file_type, **kwargs):
     import pyarrow as pa
     fs = pa.hdfs.connect()
