@@ -232,7 +232,7 @@ class TestSparkXShards(ZooTestCase):
         assert data1[0]["value"].values[0] == data2[0][0], "value should be same"
         assert data1[1]["value"].values[0] == data2[1][0], "value should be same"
         with self.assertRaises(Exception) as context:
-            data_shard.len('abc')
+            len(data_shard['abc'])
         self.assertTrue('Invalid key for this XShards' in str(context.exception))
 
     def test_for_each(self):
