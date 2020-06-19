@@ -23,8 +23,6 @@ import mxnet as mx
 import numpy as np
 from mxnet import gluon
 from zoo.ray.utils import to_list
-from zoo.orca.learn.mxnet.utils import find_free_port
-from zoo.orca.data.shard import XShards
 
 
 class MXNetRunner(object):
@@ -55,42 +53,29 @@ class MXNetRunner(object):
             if "seed" in self.config:
                 mx.random.seed(self.config["seed"])
 
-            if isinstance(train_data, XShards):
+            from zoo.orca.data.shard import RayPartition
+            if isinstance(train_data, RayPartition):
                 from zoo.orca.data.utils import ray_partition_get_data_label
-                # XShard input
-                # retrieve train data
-                train_data = train_data.get_partitions()
-                train_partition_data = ray.get(train_data[self.kv.rank].get_data())
-                data, label = ray_partition_get_data_label(train_partition_data,
+                data, label = ray_partition_get_data_label(train_data.get_data(),
                                                            tuple_allowed=False, list_allowed=True)
                 self.train_data = mx.io.NDArrayIter(data=data, label=label,
                                                     batch_size=config["batch_size"],
                                                     shuffle=True)
                 if train_resize_size is not None:
                     self.train_data = mx.io.ResizeIter(self.train_data, train_resize_size)
-                # retrieve val data
                 if test_data is None:
                     self.val_data = None
                 else:
-                    assert isinstance(test_data, XShards), "Test data should be an instance of " \
-                                                           "XShards, please check your input"
-                    test_data = test_data.get_partitions()
-                    val_partition_data = ray.get(test_data[self.kv.rank].get_data())
-                    val_data, val_label = ray_partition_get_data_label(val_partition_data,
+                    val_data, val_label = ray_partition_get_data_label(test_data.get_data(),
                                                                        tuple_allowed=False,
                                                                        list_allowed=True)
                     self.val_data = mx.io.NDArrayIter(data=val_data,
                                                       label=val_label,
                                                       batch_size=config["batch_size"],
                                                       shuffle=True)
-            else:
-                # data_creator
-                assert callable(train_data), "Train data should be an instance of xShards or " \
-                                             "a callable function, please check your input"
+            else:  # data_creator functions
                 self.train_data = train_data(self.config, self.kv)
                 if test_data is not None:
-                    assert callable(test_data), "Test data should be an instance of xShards or " \
-                                                "a callable function, please check your input"
                     self.val_data = test_data(self.config, self.kv)
                 else:
                     self.val_data = None
@@ -246,8 +231,13 @@ class MXNetRunner(object):
 
     def get_node_ip(self):
         """Returns the IP address of the current node."""
-        return ray.services.get_node_ip_address()
+        if "node_ip" not in self.__dict__:
+            self.node_ip = ray.services.get_node_ip_address()
+        return self.node_ip
 
     def find_free_port(self):
         """Finds a free port on the current node."""
-        return find_free_port()
+        if "port" not in self.__dict__:
+            from zoo.orca.learn.mxnet.utils import find_free_port
+            self.port = find_free_port()
+        return self.port

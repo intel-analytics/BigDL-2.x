@@ -22,10 +22,9 @@ export DL_PYTHON_HOME="$(cd ${SCRIPT_DIR}/../; pwd)"
 header="Copyright 2018 Analytics Zoo Authors"
 
 echo "Checking Analytics Zoo license for Python files..."
-# Excluding tf_graph_util.py and tfpark/inception/nets, because they are migrated from TensorFlow
-# Excluding simple_horovod_pytorch.py, because it is migrated from horovod
-find $DL_PYTHON_HOME ! -name "pep8-1.7.0.py" ! -name "tf_graph_util.py" -name "*.py" | grep -v "tfpark/inception/nets/" \
-| grep -v "simple_horovod_pytorch.py" | while read -d $'\n' file
+# Excluding tfpark/inception/nets, because they are migrated from TensorFlow
+find $DL_PYTHON_HOME ! -name "pep8-1.7.0.py" -name "*.py" | grep -v "tfpark/inception/nets/" \
+| while read -d $'\n' file
 do
     if ! (grep -qF "$header" "$file");
     then

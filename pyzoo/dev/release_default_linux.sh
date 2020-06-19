@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-# This is the default script with maven parameters to release analytics-zoo.
+# This is the default script with maven parameters to release analytics-zoo for linux.
 # Note that if the maven parameters to build analytics-zoo need to be changed,
 # make sure to change this file accordingly.
 # If you want to customize the release, please use release.sh and specify maven parameters instead.
@@ -26,13 +26,12 @@ RUN_SCRIPT_DIR=$(cd $(dirname $0) ; pwd)
 echo $RUN_SCRIPT_DIR
 
 if (( $# < 1)); then
-  echo "Usage: release_default.sh version"
-  echo "Usage example: bash release_default.sh default"
-  echo "Usage example: bash release_default.sh 0.6.0.dev0"
+  echo "Usage: release_default_linux.sh version"
+  echo "Usage example: bash release_default_linux.sh default"
+  echo "Usage example: bash release_default_linux.sh 0.6.0.dev0"
   exit -1
 fi
 
 version=$1
 
 bash ${RUN_SCRIPT_DIR}/release.sh linux ${version} true -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.4+
-bash ${RUN_SCRIPT_DIR}/release.sh mac ${version} true -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.4+

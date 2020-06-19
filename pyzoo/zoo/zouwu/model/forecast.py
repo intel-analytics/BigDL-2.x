@@ -19,11 +19,162 @@ from abc import ABCMeta, abstractmethod
 from zoo.automl.model.MTNet_keras import MTNetKeras as MTNetKerasModel
 from zoo.automl.model.VanillaLSTM import VanillaLSTM as LSTMKerasModel
 from zoo.tfpark import KerasModel as TFParkKerasModel
+from zoo.automl.model import TCMF
 
 import tensorflow as tf
 
 
-class Forecaster(TFParkKerasModel, metaclass=ABCMeta):
+class Forecaster(metaclass=ABCMeta):
+    @abstractmethod
+    def fit(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def evaluate(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def predict(self, **kwargs):
+        pass
+
+
+class TCMFForecaster(Forecaster):
+    def __init__(self,
+                 vbsize=128,
+                 hbsize=256,
+                 num_channels_X=[32, 32, 32, 32, 32, 1],
+                 num_channels_Y=[16, 16, 16, 16, 16, 1],
+                 kernel_size=7,
+                 dropout=0.1,
+                 rank=64,
+                 kernel_size_Y=7,
+                 learning_rate=0.0005,
+                 val_len=24,
+                 end_index=-24,
+                 normalize=False,
+                 start_date="2020-4-1",
+                 freq="1H",
+                 covariates=None,
+                 use_time=True,
+                 dti=None,
+                 svd=None,
+                 period=24,
+                 forward_cov=None,
+                 max_y_iterations=300,
+                 init_XF_epoch=100,
+                 max_FX_epoch=300,
+                 max_TCN_epoch=300,
+                 alt_iters=10):
+        """
+        Initialize
+        :param vbsize:
+        :param hbsize:
+        :param num_channels_X:
+        :param num_channels_Y:
+        :param kernel_size:
+        :param dropout:
+        :param rank:
+        :param kernel_size_Y:
+        :param learning_rate:
+        :param val_len:
+        :param end_index:
+        :param normalize:
+        :param start_date:
+        :param freq:
+        :param use_time:
+        :param dti:
+        :param svd:
+        :param period:
+        :param forward_cov:
+        :param max_y_iterations,
+        :param init_XF_epoch,
+        :param max_FX_epoch,
+        :param max_TCN_epoch,
+        :param alt_iters
+        """
+        self.internal = None
+        self.config = {
+            "vbsize": vbsize,
+            "hbsize": hbsize,
+            "num_channels_X": num_channels_X,
+            "num_channels_Y": num_channels_Y,
+            "kernel_size": kernel_size,
+            "dropout": dropout,
+            "rank": rank,
+            "kernel_size_Y": kernel_size_Y,
+            "learning_rate": learning_rate,
+            "val_len": val_len,
+            "end_index": end_index,
+            "normalize": normalize,
+            "start_date": start_date,
+            "freq": freq,
+            "covariates": covariates,
+            "use_time": use_time,
+            "dti": dti,
+            "svd": svd,
+            "period": period,
+            "forward_cov": forward_cov,
+            "max_y_iterations": max_y_iterations,
+            "init_XF_epoch": init_XF_epoch,
+            "max_FX_epoch": max_FX_epoch,
+            "max_TCN_epoch": max_TCN_epoch,
+            "alt_iters": alt_iters,
+        }
+        self.model = self._build()
+
+    def _build(self):
+        self.internal = TCMF()
+        return self.internal._build(**self.config)
+
+    def fit(self,
+            x,
+            incremental=False):
+        """
+        fit the model
+        :param x: the input
+        :param covariates: the global covariates
+        :param lr: learning rate
+        :param incremental: if the fit is incremental
+        :return:
+        """
+        if incremental:
+            self.internal.fit_incremental(x)
+        else:
+            self.internal.fit_eval(x)
+
+    def evaluate(self,
+                 target_value,
+                 x=None,
+                 metric=['mae'],
+                 covariates=None,
+                 ):
+        """
+        evaluate the model
+        :param target_value: target value for evaluation. We interpret its second dimension of
+        as the horizon length for evaluation.
+        :param covariates: global covariates
+        :param x: the input
+        :param metric: the metrics
+        :return:
+        """
+        self.internal.evaluate(y=target_value, x=x, metrics=metric)
+
+    def predict(self,
+                x=None,
+                horizon=24,
+                covariates=None,
+                ):
+        """
+        predict
+        :param x: the input. We don't support input x directly
+        :param horizon: horizon length to look forward.
+        :param covariates: the global covariates
+        :return:
+        """
+        self.internal.predict(x=x, horizon=horizon)
+
+
+class TFParkForecaster(TFParkKerasModel, Forecaster, metaclass=ABCMeta):
     """
     Base class for TFPark KerasModel based Forecast models.
     """
@@ -41,12 +192,12 @@ class Forecaster(TFParkKerasModel, metaclass=ABCMeta):
     def _build(self):
         """
         Build a tf.keras model.
-        :return: a tf.keras model (compiled)
+       :return: a tf.keras model (compiled)
         """
         pass
 
 
-class LSTMForecaster(Forecaster):
+class LSTMForecaster(TFParkForecaster):
     """
     Vanilla LSTM Forecaster
     """
@@ -105,7 +256,7 @@ class LSTMForecaster(Forecaster):
                                     **self.model_config)
 
 
-class MTNetForecaster(Forecaster):
+class MTNetForecaster(TFParkForecaster):
     """
     MTNet Forecast Model
     """
@@ -152,7 +303,7 @@ class MTNetForecaster(Forecaster):
     def _build(self):
         """
         build a MTNet model in tf.keras
-        :return: a tf.keras MTNet model
+       :return: a tf.keras MTNet model
         """
         # TODO change this function call after MTNet fixes
         self.internal = MTNetKerasModel(

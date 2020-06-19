@@ -58,4 +58,12 @@ class PreProcessingSpec extends FlatSpec with Matchers {
     val a = pre.decodeTensor(info)
     a
   }
+  "decode string tensor" should "work" in {
+    val pre = new PreProcessing(null)
+    val str = "abc|dff|aoa"
+    val tensor = pre.decodeString(str)
+    assert(tensor.valueAt(1) == "abc")
+    assert(tensor.valueAt(2) == "dff")
+    assert(tensor.valueAt(3) == "aoa")
+  }
 }

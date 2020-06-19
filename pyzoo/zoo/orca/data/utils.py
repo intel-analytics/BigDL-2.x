@@ -31,9 +31,11 @@ def chunk(lst, n):
         yield lst[c * size:(c + 1) * size] + extra
 
 
-def flatten(list_of_list):
-    flattend = [item for sublist in list_of_list for item in sublist]
-    return flattend
+def flatten(list_input):
+    if any(isinstance(i, list) for i in list_input):
+        return [item for sublist in list_input for item in sublist]
+    else:
+        return list_input
 
 
 def list_s3_file(file_path, file_type, env):
@@ -224,3 +226,74 @@ def ray_partition_get_data_label(partition_data, tuple_allowed=True, list_allowe
             raise ValueError("value of y should be a ndarray")
 
     return data, label
+
+
+def read_pd_hdfs_file_list(iterator, file_type, **kwargs):
+    import pyarrow as pa
+    fs = pa.hdfs.connect()
+
+    for x in iterator:
+        with fs.open(x, 'rb') as f:
+            df = read_pd_file(f, file_type, **kwargs)
+            yield df
+
+
+def read_pd_s3_file_list(iterator, file_type, **kwargs):
+    access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
+    secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
+    import boto3
+    s3_client = boto3.Session(
+        aws_access_key_id=access_key_id,
+        aws_secret_access_key=secret_access_key,
+    ).client('s3', verify=False)
+    for x in iterator:
+        path_parts = x.split("://")[1].split('/')
+        bucket = path_parts.pop(0)
+        key = "/".join(path_parts)
+        obj = s3_client.get_object(Bucket=bucket, Key=key)
+        df = read_pd_file(obj['Body'], file_type, **kwargs)
+        yield df
+
+
+def read_pd_file(path, file_type, **kwargs):
+    import pandas as pd
+    if file_type == "csv":
+        df = pd.read_csv(path, **kwargs)
+    elif file_type == "json":
+        df = pd.read_json(path, **kwargs)
+    else:
+        raise Exception("Unsupported file type")
+    return df
+
+
+def get_class_name(obj):
+    if obj.__class__.__module__ != 'builtins':
+        return '.'.join([obj.__class__.__module__, obj.__class__.__name__])
+    return obj.__class__.__name__
+
+
+def get_node_ip():
+    """
+    This function is ported from ray to get the ip of the current node. In the settings where
+    Ray is not involved, calling ray.services.get_node_ip_address would introduce Ray overhead.
+    """
+    import socket
+    import errno
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # This command will raise an exception if there is no internet connection.
+        s.connect(("8.8.8.8", 80))
+        node_ip_address = s.getsockname()[0]
+    except OSError as e:
+        node_ip_address = "127.0.0.1"
+        # [Errno 101] Network is unreachable
+        if e.errno == errno.ENETUNREACH:
+            try:
+                # try get node ip address from host name
+                host_name = socket.getfqdn(socket.gethostname())
+                node_ip_address = socket.gethostbyname(host_name)
+            except Exception:
+                pass
+    finally:
+        s.close()
+    return node_ip_address

@@ -101,8 +101,16 @@ class InputQueue(API):
         field_list = []
         data_list = []
         for key, value in data.items():
+            if "string" in key:
+                # list of string will be converted to Tensor of String
+                # use | to split
+                str_concat = '|'.join(value)
+                field = pa.field(key, pa.string())
+                data = pa.array([str_concat])
+                field_list.append(field)
+                data_list.append(data)
 
-            if isinstance(value, str):
+            elif isinstance(value, str):
                 # str value will be considered as image path
                 field = pa.field(key, pa.string())
                 data = self.encode_image(value)
