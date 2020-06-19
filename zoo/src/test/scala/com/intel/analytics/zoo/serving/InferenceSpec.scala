@@ -30,8 +30,8 @@ class InferenceSpec extends FlatSpec with Matchers {
     "tar -xvf /tmp/tf_string.tar -C /tmp/".!
 
     val model = new InferenceModel(1)
-//    val modelPath = "/tmp/tf_string"
-    val modelPath = "/home/litchy/models/tf_string"
+    val modelPath = "/tmp/tf_string"
+//    val modelPath = "/home/litchy/models/tf_string"
     model.doLoadTensorflow(modelPath,
       "savedModel", null, null)
 
