@@ -47,8 +47,8 @@ class SequenceTransformer(HybridBlock):
 class ContextTransformer(HybridBlock):
     def __init__(self, context_dims, context_embed,
                  context_hidden_size, context_max_length, context_num_heads, context_num_layers,
-                 context_transformer_dropout, context_pooling_dropout, cross_size, prefix=None,
-                 params=None):
+                 context_transformer_dropout, context_pooling_dropout, cross_size,
+                 prefix=None, params=None):
         super().__init__(prefix=prefix, params=params)
         self.context_dims = context_dims
         self.context_embed = context_embed
@@ -60,7 +60,8 @@ class ContextTransformer(HybridBlock):
                                                           num_heads=context_num_heads,
                                                           num_layers=context_num_layers,
                                                           max_length=context_max_length,
-                                                          dropout=context_transformer_dropout)
+                                                          dropout=context_transformer_dropout
+                                                          )
 
     def hybrid_forward(self, F, input_context_list):
         context_embed = [F.Embedding(data=input_context_list[i], input_dim=context_dim,
