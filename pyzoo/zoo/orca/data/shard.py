@@ -239,7 +239,7 @@ class SparkXShards(XShards):
             rdd = self.rdd.map(lambda s: s.unique())
             import numpy as np
             result = rdd.reduce(lambda list1, list2: pd.unique(np.concatenate((list1, list2),
-                                                                                  axis=0)))
+                                                                              axis=0)))
             return result
         else:
             # we may support numpy or other types later
@@ -274,7 +274,7 @@ class SparkXShards(XShards):
 
     def __len__(self):
         return self.rdd.map(lambda data: len(data) if hasattr(data, '__len__') else 1)\
-                .reduce(lambda l1, l2: l1 + l2)
+            .reduce(lambda l1, l2: l1 + l2)
 
     def save_pickle(self, path, batchSize=10):
         self.rdd.saveAsPickleFile(path, batchSize)
