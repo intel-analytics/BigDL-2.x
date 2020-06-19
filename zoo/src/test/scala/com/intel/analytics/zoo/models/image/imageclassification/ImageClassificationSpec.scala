@@ -132,14 +132,14 @@ class ImageClassificationSpec extends ZooSpecHelper {
   }
 
   "ImageClassifier" should "predict inception-v1-quantize locally" in {
-    predictLocal("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/" +
-      "imageclassification/imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model",
+    predictLocal("https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/" +
+      "image-classification/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model",
       "analytics-zoo", resource.getFile)
   }
 
   "ImageClassifier" should "predict inception-v1-quantize" in {
-    predict("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/" +
-      "imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model", "analytics-zoo",
+    predict("https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/image-classification/" +
+      "analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model", "analytics-zoo",
       resource.getFile)
   }
 
@@ -156,8 +156,8 @@ class ImageClassificationSpec extends ZooSpecHelper {
   "ImageClassifier" should "throw exception if input is empty locally" in {
     val tempDir = createTmpDir()
     val thrown = intercept[Exception]{
-      predictLocal("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/" +
-        "imageclassification/imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model",
+      predictLocal("https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/" +
+        "image-classification/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model",
         "analytics-zoo", tempDir.getAbsolutePath)
     }
     assert("requirement failed: ImageModel.predictImageSet: input is empty, please check your " +
@@ -168,7 +168,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
   "ImageClassifier" should "throw exception if input is empty" in {
     val tempDir = createTmpDir()
     val thrown = intercept[Exception]{
-      predict("https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/" +
+      predict("https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/" +
         "imageclassification/imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model",
         "analytics-zoo", tempDir.getAbsolutePath)
     }
