@@ -17,20 +17,31 @@
 package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams}
 import org.scalatest.{FlatSpec, Matchers}
 
+import sys.process._
+
 class InferenceSpec extends FlatSpec with Matchers {
   "TF String input" should "work" in {
-//    val configPath = "/home/litchy/pro/analytics-zoo/config.yaml"
-    val str = "abc|dff|aoa"
-    val eleList = str.split("\\|")
-//    val helper = new ClusterServingHelper(configPath)
-//    helper.initArgs()
-//    val param = new SerParams(helper)
-//    val model = helper.loadInferenceModel()
-//    val res = model.doPredict(t)
-//    res
+    ("wget -O /tmp/tf_string.tar http://10.239.45.10:8081" +
+      "/repository/raw/analytics-zoo-data/tf_string.tar").!
+    "tar -xvf /tmp/tf_string.tar -C /tmp/".!
+
+    val model = new InferenceModel(1)
+    val modelPath = "/tmp/tf_string"
+//    val modelPath = "/home/litchy/models/tf_string"
+    model.doLoadTensorflow(modelPath,
+      "savedModel", null, null)
+
+    ("rm -rf /tmp/tf_string*").!
+    val t = Tensor[String](2)
+    t.setValue(1, "123")
+    t.setValue(2, "456")
+    val res = model.doPredict(t)
+    assert(res.toTensor[Float].valueAt(1) == 123)
+    assert(res.toTensor[Float].valueAt(2) == 456)
   }
 
 }
