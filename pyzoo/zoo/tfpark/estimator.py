@@ -16,7 +16,7 @@
 
 from bigdl.optim.optimizer import MaxIteration, Loss, TreeNNAccuracy
 
-from zoo.tfpark.utils import evaluate_string_metrics
+from zoo.tfpark.utils import evaluate_string_metrics, check_tf_version
 from zoo.pipeline.api.keras import metrics
 from zoo.tfpark.tfnet import TFNet
 from zoo.tfpark.tf_optimizer import TFOptimizer
@@ -35,6 +35,7 @@ class TFEstimator(object):
         ZooOptimizer must be used and only ZooOptimizer should be used to derive
         the train_op.
         """
+        check_tf_version()
 
         self.estimator = estimator
         self._model_fn = self.estimator.model_fn
@@ -93,6 +94,7 @@ class TFEstimator(object):
                        warm-started, and it is assumed that vocabularies
                        and `tf.Tensor` names are unchanged.
         """
+        check_tf_version()
         import tensorflow as tf
         estimator = tf.estimator.Estimator(model_fn, model_dir=model_dir, config=config,
                                            params=params, warm_start_from=warm_start_from)

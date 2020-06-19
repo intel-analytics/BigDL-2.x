@@ -18,6 +18,7 @@ import sys
 
 from zoo.pipeline.api.net.utils import find_placeholders, _check_the_same
 from zoo.tfpark.tfnet import TFNet
+from zoo.tfpark.utils import check_tf_version
 
 if sys.version >= '3':
     long = int
@@ -36,6 +37,7 @@ class TFPredictor:
         to load the trained variables then pass into TFPredictor
         :param outputs: the output tensors of the TensorFlow model
         '''
+        check_tf_version()
         if inputs is None:
             dataset, inputs = TFPredictor._get_datasets_and_inputs(outputs)
 

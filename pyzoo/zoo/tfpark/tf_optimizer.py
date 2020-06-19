@@ -29,6 +29,7 @@ from zoo.common.utils import callZooFunc
 from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss, OptimMethod
 from zoo.pipeline.api.net.utils import find_placeholders, to_bigdl_optim_method, find_tensors
 from zoo.pipeline.estimator import Estimator
+from zoo.tfpark.utils import check_tf_version
 from zoo.util import nest
 
 
@@ -458,6 +459,8 @@ class TFOptimizer:
     def from_train_op(cls, train_op, loss, *, inputs=None, labels=None, metrics=None, updates=None,
                       sess=None, dataset=None, tensor_with_value=None, session_config=None,
                       model_dir=None):
+
+        check_tf_version()
         sess = TFOptimizer._get_or_create_session(sess)
         grads, variables = TFOptimizer._get_vars_grads_from_train_op(train_op)
         if dataset is None:
@@ -531,6 +534,7 @@ class TFOptimizer:
         is the value to feed to the tensor in validation phase.
         :return: a TFOptimizer
         """
+        check_tf_version()
         sess = TFOptimizer._get_or_create_session(session)
         grads, variables = TFOptimizer._get_vars_grads(loss)
 
@@ -578,6 +582,7 @@ class TFOptimizer:
     @staticmethod
     def export_training_model(export_dir, loss, sess, inputs, labels=None, predictions=None,
                               metrics=None, tensor_with_value=None, updates=None):
+        check_tf_version()
 
         grads, variables = TFOptimizer._get_vars_grads(loss)
 
@@ -606,6 +611,7 @@ class TFOptimizer:
         validation data.
         :return:
         """
+        check_tf_version()
         import tensorflow.keras.backend as K
 
         model_inputs = keras_model.inputs

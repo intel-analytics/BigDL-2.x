@@ -26,6 +26,7 @@ from zoo.common import Sample, JTensor
 from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.feature.common import FeatureSet, SampleToMiniBatch
 from zoo.feature.image import ImagePreprocessing, ImageFeatureToSample
+from zoo.tfpark.utils import check_tf_version
 from zoo.util import nest
 
 
@@ -373,6 +374,7 @@ class TFDataset(object):
                         when training
         :return: a TFDataset
         """
+        check_tf_version()
         return TFNdarrayDataset.from_rdd(*args, **kwargs)
 
     @staticmethod
@@ -400,6 +402,7 @@ class TFDataset(object):
                         when training
         :return: a TFDataset
         """
+        check_tf_version()
         return TFNdarrayDataset.from_ndarrays(*args, **kwargs)
 
     @staticmethod
@@ -432,6 +435,7 @@ class TFDataset(object):
                         when training
         :return: a TFDataset
         """
+        check_tf_version()
         tensor_structure = TFDataset._to_tensor_structure(image, label)
         return TFImageDataset(image_set, tensor_structure, batch_size,
                               batch_per_thread, hard_code_batch_size,
@@ -467,6 +471,7 @@ class TFDataset(object):
                         when training
         :return: a TFDataset
         """
+        check_tf_version()
         tensor_structure = TFDataset._to_tensor_structure(text, label)
         return TFTextDataset(text_set, tensor_structure, batch_size,
                              batch_per_thread, hard_code_batch_size,
@@ -495,6 +500,7 @@ class TFDataset(object):
                         when training
         :return: a TFDataset
         """
+        check_tf_version()
         input_format_class = "org.tensorflow.hadoop.io.TFRecordFileInputFormat"
         key_class = "org.apache.hadoop.io.BytesWritable"
         value_class = "org.apache.hadoop.io.NullWritable"
@@ -537,6 +543,7 @@ class TFDataset(object):
         :param validation_dataset: The FeatureSet used for validation during training
         :return: a TFDataset
         """
+        check_tf_version()
         tensor_structure = TFDataset._to_tensor_structure(features, labels)
 
         return TFFeatureDataset(dataset, tensor_structure, batch_size,
@@ -562,6 +569,7 @@ class TFDataset(object):
         :param validation_string_rdd: the RDD of strings to be used in validation
         :return: a TFDataset
         """
+        check_tf_version()
         string_rdd = string_rdd.map(lambda x: bytearray(x, "utf-8"))
         if validation_string_rdd is not None:
             validation_string_rdd = validation_string_rdd.map(lambda x: bytearray(x, "utf-8"))
@@ -587,6 +595,7 @@ class TFDataset(object):
         :param validation_bytes_rdd: the RDD of bytes to be used in validation
         :return: a TFDataset
         """
+        check_tf_version()
         return TFBytesDataset(bytes_rdd, batch_size, batch_per_thread,
                               hard_code_batch_size, validation_bytes_rdd)
 
@@ -622,6 +631,7 @@ class TFDataset(object):
         :param validation_dataset: the dataset used for validation
         :return: a TFDataset
         """
+        check_tf_version()
         return TFDataDataset(dataset, batch_size, batch_per_thread,
                              hard_code_batch_size, validation_dataset,
                              sequential_order, shuffle, remove_checking)
@@ -655,6 +665,7 @@ class TFDataset(object):
         :param validation_df: the DataFrame used for validation
         :return: a TFDataset
         """
+        check_tf_version()
         return DataFrameDataset(df, feature_cols, labels_cols, batch_size,
                                 batch_per_thread, hard_code_batch_size, validation_df,
                                 sequential_order, shuffle)
