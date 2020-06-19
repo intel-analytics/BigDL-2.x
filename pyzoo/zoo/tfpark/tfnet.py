@@ -33,6 +33,7 @@ from zoo.util.utils import to_sample_rdd
 import logging
 
 from zoo.tfpark.utils import check_tf_version
+from zoo.util.utils import to_sample_rdd
 
 if sys.version >= '3':
     long = int
