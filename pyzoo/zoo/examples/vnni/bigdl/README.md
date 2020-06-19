@@ -5,7 +5,7 @@ Int8 quantized models can generally give you better performance on Intel Xeon sc
 
 ## Download Analytics Zoo and the pre-trained model
 - You can download Analytics Zoo prebuilt release and nightly build package from [here](https://analytics-zoo.github.io/master/#release-download/) and extract it.
-- Download pre-trained int8 quantized ResNet50 model from [here](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/imageclassification/imagenet/analytics-zoo_resnet-50-int8_imagenet_0.5.0.model).
+- Download pre-trained int8 quantized ResNet50 model from [here](https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/image-classification//analytics-zoo_resnet-50-int8_imagenet_0.5.0.model).
 
 ## Examples
 This folder contains three examples for BigDL VNNI support:
