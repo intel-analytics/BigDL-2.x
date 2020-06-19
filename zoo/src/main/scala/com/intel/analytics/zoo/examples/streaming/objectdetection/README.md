@@ -9,7 +9,7 @@ So, there are two applications in this example: ImagePathWriter and StreamingObj
 
 ## Datasets and pre-trained models
 * Datasets: [COCO](http://cocodataset.org/#home)
-* Pre-trained model: [SSD 300x300](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model)
+* Pre-trained model: [SSD 300x300](https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model)
 
 ## Run this example
 Make sure all nodes can access image files, model and text files. Local file system/HDFS/Amazon S3 are supported.
