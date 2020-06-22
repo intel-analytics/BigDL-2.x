@@ -101,7 +101,7 @@ if [ -f "$FILENAME" ]
 then
     echo "$FILENAME already exists"
 else
-    wget https://s3.amazonaws.com/analytics-zoo-data/train_dog.mp4 -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
+    wget $FTP_URI/analytics-zoo-data/apps/object-detection/train_dog.mp4  -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
 fi
 FILENAME="~/.imageio/ffmpeg/ffmpeg-linux64-v3.3.1"
 if [ -f "$FILENAME" ]
