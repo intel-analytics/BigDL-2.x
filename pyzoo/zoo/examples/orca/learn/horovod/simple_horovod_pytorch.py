@@ -32,7 +32,7 @@ from torchvision import datasets, transforms
 from zoo.ray import RayContext
 
 from zoo import init_spark_on_yarn, init_spark_on_local
-from zoo.orca.learn.horovod import HorovodRayTrainer
+from zoo.orca.learn.horovod import HorovodRayRunner
 
 
 def run_horovod():
@@ -237,5 +237,5 @@ if __name__ == "__main__":
             object_store_memory=args.object_store_memory)
         ray_ctx.init()
 
-    runner = HorovodRayTrainer(ray_ctx)
-    runner.train(func=run_horovod)
+    runner = HorovodRayRunner(ray_ctx)
+    runner.run(func=run_horovod)
