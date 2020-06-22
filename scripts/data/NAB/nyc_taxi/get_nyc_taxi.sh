@@ -39,7 +39,7 @@ then
 fi
 
 echo "Downloading nyc_taxi.csv"
-wget https://analytics-zoo-data.s3.amazonaws.com/nyc_taxi.csv
+wget $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv
 
 
 echo "Finished"
