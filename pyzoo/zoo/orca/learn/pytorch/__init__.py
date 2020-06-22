@@ -15,4 +15,3 @@
 #
 
 from .pytorch_trainer import PyTorchTrainer
-from .pytorch_horovod_estimator import PyTorchHorovodEstimator

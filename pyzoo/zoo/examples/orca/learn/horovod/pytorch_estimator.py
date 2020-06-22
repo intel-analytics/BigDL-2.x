@@ -22,7 +22,7 @@ import torch.nn as nn
 
 from zoo import init_spark_on_local
 from zoo.ray import RayContext
-from zoo.orca.learn.pytorch import PyTorchHorovodEstimator
+from zoo.orca.learn.pytorch.pytorch_horovod_estimator import PyTorchHorovodEstimator
 
 
 class LinearDataset(torch.utils.data.Dataset):
