@@ -95,7 +95,7 @@ class TestZouwuModelForecast(ZooTestCase):
     def test_forecast_tcmf(self):
         from zoo.zouwu.model.forecast import TCMFForecaster
         model = TCMFForecaster(max_y_iterations=1,
-                               init_XF_epoch=1,
+                               init_FX_epoch=1,
                                max_FX_epoch=1,
                                max_TCN_epoch=1,
                                alt_iters=2)
