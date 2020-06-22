@@ -41,5 +41,4 @@ fi
 echo "Downloading nyc_taxi.csv"
 wget http://10.239.45.10:8081/repository/raw/analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv
 
-
 echo "Finished"
