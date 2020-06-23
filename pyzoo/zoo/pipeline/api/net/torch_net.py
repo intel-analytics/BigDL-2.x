@@ -112,7 +112,7 @@ class TorchNet(Layer):
             return ImageSet(results)
         if distributed:
             if isinstance(x, np.ndarray):
-                from zoo.tfpark.tfnet import to_sample_rdd
+                from zoo.util.utils import to_sample_rdd
                 data_rdd = to_sample_rdd(x, np.zeros([x.shape[0]]), getOrCreateSparkContext())
             elif isinstance(x, RDD):
                 data_rdd = x
