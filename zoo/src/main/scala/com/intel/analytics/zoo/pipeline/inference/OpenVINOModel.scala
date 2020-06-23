@@ -134,12 +134,12 @@ object OpenVINOModel {
         val localWeightBytes = Files.readAllBytes(Paths.get(weightPath))
         out.writeInt(localModelBytes.length)
         timing(s"writing " +
-          s"${localModelBytes.length / 1024 / 1024}Mb openvino model to stream") {
+          s"${localModelBytes.length / 1024 / 1024}Mb OpenVINO model to stream") {
           out.write(localModelBytes)
         }
         out.writeInt(localWeightBytes.length)
         timing(s"writing " +
-          s"${localWeightBytes.length / 1024 / 1024}Mb openvino weight to stream") {
+          s"${localWeightBytes.length / 1024 / 1024}Mb OpenVINO weight to stream") {
           out.write(localWeightBytes)
         }
       } else {

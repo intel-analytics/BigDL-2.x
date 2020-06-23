@@ -88,7 +88,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
                      weightFilePath: String,
                      deviceType: DeviceTypeEnumVal,
                      batchSize: Int = 0): OpenVINOModel = {
-    timing("load openvino IR") {
+    timing("load OpenVINO IR") {
       val buffer = Source.fromFile(modelFilePath)
       val isInt8 = buffer.getLines().count(_ matches ".*statistics.*") > 0
       buffer.close()
@@ -105,6 +105,11 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
       val buffer = Source.fromBytes(modelBytes)
       val isInt8 = buffer.getLines().count(_ matches ".*statistics.*") > 0
       buffer.close()
+      // Write model and weight bytes into Tmp files
+      val modelFile = File.createTempFile("ZOOTEMPOpenVINO", ".xml")
+      Files.write(Paths.get(modelFile.toURI), modelBytes)
+      val weightFile = File.createTempFile("ZOOTEMPOpenVINO", ".bin")
+      Files.write(Paths.get(weightFile.toURI), weightBytes)
       val modelHolder = new OpenVINOModelHolder(modelFile.getAbsolutePath,
         weightFile.getAbsolutePath)
       new OpenVINOModel(modelHolder, isInt8, batchSize, deviceType)
@@ -112,7 +117,7 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
   }
 
   def forceLoad(): Unit = {
-    logger.info("Force native loader")
+    logger.info("Force Native loader")
   }
 
   def load(path: String): Unit = {
