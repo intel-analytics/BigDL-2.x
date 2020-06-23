@@ -32,7 +32,6 @@ from zoo.util.utils import to_sample_rdd
 
 import logging
 
-from zoo.tfpark.utils import check_tf_version
 from zoo.util.utils import to_sample_rdd
 
 if sys.version >= '3':
@@ -44,7 +43,6 @@ class TFNet(Layer):
     def __init__(self, path, input_names=None, output_names=None,
                  tf_session_config=None, jvalue=None, bigdl_type="float"):
 
-        check_tf_version()
 
         if jvalue is not None:
             super(TFNet, self).__init__(jvalue, bigdl_type)

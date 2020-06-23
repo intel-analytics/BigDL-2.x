@@ -16,7 +16,6 @@
 
 import numpy as np
 from bigdl.optim.optimizer import MaxEpoch
-from zoo.tfpark.utils import evaluate_string_metrics, check_tf_version
 from zoo.common import load_from_file
 from zoo.common import save_file
 from zoo.common.nncontext import getOrCreateSparkContext
@@ -32,7 +31,6 @@ class KerasModel(object):
         """
         :param model: a compiled keras model
         """
-        check_tf_version()
         self.model = model
         self.model_dir = model_dir
         import tensorflow as tf
@@ -78,7 +76,6 @@ class KerasModel(object):
         :param path: String. The path to the pre-defined model.
         :return: KerasModel.
         """
-        check_tf_version()
         from tensorflow.python.keras import models
         def load_func(file_path):
             return models.load_model(file_path)
