@@ -77,8 +77,8 @@ class TestZouwuModelForecast(ZooTestCase):
         # TODO hacking to fix a bug
         model = MTNetForecaster(target_dim=1,
                                 feature_dim=self.x_train.shape[-1],
-                                lb_long_steps=self.long_num,
-                                lb_long_stepsize=self.time_step
+                                long_series_num=self.long_num,
+                                series_length=self.time_step
                                 )
         x_train_long, x_train_short = model.preprocess_input(self.x_train)
         x_val_long, x_val_short = model.preprocess_input(self.x_val)
