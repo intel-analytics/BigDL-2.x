@@ -37,6 +37,8 @@ class MXNetRunner(object):
         assert isinstance(config, dict), "config must be a dict"
         for param in ["batch_size", "optimizer", "optimizer_params", "log_interval"]:
             assert param in config, param + " must be specified in config"
+        self.train_data_original = train_data
+        self.test_data_original = test_data
         self.config = config
         self.model_creator = model_creator
         self.loss_creator = loss_creator
@@ -220,11 +222,19 @@ class MXNetRunner(object):
         if self.is_worker:
             del self.kv
             del self.model
-            del self.train_data
-            del self.val_data
             del self.trainer
             del self.loss
-        # TODO: also delete downloaded data as well?
+            del self.train_data
+            if self.eval_metrics:
+                del self.eval_metrics
+            if self.val_data:
+                del self.val_data
+                del self.val_metrics
+            from zoo.orca.data.shard import RayPartition
+            if isinstance(self.train_data_original, RayPartition):
+                del self.train_data_original
+            if isinstance(self.test_data_original, RayPartition):
+                del self.test_data_original
 
     def get_node_ip(self):
         """Returns the IP address of the current node."""
