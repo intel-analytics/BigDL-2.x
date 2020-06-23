@@ -16,4 +16,3 @@
 
 from .graph_net import GraphNet
 from .net_load import Net
-from zoo.tfpark.tfnet import TFNet
