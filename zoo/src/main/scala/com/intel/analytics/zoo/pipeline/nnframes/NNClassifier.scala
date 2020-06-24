@@ -363,8 +363,8 @@ object XGBClassifierModel {
 }
 
 /**
-  * [[XGBRegressorModel]] xgboost wrapper of XGBRegressorModel.
-  */
+ * [[XGBRegressorModel]] xgboost wrapper of XGBRegressorModel.
+ */
 class XGBRegressorModel private[zoo](val model: XGBoostRegressionModel) {
   var predictionCol: String = null
   def setPredictionCol(value: String): this.type = {

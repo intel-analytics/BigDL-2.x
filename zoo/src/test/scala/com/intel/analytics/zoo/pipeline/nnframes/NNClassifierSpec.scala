@@ -456,7 +456,7 @@ class NNClassifierSpec extends ZooSpecHelper {
       .load(filePath)
 
     val vectorAssembler = new VectorAssembler()
-      .setInputCols(Array("0","1","2","3","4","5","6","7","8","9"))
+      .setInputCols(Array("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"))
       .setOutputCol("features_vec")
     val data = vectorAssembler.transform(df)
     val asDense = udf((v: Vector) => v.toDense)
