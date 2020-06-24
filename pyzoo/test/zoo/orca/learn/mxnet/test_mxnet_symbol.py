@@ -60,9 +60,10 @@ def get_metrics(config):
 class TestMXNetSymbol(TestCase):
     def test_symbol(self):
         config = create_trainer_config(batch_size=32, log_interval=2, seed=42)
-        trainer = Estimator(config, get_model, validation_metrics_creator=get_metrics,
-                            eval_metrics_creator=get_metrics)
-        trainer.train(get_train_data_iter, get_test_data_iter, nb_epoch=2)
+        estimator = Estimator(config, get_model, validation_metrics_creator=get_metrics,
+                              eval_metrics_creator=get_metrics)
+        estimator.fit(get_train_data_iter, get_test_data_iter, nb_epoch=2)
+        estimator.shutdown()
 
 
 if __name__ == "__main__":

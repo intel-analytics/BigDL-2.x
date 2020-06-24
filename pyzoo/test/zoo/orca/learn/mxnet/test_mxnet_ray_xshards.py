@@ -101,9 +101,10 @@ class TestMXNetRayXShards(TestCase):
                                                          orient='records', lines=False)
         test_data_shard.transform_shard(prepare_data_symbol)
         config = create_trainer_config(batch_size=32, log_interval=1, seed=42)
-        trainer = Estimator(config, get_symbol_model, validation_metrics_creator=get_metrics,
-                            eval_metrics_creator=get_metrics, num_workers=2)
-        trainer.train(train_data_shard, test_data_shard, nb_epoch=2)
+        estimator = Estimator(config, get_symbol_model, validation_metrics_creator=get_metrics,
+                              eval_metrics_creator=get_metrics, num_workers=2)
+        estimator.fit(train_data_shard, test_data_shard, nb_epoch=2)
+        estimator.shutdown()
 
     def test_xshards_gluon(self):
         # prepare data
@@ -118,10 +119,11 @@ class TestMXNetRayXShards(TestCase):
                                                          orient='records', lines=False)
         test_data_shard.transform_shard(prepare_data_gluon)
         config = create_trainer_config(batch_size=32, log_interval=1, seed=42)
-        trainer = Estimator(config, get_gluon_model, get_loss,
-                            validation_metrics_creator=get_gluon_metrics,
-                            eval_metrics_creator=get_gluon_metrics, num_workers=2)
-        trainer.train(train_data_shard, test_data_shard, nb_epoch=2)
+        estimator = Estimator(config, get_gluon_model, get_loss,
+                              validation_metrics_creator=get_gluon_metrics,
+                              eval_metrics_creator=get_gluon_metrics, num_workers=2)
+        estimator.fit(train_data_shard, test_data_shard, nb_epoch=2)
+        estimator.shutdown()
 
     # def test_xshard_list(self):
     #     # prepare data

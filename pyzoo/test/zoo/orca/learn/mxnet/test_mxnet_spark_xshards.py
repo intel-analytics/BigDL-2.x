@@ -93,10 +93,10 @@ class TestMXNetSparkXShards(TestCase):
             test_file_path, get_spark_ctx(),
             orient='records', lines=False).transform_shard(prepare_data_symbol)
         config = create_trainer_config(batch_size=32, log_interval=1, seed=42)
-        trainer = Estimator(config, get_symbol_model, validation_metrics_creator=get_metrics,
-                            eval_metrics_creator=get_metrics, num_workers=2)
-        trainer.train(train_data_shard, test_data_shard, nb_epoch=2)
-        trainer.shutdown()
+        estimator = Estimator(config, get_symbol_model, validation_metrics_creator=get_metrics,
+                              eval_metrics_creator=get_metrics, num_workers=2)
+        estimator.fit(train_data_shard, test_data_shard, nb_epoch=2)
+        estimator.shutdown()
 
     def test_xshards_symbol_without_val(self):
         resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
@@ -105,10 +105,10 @@ class TestMXNetSparkXShards(TestCase):
             train_file_path, get_spark_ctx(),
             orient='records', lines=False).transform_shard(prepare_data_symbol)
         config = create_trainer_config(batch_size=32, log_interval=1, seed=42)
-        trainer = Estimator(config, get_symbol_model,
-                            eval_metrics_creator=get_metrics, num_workers=2)
-        trainer.train(train_data_shard, nb_epoch=2)
-        trainer.shutdown()
+        estimator = Estimator(config, get_symbol_model,
+                              eval_metrics_creator=get_metrics, num_workers=2)
+        estimator.fit(train_data_shard, nb_epoch=2)
+        estimator.shutdown()
 
     def test_xshards_gluon(self):
         resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
@@ -121,12 +121,12 @@ class TestMXNetSparkXShards(TestCase):
             test_file_path, get_spark_ctx(),
             orient='records', lines=False).transform_shard(prepare_data_gluon)
         config = create_trainer_config(batch_size=32, log_interval=1, seed=42)
-        trainer = Estimator(config, get_gluon_model, get_loss,
-                            validation_metrics_creator=get_gluon_metrics,
-                            eval_metrics_creator=get_gluon_metrics,
-                            num_workers=2)
-        trainer.train(train_data_shard, test_data_shard, nb_epoch=2)
-        trainer.shutdown()
+        estimator = Estimator(config, get_gluon_model, get_loss,
+                              validation_metrics_creator=get_gluon_metrics,
+                              eval_metrics_creator=get_gluon_metrics,
+                              num_workers=2)
+        estimator.fit(train_data_shard, test_data_shard, nb_epoch=2)
+        estimator.shutdown()
 
 
 if __name__ == "__main__":

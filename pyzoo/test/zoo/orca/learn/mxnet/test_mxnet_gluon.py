@@ -75,11 +75,12 @@ class TestMXNetGluon(TestCase):
         assert "object_store_address" in address_info
         config = create_trainer_config(batch_size=32, log_interval=2, optimizer="adam",
                                        optimizer_params={'learning_rate': 0.02})
-        trainer = Estimator(config, get_model, get_loss,
-                            eval_metrics_creator=get_metrics,
-                            validation_metrics_creator=get_metrics,
-                            num_workers=2)
-        trainer.train(get_train_data_iter, get_test_data_iter, nb_epoch=2)
+        estimator = Estimator(config, get_model, get_loss,
+                              eval_metrics_creator=get_metrics,
+                              validation_metrics_creator=get_metrics,
+                              num_workers=2)
+        estimator.fit(get_train_data_iter, get_test_data_iter, nb_epoch=2)
+        estimator.shutdown()
 
 
 if __name__ == "__main__":

@@ -122,7 +122,7 @@ class Estimator(object):
             for i, runner in enumerate(self.runners)
         ])
 
-    def train(self, train_data, val_data=None, nb_epoch=1, train_resize_batch_num=None):
+    def fit(self, train_data, val_data=None, nb_epoch=1, train_resize_batch_num=None):
         """
         Trains an MXNet model given train_data (with val_data) for several epochs.
 
