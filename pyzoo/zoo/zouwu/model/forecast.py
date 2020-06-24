@@ -50,47 +50,69 @@ class TCMFForecaster(Forecaster):
                  kernel_size_Y=7,
                  learning_rate=0.0005,
                  val_len=24,
-                 end_index=-24,
                  normalize=False,
                  start_date="2020-4-1",
                  freq="1H",
                  covariates=None,
                  use_time=True,
                  dti=None,
-                 svd=None,
+                 svd=True,
                  period=24,
-                 forward_cov=None,
                  max_y_iterations=300,
-                 init_XF_epoch=100,
+                 init_FX_epoch=100,
                  max_FX_epoch=300,
                  max_TCN_epoch=300,
                  alt_iters=10):
         """
         Initialize
-        :param vbsize:
-        :param hbsize:
-        :param num_channels_X:
-        :param num_channels_Y:
-        :param kernel_size:
-        :param dropout:
-        :param rank:
-        :param kernel_size_Y:
-        :param learning_rate:
-        :param val_len:
-        :param end_index:
-        :param normalize:
-        :param start_date:
-        :param freq:
-        :param use_time:
-        :param dti:
-        :param svd:
-        :param period:
-        :param forward_cov:
-        :param max_y_iterations,
-        :param init_XF_epoch,
-        :param max_FX_epoch,
-        :param max_TCN_epoch,
-        :param alt_iters
+        :param vbsize: int, default is 128.
+            Vertical batch size, which is the number of cells per batch.
+        :param hbsize: int, default is 256.
+            Horizontal batch size, which is the number of time series per batch.
+        :param num_channels_X: list, default=[32, 32, 32, 32, 32, 1].
+            List containing channel progression of temporal convolution network for local model
+        :param num_channels_Y: list, default=[16, 16, 16, 16, 16, 1]
+            List containing channel progression of temporal convolution network for hybrid model.
+        :param kernel_size: int, default is 7.
+            Kernel size for local models
+        :param dropout: float, default is 0.1.
+            Dropout rate during training
+        :param rank: int, default is 64.
+            The rank in matrix factorization of global model.
+        :param kernel_size_Y: int, default is 7.
+            Kernel size of hybrid model
+        :param learning_rate: float, default is 0.0005
+        :param val_len: int, default is 24.
+            Validation length. We will use the last val_len time points as validation data.
+        :param normalize: boolean, false by default.
+            Whether to normalize input data for training.
+        :param start_date: str or datetime-like.
+            Start date time for the time-series. e.g. "2020-01-01"
+        :param freq: str or DateOffset, default is 'H'
+            Frequency of data
+        :param use_time: boolean, default is True.
+            Whether to use time coveriates.
+        :param covariates: 2-D ndarray or None. The shape of ndarray should be (r, T), where r is
+            the number of covariates and T is the number of time points.
+            Global covariates for all time series. If None, only default time coveriates will be
+            used while use_time is True. If not, the time coveriates used is the stack of input
+            covariates and default time coveriates.
+        :param dti: DatetimeIndex or None.
+            If None, use default fixed frequency DatetimeIndex generated with start_date and freq.
+        :param svd: boolean, default is False.
+            Whether factor matrices are initialized by NMF
+        :param period: int, default is 24.
+            Periodicity of input time series, leave it out if not known
+        :param max_y_iterations: int, default is 300.
+            Max number of iterations while training the hybrid model.
+        :param init_FX_epoch: int, default is 100.
+            Number of iterations while initializing factors
+        :param max_FX_epoch: int, default is 300.
+            Max number of iterations while training factors.
+        :param max_TCN_epoch: int, default is 300.
+            Max number of iterations while training the local model.
+        :param alt_iters: int, default is 10.
+            Number of iterations while alternate training.
         """
         self.internal = None
         self.config = {
@@ -104,7 +126,6 @@ class TCMFForecaster(Forecaster):
             "kernel_size_Y": kernel_size_Y,
             "learning_rate": learning_rate,
             "val_len": val_len,
-            "end_index": end_index,
             "normalize": normalize,
             "start_date": start_date,
             "freq": freq,
@@ -113,9 +134,8 @@ class TCMFForecaster(Forecaster):
             "dti": dti,
             "svd": svd,
             "period": period,
-            "forward_cov": forward_cov,
             "max_y_iterations": max_y_iterations,
-            "init_XF_epoch": init_XF_epoch,
+            "init_FX_epoch": init_FX_epoch,
             "max_FX_epoch": max_FX_epoch,
             "max_TCN_epoch": max_TCN_epoch,
             "alt_iters": alt_iters,
@@ -211,6 +231,7 @@ class LSTMForecaster(TFParkForecaster):
                  dropout_2=0.2,
                  metric="mean_squared_error",
                  lr=0.001,
+                 loss="mse",
                  uncertainty: bool = False
                  ):
         """
@@ -225,6 +246,7 @@ class LSTMForecaster(TFParkForecaster):
         :param metric: the metric for validation and evaluation
         :param lr: learning rate
         :param uncertainty: whether to return uncertainty
+        :param loss: the target function you want to optimize on
         """
         #
         self.target_dim = target_dim
@@ -238,7 +260,8 @@ class LSTMForecaster(TFParkForecaster):
             "lstm_2_units": lstm_2_units,
             "dropout_2": dropout_2,
             "metric": metric,
-            "feature_num": feature_dim
+            "feature_num": feature_dim,
+            "loss": loss
         }
         self.internal = None
 
@@ -264,10 +287,16 @@ class MTNetForecaster(TFParkForecaster):
     def __init__(self,
                  target_dim=1,
                  feature_dim=1,
-                 lb_long_steps=1,
-                 lb_long_stepsize=1,
+                 long_series_num=1,
+                 series_length=1,
                  ar_window_size=1,
-                 cnn_kernel_size=1,
+                 cnn_height=1,
+                 cnn_hid_size=32,
+                 rnn_hid_sizes=[16, 32],
+                 lr=0.001,
+                 loss="mae",
+                 cnn_dropout=0.2,
+                 rnn_dropout=0.2,
                  metric="mean_squared_error",
                  uncertainty: bool = False,
                  ):
@@ -275,12 +304,18 @@ class MTNetForecaster(TFParkForecaster):
         Build a MTNet Forecast Model.
         :param target_dim: the dimension of model output
         :param feature_dim: the dimension of input feature
-        :param lb_long_steps: the number of steps for the long-term memory series
-        :param lb_long_stepsize: the step size for long-term memory series
-        :param ar_window_size：the auto regression window size in MTNet
-        :param cnn_kernel_size: cnn filter height in MTNet
+        :param long_series_num: the number of series for the long-term memory series
+        :param series_length: the series size for long-term and short-term memory series
+        :param ar_window_size: the auto regression window size in MTNet
+        :param cnn_hid_size: the hidden layer unit for cnn in encoder
+        :param rnn_hid_sizes: the hidden layers unit for rnn in encoder
+        :param cnn_height: cnn filter height in MTNet
         :param metric: the metric for validation and evaluation
         :param uncertainty: whether to enable calculation of uncertainty
+        :param lr: learning rate
+        :param loss: the target function you want to optimize on
+        :param cnn_dropout: the dropout possibility for cnn in encoder
+        :param rnn_dropout: the dropout possibility for rnn in encoder
         """
         self.check_optional_config = False
         self.mc = uncertainty
@@ -289,12 +324,17 @@ class MTNetForecaster(TFParkForecaster):
             "output_dim": target_dim,
             "metrics": [metric],
             "mc": uncertainty,
-            "time_step": lb_long_stepsize,
-            "long_num": lb_long_steps,
+            "time_step": series_length,
+            "long_num": long_series_num,
             "ar_window": ar_window_size,
-            "cnn_height": cnn_kernel_size,
-            "past_seq_len": (lb_long_steps + 1) * lb_long_stepsize
-
+            "cnn_height": cnn_height,
+            "past_seq_len": (long_series_num + 1) * series_length,
+            "cnn_hid_size": cnn_hid_size,
+            "rnn_hid_sizes": rnn_hid_sizes,
+            "lr": lr,
+            "cnn_dropout": cnn_dropout,
+            "rnn_dropout": rnn_dropout,
+            "loss": loss
         }
         self._internal = None
 
