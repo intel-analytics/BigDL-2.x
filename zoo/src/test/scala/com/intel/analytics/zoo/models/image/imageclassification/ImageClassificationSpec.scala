@@ -139,7 +139,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
 
   "ImageClassifier" should "predict inception-v1-quantize" in {
     predict("https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/" +
-      "image-classification/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model", 
+      "image-classification/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model",
       "analytics-zoo", resource.getFile)
   }
 
