@@ -92,9 +92,10 @@ class PreProcessing(param: SerParams) {
     val mat = OpenCVMethod.fromImageBytes(byteBuffer, Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
     val (height, width, channel) = (mat.height(), mat.width(), mat.channels())
 
-    OpenCVMat.toFloatPixels(mat, arrayBuffer(idx))
+    val arrayBuffer = new Array[Float](height * width * channel)
+    OpenCVMat.toFloatPixels(mat, arrayBuffer)
 
-    val imageTensor = Tensor[Float](arrayBuffer(idx), Array(height, width, channel))
+    val imageTensor = Tensor[Float](arrayBuffer, Array(height, width, channel))
     if (param.chwFlag) {
       imageTensor.transpose(1, 3)
         .transpose(2, 3).contiguous()
