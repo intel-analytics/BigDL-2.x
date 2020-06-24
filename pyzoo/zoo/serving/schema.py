@@ -34,7 +34,8 @@ def get_field_and_data(key, value):
 
         elif isinstance(sample, np.ndarray):
             assert len(value) == 3, "Sparse Tensor must have list of ndarray" \
-                                    "with length 3, which represent indices, values, shape respectively"
+                                    "with length 3, which represent indices, " \
+                                    "values, shape respectively"
             indices_field = pa.field("indiceData", pa.list_(pa.int32()))
             indices_shape_field = pa.field("indiceShape", pa.list_(pa.int32()))
             value_field = pa.field("data", pa.list_(pa.float32()))
