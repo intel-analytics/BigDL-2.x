@@ -34,6 +34,8 @@ import com.intel.analytics.zoo.serving.http.Instances
 import com.intel.analytics.zoo.serving.preprocessing.DataType
 import com.intel.analytics.zoo.serving.preprocessing.DataType.DataTypeEnumVal
 import com.intel.analytics.zoo.serving.utils.SerParams
+import org.opencv.core.Size
+import org.opencv.imgproc.Imgproc
 
 class PreProcessing(param: SerParams) {
   val logger = Logger.getLogger(getClass)
@@ -90,6 +92,7 @@ class PreProcessing(param: SerParams) {
   def decodeImage(s: String, idx: Int = 0): Tensor[Float] = {
     byteBuffer = java.util.Base64.getDecoder.decode(s)
     val mat = OpenCVMethod.fromImageBytes(byteBuffer, Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
+//    Imgproc.resize(mat, mat, new Size(224, 224))
     val (height, width, channel) = (mat.height(), mat.width(), mat.channels())
 
     val arrayBuffer = new Array[Float](height * width * channel)
