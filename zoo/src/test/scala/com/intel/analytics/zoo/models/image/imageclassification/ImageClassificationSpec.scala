@@ -144,8 +144,8 @@ class ImageClassificationSpec extends ZooSpecHelper {
   }
 
   "ImageClassifier" should "predict bigdl inception-v1-quantize locally" in {
-    predictLocal("https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/" +
-      "imagenet/bigdl_inception-v1-quantize_imagenet_0.4.0.model", "bigdl", resource.getFile)
+    predictLocal("https://s3-ap-southeast-1.amazonaws.com/bigdl-models/image-classification/" +
+      "bigdl_inception-v1-quantize_imagenet_0.4.0.model", "bigdl", resource.getFile)
   }
 
   "ImageClassifier" should "predict bigdl inception-v1-quantize" in {
