@@ -126,8 +126,8 @@ class Estimator(object):
         """
         Trains an MXNet model given train_data (with val_data) for several epochs.
 
-        :param train_data: An instance of XShards or a function that takes config and kv as arguments
-        and returns an MXNet DataIter/DataLoader for training.
+        :param train_data: An instance of XShards or a function that takes config and kv as
+        arguments and returns an MXNet DataIter/DataLoader for training.
         You can specify data related configurations for this function in the config argument above.
         kv is an instance of MXNet distributed key-value store. kv.num_workers and kv.rank
         can be used in this function to split data for different workers if necessary.
@@ -138,10 +138,10 @@ class Estimator(object):
         kv is an instance of MXNet distributed key-value store. kv.num_workers and kv.rank
         can be used in this function to split data for different workers if necessary.
 
-        :param train_resize_batch_num: The number of batches per epoch to resize to. Default is None.
-        You might need to specify this if the size of train_data for each worker varies.
-        MXNet distributed training would crash when the first worker finishes the training if the
-        workers have unbalanced training data.
+        :param train_resize_batch_num: The number of batches per epoch to resize to.
+        Default is None. You might need to specify this if the size of train_data for each
+        worker varies. MXNet distributed training would crash when the first worker finishes
+        the training if the workers have unbalanced training data.
         See this issue for more details: https://github.com/apache/incubator-mxnet/issues/17651
         """
         if val_data:
@@ -183,7 +183,8 @@ class Estimator(object):
         val_data_list += [None] * self.num_servers
 
         stats = ray.get(
-            [runner.train.remote(train_data_list[i], val_data_list[i], nb_epoch, train_resize_batch_num)
+            [runner.train.remote(train_data_list[i], val_data_list[i],
+                                 nb_epoch, train_resize_batch_num)
              for i, runner in enumerate(self.runners)])
         return stats
 
