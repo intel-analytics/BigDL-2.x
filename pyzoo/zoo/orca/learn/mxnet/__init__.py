@@ -14,5 +14,5 @@
 # limitations under the License.
 #
 
-from .mxnet_trainer import MXNetTrainer
+from .mxnet_trainer import Estimator
 from .utils import create_trainer_config

@@ -23,7 +23,7 @@ import mxnet as mx
 from mxnet import gluon
 from mxnet.gluon import nn
 import zoo.orca.data.pandas
-from zoo.orca.learn.mxnet import MXNetTrainer, create_trainer_config
+from zoo.orca.learn.mxnet import Estimator, create_trainer_config
 from test.zoo.orca.learn.mxnet.conftest import get_ray_ctx
 
 
@@ -101,10 +101,9 @@ class TestMXNetRayXShards(TestCase):
                                                          orient='records', lines=False)
         test_data_shard.transform_shard(prepare_data_symbol)
         config = create_trainer_config(batch_size=32, log_interval=1, seed=42)
-        trainer = MXNetTrainer(config, train_data_shard, get_symbol_model,
-                               validation_metrics_creator=get_metrics, test_data=test_data_shard,
-                               eval_metrics_creator=get_metrics, num_workers=2)
-        trainer.train(nb_epoch=2)
+        trainer = Estimator(config, get_symbol_model, validation_metrics_creator=get_metrics,
+                            eval_metrics_creator=get_metrics, num_workers=2)
+        trainer.train(train_data_shard, test_data_shard, nb_epoch=2)
 
     def test_xshards_gluon(self):
         # prepare data
@@ -119,11 +118,10 @@ class TestMXNetRayXShards(TestCase):
                                                          orient='records', lines=False)
         test_data_shard.transform_shard(prepare_data_gluon)
         config = create_trainer_config(batch_size=32, log_interval=1, seed=42)
-        trainer = MXNetTrainer(config, train_data_shard, get_gluon_model, get_loss,
-                               validation_metrics_creator=get_gluon_metrics,
-                               test_data=test_data_shard, eval_metrics_creator=get_gluon_metrics,
-                               num_workers=2)
-        trainer.train(nb_epoch=2)
+        trainer = Estimator(config, get_gluon_model, get_loss,
+                            validation_metrics_creator=get_gluon_metrics,
+                            eval_metrics_creator=get_gluon_metrics, num_workers=2)
+        trainer.train(train_data_shard, test_data_shard, nb_epoch=2)
 
     # def test_xshard_list(self):
     #     # prepare data

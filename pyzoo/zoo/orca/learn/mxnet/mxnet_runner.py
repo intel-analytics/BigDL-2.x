@@ -29,16 +29,13 @@ from zoo.ray.utils import to_list
 class MXNetRunner(object):
     """Manages a MXNet model for training."""
 
-    def setup_distributed(self, env, config, train_data, model_creator, loss_creator=None,
-                          validation_metrics_creator=None, test_data=None, train_resize_size=None,
-                          eval_metrics_creator=None):
+    def setup_distributed(self, env, config, model_creator, loss_creator=None,
+                          validation_metrics_creator=None, eval_metrics_creator=None):
         logging.basicConfig(level=logging.INFO)  # This can print log messages to console.
         self.logger = logging.getLogger()
         assert isinstance(config, dict), "config must be a dict"
         for param in ["batch_size", "optimizer", "optimizer_params", "log_interval"]:
             assert param in config, param + " must be specified in config"
-        self.train_data_original = train_data
-        self.test_data_original = test_data
         self.config = config
         self.model_creator = model_creator
         self.loss_creator = loss_creator
@@ -56,46 +53,14 @@ class MXNetRunner(object):
             if "seed" in self.config:
                 mx.random.seed(self.config["seed"])
 
-            from zoo.orca.data.shard import RayPartition
-            if isinstance(train_data, RayPartition):
-                data, label = get_data_label(train_data.get_data())
-                self.train_data = mx.io.NDArrayIter(data=data, label=label,
-                                                    batch_size=config["batch_size"],
-                                                    shuffle=True)
-                if train_resize_size is not None:
-                    self.train_data = mx.io.ResizeIter(self.train_data, train_resize_size)
-                if test_data is None:
-                    self.val_data = None
-                else:
-                    val_data, val_label = get_data_label(test_data.get_data())
-                    self.val_data = mx.io.NDArrayIter(data=val_data,
-                                                      label=val_label,
-                                                      batch_size=config["batch_size"],
-                                                      shuffle=True)
-            else:  # data_creator functions
-                self.train_data = train_data(self.config, self.kv)
-                if test_data is not None:
-                    self.val_data = test_data(self.config, self.kv)
-                else:
-                    self.val_data = None
-
             self.model = self.model_creator(self.config)
-            if self.loss_creator:
-                self.loss = self.loss_creator(self.config)
-            else:
-                self.loss = None
-            if self.eval_metircs_creator:
-                self.eval_metrics = self.eval_metircs_creator(self.config)
-            else:
-                self.eval_metrics = None
-            if self.val_data:
-                assert self.validation_metrics_creator, \
-                    "Metrics not defined for validation, please specify metrics_creator"
-                self.val_metrics = self.validation_metrics_creator(self.config)
-            else:
-                self.val_metrics = None
+            self.loss = self.loss_creator(self.config) if self.loss_creator else None
+            self.eval_metrics = self.eval_metircs_creator(self.config) \
+                if self.eval_metircs_creator else None
+            self.val_metrics = self.validation_metrics_creator(self.config) \
+                if self.validation_metrics_creator else None
             # For BaseModule, use symbolic API. Otherwise, use imperative API.
-            # TODO: change to Estimator API?
+            # TODO: change Gluon Trainer to Estimator API?
             if not isinstance(self.model, mx.module.BaseModule):
                 assert self.loss, "Loss not defined for gluon model, please specify loss_creator"
                 self.trainer = gluon.Trainer(self.model.collect_params(), self.config["optimizer"],
@@ -111,19 +76,37 @@ class MXNetRunner(object):
             # For servers, just import mxnet and no need to do anything else
             subprocess.Popen("python -c 'import mxnet'", shell=True, env=modified_env)
 
-    def train(self, nb_epoch=1):
+    def train(self, train_data, val_data=None, nb_epoch=1, train_resize_batch_num=None):
         """Train the model and update the model parameters."""
         stats = dict()
         if self.is_worker:
+            from zoo.orca.data.shard import RayPartition
+            if isinstance(train_data, RayPartition):
+                data, label = get_data_label(train_data.get_data())
+                train_data_iter = mx.io.NDArrayIter(data=data, label=label,
+                                                    batch_size=self.config["batch_size"],
+                                                    shuffle=True)
+                if train_resize_batch_num is not None:
+                    train_data_iter = mx.io.ResizeIter(train_data_iter, train_resize_batch_num)
+                if val_data:
+                    data_val, label_val = get_data_label(val_data.get_data())
+                    val_data_iter = mx.io.NDArrayIter(data=data_val, label=label_val,
+                                                      batch_size=self.config["batch_size"],
+                                                      shuffle=True)
+                else:
+                    val_data_iter = None
+            else:  # data_creator functions; should return Iter or DataLoader
+                train_data_iter = train_data(self.config, self.kv)
+                val_data_iter = val_data(self.config, self.kv) if val_data else None
             start_time = time.time()
             if self.trainer:  # Imperative API
                 for epoch in range(nb_epoch):
-                    self.train_data.reset()
+                    train_data_iter.reset()
                     if self.eval_metrics:
                         self.eval_metrics.reset()  # metrics will accumulate for one batch
                     batch_start_time = time.time()
                     epoch_start_time = time.time()
-                    for i, batch in enumerate(self.train_data):
+                    for i, batch in enumerate(train_data_iter):
                         data = gluon.utils.split_and_load(
                             batch.data[0].astype("float32"), ctx_list=[mx.cpu()], batch_axis=0)
                         label = gluon.utils.split_and_load(
@@ -168,10 +151,10 @@ class MXNetRunner(object):
                             epoch_train_log += "%s=%f  " % (name, acc)
                         self.logger.info(epoch_train_log)
                     # Epoch metrics log on validation data if any:
-                    if self.val_data:
+                    if val_data_iter:
                         self.val_metrics.reset()
-                        self.val_data.reset()
-                        for batch in self.val_data:
+                        val_data_iter.reset()
+                        for batch in val_data_iter:
                             data = gluon.utils.split_and_load(
                                 batch.data[0].astype("float32", copy=False),
                                 ctx_list=[mx.cpu()], batch_axis=0)
@@ -199,13 +182,13 @@ class MXNetRunner(object):
                     self.config["init"] = Uniform(0.01)  # This is the default value for MXNet
                 if self.eval_metrics is None:
                     self.eval_metrics = 'acc'
-                self.model.fit(train_data=self.train_data,
+                self.model.fit(train_data=train_data_iter,
                                num_epoch=nb_epoch,
                                initializer=self.config["init"],
                                kvstore=self.kv,
                                optimizer=self.config["optimizer"],
                                optimizer_params=self.config["optimizer_params"],
-                               eval_data=self.val_data,
+                               eval_data=val_data_iter,
                                eval_metric=self.eval_metrics,
                                validation_metric=self.val_metrics,
                                batch_end_callback=mx.callback.Speedometer(
@@ -214,6 +197,10 @@ class MXNetRunner(object):
                                else mx.callback.do_checkpoint(self.config["model"]))
             epoch_time = time.time() - start_time
             stats["epoch_time"] = epoch_time
+            if isinstance(train_data, RayPartition):
+                del train_data
+            if val_data and isinstance(val_data, RayPartition):
+                del val_data
         return stats
 
     def shutdown(self):
@@ -224,17 +211,8 @@ class MXNetRunner(object):
             del self.model
             del self.trainer
             del self.loss
-            del self.train_data
-            if self.eval_metrics:
-                del self.eval_metrics
-            if self.val_data:
-                del self.val_data
-                del self.val_metrics
-            from zoo.orca.data.shard import RayPartition
-            if isinstance(self.train_data_original, RayPartition):
-                del self.train_data_original
-            if isinstance(self.test_data_original, RayPartition):
-                del self.test_data_original
+            del self.eval_metrics
+            del self.val_metrics
 
     def get_node_ip(self):
         """Returns the IP address of the current node."""

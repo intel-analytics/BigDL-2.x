@@ -151,7 +151,7 @@ class RayPartition(object):
             if self.client.contains(self.shard_list):
                 self.client.delete([self.shard_list])
             assert not self.client.contains(self.shard_list)
-            print("Deleted")
+            print("Deleted successfully")
             self.client.disconnect()
 
 
