@@ -23,6 +23,7 @@ import tensorflow as tf
 
 from zoo.tfpark.tf_dataset import TFDataset
 from zoo.tfpark.tf_optimizer import TFModel
+from zoo.tfpark import KerasModel
 from zoo.util import nest
 
 
@@ -47,6 +48,11 @@ class Estimator(object):
                                   metrics=metrics, updates=updates,
                                   sess=sess,
                                   model_dir=model_dir)
+
+    @staticmethod
+    def from_keras(*, keras_model, model_dir=None, backend="spark"):
+        assert backend == "spark", "only spark backend is supported for now"
+        return TFKerasWrapper(keras_model, model_dir)
 
 
 def _xshards_to_tf_dataset(data_shard,
@@ -128,14 +134,16 @@ def _xshards_to_tf_dataset(data_shard,
     return dataset
 
 
-def _to_dataset(data, batch_size, batch_per_thread):
+def _to_dataset(data, batch_size, batch_per_thread, validation_data=None):
     if isinstance(data, SparkXShards):
         dataset = _xshards_to_tf_dataset(data,
                                          batch_size=batch_size,
-                                         batch_per_thread=batch_per_thread)
+                                         batch_per_thread=batch_per_thread,
+                                         validation_data_shard=validation_data)
     elif isinstance(data, Dataset):
         dataset = TFDataDataset2(data, batch_size=batch_size,
-                                 batch_per_thread=batch_per_thread)
+                                 batch_per_thread=batch_per_thread,
+                                 validation_dataset=validation_data)
     else:
         raise ValueError("data must be a SparkXShards or an orca.data.tf.Dataset")
 
@@ -184,7 +192,8 @@ class TFOptimizerWrapper(Estimator):
         assert self.optimizer is not None, \
             "optimizer is None; it not None in training"
 
-        dataset = _to_dataset(data, batch_size=batch_size, batch_per_thread=-1)
+        dataset = _to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
+                              validation_data=validation_data)
 
         if feed_dict is not None:
             tensor_with_value = {key: (value, value) for key, value in feed_dict.items()}
@@ -229,3 +238,37 @@ class TFOptimizerWrapper(Estimator):
         return evaluate_metrics(flat_inputs + flat_labels,
                                 sess=self.sess,
                                 dataset=dataset, metrics=self.metrics)
+
+
+class TFKerasWrapper(Estimator):
+
+    def __init__(self, keras_model, model_dir=None):
+        self.model = KerasModel(keras_model, model_dir)
+
+    def fit(self, train_data,
+            batch_size=None,
+            epochs=1,
+            validation_data=None,
+            optim_method=None,
+            session_config=None,
+            **kwargs):
+
+        train_dataset = _to_dataset(train_data, batch_size=batch_size, batch_per_thread=-1,
+                                    validation_data=validation_data)
+
+        self.model.fit(train_dataset, batch_size=batch_size, epochs=epochs,
+                       optim_method=optim_method, session_config=session_config,
+                       **kwargs)
+        return self
+
+    def predict(self, data, batch_size=32):
+
+        dataset = _to_dataset(data, batch_size=-1, batch_per_thread=batch_size)
+
+        return self.model.predict(dataset, batch_size)
+
+    def evaluate(self, data, batch_size=32):
+
+        dataset = _to_dataset(data, batch_size=-1, batch_per_thread=batch_size)
+
+        return self.model.evaluate(dataset, batch_per_thread=batch_size)
