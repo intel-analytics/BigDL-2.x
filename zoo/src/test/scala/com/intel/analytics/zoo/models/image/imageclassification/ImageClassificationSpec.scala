@@ -144,8 +144,8 @@ class ImageClassificationSpec extends ZooSpecHelper {
   }
 
   "ImageClassifier" should "predict bigdl inception-v1-quantize locally" in {
-    predictLocal("https://s3-ap-southeast-1.amazonaws.com/bigdl-models/image-classification/" +
-      "bigdl_inception-v1-quantize_imagenet_0.4.0.model", "bigdl", resource.getFile)
+    predictLocal("https://s3-ap-southeast-1.amazonaws.com/bigdl-models/imageclassification/" +
+      "imagenet/bigdl_inception-v1-quantize_imagenet_0.4.0.model", "bigdl", resource.getFile)
   }
 
   "ImageClassifier" should "predict bigdl inception-v1-quantize" in {
@@ -169,7 +169,7 @@ class ImageClassificationSpec extends ZooSpecHelper {
     val tempDir = createTmpDir()
     val thrown = intercept[Exception]{
       predict("https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/" +
-        "imageclassification/imagenet/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model",
+        "image-classification/analytics-zoo_inception-v1-quantize_imagenet_0.1.0.model",
         "analytics-zoo", tempDir.getAbsolutePath)
     }
     assert("requirement failed: ImageModel.predictImageSet: input is empty, please check your " +
