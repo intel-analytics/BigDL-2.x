@@ -23,7 +23,7 @@ from zoo.orca.data.tf.data import Dataset
 from zoo.orca.learn.tf.estimator import Estimator
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.common.nncontext import *
-from zoo.util import nest
+
 
 class TestEstimatorForKeras(ZooTestCase):
     def setup_method(self, method):
