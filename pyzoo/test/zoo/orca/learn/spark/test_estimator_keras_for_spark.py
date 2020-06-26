@@ -86,7 +86,8 @@ class TestEstimatorForKeras(ZooTestCase):
 
         def transform(df):
             result = {
-                "x": (df['user'].to_numpy().reshape([-1,1]), df['item'].to_numpy().reshape([-1,1])),
+                "x": (df['user'].to_numpy().reshape([-1,1]),
+                      df['item'].to_numpy().reshape([-1,1])),
                 "y": df['label'].to_numpy()
             }
             return result
@@ -106,7 +107,8 @@ class TestEstimatorForKeras(ZooTestCase):
 
         def transform(df):
             result = {
-                "x": (df['user'].to_numpy().reshape([-1,1]), df['item'].to_numpy().reshape([-1,1])),
+                "x": (df['user'].to_numpy().reshape([-1,1]),
+                      df['item'].to_numpy().reshape([-1,1])),
             }
             return result
 
@@ -123,7 +125,8 @@ class TestEstimatorForKeras(ZooTestCase):
 
         def transform(df):
             result = {
-                "x": (df['user'].to_numpy().reshape([-1,1]), df['item'].to_numpy().reshape([-1,1])),
+                "x": (df['user'].to_numpy().reshape([-1,1]),
+                      df['item'].to_numpy().reshape([-1,1])),
                 "y": df['label'].to_numpy()
             }
             return result
@@ -136,17 +139,19 @@ class TestEstimatorForKeras(ZooTestCase):
                 batch_size=8,
                 epochs=10)
         # train with different optimizer
+        est = Estimator.from_keras(keras_model=model, optim_method=tf.keras.optimizers.Adam())
         est.fit(data=data_shard,
                 batch_size=8,
-                epochs=10,
-                optim_method=tf.keras.optimizers.Adam())
+                epochs=10
+                )
         # train with session config
         tf_session_config = tf.ConfigProto(inter_op_parallelism_threads=1,
                                            intra_op_parallelism_threads=1)
+        est = Estimator.from_keras(keras_model=model, session_config=tf_session_config)
         est.fit(data=data_shard,
                 batch_size=8,
-                epochs=10,
-                session_config=tf_session_config)
+                epochs=10
+                )
         # train with model dir
         temp = tempfile.mkdtemp()
         model_dir = os.path.join(temp, "model")
@@ -167,7 +172,8 @@ class TestEstimatorForKeras(ZooTestCase):
 
         def transform(df):
             result = {
-                "x": (df['user'].to_numpy().reshape([-1,1]), df['item'].to_numpy().reshape([-1,1])),
+                "x": (df['user'].to_numpy().reshape([-1,1]),
+                      df['item'].to_numpy().reshape([-1,1])),
                 "y": df['label'].to_numpy()
             }
             return result

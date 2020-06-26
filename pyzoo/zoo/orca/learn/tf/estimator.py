@@ -50,9 +50,10 @@ class Estimator(object):
                                   model_dir=model_dir)
 
     @staticmethod
-    def from_keras(*, keras_model, model_dir=None, backend="spark"):
+    def from_keras(*, keras_model, model_dir=None, optim_method=None,
+            session_config=None, backend="spark"):
         assert backend == "spark", "only spark backend is supported for now"
-        return TFKerasWrapper(keras_model, model_dir)
+        return TFKerasWrapper(keras_model, model_dir, optim_method, session_config)
 
 
 def _xshards_to_tf_dataset(data_shard,
@@ -242,8 +243,10 @@ class TFOptimizerWrapper(Estimator):
 
 class TFKerasWrapper(Estimator):
 
-    def __init__(self, keras_model, model_dir=None):
+    def __init__(self, keras_model, model_dir=None, optim_method=None, session_config=None):
         self.model = KerasModel(keras_model, model_dir)
+        self.optim_method = optim_method
+        self.session_config = session_config
 
     def fit(self, data,
             batch_size=None,
@@ -254,7 +257,9 @@ class TFKerasWrapper(Estimator):
         train_dataset = _to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                                     validation_data=validation_data)
 
-        self.model.fit(train_dataset, batch_size=batch_size, epochs=epochs, **kwargs)
+        self.model.fit(train_dataset, batch_size=batch_size, epochs=epochs,
+                       optim_method=self.optim_method, session_config=self.session_config,
+                       **kwargs)
         return self
 
     def predict(self, data, batch_size=32):
