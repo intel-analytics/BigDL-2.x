@@ -245,20 +245,16 @@ class TFKerasWrapper(Estimator):
     def __init__(self, keras_model, model_dir=None):
         self.model = KerasModel(keras_model, model_dir)
 
-    def fit(self, train_data,
+    def fit(self, data,
             batch_size=None,
             epochs=1,
             validation_data=None,
-            optim_method=None,
-            session_config=None,
             **kwargs):
 
-        train_dataset = _to_dataset(train_data, batch_size=batch_size, batch_per_thread=-1,
+        train_dataset = _to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                                     validation_data=validation_data)
 
-        self.model.fit(train_dataset, batch_size=batch_size, epochs=epochs,
-                       optim_method=optim_method, session_config=session_config,
-                       **kwargs)
+        self.model.fit(train_dataset, batch_size=batch_size, epochs=epochs, **kwargs)
         return self
 
     def predict(self, data, batch_size=32):
