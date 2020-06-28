@@ -74,7 +74,7 @@ else
     echo "Running Python 3"
     
     echo "Running TFPark tests"
-    python -m pytest -v ../test/zoo/tfpark/test_tf_dataset.py
+    python -m pytest -v ../test/zoo/tfpark/
     exit_status_3=$?
     if [ $exit_status_3 -ne 0 ];
     then
