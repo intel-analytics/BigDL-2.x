@@ -15,7 +15,7 @@ Quick example about integrating analytics-zoo inference/predict service into str
 ## Datasets and pre-trained models
 **1. Streaming Object Detection**
 * Datasets: [COCO](http://cocodataset.org/#home)
-* Pre-trained model: [SSD 300x300](https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model)
+* Pre-trained model: [SSD 300x300](https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/object-detection/analytics-zoo_ssd-vgg16-300x300_COCO_0.1.0.model)
 
 **2. Streaming Text Classification**
 * Pre-trained model: Save trained text classification model and word2index in [Text Classification](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/text-classification.md).
