@@ -20,7 +20,8 @@ def check_tf_version():
     try:
         import tensorflow as tf
     except Exception as e:
-        return False, RuntimeError("Importing TensorFlow failed, please install tensorflow 1.15.0.", e)
+        return False, RuntimeError("Importing TensorFlow failed, "
+                                   "please install tensorflow 1.15.0.", e)
 
     v_str = tf.__version__
     major, minor, patch = v_str.split(".")
@@ -59,15 +60,12 @@ else:
     # otherwise it would raise error even on creation of objects.
     MAGIC_METHODS_TO_CHANGE -= {'__class__', '__init__', '__new__'}
 
-
     def error_func(*args, **kwargs):
         """(nearly) all magic methods will be set to this function."""
         raise error
 
-
     class UnusableClass(object):
         pass
-
 
     for i in MAGIC_METHODS_TO_CHANGE:
         setattr(UnusableClass, i, error_func)

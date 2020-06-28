@@ -41,7 +41,6 @@ class TFNet(Layer):
     def __init__(self, path, input_names=None, output_names=None,
                  tf_session_config=None, jvalue=None, bigdl_type="float"):
 
-
         if jvalue is not None:
             super(TFNet, self).__init__(jvalue, bigdl_type)
             return

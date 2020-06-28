@@ -77,8 +77,10 @@ class KerasModel(object):
         :return: KerasModel.
         """
         from tensorflow.python.keras import models
+
         def load_func(file_path):
             return models.load_model(file_path)
+
         keras_model = load_from_file(load_func, path)
         return KerasModel(keras_model)
 
