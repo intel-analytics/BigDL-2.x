@@ -154,6 +154,7 @@ class Estimator(object):
             if val_data:
                 assert isinstance(val_data, SparkXShards)
                 val_data = val_data.repartition(self.num_workers).to_ray()
+
         if isinstance(train_data, RayXShards):
             if train_data.num_partitions() != self.num_workers:
                 train_data.repartition(self.num_workers)
@@ -162,14 +163,13 @@ class Estimator(object):
                 if val_data.num_partitions() != self.num_workers:
                     val_data.repartition(self.num_workers)
 
-        if isinstance(train_data, RayXShards):
             self.workers = train_data.colocate_actors(self.workers)
             train_data_list = train_data.get_partitions()
             if val_data:
                 val_data_list = val_data.get_partitions()
             else:
                 val_data_list = [None] * self.num_workers
-        else:
+        else:  # data_creator functions; should return Iter or DataLoader
             assert callable(train_data),\
                 "train_data should be either an instance of XShards or a callable function"
             train_data_list = [train_data] * self.num_workers

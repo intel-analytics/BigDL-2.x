@@ -153,6 +153,7 @@ class RayPartition(object):
             assert not self.client.contains(self.shard_list)
             print("Deleted successfully")
             self.client.disconnect()
+            del self.client
 
 
 class SparkXShards(XShards):
