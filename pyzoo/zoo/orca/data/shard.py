@@ -139,14 +139,15 @@ class RayPartition(object):
         # The ObjectID would contain a list of data.
         else:
             import pyarrow.plasma as plasma
-            self.client = plasma.connect(self.object_store_address)
+            # Default num_retries=-1 would try 80 times.
+            self.client = plasma.connect(self.object_store_address, num_retries=5)
             return self.client.get(self.shard_list)
 
     def __del__(self):
         if self.object_store_address:
             if "client" not in self.__dict__:
                 import pyarrow.plasma as plasma
-                self.client = plasma.connect(self.object_store_address)
+                self.client = plasma.connect(self.object_store_address, num_retries=5)
             print("Removing data")
             if self.client.contains(self.shard_list):
                 self.client.delete([self.shard_list])

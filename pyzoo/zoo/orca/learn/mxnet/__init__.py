@@ -15,4 +15,4 @@
 #
 
 from .mxnet_trainer import Estimator
-from .utils import create_trainer_config
+from .utils import create_config

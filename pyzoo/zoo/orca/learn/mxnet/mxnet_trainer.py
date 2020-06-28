@@ -33,7 +33,7 @@ class Estimator(object):
     and other optimization configurations.
     log_interval should be an integer, specifying the interval for logging throughput and metrics
     information (if any) during the training process.
-    You can call create_trainer_config to create the config easily.
+    You can call create_config to directly create it.
     You can specify "seed" in config to set random seed.
     You can specify "init" in seed to set model initializer.
 
@@ -150,10 +150,14 @@ class Estimator(object):
                 "when creating the Estimator"
         from zoo.orca.data import RayXShards, SparkXShards
         if isinstance(train_data, SparkXShards):
-            train_data = train_data.repartition(self.num_workers).to_ray()
+            if train_data.num_partitions() != self.num_workers:
+                train_data = train_data.repartition(self.num_workers)
+            train_data = train_data.to_ray()
             if val_data:
                 assert isinstance(val_data, SparkXShards)
-                val_data = val_data.repartition(self.num_workers).to_ray()
+                if val_data.num_partitions() != self.num_workers:
+                    val_data = val_data.repartition(self.num_workers)
+                val_data = val_data.to_ray()
 
         if isinstance(train_data, RayXShards):
             if train_data.num_partitions() != self.num_workers:

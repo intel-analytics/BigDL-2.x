@@ -23,7 +23,7 @@ import mxnet as mx
 from mxnet import gluon
 from mxnet.gluon import nn
 import zoo.orca.data.pandas
-from zoo.orca.learn.mxnet import Estimator, create_trainer_config
+from zoo.orca.learn.mxnet import Estimator, create_config
 from test.zoo.orca.learn.mxnet.conftest import get_spark_ctx
 
 
@@ -92,7 +92,7 @@ class TestMXNetSparkXShards(TestCase):
         test_data_shard = zoo.orca.data.pandas.read_json(
             test_file_path, get_spark_ctx(),
             orient='records', lines=False).transform_shard(prepare_data_symbol)
-        config = create_trainer_config(batch_size=32, log_interval=1, seed=42)
+        config = create_config(batch_size=32, log_interval=1, seed=42)
         estimator = Estimator(config, get_symbol_model, validation_metrics_creator=get_metrics,
                               eval_metrics_creator=get_metrics, num_workers=2)
         estimator.fit(train_data_shard, nb_epoch=2)
@@ -108,7 +108,7 @@ class TestMXNetSparkXShards(TestCase):
         train_data_shard = zoo.orca.data.pandas.read_json(
             train_file_path, get_spark_ctx(),
             orient='records', lines=False).transform_shard(prepare_data_symbol)
-        config = create_trainer_config(batch_size=32, log_interval=1, seed=42)
+        config = create_config(batch_size=32, log_interval=1, seed=42)
         estimator = Estimator(config, get_symbol_model,
                               eval_metrics_creator=get_metrics, num_workers=2)
         estimator.fit(train_data_shard, nb_epoch=2)
@@ -124,7 +124,7 @@ class TestMXNetSparkXShards(TestCase):
         test_data_shard = zoo.orca.data.pandas.read_json(
             test_file_path, get_spark_ctx(),
             orient='records', lines=False).transform_shard(prepare_data_gluon)
-        config = create_trainer_config(batch_size=32, log_interval=1, seed=42)
+        config = create_config(batch_size=32, log_interval=1, seed=42)
         estimator = Estimator(config, get_gluon_model, get_loss,
                               validation_metrics_creator=get_gluon_metrics,
                               eval_metrics_creator=get_gluon_metrics,
