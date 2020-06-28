@@ -155,12 +155,13 @@ class RayPartition(object):
                 if self.client.contains(self.shard_list):
                     self.client.delete([self.shard_list])
                 assert not self.client.contains(self.shard_list)
-                logger.info("Removed data from plasma object store")
+                logger.info("Removed data from plasma object store on node ", self.node_ip)
                 self.client.disconnect()
                 del self.client
             except Exception as e:
                 logger.warning(e)
-                logger.warning("Error occurred when removing the data from the plasma store on node ", self.node_ip)
+                logger.warning("Error occurred when removing the data from the plasma store "
+                               "on node ", self.node_ip)
 
 
 class SparkXShards(XShards):
