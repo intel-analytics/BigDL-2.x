@@ -39,6 +39,7 @@ state*.[0-9]*
 # other
 nohup.out
 *.log
+*.lock
 *.un~
 .ipynb_checkpoints/
 pyspark/dist/

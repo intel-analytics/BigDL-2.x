@@ -1,3 +1,22 @@
+#
+# Copyright 2018 Analytics Zoo Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Some portions of this file Copyright 2018 Uber Technologies, Inc
+# and licensed under the Apache License, Version 2.0
+#
+
 # This file is adapted from https://github.com/horovod/horovod/blob/master/examples/pytorch_mnist.py
 
 from __future__ import print_function
@@ -13,7 +32,7 @@ from torchvision import datasets, transforms
 from zoo.ray import RayContext
 
 from zoo import init_spark_on_yarn, init_spark_on_local
-from zoo.orca.learn.horovod import HorovodRayTrainer
+from zoo.orca.learn.horovod import HorovodRayRunner
 
 
 def run_horovod():
@@ -218,5 +237,5 @@ if __name__ == "__main__":
             object_store_memory=args.object_store_memory)
         ray_ctx.init()
 
-    runner = HorovodRayTrainer(ray_ctx)
-    runner.train(func=run_horovod)
+    runner = HorovodRayRunner(ray_ctx)
+    runner.run(func=run_horovod)

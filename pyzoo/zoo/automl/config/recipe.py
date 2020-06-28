@@ -98,9 +98,10 @@ class MTNetSmokeRecipe(Recipe):
             "lr": 0.001,
             "batch_size": 16,
             "epochs": 1,
-            "dropout": 0.2,
+            "cnn_dropout": 0.2,
+            "rnn_dropout": 0.2,
             "time_step": tune.choice([3, 4]),
-            "filter_size": 2,
+            "cnn_height": 2,
             "long_num": tune.choice([3, 4]),
             "ar_size": tune.choice([2, 3]),
             "past_seq_len": tune.sample_from(lambda spec:
@@ -296,8 +297,9 @@ class MTNetGridRandomRecipe(Recipe):
                  epochs=5,
                  training_iteration=10,
                  time_step=[3, 4],
-                 filter_size=[2, 4],
                  long_num=[3, 4],
+                 cnn_height=[2, 3],
+                 cnn_hid_size=[32, 50, 100],
                  ar_size=[2, 3],
                  batch_size=[32, 64]):
         """
@@ -306,10 +308,11 @@ class MTNetGridRandomRecipe(Recipe):
         :param training_iteration: no. of iterations for training (n epochs) in trials
         :param epochs: no. of epochs to train in each iteration
         :param time_step: random search candidates for model param "time_step"
-        :param filter_size: random search candidates for model param "filter_size"
         :param long_num: random search candidates for model param "long_num"
         :param ar_size: random search candidates for model param "ar_size"
         :param batch_size: grid search candidates for batch size
+        :param cnn_height: random search candidates for model param "cnn_height"
+        :param cnn_hid_size: random search candidates for model param "cnn_hid_size"
         """
         super(self.__class__, self).__init__()
         # -- run time params
@@ -322,10 +325,12 @@ class MTNetGridRandomRecipe(Recipe):
         self.epochs = epochs
 
         # ---- model params
-        self.dropout = tune.uniform(0.2, 0.5)
+        self.cnn_dropout = tune.uniform(0.2, 0.5)
+        self.rnn_dropout = tune.uniform(0.2, 0.5)
         self.time_step = tune.choice(time_step)
-        self.filter_size = tune.choice(filter_size)
         self.long_num = tune.choice(long_num,)
+        self.cnn_height = tune.choice(cnn_height)
+        self.cnn_hid_size = tune.choice(cnn_hid_size)
         self.ar_size = tune.choice(ar_size)
         self.past_seq_len = tune.sample_from(
             lambda spec: (
@@ -346,12 +351,14 @@ class MTNetGridRandomRecipe(Recipe):
             "lr": self.lr,
             "batch_size": self.batch_size,
             "epochs": self.epochs,
-            "dropout": self.dropout,
+            "cnn_dropout": self.cnn_dropout,
+            "rnn_dropout": self.rnn_dropout,
             "time_step": self.time_step,
-            "filter_size": self.filter_size,
             "long_num": self.long_num,
             "ar_size": self.ar_size,
             "past_seq_len": self.past_seq_len,
+            "cnn_hid_size": self.cnn_hid_size,
+            "cnn_height": self.cnn_height
         }
 
 
