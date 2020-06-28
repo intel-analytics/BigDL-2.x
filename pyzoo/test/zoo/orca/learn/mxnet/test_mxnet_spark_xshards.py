@@ -95,7 +95,11 @@ class TestMXNetSparkXShards(TestCase):
         config = create_trainer_config(batch_size=32, log_interval=1, seed=42)
         estimator = Estimator(config, get_symbol_model, validation_metrics_creator=get_metrics,
                               eval_metrics_creator=get_metrics, num_workers=2)
-        estimator.fit(train_data_shard, test_data_shard, nb_epoch=2)
+        estimator.fit(train_data_shard, nb_epoch=2)
+        train_data_shard2 = zoo.orca.data.pandas.read_json(
+            train_file_path, get_spark_ctx(),
+            orient='records', lines=False).transform_shard(prepare_data_symbol)
+        estimator.fit(train_data_shard2, test_data_shard, nb_epoch=1)
         estimator.shutdown()
 
     def test_xshards_symbol_without_val(self):
