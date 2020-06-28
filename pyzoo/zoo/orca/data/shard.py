@@ -148,28 +148,19 @@ class RayPartition(object):
             import logging
             logging.basicConfig(level=logging.WARNING)
             logger = logging.getLogger()
-            if "client" not in self.__dict__:
-                import pyarrow.plasma as plasma
-                try:
-                    self.client = plasma.connect(self.object_store_address, num_retries=5)
-                except Exception as e:
-                    logger.warning(e)
-                    logger.warning("Error connecting to the plasma store and deleting the data")
-                    return
-            if self.client.contains(self.shard_list):
-                try:
-                    self.client.delete([self.shard_list])
-                    assert not self.client.contains(self.shard_list)
-                except Exception as e:
-                    logger.warning(e)
-                    logger.warning("Error deleting the data from the plasma store")
-            logger.info("Removed data from plasma object store")
             try:
+                if "client" not in self.__dict__:
+                    import pyarrow.plasma as plasma
+                    self.client = plasma.connect(self.object_store_address, num_retries=5)
+                if self.client.contains(self.shard_list):
+                    self.client.delete([self.shard_list])
+                assert not self.client.contains(self.shard_list)
+                logger.info("Removed data from plasma object store")
                 self.client.disconnect()
+                del self.client
             except Exception as e:
                 logger.warning(e)
-                logger.warning("Error disconnecting the plasma store")
-            del self.client
+                logger.warning("Error occurred when removing the data from the plasma store on node ", self.node_ip)
 
 
 class SparkXShards(XShards):
