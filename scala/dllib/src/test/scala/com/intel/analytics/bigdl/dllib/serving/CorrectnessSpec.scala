@@ -42,6 +42,7 @@ import org.apache.commons.io.FileUtils
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.serving.engine.InferenceSupportive
 import com.intel.analytics.zoo.serving.http.{Instances, JsonUtil}
+import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams}
 
 import sys.env
