@@ -18,7 +18,8 @@ package com.intel.analytics.zoo.serving.engine
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import com.intel.analytics.zoo.serving.{PostProcessing, PreProcessing}
+import com.intel.analytics.zoo.serving.PreProcessing
+import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
 import com.intel.analytics.zoo.serving.utils.SerParams
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.configuration.Configuration

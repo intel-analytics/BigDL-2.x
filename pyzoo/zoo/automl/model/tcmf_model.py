@@ -54,12 +54,11 @@ class TCMF(BaseModel):
         self.covariates = config.get('covariates', None)
         self.use_time = config.get("use_time", True)
         self.dti = config.get("dti", None)
-        self.svd = config.get("svd", None)
+        self.svd = config.get("svd", True)
         self.period = config.get("period", 24)
-        self.forward_cov = config.get("forward_cov", None)
         self.alt_iters = config.get("alt_iters", 10)
         self.y_iters = config.get("max_y_iterations", 300)
-        self.init_epoch = config.get("init_XF_epoch", 100)
+        self.init_epoch = config.get("init_FX_epoch", 100)
         self.max_FX_epoch = config.get("max_FX_epoch", 300)
         self.max_TCN_epoch = config.get("max_TCN_epoch", 300)
 
@@ -89,7 +88,7 @@ class TCMF(BaseModel):
             dti=self.dti,
             svd=self.svd,
             period=self.period,
-            forward_cov=self.forward_cov
+            forward_cov=False
         )
         self.model_init = True
 

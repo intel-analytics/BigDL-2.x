@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.serving.engine
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.zoo.serving.PostProcessing
+import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
 import com.intel.analytics.zoo.serving.utils.SerParams
 
 object InferenceSupportive {

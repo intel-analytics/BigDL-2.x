@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving
+package com.intel.analytics.zoo.serving.postprocessing
 
-import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.serving.utils.TensorUtils
 
 
