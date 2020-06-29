@@ -58,7 +58,7 @@ class OnnxTestCase(ZooTestCase):
 
     def compare_with_pytorch(self, pytorch_model, input_shape_with_batch,
                              input_data_with_batch=None, compare_result=True,
-                             rtol=1e-6, atol=1e-6):
+                             rtol=1e-5, atol=1e-5):
         input_shape_with_batch = to_list(input_shape_with_batch)
         if input_data_with_batch is not None:
             input_data_with_batch = to_list(input_data_with_batch)
