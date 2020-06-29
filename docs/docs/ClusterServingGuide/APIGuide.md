@@ -37,7 +37,7 @@ Import the dependency and create an instance of `InputQueue`
 from zoo.serving.client import InputQueue
 input_api = InputQueue()
 ```
-To enqueue an list of string, pass a list of str objects, list of str type input is usually used in Tensorflow models.
+To enqueue a list of string, pass a list of str objects, list of str type input is usually used in Tensorflow models.
 ```
 input_api.enqueue('my-string-input', user_define_key=['hello', 'world'])
 ```
