@@ -108,7 +108,7 @@ def read_file_spark(context, file_path, file_type, **kwargs):
     if not file_paths:
         raise Exception("The file path is invalid/empty or does not include csv/json files")
 
-    if ZooContext.orca_read_file_backend == "pandas":
+    if ZooContext.orca_pandas_read_backend == "pandas":
         num_files = len(file_paths)
         total_cores = node_num * core_num
         num_partitions = num_files if num_files < total_cores else total_cores

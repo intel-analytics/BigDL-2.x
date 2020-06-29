@@ -116,7 +116,7 @@ class ZooContextMeta(type):
 
     _log_output = False
     __orca_eager_mode = True
-    _orca_read_file_backend = "pandas"
+    _orca_pandas_read_backend = "pandas"
 
     @property
     def log_output(cls):
@@ -151,19 +151,19 @@ class ZooContextMeta(type):
         cls.__orca_eager_mode = value
 
     @property
-    def orca_read_file_backend(cls):
+    def orca_pandas_read_backend(cls):
         """
         The backend for reading csv/json files. Either "spark" or "pandas".
         spark backend would call spark.read and pandas backend would call pandas.read.
         """
-        return cls._orca_read_file_backend
+        return cls._orca_pandas_read_backend
 
-    @orca_read_file_backend.setter
-    def orca_read_file_backend(cls, value):
+    @orca_pandas_read_backend.setter
+    def orca_pandas_read_backend(cls, value):
         value = value.lower()
         assert value == "spark" or value == "pandas", \
-            "orca_read_file_backend must be either spark or pandas"
-        cls._orca_read_file_backend = value
+            "orca_pandas_read_backend must be either spark or pandas"
+        cls._orca_pandas_read_backend = value
 
 
 class ZooContext(metaclass=ZooContextMeta):

@@ -40,7 +40,7 @@ class TestSparkXShards(ZooTestCase):
         self.sc.stop()
 
     def test_read_local_csv_pandas_backend(self):
-        ZooContext.orca_read_file_backend = "pandas"
+        ZooContext.orca_pandas_read_backend = "pandas"
         file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
         data = data_shard.collect()
@@ -53,7 +53,7 @@ class TestSparkXShards(ZooTestCase):
         self.assertTrue('The file path is invalid/empty' in str(context.exception))
 
     def test_read_local_csv_spark_backend(self):
-        ZooContext.orca_read_file_backend = "spark"
+        ZooContext.orca_pandas_read_backend = "spark"
         file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc, header=True)
         data = data_shard.collect()
@@ -65,7 +65,7 @@ class TestSparkXShards(ZooTestCase):
         self.assertTrue('The file path is invalid/empty' in str(context.exception))
 
     def test_read_local_json_pandas_backend(self):
-        ZooContext.orca_read_file_backend = "pandas"
+        ZooContext.orca_pandas_read_backend = "pandas"
         file_path = os.path.join(self.resource_path, "orca/data/json")
         data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc,
                                                     orient='columns', lines=True)
@@ -75,7 +75,7 @@ class TestSparkXShards(ZooTestCase):
         assert "value" in df.columns, "value is not in columns"
 
     def test_read_local_json_spark_backend(self):
-        ZooContext.orca_read_file_backend = "spark"
+        ZooContext.orca_pandas_read_backend = "spark"
         file_path = os.path.join(self.resource_path, "orca/data/json")
         data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc)
         data = data_shard.collect()
