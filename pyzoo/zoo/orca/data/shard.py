@@ -336,6 +336,7 @@ class SparkXShards(XShards):
                 if not client.contains(target_id):
                     object_id = client.put(res, target_id)
                     assert object_id == target_id
+                client.disconnect()
                 yield target_id, get_node_ip()
             return f
 
