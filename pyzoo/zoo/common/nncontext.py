@@ -116,6 +116,7 @@ class ZooContextMeta(type):
 
     _log_output = False
     __orca_eager_mode = True
+    _orca_read_file_backend = "pandas"
 
     @property
     def log_output(cls):
@@ -148,6 +149,20 @@ class ZooContextMeta(type):
                                  " Please set it before init_nncontext, init_spark_on_local"
                                  "or init_spark_on_yarn")
         cls.__orca_eager_mode = value
+
+    @property
+    def orca_read_file_backend(cls):
+        """
+        Whether to redirect Spark driver JVM's stdout and stderr to the current
+        python process. This is useful when running Analytics Zoo in jupyter notebook.
+        Default to False. Needs to be set before initializing SparkContext.
+        """
+        return cls._orca_read_file_backend
+
+    @orca_read_file_backend.setter
+    def orca_read_file_backend(cls, value):
+        assert value == "spark" or value == "pandas", "orca_read_file_backend must be either spark or pandas"
+        cls._orca_read_file_backend = value
 
 
 class ZooContext(metaclass=ZooContextMeta):
