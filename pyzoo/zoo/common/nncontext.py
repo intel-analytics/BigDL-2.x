@@ -153,9 +153,8 @@ class ZooContextMeta(type):
     @property
     def orca_read_file_backend(cls):
         """
-        Whether to redirect Spark driver JVM's stdout and stderr to the current
-        python process. This is useful when running Analytics Zoo in jupyter notebook.
-        Default to False. Needs to be set before initializing SparkContext.
+        The backend for reading csv/json files. Either "spark" or "pandas".
+        spark backend would call spark.read and pandas backend would call pandas.read.
         """
         return cls._orca_read_file_backend
 
