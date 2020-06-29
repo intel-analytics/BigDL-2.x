@@ -75,8 +75,9 @@ class TFDataDataset2(TFDataset):
         self.validation_dataset = validation_dataset
 
     def _get_prediction_data(self):
-        assert not self.drop_remainder, "sanity check: drop_remainder should be false in this case," \
-                                        " otherwise, please report a bug"
+        assert not self.drop_remainder, \
+            "sanity check: drop_remainder should be false in this case," \
+            " otherwise please report a bug"
         jvalue = callZooFunc("float", "createMiniBatchRDDFromTFDataset",
                              self.rdd.map(lambda x: x[0]), self.init_op_name, self.table_init_op,
                              self.output_names, self.output_types, self.shard_index_op_name)
