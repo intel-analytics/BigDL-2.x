@@ -72,15 +72,15 @@ class data_loader(object):
     """
 
     def __init__(
-        self,
-        Ymat,
-        covariates=None,
-        Ycov=None,
-        vbsize=200,
-        hbsize=100,
-        end_index=20000,
-        val_len=30,
-        shuffle=False,
+            self,
+            Ymat,
+            covariates=None,
+            Ycov=None,
+            vbsize=200,
+            hbsize=100,
+            end_index=20000,
+            val_len=30,
+            shuffle=False,
     ):
         """
         Argeuments:
@@ -144,28 +144,28 @@ class data_loader(object):
             pr_vindex = self.vindex
 
         data = self.Ymat[
-            int(pr_vindex): int(pr_vindex + self.vbsize),
-            int(pr_hindex): int(min(self.end_index, pr_hindex + self.hbsize)),
-        ]
+               int(pr_vindex): int(pr_vindex + self.vbsize),
+               int(pr_hindex): int(min(self.end_index, pr_hindex + self.hbsize)),
+               ]
         out_data = self.Ymat[
-            int(pr_vindex): int(pr_vindex + self.vbsize),
-            int(pr_hindex + 1): int(min(self.end_index, pr_hindex + self.hbsize) + 1),
-        ]
+                   int(pr_vindex): int(pr_vindex + self.vbsize),
+                   int(pr_hindex + 1): int(min(self.end_index, pr_hindex + self.hbsize) + 1),
+                   ]
         nd, Td = data.shape
         if self.covariates is not None:
             covs = self.covariates[
-                :, int(pr_hindex): int(min(self.end_index, pr_hindex + self.hbsize))
-            ]
+                   :, int(pr_hindex): int(min(self.end_index, pr_hindex + self.hbsize))
+                   ]
             rcovs = np.repeat(
                 covs.reshape(1, covs.shape[0], covs.shape[1]), repeats=nd, axis=0
             )
 
         if self.Ycov is not None:
             ycovs = self.Ycov[
-                int(pr_vindex): int(pr_vindex + self.vbsize),
-                :,
-                int(pr_hindex): int(min(self.end_index, pr_hindex + self.hbsize)),
-            ]
+                    int(pr_vindex): int(pr_vindex + self.vbsize),
+                    :,
+                    int(pr_hindex): int(min(self.end_index, pr_hindex + self.hbsize)),
+                    ]
         if option == 1:
             inp = torch.from_numpy(data).view(1, nd, Td)
             out = torch.from_numpy(out_data).view(1, nd, Td)
@@ -195,26 +195,26 @@ class data_loader(object):
         n, T = self.Ymat.shape
         index = self.val_index
         in_data = self.Ymat[
-            int(index): int(index + self.vbsize),
-            int(self.end_index): int(self.end_index + self.val_len),
-        ]
+                  int(index): int(index + self.vbsize),
+                  int(self.end_index): int(self.end_index + self.val_len),
+                  ]
         out_data = self.Ymat[
-            int(index): int(index + self.vbsize),
-            int(self.end_index + 1): int(self.end_index + self.val_len + 1),
-        ]
+                   int(index): int(index + self.vbsize),
+                   int(self.end_index + 1): int(self.end_index + self.val_len + 1),
+                   ]
         nd, Td = in_data.shape
         if self.covariates is not None:
             covs = self.covariates[
-                :, int(self.end_index): int(self.end_index + self.val_len)
-            ]
+                   :, int(self.end_index): int(self.end_index + self.val_len)
+                   ]
             rcovs = np.repeat(
                 covs.reshape(1, covs.shape[0], covs.shape[1]), repeats=nd, axis=0
             )
         if self.Ycov is not None:
             ycovs = self.Ycov[
-                int(index): int(index + self.vbsize), :,
-                int(self.end_index): int(self.end_index + self.val_len),
-            ]
+                    int(index): int(index + self.vbsize), :,
+                    int(self.end_index): int(self.end_index + self.val_len),
+                    ]
         if option == 1:
             inp = torch.from_numpy(in_data).view(1, nd, Td)
             inp = inp.transpose(0, 1).float()
@@ -232,3 +232,9 @@ class data_loader(object):
             inp = torch.from_numpy(in_data).float()
             out = torch.from_numpy(out_data).float()
         return inp, out, self.vindex, self.hindex
+
+    def reset_Ymat(self, Ymat):
+        self.Ymat = Ymat
+        n, T = self.Ymat.shape
+        if self.I.shape[0] != n:
+            self.I = np.array(range(n))

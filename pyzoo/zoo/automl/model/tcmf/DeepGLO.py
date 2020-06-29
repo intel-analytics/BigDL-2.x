@@ -96,31 +96,28 @@ def get_model(A, y, lamb=0):
 
 class DeepGLO(object):
     def __init__(
-        self,
-        vbsize=150,
-        hbsize=256,
-        num_channels_X=[32, 32, 32, 32, 1],
-        num_channels_Y=[32, 32, 32, 32, 1],
-        kernel_size=7,
-        dropout=0.2,
-        rank=64,
-        kernel_size_Y=7,
-        lr=0.0005,
-        val_len=24,
-        end_index=-24,
-        normalize=False,
-        start_date="2016-1-1",
-        freq="H",
-        covariates=None,
-        use_time=True,
-        dti=None,
-        svd=False,
-        period=None,
-        forward_cov=False,
+            self,
+            vbsize=150,
+            hbsize=256,
+            num_channels_X=[32, 32, 32, 32, 1],
+            num_channels_Y=[32, 32, 32, 32, 1],
+            kernel_size=7,
+            dropout=0.2,
+            rank=64,
+            kernel_size_Y=7,
+            lr=0.0005,
+            val_len=24,
+            end_index=-24,
+            normalize=False,
+            use_time=True,
+            dti=None,
+            svd=False,
+            period=None,
+            forward_cov=False,
     ):
-        self.start_date = start_date
-        self.freq = freq
-        self.covariates = covariates
+        self.start_date = ''
+        self.freq = 'H'
+        self.covariates = None
         self.use_time = use_time
         self.dti = dti
         self.dropout = dropout
@@ -164,13 +161,13 @@ class DeepGLO(object):
         return (1 - alpha) * l1 + alpha * l2
 
     def recover_future_X(
-        self,
-        last_step,
-        future,
-        num_epochs=50,
-        alpha=0.5,
-        vanilla=True,
-        tol=1e-7,
+            self,
+            last_step,
+            future,
+            num_epochs=50,
+            alpha=0.5,
+            vanilla=True,
+            tol=1e-7,
     ):
         rg = max(
             1 + 2 * (self.kernel_size - 1) * 2 ** (len(self.num_channels_X) - 1),
@@ -246,7 +243,7 @@ class DeepGLO(object):
         loss.backward()
         optim_F.step()
         self.F[
-            self.D.I[last_vindex: last_vindex + inp.size(0)], :
+        self.D.I[last_vindex: last_vindex + inp.size(0)], :
         ] = Fout.cpu().detach()
         return loss
 
@@ -304,7 +301,7 @@ class DeepGLO(object):
         return self.tensor2d_to_temporal(out)
 
     def predict_global(
-        self, ind, last_step=100, future=10, normalize=False, bsize=90
+            self, ind, last_step=100, future=10, normalize=False, bsize=90
     ):
 
         if ind is None:
@@ -376,14 +373,14 @@ class DeepGLO(object):
         self.Xseq = TC.seq
 
     def train_factors(
-        self,
-        reg_X=0.0,
-        reg_F=0.0,
-        mod=5,
-        early_stop=False,
-        tenacity=3,
-        ind=None,
-        seed=False,
+            self,
+            reg_X=0.0,
+            reg_F=0.0,
+            mod=5,
+            early_stop=False,
+            tenacity=3,
+            ind=None,
+            seed=False,
     ):
         self.D.epoch = 0
         self.D.vindex = 0
@@ -480,8 +477,8 @@ class DeepGLO(object):
             Fout = self.F[self.D.I[last_vindex: last_vindex + out.size(0)], :]
             output = np.array(torch.matmul(Fout, Xout).detach())
             Ycov[
-                last_vindex: last_vindex + output.shape[0],
-                last_hindex + 1: last_hindex + 1 + output.shape[1],
+            last_vindex: last_vindex + output.shape[0],
+            last_hindex + 1: last_hindex + 1 + output.shape[1],
             ] = output
 
         for p in self.Xseq.parameters():
@@ -528,10 +525,71 @@ class DeepGLO(object):
 
         self.Yseq.train_model(early_stop=early_stop, tenacity=tenacity)
 
+    def append_new_y(self,
+                  Ymat_new):
+        # prepare internal data structures
+
+        # normalize the incremented Ymat if needed
+        if self.normalize:
+            # TODO check the correctness of this part
+            # self.s = np.std(Ymat[:, 0:end_index], axis=1)
+            # self.s[self.s == 0] = 1.0
+            # self.s += 1.0
+            # self.m = np.mean(Ymat[:, 0:end_index], axis=1)
+            Ymat_new = (Ymat_new - self.m[:, None]) / self.s[:, None]
+            # self.mini = np.abs(np.min(self.Ymat))
+            Ymat_new = Ymat_new + self.mini
+        else:
+            pass
+
+        # append the new Ymat onto the original,
+        # reset start/end index and Ymat in D
+        if self.Ymat.shape[0] != Ymat_new.shape[0]:
+            raise RuntimeError("incremented no. of time series should have the same dimension as original")
+        n, T_added = Ymat_new.shape
+        # TODO how to deal with the Ymat data after end_index?
+        #  we don't support this case now. end_index + val_len = T
+        self.Ymat = np.concatenate((self.Ymat[:, : self.end_index], Ymat_new), axis=1)
+        self.end_index = self.end_index + T_added
+        self.D.end_index = self.end_index
+
+        # initialize the newly added X
+        n, T = self.Ymat.shape
+        t0 = self.end_index + 1
+        if t0 > T:
+            self.Ymat = np.hstack([self.Ymat, self.Ymat[:, -1].reshape(-1, 1)])
+
+        # fix data loader with the new Ymat
+        self.D.reset_Ymat(self.Ymat)
+
+    def inject_new(self,
+                   Ymat,
+                   ):
+
+        self.append_new_y(Ymat)
+        n, T = self.Ymat.shape
+        rank, XT = self.X.shape
+        future = T-XT
+        Xn = self.recover_future_X(last_step=XT, future=future)
+        self.X = torch.cat([self.X, Xn], dim=1)
+
     def train_all_models(
-        self, Ymat, init_epochs=100, alt_iters=10, y_iters=200, tenacity=7, mod=5,
-            max_FX_epoch=300, max_TCN_epoch=300
+            self,
+            Ymat,
+            covariates=None,
+            start_date="2016-1-1",
+            freq="H",
+            init_epochs=100,
+            alt_iters=10,
+            y_iters=200,
+            tenacity=7,
+            mod=5,
+            max_FX_epoch=300,
+            max_TCN_epoch=300
     ):
+        self.covariates = covariates
+        self.start_date = start_date
+        self.freq = freq
         self.end_index = Ymat.shape[1]
 
         if self.normalize:
@@ -703,7 +761,7 @@ class DeepGLO(object):
             return Y
 
     def predict(
-        self, ind=None, last_step=100, future=10, normalize=False, bsize=90
+            self, ind=None, last_step=100, future=10, normalize=False, bsize=90
     ):
 
         if ind is None:
@@ -745,7 +803,7 @@ class DeepGLO(object):
             # this seems like we are looking ahead, but it will not use the last coordinate,
             # which is the only new point added
             ycovs[:, 1, period - 1::] = self.Ymat[
-                :, last_step - rg: last_step + future - (period - 1)]
+                                        :, last_step - rg: last_step + future - (period - 1)]
 
         Y = self.Yseq.predict_future(
             data_in=self.Ymat[ind, last_step - rg: last_step],

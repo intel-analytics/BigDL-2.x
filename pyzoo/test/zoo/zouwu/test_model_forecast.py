@@ -100,11 +100,20 @@ class TestZouwuModelForecast(ZooTestCase):
                                max_TCN_epoch=1,
                                alt_iters=2)
         x = np.random.rand(300, 480)
-        model.fit(x)
+        # full retrain
+        model.fit(x, start_date='2020-01-01', freq='H')
+        # predict
         yhat = model.predict(x=None, horizon=24)
         assert yhat.shape == (300, 24)
+        # evaluate
         target_value = np.random.rand(300, 24)
-        model.evaluate(x=None, target_value=target_value, metric=['mse'])
+        eval_result = model.evaluate(x=None, target_value=target_value, metric=['mse'])
+        # inject new data
+        x_new = np.random.rand(300, 24)
+        model.fit(x_new, mode='inject_new')  # 1st time
+        # model.fit(x_new, mode='inject_new')  # 2nd time
+        yhat = model.predict(x=None, horizon=24)
+        assert yhat.shape == (300, 24)
 
 
 if __name__ == "__main__":

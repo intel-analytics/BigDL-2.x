@@ -51,9 +51,6 @@ class TCMFForecaster(Forecaster):
                  learning_rate=0.0005,
                  val_len=24,
                  normalize=False,
-                 start_date="2020-4-1",
-                 freq="1H",
-                 covariates=None,
                  use_time=True,
                  dti=None,
                  svd=True,
@@ -86,17 +83,8 @@ class TCMFForecaster(Forecaster):
             Validation length. We will use the last val_len time points as validation data.
         :param normalize: boolean, false by default.
             Whether to normalize input data for training.
-        :param start_date: str or datetime-like.
-            Start date time for the time-series. e.g. "2020-01-01"
-        :param freq: str or DateOffset, default is 'H'
-            Frequency of data
         :param use_time: boolean, default is True.
             Whether to use time coveriates.
-        :param covariates: 2-D ndarray or None. The shape of ndarray should be (r, T), where r is
-            the number of covariates and T is the number of time points.
-            Global covariates for all time series. If None, only default time coveriates will be
-            used while use_time is True. If not, the time coveriates used is the stack of input
-            covariates and default time coveriates.
         :param dti: DatetimeIndex or None.
             If None, use default fixed frequency DatetimeIndex generated with start_date and freq.
         :param svd: boolean, default is False.
@@ -127,9 +115,6 @@ class TCMFForecaster(Forecaster):
             "learning_rate": learning_rate,
             "val_len": val_len,
             "normalize": normalize,
-            "start_date": start_date,
-            "freq": freq,
-            "covariates": covariates,
             "use_time": use_time,
             "dti": dti,
             "svd": svd,
@@ -148,19 +133,44 @@ class TCMFForecaster(Forecaster):
 
     def fit(self,
             x,
-            incremental=False):
+            start_date=None,
+            freq=None,
+            covariates=None,
+            mode='full-retrain'):
         """
         fit the model
-        :param x: the input
-        :param covariates: the global covariates
-        :param lr: learning rate
-        :param incremental: if the fit is incremental
+        :param x: 2-D numpy array in shape (n, T), where n is the number
+            of target time series, T is the number of samples in time dimension.
+            The target values.
+        :param covariates:  2-D numpy array or None. If array, the shape should be (r, T),
+            where r is the number of covariates and T is the number of samples in time dimension.
+            If None, only the default time covariates will be used while use_time is True.
+            Global covariates for all time series.
+        :param start_date: str or datetime-like.
+            Start date time for the time-series. e.g. "2020-01-01"
+        :param freq: str or DateOffset, default is 'H'
+            Frequency of data
+        :param mode: str. only support 'full-retrain' or 'inject-new', Default is 'full-retrain'
+            Training mode
         :return:
         """
-        if incremental:
-            self.internal.fit_incremental(x)
+        self.config.update({
+            "covariates": covariates
+        })
+
+        if mode == 'full-retrain':
+            if not start_date or not freq:
+                raise RuntimeError("start_date or frequency must be specified for full retrain")
+            self.config.update({
+                "start_date": start_date,
+                "freq": freq
+            })
+            self.internal.fit_eval(x, **self.config)
+        elif mode == 'inject_new':
+            self.config.update({"fit_x_only": True})
+            self.internal.fit_incremental(x, **self.config)
         else:
-            self.internal.fit_eval(x)
+            raise RuntimeError("mode should only be full-retrain or inject_new")
 
     def evaluate(self,
                  target_value,

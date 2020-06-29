@@ -81,9 +81,6 @@ class TCMF(BaseModel):
             lr=self.lr,
             val_len=self.val_len,
             normalize=self.normalize,
-            start_date=self.start_date,
-            freq=self.freq,
-            covariates=self.covariates,
             use_time=self.use_time,
             dti=self.dti,
             svd=self.svd,
@@ -106,7 +103,11 @@ class TCMF(BaseModel):
         """
         if not self.model_init:
             self._build(**config)
+
         self.model.train_all_models(x,
+                                    start_date=self.start_date,
+                                    freq=self.freq,
+                                    covariates=self.covariates,
                                     alt_iters=self.alt_iters,
                                     y_iters=self.y_iters,
                                     init_epochs=self.init_epoch,
@@ -114,17 +115,21 @@ class TCMF(BaseModel):
                                     max_TCN_epoch=self.max_TCN_epoch)
         return self.model.Yseq.val_loss
 
-    def fit_incremental(self, x):
+    def fit_incremental(self, x, verbose=0, **config):
         """
         Incremental fitting given a pre-trained model.
-        :param x: incremental data
+        :param verbose:
+        :param x: incremental input
         :param config: fitting parameters
         :return:
         """
-        # TODO incrementally train models
-        pass
+        fit_x_only = config.get("fit_x_only", True)
+        if fit_x_only:
+            self.model.inject_new(x)
+        else:
+            raise NotImplementedError("incremental training is not implemented yet")
 
-    def predict(self, x=None, horizon=24, mc=False, ):
+    def predict(self, x=None, horizon=24, mc=False):
         """
         Predict horizon time-points ahead the input x in fit_eval
         :param x: We don't support input x currently.
