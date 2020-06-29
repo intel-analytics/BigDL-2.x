@@ -115,9 +115,11 @@ def read_file_spark(context, file_path, file_type, **kwargs):
         rdd = context.parallelize(file_paths, num_partitions)
 
         if prefix == "hdfs":
-            pd_rdd = rdd.mapPartitions(lambda iter: read_pd_hdfs_file_list(iter, file_type, **kwargs))
+            pd_rdd = rdd.mapPartitions(
+                lambda iter: read_pd_hdfs_file_list(iter, file_type, **kwargs))
         elif prefix == "s3":
-            pd_rdd = rdd.mapPartitions(lambda iter: read_pd_s3_file_list(iter, file_type, **kwargs))
+            pd_rdd = rdd.mapPartitions(
+                lambda iter: read_pd_s3_file_list(iter, file_type, **kwargs))
         else:
             def loadFile(iterator):
                 for x in iterator:

@@ -160,7 +160,9 @@ class ZooContextMeta(type):
 
     @orca_read_file_backend.setter
     def orca_read_file_backend(cls, value):
-        assert value == "spark" or value == "pandas", "orca_read_file_backend must be either spark or pandas"
+        value = value.lower()
+        assert value == "spark" or value == "pandas", \
+            "orca_read_file_backend must be either spark or pandas"
         cls._orca_read_file_backend = value
 
 
