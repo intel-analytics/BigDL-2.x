@@ -21,6 +21,7 @@ import redis
 import time
 import numpy as np
 import pyarrow as pa
+from zoo.serving.schema import *
 
 
 class API:
@@ -101,71 +102,10 @@ class InputQueue(API):
         field_list = []
         data_list = []
         for key, value in data.items():
-            if "string" in key:
-                # list of string will be converted to Tensor of String
-                # use | to split
-                str_concat = '|'.join(value)
-                field = pa.field(key, pa.string())
-                data = pa.array([str_concat])
-                field_list.append(field)
-                data_list.append(data)
+            field, data = get_field_and_data(key, value)
+            field_list.append(field)
+            data_list.append(data)
 
-            elif isinstance(value, str):
-                # str value will be considered as image path
-                field = pa.field(key, pa.string())
-                data = self.encode_image(value)
-                # b = bytes(data, "utf-8")
-                data = pa.array([data])
-                # ba = pa.array(b, type=pa.binary())
-                field_list.append(field)
-                data_list.append(data)
-
-            elif isinstance(value, np.ndarray):
-                # ndarray value will be considered as tensor
-                indices_field = pa.field("indiceData", pa.list_(pa.int32()))
-                indices_shape_field = pa.field("indiceShape", pa.list_(pa.int32()))
-                data_field = pa.field("data", pa.list_(pa.float32()))
-                shape_field = pa.field("shape", pa.list_(pa.int32()))
-                tensor_type = pa.struct(
-                    [indices_field, indices_shape_field, data_field, shape_field])
-                field = pa.field(key, tensor_type)
-
-                shape = np.array(value.shape)
-                d = value.astype("float32").flatten()
-                # data = pa.array([{'data': d}, {'shape': shape}, {}],
-                #                 type=tensor_type)
-                data = pa.array([{'indiceData': []},
-                                 {'indiceShape': []},
-                                 {'data': d},
-                                 {'shape': shape}], type=tensor_type)
-                field_list.append(field)
-                data_list.append(data)
-
-            elif isinstance(value, list):
-                # list will be considered as sparse tensor
-                assert len(value) == 3, "Sparse Tensor must have list of ndarray" \
-                    "with length 3, which represent indices, values, shape respectively"
-                indices_field = pa.field("indiceData", pa.list_(pa.int32()))
-                indices_shape_field = pa.field("indiceShape", pa.list_(pa.int32()))
-                value_field = pa.field("data", pa.list_(pa.float32()))
-                shape_field = pa.field("shape", pa.list_(pa.int32()))
-                sparse_tensor_type = pa.struct(
-                    [indices_field, indices_shape_field,  value_field, shape_field])
-                field = pa.field(key, sparse_tensor_type)
-
-                shape = value[2]
-                values = value[1]
-                indices = value[0].astype("float32").flatten()
-                indices_shape = value[0].shape
-                data = pa.array([{'indiceData': indices},
-                                 {'indiceShape': indices_shape},
-                                 {'data': values},
-                                 {'shape': shape}], type=sparse_tensor_type)
-                field_list.append(field)
-                data_list.append(data)
-            else:
-                raise TypeError("Your request does not match any schema, "
-                                "please check.")
         schema = pa.schema(field_list)
         batch = pa.RecordBatch.from_arrays(
             data_list, schema)
@@ -179,39 +119,10 @@ class InputQueue(API):
         d = {"uri": uri, "data": b64str}
         self.__enqueue_data(d)
 
-    def encode_image(self, img):
-        """
-        :param id: String you use to identify this record
-        :param data: Data, ndarray type
-        :return:
-        """
-        if isinstance(img, str):
-            img = cv2.imread(img)
-            if img.size == 0:
-                print("You have pushed an image with path: ",
-                      img, "the path is invalid, skipped.")
-                return
-
-        # force resize here to avoid input image shape inconsistent
-        # if the shape is consistent, it would not affect the data
-        img = cv2.resize(img, (self.h, self.w))
-        data = cv2.imencode(".jpg", img)[1]
-        img_encoded = self.base64_encode_image(data)
-        return img_encoded
-        # arrow_b64string = pa.array(img_encoded)
-        #
-        # sink = pa.BufferOutputStream()
-        # schema = pa.schema([pa.field("data", pa.string())])
-        # batch = pa.RecordBatch.from_arrays(
-        #     [arrow_b64string], schema)
-        # writer = pa.RecordBatchFileWriter(sink, batch.schema)
-        # writer.write_batch(batch)
-        #
-        # d = {"uri": uri, "data": img_encoded}
-        #
-        # self.__enqueue_data(d)
-
     def enqueue_tensor(self, uri, data):
+        """
+        deprecated
+        """
         if isinstance(data, np.ndarray):
             # tensor
             data = [data]
