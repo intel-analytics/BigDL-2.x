@@ -131,12 +131,12 @@ def read_file_spark(context, file_path, file_type, **kwargs):
         spark = sqlContext.sparkSession
         # TODO: add S3 confidentials
         if file_type == "json":
-            df = spark.read.json(file_paths)
+            df = spark.read.json(file_paths, **kwargs)
         elif file_type == "csv":
-            df = spark.read.csv(file_paths)
+            df = spark.read.csv(file_paths, **kwargs)
         else:
             raise Exception("Unsupported file type")
-        if df.rdd.getNumPartitions < node_num:
+        if df.rdd.getNumPartitions() < node_num:
             df = df.repartition(node_num)
 
         def to_pandas(columns):

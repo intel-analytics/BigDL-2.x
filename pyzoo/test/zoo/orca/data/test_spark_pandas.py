@@ -19,6 +19,7 @@ import shutil
 
 import pytest
 
+from zoo import ZooContext
 import zoo.orca.data
 import zoo.orca.data.pandas
 from zoo.orca.data.shard import SharedValue
@@ -38,7 +39,8 @@ class TestSparkXShards(ZooTestCase):
         """
         self.sc.stop()
 
-    def test_read_local_csv(self):
+    def test_read_local_csv_pandas_backend(self):
+        ZooContext.orca_read_file_backend = "pandas"
         file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
         data = data_shard.collect()
@@ -50,12 +52,33 @@ class TestSparkXShards(ZooTestCase):
             xshards = zoo.orca.data.pandas.read_csv(file_path, self.sc)
         self.assertTrue('The file path is invalid/empty' in str(context.exception))
 
-    def test_read_local_json(self):
+    def test_read_local_csv_spark_backend(self):
+        ZooContext.orca_read_file_backend = "spark"
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc, header=True)
+        data = data_shard.collect()
+        df = data[0]
+        assert "location" in df.columns, "location is not in columns"
+        file_path = os.path.join(self.resource_path, "abc")
+        with self.assertRaises(Exception) as context:
+            xshards = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        self.assertTrue('The file path is invalid/empty' in str(context.exception))
+
+    def test_read_local_json_pandas_backend(self):
+        ZooContext.orca_read_file_backend = "pandas"
         file_path = os.path.join(self.resource_path, "orca/data/json")
         data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc,
                                                     orient='columns', lines=True)
         data = data_shard.collect()
         assert len(data) == 2, "number of shard should be 2"
+        df = data[0]
+        assert "value" in df.columns, "value is not in columns"
+
+    def test_read_local_json_spark_backend(self):
+        ZooContext.orca_read_file_backend = "spark"
+        file_path = os.path.join(self.resource_path, "orca/data/json")
+        data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc)
+        data = data_shard.collect()
         df = data[0]
         assert "value" in df.columns, "value is not in columns"
 
