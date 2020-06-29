@@ -18,26 +18,19 @@ import os.path
 import shutil
 
 import pytest
+from unittest import TestCase
 
-from zoo import ZooContext
 import zoo.orca.data
 import zoo.orca.data.pandas
 from zoo.orca.data.shard import SharedValue
-from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.common.nncontext import *
+from test.zoo.orca.data.conftest import get_spark_ctx
 
 
-class TestSparkXShards(ZooTestCase):
+class TestSparkXShards(TestCase):
     def setup_method(self, method):
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
-        sparkConf = init_spark_conf().setMaster("local[4]").setAppName("testSparkXShards")
-        self.sc = init_nncontext(sparkConf)
-
-    def teardown_method(self, method):
-        """ teardown any state that was previously setup with a setup_method
-        call.
-        """
-        self.sc.stop()
+        self.sc = get_spark_ctx()
 
     def test_read_local_csv_pandas_backend(self):
         ZooContext.orca_pandas_read_backend = "pandas"
@@ -63,6 +56,8 @@ class TestSparkXShards(ZooTestCase):
         with self.assertRaises(Exception) as context:
             xshards = zoo.orca.data.pandas.read_csv(file_path, self.sc)
         self.assertTrue('The file path is invalid/empty' in str(context.exception))
+        # Change the backend to default pandas so that this won't affect other unit tests.
+        ZooContext.orca_pandas_read_backend = "pandas"
 
     def test_read_local_json_pandas_backend(self):
         ZooContext.orca_pandas_read_backend = "pandas"
@@ -81,6 +76,7 @@ class TestSparkXShards(ZooTestCase):
         data = data_shard.collect()
         df = data[0]
         assert "value" in df.columns, "value is not in columns"
+        ZooContext.orca_pandas_read_backend = "pandas"
 
     def test_read_s3(self):
         access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
