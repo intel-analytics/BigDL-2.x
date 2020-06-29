@@ -88,7 +88,7 @@ if [ -f "$FILENAME" ]
 then
     echo "$FILENAME already exists"
 else
-    wget https://s3-ap-southeast-1.amazonaws.com/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
+    wget https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet-300x300_PASCAL_0.1.0.model -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
 fi
 FILENAME="${ANALYTICS_ZOO_HOME}/apps/object-detection/train_dog.mp4"
 if [ -f "$FILENAME" ]
@@ -101,7 +101,7 @@ if [ -f "$FILENAME" ]
 then
     echo "$FILENAME already exists"
 else
-    wget https://s3.amazonaws.com/analytics-zoo-data/train_dog.mp4 -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
+    wget $FTP_URI/analytics-zoo-data/apps/object-detection/train_dog.mp4  -P ${ANALYTICS_ZOO_HOME}/apps/object-detection/
 fi
 FILENAME="~/.imageio/ffmpeg/ffmpeg-linux64-v3.3.1"
 if [ -f "$FILENAME" ]
@@ -705,6 +705,35 @@ fi
 now=$(date "+%s")
 time19=$((now-start))
 echo "#19 automl-nyc-taxi time used:$time19 seconds"
+
+echo "#20 start app test for zouwu-anomaly-detect"
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/AIOps/AIOps_anomaly_detect
+
+chmod +x ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/AIOps/get_data.sh
+${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/AIOps/get_data.sh
+
+chmod +x ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/AIOps/extract_data.sh
+${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/AIOps/extract_data.sh
+
+sed -i '/get_ipython()/d; /plot./d; /plt./d' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/AIOps/AIOps_anomaly_detect.py
+sed -i "s/epochs=20/epochs=2/g; s/epochs=10/epochs=2/g; s/epochs=50/epochs=2/g" ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/AIOps/AIOps_anomaly_detect.py
+cd ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/AIOps/
+
+python ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/AIOps/AIOps_anomaly_detect.py
+cd -
+
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "zouwu-anomaly-detect failed"
+    exit $exit_status
+fi
+now=$(date "+%s")
+time20=$((now-start))
+echo "#20 zouwu-anomaly-detect time used:$time20 seconds"
 
 fi
 
