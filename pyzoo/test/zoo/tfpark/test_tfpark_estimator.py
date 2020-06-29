@@ -21,7 +21,7 @@ import tensorflow as tf
 from zoo.feature.common import ChainedPreprocessing, FeatureSet
 from zoo.feature.image import *
 from zoo.tfpark import TFDataset, TFEstimator
-from zoo.tfpark.zoo_optimizer import ZooOptimizer
+from zoo.tfpark import ZooOptimizer
 
 
 class TestTFParkEstimator(ZooTestCase):

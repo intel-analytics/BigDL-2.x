@@ -23,7 +23,7 @@ from optparse import OptionParser
 from tensorflow_estimator.python.estimator.canned import prediction_keys
 from zoo import init_nncontext
 from zoo.tfpark import TFDataset, TFEstimator
-from zoo.tfpark.zoo_optimizer import ZooOptimizer
+from zoo.tfpark import ZooOptimizer
 
 
 def make_input_fn(data_df, label_df, mode, batch_size=-1, batch_per_thread=-1):

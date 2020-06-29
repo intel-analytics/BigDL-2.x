@@ -39,7 +39,7 @@ class GANEstimator(object):
                  model_dir=None,
                  session_config=None,
                  ):
-        from zoo.tfpark.zoo_optimizer import ZooOptimizer
+        from zoo.tfpark import ZooOptimizer
         assert isinstance(generator_optimizer, ZooOptimizer),\
             "generator_optimizer should be a ZooOptimizer"
         assert isinstance(discriminator_optimizer, ZooOptimizer),\

@@ -22,7 +22,7 @@ from zoo.feature.common import *
 from zoo.feature.image.imagePreprocessing import *
 from zoo.feature.image.imageset import *
 from zoo.tfpark import TFDataset, TFEstimator
-from zoo.tfpark.zoo_optimizer import ZooOptimizer
+from zoo.tfpark import ZooOptimizer
 
 
 def main(option):

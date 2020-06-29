@@ -18,7 +18,7 @@ from zoo.tfpark.text.estimator import *
 
 def make_bert_ner_model_fn(optimizer):
     import tensorflow as tf
-    from zoo.tfpark.zoo_optimizer import ZooOptimizer
+    from zoo.tfpark import ZooOptimizer
 
     def _bert_ner_model_fn(features, labels, mode, params):
         output_layer = bert_model(features, labels, mode, params).get_sequence_output()

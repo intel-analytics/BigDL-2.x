@@ -18,7 +18,7 @@ from zoo.tfpark.gan.gan_estimator import GANEstimator
 
 from zoo import init_nncontext
 from zoo.tfpark import TFDataset
-from zoo.tfpark.zoo_optimizer import ZooOptimizer
+from zoo.tfpark import ZooOptimizer
 import numpy as np
 import matplotlib.pyplot as plt
 

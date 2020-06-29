@@ -18,7 +18,7 @@ import tensorflow as tf
 import numpy as np
 from zoo import init_nncontext
 from zoo.tfpark import TFDataset, TFEstimator
-from zoo.tfpark.zoo_optimizer import ZooOptimizer
+from zoo.tfpark import ZooOptimizer
 
 
 def get_data(dataset):
