@@ -99,8 +99,9 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
       val buffer = Source.fromBytes(modelBytes)
       // For OpenVINO model version 9 or previous, check statistics keyword
       // For OpenVINO model version 10 or later, check FakeQuantize keyword
-      val isInt8 = (buffer.getLines().count(_ matches ".*statistics.*")
-        + buffer.getLines().count(_ matches ".*FakeQuantize.*")) > 0
+      val isInt8 = buffer
+        .getLines()
+        .count(_ matches ".*statistics.*|.*FakeQuantize.*") > 0
       buffer.close()
       new OpenVINOModel(new OpenVINOModelHolder(modelBytes, weightBytes),
         isInt8, batchSize, deviceType)
@@ -115,8 +116,9 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
       val buffer = Source.fromBytes(modelBytes)
       // For OpenVINO model version 9 or previous, check statistics keyword
       // For OpenVINO model version 10 or later, check FakeQuantize keyword
-      val isInt8 = (buffer.getLines().count(_ matches ".*statistics.*")
-        + buffer.getLines().count(_ matches ".*FakeQuantize.*")) > 0
+      val isInt8 = buffer
+        .getLines()
+        .count(_ matches ".*statistics.*|.*FakeQuantize.*") > 0
       buffer.close()
       new OpenVINOModel(new OpenVINOModelHolder(modelBytes, weightBytes),
         isInt8, batchSize, deviceType)
