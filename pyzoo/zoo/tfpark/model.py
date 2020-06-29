@@ -16,6 +16,8 @@
 
 import numpy as np
 from bigdl.optim.optimizer import MaxEpoch
+
+from zoo.tfpark.utils import evaluate_string_metrics
 from zoo.common import load_from_file
 from zoo.common import save_file
 from zoo.common.nncontext import getOrCreateSparkContext
