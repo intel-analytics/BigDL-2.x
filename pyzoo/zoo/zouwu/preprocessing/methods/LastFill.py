@@ -12,13 +12,27 @@ class LastFill(BaseModel):
         pass
         
     def imputation(self, df):
+        """
+        impute data
+        :params df: input dataframe
+        :return: imputed dataframe
+        """
         df.iloc[0].fillna(0, replace=True)
         return df.fillna(method='pad')
         
     def train(self):
+        """
+        since statistical model don't need training, just passing
+        """
         pass
         
     def model_evaluation(self, df, drop_rate):
+        """
+        evaluate model by randomly drop some value
+        :params df: input dataframe
+        :params drop_rate: percentage value that will be randomly dropped
+        :return: MSE results
+        """
         mask = np.zeros(df.shape[0]*df.shape[1])
         idx = np.random.choice(mask.shape[0], int(mask.shape[0]*drop_rate), replace = False)
         mask[idx] = 1
