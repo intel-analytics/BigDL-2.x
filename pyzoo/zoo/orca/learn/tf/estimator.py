@@ -52,7 +52,10 @@ class Estimator(object):
 
 def _xshards_to_tf_dataset(data_shard,
                            batch_size=-1, batch_per_thread=-1,
-                           validation_data_shard=None, **kwargs):
+                           validation_data_shard=None,
+                           hard_code_batch_size=False,
+                           sequential_order=False,
+                           shuffle=True):
     # todo data_shard.head ?
     import numpy as np
 
@@ -125,14 +128,16 @@ def _xshards_to_tf_dataset(data_shard,
                                  batch_size=batch_size,
                                  batch_per_thread=batch_per_thread,
                                  val_rdd=val_rdd,
-                                 **kwargs)
+                                 hard_code_batch_size=hard_code_batch_size,
+                                 sequential_order=sequential_order,
+                                 shuffle=shuffle)
 
     return dataset
 
 
-def _to_dataset(data, batch_size, batch_per_thread, validation_data=None,
-                feature_cols=None, labels_cols=None, hard_code_batch_size=None,
-                              sequential_order=None, shuffle=None):
+def _to_dataset(data, batch_size, batch_per_thread, validation_data,
+                feature_cols, labels_cols, hard_code_batch_size,
+                sequential_order, shuffle):
     if isinstance(data, SparkXShards):
         dataset = _xshards_to_tf_dataset(data,
                                          batch_size,
@@ -196,9 +201,7 @@ class TFOptimizerWrapper(Estimator):
             validation_data=None,
             feed_dict=None,
             session_config=None,
-            hard_code_batch_size=False,
-            sequential_order=False,
-            shuffle=True
+            hard_code_batch_size=False
             ):
 
         assert self.labels is not None, \
@@ -217,9 +220,9 @@ class TFOptimizerWrapper(Estimator):
         dataset = _to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                               validation_data=validation_data,
                               feature_cols=feature_cols, labels_cols=labels_cols,
-                              hard_code_batch_size=hard_code_batch_size,
-                              sequential_order=sequential_order,
-                              shuffle=shuffle)
+                              hard_code_batch_size = hard_code_batch_size,
+                              sequential_order=False, shuffle=True
+                              )
 
         if feed_dict is not None:
             tensor_with_value = {key: (value, value) for key, value in feed_dict.items()}
@@ -252,6 +255,7 @@ class TFOptimizerWrapper(Estimator):
                 "feature columns is None; it should not be None in prediction"
 
         dataset = _to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
+                              validation_data=None,
                               feature_cols=feature_cols, labels_cols=None,
                               hard_code_batch_size=hard_code_batch_size,
                               sequential_order=True,
@@ -278,6 +282,7 @@ class TFOptimizerWrapper(Estimator):
                 "label columns is None; it should not be None in evaluation"
 
         dataset = _to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
+                              validation_data=None,
                               feature_cols=feature_cols, labels_cols=labels_cols,
                               hard_code_batch_size=hard_code_batch_size,
                               sequential_order=True,
