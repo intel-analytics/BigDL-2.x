@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.http.Instances
 import com.intel.analytics.zoo.serving.utils.ConfigUtils
 import org.scalatest.{FlatSpec, Matchers}
@@ -66,4 +67,11 @@ class PreProcessingSpec extends FlatSpec with Matchers {
     assert(tensor.valueAt(2) == "dff")
     assert(tensor.valueAt(3) == "aoa")
   }
+//  "auto" should "work" in {
+//    val model = new InferenceModel(1)
+//    val p = "/home/litchy/u-models/tf_auto"
+//    model.doLoadTensorflow(p, "savedModel", null, null)
+//    val input = Tensor(new Array[Float](128), Array(1,128))
+//    val res = model.doPredict(input)
+//  }
 }
