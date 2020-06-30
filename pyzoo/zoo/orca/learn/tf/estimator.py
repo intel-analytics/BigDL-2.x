@@ -209,7 +209,7 @@ class TFOptimizerWrapper(Estimator):
         assert self.loss is not None, \
             "loss is None; it should not be None in training"
         assert self.optimizer is not None, \
-            "optimizer is None; it should not None in training"
+            "optimizer is None; it should not be None in training"
 
         if isinstance(data, DataFrame):
             assert feature_cols is not None, \
