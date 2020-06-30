@@ -15,10 +15,16 @@
 #
 import pytest
 
+sc = None
 
 @pytest.fixture(autouse=True, scope='package')
 def estimator_for_spark_fixture():
     from zoo import init_spark_on_local
+    global sc
     sc = init_spark_on_local(cores=4, spark_log_level="INFO")
     yield sc
     sc.stop()
+
+
+def get_spark_ctx():
+    return sc

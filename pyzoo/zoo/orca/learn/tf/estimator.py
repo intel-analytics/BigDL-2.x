@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from pyspark.sql.dataframe import DataFrame
 from bigdl.optim.optimizer import MaxIteration, SGD
 
 from zoo.tfpark.utils import evaluate_metrics
@@ -51,7 +52,7 @@ class Estimator(object):
 
 def _xshards_to_tf_dataset(data_shard,
                            batch_size=-1, batch_per_thread=-1,
-                           validation_data_shard=None):
+                           validation_data_shard=None, **kwargs):
     # todo data_shard.head ?
     import numpy as np
 
@@ -123,19 +124,36 @@ def _xshards_to_tf_dataset(data_shard,
                                  labels=label_spec,
                                  batch_size=batch_size,
                                  batch_per_thread=batch_per_thread,
-                                 val_rdd=val_rdd)
+                                 val_rdd=val_rdd,
+                                 **kwargs)
 
     return dataset
 
 
-def _to_dataset(data, batch_size, batch_per_thread):
+def _to_dataset(data, batch_size, batch_per_thread, validation_data=None,
+                feature_cols=None, labels_cols=None, hard_code_batch_size=None,
+                              sequential_order=None, shuffle=None):
     if isinstance(data, SparkXShards):
         dataset = _xshards_to_tf_dataset(data,
-                                         batch_size=batch_size,
-                                         batch_per_thread=batch_per_thread)
+                                         batch_size,
+                                         batch_per_thread,
+                                         validation_data,
+                                         hard_code_batch_size=hard_code_batch_size,
+                                         sequential_order=sequential_order,
+                                         shuffle=shuffle)
     elif isinstance(data, Dataset):
         dataset = TFDataDataset2(data, batch_size=batch_size,
-                                 batch_per_thread=batch_per_thread)
+                                 batch_per_thread=batch_per_thread,
+                                 validation_dataset=validation_data)
+    elif isinstance(data, DataFrame):
+        dataset = TFDataset.from_dataframe(data, feature_cols, labels_cols,
+                                           batch_size,
+                                           batch_per_thread,
+                                           hard_code_batch_size,
+                                           validation_data,
+                                           sequential_order,
+                                           shuffle
+                                           )
     else:
         raise ValueError("data must be a SparkXShards or an orca.data.tf.Dataset")
 
@@ -173,18 +191,35 @@ class TFOptimizerWrapper(Estimator):
 
     def fit(self, data, steps,
             batch_size=32,
+            feature_cols=None,
+            labels_cols=None,
             validation_data=None,
             feed_dict=None,
-            session_config=None):
+            session_config=None,
+            hard_code_batch_size=False,
+            sequential_order=False,
+            shuffle=True
+            ):
 
         assert self.labels is not None, \
             "labels is None; it should not be None in training"
         assert self.loss is not None, \
             "loss is None; it should not be None in training"
         assert self.optimizer is not None, \
-            "optimizer is None; it not None in training"
+            "optimizer is None; it should not None in training"
 
-        dataset = _to_dataset(data, batch_size=batch_size, batch_per_thread=-1)
+        if isinstance(data, DataFrame):
+            assert feature_cols is not None, \
+                "feature columns is None; it should not be None in training"
+            assert labels_cols is not None, \
+                "label columns is None; it should not be None in training"
+
+        dataset = _to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
+                              validation_data=validation_data,
+                              feature_cols=feature_cols, labels_cols=labels_cols,
+                              hard_code_batch_size=hard_code_batch_size,
+                              sequential_order=sequential_order,
+                              shuffle=shuffle)
 
         if feed_dict is not None:
             tensor_with_value = {key: (value, value) for key, value in feed_dict.items()}
@@ -206,22 +241,48 @@ class TFOptimizerWrapper(Estimator):
         optimizer.optimize(end_trigger=MaxIteration(steps))
         return self
 
-    def predict(self, data, batch_size=32):
+    def predict(self, data, batch_size=32,
+                feature_cols=None,
+                hard_code_batch_size=False
+                ):
         assert self.outputs is not None, \
             "output is None, it should not be None in prediction"
+        if isinstance(data, DataFrame):
+            assert feature_cols is not None, \
+                "feature columns is None; it should not be None in prediction"
 
-        dataset = _to_dataset(data, batch_size=-1, batch_per_thread=batch_size)
+        dataset = _to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
+                              feature_cols=feature_cols, labels_cols=None,
+                              hard_code_batch_size=hard_code_batch_size,
+                              sequential_order=True,
+                              shuffle=False
+                              )
 
         flat_inputs = nest.flatten(self.inputs)
         flat_outputs = nest.flatten(self.outputs)
         tfnet = TFNet.from_session(sess=self.sess, inputs=flat_inputs, outputs=flat_outputs)
         return tfnet.predict(dataset)
 
-    def evaluate(self, data, batch_size=32):
+    def evaluate(self, data, batch_size=32,
+                 feature_cols=None,
+                 labels_cols=None,
+                 hard_code_batch_size=False
+                 ):
         assert self.metrics is not None, \
             "metrics is None, it should not be None in evaluate"
 
-        dataset = _to_dataset(data, batch_size=-1, batch_per_thread=batch_size)
+        if isinstance(data, DataFrame):
+            assert feature_cols is not None, \
+                "feature columns is None; it should not be None in evaluation"
+            assert labels_cols is not None, \
+                "label columns is None; it should not be None in evaluation"
+
+        dataset = _to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
+                              feature_cols=feature_cols, labels_cols=labels_cols,
+                              hard_code_batch_size=hard_code_batch_size,
+                              sequential_order=True,
+                              shuffle=False
+                              )
 
         flat_inputs = nest.flatten(self.inputs)
         flat_labels = nest.flatten(self.labels)

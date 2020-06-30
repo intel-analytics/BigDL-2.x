@@ -15,10 +15,15 @@
 #
 import os
 import tensorflow as tf
+from pyspark.sql.context import SQLContext
+
+from unittest import TestCase
 
 from zoo.orca.data.tf.data import Dataset
 from zoo.orca.learn.tf.estimator import Estimator
 import zoo.orca.data.pandas
+
+from test.zoo.orca.learn.spark.conftest import get_spark_ctx
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
@@ -37,188 +42,249 @@ class SimpleModel(object):
                                                                           labels=self.label))
 
 
-def test_estimator_graph(estimator_for_spark_fixture):
-    import zoo.orca.data.pandas
+class TestSparkXShards(TestCase):
+    def setup_method(self, method):
+        self.resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        self.sc = get_spark_ctx()
 
-    sc = estimator_for_spark_fixture
+    def test_estimator_graph(self):
+        import zoo.orca.data.pandas
 
-    tf.reset_default_graph()
+        tf.reset_default_graph()
 
-    model = SimpleModel()
-    file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+        model = SimpleModel()
+        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
 
-    def transform(df):
-        result = {
-            "x": (df['user'].to_numpy(), df['item'].to_numpy()),
-            "y": df['label'].to_numpy()
-        }
-        return result
+        def transform(df):
+            result = {
+                "x": (df['user'].to_numpy(), df['item'].to_numpy()),
+                "y": df['label'].to_numpy()
+            }
+            return result
 
-    data_shard = data_shard.transform_shard(transform)
+        data_shard = data_shard.transform_shard(transform)
 
-    est = Estimator.from_graph(
-        inputs=[model.user, model.item],
-        labels=[model.label],
-        outputs=[model.logits],
-        loss=model.loss,
-        optimizer=tf.train.AdamOptimizer(),
-        metrics={"loss": model.loss})
-    est.fit(data=data_shard,
-            batch_size=8,
-            steps=10,
-            validation_data=data_shard)
+        est = Estimator.from_graph(
+            inputs=[model.user, model.item],
+            labels=[model.label],
+            outputs=[model.logits],
+            loss=model.loss,
+            optimizer=tf.train.AdamOptimizer(),
+            metrics={"loss": model.loss})
+        est.fit(data=data_shard,
+                batch_size=8,
+                steps=10,
+                validation_data=data_shard)
 
-    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
 
-    def transform(df):
-        result = {
-            "x": (df['user'].to_numpy(), df['item'].to_numpy()),
-        }
-        return result
+        def transform(df):
+            result = {
+                "x": (df['user'].to_numpy(), df['item'].to_numpy()),
+            }
+            return result
 
-    data_shard = data_shard.transform_shard(transform)
-    predictions = est.predict(data_shard).collect()
-    print(predictions)
+        data_shard = data_shard.transform_shard(transform)
+        predictions = est.predict(data_shard).collect()
+        print(predictions)
 
+    def test_estimator_graph_fit(self):
+        import zoo.orca.data.pandas
+        tf.reset_default_graph()
 
-def test_estimator_graph_fit(estimator_for_spark_fixture):
-    import zoo.orca.data.pandas
-    tf.reset_default_graph()
+        model = SimpleModel()
 
-    model = SimpleModel()
-    sc = estimator_for_spark_fixture
-    file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
 
-    def transform(df):
-        result = {
-            "x": (df['user'].to_numpy(), df['item'].to_numpy()),
-            "y": df['label'].to_numpy()
-        }
-        return result
+        def transform(df):
+            result = {
+                "x": (df['user'].to_numpy(), df['item'].to_numpy()),
+                "y": df['label'].to_numpy()
+            }
+            return result
 
-    data_shard = data_shard.transform_shard(transform)
+        data_shard = data_shard.transform_shard(transform)
 
-    est = Estimator.from_graph(
-        inputs=[model.user, model.item],
-        labels=[model.label],
-        loss=model.loss,
-        optimizer=tf.train.AdamOptimizer(),
-        metrics={"loss": model.loss})
-    est.fit(data=data_shard,
-            batch_size=8,
-            steps=10,
-            validation_data=data_shard)
+        est = Estimator.from_graph(
+            inputs=[model.user, model.item],
+            labels=[model.label],
+            loss=model.loss,
+            optimizer=tf.train.AdamOptimizer(),
+            metrics={"loss": model.loss})
+        est.fit(data=data_shard,
+                batch_size=8,
+                steps=10,
+                validation_data=data_shard)
 
+    def test_estimator_graph_evaluate(self):
+        import zoo.orca.data.pandas
+        tf.reset_default_graph()
 
-def test_estimator_graph_evaluate(estimator_for_spark_fixture):
-    import zoo.orca.data.pandas
-    tf.reset_default_graph()
+        model = SimpleModel()
+        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
 
-    model = SimpleModel()
-    sc = estimator_for_spark_fixture
-    file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+        def transform(df):
+            result = {
+                "x": (df['user'].to_numpy(), df['item'].to_numpy()),
+                "y": df['label'].to_numpy()
+            }
+            return result
 
-    def transform(df):
-        result = {
-            "x": (df['user'].to_numpy(), df['item'].to_numpy()),
-            "y": df['label'].to_numpy()
-        }
-        return result
+        data_shard = data_shard.transform_shard(transform)
 
-    data_shard = data_shard.transform_shard(transform)
+        est = Estimator.from_graph(
+            inputs=[model.user, model.item],
+            labels=[model.label],
+            loss=model.loss,
+            optimizer=tf.train.AdamOptimizer(),
+            metrics={"loss": model.loss})
+        result = est.evaluate(data_shard)
+        assert "loss" in result
+        print(result)
 
-    est = Estimator.from_graph(
-        inputs=[model.user, model.item],
-        labels=[model.label],
-        loss=model.loss,
-        optimizer=tf.train.AdamOptimizer(),
-        metrics={"loss": model.loss})
-    result = est.evaluate(data_shard)
-    assert "loss" in result
-    print(result)
+    def test_estimator_graph_predict(self):
+        import zoo.orca.data.pandas
+        tf.reset_default_graph()
 
+        model = SimpleModel()
+        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
 
-def test_estimator_graph_predict(estimator_for_spark_fixture):
-    import zoo.orca.data.pandas
-    tf.reset_default_graph()
+        est = Estimator.from_graph(
+            inputs=[model.user, model.item],
+            outputs=[model.logits])
 
-    sc = estimator_for_spark_fixture
+        def transform(df):
+            result = {
+                "x": (df['user'].to_numpy(), df['item'].to_numpy()),
+            }
+            return result
 
-    model = SimpleModel()
-    file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+        data_shard = data_shard.transform_shard(transform)
+        predictions = est.predict(data_shard).collect()
+        print(predictions)
 
-    est = Estimator.from_graph(
-        inputs=[model.user, model.item],
-        outputs=[model.logits])
+    def test_estimator_graph_fit_dataset(self):
+        import zoo.orca.data.pandas
+        tf.reset_default_graph()
+        model = SimpleModel()
 
-    def transform(df):
-        result = {
-            "x": (df['user'].to_numpy(), df['item'].to_numpy()),
-        }
-        return result
+        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
 
-    data_shard = data_shard.transform_shard(transform)
-    predictions = est.predict(data_shard).collect()
-    print(predictions)
+        def transform(df):
+            result = {
+                "x": (df['user'].to_numpy(), df['item'].to_numpy()),
+                "y": df['label'].to_numpy()
+            }
+            return result
 
+        data_shard = data_shard.transform_shard(transform)
+        dataset = Dataset.from_tensor_slices(data_shard)
 
-def test_estimator_graph_fit_dataset(estimator_for_spark_fixture):
-    import zoo.orca.data.pandas
-    tf.reset_default_graph()
-    model = SimpleModel()
-    sc = estimator_for_spark_fixture
-    file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+        est = Estimator.from_graph(
+            inputs=[model.user, model.item],
+            labels=[model.label],
+            loss=model.loss,
+            optimizer=tf.train.AdamOptimizer(),
+            metrics={"loss": model.loss})
+        est.fit(data=dataset,
+                batch_size=8,
+                steps=10,
+                validation_data=dataset)
 
-    def transform(df):
-        result = {
-            "x": (df['user'].to_numpy(), df['item'].to_numpy()),
-            "y": df['label'].to_numpy()
-        }
-        return result
+    def test_estimator_graph_predict_dataset(self):
 
-    data_shard = data_shard.transform_shard(transform)
-    dataset = Dataset.from_tensor_slices(data_shard)
+        tf.reset_default_graph()
 
-    est = Estimator.from_graph(
-        inputs=[model.user, model.item],
-        labels=[model.label],
-        loss=model.loss,
-        optimizer=tf.train.AdamOptimizer(),
-        metrics={"loss": model.loss})
-    est.fit(data=dataset,
-            batch_size=8,
-            steps=10,
-            validation_data=dataset)
+        model = SimpleModel()
+        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
 
+        est = Estimator.from_graph(
+            inputs=[model.user, model.item],
+            outputs=[model.logits])
 
-def test_estimator_graph_predict_dataset(estimator_for_spark_fixture):
+        def transform(df):
+            result = {
+                "x": (df['user'].to_numpy(), df['item'].to_numpy()),
+            }
+            return result
 
-    sc = estimator_for_spark_fixture
-    tf.reset_default_graph()
+        data_shard = data_shard.transform_shard(transform)
+        dataset = Dataset.from_tensor_slices(data_shard)
+        predictions = est.predict(dataset).collect()
+        assert len(predictions) == 10
 
-    model = SimpleModel()
-    file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+    def test_estimator_graph_dataframe(self):
 
-    est = Estimator.from_graph(
-        inputs=[model.user, model.item],
-        outputs=[model.logits])
+        tf.reset_default_graph()
 
-    def transform(df):
-        result = {
-            "x": (df['user'].to_numpy(), df['item'].to_numpy()),
-        }
-        return result
+        model = SimpleModel()
+        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+        sqlcontext = SQLContext(self.sc)
+        df = sqlcontext.read.csv(file_path, header=True, inferSchema=True)
 
-    data_shard = data_shard.transform_shard(transform)
-    dataset = Dataset.from_tensor_slices(data_shard)
-    predictions = est.predict(dataset).collect()
-    assert len(predictions) == 10
+        est = Estimator.from_graph(
+            inputs=[model.user, model.item],
+            labels=[model.label],
+            outputs=[model.logits],
+            loss=model.loss,
+            optimizer=tf.train.AdamOptimizer(),
+            metrics={"loss": model.loss})
+
+        est.fit(data=df,
+                batch_size=8,
+                steps=10,
+                feature_cols=['user', 'item'],
+                labels_cols=['label'],
+                validation_data=df)
+
+        result = est.evaluate(df, batch_size=4, feature_cols=['user', 'item'], labels_cols=['label'])
+        print(result)
+
+        predictions = est.predict(df,batch_size=4,feature_cols=['user', 'item']).collect()
+        assert len(predictions) == 10
+
+    def test_estimator_graph_dataframe_exception(self):
+
+        tf.reset_default_graph()
+
+        model = SimpleModel()
+        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+        sqlcontext = SQLContext(self.sc)
+        df = sqlcontext.read.csv(file_path, header=True, inferSchema=True)
+
+        est = Estimator.from_graph(
+            inputs=[model.user, model.item],
+            labels=[model.label],
+            outputs=[model.logits],
+            loss=model.loss,
+            optimizer=tf.train.AdamOptimizer(),
+            metrics={"loss": model.loss})
+
+        with self.assertRaises(Exception) as context:
+            est.fit(data=df,
+                    batch_size=8,
+                    steps=10,
+                    feature_cols=['user', 'item'],
+                    validation_data=df)
+        self.assertTrue('label columns is None; it should not be None in training'
+                        in str(context.exception))
+
+        est.fit(data=df,
+                batch_size=8,
+                steps=10,
+                feature_cols=['user', 'item'],
+                labels_cols=['label']
+                )
+        with self.assertRaises(Exception) as context:
+            predictions = est.predict(df,batch_size=4).collect()
+        self.assertTrue('feature columns is None; it should not be None in prediction'
+                        in str(context.exception))
 
 
 if __name__ == "__main__":

@@ -17,7 +17,6 @@
 import os.path
 
 import pytest
-import ray
 
 import zoo.orca.data.pandas
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
