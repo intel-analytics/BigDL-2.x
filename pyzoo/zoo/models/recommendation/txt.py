@@ -98,8 +98,9 @@ class TxT(HybridBlock):
     def __init__(self, num_items, context_dims, item_embed=100, context_embed=100,
                  item_hidden_size=256, item_max_length=8, item_num_heads=4, item_num_layers=2,
                  item_transformer_dropout=0.0, item_pooling_dropout=0.1, context_hidden_size=256,
-                 context_num_heads=2, context_transformer_dropout=0.0, context_pooling_dropout=0.0,
-                 act_type="relu", cross_size=100, prefix=None, params=None):
+                 context_num_heads=2, context_transformer_dropout=0.0,
+                 context_pooling_dropout=0.0, act_type="relu", cross_size=100,
+                 prefix=None, params=None):
         super().__init__(prefix=prefix, params=params)
         self.num_items = num_items
         self.act_type = act_type
@@ -130,7 +131,9 @@ class TxT(HybridBlock):
                        label, item_valid_length=None):
         item_outs = self.sequence_transformer.hybrid_forward(F, input_item=input_item,
                                                              item_valid_length=item_valid_length)
-        context_outs = self.context_transformer.hybrid_forward(F, input_context_list=input_context_list)
+        context_outs = self.context_transformer.hybrid_forward(
+            F, input_context_list=input_context_list
+        )
         outs = F.broadcast_mul(item_outs, context_outs)
         outs = F.Activation(data=outs, act_type=self.act_type)
         outs = F.FullyConnected(data=outs, num_hidden=int(self.num_items))
