@@ -44,7 +44,6 @@ class SimpleModel(object):
 
 class TestEstimatorForGraph(TestCase):
     def setup_method(self, method):
-        self.resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
         self.sc = get_spark_ctx()
 
     def test_estimator_graph(self):
