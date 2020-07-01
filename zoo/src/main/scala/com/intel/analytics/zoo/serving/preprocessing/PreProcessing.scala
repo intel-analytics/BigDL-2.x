@@ -34,6 +34,8 @@ import com.intel.analytics.zoo.serving.http.Instances
 import com.intel.analytics.zoo.serving.preprocessing.DataType
 import com.intel.analytics.zoo.serving.preprocessing.DataType.DataTypeEnumVal
 import com.intel.analytics.zoo.serving.utils.SerParams
+import org.opencv.core.Size
+import org.opencv.imgproc.Imgproc
 
 class PreProcessing(param: SerParams) {
   val logger = Logger.getLogger(getClass)
@@ -62,28 +64,44 @@ class PreProcessing(param: SerParams) {
     val instance = Instances.fromArrow(byteBuffer)
 
     val kvMap = instance.instances.flatMap(insMap => {
-      val oneInsMap = insMap.map(kv => {
+      val oneInsMap = insMap.map(kv =>
         if (kv._2.isInstanceOf[String]) {
-          (kv._1, decodeImage(kv._2.asInstanceOf[String]))
-        } else {
+          if (kv._2.asInstanceOf[String].contains("|")) {
+            (kv._1, decodeString(kv._2.asInstanceOf[String]))
+          }
+          else {
+            (kv._1, decodeImage(kv._2.asInstanceOf[String]))
+          }
+        }
+        else {
           (kv._1, decodeTensor(kv._2.asInstanceOf[(
             ArrayBuffer[Int], ArrayBuffer[Float], ArrayBuffer[Int], ArrayBuffer[Int])]))
-        }
-      }).toList
+        }).toList
 //      Seq(T(oneInsMap.head, oneInsMap.tail: _*))
       val arr = oneInsMap.map(x => x._2)
       Seq(T.array(arr.toArray))
     })
     kvMap.head
   }
+  def decodeString(s: String): Tensor[String] = {
+
+    val eleList = s.split("\\|")
+    val tensor = Tensor[String](eleList.length)
+    (1 to eleList.length).foreach(i => {
+      tensor.setValue(i, eleList(i - 1))
+    })
+    tensor
+  }
   def decodeImage(s: String, idx: Int = 0): Tensor[Float] = {
     byteBuffer = java.util.Base64.getDecoder.decode(s)
     val mat = OpenCVMethod.fromImageBytes(byteBuffer, Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
+//    Imgproc.resize(mat, mat, new Size(224, 224))
     val (height, width, channel) = (mat.height(), mat.width(), mat.channels())
 
-    OpenCVMat.toFloatPixels(mat, arrayBuffer(idx))
+    val arrayBuffer = new Array[Float](height * width * channel)
+    OpenCVMat.toFloatPixels(mat, arrayBuffer)
 
-    val imageTensor = Tensor[Float](arrayBuffer(idx), Array(height, width, channel))
+    val imageTensor = Tensor[Float](arrayBuffer, Array(height, width, channel))
     if (param.chwFlag) {
       imageTensor.transpose(1, 3)
         .transpose(2, 3).contiguous()
@@ -196,11 +214,11 @@ class PreProcessing(param: SerParams) {
       "your input parameter length does not match your config.")
     (0 until encodedList.length).foreach(i => {
       byteBuffer = java.util.Base64.getDecoder.decode(encodedList(i))
-      param.dataType(i) match {
-        case DataType.IMAGE => decodeImage(i)
-        case DataType.TENSOR => decodeTensor1(i)
-        case DataType.SPARSETENSOR => decodeTensor1(i, true)
-      }
+//      param.dataType(i) match {
+//        case DataType.IMAGE => decodeImage(i)
+//        case DataType.TENSOR => decodeTensor1(i)
+//        case DataType.SPARSETENSOR => decodeTensor1(i, true)
+//      }
     })
     T.array(tensorBuffer)
   }

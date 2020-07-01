@@ -310,9 +310,27 @@ class TestTFDataset(ZooTestCase):
         model = KerasModel(seq)
         model.fit(dataset)
 
+    def test_tfdataset_with_tf_data_dataset_which_contains_bool(self):
+        dataset = tf.data.Dataset.from_tensor_slices((np.random.randn(102, 28, 28, 1),
+                                                      np.random.randint(0, 10, size=(102,)),
+                                                      np.ones(shape=(102, 28, 28, 1),
+                                                              dtype=np.bool)))
+        dataset = TFDataset.from_tf_data_dataset(dataset, batch_size=16)
+
+        feature, labels, mask = dataset.tensors
+
+        float_mask = tf.to_float(mask)
+        masked_feature = tf.to_float(feature) * float_mask
+        flatten = tf.layers.flatten(masked_feature)
+        logits = tf.layers.dense(flatten, 10)
+        loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits,
+                                                                     labels=labels))
+        opt = TFOptimizer.from_loss(loss, Adam())
+        opt.optimize()
+
     def test_tfdataset_with_tf_data_dataset(self):
-        dataset = tf.data.Dataset.from_tensor_slices((np.random.randn(100, 28, 28, 1),
-                                                      np.random.randint(0, 10, size=(100,))))
+        dataset = tf.data.Dataset.from_tensor_slices((np.random.randn(102, 28, 28, 1),
+                                                      np.random.randint(0, 10, size=(102,))))
         dataset = dataset.map(lambda feature, label: (tf.to_float(feature), label))
         dataset = TFDataset.from_tf_data_dataset(dataset, batch_size=16)
         seq = tf.keras.Sequential(
@@ -324,16 +342,17 @@ class TestTFDataset(ZooTestCase):
                     metrics=['accuracy'])
         model = KerasModel(seq)
         model.fit(dataset)
-        dataset = tf.data.Dataset.from_tensor_slices((np.random.randn(100, 28, 28, 1),
-                                                      np.random.randint(0, 10, size=(100,))))
+        dataset = tf.data.Dataset.from_tensor_slices((np.random.randn(102, 28, 28, 1),
+                                                      np.random.randint(0, 10, size=(102,))))
         dataset = dataset.map(lambda feature, label: (tf.to_float(feature),
                                                       label))
         dataset = TFDataset.from_tf_data_dataset(dataset, batch_per_thread=16)
         model.evaluate(dataset)
-        dataset = tf.data.Dataset.from_tensor_slices(np.random.randn(100, 28, 28, 1))
+        dataset = tf.data.Dataset.from_tensor_slices(np.random.randn(102, 28, 28, 1))
         dataset = dataset.map(lambda data: tf.to_float(data))
         dataset = TFDataset.from_tf_data_dataset(dataset, batch_per_thread=16)
-        model.predict(dataset).collect()
+        result = model.predict(dataset).collect()
+        assert len(result) == 102
 
     def check_dataset(self, create_ds):
 

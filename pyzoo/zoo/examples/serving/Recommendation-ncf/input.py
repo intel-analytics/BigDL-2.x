@@ -20,8 +20,8 @@ import numpy as np
 x = np.array([2, 3], dtype=np.float32)
 
 input_api = InputQueue()
-input_api.enqueue_tensor('my_input', x)
+input_api.enqueue('my_input', input=x)
 
 output_api = OutputQueue()
-img1_result = output_api.query('my_input')
-print("Result is :" + str(img1_result))
+result = output_api.query('my_input')
+print("Result is :" + str(result))

@@ -17,7 +17,8 @@
 import tensorflow as tf
 import numpy as np
 from zoo import init_nncontext
-from zoo.tfpark import TFDataset, TFEstimator, ZooOptimizer
+from zoo.tfpark import TFDataset, TFEstimator
+from zoo.tfpark import ZooOptimizer
 
 
 def get_data(dataset):
@@ -42,7 +43,8 @@ def main():
 
             optimizer = ZooOptimizer(tf.train.AdamOptimizer())
             train_op = optimizer.minimize(loss)
-            return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
+            return tf.estimator.EstimatorSpec(mode, predictions=logits,
+                                              loss=loss, train_op=train_op)
         else:
             return tf.estimator.EstimatorSpec(mode, predictions=logits)
 
@@ -60,7 +62,7 @@ def main():
         return dataset
     estimator = TFEstimator.from_model_fn(model_fn, model_dir="/tmp/estimator")
 
-    estimator.train(input_fn, steps=60000//320)
+    estimator.train(input_fn, steps=10)
 
     metrics = estimator.evaluate(input_fn, ["acc"])
     print(metrics)

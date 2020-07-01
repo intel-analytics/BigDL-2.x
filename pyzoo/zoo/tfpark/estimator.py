@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from tensorflow.python.util import function_utils
-import tensorflow as tf
 
 from bigdl.optim.optimizer import MaxIteration, Loss, TreeNNAccuracy
+
+from zoo.tfpark.utils import evaluate_string_metrics
 from zoo.pipeline.api.keras import metrics
 from zoo.tfpark.tfnet import TFNet
 from zoo.tfpark.tf_optimizer import TFOptimizer
@@ -75,7 +75,7 @@ class TFEstimator(object):
                 `tf.estimator.EstimatorSpec`
 
             For the train_op in tf.estimator.EstimatorSpec, it derive from and only from
-            `zoo.tfpark.ZooOptimizer`
+            `zoo.tfpark.zoo_optimizer.ZooOptimizer`
         :param model_dir: Directory to save model parameters, graph and etc. This can
             also be used to load checkpoints from the directory into an estimator to
             continue training a previously saved model. If `PathLike` object, the
@@ -93,11 +93,13 @@ class TFEstimator(object):
                        warm-started, and it is assumed that vocabularies
                        and `tf.Tensor` names are unchanged.
         """
+        import tensorflow as tf
         estimator = tf.estimator.Estimator(model_fn, model_dir=model_dir, config=config,
                                            params=params, warm_start_from=warm_start_from)
         return cls(estimator)
 
     def _call_model_fn(self, features, labels, mode, config):
+        from tensorflow.python.util import function_utils
         model_fn_args = function_utils.fn_args(self._model_fn)
         kwargs = {}
         if 'labels' in model_fn_args:
@@ -131,6 +133,7 @@ class TFEstimator(object):
         Returns:
           `self`, for chaining.
         """
+        import tensorflow as tf
 
         with tf.Graph().as_default() as g:
             global_step_tensor = self.estimator._create_and_assert_global_step(g)
@@ -199,12 +202,13 @@ class TFEstimator(object):
         if not all(isinstance(metric, six.string_types) for metric in eval_methods):
             raise ValueError("All metrics should be string types")
         from tensorflow_estimator.python.estimator.canned import prediction_keys
+        import tensorflow as tf
         with tf.Graph().as_default() as g:
             result = self.estimator._call_input_fn(input_fn, tf.estimator.ModeKeys.EVAL)
             if isinstance(result, TFDataset):
                 spec = self._call_model_fn(result.feature_tensors,
                                            result.label_tensors,
-                                           tf.estimator.ModeKeys.PREDICT,
+                                           tf.estimator.ModeKeys.EVAL,
                                            self.config)
                 latest_checkpoint = self.estimator.latest_checkpoint()
 
@@ -217,7 +221,6 @@ class TFEstimator(object):
                         saver.restore(sess, checkpoint_path)
                     else:
                         sess.run(tf.global_variables_initializer())
-                    inputs = nest.flatten(result._original_tensors[0])
                     if isinstance(spec.predictions, dict):
                         if "mae" in eval_methods:
                             outputs = [
@@ -230,17 +233,19 @@ class TFEstimator(object):
                         if len(outputs) > 1:
                             raise Exception("Evaluate on more than one output is not " +
                                             "supported now")
-                    tfnet = TFNet.from_session(sess, inputs=inputs, outputs=outputs)
 
-                    if result.batch_per_thread < 0:
-                        batch_size = result.batch_size
+                    all_inputs = result._original_tensors
+                    if isinstance(all_inputs, tuple) and len(all_inputs) == 2:
+                        targets = nest.flatten(all_inputs[1])
                     else:
-                        batch_size = result.batch_per_thread * result.get_num_partitions()
-
-                    eval_methods = [self._to_bigdl_metric(m) for m in eval_methods]
-                    results = tfnet.evaluate(result, batch_size, eval_methods)
-                    final_result = dict([(r.method, r.result) for r in results])
-                    return final_result
+                        targets = None
+                    return evaluate_string_metrics(sess=sess,
+                                                   string_metrics=eval_methods,
+                                                   dataset=result,
+                                                   inputs=nest.flatten(all_inputs),
+                                                   targets=targets,
+                                                   outputs=outputs,
+                                                   loss=spec.loss)
 
         return self.estimator.evaluate(input_fn, steps, checkpoint_path=checkpoint_path)
 
@@ -266,6 +271,8 @@ class TFEstimator(object):
           Evaluated values of `predictions` tensors.
 
         """
+        import tensorflow as tf
+
         with tf.Graph().as_default() as g:
             result = self.estimator._call_input_fn(input_fn, tf.estimator.ModeKeys.PREDICT)
             if isinstance(result, TFDataset):

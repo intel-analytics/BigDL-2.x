@@ -18,7 +18,7 @@ import pytest
 import numpy as np
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
-from zoo.automl.config.recipe import LSTMGridRandomRecipe
+from zoo.automl.config.recipe import LSTMGridRandomRecipe, MTNetGridRandomRecipe
 from zoo.zouwu.autots.forecast import AutoTSTrainer
 from zoo.zouwu.autots.forecast import TSPipeline
 
@@ -69,6 +69,29 @@ class TestZouwuAutoTS(ZooTestCase):
                                num_rand_samples=5,
                                batch_size=[1024],
                                lstm_2_units=[8],
+                               training_iteration=1,
+                               epochs=1
+                           ))
+        assert isinstance(pipeline, TSPipeline)
+        assert pipeline.internal.config is not None
+        pipeline.evaluate(self.validation_df)
+        pipeline.predict(self.validation_df)
+
+    def test_AutoTrainer_MTNetRecipe(self):
+        horizon = np.random.randint(1, 6)
+        tsp = AutoTSTrainer(dt_col="datetime",
+                            target_col="value",
+                            horizon=horizon,
+                            extra_features_col=None
+                            )
+        pipeline = tsp.fit(self.train_df,
+                           self.validation_df,
+                           recipe=MTNetGridRandomRecipe(
+                               num_rand_samples=5,
+                               time_step=[5],
+                               long_num=[2],
+                               batch_size=[1024],
+                               cnn_hid_size=[32, 50],
                                training_iteration=1,
                                epochs=1
                            ))

@@ -23,6 +23,8 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
    
    4. [Model inference](#4-model-inference)
 
+   5. [HTTP Server](#5-http-server)
+
 * [Optional Operations](#optional-operations)
 
      - [Update Model or Configurations](#update-model-or-configurations)
@@ -39,7 +41,7 @@ This section provides a quick start example for you to run Analytics Zoo Cluster
 * A sample trained TensorFlow model, and sample data for inference
 * A sample Python client program
 
-Use one command to run Cluster Serving container.
+Use one command to run Cluster Serving container. (We provide quick start model in older version of docker image, for newest version, please refer to following sections and we remove the model to reduce the docker image size).
 ```
 docker run -itd --name cluster-serving --net=host intelanalytics/zoo-cluster-serving:0.7.0
 ```
@@ -104,7 +106,7 @@ docker pull intelanalytics/zoo-cluster-serving
 ```
 then, (or directly run `docker run`, it will pull the image if it does not exist)
 ```
-docker run --name cluster-serving --net=host -itd intelanalytics/zoo-cluster-serving:0.7.0 bash
+docker run --name cluster-serving --net=host -itd intelanalytics/zoo-cluster-serving:0.8.1 bash
 ```
 Log into the container
 ```
@@ -114,15 +116,15 @@ docker exec -it cluster-serving bash
 ##### Yarn user
 For Yarn user using docker, you have to set additional config, thus you need to call following when starting the container
 ```
-docker run --name cluster-serving --net=host -v /path/to/HADOOP_CONF_DIR:/opt/work/HADOOP_CONF_DIR -e HADOOP_CONF_DIR=/opt/work/HADOOP_CONF_DIR -itd intelanalytics/zoo-cluster-serving:0.7.0 bash
+docker run --name cluster-serving --net=host -v /path/to/HADOOP_CONF_DIR:/opt/work/HADOOP_CONF_DIR -e HADOOP_CONF_DIR=/opt/work/HADOOP_CONF_DIR -itd intelanalytics/zoo-cluster-serving:0.8.1 bash
 ```
 
 #### Manual installation
-Non-Docker users need to install [Spark 2.4.3](https://archive.apache.org/dist/spark/spark-2.4.3/spark-2.4.3-bin-hadoop2.7.tgz), [Redis](https://redis.io/topics/quickstart) and [TensorBoard](https://www.tensorflow.org/tensorboard/get_started).
+Non-Docker users need to install [Flink](https://archive.apache.org/dist/flink/flink-1.10.0/), 1.10.0 by default, for users choose Spark as backend, install [Spark](https://archive.apache.org/dist/spark/spark-2.4.3/spark-2.4.3-bin-hadoop2.7.tgz), 2.4.3 by default, [Redis](https://redis.io/topics/quickstart), 0.5.0 by default and [TensorBoard](https://www.tensorflow.org/tensorboard/get_started) if you choose Spark backend and need visualization.
 
-After preparing dependencies above, make sure the environment variable `$SPARK_HOME` (/path/to/spark-SPARK_VERSION-bin-hadoop-HADOOP_VERSION), `$REDIS_HOME`(/path/to/redis-REDIS_VERSION) is set before following steps. 
+After preparing dependencies above, make sure the environment variable `$FLINK_HOME` (/path/to/flink-FLINK_VERSION-bin), or `$SPARK_HOME` (/path/to/spark-SPARK_VERSION-bin-hadoop-HADOOP_VERSION), `$REDIS_HOME`(/path/to/redis-REDIS_VERSION) is set before following steps. 
 
-Cluster Sering use TensorBoard to visualize the serving status. Use `pip install tensorboard` to install TensorBoard.
+For Spark user only, use `pip install tensorboard` to install TensorBoard.
 
 Install Analytics Zoo by Download Release or Pip.
 
@@ -133,11 +135,13 @@ Unzip the file and go into directory `analytics-zoo`, run `export ANALYTICS_ZOO_
 
 Run `source analytics-zoo/bin/analytics-zoo-env.sh` to set environment.
 
-Go to `analytics-zoo/scripts/cluster-serving`, run `cluster-serving-init`.
+Go to `analytics-zoo/bin/cluster-serving`, run `cluster-serving-init`.
 
 Run `export OMP_NUM_THREADS=all` if you want to use all cores on your machine to do inference in parallel manner.
 ##### Pip
-`pip install analytics-zoo`. And go to any directory, run `cluster-serving-init`.
+Use `pip install analytics-zoo` to install release stable version. For latest nightly built version, download the wheel at [download page](https://sourceforge.net/projects/analytics-zoo/files/zoo-py/) and use `pip` to install it.
+
+Then, go to any directory, run `cluster-serving-init`.
 
 Run `export OMP_NUM_THREADS=all` if you want to use all cores on your machine to do inference in parallel manner.
 ### 2. Configuration
@@ -185,7 +189,7 @@ spark:
 ```
 
 #### Preparing Model
-Currently Analytics Zoo Cluster Serving supports TensorFlow, Caffe, PyTorch, BigDL, OpenVINO models. Note that currently only **image classification** models are supported.
+Currently Analytics Zoo Cluster Serving supports TensorFlow, OpenVINO, PyTorch, BigDL, Caffe models. Supported types are listed below.
 
 You need to put your model file into a directory and the directory could have layout like following according to model type, note that only one model is allowed in your directory.
 
@@ -209,7 +213,7 @@ Please refer to [freeze checkpoint example](https://github.com/intel-analytics/a
        |-- variables.data-00000-of-00001
        |-- variables.index
 ```
-Note: you can specify model inputs and outputs in the config.yaml file. If the inputs or outputs are not provided,  the signature "serving_default" will be used to find input and output tensors.
+Note: you can specify model inputs and outputs in the config.yaml file. If the inputs or outputs are not provided, the signature "serving_default" will be used to find input and output tensors.
 
 **Caffe**
 
@@ -243,21 +247,22 @@ Note: you can specify model inputs and outputs in the config.yaml file. If the i
 
 Put the model in any of your local directory, and set `model:/path/to/dir`.
 
-#### Other Configuration
+#### Data Configuration
 The field `data` contains your input data configuration.
 
-* src: the queue you subscribe for your input data, e.g. a default config of Redis on local machine is `localhost:6379`. Note that please use the host address in your network instead of localhost or 127.0.0.1 when you run serving in cluster, and make sure other nodes in cluster could also recognize this address.
-* data_type: the type of your input data. image and tensor are supported.
-* image_shape: the shape of your image input data, e.g. a default config for pretrained imagenet is `3,224,224`. You should use the same shape of data which trained your model. In TensorFlow the format is usually HWC and in other models the format is usually CHW.
-* tensor_shape: the shape of your tensor(ndarray) or table(list of ndarray) input data. e.g. [1,2] (tensor) [[1],[2,1,2],[3]] (table) **note:** tensor_shape must be provided given data_type is tensor
-* filter: the top N classes in the prediction result. **note:** if the top-N number is larger than model output size of the the final layer, it would just return all the outputs.
+* src: the queue you subscribe for your input data, e.g. default config of Redis on local machine is `localhost:6379`. Note that please use the host address in your network instead of localhost or 127.0.0.1 when you run serving in cluster, and make sure other nodes in cluster could also recognize this address.
+* shape: the shape of your input data. e.g. [[1],[3,224,224],[3]], if your model contains only one input, brackets could be omitted.
+* filter: the post-processing of pipeline, could be none. Except none, currently supported filters are,
 
+Top-N, e.g. `topN(1)` represents Top-1 result is kept and returned with index. User should follow this schema `topN(n)`. Noted if the top-N number is larger than model output size of the the final layer, it would just return all the outputs.
+
+#### Other Configuration
 The field `params` contains your inference parameter configuration.
 
-* batch_size: the batch size you use for model inference. We recommend this value to be not smaller than 4 and not larger than 512. In general, using larger batch size means higher throughput, but also increase the latency between batches accordingly.
+* core_number: the batch size you use for model inference, usually the core number of your machine is recommended. Thus you could just provide your machine core number at this field. We recommend this value to be not smaller than 4 and not larger than 512. In general, using larger batch size means higher throughput, but also increase the latency between batches accordingly.
 * performance_mode: The performance mode will utilize your CPU resource to achieve better inference performance on a single node. **Note:** numactl and net-tools should be installed in your system, and spark master should be `local[*]` in the config.yaml file.
 
-The field `spark` contains your spark configuration.
+For Spark users only, the field `spark` contains your spark configuration.
 
 * master: Your cluster address, same as parameter `master` in spark
 * driver_memory: same as parameter `driver-memory` in spark
@@ -274,9 +279,9 @@ You can use following command to start Cluster Serving.
 ```
 cluster-serving-start
 ```
-This command will start Redis and TensorBoard if they are not running. Note that you need to provide `REDIS_HOME` environment variable as mentioned in [Installation](#1-installation).
+This command will start Redis and TensorBoard (for spark users only) if they are not running.
 
-**NOTE:** If your input data_type is tensor(ndarray), you should run `spark-structured-streaming-cluster-serving-start` instead.
+For spark users, if you choose spark streaming, run `spark-streaming-cluster-serving-start`. If you choose spark structured streaming, run `spark-structured-streaming-cluster-serving-start`.
 
 #### Stop
 You can use following command to stop Cluster Serving. Data in Redis and TensorBoard service will persist.
@@ -296,17 +301,20 @@ cluster-serving-shutdown
 
 If you are using Docker, you could also run `docker rm` to shutdown Cluster Serving.
 ### 4. Model Inference
-We support Python API for conducting inference with Data Pipeline in Cluster Serving. The requirements of API are `opencv-python`, `pyyaml`, `redis`.
+We support Python API and HTTP RESTful API for conducting inference with Data Pipeline in Cluster Serving. 
+
+#### Python API
+For Python API, the requirements of python packages are `opencv-python`(for raw image only), `pyyaml`, `redis`. You can use `InputQueue` and `OutputQueue` to connect to data pipeline by providing the pipeline url, e.g. `my_input_queue = InputQueue(host, port)` and `my_output_queue = OutputQueue(host, port)`. If parameters are not provided, default url `localhost:6379` would be used.
 
 We provide some basic usages here, for more details, please see [API Guide](APIGuide.md).
-#### Input and Output API
+##### Input and Output API
 To input data to queue, you need a `InputQueue` instance, and using `enqueue` method, for each input, give a key correspond to your model or give arbitrary key if your model does not care about it.
 
 To enqueue an image
 ```
 from zoo.serving.client import InputQueue
 input_api = InputQueue()
-input_api.enqueue('my-image1', user_define_key='path/to/image1')
+input_api.enqueue('my-image1', user_define_key={"path: 'path/to/image1'})
 ```
 To enqueue an instance containing 1 image and 2 ndarray
 ```
@@ -315,9 +323,9 @@ import numpy as np
 input_api = InputQueue()
 t1 = np.array([1,2])
 t2 = np.array([[1,2], [3,4]])
-input_api.enqueue_image('my-instance', img='path/to/image', tensor1=t1, tensor2=t2)
+input_api.enqueue_image('my-instance', img={"path": 'path/to/image'}, tensor1=t1, tensor2=t2)
 ```
-There are 3 types of inputs in total, image, tensor, sparse tensor, which could represents nearly all types of models. For more details of usage, go to [API Guide](APIGuide.md)
+There are 4 types of inputs in total, string, image, tensor, sparse tensor, which could represents nearly all types of models. For more details of usage, go to [API Guide](APIGuide.md)
 
 To get data from queue, you need a `OutputQueue` instance, and using `query` or `dequeue` method. The `query` method takes image uri as parameter and returns the corresponding result. The `dequeue` method takes no parameter and just returns all results and also delete them in data queue. See following example.
 ```
@@ -326,7 +334,7 @@ output_api = OutputQueue()
 img1_result = output_api.query('img1')
 all_result = output_api.dequeue() # the output queue is empty after this code
 ```
-#### Output Format
+##### Output Format
 Consider the code above, in [Input and Output API](#input-and-output-api) Section.
 ```
 img1_result = output_api.query('img1')
@@ -339,6 +347,283 @@ Where `n` is the number of `top_n` in your configuration file. This string could
 ```
 import json
 result_class_prob_map = json.loads(img1_result)
+```
+
+#### HTTP RESTful API
+For HTTP RESTful API, we provide a HTTP server to support RESTful HTTP requests. User can submit HTTP requests to the HTTP server through RESTful APIs. The HTTP server will parse the input requests and pub them to Redis input queues, and also retrieve the output results and render them as json results in HTTP responses. The serving backend will leverage the cluster serving.
+
+##### Start the HTTP Server
+User can download a analytics-zoo-${VERSION}-http.jar from the Nexus Repository with GAVP: 
+```
+<groupId>com.intel.analytics.zoo</groupId>
+<artifactId>analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}</artifactId>
+<version>${ZOO_VERSION}</version>
+```
+User can also build from the source code:
+```
+mvn clean package -P spark_2.4+ -Dmaven.test.skip=true
+```
+After that, start the HTTP server with below command.
+```
+java -jar analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ZOO_VERSION}-http.jar
+```
+And check the status of the HTTP server with:
+```
+curl  http://${BINDED_HOST_IP}:${BINDED_HOST_PORT}/
+```
+If you get a response like "welcome to analytics zoo web serving frontend", that means the HTTP server is started successfully.
+##### Start options
+User can pass options to the HTTP server when start it:
+```
+java -jar analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ZOO_VERSION}-http.jar --redisHost="172.16.0.109"
+```
+All the supported parameter are listed here:
+* **interface**: the binded server interface, default is "0.0.0.0"
+* **port**: the binded server port, default is 10020
+* **redisHost**: the host IP of redis server, default is "localhost"
+* **redisPort**: the host port of redis server, default is 6379
+* **redisInputQueue**: the input queue of redis server, default is "serving_stream"
+* **redisOutputQueue**: the output queue of redis server, default is "result:" 
+* **parallelism**: the parallelism of requests processing, default is 1000
+* **timeWindow**: the timeWindow wait to pub inputs to redis, default is 0
+* **countWindow**: the timeWindow wait to ub inputs to redis, default is 56
+* **tokenBucketEnabled**: the switch to enable/disable RateLimiter, default is false
+* **tokensPerSecond**: the rate of permits per second, default is 100
+* **tokenAcquireTimeout**: acquires a permit from this RateLimiter if it can be obtained without exceeding the specified timeout(ms), default is 100
+
+**User can adjust these options to tune the performance of the HTTP server.**
+
+##### RESTful API
+This part describes API endpoints and end-to-end examples on usage. 
+The requests and responses are in JSON format. The composition of them depends on the requests type or verb. See the APIs for details.
+In case of error, all APIs will return a JSON object in the response body with error as key and the error message as the value:
+```
+{
+  "error": <error message string>
+}
+```
+##### Predict API
+URL
+```
+POST http://host:port/predict
+```
+Request Example for images as inputs:
+```
+curl -d \
+'{
+  "instances": [
+    {
+      "image": "/9j/4AAQSkZJRgABAQEASABIAAD/7RcEUGhvdG9za..."
+    },
+    {
+      "image": "/9j/4AAQSkZJRgABAQEASABIAAD/7RcEUGhvdG9za..."
+    },
+    {
+      "image": "/9j/4AAQSkZJRgABAQEASABIAAD/7RcEUGhvdG9za..."
+    },
+    {
+      "image": "/9j/4AAQSkZJRgABAQEASABIAAD/7RcEUGhvdG9za..."
+    },
+    {
+      "image": "/9j/4AAQSkZJRgABAQEASABIAAD/7RcEUGhvdG9za..."
+    }
+  ]
+}' \
+-X POST http://host:port/predict
+```
+Response Example
+```
+{
+  "predictions": [
+    "{value=[[903,0.1306194]]}",
+    "{value=[[903,0.1306194]]}",
+    "{value=[[903,0.1306194]]}",
+    "{value=[[903,0.1306194]]}",
+    "{value=[[903,0.1306194]]}"
+  ]
+}
+```
+Request Example for tensor as inputs:
+```
+curl -d \
+'{
+  "instances" : [ {
+    "ids" : [ 100.0, 88.0 ]
+  }, {
+    "ids" : [ 100.0, 88.0 ]
+  }, {
+    "ids" : [ 100.0, 88.0 ]
+  }, {
+    "ids" : [ 100.0, 88.0 ]
+  }, {
+    "ids" : [ 100.0, 88.0 ]
+  } ]
+}' \
+-X POST http://host:port/predict
+```
+Response Example
+```
+{
+  "predictions": [
+    "{value=[[1,0.6427843]]}",
+    "{value=[[1,0.6427843]]}",
+    "{value=[[1,0.6427843]]}",
+    "{value=[[1,0.6427843]]}",
+    "{value=[[1,0.6427842]]}"
+  ]
+}
+```
+Another request example for composition of scalars and tensors.
+```
+curl -d \
+ '{
+  "instances" : [ {
+    "intScalar" : 12345,
+    "floatScalar" : 3.14159,
+    "stringScalar" : "hello, world. hello, arrow.",
+    "intTensor" : [ 7756, 9549, 1094, 9808, 4959, 3831, 3926, 6578, 1870, 1741 ],
+    "floatTensor" : [ 0.6804766, 0.30136853, 0.17394465, 0.44770062, 0.20275897, 0.32762378, 0.45966738, 0.30405098, 0.62053126, 0.7037923 ],
+    "stringTensor" : [ "come", "on", "united" ],
+    "intTensor2" : [ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ] ],
+    "floatTensor2" : [ [ [ 0.2, 0.3 ], [ 0.5, 0.6 ] ], [ [ 0.2, 0.3 ], [ 0.5, 0.6 ] ] ],
+    "stringTensor2" : [ [ [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ], [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ] ], [ [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ], [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ] ] ]
+  }, {
+    "intScalar" : 12345,
+    "floatScalar" : 3.14159,
+    "stringScalar" : "hello, world. hello, arrow.",
+    "intTensor" : [ 7756, 9549, 1094, 9808, 4959, 3831, 3926, 6578, 1870, 1741 ],
+    "floatTensor" : [ 0.6804766, 0.30136853, 0.17394465, 0.44770062, 0.20275897, 0.32762378, 0.45966738, 0.30405098, 0.62053126, 0.7037923 ],
+    "stringTensor" : [ "come", "on", "united" ],
+    "intTensor2" : [ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ] ],
+    "floatTensor2" : [ [ [ 0.2, 0.3 ], [ 0.5, 0.6 ] ], [ [ 0.2, 0.3 ], [ 0.5, 0.6 ] ] ],
+    "stringTensor2" : [ [ [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ], [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ] ], [ [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ], [ [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ], [ "come", "on", "united" ] ] ] ]
+  } ]
+}' \
+-X POST http://host:port/predict
+```
+Another request example for composition of sparse and dense tensors.
+```
+curl -d \
+'{
+  "instances" : [ {
+    "sparseTensor" : {
+      "shape" : [ 100, 10000, 10 ],
+      "data" : [ 0.2, 0.5, 3.45, 6.78 ],
+      "indices" : [ [ 1, 1, 1 ], [ 2, 2, 2 ], [ 3, 3, 3 ], [ 4, 4, 4 ] ]
+    },
+    "intTensor2" : [ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ] ]
+  }, {
+    "sparseTensor" : {
+      "shape" : [ 100, 10000, 10 ],
+      "data" : [ 0.2, 0.5, 3.45, 6.78 ],
+      "indices" : [ [ 1, 1, 1 ], [ 2, 2, 2 ], [ 3, 3, 3 ], [ 4, 4, 4 ] ]
+    },
+    "intTensor2" : [ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ] ]
+  } ]
+}' \
+-X POST http://host:port/predict
+```
+
+
+##### Metrics API
+URL
+```
+GET http://host:port/metrics
+```
+Response example:
+```
+[
+  {
+    name: "zoo.serving.redis.get",
+    count: 810,
+    meanRate: 12.627772820651845,
+    min: 0,
+    max: 25,
+    mean: 0.9687099303718213,
+    median: 0.928579,
+    stdDev: 0.8150031623593447,
+    _75thPercentile: 1.000047,
+    _95thPercentile: 1.141443,
+    _98thPercentile: 1.268665,
+    _99thPercentile: 1.608387,
+    _999thPercentile: 25.874584
+  },
+  {
+    name: "zoo.serving.redis.put",
+    count: 192,
+    meanRate: 2.9928448518681816,
+    min: 4,
+    max: 207,
+    mean: 8.470988823179553,
+    median: 6.909573,
+    stdDev: 13.269285415774808,
+    _75thPercentile: 8.262833,
+    _95thPercentile: 14.828704,
+    _98thPercentile: 18.860232,
+    _99thPercentile: 19.825203,
+    _999thPercentile: 207.541874
+  },
+  {
+    name: "zoo.serving.redis.wait",
+    count: 192,
+    meanRate: 2.992786169232195,
+    min: 82,
+    max: 773,
+    mean: 93.03099107296806,
+    median: 88.952799,
+    stdDev: 45.54085374821418,
+    _75thPercentile: 91.893393,
+    _95thPercentile: 118.370628,
+    _98thPercentile: 119.941905,
+    _99thPercentile: 121.158649,
+    _999thPercentile: 773.497556
+  },
+  {
+    name: "zoo.serving.request.metrics",
+    count: 1,
+    meanRate: 0.015586927261874562,
+    min: 18,
+    max: 18,
+    mean: 18.232472,
+    median: 18.232472,
+    stdDev: 0,
+    _75thPercentile: 18.232472,
+    _95thPercentile: 18.232472,
+    _98thPercentile: 18.232472,
+    _99thPercentile: 18.232472,
+    _999thPercentile: 18.232472
+  },
+  {
+    name: "zoo.serving.request.overall",
+    count: 385,
+    meanRate: 6.000929977336221,
+    min: 18,
+    max: 894,
+    mean: 94.5795886310155,
+    median: 89.946348,
+    stdDev: 49.63620144068503,
+    _75thPercentile: 93.851032,
+    _95thPercentile: 121.148026,
+    _98thPercentile: 123.118267,
+    _99thPercentile: 124.053326,
+    _999thPercentile: 894.004612
+  },
+  {
+    name: "zoo.serving.request.predict",
+    count: 192,
+    meanRate: 2.9925722215434205,
+    min: 85,
+    max: 894,
+    mean: 96.63308151066575,
+    median: 92.323305,
+    stdDev: 53.17110030594844,
+    _75thPercentile: 94.839714,
+    _95thPercentile: 122.564496,
+    _98thPercentile: 123.974892,
+    _99thPercentile: 125.636335,
+    _999thPercentile: 894.062819
+  }
+]
 ```
 
 ## Optional Operations

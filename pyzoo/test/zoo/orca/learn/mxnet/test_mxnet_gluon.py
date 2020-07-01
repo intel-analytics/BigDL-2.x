@@ -18,11 +18,11 @@ from unittest import TestCase
 import numpy as np
 import pytest
 
-import ray
 import mxnet as mx
 from mxnet import gluon
 from mxnet.gluon import nn
-from zoo.orca.learn.mxnet import MXNetTrainer, create_trainer_config
+from zoo.ray import RayContext
+from zoo.orca.learn.mxnet import Estimator, create_config
 
 np.random.seed(1337)  # for reproducibility
 
@@ -70,13 +70,17 @@ def get_metrics(config):
 
 class TestMXNetGluon(TestCase):
     def test_gluon(self):
-        config = create_trainer_config(batch_size=32, log_interval=2, optimizer="adam",
-                                       optimizer_params={'learning_rate': 0.02})
-        trainer = MXNetTrainer(config, get_train_data_iter, get_model, get_loss,
-                               eval_metrics_creator=get_metrics,
-                               validation_metrics_creator=get_metrics,
-                               num_workers=2, test_data=get_test_data_iter)
-        trainer.train(nb_epoch=2)
+        current_ray_ctx = RayContext.get()
+        address_info = current_ray_ctx.address_info
+        assert "object_store_address" in address_info
+        config = create_config(batch_size=32, log_interval=2, optimizer="adam",
+                               optimizer_params={'learning_rate': 0.02})
+        estimator = Estimator(config, get_model, get_loss,
+                              eval_metrics_creator=get_metrics,
+                              validation_metrics_creator=get_metrics,
+                              num_workers=2)
+        estimator.fit(get_train_data_iter, get_test_data_iter, nb_epoch=2)
+        estimator.shutdown()
 
 
 if __name__ == "__main__":

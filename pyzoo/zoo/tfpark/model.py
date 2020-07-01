@@ -15,20 +15,16 @@
 #
 
 import numpy as np
-import tensorflow.keras.backend as K
-from tensorflow.python.keras import models
-from tensorflow.python.keras.engine import training_utils
-
 from bigdl.optim.optimizer import MaxEpoch
+
+from zoo.tfpark.utils import evaluate_string_metrics
 from zoo.common import load_from_file
 from zoo.common import save_file
 from zoo.common.nncontext import getOrCreateSparkContext
-from zoo.pipeline.api.keras.utils import to_bigdl_metric
 from zoo.tfpark.tf_dataset import TFNdarrayDataset, TFDataset
 
 from zoo.tfpark.tf_optimizer import TFOptimizer
 from zoo.tfpark.tf_predictor import TFPredictor
-from zoo.tfpark.tfnet import TFNet
 
 
 class KerasModel(object):
@@ -39,6 +35,8 @@ class KerasModel(object):
         """
         self.model = model
         self.model_dir = model_dir
+        import tensorflow as tf
+        self.real_batch_size = tf.shape(self.model.inputs[0])[0]
 
     @property
     def metrics_names(self):
@@ -80,8 +78,11 @@ class KerasModel(object):
         :param path: String. The path to the pre-defined model.
         :return: KerasModel.
         """
+        from tensorflow.python.keras import models
+
         def load_func(file_path):
             return models.load_model(file_path)
+
         keras_model = load_from_file(load_func, path)
         return KerasModel(keras_model)
 
@@ -197,27 +198,28 @@ class KerasModel(object):
                                                   )
                 return self._evaluate_distributed(dataset)
             else:
-                return self.model.evaluate(x=x,
-                                           y=y,
-                                           batch_size=batch_per_thread)
+                results = self.model.evaluate(x=x,
+                                              y=y,
+                                              batch_size=batch_per_thread)
+                results = dict(zip(self.metrics_names, results))
+                return results
 
     def _evaluate_distributed(self, dataset):
 
-        tfnet = TFNet.from_session(K.get_session(),
-                                   inputs=self.model.inputs,
-                                   outputs=self.model.outputs)
-        if dataset.batch_per_thread < 0:
-            batch_size = dataset.batch_size
+        import tensorflow.keras.backend as K
+
+        if hasattr(self.model, "targets"):
+            model_targets = self.model.targets
         else:
-            batch_size = dataset.batch_per_thread * dataset.get_num_partitions()
+            model_targets = self.model._targets
 
-        eval_methods = [to_bigdl_metric(m, self.model.loss)
-                        for m in self.metrics_names]
-
-        results = tfnet.evaluate(dataset, batch_size, eval_methods)
-        final_result = [r.result for r in results]
-
-        return final_result
+        return evaluate_string_metrics(sess=K.get_session(),
+                                       string_metrics=self.metrics_names,
+                                       dataset=dataset,
+                                       inputs=self.model.inputs + model_targets,
+                                       targets=model_targets,
+                                       outputs=self.model.outputs,
+                                       loss=self.model.total_loss)
 
     def predict(self,
                 x,
@@ -359,6 +361,7 @@ def _standarize_feature_dataset(dataset, model):
 
 
 def _create_rdd_x_y(x, y, input_names, output_names, sc):
+    from tensorflow.python.keras.engine import training_utils
     x = training_utils.standardize_input_data(x, input_names,
                                               check_batch_axis=False,
                                               exception_prefix='input')
@@ -398,6 +401,7 @@ def _create_rdd_x_y(x, y, input_names, output_names, sc):
 
 
 def _create_rdd_x(x, input_names, sc):
+    from tensorflow.python.keras.engine import training_utils
     x = training_utils.standardize_input_data(x, input_names,
                                               check_batch_axis=False,
                                               exception_prefix='input')

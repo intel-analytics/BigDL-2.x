@@ -25,15 +25,12 @@ from bigdl.nn.layer import Layer
 from bigdl.optim.optimizer import MaxEpoch, EveryEpoch
 from bigdl.util.common import to_list, JavaValue
 
-from zoo.tfpark.zoo_optimizer import FakeOptimMethod
 from zoo.common.utils import callZooFunc
 from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss, OptimMethod
 from zoo.pipeline.api.net.utils import find_placeholders, to_bigdl_optim_method, find_tensors
 from zoo.pipeline.estimator import Estimator
 from zoo.util import nest
 
-import tensorflow as tf
-from tensorflow import gfile
 
 if sys.version >= '3':
     long = int
@@ -52,10 +49,11 @@ class TFValidationMethod(JavaValue):
 
 
 class StatelessMetric(JavaValue):
-    def __init__(self, metric_name, idx):
+    def __init__(self, metric_name, idx, count_idx):
         self.name = metric_name
         self.idx = idx
-        JavaValue.__init__(self, None, "float", metric_name, idx)
+        self.count_idx = count_idx
+        JavaValue.__init__(self, None, "float", metric_name, idx, count_idx)
 
 
 class BigDLMetric(object):
@@ -129,6 +127,7 @@ class TFModel(object):
 
     @staticmethod
     def _process_session_config(session_config):
+        import tensorflow as tf
         if session_config is not None:
 
             assert isinstance(session_config, tf.ConfigProto), \
@@ -145,18 +144,18 @@ class TFModel(object):
         return grads
 
     @staticmethod
-    def _process_metrics(graph, metrics):
-
-        outputs = []
+    def _process_metrics(graph, metrics, real_batch_size):
+        import tensorflow as tf
+        outputs = [real_batch_size]
         val_methods = None
         if metrics is not None:
-            idx = 0
+            idx = 1
             val_methods = []
             for metric_name in metrics:
                 metric = metrics[metric_name]
                 if tf.is_numeric_tensor(metric):
                     outputs.append(metric)
-                    val_methods.append(StatelessMetric(metric_name, idx))
+                    val_methods.append(StatelessMetric(metric_name, idx, 0))
                     idx += 1
                 else:
                     outputs += metric.outputs
@@ -177,7 +176,7 @@ class TFModel(object):
 
     @staticmethod
     def _process_variables(graph, variables, updates):
-
+        import tensorflow as tf
         all_trainable_variables = variables
 
         name2idx = dict([(v.name, idx) for idx, v in enumerate(all_trainable_variables)])
@@ -236,6 +235,8 @@ class TFModel(object):
                      grads, update_op, train_op,
                      additional_inputs,
                      additional_values):
+        import tensorflow as tf
+        from tensorflow import gfile
         saver = tf.train.Saver()
         if not os.path.isdir(folder):
             os.makedirs(folder)
@@ -286,13 +287,13 @@ class TFModel(object):
     @staticmethod
     def export(model_dir, loss_tensor, sess, inputs, labels, predictions, grads, variables, graph,
                tensors_with_value, metrics, updates, train_op=None):
-        inputs, additional_inputs, additional_values = \
-            TFModel._expand_inputs(inputs, tensors_with_value, loss_tensor)
-        metric_tensors, val_methods = TFModel._process_metrics(graph, metrics)
-        grads = TFModel._process_grads(graph, grads)
-
+        import tensorflow as tf
         with graph.as_default():
             batch_size_tensor = tf.to_float(tf.shape(inputs[0])[0])
+        inputs, additional_inputs, additional_values = \
+            TFModel._expand_inputs(inputs, tensors_with_value, loss_tensor)
+        metric_tensors, val_methods = TFModel._process_metrics(graph, metrics, batch_size_tensor)
+        grads = TFModel._process_grads(graph, grads)
 
         trainable_variables, trainable_variable_placeholders, trainable_assign, \
             extra_variables, extra_variable_assign_placeholders, \
@@ -408,6 +409,7 @@ class TFOptimizer:
 
     @staticmethod
     def _get_or_create_session(session):
+        import tensorflow as tf
         if session is None:
             sess = tf.Session()
             sess.run(tf.global_variables_initializer())
@@ -417,13 +419,14 @@ class TFOptimizer:
 
     @staticmethod
     def _get_dataset_from_loss(loss):
+        import tensorflow as tf
         all_required_inputs = find_placeholders([loss])
         dataset = tf.get_collection(all_required_inputs[0].name)[0]
         return dataset
 
     @staticmethod
     def _get_vars_grads(loss):
-
+        import tensorflow as tf
         grads_vars = tf.train.GradientDescentOptimizer(0).compute_gradients(loss)
         grads_vars.sort(key=lambda grad_var: grad_var[1].name)
         variables = []
@@ -455,6 +458,7 @@ class TFOptimizer:
     def from_train_op(cls, train_op, loss, *, inputs=None, labels=None, metrics=None, updates=None,
                       sess=None, dataset=None, tensor_with_value=None, session_config=None,
                       model_dir=None):
+
         sess = TFOptimizer._get_or_create_session(sess)
         grads, variables = TFOptimizer._get_vars_grads_from_train_op(train_op)
         if dataset is None:
@@ -476,6 +480,7 @@ class TFOptimizer:
 
         inputs = nest.flatten(inputs)
         labels = nest.flatten(labels)
+        from zoo.tfpark.zoo_optimizer import FakeOptimMethod
         return TFOptimizer._from_grads(loss=loss, sess=sess, inputs=inputs, labels=labels,
                                        grads=grads,
                                        variables=variables, dataset=dataset, metrics=metrics,

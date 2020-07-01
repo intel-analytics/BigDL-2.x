@@ -77,8 +77,8 @@ class TestZouwuModelForecast(ZooTestCase):
         # TODO hacking to fix a bug
         model = MTNetForecaster(target_dim=1,
                                 feature_dim=self.x_train.shape[-1],
-                                lb_long_steps=self.long_num,
-                                lb_long_stepsize=self.time_step
+                                long_series_num=self.long_num,
+                                series_length=self.time_step
                                 )
         x_train_long, x_train_short = model.preprocess_input(self.x_train)
         x_val_long, x_val_short = model.preprocess_input(self.x_val)
@@ -91,6 +91,20 @@ class TestZouwuModelForecast(ZooTestCase):
                   distributed=False)
         model.evaluate([x_val_long, x_val_short], self.y_val)
         model.predict([x_test_long, x_test_short])
+
+    def test_forecast_tcmf(self):
+        from zoo.zouwu.model.forecast import TCMFForecaster
+        model = TCMFForecaster(max_y_iterations=1,
+                               init_FX_epoch=1,
+                               max_FX_epoch=1,
+                               max_TCN_epoch=1,
+                               alt_iters=2)
+        x = np.random.rand(300, 480)
+        model.fit(x)
+        yhat = model.predict(x=None, horizon=24)
+        assert yhat.shape == (300, 24)
+        target_value = np.random.rand(300, 24)
+        model.evaluate(x=None, target_value=target_value, metric=['mse'])
 
 
 if __name__ == "__main__":

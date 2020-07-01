@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from zoo.tfpark import ZooOptimizer
+
 from zoo.tfpark.text.estimator import *
 
 
@@ -28,6 +28,8 @@ def make_bert_classifier_model_fn(optimizer):
         :param params: Must include the key "num_classes".
         :return: tf.estimator.EstimatorSpec.
         """
+        import tensorflow as tf
+        from zoo.tfpark import ZooOptimizer
         output_layer = bert_model(features, labels, mode, params).get_pooled_output()
         hidden_size = output_layer.shape[-1].value
         output_weights = tf.get_variable(
@@ -42,15 +44,20 @@ def make_bert_classifier_model_fn(optimizer):
             logits = tf.matmul(output_layer, output_weights, transpose_b=True)
             logits = tf.nn.bias_add(logits, output_bias)
             probabilities = tf.nn.softmax(logits, axis=-1)
-            if mode == tf.estimator.ModeKeys.PREDICT or mode == tf.estimator.ModeKeys.EVAL:
+
+            if mode == tf.estimator.ModeKeys.PREDICT:
                 return tf.estimator.EstimatorSpec(mode=mode, predictions=probabilities)
             else:
                 log_probs = tf.nn.log_softmax(logits, axis=-1)
                 one_hot_labels = tf.one_hot(labels, depth=params["num_classes"], dtype=tf.float32)
                 per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
                 loss = tf.reduce_mean(per_example_loss)
-                train_op = ZooOptimizer(optimizer).minimize(loss)
-                return tf.estimator.EstimatorSpec(mode=mode, train_op=train_op, loss=loss)
+                if mode == tf.estimator.ModeKeys.EVAL:
+                    return tf.estimator.EstimatorSpec(mode=mode, predictions=probabilities,
+                                                      loss=loss)
+                else:
+                    train_op = ZooOptimizer(optimizer).minimize(loss)
+                    return tf.estimator.EstimatorSpec(mode=mode, train_op=train_op, loss=loss)
     return _bert_classifier_model_fn
 
 

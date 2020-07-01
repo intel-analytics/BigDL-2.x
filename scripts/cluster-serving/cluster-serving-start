@@ -96,7 +96,7 @@ if [ -z "${BIGDL_JAR}" ]; then
       mkdir tmp
       (cd tmp; unzip -uo ../zoo.jar)
       (cd tmp; unzip -uo ../bigdl.jar)
-      jar -cvf zoo.jar -C tmp .
+      jar -cvf all-in-one.jar -C tmp .
   else
       BIGDL_JAR=
   fi
@@ -105,27 +105,38 @@ if [ -z "${SPARK_REDIS_JAR}" ]; then
     SPARK_REDIS_JAR=spark-redis-2.4.0-jar-with-dependencies.jar
 fi
 
-if [ "${params_performance_mode}" == "ON" ] && [ "${spark_master}" == "local[*]" ]; then
-    echo -e "\033[36mPerformance mode is ON, Start standalone cluster... \033[0m"
-    if [ -f "cluster-with-numactl.sh" ]; then
+if [ -z "${1// }" ]; then
+    echo "Using default setting, starting Cluster Serving with Flink backend"
+    ${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p 1 zoo.jar
+else
+  if [ $1 != "spark" ]; then
+    echo "You provided invalid parameter when start serving, supported parameter is spark, your is "$1
+    exit 1
+  fi
+    if [ "${params_performance_mode}" == "ON" ] && [ "${spark_master}" == "local[*]" ]; then
+     echo -e "\033[36mPerformance mode is ON, Start standalone cluster... \033[0m"
+     if [ -f "cluster-with-numactl.sh" ]; then
       OUTPUT=`./cluster-with-numactl.sh start | tail -1`
-    else
+     else
       OUTPUT=`cluster-with-numactl.sh start | tail -1`
-    fi
-    IFS=','
-    PARAMS=($OUTPUT)
-    unset IFS
-    LENGTH=${#PARAMS[@]}
-    if [ $LENGTH -gt 2 ]; then
+     fi
+     IFS=','
+     PARAMS=($OUTPUT)
+     unset IFS
+     LENGTH=${#PARAMS[@]}
+     if [ $LENGTH -gt 2 ]; then
       spark_master=${PARAMS[0]}
       spark_executor_cores=${PARAMS[1]}
       spark_num_executors=${PARAMS[2]}
       spark_total_executor_cores=${PARAMS[3]}
       spark_driver_memory=${PARAMS[4]}
       export OMP_NUM_THREADS=${spark_executor_cores}
-    elif [ $LENGTH -eq 2 ]; then
+     elif [ $LENGTH -eq 2 ]; then
       echo -e "\033[31m${PARAMS[1]}, use local[*] instead \033[0m"
+     fi
     fi
+    ${SPARK_HOME}/bin/spark-submit --master ${spark_master} --driver-memory ${spark_driver_memory} --executor-memory ${spark_executor_memory} --num-executors ${spark_num_executors} --executor-cores ${spark_executor_cores} --total-executor-cores ${spark_total_executor_cores} --jars ${SPARK_REDIS_JAR},${BIGDL_JAR} --class com.intel.analytics.zoo.serving.SparkStreamingClusterServing ${ZOO_JAR} >> cluster-serving.log
 fi
 
-${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p 1 ${ZOO_JAR}
+
+
