@@ -285,6 +285,16 @@ class TestEstimatorForGraph(TestCase):
         self.assertTrue('feature columns is None; it should not be None in prediction'
                         in str(context.exception))
 
+        with self.assertRaises(Exception) as context:
+            est.fit(data=df,
+                    batch_size=8,
+                    steps=10,
+                    feature_cols=['user', 'item'],
+                    labels_cols=['label'],
+                    validation_data=[1,2,3])
+        self.assertTrue('train data and validation data should be in the same type'
+                        in str(context.exception))
+
 
 if __name__ == "__main__":
     import pytest

@@ -138,6 +138,10 @@ def _xshards_to_tf_dataset(data_shard,
 def _to_dataset(data, batch_size, batch_per_thread, validation_data,
                 feature_cols, labels_cols, hard_code_batch_size,
                 sequential_order, shuffle):
+    if validation_data:
+        assert type(data) == type(validation_data), \
+                "train data and validation data should be in the same type"
+
     if isinstance(data, SparkXShards):
         dataset = _xshards_to_tf_dataset(data,
                                          batch_size,
@@ -160,7 +164,7 @@ def _to_dataset(data, batch_size, batch_per_thread, validation_data,
                                            shuffle
                                            )
     else:
-        raise ValueError("data must be a SparkXShards or an orca.data.tf.Dataset")
+        raise ValueError("data must be a SparkXShards or an orca.data.tf.Dataset or DataFrame")
 
     return dataset
 
