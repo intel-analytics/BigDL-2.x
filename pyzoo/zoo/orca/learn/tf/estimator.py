@@ -252,14 +252,14 @@ class TFKerasWrapper(Estimator):
             batch_size=None,
             epochs=1,
             validation_data=None,
-            **kwargs):
+            ):
 
         train_dataset = _to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                                     validation_data=validation_data)
 
         self.model.fit(train_dataset, batch_size=batch_size, epochs=epochs,
-                       optim_method=self.optim_method, session_config=self.session_config,
-                       **kwargs)
+                       optim_method=self.optim_method, session_config=self.session_config
+                       )
         return self
 
     def predict(self, data, batch_size=32):
