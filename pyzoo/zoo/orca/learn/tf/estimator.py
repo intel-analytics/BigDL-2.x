@@ -27,10 +27,13 @@ from zoo.util import nest
 
 
 class Estimator(object):
-    def fit(self, data, steps, **kwargs):
+    def fit(self, data, epochs, **kwargs):
         pass
 
     def predict(self, data, **kwargs):
+        pass
+
+    def evaluate(self, data, **kwargs):
         pass
 
     @staticmethod
@@ -38,7 +41,7 @@ class Estimator(object):
                    labels=None, loss=None, optimizer=None,
                    metrics=None, updates=None,
                    sess=None, session_config=None,
-                   model_dir=None, backend="spark"):
+                   feed_dict=None, model_dir=None, backend="spark"):
         assert backend == "spark", "only spark backend is supported for now"
         return TFOptimizerWrapper(inputs=inputs,
                                   outputs=outputs,
@@ -48,7 +51,8 @@ class Estimator(object):
                                   metrics=metrics, updates=updates,
                                   sess=sess,
                                   session_config=session_config,
-                                  model_dir=model_dir)
+                                  model_dir=model_dir,
+                                  feed_dict=feed_dict)
 
     @staticmethod
     def from_keras(keras_model, session_config=None,
@@ -159,7 +163,8 @@ class TFOptimizerWrapper(Estimator):
                  metrics,
                  updates, sess,
                  session_config,
-                 model_dir):
+                 model_dir,
+                 feed_dict):
         self.inputs = inputs
         self.outputs = outputs
         self.labels = labels
@@ -182,12 +187,15 @@ class TFOptimizerWrapper(Estimator):
             self.sess = sess
         self.session_config = session_config
         self.model_dir = model_dir
+        if feed_dict is not None:
+            self.tensor_with_value = {key: (value, value) for key, value in feed_dict.items()}
+        else:
+            self.tensor_with_value = None
 
     def fit(self, data,
-            batch_size=32,
             epochs=1,
-            validation_data=None,
-            feed_dict=None
+            batch_size=32,
+            validation_data=None
             ):
 
         assert self.labels is not None, \
@@ -200,11 +208,6 @@ class TFOptimizerWrapper(Estimator):
         dataset = _to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                               validation_data=validation_data)
 
-        if feed_dict is not None:
-            tensor_with_value = {key: (value, value) for key, value in feed_dict.items()}
-        else:
-            tensor_with_value = None
-
         optimizer = TFOptimizer.from_train_op(
             train_op=self.train_op,
             loss=self.loss,
@@ -213,14 +216,14 @@ class TFOptimizerWrapper(Estimator):
             dataset=dataset,
             metrics=self.metrics,
             updates=self.updates, sess=self.sess,
-            tensor_with_value=tensor_with_value,
+            tensor_with_value=self.tensor_with_value,
             session_config=self.session_config,
             model_dir=self.model_dir)
 
         optimizer.optimize(end_trigger=MaxEpoch(epochs))
         return self
 
-    def predict(self, data, batch_size=32):
+    def predict(self, data, batch_size=4):
         assert self.outputs is not None, \
             "output is None, it should not be None in prediction"
 
@@ -231,7 +234,7 @@ class TFOptimizerWrapper(Estimator):
         tfnet = TFNet.from_session(sess=self.sess, inputs=flat_inputs, outputs=flat_outputs)
         return tfnet.predict(dataset)
 
-    def evaluate(self, data, batch_size=32):
+    def evaluate(self, data, batch_size=4):
         assert self.metrics is not None, \
             "metrics is None, it should not be None in evaluate"
 
@@ -252,10 +255,9 @@ class TFKerasWrapper(Estimator):
         self.session_config = session_config
 
     def fit(self, data,
-            batch_size=32,
             epochs=1,
-            validation_data=None,
-            feed_dict=None
+            batch_size=32,
+            validation_data=None
             ):
 
         train_dataset = _to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
@@ -266,13 +268,13 @@ class TFKerasWrapper(Estimator):
                        )
         return self
 
-    def predict(self, data, batch_size=32):
+    def predict(self, data, batch_size=4):
 
         dataset = _to_dataset(data, batch_size=-1, batch_per_thread=batch_size)
 
         return self.model.predict(dataset, batch_size)
 
-    def evaluate(self, data, batch_size=32):
+    def evaluate(self, data, batch_size=4):
 
         dataset = _to_dataset(data, batch_size=-1, batch_per_thread=batch_size)
 
