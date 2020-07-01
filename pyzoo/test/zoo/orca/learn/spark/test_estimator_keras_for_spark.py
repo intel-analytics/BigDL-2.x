@@ -139,7 +139,7 @@ class TestEstimatorForKeras(ZooTestCase):
                 batch_size=8,
                 epochs=10)
         # train with different optimizer
-        est = Estimator.from_keras(keras_model=model, optim_method=tf.keras.optimizers.Adam())
+        est = Estimator.from_keras(keras_model=model)
         est.fit(data=data_shard,
                 batch_size=8,
                 epochs=10

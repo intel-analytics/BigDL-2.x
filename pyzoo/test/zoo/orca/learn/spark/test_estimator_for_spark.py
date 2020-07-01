@@ -66,7 +66,7 @@ def test_estimator_graph(estimator_for_spark_fixture):
         metrics={"loss": model.loss})
     est.fit(data=data_shard,
             batch_size=8,
-            steps=10,
+            epochs=10,
             validation_data=data_shard)
 
     data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
@@ -108,7 +108,7 @@ def test_estimator_graph_fit(estimator_for_spark_fixture):
         metrics={"loss": model.loss})
     est.fit(data=data_shard,
             batch_size=8,
-            steps=10,
+            epochs=10,
             validation_data=data_shard)
 
 
@@ -192,7 +192,7 @@ def test_estimator_graph_fit_dataset(estimator_for_spark_fixture):
         metrics={"loss": model.loss})
     est.fit(data=dataset,
             batch_size=8,
-            steps=10,
+            epochs=10,
             validation_data=dataset)
 
 

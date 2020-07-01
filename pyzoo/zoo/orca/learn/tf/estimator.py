@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from bigdl.optim.optimizer import MaxIteration, SGD
+from bigdl.optim.optimizer import MaxEpoch, SGD
 
 from zoo.tfpark.utils import evaluate_metrics
 from zoo.orca.data.shard import SparkXShards
@@ -22,7 +22,6 @@ from zoo.tfpark import TFOptimizer, TFNet, ZooOptimizer
 import tensorflow as tf
 
 from zoo.tfpark.tf_dataset import TFDataset
-from zoo.tfpark.tf_optimizer import TFModel
 from zoo.tfpark import KerasModel
 from zoo.util import nest
 
@@ -38,7 +37,8 @@ class Estimator(object):
     def from_graph(*, inputs, outputs=None,
                    labels=None, loss=None, optimizer=None,
                    metrics=None, updates=None,
-                   sess=None, model_dir=None, backend="spark"):
+                   sess=None, session_config=None,
+                   model_dir=None, backend="spark"):
         assert backend == "spark", "only spark backend is supported for now"
         return TFOptimizerWrapper(inputs=inputs,
                                   outputs=outputs,
@@ -47,13 +47,14 @@ class Estimator(object):
                                   optimizer=optimizer,
                                   metrics=metrics, updates=updates,
                                   sess=sess,
+                                  session_config=session_config,
                                   model_dir=model_dir)
 
     @staticmethod
-    def from_keras(*, keras_model, model_dir=None, optim_method=None,
-            session_config=None, backend="spark"):
+    def from_keras(keras_model, session_config=None,
+                   model_dir=None, backend="spark"):
         assert backend == "spark", "only spark backend is supported for now"
-        return TFKerasWrapper(keras_model, model_dir, optim_method, session_config)
+        return TFKerasWrapper(keras_model, model_dir, session_config)
 
 
 def _xshards_to_tf_dataset(data_shard,
@@ -157,6 +158,7 @@ class TFOptimizerWrapper(Estimator):
                  optimizer,
                  metrics,
                  updates, sess,
+                 session_config,
                  model_dir):
         self.inputs = inputs
         self.outputs = outputs
@@ -178,13 +180,15 @@ class TFOptimizerWrapper(Estimator):
             self.sess.run(tf.global_variables_initializer())
         else:
             self.sess = sess
+        self.session_config = session_config
         self.model_dir = model_dir
 
-    def fit(self, data, steps,
+    def fit(self, data,
             batch_size=32,
+            epochs=1,
             validation_data=None,
-            feed_dict=None,
-            session_config=None):
+            feed_dict=None
+            ):
 
         assert self.labels is not None, \
             "labels is None; it should not be None in training"
@@ -210,10 +214,10 @@ class TFOptimizerWrapper(Estimator):
             metrics=self.metrics,
             updates=self.updates, sess=self.sess,
             tensor_with_value=tensor_with_value,
-            session_config=session_config,
+            session_config=self.session_config,
             model_dir=self.model_dir)
 
-        optimizer.optimize(end_trigger=MaxIteration(steps))
+        optimizer.optimize(end_trigger=MaxEpoch(epochs))
         return self
 
     def predict(self, data, batch_size=32):
@@ -243,22 +247,22 @@ class TFOptimizerWrapper(Estimator):
 
 class TFKerasWrapper(Estimator):
 
-    def __init__(self, keras_model, model_dir=None, optim_method=None, session_config=None):
+    def __init__(self, keras_model, model_dir=None, session_config=None):
         self.model = KerasModel(keras_model, model_dir)
-        self.optim_method = optim_method
         self.session_config = session_config
 
     def fit(self, data,
-            batch_size=None,
+            batch_size=32,
             epochs=1,
             validation_data=None,
+            feed_dict=None
             ):
 
         train_dataset = _to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                                     validation_data=validation_data)
 
         self.model.fit(train_dataset, batch_size=batch_size, epochs=epochs,
-                       optim_method=self.optim_method, session_config=self.session_config
+                       session_config=self.session_config
                        )
         return self
 
