@@ -247,7 +247,7 @@ class TFOptimizerWrapper(Estimator):
 
 class TFKerasWrapper(Estimator):
 
-    def __init__(self, keras_model, model_dir=None, session_config=None):
+    def __init__(self, keras_model, model_dir, session_config):
         self.model = KerasModel(keras_model, model_dir)
         self.session_config = session_config
 
