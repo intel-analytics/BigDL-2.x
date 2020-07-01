@@ -636,7 +636,11 @@ class DeepGLO(object):
 
     def get_prediction_time_covs(self, rg, horizon, last_step):
         covs_past = self.Yseq.covariates[:, last_step - rg: last_step]
-        future_start_date = pd.Timestamp(self.start_date) + pd.Timedelta('1h') * last_step
+        if self.freq[0].isalpha():
+            freq = "1" + self.freq
+        else:
+            freq = self.freq
+        future_start_date = pd.Timestamp(self.start_date) + pd.Timedelta(freq) * last_step
         covs_future = self.get_time_covs(start_date=future_start_date, num_ts=horizon)
         covs = np.concatenate([covs_past, covs_future], axis=1)
         return covs
