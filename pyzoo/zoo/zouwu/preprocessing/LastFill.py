@@ -48,6 +48,8 @@ class LastFill(BaseImpute):
         :return: MSE results
         """
         missing = df.isna()*1
+        df1 = self.impute(df)
+        print("na", df.isna().sum().sum())
         missing = missing.to_numpy()
         mask = np.zeros(df.shape[0]*df.shape[1])
         idx = np.random.choice(mask.shape[0], int(mask.shape[0]*drop_rate), replace=False)
@@ -57,8 +59,11 @@ class LastFill(BaseImpute):
         np_df[mask == 1] = None
         new_df = pd.DataFrame(np_df)
         impute_df = self.impute(new_df)
+        print("NA", impute_df.isna().sum().sum())
         pred = impute_df.to_numpy()
-        true = df.to_numpy()
+        true = df1.to_numpy()
+        print(pred)
+        print("true", true)
         pred[missing == 1] = 0
         true[missing == 1] = 0
         a = metrics.mean_squared_error(true[:, 0], pred[:, 0])
