@@ -21,7 +21,7 @@ class BaseImpute(ABC):
     """
     base model for data imputation
     """
-    
+
     @abstractmethod
     def impute(self, df):
         """
@@ -30,7 +30,7 @@ class BaseImpute(ABC):
         :return: dataframe without missing values
         """
         raise NotImplementError
-        
+
     @abstractmethod
     def evaluate(self, df, drop_rate):
         """
