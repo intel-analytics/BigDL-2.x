@@ -61,4 +61,6 @@ class LastFill(BaseImpute):
         true = df.to_numpy()
         pred[missing == 1] = 0
         true[missing == 1] = 0
-        return [metrics.mean_squared_error(true[:, 0], pred[:, 0]), metrics.mean_squared_error(true[:, 1], pred[:, 1])]
+        a = metrics.mean_squared_error(true[:, 0], pred[:, 0])
+        b = metrics.mean_squared_error(true[:, 1], pred[:, 1])
+        return [a, b]
