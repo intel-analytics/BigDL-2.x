@@ -17,7 +17,7 @@
 import os
 import glob
 
-from pyspark import SparkContext
+from bigdl.util.common import *
 from zoo.common.nncontext import init_spark_conf
 from zoo import init_nncontext
 
@@ -131,7 +131,14 @@ class SparkRunner:
                                                self._get_bigdl_classpath_jar_name_on_driver()[1])
                 ]
 
+    def _expand_driver_cp_submit_args(self):
+        if os.environ.get("BIGDL_JARS", None) and not is_spark_below_2_2():
+            submit_args = " --driver-class-path " + os.environ["BIGDL_JARS"] + " pyspark-shell "
+            print("pyspark_submit_args is: {}".format(submit_args))
+            os.environ['PYSPARK_SUBMIT_ARGS'] = submit_args
+
     def init_spark_on_local(self, cores, conf=None, python_location=None):
+        self._expand_driver_cp_submit_args()
         print("Start to getOrCreate SparkContext")
         if 'PYSPARK_PYTHON' not in os.environ:
             os.environ['PYSPARK_PYTHON'] = \
