@@ -100,19 +100,9 @@ def check_type_and_convert(data, tuple_allowed=True, list_allowed=True):
     if isinstance(x, np.ndarray):
         new_x = [x]
     elif isinstance(x, tuple) and all([isinstance(xi, np.ndarray) for xi in x]):
-        if tuple_allowed:
-            new_x = x
-        elif list_allowed:
-            new_x = list(x)
-        else:
-            raise ValueError("value of x should be a ndarray")
+        new_x = __convert_tuple(x, tuple_allowed, list_allowed)
     elif isinstance(x, list) and all([isinstance(xi, np.ndarray) for xi in x]):
-        if list_allowed:
-            new_x = x
-        elif tuple_allowed:
-            new_x = tuple(x)
-        else:
-            raise ValueError("value of x should be a ndarray")
+        new_x = __convert_list(x, tuple_allowed, list_allowed)
     else:
         raise ValueError("value of x should be a ndarray, "
                          "a tuple of ndarrays or a list of ndarrays")
@@ -122,19 +112,9 @@ def check_type_and_convert(data, tuple_allowed=True, list_allowed=True):
         if isinstance(y, np.ndarray):
             new_y = [y]
         elif isinstance(y, tuple) and all([isinstance(yi, np.ndarray) for yi in y]):
-            if tuple_allowed:
-                new_y = y
-            elif list_allowed:
-                new_y = list(y)
-            else:
-                raise ValueError("value of y should be a ndarray")
+            new_y = __convert_tuple(y, tuple_allowed, list_allowed)
         elif isinstance(y, list) and all([isinstance(yi, np.ndarray) for yi in y]):
-            if list_allowed:
-                new_y = y
-            elif tuple_allowed:
-                new_y = tuple(y)
-            else:
-                raise ValueError("value of y should be a ndarray")
+            new_y = __convert_list(y, tuple_allowed, list_allowed)
         else:
             raise ValueError("value of y should be a ndarray, "
                              "a tuple of ndarrays or a list of ndarrays")
@@ -196,16 +176,13 @@ def ray_partition_get_data_label(partition_data, tuple_allowed=True, list_allowe
                       data_list)
     elif isinstance(partition_data[0]['x'], list):
         data = reduce(lambda list1, list2: combine_list_tuple(list1, list2), data_list)
-        if not list_allowed and tuple_allowed:
-            data = tuple(data)
-        elif not list_allowed and not tuple_allowed:
-            raise ValueError("value of x should be a ndarray")
+        data = __convert_list(data, tuple_allowed, list_allowed)
     elif isinstance(partition_data[0]['x'], tuple):
         data = reduce(lambda tuple1, tuple2: combine_list_tuple(tuple1, tuple2), data_list)
-        if not tuple_allowed and list_allowed:
-            data = list(data)
-        elif not list_allowed and not tuple_allowed:
-            raise ValueError("value of x should be a ndarray")
+        data = __convert_tuple(data, tuple_allowed, list_allowed)
+    else:
+        raise ValueError("value of x should be a ndarray, a dict of ndarrays, a tuple of ndarrays"
+                         " or a list of ndarrays, please check")
 
     if isinstance(partition_data[0]['y'], dict):
         label = reduce(lambda dict1, dict2: combine_dict(dict1, dict2), label_list)
@@ -214,16 +191,13 @@ def ray_partition_get_data_label(partition_data, tuple_allowed=True, list_allowe
                        label_list)
     elif isinstance(partition_data[0]['y'], list):
         label = reduce(lambda list1, list2: combine_list_tuple(list1, list2), data_list)
-        if not list_allowed and tuple_allowed:
-            label = tuple(label)
-        elif not list_allowed and not tuple_allowed:
-            raise ValueError("value of y should be a ndarray")
+        label = __convert_list(label, tuple_allowed, list_allowed)
     elif isinstance(partition_data[0]['y'], tuple):
         label = reduce(lambda tuple1, tuple2: combine_list_tuple(tuple1, tuple2), data_list)
-        if not tuple_allowed and list_allowed:
-            label = list(label)
-        elif not list_allowed and not tuple_allowed:
-            raise ValueError("value of y should be a ndarray")
+        label = __convert_tuple(label, tuple_allowed, list_allowed)
+    else:
+        raise ValueError("value of x should be a ndarray, a dict of ndarrays, a tuple of ndarrays"
+                         " or a list of ndarrays, please check")
 
     return data, label
 
@@ -297,3 +271,21 @@ def get_node_ip():
     finally:
         s.close()
     return node_ip_address
+
+
+def __convert_list(data, tuple_allowed, list_allowed):
+    if not list_allowed and tuple_allowed:
+        return tuple(data)
+    elif not list_allowed and not tuple_allowed:
+        raise ValueError("value of x and y should be a ndarray, but get a list instead")
+    else:
+        return data
+
+
+def __convert_tuple(data, tuple_allowed, list_allowed):
+    if not tuple_allowed and list_allowed:
+        return list(data)
+    elif not list_allowed and not tuple_allowed:
+        raise ValueError("value of x and y should be a ndarray, but get a tuple instead")
+    else:
+        return data

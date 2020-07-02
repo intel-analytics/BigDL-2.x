@@ -18,27 +18,22 @@ import os.path
 import shutil
 
 import pytest
+from unittest import TestCase
 
 import zoo.orca.data
 import zoo.orca.data.pandas
 from zoo.orca.data.shard import SharedValue
-from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.common.nncontext import *
+from test.zoo.orca.data.conftest import get_spark_ctx
 
 
-class TestSparkXShards(ZooTestCase):
+class TestSparkXShards(TestCase):
     def setup_method(self, method):
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
-        sparkConf = init_spark_conf().setMaster("local[4]").setAppName("testSparkXShards")
-        self.sc = init_nncontext(sparkConf)
+        self.sc = get_spark_ctx()
 
-    def teardown_method(self, method):
-        """ teardown any state that was previously setup with a setup_method
-        call.
-        """
-        self.sc.stop()
-
-    def test_read_local_csv(self):
+    def test_read_local_csv_pandas_backend(self):
+        ZooContext.orca_pandas_read_backend = "pandas"
         file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
         data = data_shard.collect()
@@ -50,7 +45,22 @@ class TestSparkXShards(ZooTestCase):
             xshards = zoo.orca.data.pandas.read_csv(file_path, self.sc)
         self.assertTrue('The file path is invalid/empty' in str(context.exception))
 
-    def test_read_local_json(self):
+    def test_read_local_csv_spark_backend(self):
+        ZooContext.orca_pandas_read_backend = "spark"
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc, header=True)
+        data = data_shard.collect()
+        df = data[0]
+        assert "location" in df.columns, "location is not in columns"
+        file_path = os.path.join(self.resource_path, "abc")
+        with self.assertRaises(Exception) as context:
+            xshards = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        self.assertTrue('The file path is invalid/empty' in str(context.exception))
+        # Change the backend to default pandas so that this won't affect other unit tests.
+        ZooContext.orca_pandas_read_backend = "pandas"
+
+    def test_read_local_json_pandas_backend(self):
+        ZooContext.orca_pandas_read_backend = "pandas"
         file_path = os.path.join(self.resource_path, "orca/data/json")
         data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc,
                                                     orient='columns', lines=True)
@@ -58,6 +68,15 @@ class TestSparkXShards(ZooTestCase):
         assert len(data) == 2, "number of shard should be 2"
         df = data[0]
         assert "value" in df.columns, "value is not in columns"
+
+    def test_read_local_json_spark_backend(self):
+        ZooContext.orca_pandas_read_backend = "spark"
+        file_path = os.path.join(self.resource_path, "orca/data/json")
+        data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc)
+        data = data_shard.collect()
+        df = data[0]
+        assert "value" in df.columns, "value is not in columns"
+        ZooContext.orca_pandas_read_backend = "pandas"
 
     def test_read_s3(self):
         access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
@@ -74,7 +93,7 @@ class TestSparkXShards(ZooTestCase):
         data_shard = zoo.orca.data.pandas.read_json(file_path, self.sc,
                                                     orient='columns', lines=True)
         partitions_num_1 = data_shard.rdd.getNumPartitions()
-        assert partitions_num_1 == 4, "number of partition should be 4"
+        assert partitions_num_1 == 2, "number of partition should be 2"
         data_shard.cache()
         partitioned_shard = data_shard.repartition(1)
         assert data_shard.is_cached(), "data_shard should be cached"
@@ -110,7 +129,7 @@ class TestSparkXShards(ZooTestCase):
     def test_partition_by_single_column(self):
         file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
-        partitioned_shard = data_shard.partition_by(cols="location")
+        partitioned_shard = data_shard.partition_by(cols="location", num_partitions=4)
         partitions = partitioned_shard.rdd.glom().collect()
         assert len(partitions) == 4
 
@@ -124,7 +143,7 @@ class TestSparkXShards(ZooTestCase):
     def test_unique(self):
         file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
-        location_list = data_shard.unique("location")
+        location_list = data_shard["location"].unique()
         assert len(location_list) == 6
 
     def test_split(self):
@@ -146,27 +165,27 @@ class TestSparkXShards(ZooTestCase):
     def test_len(self):
         file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
-        assert data_shard.len() == 14
-        assert data_shard.len('ID') == 14
+        assert len(data_shard) == 14
+        assert len(data_shard['ID']) == 14
         with self.assertRaises(Exception) as context:
-            data_shard.len('abc')
+            len(data_shard['abc'])
         self.assertTrue('Invalid key for this XShards' in str(context.exception))
 
         def to_dict(df):
             return {'ID': df['ID'].to_numpy(), 'location': df['location'].to_numpy()}
         data_shard = data_shard.transform_shard(to_dict)
-        assert data_shard.len('ID') == 14
-        assert data_shard.len() == 4
+        assert len(data_shard['ID']) == 14
+        assert len(data_shard) == 4
         with self.assertRaises(Exception) as context:
-            data_shard.len('abc')
+            len(data_shard['abc'])
         self.assertTrue('Invalid key for this XShards' in str(context.exception))
 
         def to_number(d):
             return 4
         data_shard = data_shard.transform_shard(to_number)
-        assert data_shard.len() == 2
+        assert len(data_shard) == 2
         with self.assertRaises(Exception) as context:
-            data_shard.len('abc')
+            len(data_shard['abc'])
         self.assertTrue('No selection operation available for this XShards' in
                         str(context.exception))
 
@@ -232,7 +251,7 @@ class TestSparkXShards(ZooTestCase):
         assert data1[0]["value"].values[0] == data2[0][0], "value should be same"
         assert data1[1]["value"].values[0] == data2[1][0], "value should be same"
         with self.assertRaises(Exception) as context:
-            data_shard.len('abc')
+            len(data_shard['abc'])
         self.assertTrue('Invalid key for this XShards' in str(context.exception))
 
     def test_for_each(self):

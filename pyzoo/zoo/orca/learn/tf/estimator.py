@@ -55,7 +55,8 @@ def _xshards_to_tf_dataset(data_shard,
     # todo data_shard.head ?
     from zoo.orca.data.utils import get_spec, flatten_xy
 
-    (feature_spec, label_spec) = data_shard.rdd.map(get_spec(True, False)).first()
+    # (feature_spec, label_spec) = data_shard.rdd.map(get_spec(True, False)).first()
+    (feature_spec, label_spec) = data_shard._for_each(get_spec(True, False)).first()
 
     feature_spec = [(tf.dtypes.as_dtype(spec[0]), spec[1]) for spec in feature_spec]
     label_spec = [(tf.dtypes.as_dtype(spec[0]), spec[1]) for spec in label_spec] \

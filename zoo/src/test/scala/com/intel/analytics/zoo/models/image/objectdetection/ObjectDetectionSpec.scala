@@ -35,7 +35,7 @@ class ObjectDetectionSpec extends FlatSpec with Matchers with BeforeAndAfter {
   before {
     val conf = new SparkConf().setAppName("Test ObjectDetector").setMaster("local[1]")
     sc = NNContext.initNNContext(conf)
-    val s = s"wget -q -O ./ssd.model https://s3-ap-southeast-1.amazonaws.com/" +
+    val s = s"wget -q -O ./ssd.model https://sourceforge.net/projects/analytics-zoo/files/" +
       s"analytics-zoo-models/object-detection/analytics-zoo_ssd-mobilenet" +
       s"-300x300_PASCAL_0.1.0.model" !!
     val s2 = s"wget -q -O ./bigdl_ssd.model https://s3-ap-southeast-1.amazonaws.com/" +
