@@ -121,7 +121,7 @@ class TestMXNetRayXShards(TestCase):
         config = create_config(batch_size=32, log_interval=1, seed=42)
         estimator = Estimator(config, get_gluon_model, get_loss,
                               validation_metrics_creator=get_gluon_metrics,
-                              eval_metrics_creator=get_gluon_metrics, num_workers=3)
+                              eval_metrics_creator=get_gluon_metrics, num_workers=2)
         estimator.fit(train_data_shard, test_data_shard, nb_epoch=2)
         estimator.shutdown()
 
