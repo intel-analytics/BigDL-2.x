@@ -338,7 +338,7 @@ class SparkXShards(XShards):
                 if not client.contains(target_id):
                     object_id = client.put(res, target_id)
                     assert object_id == target_id, \
-                        "Error occurred when putting data into plasma object store"
+                        "Errors occurred when putting data into plasma object store"
                 client.disconnect()
                 yield target_id, get_node_ip()
             return f
