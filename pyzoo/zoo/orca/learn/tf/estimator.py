@@ -13,19 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from pyspark.sql.dataframe import DataFrame
-from bigdl.optim.optimizer import MaxIteration, SGD
 
-from zoo.tfpark.utils import evaluate_metrics
-from zoo.orca.data.shard import SparkXShards
-from zoo.orca.data.tf.data import Dataset, TFDataDataset2
-from zoo.tfpark import TFOptimizer, TFNet, ZooOptimizer
 import tensorflow as tf
+from pyspark.sql.dataframe import DataFrame
 
-from zoo.tfpark.tf_dataset import TFDataset
-from zoo.tfpark.tf_optimizer import TFModel
+from bigdl.optim.optimizer import MaxIteration
+from zoo.tfpark.utils import evaluate_metrics
+from zoo.tfpark import TFOptimizer, TFNet, ZooOptimizer
 from zoo.util import nest
-
+from zoo.orca.learn.tf.utils import to_dataset
 
 class Estimator(object):
     def fit(self, data, steps, **kwargs):
@@ -48,125 +44,6 @@ class Estimator(object):
                                   metrics=metrics, updates=updates,
                                   sess=sess,
                                   model_dir=model_dir)
-
-
-def _xshards_to_tf_dataset(data_shard,
-                           batch_size=-1, batch_per_thread=-1,
-                           validation_data_shard=None,
-                           hard_code_batch_size=False,
-                           sequential_order=False,
-                           shuffle=True):
-    # todo data_shard.head ?
-    import numpy as np
-
-    def check_data_type_and_to_list(data):
-        result = {}
-        assert isinstance(data, dict), "each shard should be an dict"
-        assert "x" in data, "key x should in each shard"
-        x = data["x"]
-        if isinstance(x, np.ndarray):
-            new_x = [x]
-        elif isinstance(x, tuple) and all([isinstance(xi, np.ndarray) for xi in x]):
-            new_x = x
-        else:
-            raise ValueError("value of x should be a ndarray or a tuple of ndarrays")
-        result["x"] = new_x
-        if "y" in data:
-            y = data["y"]
-            if isinstance(y, np.ndarray):
-                new_y = [y]
-            elif isinstance(y, tuple) and all([isinstance(yi, np.ndarray) for yi in y]):
-                new_y = y
-            else:
-                raise ValueError("value of x should be a ndarray or a tuple of ndarrays")
-            result["y"] = new_y
-        return result
-
-    def get_spec(data):
-        data = check_data_type_and_to_list(data)
-        feature_spec = [(feat.dtype, feat.shape[1:])
-                        for feat in data["x"]]
-        if "y" in data:
-            label_spec = [(label.dtype, label.shape[1:])
-                          for label in data["y"]]
-        else:
-            label_spec = None
-        return (feature_spec, label_spec)
-
-    (feature_spec, label_spec) = data_shard.rdd.map(get_spec).first()
-
-    feature_spec = [(tf.dtypes.as_dtype(spec[0]), spec[1]) for spec in feature_spec]
-    label_spec = [(tf.dtypes.as_dtype(spec[0]), spec[1]) for spec in label_spec] \
-        if label_spec is not None else None
-
-    assert batch_size != -1 or batch_per_thread != -1, \
-        "one of batch_size and batch_per_thread should be specified"
-
-    # todo this might be very slow
-    def flatten(data):
-        data = check_data_type_and_to_list(data)
-        features = data["x"]
-
-        has_label = "y" in data
-        labels = data["y"] if has_label else None
-        length = features[0].shape[0]
-
-        for i in range(length):
-            fs = [feat[i] for feat in features]
-            if has_label:
-                ls = [l[i] for l in labels]
-                yield (fs, ls)
-            else:
-                yield (fs,)
-
-    val_rdd = None if validation_data_shard is None \
-        else validation_data_shard.rdd.flatMap(flatten)
-
-    dataset = TFDataset.from_rdd(data_shard.rdd.flatMap(flatten),
-                                 features=feature_spec,
-                                 labels=label_spec,
-                                 batch_size=batch_size,
-                                 batch_per_thread=batch_per_thread,
-                                 val_rdd=val_rdd,
-                                 hard_code_batch_size=hard_code_batch_size,
-                                 sequential_order=sequential_order,
-                                 shuffle=shuffle)
-
-    return dataset
-
-
-def _to_dataset(data, batch_size, batch_per_thread, validation_data,
-                feature_cols, labels_cols, hard_code_batch_size,
-                sequential_order, shuffle):
-    if validation_data:
-        assert type(data) == type(validation_data), \
-                "train data and validation data should be in the same type"
-
-    if isinstance(data, SparkXShards):
-        dataset = _xshards_to_tf_dataset(data,
-                                         batch_size,
-                                         batch_per_thread,
-                                         validation_data,
-                                         hard_code_batch_size=hard_code_batch_size,
-                                         sequential_order=sequential_order,
-                                         shuffle=shuffle)
-    elif isinstance(data, Dataset):
-        dataset = TFDataDataset2(data, batch_size=batch_size,
-                                 batch_per_thread=batch_per_thread,
-                                 validation_dataset=validation_data)
-    elif isinstance(data, DataFrame):
-        dataset = TFDataset.from_dataframe(data, feature_cols, labels_cols,
-                                           batch_size,
-                                           batch_per_thread,
-                                           hard_code_batch_size,
-                                           validation_data,
-                                           sequential_order,
-                                           shuffle
-                                           )
-    else:
-        raise ValueError("data must be a SparkXShards or an orca.data.tf.Dataset or DataFrame")
-
-    return dataset
 
 
 class TFOptimizerWrapper(Estimator):
@@ -221,7 +98,7 @@ class TFOptimizerWrapper(Estimator):
             assert labels_cols is not None, \
                 "label columns is None; it should not be None in training"
 
-        dataset = _to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
+        dataset = to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                               validation_data=validation_data,
                               feature_cols=feature_cols, labels_cols=labels_cols,
                               hard_code_batch_size = hard_code_batch_size,
@@ -258,7 +135,7 @@ class TFOptimizerWrapper(Estimator):
             assert feature_cols is not None, \
                 "feature columns is None; it should not be None in prediction"
 
-        dataset = _to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
+        dataset = to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
                               validation_data=None,
                               feature_cols=feature_cols, labels_cols=None,
                               hard_code_batch_size=hard_code_batch_size,
@@ -285,7 +162,7 @@ class TFOptimizerWrapper(Estimator):
             assert labels_cols is not None, \
                 "label columns is None; it should not be None in evaluation"
 
-        dataset = _to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
+        dataset = to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
                               validation_data=None,
                               feature_cols=feature_cols, labels_cols=labels_cols,
                               hard_code_batch_size=hard_code_batch_size,
