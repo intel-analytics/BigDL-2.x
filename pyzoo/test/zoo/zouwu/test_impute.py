@@ -33,18 +33,19 @@ class TestDataImputation(ZooTestCase):
         pass
 
     def create_data(self):
-        data = np.random.random_sample((5, 5))
-        mask = np.random.random_sample((5, 5))
-        mask[mask >= 0.2] = 1
+        data = np.random.random_sample((5, 50))
+        mask = np.random.random_sample((5, 50))
+        mask[mask >= 0.4] = 2
+        mask[mask < 0.4] = 1
         mask[mask < 0.2] = 0
         data[mask == 0] = None
+        data[mask == 1] = np.nan
         df = pd.DataFrame(data)
         idx = pd.date_range(start='2020-07-01 00:00:00', end='2020-07-01 08:00:00', freq='2H')
         df.index = idx
         self.data = df
 
     def test_lastfill(self):
-        last_fill = LastFill()
         last_fill = LastFill()
         mse_missing = last_fill.evaluate(self.data, 0.1)
         imputed_data = last_fill.impute(self.data)

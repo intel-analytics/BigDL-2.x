@@ -14,6 +14,9 @@
 # limitations under the License.
 #
 
+import numpy as np
+import pandas as pd
+import sklearn.metrics as metrics
 from abc import ABC, abstractmethod
 
 
@@ -31,12 +34,29 @@ class BaseImpute(ABC):
         """
         raise NotImplementError
 
-    @abstractmethod
     def evaluate(self, df, drop_rate):
         """
-        randomly drop some values and evaluate the data imputation method
-        :param df: input dataframe (better without missing values)
-        :param drop_rate: percentage value of randomly dropping data
+        evaluate model by randomly drop some value
+        :params df: input dataframe
+        :params drop_rate: percentage value that will be randomly dropped
         :return: MSE results
         """
-        raise NotImplementError
+        missing = df.isna()*1
+        df1 = self.impute(df)
+        missing = missing.to_numpy()
+        mask = np.zeros(df.shape[0]*df.shape[1])
+        idx = np.random.choice(mask.shape[0], int(mask.shape[0]*drop_rate), replace=False)
+        mask[idx] = 1
+        mask = np.reshape(mask, (df.shape[0], df.shape[1]))
+        np_df = df.to_numpy()
+        np_df[mask == 1] = None
+        new_df = pd.DataFrame(np_df)
+        impute_df = self.impute(new_df)
+        pred = impute_df.to_numpy()
+        true = df1.to_numpy()
+        pred[missing == 1] = 0
+        true[missing == 1] = 0
+        result = []
+        for i in range(len(df.columns)):
+          result.append(metrics.mean_squared_error(true[:, i], pred[:, i]))
+        return result
