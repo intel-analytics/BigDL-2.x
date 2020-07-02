@@ -333,14 +333,20 @@ class SparkXShards(XShards):
                 res = list(iterator)
                 client = plasma.connect(object_store_address)
                 target_id = ids[index]
+                # If the ObjectID exists in plasma, we assume a task trial
+                # succeeds and the data is already in the object store.
                 if not client.contains(target_id):
                     object_id = client.put(res, target_id)
-                    assert object_id == target_id
+                    assert object_id == target_id, \
+                        "Error occurred when putting data into plasma object store"
                 client.disconnect()
                 yield target_id, get_node_ip()
             return f
 
-        # Create plasma ObjectIDs beforehand instead of creating a random one every time.
+        # Create plasma ObjectIDs beforehand instead of creating a random one every time to avoid
+        # memory leak in case errors occur when putting data into plasma and Spark would retry.
+        # ObjectIDs in plasma is a byte string of length 20 containing characters and numbers.
+        # The random generation of ObjectIDs is often good enough to ensure unique IDs.
         import pyarrow.plasma as plasma
         object_ids = [plasma.ObjectID.from_random() for i in range(self.rdd.getNumPartitions())]
         object_id_node_ips = self.rdd.mapPartitionsWithIndex(put_to_plasma(object_ids)).collect()
