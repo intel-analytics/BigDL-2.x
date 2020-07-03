@@ -159,7 +159,7 @@ class TFOptimizerWrapper(Estimator):
                  optimizer,
                  metrics,
                  updates, sess,
-                 model_dir,
+                 model_dir
                  ):
         self.inputs = inputs
         self.outputs = outputs
