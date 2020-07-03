@@ -187,8 +187,8 @@ class TFOptimizerWrapper(Estimator):
             epochs=1,
             batch_size=32,
             validation_data=None,
-            feed_dict=None,
-            session_config=None
+            session_config=None,
+            feed_dict=None
             ):
 
         assert self.labels is not None, \
@@ -255,8 +255,8 @@ class TFKerasWrapper(Estimator):
             epochs=1,
             batch_size=32,
             validation_data=None,
-            feed_dict=None,
-            session_config=None
+            session_config=None,
+            feed_dict = None
             ):
 
         train_dataset = _to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
