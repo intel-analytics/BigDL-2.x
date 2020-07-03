@@ -17,7 +17,7 @@
 import os
 import glob
 
-from bigdl.util.common import *
+from pyspark import SparkContext
 from zoo.common.nncontext import init_spark_conf
 from zoo import init_nncontext
 
