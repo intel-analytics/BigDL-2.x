@@ -18,7 +18,7 @@ import os
 from zoo.common import get_file_list
 
 
-def list_s3_file(file_path, file_type, env):
+def list_s3_file(file_path, env):
     path_parts = file_path.split('/')
     bucket = path_parts.pop(0)
     key = "/".join(path_parts)
@@ -40,9 +40,7 @@ def list_s3_file(file_path, file_type, env):
                                          Prefix=key)
         for obj in resp['Contents']:
             keys.append(obj['Key'])
-        # only get json/csv files
-        files = [file for file in keys if os.path.splitext(file)[1] == "." + file_type]
-        file_paths = [os.path.join("s3://" + bucket, file) for file in files]
+        file_paths = [os.path.join("s3://" + bucket, file) for file in keys]
         return file_paths
 
 
@@ -50,25 +48,25 @@ def extract_one_path(file_path, file_type, env):
     file_url_splits = file_path.split("://")
     prefix = file_url_splits[0]
     if prefix == "s3":
-        file_paths = list_s3_file(file_url_splits[1], file_type, env)
+        file_paths = list_s3_file(file_url_splits[1], env)
     elif prefix == "hdfs":
         import pyarrow as pa
         fs = pa.hdfs.connect()
         if fs.isfile(file_path):
-            return [file_path]
+            file_paths = [file_path]
         else:
             file_paths = get_file_list(file_path)
-            # only get json/csv files
-            file_paths = [file for file in file_paths
-                          if os.path.splitext(file)[1] == "." + file_type]
     else:
         if os.path.isfile(file_path):
-            return [file_path]
+            file_paths = [file_path]
         else:
-            file_paths = get_file_list(file_path)
-            # only get json/csv files
-            file_paths = [file for file in file_paths
-                          if os.path.splitext(file)[1] == "." + file_type]
+            from os import listdir
+            from os.path import isfile, abspath, join, splitext
+            # An error would be already raised here if the path is invalid.
+            file_paths = [abspath(join(file_path, file)) for file in listdir(file_path)]
+    # Only get json/csv files.
+    file_paths = [file for file in file_paths
+                  if os.path.isfile(file) and os.path.splitext(file)[1] == "." + file_type]
     return file_paths
 
 
