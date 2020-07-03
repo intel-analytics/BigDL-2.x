@@ -40,8 +40,7 @@ class Estimator(object):
     def from_graph(*, inputs, outputs=None,
                    labels=None, loss=None, optimizer=None,
                    metrics=None, updates=None,
-                   sess=None, session_config=None,
-                   feed_dict=None, model_dir=None, backend="spark"):
+                   sess=None, model_dir=None, backend="spark"):
         assert backend == "spark", "only spark backend is supported for now"
         return TFOptimizerWrapper(inputs=inputs,
                                   outputs=outputs,
@@ -50,15 +49,13 @@ class Estimator(object):
                                   optimizer=optimizer,
                                   metrics=metrics, updates=updates,
                                   sess=sess,
-                                  session_config=session_config,
                                   model_dir=model_dir
                                   )
 
     @staticmethod
-    def from_keras(keras_model, session_config=None,
-                   model_dir=None, backend="spark"):
+    def from_keras(keras_model, model_dir=None, backend="spark"):
         assert backend == "spark", "only spark backend is supported for now"
-        return TFKerasWrapper(keras_model, model_dir, session_config)
+        return TFKerasWrapper(keras_model, model_dir)
 
 
 def _xshards_to_tf_dataset(data_shard,
@@ -162,7 +159,6 @@ class TFOptimizerWrapper(Estimator):
                  optimizer,
                  metrics,
                  updates, sess,
-                 session_config,
                  model_dir,
                  ):
         self.inputs = inputs
@@ -185,14 +181,14 @@ class TFOptimizerWrapper(Estimator):
             self.sess.run(tf.global_variables_initializer())
         else:
             self.sess = sess
-        self.session_config = session_config
         self.model_dir = model_dir
 
     def fit(self, data,
             epochs=1,
             batch_size=32,
             validation_data=None,
-            feed_dict=None
+            feed_dict=None,
+            session_config=None
             ):
 
         assert self.labels is not None, \
@@ -219,7 +215,7 @@ class TFOptimizerWrapper(Estimator):
             metrics=self.metrics,
             updates=self.updates, sess=self.sess,
             tensor_with_value=tensor_with_value,
-            session_config=self.session_config,
+            session_config=session_config,
             model_dir=self.model_dir)
 
         optimizer.optimize(end_trigger=MaxEpoch(epochs))
@@ -252,22 +248,22 @@ class TFOptimizerWrapper(Estimator):
 
 class TFKerasWrapper(Estimator):
 
-    def __init__(self, keras_model, model_dir, session_config):
+    def __init__(self, keras_model, model_dir):
         self.model = KerasModel(keras_model, model_dir)
-        self.session_config = session_config
 
     def fit(self, data,
             epochs=1,
             batch_size=32,
             validation_data=None,
-            feed_dict=None
+            feed_dict=None,
+            session_config=None
             ):
 
         train_dataset = _to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                                     validation_data=validation_data)
 
         self.model.fit(train_dataset, batch_size=batch_size, epochs=epochs,
-                       session_config=self.session_config
+                       session_config=session_config
                        )
         return self
 

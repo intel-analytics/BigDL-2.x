@@ -147,10 +147,11 @@ class TestEstimatorForKeras(ZooTestCase):
         # train with session config
         tf_session_config = tf.ConfigProto(inter_op_parallelism_threads=1,
                                            intra_op_parallelism_threads=1)
-        est = Estimator.from_keras(keras_model=model, session_config=tf_session_config)
+        est = Estimator.from_keras(keras_model=model)
         est.fit(data=data_shard,
                 batch_size=8,
-                epochs=10
+                epochs=10,
+                session_config=tf_session_config
                 )
         # train with model dir
         temp = tempfile.mkdtemp()
