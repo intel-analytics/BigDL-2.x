@@ -58,5 +58,5 @@ class BaseImpute(ABC):
         true[missing == 1] = 0
         result = []
         for i in range(len(df.columns)):
-          result.append(metrics.mean_squared_error(true[:, i], pred[:, i]))
+            result.append(metrics.mean_squared_error(true[:, i], pred[:, i]))
         return result
