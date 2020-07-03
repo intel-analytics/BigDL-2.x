@@ -62,15 +62,10 @@ object SparkStructuredStreamingClusterServing {
     val nodeNum = helper.nodeNum
     val modelType = helper.modelType
     val blasFlag = helper.blasFlag
-    val dataType = helper.dataType
+//    val dataType = helper.dataType
     val dataShape = helper.dataShape
 
-    val (flagC, flagW, flagH, streamKey, dataField) = if (dataType == DataType.IMAGE) {
-      (helper.dataShape(0)(0), helper.dataShape(0)(1), helper.dataShape(0)(2), "serving_stream",
-        "data")
-    } else {
-      (0, 0, 0, "serving_stream", "data")
-    }
+    val (streamKey, dataField) = ("serving_stream", "data")
 
     val filter = helper.filter
 

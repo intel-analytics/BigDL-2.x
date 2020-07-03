@@ -67,9 +67,9 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
   var blasFlag: Boolean = false
   var chwFlag: Boolean = true
 
-  var dataType: Array[DataTypeEnumVal] = null
+//  var dataType: Array[DataTypeEnumVal] = null
   var dataShape: Array[Array[Int]] = Array[Array[Int]]()
-  var filter: String = "topN"
+  var filter: String = null
 
   var logFile: FileWriter = null
   var logErrorFlag: Boolean = true
@@ -182,7 +182,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     dataShape = ConfigUtils.parseShape(shapeStr)
     val typeStr = getYaml(dataConfig, "type", "image")
     require(typeStr != null, "data type in config must be specified.")
-    dataType = ConfigUtils.parseType(typeStr)
+//    dataType = ConfigUtils.parseType(typeStr)
 
 
     filter = getYaml(dataConfig, "filter", "topN(1)")

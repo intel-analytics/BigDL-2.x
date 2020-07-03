@@ -634,9 +634,13 @@ class DeepGLO(object):
             covariates = self.covariates
         return covariates
 
-    def get_prediction_time_covs(self, rg, horizon):
-        covs_past = self.Yseq.covariates[:, -rg:]
-        future_start_date = pd.Timestamp(self.start_date) + pd.Timedelta('1h') * self.Ymat.shape[1]
+    def get_prediction_time_covs(self, rg, horizon, last_step):
+        covs_past = self.Yseq.covariates[:, last_step - rg: last_step]
+        if self.freq[0].isalpha():
+            freq = "1" + self.freq
+        else:
+            freq = self.freq
+        future_start_date = pd.Timestamp(self.start_date) + pd.Timedelta(freq) * last_step
         covs_future = self.get_time_covs(start_date=future_start_date, num_ts=horizon)
         covs = np.concatenate([covs_past, covs_future], axis=1)
         return covs
@@ -644,11 +648,11 @@ class DeepGLO(object):
     def predict_horizon(
             self, ind=None, future=10, normalize=False, bsize=90
     ):
-
+        last_step = self.end_index
         if ind is None:
             ind = np.arange(self.Ymat.shape[0])
 
-        self.Xseq = self.Xseq
+        self.Xseq = self.Xseq.cpu()
 
         self.Yseq.seq = self.Yseq.seq.eval()
         self.Xseq = self.Xseq.eval()
@@ -657,8 +661,7 @@ class DeepGLO(object):
             1 + 2 * (self.kernel_size - 1) * 2 ** (len(self.num_channels_X) - 1),
             1 + 2 * (self.kernel_size_Y - 1) * 2 ** (len(self.num_channels_Y) - 1),
         )
-        covs = self.get_prediction_time_covs(rg, future)
-        last_step = self.Ymat.shape[1]
+        covs = self.get_prediction_time_covs(rg, future, last_step)
 
         yc = self.predict_global(
             ind=ind,

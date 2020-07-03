@@ -65,12 +65,15 @@ class PreProcessing(param: SerParams) {
 
     val kvMap = instance.instances.flatMap(insMap => {
       val oneInsMap = insMap.map(kv =>
-        if (kv._1.contains("string")) {
-          (kv._1, decodeString(kv._2.asInstanceOf[String]))
+        if (kv._2.isInstanceOf[String]) {
+          if (kv._2.asInstanceOf[String].contains("|")) {
+            (kv._1, decodeString(kv._2.asInstanceOf[String]))
+          }
+          else {
+            (kv._1, decodeImage(kv._2.asInstanceOf[String]))
+          }
         }
-        else if (kv._2.isInstanceOf[String]) {
-          (kv._1, decodeImage(kv._2.asInstanceOf[String]))
-        } else {
+        else {
           (kv._1, decodeTensor(kv._2.asInstanceOf[(
             ArrayBuffer[Int], ArrayBuffer[Float], ArrayBuffer[Int], ArrayBuffer[Int])]))
         }).toList
@@ -211,11 +214,11 @@ class PreProcessing(param: SerParams) {
       "your input parameter length does not match your config.")
     (0 until encodedList.length).foreach(i => {
       byteBuffer = java.util.Base64.getDecoder.decode(encodedList(i))
-      param.dataType(i) match {
-        case DataType.IMAGE => decodeImage(i)
-        case DataType.TENSOR => decodeTensor1(i)
-        case DataType.SPARSETENSOR => decodeTensor1(i, true)
-      }
+//      param.dataType(i) match {
+//        case DataType.IMAGE => decodeImage(i)
+//        case DataType.TENSOR => decodeTensor1(i)
+//        case DataType.SPARSETENSOR => decodeTensor1(i, true)
+//      }
     })
     T.array(tensorBuffer)
   }
