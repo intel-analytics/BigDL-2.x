@@ -51,8 +51,8 @@ class Estimator(object):
                                   metrics=metrics, updates=updates,
                                   sess=sess,
                                   session_config=session_config,
-                                  model_dir=model_dir,
-                                  feed_dict=feed_dict)
+                                  model_dir=model_dir
+                                  )
 
     @staticmethod
     def from_keras(keras_model, session_config=None,
@@ -164,7 +164,7 @@ class TFOptimizerWrapper(Estimator):
                  updates, sess,
                  session_config,
                  model_dir,
-                 feed_dict):
+                 ):
         self.inputs = inputs
         self.outputs = outputs
         self.labels = labels
@@ -187,15 +187,12 @@ class TFOptimizerWrapper(Estimator):
             self.sess = sess
         self.session_config = session_config
         self.model_dir = model_dir
-        if feed_dict is not None:
-            self.tensor_with_value = {key: (value, value) for key, value in feed_dict.items()}
-        else:
-            self.tensor_with_value = None
 
     def fit(self, data,
             epochs=1,
             batch_size=32,
-            validation_data=None
+            validation_data=None,
+            feed_dict=None
             ):
 
         assert self.labels is not None, \
@@ -208,6 +205,11 @@ class TFOptimizerWrapper(Estimator):
         dataset = _to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                               validation_data=validation_data)
 
+        if feed_dict is not None:
+            tensor_with_value = {key: (value, value) for key, value in feed_dict.items()}
+        else:
+            tensor_with_value = None
+
         optimizer = TFOptimizer.from_train_op(
             train_op=self.train_op,
             loss=self.loss,
@@ -216,7 +218,7 @@ class TFOptimizerWrapper(Estimator):
             dataset=dataset,
             metrics=self.metrics,
             updates=self.updates, sess=self.sess,
-            tensor_with_value=self.tensor_with_value,
+            tensor_with_value=tensor_with_value,
             session_config=self.session_config,
             model_dir=self.model_dir)
 
@@ -257,7 +259,8 @@ class TFKerasWrapper(Estimator):
     def fit(self, data,
             epochs=1,
             batch_size=32,
-            validation_data=None
+            validation_data=None,
+            feed_dict=None
             ):
 
         train_dataset = _to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
