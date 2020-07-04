@@ -81,8 +81,8 @@ class SparkRunner:
 
     def _create_sc(self, submit_args, conf):
         from pyspark.sql import SparkSession
-        print("pyspark_submit_args is: {}".format(submit_args))
-        os.environ['PYSPARK_SUBMIT_ARGS'] = submit_args
+        # print("pyspark_submit_args is: {}".format(submit_args))
+        # os.environ['PYSPARK_SUBMIT_ARGS'] = submit_args
         zoo_conf = init_spark_conf(conf)
         sc = init_nncontext(conf=zoo_conf, redirect_spark_log=self.redirect_spark_log)
         sc.setLogLevel(self.spark_log_level)
@@ -176,9 +176,10 @@ class SparkRunner:
                 command = command + " --py-files {} ".format(extra_python_lib)
             if jars:
                 command = command + " --jars {}".format(jars)
-            return command + " --driver-class-path {}:{}".\
-                format(self._get_zoo_classpath_jar_name_on_driver()[0],
-                       self. _get_bigdl_classpath_jar_name_on_driver()[0])
+            # return command + " --driver-class-path {}:{}".\
+            #     format(self._get_zoo_classpath_jar_name_on_driver()[0],
+            #            self. _get_bigdl_classpath_jar_name_on_driver()[0])
+            return command
 
         def _submit_opt():
             conf = {

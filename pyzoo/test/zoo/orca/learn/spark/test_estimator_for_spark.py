@@ -46,7 +46,7 @@ def test_estimator_graph(estimator_for_spark_fixture):
 
     model = SimpleModel()
     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+    data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
     def transform(df):
         result = {
@@ -69,7 +69,7 @@ def test_estimator_graph(estimator_for_spark_fixture):
             steps=10,
             validation_data=data_shard)
 
-    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+    data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
     def transform(df):
         result = {
@@ -89,7 +89,7 @@ def test_estimator_graph_fit(estimator_for_spark_fixture):
     model = SimpleModel()
     sc = estimator_for_spark_fixture
     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+    data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
     def transform(df):
         result = {
@@ -119,7 +119,7 @@ def test_estimator_graph_evaluate(estimator_for_spark_fixture):
     model = SimpleModel()
     sc = estimator_for_spark_fixture
     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+    data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
     def transform(df):
         result = {
@@ -149,7 +149,7 @@ def test_estimator_graph_predict(estimator_for_spark_fixture):
 
     model = SimpleModel()
     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+    data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
     est = Estimator.from_graph(
         inputs=[model.user, model.item],
@@ -172,7 +172,7 @@ def test_estimator_graph_fit_dataset(estimator_for_spark_fixture):
     model = SimpleModel()
     sc = estimator_for_spark_fixture
     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+    data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
     def transform(df):
         result = {
@@ -206,7 +206,7 @@ def test_estimator_graph_predict_dataset(estimator_for_spark_fixture):
 
     model = SimpleModel()
     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-    data_shard = zoo.orca.data.pandas.read_csv(file_path, sc)
+    data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
     est = Estimator.from_graph(
         inputs=[model.user, model.item],
