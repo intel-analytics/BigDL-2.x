@@ -58,7 +58,7 @@ def main(max_epoch):
     # >> [0.08865142822265625, 0.9722]
 
     # the following assert is used for internal testing
-    assert result['acc'] > 0.99
+    assert result['acc Top1Accuracy'] > 0.95
 
     keras_model.save_weights("/tmp/mnist_keras.h5")
 
