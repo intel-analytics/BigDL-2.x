@@ -92,9 +92,9 @@ class PostProcessing(tensor: Tensor[Float]) {
   }
 }
 object PostProcessing {
-  def apply(t: Tensor[Float], filter: String = null): String = {
+  def apply(t: Tensor[Float], filter: String = ""): String = {
     val cls = new PostProcessing(t)
-    if (filter != null) {
+    if (filter != "") {
       require(filter.last == ')',
         "please check your filter format, should be filter_name(filter_args)")
       require(filter.split("\\(").length == 2,
