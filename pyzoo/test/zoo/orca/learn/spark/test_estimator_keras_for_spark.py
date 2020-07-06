@@ -104,7 +104,7 @@ class TestEstimatorForKeras(TestCase):
 
         data_shard = data_shard.transform_shard(transform)
         predictions = est.predict(data_shard).collect()
-        assert len(predictions[0])==2
+        assert len(predictions[0]) == 2
 
     def test_estimator_keras_xshards_options(self):
         import zoo.orca.data.pandas
@@ -164,7 +164,7 @@ class TestEstimatorForKeras(TestCase):
         def transform(df):
             result = {
                 "x": (df['user'].to_numpy().reshape([-1,1]),
-                      df['item'].to_numpy().reshape([-1,1])),
+                      df['item'].to_numpy().reshape([-1,1])), 
                 "y": df['label'].to_numpy()
             }
             return result
