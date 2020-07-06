@@ -19,9 +19,9 @@ from zoo.util.tf import process_grad
 
 
 class FakeOptimMethod(OptimMethod):
-
     def __init__(self):
         super(FakeOptimMethod, self).__init__(None, "float")
+
 
 # cannot subclass tf.train.Optimizer without importing it
 import tensorflow as tf
@@ -32,10 +32,15 @@ def get_gradients_for_keras(optimizer, loss, params):
     from tensorflow.python.keras import backend
     from tensorflow.python.ops import gradients
     from tensorflow.python.ops import clip_ops
+    from tensorflow.python.keras.optimizers import TFOptimizer
 
     params = nest.flatten(params)
-    with backend.get_graph().as_default(), backend.name_scope(optimizer._name +
-                                                                      "/gradients"):
+    if isinstance(optimizer, TFOptimizer):
+        scope_name = optimizer.optimizer._name
+    else:
+        scope_name = optimizer._name
+
+    with backend.get_graph().as_default(), backend.name_scope(scope_name + "/gradients"):
         grads = gradients.gradients(loss, params)
 
         all_reduced_grads = []

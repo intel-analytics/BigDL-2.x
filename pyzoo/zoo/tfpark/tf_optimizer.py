@@ -644,7 +644,12 @@ class TFOptimizer:
         from zoo.tfpark.zoo_optimizer import get_gradients_for_keras
         grads = get_gradients_for_keras(keras_optimizer, loss, variables)
         grads_and_vars = list(zip(grads, variables))
-        train_op = keras_optimizer.apply_gradients(grads_and_vars)
+        import tensorflow.python.keras.optimizers as koptimizers
+        if isinstance(keras_optimizer, koptimizers.TFOptimizer):
+            # work around keras TFOptimzier bug
+            train_op = keras_optimizer.optimizer.apply_gradients(grads_and_vars)
+        else:
+            train_op = keras_optimizer.apply_gradients(grads_and_vars)
 
         sess = K.get_session()
 
