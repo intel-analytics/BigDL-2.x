@@ -76,8 +76,8 @@ class TestEstimatorForKeras(TestCase):
 
         def transform(df):
             result = {
-                "x": (df['user'].to_numpy().reshape([-1,1]),
-                      df['item'].to_numpy().reshape([-1,1])),
+                "x": (df['user'].to_numpy().reshape([-1, 1]),
+                      df['item'].to_numpy().reshape([-1, 1])),
                 "y": df['label'].to_numpy()
             }
             return result
@@ -97,8 +97,8 @@ class TestEstimatorForKeras(TestCase):
 
         def transform(df):
             result = {
-                "x": (df['user'].to_numpy().reshape([-1,1]),
-                      df['item'].to_numpy().reshape([-1,1])),
+                "x": (df['user'].to_numpy().reshape([-1, 1]),
+                      df['item'].to_numpy().reshape([-1, 1])),
             }
             return result
 
@@ -115,8 +115,8 @@ class TestEstimatorForKeras(TestCase):
 
         def transform(df):
             result = {
-                "x": (df['user'].to_numpy().reshape([-1,1]),
-                      df['item'].to_numpy().reshape([-1,1])),
+                "x": (df['user'].to_numpy().reshape([-1, 1]),
+                      df['item'].to_numpy().reshape([-1, 1])),
                 "y": df['label'].to_numpy()
             }
             return result
@@ -163,8 +163,8 @@ class TestEstimatorForKeras(TestCase):
 
         def transform(df):
             result = {
-                "x": (df['user'].to_numpy().reshape([-1,1]),
-                      df['item'].to_numpy().reshape([-1,1])), 
+                "x": (df['user'].to_numpy().reshape([-1, 1]),
+                      df['item'].to_numpy().reshape([-1, 1])),
                 "y": df['label'].to_numpy()
             }
             return result
