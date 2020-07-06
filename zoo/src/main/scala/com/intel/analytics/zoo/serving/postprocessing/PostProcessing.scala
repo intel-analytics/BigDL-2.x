@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving
+package com.intel.analytics.zoo.serving.postprocessing
 
-import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.serving.utils.TensorUtils
 
 
@@ -92,9 +92,9 @@ class PostProcessing(tensor: Tensor[Float]) {
   }
 }
 object PostProcessing {
-  def apply(t: Tensor[Float], filter: String = "None"): String = {
+  def apply(t: Tensor[Float], filter: String = null): String = {
     val cls = new PostProcessing(t)
-    if (filter != "None") {
+    if (filter != null) {
       require(filter.last == ')',
         "please check your filter format, should be filter_name(filter_args)")
       require(filter.split("\\(").length == 2,

@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.serving.engine
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.zoo.serving.PostProcessing
+import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
 import com.intel.analytics.zoo.serving.utils.SerParams
 
 object InferenceSupportive {
@@ -27,7 +27,7 @@ object InferenceSupportive {
                            params: SerParams): Iterator[(String, String)] = {
     val postProcessed = preProcessed.grouped(params.coreNum).flatMap(pathByteBatch => {
       val thisBatchSize = pathByteBatch.size
-      (0 until params.coreNum).toParArray.map(idx => {
+      (0 until thisBatchSize).toParArray.map(idx => {
         val t = pathByteBatch(idx)._2
         val result = params.model.doPredict(t)
         val value = PostProcessing(result.toTensor[Float])

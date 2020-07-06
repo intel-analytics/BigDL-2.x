@@ -191,7 +191,7 @@ class TCMFForecaster(Forecaster):
         :param covariates: the global covariates
         :return:
         """
-        self.internal.predict(x=x, horizon=horizon)
+        return self.internal.predict(x=x, horizon=horizon)
 
 
 class TFParkForecaster(TFParkKerasModel, Forecaster, metaclass=ABCMeta):

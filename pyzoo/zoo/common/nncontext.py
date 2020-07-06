@@ -116,6 +116,7 @@ class ZooContextMeta(type):
 
     _log_output = False
     __orca_eager_mode = True
+    _orca_pandas_read_backend = "pandas"
 
     @property
     def log_output(cls):
@@ -148,6 +149,21 @@ class ZooContextMeta(type):
                                  " Please set it before init_nncontext, init_spark_on_local"
                                  "or init_spark_on_yarn")
         cls.__orca_eager_mode = value
+
+    @property
+    def orca_pandas_read_backend(cls):
+        """
+        The backend for reading csv/json files. Either "spark" or "pandas".
+        spark backend would call spark.read and pandas backend would call pandas.read.
+        """
+        return cls._orca_pandas_read_backend
+
+    @orca_pandas_read_backend.setter
+    def orca_pandas_read_backend(cls, value):
+        value = value.lower()
+        assert value == "spark" or value == "pandas", \
+            "orca_pandas_read_backend must be either spark or pandas"
+        cls._orca_pandas_read_backend = value
 
 
 class ZooContext(metaclass=ZooContextMeta):
@@ -324,9 +340,11 @@ def init_spark_conf(conf=None):
     # Set bigDL and TF conf
 
     spark_conf.setAll(zoo_conf.items())
+
     if os.environ.get("BIGDL_JARS", None) and not is_spark_below_2_2():
-        for jar in os.environ["BIGDL_JARS"].split(":"):
-            extend_spark_driver_cp(spark_conf, jar)
+        submit_args = " --driver-class-path " + os.environ["BIGDL_JARS"] + " pyspark-shell "
+        print("pyspark_submit_args is: {}".format(submit_args))
+        os.environ['PYSPARK_SUBMIT_ARGS'] = submit_args
 
     # add content in PYSPARK_FILES in spark.submit.pyFiles
     # This is a workaround for current Spark on k8s

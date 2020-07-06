@@ -17,6 +17,7 @@
 import numpy as np
 import sys
 import functools
+import logging
 
 from pyspark.ml.linalg import DenseVector, SparseVector, VectorUDT
 from bigdl.transform.vision.image import FeatureTransformer
@@ -28,8 +29,6 @@ from zoo.feature.common import FeatureSet, SampleToMiniBatch
 from zoo.feature.image import ImagePreprocessing, ImageFeatureToSample
 from zoo.util import nest
 
-import tensorflow as tf
-from tensorflow.python.data.ops import dataset_ops
 
 if sys.version >= '3':
     long = int
@@ -54,6 +53,8 @@ def _to_tensor_structure(tensors):
 
 
 def _tensors_to_rdd(tensors, sc, splits):
+
+    import tensorflow as tf
 
     if isinstance(tensors, np.ndarray):
         tensors = (tensors,)
@@ -181,6 +182,8 @@ class TFDataset(object):
         self._tensors = None
 
     def _create_placeholders(self):
+
+        import tensorflow as tf
 
         if not self.hard_code_batch_size:
             tensors = nest.pack_sequence_as(
@@ -666,6 +669,7 @@ class TFDataDataset(TFDataset):
 
     @staticmethod
     def _assert_not_batched(dataset):
+        from tensorflow.python.data.ops import dataset_ops
 
         if isinstance(dataset, dataset_ops.DatasetV1Adapter):
             TFDataDataset._assert_not_batched(dataset._dataset)
@@ -693,6 +697,9 @@ class TFDataDataset(TFDataset):
                  batch_per_thread, hard_code_batch_size=False,
                  validation_dataset=None,
                  sequential_order=False, shuffle=True, remove_checking=False):
+
+        from tensorflow.python.data.ops import dataset_ops
+        import tensorflow as tf
 
         # rule 1: we assume that the dataset user passed is not batched
         rules = [(
@@ -739,14 +746,32 @@ class TFDataDataset(TFDataset):
             # training case
             self._per_partition_batch_size = self.batch_size // self.node_num
             self._shard_num = self.node_num
+            self.drop_remainder = True
         else:
             # inference case
             self._per_partition_batch_size = self.batch_per_thread
             self._shard_num = self.total_core_num
+            if hard_code_batch_size:
+                self.drop_remainder = True
+                logging.warning("hard_code_batch_size is set to true, so we"
+                                " must drop remainder elements in the dataset"
+                                " to avoid outputting small batches, the dropped"
+                                " elements will not get processed. You can "
+                                "pad your dataset so that the total number "
+                                "of elements is divisible by the total batch size"
+                                " to avoid this.")
+            else:
+                self.drop_remainder = False
 
-        tf_data_dataset = tf_data_dataset.batch(self._per_partition_batch_size)
+        if self.hard_code_batch_size:
+            self.drop_remainder = True
+
+        tf_data_dataset = tf_data_dataset.batch(self._per_partition_batch_size,
+                                                drop_remainder=self.drop_remainder)
         if validation_dataset is not None:
-            validation_dataset = validation_dataset.batch(self._per_partition_batch_size)
+            drop_remainder = self.hard_code_batch_size
+            validation_dataset = validation_dataset.batch(self._per_partition_batch_size,
+                                                          drop_remainder=drop_remainder)
 
         shard_index = tf.placeholder(dtype=tf.int64, shape=())
         tf_data_dataset = tf_data_dataset.shard(self._shard_num, shard_index)
@@ -852,7 +877,7 @@ class TFBytesDataset(TFDataset):
     def __init__(self, string_rdd, batch_size,
                  batch_per_thread, hard_code_batch_size=False,
                  validation_string_rdd=None, sequential_order=False, shuffle=True):
-
+        import tensorflow as tf
         tensor_structure = (TensorMeta(dtype=tf.string, shape=(), name="input"),)
 
         super(TFBytesDataset, self).__init__(tensor_structure, batch_size,
@@ -1043,6 +1068,8 @@ class TFNdarrayDataset(TFDataset):
                  sequential_order=False,
                  shuffle=True):
 
+        import tensorflow as tf
+
         if features is not None:
             feature_structure = _to_tensor_structure(features)
             if labels is not None:
@@ -1100,6 +1127,7 @@ class DataFrameDataset(TFNdarrayDataset):
 
     @staticmethod
     def df_datatype_to_tf(dtype):
+        import tensorflow as tf
         import pyspark.sql.types as df_types
         if isinstance(dtype, df_types.FloatType):
             return (tf.float32, ())

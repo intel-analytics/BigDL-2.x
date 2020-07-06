@@ -195,6 +195,9 @@ def test_estimator_graph_fit_dataset(estimator_for_spark_fixture):
             steps=10,
             validation_data=dataset)
 
+    result = est.evaluate(dataset, batch_size=4)
+    assert 'loss' in result
+
 
 def test_estimator_graph_predict_dataset(estimator_for_spark_fixture):
 
@@ -218,7 +221,7 @@ def test_estimator_graph_predict_dataset(estimator_for_spark_fixture):
     data_shard = data_shard.transform_shard(transform)
     dataset = Dataset.from_tensor_slices(data_shard)
     predictions = est.predict(dataset).collect()
-    print(predictions)
+    assert len(predictions) == 10
 
 
 if __name__ == "__main__":
