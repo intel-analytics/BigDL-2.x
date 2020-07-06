@@ -14,13 +14,8 @@
 # limitations under the License.
 #
 
-import base64
-import cv2
-import yaml
 import redis
 import time
-import numpy as np
-import pyarrow as pa
 from zoo.serving.schema import *
 
 
@@ -30,31 +25,15 @@ class API:
     select data pipeline here, Redis/Kafka/...
     interface preserved for API class
     """
-    def __init__(self):
+    def __init__(self, host=None, port=None):
 
-        try:
-            file_path = "config.yaml"
-        except Exception:
-            raise EOFError("config file does not exist. Please check your config"
-                           "at analytics-zoo/docker/cluster-serving/config.yaml")
+        if not host:
+            host = "localhost"
+        if not port:
+            port = "6379"
 
-        try:
-            with open(file_path) as f:
-                config = yaml.load(f)
-                if not config['data']['src']:
-                    host_port = ["localhost", "6379"]
-                else:
-                    host_port = config['data']['src'].split(":")
-                config['data']['host'] = host_port[0]
-                config['data']['port'] = host_port[1]
-        except Exception:
-            config = {}
-            config['data'] = {}
-            config['data']['host'], config['data']['port'] = "localhost", "6379"
-            config['data']['image_shape'] = None
-
-        self.db = redis.StrictRedis(host=config['data']['host'],
-                                    port=config['data']['port'], db=0)
+        self.db = redis.StrictRedis(host=host,
+                                    port=port, db=0)
         # self.db = redis.StrictRedis(host="10.239.47.210",
         #                             port="16380", db=0)
         try:
@@ -63,39 +42,16 @@ class API:
         except Exception:
             print("redis group exist, will not create new one")
 
-        if not config['data']['image_shape']:
-            self.data_shape = ["3", "224", "224"]
-        else:
-            self.data_shape = config['data']['image_shape'].split(",")
-        for i in range(len(self.data_shape)):
-            self.data_shape[i] = int(self.data_shape[i])
-
 
 class InputQueue(API):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, host=None, port=None):
+        super().__init__(host, port)
         self.c, self.h, self.w = None, None, None
         self.stream_name = "serving_stream"
 
         # TODO: these params can be read from config in future
         self.input_threshold = 0.6
         self.interval_if_error = 1
-        self.data_shape_check()
-
-    def data_shape_check(self):
-        for num in self.data_shape:
-            if num <= 0:
-                raise Exception("Your image shape config is invalid, "
-                                "your config shape is" + str(self.data_shape)
-                                + "no negative value is allowed.")
-            if 0 < num < 5:
-                self.c = num
-                continue
-            if not self.h:
-                self.h = num
-            else:
-                self.w = num
-        return
 
     def enqueue(self, uri, **data):
         sink = pa.BufferOutputStream()
@@ -182,8 +138,8 @@ class InputQueue(API):
 
 
 class OutputQueue(API):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, host=None, port=None):
+        super().__init__(host, port)
 
     def dequeue(self):
         res_list = self.db.keys('result:*')
