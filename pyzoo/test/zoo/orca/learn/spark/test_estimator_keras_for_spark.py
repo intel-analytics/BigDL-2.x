@@ -15,27 +15,19 @@
 #
 import os
 import shutil
+from unittest import TestCase
 
 import tensorflow as tf
 
 import zoo.orca.data.pandas
 from zoo.orca.data.tf.data import Dataset
 from zoo.orca.learn.tf.estimator import Estimator
-from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.common.nncontext import *
 
 
-class TestEstimatorForKeras(ZooTestCase):
+class TestEstimatorForKeras(TestCase):
     def setup_method(self, method):
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
-        sparkConf = init_spark_conf().setMaster("local[4]").setAppName("testSparkXShards")
-        self.sc = init_nncontext(sparkConf)
-
-    def teardown_method(self, method):
-        """ teardown any state that was previously setup with a setup_method
-        call.
-        """
-        self.sc.stop()
 
     def create_model(self):
 
@@ -44,7 +36,6 @@ class TestEstimatorForKeras(ZooTestCase):
 
         feat = tf.keras.layers.concatenate([user, item], axis=1)
         predictions = tf.keras.layers.Dense(2, activation='softmax')(feat)
-
 
         model = tf.keras.models.Model(inputs=[user, item], outputs=predictions)
         model.compile(optimizer='rmsprop',
@@ -59,7 +50,6 @@ class TestEstimatorForKeras(ZooTestCase):
 
         feat = tf.keras.layers.concatenate([user, item], axis=1)
         predictions = tf.keras.layers.Dense(2, activation='softmax')(feat)
-
 
         model = tf.keras.models.Model(inputs=[user, item], outputs=predictions)
         optimizer = tf.keras.optimizers.RMSprop(
@@ -82,7 +72,7 @@ class TestEstimatorForKeras(ZooTestCase):
 
         model = self.create_model()
         file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
         def transform(df):
             result = {
@@ -100,10 +90,10 @@ class TestEstimatorForKeras(ZooTestCase):
                 epochs=10,
                 validation_data=data_shard)
 
-        result = est.evaluate(data_shard)
-        print(result)
+        eval_result = est.evaluate(data_shard)
+        print(eval_result)
 
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
         def transform(df):
             result = {
@@ -121,7 +111,7 @@ class TestEstimatorForKeras(ZooTestCase):
 
         model = self.create_model()
         file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
         def transform(df):
             result = {
@@ -169,7 +159,7 @@ class TestEstimatorForKeras(ZooTestCase):
 
         model = self.create_model_with_clip()
         file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
         def transform(df):
             result = {
@@ -186,7 +176,6 @@ class TestEstimatorForKeras(ZooTestCase):
                 batch_size=8,
                 epochs=10,
                 validation_data=data_shard)
-
 
 
 if __name__ == "__main__":
