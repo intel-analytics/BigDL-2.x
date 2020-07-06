@@ -335,7 +335,7 @@ then
     exit $exit_status
 fi
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/keras/keras_dataset.py 1
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/keras/keras_dataset.py 5
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
@@ -345,7 +345,7 @@ then
     exit $exit_status
 fi
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/keras/keras_ndarray.py 1
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/keras/keras_ndarray.py 5
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
