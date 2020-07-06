@@ -52,7 +52,7 @@ def main(max_epoch):
                     distributed=True)
 
     result = keras_model.evaluate(testing_images_data, testing_labels_data,
-                                  distributed=False, batch_per_thread=80)
+                                  distributed=True, batch_per_thread=80)
 
     print(result)
     # >> [0.08865142822265625, 0.9722]
