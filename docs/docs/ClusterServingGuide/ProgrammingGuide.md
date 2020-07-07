@@ -5,7 +5,6 @@ The overall architecture of Analytics Zoo Cluster Serving solution is illustrate
 
 ![overview](cluster_serving_overview.jpg)
 
-Note: currently only **image classification** models are supported.
 
 This page contains the guide for you to run Analytics Zoo Cluster Serving, including following:
 
@@ -323,7 +322,7 @@ import numpy as np
 input_api = InputQueue()
 t1 = np.array([1,2])
 t2 = np.array([[1,2], [3,4]])
-input_api.enqueue_image('my-instance', img={"path": 'path/to/image'}, tensor1=t1, tensor2=t2)
+input_api.enqueue('my-instance', img={"path": 'path/to/image'}, tensor1=t1, tensor2=t2)
 ```
 There are 4 types of inputs in total, string, image, tensor, sparse tensor, which could represents nearly all types of models. For more details of usage, go to [API Guide](APIGuide.md)
 

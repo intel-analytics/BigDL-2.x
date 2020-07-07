@@ -13,21 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 import tensorflow as tf
+
 from pyspark.sql.dataframe import DataFrame
 
-from bigdl.optim.optimizer import MaxIteration
+from bigdl.optim.optimizer import MaxEpoch
 from zoo.tfpark.utils import evaluate_metrics
 from zoo.tfpark import TFOptimizer, TFNet, ZooOptimizer
+from zoo.tfpark import KerasModel
 from zoo.util import nest
 from zoo.orca.learn.tf.utils import to_dataset
 
+
 class Estimator(object):
-    def fit(self, data, steps, **kwargs):
+    def fit(self, data, epochs, **kwargs):
         pass
 
     def predict(self, data, **kwargs):
+        pass
+
+    def evaluate(self, data, **kwargs):
         pass
 
     @staticmethod
@@ -43,7 +48,13 @@ class Estimator(object):
                                   optimizer=optimizer,
                                   metrics=metrics, updates=updates,
                                   sess=sess,
-                                  model_dir=model_dir)
+                                  model_dir=model_dir
+                                  )
+
+    @staticmethod
+    def from_keras(keras_model, model_dir=None, backend="spark"):
+        assert backend == "spark", "only spark backend is supported for now"
+        return TFKerasWrapper(keras_model, model_dir)
 
 
 class TFOptimizerWrapper(Estimator):
@@ -52,7 +63,8 @@ class TFOptimizerWrapper(Estimator):
                  optimizer,
                  metrics,
                  updates, sess,
-                 model_dir):
+                 model_dir
+                 ):
         self.inputs = inputs
         self.outputs = outputs
         self.labels = labels
@@ -75,14 +87,15 @@ class TFOptimizerWrapper(Estimator):
             self.sess = sess
         self.model_dir = model_dir
 
-    def fit(self, data, steps,
+    def fit(self, data,
+            epochs=1,
             batch_size=32,
             feature_cols=None,
             labels_cols=None,
             validation_data=None,
-            feed_dict=None,
+            hard_code_batch_size=False,
             session_config=None,
-            hard_code_batch_size=False
+            feed_dict=None
             ):
 
         assert self.labels is not None, \
@@ -122,13 +135,14 @@ class TFOptimizerWrapper(Estimator):
             session_config=session_config,
             model_dir=self.model_dir)
 
-        optimizer.optimize(end_trigger=MaxIteration(steps))
+        optimizer.optimize(end_trigger=MaxEpoch(epochs))
         return self
 
-    def predict(self, data, batch_size=32,
+    def predict(self, data, batch_size=4,
                 feature_cols=None,
                 hard_code_batch_size=False
                 ):
+
         assert self.outputs is not None, \
             "output is None, it should not be None in prediction"
         if isinstance(data, DataFrame):
@@ -153,6 +167,7 @@ class TFOptimizerWrapper(Estimator):
                  labels_cols=None,
                  hard_code_batch_size=False
                  ):
+
         assert self.metrics is not None, \
             "metrics is None, it should not be None in evaluate"
 
@@ -176,3 +191,78 @@ class TFOptimizerWrapper(Estimator):
         return evaluate_metrics(flat_inputs + flat_labels,
                                 sess=self.sess,
                                 dataset=dataset, metrics=self.metrics)
+
+
+class TFKerasWrapper(Estimator):
+
+    def __init__(self, keras_model, model_dir):
+        self.model = KerasModel(keras_model, model_dir)
+
+    def fit(self, data,
+            epochs=1,
+            batch_size=32,
+            feature_cols=None,
+            labels_cols=None,
+            validation_data=None,
+            hard_code_batch_size=False,
+            session_config=None
+            ):
+
+        if isinstance(data, DataFrame):
+            assert feature_cols is not None, \
+                "feature columns is None; it should not be None in training"
+            assert labels_cols is not None, \
+                "label columns is None; it should not be None in training"
+
+        dataset = to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
+                              validation_data=validation_data,
+                              feature_cols=feature_cols, labels_cols=labels_cols,
+                              hard_code_batch_size = hard_code_batch_size,
+                              sequential_order=False, shuffle=True
+                              )
+
+        self.model.fit(dataset, batch_size=batch_size, epochs=epochs,
+                       session_config=session_config
+                       )
+        return self
+
+    def predict(self, data, batch_size=4,
+                feature_cols=None,
+                hard_code_batch_size=False
+                ):
+
+        if isinstance(data, DataFrame):
+            assert feature_cols is not None, \
+                "feature columns is None; it should not be None in prediction"
+
+        dataset = to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
+                              validation_data=None,
+                              feature_cols=feature_cols, labels_cols=None,
+                              hard_code_batch_size=hard_code_batch_size,
+                              sequential_order=True,
+                              shuffle=False
+                              )
+
+        return self.model.predict(dataset, batch_size)
+
+    def evaluate(self, data, batch_size=4,
+                 feature_cols=None,
+                 labels_cols=None,
+                 hard_code_batch_size=False
+                 ):
+
+        if isinstance(data, DataFrame):
+            assert feature_cols is not None, \
+                "feature columns is None; it should not be None in evaluation"
+            assert labels_cols is not None, \
+                "label columns is None; it should not be None in evaluation"
+
+        dataset = to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
+                              validation_data=None,
+                              feature_cols=feature_cols, labels_cols=labels_cols,
+                              hard_code_batch_size=hard_code_batch_size,
+                              sequential_order=True,
+                              shuffle=False
+                              )
+
+        return self.model.evaluate(dataset, batch_per_thread=batch_size)

@@ -53,7 +53,7 @@ class TestEstimatorForGraph(TestCase):
 
         model = SimpleModel()
         file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
         def transform(df):
             result = {
@@ -73,10 +73,10 @@ class TestEstimatorForGraph(TestCase):
             metrics={"loss": model.loss})
         est.fit(data=data_shard,
                 batch_size=8,
-                steps=10,
+                epochs=10,
                 validation_data=data_shard)
 
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
         def transform(df):
             result = {
@@ -93,9 +93,8 @@ class TestEstimatorForGraph(TestCase):
         tf.reset_default_graph()
 
         model = SimpleModel()
-
         file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
         def transform(df):
             result = {
@@ -114,7 +113,7 @@ class TestEstimatorForGraph(TestCase):
             metrics={"loss": model.loss})
         est.fit(data=data_shard,
                 batch_size=8,
-                steps=10,
+                epochs=10,
                 validation_data=data_shard)
 
     def test_estimator_graph_evaluate(self):
@@ -123,7 +122,7 @@ class TestEstimatorForGraph(TestCase):
 
         model = SimpleModel()
         file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
         def transform(df):
             result = {
@@ -150,7 +149,7 @@ class TestEstimatorForGraph(TestCase):
 
         model = SimpleModel()
         file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
         est = Estimator.from_graph(
             inputs=[model.user, model.item],
@@ -172,7 +171,7 @@ class TestEstimatorForGraph(TestCase):
         model = SimpleModel()
 
         file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
         def transform(df):
             result = {
@@ -192,16 +191,18 @@ class TestEstimatorForGraph(TestCase):
             metrics={"loss": model.loss})
         est.fit(data=dataset,
                 batch_size=8,
-                steps=10,
+                epochs=10,
                 validation_data=dataset)
 
-    def test_estimator_graph_predict_dataset(self):
+        result = est.evaluate(dataset, batch_size=4)
+        assert 'loss' in result
 
+    def test_estimator_graph_predict_dataset(self):
         tf.reset_default_graph()
 
         model = SimpleModel()
         file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-        data_shard = zoo.orca.data.pandas.read_csv(file_path, self.sc)
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
         est = Estimator.from_graph(
             inputs=[model.user, model.item],

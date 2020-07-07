@@ -22,9 +22,8 @@ from zoo import ZooContext
 
 class XShards(object):
     """
-    A collection of data which can be pre-processed parallelly.
+    A collection of data which can be pre-processed in parallel.
     """
-
     def transform_shard(self, func, *args):
         """
         Transform each shard in the XShards using func
@@ -54,49 +53,22 @@ class RayXShards(XShards):
     A collection of data which can be pre-processed in parallel on Ray
     """
     def __init__(self, partitions):
+        assert all([isinstance(partition, RayPartition) for partition in partitions]), \
+            "partitions should be list of RayPartition"
         self.partitions = partitions
-        self.shard_list = flatten([partition.shard_list for partition in partitions])
 
     def transform_shard(self, func, *args):
-        """
-        Transform each shard in the XShards using func
-        :param func: pre-processing function.
-        In the function, the element object should be the first argument
-        :param args: rest arguments for the pre-processing function
-        :return: this DataShard
-        """
-        import ray
-        done_ids, undone_ids = ray.wait([shard.transform.remote(func, *args)
-                                         for shard in self.shard_list],
-                                        num_returns=len(self.shard_list))
-        assert len(undone_ids) == 0
-        return self
+        raise Exception("Transform is not supported for RayXShards")
 
     def collect(self):
-        """
-        Returns a list that contains all of the elements in this XShards
-        :return: list of elements
-        """
-        import ray
-        return ray.get([shard.get_data.remote() for shard in self.shard_list])
+        return [partition.get_data() for partition in self.partitions]
 
     def num_partitions(self):
         return len(self.partitions)
 
-    def repartition(self, num_partitions):
-        """
-        Repartition XShards.
-        :param num_partitions: number of partitions
-        :return: this XShards
-        """
-        shards_partitions = list(chunk(self.shard_list, num_partitions))
-        self.partitions = [RayPartition(shards) for shards in shards_partitions]
-        return self
-
     def get_partitions(self):
         """
-        Return partition list of the XShards
-        :return: partition list
+        Return the list of RayPartition of the RayXShards
         """
         return self.partitions
 
@@ -122,26 +94,20 @@ class RayXShards(XShards):
 
 class RayPartition(object):
     """
-    Partition of RayXShards
+    A partition of RayXShards containing the plasma ObjectID, the plasma object_store_address,
+    and the node of the partition.
     """
-    def __init__(self, shard_list, node_ip=None, object_store_address=None):
-        self.shard_list = shard_list
+    def __init__(self, object_id, node_ip, object_store_address):
+        # The object_id would contain a list of data from a partition of Spark RDD.
+        self.object_id = object_id
         self.node_ip = node_ip
         self.object_store_address = object_store_address
 
     def get_data(self):
-        # For partitions read by Ray, shard_list is a list of Ray actors.
-        # Each Ray actor contains a partition of data.
-        if isinstance(self.shard_list, list):
-            import ray
-            return ray.get([shard.get_data.remote() for shard in self.shard_list])
-        # For partitions transfromed from Spark, shard_list is a single plasma ObjectID.
-        # The ObjectID would contain a list of data.
-        else:
-            import pyarrow.plasma as plasma
-            # Default num_retries=-1 would try 80 times.
-            self.client = plasma.connect(self.object_store_address, num_retries=5)
-            return self.client.get(self.shard_list)
+        import pyarrow.plasma as plasma
+        # Default num_retries=-1 would try 80 times.
+        self.client = plasma.connect(self.object_store_address, num_retries=5)
+        return self.client.get(self.object_id)
 
     def __del__(self):
         if self.object_store_address:
@@ -152,9 +118,9 @@ class RayPartition(object):
                 if "client" not in self.__dict__:
                     import pyarrow.plasma as plasma
                     self.client = plasma.connect(self.object_store_address, num_retries=5)
-                if self.client.contains(self.shard_list):
-                    self.client.delete([self.shard_list])
-                assert not self.client.contains(self.shard_list)
+                if self.client.contains(self.object_id):
+                    self.client.delete([self.object_id])
+                assert not self.client.contains(self.object_id)
                 logger.info("Removed data from plasma object store on node " + str(self.node_ip))
                 self.client.disconnect()
                 del self.client
@@ -322,37 +288,38 @@ class SparkXShards(XShards):
 
     # Tested on pyarrow 0.17.0; 0.16.0 would get errors.
     def to_ray(self):
-        import random
-        import string
         from zoo.ray import RayContext
         ray_ctx = RayContext.get()
         object_store_address = ray_ctx.address_info["object_store_address"]
 
-        # TODO: Handle failure when doing this?
-        # TODO: delete the data in the plasma?
-        def put_to_plasma(seed):
+        def put_to_plasma(ids):
             def f(index, iterator):
                 import pyarrow.plasma as plasma
                 from zoo.orca.data.utils import get_node_ip
-                # mapPartition would set the same random seed for each partition?
-                # Here use the partition index to override the random seed so that there won't be
-                # identical object_ids in plasma.
-                random.seed(seed+str(index))
                 res = list(iterator)
                 client = plasma.connect(object_store_address)
-                object_id = client.put(res)
-                yield object_id, get_node_ip()
+                target_id = ids[index]
+                # If the ObjectID exists in plasma, we assume a task trial
+                # succeeds and the data is already in the object store.
+                if not client.contains(target_id):
+                    object_id = client.put(res, target_id)
+                    assert object_id == target_id, \
+                        "Errors occurred when putting data into plasma object store"
+                client.disconnect()
+                yield target_id, get_node_ip()
             return f
 
-        # Generate a random string here to make sure that when this method is called twice, the
-        # seeds to generate plasma ObjectID are different.
-        random_str = ''.join(
-            [random.choice(string.ascii_letters + string.digits) for i in range(32)])
-        object_id_node_ips = self.rdd.mapPartitionsWithIndex(put_to_plasma(random_str)).collect()
+        # Create plasma ObjectIDs beforehand instead of creating a random one every time to avoid
+        # memory leak in case errors occur when putting data into plasma and Spark would retry.
+        # ObjectIDs in plasma is a byte string of length 20 containing characters and numbers.
+        # The random generation of ObjectIDs is often good enough to ensure unique IDs.
+        import pyarrow.plasma as plasma
+        object_ids = [plasma.ObjectID.from_random() for i in range(self.rdd.getNumPartitions())]
+        object_id_node_ips = self.rdd.mapPartitionsWithIndex(put_to_plasma(object_ids)).collect()
         self.uncache()
         # Sort the data according to the node_ips.
         object_id_node_ips.sort(key=lambda x: x[1])
-        partitions = [RayPartition(shard_list=id_ip[0], node_ip=id_ip[1],
+        partitions = [RayPartition(object_id=id_ip[0], node_ip=id_ip[1],
                                    object_store_address=object_store_address)
                       for id_ip in object_id_node_ips]
         return RayXShards(partitions)
