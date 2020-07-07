@@ -178,9 +178,7 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
         s"""
            |${getName()}_extra_parameters = []
            |for named_buffer in ${this.getName()}.named_buffers():
-           |    name = named_buffer[0].split(".")[-1]
-           |    if name == 'running_mean' or name == 'running_var':
-           |        ${getName()}_extra_parameters.append(named_buffer[1].data.numpy())
+           |    ${getName()}_extra_parameters.append(named_buffer[1].data.numpy())
            |""".stripMargin
       PythonInterpreter.exec(getExtraParamCode)
       val extraParams = PythonInterpreter.getValue[AnyRef](s"${getName()}_extra_parameters")
