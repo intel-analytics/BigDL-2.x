@@ -19,11 +19,10 @@ from pyspark.sql.context import SQLContext
 
 from unittest import TestCase
 
+from zoo import init_nncontext
 from zoo.orca.data.tf.data import Dataset
 from zoo.orca.learn.tf.estimator import Estimator
 import zoo.orca.data.pandas
-
-from test.zoo.orca.learn.spark.conftest import get_spark_ctx
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
@@ -43,8 +42,6 @@ class SimpleModel(object):
 
 
 class TestEstimatorForGraph(TestCase):
-    def setup_method(self, method):
-        self.sc = get_spark_ctx()
 
     def test_estimator_graph(self):
         import zoo.orca.data.pandas
@@ -225,7 +222,8 @@ class TestEstimatorForGraph(TestCase):
 
         model = SimpleModel()
         file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-        sqlcontext = SQLContext(self.sc)
+        sc = init_nncontext()
+        sqlcontext = SQLContext(sc)
         df = sqlcontext.read.csv(file_path, header=True, inferSchema=True)
 
         est = Estimator.from_graph(
@@ -238,7 +236,7 @@ class TestEstimatorForGraph(TestCase):
 
         est.fit(data=df,
                 batch_size=8,
-                steps=10,
+                epochs=10,
                 feature_cols=['user', 'item'],
                 labels_cols=['label'],
                 validation_data=df)
@@ -246,7 +244,7 @@ class TestEstimatorForGraph(TestCase):
         result = est.evaluate(df, batch_size=4, feature_cols=['user', 'item'], labels_cols=['label'])
         print(result)
 
-        predictions = est.predict(df,batch_size=4,feature_cols=['user', 'item']).collect()
+        predictions = est.predict(df, batch_size=4,feature_cols=['user', 'item']).collect()
         assert len(predictions) == 10
 
     def test_estimator_graph_dataframe_exception(self):
@@ -255,7 +253,8 @@ class TestEstimatorForGraph(TestCase):
 
         model = SimpleModel()
         file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-        sqlcontext = SQLContext(self.sc)
+        sc = init_nncontext()
+        sqlcontext = SQLContext(sc)
         df = sqlcontext.read.csv(file_path, header=True, inferSchema=True)
 
         est = Estimator.from_graph(
@@ -269,7 +268,7 @@ class TestEstimatorForGraph(TestCase):
         with self.assertRaises(Exception) as context:
             est.fit(data=df,
                     batch_size=8,
-                    steps=10,
+                    epochs=10,
                     feature_cols=['user', 'item'],
                     validation_data=df)
         self.assertTrue('label columns is None; it should not be None in training'
@@ -277,23 +276,23 @@ class TestEstimatorForGraph(TestCase):
 
         est.fit(data=df,
                 batch_size=8,
-                steps=10,
+                epochs=10,
                 feature_cols=['user', 'item'],
                 labels_cols=['label']
                 )
         with self.assertRaises(Exception) as context:
-            predictions = est.predict(df,batch_size=4).collect()
+            predictions = est.predict(df, batch_size=4).collect()
         self.assertTrue('feature columns is None; it should not be None in prediction'
                         in str(context.exception))
 
         with self.assertRaises(Exception) as context:
             est.fit(data=df,
                     batch_size=8,
-                    steps=10,
+                    epochs=10,
                     feature_cols=['user', 'item'],
                     labels_cols=['label'],
-                    validation_data=[1,2,3])
-        self.assertTrue('train data and validation data should be in the same type'
+                    validation_data=[1, 2, 3])
+        self.assertTrue('train data and validation data should be both DataFrame'
                         in str(context.exception))
 
 
