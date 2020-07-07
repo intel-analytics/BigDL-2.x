@@ -30,7 +30,7 @@ object InferenceSupportive {
       (0 until thisBatchSize).toParArray.map(idx => {
         val t = pathByteBatch(idx)._2
         val result = params.model.doPredict(t)
-        val value = PostProcessing(result.toTensor[Float])
+        val value = PostProcessing(result.toTensor[Float], params.filter)
         (pathByteBatch(idx)._1, value)
       })
     })

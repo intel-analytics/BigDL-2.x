@@ -37,10 +37,8 @@ class SimpleModel(object):
                                                                           labels=self.label))
 
 
-def test_estimator_graph(estimator_for_spark_fixture):
+def test_estimator_graph():
     import zoo.orca.data.pandas
-
-    sc = estimator_for_spark_fixture
 
     tf.reset_default_graph()
 
@@ -66,7 +64,7 @@ def test_estimator_graph(estimator_for_spark_fixture):
         metrics={"loss": model.loss})
     est.fit(data=data_shard,
             batch_size=8,
-            steps=10,
+            epochs=10,
             validation_data=data_shard)
 
     data_shard = zoo.orca.data.pandas.read_csv(file_path)
@@ -82,12 +80,11 @@ def test_estimator_graph(estimator_for_spark_fixture):
     print(predictions)
 
 
-def test_estimator_graph_fit(estimator_for_spark_fixture):
+def test_estimator_graph_fit():
     import zoo.orca.data.pandas
     tf.reset_default_graph()
 
     model = SimpleModel()
-    sc = estimator_for_spark_fixture
     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
     data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
@@ -108,16 +105,15 @@ def test_estimator_graph_fit(estimator_for_spark_fixture):
         metrics={"loss": model.loss})
     est.fit(data=data_shard,
             batch_size=8,
-            steps=10,
+            epochs=10,
             validation_data=data_shard)
 
 
-def test_estimator_graph_evaluate(estimator_for_spark_fixture):
+def test_estimator_graph_evaluate():
     import zoo.orca.data.pandas
     tf.reset_default_graph()
 
     model = SimpleModel()
-    sc = estimator_for_spark_fixture
     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
     data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
@@ -141,11 +137,9 @@ def test_estimator_graph_evaluate(estimator_for_spark_fixture):
     print(result)
 
 
-def test_estimator_graph_predict(estimator_for_spark_fixture):
+def test_estimator_graph_predict():
     import zoo.orca.data.pandas
     tf.reset_default_graph()
-
-    sc = estimator_for_spark_fixture
 
     model = SimpleModel()
     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
@@ -166,11 +160,11 @@ def test_estimator_graph_predict(estimator_for_spark_fixture):
     print(predictions)
 
 
-def test_estimator_graph_fit_dataset(estimator_for_spark_fixture):
+def test_estimator_graph_fit_dataset():
     import zoo.orca.data.pandas
     tf.reset_default_graph()
     model = SimpleModel()
-    sc = estimator_for_spark_fixture
+
     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
     data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
@@ -192,16 +186,15 @@ def test_estimator_graph_fit_dataset(estimator_for_spark_fixture):
         metrics={"loss": model.loss})
     est.fit(data=dataset,
             batch_size=8,
-            steps=10,
+            epochs=10,
             validation_data=dataset)
 
     result = est.evaluate(dataset, batch_size=4)
     assert 'loss' in result
 
 
-def test_estimator_graph_predict_dataset(estimator_for_spark_fixture):
+def test_estimator_graph_predict_dataset():
 
-    sc = estimator_for_spark_fixture
     tf.reset_default_graph()
 
     model = SimpleModel()
