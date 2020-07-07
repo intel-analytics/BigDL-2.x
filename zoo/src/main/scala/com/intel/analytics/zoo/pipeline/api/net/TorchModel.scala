@@ -201,10 +201,8 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
         s"""
            |${idxName} = 0
            |for named_buffer in ${this.getName()}.named_buffers():
-           |    name = named_buffer[0].split(".")[-1]
-           |    if name == 'running_mean' or name == 'running_var':
-           |        named_buffer[1].copy_(torch.Tensor(${paramName}[${idxName}]))
-           |        ${idxName} += 1
+           |    named_buffer[1].copy_(torch.Tensor(${paramName}[${idxName}]))
+           |    ${idxName} += 1
            |""".stripMargin
       PythonInterpreter.exec(setExtraParamCode)
     } else {
