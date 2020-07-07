@@ -1613,7 +1613,8 @@ object InternalDistriOptimizer {
         val (weights, gradients) = models.mapPartitions(iter => {
           val cached = iter.next()
           val curPartitionId = TaskContext.getPartitionId()
-          val (offset, size) = InternalOptimizerUtil.getLocalPartitionRangeFromParameters(parameters)
+          val (offset, size) =
+            InternalOptimizerUtil.getLocalPartitionRangeFromParameters(parameters)
           val weightTensor = Tensor[T](size)
           weightTensor.copy(cached.modelWeights.head.narrow(1, offset, size))
           Iterator.single((Map(curPartitionId -> weightTensor),

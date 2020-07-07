@@ -193,7 +193,8 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
   // TODO: change to override setExtraParameter when switch to bigdl 0.11.0
   private[zoo] def setExtraParam(extraParams: Array[Tensor[Float]]): this.type = {
     if (loaded) {
-      val params = extraParams.map(param => new NDArray[Array[Float]](param.storage().array(), param.size(): _*))
+      val params = extraParams.map(param =>
+          new NDArray[Array[Float]](param.storage().array(), param.size(): _*))
       val paramName = s"${getName()}_new_extra_param"
       val idxName = s"${getName()}_buffer_idx"
       PythonInterpreter.set(paramName, params)
