@@ -577,40 +577,40 @@ class LocalModel(object):
         bsize: batch size for processing (determine according to gopu memory limits)
         normalize: should be set according to the normalization used in the class initialization
         """
-        if normalize:
-            data = (data_in - self.m[:, None]) / self.s[:, None]
-            data += self.mini
+        with torch.no_grad():
+            if normalize:
+                data = (data_in - self.m[:, None]) / self.s[:, None]
+                data += self.mini
 
-        else:
-            data = data_in
+            else:
+                data = data_in
 
-        n, T = data.shape
+            n, T = data.shape
 
-        I = list(np.arange(0, n, bsize))
-        I.append(n)
-        bdata = data[range(I[0], I[1]), :]
-        if ycovs is not None:
-            out = self.predict_future_batch(
-                bdata, covariates, ycovs[range(I[0], I[1]), :, :], future
-            )
-        else:
-            out = self.predict_future_batch(bdata, covariates, None, future)
-
-        for i in range(1, len(I) - 1):
-            bdata = data[range(I[i], I[i + 1]), :]
-            self.seq = self.seq.cpu()
+            I = list(np.arange(0, n, bsize))
+            I.append(n)
+            bdata = data[range(I[0], I[1]), :]
             if ycovs is not None:
-                temp = self.predict_future_batch(
-                    bdata, covariates, ycovs[range(I[i], I[i + 1]), :, :], future
+                out = self.predict_future_batch(
+                    bdata, covariates, ycovs[range(I[0], I[1]), :, :], future
                 )
             else:
-                temp = self.predict_future_batch(bdata, covariates, None, future)
-            out = np.vstack([out, temp])
+                out = self.predict_future_batch(bdata, covariates, None, future)
 
-        if normalize:
-            temp = (out - self.mini) * self.s[:, None] + self.m[:, None]
-            out = temp
+            for i in range(1, len(I) - 1):
+                bdata = data[range(I[i], I[i + 1]), :]
+                self.seq = self.seq.cpu()
+                if ycovs is not None:
+                    temp = self.predict_future_batch(
+                        bdata, covariates, ycovs[range(I[i], I[i + 1]), :, :], future
+                    )
+                else:
+                    temp = self.predict_future_batch(bdata, covariates, None, future)
+                out = np.vstack([out, temp])
 
+            if normalize:
+                temp = (out - self.mini) * self.s[:, None] + self.m[:, None]
+                out = temp
         return out
 
     def rolling_validation(self, Ymat, tau=24, n=7, bsize=90, alpha=0.3):
