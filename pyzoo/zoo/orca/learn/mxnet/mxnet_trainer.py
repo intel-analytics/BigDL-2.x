@@ -136,8 +136,8 @@ class Estimator(object):
 
         :param batch_size: The number of samples per batch. Default is 32.
 
-        :param validation_data: An instance of XShards or a function that takes config and kv as arguments
-        and returns an MXNet DataIter/DataLoader for validation.
+        :param validation_data: An instance of SparkXShards or a function that takes config and
+        kv as arguments and returns an MXNet DataIter/DataLoader for validation.
         You can specify data related configurations for this function in the config argument above.
         kv is an instance of MXNet distributed key-value store. kv.num_workers and kv.rank
         can be used in this function to split data for different workers if necessary.
