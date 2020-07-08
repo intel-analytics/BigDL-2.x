@@ -109,6 +109,7 @@ class TestZouwuModelForecast(ZooTestCase):
     def test_forecast_tcmf_xshards(self):
         from zoo.zouwu.model.forecast import TCMFForecaster
         import zoo.orca.data.pandas
+        from zoo.orca.data import SharedValue
         import os.path
 
         resource_path = os.path.join(os.path.split(__file__)[0],
@@ -116,8 +117,17 @@ class TestZouwuModelForecast(ZooTestCase):
 
         def preprocessing(df):
             idx = df.index.values
-            data = np.concatenate((np.expand_dims(idx, axis=1), df.to_numpy()), axis=1)
+            data = np.concatenate((np.expand_dims(idx, axis=1), df.to_numpy().astype(np.float32))
+                                  , axis=1)
             return data
+
+        def postprocessing(pred_results, output_dt_col_name):
+            final_df = pd.DataFrame(pred_results, columns=["idx"] + output_dt_col_name.value)
+            final_df.idx = final_df.idx.astype("int")
+            final_df = final_df.set_index("idx")
+            final_df.columns.name = "datetime"
+            final_df = final_df.unstack().reset_index().rename({0: "kpi"}, axis=1)
+            return final_df
 
         model = TCMFForecaster(max_y_iterations=1,
                                init_FX_epoch=1,
@@ -130,7 +140,14 @@ class TestZouwuModelForecast(ZooTestCase):
         yhat_shard = model.predict(x=None, horizon=24)
         yhat_list = yhat_shard.collect()
         yhat = np.concatenate(yhat_list, axis=0)
-        assert yhat.shape == (300, 24)
+        assert yhat.shape == (300, 25)
+        output_dt_col_name = pd.date_range(start='2020-05-01', periods=24, freq='H').to_list()
+        output_dt_col_name_shared_value = SharedValue(output_dt_col_name)
+        yhat_df_shards = yhat_shard.transform_shard(postprocessing, output_dt_col_name_shared_value)
+        final_df_list = yhat_df_shards.collect()
+        final_df = pd.concat(final_df_list)
+        final_df.sort_values("datetime", inplace=True)
+        assert final_df.shape == (7200, 3)
 
 
 if __name__ == "__main__":

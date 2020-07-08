@@ -153,7 +153,7 @@ class TCMFForecaster(Forecaster):
             incremental=False):
         """
         fit the model
-        :param x: the input
+        :param x: the input for fit. Only ndarray and SparkXShards of ndarray are supported
         :param covariates: the global covariates
         :param lr: learning rate
         :param incremental: if the fit is incremental
@@ -227,15 +227,18 @@ class TCMFForecaster(Forecaster):
     def save(self, path):
         if isinstance(self.internal, SparkXShards):
             self.internal.save_pickle(path)
-        # TODO: single node
+        else:
+            self.internal.save(path)
 
     @classmethod
-    def load(cls, path, minPartitions=None):
-        loaded_model_shards = SparkXShards.load_pickle(path, minPartitions=minPartitions)
+    def load(cls, path, distributed=False, minPartitions=None):
         loaded_model = TCMFForecaster()
-        loaded_model.internal = loaded_model_shards
+        if distributed:
+            loaded_model_shards = SparkXShards.load_pickle(path, minPartitions=minPartitions)
+            loaded_model.internal = loaded_model_shards
+        else:
+            loaded_model.internal.restore(path)
         return loaded_model
-        # TODO: single node
 
 
 class TFParkForecaster(TFParkKerasModel, Forecaster, metaclass=ABCMeta):
