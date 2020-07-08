@@ -446,13 +446,13 @@ class LocalModel(object):
                 p.grad.data.clamp_(max=1e5, min=-1e5)
             optimizer.step()
 
-            loss_all = loss_all + [loss.cpu().item()]
+            loss_all = loss_all + [loss.item()]
             if self.test:
                 inp_test = Variable(inp_test)
                 out_target_test = Variable(out_target_test)
                 out_test, dic = self.__prediction__(inp_test)
                 losst = self.__loss__(out_test, out_target_test, dic)
-            loss_test_all = loss_test_all + [losst.cpu().item()]
+            loss_test_all = loss_test_all + [losst.item()]
 
             if current_epoch > last_epoch:
                 ve = loss_test_all[-1]
@@ -500,12 +500,11 @@ class LocalModel(object):
 
     def convert_from_output(self, T):
         out = T.view(T.size(0), T.size(2))
-        return np.array(out.cpu().detach())
+        return np.array(out.detach())
 
     def predict_future_batch(
         self, data, covariates=None, ycovs=None, future=10
     ):
-        self.seq = self.seq.cpu()
         inp = self.convert_to_input(data)
         if covariates is not None:
             cov = self.convert_covariates(data, covariates)
@@ -514,9 +513,6 @@ class LocalModel(object):
             ycovs = self.convert_ycovs(data, ycovs)
             inp = torch.cat((inp, ycovs[:, :, 0: inp.size(2)]), 1)
 
-        inp = inp.cpu()
-        cov = cov.cpu()
-        ycovs = ycovs.cpu()
         out, dic = self.__prediction__(inp)
         ci = inp.size(2)
         output = out[:, :, out.size(2) - 1].view(out.size(0), out.size(1), 1)
@@ -544,9 +540,7 @@ class LocalModel(object):
                 )
             out = torch.cat((inp, output), dim=2)
         out = out[:, 0, :].view(out.size(0), 1, out.size(2))
-        out = out.cpu()
         y = self.convert_from_output(out)
-        self.seq = self.seq.cpu()
         return y
 
     def predict_future(
@@ -588,7 +582,6 @@ class LocalModel(object):
 
             for i in range(1, len(I) - 1):
                 bdata = data[range(I[i], I[i + 1]), :]
-                self.seq = self.seq.cpu()
                 if ycovs is not None:
                     temp = self.predict_future_batch(
                         bdata, covariates, ycovs[range(I[i], I[i + 1]), :, :], future
