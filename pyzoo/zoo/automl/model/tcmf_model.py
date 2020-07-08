@@ -14,9 +14,9 @@
 #
 
 from zoo.automl.model.tcmf import DeepGLO
-
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.model.abstract import BaseModel
+import pickle
 
 
 class TCMF(BaseModel):
