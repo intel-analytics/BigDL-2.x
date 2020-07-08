@@ -73,6 +73,7 @@ class TorchModel(Layer):
         new_extra_params = callZooFunc(self.bigdl_type, "getModuleExtraParameters", self.value)
         idx = 0
         for named_buffer in m.named_buffers():
-            named_buffer[1].copy_(torch.Tensor(new_extra_params[idx].to_ndarray()))
+            named_buffer[1].copy_(torch.reshape(
+                torch.Tensor(new_extra_params[idx].to_ndarray()), named_buffer[1].size()))
             idx += 1
         return m

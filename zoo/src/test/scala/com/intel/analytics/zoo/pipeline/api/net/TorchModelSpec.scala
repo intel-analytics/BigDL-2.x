@@ -186,7 +186,7 @@ class TorchModelSpec extends ZooSpecHelper{
     val model = TorchModel(bys, w)
     model.training()
     val extraParams = model.getExtraParameter()
-    extraParams.foreach(_.rand())
+    extraParams.foreach(_.fill(3))
     model.setExtraParam(extraParams)
     val newExtraParams = model.getExtraParameter()
     extraParams.zip(newExtraParams).foreach{v =>

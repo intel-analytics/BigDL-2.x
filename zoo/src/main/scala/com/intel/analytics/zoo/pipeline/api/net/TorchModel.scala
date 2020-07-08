@@ -192,7 +192,11 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
   private[zoo] def setExtraParam(extraParams: Array[Tensor[Float]]): this.type = {
     if (loaded) {
       val params = extraParams.map(param =>
-          new NDArray[Array[Float]](param.storage().array(), param.size(): _*))
+        if (param.isScalar) {
+          new NDArray[Array[Float]](param.storage().array())
+        } else {
+          new NDArray[Array[Float]](param.storage().array(), param.size(): _*)
+        })
       val paramName = s"${getName()}_new_extra_param"
       val idxName = s"${getName()}_buffer_idx"
       PythonInterpreter.set(paramName, params)
@@ -200,7 +204,8 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
         s"""
            |${idxName} = 0
            |for named_buffer in ${this.getName()}.named_buffers():
-           |    named_buffer[1].copy_(torch.Tensor(${paramName}[${idxName}]))
+           |    named_buffer[1].copy_(
+           |      torch.reshape(torch.Tensor(${paramName}[${idxName}]), named_buffer[1].size()))
            |    ${idxName} += 1
            |""".stripMargin
       PythonInterpreter.exec(setExtraParamCode)
