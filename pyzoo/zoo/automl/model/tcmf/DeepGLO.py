@@ -403,7 +403,7 @@ class DeepGLO(object):
             last_epoch = self.D.epoch
             last_vindex = self.D.vindex
             last_hindex = self.D.hindex
-            inp, out, vindex, hindex = self.D.next_batch(option=1)
+            inp, out, vindex, hindex = self.D.next_batch()
 
             if iter_count % mod >= 0:
                 l1 = self.step_factF_loss(inp, out, last_vindex, last_hindex, reg=reg_F)
@@ -473,7 +473,7 @@ class DeepGLO(object):
             last_epoch = self.D.epoch
             last_vindex = self.D.vindex
             last_hindex = self.D.hindex
-            inp, out, vindex, hindex = self.D.next_batch(option=1)
+            inp, out, vindex, hindex = self.D.next_batch()
 
             Xin = self.tensor2d_to_temporal(self.X[:, last_hindex: last_hindex + inp.size(2)]).cpu()
             Xout = self.temporal_to_tensor2d(self.Xseq(Xin)).cpu()
