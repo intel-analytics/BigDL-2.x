@@ -292,7 +292,7 @@ class TestEstimatorForGraph(TestCase):
                     feature_cols=['user', 'item'],
                     labels_cols=['label'],
                     validation_data=[1, 2, 3])
-        self.assertTrue('train data and validation data should be both DataFrame'
+        self.assertTrue('train data and validation data should be both Spark DataFrame'
                         in str(context.exception))
 
 

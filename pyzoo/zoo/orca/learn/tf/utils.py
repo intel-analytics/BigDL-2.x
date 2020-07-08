@@ -17,9 +17,8 @@ from pyspark.sql.dataframe import DataFrame
 import tensorflow as tf
 
 from zoo.tfpark.tf_dataset import TFDataset
-from zoo.orca.data.shard import SparkXShards
+from zoo.orca.data import SparkXShards
 from zoo.orca.data.tf.data import Dataset, TFDataDataset2
-
 
 
 def xshards_to_tf_dataset(data_shard,
@@ -119,7 +118,7 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
                 "train data and validation data should be both orca.data.tf.Dataset"
         if isinstance(data, DataFrame):
             assert isinstance(validation_data, DataFrame), \
-                "train data and validation data should be both DataFrame"
+                "train data and validation data should be both Spark DataFrame"
 
     if isinstance(data, SparkXShards):
         dataset = xshards_to_tf_dataset(data,
@@ -143,6 +142,6 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
                                            shuffle
                                            )
     else:
-        raise ValueError("data must be a SparkXShards or an orca.data.tf.Dataset or DataFrame")
+        raise ValueError("data must be SparkXShards or orca.data.tf.Dataset or Spark DataFrame")
 
     return dataset
