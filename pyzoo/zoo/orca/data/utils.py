@@ -74,32 +74,27 @@ def extract_one_path(file_path, file_type, env):
 
 
 def check_type_and_convert(data, tuple_allowed=True, list_allowed=True):
+    def check_and_convert(convert_data):
+        if isinstance(convert_data, np.ndarray):
+            return [x]
+        elif isinstance(convert_data, tuple) and \
+                all([isinstance(di, np.ndarray) for di in convert_data]):
+            return __convert_tuple(x, tuple_allowed, list_allowed)
+        elif isinstance(convert_data, list) and \
+                all([isinstance(di, np.ndarray) for di in convert_data]):
+            return __convert_list(x, tuple_allowed, list_allowed)
+        else:
+            raise ValueError("value of x and y should be a ndarray, "
+                             "a tuple of ndarrays or a list of ndarrays")
+
     result = {}
     assert isinstance(data, dict), "each shard should be an dict"
     assert "x" in data, "key x should in each shard"
     x = data["x"]
-    if isinstance(x, np.ndarray):
-        new_x = [x]
-    elif isinstance(x, tuple) and all([isinstance(xi, np.ndarray) for xi in x]):
-        new_x = __convert_tuple(x, tuple_allowed, list_allowed)
-    elif isinstance(x, list) and all([isinstance(xi, np.ndarray) for xi in x]):
-        new_x = __convert_list(x, tuple_allowed, list_allowed)
-    else:
-        raise ValueError("value of x should be a ndarray, "
-                         "a tuple of ndarrays or a list of ndarrays")
-    result["x"] = new_x
+    result["x"] = check_and_convert(x)
     if "y" in data:
         y = data["y"]
-        if isinstance(y, np.ndarray):
-            new_y = [y]
-        elif isinstance(y, tuple) and all([isinstance(yi, np.ndarray) for yi in y]):
-            new_y = __convert_tuple(y, tuple_allowed, list_allowed)
-        elif isinstance(y, list) and all([isinstance(yi, np.ndarray) for yi in y]):
-            new_y = __convert_list(y, tuple_allowed, list_allowed)
-        else:
-            raise ValueError("value of y should be a ndarray, "
-                             "a tuple of ndarrays or a list of ndarrays")
-        result["y"] = new_y
+        result["y"] = check_and_convert(y)
     return result
 
 
@@ -148,37 +143,30 @@ def ray_partition_get_data_label(partition_data, tuple_allowed=True, list_allowe
         return [np.concatenate((list1[index], list2[index]), axis=0)
                 for index in range(0, len(list1))]
 
+    def check_type_and_combine(data_list):
+        if isinstance(data_list[0], dict):
+            return reduce(lambda dict1, dict2: combine_dict(dict1, dict2), data_list)
+        elif isinstance(data_list[0]['x'], np.ndarray):
+            return reduce(lambda array1, array2: np.concatenate((array1, array2), axis=0),
+                          data_list)
+        elif isinstance(data_list[0], list):
+            data = reduce(lambda list1, list2: combine_list_tuple(list1, list2), data_list)
+            data = __convert_list(data, tuple_allowed, list_allowed)
+            return data
+        elif isinstance(data_list[0], tuple):
+            data = reduce(lambda tuple1, tuple2: combine_list_tuple(tuple1, tuple2), data_list)
+            data = __convert_tuple(data, tuple_allowed, list_allowed)
+            return data
+        else:
+            raise ValueError(
+                "value of x and y should be a ndarray, a dict of ndarrays, a tuple of ndarrays"
+                " or a list of ndarrays, please check")
+
     data_list = [data['x'] for data in partition_data]
     label_list = [data['y'] for data in partition_data]
-    if isinstance(partition_data[0]['x'], dict):
-        data = reduce(lambda dict1, dict2: combine_dict(dict1, dict2), data_list)
-    elif isinstance(partition_data[0]['x'], np.ndarray):
-        data = reduce(lambda array1, array2: np.concatenate((array1, array2), axis=0),
-                      data_list)
-    elif isinstance(partition_data[0]['x'], list):
-        data = reduce(lambda list1, list2: combine_list_tuple(list1, list2), data_list)
-        data = __convert_list(data, tuple_allowed, list_allowed)
-    elif isinstance(partition_data[0]['x'], tuple):
-        data = reduce(lambda tuple1, tuple2: combine_list_tuple(tuple1, tuple2), data_list)
-        data = __convert_tuple(data, tuple_allowed, list_allowed)
-    else:
-        raise ValueError("value of x should be a ndarray, a dict of ndarrays, a tuple of ndarrays"
-                         " or a list of ndarrays, please check")
 
-    if isinstance(partition_data[0]['y'], dict):
-        label = reduce(lambda dict1, dict2: combine_dict(dict1, dict2), label_list)
-    elif isinstance(partition_data[0]['y'], np.ndarray):
-        label = reduce(lambda array1, array2: np.concatenate((array1, array2), axis=0),
-                       label_list)
-    elif isinstance(partition_data[0]['y'], list):
-        label = reduce(lambda list1, list2: combine_list_tuple(list1, list2), data_list)
-        label = __convert_list(label, tuple_allowed, list_allowed)
-    elif isinstance(partition_data[0]['y'], tuple):
-        label = reduce(lambda tuple1, tuple2: combine_list_tuple(tuple1, tuple2), data_list)
-        label = __convert_tuple(label, tuple_allowed, list_allowed)
-    else:
-        raise ValueError("value of x should be a ndarray, a dict of ndarrays, a tuple of ndarrays"
-                         " or a list of ndarrays, please check")
+    data = check_type_and_combine(data_list)
+    label = check_type_and_combine(label_list)
 
     return data, label
 
