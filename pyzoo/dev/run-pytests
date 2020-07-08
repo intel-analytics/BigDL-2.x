@@ -91,6 +91,14 @@ else
         exit $exit_status_3
     fi
 
+    echo "Running Orca TF estimator tests"
+    python -m pytest -v ../test/zoo/orca/learn/spark/
+    exit_status_3=$?
+    if [ $exit_status_3 -ne 0 ];
+    then
+        exit $exit_status_3
+    fi
+
     echo "Running other tests"
     python -m pytest -v ../test/ --ignore=../test/zoo/pipeline/utils/test_utils.py \
        --ignore=../test/zoo/automl/ \
