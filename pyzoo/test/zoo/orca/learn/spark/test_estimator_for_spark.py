@@ -244,7 +244,9 @@ class TestEstimatorForGraph(TestCase):
         result = est.evaluate(df, batch_size=4, feature_cols=['user', 'item'], labels_cols=['label'])
         print(result)
 
-        predictions = est.predict(df, batch_size=4,feature_cols=['user', 'item']).collect()
+        prediction_df = est.predict(df, batch_size=4,feature_cols=['user', 'item'])
+        assert 'prediction' in prediction_df.columns
+        predictions = prediction_df.collect()
         assert len(predictions) == 10
 
     def test_estimator_graph_dataframe_exception(self):

@@ -22,7 +22,7 @@ from zoo.tfpark.utils import evaluate_metrics
 from zoo.tfpark import TFOptimizer, TFNet, ZooOptimizer
 from zoo.tfpark import KerasModel
 from zoo.util import nest
-from zoo.orca.learn.tf.utils import to_dataset
+from zoo.orca.learn.tf.utils import to_dataset, convert_predict_to_dataframe
 
 
 class Estimator(object):
@@ -160,7 +160,11 @@ class TFOptimizerWrapper(Estimator):
         flat_inputs = nest.flatten(self.inputs)
         flat_outputs = nest.flatten(self.outputs)
         tfnet = TFNet.from_session(sess=self.sess, inputs=flat_inputs, outputs=flat_outputs)
-        return tfnet.predict(dataset)
+        predicted_rdd = tfnet.predict(dataset)
+        if isinstance(data, DataFrame):
+            return convert_predict_to_dataframe(data, predicted_rdd)
+        else:
+            return predicted_rdd
 
     def evaluate(self, data, batch_size=32,
                  feature_cols=None,
@@ -243,7 +247,12 @@ class TFKerasWrapper(Estimator):
                               shuffle=False
                               )
 
-        return self.model.predict(dataset, batch_size)
+        predicted_rdd = self.model.predict(dataset, batch_size)
+        if isinstance(data, DataFrame):
+            return convert_predict_to_dataframe(data, predicted_rdd)
+        else:
+            return predicted_rdd
+
 
     def evaluate(self, data, batch_size=4,
                  feature_cols=None,
