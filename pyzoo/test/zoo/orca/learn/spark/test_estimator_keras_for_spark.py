@@ -19,10 +19,9 @@ from unittest import TestCase
 
 import tensorflow as tf
 
-import zoo.orca.data.pandas
-from zoo.orca.data.tf.data import Dataset
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo.common.nncontext import *
+import zoo.orca.data.pandas
 
 
 class TestEstimatorForKeras(TestCase):
@@ -183,14 +182,9 @@ class TestEstimatorForKeras(TestCase):
         sqlcontext = SQLContext(sc)
         file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
         df = sqlcontext.read.csv(file_path, header=True, inferSchema=True)
-        from pyspark.mllib.linalg import DenseVector, VectorUDT
-        # from pyspark.sql.types import *
-        from pyspark.sql.functions import udf
-
-        reshape = udf(lambda x: DenseVector(np.array(x).reshape([-1, 1])), VectorUDT())
-        df = df.withColumn('user', reshape(df['user']))\
-            .withColumn('item', reshape(df['item']))
-        df_value = df.collect()
+        from pyspark.sql.functions import array
+        df = df.withColumn('user', array('user')) \
+            .withColumn('item', array('item'))
 
         est = Estimator.from_keras(keras_model=model)
         est.fit(data=df,
@@ -201,9 +195,9 @@ class TestEstimatorForKeras(TestCase):
                 validation_data=df)
 
         eval_result = est.evaluate(df, feature_cols=['user', 'item'], labels_cols=['label'])
-        assert 'accuracy' in eval_result
+        assert 'acc Top1Accuracy' in eval_result
 
-        predictions = est.predict(batch_size=4,feature_cols=['user', 'item']).collect()
+        predictions = est.predict(df, batch_size=4,feature_cols=['user', 'item']).collect()
         assert len(predictions) == 10
 
     def test_estimator_keras_dataframe_no_fit(self):
@@ -212,13 +206,16 @@ class TestEstimatorForKeras(TestCase):
         sqlcontext = SQLContext(sc)
         file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
         df = sqlcontext.read.csv(file_path, header=True, inferSchema=True)
+        from pyspark.sql.functions import array
+        df = df.withColumn('user', array('user')) \
+            .withColumn('item', array('item'))
 
         est = Estimator.from_keras(keras_model=model)
 
         eval_result = est.evaluate(df, feature_cols=['user', 'item'], labels_cols=['label'])
-        assert 'accuracy' in eval_result
+        assert 'acc Top1Accuracy' in eval_result
 
-        predictions = est.predict(batch_size=4, feature_cols=['user', 'item']).collect()
+        predictions = est.predict(df, batch_size=4, feature_cols=['user', 'item']).collect()
         assert len(predictions) == 10
 
 
