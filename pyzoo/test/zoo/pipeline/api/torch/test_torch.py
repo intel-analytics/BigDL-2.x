@@ -83,6 +83,7 @@ class TestPytorch(TestCase):
 
         torch_model = SimpleTorchModel()
         az_model = TorchModel.from_pytorch(torch_model)
+        az_model.training()
 
         weights = az_model.get_weights()
         weights[0][0] = 1.0
