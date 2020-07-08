@@ -106,6 +106,32 @@ class TestZouwuModelForecast(ZooTestCase):
         target_value = np.random.rand(300, 24)
         model.evaluate(x=None, target_value=target_value, metric=['mse'])
 
+    def test_forecast_tcmf_xshards(self):
+        from zoo.zouwu.model.forecast import TCMFForecaster
+        import zoo.orca.data.pandas
+        import os.path
+
+        resource_path = os.path.join(os.path.split(__file__)[0],
+                                     "../resources/zouwu/tcmf_random_data.csv")
+
+        def preprocessing(df):
+            idx = df.index.values
+            data = np.concatenate((np.expand_dims(idx, axis=1), df.to_numpy()), axis=1)
+            return data
+
+        model = TCMFForecaster(max_y_iterations=1,
+                               init_FX_epoch=1,
+                               max_FX_epoch=1,
+                               max_TCN_epoch=1,
+                               alt_iters=2)
+        shard = zoo.orca.data.pandas.read_csv(resource_path, parse_dates=[1])
+        shard = shard.transform_shard(preprocessing)
+        model.fit(shard)
+        yhat_shard = model.predict(x=None, horizon=24)
+        yhat_list = yhat_shard.collect()
+        yhat = np.concatenate(yhat_list, axis=0)
+        assert yhat.shape == (300, 24)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

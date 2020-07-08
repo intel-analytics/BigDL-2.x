@@ -20,9 +20,10 @@ from zoo.automl.model.MTNet_keras import MTNetKeras as MTNetKerasModel
 from zoo.automl.model.VanillaLSTM import VanillaLSTM as LSTMKerasModel
 from zoo.tfpark import KerasModel as TFParkKerasModel
 from zoo.automl.model import TCMF
-from zoo.orca.data.shard import SparkXShards, SharedValue
+from zoo.orca.data import SparkXShards, SharedValue
 
 import tensorflow as tf
+import numpy as np
 
 
 class Forecaster(metaclass=ABCMeta):
@@ -63,8 +64,7 @@ class TCMFForecaster(Forecaster):
                  init_FX_epoch=100,
                  max_FX_epoch=300,
                  max_TCN_epoch=300,
-                 alt_iters=10,
-                 loaded_model=None):
+                 alt_iters=10):
         """
         Initialize
         :param vbsize: int, default is 128.
@@ -116,36 +116,33 @@ class TCMFForecaster(Forecaster):
         :param alt_iters: int, default is 10.
             Number of iterations while alternate training.
         """
-        if loaded_model is None:
-            self.internal = None
-            self.config = {
-                "vbsize": vbsize,
-                "hbsize": hbsize,
-                "num_channels_X": num_channels_X,
-                "num_channels_Y": num_channels_Y,
-                "kernel_size": kernel_size,
-                "dropout": dropout,
-                "rank": rank,
-                "kernel_size_Y": kernel_size_Y,
-                "learning_rate": learning_rate,
-                "val_len": val_len,
-                "normalize": normalize,
-                "start_date": start_date,
-                "freq": freq,
-                "covariates": covariates,
-                "use_time": use_time,
-                "dti": dti,
-                "svd": svd,
-                "period": period,
-                "max_y_iterations": max_y_iterations,
-                "init_FX_epoch": init_FX_epoch,
-                "max_FX_epoch": max_FX_epoch,
-                "max_TCN_epoch": max_TCN_epoch,
-                "alt_iters": alt_iters,
-            }
-            self.model = self._build()
-        else:
-            self.internal = loaded_model
+        self.internal = None
+        self.config = {
+            "vbsize": vbsize,
+            "hbsize": hbsize,
+            "num_channels_X": num_channels_X,
+            "num_channels_Y": num_channels_Y,
+            "kernel_size": kernel_size,
+            "dropout": dropout,
+            "rank": rank,
+            "kernel_size_Y": kernel_size_Y,
+            "learning_rate": learning_rate,
+            "val_len": val_len,
+            "normalize": normalize,
+            "start_date": start_date,
+            "freq": freq,
+            "covariates": covariates,
+            "use_time": use_time,
+            "dti": dti,
+            "svd": svd,
+            "period": period,
+            "max_y_iterations": max_y_iterations,
+            "init_FX_epoch": init_FX_epoch,
+            "max_FX_epoch": max_FX_epoch,
+            "max_TCN_epoch": max_TCN_epoch,
+            "alt_iters": alt_iters,
+        }
+        self.model = self._build()
 
     def _build(self):
         self.internal = TCMF()
@@ -173,13 +170,18 @@ class TCMFForecaster(Forecaster):
             return [cid_arr, tcmf]
 
         if isinstance(x, SparkXShards):
-            model_shared_value = SharedValue(self.internal)
-            self.internal = x.transform_shard(orca_train_model, model_shared_value, incremental)
-        else:
+            if x._get_class_name() == "numpy.ndarray":
+                model_shared_value = SharedValue(self.internal)
+                self.internal = x.transform_shard(orca_train_model, model_shared_value, incremental)
+            else:
+                raise ValueError("value of x should be a ndarray or a xShards of ndarray")
+        elif isinstance(x, np.ndarray):
             if incremental:
                 self.internal.fit_incremental(x)
             else:
                 self.internal.fit_eval(x)
+        else:
+            raise ValueError("value of x should be a ndarray or a xShards of ndarray")
 
     def evaluate(self,
                  target_value,
@@ -211,7 +213,6 @@ class TCMFForecaster(Forecaster):
         :return:
         """
         def orca_predict(data, horizon=24):
-            import numpy as np
             cid_arr = data[0]
             tcmf = data[1]
             predict_results = tcmf.predict(x=None, horizon=horizon)
@@ -231,9 +232,10 @@ class TCMFForecaster(Forecaster):
     @classmethod
     def load(cls, path, minPartitions=None):
         loaded_model_shards = SparkXShards.load_pickle(path, minPartitions=minPartitions)
-        return TCMFForecaster(loaded_model=loaded_model_shards)
+        loaded_model = TCMFForecaster()
+        loaded_model.internal = loaded_model_shards
+        return loaded_model
         # TODO: single node
-
 
 
 class TFParkForecaster(TFParkKerasModel, Forecaster, metaclass=ABCMeta):
