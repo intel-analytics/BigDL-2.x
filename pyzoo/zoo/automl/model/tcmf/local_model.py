@@ -55,7 +55,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 from torch.nn.utils import weight_norm
 
-from zoo.automl.model.tcmf.data_loader import data_loader
+from zoo.automl.model.tcmf.data_loader import DataLoader
 from zoo.automl.model.tcmf.time import TimeCovariates
 
 import logging
@@ -160,7 +160,7 @@ class TemporalBlock(nn.Module):
         return self.relu(out + res)
 
 
-class TemporalBlock_last(nn.Module):
+class TemporalBlockLast(nn.Module):
     def __init__(
         self,
         n_inputs,
@@ -172,7 +172,7 @@ class TemporalBlock_last(nn.Module):
         dropout=0.2,
         init=True,
     ):
-        super(TemporalBlock_last, self).__init__()
+        super(TemporalBlockLast, self).__init__()
         self.kernel_size = kernel_size
         self.conv1 = weight_norm(
             nn.Conv1d(
@@ -257,7 +257,7 @@ class TemporalConvNet(nn.Module):
             out_channels = num_channels[i]
             if i == num_levels - 1:
                 layers += [
-                    TemporalBlock_last(
+                    TemporalBlockLast(
                         in_channels,
                         out_channels,
                         kernel_size,
@@ -395,7 +395,7 @@ class LocalModel(object):
 
         self.seq = self.seq.float()
 
-        self.D = data_loader(
+        self.D = DataLoader(
             Ymat=self.Ymat,
             vbsize=vbsize,
             hbsize=hbsize,

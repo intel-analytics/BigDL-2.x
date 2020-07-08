@@ -54,8 +54,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 
-from zoo.automl.model.tcmf.data_loader import data_loader
-from zoo.automl.model.tcmf.LocalModel import TemporalConvNet, LocalModel
+from zoo.automl.model.tcmf.data_loader import DataLoader
+from zoo.automl.model.tcmf.local_model import TemporalConvNet, LocalModel
 from zoo.automl.model.tcmf.time import TimeCovariates
 
 import copy
@@ -552,7 +552,7 @@ class DeepGLO(object):
             self.X = X.float()
             self.F = F.float()
 
-        self.D = data_loader(
+        self.D = DataLoader(
             Ymat=self.Ymat,
             vbsize=self.vbsize,
             hbsize=self.hbsize,
