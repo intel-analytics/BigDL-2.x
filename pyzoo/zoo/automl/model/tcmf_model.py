@@ -138,7 +138,7 @@ class TCMF(BaseModel):
             raise Exception("Needs to call fit_eval or restore first before calling predict")
         out = self.model.predict_horizon(
             future=horizon,
-            bsize=8000,
+            bsize=90,
             normalize=False,
         )
         return out[:, -horizon::]
