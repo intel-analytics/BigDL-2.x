@@ -390,12 +390,10 @@ class DeepGLO(object):
             last_hindex = self.D.hindex
             inp, out, vindex, hindex = self.D.next_batch()
 
-            if iter_count % mod >= 0:
-                l1 = self.step_factF_loss(inp, out, last_vindex, last_hindex, reg=reg_F)
-                l_F = l_F + [l1.cpu().item()]
-            if iter_count % mod >= 0:
-                l1 = self.step_factX_loss(inp, out, last_vindex, last_hindex, reg=reg_X)
-                l_X = l_X + [l1.cpu().item()]
+            step_l_F = self.step_factF_loss(inp, out, last_vindex, last_hindex, reg=reg_F)
+            l_F = l_F + [step_l_F.cpu().item()]
+            step_l_X = self.step_factX_loss(inp, out, last_vindex, last_hindex, reg=reg_X)
+            l_X = l_X + [step_l_X.cpu().item()]
             if seed is False and iter_count % mod == 1:
                 l2 = self.step_temporal_loss_X(inp, last_vindex, last_hindex)
                 l_X_temporal = l_X_temporal + [l2.cpu().item()]
