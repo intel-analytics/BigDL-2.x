@@ -34,7 +34,7 @@ class Estimator(object):
     log_interval should be an integer, specifying the interval for logging throughput and metrics
     information (if any) during the training process.
     You can call create_config to directly create it.
-    You can specify "seed" in config to set random seed.
+    You can specify "seed" in config to set random seed for weight initialization.
     You can specify "init" in extra_config to set model initializer for gluon models.
 
     :param model_creator: A function that takes config as argument and returns an MXNet model.
