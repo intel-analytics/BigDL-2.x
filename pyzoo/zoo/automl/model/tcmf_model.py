@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from abc import ABC
 
-from zoo.automl.model.tcmf.DeepGLO import *
+from zoo.automl.model.tcmf import DeepGLO
 
 from zoo.automl.common.metrics import Evaluator
-import pandas as pd
 from zoo.automl.model.abstract import BaseModel
-from zoo.automl.common.util import save_config
 
 
 class TCMF(BaseModel):

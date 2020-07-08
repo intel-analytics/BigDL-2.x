@@ -47,29 +47,16 @@
 
 from __future__ import print_function
 import torch
-import h5py
 import numpy as np
-from scipy.io import loadmat
-from torch.nn.utils import weight_norm
+import pandas as pd
 
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
-
-# import matplotlib
 from torch.autograd import Variable
-import sys
 
-import itertools
-import torch.nn.functional as F
-import copy
-import os
-import gc
-
-from zoo.automl.model.tcmf.data_loader import *
-from zoo.automl.model.tcmf.LocalModel import *
-
-from sklearn.decomposition import NMF
+from zoo.automl.model.tcmf.data_loader import data_loader
+from zoo.automl.model.tcmf.LocalModel import TemporalConvNet, LocalModel
+from zoo.automl.model.tcmf.time import TimeCovariates
 
 import copy
 
@@ -80,8 +67,6 @@ import pickle
 np.random.seed(111)
 torch.manual_seed(111)
 random.seed(111)
-
-import logging
 
 
 def get_model(A, y, lamb=0):

@@ -45,36 +45,25 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import torch
-import h5py
-import numpy as np
-from scipy.io import loadmat
-from torch.nn.utils import weight_norm
+import pickle
+import random
 
+import numpy as np
+import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
-
-# import matplotlib
 from torch.autograd import Variable
+from torch.nn.utils import weight_norm
 
+from zoo.automl.model.tcmf.data_loader import data_loader
+from zoo.automl.model.tcmf.time import TimeCovariates
 
-import itertools
-import torch.nn.functional as F
-
-
-from zoo.automl.model.tcmf.data_loader import *
-from zoo.automl.model.tcmf.time import *
-
-import random
-import pickle
+import logging
 
 np.random.seed(111)
 torch.manual_seed(111)
 random.seed(111)
 
-
-import logging
 logger = logging.getLogger(__name__)
 
 
