@@ -76,8 +76,11 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
       RedisUtils.checkMemory(jedis, 0.6, 0.5)
 
     }
-    val lastModified = FileUtils.getLastModified(params.modelDir)
-    if (FileUtils.checkStop() || FileUtils.checkModified(params.modelDir, lastModified)) {
+//    logger.info(s"checking update, model dir is ${params.modelDir}, " +
+//      s"last mod is ${params.lastModified.toString}, " +
+//      s"result is ${FileUtils.checkModified(params.modelDir, params.lastModified).toString}")
+    if (FileUtils.checkStop() || FileUtils.checkModified(params.modelDir, params.lastModified)) {
+
       isRunning = false
     }
 //    val end = System.nanoTime()

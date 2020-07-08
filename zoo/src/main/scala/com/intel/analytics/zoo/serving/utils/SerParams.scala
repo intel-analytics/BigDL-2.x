@@ -26,5 +26,6 @@ class SerParams(helper: ClusterServingHelper) extends Serializable {
   val dataShape = helper.dataShape
   val modelType = helper.modelType
   val modelDir = helper.modelDir
+  val lastModified = FileUtils.getLastModified(helper.modelDir)
   val model = helper.loadInferenceModel()
 }
