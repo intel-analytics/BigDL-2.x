@@ -687,7 +687,8 @@ class DeepGLO(object):
             while last_step + future - (period - 1) > last_step + 1:
                 period += self.period
             # The last coordinate is not used.
-            ycovs[:, 1, period - 1: -1:] = self.Ymat[:, last_step - rg: last_step]
+            ycovs[:, 1, period - 1::] = self.Ymat[
+                                        :, last_step - rg: last_step + future - (period - 1)]
 
         Y = self.Yseq.predict_future(
             data_in=self.Ymat[ind, last_step - rg: last_step],
