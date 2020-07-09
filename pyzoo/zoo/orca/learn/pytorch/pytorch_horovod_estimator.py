@@ -176,6 +176,8 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
         self.initialization_hook = initialization_hook
         self.config = {} if config is None else config
 
+        worker_config = self.config.copy()
+
         self.param = dict(
             model_creator=self.model_creator,
             data_creator=self.data_creator,
@@ -183,7 +185,8 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
             loss_creator=self.loss_creator,
             scheduler_creator=self.scheduler_creator,
             training_operator_cls=self.training_operator_cls,
-            scheduler_step_freq=self.scheduler_step_freq)
+            scheduler_step_freq=self.scheduler_step_freq,
+            config=worker_config)
         super().__init__(RayContext.get(), worker_cls=TorchWorker, worker_param=self.param)
 
         def setup_pytorch():
