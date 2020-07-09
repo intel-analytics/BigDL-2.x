@@ -171,7 +171,7 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
     this
   }
 
-  protected var extraParams: Array[Tensor[Float]] = null
+  protected var extraParams: Array[Tensor[Float]] = Array()
   override def getExtraParameter(): Array[Tensor[Float]] = {
     if (loaded) {
       val getExtraParamCode =
