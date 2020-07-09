@@ -46,22 +46,7 @@ except ImportError:
 
 
 class TorchRunner:
-    """Manages a PyTorch model for training.
-
-    Args:
-        model_creator (dict -> Model(s)): see torch_trainer.py
-        data_creator (dict -> Iterable(s)): see torch_trainer.py.
-        optimizer_creator ((models, dict) -> optimizers): see torch_trainer.py.
-        loss_creator (torch.nn.*Loss class | dict -> loss):
-            see torch_trainer.py.
-        scheduler_creator ((optimizers, dict) -> scheduler): see
-            torch_trainer.py.
-        training_operator_cls: see torch_trainer.py
-        config (dict): see torch_trainer.py.
-        use_fp16 (bool): see torch_trainer.py.
-        apex_args (dict|None): see torch_trainer.py.
-        scheduler_step_freq (str): see torch_trainer.py.
-    """
+    """Manages a PyTorch model for training."""
 
     def __init__(self,
                  model_creator,
@@ -71,8 +56,9 @@ class TorchRunner:
                  scheduler_creator=None,
                  training_operator_cls=None,
                  config=None,
+                 serialize_data_creation=True,
                  use_tqdm=False,
-                 scheduler_step_freq="batch"):
+                 scheduler_step_freq=None):
         self.model_creator = model_creator
         self.optimizer_creator = optimizer_creator
         self.loss_creator = loss_creator
@@ -89,6 +75,8 @@ class TorchRunner:
         self.schedulers = None
         self.train_loader = None
         self.validation_loader = None
+        self.training_operator = None
+        self.serialize_data_creation = serialize_data_creation
         self.use_tqdm = use_tqdm
         self.scheduler_step_freq = scheduler_step_freq
 
@@ -107,17 +95,15 @@ class TorchRunner:
 
     def _initialize_dataloaders(self):
         logger.debug("Instantiating dataloaders.")
-        # When creating loaders, a filelock will be used to ensure no
-        # race conditions in data downloading among different workers.
-        with FileLock(os.path.join(tempfile.gettempdir(), ".ray_data.lock")):
+        loaders = None
+        if self.serialize_data_creation:
+            logger.debug("Serializing the dataloading process.")
+            with FileLock(
+                    os.path.join(tempfile.gettempdir(), ".raydata.lock")):
+                loaders = self.data_creator(self.config)
+        else:
             loaders = self.data_creator(self.config)
-            train_loader, val_loader = self._validate_loaders(loaders)
-            if not isinstance(train_loader, torch.utils.data.DataLoader):
-                logger.warning(
-                    "TorchTrainer data_creator return values are no longer "
-                    "wrapped as DataLoaders. Users must return DataLoader(s) "
-                    "in data_creator. This warning will be removed in "
-                    "a future version of Ray.")
+        train_loader, val_loader = self._validate_loaders(loaders)
 
         self.train_loader, self.validation_loader = train_loader, val_loader
 
@@ -131,9 +117,6 @@ class TorchRunner:
         else:
             self.criterion = self.loss_creator(self.config)
 
-        if torch.cuda.is_available() and hasattr(self.criterion, "cuda"):
-            self.criterion = self.criterion.cuda()
-
     def _create_schedulers_if_available(self):
         # Learning rate schedules are optional.
         if not self.scheduler_creator:
@@ -141,10 +124,57 @@ class TorchRunner:
         self.schedulers = self.scheduler_creator(self.given_optimizers,
                                                  self.config)
 
-        if not isinstance(self.schedulers, collections.Iterable):
+        if not isinstance(self.schedulers, Iterable):
             self.schedulers = [self.schedulers]
 
-    def train_epoch(self, data, num_steps=None, profile=False, info=None):
+    def setup_components(self):
+        """Runs the creator functions without any distributed coordination."""
+        logger.debug("Loading data.")
+        if self.data_creator and callable(self.data_creator):
+            self._initialize_dataloaders()
+
+        logger.debug("Creating model")
+        self.models = self.model_creator(self.config)
+        if not isinstance(self.models, Iterable):
+            self.models = [self.models]
+        assert all(isinstance(model, nn.Module) for model in self.models), (
+            "All models must be PyTorch models: {}.".format(self.models))
+
+        logger.debug("Creating optimizer.")
+        self.optimizers = self.optimizer_creator(self.given_models,
+                                                 self.config)
+        if not isinstance(self.optimizers, Iterable):
+            self.optimizers = [self.optimizers]
+
+        self._create_schedulers_if_available()
+        self._create_loss()
+
+    def setup_operator(self):
+        """Create the training operator."""
+        self.training_operator = self.training_operator_cls(
+            self.config,
+            models=self.models,
+            optimizers=self.optimizers,
+            criterion=self.criterion,
+            train_loader=self.train_loader,
+            validation_loader=self.validation_loader,
+            world_rank=0,
+            schedulers=self.schedulers,
+            use_tqdm=self.use_tqdm)
+
+    def get_node_ip(self):
+        """Returns the IP address of the current node."""
+        return ray.services.get_node_ip_address()
+
+    def find_free_port(self):
+        """Finds a free port on the current node."""
+        return utils.find_free_port()
+
+    def train_epoch(self,
+                    num_steps=None,
+                    profile=False,
+                    info=None,
+                    iterator=None):
         """Runs a training epoch and updates the model parameters."""
         logger.debug("Begin Training Step {}".format(self.epochs + 1))
         info = info or {}
@@ -155,19 +185,18 @@ class TorchRunner:
             SCHEDULER_STEP: self.scheduler_step_freq
         })
         with self.timers.record("train_epoch"):
-            if data:
-                from zoo.orca.data.shard import RayPartition
-                assert isinstance(data, RayPartition)
-                data, label = get_data_label(data.get_data())
-                dataset = torch.utils.data.TensorDataset(data, label)
-                train_data_iter = torch.utils.data.DataLoader(dataset,
-                                                              batch_size=self.config["batch_size"],
-                                                              shuffle=True)
-                iterator = train_data_iter
+            if iterator is None:
+                iterator = iter(self.train_loader)
             else:
-                iterator = self.train_loader
+                # Dataset will provide us with a list of tuples but we
+                # need two lists.
+                def format_batch(batch):
+                    features, targets = zip(*batch)
+                    return torch.cat(features), torch.cat(targets)
+
+                iterator = map(format_batch, iterator)
             if num_steps:
-                iterator = itertools.islice(iter(self.train_loader), num_steps)
+                iterator = itertools.islice(iterator, num_steps)
             train_stats = self.training_operator.train_epoch(iterator, info)
 
         self.epochs += 1
@@ -204,19 +233,12 @@ class TorchRunner:
             self.timers.disable()
         self.training_operator._set_timers(self.timers)
 
-    def _get_model_state_dicts(self):
-        return [model.state_dict() for model in self.models]
-
-    def _set_model_state_dicts(self, models_state_dicts):
-        for model, state_dict in zip(self.models, models_state_dicts):
-            model.load_state_dict(state_dict)
-
     def state_dict(self):
         """Returns the state of the runner."""
         state = {
             "epoch": self.epochs,
             "operator": self.training_operator.state_dict(),
-            "models": self._get_model_state_dicts(),
+            "models": [model.state_dict() for model in self.models],
             "optimizers": [opt.state_dict() for opt in self.optimizers]
         }
         if self.schedulers:
@@ -229,7 +251,8 @@ class TorchRunner:
 
     def load_state_dict(self, state):
         """Sets the state of the model."""
-        self._set_model_state_dicts(state["models"])
+        for model, state_dict in zip(self.models, state["models"]):
+            model.load_state_dict(state_dict)
         for optimizer, state_dict in zip(self.optimizers, state["optimizers"]):
             optimizer.load_state_dict(state_dict)
         if self.schedulers:

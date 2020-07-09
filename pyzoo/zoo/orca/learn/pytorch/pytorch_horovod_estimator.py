@@ -117,7 +117,6 @@ class TorchWorker(HorovodWorker, TorchRunner):
             validation_loader=self.validation_loader,
             world_rank=hvd.rank(),
             schedulers=self.schedulers,
-            use_fp16=self.use_fp16,
             use_tqdm=self.use_tqdm)
 
     def load_state_stream(self, byte_obj):
