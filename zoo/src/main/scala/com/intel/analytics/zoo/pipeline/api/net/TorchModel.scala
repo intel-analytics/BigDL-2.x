@@ -51,6 +51,9 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
          |${getName()} = CloudPickleSerializer.loads(CloudPickleSerializer, by)
          |""".stripMargin
     PythonInterpreter.exec(loadModelCode)
+    if (extraParams.length != 0) {
+      setExtraParam(extraParams)
+    }
     loaded = true
     true
   }
@@ -204,9 +207,8 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
            |    ${idxName} += 1
            |""".stripMargin
       PythonInterpreter.exec(setExtraParamCode)
-    } else {
-      this.extraParams = extraParams
     }
+    this.extraParams = extraParams
     this
   }
 

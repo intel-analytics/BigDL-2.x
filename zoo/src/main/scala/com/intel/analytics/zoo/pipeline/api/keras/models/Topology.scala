@@ -1427,7 +1427,6 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
       ): Map[ValidationMethod[T], ValidationResult] = {
     val validateRDD = validationSet.toDistributed().data(train = false)
     val sc = validateRDD.sparkContext
-    val cachedModels = InternalOptimizerUtil.getModelCacheFromOptimizer(this)
 
     val coresPerNode = EngineRef.getCoreNumber()
     val _subModelNumber = EngineRef.getEngineType() match {
@@ -1454,7 +1453,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
       }
     } else {
       val bcVMethods = validateRDD.sparkContext.broadcast(validationMethod)
-      val bcModel = ModelBroadcast[T]().broadcast(sc, model)
+      val bcModel = ModelBroadcast[T]().broadcast(sc, _model)
       validateRDD.mapPartitions{_ =>
         Iterator.single(Cache[T](
           Array.tabulate(_subModelNumber)(_ => bcModel.value()),
