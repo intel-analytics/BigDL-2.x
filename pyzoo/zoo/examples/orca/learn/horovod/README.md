@@ -14,9 +14,9 @@ if you haven't already.
 Then create a conda an environment and install the following packages:
 
 ```bash
-conda install pytorch==1.4.0 torchvision==0.5.0 cpuonly -c pytorch
-conda install cmake==3.14.0
-conda install gxx_linux-64==7.3.0
+conda install -y pytorch==1.4.0 torchvision==0.5.0 cpuonly -c pytorch
+conda install -y cmake==3.14.0
+conda install -y gxx_linux-64==7.3.0
 HOROVOD_WITH_PYTORCH=1; HOROVOD_WITH_GLOO=1; pip install --no-cache-dir horovod==0.19.1
 pip install analytics-zoo[ray]
 ```

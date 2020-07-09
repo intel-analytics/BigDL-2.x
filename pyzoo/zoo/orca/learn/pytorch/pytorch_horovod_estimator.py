@@ -22,9 +22,8 @@ import numpy as np
 import numbers
 import io
 
-from ray.util.sgd.torch import TrainingOperator
-from ray.util.sgd.utils import check_for_failure
-from ray.util.sgd.torch.torch_runner import TorchRunner
+from zoo.orca.learn.pytorch.training_operator import TrainingOperator
+from zoo.orca.learn.pytorch.torch_runner import TorchRunner
 from torch.utils.data import DataLoader, IterableDataset
 from torch.utils.data.distributed import DistributedSampler
 from zoo.orca.learn.horovod.horovod_ray_runner import HorovodRayRunner, HorovodWorker
@@ -71,7 +70,6 @@ class TorchWorker(HorovodWorker, TorchRunner):
             raise ValueError("only support one optimizer for now")
 
         self._create_schedulers_if_available()
-        self._try_setup_apex()
         self._create_loss()
 
     def _wrap_dataloaders(self):
@@ -140,13 +138,38 @@ class TorchWorker(HorovodWorker, TorchRunner):
         return self.load_state_dict(state_dict)
 
 
+from ray.exceptions import RayActorError
+
+
+def check_for_failure(remote_values):
+    """Checks remote values for any that returned and failed.
+
+    Args:
+        remote_values (list): List of object IDs representing functions
+            that may fail in the middle of execution. For example, running
+            a SGD training loop in multiple parallel actor calls.
+
+    Returns:
+        Bool for success in executing given remote tasks.
+    """
+    unfinished = remote_values
+    try:
+        while len(unfinished) > 0:
+            finished, unfinished = ray.wait(unfinished)
+            finished = ray.get(finished)
+        return True
+    except RayActorError as exc:
+        logger.exception(str(exc))
+    return False
+
+
 class PyTorchHorovodEstimator(HorovodRayRunner):
     def __init__(
             self,
             *,
             model_creator,
-            data_creator,
             optimizer_creator,
+            data_creator,
             loss_creator=None,
             scheduler_creator=None,
             training_operator_cls=TrainingOperator,
@@ -250,9 +273,10 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
     def _train_epoch(self, num_steps=None, profile=False, info=None):
         params = dict(num_steps=num_steps, profile=profile, info=info)
 
-        remote_worker_stats = [
-            w.train_epoch.remote(**params) for w in self.remote_workers
-        ]
+        remote_worker_stats = []
+        for i, w in enumerate(self.remote_workers):
+            stats = w.train_epoch.remote(**params)
+            remote_worker_stats.append(stats)
 
         success = check_for_failure(remote_worker_stats)
         if success:
