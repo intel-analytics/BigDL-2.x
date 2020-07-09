@@ -17,8 +17,9 @@ Here are the commands that work on for us on ubuntu 16.04. The exact steps may v
 
 ```bash
 conda install -y pytorch==1.4.0 torchvision==0.5.0 cpuonly -c pytorch
-conda install -y cmake==3.14.0
-conda install -y gxx_linux-64==7.3.0
+conda install -y cmake==3.16.0 -c conda-forge
+conda install cxx-compiler==1.0 -c conda-forge
+conda install openmpi
 HOROVOD_WITH_PYTORCH=1; HOROVOD_WITH_GLOO=1; pip install --no-cache-dir horovod==0.19.1
 pip install analytics-zoo[ray]
 ```
@@ -31,5 +32,3 @@ After creating and activating the conda environment, you can run this example by
 python simple_horovod_pytorch.py --hadoop_conf $your_hadoop_conf_directory --conda_name $your_conda_env_name
 
 ```
-
-
