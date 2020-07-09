@@ -146,7 +146,7 @@ def ray_partition_get_data_label(partition_data, tuple_allowed=True, list_allowe
     def check_type_and_combine(data_list):
         if isinstance(data_list[0], dict):
             return reduce(lambda dict1, dict2: combine_dict(dict1, dict2), data_list)
-        elif isinstance(data_list[0]['x'], np.ndarray):
+        elif isinstance(data_list[0], np.ndarray):
             return reduce(lambda array1, array2: np.concatenate((array1, array2), axis=0),
                           data_list)
         elif isinstance(data_list[0], list):
