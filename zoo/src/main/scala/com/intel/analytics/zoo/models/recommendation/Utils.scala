@@ -154,7 +154,6 @@ object Utils {
     }
   }
 
-
   /**
    * convert a row to tensor given column feature information of WideAndDeep model.
    *
@@ -220,10 +219,10 @@ object Utils {
     (0 to contCol - 1).map(i =>{
       val data= r.getAs[Any](columnInfo.continuousCols(i))
       val td = data match {
-        case n:Int => n.toFloat
-        case n:Long => n.toFloat
-        case n:Double => n.toFloat
-        case n:Float => n
+        case n: Int => n.toFloat
+        case n: Long => n.toFloat
+        case n: Double => n.toFloat
+        case n: Float => n
       }
       contTensor.setValue(i + 1, td)
     })
