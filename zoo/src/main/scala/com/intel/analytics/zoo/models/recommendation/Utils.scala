@@ -217,8 +217,16 @@ object Utils {
 
 
     val contTensor = Tensor[Float](contCol).fill(0)
-    (0 to contCol - 1).map(i =>
-      contTensor.setValue(i + 1, r.getAs[Int](columnInfo.continuousCols(i)).toFloat))
+    (0 to contCol - 1).map(i =>{
+      val data= r.getAs[Any](columnInfo.continuousCols(i))
+      val td = data match {
+        case n:Int => n.toFloat
+        case n:Long => n.toFloat
+        case n:Double => n.toFloat
+        case n:Float => n
+      }
+      contTensor.setValue(i + 1, td)
+    })
 
     (indCol > 0, embCol > 0, contCol > 0) match {
 
