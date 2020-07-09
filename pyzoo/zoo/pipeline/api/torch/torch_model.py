@@ -69,7 +69,7 @@ class TorchModel(Layer):
         w = torch.Tensor(new_weight[0])
         torch.nn.utils.vector_to_parameters(w, m.parameters())
 
-        # set running mean and running var
+        # set named buffers
         new_extra_params = callZooFunc(self.bigdl_type, "getModuleExtraParameters", self.value)
         if len(new_extra_params) != 0:
             idx = 0
