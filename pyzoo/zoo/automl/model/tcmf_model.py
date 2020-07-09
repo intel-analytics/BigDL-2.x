@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from abc import ABC
 
-from zoo.automl.model.tcmf.DeepGLO import *
-
+from zoo.automl.model.tcmf import DeepGLO
 from zoo.automl.common.metrics import Evaluator
-import pandas as pd
 from zoo.automl.model.abstract import BaseModel
-from zoo.automl.common.util import save_config
+import pickle
 
 
 class TCMF(BaseModel):
@@ -138,7 +135,7 @@ class TCMF(BaseModel):
             raise Exception("Needs to call fit_eval or restore first before calling predict")
         out = self.model.predict_horizon(
             future=horizon,
-            bsize=8000,
+            bsize=90,
             normalize=False,
         )
         return out[:, -horizon::]

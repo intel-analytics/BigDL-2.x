@@ -81,9 +81,9 @@ class CorrectnessSpec extends FlatSpec with Matchers {
   }
 
 
-  def runServingBg(): Future[Unit] = Future {
-    ClusterServing.run(configPath, redisHost, redisPort)
-  }
+//  def runServingBg(): Future[Unit] = Future {
+//    ClusterServing.run(configPath, redisHost, redisPort)
+//  }
   "Cluster Serving result" should "be correct" in {
 
     ("wget -O /tmp/serving_val.tar http://10.239.45.10:8081" +

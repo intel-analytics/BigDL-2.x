@@ -16,16 +16,12 @@
 
 package com.intel.analytics.zoo.serving.utils
 
-class SerParams(helper: ClusterServingHelper) extends Serializable {
-  var redisHost = helper.redisHost
-  var redisPort = helper.redisPort.toInt
-  val coreNum = helper.coreNum
-  val filter = helper.filter
-  val chwFlag = helper.chwFlag
-  val inferenceMode = helper.inferenceMode
-  val dataShape = helper.dataShape
-  val modelType = helper.modelType
-  val modelDir = helper.modelDir
-  val lastModified = FileUtils.getLastModified(helper.modelDir)
-  val model = helper.loadInferenceModel()
+import java.nio.file.{FileSystems, Path}
+import java.nio.file.StandardWatchEventKinds._
+
+object Watcher {
+  def checkUpdate(path: Path): Unit = {
+    val watcher = FileSystems.getDefault.newWatchService()
+    val key = path.register(watcher, ENTRY_CREATE, ENTRY_MODIFY)
+  }
 }

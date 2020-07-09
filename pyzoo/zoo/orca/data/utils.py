@@ -76,13 +76,13 @@ def extract_one_path(file_path, file_type, env):
 def check_type_and_convert(data, tuple_allowed=True, list_allowed=True):
     def check_and_convert(convert_data):
         if isinstance(convert_data, np.ndarray):
-            return [x]
+            return [convert_data]
         elif isinstance(convert_data, tuple) and \
                 all([isinstance(di, np.ndarray) for di in convert_data]):
-            return __convert_tuple(x, tuple_allowed, list_allowed)
+            return __convert_tuple(convert_data, tuple_allowed, list_allowed)
         elif isinstance(convert_data, list) and \
                 all([isinstance(di, np.ndarray) for di in convert_data]):
-            return __convert_list(x, tuple_allowed, list_allowed)
+            return __convert_list(convert_data, tuple_allowed, list_allowed)
         else:
             raise ValueError("value of x and y should be a ndarray, "
                              "a tuple of ndarrays or a list of ndarrays")
