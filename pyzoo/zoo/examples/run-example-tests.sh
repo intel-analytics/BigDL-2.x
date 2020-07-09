@@ -277,7 +277,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 2g \
     --executor-memory 2g \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/keras/keras_dataset.py 1
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/keras/keras_dataset.py 5
 
 
 echo "start example test for TFPark keras keras_ndarray 4"
@@ -285,7 +285,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 2g \
     --executor-memory 2g \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/keras/keras_ndarray.py 1
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/keras/keras_ndarray.py 5
 
 
 echo "start example test for TFPark estimator estimator_dataset 5"
@@ -596,6 +596,27 @@ now=$(date "+%s")
 time15=$((now-start))
 echo "#15 attention time used:$time15 seconds"
 
+echo "#16 start example test for orca data"
+if [ -f analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv ]
+then
+    echo "analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv already exists"
+else
+    wget -nv $FTP_URI/analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv \
+    -P analytics-zoo-data/data/NAB/nyc_taxi/
+fi
+#timer
+start=$(date "+%s")
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
+    --master ${MASTER} \
+    --driver-memory 2g \
+    --executor-memory 2g \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/data/spark_pandas.py \
+    -f analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv
+
+now=$(date "+%s")
+time16=$((now-start))
+
+
 echo "#1 textclassification time used: $time1 seconds"
 echo "#2 autograd time used: $time2 seconds"
 echo "#3 image-classification time used: $time3 seconds"
@@ -611,3 +632,4 @@ echo "#12 vnni/openvino time used: $time12 seconds"
 echo "#13 streaming Object Detection time used: $time13 seconds"
 echo "#14 streaming text classification time used: $time14 seconds"
 echo "#15 attention time used:$time15 seconds"
+echo "#16 orca data time used:$time16 seconds"
