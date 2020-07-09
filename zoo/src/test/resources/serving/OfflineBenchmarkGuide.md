@@ -1,7 +1,6 @@
-## offline benchmark guide
+## Offline benchmark guide
 
 This page contains the guide for you to run offline benchmark.
-
 
 ##### STEP 1:
 ```
@@ -19,12 +18,8 @@ cluster-serving-init
 ```
 The script will generate `config.yaml` and `zoo.jar` in the current path.
 
-If these files already exist, skip STEP 3.
-
-
 ##### STEP 4:
-Put the model in any of your local directory, and set model:/path/to/dir in `config.yaml`.
-
+Put the model in your local directory, and set model:/path/to/dir in `config.yaml`.
 
 ##### STEP 5:
 ```
