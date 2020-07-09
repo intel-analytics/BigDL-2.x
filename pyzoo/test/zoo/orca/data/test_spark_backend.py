@@ -91,7 +91,7 @@ class TestSparkBackend(TestCase):
         assert isinstance(df, pd.Series)
 
     def test_index_col(self):
-        file_path = os.path.join(self.resource_path, "orca/data/csv")
+        file_path = os.path.join(self.resource_path, "orca/data/csv/morgage1.csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path, index_col="ID")
         data = data_shard.collect()
         df = data[0]

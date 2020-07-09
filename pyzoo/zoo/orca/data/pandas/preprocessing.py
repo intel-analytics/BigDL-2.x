@@ -202,7 +202,7 @@ def read_file_spark(file_path, file_type, **kwargs):
                     pd_df = pd_df.iloc[:, 0]
                 if index_col:
                     pd_df = pd_df.set_index(index_col)
-                yield pd_df
+                return [pd_df]
 
             return f
 
