@@ -503,6 +503,7 @@ class DeepGLO(object):
     def append_new_y(self,
                   Ymat_new):
         # prepare internal data structures
+        # update self.Ymat, self.end_index, self.D
 
         # normalize the incremented Ymat if needed
         if self.normalize:
@@ -528,7 +529,6 @@ class DeepGLO(object):
         self.end_index = self.end_index + T_added
         self.D.end_index = self.end_index
 
-        # initialize the newly added X
         n, T = self.Ymat.shape
         t0 = self.end_index + 1
         if t0 > T:
@@ -536,6 +536,11 @@ class DeepGLO(object):
 
         # fix data loader with the new Ymat
         self.D.reset_Ymat(self.Ymat)
+
+        # update Yseq.covariates
+        end_index_old = self.end_index - T_added
+        new_covariates = self.get_future_time_covs(T_added, end_index_old)
+        self.Yseq.covariates = np.hstack([self.Yseq.covariates[:, :end_index_old], new_covariates])
 
     def inject_new(self,
                    Ymat,
@@ -545,7 +550,13 @@ class DeepGLO(object):
         n, T = self.Ymat.shape
         rank, XT = self.X.shape
         future = T-XT
-        Xn = self.recover_future_X(last_step=XT, future=future)
+        Xn = self.recover_future_X(
+            last_step=XT,
+            future=future,
+            num_epochs=100000,
+            alpha=0.3,
+            vanilla=True,
+        )
         self.X = torch.cat([self.X, Xn], dim=1)
 
     def train_all_models(
@@ -553,7 +564,6 @@ class DeepGLO(object):
             max_FX_epoch=300, max_TCN_epoch=300
     ):
         self.end_index = Ymat.shape[1]
-
         if self.normalize:
             self.s = np.std(Ymat[:, 0:self.end_index], axis=1)
             # self.s[self.s == 0] = 1.0
@@ -654,14 +664,18 @@ class DeepGLO(object):
             covariates = self.covariates
         return covariates
 
-    def get_prediction_time_covs(self, rg, horizon, last_step):
-        covs_past = self.Yseq.covariates[:, last_step - rg: last_step]
+    def get_future_time_covs(self, horizon, last_step):
         if self.freq[0].isalpha():
             freq = "1" + self.freq
         else:
             freq = self.freq
         future_start_date = pd.Timestamp(self.start_date) + pd.Timedelta(freq) * last_step
         covs_future = self.get_time_covs(start_date=future_start_date, num_ts=horizon)
+        return covs_future
+
+    def get_prediction_time_covs(self, rg, horizon, last_step):
+        covs_past = self.Yseq.covariates[:, last_step - rg: last_step]
+        covs_future = self.get_future_time_covs(horizon, last_step)
         covs = np.concatenate([covs_past, covs_future], axis=1)
         return covs
 
