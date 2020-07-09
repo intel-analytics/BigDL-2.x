@@ -268,7 +268,6 @@ class DeepGLO(object):
 
     def predict_future(self, model, inp, future=10, bsize=90):
         n = inp.size(0)
-        inp = inp
         ids = np.arange(0, n, bsize)
         ids = list(ids) + [n]
         out = self.predict_future_batch(model, inp[ids[0]: ids[1], :, :], future)
