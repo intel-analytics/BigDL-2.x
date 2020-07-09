@@ -101,11 +101,20 @@ class TestZouwuModelForecast(ZooTestCase):
                                alt_iters=2)
         horizon = np.random.randint(1, 50)
         x = np.random.rand(300, 480)
+        # full retrain
         model.fit(x)
+        # predict
         yhat = model.predict(x=None, horizon=horizon)
         assert yhat.shape == (300, horizon)
+        # evaluate
         target_value = np.random.rand(300, horizon)
-        model.evaluate(x=None, target_value=target_value, metric=['mse'])
+        eval_result = model.evaluate(x=None, target_value=target_value, metric=['mse'])
+        # inject new data
+        x_new = np.random.rand(300, horizon)
+        model.fit(x_new, incremental=True)  # 1st time
+        # model.fit(x_new, incremental=True)  # 2nd time
+        yhat = model.predict(x=None, horizon=horizon)
+        assert yhat.shape == (300, horizon)
 
 
 if __name__ == "__main__":

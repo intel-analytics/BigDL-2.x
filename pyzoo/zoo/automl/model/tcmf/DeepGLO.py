@@ -500,6 +500,54 @@ class DeepGLO(object):
 
         self.Yseq.train_model(early_stop=early_stop, tenacity=tenacity)
 
+    def append_new_y(self,
+                  Ymat_new):
+        # prepare internal data structures
+
+        # normalize the incremented Ymat if needed
+        if self.normalize:
+            # TODO check the correctness of this part
+            # self.s = np.std(Ymat[:, 0:end_index], axis=1)
+            # self.s[self.s == 0] = 1.0
+            # self.s += 1.0
+            # self.m = np.mean(Ymat[:, 0:end_index], axis=1)
+            Ymat_new = (Ymat_new - self.m[:, None]) / self.s[:, None]
+            # self.mini = np.abs(np.min(self.Ymat))
+            Ymat_new = Ymat_new + self.mini
+        else:
+            pass
+
+        # append the new Ymat onto the original,
+        # reset start/end index and Ymat in D
+        if self.Ymat.shape[0] != Ymat_new.shape[0]:
+            raise RuntimeError("incremented no. of time series should have the same dimension as original")
+        n, T_added = Ymat_new.shape
+        # TODO how to deal with the Ymat data after end_index?
+        #  we don't support this case now. end_index + val_len = T
+        self.Ymat = np.concatenate((self.Ymat[:, : self.end_index], Ymat_new), axis=1)
+        self.end_index = self.end_index + T_added
+        self.D.end_index = self.end_index
+
+        # initialize the newly added X
+        n, T = self.Ymat.shape
+        t0 = self.end_index + 1
+        if t0 > T:
+            self.Ymat = np.hstack([self.Ymat, self.Ymat[:, -1].reshape(-1, 1)])
+
+        # fix data loader with the new Ymat
+        self.D.reset_Ymat(self.Ymat)
+
+    def inject_new(self,
+                   Ymat,
+                   ):
+
+        self.append_new_y(Ymat)
+        n, T = self.Ymat.shape
+        rank, XT = self.X.shape
+        future = T-XT
+        Xn = self.recover_future_X(last_step=XT, future=future)
+        self.X = torch.cat([self.X, Xn], dim=1)
+
     def train_all_models(
         self, Ymat, init_epochs=100, alt_iters=10, y_iters=200, tenacity=7, mod=5,
             max_FX_epoch=300, max_TCN_epoch=300

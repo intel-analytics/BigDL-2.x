@@ -118,10 +118,9 @@ class TCMF(BaseModel):
         :param config: fitting parameters
         :return:
         """
-        # TODO incrementally train models
-        pass
+        self.model.inject_new(x)
 
-    def predict(self, x=None, horizon=24, mc=False, ):
+    def predict(self, x=None, horizon=24, mc=False):
         """
         Predict horizon time-points ahead the input x in fit_eval
         :param x: We don't support input x currently.

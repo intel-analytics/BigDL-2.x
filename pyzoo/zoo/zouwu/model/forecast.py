@@ -152,8 +152,6 @@ class TCMFForecaster(Forecaster):
         """
         fit the model
         :param x: the input
-        :param covariates: the global covariates
-        :param lr: learning rate
         :param incremental: if the fit is incremental
         :return:
         """
