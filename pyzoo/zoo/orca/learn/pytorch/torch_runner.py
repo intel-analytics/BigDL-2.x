@@ -35,8 +35,6 @@ from zoo.orca.learn.pytorch.constants import SCHEDULER_STEP, NUM_STEPS
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.pytorch import utils
 
-from zoo.orca.learn.utils import get_data_label
-
 logger = logging.getLogger(__name__)
 
 try:
