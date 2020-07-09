@@ -39,6 +39,7 @@ def _is_multiple(component):
     """Checks if a component (optimizer, model, etc) is not singular."""
     return isinstance(component, collections.Iterable) and len(component) > 1
 
+
 class TrainingOperator:
     """Abstract class for custom training or validation loops.
 

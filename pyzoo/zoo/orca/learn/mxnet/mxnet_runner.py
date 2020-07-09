@@ -228,4 +228,3 @@ class MXNetRunner(object):
             from zoo.orca.learn.mxnet.utils import find_free_port
             self.port = find_free_port()
         return self.port
-
