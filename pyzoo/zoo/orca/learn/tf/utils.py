@@ -148,15 +148,18 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
 
 
 def convert_predict_to_dataframe(df, prediction_rdd):
+    from pyspark.sql import Row
     from pyspark.sql.types import StructType, StructField, FloatType
     from pyspark.ml.linalg import VectorUDT, Vectors
 
     def combine(pair):
         # scalar
         if len(pair[1].shape) == 0:
-            return dict(list(pair[0].asDict().items()) + [("prediction", float(pair[1].tolist()))]), FloatType()
+            row = Row(*([pair[0][col] for col in pair[0].__fields__] + [float(pair[1].item(0))]))
+            return row, FloatType()
         else:
-            return dict(list(pair[0].asDict().items()) + [("prediction", Vectors.dense(pair[1]))]), VectorUDT()
+            row = Row(*([pair[0][col] for col in pair[0].__fields__] + [Vectors.dense(pair[1])]))
+            return row, VectorUDT()
 
     combined_rdd = df.rdd.zip(prediction_rdd).map(combine)
     type = combined_rdd.map(lambda data: data[1]).first()
