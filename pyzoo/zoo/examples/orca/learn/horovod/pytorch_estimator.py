@@ -21,6 +21,7 @@ import torch
 import torch.nn as nn
 
 from zoo import init_spark_on_yarn, init_spark_on_local
+from zoo.orca.data import SparkXShards
 from zoo.ray import RayContext
 from zoo.orca.learn.pytorch.pytorch_horovod_estimator import PyTorchHorovodEstimator
 
@@ -74,10 +75,10 @@ def data_creator(config):
     return train_loader, validation_loader
 
 
-def train_example():
+def train_example(data_shards):
+
     trainer1 = PyTorchHorovodEstimator(
         model_creator=model_creator,
-        data_creator=data_creator,
         optimizer_creator=optimizer_creator,
         loss_creator=nn.MSELoss,
         scheduler_creator=scheduler_creator,
@@ -89,7 +90,7 @@ def train_example():
 
     # train 5 epochs
     for i in range(5):
-        stats = trainer1.train()
+        stats = trainer1.train(data_shards)
         print(stats)
 
 
@@ -143,4 +144,7 @@ if __name__ == "__main__":
             sc=sc,
             object_store_memory=args.object_store_memory)
         ray_ctx.init()
-    train_example()
+
+    rdd = sc.parallelize(range(10)).mapPartitions(lambda x: [{"x": np.random.randn(10, 1).astype(np.float32), "y": np.random.randn(10).astype(np.float32)}])
+    data_shards = SparkXShards(rdd)
+    train_example(data_shards)

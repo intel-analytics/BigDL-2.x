@@ -92,7 +92,7 @@ class TorchWorker(HorovodWorker, TorchRunner):
             }
             return DataLoader(**data_loader_args)
 
-        self.train_loader = with_sampler(self.train_loader)
+        self.train_loader = with_sampler(self.train_loader) if self.train_loader else None
 
         if self.validation_loader:
             self.validation_loader = with_sampler(self.validation_loader)
@@ -168,7 +168,7 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
             *,
             model_creator,
             optimizer_creator,
-            data_creator,
+            data_creator=None,
             loss_creator=None,
             scheduler_creator=None,
             training_operator_cls=TrainingOperator,
@@ -177,8 +177,7 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
             scheduler_step_freq="batch"
     ):
 
-        if not (callable(model_creator) and callable(optimizer_creator)
-                and callable(data_creator)):
+        if not (callable(model_creator) and callable(optimizer_creator)):
             raise ValueError(
                 "Must provide a callable model_creator, optimizer_creator, "
                 "and data_creator.")
@@ -242,12 +241,14 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
         ray.get(remote_operator_setups)
 
     def train(self,
+              data_shards=None,
               num_steps=None,
               profile=False,
               reduce_results=True,
               info=None):
 
         success, worker_stats = self._train_epoch(
+            data_shards=data_shards,
             num_steps=num_steps, profile=profile, info=info)
 
         if reduce_results:
@@ -269,12 +270,28 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
                 stats[stat_key] = worker_stats[0][stat_key]
         return stats
 
-    def _train_epoch(self, num_steps=None, profile=False, info=None):
+    def _train_epoch(self, data_shards=None, num_steps=None, profile=False, info=None):
         params = dict(num_steps=num_steps, profile=profile, info=info)
 
+        if data_shards is not None:
+            from zoo.orca.data import SparkXShards
+            assert isinstance(data_shards, SparkXShards),\
+                "data_shards must be a instance of SparkXShards," \
+                " but got data_shards:{}".format(type(data_shards))
+            if data_shards.num_partitions() != self.num_nodes:
+                data_shards = data_shards.repartition(self.num_nodes)
+            data_shards = data_shards.to_ray()
+            self.remote_workers = data_shards.colocate_actors(self.remote_workers)
+            train_data_list = data_shards.get_partitions()
+
+        else:
+            train_data_list = None
         remote_worker_stats = []
         for i, w in enumerate(self.remote_workers):
-            stats = w.train_epoch.remote(**params)
+            if train_data_list:
+                stats = w.train_epoch.remote(data=train_data_list[i], **params)
+            else:
+                stats = w.train_epoch.remote(**params)
             remote_worker_stats.append(stats)
 
         success = check_for_failure(remote_worker_stats)

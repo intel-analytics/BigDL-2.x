@@ -34,6 +34,8 @@ import ray
 from zoo.orca.learn.pytorch.constants import SCHEDULER_STEP, NUM_STEPS
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.pytorch import utils
+from zoo.orca.learn.utils import get_data_label
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +44,43 @@ try:
 except ImportError:
     from collections import Iterable
 
+
+class NdarrayDataset(torch.utils.data.Dataset):
+
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+        assert isinstance(self.x, list) or isinstance(self.x, np.ndarray),\
+            "x must be a list or a single ndarray, but got x: {}".format(type(x))
+
+        assert isinstance(self.y, list) or isinstance(self.y, np.ndarray),\
+            "y must be a list or a single ndarray, but got y: {}".format(type(y))
+
+    def __len__(self):
+        if isinstance(self.x, list):
+            return len(self.x[0])
+        else:
+            return len(self.x)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+        if isinstance(self.x, list):
+            result_x = []
+            for item in self.x:
+                result_x.append(item[idx])
+        else:
+            result_x = self.x[idx]
+
+        if isinstance(self.y, list):
+            result_y = []
+            for item in self.y:
+                result_y.append(item[idx])
+        else:
+            result_y = self.y[idx]
+
+        return result_x, result_y
 
 class TorchRunner:
     """Manages a PyTorch model for training."""
@@ -169,10 +208,10 @@ class TorchRunner:
         return utils.find_free_port()
 
     def train_epoch(self,
+                    data=None,
                     num_steps=None,
                     profile=False,
-                    info=None,
-                    iterator=None):
+                    info=None):
         """Runs a training epoch and updates the model parameters."""
         logger.debug("Begin Training Step {}".format(self.epochs + 1))
         info = info or {}
@@ -183,16 +222,14 @@ class TorchRunner:
             SCHEDULER_STEP: self.scheduler_step_freq
         })
         with self.timers.record("train_epoch"):
-            if iterator is None:
+            if data is None:
                 iterator = iter(self.train_loader)
             else:
-                # Dataset will provide us with a list of tuples but we
-                # need two lists.
-                def format_batch(batch):
-                    features, targets = zip(*batch)
-                    return torch.cat(features), torch.cat(targets)
-
-                iterator = map(format_batch, iterator)
+                data, label = get_data_label(data.get_data())
+                dataset = NdarrayDataset(x=data, y=label)
+                iterator = torch.utils.data.DataLoader(dataset,
+                                                       batch_size=self.config.get("batch_size", 1),
+                                                       shuffle=True)
             if num_steps:
                 iterator = itertools.islice(iterator, num_steps)
             train_stats = self.training_operator.train_epoch(iterator, info)
