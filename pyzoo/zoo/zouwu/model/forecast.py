@@ -19,7 +19,7 @@ from abc import ABCMeta, abstractmethod
 from zoo.automl.model.MTNet_keras import MTNetKeras as MTNetKerasModel
 from zoo.automl.model.VanillaLSTM import VanillaLSTM as LSTMKerasModel
 from zoo.tfpark import KerasModel as TFParkKerasModel
-from zoo.automl.model import TCMF
+from zoo.automl.model import TCMFSingleNodeModelWrapper, TCMFDistributedModelWrapper
 from zoo.orca.data import SparkXShards, SharedValue
 
 import tensorflow as tf
@@ -142,46 +142,31 @@ class TCMFForecaster(Forecaster):
             "max_TCN_epoch": max_TCN_epoch,
             "alt_iters": alt_iters,
         }
-        self.model = self._build()
-
-    def _build(self):
-        self.internal = TCMF()
-        return self.internal._build(**self.config)
 
     def fit(self,
-            x,
-            incremental=False):
+            x, id_as_first_col=True, incremental=False):
         """
         fit the model
         :param x: the input for fit. Only ndarray and SparkXShards of ndarray are supported
-        :param covariates: the global covariates
-        :param lr: learning rate
+        :param id_as_first_col: if the id is the first column of x
         :param incremental: if the fit is incremental
         :return:
         """
-        def orca_train_model(np, shared_model, incremental):
-            tcmf = shared_model.value
-            cid_arr = np[:, 0]
-            train_data = np[:, 1:]
-            if incremental:
-                tcmf.fit_incremental(train_data)
-            else:
-                tcmf.fit_eval(train_data)
-            return [cid_arr, tcmf]
+        if incremental:
+            raise NotImplementedError
 
-        if isinstance(x, SparkXShards):
-            if x._get_class_name() == "numpy.ndarray":
-                model_shared_value = SharedValue(self.internal)
-                self.internal = x.transform_shard(orca_train_model, model_shared_value, incremental)
+        if self.internal is None:
+            if isinstance(x, SparkXShards):
+                self.internal = TCMFDistributedModelWrapper(self.config)
+                self.internal.fit(x, id_as_first_col, incremental)
+            elif isinstance(x, np.ndarray):
+                self.internal = TCMFSingleNodeModelWrapper(self.config)
+                self.internal.fit(x, id_as_first_col, incremental)
             else:
-                raise ValueError("value of x should be a ndarray or a xShards of ndarray")
-        elif isinstance(x, np.ndarray):
-            if incremental:
-                self.internal.fit_incremental(x)
-            else:
-                self.internal.fit_eval(x)
+                raise ValueError("value of x should be a ndarray or an xShards of ndarray")
         else:
-            raise ValueError("value of x should be a ndarray or a xShards of ndarray")
+            raise Exception("This model has been full trained, "
+                            "you can only run full training once.")
 
     def evaluate(self,
                  target_value,
@@ -212,32 +197,34 @@ class TCMFForecaster(Forecaster):
         :param covariates: the global covariates
         :return:
         """
-        def orca_predict(data, horizon=24):
-            cid_arr = data[0]
-            tcmf = data[1]
-            predict_results = tcmf.predict(x=None, horizon=horizon)
-            results = np.concatenate([np.expand_dims(cid_arr, axis=1), predict_results], axis=1)
-            return results
-
-        if isinstance(self.internal, SparkXShards):
-            return self.internal.transform_shard(orca_predict, horizon)
+        if self.internal is None:
+            raise Exception("You should run fit before call predict()")
         else:
-            return self.internal.predict(x=x, horizon=horizon)
+            self.internal.predict(x, horizon)
 
     def save(self, path):
-        if isinstance(self.internal, SparkXShards):
-            self.internal.save_pickle(path)
+        if self.internal is None:
+            raise Exception("You should run fit before call save()")
         else:
             self.internal.save(path)
+
+    def is_distributed(self):
+        if self.internal is None:
+            raise ValueError("You should run fit before call is_distributed()")
+        elif isinstance(self.internal, TCMFDistributedModelWrapper):
+            return True
+        else:
+            return False
 
     @classmethod
     def load(cls, path, distributed=False, minPartitions=None):
         loaded_model = TCMFForecaster()
         if distributed:
-            loaded_model_shards = SparkXShards.load_pickle(path, minPartitions=minPartitions)
-            loaded_model.internal = loaded_model_shards
+            loaded_model.internal = TCMFDistributedModelWrapper(loaded_model.config)
+            loaded_model.internal.load(path, minPartitions=minPartitions)
         else:
-            loaded_model.internal.restore(path)
+            loaded_model.internal = TCMFSingleNodeModelWrapper(loaded_model.config)
+            loaded_model.internal.load(path)
         return loaded_model
 
 

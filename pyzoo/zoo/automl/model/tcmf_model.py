@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from abc import ABC
+from abc import ABCMeta, abstractmethod
 
 from zoo.automl.model.tcmf.DeepGLO import *
 
 from zoo.automl.common.metrics import Evaluator
 import pandas as pd
 from zoo.automl.model.abstract import BaseModel
+from zoo.orca.data import SparkXShards, SharedValue
 from zoo.automl.common.util import save_config
 
 
@@ -186,3 +187,170 @@ class TCMF(BaseModel):
 
     def _get_required_parameters(self):
         return {}
+
+
+class ModelWrapper(metaclass=ABCMeta):
+    @abstractmethod
+    def fit(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def evaluate(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def predict(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def save(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def load(self, **kwargs):
+        pass
+
+
+class TCMFDistributedModelWrapper(ModelWrapper):
+
+    def __init__(self, config):
+        self.internal = None
+        self.config = config
+
+    def fit(self, x, id_as_first_col=True, incremental=False):
+        def orca_train_model(np, shared_config, incremental):
+            config = shared_config.value
+            tcmf = TCMF()
+            tcmf._build(**config)
+            cid_arr = np[:, 0]
+            train_data = np[:, 1:]
+            if incremental:
+                tcmf.fit_incremental(train_data)
+            else:
+                tcmf.fit_eval(train_data)
+            return [cid_arr, tcmf]
+
+        if not id_as_first_col:
+            raise Exception("id should be the first column of ndarray in xShards")
+
+        if isinstance(x, SparkXShards):
+            if x._get_class_name() == "numpy.ndarray":
+                config_shared_value = SharedValue(self.config)
+                self.internal = x.rdd.mapPartitions(orca_train_model,
+                                                    config_shared_value, incremental)
+            else:
+                raise ValueError("value of x should be an xShards of ndarray, "
+                                 "but is an xShards of " + x._get_class_name())
+        else:
+            raise ValueError("value of x should be an xShards of ndarray, but isn't an xShards")
+
+    def evaluate(self, x, y, metric=None):
+        """
+        Evaluate the model
+        :param x: input
+        :param y: target
+        :param metric:
+        :return: a list of metric evaluation results
+        """
+        raise NotImplementedError
+
+    def predict(self, x, horizon=24):
+        """
+        Prediction.
+        :param x: input
+        :return: result
+        """
+        def orca_predict(data, horizon=24):
+            cid_arr = data[0]
+            tcmf = data[1]
+            predict_results = tcmf.predict(x=None, horizon=horizon)
+            results = np.concatenate([np.expand_dims(cid_arr, axis=1), predict_results], axis=1)
+            return results
+
+        return self.internal.transform_shard(orca_predict, horizon)
+
+    def save(self, model_path):
+        """
+        save model to file.
+        :param model_path: the model file path to be saved to.
+        :param config_path: the config file path to be saved to.
+        :return:
+        """
+        if self.internal is not None:
+            self.internal.save_pickle(model_path)
+
+    def load(self, model_path, minPartitions=None):
+        """
+        restore model from model file and config.
+        :param model_path: the model file
+        :param config: the config
+        :return: the restored model
+        """
+        self.internal = SparkXShards.load_pickle(model_path, minPartitions=minPartitions)
+
+
+class TCMFSingleNodeModelWrapper(ModelWrapper):
+
+    def __init__(self, config):
+        self.internal = TCMF()
+        self.config = config
+        self.internal._build(**self.config)
+        self.id_arr = None
+
+    def fit(self, x, id_as_first_col=True, incremental=False):
+        if isinstance(x, np.ndarray):
+            if id_as_first_col:
+                self.id_arr = x[:, 0]
+                train_data = x[:, 1:]
+            else:
+                # TODO: add idx or not?
+                self.id_arr = np.arange(x.shape[0])
+                train_data = x
+
+            if incremental:
+                self.internal.fit_incremental(train_data)
+            else:
+                self.internal.fit_eval(train_data)
+        else:
+            raise ValueError("value of x should be a ndarray")
+
+    def evaluate(self, x, y, metric=None):
+        """
+        Evaluate the model
+        :param x: input
+        :param y: target
+        :param metric:
+        :return: a list of metric evaluation results
+        """
+        if isinstance(y, np.ndarray):
+            self.internal.evaluate(y=y, x=x, metrics=metric)
+        else:
+            raise ValueError("value of y should be a ndarray")
+
+    def predict(self, x, horizon=24):
+        """
+        Prediction.
+        :param x: input
+        :return: result
+        """
+        pred = self.internal.predict(x=x, horizon=horizon)
+        return np.concatenate([np.expand_dims(self.id_arr, axis=1), pred], axis=1)
+
+    def save(self, model_path):
+        """
+        save model to file.
+        :param model_path: the model file path to be saved to.
+        :param config_path: the config file path to be saved to.
+        :return:
+        """
+        self.internal.save(model_path)
+
+    def load(self, model_path):
+        """
+        restore model from model file and config.
+        :param model_path: the model file
+        :param config: the config
+        :return: the restored model
+        """
+        self.internal = TCMF()
+        self.internal.restore(model_path)
