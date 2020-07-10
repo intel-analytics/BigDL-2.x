@@ -576,6 +576,11 @@ class XGBRegressorModel private[zoo](val model: XGBoostRegressionModel) {
     this
   }
 
+  def setFeaturesCol(value: String): this.type = {
+    model.setFeaturesCol(value)
+    this
+  }
+
   def transform(dataset: DataFrame): DataFrame = {
     var output = model.transform(dataset)
     if(predictionCol != null) {
