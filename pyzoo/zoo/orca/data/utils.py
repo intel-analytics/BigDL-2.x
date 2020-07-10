@@ -44,7 +44,7 @@ def list_s3_file(file_path, env):
         return file_paths
 
 
-def extract_one_path(file_path, file_type, env):
+def extract_one_path(file_path, env):
     file_url_splits = file_path.split("://")
     prefix = file_url_splits[0]
     if prefix == "s3":
@@ -56,17 +56,13 @@ def extract_one_path(file_path, file_type, env):
             file_paths = [file_path]
         else:
             file_paths = get_file_list(file_path)
-    else:
-        if os.path.isfile(file_path):
-            file_paths = [file_path]
+    else:  # Local file path; could be a relative path.
+        from os.path import isfile, abspath, join
+        if isfile(file_path):
+            file_paths = [abspath(file_path)]
         else:
-            from os import listdir
-            from os.path import isfile, abspath, join, splitext
             # An error would be already raised here if the path is invalid.
-            file_paths = [abspath(join(file_path, file)) for file in listdir(file_path)]
-    # Only get json/csv files.
-    file_paths = [file for file in file_paths
-                  if os.path.isfile(file) and os.path.splitext(file)[1] == "." + file_type]
+            file_paths = [abspath(join(file_path, file)) for file in os.listdir(file_path)]
     return file_paths
 
 
