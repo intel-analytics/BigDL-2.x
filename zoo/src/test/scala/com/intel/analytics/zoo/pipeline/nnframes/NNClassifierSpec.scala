@@ -30,16 +30,17 @@ import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.feature.common._
 import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import ml.dmlc.xgboost4j.scala.spark.{XGBoostHelper, XGBoostRegressionModel, XGBoostRegressor}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.feature.{MinMaxScaler, VectorAssembler}
-import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
+import spire.random.Random
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.io.Path
@@ -410,7 +411,7 @@ class NNClassifierSpec extends ZooSpecHelper {
   }
 
   "XGBClassifierModel" should "work with sparse features" in {
-    val path = getClass.getClassLoader.getResource("XGBClassifier").getPath
+    val path = getClass.getClassLoader.getResource("XGBoost").getPath
     val filePath = path + "/test.csv"
     val modelPath = path + "/XGBClassifer.bin"
     val spark = SparkSession.builder().getOrCreate()
@@ -425,7 +426,7 @@ class NNClassifierSpec extends ZooSpecHelper {
   }
 
   "XGBClassifierModel" should "work with dense features" in {
-    val path = getClass.getClassLoader.getResource("XGBClassifier").getPath
+    val path = getClass.getClassLoader.getResource("XGBoost").getPath
     val filePath = path + "/iris.data"
     val modelPath = path + "/XGBClassifer.bin"
 
@@ -443,28 +444,30 @@ class NNClassifierSpec extends ZooSpecHelper {
     model.transform(df).count()
   }
 
-  "XGBRegressorModel" should "work" in {
-    val path = getClass.getClassLoader.getResource("XGBClassifier").getPath
-    val filePath = path + "/regressor.csv"
-    val modelPath = path + "/xgbregressor0.model"
-
+  "XGBRegressor" should "work" in {
     val spark = SparkSession.builder().getOrCreate()
-    val df = spark.read.format("csv")
-      .option("sep", ",")
-      .option("inferSchema", true)
-      .option("header", true)
-      .load(filePath)
+    import spark.implicits._
+
+    val df = Seq(
+      (1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 1.0f, 2.0f, 4.0f, 8.0f, 3.0f, 116.3668f),
+      (1.0f, 3.0f, 8.0f, 6.0f, 5.0f, 9.0f, 5.0f, 6.0f, 7.0f, 4.0f, 116.367f),
+      (2.0f, 1.0f, 5.0f, 7.0f, 6.0f, 7.0f, 4.0f, 1.0f, 2.0f, 3.0f, 116.367f),
+      (2.0f, 1.0f, 4.0f, 3.0f, 6.0f, 1.0f, 3.0f, 2.0f, 1.0f, 3.0f, 116.3668f)
+    ).toDF("f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "label")
 
     val vectorAssembler = new VectorAssembler()
-      .setInputCols(Array("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"))
-      .setOutputCol("features_vec")
-    val data = vectorAssembler.transform(df)
-    val asDense = udf((v: Vector) => v.toDense)
-    val xgbInput = data.withColumn("features", asDense(col("features_vec")))
+      .setInputCols(Array("f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10"))
+      .setOutputCol("features")
+    val assembledDf = vectorAssembler.transform(df).select("features", "label").cache()
 
-    val model = XGBRegressorModel.loadFromXGB(modelPath)
+    val xgbRf0 = new XGBRegressor()
+    val xgbRegressorModel0 = xgbRf0.fit(assembledDf)
+    val y0 = xgbRegressorModel0.transform(assembledDf)
 
-    model.transform(xgbInput).count()
+    xgbRegressorModel0.save("/tmp/test")
+    val model = XGBRegressorModel.load("/tmp/test")
+    val y0_0 = model.transform(assembledDf)
+    assert(y0_0.except(y0).count()==0)
   }
 }
 
