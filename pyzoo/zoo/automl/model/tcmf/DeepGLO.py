@@ -527,15 +527,11 @@ class DeepGLO(object):
         #  we don't support this case now. end_index + val_len = T
         self.Ymat = np.concatenate((self.Ymat[:, : self.end_index], Ymat_new), axis=1)
         self.end_index = self.end_index + T_added
-        self.D.end_index = self.end_index
 
         n, T = self.Ymat.shape
         t0 = self.end_index + 1
         if t0 > T:
             self.Ymat = np.hstack([self.Ymat, self.Ymat[:, -1].reshape(-1, 1)])
-
-        # fix data loader with the new Ymat
-        self.D.reset_Ymat(self.Ymat)
 
         # update Yseq.covariates
         end_index_old = self.end_index - T_added

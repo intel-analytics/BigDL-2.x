@@ -205,9 +205,3 @@ class DataLoader(object):
             inp = torch.cat((inp, ycovs), 1)
         out = out.transpose(0, 1).float()
         return inp, out, self.vindex, self.hindex
-
-    def reset_Ymat(self, Ymat):
-        self.Ymat = Ymat
-        n, T = self.Ymat.shape
-        if self.I.shape[0] != n:
-            self.I = np.array(range(n))
