@@ -86,6 +86,10 @@ def read_file_spark(file_path, file_type, **kwargs):
         spark = sqlContext.sparkSession
         # TODO: add S3 confidentials
 
+        # The following implementation is adapted from
+        # https://github.com/databricks/koalas/blob/master/databricks/koalas/namespace.py
+        # with some modifications.
+
         if "mangle_dupe_cols" in kwargs:
             assert kwargs["mangle_dupe_cols"], "mangle_dupe_cols can only be True"
             kwargs.pop("mangle_dupe_cols")
