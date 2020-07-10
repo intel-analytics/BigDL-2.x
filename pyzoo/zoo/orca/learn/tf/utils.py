@@ -22,11 +22,11 @@ from zoo.orca.data.tf.data import Dataset, TFDataDataset2
 
 
 def xshards_to_tf_dataset(data_shard,
-                           batch_size=-1, batch_per_thread=-1,
-                           validation_data_shard=None,
-                           hard_code_batch_size=False,
-                           sequential_order=False,
-                           shuffle=True):
+                          batch_size=-1, batch_per_thread=-1,
+                          validation_data_shard=None,
+                          hard_code_batch_size=False,
+                          sequential_order=False,
+                          shuffle=True):
     # todo data_shard.head ?
     import numpy as np
 
@@ -107,8 +107,8 @@ def xshards_to_tf_dataset(data_shard,
 
 
 def to_dataset(data, batch_size, batch_per_thread, validation_data,
-                feature_cols, labels_cols, hard_code_batch_size,
-                sequential_order, shuffle):
+               feature_cols, labels_cols, hard_code_batch_size,
+               sequential_order, shuffle):
     if validation_data:
         if isinstance(data, SparkXShards):
             assert isinstance(validation_data, SparkXShards), \
@@ -122,12 +122,12 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
 
     if isinstance(data, SparkXShards):
         dataset = xshards_to_tf_dataset(data,
-                                         batch_size,
-                                         batch_per_thread,
-                                         validation_data,
-                                         hard_code_batch_size=hard_code_batch_size,
-                                         sequential_order=sequential_order,
-                                         shuffle=shuffle)
+                                        batch_size,
+                                        batch_per_thread,
+                                        validation_data,
+                                        hard_code_batch_size=hard_code_batch_size,
+                                        sequential_order=sequential_order,
+                                        shuffle=shuffle)
     elif isinstance(data, Dataset):
         dataset = TFDataDataset2(data, batch_size=batch_size,
                                  batch_per_thread=batch_per_thread,

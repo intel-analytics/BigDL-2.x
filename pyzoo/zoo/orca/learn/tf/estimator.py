@@ -112,11 +112,11 @@ class TFOptimizerWrapper(Estimator):
                 "label columns is None; it should not be None in training"
 
         dataset = to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
-                              validation_data=validation_data,
-                              feature_cols=feature_cols, labels_cols=labels_cols,
-                              hard_code_batch_size = hard_code_batch_size,
-                              sequential_order=False, shuffle=True
-                              )
+                             validation_data=validation_data,
+                             feature_cols=feature_cols, labels_cols=labels_cols,
+                             hard_code_batch_size=hard_code_batch_size,
+                             sequential_order=False, shuffle=True
+                             )
 
         if feed_dict is not None:
             tensor_with_value = {key: (value, value) for key, value in feed_dict.items()}
@@ -150,12 +150,12 @@ class TFOptimizerWrapper(Estimator):
                 "feature columns is None; it should not be None in prediction"
 
         dataset = to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
-                              validation_data=None,
-                              feature_cols=feature_cols, labels_cols=None,
-                              hard_code_batch_size=hard_code_batch_size,
-                              sequential_order=True,
-                              shuffle=False
-                              )
+                             validation_data=None,
+                             feature_cols=feature_cols, labels_cols=None,
+                             hard_code_batch_size=hard_code_batch_size,
+                             sequential_order=True,
+                             shuffle=False
+                             )
 
         flat_inputs = nest.flatten(self.inputs)
         flat_outputs = nest.flatten(self.outputs)
@@ -182,12 +182,12 @@ class TFOptimizerWrapper(Estimator):
                 "label columns is None; it should not be None in evaluation"
 
         dataset = to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
-                              validation_data=None,
-                              feature_cols=feature_cols, labels_cols=labels_cols,
-                              hard_code_batch_size=hard_code_batch_size,
-                              sequential_order=True,
-                              shuffle=False
-                              )
+                             validation_data=None,
+                             feature_cols=feature_cols, labels_cols=labels_cols,
+                             hard_code_batch_size=hard_code_batch_size,
+                             sequential_order=True,
+                             shuffle=False
+                             )
 
         flat_inputs = nest.flatten(self.inputs)
         flat_labels = nest.flatten(self.labels)
@@ -219,11 +219,11 @@ class TFKerasWrapper(Estimator):
                 "label columns is None; it should not be None in training"
 
         dataset = to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
-                              validation_data=validation_data,
-                              feature_cols=feature_cols, labels_cols=labels_cols,
-                              hard_code_batch_size = hard_code_batch_size,
-                              sequential_order=False, shuffle=True
-                              )
+                             validation_data=validation_data,
+                             feature_cols=feature_cols, labels_cols=labels_cols,
+                             hard_code_batch_size=hard_code_batch_size,
+                             sequential_order=False, shuffle=True
+                             )
 
         self.model.fit(dataset, batch_size=batch_size, epochs=epochs,
                        session_config=session_config
@@ -240,19 +240,17 @@ class TFKerasWrapper(Estimator):
                 "feature columns is None; it should not be None in prediction"
 
         dataset = to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
-                              validation_data=None,
-                              feature_cols=feature_cols, labels_cols=None,
-                              hard_code_batch_size=hard_code_batch_size,
-                              sequential_order=True,
-                              shuffle=False
-                              )
+                             validation_data=None,
+                             feature_cols=feature_cols, labels_cols=None,
+                             hard_code_batch_size=hard_code_batch_size,
+                             sequential_order=True, shuffle=False
+                             )
 
         predicted_rdd = self.model.predict(dataset, batch_size)
         if isinstance(data, DataFrame):
             return convert_predict_to_dataframe(data, predicted_rdd)
         else:
             return predicted_rdd
-
 
     def evaluate(self, data, batch_size=4,
                  feature_cols=None,
@@ -267,11 +265,10 @@ class TFKerasWrapper(Estimator):
                 "label columns is None; it should not be None in evaluation"
 
         dataset = to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
-                              validation_data=None,
-                              feature_cols=feature_cols, labels_cols=labels_cols,
-                              hard_code_batch_size=hard_code_batch_size,
-                              sequential_order=True,
-                              shuffle=False
-                              )
+                             validation_data=None,
+                             feature_cols=feature_cols, labels_cols=labels_cols,
+                             hard_code_batch_size=hard_code_batch_size,
+                             sequential_order=True,shuffle=False
+                             )
 
         return self.model.evaluate(dataset, batch_per_thread=batch_size)
