@@ -502,29 +502,15 @@ class DeepGLO(object):
 
     def append_new_y(self,
                   Ymat_new):
-        # prepare internal data structures
-        # update self.Ymat, self.end_index, self.D
-
+        # update Yseq
         # normalize the incremented Ymat if needed
         if self.normalize:
-            # TODO check the correctness of this part
-            # self.s = np.std(Ymat[:, 0:end_index], axis=1)
-            # self.s[self.s == 0] = 1.0
-            # self.s += 1.0
-            # self.m = np.mean(Ymat[:, 0:end_index], axis=1)
             Ymat_new = (Ymat_new - self.m[:, None]) / self.s[:, None]
-            # self.mini = np.abs(np.min(self.Ymat))
             Ymat_new = Ymat_new + self.mini
-        else:
-            pass
 
-        # append the new Ymat onto the original,
-        # reset start/end index and Ymat in D
-        if self.Ymat.shape[0] != Ymat_new.shape[0]:
-            raise RuntimeError("incremented no. of time series should have the same dimension as original")
+        # append the new Ymat onto the original, note that self.end_index equals to the no.of time
+        # steps of the original.
         n, T_added = Ymat_new.shape
-        # TODO how to deal with the Ymat data after end_index?
-        #  we don't support this case now. end_index + val_len = T
         self.Ymat = np.concatenate((self.Ymat[:, : self.end_index], Ymat_new), axis=1)
         self.end_index = self.end_index + T_added
 
@@ -534,18 +520,20 @@ class DeepGLO(object):
             self.Ymat = np.hstack([self.Ymat, self.Ymat[:, -1].reshape(-1, 1)])
 
         # update Yseq.covariates
-        end_index_old = self.end_index - T_added
-        new_covariates = self.get_future_time_covs(T_added, end_index_old)
-        self.Yseq.covariates = np.hstack([self.Yseq.covariates[:, :end_index_old], new_covariates])
+        last_step = self.end_index - T_added
+        new_covariates = self.get_future_time_covs(T_added, last_step)
+        self.Yseq.covariates = np.hstack([self.Yseq.covariates[:, :last_step], new_covariates])
 
     def inject_new(self,
-                   Ymat,
+                   Ymat_new,
                    ):
-
-        self.append_new_y(Ymat)
+        if self.Ymat.shape[0] != Ymat_new.shape[0]:
+            raise ValueError("Expected incremental input with {} time series, got {} instead."
+                             .format(self.Ymat.shape[0], Ymat_new.shape[0]))
+        self.append_new_y(Ymat_new)
         n, T = self.Ymat.shape
         rank, XT = self.X.shape
-        future = T-XT
+        future = T - XT
         Xn = self.recover_future_X(
             last_step=XT,
             future=future,
