@@ -146,19 +146,25 @@ class TCMFForecaster(Forecaster):
         self.internal = TCMF()
         return self.internal._build(**self.config)
 
-    def fit(self,
-            x,
-            incremental=False):
+    def fit(self, x):
         """
-        fit the model
-        :param x: the input
-        :param incremental: if the fit is incremental
+        fit the model on x from scratch
+        :param x: 2-D numpy array in shape (n, T), where n is the number of target time series,
+            T is the number of time steps.
+            input data to be fitted.
         :return:
         """
-        if incremental:
-            self.internal.fit_incremental(x)
-        else:
-            self.internal.fit_eval(x)
+        self.internal.fit_eval(x)
+
+    def fit_incremental(self, x_incr):
+        """
+        incrementally fit the model. Note that we only incrementally fit X_seq (TCN in global model)
+        :param x_incr: 2-D numpy array in shape (n, T_incr), where n is the number of target time
+        series, T_incr is the number of time steps incremented.
+            incremental data to be fitted.
+        :return:
+        """
+        self.internal.fit_incremental(x_incr)
 
     def evaluate(self,
                  target_value,
@@ -180,13 +186,11 @@ class TCMFForecaster(Forecaster):
     def predict(self,
                 x=None,
                 horizon=24,
-                covariates=None,
                 ):
         """
         predict
         :param x: the input. We don't support input x directly
         :param horizon: horizon length to look forward.
-        :param covariates: the global covariates
         :return:
         """
         return self.internal.predict(x=x, horizon=horizon)

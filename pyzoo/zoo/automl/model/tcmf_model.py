@@ -115,7 +115,6 @@ class TCMF(BaseModel):
         """
         Incremental fitting given a pre-trained model.
         :param x: incremental data
-        :param config: fitting parameters
         :return:
         """
         self.model.inject_new(x)

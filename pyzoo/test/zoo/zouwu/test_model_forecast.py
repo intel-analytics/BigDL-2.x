@@ -111,7 +111,7 @@ class TestZouwuModelForecast(ZooTestCase):
         eval_result = model.evaluate(x=None, target_value=target_value, metric=['mse'])
         # inject new data
         x_new = np.random.rand(300, horizon)
-        model.fit(x_new, incremental=True)  # 1st time
+        model.fit_incremental(x_new)  # 1st time
         # model.fit(x_new, incremental=True)  # 2nd time
         yhat = model.predict(x=None, horizon=horizon)
         assert yhat.shape == (300, horizon)
