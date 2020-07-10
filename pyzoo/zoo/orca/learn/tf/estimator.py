@@ -39,6 +39,7 @@ class Estimator(object):
     @staticmethod
     def from_graph(*, inputs, outputs=None,
                    labels=None, loss=None, optimizer=None,
+                   clip_norm=None, clip_value=None,
                    metrics=None, updates=None,
                    sess=None, model_dir=None, backend="spark"):
         assert backend == "spark", "only spark backend is supported for now"
@@ -47,6 +48,8 @@ class Estimator(object):
                                   labels=labels,
                                   loss=loss,
                                   optimizer=optimizer,
+                                  clip_norm=clip_norm,
+                                  clip_value=clip_value,
                                   metrics=metrics, updates=updates,
                                   sess=sess,
                                   model_dir=model_dir
@@ -156,7 +159,7 @@ def _to_dataset(data, batch_size, batch_per_thread, validation_data=None):
 class TFOptimizerWrapper(Estimator):
 
     def __init__(self, *, inputs, outputs, labels, loss,
-                 optimizer,
+                 optimizer, clip_norm, clip_value,
                  metrics,
                  updates, sess,
                  model_dir
@@ -170,7 +173,20 @@ class TFOptimizerWrapper(Estimator):
                 "optimizer is of type {}, ".format(type(self.optimizer)) + \
                 "it should be an instance of tf.train.Optimizer"
             self.optimizer = ZooOptimizer(optimizer)
-            self.train_op = self.optimizer.minimize(self.loss)
+            if clip_norm or clip_value:
+                gvs = self.optimizer.compute_gradients(self.loss)
+                if clip_norm:
+                    gvs = [(tf.clip_by_norm(g_v[0], clip_norm), g_v[1]) for g_v in gvs]
+                if clip_value:
+                    if isinstance(clip_value, tuple):
+                        gvs = [(tf.clip_by_value(g_v[0], -clip_value, clip_value), g_v[1]) for g_v in gvs]
+                    if isinstance(clip_value, (int, float)):
+                        gvs = [(tf.clip_by_value(g_v[0], -clip_value, clip_value), g_v[1]) for g_v in gvs]
+                    else:
+                        raise Exception("clip_value should be a tuple or one number")
+                self.train_op = self.optimizer.apply_gradients(gvs)
+            else:
+                self.train_op = self.optimizer.minimize(self.loss)
         else:
             self.optimizer = None
             self.train_op = None
