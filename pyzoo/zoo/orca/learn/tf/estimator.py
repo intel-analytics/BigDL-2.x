@@ -268,7 +268,7 @@ class TFKerasWrapper(Estimator):
                              validation_data=None,
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=hard_code_batch_size,
-                             sequential_order=True,shuffle=False
+                             sequential_order=True, shuffle=False
                              )
 
         return self.model.evaluate(dataset, batch_per_thread=batch_size)
