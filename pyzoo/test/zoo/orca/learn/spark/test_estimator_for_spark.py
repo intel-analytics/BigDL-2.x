@@ -194,7 +194,7 @@ def test_estimator_graph_fit_clip():
         labels=[model.label],
         loss=model.loss,
         optimizer=tf.train.AdamOptimizer(),
-        clip_value=0.2,
+        clip_value=1,
         metrics={"loss": model.loss})
     est.fit(data=data_shard,
             batch_size=8,

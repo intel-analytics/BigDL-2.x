@@ -179,7 +179,7 @@ class TFOptimizerWrapper(Estimator):
                     gvs = [(tf.clip_by_norm(g_v[0], clip_norm), g_v[1]) for g_v in gvs]
                 if clip_value:
                     if isinstance(clip_value, tuple):
-                        gvs = [(tf.clip_by_value(g_v[0], -clip_value, clip_value), g_v[1]) for g_v in gvs]
+                        gvs = [(tf.clip_by_value(g_v[0], clip_value[0], clip_value[1]), g_v[1]) for g_v in gvs]
                     if isinstance(clip_value, (int, float)):
                         gvs = [(tf.clip_by_value(g_v[0], -clip_value, clip_value), g_v[1]) for g_v in gvs]
                     else:
