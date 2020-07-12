@@ -18,6 +18,8 @@ from py4j.protocol import Py4JError
 from zoo.orca.data.utils import *
 from zoo.orca import OrcaContext
 from zoo.common.nncontext import init_nncontext
+from zoo import ZooContext, get_node_and_core_number
+from zoo.util import nest
 
 
 class XShards(object):
@@ -372,3 +374,42 @@ class SharedValue(object):
 
     def unpersist(self):
         self.broadcast_data.unpersist()
+
+
+def partition(data):
+    sc = init_nncontext()
+    node_num, core_num = get_node_and_core_number()
+    total_core_num = node_num * core_num
+    import numpy as np
+    type_err_msg = """
+The types supported in zoo.orca.data.shard are
+1. np.ndarray
+2. a tuple, list, dict of np.ndarray
+3. nested structure made of tuple, list, dict with ndarray as the leaf value
+
+But got data of type {}
+    """.format(type(data))
+    supported_types = {list, tuple, dict}
+    if isinstance(data, np.ndarray):
+        arrays = np.array_split(data, total_core_num)
+        rdd = sc.parallelize(arrays)
+    else:
+        assert type(data) in supported_types, type_err_msg
+        flattened = nest.flatten(data)
+        data_length = len(flattened[0])
+        data_to_be_shard = []
+        for i in range(total_core_num):
+            data_to_be_shard.append([])
+        for x in flattened:
+            assert len(x) == data_length, \
+                "the ndarrays in data must all have the same size in first dimension, " \
+                "got first ndarray of size {} and another {}".format(data_length, len(x))
+            x_parts = np.array_split(x, total_core_num)
+            for idx, x_part in enumerate(x_parts):
+                data_to_be_shard[idx].append(x_part)
+
+        data_to_be_shard = [nest.pack_sequence_as(data, shard) for shard in data_to_be_shard]
+        rdd = sc.parallelize(data_to_be_shard)
+
+    data_shards = SparkXShards(rdd)
+    return data_shards
