@@ -378,7 +378,9 @@ The types supported in zoo.orca.data.shard are
 1. np.ndarray
 2. a tuple, list, dict of np.ndarray
 3. nested structure made of tuple, list, dict with ndarray as the leaf value
-    """
+
+But got data of type {}
+    """.format(type(data))
     supported_types = {list, tuple, dict}
     if isinstance(data, np.ndarray):
         arrays = np.array_split(data, total_core_num)
