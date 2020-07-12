@@ -368,6 +368,7 @@ class SharedValue(object):
     def unpersist(self):
         self.broadcast_data.unpersist()
 
+
 def partition(data):
     sc = init_nncontext()
     node_num, core_num = get_node_and_core_number()
