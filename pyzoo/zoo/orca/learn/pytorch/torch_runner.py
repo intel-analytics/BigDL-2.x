@@ -241,18 +241,25 @@ class TorchRunner:
             stats.update(profile=self.timers.stats())
         return stats
 
-    def validate(self, num_steps=None, profile=False, info=None):
+    def validate(self, data=None, num_steps=None, profile=False, info=None):
         """Evaluates the model on the validation data set."""
-        if self.validation_loader is None:
-            raise ValueError("No validation dataloader provided.")
+
         info = info or {}
         self._toggle_profiling(profile=profile)
 
         with self.timers.record("validation"):
-            iterator = self.validation_loader
+
+            if data is None:
+                iterator = self.validation_loader
+            else:
+                data, label = get_data_label(data.get_data())
+                dataset = NdarrayDataset(x=data, y=label)
+                iterator = torch.utils.data.DataLoader(dataset,
+                                                       batch_size=self.config.get("batch_size", 1),
+                                                       shuffle=False)
             if num_steps:
                 iterator = itertools.islice(
-                    iter(self.validation_loader), num_steps)
+                    iterator, num_steps)
             validation_stats = self.training_operator.validate(
                 iterator, info=info)
         if profile:

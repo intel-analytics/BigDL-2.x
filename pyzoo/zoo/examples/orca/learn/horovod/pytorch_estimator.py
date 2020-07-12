@@ -24,31 +24,36 @@ from zoo import init_spark_on_yarn, init_spark_on_local
 from zoo.orca.data import SparkXShards
 from zoo.ray import RayContext
 from zoo.orca.learn.pytorch.pytorch_horovod_estimator import PyTorchHorovodEstimator
+import torch.nn.functional as F
 
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
+        self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
+        self.conv2_drop = nn.Dropout2d()
+        self.fc1 = nn.Linear(320, 50)
+        self.fc2 = nn.Linear(50, 10)
 
-class LinearDataset(torch.utils.data.Dataset):
-    """y = a * x + b"""
-
-    def __init__(self, a, b, size=1000):
-        x = np.arange(0, 10, 10 / size, dtype=np.float32)
-        self.x = torch.from_numpy(x)
-        self.y = torch.from_numpy(a * x + b)
-
-    def __getitem__(self, index):
-        return self.x[index, None], self.y[index, None]
-
-    def __len__(self):
-        return len(self.x)
+    def forward(self, x):
+        x = F.relu(F.max_pool2d(self.conv1(x), 2))
+        x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
+        x = x.view(-1, 320)
+        x = F.relu(self.fc1(x))
+        x = F.dropout(x, training=self.training)
+        x = self.fc2(x)
+        return F.log_softmax(x)
 
 
 def model_creator(config):
     """Returns a torch.nn.Module object."""
-    return nn.Linear(1, config.get("hidden_size", 1))
+
+    return Net()
 
 
 def optimizer_creator(model, config):
     """Returns optimizer defined upon the model parameters."""
-    return torch.optim.SGD(model.parameters(), lr=config.get("lr", 1e-2))
+    return torch.optim.Adam(model.parameters(), lr=config.get("lr", 1e-3))
 
 
 def scheduler_creator(optimizer, config):
@@ -58,40 +63,30 @@ def scheduler_creator(optimizer, config):
     If using a scheduler for validation loss, be sure to call
     ``trainer.update_scheduler(validation_loss)``.
     """
-    return torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.9)
+    return torch.optim.lr_scheduler.StepLR(optimizer, step_size=4, gamma=0.9)
 
 
-def data_creator(config):
-    """Returns training dataloader, validation dataloader."""
-    train_dataset = LinearDataset(2, 5, size=config.get("data_size", 1000))
-    val_dataset = LinearDataset(2, 5, size=config.get("val_size", 400))
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset,
-        batch_size=config.get("batch_size", 32),
-    )
-    validation_loader = torch.utils.data.DataLoader(
-        val_dataset,
-        batch_size=config.get("batch_size", 32))
-    return train_loader, validation_loader
-
-
-def train_example(data_shards):
+def train_example(data_shards, validation_data_shards):
 
     trainer1 = PyTorchHorovodEstimator(
         model_creator=model_creator,
         optimizer_creator=optimizer_creator,
-        loss_creator=nn.MSELoss,
-        scheduler_creator=scheduler_creator,
+        loss_creator=nn.NLLLoss,
+        scheduler_creator=None,
         config={
-            "lr": 1e-2,  # used in optimizer_creator
-            "hidden_size": 1,  # used in model_creator
-            "batch_size": 4,  # used in data_creator
+            "lr": 1e-3,  # used in optimizer_creator
+            "batch_size": 256,  # used in data_creator
         })
 
+    last_val_stats = None
     # train 5 epochs
     for i in range(5):
         stats = trainer1.train(data_shards)
-        print(stats)
+        print("train stats: {}".format(stats))
+        val_stats = trainer1.validate(validation_data_shards)
+        print("validata stats: {}".format(val_stats))
+        last_val_stats = val_stats
+    return last_val_stats
 
 
 parser = argparse.ArgumentParser()
@@ -139,12 +134,26 @@ if __name__ == "__main__":
             object_store_memory=args.object_store_memory)
         ray_ctx.init()
     else:
-        sc = init_spark_on_local()
+        sc = init_spark_on_local(conf={"spark.driver.memory": "20g"})
         ray_ctx = RayContext(
             sc=sc,
             object_store_memory=args.object_store_memory)
         ray_ctx.init()
 
-    rdd = sc.parallelize(range(10)).mapPartitions(lambda x: [{"x": np.random.randn(10, 1).astype(np.float32), "y": np.random.randn(10).astype(np.float32)}])
-    data_shards = SparkXShards(rdd)
-    train_example(data_shards)
+    from bigdl.dataset import mnist
+
+    (train_images_data, train_labels_data) = mnist.read_data_sets("/tmp/mnist", "train")
+    (test_images_data, test_labels_data) = mnist.read_data_sets("/tmp/mnist", "train")
+
+    train_images_data = (train_images_data - mnist.TRAIN_MEAN) / mnist.TRAIN_STD
+    train_labels_data = train_labels_data.astype(np.int)
+    test_images_data = (test_images_data - mnist.TRAIN_MEAN) / mnist.TRAIN_STD
+    test_labels_data = test_labels_data.astype(np.int)
+
+    import zoo.orca.data
+
+    data_shards = zoo.orca.data.partition({"x": train_images_data.reshape((-1, 1, 28, 28)).astype(np.float32), "y": train_labels_data})
+    val_data_shards = zoo.orca.data.partition({"x": test_images_data.reshape((-1, 1, 28, 28)).astype(np.float32), "y": test_labels_data})
+    val_stats = train_example(data_shards, val_data_shards)
+
+    assert val_stats["val_accuracy"] > 0.97

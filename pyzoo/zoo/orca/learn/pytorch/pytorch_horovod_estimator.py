@@ -174,6 +174,7 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
             training_operator_cls=TrainingOperator,
             initialization_hook=None,
             config=None,
+            use_tqdm=False,
             scheduler_step_freq="batch"
     ):
 
@@ -197,6 +198,8 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
         self.initialization_hook = initialization_hook
         self.config = {} if config is None else config
 
+        self.use_tqdm = use_tqdm
+
         worker_config = self.config.copy()
 
         self.param = dict(
@@ -207,6 +210,7 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
             scheduler_creator=self.scheduler_creator,
             training_operator_cls=self.training_operator_cls,
             scheduler_step_freq=self.scheduler_step_freq,
+            use_tqdm=self.use_tqdm,
             config=worker_config)
         super().__init__(RayContext.get(), worker_cls=TorchWorker, worker_param=self.param)
 
@@ -300,7 +304,7 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
 
         return success, None
 
-    def validate(self, num_steps=None, profile=False, info=None):
+    def validate(self, data_shards=None, num_steps=None, profile=False, info=None):
         """Evaluates the model on the validation data set.
 
         Args:
@@ -316,9 +320,29 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
                 You can provide custom metrics by passing in a custom
                 ``training_operator_cls``.
         """
+
+        if data_shards is not None:
+            from zoo.orca.data import SparkXShards
+            assert isinstance(data_shards, SparkXShards),\
+                "data_shards must be a instance of SparkXShards," \
+                " but got data_shards:{}".format(type(data_shards))
+            if data_shards.num_partitions() != self.num_nodes:
+                data_shards = data_shards.repartition(self.num_nodes)
+            data_shards = data_shards.to_ray()
+            self.remote_workers = data_shards.colocate_actors(self.remote_workers)
+            train_data_list = data_shards.get_partitions()
+
+        else:
+            train_data_list = None
+
         params = dict(num_steps=num_steps, profile=profile, info=info)
 
-        remote_worker_stats = [
-            w.validate.remote(**params) for w in self.remote_workers
-        ]
+        remote_worker_stats = []
+        for i, w in enumerate(self.remote_workers):
+            if train_data_list:
+                stats = w.validate.remote(data=train_data_list[i], **params)
+            else:
+                stats = w.validate.remote(**params)
+            remote_worker_stats.append(stats)
+
         return self._process_stats(ray.get(remote_worker_stats))
