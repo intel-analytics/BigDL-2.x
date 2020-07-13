@@ -216,13 +216,14 @@ object Utils {
 
 
     val contTensor = Tensor[Float](contCol).fill(0)
-    (0 to contCol - 1).map(i =>{
-      val data= r.getAs[Any](columnInfo.continuousCols(i))
+    (0 to contCol - 1).map(i => {
+      val data = r.getAs[Any](columnInfo.continuousCols(i))
       val td = data match {
         case n: Int => n.toFloat
         case n: Long => n.toFloat
         case n: Double => n.toFloat
         case n: Float => n
+        case _ => throw new Exception("wrong data type")
       }
       contTensor.setValue(i + 1, td)
     })
