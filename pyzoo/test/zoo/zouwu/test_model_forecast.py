@@ -94,15 +94,31 @@ class TestZouwuModelForecast(ZooTestCase):
 
     def test_forecast_tcmf(self):
         from zoo.zouwu.model.forecast import TCMFForecaster
+        import tempfile
         model = TCMFForecaster(max_y_iterations=1,
                                init_FX_epoch=1,
                                max_FX_epoch=1,
                                max_TCN_epoch=1,
                                alt_iters=2)
         x = np.random.rand(300, 480)
-        model.fit(x)
+        with self.assertRaises(Exception) as context:
+            model.is_distributed()
+        self.assertTrue('You should run fit before call is_distributed()' in str(context.exception))
+        model.fit(x, id_as_first_col=False)
+        assert not model.is_distributed()
+        with self.assertRaises(Exception) as context:
+            model.fit(x)
+        self.assertTrue('This model has been full trained' in str(context.exception))
+        with self.assertRaises(Exception) as context:
+            model.fit(x, incremental=True)
+        self.assertTrue('NotImplementedError' in context.exception.__class__.__name__)
+        with tempfile.TemporaryDirectory() as tempdirname:
+            model.save(tempdirname)
+            loaded_model = TCMFForecaster.load(tempdirname, distributed=False)
         yhat = model.predict(x=None, horizon=24)
-        assert yhat.shape == (300, 24)
+        yhat_loaded = loaded_model.predict(x=None, horizon=24)
+        assert yhat.shape == (300, 25)
+        assert (yhat == yhat_loaded).all()
         target_value = np.random.rand(300, 24)
         model.evaluate(x=None, target_value=target_value, metric=['mse'])
 
@@ -110,10 +126,7 @@ class TestZouwuModelForecast(ZooTestCase):
         from zoo.zouwu.model.forecast import TCMFForecaster
         import zoo.orca.data.pandas
         from zoo.orca.data import SharedValue
-        import os.path
-
-        resource_path = os.path.join(os.path.split(__file__)[0],
-                                     "../resources/zouwu/tcmf_random_data.csv")
+        import tempfile
 
         def preprocessing(df):
             idx = df.index.values
@@ -134,13 +147,39 @@ class TestZouwuModelForecast(ZooTestCase):
                                max_FX_epoch=1,
                                max_TCN_epoch=1,
                                alt_iters=2)
-        shard = zoo.orca.data.pandas.read_csv(resource_path, parse_dates=[1])
+
+        with tempfile.NamedTemporaryFile() as temp:
+            x = np.random.rand(300, 480)
+            df = pd.DataFrame(x)
+            df.to_csv(temp.name)
+            shard = zoo.orca.data.pandas.read_csv(temp.name)
         shard = shard.transform_shard(preprocessing)
+        with self.assertRaises(Exception) as context:
+            model.fit(shard, id_as_first_col=False)
+        self.assertTrue('id should be the first column of ndarray in xShards' in
+                        str(context.exception))
+        with self.assertRaises(Exception) as context:
+            model.is_distributed()
+        self.assertTrue('You should run fit before call is_distributed()' in str(context.exception))
         model.fit(shard)
-        yhat_shard = model.predict(x=None, horizon=24)
+        assert model.is_distributed()
+        with self.assertRaises(Exception) as context:
+            model.fit(shard)
+        self.assertTrue('This model has been full trained' in str(context.exception))
+        with self.assertRaises(Exception) as context:
+            model.fit(shard, incremental=True)
+        self.assertTrue('NotImplementedError' in context.exception.__class__.__name__)
+        with tempfile.TemporaryDirectory() as tempdirname:
+            model.save(tempdirname + "/model")
+            loaded_model = TCMFForecaster.load(tempdirname + "/model", distributed=True)
+        yhat_shard_origin = model.predict(x=None, horizon=24)
+        yhat_list_origin = yhat_shard_origin.collect()
+        yhat_shard = loaded_model.predict(x=None, horizon=24)
         yhat_list = yhat_shard.collect()
+        yhat_origin = np.concatenate(yhat_list_origin, axis=0)
         yhat = np.concatenate(yhat_list, axis=0)
         assert yhat.shape == (300, 25)
+        assert (yhat == yhat_origin).all()
         output_dt_col_name = pd.date_range(start='2020-05-01', periods=24, freq='H').to_list()
         output_dt_col_name_shared_value = SharedValue(output_dt_col_name)
         yhat_df_shards = yhat_shard.transform_shard(postprocessing, output_dt_col_name_shared_value)

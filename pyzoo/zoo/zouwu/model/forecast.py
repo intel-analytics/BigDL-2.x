@@ -158,12 +158,16 @@ class TCMFForecaster(Forecaster):
         if self.internal is None:
             if isinstance(x, SparkXShards):
                 self.internal = TCMFDistributedModelWrapper(self.config)
-                self.internal.fit(x, id_as_first_col, incremental)
             elif isinstance(x, np.ndarray):
                 self.internal = TCMFSingleNodeModelWrapper(self.config)
-                self.internal.fit(x, id_as_first_col, incremental)
             else:
                 raise ValueError("value of x should be a ndarray or an xShards of ndarray")
+
+            try:
+                self.internal.fit(x, id_as_first_col, incremental)
+            except Exception as inst:
+                self.internal = None
+                raise inst
         else:
             raise Exception("This model has been full trained, "
                             "you can only run full training once.")
@@ -183,7 +187,7 @@ class TCMFForecaster(Forecaster):
         :param metric: the metrics
         :return:
         """
-        self.internal.evaluate(y=target_value, x=x, metrics=metric)
+        self.internal.evaluate(y=target_value, x=x, metric=metric)
 
     def predict(self,
                 x=None,
@@ -200,7 +204,7 @@ class TCMFForecaster(Forecaster):
         if self.internal is None:
             raise Exception("You should run fit before call predict()")
         else:
-            self.internal.predict(x, horizon)
+            return self.internal.predict(x, horizon)
 
     def save(self, path):
         if self.internal is None:

@@ -236,8 +236,11 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         if isinstance(x, SparkXShards):
             if x._get_class_name() == "numpy.ndarray":
                 config_shared_value = SharedValue(self.config)
-                self.internal = x.rdd.mapPartitions(orca_train_model,
-                                                    config_shared_value, incremental)
+                # self.internal = \
+                #     x.rdd.mapPartitions(lambda data: orca_train_model(data,
+                #                                                       config_shared_value,
+                #                                                       incremental))
+                self.internal = x.transform_shard(orca_train_model, config_shared_value, incremental)
             else:
                 raise ValueError("value of x should be an xShards of ndarray, "
                                  "but is an xShards of " + x._get_class_name())
@@ -343,7 +346,9 @@ class TCMFSingleNodeModelWrapper(ModelWrapper):
         :param config_path: the config file path to be saved to.
         :return:
         """
-        self.internal.save(model_path)
+        with open(model_path + '/id.pkl', 'wb') as f:
+            pickle.dump(self.id_arr, f)
+        self.internal.save(model_path + "/model")
 
     def load(self, model_path):
         """
@@ -353,4 +358,6 @@ class TCMFSingleNodeModelWrapper(ModelWrapper):
         :return: the restored model
         """
         self.internal = TCMF()
-        self.internal.restore(model_path)
+        with open(model_path + '/id.pkl', 'rb') as f:
+            self.id_arr = pickle.load(f)
+        self.internal.restore(model_path + "/model")
