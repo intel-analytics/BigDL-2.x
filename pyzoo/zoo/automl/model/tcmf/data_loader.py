@@ -45,28 +45,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+import numpy as np
 import torch
-import h5py
-import numpy as np
-from scipy.io import loadmat
-
-import torch.nn as nn
-import torch.optim as optim
-import numpy as np
-
-# import matplotlib
-from torch.autograd import Variable
-import itertools
-from sklearn.preprocessing import normalize
-import datetime
-import json
-import os
-import sys
-import pandas as pd
-import pyarrow.parquet as pq
 
 
-class data_loader(object):
+class DataLoader(object):
     """
     Data Loader Class for DeepGLO
     """
@@ -111,13 +94,11 @@ class data_loader(object):
         self.covariates = covariates
         self.Ycov = Ycov
 
-    def next_batch(self, option=1):
+    def next_batch(self):
         """
-        Arguments:
-        option = 1 means data is returned as pytorch tensor of shape nd*cd*td where nd is vbsize,
-            hb is hsize and cd is the number os channels (depends on covariates)
-        option = 0 is deprecated
         Returns:
+        data is returned as pytorch tensor of shape nd*cd*td where nd is vbsize,
+        hb is hsize and cd is the number os channels (depends on covariates)
         inp: input batch
         out: one shifted output batch
         vindex: strating vertical index of input batch
@@ -166,29 +147,25 @@ class data_loader(object):
                 :,
                 int(pr_hindex): int(min(self.end_index, pr_hindex + self.hbsize)),
             ]
-        if option == 1:
-            inp = torch.from_numpy(data).view(1, nd, Td)
-            out = torch.from_numpy(out_data).view(1, nd, Td)
-            if self.covariates is not None:
-                rcovs = torch.from_numpy(rcovs).float()
-            if self.Ycov is not None:
-                ycovs = torch.from_numpy(ycovs).float()
-            inp = inp.transpose(0, 1).float()
-            if self.covariates is not None:
-                inp = torch.cat((inp, rcovs), 1)
-            if self.Ycov is not None:
-                inp = torch.cat((inp, ycovs), 1)
-            out = out.transpose(0, 1).float()
-        else:
-            inp = torch.from_numpy(data).float()
-            out = torch.from_numpy(out_data).float()
+        inp = torch.from_numpy(data).view(1, nd, Td)
+        out = torch.from_numpy(out_data).view(1, nd, Td)
+        if self.covariates is not None:
+            rcovs = torch.from_numpy(rcovs).float()
+        if self.Ycov is not None:
+            ycovs = torch.from_numpy(ycovs).float()
+        inp = inp.transpose(0, 1).float()
+        if self.covariates is not None:
+            inp = torch.cat((inp, rcovs), 1)
+        if self.Ycov is not None:
+            inp = torch.cat((inp, ycovs), 1)
+        out = out.transpose(0, 1).float()
 
         inp[torch.isnan(inp)] = 0
         out[torch.isnan(out)] = 0
 
         return inp, out, self.vindex, self.hindex
 
-    def supply_test(self, option=1):
+    def supply_test(self):
         """
         Supplies validation set in the same format as above
         """
@@ -215,20 +192,16 @@ class data_loader(object):
                 int(index): int(index + self.vbsize), :,
                 int(self.end_index): int(self.end_index + self.val_len),
             ]
-        if option == 1:
-            inp = torch.from_numpy(in_data).view(1, nd, Td)
-            inp = inp.transpose(0, 1).float()
-            if self.covariates is not None:
-                rcovs = torch.from_numpy(rcovs).float()
-            if self.Ycov is not None:
-                ycovs = torch.from_numpy(ycovs).float()
-            out = torch.from_numpy(out_data).view(1, nd, Td)
-            if self.covariates is not None:
-                inp = torch.cat((inp, rcovs), 1)
-            if self.Ycov is not None:
-                inp = torch.cat((inp, ycovs), 1)
-            out = out.transpose(0, 1).float()
-        else:
-            inp = torch.from_numpy(in_data).float()
-            out = torch.from_numpy(out_data).float()
+        inp = torch.from_numpy(in_data).view(1, nd, Td)
+        inp = inp.transpose(0, 1).float()
+        if self.covariates is not None:
+            rcovs = torch.from_numpy(rcovs).float()
+        if self.Ycov is not None:
+            ycovs = torch.from_numpy(ycovs).float()
+        out = torch.from_numpy(out_data).view(1, nd, Td)
+        if self.covariates is not None:
+            inp = torch.cat((inp, rcovs), 1)
+        if self.Ycov is not None:
+            inp = torch.cat((inp, ycovs), 1)
+        out = out.transpose(0, 1).float()
         return inp, out, self.vindex, self.hindex

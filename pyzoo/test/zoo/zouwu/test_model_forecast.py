@@ -100,6 +100,7 @@ class TestZouwuModelForecast(ZooTestCase):
                                max_FX_epoch=1,
                                max_TCN_epoch=1,
                                alt_iters=2)
+        horizon = np.random.randint(1, 50)
         x = np.random.rand(300, 480)
         with self.assertRaises(Exception) as context:
             model.is_distributed()
@@ -115,11 +116,11 @@ class TestZouwuModelForecast(ZooTestCase):
         with tempfile.TemporaryDirectory() as tempdirname:
             model.save(tempdirname)
             loaded_model = TCMFForecaster.load(tempdirname, distributed=False)
-        yhat = model.predict(x=None, horizon=24)
-        yhat_loaded = loaded_model.predict(x=None, horizon=24)
-        assert yhat.shape == (300, 25)
+        yhat = model.predict(x=None, horizon=horizon)
+        yhat_loaded = loaded_model.predict(x=None, horizon=horizon)
+        assert yhat.shape == (300, horizon + 1)
         assert (yhat == yhat_loaded).all()
-        target_value = np.random.rand(300, 24)
+        target_value = np.random.rand(300, horizon)
         model.evaluate(x=None, target_value=target_value, metric=['mse'])
 
     def test_forecast_tcmf_xshards(self):
@@ -172,21 +173,22 @@ class TestZouwuModelForecast(ZooTestCase):
         with tempfile.TemporaryDirectory() as tempdirname:
             model.save(tempdirname + "/model")
             loaded_model = TCMFForecaster.load(tempdirname + "/model", distributed=True)
-        yhat_shard_origin = model.predict(x=None, horizon=24)
+        horizon = np.random.randint(1, 50)
+        yhat_shard_origin = model.predict(x=None, horizon=horizon)
         yhat_list_origin = yhat_shard_origin.collect()
-        yhat_shard = loaded_model.predict(x=None, horizon=24)
+        yhat_shard = loaded_model.predict(x=None, horizon=horizon)
         yhat_list = yhat_shard.collect()
         yhat_origin = np.concatenate(yhat_list_origin, axis=0)
         yhat = np.concatenate(yhat_list, axis=0)
-        assert yhat.shape == (300, 25)
+        assert yhat.shape == (300, horizon + 1)
         assert (yhat == yhat_origin).all()
-        output_dt_col_name = pd.date_range(start='2020-05-01', periods=24, freq='H').to_list()
+        output_dt_col_name = pd.date_range(start='2020-05-01', periods=horizon, freq='H').to_list()
         output_dt_col_name_shared_value = SharedValue(output_dt_col_name)
         yhat_df_shards = yhat_shard.transform_shard(postprocessing, output_dt_col_name_shared_value)
         final_df_list = yhat_df_shards.collect()
         final_df = pd.concat(final_df_list)
         final_df.sort_values("datetime", inplace=True)
-        assert final_df.shape == (7200, 3)
+        assert final_df.shape == (300 * horizon, 3)
 
 
 if __name__ == "__main__":

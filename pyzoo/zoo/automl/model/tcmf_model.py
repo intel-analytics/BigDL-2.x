@@ -14,13 +14,12 @@
 #
 from abc import ABCMeta, abstractmethod
 
-from zoo.automl.model.tcmf.DeepGLO import *
-
+from zoo.automl.model.tcmf import DeepGLO
 from zoo.automl.common.metrics import Evaluator
-import pandas as pd
 from zoo.automl.model.abstract import BaseModel
 from zoo.orca.data import SparkXShards, SharedValue
-from zoo.automl.common.util import save_config
+import pickle
+import numpy as np
 
 
 class TCMF(BaseModel):
@@ -236,10 +235,6 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         if isinstance(x, SparkXShards):
             if x._get_class_name() == "numpy.ndarray":
                 config_shared_value = SharedValue(self.config)
-                # self.internal = \
-                #     x.rdd.mapPartitions(lambda data: orca_train_model(data,
-                #                                                       config_shared_value,
-                #                                                       incremental))
                 self.internal = x.transform_shard(orca_train_model, config_shared_value, incremental)
             else:
                 raise ValueError("value of x should be an xShards of ndarray, "
