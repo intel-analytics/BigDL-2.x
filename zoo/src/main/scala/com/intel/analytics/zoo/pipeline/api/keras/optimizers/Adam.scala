@@ -66,6 +66,7 @@ class Adam[@specialized(Float, Double) T: ClassTag](
     val beta1 = this.beta_1
     val beta2 = this.beta_2
     val eps = this.epsilon
+    val wd = this.wDecay
 
     val (fx, dfdx) = feval(parameter)
     val state = SGDRef.getstate(this)
@@ -81,8 +82,8 @@ class Adam[@specialized(Float, Double) T: ClassTag](
 
     val clr = - this.schedule.currentRate
 
-    if(wDecay > 0) {
-      dfdx.add(parameter * (ev.fromType(wDecay)))
+    if(wd > 0) {
+      dfdx.add(parameter * (ev.fromType(wd)))
     }
 
     /**
