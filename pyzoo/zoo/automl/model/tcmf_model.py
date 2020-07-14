@@ -271,7 +271,6 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         """
         save model to file.
         :param model_path: the model file path to be saved to.
-        :param config_path: the config file path to be saved to.
         :return:
         """
         if self.internal is not None:
@@ -281,7 +280,6 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         """
         restore model from model file and config.
         :param model_path: the model file
-        :param config: the config
         :return: the restored model
         """
         self.internal = SparkXShards.load_pickle(model_path, minPartitions=minPartitions)
@@ -321,7 +319,7 @@ class TCMFSingleNodeModelWrapper(ModelWrapper):
         :return: a list of metric evaluation results
         """
         if isinstance(y, np.ndarray):
-            self.internal.evaluate(y=y, x=x, metrics=metric)
+            return self.internal.evaluate(y=y, x=x, metrics=metric)
         else:
             raise ValueError("value of y should be a ndarray")
 
@@ -338,7 +336,6 @@ class TCMFSingleNodeModelWrapper(ModelWrapper):
         """
         save model to file.
         :param model_path: the model file path to be saved to.
-        :param config_path: the config file path to be saved to.
         :return:
         """
         with open(model_path + '/id.pkl', 'wb') as f:
@@ -349,7 +346,6 @@ class TCMFSingleNodeModelWrapper(ModelWrapper):
         """
         restore model from model file and config.
         :param model_path: the model file
-        :param config: the config
         :return: the restored model
         """
         self.internal = TCMF()
