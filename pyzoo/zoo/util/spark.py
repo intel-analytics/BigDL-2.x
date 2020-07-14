@@ -116,13 +116,15 @@ class SparkRunner:
         assert zoo_classpath, "Cannot find Analytics-Zoo classpath"
         return zoo_classpath.split("/")[-1]
 
-    def _assemble_zoo_classpath_for_executor(self):
+    def _assemble_zoo_classpath_for_executor(self, conda_path=None):
         conda_env_path = "/".join(self._detect_python_location().split("/")[:-2])
         python_interpreters = glob.glob("{}/lib/python*".format(conda_env_path))
         assert len(python_interpreters) == 1, \
             "Conda env should contain a single python, but got: {}:".format(python_interpreters)
         python_interpreter_name = python_interpreters[0].split("/")[-1]
-        prefix = "{}/lib/{}/site-packages/".format(self.PYTHON_ENV, python_interpreter_name)
+        if not conda_path:
+            conda_path = self.PYTHON_ENV
+        prefix = "{}/lib/{}/site-packages/".format(conda_path, python_interpreter_name)
         return ["{}/zoo/share/lib/{}".format(prefix,
                                              self._get_zoo_classpath_jar_name_on_driver()),
                 "{}/bigdl/share/lib/{}".format(prefix,
@@ -219,3 +221,61 @@ class SparkRunner:
             if conda_name and penv_archive and pack_env:
                 os.remove(penv_archive)
         return sc
+
+    def init_spark_standalone(self, conda_name, slaves, num_executor,
+                              executor_cores,
+                              master=None,
+                              executor_memory="10g",
+                              driver_memory="1g",
+                              driver_cores=4,
+                              extra_executor_memory_for_ray=None,
+                              extra_python_lib=None,
+                              spark_conf=None,
+                              jars=None):
+        # TODO: allow users not to use conda?
+        penv_archive = self.pack_penv(conda_name)
+        import subprocess
+        # TODO: scp in parallel?
+        # TODO: get slaves from SPARK_HOME/conf/slaves?
+        if not isinstance(slaves, list):
+            slaves = [slaves]
+        for slave in slaves:
+            p1 = subprocess.Popen(["scp", penv_archive, "root@"+slave+":/tmp/az_python"])
+            # Wait for the process to finish
+            sts1 = os.waitpid(p1.pid, 0)
+            p2 = subprocess.Popen([
+                "ssh", "root@" + slave,
+                "cd /tmp/az_python; mkdir -p {}; tar -xzf {}.tar.gz -C {}".format(self.PYTHON_ENV, self.PYTHON_ENV, self.PYTHON_ENV)])
+            sts2 = os.waitpid(p2.pid, 0)
+        os.environ["PYSPARK_PYTHON"] = "/tmp/az_python/{}/bin/python".format(self.PYTHON_ENV)
+
+        if not master:
+            from zoo.util.utils import get_node_ip
+            master = "spark://{}:7077".format(get_node_ip())
+
+        submit_args = " --master " + master
+        if extra_python_lib:
+            submit_args = submit_args + " --py-files {}".format(extra_python_lib)
+        if jars:
+            submit_args = submit_args + " --jars {}".format(jars)
+        submit_args = submit_args + " pyspark-shell"
+        os.environ['PYSPARK_SUBMIT_ARGS'] = submit_args
+
+        conda_path = "/tmp/az_python/{}".format(self.PYTHON_ENV)
+        zoo_bigdl_path_on_executor = ":".join(self._assemble_zoo_classpath_for_executor(conda_path=conda_path))
+        conf = init_spark_conf(spark_conf) \
+            .set("spark.driver.cores", driver_cores) \
+            .set("spark.driver.memory", driver_memory) \
+            .set("spark.executor.instances", num_executor) \
+            .set("spark.executor.cores", executor_cores) \
+            .set("spark.cores.max", num_executor * executor_cores) \
+            .set("spark.executor.memory", executor_memory) \
+            .set("spark.executorEnv.PYTHONHOME", conda_path)
+        if extra_executor_memory_for_ray:
+            conf.set("spark.executor.memoryOverhead", extra_executor_memory_for_ray)
+        if conf.contains("spark.executor.extraClassPath"):
+            conf.set("spark.executor.extraClassPath", "{}:{}".format(
+                    zoo_bigdl_path_on_executor, conf.get("spark.executor.extraClassPath")))
+        else:
+            conf.set("spark.executor.extraClassPath", zoo_bigdl_path_on_executor)
+        return init_nncontext(conf)
