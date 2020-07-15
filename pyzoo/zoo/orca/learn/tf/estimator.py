@@ -181,10 +181,12 @@ class TFOptimizerWrapper(Estimator):
                     if isinstance(clip_value, tuple):
                         assert len(clip_value) == 2 and clip_value[0] < clip_value[1], \
                             "clip value should be (clip_min, clip_max)"
-                        gvs = [(tf.clip_by_value(g_v[0], clip_value[0], clip_value[1]), g_v[1]) for g_v in gvs]
+                        gvs = [(tf.clip_by_value(g_v[0], clip_value[0], clip_value[1]), g_v[1])
+                               for g_v in gvs]
                     if isinstance(clip_value, (int, float)):
                         assert clip_value > 0, "clip value should be larger than 0"
-                        gvs = [(tf.clip_by_value(g_v[0], -clip_value, clip_value), g_v[1]) for g_v in gvs]
+                        gvs = [(tf.clip_by_value(g_v[0], -clip_value, clip_value), g_v[1])
+                               for g_v in gvs]
                     else:
                         raise Exception("clip_value should be a tuple or one number")
                 self.train_op = self.optimizer.apply_gradients(gvs)
