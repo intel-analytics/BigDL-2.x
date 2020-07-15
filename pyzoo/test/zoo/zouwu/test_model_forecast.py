@@ -104,7 +104,8 @@ class TestZouwuModelForecast(ZooTestCase):
         x = np.random.rand(300, 480)
         with self.assertRaises(Exception) as context:
             model.is_distributed()
-        self.assertTrue('You should run fit before calling is_distributed()' in str(context.exception))
+        self.assertTrue('You should run fit before calling is_distributed()'
+                        in str(context.exception))
         model.fit(x, id_as_first_col=False)
         assert not model.is_distributed()
         with self.assertRaises(Exception) as context:
@@ -131,8 +132,8 @@ class TestZouwuModelForecast(ZooTestCase):
 
         def preprocessing(df):
             idx = df.index.values
-            data = np.concatenate((np.expand_dims(idx, axis=1), df.to_numpy().astype(np.float32))
-                                  , axis=1)
+            data = np.concatenate((np.expand_dims(idx, axis=1), df.to_numpy().astype(np.float32)),
+                                  axis=1)
             return data
 
         def postprocessing(pred_results, output_dt_col_name):
@@ -161,7 +162,8 @@ class TestZouwuModelForecast(ZooTestCase):
                         str(context.exception))
         with self.assertRaises(Exception) as context:
             model.is_distributed()
-        self.assertTrue('You should run fit before calling is_distributed()' in str(context.exception))
+        self.assertTrue('You should run fit before calling is_distributed()'
+                        in str(context.exception))
         model.fit(shard)
         assert model.is_distributed()
         with self.assertRaises(Exception) as context:
