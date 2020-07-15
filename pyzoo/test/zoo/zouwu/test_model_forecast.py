@@ -104,12 +104,12 @@ class TestZouwuModelForecast(ZooTestCase):
         x = np.random.rand(300, 480)
         with self.assertRaises(Exception) as context:
             model.is_distributed()
-        self.assertTrue('You should run fit before call is_distributed()' in str(context.exception))
+        self.assertTrue('You should run fit before calling is_distributed()' in str(context.exception))
         model.fit(x, id_as_first_col=False)
         assert not model.is_distributed()
         with self.assertRaises(Exception) as context:
             model.fit(x)
-        self.assertTrue('This model has been full trained' in str(context.exception))
+        self.assertTrue('This model has already been fully trained' in str(context.exception))
         with self.assertRaises(Exception) as context:
             model.fit(x, incremental=True)
         self.assertTrue('NotImplementedError' in context.exception.__class__.__name__)
@@ -161,12 +161,12 @@ class TestZouwuModelForecast(ZooTestCase):
                         str(context.exception))
         with self.assertRaises(Exception) as context:
             model.is_distributed()
-        self.assertTrue('You should run fit before call is_distributed()' in str(context.exception))
+        self.assertTrue('You should run fit before calling is_distributed()' in str(context.exception))
         model.fit(shard)
         assert model.is_distributed()
         with self.assertRaises(Exception) as context:
             model.fit(shard)
-        self.assertTrue('This model has been full trained' in str(context.exception))
+        self.assertTrue('This model has already been fully trained' in str(context.exception))
         with self.assertRaises(Exception) as context:
             model.fit(shard, incremental=True)
         self.assertTrue('NotImplementedError' in context.exception.__class__.__name__)

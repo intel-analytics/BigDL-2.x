@@ -202,6 +202,10 @@ class ModelWrapper(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def is_distributed(self, **kwargs):
+        pass
+
+    @abstractmethod
     def save(self, **kwargs):
         pass
 
@@ -217,8 +221,7 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         self.config = config
 
     def fit(self, x, id_as_first_col=True, incremental=False):
-        def orca_train_model(np, shared_config, incremental):
-            config = shared_config.value
+        def orca_train_model(np, config, incremental):
             tcmf = TCMF()
             tcmf._build(**config)
             cid_arr = np[:, 0]
@@ -234,8 +237,7 @@ class TCMFDistributedModelWrapper(ModelWrapper):
 
         if isinstance(x, SparkXShards):
             if x._get_class_name() == "numpy.ndarray":
-                config_shared_value = SharedValue(self.config)
-                self.internal = x.transform_shard(orca_train_model, config_shared_value, incremental)
+                self.internal = x.transform_shard(orca_train_model, self.config, incremental)
             else:
                 raise ValueError("value of x should be an xShards of ndarray, "
                                  "but is an xShards of " + x._get_class_name())
@@ -267,6 +269,9 @@ class TCMFDistributedModelWrapper(ModelWrapper):
 
         return self.internal.transform_shard(orca_predict, horizon)
 
+    def is_distributed(self):
+        return True
+
     def save(self, model_path):
         """
         save model to file.
@@ -285,7 +290,7 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         self.internal = SparkXShards.load_pickle(model_path, minPartitions=minPartitions)
 
 
-class TCMFSingleNodeModelWrapper(ModelWrapper):
+class TCMFLocalModelWrapper(ModelWrapper):
 
     def __init__(self, config):
         self.internal = TCMF()
@@ -331,6 +336,9 @@ class TCMFSingleNodeModelWrapper(ModelWrapper):
         """
         pred = self.internal.predict(x=x, horizon=horizon)
         return np.concatenate([np.expand_dims(self.id_arr, axis=1), pred], axis=1)
+
+    def is_distributed(self):
+        return False
 
     def save(self, model_path):
         """

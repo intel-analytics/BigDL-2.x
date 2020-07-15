@@ -19,7 +19,7 @@ from abc import ABCMeta, abstractmethod
 from zoo.automl.model.MTNet_keras import MTNetKeras as MTNetKerasModel
 from zoo.automl.model.VanillaLSTM import VanillaLSTM as LSTMKerasModel
 from zoo.tfpark import KerasModel as TFParkKerasModel
-from zoo.automl.model import TCMFSingleNodeModelWrapper, TCMFDistributedModelWrapper
+from zoo.automl.model import TCMFLocalModelWrapper, TCMFDistributedModelWrapper
 from zoo.orca.data import SparkXShards, SharedValue
 
 import tensorflow as tf
@@ -159,7 +159,7 @@ class TCMFForecaster(Forecaster):
             if isinstance(x, SparkXShards):
                 self.internal = TCMFDistributedModelWrapper(self.config)
             elif isinstance(x, np.ndarray):
-                self.internal = TCMFSingleNodeModelWrapper(self.config)
+                self.internal = TCMFLocalModelWrapper(self.config)
             else:
                 raise ValueError("value of x should be a ndarray or an xShards of ndarray")
 
@@ -169,7 +169,7 @@ class TCMFForecaster(Forecaster):
                 self.internal = None
                 raise inst
         else:
-            raise Exception("This model has been full trained, "
+            raise Exception("This model has already been fully trained, "
                             "you can only run full training once.")
 
     def evaluate(self,
@@ -202,23 +202,21 @@ class TCMFForecaster(Forecaster):
         :return:
         """
         if self.internal is None:
-            raise Exception("You should run fit before call predict()")
+            raise Exception("You should run fit before calling predict()")
         else:
             return self.internal.predict(x, horizon)
 
     def save(self, path):
         if self.internal is None:
-            raise Exception("You should run fit before call save()")
+            raise Exception("You should run fit before calling save()")
         else:
             self.internal.save(path)
 
     def is_distributed(self):
         if self.internal is None:
-            raise ValueError("You should run fit before call is_distributed()")
-        elif isinstance(self.internal, TCMFDistributedModelWrapper):
-            return True
+            raise ValueError("You should run fit before calling is_distributed()")
         else:
-            return False
+            return self.internal.is_distributed()
 
     @classmethod
     def load(cls, path, distributed=False, minPartitions=None):
@@ -227,7 +225,7 @@ class TCMFForecaster(Forecaster):
             loaded_model.internal = TCMFDistributedModelWrapper(loaded_model.config)
             loaded_model.internal.load(path, minPartitions=minPartitions)
         else:
-            loaded_model.internal = TCMFSingleNodeModelWrapper(loaded_model.config)
+            loaded_model.internal = TCMFLocalModelWrapper(loaded_model.config)
             loaded_model.internal.load(path)
         return loaded_model
 
