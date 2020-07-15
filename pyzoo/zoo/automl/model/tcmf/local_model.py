@@ -45,36 +45,25 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import torch
-import h5py
-import numpy as np
-from scipy.io import loadmat
-from torch.nn.utils import weight_norm
+import pickle
+import random
 
+import numpy as np
+import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
-
-# import matplotlib
 from torch.autograd import Variable
+from torch.nn.utils import weight_norm
 
+from zoo.automl.model.tcmf.data_loader import DataLoader
+from zoo.automl.model.tcmf.time import TimeCovariates
 
-import itertools
-import torch.nn.functional as F
-
-
-from zoo.automl.model.tcmf.data_loader import *
-from zoo.automl.model.tcmf.time import *
-
-import random
-import pickle
+import logging
 
 np.random.seed(111)
 torch.manual_seed(111)
 random.seed(111)
 
-
-import logging
 logger = logging.getLogger(__name__)
 
 
@@ -171,7 +160,7 @@ class TemporalBlock(nn.Module):
         return self.relu(out + res)
 
 
-class TemporalBlock_last(nn.Module):
+class TemporalBlockLast(nn.Module):
     def __init__(
         self,
         n_inputs,
@@ -183,7 +172,7 @@ class TemporalBlock_last(nn.Module):
         dropout=0.2,
         init=True,
     ):
-        super(TemporalBlock_last, self).__init__()
+        super(TemporalBlockLast, self).__init__()
         self.kernel_size = kernel_size
         self.conv1 = weight_norm(
             nn.Conv1d(
@@ -268,7 +257,7 @@ class TemporalConvNet(nn.Module):
             out_channels = num_channels[i]
             if i == num_levels - 1:
                 layers += [
-                    TemporalBlock_last(
+                    TemporalBlockLast(
                         in_channels,
                         out_channels,
                         kernel_size,
@@ -406,7 +395,7 @@ class LocalModel(object):
 
         self.seq = self.seq.float()
 
-        self.D = data_loader(
+        self.D = DataLoader(
             Ymat=self.Ymat,
             vbsize=vbsize,
             hbsize=hbsize,
@@ -457,13 +446,13 @@ class LocalModel(object):
                 p.grad.data.clamp_(max=1e5, min=-1e5)
             optimizer.step()
 
-            loss_all = loss_all + [loss.cpu().item()]
+            loss_all = loss_all + [loss.item()]
             if self.test:
                 inp_test = Variable(inp_test)
                 out_target_test = Variable(out_target_test)
                 out_test, dic = self.__prediction__(inp_test)
                 losst = self.__loss__(out_test, out_target_test, dic)
-            loss_test_all = loss_test_all + [losst.cpu().item()]
+            loss_test_all = loss_test_all + [losst.item()]
 
             if current_epoch > last_epoch:
                 ve = loss_test_all[-1]
@@ -511,12 +500,11 @@ class LocalModel(object):
 
     def convert_from_output(self, T):
         out = T.view(T.size(0), T.size(2))
-        return np.array(out.cpu().detach())
+        return np.array(out.detach())
 
     def predict_future_batch(
         self, data, covariates=None, ycovs=None, future=10
     ):
-        self.seq = self.seq.cpu()
         inp = self.convert_to_input(data)
         if covariates is not None:
             cov = self.convert_covariates(data, covariates)
@@ -525,9 +513,6 @@ class LocalModel(object):
             ycovs = self.convert_ycovs(data, ycovs)
             inp = torch.cat((inp, ycovs[:, :, 0: inp.size(2)]), 1)
 
-        inp = inp.cpu()
-        cov = cov.cpu()
-        ycovs = ycovs.cpu()
         out, dic = self.__prediction__(inp)
         ci = inp.size(2)
         output = out[:, :, out.size(2) - 1].view(out.size(0), out.size(1), 1)
@@ -555,9 +540,7 @@ class LocalModel(object):
                 )
             out = torch.cat((inp, output), dim=2)
         out = out[:, 0, :].view(out.size(0), 1, out.size(2))
-        out = out.cpu()
         y = self.convert_from_output(out)
-        self.seq = self.seq.cpu()
         return y
 
     def predict_future(
@@ -577,40 +560,39 @@ class LocalModel(object):
         bsize: batch size for processing (determine according to gopu memory limits)
         normalize: should be set according to the normalization used in the class initialization
         """
-        if normalize:
-            data = (data_in - self.m[:, None]) / self.s[:, None]
-            data += self.mini
+        with torch.no_grad():
+            if normalize:
+                data = (data_in - self.m[:, None]) / self.s[:, None]
+                data += self.mini
 
-        else:
-            data = data_in
+            else:
+                data = data_in
 
-        n, T = data.shape
+            n, T = data.shape
 
-        I = list(np.arange(0, n, bsize))
-        I.append(n)
-        bdata = data[range(I[0], I[1]), :]
-        if ycovs is not None:
-            out = self.predict_future_batch(
-                bdata, covariates, ycovs[range(I[0], I[1]), :, :], future
-            )
-        else:
-            out = self.predict_future_batch(bdata, covariates, None, future)
-
-        for i in range(1, len(I) - 1):
-            bdata = data[range(I[i], I[i + 1]), :]
-            self.seq = self.seq.cpu()
+            I = list(np.arange(0, n, bsize))
+            I.append(n)
+            bdata = data[range(I[0], I[1]), :]
             if ycovs is not None:
-                temp = self.predict_future_batch(
-                    bdata, covariates, ycovs[range(I[i], I[i + 1]), :, :], future
+                out = self.predict_future_batch(
+                    bdata, covariates, ycovs[range(I[0], I[1]), :, :], future
                 )
             else:
-                temp = self.predict_future_batch(bdata, covariates, None, future)
-            out = np.vstack([out, temp])
+                out = self.predict_future_batch(bdata, covariates, None, future)
 
-        if normalize:
-            temp = (out - self.mini) * self.s[:, None] + self.m[:, None]
-            out = temp
+            for i in range(1, len(I) - 1):
+                bdata = data[range(I[i], I[i + 1]), :]
+                if ycovs is not None:
+                    temp = self.predict_future_batch(
+                        bdata, covariates, ycovs[range(I[i], I[i + 1]), :, :], future
+                    )
+                else:
+                    temp = self.predict_future_batch(bdata, covariates, None, future)
+                out = np.vstack([out, temp])
 
+            if normalize:
+                temp = (out - self.mini) * self.s[:, None] + self.m[:, None]
+                out = temp
         return out
 
     def rolling_validation(self, Ymat, tau=24, n=7, bsize=90, alpha=0.3):

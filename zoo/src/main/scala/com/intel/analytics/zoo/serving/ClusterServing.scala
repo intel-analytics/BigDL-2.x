@@ -42,8 +42,8 @@ object ClusterServing {
       while (true) {
         params = new SerParams(helper)
         val serving = StreamExecutionEnvironment.getExecutionEnvironment
-        serving.addSource(new FlinkRedisSource(params))
-          .map(new FlinkInference(params))
+        serving.addSource(new FlinkRedisSource(params)).setParallelism(1)
+          .map(new FlinkInference(params)).setParallelism(1)
           .addSink(new FlinkRedisSink(params))
         serving.setParallelism(1)
         serving.execute("Cluster Serving - Flink")

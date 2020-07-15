@@ -99,11 +99,12 @@ class TestZouwuModelForecast(ZooTestCase):
                                max_FX_epoch=1,
                                max_TCN_epoch=1,
                                alt_iters=2)
+        horizon = np.random.randint(1, 50)
         x = np.random.rand(300, 480)
         model.fit(x)
-        yhat = model.predict(x=None, horizon=24)
-        assert yhat.shape == (300, 24)
-        target_value = np.random.rand(300, 24)
+        yhat = model.predict(x=None, horizon=horizon)
+        assert yhat.shape == (300, horizon)
+        target_value = np.random.rand(300, horizon)
         model.evaluate(x=None, target_value=target_value, metric=['mse'])
 
 

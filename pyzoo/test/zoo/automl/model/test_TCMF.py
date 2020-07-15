@@ -37,6 +37,7 @@ class TestTCMF(ZooTestCase):
         }
         self.model = TCMF()
         self.Ymat = np.random.rand(self.num_samples, seq_len)
+        self.horizon = np.random.randint(1, 50)
 
     def teardown_method(self, method):
         del self.model
@@ -45,22 +46,21 @@ class TestTCMF(ZooTestCase):
     def test_fit_predict_evaluate(self):
         self.model.fit_eval(x=self.Ymat, y=None, **self.config)
         # test predict
-        horizon = 24
-        result = self.model.predict(x=None, horizon=horizon)
-        assert result.shape[1] == horizon
+        result = self.model.predict(x=None, horizon=self.horizon)
+        assert result.shape[1] == self.horizon
         # test evaluate
-        target = np.random.rand(self.num_samples, horizon)
+        target = np.random.rand(self.num_samples, self.horizon)
         evaluate_result = self.model.evaluate(y=target, metrics=['mae', 'smape'])
         assert len(evaluate_result) == 2
-        assert len(evaluate_result[0]) == horizon
-        assert len(evaluate_result[1]) == horizon
+        assert len(evaluate_result[0]) == self.horizon
+        assert len(evaluate_result[1]) == self.horizon
 
     def test_predict_evaluate_error(self):
         with pytest.raises(ValueError):
             self.model.predict(x=1)
 
         with pytest.raises(ValueError):
-            self.model.evaluate(x=1, y=np.random.rand(self.num_samples, 24))
+            self.model.evaluate(x=1, y=np.random.rand(self.num_samples, self.horizon))
 
         with pytest.raises(ValueError):
             self.model.evaluate(x=None, y=None)
@@ -69,19 +69,18 @@ class TestTCMF(ZooTestCase):
             self.model.predict(x=None)
 
         with pytest.raises(Exception):
-            self.model.evaluate(x=None, y=np.random.rand(self.num_samples, 24))
+            self.model.evaluate(x=None, y=np.random.rand(self.num_samples, self.horizon))
 
     def test_save_restore(self):
         self.model.fit_eval(x=self.Ymat, y=None, **self.config)
-        horizon = 24
-        result_save = self.model.predict(x=None, horizon=horizon)
+        result_save = self.model.predict(x=None, horizon=self.horizon)
         model_file = "tmp.pkl"
         self.model.save(model_file)
         assert os.path.isfile(model_file)
         new_model = TCMF()
         new_model.restore(model_file)
         assert new_model.model
-        result_restore = new_model.predict(x=None, horizon=horizon)
+        result_restore = new_model.predict(x=None, horizon=self.horizon)
         assert_array_almost_equal(result_save, result_restore, decimal=2), \
             "Prediction values are not the same after restore: " \
             "predict before is {}, and predict after is {}".format(result_save, result_restore)
