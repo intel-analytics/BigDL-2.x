@@ -59,7 +59,7 @@ def read_file_spark(file_path, file_type, **kwargs):
             file_paths = extract_one_path(file_path, os.environ)
 
         if not file_paths:
-            raise Exception("The file path is invalid/empty or does not include csv/json files")
+            raise Exception("The file path is invalid or empty, please check your data")
 
         num_files = len(file_paths)
         total_cores = node_num * core_num

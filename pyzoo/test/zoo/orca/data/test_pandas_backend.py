@@ -41,6 +41,11 @@ class TestSparkXShards(TestCase):
         with self.assertRaises(Exception) as context:
             xshards = zoo.orca.data.pandas.read_csv(file_path)
         self.assertTrue('No such file or directory' in str(context.exception))
+        file_path = os.path.join(self.resource_path, "image3d")
+        with self.assertRaises(Exception) as context:
+            xshards = zoo.orca.data.pandas.read_csv(file_path)
+        # This error is raised by pandas.errors.ParserError
+        self.assertTrue('Error tokenizing data' in str(context.exception))
 
     def test_read_local_json(self):
         ZooContext.orca_pandas_read_backend = "pandas"
