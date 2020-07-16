@@ -148,25 +148,47 @@ def read_file_spark(file_path, file_type, **kwargs):
             df = spark.read.json(file_paths, **kwargs)
 
         # Handle pandas-compatible postprocessing arguments
+        if usecols is not None and not callable(usecols):
+            usecols = list(usecols)
+        renamed = False
         if isinstance(names, list):
             if len(set(names)) != len(names):
                 raise ValueError("Found duplicate names, please check your names input")
-            if len(names) != len(df.schema):
-                raise ValueError(
-                    "The number of names [%s] does not match the number "
-                    "of columns [%d]. Try names by a Spark SQL DDL-formatted "
-                    "string." % (len(names), len(df.schema))
+            if usecols is not None:
+                if not callable(usecols):
+                    # usecols is list
+                    if len(names) != len(usecols) and len(names) != len(df.schema):
+                        raise ValueError(
+                            "Passed names did not match usecols"
+                        )
+                if len(names) == len(df.schema):
+                    df = df.selectExpr(
+                        *["`%s` as `%s`" % (field.name, name) for field, name in zip(df.schema, names)]
+                    )
+                    renamed = True
+
+            else:
+                if len(names) != len(df.schema):
+                    raise ValueError(
+                            "The number of names [%s] does not match the number "
+                            "of columns [%d]. Try names by a Spark SQL DDL-formatted "
+                            "string." % (len(names), len(df.schema))
+                    )
+                df = df.selectExpr(
+                        *["`%s` as `%s`" % (field.name, name) for field, name in zip(df.schema, names)]
                 )
-            df = df.selectExpr(
-                *["`%s` as `%s`" % (field.name, name) for field, name in zip(df.schema, names)]
-            )
-        if usecols is not None and not callable(usecols):
-            usecols = list(usecols)
+                renamed = True
+        index_map = {}
         if usecols is not None:
             if callable(usecols):
                 cols = [field.name for field in df.schema if usecols(field.name)]
                 missing = []
             elif all(isinstance(col, int) for col in usecols):
+                new_index = 0
+                for i, field in enumerate(df.schema):
+                    if i in usecols:
+                        index_map[i] = new_index
+                        new_index += 1
                 cols = [field.name for i, field in enumerate(df.schema) if i in usecols]
                 missing = [
                     col
@@ -175,7 +197,10 @@ def read_file_spark(file_path, file_type, **kwargs):
                 ]
             elif all(isinstance(col, str) for col in usecols):
                 cols = [field.name for field in df.schema if field.name in usecols]
-                missing = [col for col in usecols if col not in cols]
+                if isinstance(names, list):
+                    missing = [c for c in usecols if c not in names]
+                else:
+                    missing = [col for col in usecols if col not in cols]
             else:
                 raise ValueError(
                     "usecols must only be list-like of all strings, "
@@ -183,16 +208,13 @@ def read_file_spark(file_path, file_type, **kwargs):
             if len(missing) > 0:
                 raise ValueError(
                     "usecols do not match columns, columns expected but not found: %s" % missing)
-
             if len(cols) > 0:
                 df = df.select(cols)
-        if dtype is not None:
-            if isinstance(dtype, dict):
-                for col, type in dtype.items():
-                    df = df.withColumn(col, df[col].astype(type))
-            else:
-                for col in df.columns:
-                    df = df.withColumn(col, df[col].astype(dtype))
+                if isinstance(names, list):
+                    if not renamed:
+                        df = df.selectExpr(
+                                *["`%s` as `%s`" % (col, name) for col, name in zip(cols, names)]
+                            )
 
         if df.rdd.getNumPartitions() < node_num:
             df = df.repartition(node_num)
@@ -202,10 +224,20 @@ def read_file_spark(file_path, file_type, **kwargs):
                 import pandas as pd
                 data = list(iter)
                 pd_df = pd.DataFrame(data, columns=columns)
+                if dtype is not None:
+                    if isinstance(dtype, dict):
+                        for col, type in dtype.items():
+                            if isinstance(col, str):
+                                pd_df[col] = pd_df[col].astype(type)
+                            elif isinstance(col, int):
+                                pd_df.iloc[:, index_map[col]] = pd_df.iloc[:, index_map[col]].astype(type)
+                    else:
+                        pd_df = pd_df.astype(dtype)
                 if squeeze and len(pd_df.columns) == 1:
                     pd_df = pd_df.iloc[:, 0]
                 if index_col:
                     pd_df = pd_df.set_index(index_col)
+
                 return [pd_df]
 
             return f
