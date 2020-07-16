@@ -28,14 +28,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import logging
 import pickle
 
 import ray
 
-from ray.tune import Trainable
-from ray.tune.resources import Resources
 from ray.util.sgd.tf.tf_runner import TFRunner
 
 logger = logging.getLogger(__name__)
@@ -185,40 +182,3 @@ class TFTrainer:
         model = self.model_creator(self.config)
         model.set_weights(state["weights"])
         return model
-
-
-class TFTrainable(Trainable):
-    @classmethod
-    def default_resource_request(cls, config):
-        return Resources(
-            cpu=0,
-            gpu=0,
-            extra_cpu=config["num_replicas"],
-            extra_gpu=int(config["use_gpu"]) * config["num_replicas"])
-
-    def setup(self, config):
-        self._trainer = TFTrainer(
-            model_creator=config["model_creator"],
-            data_creator=config["data_creator"],
-            config=config.get("trainer_config", {}),
-            num_replicas=config["num_replicas"],
-            use_gpu=config["use_gpu"],
-            num_cpus_per_worker=config.get("num_cpus_per_worker", 1))
-
-    def step(self):
-
-        train_stats = self._trainer.train()
-        validation_stats = self._trainer.validate()
-
-        train_stats.update(validation_stats)
-
-        return train_stats
-
-    def save_checkpoint(self, checkpoint_dir):
-        return self._trainer.save(os.path.join(checkpoint_dir, "model"))
-
-    def load_checkpoint(self, checkpoint_path):
-        return self._trainer.restore(checkpoint_path)
-
-    def cleanup(self):
-        self._trainer.shutdown()
