@@ -178,17 +178,12 @@ def read_file_spark(file_path, file_type, **kwargs):
                         *["`%s` as `%s`" % (field.name, name) for field, name in zip(df.schema, names)]
                 )
                 renamed = True
-        index_map = {}
+        index_map = dict([(i, field.name) for i, field in enumerate(df.schema)])
         if usecols is not None:
             if callable(usecols):
                 cols = [field.name for field in df.schema if usecols(field.name)]
                 missing = []
             elif all(isinstance(col, int) for col in usecols):
-                new_index = 0
-                for i, field in enumerate(df.schema):
-                    if i in usecols:
-                        index_map[i] = new_index
-                        new_index += 1
                 cols = [field.name for i, field in enumerate(df.schema) if i in usecols]
                 missing = [
                     col
@@ -215,6 +210,10 @@ def read_file_spark(file_path, file_type, **kwargs):
                         df = df.selectExpr(
                                 *["`%s` as `%s`" % (col, name) for col, name in zip(cols, names)]
                             )
+                        # update index map after rename
+                        for index, col in index_map.items():
+                            if col in cols:
+                                index_map[index] = names[cols.index(col)]
 
         if df.rdd.getNumPartitions() < node_num:
             df = df.repartition(node_num)
@@ -228,9 +227,15 @@ def read_file_spark(file_path, file_type, **kwargs):
                     if isinstance(dtype, dict):
                         for col, type in dtype.items():
                             if isinstance(col, str):
+                                if col not in pd_df.columns:
+                                    raise ValueError("column to be set type is not"
+                                                     " in current dataframe")
                                 pd_df[col] = pd_df[col].astype(type)
                             elif isinstance(col, int):
-                                pd_df.iloc[:, index_map[col]] = pd_df.iloc[:, index_map[col]].astype(type)
+                                if index_map[col] not in pd_df.columns:
+                                    raise ValueError("column index to be set type is not"
+                                                     " in current dataframe")
+                                pd_df[index_map[col]] = pd_df[index_map[col]].astype(type)
                     else:
                         pd_df = pd_df.astype(dtype)
                 if squeeze and len(pd_df.columns) == 1:

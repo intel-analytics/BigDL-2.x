@@ -127,6 +127,22 @@ class TestSparkBackend(TestCase):
         assert "item" in df2.columns
         assert "location" in df2.columns
 
+        data_shard = zoo.orca.data.pandas.read_csv(file_path, header=0,
+                                                   names=['user', 'item', 'rating'],
+                                                   usecols=['user', 'item'],
+                                                   dtype={0: np.float32, 1: np.int32})
+        data = data_shard.collect()
+        df2 = data[0]
+        assert df2.user.dtype == "float32" and df2.item.dtype == "int32"
+
+        with self.assertRaises(Exception) as context:
+            data_shard = zoo.orca.data.pandas.read_csv(file_path, header=0,
+                                                       names=['user', 'item'], usecols=[0, 1],
+                                                       dtype={1: np.float32, 2: np.int32})
+            data = data_shard.collect()
+        self.assertTrue('column index to be set type is not in current dataframe'
+                        in str(context.exception))
+
     def test_read_invalid_path(self):
         file_path = os.path.join(self.resource_path, "abc")
         with self.assertRaises(Exception) as context:
