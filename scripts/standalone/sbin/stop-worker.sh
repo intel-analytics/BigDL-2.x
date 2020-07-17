@@ -17,28 +17,28 @@
 # limitations under the License.
 #
 
-# A shell script to stop all workers on a single slave
+# A shell script to stop all workers on a single worker
 #
 # Environment variables
 #
 #   SPARK_WORKER_INSTANCES The number of worker instances that should be
-#                          running on this slave.  Default is 1.
+#                          running on this worker machine.  Default is 1.
 
-# Usage: stop-slave.sh
-#   Stops all slaves on this worker machine
+# Usage: stop-worker.sh
+#   Stops all workers on this worker machine
 
 if [ -z "${SPARK_HOME}" ]; then
   export SPARK_HOME="$(cd "`dirname "$0"`"/..; pwd)"
 fi
 
-. "${AZ_SCRIPT_HOME}/sbin/spark-config.sh"
+. "${ZOO_STANDALONE_HOME}/sbin/spark-config.sh"
 
 . "${SPARK_HOME}/bin/load-spark-env.sh"
 
 if [ "$SPARK_WORKER_INSTANCES" = "" ]; then
-  "${AZ_SCRIPT_HOME}/sbin"/spark-daemon.sh stop org.apache.spark.deploy.worker.Worker 1
+  "${ZOO_STANDALONE_HOME}/sbin"/spark-daemon.sh stop org.apache.spark.deploy.worker.Worker 1
 else
   for ((i=0; i<$SPARK_WORKER_INSTANCES; i++)); do
-    "${AZ_SCRIPT_HOME}/sbin"/spark-daemon.sh stop org.apache.spark.deploy.worker.Worker $(( $i + 1 ))
+    "${ZOO_STANDALONE_HOME}/sbin"/spark-daemon.sh stop org.apache.spark.deploy.worker.Worker $(( $i + 1 ))
   done
 fi
