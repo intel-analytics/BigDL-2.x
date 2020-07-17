@@ -21,8 +21,8 @@ if [ -z "${SPARK_HOME}" ]; then
   export SPARK_HOME="$(cd "`dirname "$0"`"/..; pwd)"
 fi
 
-. "${AZ_SCRIPT_HOME}/sbin/spark-config.sh"
+. "${ZOO_STANDALONE_HOME}/sbin/spark-config.sh"
 
 . "${SPARK_HOME}/bin/load-spark-env.sh"
 
-"${AZ_SCRIPT_HOME}/sbin/slaves.sh" export SPARK_HOME=${EXECUTOR_SPARK_HOME} \; export AZ_SCRIPT_HOME=${EXECUTOR_AZ_SCRIPT_HOME} \; cd "${EXECUTOR_SPARK_HOME}" \; "${EXECUTOR_AZ_SCRIPT_HOME}/sbin"/stop-slave.sh
+"${ZOO_STANDALONE_HOME}/sbin/workers.sh" export SPARK_HOME=${EXECUTOR_SPARK_HOME} \; export ZOO_STANDALONE_HOME=${EXECUTOR_ZOO_STANDALONE_HOME} \; cd "${EXECUTOR_ZOO_STANDALONE_HOME}" \; "${EXECUTOR_ZOO_STANDALONE_HOME}/sbin"/stop-worker.sh

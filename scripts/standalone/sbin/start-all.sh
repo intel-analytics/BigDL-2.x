@@ -19,17 +19,17 @@
 
 # Start all spark daemons.
 # Starts the master on this node.
-# Starts a worker on each node specified in conf/slaves
+# Starts a worker on each node specified in conf/workers
 
 if [ -z "${SPARK_HOME}" ]; then
   export SPARK_HOME="$(cd "`dirname "$0"`"/..; pwd)"
 fi
 
 # Load the Spark configuration
-. "${AZ_SCRIPT_HOME}/sbin/spark-config.sh"
+. "${ZOO_STANDALONE_HOME}/sbin/spark-config.sh"
 
 # Start Master
-"${AZ_SCRIPT_HOME}/sbin"/start-master.sh
+"${ZOO_STANDALONE_HOME}/sbin"/start-master.sh
 
 # Start Workers
-"${AZ_SCRIPT_HOME}/sbin"/start-slaves.sh
+"${ZOO_STANDALONE_HOME}/sbin"/start-workers.sh

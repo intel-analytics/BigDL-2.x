@@ -17,12 +17,12 @@
 # limitations under the License.
 #
 
-# Starts a slave on the machine this script is executed on.
+# Starts a worker on the machine this script is executed on.
 #
 # Environment Variables
 #
 #   SPARK_WORKER_INSTANCES  The number of worker instances to run on this
-#                           slave.  Default is 1.
+#                           worker.  Default is 1. Note it has been deprecate since Spark 3.0.
 #   SPARK_WORKER_PORT       The base port number for the first worker. If set,
 #                           subsequent workers will increment this number.  If
 #                           unset, Spark will find a valid port number, but
@@ -40,16 +40,17 @@ fi
 CLASS="org.apache.spark.deploy.worker.Worker"
 
 if [[ $# -lt 1 ]] || [[ "$@" = *--help ]] || [[ "$@" = *-h ]]; then
-  echo "Usage: ./sbin/start-slave.sh [options] <master>"
+  echo "Usage: ./sbin/start-worker.sh <master> [options]"
   pattern="Usage:"
   pattern+="\|Using Spark's default log4j profile:"
-  pattern+="\|Registered signal handlers for"
+  pattern+="\|Started daemon with process name"
+  pattern+="\|Registered signal handler for"
 
   "${SPARK_HOME}"/bin/spark-class $CLASS --help 2>&1 | grep -v "$pattern" 1>&2
   exit 1
 fi
 
-. "${AZ_SCRIPT_HOME}/sbin/spark-config.sh"
+. "${ZOO_STANDALONE_HOME}/sbin/spark-config.sh"
 
 . "${SPARK_HOME}/bin/load-spark-env.sh"
 
@@ -78,7 +79,7 @@ function start_instance {
   fi
   WEBUI_PORT=$(( $SPARK_WORKER_WEBUI_PORT + $WORKER_NUM - 1 ))
 
-  "${AZ_SCRIPT_HOME}/sbin"/spark-daemon.sh start $CLASS $WORKER_NUM \
+  "${ZOO_STANDALONE_HOME}/sbin"/spark-daemon.sh start $CLASS $WORKER_NUM \
      --webui-port "$WEBUI_PORT" $PORT_FLAG $PORT_NUM $MASTER "$@"
 }
 

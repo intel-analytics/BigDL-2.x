@@ -25,18 +25,18 @@ if [ -z "${SPARK_HOME}" ]; then
 fi
 
 # Load the Spark configuration
-. "${AZ_SCRIPT_HOME}/sbin/spark-config.sh"
+. "${ZOO_STANDALONE_HOME}/sbin/spark-config.sh"
 
-# Stop the slaves, then the master
-"${AZ_SCRIPT_HOME}/sbin"/stop-slaves.sh
-"${AZ_SCRIPT_HOME}/sbin"/stop-master.sh
+# Stop the workers, then the master
+"${ZOO_STANDALONE_HOME}/sbin"/stop-workers.sh
+"${ZOO_STANDALONE_HOME}/sbin"/stop-master.sh
 
 if [ "$1" == "--wait" ]
 then
   printf "Waiting for workers to shut down..."
   while true
   do
-    running=`${SPARK_HOME}/sbin/slaves.sh ps -ef | grep -v grep | grep deploy.worker.Worker`
+    running=`${SPARK_HOME}/sbin/workers.sh ps -ef | grep -v grep | grep deploy.worker.Worker`
     if [ -z "$running" ]
     then
       printf "\nAll workers successfully shut down.\n"

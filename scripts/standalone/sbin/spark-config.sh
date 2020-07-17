@@ -25,7 +25,6 @@ if [ -z "${SPARK_HOME}" ]; then
 fi
 
 export SPARK_CONF_DIR="${SPARK_CONF_DIR:-"${SPARK_HOME}/conf"}"
-echo $SPARK_CONF_DIR
 # Add the PySpark classes to the PYTHONPATH:
 if [ -z "${PYSPARK_PYTHONPATH_SET}" ]; then
   export PYTHONPATH="${SPARK_HOME}/python:${PYTHONPATH}"

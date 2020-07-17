@@ -17,13 +17,13 @@
 # limitations under the License.
 #
 
-# Starts a slave instance on each machine specified in the conf/slaves file.
+# Starts a worker instance on each machine specified in the conf/workers file.
 
 if [ -z "${SPARK_HOME}" ]; then
   export SPARK_HOME="$(cd "`dirname "$0"`"/..; pwd)"
 fi
 
-. "${AZ_SCRIPT_HOME}/sbin/spark-config.sh"
+. "${ZOO_STANDALONE_HOME}/sbin/spark-config.sh"
 . "${SPARK_HOME}/bin/load-spark-env.sh"
 
 # Find the port number for the master
@@ -34,15 +34,13 @@ fi
 if [ "$SPARK_MASTER_HOST" = "" ]; then
   case `uname` in
       (SunOS)
-	  SPARK_MASTER_HOST="`/usr/sbin/check-hostname | awk '{print $NF}'`"
-	  ;;
+          SPARK_MASTER_HOST="`/usr/sbin/check-hostname | awk '{print $NF}'`"
+          ;;
       (*)
-	  SPARK_MASTER_HOST="`hostname -f`"
-	  ;;
+          SPARK_MASTER_HOST="`hostname -f`"
+          ;;
   esac
 fi
 
-# Launch the slaves
-#"${SPARK_HOME}/sbin/slaves.sh" cd "${SPARK_HOME}" \; "${SPARK_HOME}/sbin/start-slave.sh" "spark://$SPARK_MASTER_HOST:$SPARK_MASTER_PORT"
-"${AZ_SCRIPT_HOME}/sbin/slaves.sh" export SPARK_HOME=${EXECUTOR_SPARK_HOME} \; export AZ_SCRIPT_HOME=${EXECUTOR_AZ_SCRIPT_HOME} \; cd "${EXECUTOR_SPARK_HOME}" \; "${EXECUTOR_AZ_SCRIPT_HOME}/sbin/start-slave.sh" "spark://$SPARK_MASTER_HOST:$SPARK_MASTER_PORT"
-#"${AZ_SCRIPT_HOME}/sbin/slaves.sh" cd "/opt/kai/standalone/lib/python3.6/site-packages/pyspark/" \; "/opt/kai/standalone/lib/python3.6/site-packages/pyspark/sbin/start-slave.sh" "spark://$SPARK_MASTER_HOST:$SPARK_MASTER_PORT"
+# Launch the workers
+"${ZOO_STANDALONE_HOME}/sbin/workers.sh" export SPARK_HOME=${EXECUTOR_SPARK_HOME} \; export ZOO_STANDALONE_HOME=${EXECUTOR_ZOO_STANDALONE_HOME} \; cd "${EXECUTOR_ZOO_STANDALONE_HOME}" \; "${EXECUTOR_ZOO_STANDALONE_HOME}/sbin/start-worker.sh" "spark://$SPARK_MASTER_HOST:$SPARK_MASTER_PORT"

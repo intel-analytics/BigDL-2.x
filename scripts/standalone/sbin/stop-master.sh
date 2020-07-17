@@ -23,6 +23,6 @@ if [ -z "${SPARK_HOME}" ]; then
   export SPARK_HOME="$(cd "`dirname "$0"`"/..; pwd)"
 fi
 
-. "${AZ_SCRIPT_HOME}/sbin/spark-config.sh"
+. "${ZOO_STANDALONE_HOME}/sbin/spark-config.sh"
 
-"${AZ_SCRIPT_HOME}/sbin"/spark-daemon.sh stop org.apache.spark.deploy.master.Master 1
+"${ZOO_STANDALONE_HOME}/sbin"/spark-daemon.sh stop org.apache.spark.deploy.master.Master 1
