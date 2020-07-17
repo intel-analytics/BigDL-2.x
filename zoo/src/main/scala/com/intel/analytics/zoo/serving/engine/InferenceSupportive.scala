@@ -54,22 +54,6 @@ object InferenceSupportive {
       val result = params.model.doPredict(t)
       dimCheck(result, "remove", params)
 
-//      val result = if (params.modelType == "openvino") {
-//        val res = params.model.doPredict(t).toTensor[Float]
-//        if (t.isTensor) {
-//          t.toTensor[Float].squeeze(1)
-//        }
-//        else if (t.isTable) {
-//          val dataTable = t.toTable
-//          dataTable.keySet.foreach(key => {
-//            dataTable(key).asInstanceOf[Tensor[Float]].squeeze(1)
-//          })
-//        }
-//        res.squeeze(1)
-//      } else {
-//        params.model.doPredict(t).toTensor[Float]
-//      }
-
       if (result.isTensor) {
         (0 until thisBatchSize).toParArray.map(i => {
           val value = PostProcessing(result.toTensor[Float].select(1, i + 1), params.filter)
