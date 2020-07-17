@@ -106,7 +106,7 @@ object SparkStreamingClusterServing {
     val ssc = new StreamingContext(spark.sparkContext, new Duration(50))
 
 
-    val receiver = new ServingReceiver()
+    val receiver = new ServingReceiver(serParams.redisHost, serParams.redisPort)
     val images = ssc.receiverStream(receiver)
 
     images.foreachRDD{ m =>
