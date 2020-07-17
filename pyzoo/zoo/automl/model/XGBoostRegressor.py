@@ -15,27 +15,61 @@
 from abc import ABC
 
 import pickle
+import pandas as pd
 from xgboost.sklearn import XGBRegressor
 
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.model.abstract import BaseModel
 
 
-class XGBRegressor(BaseModel):
+class XGBoostRegressor(BaseModel):
 
-    def __init__(self):
+    def __init__(self, **config):
         """
         Initialize hyper parameters
         :param check_optional_config:
         :param future_seq_len:
         """
         # models
+        self.num_rounds = config.get('n_estimators', 1000)
+        self.max_depth = config.get('max_depth', 5)
+        self.tree_method = config.get('tree_method', 'hist')
+        self.n_jobs = config.get('n_jobs', -1)
+        self.random_state = config.get('random_state', 2)
+        self.learning_rate = config.get('learning_rate', 0.1)
+        self.min_child_weight = config.get('min_child_weight', 1)
+        self.seed = config.get('seed', 0)
+
+        self.subsample = config.get('subsample', 0.8)
+        self.colsample_bytree = config.get('colsample_bytree', 0.8)
+        self.gamma = config.get('gamma', 0)
+        self.reg_alpha = config.get('reg_alpha', 0)
+        self.reg_lambda = config.get('reg_lambda', 1)
+        self.verbosity = config.get('verbosity', 0)
+        if config.get('metric', 'mse') in ('rmse', 'mse'):
+            self.metric = 'rmse'
+
         self.model = None
         self.model_init = False
-        self.config = None
 
     def set_params(self, **config):
-        self.config = config
+        self.num_rounds = config.get('n_estimators', self.num_rounds)
+        self.max_depth = config.get('max_depth', self.max_depth)
+        self.tree_method = config.get('tree_method', self.tree_method)
+        self.n_jobs = config.get('n_jobs', self.n_jobs)
+        self.random_state = config.get('random_state', self.random_state)
+        self.learning_rate = config.get('learning_rate', self.learning_rate)
+        self.min_child_weight = config.get('min_child_weight', self.min_child_weight)
+        self.seed = config.get('seed', self.seed)
+
+        self.subsample = config.get('subsample', self.subsample)
+        self.colsample_bytree = config.get('colsample_bytree', self.colsample_bytree)
+        self.gamma = config.get('gamma', self.gamma)
+        self.reg_alpha = config.get('reg_alpha', self.reg_alpha)
+        self.reg_lambda = config.get('reg_lambda', self.reg_lambda)
+        self.verbosity = config.get('verbosity', self.verbosity)
+        if config.get('metric', 'mse') in ('rmse', 'mse'):
+            self.metric = 'rmse'
 
     def _build(self, **config):
         """
@@ -44,7 +78,13 @@ class XGBRegressor(BaseModel):
         :return:
         """
         self.set_params(**config)
-        self.model = XGBRegressor(self.config)
+        self.model = XGBRegressor(n_estimators=self.num_rounds, max_depth=self.max_depth,
+                                  n_jobs=self.n_jobs, tree_method=self.tree_method,
+                                  random_state=self.random_state, learning_rate=self.learning_rate,
+                                  min_child_weight=self.min_child_weight, seed=self.seed,
+                                  subsample=self.subsample, colsample_bytree=self.colsample_bytree,
+                                  gamma=self.gamma, reg_alpha=self.reg_alpha,
+                                  reg_lambda=self.reg_lambda, verbosity=self.verbosity)
         self.model_init = True
 
     def fit_eval(self, x, y, validation_data=None, **config):
@@ -61,8 +101,13 @@ class XGBRegressor(BaseModel):
         """
         if not self.model_init:
             self._build(**config)
-        self.model.fit(x, y, eval_set = validation_data)
-        return self.model.evals_result
+
+        if validation_data is not list:
+            validation_data = [validation_data]
+
+        self.model.fit(x, y, eval_set=validation_data)
+        res = self.model.evals_result_.get("validation_0").get(self.metric)[-1]
+        return res
 
     def predict(self, x):
         """
@@ -77,7 +122,9 @@ class XGBRegressor(BaseModel):
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling predict")
         out = self.model.predict(x)
-        return out
+        output_df = pd.DataFrame(out)
+
+        return output_df
 
     def evaluate(self, x, y, metrics=['mse']):
         """
@@ -100,13 +147,16 @@ class XGBRegressor(BaseModel):
         y_pred = self.predict(x)
         return [Evaluator.evaluate(m, y, y_pred) for m in metrics]
 
-    def save(self, model_file):
+    def save(self, model_file, config_path=None):
         pickle.dump(self.model, open(model_file, "wb"))
 
-    def restore(self, model_file):
+    def restore(self, model_file, **config):
         with open(model_file, 'rb') as f:
             self.model = pickle.load(f)
         self.model_init = True
+
+    def _get_required_parameters(self):
+        return {}
 
     def _get_optional_parameters(self):
         param = self.model.get_xgb_params

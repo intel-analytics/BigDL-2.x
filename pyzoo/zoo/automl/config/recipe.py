@@ -520,3 +520,52 @@ class BayesRecipe(Recipe):
 
     def search_algorithm(self):
         return 'BayesOpt'
+
+
+class XgbRegressorGridRandomRecipe(Recipe):
+    def __init__(
+            self,
+            n_estimators=[5, 10, 15],
+            max_depth=[4, 3, 5],
+            n_jobs=-1,
+            tree_method='hist',
+            random_state=2,
+            min_child_weight=1,
+            seed=0,
+            subsample=0.8,
+            colsample_bytree=0.8,
+            gamma=0,
+            reg_alpha=0,
+            reg_lambda=1):
+        """
+        """
+        super(self.__class__, self).__init__()
+
+        self.n_jobs = n_jobs
+        self.tree_method = tree_method
+        self.random_state = random_state
+        self.min_child_weight = min_child_weight
+        self.seed = seed
+        self.subsample = subsample
+        self.colsample_bytree = colsample_bytree
+        self.gamma = gamma
+        self.reg_alpha = reg_alpha
+        self.reg_lambda = reg_lambda
+
+        self.n_estimators = tune.choice(n_estimators)
+        self.max_depth = tune.grid_search(max_depth)
+
+        # -- optimization params
+        self.lr = tune.uniform(0.05, 0.2)
+
+    def search_space(self, all_available_features):
+        return {
+            # -------- feature related parameters
+            "model": "XGBRegressor",
+
+            "n_estimators": self.n_estimators,
+            "max_depth": self.max_depth,
+
+            # ----------- optimization parameters
+            "lr": self.lr
+        }
