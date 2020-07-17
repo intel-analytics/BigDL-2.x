@@ -201,10 +201,10 @@ class TestEstimatorForGraph(TestCase):
                 batch_size=8,
                 epochs=2,
                 validation_data=data_shard)
-        est.sess.close()
+
 
     # def test_estimator_graph_resume_training(self):
-    #     model_dir = os.path.join(self.temp, "test_model")
+    #     model_dir = "/model/test_model"
     #     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
     #     data_shard = zoo.orca.data.pandas.read_csv(file_path)
     #
