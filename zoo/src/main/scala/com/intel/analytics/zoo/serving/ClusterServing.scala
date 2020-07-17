@@ -37,8 +37,6 @@ object ClusterServing {
   def run(configPath: String = "config.yaml"): Unit = {
     val helper = new ClusterServingHelper(configPath)
     helper.initArgs()
-
-
     params = new SerParams(helper)
     val serving = StreamExecutionEnvironment.getExecutionEnvironment
     serving.addSource(new FlinkRedisSource(params)).setParallelism(1)
