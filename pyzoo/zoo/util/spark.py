@@ -245,24 +245,27 @@ class SparkRunner:
         penv_archive = self.pack_penv(conda_name)
         import tempfile
         worker_tmp_dir = tempfile.mkdtemp()
-        print(worker_tmp_dir)
         import subprocess
         # TODO: scp in parallel?
         if not isinstance(workers, list):
             workers = [workers]
         for worker in workers:
-            p1 = subprocess.Popen(["scp", penv_archive, "root@"+worker+":"+worker_tmp_dir])
-            # Wait for the process to finish
+            # TODO: need to input password for three times?
+            p1 = subprocess.Popen(["ssh", "root@" + worker,
+                                   "mkdir {}".format(worker_tmp_dir)])
             os.waitpid(p1.pid, 0)
-            p2 = subprocess.Popen(["ssh", "root@" + worker,
+            p2 = subprocess.Popen(["scp", penv_archive,
+                                   "root@{}:{}/{}".format(worker, worker_tmp_dir, penv_archive.split("/")[-1])])
+            # Wait for the process to finish
+            os.waitpid(p2.pid, 0)
+            p3 = subprocess.Popen(["ssh", "root@" + worker,
                                    "cd " + worker_tmp_dir + "; mkdir -p {}; tar -xzf {}.tar.gz -C {}"
                                   .format(self.PYTHON_ENV, self.PYTHON_ENV, self.PYTHON_ENV)])
-            os.waitpid(p2.pid, 0)
+            os.waitpid(p3.pid, 0)
         executor_conda_path = worker_tmp_dir + "/" + self.PYTHON_ENV
         os.environ["PYSPARK_PYTHON"] = executor_conda_path + "/bin/python"
 
         # Start Spark standalone clusters on master and workers
-
         pyspark_home = "{}/site-packages/pyspark".format(self._get_conda_python_path())
         zoo_standalone_home = "{}/site-packages/zoo/share/bin/standalone".format(self._get_conda_python_path())
         executor_pyspark_home = "{}/lib/{}/site-packages/pyspark"\
@@ -279,18 +282,16 @@ class SparkRunner:
                                       "ZOO_STANDALONE_HOME": zoo_standalone_home,
                                       "EXECUTOR_ZOO_STANDALONE_HOME": executor_zoo_standalone_home,
                                       "SPARK_WORKERS": spark_workers_path}
-        print(SparkRunner.standalone_env)
 
         pro = subprocess.Popen("{}/sbin/start-all.sh".format(zoo_standalone_home),
-                               env=SparkRunner.standalone_env)
+                               shell=True, env=SparkRunner.standalone_env)
         os.waitpid(pro.pid, 0)
 
         # Start pyspark-shell
         from zoo.util.utils import get_node_ip
         master = "spark://{}:7077".format(get_node_ip())
-
         submit_args = " --master " + master
-        submit_args = submit_args + "--num-executors {} --executor-cores {} " \
+        submit_args = submit_args + " --num-executors {} --executor-cores {} " \
                                     "--executor-memory {}".format(num_executors, executor_cores, executor_memory)
         if extra_python_lib:
             submit_args = submit_args + " --py-files {}".format(extra_python_lib)
@@ -303,6 +304,8 @@ class SparkRunner:
         spark_conf = init_spark_conf(conf) \
             .set("spark.driver.cores", driver_cores) \
             .set("spark.driver.memory", driver_memory) \
+            .set("spark.executor.instances", num_executors) \
+            .set("spark.executor.cores", executor_cores) \
             .set("spark.cores.max", num_executors * executor_cores) \
             .set("spark.executorEnv.PYTHONHOME", executor_conda_path)
         if extra_executor_memory_for_ray:
@@ -315,6 +318,7 @@ class SparkRunner:
 
         sc = init_nncontext(spark_conf, redirect_spark_log=self.redirect_spark_log)
         sc.setLogLevel(self.spark_log_level)
+        os.remove(penv_archive)
         return sc
 
     @staticmethod
@@ -324,5 +328,6 @@ class SparkRunner:
         if not env:
             raise Exception("")
         pro = subprocess.Popen("{}/sbin/stop-all.sh".format(env["ZOO_STANDALONE_HOME"]),
-                               env=env)
+                               shell=True, env=env)
         os.waitpid(pro.pid, 0)
+        # TODO: remove conda package on workers
