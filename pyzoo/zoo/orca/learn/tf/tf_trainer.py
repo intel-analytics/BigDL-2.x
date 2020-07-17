@@ -33,7 +33,7 @@ import pickle
 
 import ray
 
-from ray.util.sgd.tf.tf_runner import TFRunner
+from zoo.orca.learn.tf.tf_runner import TFRunner
 
 logger = logging.getLogger(__name__)
 
