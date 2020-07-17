@@ -525,6 +525,7 @@ class BayesRecipe(Recipe):
 class XgbRegressorGridRandomRecipe(Recipe):
     def __init__(
             self,
+            num_rand_samples=1,
             n_estimators=[5, 10, 15],
             max_depth=[4, 3, 5],
             n_jobs=-1,
@@ -541,6 +542,7 @@ class XgbRegressorGridRandomRecipe(Recipe):
         """
         super(self.__class__, self).__init__()
 
+        self.num_samples = num_rand_samples
         self.n_jobs = n_jobs
         self.tree_method = tree_method
         self.random_state = random_state
