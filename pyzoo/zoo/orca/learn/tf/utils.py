@@ -167,3 +167,22 @@ def convert_predict_to_dataframe(df, prediction_rdd):
     schema = StructType(df.schema.fields + [StructField('prediction', type)])
     result_df = result_rdd.toDF(schema)
     return result_df
+
+
+def find_checkpoint(model_dir):
+    import os
+    import re
+    ckpt_path = None
+    versions = []
+    for (root, dirs, files) in os.walk(model_dir, topdown=True):
+        temp_versions = []
+        for file_name in files:
+            if re.match("^optimMethod-TFParkTraining\.[0-9]+$", file_name) is not None:
+                version = int(file_name.split(".")[1])
+                temp_versions.append(version)
+        if temp_versions:
+            ckpt_path = root
+            versions = temp_versions
+            break
+    return ckpt_path, versions
+

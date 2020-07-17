@@ -35,6 +35,11 @@ class Estimator(object):
     def evaluate(self, data, **kwargs):
         pass
 
+    def load(self, path, version):
+        self.load_model = True
+        self.load_path = path
+        self.load_model_version = version
+
     @staticmethod
     def from_graph(*, inputs, outputs=None,
                    labels=None, loss=None, optimizer=None,
@@ -86,6 +91,7 @@ class TFOptimizerWrapper(Estimator):
         else:
             self.sess = sess
         self.model_dir = model_dir
+        self.load_model = False
 
     def fit(self, data,
             epochs=1,
@@ -95,7 +101,8 @@ class TFOptimizerWrapper(Estimator):
             validation_data=None,
             hard_code_batch_size=False,
             session_config=None,
-            feed_dict=None
+            feed_dict=None,
+            checkpoint_trigger=None
             ):
 
         assert self.labels is not None, \
@@ -135,7 +142,10 @@ class TFOptimizerWrapper(Estimator):
             session_config=session_config,
             model_dir=self.model_dir)
 
-        optimizer.optimize(end_trigger=MaxEpoch(epochs))
+        if self.load_model:
+            optimizer.load_checkpoint(self.load_path, self.load_model_version)
+
+        optimizer.optimize(end_trigger=MaxEpoch(epochs), checkpoint_trigger=checkpoint_trigger)
         return self
 
     def predict(self, data, batch_size=4,
@@ -209,7 +219,8 @@ class TFKerasWrapper(Estimator):
             labels_cols=None,
             validation_data=None,
             hard_code_batch_size=False,
-            session_config=None
+            session_config=None,
+            checkpoint_trigger=None
             ):
 
         if isinstance(data, DataFrame):
@@ -225,9 +236,15 @@ class TFKerasWrapper(Estimator):
                              sequential_order=False, shuffle=True
                              )
 
-        self.model.fit(dataset, batch_size=batch_size, epochs=epochs,
-                       session_config=session_config
-                       )
+        optimizer = TFOptimizer.from_keras(self.model, dataset,
+                                           model_dir=self.model_dir,
+                                           session_config=session_config)
+
+        if self.load_model:
+            optimizer.load_checkpoint(self.load_path, self.load_model_version)
+
+        optimizer.optimize(MaxEpoch(epochs), checkpoint_trigger=checkpoint_trigger)
+
         return self
 
     def predict(self, data, batch_size=4,

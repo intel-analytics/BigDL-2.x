@@ -16,6 +16,8 @@
 import os
 import tensorflow as tf
 from pyspark.sql.context import SQLContext
+import tempfile
+import shutil
 
 from unittest import TestCase
 
@@ -23,6 +25,7 @@ from zoo import init_nncontext
 from zoo.orca.data.tf.data import Dataset
 from zoo.orca.learn.tf.estimator import Estimator
 import zoo.orca.data.pandas
+from zoo.orca.learn.tf.utils import find_checkpoint
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
@@ -42,6 +45,12 @@ class SimpleModel(object):
 
 
 class TestEstimatorForGraph(TestCase):
+
+    def setup_method(self, method):
+        self.temp = tempfile.mkdtemp()
+
+    def teardown_method(self, method):
+        shutil.rmtree(self.temp)
 
     def test_estimator_graph(self):
         import zoo.orca.data.pandas
@@ -161,6 +170,69 @@ class TestEstimatorForGraph(TestCase):
         data_shard = data_shard.transform_shard(transform)
         predictions = est.predict(data_shard).collect()
         print(predictions)
+
+    def test_estimator_graph_checkpoint(self):
+        import zoo.orca.data.pandas
+        tf.reset_default_graph()
+
+        model = SimpleModel()
+        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
+
+        def transform(df):
+            result = {
+                "x": (df['user'].to_numpy(), df['item'].to_numpy()),
+                "y": df['label'].to_numpy()
+            }
+            return result
+
+        data_shard = data_shard.transform_shard(transform)
+
+        model_dir = "/model/test_model"
+        est = Estimator.from_graph(
+            inputs=[model.user, model.item],
+            labels=[model.label],
+            loss=model.loss,
+            optimizer=tf.train.AdamOptimizer(),
+            metrics={"loss": model.loss},
+            model_dir=model_dir
+        )
+        est.fit(data=data_shard,
+                batch_size=8,
+                epochs=2,
+                validation_data=data_shard)
+        est.sess.close()
+
+    # def test_estimator_graph_resume_training(self):
+    #     model_dir = os.path.join(self.temp, "test_model")
+    #     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+    #     data_shard = zoo.orca.data.pandas.read_csv(file_path)
+    #
+    #     def transform(df):
+    #         result = {
+    #             "x": (df['user'].to_numpy(), df['item'].to_numpy()),
+    #             "y": df['label'].to_numpy()
+    #         }
+    #         return result
+    #
+    #     data_shard = data_shard.transform_shard(transform)
+    #
+    #     tf.reset_default_graph()
+    #     model = SimpleModel()
+    #     est = Estimator.from_graph(
+    #         inputs=[model.user, model.item],
+    #         labels=[model.label],
+    #         loss=model.loss,
+    #         optimizer=tf.train.AdamOptimizer(),
+    #         metrics={"loss": model.loss},
+    #         model_dir=model_dir
+    #     )
+    #     ckpt_dir, versions = find_checkpoint(model_dir)
+    #     est.load(ckpt_dir, max(versions))
+    #     est.fit(data=data_shard,
+    #             batch_size=8,
+    #             epochs=2,
+    #             validation_data=data_shard)
 
     def test_estimator_graph_fit_dataset(self):
         import zoo.orca.data.pandas
