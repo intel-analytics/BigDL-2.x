@@ -23,6 +23,8 @@ from zoo import init_nncontext
 
 
 class SparkRunner:
+    standalone_env = None
+
     def __init__(self,
                  spark_log_level="WARN",
                  redirect_spark_log=True):
@@ -104,6 +106,16 @@ class SparkRunner:
                             "Please set it manually by python_location")
         return out.strip()
 
+    def _get_conda_python_path(self):
+        conda_env_path = "/".join(self._detect_python_location().split("/")[:-2])
+        python_interpreters = glob.glob("{}/lib/python*".format(conda_env_path))
+        assert len(python_interpreters) == 1, \
+            "Conda env should contain a single python, but got: {}:".format(python_interpreters)
+        return python_interpreters[0]
+
+    def _get_conda_python_intepreter_name(self):
+        return self._get_conda_python_path().split("/")[-1]
+
     def _get_bigdl_classpath_jar_name_on_driver(self):
         from bigdl.util.engine import get_bigdl_classpath
         bigdl_classpath = get_bigdl_classpath()
@@ -117,14 +129,9 @@ class SparkRunner:
         return zoo_classpath.split("/")[-1]
 
     def _assemble_zoo_classpath_for_executor(self, conda_path=None):
-        conda_env_path = "/".join(self._detect_python_location().split("/")[:-2])
-        python_interpreters = glob.glob("{}/lib/python*".format(conda_env_path))
-        assert len(python_interpreters) == 1, \
-            "Conda env should contain a single python, but got: {}:".format(python_interpreters)
-        python_interpreter_name = python_interpreters[0].split("/")[-1]
         if not conda_path:
             conda_path = self.PYTHON_ENV
-        prefix = "{}/lib/{}/site-packages/".format(conda_path, python_interpreter_name)
+        prefix = "{}/lib/{}/site-packages/".format(conda_path, self._get_conda_python_intepreter_name())
         return ["{}/zoo/share/lib/{}".format(prefix,
                                              self._get_zoo_classpath_jar_name_on_driver()),
                 "{}/bigdl/share/lib/{}".format(prefix,
@@ -222,38 +229,69 @@ class SparkRunner:
                 os.remove(penv_archive)
         return sc
 
-    def init_spark_standalone(self, conda_name, slaves, num_executor,
+    def init_spark_standalone(self,
+                              conda_name,
+                              workers,
+                              num_executors,
                               executor_cores,
-                              master=None,
                               executor_memory="10g",
                               driver_memory="1g",
                               driver_cores=4,
                               extra_executor_memory_for_ray=None,
                               extra_python_lib=None,
-                              spark_conf=None,
+                              conf=None,
                               jars=None):
-        # TODO: allow users not to use conda?
+        # Distribute conda packages to workers using scp
         penv_archive = self.pack_penv(conda_name)
+        import tempfile
+        worker_tmp_dir = tempfile.mkdtemp()
+        print(worker_tmp_dir)
         import subprocess
         # TODO: scp in parallel?
-        # TODO: get slaves from SPARK_HOME/conf/slaves?
-        if not isinstance(slaves, list):
-            slaves = [slaves]
-        for slave in slaves:
-            p1 = subprocess.Popen(["scp", penv_archive, "root@"+slave+":/tmp/az_python"])
+        if not isinstance(workers, list):
+            workers = [workers]
+        for worker in workers:
+            p1 = subprocess.Popen(["scp", penv_archive, "root@"+worker+":"+worker_tmp_dir])
             # Wait for the process to finish
-            sts1 = os.waitpid(p1.pid, 0)
-            p2 = subprocess.Popen([
-                "ssh", "root@" + slave,
-                "cd /tmp/az_python; mkdir -p {}; tar -xzf {}.tar.gz -C {}".format(self.PYTHON_ENV, self.PYTHON_ENV, self.PYTHON_ENV)])
-            sts2 = os.waitpid(p2.pid, 0)
-        os.environ["PYSPARK_PYTHON"] = "/tmp/az_python/{}/bin/python".format(self.PYTHON_ENV)
+            os.waitpid(p1.pid, 0)
+            p2 = subprocess.Popen(["ssh", "root@" + worker,
+                                   "cd " + worker_tmp_dir + "; mkdir -p {}; tar -xzf {}.tar.gz -C {}"
+                                  .format(self.PYTHON_ENV, self.PYTHON_ENV, self.PYTHON_ENV)])
+            os.waitpid(p2.pid, 0)
+        executor_conda_path = worker_tmp_dir + "/" + self.PYTHON_ENV
+        os.environ["PYSPARK_PYTHON"] = executor_conda_path + "/bin/python"
 
-        if not master:
-            from zoo.util.utils import get_node_ip
-            master = "spark://{}:7077".format(get_node_ip())
+        # Start Spark standalone clusters on master and workers
+
+        pyspark_home = "{}/site-packages/pyspark".format(self._get_conda_python_path())
+        zoo_standalone_home = "{}/site-packages/zoo/share/bin/standalone".format(self._get_conda_python_path())
+        executor_pyspark_home = "{}/lib/{}/site-packages/pyspark"\
+            .format(executor_conda_path, self._get_conda_python_intepreter_name())
+        executor_zoo_standalone_home = "{}/lib/{}/site-packages/zoo/share/bin/standalone"\
+            .format(executor_conda_path, self._get_conda_python_intepreter_name())
+        spark_workers_path = "{}/workers".format(zoo_standalone_home)
+        f = open(spark_workers_path, "w")
+        for worker in workers:
+            f.write(worker + "\n")
+        f.close()
+        SparkRunner.standalone_env = {"SPARK_HOME": pyspark_home,
+                                      "EXECUTOR_SPARK_HOME": executor_pyspark_home,
+                                      "ZOO_STANDALONE_HOME": zoo_standalone_home,
+                                      "EXECUTOR_ZOO_STANDALONE_HOME": executor_zoo_standalone_home,
+                                      "SPARK_WORKERS": spark_workers_path}
+        print(SparkRunner.standalone_env)
+
+        pro = subprocess.Popen("{}/sbin/start-all.sh".format(zoo_standalone_home),
+                               env=SparkRunner.standalone_env)
+        os.waitpid(pro.pid, 0)
+
+        # Start pyspark-shell
+        from zoo.util.utils import get_node_ip
+        master = "spark://{}:7077".format(get_node_ip())
 
         submit_args = " --master " + master
+        submit_args = submit_args + "--num-executors {} --executor-cores {} " \
+                                    "--executor-memory {}".format(num_executors, executor_cores, executor_memory)
         if extra_python_lib:
             submit_args = submit_args + " --py-files {}".format(extra_python_lib)
         if jars:
@@ -261,21 +299,30 @@ class SparkRunner:
         submit_args = submit_args + " pyspark-shell"
         os.environ['PYSPARK_SUBMIT_ARGS'] = submit_args
 
-        conda_path = "/tmp/az_python/{}".format(self.PYTHON_ENV)
-        zoo_bigdl_path_on_executor = ":".join(self._assemble_zoo_classpath_for_executor(conda_path=conda_path))
-        conf = init_spark_conf(spark_conf) \
+        zoo_bigdl_path_on_executor = ":".join(self._assemble_zoo_classpath_for_executor(conda_path=executor_conda_path))
+        spark_conf = init_spark_conf(conf) \
             .set("spark.driver.cores", driver_cores) \
             .set("spark.driver.memory", driver_memory) \
-            .set("spark.executor.instances", num_executor) \
-            .set("spark.executor.cores", executor_cores) \
-            .set("spark.cores.max", num_executor * executor_cores) \
-            .set("spark.executor.memory", executor_memory) \
-            .set("spark.executorEnv.PYTHONHOME", conda_path)
+            .set("spark.cores.max", num_executors * executor_cores) \
+            .set("spark.executorEnv.PYTHONHOME", executor_conda_path)
         if extra_executor_memory_for_ray:
-            conf.set("spark.executor.memoryOverhead", extra_executor_memory_for_ray)
-        if conf.contains("spark.executor.extraClassPath"):
-            conf.set("spark.executor.extraClassPath", "{}:{}".format(
+            spark_conf.set("spark.executor.memoryOverhead", extra_executor_memory_for_ray)
+        if spark_conf.contains("spark.executor.extraClassPath"):
+            spark_conf.set("spark.executor.extraClassPath", "{}:{}".format(
                     zoo_bigdl_path_on_executor, conf.get("spark.executor.extraClassPath")))
         else:
-            conf.set("spark.executor.extraClassPath", zoo_bigdl_path_on_executor)
-        return init_nncontext(conf)
+            spark_conf.set("spark.executor.extraClassPath", zoo_bigdl_path_on_executor)
+
+        sc = init_nncontext(spark_conf, redirect_spark_log=self.redirect_spark_log)
+        sc.setLogLevel(self.spark_log_level)
+        return sc
+
+    @staticmethod
+    def stop_spark_standalone():
+        import subprocess
+        env = SparkRunner.standalone_env
+        if not env:
+            raise Exception("")
+        pro = subprocess.Popen("{}/sbin/stop-all.sh".format(env["ZOO_STANDALONE_HOME"]),
+                               env=env)
+        os.waitpid(pro.pid, 0)
