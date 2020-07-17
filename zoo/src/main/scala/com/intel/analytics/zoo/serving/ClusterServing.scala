@@ -38,22 +38,17 @@ object ClusterServing {
     val helper = new ClusterServingHelper(configPath)
     helper.initArgs()
 
-    breakable {
-      while (true) {
-        params = new SerParams(helper)
-        val serving = StreamExecutionEnvironment.getExecutionEnvironment
-        serving.addSource(new FlinkRedisSource(params)).setParallelism(1)
-          .map(new FlinkInference(params)).setParallelism(1)
-          .addSink(new FlinkRedisSink(params))
-        serving.setParallelism(1)
-        serving.execute("Cluster Serving - Flink")
-        // blocking until source terminates
-        if (FileUtils.checkStop()) {
-          break
-        }
-        logger.info("New version of model detected, loading...")
-      }
-    }
+
+    params = new SerParams(helper)
+    val serving = StreamExecutionEnvironment.getExecutionEnvironment
+    serving.addSource(new FlinkRedisSource(params)).setParallelism(1)
+      .map(new FlinkInference(params))
+      .addSink(new FlinkRedisSink(params))
+    serving.setParallelism(1)
+    serving.execute("Cluster Serving - Flink")
+    // blocking until source terminates
+    println(s"Driver: check stop is ${FileUtils.checkStop().toString}")
+    println(s"Driver: check modify is ${FileUtils.checkModified(params.modelDir, params.lastModified)}")
     logger.info("Cluster Serving Stopped.")
   }
   def main(args: Array[String]): Unit = {

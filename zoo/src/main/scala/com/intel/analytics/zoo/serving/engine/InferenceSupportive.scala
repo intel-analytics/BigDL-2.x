@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.serving.engine
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.tensor
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
@@ -49,27 +50,43 @@ object InferenceSupportive {
        * original Tensor, thus if reuse of Tensor is needed,
        * have to squeeze it back.
        */
-//      println(s"preparing to predict")
-      val result = if (params.modelType == "openvino") {
-        val res = params.model.doPredict(t).toTensor[Float]
-        if (t.isTensor) {
-          t.toTensor[Float].squeeze(1)
-        }
-        else if (t.isTable) {
-          val dataTable = t.toTable
+      dimCheck(t, "add", params)
+      val result = params.model.doPredict(t)
+      dimCheck(result, "remove", params)
+
+//      val result = if (params.modelType == "openvino") {
+//        val res = params.model.doPredict(t).toTensor[Float]
+//        if (t.isTensor) {
+//          t.toTensor[Float].squeeze(1)
+//        }
+//        else if (t.isTable) {
+//          val dataTable = t.toTable
+//          dataTable.keySet.foreach(key => {
+//            dataTable(key).asInstanceOf[Tensor[Float]].squeeze(1)
+//          })
+//        }
+//        res.squeeze(1)
+//      } else {
+//        params.model.doPredict(t).toTensor[Float]
+//      }
+
+      if (result.isTensor) {
+        (0 until thisBatchSize).toParArray.map(i => {
+          val value = PostProcessing(result.toTensor[Float].select(1, i + 1), params.filter)
+          (pathByteBatch(i)._1, value)
+        })
+      } else if (result.isTable) {
+        val dataTable = result.toTable
+        (0 until thisBatchSize).toParArray.map(i => {
+          var value = ""
           dataTable.keySet.foreach(key => {
-            dataTable(key).asInstanceOf[Tensor[Float]].squeeze(1)
+            value += PostProcessing(dataTable(key).asInstanceOf[Tensor[Float]].select(1, i + 1), params.filter)
           })
-        }
-        res.squeeze(1)
+          (pathByteBatch(i)._1, value)
+        })
       } else {
-        params.model.doPredict(t).toTensor[Float]
+        throw new Exception("Wrong output format, neither Tensor nor Table.")
       }
-//      println(s"predict end")
-      (0 until thisBatchSize).toParArray.map(i => {
-        val value = PostProcessing(result.select(1, i + 1), params.filter)
-        (pathByteBatch(i)._1, value)
-      })
     })
     postProcessed
   }
@@ -110,5 +127,27 @@ object InferenceSupportive {
       })
     }
     t
+  }
+  def dimCheck(input: Activity, op: String, params: SerParams): Activity = {
+    if (params.modelType == "openvino") {
+      if (input.isTensor) {
+        op match {
+          case "add" => input.asInstanceOf[Tensor[Float]].addSingletonDimension()
+          case _ => input.asInstanceOf[Tensor[Float]].squeeze(1)
+        }
+      }
+      else if (input.isTable) {
+        val dataTable = input.toTable
+        op match {
+          case "add" => dataTable.keySet.foreach(key => {
+            dataTable(key).asInstanceOf[Tensor[Float]].addSingletonDimension()
+          })
+          case _ => dataTable.keySet.foreach(key => {
+            dataTable(key).asInstanceOf[Tensor[Float]].squeeze(1)
+          })
+        }
+      }
+    }
+    input
   }
 }
