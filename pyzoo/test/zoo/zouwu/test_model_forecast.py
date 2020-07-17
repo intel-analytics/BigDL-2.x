@@ -101,25 +101,47 @@ class TestZouwuModelForecast(ZooTestCase):
                                max_TCN_epoch=1,
                                alt_iters=2)
         horizon = np.random.randint(1, 50)
-        x = np.random.rand(300, 480)
+        # construct data
+        id = np.arange(300)
+        ds = np.arange(480)
+        y = np.transpose([np.tile(id, len(ds)), np.repeat(ds, len(id))])
+        kpis = np.random.rand(144000, 2)
+        input = np.concatenate((y, kpis), axis=1)
+        df = pd.DataFrame(input, columns=["id", "ds", "kpi1", "kpi2"])
+        df.id = df.id.astype("int")
+        df.ds = df.ds.astype("int")
+        # pre-processing
+        kpi_cols = ["kpi1", "kpi2"]
+        df = df.groupby("id").apply(lambda df: df.set_index("ds").reindex(ds))[kpi_cols]
+        df = df.unstack()
+        df = df.reset_index(level=0)
         with self.assertRaises(Exception) as context:
             model.is_distributed()
         self.assertTrue('You should run fit before calling is_distributed()'
                         in str(context.exception))
-        model.fit(x, id_as_first_col=False)
+        with self.assertRaises(Exception) as context:
+            model.fit(df, id_col_name="cid", target_col_name="kpi1")
+        self.assertTrue("id_col_name doesn't exist in the DataFrame in x" in str(context.exception))
+        with self.assertRaises(Exception) as context:
+            model.fit(df, id_col_name="id", target_col_name="kpi3")
+        self.assertTrue("target_col_name doesn't exist in the DataFrame in x"
+                        in str(context.exception))
+        model.fit(df, id_col_name="id", target_col_name="kpi1")
         assert not model.is_distributed()
         with self.assertRaises(Exception) as context:
-            model.fit(x)
+            model.fit(df, id_col_name="id", target_col_name="kpi1")
         self.assertTrue('This model has already been fully trained' in str(context.exception))
         with self.assertRaises(Exception) as context:
-            model.fit(x, incremental=True)
+            model.fit(df, id_col_name="id", target_col_name="kpi1", incremental=True)
         self.assertTrue('NotImplementedError' in context.exception.__class__.__name__)
         with tempfile.TemporaryDirectory() as tempdirname:
             model.save(tempdirname)
             loaded_model = TCMFForecaster.load(tempdirname, distributed=False)
-        yhat = model.predict(x=None, horizon=horizon)
-        yhat_loaded = loaded_model.predict(x=None, horizon=horizon)
-        assert yhat.shape == (300, horizon + 1)
+        output_dt_col_name = pd.date_range(start='2020-05-01', periods=horizon, freq='H').to_list()
+        yhat = model.predict(x=None, output_col_name=output_dt_col_name, horizon=horizon).to_numpy()
+        yhat_loaded = loaded_model.predict(x=None, output_col_name=output_dt_col_name,
+                                           horizon=horizon).to_numpy()
+        assert yhat.shape == (300, horizon)
         assert (yhat == yhat_loaded).all()
         target_value = np.random.rand(300, horizon)
         model.evaluate(x=None, target_value=target_value, metric=['mse'])
@@ -127,22 +149,14 @@ class TestZouwuModelForecast(ZooTestCase):
     def test_forecast_tcmf_xshards(self):
         from zoo.zouwu.model.forecast import TCMFForecaster
         import zoo.orca.data.pandas
-        from zoo.orca.data import SharedValue
         import tempfile
 
         def preprocessing(df):
-            idx = df.index.values
-            data = np.concatenate((np.expand_dims(idx, axis=1), df.to_numpy().astype(np.float32)),
-                                  axis=1)
-            return data
-
-        def postprocessing(pred_results, output_dt_col_name):
-            final_df = pd.DataFrame(pred_results, columns=["idx"] + output_dt_col_name.value)
-            final_df.idx = final_df.idx.astype("int")
-            final_df = final_df.set_index("idx")
-            final_df.columns.name = "datetime"
-            final_df = final_df.unstack().reset_index().rename({0: "kpi"}, axis=1)
-            return final_df
+            kpi_cols = ["kpi1", "kpi2"]
+            df = df.groupby("id").apply(lambda df: df.set_index("ds").reindex(ds))[kpi_cols]
+            df = df.unstack()
+            df = df.reset_index(level=0)
+            return df
 
         model = TCMFForecaster(max_y_iterations=1,
                                init_FX_epoch=1,
@@ -151,45 +165,54 @@ class TestZouwuModelForecast(ZooTestCase):
                                alt_iters=2)
 
         with tempfile.NamedTemporaryFile() as temp:
-            x = np.random.rand(300, 480)
-            df = pd.DataFrame(x)
+            id = np.arange(300)
+            ds = np.arange(480)
+            y = np.transpose([np.tile(id, len(ds)), np.repeat(ds, len(id))])
+            kpis = np.random.rand(144000, 2)
+            input = np.concatenate((y, kpis), axis=1)
+            df = pd.DataFrame(input, columns=["id", "ds", "kpi1", "kpi2"])
+            df.id = df.id.astype("int")
+            df.ds = df.ds.astype("int")
             df.to_csv(temp.name)
             shard = zoo.orca.data.pandas.read_csv(temp.name)
         shard = shard.transform_shard(preprocessing)
         with self.assertRaises(Exception) as context:
-            model.fit(shard, id_as_first_col=False)
-        self.assertTrue('id should be the first column of ndarray in xShards' in
-                        str(context.exception))
+            model.fit(shard, id_col_name="cid", target_col_name="kpi1")
+        self.assertTrue("id_col_name doesn't exist in the DataFrame in x" in str(context.exception))
+        with self.assertRaises(Exception) as context:
+            model.fit(shard, id_col_name="id", target_col_name="kpi3")
+        self.assertTrue("target_col_name doesn't exist in the DataFrame in x"
+                        in str(context.exception))
         with self.assertRaises(Exception) as context:
             model.is_distributed()
         self.assertTrue('You should run fit before calling is_distributed()'
                         in str(context.exception))
-        model.fit(shard)
+        model.fit(shard, id_col_name="id", target_col_name="kpi1")
         assert model.is_distributed()
         with self.assertRaises(Exception) as context:
-            model.fit(shard)
+            model.fit(shard, id_col_name="id", target_col_name="kpi1")
         self.assertTrue('This model has already been fully trained' in str(context.exception))
         with self.assertRaises(Exception) as context:
-            model.fit(shard, incremental=True)
+            model.fit(shard, id_col_name="id", target_col_name="kpi1", incremental=True)
         self.assertTrue('NotImplementedError' in context.exception.__class__.__name__)
         with tempfile.TemporaryDirectory() as tempdirname:
             model.save(tempdirname + "/model")
             loaded_model = TCMFForecaster.load(tempdirname + "/model", distributed=True)
         horizon = np.random.randint(1, 50)
-        yhat_shard_origin = model.predict(x=None, horizon=horizon)
-        yhat_list_origin = yhat_shard_origin.collect()
-        yhat_shard = loaded_model.predict(x=None, horizon=horizon)
-        yhat_list = yhat_shard.collect()
-        yhat_origin = np.concatenate(yhat_list_origin, axis=0)
-        yhat = np.concatenate(yhat_list, axis=0)
-        assert yhat.shape == (300, horizon + 1)
-        assert (yhat == yhat_origin).all()
         output_dt_col_name = pd.date_range(start='2020-05-01', periods=horizon, freq='H').to_list()
-        output_dt_col_name_shared_value = SharedValue(output_dt_col_name)
-        yhat_df_shards = yhat_shard.transform_shard(postprocessing, output_dt_col_name_shared_value)
-        final_df_list = yhat_df_shards.collect()
-        final_df = pd.concat(final_df_list)
-        final_df.sort_values("datetime", inplace=True)
+        yhat_shard_origin = model.predict(x=None, output_col_name=output_dt_col_name,
+                                          horizon=horizon)
+        yhat_list_origin = yhat_shard_origin.collect()
+        yhat_shard = loaded_model.predict(x=None, output_col_name=output_dt_col_name,
+                                          horizon=horizon)
+        yhat_list = yhat_shard.collect()
+        yhat_origin = pd.concat(yhat_list_origin).to_numpy()
+        yhat = pd.concat(yhat_list).to_numpy()
+        assert yhat.shape == (300, horizon)
+        assert (yhat == yhat_origin).all()
+        yhat = pd.concat(yhat_list)
+        yhat.columns.name = "datetime"
+        final_df = yhat.unstack().reset_index().rename({0: "kpi"}, axis=1)
         assert final_df.shape == (300 * horizon, 3)
 
 

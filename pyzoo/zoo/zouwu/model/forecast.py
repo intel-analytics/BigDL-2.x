@@ -20,10 +20,10 @@ from zoo.automl.model.MTNet_keras import MTNetKeras as MTNetKerasModel
 from zoo.automl.model.VanillaLSTM import VanillaLSTM as LSTMKerasModel
 from zoo.tfpark import KerasModel as TFParkKerasModel
 from zoo.automl.model import TCMFLocalModelWrapper, TCMFDistributedModelWrapper
-from zoo.orca.data import SparkXShards, SharedValue
+from zoo.orca.data import SparkXShards
 
 import tensorflow as tf
-import numpy as np
+import pandas as pd
 
 
 class Forecaster(metaclass=ABCMeta):
@@ -144,11 +144,13 @@ class TCMFForecaster(Forecaster):
         }
 
     def fit(self,
-            x, id_as_first_col=True, incremental=False):
+            x, id_col_name, target_col_name, incremental=False):
         """
         fit the model
-        :param x: the input for fit. Only ndarray and SparkXShards of ndarray are supported
-        :param id_as_first_col: if the id is the first column of x
+        :param x: the input for fit. Only pandas DataFrame and SparkXShards of pandas DataFrame are
+            supported
+        :param id_col_name: the name of the column which represents the id
+        :param target_col_name: the name of the column which represents the target
         :param incremental: if the fit is incremental
         :return:
         """
@@ -158,13 +160,14 @@ class TCMFForecaster(Forecaster):
         if self.internal is None:
             if isinstance(x, SparkXShards):
                 self.internal = TCMFDistributedModelWrapper(self.config)
-            elif isinstance(x, np.ndarray):
+            elif isinstance(x, pd.DataFrame):
                 self.internal = TCMFLocalModelWrapper(self.config)
             else:
-                raise ValueError("value of x should be a ndarray or an xShards of ndarray")
+                raise ValueError("value of x should be a pandas DataFrame or "
+                                 "an xShards of pandas DataFrame")
 
             try:
-                self.internal.fit(x, id_as_first_col, incremental)
+                self.internal.fit(x, id_col_name, target_col_name, incremental)
             except Exception as inst:
                 self.internal = None
                 raise inst
@@ -191,12 +194,14 @@ class TCMFForecaster(Forecaster):
 
     def predict(self,
                 x=None,
+                output_col_name=None,
                 horizon=24,
                 covariates=None,
                 ):
         """
         predict
         :param x: the input. We don't support input x directly
+        :param output_col_name: the column name list of predict result, type: list
         :param horizon: horizon length to look forward.
         :param covariates: the global covariates
         :return:
@@ -204,7 +209,11 @@ class TCMFForecaster(Forecaster):
         if self.internal is None:
             raise Exception("You should run fit before calling predict()")
         else:
-            return self.internal.predict(x, horizon)
+            if isinstance(output_col_name, list) and len(output_col_name) == horizon:
+                return self.internal.predict(x, output_col_name, horizon)
+            else:
+                raise ValueError("output_col_name should be a list and len(output_col_name) "
+                                 "should be equal to horizon")
 
     def save(self, path):
         if self.internal is None:

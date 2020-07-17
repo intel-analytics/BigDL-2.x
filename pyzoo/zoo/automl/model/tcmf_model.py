@@ -17,9 +17,10 @@ from abc import ABCMeta, abstractmethod
 from zoo.automl.model.tcmf import DeepGLO
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.model.abstract import BaseModel
-from zoo.orca.data import SparkXShards, SharedValue
+from zoo.orca.data import SparkXShards
 import pickle
 import numpy as np
+import pandas as pd
 
 
 class TCMF(BaseModel):
@@ -220,29 +221,33 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         self.internal = None
         self.config = config
 
-    def fit(self, x, id_as_first_col=True, incremental=False):
-        def orca_train_model(np, config, incremental):
+    def fit(self, x, id_col_name, target_col_name, incremental=False):
+        def orca_train_model(df, config, incremental):
             tcmf = TCMF()
             tcmf._build(**config)
-            cid_arr = np[:, 0]
-            train_data = np[:, 1:]
+            if id_col_name in df.columns:
+                id_arr = df[id_col_name].to_numpy()
+            else:
+                raise ValueError("id_col_name doesn't exist in the DataFrame in x")
+            if target_col_name in df.columns:
+                train_data = df[target_col_name].to_numpy()
+            else:
+                raise ValueError("target_col_name doesn't exist in the DataFrame in x")
             if incremental:
                 tcmf.fit_incremental(train_data)
             else:
                 tcmf.fit_eval(train_data)
-            return [cid_arr, tcmf]
-
-        if not id_as_first_col:
-            raise Exception("id should be the first column of ndarray in xShards")
+            return [id_arr, tcmf]
 
         if isinstance(x, SparkXShards):
-            if x._get_class_name() == "numpy.ndarray":
+            if x._get_class_name() == "pandas.core.frame.DataFrame":
                 self.internal = x.transform_shard(orca_train_model, self.config, incremental)
             else:
-                raise ValueError("value of x should be an xShards of ndarray, "
+                raise ValueError("value of x should be an xShards of pandas DataFrame, "
                                  "but is an xShards of " + x._get_class_name())
         else:
-            raise ValueError("value of x should be an xShards of ndarray, but isn't an xShards")
+            raise ValueError("value of x should be an xShards of pandas DataFrame, "
+                             "but isn't an xShards")
 
     def evaluate(self, x, y, metric=None):
         """
@@ -254,7 +259,7 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         """
         raise NotImplementedError
 
-    def predict(self, x, horizon=24):
+    def predict(self, x, output_col_name, horizon=24):
         """
         Prediction.
         :param x: input
@@ -265,7 +270,10 @@ class TCMFDistributedModelWrapper(ModelWrapper):
             tcmf = data[1]
             predict_results = tcmf.predict(x=None, horizon=horizon)
             results = np.concatenate([np.expand_dims(cid_arr, axis=1), predict_results], axis=1)
-            return results
+            final_df = pd.DataFrame(results, columns=["id"] + output_col_name)
+            final_df.id = final_df.id.astype("int")
+            final_df = final_df.set_index("id")
+            return final_df
 
         return self.internal.transform_shard(orca_predict, horizon)
 
@@ -298,15 +306,16 @@ class TCMFLocalModelWrapper(ModelWrapper):
         self.internal._build(**self.config)
         self.id_arr = None
 
-    def fit(self, x, id_as_first_col=True, incremental=False):
-        if isinstance(x, np.ndarray):
-            if id_as_first_col:
-                self.id_arr = x[:, 0]
-                train_data = x[:, 1:]
+    def fit(self, x, id_col_name, target_col_name, incremental=False):
+        if isinstance(x, pd.DataFrame):
+            if id_col_name in x.columns:
+                self.id_arr = x[id_col_name].to_numpy()
             else:
-                # TODO: add idx or not?
-                self.id_arr = np.arange(x.shape[0])
-                train_data = x
+                raise ValueError("id_col_name doesn't exist in the DataFrame in x")
+            if target_col_name in x.columns:
+                train_data = x[target_col_name].to_numpy()
+            else:
+                raise ValueError("target_col_name doesn't exist in the DataFrame in x")
 
             if incremental:
                 self.internal.fit_incremental(train_data)
@@ -328,14 +337,18 @@ class TCMFLocalModelWrapper(ModelWrapper):
         else:
             raise ValueError("value of y should be a ndarray")
 
-    def predict(self, x, horizon=24):
+    def predict(self, x, output_col_name, horizon=24):
         """
         Prediction.
         :param x: input
         :return: result
         """
         pred = self.internal.predict(x=x, horizon=horizon)
-        return np.concatenate([np.expand_dims(self.id_arr, axis=1), pred], axis=1)
+        results = np.concatenate([np.expand_dims(self.id_arr, axis=1), pred], axis=1)
+        final_df = pd.DataFrame(results, columns=["id"] + output_col_name)
+        final_df.id = final_df.id.astype("int")
+        final_df = final_df.set_index("id")
+        return final_df
 
     def is_distributed(self):
         return False
