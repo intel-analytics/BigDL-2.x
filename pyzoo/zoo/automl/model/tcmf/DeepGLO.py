@@ -47,29 +47,16 @@
 
 from __future__ import print_function
 import torch
-import h5py
 import numpy as np
-from scipy.io import loadmat
-from torch.nn.utils import weight_norm
+import pandas as pd
 
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
-
-# import matplotlib
 from torch.autograd import Variable
-import sys
 
-import itertools
-import torch.nn.functional as F
-import copy
-import os
-import gc
-
-from zoo.automl.model.tcmf.data_loader import *
-from zoo.automl.model.tcmf.LocalModel import *
-
-from sklearn.decomposition import NMF
+from zoo.automl.model.tcmf.data_loader import DataLoader
+from zoo.automl.model.tcmf.local_model import TemporalConvNet, LocalModel
+from zoo.automl.model.tcmf.time import TimeCovariates
 
 import copy
 
@@ -80,8 +67,6 @@ import pickle
 np.random.seed(111)
 torch.manual_seed(111)
 random.seed(111)
-
-import logging
 
 
 def get_model(A, y, lamb=0):
@@ -183,7 +168,6 @@ class DeepGLO(object):
         Xf = outX[:, -future::]
         Yn = self.Ymat[:, last_step: last_step + future]
         Yn = torch.from_numpy(Yn).float()
-        self.Xseq = self.Xseq.cpu()
 
         Fn = self.F
 
@@ -202,14 +186,12 @@ class DeepGLO(object):
             optim_Xn.step()
             # Xn = torch.clamp(Xn.detach(), min=0)
 
-            if np.abs(lprev - loss.cpu().item()) <= tol:
+            if np.abs(lprev - loss.item()) <= tol:
                 break
 
             if i % 1000 == 0:
-                print("Recovery Loss: " + str(loss.cpu().item()))
-                lprev = loss.cpu().item()
-
-        self.Xseq = self.Xseq.cpu()
+                print("Recovery Loss: " + str(loss.item()))
+                lprev = loss.item()
 
         return Xn.detach()
 
@@ -228,7 +210,7 @@ class DeepGLO(object):
         loss.backward()
         optim_X.step()
         # Xout = torch.clamp(Xout, min=0)
-        self.X[:, last_hindex + 1: last_hindex + 1 + inp.size(2)] = Xout.cpu().detach()
+        self.X[:, last_hindex + 1: last_hindex + 1 + inp.size(2)] = Xout.detach()
         return loss
 
     def step_factF_loss(self, inp, out, last_vindex, last_hindex, reg=0.0):
@@ -247,7 +229,7 @@ class DeepGLO(object):
         optim_F.step()
         self.F[
             self.D.I[last_vindex: last_vindex + inp.size(0)], :
-        ] = Fout.cpu().detach()
+        ] = Fout.detach()
         return loss
 
     def step_temporal_loss_X(self, inp, last_vindex, last_hindex):
@@ -271,9 +253,6 @@ class DeepGLO(object):
         return loss
 
     def predict_future_batch(self, model, inp, future=10):
-        model = model.cpu()
-        inp = inp.cpu()
-
         out = model(inp)
         output = out[:, :, out.size(2) - 1].view(out.size(0), out.size(1), 1)
         out = torch.cat((inp, output), dim=2)
@@ -284,12 +263,11 @@ class DeepGLO(object):
             out = torch.cat((inp, output), dim=2)
 
         out = self.temporal_to_tensor2d(out)
-        out = np.array(out.cpu().detach())
+        out = np.array(out.detach())
         return out
 
     def predict_future(self, model, inp, future=10, bsize=90):
         n = inp.size(0)
-        inp = inp.cpu()
         ids = np.arange(0, n, bsize)
         ids = list(ids) + [n]
         out = self.predict_future_batch(model, inp[ids[0]: ids[1], :, :], future)
@@ -309,8 +287,6 @@ class DeepGLO(object):
 
         if ind is None:
             ind = np.arange(self.Ymat.shape[0])
-
-        self.Xseq = self.Xseq.cpu()
 
         self.Xseq = self.Xseq.eval()
 
@@ -332,9 +308,7 @@ class DeepGLO(object):
 
         Y = torch.matmul(F, outX)
 
-        Y = np.array(Y[ind, :].cpu().detach())
-
-        self.Xseq = self.Xseq.cpu()
+        Y = np.array(Y[ind, :].detach())
 
         del F
 
@@ -403,17 +377,15 @@ class DeepGLO(object):
             last_epoch = self.D.epoch
             last_vindex = self.D.vindex
             last_hindex = self.D.hindex
-            inp, out, vindex, hindex = self.D.next_batch(option=1)
+            inp, out, vindex, hindex = self.D.next_batch()
 
-            if iter_count % mod >= 0:
-                l1 = self.step_factF_loss(inp, out, last_vindex, last_hindex, reg=reg_F)
-                l_F = l_F + [l1.cpu().item()]
-            if iter_count % mod >= 0:
-                l1 = self.step_factX_loss(inp, out, last_vindex, last_hindex, reg=reg_X)
-                l_X = l_X + [l1.cpu().item()]
+            step_l_F = self.step_factF_loss(inp, out, last_vindex, last_hindex, reg=reg_F)
+            l_F = l_F + [step_l_F.item()]
+            step_l_X = self.step_factX_loss(inp, out, last_vindex, last_hindex, reg=reg_X)
+            l_X = l_X + [step_l_X.item()]
             if seed is False and iter_count % mod == 1:
                 l2 = self.step_temporal_loss_X(inp, last_vindex, last_hindex)
-                l_X_temporal = l_X_temporal + [l2.cpu().item()]
+                l_X_temporal = l_X_temporal + [l2.item()]
             iter_count = iter_count + 1
 
             if self.D.epoch > last_epoch:
@@ -473,10 +445,10 @@ class DeepGLO(object):
             last_epoch = self.D.epoch
             last_vindex = self.D.vindex
             last_hindex = self.D.hindex
-            inp, out, vindex, hindex = self.D.next_batch(option=1)
+            inp, out, vindex, hindex = self.D.next_batch()
 
-            Xin = self.tensor2d_to_temporal(self.X[:, last_hindex: last_hindex + inp.size(2)]).cpu()
-            Xout = self.temporal_to_tensor2d(self.Xseq(Xin)).cpu()
+            Xin = self.tensor2d_to_temporal(self.X[:, last_hindex: last_hindex + inp.size(2)])
+            Xout = self.temporal_to_tensor2d(self.Xseq(Xin))
             Fout = self.F[self.D.I[last_vindex: last_vindex + out.size(0)], :]
             output = np.array(torch.matmul(Fout, Xout).detach())
             Ycov[
@@ -567,7 +539,7 @@ class DeepGLO(object):
             self.X = X.float()
             self.F = F.float()
 
-        self.D = data_loader(
+        self.D = DataLoader(
             Ymat=self.Ymat,
             vbsize=self.vbsize,
             hbsize=self.hbsize,
@@ -604,7 +576,7 @@ class DeepGLO(object):
                     + "-------------------------------------------------------"
                 )
                 self.num_epochs = max_TCN_epoch
-                T = np.array(self.X.cpu().detach())
+                T = np.array(self.X.detach())
                 self.train_Xseq(
                     Ymat=T,
                     num_epochs=self.num_epochs,
@@ -651,8 +623,6 @@ class DeepGLO(object):
         last_step = self.end_index
         if ind is None:
             ind = np.arange(self.Ymat.shape[0])
-
-        self.Xseq = self.Xseq.cpu()
 
         self.Yseq.seq = self.Yseq.seq.eval()
         self.Xseq = self.Xseq.eval()

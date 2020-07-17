@@ -66,6 +66,7 @@
                         <configuration>
                             <excludes>
                                 <exclude>**/com/intel/analytics/zoo/serving/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/pipeline/nnframes/XgboostTrainSpec.scala</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
