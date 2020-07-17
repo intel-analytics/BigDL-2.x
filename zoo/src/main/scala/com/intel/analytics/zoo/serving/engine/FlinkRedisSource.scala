@@ -78,9 +78,11 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
     }
 //    if (FileUtils.checkStop() || FileUtils.checkModified(params.modelDir, params.lastModified)) {
 //      println(s"Source: check stop is ${FileUtils.checkStop().toString}")
-//      println(s"Source: check modify is ${FileUtils.checkModified(params.modelDir, params.lastModified)}")
+//      println(s"Source: check modify is
+//          ${FileUtils.checkModified(params.modelDir, params.lastModified)}")
 //      logger.info(s"Source: check stop is ${FileUtils.checkStop().toString}")
-//      logger.info(s"Source: check modify is ${FileUtils.checkModified(params.modelDir, params.lastModified)}")
+//      logger.info(s"Source: check modify is
+//          ${FileUtils.checkModified(params.modelDir, params.lastModified)}")
 //      isRunning = false
 //    }
   }

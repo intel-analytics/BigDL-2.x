@@ -64,7 +64,8 @@ object InferenceSupportive {
         (0 until thisBatchSize).toParArray.map(i => {
           var value = ""
           dataTable.keySet.foreach(key => {
-            value += PostProcessing(dataTable(key).asInstanceOf[Tensor[Float]].select(1, i + 1), params.filter)
+            value += PostProcessing(dataTable(key).asInstanceOf[Tensor[Float]]
+              .select(1, i + 1), params.filter)
           })
           (pathByteBatch(i)._1, value)
         })
