@@ -46,7 +46,8 @@ object ClusterServing {
     serving.execute("Cluster Serving - Flink")
     // blocking until source terminates
     println(s"Driver: check stop is ${FileUtils.checkStop().toString}")
-    println(s"Driver: check modify is ${FileUtils.checkModified(params.modelDir, params.lastModified)}")
+    println(s"Driver: check modify is " +
+      s"${FileUtils.checkModified(params.modelDir, params.lastModified)}")
     logger.info("Cluster Serving Stopped.")
   }
   def main(args: Array[String]): Unit = {
