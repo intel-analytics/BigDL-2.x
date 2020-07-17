@@ -282,7 +282,7 @@ class SparkRunner:
                                       "ZOO_STANDALONE_HOME": zoo_standalone_home,
                                       "EXECUTOR_ZOO_STANDALONE_HOME": executor_zoo_standalone_home,
                                       "SPARK_WORKERS": spark_workers_path}
-
+        # TODO: the scripts have no execution permission
         pro = subprocess.Popen("{}/sbin/start-all.sh".format(zoo_standalone_home),
                                shell=True, env=SparkRunner.standalone_env)
         os.waitpid(pro.pid, 0)
