@@ -163,19 +163,21 @@ def read_file_spark(file_path, file_type, **kwargs):
                         )
                 if len(names) == len(df.schema):
                     df = df.selectExpr(
-                        *["`%s` as `%s`" % (field.name, name) for field, name in zip(df.schema, names)]
+                        *["`%s` as `%s`" % (field.name, name) for field, name
+                          in zip(df.schema, names)]
                     )
                     renamed = True
 
             else:
                 if len(names) != len(df.schema):
                     raise ValueError(
-                            "The number of names [%s] does not match the number "
-                            "of columns [%d]. Try names by a Spark SQL DDL-formatted "
-                            "string." % (len(names), len(df.schema))
+                        "The number of names [%s] does not match the number "
+                        "of columns [%d]. Try names by a Spark SQL DDL-formatted "
+                        "string." % (len(names), len(df.schema))
                     )
                 df = df.selectExpr(
-                        *["`%s` as `%s`" % (field.name, name) for field, name in zip(df.schema, names)]
+                        *["`%s` as `%s`" % (field.name, name) for field, name
+                          in zip(df.schema, names)]
                 )
                 renamed = True
         index_map = dict([(i, field.name) for i, field in enumerate(df.schema)])
@@ -208,8 +210,8 @@ def read_file_spark(file_path, file_type, **kwargs):
                 if isinstance(names, list):
                     if not renamed:
                         df = df.selectExpr(
-                                *["`%s` as `%s`" % (col, name) for col, name in zip(cols, names)]
-                            )
+                            *["`%s` as `%s`" % (col, name) for col, name in zip(cols, names)]
+                        )
                         # update index map after rename
                         for index, col in index_map.items():
                             if col in cols:

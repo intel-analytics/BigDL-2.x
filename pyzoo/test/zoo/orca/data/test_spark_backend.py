@@ -112,7 +112,7 @@ class TestSparkBackend(TestCase):
         self.assertTrue('Passed names did not match usecols'
                         in str(context.exception))
         data_shard = zoo.orca.data.pandas.read_csv(file_path, header=0,
-                                                   names=['user','item'], usecols=[0, 1],
+                                                   names=['user', 'item'], usecols=[0, 1],
                                                    dtype={0: np.float32, 1: np.int32})
         data = data_shard.collect()
         df2 = data[0]
