@@ -176,8 +176,8 @@ def read_file_spark(file_path, file_type, **kwargs):
                         "string." % (len(names), len(df.schema))
                     )
                 df = df.selectExpr(
-                        *["`%s` as `%s`" % (field.name, name) for field, name
-                          in zip(df.schema, names)]
+                    *["`%s` as `%s`" % (field.name, name) for field, name
+                      in zip(df.schema, names)]
                 )
                 renamed = True
         index_map = dict([(i, field.name) for i, field in enumerate(df.schema)])
