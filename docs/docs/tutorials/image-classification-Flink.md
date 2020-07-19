@@ -79,7 +79,7 @@ The raw images in **ImageNet** are various sizes.  Let us show two of the predic
 
 #### Preprocessing dataset
 
-MobileNet_v1_1.0_224's input layer is 224 * 224 * 3. Inference Model requires predict input is `JList[JList[JTensor]]`. 
+MobileNet_v1_1.0_224's input layer is 224 * 224 * 3. Inference Model requires predict input to be `JList[JList[JTensor]]`. 
 
 In this example, `ImageProcessing` is prepared to provide approaches to convert format, resize and normalize. These methods are defined [here](https://github.com/intel-analytics/analytics-zoo/blob/master/apps/model-inference-examples/model-inference-flink/src/main/scala/com/intel/analytics/zoo/apps/model/inference/flink/ImageClassification/ImageProcessing.scala). 
 
