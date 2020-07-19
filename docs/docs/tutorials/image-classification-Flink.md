@@ -79,9 +79,9 @@ The raw images in **ImageNet** are various sizes.  Let us show two of the predic
 
 #### Preprocessing dataset
 
-MobileNet_v1_1.0_224 network has the image input of 224 by 224. Inference Model requires predict Input is  `JList[JList[JTensor]]`. 
+MobileNet_v1_1.0_224's input layer is 224 * 224 * 3. Inference Model requires predict input is `JList[JList[JTensor]]`. 
 
-In this example, `trait ImageProcessing` is prepared to provide approaches to convert format, resize and normalize. These methods are defined [here](https://github.com/intel-analytics/analytics-zoo/blob/master/apps/model-inference-examples/model-inference-flink/src/main/scala/com/intel/analytics/zoo/apps/model/inference/flink/ImageClassification/ImageProcessing.scala). 
+In this example, `ImageProcessing` is prepared to provide approaches to convert format, resize and normalize. These methods are defined [here](https://github.com/intel-analytics/analytics-zoo/blob/master/apps/model-inference-examples/model-inference-flink/src/main/scala/com/intel/analytics/zoo/apps/model/inference/flink/ImageClassification/ImageProcessing.scala). 
 
 First, let us load images from the image folder.
 
@@ -315,4 +315,4 @@ sweatshirt
 
 We have reached the end of the tutorial. In this tutorial, we introduce how to use Analytics Zoo Inference Model for image classification on streaming. We write a subclass extends `InferenceModel`, and load pre-trained model. With that, we define  `RichMapFunction` and started with the prediction on Flink streaming.
 
-What goes for next? You could take practice. Load the data and pre-trained model you need to see what speedup you get.
+What goes for next? Try to take practice. Load the data and pre-trained model to see how the results get.
