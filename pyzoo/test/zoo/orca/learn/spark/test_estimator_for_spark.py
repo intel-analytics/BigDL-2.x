@@ -21,11 +21,13 @@ import shutil
 
 from unittest import TestCase
 
+from bigdl.optim.optimizer import SeveralIteration
 from zoo import init_nncontext
 from zoo.orca.data.tf.data import Dataset
 from zoo.orca.learn.tf.estimator import Estimator
 import zoo.orca.data.pandas
 from zoo.orca.learn.tf.utils import find_checkpoint
+
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
@@ -199,8 +201,9 @@ class TestEstimatorForGraph(TestCase):
         )
         est.fit(data=data_shard,
                 batch_size=8,
-                epochs=2,
-                validation_data=data_shard)
+                epochs=6,
+                validation_data=data_shard,
+                checkpoint_trigger=SeveralIteration(4))
 
 
     # def test_estimator_graph_resume_training(self):
