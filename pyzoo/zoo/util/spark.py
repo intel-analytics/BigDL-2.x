@@ -291,8 +291,8 @@ class SparkRunner:
         from zoo.util.utils import get_node_ip
         master = "spark://{}:7077".format(get_node_ip())
         submit_args = " --master " + master
-        submit_args = submit_args + " --num-executors {} --executor-cores {} " \
-                                    "--executor-memory {}".format(num_executors, executor_cores, executor_memory)
+        submit_args = submit_args + " --num-executors {} --executor-cores {}" \
+                                    " --executor-memory {}".format(num_executors, executor_cores, executor_memory)
         if extra_python_lib:
             submit_args = submit_args + " --py-files {}".format(extra_python_lib)
         if jars:
