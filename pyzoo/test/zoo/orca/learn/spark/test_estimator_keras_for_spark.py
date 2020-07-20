@@ -21,6 +21,7 @@ import tensorflow as tf
 
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo.common.nncontext import *
+from zoo.orca.learn.tf.utils import convert_predict_to_dataframe
 import zoo.orca.data.pandas
 
 
@@ -103,7 +104,7 @@ class TestEstimatorForKeras(TestCase):
 
         data_shard = data_shard.transform_shard(transform)
         predictions = est.predict(data_shard).collect()
-        assert len(predictions[0]) == 2
+        assert predictions[0]['prediction'].shape[1] == 2
 
     def test_estimator_keras_xshards_options(self):
         import zoo.orca.data.pandas
@@ -221,6 +222,21 @@ class TestEstimatorForKeras(TestCase):
         assert 'prediction' in prediction_df.columns
         predictions = prediction_df.collect()
         assert len(predictions) == 10
+
+    def test_convert_predict_list_of_array(self):
+        sc = init_nncontext()
+        sqlcontext = SQLContext(sc)
+        rdd = sc.parallelize([(1, 2, 3), (4, 5, 6), (7, 8, 9)])
+        df = rdd.toDF(["feature", "label", "c"])
+        predict_rdd = df.rdd.map(lambda row: [np.array([1, 2]), np.array(0)])
+        resultDF = convert_predict_to_dataframe(df, predict_rdd)
+        resultDF.printSchema()
+        print(resultDF.collect()[0])
+        predict_rdd = df.rdd.map(lambda row: np.array(1))
+        resultDF = convert_predict_to_dataframe(df, predict_rdd)
+        resultDF.printSchema()
+        print(resultDF.collect()[0])
+
 
 
 if __name__ == "__main__":
