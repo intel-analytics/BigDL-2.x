@@ -335,7 +335,7 @@ then
     exit $exit_status
 fi
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/keras/keras_dataset.py 1
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/keras/keras_dataset.py 5
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
@@ -345,7 +345,7 @@ then
     exit $exit_status
 fi
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/keras/keras_ndarray.py 1
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/keras/keras_ndarray.py 5
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
@@ -606,6 +606,33 @@ now=$(date "+%s")
 time15=$((now-start))
 echo "attention time used:$time15 seconds"
 
+echo "#16 start test for orca data"
+#timer
+start=$(date "+%s")
+# prepare data
+if [ -f analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv ]
+then
+    echo "analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv already exists"
+else
+    wget $FTP_URI/analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv \
+    -P analytics-zoo-data/data/NAB/nyc_taxi/
+fi
+
+# Run the example
+export SPARK_DRIVER_MEMORY=2g
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/data/spark_pandas.py \
+    -f analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "orca data failed"
+    exit $exit_status
+fi
+now=$(date "+%s")
+time16=$((now-start))
+
+
 # This should be done at the very end after all tests finish.
 clear_up
 
@@ -623,3 +650,4 @@ echo "#12 vnni/openvino time used: $time12 seconds"
 echo "#13 streaming Object Detection time used: $time13 seconds"
 echo "#14 streaming text classification time used: $time14 seconds"
 echo "#15 start example test for attention time used: $time15 seconds"
+echo "#16 orca data time used:$time16 seconds"

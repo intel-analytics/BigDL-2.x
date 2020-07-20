@@ -16,6 +16,8 @@
 
 package com.intel.analytics.zoo.serving.utils
 
+import java.text.SimpleDateFormat
+
 class SerParams(helper: ClusterServingHelper) extends Serializable {
   var redisHost = helper.redisHost
   var redisPort = helper.redisPort.toInt
@@ -25,5 +27,9 @@ class SerParams(helper: ClusterServingHelper) extends Serializable {
   val inferenceMode = helper.inferenceMode
   val dataShape = helper.dataShape
   val modelType = helper.modelType
+  val modelDir = helper.modelDir
+  val lastModified = FileUtils.getLastModified(helper.modelDir)
+  val sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss")
+  println(s"loading params, time is ${sdf.format(lastModified)}")
   val model = helper.loadInferenceModel()
 }

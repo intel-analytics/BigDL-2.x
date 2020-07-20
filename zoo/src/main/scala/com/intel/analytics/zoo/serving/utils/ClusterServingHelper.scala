@@ -46,7 +46,6 @@ import scala.util.parsing.json._
 class ClusterServingHelper(_configPath: String = "config.yaml") {
   type HM = LinkedHashMap[String, String]
 
-//  val configPath = "zoo/src/main/scala/com/intel/analytics/zoo/serving/config.yaml"
   val configPath = _configPath
 
   var lastModTime: String = null
@@ -76,13 +75,12 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
   var logSummaryFlag: Boolean = false
 
   /**
-   * model relative
+   * model related
    */
   var modelType: String = null
   var weightPath: String = null
   var defPath: String = null
-  var dirPath: String = null
-
+  var modelDir: String = null
   /**
    * Initialize the parameters by loading config file
    * create log file, set backend engine type flag
@@ -97,12 +95,12 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
 
     // parse model field
     val modelConfig = configList.get("model").asInstanceOf[HM]
-    val modelFolder = getYaml(modelConfig, "path", null)
+    modelDir = getYaml(modelConfig, "path", null)
     modelInputs = getYaml(modelConfig, "inputs", "")
     modelOutputs = getYaml(modelConfig, "outputs", "")
     inferenceMode = getYaml(modelConfig, "mode", "")
 
-    parseModelType(modelFolder)
+    parseModelType(modelDir)
 
 
     /**
@@ -185,7 +183,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
 //    dataType = ConfigUtils.parseType(typeStr)
 
 
-    filter = getYaml(dataConfig, "filter", "topN(1)")
+    filter = getYaml(dataConfig, "filter", "")
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
     coreNum = getYaml(paramsConfig, "core_number", "4").toInt
@@ -200,7 +198,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     }
     else blasFlag = false
 
-    new File("running").createNewFile()
+//    new File("running").createNewFile()
 
   }
 

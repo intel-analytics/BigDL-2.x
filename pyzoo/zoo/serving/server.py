@@ -44,7 +44,11 @@ class ClusterServing:
     def try_copy_bigdl_jar(self):
         try:
             from bigdl.util.engine import get_bigdl_classpath
-            shutil.copyfile(get_bigdl_classpath(), self.bigdl_jar)
+            bigdl_jar_src = get_bigdl_classpath()
+            if bigdl_jar_src == "":
+                raise Exception("BigDL jar not discovered.")
+            shutil.copyfile(bigdl_jar_src, self.bigdl_jar)
+            print("BigDL jar copied from ", bigdl_jar_src)
 
         except Exception:
             print("WARNING: if you are running Cluster Serving using pip, you have misconfig"

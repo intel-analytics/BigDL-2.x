@@ -76,16 +76,21 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
       RedisUtils.checkMemory(jedis, 0.6, 0.5)
 
     }
-    if (FileUtils.checkStop()) {
-      isRunning = false
-    }
-//    val end = System.nanoTime()
-//    logger.info(s">>> get from source end ${System.currentTimeMillis()} ms")
+//    if (FileUtils.checkStop() || FileUtils.checkModified(params.modelDir, params.lastModified)) {
+//      println(s"Source: check stop is ${FileUtils.checkStop().toString}")
+//      println(s"Source: check modify is
+//          ${FileUtils.checkModified(params.modelDir, params.lastModified)}")
+//      logger.info(s"Source: check stop is ${FileUtils.checkStop().toString}")
+//      logger.info(s"Source: check modify is
+//          ${FileUtils.checkModified(params.modelDir, params.lastModified)}")
+//      isRunning = false
+//    }
   }
 
   override def cancel(): Unit = {
     jedis.close()
     redisPool.close()
+    logger.info("Flink source cancelled")
   }
 
 }

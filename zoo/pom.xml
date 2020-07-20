@@ -20,6 +20,7 @@
         <spark-scope>provided</spark-scope>
         <flink-scope>provided</flink-scope>
         <bigdl-scope>compile</bigdl-scope>
+
         <scala-library-scope>provided</scala-library-scope>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>2.11.8</scala.version>
@@ -65,6 +66,7 @@
                         <configuration>
                             <excludes>
                                 <exclude>**/com/intel/analytics/zoo/serving/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/pipeline/nnframes/XgboostTrainSpec.scala</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
