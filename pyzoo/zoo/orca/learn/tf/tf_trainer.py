@@ -45,7 +45,6 @@ class TFTrainer:
                  config=None,
                  num_replicas=1,
                  num_cpus_per_worker=1,
-                 use_gpu=False,
                  verbose=False):
         """Sets up the TensorFlow trainer.
         Args:
@@ -70,7 +69,6 @@ class TFTrainer:
         self.data_creator = data_creator
         self.config = {} if config is None else config
         self.num_cpus_per_worker = num_cpus_per_worker
-        self.use_gpu = use_gpu
         self.num_replicas = num_replicas
         self.verbose = verbose
 
@@ -78,7 +76,7 @@ class TFTrainer:
         # todo: are these resource quotas right?
         # should they be exposed to the client codee?
         Runner = ray.remote(
-            num_cpus=self.num_cpus_per_worker, num_gpus=int(use_gpu))(TFRunner)
+            num_cpus=self.num_cpus_per_worker)(TFRunner)
 
         # todo: should we warn about using
         # distributed training on one device only?
