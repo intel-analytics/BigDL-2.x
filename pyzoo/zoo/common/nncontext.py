@@ -47,7 +47,7 @@ def init_spark_on_local(cores=2, conf=None, python_location=None, spark_log_leve
 
 def init_spark_on_yarn(hadoop_conf,
                        conda_name,
-                       num_executor,
+                       num_executors,
                        executor_cores,
                        executor_memory="2g",
                        driver_memory="1g",
@@ -61,7 +61,7 @@ def init_spark_on_yarn(hadoop_conf,
                        spark_log_level="WARN",
                        redirect_spark_log=True,
                        jars=None,
-                       spark_conf=None):
+                       conf=None):
     """
     Create a SparkContext with Zoo configuration on Yarn cluster on "Yarn-client" mode.
     You should create a conda env and install the python dependencies in that env.
@@ -70,7 +70,7 @@ def init_spark_on_yarn(hadoop_conf,
 
     :param hadoop_conf: path to the yarn configuration folder.
     :param conda_name: Name of the conda env.
-    :param num_executor: Number of the Executors.
+    :param num_executors: Number of the Executors.
     :param executor_cores: Cores for each Executor.
     :param executor_memory: Memory for each Executor.
     :param driver_memory: Memory for the Driver.
@@ -86,8 +86,8 @@ def init_spark_on_yarn(hadoop_conf,
     :param spark_log_level: Log level of Spark
     :param redirect_spark_log: Direct the Spark log to local file or not.
     :param jars: Comma-separated list of jars to include on the driver and executor classpaths.
-    :param spark_conf: You can append extra spark conf here in key value format.
-                       i.e spark_conf={"spark.executor.extraJavaOptions": "-XX:+PrintGCDetails"}
+    :param conf: You can append extra conf for Spark here in key-value format.
+                 i.e conf={"spark.executor.extraJavaOptions": "-XX:+PrintGCDetails"}
     :return: SparkContext
     """
     from zoo.util.spark import SparkRunner
@@ -96,7 +96,7 @@ def init_spark_on_yarn(hadoop_conf,
     sc = sparkrunner.init_spark_on_yarn(
         hadoop_conf=hadoop_conf,
         conda_name=conda_name,
-        num_executor=num_executor,
+        num_executors=num_executors,
         executor_cores=executor_cores,
         executor_memory=executor_memory,
         driver_memory=driver_memory,
@@ -108,7 +108,7 @@ def init_spark_on_yarn(hadoop_conf,
         hadoop_user_name=hadoop_user_name,
         spark_yarn_archive=spark_yarn_archive,
         jars=jars,
-        spark_conf=spark_conf)
+        conf=conf)
     return sc
 
 
