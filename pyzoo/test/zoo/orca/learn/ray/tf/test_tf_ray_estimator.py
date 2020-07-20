@@ -25,14 +25,25 @@ NUM_TEST_SAMPLES = 400
 
 
 def create_config(batch_size):
+    import tensorflow as tf
+
     return {
         # todo: batch size needs to scale with # of workers
         "batch_size": batch_size,
         "fit_config": {
-            "steps_per_epoch": NUM_TRAIN_SAMPLES // batch_size
+            "epochs": 5,
+            "steps_per_epoch": NUM_TRAIN_SAMPLES // batch_size,
+            "callbacks": [tf.keras.callbacks.ModelCheckpoint(
+                            "/tmp/checkpoint/keras_ckpt", monitor='val_loss', verbose=0, save_best_only=False,
+                            save_weights_only=False, mode='auto', save_freq='epoch')]
         },
         "evaluate_config": {
             "steps": NUM_TEST_SAMPLES // batch_size,
+        },
+        "compile_config": {
+            "optimizer": "sgd",
+            "loss": "mean_squared_error",
+            "metrics": ["mean_squared_error"]
         }
     }
 
@@ -66,9 +77,10 @@ def simple_model(config):
     return model
 
 
-def compile_args(config):
+def compile_args():
+    import tensorflow as tf
     args = {
-        "optimizer": "sgd",
+        "optimizer": tf.keras.optimizers.Adam(),
         "loss": "mean_squared_error",
         "metrics": ["mean_squared_error"]
     }
@@ -81,7 +93,7 @@ class TestTFRayEstimator(TestCase):
 
         trainer = TFRayEstimator(
             model_creator=simple_model,
-            compile_args_creator=compile_args,
+            compile_args=compile_args(),
             data_creator=simple_dataset,
             verbose=True,
             config=create_config(32))

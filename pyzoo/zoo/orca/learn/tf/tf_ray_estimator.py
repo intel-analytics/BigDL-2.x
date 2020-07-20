@@ -21,17 +21,15 @@ from zoo.ray import RayContext
 class TFRayEstimator:
     def __init__(self,
                  model_creator,
-                 compile_args_creator,
+                 compile_args,
                  data_creator,
                  config=None,
                  verbose=False
                  ):
         def trainer_model_creator(config):
             model = model_creator(config)
-            compile_args = compile_args_creator(config)
             # to support horovod, we need to wrap hvd.DistributedOptimizer on
             # compile_args["optimizer"]
-            print(compile_args)
             model.compile(**compile_args)
             return model
 
@@ -41,7 +39,6 @@ class TFRayEstimator:
                                     config=config,
                                     num_replicas=self.ray_ctx.num_ray_nodes,
                                     num_cpus_per_worker=self.ray_ctx.ray_node_cpu_cores,
-                                    use_gpu=False,
                                     verbose=verbose)
 
     def fit(self):
@@ -54,10 +51,10 @@ class TFRayEstimator:
         return self.tf_trainer.get_model()
 
     def save(self, checkpoint):
-        return self.tf_trainer.save()
+        return self.tf_trainer.save(checkpoint)
 
     def restore(self, checkpoint):
-        self.tf_trainer.restore()
+        self.tf_trainer.restore(checkpoint)
 
     def shutdown(self):
         self.tf_trainer.shutdown()
