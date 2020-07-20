@@ -48,12 +48,6 @@ class SimpleModel(object):
 
 class TestEstimatorForGraph(TestCase):
 
-    def setup_method(self, method):
-        self.temp = tempfile.mkdtemp()
-
-    def teardown_method(self, method):
-        shutil.rmtree(self.temp)
-
     def test_estimator_graph(self):
         import zoo.orca.data.pandas
 
@@ -190,7 +184,9 @@ class TestEstimatorForGraph(TestCase):
 
         data_shard = data_shard.transform_shard(transform)
 
-        model_dir = "/model/test_model"
+        temp = tempfile.mkdtemp()
+        model_dir = os.path.join(temp, "test_model")
+
         est = Estimator.from_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
@@ -205,37 +201,31 @@ class TestEstimatorForGraph(TestCase):
                 validation_data=data_shard,
                 checkpoint_trigger=SeveralIteration(4))
 
+        est.sess.close()
 
-    # def test_estimator_graph_resume_training(self):
-    #     model_dir = "/model/test_model"
-    #     file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-    #     data_shard = zoo.orca.data.pandas.read_csv(file_path)
-    #
-    #     def transform(df):
-    #         result = {
-    #             "x": (df['user'].to_numpy(), df['item'].to_numpy()),
-    #             "y": df['label'].to_numpy()
-    #         }
-    #         return result
-    #
-    #     data_shard = data_shard.transform_shard(transform)
-    #
-    #     tf.reset_default_graph()
-    #     model = SimpleModel()
-    #     est = Estimator.from_graph(
-    #         inputs=[model.user, model.item],
-    #         labels=[model.label],
-    #         loss=model.loss,
-    #         optimizer=tf.train.AdamOptimizer(),
-    #         metrics={"loss": model.loss},
-    #         model_dir=model_dir
-    #     )
-    #     ckpt_dir, versions = find_checkpoint(model_dir)
-    #     est.load(ckpt_dir, max(versions))
-    #     est.fit(data=data_shard,
-    #             batch_size=8,
-    #             epochs=2,
-    #             validation_data=data_shard)
+        tf.reset_default_graph()
+
+        ckpt_dir, versions = find_checkpoint(model_dir)
+
+        model = SimpleModel()
+        est = Estimator.from_graph(
+            inputs=[model.user, model.item],
+            labels=[model.label],
+            loss=model.loss,
+            optimizer=tf.train.AdamOptimizer(),
+            metrics={"loss": model.loss},
+            model_dir=model_dir
+        )
+
+        est.load(ckpt_dir, max(versions))
+        est.fit(data=data_shard,
+                batch_size=8,
+                epochs=10,
+                validation_data=data_shard)
+        result = est.evaluate(data_shard)
+        assert "loss" in result
+        print(result)
+        shutil.rmtree(temp)
 
     def test_estimator_graph_fit_dataset(self):
         import zoo.orca.data.pandas

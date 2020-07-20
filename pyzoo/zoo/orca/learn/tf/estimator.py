@@ -18,12 +18,15 @@ import tensorflow as tf
 from pyspark.sql.dataframe import DataFrame
 
 from bigdl.optim.optimizer import MaxEpoch
+
 from zoo.tfpark.utils import evaluate_metrics
 from zoo.tfpark import TFOptimizer, TFNet, ZooOptimizer
 from zoo.tfpark import KerasModel
 from zoo.util import nest
 from zoo.orca.learn.tf.utils import to_dataset, convert_predict_to_dataframe
 
+from zoo.tfpark.tf_dataset import TFNdarrayDataset
+from zoo.tfpark.model import _standarize_feature_label_dataset
 
 class Estimator(object):
     def fit(self, data, epochs, **kwargs):
@@ -211,6 +214,8 @@ class TFKerasWrapper(Estimator):
 
     def __init__(self, keras_model, model_dir):
         self.model = KerasModel(keras_model, model_dir)
+        # self.model_dir = model_dir
+        self.load_model = False
 
     def fit(self, data,
             epochs=1,
@@ -236,8 +241,11 @@ class TFKerasWrapper(Estimator):
                              sequential_order=False, shuffle=True
                              )
 
-        optimizer = TFOptimizer.from_keras(self.model, dataset,
-                                           model_dir=self.model_dir,
+        # if isinstance(dataset, TFNdarrayDataset):
+        #     dataset = _standarize_feature_label_dataset(dataset, self.model.model)
+
+        optimizer = TFOptimizer.from_keras(self.model.model, dataset,
+                                           model_dir=self.model.model_dir,
                                            session_config=session_config)
 
         if self.load_model:

@@ -19,9 +19,11 @@ from unittest import TestCase
 
 import tensorflow as tf
 
+from bigdl.optim.optimizer import SeveralIteration
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo.common.nncontext import *
 import zoo.orca.data.pandas
+from zoo.orca.learn.tf.utils import find_checkpoint
 
 
 class TestEstimatorForKeras(TestCase):
@@ -176,6 +178,55 @@ class TestEstimatorForKeras(TestCase):
                 epochs=10,
                 validation_data=data_shard)
 
+    def test_estimator_keras_xshards_checkpoint(self):
+        import zoo.orca.data.pandas
+
+        import tensorflow.keras.backend as K
+        K.clear_session()
+        tf.reset_default_graph()
+        model = self.create_model()
+        file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
+
+        def transform(df):
+            result = {
+                "x": (df['user'].to_numpy().reshape([-1, 1]),
+                      df['item'].to_numpy().reshape([-1, 1])),
+                "y": df['label'].to_numpy()
+            }
+            return result
+
+        data_shard = data_shard.transform_shard(transform)
+
+        temp = tempfile.mkdtemp()
+        model_dir = os.path.join(temp, "test_model")
+
+        est = Estimator.from_keras(keras_model=model, model_dir=model_dir)
+        est.fit(data=data_shard,
+                batch_size=8,
+                epochs=6,
+                validation_data=data_shard,
+                checkpoint_trigger=SeveralIteration(4))
+
+        eval_result = est.evaluate(data_shard)
+        print(eval_result)
+
+        K.get_session().close()
+        tf.reset_default_graph()
+        model = self.create_model()
+        ckpt_dir, versions = find_checkpoint(model_dir)
+        est = Estimator.from_keras(keras_model=model, model_dir=model_dir)
+        est.load(ckpt_dir, max(versions))
+        est.fit(data=data_shard,
+                batch_size=8,
+                epochs=10,
+                validation_data=data_shard,
+                checkpoint_trigger=SeveralIteration(4))
+
+        eval_result = est.evaluate(data_shard)
+        print(eval_result)
+        shutil.rmtree(temp)
+
     def test_estimator_keras_dataframe(self):
         model = self.create_model()
         sc = init_nncontext()
@@ -221,6 +272,8 @@ class TestEstimatorForKeras(TestCase):
         assert 'prediction' in prediction_df.columns
         predictions = prediction_df.collect()
         assert len(predictions) == 10
+
+
 
 
 if __name__ == "__main__":
