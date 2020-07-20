@@ -186,3 +186,23 @@ def find_checkpoint(model_dir):
             break
     return ckpt_path, versions
 
+
+# def find_latest_checkpoint(model_dir):
+#     import os
+#     import re
+#     ckpt_path = None
+#     versions = []
+#     for (root, dirs, files) in os.walk(model_dir, topdown=True):
+#         temp_versions = []
+#         for dir in dirs:
+#             if
+#         for file_name in files:
+#             if re.match("^optimMethod-TFParkTraining\.[0-9]+$", file_name) is not None:
+#                 version = int(file_name.split(".")[1])
+#                 temp_versions.append(version)
+#         if temp_versions:
+#             ckpt_path = root
+#             versions = temp_versions
+#             break
+#     return ckpt_path, versions
+

@@ -25,8 +25,6 @@ from zoo.tfpark import KerasModel
 from zoo.util import nest
 from zoo.orca.learn.tf.utils import to_dataset, convert_predict_to_dataframe
 
-from zoo.tfpark.tf_dataset import TFNdarrayDataset
-from zoo.tfpark.model import _standarize_feature_label_dataset
 
 class Estimator(object):
     def fit(self, data, epochs, **kwargs):
@@ -39,9 +37,9 @@ class Estimator(object):
         pass
 
     def load(self, path, version):
-        self.load_model = True
+        self.load_checkpoint = True
         self.load_path = path
-        self.load_model_version = version
+        self.load_checkpoint_version = version
 
     @staticmethod
     def from_graph(*, inputs, outputs=None,
@@ -94,7 +92,7 @@ class TFOptimizerWrapper(Estimator):
         else:
             self.sess = sess
         self.model_dir = model_dir
-        self.load_model = False
+        self.load_checkpoint = False
 
     def fit(self, data,
             epochs=1,
@@ -145,8 +143,8 @@ class TFOptimizerWrapper(Estimator):
             session_config=session_config,
             model_dir=self.model_dir)
 
-        if self.load_model:
-            optimizer.load_checkpoint(self.load_path, self.load_model_version)
+        if self.load_checkpoint:
+            optimizer.load_checkpoint(self.load_path, self.load_checkpoint_version)
 
         optimizer.optimize(end_trigger=MaxEpoch(epochs), checkpoint_trigger=checkpoint_trigger)
         return self
@@ -214,8 +212,7 @@ class TFKerasWrapper(Estimator):
 
     def __init__(self, keras_model, model_dir):
         self.model = KerasModel(keras_model, model_dir)
-        # self.model_dir = model_dir
-        self.load_model = False
+        self.load_checkpoint = False
 
     def fit(self, data,
             epochs=1,
@@ -241,15 +238,12 @@ class TFKerasWrapper(Estimator):
                              sequential_order=False, shuffle=True
                              )
 
-        # if isinstance(dataset, TFNdarrayDataset):
-        #     dataset = _standarize_feature_label_dataset(dataset, self.model.model)
-
         optimizer = TFOptimizer.from_keras(self.model.model, dataset,
                                            model_dir=self.model.model_dir,
                                            session_config=session_config)
 
-        if self.load_model:
-            optimizer.load_checkpoint(self.load_path, self.load_model_version)
+        if self.load_checkpoint:
+            optimizer.load_checkpoint(self.load_path, self.load_checkpoint_version)
 
         optimizer.optimize(MaxEpoch(epochs), checkpoint_trigger=checkpoint_trigger)
 
