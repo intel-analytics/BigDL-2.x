@@ -24,6 +24,13 @@ NUM_TRAIN_SAMPLES = 1000
 NUM_TEST_SAMPLES = 400
 
 
+def scheduler(epoch):
+    if epoch < 2:
+        return 0.001
+    else:
+        return 0.001 * tf.math.exp(0.1 * (2 - epoch))
+
+
 def create_config(batch_size):
     import tensorflow as tf
 
@@ -32,19 +39,11 @@ def create_config(batch_size):
         "batch_size": batch_size,
         "fit_config": {
             "epochs": 5,
-            "steps_per_epoch": NUM_TRAIN_SAMPLES // batch_size,
-            "callbacks": [tf.keras.callbacks.ModelCheckpoint(
-                            "/tmp/checkpoint/keras_ckpt", monitor='val_loss', verbose=0, save_best_only=False,
-                            save_weights_only=False, mode='auto', save_freq='epoch')]
+            "callbacks": [tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=0)]
         },
         "evaluate_config": {
             "steps": NUM_TEST_SAMPLES // batch_size,
         },
-        "compile_config": {
-            "optimizer": "sgd",
-            "loss": "mean_squared_error",
-            "metrics": ["mean_squared_error"]
-        }
     }
 
 
@@ -65,15 +64,15 @@ def simple_dataset(config):
 
     train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
     test_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test))
-    train_dataset = train_dataset.shuffle(NUM_TRAIN_SAMPLES).repeat().batch(
+    train_dataset = train_dataset.shuffle(NUM_TRAIN_SAMPLES).batch(
         batch_size)
-    test_dataset = test_dataset.repeat().batch(batch_size)
+    test_dataset = test_dataset.batch(batch_size)
 
     return train_dataset, test_dataset
 
 
 def simple_model(config):
-    model = Sequential([Dense(10, input_shape=(1, )), Dense(1)])
+    model = Sequential([Dense(10, input_shape=(1,)), Dense(1)])
     return model
 
 
@@ -88,9 +87,7 @@ def compile_args():
 
 
 class TestTFRayEstimator(TestCase):
-
     def test_fit_and_evaluate(self):
-
         trainer = TFRayEstimator(
             model_creator=simple_model,
             compile_args=compile_args(),
