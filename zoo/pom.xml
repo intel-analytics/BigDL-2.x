@@ -114,7 +114,14 @@
                 <dependency>
                     <groupId>io.netty</groupId>
                     <artifactId>netty-all</artifactId>
-                    <version>4.1.27.Final</version>
+                    <version>4.1.48.Final</version>
+                </dependency>
+                <dependency>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-bom</artifactId>
+                    <version>4.1.48.Final</version>
+                    <scope>import</scope>
+                    <type>pom</type>
                 </dependency>
                 <dependency>
                     <groupId>org.slf4j</groupId>
