@@ -15,7 +15,8 @@
 #
 
 from bigdl.util.common import get_node_and_core_number
-from zoo import init_nncontext, ZooContext
+from zoo import init_nncontext
+from zoo.orca import OrcaContext
 from zoo.orca.data import SparkXShards
 from zoo.orca.data.utils import *
 
@@ -48,7 +49,7 @@ def read_file_spark(file_path, file_type, **kwargs):
     sc = init_nncontext()
     node_num, core_num = get_node_and_core_number()
 
-    if ZooContext.orca_pandas_read_backend == "pandas":
+    if OrcaContext.orca_pandas_read_backend == "pandas":
         file_url_splits = file_path.split("://")
         prefix = file_url_splits[0]
 
