@@ -43,13 +43,14 @@ echo "#5 Start mxnet lenet example"
 start=$(date "+%s")
 
 # get_mnist_iterator in MXNet requires the data to be placed in the `data` folder of the running directory.
-if [ -f ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/mxnet/data/mnist.zip ]
+# The running directory of integration test is ${ANALYTICS_ZOO_ROOT}.
+if [ -f ${ANALYTICS_ZOO_ROOT}/data/mnist.zip ]
 then
     echo "mnist.zip already exists"
 else
     wget -nv $FTP_URI/analytics-zoo-data/mnist.zip -P ${ANALYTICS_ZOO_ROOT}/data
-    unzip -q ${ANALYTICS_ZOO_ROOT}/data/mnist.zip -d ${ANALYTICS_ZOO_ROOT}/data
 fi
+unzip -q ${ANALYTICS_ZOO_ROOT}/data/mnist.zip -d ${ANALYTICS_ZOO_ROOT}/data
 
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/mxnet/lenet_mnist.py -e 1 -b 256
 now=$(date "+%s")
