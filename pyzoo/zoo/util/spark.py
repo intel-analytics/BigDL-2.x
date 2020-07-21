@@ -250,22 +250,26 @@ class SparkRunner:
         zoo_standalone_home = "{}/site-packages/zoo/share/bin/standalone"\
             .format(self._get_conda_python_path())
         # The scripts from pip don't have execution permission and need to first give permission.
-        subprocess.Popen("cd {}; chmod +x *".format("{}/sbin".format(zoo_standalone_home)))
+        pro = subprocess.Popen(["chmod", "-R", "+x", "{}/sbin".format(zoo_standalone_home)])
+        os.waitpid(pro.pid, 0)
 
         # Distribute conda packages to workers using scp
         penv_archive = self.pack_penv(conda_name)
         worker_tmp_dir = tempfile.mkdtemp()
 
         # TODO: scp in parallel?
-        if os.path.isfile(workers):  # Each line lists one worker ip
-            f = open(workers, "r")
-            worker_ips = [ip.strip() for ip in f.readlines()]
-        else:
-            if not isinstance(workers, list):
-                workers = [workers]
+        type_error_msg = "workers must be a list of worker ips in string format or the path to a " \
+                         "text file with one worker ip each line"
+        if not isinstance(workers, list):
+            assert isinstance(workers, six.string_types), type_error_msg
+            if os.path.isfile(workers):  # Each line of the file contains one worker ip
+                f = open(workers, "r")
+                worker_ips = [ip.strip() for ip in f.readlines()]
+            else:  # Only one worker ip
+                worker_ips = [workers]
+        else:  # A list of worker ips
             worker_ips = workers
-        assert all(isinstance(worker, six.string_types) for worker in worker_ips), \
-            "workers must be a list of ips or a text file with an ip each line"
+        assert all(isinstance(worker, six.string_types) for worker in worker_ips), type_error_msg
         for worker in worker_ips:
             # need to input password for multiple times if can't ssh without password.
             p1 = subprocess.Popen(["ssh", "root@" + worker,
