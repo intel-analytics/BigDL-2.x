@@ -664,7 +664,7 @@ class DeepGLO(object):
         return covs
 
     def predict_horizon(
-            self, ind=None, future=10, normalize=False, bsize=90
+            self, ind=None, future=10, bsize=90
     ):
         last_step = self.end_index
         if ind is None:
@@ -715,7 +715,7 @@ class DeepGLO(object):
             normalize=False,
         )
 
-        if normalize:
+        if self.normalize:
             Y = Y - self.mini
             Y = Y * self.s[ind, None] + self.m[ind, None]
             return Y

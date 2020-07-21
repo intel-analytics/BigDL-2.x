@@ -134,7 +134,6 @@ class TCMF(BaseModel):
         out = self.model.predict_horizon(
             future=horizon,
             bsize=90,
-            normalize=self.normalize,
         )
         return out[:, -horizon::]
 
