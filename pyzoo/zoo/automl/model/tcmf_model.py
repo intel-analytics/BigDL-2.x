@@ -220,19 +220,14 @@ class TCMFDistributedModelWrapper(ModelWrapper):
     def __init__(self, config):
         self.internal = None
         self.config = config
+        self.id_col = None
+        self.target_col = None
 
-    def fit(self, x, id_col_name, target_col_name, incremental=False):
-        def orca_train_model(df, config, incremental):
+    def fit(self, x, id_col, target_col, incremental=False):
+        def orca_train_model(d, config):
             tcmf = TCMF()
             tcmf._build(**config)
-            if id_col_name in df.columns:
-                id_arr = df[id_col_name].to_numpy()
-            else:
-                raise ValueError("id_col_name doesn't exist in the DataFrame in x")
-            if target_col_name in df.columns:
-                train_data = df[target_col_name].to_numpy()
-            else:
-                raise ValueError("target_col_name doesn't exist in the DataFrame in x")
+            id_arr, train_data = split_id_and_train_data(d, id_col, target_col)
             if incremental:
                 tcmf.fit_incremental(train_data)
             else:
@@ -240,13 +235,17 @@ class TCMFDistributedModelWrapper(ModelWrapper):
             return [id_arr, tcmf]
 
         if isinstance(x, SparkXShards):
-            if x._get_class_name() == "pandas.core.frame.DataFrame":
-                self.internal = x.transform_shard(orca_train_model, self.config, incremental)
+            if x._get_class_name() == "dict":
+                self.id_col = id_col
+                if self.id_col is None:
+                    raise ValueError("id_col should be provided in distributed mode")
+                self.target_col = target_col
+                self.internal = x.transform_shard(orca_train_model, self.config)
             else:
-                raise ValueError("value of x should be an xShards of pandas DataFrame, "
+                raise ValueError("value of x should be an xShards of dict, "
                                  "but is an xShards of " + x._get_class_name())
         else:
-            raise ValueError("value of x should be an xShards of pandas DataFrame, "
+            raise ValueError("value of x should be an xShards of dict, "
                              "but isn't an xShards")
 
     def evaluate(self, x, y, metric=None):
@@ -259,23 +258,22 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         """
         raise NotImplementedError
 
-    def predict(self, x, output_col_name, horizon=24):
+    def predict(self, x, horizon=24):
         """
         Prediction.
         :param x: input
         :return: result
         """
-        def orca_predict(data, horizon=24):
-            cid_arr = data[0]
+        def orca_predict(data, id_col):
+            id_arr = data[0]
             tcmf = data[1]
             predict_results = tcmf.predict(x=None, horizon=horizon)
-            results = np.concatenate([np.expand_dims(cid_arr, axis=1), predict_results], axis=1)
-            final_df = pd.DataFrame(results, columns=["id"] + output_col_name)
-            final_df.id = final_df.id.astype("int")
-            final_df = final_df.set_index("id")
-            return final_df
+            result = dict()
+            result[id_col] = id_arr
+            result["prediction"] = predict_results
+            return result
 
-        return self.internal.transform_shard(orca_predict, horizon)
+        return self.internal.transform_shard(orca_predict, self.id_col)
 
     def is_distributed(self):
         return True
@@ -287,7 +285,10 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         :return:
         """
         if self.internal is not None:
-            self.internal.save_pickle(model_path)
+            param_list = [self.id_col, self.target_col]
+            with open(model_path + '/id.pkl', 'wb') as f:
+                pickle.dump(param_list, f)
+            self.internal.save_pickle(model_path + "/model")
 
     def load(self, model_path, minPartitions=None):
         """
@@ -295,7 +296,11 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         :param model_path: the model file
         :return: the restored model
         """
-        self.internal = SparkXShards.load_pickle(model_path, minPartitions=minPartitions)
+        with open(model_path + '/id.pkl', 'rb') as f:
+            param_list = pickle.load(f)
+            self.id_col = param_list[0]
+            self.target_col = param_list[1]
+        self.internal = SparkXShards.load_pickle(model_path + "/model", minPartitions=minPartitions)
 
 
 class TCMFLocalModelWrapper(ModelWrapper):
@@ -305,24 +310,20 @@ class TCMFLocalModelWrapper(ModelWrapper):
         self.config = config
         self.internal._build(**self.config)
         self.id_arr = None
+        self.id_col = None
+        self.target_col = None
 
-    def fit(self, x, id_col_name, target_col_name, incremental=False):
-        if isinstance(x, pd.DataFrame):
-            if id_col_name in x.columns:
-                self.id_arr = x[id_col_name].to_numpy()
-            else:
-                raise ValueError("id_col_name doesn't exist in the DataFrame in x")
-            if target_col_name in x.columns:
-                train_data = x[target_col_name].to_numpy()
-            else:
-                raise ValueError("target_col_name doesn't exist in the DataFrame in x")
-
+    def fit(self, x, id_col, target_col, incremental=False):
+        if isinstance(x, dict):
+            self.id_col = id_col
+            self.target_col = target_col
+            self.id_arr, train_data = split_id_and_train_data(x, id_col, target_col)
             if incremental:
                 self.internal.fit_incremental(train_data)
             else:
                 self.internal.fit_eval(train_data)
         else:
-            raise ValueError("value of x should be a ndarray")
+            raise ValueError("value of x should be a dict of ndarray")
 
     def evaluate(self, x, y, metric=None):
         """
@@ -332,23 +333,29 @@ class TCMFLocalModelWrapper(ModelWrapper):
         :param metric:
         :return: a list of metric evaluation results
         """
-        if isinstance(y, np.ndarray):
+        if isinstance(y, dict):
+            if self.target_col in y:
+                y = y[self.target_col]
+                if not isinstance(y, np.ndarray):
+                    raise ValueError("the value of target_col in y should be an ndarray")
+            else:
+                raise ValueError("target_col doesn't exist in y")
             return self.internal.evaluate(y=y, x=x, metrics=metric)
         else:
-            raise ValueError("value of y should be a ndarray")
+            raise ValueError("value of y should be a dict of ndarray")
 
-    def predict(self, x, output_col_name, horizon=24):
+    def predict(self, x, horizon=24):
         """
         Prediction.
         :param x: input
         :return: result
         """
         pred = self.internal.predict(x=x, horizon=horizon)
-        results = np.concatenate([np.expand_dims(self.id_arr, axis=1), pred], axis=1)
-        final_df = pd.DataFrame(results, columns=["id"] + output_col_name)
-        final_df.id = final_df.id.astype("int")
-        final_df = final_df.set_index("id")
-        return final_df
+        result = dict()
+        if self.id_arr is not None:
+            result[self.id_col] = self.id_arr
+        result["prediction"] = pred
+        return result
 
     def is_distributed(self):
         return False
@@ -359,8 +366,9 @@ class TCMFLocalModelWrapper(ModelWrapper):
         :param model_path: the model file path to be saved to.
         :return:
         """
+        param_list = [self.id_arr, self.id_col, self.target_col]
         with open(model_path + '/id.pkl', 'wb') as f:
-            pickle.dump(self.id_arr, f)
+            pickle.dump(param_list, f)
         self.internal.save(model_path + "/model")
 
     def load(self, model_path):
@@ -371,5 +379,27 @@ class TCMFLocalModelWrapper(ModelWrapper):
         """
         self.internal = TCMF()
         with open(model_path + '/id.pkl', 'rb') as f:
-            self.id_arr = pickle.load(f)
+            param_list = pickle.load(f)
+            self.id_arr = param_list[0]
+            self.id_col = param_list[1]
+            self.target_col = param_list[2]
         self.internal.restore(model_path + "/model")
+
+
+def split_id_and_train_data(d, id_col, target_col):
+    if target_col in d:
+        train_data = d[target_col]
+        if not isinstance(train_data, np.ndarray):
+            raise ValueError("the value of target_col should be an ndarray")
+    else:
+        raise ValueError("target_col doesn't exist in x")
+    id_arr = None
+    if id_col is not None:
+        if id_col in d:
+            id_arr = d[id_col]
+            if len(id_arr) != train_data.shape[0]:
+                raise ValueError("the length of the id_col should be equal to the number of "
+                                 "rows in the target_col")
+        else:
+            raise ValueError("id_col doesn't exist in x")
+    return id_arr, train_data
