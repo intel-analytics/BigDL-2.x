@@ -23,7 +23,6 @@ from bigdl.optim.optimizer import SeveralIteration
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo.common.nncontext import *
 import zoo.orca.data.pandas
-from zoo.orca.learn.tf.utils import find_checkpoint
 
 
 class TestEstimatorForKeras(TestCase):
@@ -214,9 +213,9 @@ class TestEstimatorForKeras(TestCase):
         K.get_session().close()
         tf.reset_default_graph()
         model = self.create_model()
-        ckpt_dir, versions = find_checkpoint(model_dir)
+
         est = Estimator.from_keras(keras_model=model, model_dir=model_dir)
-        est.load(ckpt_dir, max(versions))
+        est.load_latest_checkpoint(model_dir)
         est.fit(data=data_shard,
                 batch_size=8,
                 epochs=10,

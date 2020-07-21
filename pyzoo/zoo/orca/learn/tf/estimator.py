@@ -23,7 +23,7 @@ from zoo.tfpark.utils import evaluate_metrics
 from zoo.tfpark import TFOptimizer, TFNet, ZooOptimizer
 from zoo.tfpark import KerasModel
 from zoo.util import nest
-from zoo.orca.learn.tf.utils import to_dataset, convert_predict_to_dataframe
+from zoo.orca.learn.tf.utils import *
 
 
 class Estimator(object):
@@ -38,8 +38,14 @@ class Estimator(object):
 
     def load(self, path, version):
         self.load_checkpoint = True
-        self.load_path = path
-        self.load_checkpoint_version = version
+        self.checkpoint_path = path
+        self.checkpoint_version = version
+
+    def load_latest_checkpoint(self, path):
+        ckpt_path, version = find_latest_checkpoint(path)
+        if ckpt_path is None:
+            raise Exception("Cannot find checkpoint")
+        self.load(ckpt_path, version)
 
     @staticmethod
     def from_graph(*, inputs, outputs=None,
@@ -144,7 +150,7 @@ class TFOptimizerWrapper(Estimator):
             model_dir=self.model_dir)
 
         if self.load_checkpoint:
-            optimizer.load_checkpoint(self.load_path, self.load_checkpoint_version)
+            optimizer.load_checkpoint(self.checkpoint_path, self.checkpoint_version)
 
         optimizer.optimize(end_trigger=MaxEpoch(epochs), checkpoint_trigger=checkpoint_trigger)
         return self
@@ -243,7 +249,7 @@ class TFKerasWrapper(Estimator):
                                            session_config=session_config)
 
         if self.load_checkpoint:
-            optimizer.load_checkpoint(self.load_path, self.load_checkpoint_version)
+            optimizer.load_checkpoint(self.checkpoint_path, self.checkpoint_version)
 
         optimizer.optimize(MaxEpoch(epochs), checkpoint_trigger=checkpoint_trigger)
 

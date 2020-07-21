@@ -26,8 +26,6 @@ from zoo import init_nncontext
 from zoo.orca.data.tf.data import Dataset
 from zoo.orca.learn.tf.estimator import Estimator
 import zoo.orca.data.pandas
-from zoo.orca.learn.tf.utils import find_checkpoint
-
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
@@ -205,8 +203,6 @@ class TestEstimatorForGraph(TestCase):
 
         tf.reset_default_graph()
 
-        ckpt_dir, versions = find_checkpoint(model_dir)
-
         model = SimpleModel()
         est = Estimator.from_graph(
             inputs=[model.user, model.item],
@@ -217,7 +213,7 @@ class TestEstimatorForGraph(TestCase):
             model_dir=model_dir
         )
 
-        est.load(ckpt_dir, max(versions))
+        est.load_latest_checkpoint(model_dir)
         est.fit(data=data_shard,
                 batch_size=8,
                 epochs=10,
