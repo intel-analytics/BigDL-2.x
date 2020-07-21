@@ -144,13 +144,13 @@ class TCMFForecaster(Forecaster):
         }
 
     def fit(self,
-            x, id_col='id', target_col='y', incremental=False):
+            x, id, y, incremental=False):
         """
         fit the model
-        :param x: the input for fit. Only pandas DataFrame and SparkXShards of pandas DataFrame
+        :param x: the input for fit. Only dict of ndarray and SparkXShards of dict of ndarray
             are supported
-        :param id_col: the name of the column which represents the id, default: 'id'
-        :param target_col: the name of the column which represents the target, default: 'target'
+        :param id: the key of id array
+        :param y: the key of data ndarray
         :param incremental: if the fit is incremental
         :return:
         """
@@ -167,7 +167,7 @@ class TCMFForecaster(Forecaster):
                                  "an xShards of dict of ndarray")
 
             try:
-                self.internal.fit(x, id_col, target_col, incremental)
+                self.internal.fit(x, id, y, incremental)
             except Exception as inst:
                 self.internal = None
                 raise inst

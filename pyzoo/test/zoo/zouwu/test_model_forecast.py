@@ -110,25 +110,27 @@ class TestZouwuModelForecast(ZooTestCase):
         self.assertTrue('You should run fit before calling is_distributed()'
                         in str(context.exception))
         with self.assertRaises(Exception) as context:
-            model.fit(input, id_col="id", target_col="data")
-        self.assertTrue("id_col doesn't exist in x" in str(context.exception))
+            model.fit(input, id="id", y="data")
+        self.assertTrue("id id doesn't exist in x" in str(context.exception))
         with self.assertRaises(Exception) as context:
-            model.fit(input, id_col="cid", target_col="kpi3")
-        self.assertTrue("target_col doesn't exist in x"
+            model.fit(input, id="cid", y="kpi3")
+        self.assertTrue("y kpi3 doesn't exist in x"
                         in str(context.exception))
-        model.fit(input, id_col="cid", target_col="data")
+        model.fit(input, id="cid", y="data")
         assert not model.is_distributed()
         with self.assertRaises(Exception) as context:
-            model.fit(input, id_col="cid", target_col="data")
+            model.fit(input, id="cid", y="data")
         self.assertTrue('This model has already been fully trained' in str(context.exception))
         with self.assertRaises(Exception) as context:
-            model.fit(input, id_col="cid", target_col="data", incremental=True)
+            model.fit(input, id="cid", y="data", incremental=True)
         self.assertTrue('NotImplementedError' in context.exception.__class__.__name__)
         with tempfile.TemporaryDirectory() as tempdirname:
             model.save(tempdirname)
             loaded_model = TCMFForecaster.load(tempdirname, distributed=False)
         yhat = model.predict(x=None, horizon=horizon)
         yhat_loaded = loaded_model.predict(x=None, horizon=horizon)
+        yhat_id = yhat_loaded["cid"]
+        assert (yhat_id == id).all()
         yhat = yhat["prediction"]
         yhat_loaded = yhat_loaded["prediction"]
         assert yhat.shape == (300, horizon)
@@ -151,13 +153,13 @@ class TestZouwuModelForecast(ZooTestCase):
         data = np.random.rand(300, 480)
         input = dict({'cid': id, 'data': data})
         with self.assertRaises(Exception) as context:
-            model.fit(input, id_col="cid", target_col="data")
-        self.assertTrue("the length of the id_col should be equal to the number of"
+            model.fit(input, id="cid", y="data")
+        self.assertTrue("the length of the id array should be equal to the number of"
                         in str(context.exception))
-        model.fit(input, id_col=None, target_col="data")
+        model.fit(input, id=None, y="data")
         assert not model.is_distributed()
         with self.assertRaises(Exception) as context:
-            model.fit(input, id_col=None, target_col="data")
+            model.fit(input, id=None, y="data")
         self.assertTrue('This model has already been fully trained' in str(context.exception))
         with tempfile.TemporaryDirectory() as tempdirname:
             model.save(tempdirname)
@@ -169,6 +171,10 @@ class TestZouwuModelForecast(ZooTestCase):
         assert yhat.shape == (300, horizon)
         assert (yhat == yhat_loaded).all()
         target_value = np.random.rand(300, horizon)
+        target_value_fake = dict({"y": target_value})
+        with self.assertRaises(Exception) as context:
+            model.evaluate(x=None, target_value=target_value_fake, metric=['mse'])
+        self.assertTrue("key data doesn't exist in y" in str(context.exception))
         target_value = dict({"data": target_value})
         model.evaluate(x=None, target_value=target_value, metric=['mse'])
 
@@ -210,25 +216,26 @@ class TestZouwuModelForecast(ZooTestCase):
             shard = zoo.orca.data.pandas.read_csv(temp.name)
         shard = shard.transform_shard(preprocessing)
         with self.assertRaises(Exception) as context:
-            model.fit(shard, id_col="cid", target_col="data")
-        self.assertTrue("id_col doesn't exist in x" in str(context.exception))
+            model.fit(shard, id="cid", y="data")
+        self.assertTrue("id cid doesn't exist in x" in str(context.exception))
         with self.assertRaises(Exception) as context:
-            model.fit(shard, id_col="id", target_col="kpi3")
-        self.assertTrue("target_col doesn't exist in x" in str(context.exception))
+            model.fit(shard, id="id", y="kpi3")
+        self.assertTrue("y kpi3 doesn't exist in x" in str(context.exception))
         with self.assertRaises(Exception) as context:
-            model.fit(shard, id_col=None, target_col="kpi3")
-        self.assertTrue("id_col should be provided in distributed mode" in str(context.exception))
+            model.fit(shard, id=None, y="kpi3")
+        self.assertTrue("the key of id array `id` should be provided in distributed mode"
+                        in str(context.exception))
         with self.assertRaises(Exception) as context:
             model.is_distributed()
         self.assertTrue('You should run fit before calling is_distributed()'
                         in str(context.exception))
-        model.fit(shard, id_col="id", target_col="data")
+        model.fit(shard, id="id", y="data")
         assert model.is_distributed()
         with self.assertRaises(Exception) as context:
-            model.fit(shard, id_col="id", target_col="data")
+            model.fit(shard, id="id", y="data")
         self.assertTrue('This model has already been fully trained' in str(context.exception))
         with self.assertRaises(Exception) as context:
-            model.fit(shard, id_col="id", target_col="data", incremental=True)
+            model.fit(shard, id="id", y="data", incremental=True)
         self.assertTrue('NotImplementedError' in context.exception.__class__.__name__)
         with tempfile.TemporaryDirectory() as tempdirname:
             model.save(tempdirname)
