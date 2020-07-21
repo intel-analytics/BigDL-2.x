@@ -166,9 +166,10 @@ class SparkRunner:
             archive = "{}#{}".format(penv_archive, self.PYTHON_ENV)
             if additional_archive:
                 archive = archive + "," + additional_archive
-            command = " --archives {} --num-executors {}" \
-                      " --executor-cores {} --executor-memory {}". \
-                format(archive, num_executors, executor_cores, executor_memory)
+            command = " --archives {} --driver-cores {} --driver-memory {}" \
+                      " --num-executors {} --executor-cores {} --executor-memory {}". \
+                format(archive, driver_cores, driver_memory,
+                       num_executors, executor_cores, executor_memory)
 
             if extra_python_lib:
                 command = command + " --py-files {}".format(extra_python_lib)
