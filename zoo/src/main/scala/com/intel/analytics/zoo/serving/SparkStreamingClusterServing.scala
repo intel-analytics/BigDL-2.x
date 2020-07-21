@@ -100,7 +100,7 @@ object SparkStreamingClusterServing {
 
 
 
-    val serParams = new SerParams(helper)
+    val serParams = new SerParams(helper, false)
 
     val jedis = new Jedis(serParams.redisHost, serParams.redisPort)
     val ssc = new StreamingContext(spark.sparkContext, new Duration(50))
@@ -153,6 +153,7 @@ object SparkStreamingClusterServing {
            * batching is required if the machine has over about 30 cores.           *
            */
           preProcessed.mapPartitions(it => {
+            serParams.model = bcModel.value
             it.grouped(serParams.coreNum).flatMap(itemBatch => {
               InferenceSupportive.multiThreadInference(itemBatch.toIterator, serParams)
             })
@@ -167,6 +168,7 @@ object SparkStreamingClusterServing {
            * and minimizing the memory usage.
            */
           preProcessed.mapPartitions(it => {
+            serParams.model = bcModel.value
             it.grouped(serParams.coreNum).flatMap(itemBatch => {
               InferenceSupportive.multiThreadInference(itemBatch.toIterator, serParams)
             })
