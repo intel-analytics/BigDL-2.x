@@ -64,9 +64,9 @@ def init_spark_on_yarn(hadoop_conf,
                        conf=None):
     """
     Create a SparkContext with Analytics Zoo configurations on Yarn cluster for yarn-client mode.
-    You only need to create a conda environment and install the python dependencies in that environment
-    beforehand on the driver machine. These dependencies would be automatically packaged and distributed
-    to the whole Yarn cluster.
+    You only need to create a conda environment and install the python dependencies in that
+    environment beforehand on the driver machine. These dependencies would be automatically
+    packaged and distributed to the whole Yarn cluster.
 
     :param hadoop_conf: The path to the yarn configuration folder.
     :param conda_name: The name of the conda environment.
