@@ -48,8 +48,9 @@ def read_json(file_path, **kwargs):
 def read_file_spark(file_path, file_type, **kwargs):
     sc = init_nncontext()
     node_num, core_num = get_node_and_core_number()
+    backend = OrcaContext.orca_pandas_read_backend
 
-    if OrcaContext.orca_pandas_read_backend == "pandas":
+    if backend == "pandas":
         file_url_splits = file_path.split("://")
         prefix = file_url_splits[0]
 
@@ -253,5 +254,11 @@ def read_file_spark(file_path, file_type, **kwargs):
 
         pd_rdd = df.rdd.mapPartitions(to_pandas(df.columns, squeeze, index_col))
 
-    data_shards = SparkXShards(pd_rdd)
+    try:
+        data_shards = SparkXShards(pd_rdd)
+    except Exception as e:
+        alternative_backend = "pandas" if backend == "spark" else "spark"
+        print("An error occurred when reading files with '%s' backend, you may switch '%s' backend "
+              "to have another try" % (backend, alternative_backend))
+        raise e
     return data_shards
