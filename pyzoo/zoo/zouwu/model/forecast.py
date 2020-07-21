@@ -144,13 +144,11 @@ class TCMFForecaster(Forecaster):
         }
 
     def fit(self,
-            x, id, y, incremental=False):
+            x, incremental=False):
         """
         fit the model
         :param x: the input for fit. Only dict of ndarray and SparkXShards of dict of ndarray
-            are supported
-        :param id: the key of id array
-        :param y: the key of data ndarray
+            are supported. Example: {'id': id_arr, 'y': data_ndarray}
         :param incremental: if the fit is incremental
         :return:
         """
@@ -167,7 +165,7 @@ class TCMFForecaster(Forecaster):
                                  "an xShards of dict of ndarray")
 
             try:
-                self.internal.fit(x, id, y, incremental)
+                self.internal.fit(x, incremental)
             except Exception as inst:
                 self.internal = None
                 raise inst

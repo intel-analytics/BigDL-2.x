@@ -104,39 +104,36 @@ class TestZouwuModelForecast(ZooTestCase):
         # construct data
         id = np.arange(300)
         data = np.random.rand(300, 480)
-        input = dict({'cid': id, 'data': data})
+        input = dict({'data': data})
+        with self.assertRaises(Exception) as context:
+            model.fit(input)
+        self.assertTrue("key `y` doesn't exist in x" in str(context.exception))
+        input = dict({'id': id, 'y': data})
         with self.assertRaises(Exception) as context:
             model.is_distributed()
         self.assertTrue('You should run fit before calling is_distributed()'
                         in str(context.exception))
-        with self.assertRaises(Exception) as context:
-            model.fit(input, id="id", y="data")
-        self.assertTrue("id id doesn't exist in x" in str(context.exception))
-        with self.assertRaises(Exception) as context:
-            model.fit(input, id="cid", y="kpi3")
-        self.assertTrue("y kpi3 doesn't exist in x"
-                        in str(context.exception))
-        model.fit(input, id="cid", y="data")
+        model.fit(input)
         assert not model.is_distributed()
         with self.assertRaises(Exception) as context:
-            model.fit(input, id="cid", y="data")
+            model.fit(input)
         self.assertTrue('This model has already been fully trained' in str(context.exception))
         with self.assertRaises(Exception) as context:
-            model.fit(input, id="cid", y="data", incremental=True)
+            model.fit(input, incremental=True)
         self.assertTrue('NotImplementedError' in context.exception.__class__.__name__)
         with tempfile.TemporaryDirectory() as tempdirname:
             model.save(tempdirname)
             loaded_model = TCMFForecaster.load(tempdirname, distributed=False)
         yhat = model.predict(x=None, horizon=horizon)
         yhat_loaded = loaded_model.predict(x=None, horizon=horizon)
-        yhat_id = yhat_loaded["cid"]
+        yhat_id = yhat_loaded["id"]
         assert (yhat_id == id).all()
         yhat = yhat["prediction"]
         yhat_loaded = yhat_loaded["prediction"]
         assert yhat.shape == (300, horizon)
         assert (yhat == yhat_loaded).all()
         target_value = np.random.rand(300, horizon)
-        target_value = dict({"data": target_value})
+        target_value = dict({"y": target_value})
         model.evaluate(x=None, target_value=target_value, metric=['mse'])
 
     def test_forecast_tcmf_without_id(self):
@@ -151,31 +148,37 @@ class TestZouwuModelForecast(ZooTestCase):
         # construct data
         id = np.arange(200)
         data = np.random.rand(300, 480)
-        input = dict({'cid': id, 'data': data})
+        input = dict({'y': "abc"})
         with self.assertRaises(Exception) as context:
-            model.fit(input, id="cid", y="data")
+            model.fit(input)
+        self.assertTrue("the value of y should be an ndarray" in str(context.exception))
+        input = dict({'id': id, 'y': data})
+        with self.assertRaises(Exception) as context:
+            model.fit(input)
         self.assertTrue("the length of the id array should be equal to the number of"
                         in str(context.exception))
-        model.fit(input, id=None, y="data")
+        input = dict({'y': data})
+        model.fit(input)
         assert not model.is_distributed()
         with self.assertRaises(Exception) as context:
-            model.fit(input, id=None, y="data")
+            model.fit(input)
         self.assertTrue('This model has already been fully trained' in str(context.exception))
         with tempfile.TemporaryDirectory() as tempdirname:
             model.save(tempdirname)
             loaded_model = TCMFForecaster.load(tempdirname, distributed=False)
         yhat = model.predict(x=None, horizon=horizon)
         yhat_loaded = loaded_model.predict(x=None, horizon=horizon)
+        assert "id" not in yhat_loaded
         yhat = yhat["prediction"]
         yhat_loaded = yhat_loaded["prediction"]
         assert yhat.shape == (300, horizon)
         assert (yhat == yhat_loaded).all()
         target_value = np.random.rand(300, horizon)
-        target_value_fake = dict({"y": target_value})
+        target_value_fake = dict({"data": target_value})
         with self.assertRaises(Exception) as context:
             model.evaluate(x=None, target_value=target_value_fake, metric=['mse'])
-        self.assertTrue("key data doesn't exist in y" in str(context.exception))
-        target_value = dict({"data": target_value})
+        self.assertTrue("key y doesn't exist in y" in str(context.exception))
+        target_value = dict({"y": target_value})
         model.evaluate(x=None, target_value=target_value, metric=['mse'])
 
     def test_forecast_tcmf_xshards(self):
@@ -183,10 +186,10 @@ class TestZouwuModelForecast(ZooTestCase):
         import zoo.orca.data.pandas
         import tempfile
 
-        def preprocessing(df):
+        def preprocessing(df, id_name, y_name):
             id = df.index
             data = df.to_numpy()
-            result = dict({'id': id, 'data': data})
+            result = dict({id_name: id, y_name: data})
             return result
 
         def postprocessing(pred_results, output_dt_col_name):
@@ -214,32 +217,31 @@ class TestZouwuModelForecast(ZooTestCase):
             df = pd.DataFrame(data)
             df.to_csv(temp.name)
             shard = zoo.orca.data.pandas.read_csv(temp.name)
-        shard = shard.transform_shard(preprocessing)
+        shard.cache()
+        shard_train = shard.transform_shard(preprocessing, 'id', 'data')
         with self.assertRaises(Exception) as context:
-            model.fit(shard, id="cid", y="data")
-        self.assertTrue("id cid doesn't exist in x" in str(context.exception))
+            model.fit(shard_train)
+        self.assertTrue("key `y` doesn't exist in x" in str(context.exception))
+        shard_train = shard.transform_shard(preprocessing, 'cid', 'y')
         with self.assertRaises(Exception) as context:
-            model.fit(shard, id="id", y="kpi3")
-        self.assertTrue("y kpi3 doesn't exist in x" in str(context.exception))
-        with self.assertRaises(Exception) as context:
-            model.fit(shard, id=None, y="kpi3")
-        self.assertTrue("the key of id array `id` should be provided in distributed mode"
-                        in str(context.exception))
+            model.fit(shard_train)
+        self.assertTrue("key `id` doesn't exist in x" in str(context.exception))
         with self.assertRaises(Exception) as context:
             model.is_distributed()
         self.assertTrue('You should run fit before calling is_distributed()'
                         in str(context.exception))
-        model.fit(shard, id="id", y="data")
+        shard_train = shard.transform_shard(preprocessing, 'id', 'y')
+        model.fit(shard_train)
         assert model.is_distributed()
         with self.assertRaises(Exception) as context:
-            model.fit(shard, id="id", y="data")
+            model.fit(shard_train)
         self.assertTrue('This model has already been fully trained' in str(context.exception))
         with self.assertRaises(Exception) as context:
-            model.fit(shard, id="id", y="data", incremental=True)
+            model.fit(shard_train, incremental=True)
         self.assertTrue('NotImplementedError' in context.exception.__class__.__name__)
         with tempfile.TemporaryDirectory() as tempdirname:
-            model.save(tempdirname)
-            loaded_model = TCMFForecaster.load(tempdirname, distributed=True)
+            model.save(tempdirname + "/model")
+            loaded_model = TCMFForecaster.load(tempdirname + "/model", distributed=True)
         horizon = np.random.randint(1, 50)
         yhat_shard_origin = model.predict(x=None, horizon=horizon)
         yhat_list_origin = yhat_shard_origin.collect()
