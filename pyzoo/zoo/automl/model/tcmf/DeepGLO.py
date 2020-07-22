@@ -500,8 +500,7 @@ class DeepGLO(object):
 
         self.Yseq.train_model(early_stop=early_stop, tenacity=tenacity)
 
-    def append_new_y(self,
-                  Ymat_new):
+    def append_new_y(self, Ymat_new):
         # update Yseq
         # normalize the incremented Ymat if needed
         if self.normalize:
