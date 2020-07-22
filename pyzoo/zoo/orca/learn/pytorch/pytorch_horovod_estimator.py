@@ -223,6 +223,8 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
 
         Calls `operator.train_epoch()` on N parallel workers simultaneously
         underneath the hood.
+        :param data_creator: (callable) a funtion that takes a config dict as input
+                  and return a data loader containing the training data.
         :param num_steps: (int) Number of batches to compute update steps on.
                 This corresponds also to the number of times
                 ``TrainingOperator.train_batch`` is called.
@@ -288,7 +290,8 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
     def validate(self, data_creator, num_steps=None, profile=False, info=None):
         """Evaluates the model on the validation data set.
 
-        :param data_creator: 
+        :param data_creator: (callable) a funtion that takes a config dict as input
+                  and return a data loader containing the validation data.
         :param num_steps: (int) Number of batches to compute update steps on.
                This corresponds also to the number of times
                 ``TrainingOperator.validate_batch`` is called.
