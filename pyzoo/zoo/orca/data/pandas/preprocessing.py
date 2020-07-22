@@ -258,8 +258,8 @@ def read_file_spark(file_path, file_type, **kwargs):
         data_shards = SparkXShards(pd_rdd)
     except Exception as e:
         alternative_backend = "pandas" if backend == "spark" else "spark"
-        print("An error occurred when reading files with '%s' backend, you may switch to '%s' backend "
-              "for another try. You can set the backend using "
+        print("An error occurred when reading files with '%s' backend, you may switch to '%s' "
+              "backend for another try. You can set the backend using "
               "OrcaContext.pandas_read_backend" % (backend, alternative_backend))
         raise e
     return data_shards
