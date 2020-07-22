@@ -240,7 +240,7 @@ class RayTuneSearchEngine(SearchEngine):
                 trial_model = XGBoostRegressor()
             else:
                 trial_model = TimeSequenceModel(check_optional_config=False,
-                                            future_seq_len=future_seq_len)
+                                                future_seq_len=future_seq_len)
 
             # handling input
             global_input_df = ray.get(input_df_id)
@@ -255,7 +255,6 @@ class RayTuneSearchEngine(SearchEngine):
             if is_val_df_valid:
                 global_validation_df = ray.get(validation_df_id)
                 trial_validation_df = deepcopy(global_validation_df)
-                # validation_data = trial_ft.transform(trial_validation_df)
                 validation_data = trial_ft.transform(trial_validation_df)
 
             # no need to call build since it is called the first time fit_eval is called.

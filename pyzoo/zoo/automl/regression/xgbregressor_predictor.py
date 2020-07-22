@@ -67,7 +67,7 @@ class XgbRegressorPredictor(object):
         self.pipeline = None
         self.name = name
         self.feature_cols = feature_cols
-        self.target_cool = target_col
+        self.target_col = target_col
 
     def fit(self,
             input_df,
@@ -170,7 +170,7 @@ class XgbRegressorPredictor(object):
     #             "input_df should be a data frame or a list of data frames")
     #
     # def _check_missing_col(self, input_df):
-    #     cols_list = [self.dt_col, self.target_col]
+    #     cols_list = [self.feature_cols, self.target_col]
     #     if self.extra_features_col is not None:
     #         if not isinstance(self.extra_features_col, (list,)):
     #             raise ValueError(
@@ -219,7 +219,7 @@ class XgbRegressorPredictor(object):
                    resources_per_trial,
                    remote_dir):
         model = XGBoostRegressor()
-        ft = EchoTransformer(self.feature_cols, self.target_cool)
+        ft = EchoTransformer(self.feature_cols, self.target_col)
 
         # prepare parameters for search engine
         search_space = recipe.search_space(None)

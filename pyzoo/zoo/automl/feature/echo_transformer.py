@@ -68,4 +68,3 @@ class EchoTransformer(BaseFeatureTransformer):
             return input_df[[self.target_col]], y_pred
         else:
             return y_pred
-

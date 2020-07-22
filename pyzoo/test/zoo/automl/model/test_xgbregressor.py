@@ -54,7 +54,6 @@ class TestXgbregressor(ZooTestCase):
         # test evaluate
         evaluate_result = self.model.evaluate(self.val_x, self.val_y)
 
-
     def test_save_restore(self):
         self.model.fit_eval(self.x, self.y, [(self.val_x, self.val_y)])
 
