@@ -40,10 +40,6 @@ class TorchWorker(HorovodWorker, TorchRunner):
     def setup_components(self):
         import horovod.torch as hvd
 
-        logger.debug("Loading data.")
-        if self.data_creator and callable(self.data_creator):
-            self._initialize_dataloaders()
-
         logger.debug("Creating model")
         self.models = self.model_creator(self.config)
         if not isinstance(self.models, collections.Iterable):
@@ -70,30 +66,24 @@ class TorchWorker(HorovodWorker, TorchRunner):
         self._create_schedulers_if_available()
         self._create_loss()
 
-    def _wrap_dataloaders(self):
-        def with_sampler(loader):
-            import horovod.torch as hvd
-            # Automatically set the DistributedSampler
-            data_loader_args = {
-                "dataset": loader.dataset,
-                "batch_size": loader.batch_size,
-                "shuffle": False,
-                "num_workers": loader.num_workers,
-                "collate_fn": loader.collate_fn,
-                "pin_memory": loader.pin_memory,
-                "drop_last": loader.drop_last,
-                "timeout": loader.timeout,
-                "worker_init_fn": loader.worker_init_fn,
-                "sampler": DistributedSampler(loader.dataset,
-                                              num_replicas=hvd.size(),
-                                              rank=hvd.rank())
-            }
-            return DataLoader(**data_loader_args)
-
-        self.train_loader = with_sampler(self.train_loader)
-
-        if self.validation_loader:
-            self.validation_loader = with_sampler(self.validation_loader)
+    def with_sampler(self, loader):
+        import horovod.torch as hvd
+        # Automatically set the DistributedSampler
+        data_loader_args = {
+            "dataset": loader.dataset,
+            "batch_size": loader.batch_size,
+            "shuffle": False,
+            "num_workers": loader.num_workers,
+            "collate_fn": loader.collate_fn,
+            "pin_memory": loader.pin_memory,
+            "drop_last": loader.drop_last,
+            "timeout": loader.timeout,
+            "worker_init_fn": loader.worker_init_fn,
+            "sampler": DistributedSampler(loader.dataset,
+                                          num_replicas=hvd.size(),
+                                          rank=hvd.rank())
+        }
+        return DataLoader(**data_loader_args)
 
     def setup_ddp_and_operator(self):
         """Runs distributed coordination components.
@@ -103,16 +93,11 @@ class TorchWorker(HorovodWorker, TorchRunner):
         """
         import horovod.torch as hvd
 
-        # Wrap dataloaders
-        self._wrap_dataloaders()
-
         self.training_operator = self.training_operator_cls(
             self.config,
             models=self.models,
             optimizers=self.optimizers,
             criterion=self.criterion,
-            train_loader=self.train_loader,
-            validation_loader=self.validation_loader,
             world_rank=hvd.rank(),
             schedulers=self.schedulers,
             use_tqdm=self.use_tqdm)
@@ -164,7 +149,6 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
             *,
             model_creator,
             optimizer_creator,
-            data_creator,
             loss_creator=None,
             scheduler_creator=None,
             training_operator_cls=TrainingOperator,
@@ -173,16 +157,13 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
             scheduler_step_freq="batch"
     ):
 
-        if not (callable(model_creator) and callable(optimizer_creator)
-                and callable(data_creator)):
+        if not (callable(model_creator) and callable(optimizer_creator)):
             raise ValueError(
-                "Must provide a callable model_creator, optimizer_creator, "
-                "and data_creator.")
+                "Must provide a callable model_creator and optimizer_creator")
 
         self.model_creator = model_creator
         self.optimizer_creator = optimizer_creator
         self.loss_creator = loss_creator
-        self.data_creator = data_creator
         self.scheduler_creator = scheduler_creator
         self.training_operator_cls = training_operator_cls
         self.scheduler_step_freq = scheduler_step_freq
@@ -198,7 +179,6 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
 
         self.param = dict(
             model_creator=self.model_creator,
-            data_creator=self.data_creator,
             optimizer_creator=self.optimizer_creator,
             loss_creator=self.loss_creator,
             scheduler_creator=self.scheduler_creator,
@@ -238,13 +218,14 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
         ray.get(remote_operator_setups)
 
     def train(self,
+              data_creator,
               num_steps=None,
               profile=False,
               reduce_results=True,
               info=None):
 
-        success, worker_stats = self._train_epoch(
-            num_steps=num_steps, profile=profile, info=info)
+        success, worker_stats = self._train_epoch(data_creator,
+                                                  num_steps=num_steps, profile=profile, info=info)
 
         if reduce_results:
             return self._process_stats(worker_stats)
@@ -265,8 +246,9 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
                 stats[stat_key] = worker_stats[0][stat_key]
         return stats
 
-    def _train_epoch(self, num_steps=None, profile=False, info=None):
-        params = dict(num_steps=num_steps, profile=profile, info=info)
+    def _train_epoch(self, data_creator, num_steps=None, profile=False, info=None):
+        params = dict(data_creator=data_creator,
+                      num_steps=num_steps, profile=profile, info=info)
 
         remote_worker_stats = []
         for i, w in enumerate(self.remote_workers):
@@ -279,7 +261,7 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
 
         return success, None
 
-    def validate(self, num_steps=None, profile=False, info=None):
+    def validate(self, data_creator, num_steps=None, profile=False, info=None):
         """Evaluates the model on the validation data set.
 
         Args:
@@ -295,7 +277,8 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
                 You can provide custom metrics by passing in a custom
                 ``training_operator_cls``.
         """
-        params = dict(num_steps=num_steps, profile=profile, info=info)
+        params = dict(data_creator=data_creator,
+                      num_steps=num_steps, profile=profile, info=info)
 
         remote_worker_stats = [
             w.validate.remote(**params) for w in self.remote_workers
