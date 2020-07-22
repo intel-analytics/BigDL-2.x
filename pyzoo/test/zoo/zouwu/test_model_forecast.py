@@ -183,8 +183,10 @@ class TestZouwuModelForecast(ZooTestCase):
 
     def test_forecast_tcmf_xshards(self):
         from zoo.zouwu.model.forecast import TCMFForecaster
+        from zoo.orca import OrcaContext
         import zoo.orca.data.pandas
         import tempfile
+        OrcaContext.pandas_read_backend = "pandas"
 
         def preprocessing(df, id_name, y_name):
             id = df.index
@@ -259,6 +261,7 @@ class TestZouwuModelForecast(ZooTestCase):
         final_df = pd.concat(final_df_list)
         final_df.sort_values("datetime", inplace=True)
         assert final_df.shape == (300 * horizon, 3)
+        OrcaContext.pandas_read_backend = "spark"
 
 
 if __name__ == "__main__":
