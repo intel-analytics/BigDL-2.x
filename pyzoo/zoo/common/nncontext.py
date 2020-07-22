@@ -117,19 +117,6 @@ def init_spark_on_yarn(hadoop_conf,
     return sc
 
 
-class ZooContext:
-
-    @property
-    def log_output(self):
-        from zoo.orca import OrcaContext
-        return OrcaContext.log_output
-
-    @staticmethod
-    def log_output(value):
-        from zoo.orca import OrcaContext
-        OrcaContext.log_output = value
-
-
 # The following function copied from
 # https://github.com/Valassis-Digital-Media/spylon-kernel/blob/master/
 # spylon_kernel/scala_interpreter.py
@@ -168,7 +155,8 @@ def init_nncontext(conf=None, redirect_spark_log=True):
     # The following code copied and modified from
     # https://github.com/Valassis-Digital-Media/spylon-kernel/blob/master/
     # spylon_kernel/scala_interpreter.py
-    if ZooContext.log_output:
+    from zoo.orca import OrcaContext
+    if OrcaContext.log_output:
         import subprocess
         import pyspark.java_gateway
         spark_jvm_proc = None
@@ -196,7 +184,7 @@ def init_nncontext(conf=None, redirect_spark_log=True):
     else:
         sc = getOrCreateSparkContext(conf=conf)
 
-    if ZooContext.log_output:
+    if OrcaContext.log_output:
         if spark_jvm_proc.stdout is not None:
             stdout_reader = threading.Thread(target=_read_stream,
                                              daemon=True,
