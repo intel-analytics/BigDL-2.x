@@ -135,7 +135,7 @@ else
       echo -e "\033[31m${PARAMS[1]}, use local[*] instead \033[0m"
      fi
     fi
-    ${SPARK_HOME}/bin/spark-submit --master ${spark_master} --driver-memory ${spark_driver_memory} --executor-memory ${spark_executor_memory} --num-executors ${spark_num_executors} --executor-cores ${spark_executor_cores} --total-executor-cores ${spark_total_executor_cores} --jars ${SPARK_REDIS_JAR},${BIGDL_JAR} --class com.intel.analytics.zoo.serving.SparkStreamingClusterServing ${ZOO_JAR} >> cluster-serving.log
+    ${SPARK_HOME}/bin/spark-submit --master ${spark_master} --driver-memory ${spark_driver_memory} --executor-memory ${spark_executor_memory} --num-executors ${spark_num_executors} --executor-cores ${spark_executor_cores} --total-executor-cores ${spark_total_executor_cores} --jars ${SPARK_REDIS_JAR},${BIGDL_JAR} --class com.intel.analytics.zoo.serving.SparkStreamingClusterServing ${ZOO_JAR}
 fi
 
 

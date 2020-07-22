@@ -21,11 +21,11 @@ package com.intel.analytics.zoo.serving
 import java.io.File
 
 import com.intel.analytics.zoo.serving.engine.{FlinkInference, FlinkRedisSink, FlinkRedisSource}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, FileUtils, SerParams}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ClusterServingManager, FileUtils, SerParams}
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.log4j.{Level, Logger}
-import scala.util.control.Breaks._
 
+import scala.util.control.Breaks._
 import scala.collection.JavaConverters._
 
 
@@ -42,13 +42,9 @@ object ClusterServing {
     serving.addSource(new FlinkRedisSource(params)).setParallelism(1)
       .map(new FlinkInference(params))
       .addSink(new FlinkRedisSink(params))
-    serving.setParallelism(1)
-    serving.execute("Cluster Serving - Flink")
-    // blocking until source terminates
-    println(s"Driver: check stop is ${FileUtils.checkStop().toString}")
-    println(s"Driver: check modify is " +
-      s"${FileUtils.checkModified(params.modelDir, params.lastModified)}")
-    logger.info("Cluster Serving Stopped.")
+    val jobClient = serving.executeAsync()
+    ClusterServingManager.writeObjectToFile(jobClient)
+//    serving.execute("Cluster Serving - Flink")
   }
   def main(args: Array[String]): Unit = {
     run()

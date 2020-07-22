@@ -198,7 +198,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     }
     else blasFlag = false
 
-//    new File("running").createNewFile()
+    new File("running").createNewFile()
 
   }
 

@@ -71,14 +71,13 @@ object SparkStreamingClusterServing {
      * affect the result of correctness, some new data might be cut
      */
 
-    var model: InferenceModel = null
-    var bcModel: Broadcast[InferenceModel] = null
+//    var model: InferenceModel = null
+//    var bcModel: Broadcast[InferenceModel] = null
 
-    model = helper.loadInferenceModel()
-    bcModel = helper.sc.broadcast(model)
+//    model = helper.loadInferenceModel()
+//    bcModel = helper.sc.broadcast(model)
 
-    model.setInferenceSummary(
-      InferenceSummary("./TensorboardEventLogs", helper.dateTime + "-ClusterServing"))
+
 
     val spark = helper.getSparkSession()
 
@@ -100,13 +99,16 @@ object SparkStreamingClusterServing {
 
 
 
-    val serParams = new SerParams(helper, false)
+    val localSerParams = new SerParams(helper)
+    localSerParams.model.setInferenceSummary(
+      InferenceSummary("./TensorboardEventLogs", helper.dateTime + "-ClusterServing"))
+    val bcSer = helper.sc.broadcast(localSerParams)
 
-    val jedis = new Jedis(serParams.redisHost, serParams.redisPort)
+    val jedis = new Jedis(localSerParams.redisHost, localSerParams.redisPort)
     val ssc = new StreamingContext(spark.sparkContext, new Duration(50))
 
 
-    val receiver = new ServingReceiver(serParams.redisHost, serParams.redisPort)
+    val receiver = new ServingReceiver(localSerParams.redisHost, localSerParams.redisPort)
     val images = ssc.receiverStream(receiver)
 
     images.foreachRDD{ m =>
@@ -130,6 +132,7 @@ object SparkStreamingClusterServing {
          */
 
         val preProcessed = x.mapPartitions(it => {
+          val serParams = bcSer.value
           val pre = new PreProcessing(serParams)
           it.grouped(serParams.coreNum).flatMap(itemBatch => {
             acc.add(itemBatch.size)
@@ -153,7 +156,9 @@ object SparkStreamingClusterServing {
            * batching is required if the machine has over about 30 cores.           *
            */
           preProcessed.mapPartitions(it => {
-            serParams.model = bcModel.value
+            val t1 = System.nanoTime()
+            val serParams = bcSer.value
+            println(s"Take Broadcasted model time ${(System.nanoTime() - t1) / 1e9} s")
             it.grouped(serParams.coreNum).flatMap(itemBatch => {
               InferenceSupportive.multiThreadInference(itemBatch.toIterator, serParams)
             })
@@ -168,13 +173,16 @@ object SparkStreamingClusterServing {
            * and minimizing the memory usage.
            */
           preProcessed.mapPartitions(it => {
-            serParams.model = bcModel.value
+            val t1 = System.nanoTime()
+            val serParams = bcSer.value
+            println(s"Take Broadcasted model time ${(System.nanoTime() - t1) / 1e9} s")
             it.grouped(serParams.coreNum).flatMap(itemBatch => {
               InferenceSupportive.multiThreadInference(itemBatch.toIterator, serParams)
             })
           })
         }
         postProcessed.mapPartitions(it => {
+          val serParams = bcSer.value
           val jedis = new Jedis(serParams.redisHost, serParams.redisPort)
           val ppl = jedis.pipelined()
           it.foreach(v => RedisIO.writeHashMap(ppl, v._1, v._2))
@@ -200,7 +208,7 @@ object SparkStreamingClusterServing {
         val lastTimeStamp = timeStamp
         timeStamp += microBatchLatency.toInt + 1
 
-        AsyncUtils.writeServingSummay(model,
+        AsyncUtils.writeServingSummay(localSerParams.model,
           lastTimeStamp, timeStamp, totalCnt, microBatchThroughPut)
 
         .onComplete{
