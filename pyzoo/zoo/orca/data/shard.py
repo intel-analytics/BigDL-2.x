@@ -137,7 +137,7 @@ class SparkXShards(XShards):
         if transient:
             self.eager = False
         else:
-            self.eager = OrcaContext.orca_eager_mode
+            self.eager = OrcaContext._eager_mode
             self.rdd.cache()
         if self.eager:
             self.compute()

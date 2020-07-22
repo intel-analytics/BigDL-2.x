@@ -17,37 +17,37 @@
 
 class OrcaContextMeta(type):
 
-    _orca_eager_mode = True
-    _orca_pandas_read_backend = "spark"
+    _pandas_read_backend = "spark"
+    __eager_mode = True
 
     @property
-    def orca_eager_mode(cls):
+    def _eager_mode(cls):
         """
         Whether to compute eagerly for SparkXShards.
         Default to be True.
         """
-        return cls._orca_eager_mode
+        return cls.__eager_mode
 
-    @orca_eager_mode.setter
-    def orca_eager_mode(cls, value):
-        assert isinstance(value, bool), "orca_eager_mode should either be True or False"
-        cls._orca_eager_mode = value
+    @_eager_mode.setter
+    def _eager_mode(cls, value):
+        assert isinstance(value, bool), "_eager_mode should either be True or False"
+        cls.__eager_mode = value
 
     @property
-    def orca_pandas_read_backend(cls):
+    def pandas_read_backend(cls):
         """
         The backend for reading csv/json files. Either "spark" or "pandas".
         spark backend would call spark.read and pandas backend would call pandas.read.
         Default to be "spark".
         """
-        return cls._orca_pandas_read_backend
+        return cls._pandas_read_backend
 
-    @orca_pandas_read_backend.setter
-    def orca_pandas_read_backend(cls, value):
+    @pandas_read_backend.setter
+    def pandas_read_backend(cls, value):
         value = value.lower()
         assert value == "spark" or value == "pandas", \
-            "orca_pandas_read_backend must be either spark or pandas"
-        cls._orca_pandas_read_backend = value
+            "pandas_read_backend must be either spark or pandas"
+        cls._pandas_read_backend = value
 
 
 class OrcaContext(metaclass=OrcaContextMeta):

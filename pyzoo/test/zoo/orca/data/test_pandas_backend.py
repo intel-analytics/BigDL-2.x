@@ -30,10 +30,10 @@ from zoo.common.nncontext import *
 class TestSparkXShards(TestCase):
     def setup_method(self, method):
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
-        OrcaContext.orca_pandas_read_backend = "pandas"
+        OrcaContext.pandas_read_backend = "pandas"
 
     def tearDown(self):
-        OrcaContext.orca_pandas_read_backend = "spark"
+        OrcaContext.pandas_read_backend = "spark"
 
     def test_read_local_csv(self):
         file_path = os.path.join(self.resource_path, "orca/data/csv")
