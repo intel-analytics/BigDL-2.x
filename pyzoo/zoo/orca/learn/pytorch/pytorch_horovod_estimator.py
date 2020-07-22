@@ -123,14 +123,10 @@ from ray.exceptions import RayActorError
 
 def check_for_failure(remote_values):
     """Checks remote values for any that returned and failed.
-
-    Args:
-        remote_values (list): List of object IDs representing functions
+    :param remote_values: List of object IDs representing functions
             that may fail in the middle of execution. For example, running
             a SGD training loop in multiple parallel actor calls.
-
-    Returns:
-        Bool for success in executing given remote tasks.
+    :return Bool for success in executing given remote tasks.
     """
     unfinished = remote_values
     try:
@@ -223,9 +219,37 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
               profile=False,
               reduce_results=True,
               info=None):
+        """Runs a training epoch.
+
+        Calls `operator.train_epoch()` on N parallel workers simultaneously
+        underneath the hood.
+        :param num_steps: (int) Number of batches to compute update steps on.
+                This corresponds also to the number of times
+                ``TrainingOperator.train_batch`` is called.
+        :param profile: (bool) Returns time stats for the training procedure.
+        :param reduce_results: (bool) Whether to average all metrics across
+                all workers into one dict. If a metric is a non-numerical
+                value (or nested dictionaries), one value will be randomly
+                selected among the workers. If False, returns a list of dicts.
+        :param info: (dict) Optional dictionary passed to the training
+                operator for ``train_epoch`` and ``train_batch``.
+
+        :return
+            (dict | list) A dictionary of metrics for training.
+                You can provide custom metrics by passing in a custom
+                ``training_operator_cls``. If ``reduce_results=False``,
+                this will return a list of metric dictionaries whose
+                length will be equal to ``num_workers``.
+        """
+        if not callable(data_creator):
+            raise ValueError(
+                "Must provide a callable data_creator, "
+                "but got a data_creator of type: {}".format(type(data_creator)))
 
         success, worker_stats = self._train_epoch(data_creator,
-                                                  num_steps=num_steps, profile=profile, info=info)
+                                                  num_steps=num_steps,
+                                                  profile=profile,
+                                                  info=info)
 
         if reduce_results:
             return self._process_stats(worker_stats)
@@ -264,21 +288,26 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
     def validate(self, data_creator, num_steps=None, profile=False, info=None):
         """Evaluates the model on the validation data set.
 
-        Args:
-            num_steps (int): Number of batches to compute update steps on.
-                This corresponds also to the number of times
+        :param data_creator: 
+        :param num_steps: (int) Number of batches to compute update steps on.
+               This corresponds also to the number of times
                 ``TrainingOperator.validate_batch`` is called.
-            profile (bool): Returns time stats for the evaluation procedure.
-            info (dict): Optional dictionary passed to the training
+        :param profile: (bool) Returns time stats for the evaluation procedure.
+        :param info: (dict) Optional dictionary passed to the training
                 operator for `validate` and `validate_batch`.
-
-        Returns:
-            A dictionary of metrics for validation.
+        :return: A dictionary of metrics for validation.
                 You can provide custom metrics by passing in a custom
                 ``training_operator_cls``.
         """
+        if not callable(data_creator):
+            raise ValueError(
+                "Must provide a callable data_creator, "
+                "but got a data_creator of type: {}".format(type(data_creator)))
+
         params = dict(data_creator=data_creator,
-                      num_steps=num_steps, profile=profile, info=info)
+                      num_steps=num_steps,
+                      profile=profile,
+                      info=info)
 
         remote_worker_stats = [
             w.validate.remote(**params) for w in self.remote_workers

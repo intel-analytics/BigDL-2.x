@@ -148,7 +148,7 @@ class TorchRunner:
         return utils.find_free_port()
 
     def with_sampler(self, loader):
-        return loader
+        raise NotImplementedError("Please implement with_sampler in the subclass of TorchRunner")
 
     def train_epoch(self,
                     data_creator,
