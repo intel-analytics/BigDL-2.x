@@ -117,6 +117,33 @@ def init_spark_on_yarn(hadoop_conf,
     return sc
 
 
+class ZooContextMeta(type):
+
+    _log_output = False
+
+    @property
+    def log_output(cls):
+        """
+        Whether to redirect Spark driver JVM's stdout and stderr to the current
+        python process. This is useful when running Analytics Zoo in jupyter notebook.
+        Default to be False. Needs to be set before initializing SparkContext.
+        """
+        return cls._log_output
+
+    @log_output.setter
+    def log_output(cls, value):
+        if SparkContext._active_spark_context is not None:
+            raise AttributeError("log_output cannot be set after SparkContext is created."
+                                 " Please set it before init_nncontext, init_spark_on_local"
+                                 "or init_spark_on_yarn")
+        assert isinstance(value, bool), "log_output should either be True or False"
+        cls._log_output = value
+
+
+class ZooContext(metaclass=ZooContextMeta):
+    pass
+
+
 # The following function copied from
 # https://github.com/Valassis-Digital-Media/spylon-kernel/blob/master/
 # spylon_kernel/scala_interpreter.py
@@ -155,8 +182,7 @@ def init_nncontext(conf=None, redirect_spark_log=True):
     # The following code copied and modified from
     # https://github.com/Valassis-Digital-Media/spylon-kernel/blob/master/
     # spylon_kernel/scala_interpreter.py
-    from zoo.orca import OrcaContext
-    if OrcaContext.log_output:
+    if ZooContext.log_output:
         import subprocess
         import pyspark.java_gateway
         spark_jvm_proc = None
@@ -184,7 +210,7 @@ def init_nncontext(conf=None, redirect_spark_log=True):
     else:
         sc = getOrCreateSparkContext(conf=conf)
 
-    if OrcaContext.log_output:
+    if ZooContext.log_output:
         if spark_jvm_proc.stdout is not None:
             stdout_reader = threading.Thread(target=_read_stream,
                                              daemon=True,

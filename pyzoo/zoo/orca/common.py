@@ -14,12 +14,11 @@
 # limitations under the License.
 #
 
-from pyspark import SparkContext
+from zoo import ZooContext
 
 
 class OrcaContextMeta(type):
 
-    _log_output = False
     _pandas_read_backend = "spark"
     __eager_mode = True
 
@@ -30,16 +29,11 @@ class OrcaContextMeta(type):
         python process. This is useful when running Analytics Zoo in jupyter notebook.
         Default to be False. Needs to be set before initializing SparkContext.
         """
-        return cls._log_output
+        return ZooContext.log_output
 
     @log_output.setter
     def log_output(cls, value):
-        if SparkContext._active_spark_context is not None:
-            raise AttributeError("log_output cannot be set after SparkContext is created."
-                                 " Please set it before init_nncontext, init_spark_on_local"
-                                 "or init_spark_on_yarn")
-        assert isinstance(value, bool), "log_output should either be True or False"
-        cls._log_output = value
+        ZooContext.log_output = value
 
     @property
     def pandas_read_backend(cls):
