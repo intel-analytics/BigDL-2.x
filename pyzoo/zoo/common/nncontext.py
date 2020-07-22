@@ -117,30 +117,17 @@ def init_spark_on_yarn(hadoop_conf,
     return sc
 
 
-class ZooContextMeta(type):
-
-    _log_output = False
+class ZooContext:
 
     @property
-    def log_output(cls):
-        """
-        Whether to redirect Spark driver JVM's stdout and stderr to the current
-        python process. This is useful when running Analytics Zoo in jupyter notebook.
-        Default to False. Needs to be set before initializing SparkContext.
-        """
-        return cls._log_output
+    def log_output(self):
+        from zoo.orca import OrcaContext
+        return OrcaContext.log_output
 
-    @log_output.setter
-    def log_output(cls, value):
-        if SparkContext._active_spark_context is not None:
-            raise AttributeError("log_output cannot be set after SparkContext is created."
-                                 " Please set it before init_nncontext, init_spark_on_local"
-                                 "or init_spark_on_yarn")
-        cls._log_output = value
-
-
-class ZooContext(metaclass=ZooContextMeta):
-    pass
+    @staticmethod
+    def log_output(value):
+        from zoo.orca import OrcaContext
+        OrcaContext.log_output = value
 
 
 # The following function copied from

@@ -14,24 +14,32 @@
 # limitations under the License.
 #
 
+from pyspark import SparkContext
+
 
 class OrcaContextMeta(type):
 
+    _log_output = False
     _pandas_read_backend = "spark"
     __eager_mode = True
 
     @property
-    def _eager_mode(cls):
+    def log_output(cls):
         """
-        Whether to compute eagerly for SparkXShards.
-        Default to be True.
+        Whether to redirect Spark driver JVM's stdout and stderr to the current
+        python process. This is useful when running Analytics Zoo in jupyter notebook.
+        Default to be False. Needs to be set before initializing SparkContext.
         """
-        return cls.__eager_mode
+        return cls._log_output
 
-    @_eager_mode.setter
-    def _eager_mode(cls, value):
-        assert isinstance(value, bool), "_eager_mode should either be True or False"
-        cls.__eager_mode = value
+    @log_output.setter
+    def log_output(cls, value):
+        if SparkContext._active_spark_context is not None:
+            raise AttributeError("log_output cannot be set after SparkContext is created."
+                                 " Please set it before init_nncontext, init_spark_on_local"
+                                 "or init_spark_on_yarn")
+        assert isinstance(value, bool), "log_output should either be True or False"
+        cls._log_output = value
 
     @property
     def pandas_read_backend(cls):
@@ -48,6 +56,19 @@ class OrcaContextMeta(type):
         assert value == "spark" or value == "pandas", \
             "pandas_read_backend must be either spark or pandas"
         cls._pandas_read_backend = value
+
+    @property
+    def _eager_mode(cls):
+        """
+        Whether to compute eagerly for SparkXShards.
+        Default to be True.
+        """
+        return cls.__eager_mode
+
+    @_eager_mode.setter
+    def _eager_mode(cls, value):
+        assert isinstance(value, bool), "_eager_mode should either be True or False"
+        cls.__eager_mode = value
 
 
 class OrcaContext(metaclass=OrcaContextMeta):
