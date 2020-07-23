@@ -69,7 +69,9 @@ object ClusterServingManager {
       println("Cluster Serving Flink job id written to file.")
     }
     catch {
-      case e: Exception => e.printStackTrace()
+      case e: Exception =>
+        e.printStackTrace()
+        println("Failed to write job id written to file. You may not manager job by id now.")
     }
   }
 }
