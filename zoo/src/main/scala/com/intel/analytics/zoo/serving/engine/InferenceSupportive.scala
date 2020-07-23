@@ -17,12 +17,15 @@
 package com.intel.analytics.zoo.serving.engine
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.tensor
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
 import com.intel.analytics.zoo.serving.utils.SerParams
+import org.apache.log4j.Logger
 
 object InferenceSupportive {
+  val logger = Logger.getLogger(getClass)
   def singleThreadInference(preProcessed: Iterator[(String, Activity)],
                            params: SerParams): Iterator[(String, String)] = {
     val postProcessed = preProcessed.grouped(params.coreNum).flatMap(pathByteBatch => {
@@ -41,39 +44,49 @@ object InferenceSupportive {
     val postProcessed = preProcessed.grouped(params.coreNum).flatMap(pathByteBatch => {
       val thisBatchSize = pathByteBatch.size
 
+      val t1 = System.nanoTime()
       val t = batchInput(pathByteBatch, params)
+      val t2 = System.nanoTime()
+      println(s"Batch input (copy, resize) time ${(t2 - t1) / 1e9} s")
       /**
        * addSingletonDimension method will modify the
        * original Tensor, thus if reuse of Tensor is needed,
        * have to squeeze it back.
        */
-//      println(s"preparing to predict")
-      val result = if (params.modelType == "openvino") {
-        val res = params.model.doPredict(t).toTensor[Float].squeeze()
-        if (t.isTensor) {
-          t.toTensor[Float].squeeze(1)
-        }
-        else if (t.isTable) {
-          val dataTable = t.toTable
+//      dimCheck(t, "add", params)
+      val result = params.model.doPredict(t)
+      dimCheck(result, "remove", params)
+      val t3 = System.nanoTime()
+      println(s"Inference and Dim check time ${(t3 - t2) / 1e9} s")
+      val kvResult = if (result.isTensor) {
+        (0 until thisBatchSize).toParArray.map(i => {
+          val value = PostProcessing(result.toTensor[Float].select(1, i + 1), params.filter)
+          (pathByteBatch(i)._1, value)
+        })
+      } else if (result.isTable) {
+        val dataTable = result.toTable
+        (0 until thisBatchSize).toParArray.map(i => {
+          var value = ""
           dataTable.keySet.foreach(key => {
-            dataTable(key).asInstanceOf[Tensor[Float]].squeeze(1)
+            value += PostProcessing(dataTable(key).asInstanceOf[Tensor[Float]]
+              .select(1, i + 1), params.filter)
           })
-        }
-        res.squeeze(1)
+          (pathByteBatch(i)._1, value)
+        })
       } else {
-        params.model.doPredict(t).toTensor[Float]
+        throw new Exception("Wrong output format, neither Tensor nor Table.")
       }
-//      println(s"predict end")
-      (0 until thisBatchSize).toParArray.map(i => {
-        val value = PostProcessing(result.select(1, i + 1), params.filter)
-        (pathByteBatch(i)._1, value)
-      })
+      val t4 = System.nanoTime()
+      println(s"Post-processing time ${(t4 - t3) / 1e9} s")
+      println(s"Inference logic total time ${(t4 - t1) / 1e9} s")
+      kvResult
     })
     postProcessed
   }
   def batchInput(seq: Seq[(String, Activity)],
     params: SerParams): Activity = {
     val thisBatchSize = seq.size
+    println(s"This batch size is ${thisBatchSize.toString}")
 
     val inputSample = seq.head._2.toTable
     val kvTuples = inputSample.keySet.map(key => {
@@ -81,16 +94,15 @@ object InferenceSupportive {
         inputSample(key).asInstanceOf[Tensor[Float]].size()))
     }).toList
     val t = T(kvTuples.head, kvTuples.tail: _*)
+    // Batch tensor and copy
     (0 until thisBatchSize).toParArray.foreach(i => {
       val dataTable = seq(i)._2.toTable
       t.keySet.foreach(key => {
         t(key).asInstanceOf[Tensor[Float]].select(1, i + 1)
           .copy(dataTable(key).asInstanceOf[Tensor[Float]])
-        if (params.modelType == "openvino") {
-          t(key).asInstanceOf[Tensor[Float]].addSingletonDimension()
-        }
       })
     })
+    // Resize and specific control
     t.keySet.foreach(key => {
       val singleTensorSize = inputSample(key).asInstanceOf[Tensor[Float]].size()
       var newSize = Array(thisBatchSize)
@@ -98,6 +110,9 @@ object InferenceSupportive {
         newSize = newSize :+ elem
       }
       t(key).asInstanceOf[Tensor[Float]].resize(newSize)
+      if (params.modelType == "openvino") {
+        t(key).asInstanceOf[Tensor[Float]].addSingletonDimension()
+      }
     })
     if (params.dataShape.length == 1) {
       t.keySet.foreach(key => {
@@ -105,5 +120,27 @@ object InferenceSupportive {
       })
     }
     t
+  }
+  def dimCheck(input: Activity, op: String, params: SerParams): Activity = {
+    if (params.modelType == "openvino") {
+      if (input.isTensor) {
+        op match {
+          case "add" => input.asInstanceOf[Tensor[Float]].addSingletonDimension()
+          case _ => input.asInstanceOf[Tensor[Float]].squeeze(1)
+        }
+      }
+      else if (input.isTable) {
+        val dataTable = input.toTable
+        op match {
+          case "add" => dataTable.keySet.foreach(key => {
+            dataTable(key).asInstanceOf[Tensor[Float]].addSingletonDimension()
+          })
+          case _ => dataTable.keySet.foreach(key => {
+            dataTable(key).asInstanceOf[Tensor[Float]].squeeze(1)
+          })
+        }
+      }
+    }
+    input
   }
 }

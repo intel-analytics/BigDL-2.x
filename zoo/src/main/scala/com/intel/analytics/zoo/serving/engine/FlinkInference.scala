@@ -57,7 +57,8 @@ class FlinkInference(params: SerParams)
       InferenceSupportive.multiThreadInference(preProcessed, params).toList
     }
     val t2 = System.nanoTime()
-    logger.info(s"${postProcessed.size} records backend time ${(t2 - t1) / 1e9} s")
+    logger.info(s"${postProcessed.size} records backend time ${(t2 - t1) / 1e9} s. " +
+      s"Throughput ${postProcessed.size / ((t2 - t1) / 1e9)}")
     postProcessed
   }
 }

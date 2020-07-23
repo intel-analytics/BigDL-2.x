@@ -22,6 +22,7 @@ import numpy as np
 import mxnet as mx
 from mxnet import gluon
 from mxnet.gluon import nn
+from zoo.orca import OrcaContext
 import zoo.orca.data.pandas
 from zoo.orca.learn.mxnet import Estimator, create_config
 
@@ -81,48 +82,55 @@ def get_gluon_model(config):
 
 
 class TestMXNetSparkXShards(TestCase):
+    def setup_method(self, method):
+        self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+        OrcaContext.pandas_read_backend = "pandas"
+
+    def tearDown(self):
+        OrcaContext.pandas_read_backend = "spark"
+
     def test_xshards_symbol_with_val(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../../../resources")
         train_file_path = os.path.join(resource_path, "orca/learn/single_input_json/train")
         train_data_shard = zoo.orca.data.pandas.read_json(
             train_file_path, orient='records', lines=False).transform_shard(prepare_data_symbol)
         test_file_path = os.path.join(resource_path, "orca/learn/single_input_json/test")
         test_data_shard = zoo.orca.data.pandas.read_json(
             test_file_path, orient='records', lines=False).transform_shard(prepare_data_symbol)
-        config = create_config(batch_size=32, log_interval=1, seed=42)
+        config = create_config(log_interval=1, seed=42)
         estimator = Estimator(config, get_symbol_model, validation_metrics_creator=get_metrics,
                               eval_metrics_creator=get_metrics, num_workers=2)
-        estimator.fit(train_data_shard, nb_epoch=2)
+        estimator.fit(train_data_shard, epochs=2)
         train_data_shard2 = zoo.orca.data.pandas.read_json(
             train_file_path, orient='records', lines=False).transform_shard(prepare_data_symbol)
-        estimator.fit(train_data_shard2, test_data_shard, nb_epoch=1)
+        estimator.fit(train_data_shard2, validation_data=test_data_shard, epochs=1, batch_size=32)
         estimator.shutdown()
 
     def test_xshards_symbol_without_val(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../../../resources")
         train_file_path = os.path.join(resource_path, "orca/learn/single_input_json/train")
         train_data_shard = zoo.orca.data.pandas.read_json(
             train_file_path, orient='records', lines=False).transform_shard(prepare_data_symbol)
-        config = create_config(batch_size=32, log_interval=1, seed=42)
+        config = create_config(log_interval=1, seed=42)
         estimator = Estimator(config, get_symbol_model,
                               eval_metrics_creator=get_metrics, num_workers=2)
-        estimator.fit(train_data_shard, nb_epoch=2)
+        estimator.fit(train_data_shard, epochs=2, batch_size=16)
         estimator.shutdown()
 
     def test_xshards_gluon(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../../../resources")
         train_file_path = os.path.join(resource_path, "orca/learn/single_input_json/train")
         train_data_shard = zoo.orca.data.pandas.read_json(
             train_file_path, orient='records', lines=False).transform_shard(prepare_data_gluon)
         test_file_path = os.path.join(resource_path, "orca/learn/single_input_json/train")
         test_data_shard = zoo.orca.data.pandas.read_json(
             test_file_path, orient='records', lines=False).transform_shard(prepare_data_gluon)
-        config = create_config(batch_size=32, log_interval=1, seed=42)
+        config = create_config(log_interval=1, seed=42)
         estimator = Estimator(config, get_gluon_model, get_loss,
                               validation_metrics_creator=get_gluon_metrics,
                               eval_metrics_creator=get_gluon_metrics,
                               num_workers=2)
-        estimator.fit(train_data_shard, test_data_shard, nb_epoch=2)
+        estimator.fit(train_data_shard, validation_data=test_data_shard, epochs=2, batch_size=8)
         estimator.shutdown()
 
 

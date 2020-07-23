@@ -66,6 +66,7 @@
                         <configuration>
                             <excludes>
                                 <exclude>**/com/intel/analytics/zoo/serving/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/pipeline/nnframes/XgboostTrainSpec.scala</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
@@ -113,7 +114,7 @@
                 <dependency>
                     <groupId>io.netty</groupId>
                     <artifactId>netty-all</artifactId>
-                    <version>4.1.27.Final</version>
+                    <version>4.1.48.Final</version>
                 </dependency>
                 <dependency>
                     <groupId>org.slf4j</groupId>
@@ -438,11 +439,27 @@
             <groupId>org.apache.arrow</groupId>
             <artifactId>arrow-vector</artifactId>
             <version>0.17.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-common</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.arrow</groupId>
             <artifactId>arrow-memory</artifactId>
             <version>0.17.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-buffer</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-common</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.github.fppt</groupId>

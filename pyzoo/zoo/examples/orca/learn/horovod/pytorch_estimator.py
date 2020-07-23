@@ -20,7 +20,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from zoo import init_spark_on_local
+from zoo import init_spark_on_yarn, init_spark_on_local
 from zoo.ray import RayContext
 from zoo.orca.learn.pytorch.pytorch_horovod_estimator import PyTorchHorovodEstimator
 
@@ -60,24 +60,26 @@ def scheduler_creator(optimizer, config):
     return torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.9)
 
 
-def data_creator(config):
-    """Returns training dataloader, validation dataloader."""
+def train_data_creator(config):
     train_dataset = LinearDataset(2, 5, size=config.get("data_size", 1000))
-    val_dataset = LinearDataset(2, 5, size=config.get("val_size", 400))
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
         batch_size=config.get("batch_size", 32),
     )
+    return train_loader
+
+
+def validation_data_creator(config):
+    val_dataset = LinearDataset(2, 5, size=config.get("val_size", 400))
     validation_loader = torch.utils.data.DataLoader(
         val_dataset,
         batch_size=config.get("batch_size", 32))
-    return train_loader, validation_loader
+    return validation_loader
 
 
 def train_example():
     trainer1 = PyTorchHorovodEstimator(
         model_creator=model_creator,
-        data_creator=data_creator,
         optimizer_creator=optimizer_creator,
         loss_creator=nn.MSELoss,
         scheduler_creator=scheduler_creator,
@@ -89,15 +91,60 @@ def train_example():
 
     # train 5 epochs
     for i in range(5):
-        stats = trainer1.train()
-        print(stats)
+        stats = trainer1.train(train_data_creator)
+        print("train stats: {}".format(stats))
+        val_stats = trainer1.validate(validation_data_creator)
+        print("validation stats: {}".format(val_stats))
 
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--hadoop_conf", type=str,
+                    help="turn on yarn mode by passing the path to the hadoop"
+                         " configuration folder. Otherwise, turn on local mode.")
+parser.add_argument("--slave_num", type=int, default=2,
+                    help="The number of slave nodes")
+parser.add_argument("--conda_name", type=str,
+                    help="The name of conda environment.")
+parser.add_argument("--executor_cores", type=int, default=8,
+                    help="The number of driver's cpu cores you want to use."
+                         "You can change it depending on your own cluster setting.")
+parser.add_argument("--executor_memory", type=str, default="10g",
+                    help="The size of slave(executor)'s memory you want to use."
+                         "You can change it depending on your own cluster setting.")
+parser.add_argument("--driver_memory", type=str, default="2g",
+                    help="The size of driver's memory you want to use."
+                         "You can change it depending on your own cluster setting.")
+parser.add_argument("--driver_cores", type=int, default=8,
+                    help="The number of driver's cpu cores you want to use."
+                         "You can change it depending on your own cluster setting.")
+parser.add_argument("--extra_executor_memory_for_ray", type=str, default="20g",
+                    help="The extra executor memory to store some data."
+                         "You can change it depending on your own cluster setting.")
+parser.add_argument("--object_store_memory", type=str, default="4g",
+                    help="The memory to store data on local."
+                         "You can change it depending on your own cluster setting.")
 
 if __name__ == "__main__":
 
-    sc = init_spark_on_local()
-    ray_ctx = RayContext(
-        sc=sc,
-        object_store_memory="4g")
-    ray_ctx.init()
+    args = parser.parse_args()
+    if args.hadoop_conf:
+        sc = init_spark_on_yarn(
+            hadoop_conf=args.hadoop_conf,
+            conda_name=args.conda_name,
+            num_executors=args.slave_num,
+            executor_cores=args.executor_cores,
+            executor_memory=args.executor_memory,
+            driver_memory=args.driver_memory,
+            driver_cores=args.driver_cores,
+            extra_executor_memory_for_ray=args.extra_executor_memory_for_ray)
+        ray_ctx = RayContext(
+            sc=sc,
+            object_store_memory=args.object_store_memory)
+        ray_ctx.init()
+    else:
+        sc = init_spark_on_local()
+        ray_ctx = RayContext(
+            sc=sc,
+            object_store_memory=args.object_store_memory)
+        ray_ctx.init()
     train_example()

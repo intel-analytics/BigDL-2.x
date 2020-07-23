@@ -129,7 +129,7 @@ object SparkStructuredStreamingClusterServing {
 
     val acc = new LongAccumulator()
     helper.sc.register(acc)
-    val serParams = new SerParams(helper)
+    val serParams = new SerParams(helper, false)
 
     val query = inputData.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
 
@@ -189,6 +189,9 @@ object SparkStructuredStreamingClusterServing {
            * batching is required if the machine has over about 30 cores.           *
            */
           preProcessed.mapPartitions(it => {
+            val t1 = System.nanoTime()
+            serParams.model = bcModel.value
+            println(s"Take Broadcasted model time ${(System.nanoTime() - t1) / 1e9} s")
             it.grouped(serParams.coreNum).flatMap(itemBatch => {
               InferenceSupportive.multiThreadInference(itemBatch.toIterator, serParams)
             })
@@ -203,6 +206,9 @@ object SparkStructuredStreamingClusterServing {
            * and minimizing the memory usage.
            */
           preProcessed.mapPartitions(it => {
+            val t1 = System.nanoTime()
+            serParams.model = bcModel.value
+            println(s"Take Broadcasted model time ${(System.nanoTime() - t1) / 1e9} s")
             it.grouped(serParams.coreNum).flatMap(itemBatch => {
               InferenceSupportive.multiThreadInference(itemBatch.toIterator, serParams)
             })
