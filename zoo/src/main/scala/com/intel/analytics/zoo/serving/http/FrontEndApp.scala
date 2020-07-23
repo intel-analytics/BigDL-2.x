@@ -16,11 +16,13 @@
 
 package com.intel.analytics.zoo.serving.http
 
+import java.security.{KeyStore, SecureRandom}
 import java.util
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
 import akka.actor.{ActorRef, ActorSystem, Props}
-import akka.http.scaladsl.Http
+import akka.http.scaladsl.{ConnectionContext, Http}
 import akka.http.scaladsl.server.Directives.{complete, path, _}
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
@@ -154,8 +156,32 @@ object FrontEndApp extends Supportive {
                 }
               } catch {
                 case e =>
-                  val error = ServingError("Wrong content format")
-                  complete(400, error.toString)
+                  val message = e.getMessage
+                  val exampleJson =
+                    """{
+  "instances" : [ {
+    "intScalar" : 12345,
+    "floatScalar" : 3.14159,
+    "stringScalar" : "hello, world. hello, zoo.",
+    "intTensor" : [ 7756, 9549, 1094, 9808, 4959, 3831, 3926, 6578, 1870, 1741 ],
+    "floatTensor" : [ 0.6804766, 0.30136853, 0.17394465, 0.44770062, 0.20275897 ],
+    "stringTensor" : [ "come", "on", "united" ],
+    "intTensor2" : [ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ] ],
+    "floatTensor2" : [ [ [ 0.2, 0.3 ], [ 0.5, 0.6 ] ], [ [ 0.2, 0.3 ], [ 0.5, 0.6 ] ] ],
+    "stringTensor2" : [ [ [ [ "come", "on", "united" ], [ "come", "on", "united" ] ] ] ],
+    "sparseTensor" : {
+      "shape" : [ 100, 10000, 10 ],
+      "data" : [ 0.2, 0.5, 3.45, 6.78 ],
+      "indices" : [ [ 1, 1, 1 ], [ 2, 2, 2 ], [ 3, 3, 3 ], [ 4, 4, 4 ] ]
+    },
+    "image": "/9j/4AAQSkZJRgABAQEASABIAAD/7RcEUGhvdG9za..."
+  } ]
+}"""
+                  val error = ServingError(s"Wrong content format.\n" +
+                    s"Details: ${message}\n" +
+                    s"Please refer to examples:\n" +
+                    s"$exampleJson\n")
+                  complete(400, error.error)
               }
             }
           }
@@ -163,7 +189,12 @@ object FrontEndApp extends Supportive {
       }
 
 
+      val serverContext = defineServerContext()
+      Http().bindAndHandle(route, arguments.interface, port = arguments.securePort,
+        connectionContext = serverContext)
+      logger.info(s"https started at https://${arguments.interface}:${arguments.securePort}")
       Http().bindAndHandle(route, arguments.interface, arguments.port)
+      logger.info(s"http started at http://${arguments.interface}:${arguments.port}")
       system.scheduler.schedule(10 milliseconds, 10 milliseconds,
         redisPutter, PredictionInputFlushMessage())(system.dispatcher)
     }
@@ -187,19 +218,22 @@ object FrontEndApp extends Supportive {
     opt[Int]('p', "port")
       .action((x, c) => c.copy(port = x))
       .text("network port of frontend")
+    opt[Int]('s', "securePort")
+      .action((x, c) => c.copy(port = x))
+      .text("network port of frontend")
     opt[String]('h', "redisHost")
       .action((x, c) => c.copy(redisHost = x))
       .text("host of redis")
     opt[Int]('r', "redisPort")
       .action((x, c) => c.copy(redisPort = x))
       .text("port of redis")
-    opt[String]('h', "redisInputQueue")
+    opt[String]('i', "redisInputQueue")
       .action((x, c) => c.copy(redisInputQueue = x))
       .text("input queue of redis")
-    opt[String]('h', "redisOutputQueue")
+    opt[String]('o', "redisOutputQueue")
       .action((x, c) => c.copy(redisOutputQueue = x))
       .text("output queue  of redis")
-    opt[Int]('s', "parallelism")
+    opt[Int]('l', "parallelism")
       .action((x, c) => c.copy(parallelism = x))
       .text("parallelism of frontend")
     opt[Int]('t', "timeWindow")
@@ -218,11 +252,33 @@ object FrontEndApp extends Supportive {
       .action((x, c) => c.copy(tokenAcquireTimeout = x))
       .text("token acquire timeout")
   }
+
+  def defineServerContext(): ConnectionContext = {
+    val password = "1234qwer".toCharArray
+
+    val keyStore = KeyStore.getInstance("PKCS12")
+    val keystoreInputStream = getClass.getClassLoader.getResourceAsStream("keys/keystore.pkcs12")
+    require(keystoreInputStream != null, "Keystore required!")
+    keyStore.load(keystoreInputStream, password)
+
+    val keyManagerFactory = KeyManagerFactory.getInstance("SunX509")
+    keyManagerFactory.init(keyStore, password)
+
+    val trustManagerFactory = TrustManagerFactory.getInstance("SunX509")
+    trustManagerFactory.init(keyStore)
+
+    val sslContext = SSLContext.getInstance("TLS")
+    sslContext.init(keyManagerFactory.getKeyManagers,
+      trustManagerFactory.getTrustManagers, new SecureRandom)
+
+    ConnectionContext.https(sslContext)
+  }
 }
 
 case class FrontEndAppArguments(
     interface: String = "0.0.0.0",
     port: Int = 10020,
+    securePort: Int = 10023,
     redisHost: String = "localhost",
     redisPort: Int = 6379,
     redisInputQueue: String = "serving_stream",
