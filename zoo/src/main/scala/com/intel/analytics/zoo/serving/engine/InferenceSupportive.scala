@@ -53,7 +53,7 @@ object InferenceSupportive {
        * original Tensor, thus if reuse of Tensor is needed,
        * have to squeeze it back.
        */
-      dimCheck(t, "add", params)
+//      dimCheck(t, "add", params)
       val result = params.model.doPredict(t)
       dimCheck(result, "remove", params)
       val t3 = System.nanoTime()

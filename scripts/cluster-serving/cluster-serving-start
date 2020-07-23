@@ -80,11 +80,7 @@ else
     ${REDIS_HOME}/src/redis-cli config set maxclients 10000
 fi
 
-# try to start tensorboard
-#if [[ ! -e "TensorboardEventLogs" ]]; then
-#    mkdir TensorboardEventLogs
-#fi
-#tensorboard --logdir ./TensorboardEventLogs --port 6006 --host 0.0.0.0 &
+
 
 # if jar paths are not set, try to use them in current directory
 if [ -z "${ZOO_JAR}" ]; then
@@ -113,6 +109,13 @@ else
     echo "You provided invalid parameter when start serving, supported parameter is spark, your is "$1
     exit 1
   fi
+  # try to start tensorboard
+  if [[ ! -e "TensorboardEventLogs" ]]; then
+      mkdir TensorboardEventLogs
+  fi
+  tensorboard --logdir ./TensorboardEventLogs --port 6006 --host 0.0.0.0 &
+
+
     if [ "${params_performance_mode}" == "ON" ] && [ "${spark_master}" == "local[*]" ]; then
      echo -e "\033[36mPerformance mode is ON, Start standalone cluster... \033[0m"
      if [ -f "cluster-with-numactl.sh" ]; then
