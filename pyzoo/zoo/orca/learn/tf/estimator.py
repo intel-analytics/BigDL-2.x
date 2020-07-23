@@ -86,7 +86,7 @@ class TFOptimizerWrapper(Estimator):
         self.loss = loss
         if optimizer is not None:
             assert isinstance(optimizer, tf.train.Optimizer), \
-                "optimizer is of type {}, ".format(type(self.optimizer)) + \
+                "optimizer is of type {}, ".format(type(optimizer)) + \
                 "it should be an instance of tf.train.Optimizer"
             self.optimizer = ZooOptimizer(optimizer)
             if clip_norm or clip_value:
