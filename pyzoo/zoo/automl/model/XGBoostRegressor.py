@@ -31,7 +31,7 @@ class XGBoostRegressor(BaseModel):
         :param future_seq_len:
         """
         # models
-        self.num_rounds = config.get('n_estimators', 1000)
+        self.n_estimators = config.get('n_estimators', 1000)
         self.max_depth = config.get('max_depth', 5)
         self.tree_method = config.get('tree_method', 'hist')
         self.n_jobs = config.get('n_jobs', -1)
@@ -53,7 +53,7 @@ class XGBoostRegressor(BaseModel):
         self.model_init = False
 
     def set_params(self, **config):
-        self.num_rounds = config.get('n_estimators', self.num_rounds)
+        self.n_estimators = config.get('n_estimators', self.n_estimators)
         self.max_depth = config.get('max_depth', self.max_depth)
         self.tree_method = config.get('tree_method', self.tree_method)
         self.n_jobs = config.get('n_jobs', self.n_jobs)
@@ -78,7 +78,7 @@ class XGBoostRegressor(BaseModel):
         :return:
         """
         self.set_params(**config)
-        self.model = XGBRegressor(n_estimators=self.num_rounds, max_depth=self.max_depth,
+        self.model = XGBRegressor(n_estimators=self.n_estimators, max_depth=self.max_depth,
                                   n_jobs=self.n_jobs, tree_method=self.tree_method,
                                   random_state=self.random_state, learning_rate=self.learning_rate,
                                   min_child_weight=self.min_child_weight, seed=self.seed,
