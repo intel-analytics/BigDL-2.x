@@ -24,12 +24,22 @@ import com.intel.analytics.zoo.serving.engine.{FlinkInference, FlinkRedisSink, F
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ClusterServingManager, FileUtils, SerParams}
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.log4j.{Level, Logger}
+import scopt.OptionParser
 
 import scala.util.control.Breaks._
 import scala.collection.JavaConverters._
 
 
+
 object ClusterServing {
+  case class ServingParams(configPath: String = "config.yaml")
+
+  val parser = new OptionParser[ServingParams]("Text Classification Example") {
+    opt[String]('c', "configPath")
+      .text("Config Path of Cluster Serving")
+      .action((x, params) => params.copy(configPath = x))
+  }
+
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
   var params: SerParams = null
@@ -47,6 +57,7 @@ object ClusterServing {
 //    serving.execute("Cluster Serving - Flink")
   }
   def main(args: Array[String]): Unit = {
-    run()
+    val param = parser.parse(args, ServingParams()).head
+    run(param.configPath)
   }
 }
