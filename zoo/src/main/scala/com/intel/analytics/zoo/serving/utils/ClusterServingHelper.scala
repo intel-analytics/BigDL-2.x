@@ -18,7 +18,6 @@
 package com.intel.analytics.zoo.serving.utils
 
 import java.io.{File, FileInputStream, FileWriter}
-import java.lang
 import java.nio.file.{Files, Path, Paths}
 
 import com.intel.analytics.bigdl.Module
@@ -36,9 +35,6 @@ import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.yaml.snakeyaml.Yaml
 import java.time.LocalDateTime
-
-import com.intel.analytics.zoo.serving.preprocessing.DataType
-import com.intel.analytics.zoo.serving.preprocessing.DataType.DataTypeEnumVal
 
 import scala.reflect.ClassTag
 import scala.util.parsing.json._
@@ -87,7 +83,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
    * create "running" flag, for listening the stop signal
    */
   def initArgs(): Unit = {
-
+    println("Loading config at ", configPath)
     val yamlParser = new Yaml()
     val input = new FileInputStream(new File(configPath))
 
@@ -198,7 +194,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     }
     else blasFlag = false
 
-//    new File("running").createNewFile()
+    new File("running").createNewFile()
 
   }
 
@@ -236,11 +232,15 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
    * @return
    */
   def getYaml(configList: HM, key: String, default: String): String = {
-    val configValue = if (configList.get(key).isInstanceOf[java.lang.Integer] ||
-      configList.get(key).isInstanceOf[java.util.ArrayList[Integer]]) {
-      String.valueOf(configList.get(key))
-    } else {
-      configList.get(key)
+    val configValue = try {
+      if (configList.get(key).isInstanceOf[java.lang.Integer] ||
+        configList.get(key).isInstanceOf[java.util.ArrayList[Integer]]) {
+        String.valueOf(configList.get(key))
+      } else {
+        configList.get(key)
+      }
+    } catch {
+      case _ => null
     }
 
     if (configValue == null) {
