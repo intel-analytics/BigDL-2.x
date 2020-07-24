@@ -80,6 +80,8 @@ class TestNeuralCF(ZooTestCase):
         model.fit(data, nb_epoch=1, batch_size=32, validation_data=data)
         train_loss = model.get_train_summary("Loss")
         val_loss = model.get_validation_summary("Loss")
+        val_acc = model.get_validation_summary("Accuracy")
+        print(np.array(val_acc))
         print(np.array(train_loss))
         print(np.array(val_loss))
 
