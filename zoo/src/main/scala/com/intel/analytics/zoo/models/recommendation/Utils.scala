@@ -135,7 +135,7 @@ object Utils {
    */
   def row2SampleSequential(r: Row, columnInfo: ColumnFeatureInfo, modelType: String): Sample[Float]
   = {
-    val wideTensor: Tensor[Float] = getWideTensor(r, columnInfo)
+    val wideTensor: Tensor[Float] = getWideTensorSequential(r, columnInfo)
     val deepTensor: Tensor[Float] = getDeepTensor(r, columnInfo)
     val l = r.getAs[Int](columnInfo.label)
 
@@ -162,6 +162,32 @@ object Utils {
    * @return a tensor as input for wide part of a WideAndDeep model
    */
   def getWideTensor(r: Row, columnInfo: ColumnFeatureInfo): Tensor[Float] = {
+    val wideColumns = columnInfo.wideBaseCols ++ columnInfo.wideCrossCols
+    val wideDims = columnInfo.wideBaseDims ++ columnInfo.wideCrossDims
+    val wideLength = wideColumns.length
+    var acc = 0
+    val indices: Array[Int] = (0 to wideLength - 1).map(i => {
+      val index = r.getAs[Int](wideColumns(i))
+      if (i == 0) index
+      else {
+        acc = acc + wideDims(i - 1)
+        acc + index
+      }
+    }).toArray
+    val values = indices.map(_ => 1.0f)
+    val shape = Array(wideDims.sum)
+
+    Tensor.sparse(Array(indices), values, shape)
+  }
+
+  /**
+   * convert a row to tensor given column feature information of WideAndDeep model.
+   *
+   * @param r          Row of userId, itemId, features and label
+   * @param columnInfo ColumnFeatureInfo specify information of different features
+   * @return a tensor as input for wide part of a WideAndDeep model
+   */
+  def getWideTensorSequential(r: Row, columnInfo: ColumnFeatureInfo): Tensor[Float] = {
     val wideColumns = columnInfo.wideBaseCols ++ columnInfo.wideCrossCols
     val wideDims = columnInfo.wideBaseDims ++ columnInfo.wideCrossDims
     val wideLength = wideColumns.length
