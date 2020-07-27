@@ -23,9 +23,28 @@ function parse_yaml {
       }
    }'
 }
+while [ "$1" != "" ]; do
+    case $1 in
+        -e | --engine )         shift
+                                backend=$1
+                                ;;
+        -c | --config_path )    shift
+                                config_path=$1
+                                ;;
+        -h | --help )           usage
+                                exit
+                                ;;
+        * )                     usage
+                                exit 1
+    esac
+    shift
+done
 
-parse_yaml config.yaml
-eval $(parse_yaml config.yaml)
+if [ -z "${config_path// }" ]; then
+  config_path=config.yaml
+
+parse_yaml $config_path
+eval $(parse_yaml $config_path)
 
 if [ -z "${spark_master}" ]; then
     echo "master of spark cluster not set, using default value local[*]"
@@ -101,31 +120,11 @@ fi
 #    SPARK_REDIS_JAR=spark-redis-2.4.0-jar-with-dependencies.jar
 #fi
 
-while [ "$1" != "" ]; do
-    case $1 in
-        -e | --engine )         shift
-                                backend=$1
-                                ;;
-        -c | --config_path )    shift
-                                config_path=$1
-                                ;;
-        -h | --help )           usage
-                                exit
-                                ;;
-        * )                     usage
-                                exit 1
-    esac
-    shift
-done
+
 if [ -z "${backend// }" ]; then
     echo "Starting Cluster Serving with Flink backend"
-    if [ -z "${config_path// }" ]; then
-      echo "Using default serving config"
-      ${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p 1 zoo.jar
-    else
-      echo "Using user provided config"
+
       ${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p 1 zoo.jar -c $config_path
-    fi
 else
   if [ $backend != "spark" ]; then
     echo "You provided invalid parameter when start serving, supported parameter is spark, your is "$backend
