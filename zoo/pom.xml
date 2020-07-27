@@ -617,10 +617,10 @@
                             <pattern>org.apache.arrow</pattern>
                             <shadedPattern>com.intel.analytics.zoo.shaded.arrow</shadedPattern>
                         </relocation>
-                        <!--<relocation>-->
-                            <!--<pattern>org.tensorflow</pattern>-->
-                            <!--<shadedPattern>com.intel.analytics.zoo.shaded.tensorflow</shadedPattern>-->
-                        <!--</relocation>-->
+                        <relocation>
+                            <pattern>com.google.protobuf</pattern>
+                            <shadedPattern>com.intel.analytics.shaded.protobuf_v_3_5_1</shadedPattern>
+                        </relocation>
                     </relocations>
                 </configuration>
                 <executions>
