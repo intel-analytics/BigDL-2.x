@@ -18,6 +18,7 @@ from unittest import TestCase
 from zoo.orca.learn.pytorch.estimator import Estimator
 import torch
 import torch.nn as nn
+import numpy as np
 
 
 class LinearDataset(torch.utils.data.Dataset):
@@ -75,11 +76,13 @@ class TestEstimatorForRay(TestCase):
                                                      "hidden_size": 1,  # used in model_creator
                                                      "batch_size": 4,  # used in data_creator
                                                  })
-        stats_list = estimator.train(data=train_data_creator, epochs=5)
+        stats_list = estimator.fit(data=train_data_creator, epochs=5)
+        assert len(stats_list) == 5, "length of stats_list should be equal to epochs"
+        print(stats_list)
         val_stats = estimator.evaluate(validation_data_creator)
-        print("aaa")
+        assert "val_loss" in val_stats
+        print(val_stats)
 
 
 if __name__ == "__main__":
-    import pytest
     pytest.main([__file__])

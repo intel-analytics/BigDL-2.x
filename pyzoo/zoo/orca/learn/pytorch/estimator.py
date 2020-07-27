@@ -39,14 +39,14 @@ class Estimator(object):
                            scheduler_step_freq="batch",
                            backend="ray"):
         assert backend == "ray", "only ray backend is supported for now"
-        return PyTorchHorovodEstimator(model_creator=model_creator,
-                                       optimizer_creator=optimizer_creator,
-                                       loss_creator=loss_creator,
-                                       scheduler_creator=scheduler_creator,
-                                       training_operator_cls=training_operator_cls,
-                                       initialization_hook=initialization_hook,
-                                       config=config,
-                                       scheduler_step_freq=scheduler_step_freq)
+        return PyTorchHorovodEstimatorWrapper(model_creator=model_creator,
+                                              optimizer_creator=optimizer_creator,
+                                              loss_creator=loss_creator,
+                                              scheduler_creator=scheduler_creator,
+                                              training_operator_cls=training_operator_cls,
+                                              initialization_hook=initialization_hook,
+                                              config=config,
+                                              scheduler_step_freq=scheduler_step_freq)
 
 
 class PyTorchHorovodEstimatorWrapper(Estimator):
