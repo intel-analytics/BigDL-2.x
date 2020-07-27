@@ -39,12 +39,13 @@ trait JedisEnabledActor extends Actor with Supportive {
       redissTrustStorePath: String,
       redissTrustStorePassword: String): Jedis =
     timing(s"$actorName retrieve redis connection")() {
-      System.setProperty("javax.net.ssl.trustStore", redissTrustStorePath)
-      System.setProperty("javax.net.ssl.trustStorePassword", redissTrustStorePassword)
-      System.setProperty("javax.net.ssl.keyStoreType", "JKS")
-      System.setProperty("javax.net.ssl.keyStore", redissTrustStorePath)
-      System.setProperty("javax.net.ssl.keyStorePassword", redissTrustStorePassword)
-
+      if (redisSecureEnabled) {
+        System.setProperty("javax.net.ssl.trustStore", redissTrustStorePath)
+        System.setProperty("javax.net.ssl.trustStorePassword", redissTrustStorePassword)
+        System.setProperty("javax.net.ssl.keyStoreType", "JKS")
+        System.setProperty("javax.net.ssl.keyStore", redissTrustStorePath)
+        System.setProperty("javax.net.ssl.keyStorePassword", redissTrustStorePassword)
+      }
       val jedisPoolConfig = new JedisPoolConfig()
       val jedisPool = new JedisPool(new JedisPoolConfig(), redisHost, redisPort, redisSecureEnabled)
       jedisPool.getResource()
