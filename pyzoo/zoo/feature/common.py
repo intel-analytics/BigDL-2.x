@@ -380,7 +380,19 @@ class FeatureSet(DataSet):
             warnings.warn(warning_msg)
 
         bys = CloudPickleSerializer.dumps(CloudPickleSerializer, dataloader)
-        jvalue = callZooFunc(bigdl_type, "createFeatureSetFromPyTorch", bys)
+        jvalue = callZooFunc(bigdl_type, "createFeatureSetFromPyTorch", bys, False)
+        return cls(jvalue=jvalue)
+
+    @classmethod
+    def pytorch_dataloader_creator(cls, creator, bigdl_type="float"):
+        """
+        Create FeatureSet from pytorch dataloader
+        :param creator: a function return pytorch dataloader
+        :param bigdl_type: numeric type
+        :return: A feature set
+        """
+        bys = CloudPickleSerializer.dumps(CloudPickleSerializer, creator)
+        jvalue = callZooFunc(bigdl_type, "createFeatureSetFromPyTorch", bys, True)
         return cls(jvalue=jvalue)
 
     def transform(self, transformer):

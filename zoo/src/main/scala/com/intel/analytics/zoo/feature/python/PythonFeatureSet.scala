@@ -115,7 +115,7 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
   }
 
   def createFeatureSetFromPyTorch(
-        dataloader: Array[Byte]): FeatureSet[MiniBatch[Float]] = {
+        dataloader: Array[Byte], creator: Boolean): FeatureSet[MiniBatch[Float]] = {
     val trainPostfix = "_train"
     val evalPostfix = "_eval"
     val imports = s"""
@@ -148,10 +148,11 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
     }
 
     def getLoader(nodeNumber: Int, partId: Int, localLoaderName: String): String = {
+      val brace = if (creator) "()" else ""
       val load = s"""
                     |by${partId} = bytes(b % 256 for b in pyjarray)
                     |func${partId} = CloudPickleSerializer.loads(CloudPickleSerializer, by${partId})
-                    |${localLoaderName} = func${partId}
+                    |${localLoaderName} = func${partId}${brace}
                     |""".stripMargin
       load +
         s"""
