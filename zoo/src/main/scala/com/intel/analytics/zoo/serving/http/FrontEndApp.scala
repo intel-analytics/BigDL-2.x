@@ -306,7 +306,7 @@ case class FrontEndAppArguments(
     interface: String = "0.0.0.0",
     port: Int = 10020,
     securePort: Int = 10023,
-    redisHost: String = "10.239.166.29",
+    redisHost: String = "localhost",
     redisPort: Int = 6379,
     redisInputQueue: String = "serving_stream",
     redisOutputQueue: String = "result:",
@@ -318,7 +318,7 @@ case class FrontEndAppArguments(
     tokenAcquireTimeout: Int = 100,
     httpsKeyStorePath: String = getClass.getClassLoader.getResource("keys/keystore.pkcs12").getPath,
     httpsKeyStorePassword: String = "1234qwer",
-    redisSecureEnabled: Boolean = false,
+    redisSecureEnabled: Boolean = true,
     redissTrustStorePath: String = getClass.getClassLoader.getResource("keys/keystore.jks").getPath,
     redissTrustStorePassword: String = "1234qwer"
 )
