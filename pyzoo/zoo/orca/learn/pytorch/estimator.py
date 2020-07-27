@@ -55,7 +55,7 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
                  model_creator,
                  optimizer_creator,
                  loss_creator=None,
-                 scheduler_creator=None, 
+                 scheduler_creator=None,
                  training_operator_cls=TrainingOperator,
                  initialization_hook=None,
                  config=None,
