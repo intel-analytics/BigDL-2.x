@@ -185,6 +185,7 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
            |""".stripMargin
       PythonInterpreter.exec(getExtraParamCode)
       val extraParams = PythonInterpreter.getValue[AnyRef](s"${getName()}_extra_parameters")
+      if (extraParams)
       PythonFeatureSet.toArrayTensor(extraParams)
     } else {
       extraParams

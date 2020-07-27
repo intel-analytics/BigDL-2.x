@@ -395,8 +395,10 @@ object PythonFeatureSet{
             }
           // TODO: support ArrayList[String]
         }
+      case null =>
+        Array()
       case _ =>
-        throw new IllegalArgumentException("")
+        throw new IllegalArgumentException(s"supported type ${data.getClass()}")
     }
   }
 
