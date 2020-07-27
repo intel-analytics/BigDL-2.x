@@ -13,9 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Some portions of this file Copyright 2017 The Ray Authors.
-# and licensed under the Apache License, Version 2.0
+
+# Copyright 2017 The Ray Authors.
 #
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 # This file is adapted from
 # https://github.com/ray-project/ray/blob/master/python/ray/util/sgd/torch/training_operator.py
@@ -67,8 +78,6 @@ class TrainingOperator:
                  config,
                  models,
                  optimizers,
-                 train_loader,
-                 validation_loader,
                  world_rank,
                  criterion=None,
                  schedulers=None,
@@ -87,8 +96,6 @@ class TrainingOperator:
             optimizers,
             collections.Iterable), ("Components need to be iterable. Got: {}".format(
                 type(optimizers)))
-        self._train_loader = train_loader
-        self._validation_loader = validation_loader
         self._world_rank = world_rank
         self._criterion = criterion
         self._schedulers = schedulers
@@ -399,17 +406,6 @@ class TrainingOperator:
     def optimizers(self):
         """List of optimizers created by the ``optimizer_creator``."""
         return self._optimizers
-
-    @property
-    def train_loader(self):
-        """Iterable: 1st Dataloader from ``data_creator``.
-        """
-        return self._train_loader
-
-    @property
-    def validation_loader(self):
-        """Iterable: 2nd Dataloader from ``data_creator``."""
-        return self._validation_loader
 
     @property
     def world_rank(self):

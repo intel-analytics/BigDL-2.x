@@ -80,13 +80,13 @@ class FrontendActorsSpec extends FlatSpec with Matchers with BeforeAndAfter with
     val redisPutterName = s"redis-putter"
     val redisPutter = timing(s"$redisPutterName initialized.")() {
       val redisPutterProps = Props(new RedisPutActor(redisHost, redisPort,
-        redisInputQueue, redisOutputQueue, 0, 56))
+        redisInputQueue, redisOutputQueue, 0, 56, false, null, null))
       system.actorOf(redisPutterProps, name = redisPutterName)
     }
     val redisGetterName = s"redis-getter"
     val redisGetter = timing(s"$redisGetterName initialized.")() {
       val redisGetterProps = Props(new RedisGetActor(redisHost, redisPort,
-        redisInputQueue, redisOutputQueue))
+        redisInputQueue, redisOutputQueue, false, null, null))
       system.actorOf(redisGetterProps, name = redisGetterName)
     }
     val querierNum = 1
