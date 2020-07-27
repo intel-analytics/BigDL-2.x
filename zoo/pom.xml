@@ -301,12 +301,12 @@
             <scope>${spark-scope}</scope>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>org.apache.spark</groupId>-->
-<!--            <artifactId>spark-core_${scala.major.version}</artifactId>-->
-<!--            <version>${spark.version}</version>-->
-<!--            <scope>${spark-scope}</scope>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.spark</groupId>-->
+        <!--            <artifactId>spark-core_${scala.major.version}</artifactId>-->
+        <!--            <version>${spark.version}</version>-->
+        <!--            <scope>${spark-scope}</scope>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-actor_2.11</artifactId>
@@ -634,8 +634,8 @@
                             <shadedPattern>com.intel.analytics.zoo.shaded.arrow</shadedPattern>
                         </relocation>
                         <!--<relocation>-->
-                            <!--<pattern>org.tensorflow</pattern>-->
-                            <!--<shadedPattern>com.intel.analytics.zoo.shaded.tensorflow</shadedPattern>-->
+                        <!--<pattern>org.tensorflow</pattern>-->
+                        <!--<shadedPattern>com.intel.analytics.zoo.shaded.tensorflow</shadedPattern>-->
                         <!--</relocation>-->
                     </relocations>
                 </configuration>
@@ -705,10 +705,12 @@
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>http</shadedClassifierName>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>reference.conf</resource>
                                 </transformer>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
                                         <Main-Class>com.intel.analytics.zoo.serving.http.FrontEndApp</Main-Class>
                                     </manifestEntries>
@@ -798,6 +800,21 @@
                         <configuration>
                             <descriptors>
                                 <descriptor>${project.basedir}/src/assembly/dist.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>make-cluster-serving-all</id>
+                        <inherited>false</inherited>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/assembly/cluster-serving-all.xml
+                                </descriptor>
                             </descriptors>
                         </configuration>
                     </execution>
