@@ -16,11 +16,12 @@
 
 import ray
 from ray.util.sgd.torch import TorchTrainer
+from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 
 
 class PyTorchTrainer(object):
     def __init__(self, model_creator, data_creator, optimizer_creator,
-                 loss_creator=None, scheduler_creator=None, training_operator_cls=None,
+                 loss_creator=None, scheduler_creator=None, training_operator_cls=TrainingOperator,
                  initialization_hook=None, config=None, num_workers=1,
                  use_fp16=False, use_tqdm=False, scheduler_step_freq="batch"):
         # Lift TorchTrainer to an Actor so that its local worker would be
