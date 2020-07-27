@@ -118,8 +118,14 @@ while [ "$1" != "" ]; do
     shift
 done
 if [ -z "${backend// }" ]; then
-    echo "Using default setting, starting Cluster Serving with Flink backend"
-    ${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p 1 zoo.jar -c $config_path
+    echo "Starting Cluster Serving with Flink backend"
+    if [ -z "${config_path// }" ]; then
+      echo "Using default serving config"
+      ${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p 1 zoo.jar
+    else
+      echo "Using user provided config"
+      ${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p 1 zoo.jar -c $config_path
+    fi
 else
   if [ $backend != "spark" ]; then
     echo "You provided invalid parameter when start serving, supported parameter is spark, your is "$backend
