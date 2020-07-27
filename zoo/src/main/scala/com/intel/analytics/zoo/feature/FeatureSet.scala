@@ -387,16 +387,17 @@ object PythonFeatureSet{
       case ndArray: NDArray[_] =>
         Array(ndArrayToTensor(ndArray))
       case ndArrays: util.ArrayList[_] =>
-        require(ndArrays.size() > 0)
-        ndArrays.get(0) match {
-          case _: NDArray[_] =>
-            ndArrays.asInstanceOf[util.ArrayList[NDArray[_]]].asScala.toArray.map { input =>
-              ndArrayToTensor(input)
-            }
-          // TODO: support ArrayList[String]
+        if(ndArrays.size() > 0) {
+          ndArrays.get(0) match {
+            case _: NDArray[_] =>
+              ndArrays.asInstanceOf[util.ArrayList[NDArray[_]]].asScala.toArray.map { input =>
+                ndArrayToTensor(input)
+              }
+            // TODO: support ArrayList[String]
+          }
+        } else {
+          Array()
         }
-      case null =>
-        Array()
       case _ =>
         throw new IllegalArgumentException(s"supported type ${data.getClass()}")
     }
