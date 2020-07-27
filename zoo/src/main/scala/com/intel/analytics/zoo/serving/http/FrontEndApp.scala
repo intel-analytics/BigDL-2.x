@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.serving.http
 
+import java.io.File
 import java.security.{KeyStore, SecureRandom}
 import java.util
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
@@ -63,14 +64,23 @@ object FrontEndApp extends Supportive {
         val redisPutterProps = Props(new RedisPutActor(
           arguments.redisHost, arguments.redisPort,
           arguments.redisInputQueue, arguments.redisOutputQueue,
-          arguments.timeWindow, arguments.countWindow))
+          arguments.timeWindow, arguments.countWindow,
+          arguments.redisSecureEnabled,
+          arguments.redissTrustStorePath,
+          arguments.redissTrustStorePassword))
         system.actorOf(redisPutterProps, name = redisPutterName)
       }
 
       val redisGetterName = s"redis-getter"
       val redisGetter = timing(s"$redisGetterName initialized.")() {
-        val redisGetterProps = Props(new RedisGetActor(arguments.redisHost,
-          arguments.redisPort, arguments.redisInputQueue, arguments.redisOutputQueue))
+        val redisGetterProps = Props(new RedisGetActor(
+          arguments.redisHost,
+          arguments.redisPort,
+          arguments.redisInputQueue,
+          arguments.redisOutputQueue,
+          arguments.redisSecureEnabled,
+          arguments.redissTrustStorePath,
+          arguments.redissTrustStorePassword))
         system.actorOf(redisGetterProps, name = redisGetterName)
       }
 
@@ -189,7 +199,8 @@ object FrontEndApp extends Supportive {
       }
 
 
-      val serverContext = defineServerContext()
+      val serverContext = defineServerContext(arguments.httpsKeyStorePassword,
+        arguments.httpsKeyStorePath)
       Http().bindAndHandle(route, arguments.interface, port = arguments.securePort,
         connectionContext = serverContext)
       logger.info(s"https started at https://${arguments.interface}:${arguments.securePort}")
@@ -220,7 +231,7 @@ object FrontEndApp extends Supportive {
       .text("network port of frontend")
     opt[Int]('s', "securePort")
       .action((x, c) => c.copy(port = x))
-      .text("network port of frontend")
+      .text("https port of frontend")
     opt[String]('h', "redisHost")
       .action((x, c) => c.copy(redisHost = x))
       .text("host of redis")
@@ -251,13 +262,29 @@ object FrontEndApp extends Supportive {
     opt[Int]('a', "tokenAcquireTimeout")
       .action((x, c) => c.copy(tokenAcquireTimeout = x))
       .text("token acquire timeout")
+    opt[String]('p', "httpsKeyStorePath")
+      .action((x, c) => c.copy(httpsKeyStorePath = x))
+      .text("https keyStore path")
+    opt[String]('w', "httpsKeyStorePassword")
+      .action((x, c) => c.copy(httpsKeyStorePassword = x))
+      .text("https keyStore password")
+    opt[Boolean]('s', "redisSecureEnabled")
+      .action((x, c) => c.copy(redisSecureEnabled = x))
+      .text("redis secure enabled or not")
+    opt[String]('p', "redissTrustStorePath")
+      .action((x, c) => c.copy(redissTrustStorePath = x))
+      .text("rediss trustStore path")
+    opt[String]('w', "redissTrustStorePassword")
+      .action((x, c) => c.copy(redissTrustStorePassword = x))
+      .text("rediss trustStore password")
   }
 
-  def defineServerContext(): ConnectionContext = {
-    val password = "1234qwer".toCharArray
+  def defineServerContext(httpsKeyStorePassword: String,
+      httpsKeyStorePath: String): ConnectionContext = {
+    val password = httpsKeyStorePassword.toCharArray
 
     val keyStore = KeyStore.getInstance("PKCS12")
-    val keystoreInputStream = getClass.getClassLoader.getResourceAsStream("keys/keystore.pkcs12")
+    val keystoreInputStream = new File(httpsKeyStorePath).toURI().toURL().openStream()
     require(keystoreInputStream != null, "Keystore required!")
     keyStore.load(keystoreInputStream, password)
 
@@ -288,5 +315,10 @@ case class FrontEndAppArguments(
     countWindow: Int = 56,
     tokenBucketEnabled: Boolean = false,
     tokensPerSecond: Int = 100,
-    tokenAcquireTimeout: Int = 100
+    tokenAcquireTimeout: Int = 100,
+    httpsKeyStorePath: String = getClass.getClassLoader.getResource("keys/keystore.pkcs12").getPath,
+    httpsKeyStorePassword: String = "1234qwer",
+    redisSecureEnabled: Boolean = true,
+    redissTrustStorePath: String = getClass.getClassLoader.getResource("keys/keystore.jks").getPath,
+    redissTrustStorePassword: String = "1234qwer"
 )
