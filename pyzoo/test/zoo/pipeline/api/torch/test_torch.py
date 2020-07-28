@@ -138,8 +138,8 @@ class TestPytorch(TestCase):
         loss_fn = torch.nn.BCELoss()
         az_model = TorchModel.from_pytorch(torch_model)
         zoo_loss = TorchLoss.from_pytorch(loss_fn)
-        inputs = torch.Tensor([[1, 2, 3],[1, 3, 4],[3, 2, 2],
-                               [5, 6, 7],[8, 9, 10],[1, 9, 10]])
+        inputs = torch.Tensor([[1, 2],[1, 3],[3, 2],
+                               [5, 6],[8, 9],[1, 9]])
         targets = torch.Tensor([[0],[0],[0],
                                [1],[1],[1]])
         train_loader = DataLoader(TensorDataset(inputs, targets), batch_size=2)
