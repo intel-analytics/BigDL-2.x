@@ -136,20 +136,20 @@ class TestPytorch(TestCase):
         torch_model = SimpleTorchModel()
         loss_fn = torch.nn.BCELoss()
         az_model = TorchModel.from_pytorch(torch_model)
-        zooLoss = TorchLoss.from_pytorch(loss_fn)
+        zoo_loss = TorchLoss.from_pytorch(loss_fn)
         inputs = torch.Tensor([[1, 2, 3],[1, 3, 4],[3, 2, 2],
                                [5, 6, 7],[8, 9, 10],[1, 9, 10]])
         targets = torch.Tensor([[0],[0],[0],
                                [1],[1],[1]])
-        train_featureset = TensorDataset(inputs, targets)
-        val_featureset = TensorDataset(inputs, targets)
+        train_featureset = DataLoader(TensorDataset(inputs, targets), batch_size=2)
+        val_featureset = DataLoader(TensorDataset(inputs, targets), batch_size=2)
 
         zooOptimizer = Adam()
         estimator = Estimator(az_model, optim_methods=zooOptimizer)
-        estimator.train(train_featureset, zooLoss, end_trigger=MaxEpoch(4),
+        estimator.train(train_featureset, zoo_loss, end_trigger=MaxEpoch(4),
                         checkpoint_trigger=EveryEpoch(),
                         validation_set=val_featureset,
-                        validation_method=[Accuracy()], batch_size=2)
+                        validation_method=[Accuracy()])
 
         trained_model = az_model.to_pytorch()
 
