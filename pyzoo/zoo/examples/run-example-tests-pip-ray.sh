@@ -33,6 +33,16 @@ time3=$?
 execute_ray_test multiagent_two_trainers ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py
 time4=$?
 
+# get_mnist_iterator in MXNet requires the data to be placed in the `data` folder of the running directory.
+# The running directory of integration test is ${ANALYTICS_ZOO_ROOT}.
+if [ -f ${ANALYTICS_ZOO_ROOT}/data/mnist.zip ]
+then
+    echo "mnist.zip already exists"
+else
+    wget -nv $FTP_URI/analytics-zoo-data/mnist.zip -P ${ANALYTICS_ZOO_ROOT}/data
+fi
+unzip -q ${ANALYTICS_ZOO_ROOT}/data/mnist.zip -d ${ANALYTICS_ZOO_ROOT}/data
+
 execute_ray_test lenet_mnist ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/mxnet/lenet_mnist.py -e 1 -b 256
 time5=$?
 

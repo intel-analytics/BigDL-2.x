@@ -18,7 +18,6 @@
 package com.intel.analytics.zoo.serving.utils
 
 import java.io.{File, FileInputStream, FileWriter}
-import java.lang
 import java.nio.file.{Files, Path, Paths}
 
 import com.intel.analytics.bigdl.Module
@@ -36,9 +35,6 @@ import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.yaml.snakeyaml.Yaml
 import java.time.LocalDateTime
-
-import com.intel.analytics.zoo.serving.preprocessing.DataType
-import com.intel.analytics.zoo.serving.preprocessing.DataType.DataTypeEnumVal
 
 import scala.reflect.ClassTag
 import scala.util.parsing.json._
@@ -82,12 +78,18 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
   var defPath: String = null
   var modelDir: String = null
   /**
+   * secure related
+   */
+  var redisSecureEnabled: Boolean = true
+  var redisSecureTrustStorePath: String = null
+  var redisSecureTrustStorePassword: String = null
+  /**
    * Initialize the parameters by loading config file
    * create log file, set backend engine type flag
    * create "running" flag, for listening the stop signal
    */
   def initArgs(): Unit = {
-
+    println("Loading config at ", configPath)
     val yamlParser = new Yaml()
     val input = new FileInputStream(new File(configPath))
 
@@ -95,10 +97,10 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
 
     // parse model field
     val modelConfig = configList.get("model").asInstanceOf[HM]
-    modelDir = getYaml(modelConfig, "path", null)
-    modelInputs = getYaml(modelConfig, "inputs", "")
-    modelOutputs = getYaml(modelConfig, "outputs", "")
-    inferenceMode = getYaml(modelConfig, "mode", "")
+    modelDir = getYaml(modelConfig, "path", null).asInstanceOf[String]
+    modelInputs = getYaml(modelConfig, "inputs", "").asInstanceOf[String]
+    modelOutputs = getYaml(modelConfig, "outputs", "").asInstanceOf[String]
+    inferenceMode = getYaml(modelConfig, "mode", "").asInstanceOf[String]
 
     parseModelType(modelDir)
 
@@ -124,69 +126,41 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     }
     // parse data field
     val dataConfig = configList.get("data").asInstanceOf[HM]
-    val redis = getYaml(dataConfig, "src", "localhost:6379")
+    val redis = getYaml(dataConfig, "src", "localhost:6379").asInstanceOf[String]
     require(redis.split(":").length == 2, "Your redis host " +
       "and port are not valid, please check.")
     redisHost = redis.split(":").head.trim
     redisPort = redis.split(":").last.trim
-    //    dataType = dataTypeStr match {
-//      case "image" =>
-//        DataType.IMAGE
-//      case "tensor" =>
-//        DataType.TENSOR
-//      case _ =>
-//        logError("Invalid data type, please check your data_type")
-//        null
-//    }
-//    val shapeList = dataType match {
-//      case DataType.IMAGE =>
-//        val shape = getYaml(dataConfig, "image_shape", "3,224,224")
-//        val shapeList = shape.split(",").map(x => x.trim.toInt)
-//        require(shapeList.size == 3, "Your data shape must has dimension as 3")
-//        Array(shapeList)
-//      case DataType.TENSOR =>
-//        val shape = getYaml(dataConfig, "tensor_shape", null)
-//        val jsonList: Option[Any] = JSON.parseFull(shape)
-//        jsonList match {
-//          case Some(list) =>
-//            val l: List[Any] = list.asInstanceOf[List[Any]]
-//            val converted = l.head match {
-//              case _: lang.Double =>
-//                List(l.map(_.asInstanceOf[Double].toInt).toArray)
-//              case _: List[Double] =>
-//                l.map(tensorShape => tensorShape.asInstanceOf[List[Double]].map(x => x.toInt)
-//                  .toArray)
-//              case _ =>
-//                logError(s"Invalid shape format, please check your tensor_shape, your input is " +
-//                  s"${shape}")
-//                null
-//            }
-//
-//            converted.toArray
-//          case None => logError(s"Invalid shape format, please check your tensor_shape, your " +
-//            s"input is ${shape}")
-//            null
-//        }
-//      case _ =>
-//        logError("Invalid data type, please check your data_type")
-//        null
-//    }
+
+    val secureConfig = configList.get("secure").asInstanceOf[HM]
+    redisSecureEnabled = getYaml(secureConfig, "secure_enabled", false).asInstanceOf[Boolean]
+    val defaultPath = try {
+      getClass.getClassLoader.getResource("keys/keystore.jks").getPath
+    } catch {
+      case _ => ""
+    }
+    redisSecureTrustStorePath = getYaml(
+      secureConfig, "secure_trust_store_path", defaultPath)
+      .asInstanceOf[String]
+    redisSecureTrustStorePassword = getYaml(
+      secureConfig, "secure_struct_store_password", "1234qwer").asInstanceOf[String]
+
     val shapeStr = getYaml(dataConfig, "shape", "3,224,224")
     require(shapeStr != null, "data shape in config must be specified.")
 //    val shapeList = shape.split(",").map(x => x.trim.toInt)
 //    for (i <- shapeList) {
 //      dataShape = dataShape :+ i
 //    }
-    dataShape = ConfigUtils.parseShape(shapeStr)
+    dataShape = ConfigUtils.parseShape(shapeStr.asInstanceOf[String])
     val typeStr = getYaml(dataConfig, "type", "image")
     require(typeStr != null, "data type in config must be specified.")
 //    dataType = ConfigUtils.parseType(typeStr)
 
 
-    filter = getYaml(dataConfig, "filter", "")
+    filter = getYaml(dataConfig, "filter", "").asInstanceOf[String]
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
-    coreNum = getYaml(paramsConfig, "core_number", "4").toInt
+    coreNum = getYaml(paramsConfig, "core_number", 4).asInstanceOf[Int]
 
     if (modelType == "caffe" || modelType == "bigdl") {
       if (System.getProperty("bigdl.engineType", "mklblas")
@@ -235,12 +209,11 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
    * @param default default value used when the field is empty
    * @return
    */
-  def getYaml(configList: HM, key: String, default: String): String = {
-    val configValue = if (configList.get(key).isInstanceOf[java.lang.Integer] ||
-      configList.get(key).isInstanceOf[java.util.ArrayList[Integer]]) {
-      String.valueOf(configList.get(key))
-    } else {
+  def getYaml(configList: HM, key: String, default: Any): Any = {
+    val configValue = try {
       configList.get(key)
+    } catch {
+      case _ => null
     }
 
     if (configValue == null) {

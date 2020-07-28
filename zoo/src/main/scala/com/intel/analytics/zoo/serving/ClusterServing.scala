@@ -21,15 +21,25 @@ package com.intel.analytics.zoo.serving
 import java.io.File
 
 import com.intel.analytics.zoo.serving.engine.{FlinkInference, FlinkRedisSink, FlinkRedisSource}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, FileUtils, SerParams}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ClusterServingManager, FileUtils, SerParams}
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.log4j.{Level, Logger}
-import scala.util.control.Breaks._
+import scopt.OptionParser
 
+import scala.util.control.Breaks._
 import scala.collection.JavaConverters._
 
 
+
 object ClusterServing {
+  case class ServingParams(configPath: String = "config.yaml")
+
+  val parser = new OptionParser[ServingParams]("Text Classification Example") {
+    opt[String]('c', "configPath")
+      .text("Config Path of Cluster Serving")
+      .action((x, params) => params.copy(configPath = x))
+  }
+
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
   var params: SerParams = null
@@ -37,26 +47,17 @@ object ClusterServing {
   def run(configPath: String = "config.yaml"): Unit = {
     val helper = new ClusterServingHelper(configPath)
     helper.initArgs()
-
-    breakable {
-      while (true) {
-        params = new SerParams(helper)
-        val serving = StreamExecutionEnvironment.getExecutionEnvironment
-        serving.addSource(new FlinkRedisSource(params)).setParallelism(1)
-          .map(new FlinkInference(params)).setParallelism(1)
-          .addSink(new FlinkRedisSink(params))
-        serving.setParallelism(1)
-        serving.execute("Cluster Serving - Flink")
-        // blocking until source terminates
-        if (FileUtils.checkStop()) {
-          break
-        }
-        logger.info("New version of model detected, loading...")
-      }
-    }
-    logger.info("Cluster Serving Stopped.")
+    params = new SerParams(helper)
+    val serving = StreamExecutionEnvironment.getExecutionEnvironment
+    serving.addSource(new FlinkRedisSource(params)).setParallelism(1)
+      .map(new FlinkInference(params))
+      .addSink(new FlinkRedisSink(params))
+    val jobClient = serving.executeAsync()
+    ClusterServingManager.writeObjectToFile(jobClient)
+//    serving.execute("Cluster Serving - Flink")
   }
   def main(args: Array[String]): Unit = {
-    run()
+    val param = parser.parse(args, ServingParams()).head
+    run(param.configPath)
   }
 }

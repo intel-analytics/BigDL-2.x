@@ -19,9 +19,11 @@ from abc import ABCMeta, abstractmethod
 from zoo.automl.model.MTNet_keras import MTNetKeras as MTNetKerasModel
 from zoo.automl.model.VanillaLSTM import VanillaLSTM as LSTMKerasModel
 from zoo.tfpark import KerasModel as TFParkKerasModel
-from zoo.automl.model import TCMF
+from zoo.automl.model import TCMFLocalModelWrapper, TCMFDistributedModelWrapper
+from zoo.orca.data import SparkXShards
 
 import tensorflow as tf
+import pandas as pd
 
 
 class Forecaster(metaclass=ABCMeta):
@@ -140,27 +142,36 @@ class TCMFForecaster(Forecaster):
             "max_TCN_epoch": max_TCN_epoch,
             "alt_iters": alt_iters,
         }
-        self.model = self._build()
-
-    def _build(self):
-        self.internal = TCMF()
-        return self.internal._build(**self.config)
 
     def fit(self,
-            x,
-            incremental=False):
+            x, incremental=False):
         """
         fit the model
-        :param x: the input
-        :param covariates: the global covariates
-        :param lr: learning rate
+        :param x: the input for fit. Only dict of ndarray and SparkXShards of dict of ndarray
+            are supported. Example: {'id': id_arr, 'y': data_ndarray}
         :param incremental: if the fit is incremental
         :return:
         """
         if incremental:
-            self.internal.fit_incremental(x)
+            raise NotImplementedError
+
+        if self.internal is None:
+            if isinstance(x, SparkXShards):
+                self.internal = TCMFDistributedModelWrapper(self.config)
+            elif isinstance(x, dict):
+                self.internal = TCMFLocalModelWrapper(self.config)
+            else:
+                raise ValueError("value of x should be a dict of ndarray or "
+                                 "an xShards of dict of ndarray")
+
+            try:
+                self.internal.fit(x, incremental)
+            except Exception as inst:
+                self.internal = None
+                raise inst
         else:
-            self.internal.fit_eval(x)
+            raise Exception("This model has already been fully trained, "
+                            "you can only run full training once.")
 
     def evaluate(self,
                  target_value,
@@ -177,7 +188,7 @@ class TCMFForecaster(Forecaster):
         :param metric: the metrics
         :return:
         """
-        self.internal.evaluate(y=target_value, x=x, metrics=metric)
+        self.internal.evaluate(y=target_value, x=x, metric=metric)
 
     def predict(self,
                 x=None,
@@ -191,7 +202,33 @@ class TCMFForecaster(Forecaster):
         :param covariates: the global covariates
         :return:
         """
-        return self.internal.predict(x=x, horizon=horizon)
+        if self.internal is None:
+            raise Exception("You should run fit before calling predict()")
+        else:
+            return self.internal.predict(x, horizon)
+
+    def save(self, path):
+        if self.internal is None:
+            raise Exception("You should run fit before calling save()")
+        else:
+            self.internal.save(path)
+
+    def is_distributed(self):
+        if self.internal is None:
+            raise ValueError("You should run fit before calling is_distributed()")
+        else:
+            return self.internal.is_distributed()
+
+    @classmethod
+    def load(cls, path, distributed=False, minPartitions=None):
+        loaded_model = TCMFForecaster()
+        if distributed:
+            loaded_model.internal = TCMFDistributedModelWrapper(loaded_model.config)
+            loaded_model.internal.load(path, minPartitions=minPartitions)
+        else:
+            loaded_model.internal = TCMFLocalModelWrapper(loaded_model.config)
+            loaded_model.internal.load(path)
+        return loaded_model
 
 
 class TFParkForecaster(TFParkKerasModel, Forecaster, metaclass=ABCMeta):

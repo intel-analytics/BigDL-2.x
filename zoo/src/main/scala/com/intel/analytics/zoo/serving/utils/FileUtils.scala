@@ -19,8 +19,8 @@ package com.intel.analytics.zoo.serving.utils
 
 import java.io.File
 import java.nio.file.{Files, Paths}
+import java.text.SimpleDateFormat
 
-import akka.http.javadsl.model.headers.LastModified
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 
@@ -45,6 +45,7 @@ object FileUtils {
    */
   def checkStop(): Boolean = {
     if (!Files.exists(Paths.get("running"))) {
+      println("Stop Signal received, will exit soon.")
       return true
     }
     return false
@@ -72,6 +73,8 @@ object FileUtils {
     for (file <- files) {
 //      println(file.lastModified())
       if (file.lastModified() > lastModified) {
+        val sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss")
+        println(s"new file detected, time is ${sdf.format(file.lastModified())}")
         return true
       }
     }

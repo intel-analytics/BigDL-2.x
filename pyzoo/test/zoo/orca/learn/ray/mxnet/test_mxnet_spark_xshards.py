@@ -22,6 +22,7 @@ import numpy as np
 import mxnet as mx
 from mxnet import gluon
 from mxnet.gluon import nn
+from zoo.orca import OrcaContext
 import zoo.orca.data.pandas
 from zoo.orca.learn.mxnet import Estimator, create_config
 
@@ -81,8 +82,15 @@ def get_gluon_model(config):
 
 
 class TestMXNetSparkXShards(TestCase):
+    def setup_method(self, method):
+        self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+        OrcaContext.pandas_read_backend = "pandas"
+
+    def tearDown(self):
+        OrcaContext.pandas_read_backend = "spark"
+
     def test_xshards_symbol_with_val(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../../../resources")
         train_file_path = os.path.join(resource_path, "orca/learn/single_input_json/train")
         train_data_shard = zoo.orca.data.pandas.read_json(
             train_file_path, orient='records', lines=False).transform_shard(prepare_data_symbol)
@@ -99,7 +107,7 @@ class TestMXNetSparkXShards(TestCase):
         estimator.shutdown()
 
     def test_xshards_symbol_without_val(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../../../resources")
         train_file_path = os.path.join(resource_path, "orca/learn/single_input_json/train")
         train_data_shard = zoo.orca.data.pandas.read_json(
             train_file_path, orient='records', lines=False).transform_shard(prepare_data_symbol)
@@ -110,7 +118,7 @@ class TestMXNetSparkXShards(TestCase):
         estimator.shutdown()
 
     def test_xshards_gluon(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../../../resources")
         train_file_path = os.path.join(resource_path, "orca/learn/single_input_json/train")
         train_data_shard = zoo.orca.data.pandas.read_json(
             train_file_path, orient='records', lines=False).transform_shard(prepare_data_gluon)

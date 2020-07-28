@@ -74,10 +74,6 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
         sourceContext.collect(it)
       }
       RedisUtils.checkMemory(jedis, 0.6, 0.5)
-
-    }
-    if (FileUtils.checkStop() || FileUtils.checkModified(params.modelDir, params.lastModified)) {
-      isRunning = false
     }
   }
 

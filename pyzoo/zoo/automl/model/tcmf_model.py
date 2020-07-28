@@ -12,11 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from abc import ABCMeta, abstractmethod
 
 from zoo.automl.model.tcmf import DeepGLO
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.model.abstract import BaseModel
+from zoo.orca.data import SparkXShards
 import pickle
+import numpy as np
+import pandas as pd
 
 
 class TCMF(BaseModel):
@@ -183,3 +187,197 @@ class TCMF(BaseModel):
 
     def _get_required_parameters(self):
         return {}
+
+
+class ModelWrapper(metaclass=ABCMeta):
+    @abstractmethod
+    def fit(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def evaluate(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def predict(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def is_distributed(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def save(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def load(self, **kwargs):
+        pass
+
+
+class TCMFDistributedModelWrapper(ModelWrapper):
+
+    def __init__(self, config):
+        self.internal = None
+        self.config = config
+
+    def fit(self, x, incremental=False):
+        def orca_train_model(d, config):
+            tcmf = TCMF()
+            tcmf._build(**config)
+            id_arr, train_data = split_id_and_train_data(d, True)
+            if incremental:
+                tcmf.fit_incremental(train_data)
+            else:
+                tcmf.fit_eval(train_data)
+            return [id_arr, tcmf]
+
+        if isinstance(x, SparkXShards):
+            if x._get_class_name() == "dict":
+                self.internal = x.transform_shard(orca_train_model, self.config)
+            else:
+                raise ValueError("value of x should be an xShards of dict, "
+                                 "but is an xShards of " + x._get_class_name())
+        else:
+            raise ValueError("value of x should be an xShards of dict, "
+                             "but isn't an xShards")
+
+    def evaluate(self, x, y, metric=None):
+        """
+        Evaluate the model
+        :param x: input
+        :param y: target
+        :param metric:
+        :return: a list of metric evaluation results
+        """
+        raise NotImplementedError
+
+    def predict(self, x, horizon=24):
+        """
+        Prediction.
+        :param x: input
+        :return: result
+        """
+        def orca_predict(data):
+            id_arr = data[0]
+            tcmf = data[1]
+            predict_results = tcmf.predict(x=None, horizon=horizon)
+            result = dict()
+            result['id'] = id_arr
+            result["prediction"] = predict_results
+            return result
+
+        return self.internal.transform_shard(orca_predict)
+
+    def is_distributed(self):
+        return True
+
+    def save(self, model_path):
+        """
+        save model to file.
+        :param model_path: the model file path to be saved to.
+        :return:
+        """
+        if self.internal is not None:
+            self.internal.save_pickle(model_path)
+
+    def load(self, model_path, minPartitions=None):
+        """
+        restore model from model file and config.
+        :param model_path: the model file
+        :return: the restored model
+        """
+        self.internal = SparkXShards.load_pickle(model_path, minPartitions=minPartitions)
+
+
+class TCMFLocalModelWrapper(ModelWrapper):
+
+    def __init__(self, config):
+        self.internal = TCMF()
+        self.config = config
+        self.internal._build(**self.config)
+        self.id_arr = None
+
+    def fit(self, x, incremental=False):
+        if isinstance(x, dict):
+            self.id_arr, train_data = split_id_and_train_data(x, False)
+            if incremental:
+                self.internal.fit_incremental(train_data)
+            else:
+                self.internal.fit_eval(train_data)
+        else:
+            raise ValueError("value of x should be a dict of ndarray")
+
+    def evaluate(self, x, y, metric=None):
+        """
+        Evaluate the model
+        :param x: input
+        :param y: target
+        :param metric:
+        :return: a list of metric evaluation results
+        """
+        if isinstance(y, dict):
+            if 'y' in y:
+                y = y['y']
+                if not isinstance(y, np.ndarray):
+                    raise ValueError("the value of y should be an ndarray")
+            else:
+                raise ValueError("key y doesn't exist in y")
+            return self.internal.evaluate(y=y, x=x, metrics=metric)
+        else:
+            raise ValueError("value of y should be a dict of ndarray")
+
+    def predict(self, x, horizon=24):
+        """
+        Prediction.
+        :param x: input
+        :return: result
+        """
+        pred = self.internal.predict(x=x, horizon=horizon)
+        result = dict()
+        if self.id_arr is not None:
+            result['id'] = self.id_arr
+        result["prediction"] = pred
+        return result
+
+    def is_distributed(self):
+        return False
+
+    def save(self, model_path):
+        """
+        save model to file.
+        :param model_path: the model file path to be saved to.
+        :return:
+        """
+        with open(model_path + '/id.pkl', 'wb') as f:
+            pickle.dump(self.id_arr, f)
+        self.internal.save(model_path + "/model")
+
+    def load(self, model_path):
+        """
+        restore model from model file and config.
+        :param model_path: the model file
+        :return: the restored model
+        """
+        self.internal = TCMF()
+        with open(model_path + '/id.pkl', 'rb') as f:
+            self.id_arr = pickle.load(f)
+        self.internal.restore(model_path + "/model")
+
+
+def split_id_and_train_data(d, is_distributed):
+    if 'y' in d:
+        train_data = d['y']
+        if not isinstance(train_data, np.ndarray):
+            raise ValueError("the value of y should be an ndarray")
+    else:
+        raise ValueError("key `y` doesn't exist in x")
+    id_arr = None
+    if 'id' in d:
+        id_arr = d['id']
+        if len(id_arr) != train_data.shape[0]:
+            raise ValueError("the length of the id array should be equal to the number of "
+                             "rows in the y")
+    elif is_distributed:
+        raise ValueError("key `id` doesn't exist in x")
+    return id_arr, train_data

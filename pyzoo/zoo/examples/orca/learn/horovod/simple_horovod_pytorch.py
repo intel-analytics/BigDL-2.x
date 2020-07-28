@@ -193,7 +193,6 @@ parser.add_argument("--slave_num", type=int, default=2,
                     help="The number of slave nodes")
 parser.add_argument("--conda_name", type=str,
                     help="The name of conda environment.")
-parser.add_argument("--iface", type=str, default="eth0")
 parser.add_argument("--executor_cores", type=int, default=8,
                     help="The number of driver's cpu cores you want to use."
                          "You can change it depending on your own cluster setting.")
@@ -220,7 +219,7 @@ if __name__ == "__main__":
         sc = init_spark_on_yarn(
             hadoop_conf=args.hadoop_conf,
             conda_name=args.conda_name,
-            num_executor=args.slave_num,
+            num_executors=args.slave_num,
             executor_cores=args.executor_cores,
             executor_memory=args.executor_memory,
             driver_memory=args.driver_memory,
