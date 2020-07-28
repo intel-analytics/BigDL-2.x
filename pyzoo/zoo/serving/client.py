@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+from http.client import HTTPSConnection
 import redis
 import time
 from zoo.serving.schema import *
@@ -44,14 +45,30 @@ class API:
 
 
 class InputQueue(API):
-    def __init__(self, host=None, port=None):
+    def __init__(self, host=None, port=None, sync=False):
         super().__init__(host, port)
-        self.c, self.h, self.w = None, None, None
+        self.sync = sync
+        if sync:
+            try:
+                self.conn = HTTPSConnection("localhost", 8081)
+                self.conn.request("GET", "/")
+                self.conn.getresponse()
+            except Exception as e:
+                print("Connection error, please check your HTTP server. Error msg is ", e)
+                self.conn.close()
         self.stream_name = "serving_stream"
 
         # TODO: these params can be read from config in future
         self.input_threshold = 0.6
         self.interval_if_error = 1
+
+    def predict(self, request_str):
+        """
+        Sync API, block waiting until get response
+        :return:
+        """
+        self.conn.request("POST", "predict", request_str)
+        return self.conn.getresponse()
 
     def enqueue(self, uri, **data):
         sink = pa.BufferOutputStream()
