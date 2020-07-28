@@ -805,6 +805,21 @@
                     </execution>
 
                     <execution>
+                        <id>make-dist-all</id>
+                        <inherited>false</inherited>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/assembly/dist-all.xml
+                                </descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+
+                    <execution>
                         <id>make-cluster-serving-all</id>
                         <inherited>false</inherited>
                         <phase>package</phase>
@@ -819,20 +834,6 @@
                         </configuration>
                     </execution>
 
-                    <execution>
-                        <id>make-dist-all</id>
-                        <inherited>false</inherited>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <configuration>
-                            <descriptors>
-                                <descriptor>${project.basedir}/src/assembly/dist-all.xml
-                                </descriptor>
-                            </descriptors>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
             <plugin>
