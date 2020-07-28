@@ -76,7 +76,8 @@ class PreProcessing(param: SerParams) {
         else {
           (kv._1, decodeTensor(kv._2.asInstanceOf[(
             ArrayBuffer[Int], ArrayBuffer[Float], ArrayBuffer[Int], ArrayBuffer[Int])]))
-        }).toList
+        }
+      ).toList
 //      Seq(T(oneInsMap.head, oneInsMap.tail: _*))
       val arr = oneInsMap.map(x => x._2)
       Seq(T.array(arr.toArray))
