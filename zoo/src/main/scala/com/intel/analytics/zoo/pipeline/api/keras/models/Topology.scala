@@ -30,6 +30,7 @@ import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasLayerSerializable}
 import com.intel.analytics.bigdl.nn.mkldnn.MklDnnModule
 import com.intel.analytics.bigdl.nn.{Container, Graph, Module, StaticGraph, Sequential => TSequential}
 import com.intel.analytics.bigdl.optim.DistriOptimizer.{Cache, CacheV1}
+import com.intel.analytics.bigdl.optim.DistriOptimizerV2.{Cache => CacheV2}
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.parameters.AllReduceParameter
 import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
@@ -383,7 +384,7 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
         } else {
           0
         }
-      case dis: DistriOptimizerV2[T] =>
+      case dis: InternalDistriOptimizer[T] =>
         InternalOptimizerUtil.getStateFromOptiMethod(this.optimMethod).get[Int]("epoch").get - 1
     }
   }
@@ -1007,14 +1008,14 @@ private[zoo] object InternalOptimizerUtil {
 
   def initThreadModels[T: ClassTag](
       args: Object*)(
-      implicit ev: TensorNumeric[T]): (RDD[optim.DistriOptimizerV2.Cache[T]], ModelBroadcast[T]) = {
+      implicit ev: TensorNumeric[T]): (RDD[CacheV2[T]], ModelBroadcast[T]) = {
     KerasUtils.invokeMethodWithEv(DistriOptimizerV2,
       "com$intel$analytics$bigdl$optim$DistriOptimizer$$initThreadModels",
-      args: _*).asInstanceOf[(RDD[optim.DistriOptimizerV2.Cache[T]], ModelBroadcast[T])]
+      args: _*).asInstanceOf[(RDD[CacheV2[T]], ModelBroadcast[T])]
   }
 
   def clearState[T: ClassTag](
-        models: RDD[optim.DistriOptimizerV2.Cache[T]]): Unit = {
+        models: RDD[CacheV2[T]]): Unit = {
     KerasUtils.invokeMethod(DistriOptimizerV2,
       "clearState", models, implicitly[reflect.ClassTag[T]])
   }
@@ -1034,7 +1035,7 @@ private[zoo] object InternalOptimizerUtil {
 
   // TODO: Delete this when switch to Bigdl 0.11.0.
   def getTorchModel[T: ClassTag](
-      models: RDD[DistriOptimizerV2.Cache[T]],
+      models: RDD[Cache[T]],
       parameters: AllReduceParameter[T],
       trainingModel: TorchModel)(implicit ev: TensorNumeric[T]): TorchModel = {
     val partitionNum = models.partitions.length
@@ -1114,195 +1115,10 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
   import InternalDistriOptimizer._
   protected var checkpointDir: Option[String] = None
   protected var numSlice: Int = 1
-  protected var cachedModels: RDD[optim.DistriOptimizerV2.Cache[T]] = null
+  protected var cachedModels: RDD[CacheV2[T]] = null
   protected var modelBroadcast: ModelBroadcast[T] = null
   protected var parameterSplits: Map[String, (Int, Int)] = null
   protected var allReduceParameter: AllReduceParameter[T] = null
-
-
-  def train(): Module[T] = {
-    val distDataset = dataset.toDistributed()
-    val trainingModel = if (EngineRef.getEngineType() == MklDnn) {
-      model.toGraph().setName(model.getName())
-    } else model
-
-    // To be compatible with the old usage that user define hyperparameters in a table.
-    if (optimMethods.size == 1) {
-      optimMethods.head._2.loadFromTable(state)
-    }
-
-    state("dropPercentage") = dropPercentage
-    state("warmupIterationNum") = warmupIterationNum
-    state("computeThresholdbatchSize") = computeThresholdbatchSize
-    state("maxDropPercentage") = maxDropPercentage
-    state("isLayerwiseScaled") = com.intel.analytics.bigdl.nn.Utils.isLayerwiseScaled(_model)
-
-    val nodeNumber = EngineRef.getNodeNumber()
-
-    /**
-     * The best practice of torchnet's training is single model in each executor.
-     * And use multi OMP threads to speedup the single model's training.
-     * Currently, we only provide single model + multi OMP threads for torchnet model.
-     * TODO: support tfnet.
-     */
-    logger.info(s"${model} isTorchnet is ${TorchNet.isTorchNet(model)}")
-    val torchNetOptimize = TorchNet.isTorchNet(model)
-    val modelPerExecutor = if (torchNetOptimize) {
-      require(EngineRef.getEngineType() != MklDnn, "torchnet shouldn't use MKLDNN engine.")
-      val numOmpThread = distDataset.originRDD().sparkContext
-        .getConf.get("spark.executorEnv.OMP_NUM_THREADS").toInt
-      logger.info(s"torchnet will use ${numOmpThread} OMP threads.")
-      1
-    } else {
-      EngineRef.getCoreNumber()
-    }
-
-    val partitionNum = distDataset.originRDD().partitions.length
-    val modelParameters = InternalOptimizerUtil.getParametersFromModel(trainingModel)
-
-    prepareInput()
-
-    // subModuleName -> (storageOffset, length, AllReduceParameter)
-    if (allReduceParameter == null || cachedModels == null) {
-      allReduceParameter = AllReduceParameter.newParameter[T](partitionNum,
-        modelParameters._1.nElement())
-      this.close()
-      parameterSplits = if (optimMethods.size != 1) {
-        val p = optimMethods.map { case (subModuleName, optimMethod) =>
-          val subModule = trainingModel(subModuleName)
-          require(subModule.isDefined, s"Optimizer couldn't find $subModuleName in $model")
-          val subModuleWeights = InternalOptimizerUtil
-            .getParametersFromModel(subModule.get)._1
-          (subModuleName, subModuleWeights)
-        }
-        val sortedWeights = p.values.toArray.sortWith(
-          (a, b) => a.storageOffset() < b.storageOffset())
-        val compactWeights = Module.isCompact(sortedWeights)
-        require(modelParameters._1 == compactWeights,
-          s"InternDistriOptimizer: All subModules should have an OptimMethod.")
-        p.map { case (subModuleName, weights) =>
-          (subModuleName, (weights.storageOffset(), weights.nElement()))
-        }
-      } else if (optimMethods.contains(trainingModel.getName())) {
-        Map(trainingModel.getName() -> (1, modelParameters._1.nElement()))
-      } else {
-        throw new IllegalArgumentException(s"${trainingModel.getName()} doesn't " +
-          s"have corresponding OptimMethod")
-      }
-
-      // TODO: Enable LarsSGD
-//      LarsSGD.containsLarsSGD(optimMethods).foreach(weightDecay =>
-//        parameterProcessors.append(new LarsProcessor(parameterSplits, weightDecay))
-//      )
-      if (torchNetOptimize) {
-        InternalOptimizerUtil.setExecutorMklThread(distDataset.originRDD())
-      }
-      val modelsAndBroadcast = InternalOptimizerUtil.initThreadModels[T](
-        trainingModel, distDataset, criterion, state,
-        Int.box(nodeNumber), Int.box(modelPerExecutor), Boolean.box(checkSingleton),
-        allReduceParameter, parameterSplits, validationMethods, optimMethods, parameterProcessors)
-      cachedModels = modelsAndBroadcast._1
-      modelBroadcast = modelsAndBroadcast._2
-    }
-
-    val currentCheckPoint = if (checkpointPath.isDefined) {
-      val file = checkpointPath.get + "/" +
-        new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime())
-      new File(file).mkdir()
-      Some(file)
-    } else {
-      checkpointPath
-    }
-
-
-    var retryNum = 0
-    val maxRetry = System.getProperty("bigdl.failure.retryTimes", "5").toInt
-    val retryTimeInterval = System.getProperty("bigdl.failure.retryTimeInterval", "120").toInt
-    var lastFailureTimestamp = System.nanoTime()
-
-    while (retryNum < maxRetry) {
-      try {
-        InternalOptimizerUtil.optimizeModels[T](
-          trainingModel,
-          distDataset,
-          Int.box(modelPerExecutor),
-          state,
-          endWhen,
-          cachedModels,
-          optimMethods,
-          allReduceParameter,
-          parameterSplits,
-          validationTrigger,
-          validationDataSet,
-          validationMethods,
-          checkpointTrigger,
-          currentCheckPoint,
-          trainSummary,
-          validationSummary,
-          Boolean.box(isOverWrite),
-          parameterProcessors.toArray)
-        retryNum = Int.MaxValue
-      } catch {
-        case e: IllegalArgumentException =>
-          throw e
-        case t: Throwable =>
-          DistriOptimizerV2.logger.error("Error: " + ExceptionUtils.getStackTrace(t))
-          if (checkpointPath.isDefined) {
-            /* To avoid retry number is used up by first few exceptions, we count time here.
-             * If exception exceeds maxRetry times in maxRetry*retryTimeInterval seconds,
-             * we will give up retry Or we will reset retryNum
-             */
-            if (System.nanoTime() - lastFailureTimestamp < maxRetry * retryTimeInterval * 1e9) {
-              retryNum += 1
-              if (retryNum == maxRetry) {
-                throw t
-              }
-            } else {
-              retryNum = 1
-            }
-            DistriOptimizerV2.logger.info(s"Retrying $retryNum times")
-            lastFailureTimestamp = System.nanoTime()
-
-            val modelFile = getLatestFile(currentCheckPoint.get, "model")
-            clearState()
-            cachedModels.unpersist()
-            val newModel = if (modelFile != null) {
-              DistriOptimizerV2.logger.info("Model recover from last snapshot")
-              Module.load[T](modelFile)
-            } else {
-              DistriOptimizerV2.logger.info("Model recover from origin model")
-              trainingModel
-            }
-            optimMethods = optimMethods.map { case (moduleName, optimMethod) =>
-              val methodFile = getLatestFile(currentCheckPoint.get, s"optimMethod-$moduleName")
-
-              val newOptimMethod = if (methodFile != null) {
-                DistriOptimizerV2.logger.info(s"$moduleName's OptimMethod recover from last snapshot")
-                OptimMethod.load[T](methodFile)
-              } else {
-                DistriOptimizerV2.logger.info(s"$moduleName's OptimMethod recover from origin model")
-                optimMethod
-              }
-              newOptimMethod.clearHistory()
-              (moduleName, newOptimMethod)
-            }
-            val modelsAndBroadcast = InternalOptimizerUtil.initThreadModels[T](
-              newModel, distDataset, criterion, state,
-              Int.box(nodeNumber), Int.box(modelPerExecutor), Boolean.box(checkSingleton),
-              allReduceParameter, parameterSplits, validationMethods, optimMethods)
-            cachedModels = modelsAndBroadcast._1
-            modelBroadcast = modelsAndBroadcast._2
-          } else {
-            throw t
-          }
-      }
-    }
-
-    InternalDistriOptimizer.getModel(
-      cachedModels, allReduceParameter, trainingModel)
-
-    trainingModel
-  }
 
   override def close(): Unit = {
     if (cachedModels != null) {
@@ -1410,13 +1226,13 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
           this.setCheckpoint(checkpointDir.get, checkPointTrigger.get)
         }
         state("currentSlice") = state[Int]("currentSlice") + 1
-        this.train()
+        this.optimize()
         InternalOptimizerUtil.endEpoch(this)
         // (neval - 1) is true iteration
         state("epoch") = Math.floor(state[Int]("currentSlice").toDouble / numSlice).toInt + 1
       }
     } else {
-      this.train()
+      this.optimize()
     }
     this
   }
@@ -1438,7 +1254,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
     val models = if (null != cachedModels) {
       val bcVMethods = cachedModels.sparkContext.broadcast(validationMethod)
       cachedModels.map{cache =>
-        CacheV1[T](
+        CacheV2[T](
           cache.localModels,
           cache.modelWeights,
           cache.modelGradients,
@@ -1455,7 +1271,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
       val bcVMethods = validateRDD.sparkContext.broadcast(validationMethod)
       val bcModel = ModelBroadcast[T]().broadcast(sc, _model)
       validateRDD.mapPartitions{_ =>
-        Iterator.single(CacheV1[T](
+        Iterator.single(CacheV2[T](
           Array.tabulate(_subModelNumber)(_ => bcModel.value()),
           null,
           null,
@@ -1494,7 +1310,7 @@ object InternalDistriOptimizer {
 
   protected def validate[T](validationFeatureSet: FeatureSet[MiniBatch[T]],
                             validationMethods: Array[ValidationMethod[T]],
-                            models: RDD[CacheV1[T]],
+                            models: RDD[CacheV2[T]],
                             step: Int,
                             validationSummary: Option[ValidationSummary]
                            ): Map[ValidationMethod[T], ValidationResult] = {
@@ -1574,7 +1390,7 @@ object InternalDistriOptimizer {
   }
 
   def unpersistCachedModel[T: ClassTag](
-      models: RDD[optim.DistriOptimizerV2.Cache[T]] ): Unit = {
+      models: RDD[CacheV2[T]] ): Unit = {
     models.mapPartitions { iter =>
       iter.foreach { arrayModels =>
         arrayModels.localModels.foreach(_.release())
@@ -1584,7 +1400,7 @@ object InternalDistriOptimizer {
     models.unpersist()
   }
 
-  def getModel[T: ClassTag](models: RDD[DistriOptimizerV2.Cache[T]],
+  def getModel[T: ClassTag](models: RDD[Cache[T]],
                             parameters: AllReduceParameter[T],
                             trainingModel: Module[T])(implicit ev: TensorNumeric[T])
   : Module[T] = {

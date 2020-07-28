@@ -93,6 +93,10 @@ object EngineRef {
   def getEngineType(): EngineType = {
     KerasUtils.invokeMethod(Engine, "getEngineType").asInstanceOf[EngineType]
   }
+  
+  def getOptimizerVersion(): OptimizerVersion = {
+    KerasUtils.invokeMethod(Engine, "getOptimizerVersion").asInstanceOf[OptimizerVersion]
+  }
 
   def setCoreNumber(num: Int): Unit = {
     val field = Engine.getClass.getDeclaredField("physicalCoreNumber")
