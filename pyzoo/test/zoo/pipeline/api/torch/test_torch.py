@@ -120,7 +120,7 @@ class TestPytorch(TestCase):
         exported_model = az_model.to_pytorch()
         assert len((list(exported_model.named_buffers()))) != 0
 
-    def test_model_with_bn_training(self):
+    def test_train_model_with_bn(self):
         class SimpleTorchModel(nn.Module):
             def __init__(self):
                 super(SimpleTorchModel, self).__init__()
