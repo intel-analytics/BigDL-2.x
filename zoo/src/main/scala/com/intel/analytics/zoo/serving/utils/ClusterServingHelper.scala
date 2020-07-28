@@ -37,7 +37,6 @@ import org.yaml.snakeyaml.Yaml
 import java.time.LocalDateTime
 
 import scala.reflect.ClassTag
-import scala.util.parsing.json._
 
 class ClusterServingHelper(_configPath: String = "config.yaml") {
   type HM = LinkedHashMap[String, String]
@@ -133,7 +132,12 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     redisPort = redis.split(":").last.trim
 
     val secureConfig = configList.get("secure").asInstanceOf[HM]
-    redisSecureEnabled = getYaml(secureConfig, "secure_enabled", false).asInstanceOf[Boolean]
+    redisSecureEnabled = if (getYaml(secureConfig, "secure_enabled", false) != null) {
+      getYaml(secureConfig, "secure_enabled", false).asInstanceOf[Boolean]
+    } else {
+      false
+    }
+
     val defaultPath = try {
       getClass.getClassLoader.getResource("keys/keystore.jks").getPath
     } catch {
@@ -145,7 +149,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     redisSecureTrustStorePassword = getYaml(
       secureConfig, "secure_struct_store_password", "1234qwer").asInstanceOf[String]
 
-    val shapeStr = getYaml(dataConfig, "shape", "3,224,224")
+    val shapeStr = getYaml(dataConfig, "shape", "3,224,224").asInstanceOf[String]
     require(shapeStr != null, "data shape in config must be specified.")
 //    val shapeList = shape.split(",").map(x => x.trim.toInt)
 //    for (i <- shapeList) {
@@ -210,17 +214,20 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
    * @return
    */
   def getYaml(configList: HM, key: String, default: Any): Any = {
-    val configValue: Any = configList.get(key)
+    val configValue: Any = try {
+      configList.get(key)
+    } catch {
+      case _ => null
+    }
     if (configValue == null) {
       if (default == null) throw new Error(configList.toString + key + " must be provided")
       else {
-        println(configList.toString + key + " is null, using default.")
         return default
       }
     }
     else {
       println(configList.toString + key + " getted: " + configValue)
-      return configValue
+      return configValue.toString
     }
   }
 
