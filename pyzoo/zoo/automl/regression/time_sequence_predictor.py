@@ -224,7 +224,6 @@ class TimeSequencePredictor(object):
                    mc,
                    resources_per_trial,
                    remote_dir):
-
         ft = TimeSequenceFeatureTransformer(self.future_seq_len,
                                             self.dt_col,
                                             self.target_col,
@@ -235,10 +234,12 @@ class TimeSequencePredictor(object):
         else:
             feature_list = ft.get_feature_list(input_df)
 
-        # model = VanillaLSTM(check_optional_config=False)
-        model = TimeSequenceModel(
-            check_optional_config=False,
-            future_seq_len=self.future_seq_len)
+        def model_create_func():
+            # model = VanillaLSTM(check_optional_config=False)
+            model = TimeSequenceModel(
+                check_optional_config=False,
+                future_seq_len=self.future_seq_len)
+        model = model_create_func()
 
         # prepare parameters for search engine
         search_space = recipe.search_space(feature_list)
@@ -257,6 +258,7 @@ class TimeSequencePredictor(object):
                                        remote_dir=remote_dir,
                                        )
         searcher.compile(input_df,
+                         model_create_func=model_create_func(),
                          search_space=search_space,
                          stop=stop,
                          search_algorithm_params=search_algorithm_params,

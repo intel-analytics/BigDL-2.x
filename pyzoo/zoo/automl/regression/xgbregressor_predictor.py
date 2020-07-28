@@ -218,7 +218,10 @@ class XgbRegressorPredictor(object):
                    mc,
                    resources_per_trial,
                    remote_dir):
-        model = XGBoostRegressor()
+        def model_create_func():
+            model = XGBoostRegressor()
+            return model
+        model = model_create_func()
         ft = EchoTransformer(self.feature_cols, self.target_col)
 
         # prepare parameters for search engine
@@ -239,6 +242,7 @@ class XgbRegressorPredictor(object):
                                        remote_dir=remote_dir,
                                        )
         searcher.compile(input_df,
+                         model_create_func=model_create_func(),
                          search_space=search_space,
                          stop=stop,
                          search_algorithm_params=search_algorithm_params,

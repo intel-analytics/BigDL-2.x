@@ -526,13 +526,13 @@ class XgbRegressorGridRandomRecipe(Recipe):
     def __init__(
             self,
             num_rand_samples=1,
-            n_estimators=[500, 700, 800, 900, 950, 1000],
-            max_depth=[15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
+            n_estimators=[8, 15],
+            max_depth=[10, 15],
             n_jobs=-1,
             tree_method='hist',
             random_state=2,
             seed=0,
-            lr=[0.1, 0.05],
+            lr=(1e-4, 1e-1),
             subsample=0.8,
             colsample_bytree=0.8,
             min_child_weight=[1, 2, 3],
@@ -556,7 +556,7 @@ class XgbRegressorGridRandomRecipe(Recipe):
 
         self.n_estimators = tune.grid_search(n_estimators)
         self.max_depth = tune.grid_search(max_depth)
-        self.lr = tune.choice(lr)
+        self.lr = tune.loguniform(lr[0], lr[-1])
         self.subsample = subsample
         self.min_child_weight = tune.choice(min_child_weight)
 
