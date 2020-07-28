@@ -1008,10 +1008,10 @@ private[zoo] object InternalOptimizerUtil {
 
   def initThreadModels[T: ClassTag](
       args: Object*)(
-      implicit ev: TensorNumeric[T]): (RDD[CacheV2[T]], ModelBroadcast[T]) = {
+      implicit ev: TensorNumeric[T]): (RDD[Cache[T]], ModelBroadcast[T]) = {
     KerasUtils.invokeMethodWithEv(DistriOptimizerV2,
       "com$intel$analytics$bigdl$optim$DistriOptimizer$$initThreadModels",
-      args: _*).asInstanceOf[(RDD[CacheV2[T]], ModelBroadcast[T])]
+      args: _*).asInstanceOf[(RDD[Cache[T]], ModelBroadcast[T])]
   }
 
   def clearState[T: ClassTag](
@@ -1023,13 +1023,13 @@ private[zoo] object InternalOptimizerUtil {
   def optimizeModels[T: ClassTag](
       args: Object*
       )(implicit ev: TensorNumeric[T]): Unit = {
-    KerasUtils.invokeMethodWithEv(DistriOptimizerV2, "optimize",
+    KerasUtils.invokeMethodWithEv(DistriOptimizer, "optimize",
       args: _*)
   }
 
   def getModel[T: ClassTag](
       args: Object*)(implicit ev: TensorNumeric[T]): Unit = {
-    KerasUtils.invokeMethodWithEv(DistriOptimizerV2, "getModel",
+    KerasUtils.invokeMethodWithEv(DistriOptimizer, "getModel",
       args: _*)
   }
 
@@ -1264,7 +1264,10 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
           Array.tabulate(_subModelNumber)(_ =>
             Some(bcVMethods.value.map(_.clone()))),
           cache.optimMethods,
-          cache.parameterSynchronizer
+          cache.parameterSynchronizer,
+          cache.parameter,
+          cache.parameterSplits,
+          cache.parameterProcessers
         )
       }
     } else {
@@ -1280,6 +1283,9 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
           null,
           Array.tabulate(_subModelNumber) { _ =>
             Some(bcVMethods.value.map(_.clone()))},
+          null,
+          null,
+          null,
           null,
           null
         ))
