@@ -22,8 +22,6 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
    
    4. [Model inference](#4-model-inference)
 
-   5. [HTTP Server](#5-http-server)
-
 * [Optional Operations](#optional-operations)
 
      - [Update Model or Configurations](#update-model-or-configurations)
@@ -351,7 +349,7 @@ result_class_prob_map = json.loads(img1_result)
 #### HTTP RESTful API
 For HTTP RESTful API, we provide a HTTP server to support RESTful HTTP requests. User can submit HTTP requests to the HTTP server through RESTful APIs. The HTTP server will parse the input requests and pub them to Redis input queues, and also retrieve the output results and render them as json results in HTTP responses. The serving backend will leverage the cluster serving.
 
-##### Start the HTTP Server
+##### Prepare
 User can download a analytics-zoo-${VERSION}-http.jar from the Nexus Repository with GAVP: 
 ```
 <groupId>com.intel.analytics.zoo</groupId>
@@ -362,7 +360,8 @@ User can also build from the source code:
 ```
 mvn clean package -P spark_2.4+ -Dmaven.test.skip=true
 ```
-After that, start the HTTP server with below command.
+##### Start the HTTP Server
+User can start the HTTP server with following command.
 ```
 java -jar analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ZOO_VERSION}-http.jar
 ```
