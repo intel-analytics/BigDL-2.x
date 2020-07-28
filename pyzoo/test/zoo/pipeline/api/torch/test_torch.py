@@ -27,6 +27,7 @@ from zoo.pipeline.estimator import *
 from zoo.pipeline.api.keras.optimizers import Adam
 from bigdl.optim.optimizer import MaxEpoch, EveryEpoch
 from zoo.pipeline.api.keras.metrics import Accuracy
+from zoo.feature.common import FeatureSet
 
 
 class TestPytorch(TestCase):
@@ -141,12 +142,15 @@ class TestPytorch(TestCase):
                                [5, 6, 7],[8, 9, 10],[1, 9, 10]])
         targets = torch.Tensor([[0],[0],[0],
                                [1],[1],[1]])
-        train_featureset = DataLoader(TensorDataset(inputs, targets), batch_size=2)
-        val_featureset = DataLoader(TensorDataset(inputs, targets), batch_size=2)
+        train_loader = DataLoader(TensorDataset(inputs, targets), batch_size=2)
+        train_featureset = FeatureSet.pytorch_dataloader(train_loader)
+        val_loader = DataLoader(TensorDataset(inputs, targets), batch_size=2)
+        val_featureset = FeatureSet.pytorch_dataloader(val_loader)
+
 
         zooOptimizer = Adam()
         estimator = Estimator(az_model, optim_methods=zooOptimizer)
-        estimator.train(train_featureset, zoo_loss, end_trigger=MaxEpoch(4),
+        estimator.train_minibatch(train_featureset, zoo_loss, end_trigger=MaxEpoch(4),
                         checkpoint_trigger=EveryEpoch(),
                         validation_set=val_featureset,
                         validation_method=[Accuracy()])
