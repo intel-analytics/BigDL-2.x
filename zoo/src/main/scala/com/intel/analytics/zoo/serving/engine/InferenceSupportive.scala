@@ -127,7 +127,7 @@ object InferenceSupportive {
         t(key).asInstanceOf[Tensor[Float]].addSingletonDimension()
       }
     })
-    if (params.dataShape.length == 1) {
+    if (params.dataShape.size == 1) {
       t.keySet.foreach(key => {
         return t(key).asInstanceOf[Tensor[Float]]
       })
