@@ -71,8 +71,14 @@ class TFRayEstimator(HorovodRayRunner):
             "data_creator": data_creator,
             "compile_args": compile_args,
             "config": self.config,
-            "verbose": self.verbose
+            "verbose": self.verbose,
         }
+
+        if "inter_op_parallelism" not in self.config:
+            self.config["inter_op_parallelism"] = 1
+
+        if "intra_op_parallelism" not in config:
+            self.config["intra_op_parallelism"] = self.cores_per_node
 
         super().__init__(RayContext.get(), worker_cls=TFWorker, worker_param=params)
 
