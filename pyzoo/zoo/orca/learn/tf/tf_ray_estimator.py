@@ -14,47 +14,163 @@
 # limitations under the License.
 #
 
-from zoo.orca.learn.tf.tf_trainer import TFTrainer
+import numpy as np
+import logging
+import pickle
+
+import ray
+
+from zoo.orca.learn.tf.tf_runner import TFRunner
+from zoo.orca.learn.horovod.horovod_ray_runner import HorovodWorker
+from zoo.orca.learn.horovod.horovod_ray_runner import HorovodRayRunner
 from zoo.ray import RayContext
 
+logger = logging.getLogger(__name__)
 
-class TFRayEstimator:
+
+class TFWorker(HorovodWorker, TFRunner):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+class TFRayEstimator(HorovodRayRunner):
     def __init__(self,
                  model_creator,
                  compile_args,
                  data_creator,
                  config=None,
-                 verbose=False
-                 ):
-        def trainer_model_creator(config):
-            model = model_creator(config)
-            # to support horovod, we need to wrap hvd.DistributedOptimizer on
-            # compile_args["optimizer"]
-            model.compile(**compile_args)
-            return model
+                 verbose=False,
+                 backend="tf"):
+        """Sets up the TensorFlow trainer.
 
-        self.ray_ctx = RayContext.get()
-        self.tf_trainer = TFTrainer(trainer_model_creator,
-                                    data_creator,
-                                    config=config,
-                                    num_replicas=self.ray_ctx.num_ray_nodes,
-                                    num_cpus_per_worker=self.ray_ctx.ray_node_cpu_cores,
-                                    verbose=verbose)
+        Args:
+            model_creator (dict -> Model): This function takes in the `config`
+                dict and returns a compiled TF model.
+            data_creator (dict -> tf.Dataset, tf.Dataset): Creates
+                the training and validation data sets using the config.
+                `config` dict is passed into the function.
+            config (dict): configuration passed to 'model_creator',
+                'data_creator'. Also contains `fit_config`, which is passed
+                into `model.fit(data, **fit_config)` and
+                `evaluate_config` which is passed into `model.evaluate`.
+            num_replicas (int): Sets number of workers used in distributed
+                training. Workers will be placed arbitrarily across the
+                cluster.
+            use_gpu (bool): Enables all workers to use GPU.
+            verbose (bool): Prints output of one model if true.
+        """
+        self.model_creator = model_creator
+        self.data_creator = data_creator
+        self.compile_args = compile_args
+        self.config = {} if config is None else config
+        self.verbose = verbose
+
+        params = {
+            "model_creator": model_creator,
+            "data_creator": data_creator,
+            "compile_args": compile_args,
+            "config": self.config,
+            "verbose": self.verbose
+        }
+
+        super().__init__(RayContext.get(), worker_cls=TFWorker, worker_param=params)
+
+        # Generate actor class
+        # todo: are these resource quotas right?
+        # should they be exposed to the client codee?
+        # Compute URL for initializing distributed setup
+        if backend == "tf":
+            ips = ray.get(
+                [worker.get_node_ip.remote() for worker in self.remote_workers])
+            ports = ray.get(
+                [worker.find_free_port.remote() for worker in self.remote_workers])
+
+            urls = ["{ip}:{port}".format(ip=ips[i], port=ports[i])
+                    for i in range(len(self.remote_workers))]
+
+            # Get setup tasks in order to throw errors on failure
+            ray.get([
+                worker.setup_distributed.remote(urls, i, len(self.remote_workers))
+                for i, worker in enumerate(self.remote_workers)])
+        elif backend == "horovod":
+            ray.get([
+                worker.setup_horovod.remote()
+                for i, worker in enumerate(self.remote_workers)])
+        else:
+            raise Exception("Only \"tf\" and \"horovod\" are legal "
+                            "value of backend, but got {}".format(backend))
 
     def fit(self):
-        return self.tf_trainer.train()
+        """Runs a training epoch."""
+
+        # see ./tf_runner.py:setup_distributed
+        # for an explanation of only taking the first worker's data
+        worker_stats = ray.get([w.step.remote() for w in self.remote_workers])
+        stats = worker_stats[0].copy()
+        return stats
 
     def evaluate(self):
-        return self.tf_trainer.validate()
+        """Evaluates the model on the validation data set."""
+        logger.info("Starting validation step.")
+
+        # see ./tf_runner.py:setup_distributed
+        # for an explanation of only taking the first worker's data
+        stats = ray.get([w.validate.remote() for w in self.remote_workers])
+        stats = stats[0].copy()
+        return stats
 
     def get_model(self):
-        return self.tf_trainer.get_model()
+        """Returns the learned model."""
+        state = ray.get(self.remote_workers[0].get_state.remote())
+        return self._get_model_from_state(state)
 
     def save(self, checkpoint):
-        return self.tf_trainer.save(checkpoint)
+        """Saves the model at the provided checkpoint.
+
+        Args:
+            checkpoint (str): Path to target checkpoint file.
+
+        """
+
+        state = ray.get(self.remote_workers[0].get_state.remote())
+
+        with open(checkpoint, "wb") as f:
+            pickle.dump(state, f)
+
+        return checkpoint
 
     def restore(self, checkpoint):
-        self.tf_trainer.restore(checkpoint)
+        """Restores the model from the provided checkpoint.
+
+        Args:
+            checkpoint (str): Path to target checkpoint file.
+
+        """
+        with open(checkpoint, "rb") as f:
+            state = pickle.load(f)
+
+        state_id = ray.put(state)
+        ray.get([worker.set_state.remote(state_id) for worker in self.remote_workers])
 
     def shutdown(self):
-        self.tf_trainer.shutdown()
+        """Shuts down workers and releases resources."""
+        for worker in self.remote_workers:
+            worker.shutdown.remote()
+            worker.__ray_terminate__.remote()
+
+    def _get_model_from_state(self, state):
+        """Creates model and load weights from state"""
+
+        model = self.model_creator(self.config)
+        model.set_weights(state["weights"])
+
+        # This part is due to ray.get() changing scalar np.int64 object to int
+        state["optimizer_weights"][0] = np.array(
+            state["optimizer_weights"][0], dtype=np.int64)
+
+        if model.optimizer.weights == []:
+            model._make_train_function()
+        model.optimizer.set_weights(state["optimizer_weights"])
+
+        return model

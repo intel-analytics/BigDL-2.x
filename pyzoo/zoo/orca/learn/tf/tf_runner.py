@@ -48,7 +48,8 @@ def _try_import_strategy():
 class TFRunner:
     """Manages a TensorFlow model for training."""
 
-    def __init__(self, model_creator, data_creator, config=None,
+    def __init__(self, model_creator, data_creator, compile_args,
+                 config=None,
                  verbose=False):
         """Initializes the runner.
         Args:
@@ -60,6 +61,7 @@ class TFRunner:
 
         self.model_creator = model_creator
         self.data_creator = data_creator
+        self.compile_args = compile_args
         self.config = {} if config is None else config
         self.inter_op_parallelism = self.config.get("inter_op_parallelism", 1)
         self.intra_op_parallelism = self.config.get("intra_op_parallelism", 1)
@@ -80,6 +82,21 @@ class TFRunner:
 
         logger.debug("Creating model")
         self.model = self.model_creator(self.config)
+        self.model.compile(**self.compile_args)
+        self.backend = "tf-local"
+
+    def setup_horovod(self):
+        import horovod.tensorflow.keras as hvd
+        hvd.init()
+        train_dataset, test_dataset = self.data_creator(self.config)
+        self.train_dataset = train_dataset.shard(hvd.size(), hvd.rank())
+        self.test_dataset = test_dataset.shard(hvd.size(), hvd.rank())
+
+        self.model = self.model_creator(self.config)
+        self.compile_args["optimizer"] = hvd.DistributedOptimizer(self.compile_args["optimizer"])
+
+        self.model.compile(**self.compile_args)
+        self.backend = "horovod"
 
     def setup_distributed(self, urls, world_rank, world_size):
         """Sets up TensorFLow distributed environment and initializes the model.
@@ -118,14 +135,30 @@ class TFRunner:
         logger.debug("Creating model with MultiWorkerMirroredStrategy")
         with self.strategy.scope():
             self.model = self.model_creator(self.config)
+            self.model.compile(**self.compile_args)
 
         # For use in model.evaluate()
         self.local_model = None
+        self.backend = "tf-distributed"
 
     def step(self):
         """Runs a training epoch and updates the model parameters."""
         fit_default_config = {"verbose": self.verbose}
         fit_default_config.update(self.config.get("fit_config", {}))
+
+        if self.backend == "horovod":
+            import horovod.tensorflow.keras as hvd
+            bcast_callback = [hvd.callbacks.BroadcastGlobalVariablesCallback(0)]
+            if hvd.rank() == 0:
+                fit_default_config["verbose"] = 1
+            else:
+                fit_default_config["verbose"] = 0
+
+            if "callbacks" in fit_default_config:
+                callbacks = fit_default_config["callbacks"]
+                fit_default_config["callbacks"] = bcast_callback + callbacks
+            else:
+                fit_default_config["callbacks"] = bcast_callback
 
         history = self.model.fit(self.train_dataset, **fit_default_config)
         if history is None:
@@ -141,6 +174,13 @@ class TFRunner:
         stats = {}
         evaluate_config = {"verbose": self.verbose}
         evaluate_config.update(self.config.get("evaluate_config", {}))
+
+        if self.backend == "horovod":
+            import horovod.tensorflow.keras as hvd
+            if hvd.rank() == 0:
+                evaluate_config["verbose"] = 1
+            else:
+                evaluate_config["verbose"] = 0
 
         results = self.model.evaluate(self.test_dataset, **evaluate_config)
         if results is None:
