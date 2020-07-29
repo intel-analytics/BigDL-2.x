@@ -15,10 +15,13 @@
 #
 
 import pytest
+import os
+import tempfile
+import shutil
 
 from bigdl.util.common import get_node_and_core_number
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.common import set_core_number
+from zoo.common import set_core_number, exists, mkdirs
 
 
 class TestUtil(ZooTestCase):
@@ -35,6 +38,17 @@ class TestUtil(ZooTestCase):
             " number to be {} but got {}".format(core_num + 1, new_core_num)
 
         set_core_number(core_num)
+
+    def test_exists_mkdir(self):
+        assert not exists("/abc")
+        resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
+        assert exists(resource_path)
+        temp = tempfile.mkdtemp()
+        mkdirs(os.path.join(temp, "test"))
+        assert exists(os.path.join(temp, "test"))
+        assert os.path.isdir(os.path.join(temp, "test"))
+        shutil.rmtree(temp)
+
 
 
 if __name__ == "__main__":

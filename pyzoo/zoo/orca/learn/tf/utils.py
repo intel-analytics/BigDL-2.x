@@ -13,6 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import tempfile
+import os
+from os.path import join, basename, dirname
+import re
+import shutil
+
+from zoo.common.utils import put_local_file_to_remote, get_remote_file_to_local, get_file_list
 from pyspark.sql.dataframe import DataFrame
 import tensorflow as tf
 
@@ -167,3 +174,85 @@ def convert_predict_to_dataframe(df, prediction_rdd):
     schema = StructType(df.schema.fields + [StructField('prediction', type)])
     result_df = result_rdd.toDF(schema)
     return result_df
+
+def save_tf_checkpoint_to_remote(sess, checkpoint_path, saver=None):
+    ckpt_name = basename(checkpoint_path)
+    remote_dir = dirname(checkpoint_path)
+    # save to local checkpoint
+    temp = tempfile.mkdtemp()
+    if saver is None:
+        saver = tf.train.Saver()
+    saver.save(sess, join(temp, ckpt_name))
+    # change checkpoint file
+    with open(join(temp, "checkpoint")) as f:
+        new_lines = []
+        lines = f.readlines()
+        for line in lines:
+            if re.compile("^model_checkpoint_path: \"(.*)\"$").match(line):
+                new_lines.append("model_checkpoint_path: \"{}\"\n".format(ckpt_name))
+            elif  re.compile("^all_model_checkpoint_paths: \"(.*)\"$").match(line):
+                new_lines.append("all_model_checkpoint_paths: \"{}\"\n".format(ckpt_name))
+            else:
+                new_lines.append(line)
+    with open(join(temp, "checkpoint"), 'w') as f:
+        f.writelines(new_lines)
+    # move to remote
+    [put_local_file_to_remote(join(temp, file), join(remote_dir, file), over_write=True) for file in os.listdir(temp)]
+    shutil.rmtree(temp)
+
+
+def get_checkpoint_state_remote(checkpoint_dir):
+    # check if checkpoint file exists
+    file_list = get_file_list(checkpoint_dir)
+    has_checkpoint = False
+    for file in file_list:
+        if basename(file) == 'checkpoint':
+            has_checkpoint = True
+            break
+    if not has_checkpoint:
+        return None
+    # get checkpoint file
+    temp = tempfile.mkdtemp()
+    get_remote_file_to_local(join(checkpoint_dir, "checkpoint"), join(temp, "checkpoint"))
+    with open(join(temp, "checkpoint")) as f:
+        lines = f.readlines()
+        for line in lines:
+            m = re.compile("^model_checkpoint_path: \"(.*)\"$").match(line)
+            if m:
+                ckpt_name = m.group(1)
+                break
+    # filter checkpoint files
+    checkpoint_files = [file for file in file_list if basename(file).startswith(ckpt_name)]
+    if not checkpoint_files:
+        shutil.rmtree(temp)
+        return None
+    # get checkpoint files
+    [get_remote_file_to_local(file, join(temp, basename(file))) for file in checkpoint_files]
+    # get checkpoint state
+    ckpt = tf.train.get_checkpoint_state(temp)
+    if not ckpt:
+        shutil.rmtree(temp)
+        return None
+    ckpt.model_checkpoint_path = join(checkpoint_dir, ckpt_name)
+    ckpt.all_model_checkpoint_paths[:] = [join(checkpoint_dir, ckpt_name)]
+    shutil.rmtree(temp)
+    return ckpt
+
+
+def load_tf_checkpoint_from_remote(sess, checkpoint_path, saver=None):
+    ckpt_name = basename(checkpoint_path)
+    checkpoint_dir = dirname(checkpoint_path)
+    file_list = get_file_list(checkpoint_dir)
+    # filter checkpoint files
+    checkpoint_files = [file for file in file_list if basename(file).startswith(ckpt_name)]
+    # get checkpoint files
+    temp = tempfile.mkdtemp()
+    [get_remote_file_to_local(file, join(temp, basename(file))) for file in checkpoint_files]
+    if saver is None:
+        saver = tf.train.Saver()
+    try:
+        saver.restore(sess, join(temp, ckpt_name))
+    except Exception as e:
+        raise e
+    finally:
+        shutil.rmtree(temp)
