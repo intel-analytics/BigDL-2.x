@@ -974,7 +974,7 @@ private[zoo] object InternalOptimizerUtil {
 
   def getModelCacheFromOptimizer[T: ClassTag](
         optimizer: Optimizer[T, MiniBatch[T]]): RDD[Cache[T]] = {
-    val field = classOf[DistriOptimizerV2[T]].getDeclaredField("models")
+    val field = classOf[DistriOptimizer[T]].getDeclaredField("models")
     field.setAccessible(true)
     val models = field.get(optimizer).asInstanceOf[RDD[Cache[T]]]
     models
@@ -1008,10 +1008,10 @@ private[zoo] object InternalOptimizerUtil {
 
   def initThreadModels[T: ClassTag](
       args: Object*)(
-      implicit ev: TensorNumeric[T]): (RDD[Cache[T]], ModelBroadcast[T]) = {
-    KerasUtils.invokeMethodWithEv(DistriOptimizerV2,
+      implicit ev: TensorNumeric[T]): (RDD[DistriOptimizer.Cache[T]], ModelBroadcast[T]) = {
+    KerasUtils.invokeMethodWithEv(DistriOptimizer,
       "com$intel$analytics$bigdl$optim$DistriOptimizer$$initThreadModels",
-      args: _*).asInstanceOf[(RDD[Cache[T]], ModelBroadcast[T])]
+      args: _*).asInstanceOf[(RDD[DistriOptimizer.Cache[T]], ModelBroadcast[T])]
   }
 
   def clearState[T: ClassTag](
