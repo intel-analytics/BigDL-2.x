@@ -177,8 +177,8 @@ class TorchRunner:
             if TorchRunner.should_wrap_dataloader(loader):
                 loader = iter(self.with_sampler(loader))
                 if num_steps:
-                    iterator = itertools.islice(loader, num_steps)
-            train_stats = self.training_operator.train_epoch(iterator, info)
+                    loader = itertools.islice(loader, num_steps)
+            train_stats = self.training_operator.train_epoch(loader, info)
 
         self.epochs += 1
         # This is so that `epochs` is first in ordering.
