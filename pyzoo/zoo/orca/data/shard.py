@@ -145,8 +145,12 @@ class SparkXShards(XShards):
 
     def transform_shard(self, func, *args):
         def transform(iter, func, *args):
-            for x in iter:
-                yield func(x, *args)
+            dfs = list(iter)
+            assert len(dfs) <= 1, "There should be at most one element on each partition"
+            if len(dfs) == 1:
+                return [func(dfs[0], *args)]
+            else:
+                return iter
 
         transformed_shard = SparkXShards(self.rdd.mapPartitions(lambda iter:
                                                                 transform(iter, func, *args)))
@@ -185,7 +189,19 @@ class SparkXShards(XShards):
         return self.rdd.getNumPartitions()
 
     def repartition(self, num_partitions):
-        repartitioned_shard = SparkXShards(self.rdd.repartition(num_partitions))
+        if self._get_class_name() == 'pandas.core.frame.DataFrame':
+            import pandas as pd
+
+            def combine(iter):
+                dfs = list(iter)
+                if len(dfs) > 0:
+                    return [pd.concat(dfs)]
+                else:
+                    return iter
+            new_rdd = self.rdd.repartition(num_partitions).mapPartitions(combine)
+            repartitioned_shard = SparkXShards(new_rdd)
+        else:
+            repartitioned_shard = SparkXShards(self.rdd.repartition(num_partitions))
         self._uncache()
         return repartitioned_shard
 
