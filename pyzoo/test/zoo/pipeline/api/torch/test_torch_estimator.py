@@ -66,10 +66,10 @@ class TestPytorch(TestCase):
         zoo_loss = TorchLoss.from_pytorch(loss_fn)
 
         def train_dataloader():
-            inputs = torch.Tensor([[1, 2],[1, 3],[3, 2],
-                                   [5, 6],[8, 9],[1, 9]])
-            targets = torch.Tensor([[0],[0],[0],
-                                    [1],[1],[1]])
+            inputs = torch.Tensor([[1, 2], [1, 3], [3, 2],
+                                   [5, 6], [8, 9], [1, 9]])
+            targets = torch.Tensor([[0], [0], [0],
+                                    [1], [1], [1]])
             return DataLoader(TensorDataset(inputs, targets), batch_size=2)
 
         train_featureset = FeatureSet.pytorch_dataloader_creator(train_dataloader)
