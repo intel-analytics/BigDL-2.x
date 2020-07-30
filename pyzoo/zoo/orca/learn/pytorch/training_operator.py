@@ -185,7 +185,7 @@ class TrainingOperator:
                 else:
                     desc = "{}e".format(info["epoch_idx"] + 1)
             _progress_bar = tqdm(
-                total=info[NUM_STEPS] or len(self.train_loader),
+                total=info[NUM_STEPS] or len(iterator),
                 desc=desc,
                 unit="batch",
                 leave=False)
