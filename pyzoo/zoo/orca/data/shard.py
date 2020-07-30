@@ -47,6 +47,17 @@ class XShards(object):
         """
         pass
 
+    @classmethod
+    def load_pickle(cls, path, minPartitions=None):
+        """
+        Load XShards from pickle files
+        :param path: The pickle file path/directory
+        :param minPartitions: minimum partitions for the XShards
+        :return: SparkXShards
+        """
+        sc = init_nncontext()
+        return SparkXShards(sc.pickleFile(path, minPartitions))
+
 
 class RayXShards(XShards):
     """
@@ -267,10 +278,7 @@ class SparkXShards(XShards):
         self.rdd.saveAsPickleFile(path, batchSize)
         return self
 
-    @classmethod
-    def load_pickle(cls, path, minPartitions=None):
-        sc = init_nncontext()
-        return SparkXShards(sc.pickleFile(path, minPartitions))
+
 
     def __del__(self):
         self.uncache()
