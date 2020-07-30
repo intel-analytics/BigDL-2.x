@@ -266,7 +266,8 @@ def get_node_ip():
 
 def __convert_list_tuple(data, allow_tuple, allow_list):
     if not allow_list and not allow_tuple:
-        raise ValueError("value of x and y should be a ndarray, but get a list instead")
+        raise ValueError("value of x and y should be a ndarray, but get a " +
+                         data.__class__.__name__ + " instead")
     if isinstance(data, list):
         if not allow_list and allow_tuple:
             return tuple(data)
