@@ -78,11 +78,11 @@ def check_type_and_convert(data, allow_tuple=True, allow_list=True):
             return [convert_data]
         elif isinstance(convert_data, tuple) and \
                 all([isinstance(di, np.ndarray) for di in convert_data]):
-            return __convert_list_tuple(convert_data, allow_tuple=allow_tuple,
+            return _convert_list_tuple(convert_data, allow_tuple=allow_tuple,
                                         allow_list=allow_list)
         elif isinstance(convert_data, list) and \
                 all([isinstance(di, np.ndarray) for di in convert_data]):
-            return __convert_list_tuple(convert_data, allow_tuple=allow_tuple,
+            return _convert_list_tuple(convert_data, allow_tuple=allow_tuple,
                                         allow_list=allow_list)
         else:
             raise ValueError("value of x and y should be a ndarray, "
@@ -172,11 +172,11 @@ def ray_partition_get_data_label(partition_data, allow_tuple=True, allow_list=Tr
                           data_list)
         elif isinstance(data_list[0], list):
             data = reduce(lambda list1, list2: combine_list(list1, list2), data_list)
-            data = __convert_list_tuple(data, allow_tuple=allow_tuple, allow_list=allow_list)
+            data = _convert_list_tuple(data, allow_tuple=allow_tuple, allow_list=allow_list)
             return data
         elif isinstance(data_list[0], tuple):
             data = reduce(lambda tuple1, tuple2: combine_tuple(tuple1, tuple2), data_list)
-            data = __convert_list_tuple(data, allow_tuple=allow_tuple, allow_list=allow_list)
+            data = _convert_list_tuple(data, allow_tuple=allow_tuple, allow_list=allow_list)
             return data
         else:
             raise ValueError(
@@ -264,7 +264,7 @@ def get_node_ip():
     return node_ip_address
 
 
-def __convert_list_tuple(data, allow_tuple, allow_list):
+def _convert_list_tuple(data, allow_tuple, allow_list):
     if not allow_list and not allow_tuple:
         raise ValueError("value of x and y should be a ndarray, but get a " +
                          data.__class__.__name__ + " instead")
