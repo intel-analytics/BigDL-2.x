@@ -18,4 +18,3 @@ from .recommender import *
 from .neuralcf import *
 from .wide_and_deep import *
 from .session_recommender import *
-from .txt import *
