@@ -278,8 +278,6 @@ class SparkXShards(XShards):
         self.rdd.saveAsPickleFile(path, batchSize)
         return self
 
-
-
     def __del__(self):
         self.uncache()
 
