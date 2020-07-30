@@ -50,9 +50,9 @@ class XShards(object):
     @classmethod
     def load_pickle(cls, path, minPartitions=None):
         """
-        Load XShards from pickle files
+        Load XShards from pickle files.
         :param path: The pickle file path/directory
-        :param minPartitions: minimum partitions for the XShards
+        :param minPartitions: The minimum partitions for the XShards
         :return: SparkXShards
         """
         sc = init_nncontext()
