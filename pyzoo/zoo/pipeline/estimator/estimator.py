@@ -48,6 +48,21 @@ class Estimator(JavaValue):
         :return:
         """
         callZooFunc(self.bigdl_type, "setConstantGradientClipping", self.value, min, max)
+      
+    def set_optimizer_version(self, optimizerVersion):
+        """
+        Set DistriOptimizer version.
+        :param optimizerVersion: should be OptimizerV1 or OptimizerV2.
+        :return:
+        """
+        callZooFunc(self.bigdl_type, "setOptimizerVersion", optimizerVersion)
+        
+    def get_optimizer_version(self):
+        """
+        Get DistriOptimizer version.:
+        :return optimizerVersion
+        """
+        return callZooFunc(self.bigdl_type, "getOptimizerVersion")
 
     def set_l2_norm_gradient_clipping(self, clip_norm):
         """

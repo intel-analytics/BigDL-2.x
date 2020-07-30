@@ -19,8 +19,10 @@ import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.bigdl.dataset.MiniBatch
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.utils.{OptimizerV1, OptimizerV2}
 import com.intel.analytics.zoo.feature.{DiskFeatureSet, DistributedFeatureSet, FeatureSet}
-import com.intel.analytics.zoo.pipeline.api.keras.models.InternalDistriOptimizer
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
+import com.intel.analytics.zoo.pipeline.api.keras.models.{InternalDistriOptimizer, InternalDistriOptimizerV2}
 import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
@@ -124,10 +126,18 @@ class Estimator[T: ClassTag] private[zoo](
     trainSet match {
       case d: DistributedFeatureSet[MiniBatch[T]] =>
         if (internalEstimator == null) {
-          internalEstimator = new InternalDistriOptimizer[T](model, null, criterion)
-            .setCheckpointDir(modelDir)
-            .setOptimMethods(optimMethods)
-            .setNumOfSlice(d.numOfSlice)
+          EngineRef.getOptimizerVersion() match {
+            case OptimizerV1 =>
+              internalEstimator = new InternalDistriOptimizer[T](model, null, criterion)
+                .setCheckpointDir(modelDir)
+                .setOptimMethods(optimMethods)
+                .setNumOfSlice(d.numOfSlice)
+            case OptimizerV2 =>
+              internalEstimator = new InternalDistriOptimizerV2[T](model, null, criterion)
+                .setCheckpointDir(modelDir)
+                .setOptimMethods(optimMethods)
+                .setNumOfSlice(d.numOfSlice)
+          }
         }
       case _ => throw new IllegalArgumentException("Unsupported FeatureSet type.")
     }
@@ -166,9 +176,16 @@ class Estimator[T: ClassTag] private[zoo](
     if (internalEstimator == null) {
       internalEstimator = validationSet match {
         case d: DistributedFeatureSet[MiniBatch[T]] =>
-          new InternalDistriOptimizer[T](model, null, null)
-            .setCheckpointDir(modelDir)
-            .setOptimMethods(optimMethods)
+          EngineRef.getOptimizerVersion() match {
+            case OptimizerV1 =>
+            new InternalDistriOptimizer[T](model, null, null)
+              .setCheckpointDir(modelDir)
+              .setOptimMethods(optimMethods)
+            case OptimizerV2 => 
+              new InternalDistriOptimizerV2[T](model, null, null)
+              .setCheckpointDir(modelDir)
+              .setOptimMethods(optimMethods)
+          }
         case _ => throw new IllegalArgumentException("Unsupported FeatureSet type.")
       }
     }
