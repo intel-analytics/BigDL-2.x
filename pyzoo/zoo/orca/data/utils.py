@@ -67,16 +67,23 @@ def extract_one_path(file_path, env):
     return file_paths
 
 
-def check_type_and_convert(data, tuple_allowed=True, list_allowed=True):
+def check_type_and_convert(data, allow_tuple=True, allow_list=True):
+    """
+    :param allow_tuple: boolean, if the model accepts a tuple as input. Default: True
+    :param allow_list: boolean, if the model accepts a list as input. Default: True
+    :return:
+    """
     def check_and_convert(convert_data):
         if isinstance(convert_data, np.ndarray):
             return [convert_data]
         elif isinstance(convert_data, tuple) and \
                 all([isinstance(di, np.ndarray) for di in convert_data]):
-            return __convert_tuple(convert_data, tuple_allowed, list_allowed)
+            return __convert_list_tuple(convert_data, allow_tuple=allow_tuple,
+                                        allow_list=allow_list)
         elif isinstance(convert_data, list) and \
                 all([isinstance(di, np.ndarray) for di in convert_data]):
-            return __convert_list(convert_data, tuple_allowed, list_allowed)
+            return __convert_list_tuple(convert_data, allow_tuple=allow_tuple,
+                                        allow_list=allow_list)
         else:
             raise ValueError("value of x and y should be a ndarray, "
                              "a tuple of ndarrays or a list of ndarrays")
@@ -92,9 +99,14 @@ def check_type_and_convert(data, tuple_allowed=True, list_allowed=True):
     return result
 
 
-def get_spec(tuple_allowed=True, list_allowed=True):
+def get_spec(allow_tuple=True, allow_list=True):
+    """
+    :param allow_tuple: boolean, if the model accepts a tuple as input. Default: True
+    :param allow_list: boolean, if the model accepts a list as input. Default: True
+    :return:
+    """
     def _get_spec(data):
-        data = check_type_and_convert(data, tuple_allowed, list_allowed)
+        data = check_type_and_convert(data, allow_tuple, allow_list)
         feature_spec = [(feat.dtype, feat.shape[1:])
                         for feat in data["x"]]
         if "y" in data:
@@ -107,9 +119,14 @@ def get_spec(tuple_allowed=True, list_allowed=True):
 
 
 # todo this might be very slow
-def flatten_xy(tuple_allowed=True, list_allowed=True):
+def flatten_xy(allow_tuple=True, allow_list=True):
+    """
+    :param allow_tuple: boolean, if the model accepts a tuple as input. Default: True
+    :param allow_list: boolean, if the model accepts a list as input. Default: True
+    :return:
+    """
     def _flatten_xy(data):
-        data = check_type_and_convert(data, tuple_allowed, list_allowed)
+        data = check_type_and_convert(data, allow_tuple, allow_list)
         features = data["x"]
 
         has_label = "y" in data
@@ -126,16 +143,26 @@ def flatten_xy(tuple_allowed=True, list_allowed=True):
     return _flatten_xy
 
 
-def ray_partition_get_data_label(partition_data, tuple_allowed=True, list_allowed=True):
+def ray_partition_get_data_label(partition_data, allow_tuple=True, allow_list=True):
+    """
+    :param partition_data:
+    :param allow_tuple: boolean, if the model accepts a tuple as input. Default: True
+    :param allow_list: boolean, if the model accepts a list as input. Default: True
+    :return:
+    """
     from functools import reduce
 
     def combine_dict(dict1, dict2):
         return {key: np.concatenate((value, dict2[key]), axis=0)
                 for (key, value) in dict1.items()}
 
-    def combine_list_tuple(list1, list2):
+    def combine_list(list1, list2):
         return [np.concatenate((list1[index], list2[index]), axis=0)
                 for index in range(0, len(list1))]
+
+    def combine_tuple(tuple1, tuple2):
+        return tuple(np.concatenate((tuple1[index], tuple2[index]), axis=0)
+                     for index in range(0, len(tuple1)))
 
     def check_type_and_combine(data_list):
         if isinstance(data_list[0], dict):
@@ -144,12 +171,12 @@ def ray_partition_get_data_label(partition_data, tuple_allowed=True, list_allowe
             return reduce(lambda array1, array2: np.concatenate((array1, array2), axis=0),
                           data_list)
         elif isinstance(data_list[0], list):
-            data = reduce(lambda list1, list2: combine_list_tuple(list1, list2), data_list)
-            data = __convert_list(data, tuple_allowed, list_allowed)
+            data = reduce(lambda list1, list2: combine_list(list1, list2), data_list)
+            data = __convert_list_tuple(data, allow_tuple=allow_tuple, allow_list=allow_list)
             return data
         elif isinstance(data_list[0], tuple):
-            data = reduce(lambda tuple1, tuple2: combine_list_tuple(tuple1, tuple2), data_list)
-            data = __convert_tuple(data, tuple_allowed, list_allowed)
+            data = reduce(lambda tuple1, tuple2: combine_tuple(tuple1, tuple2), data_list)
+            data = __convert_list_tuple(data, allow_tuple=allow_tuple, allow_list=allow_list)
             return data
         else:
             raise ValueError(
@@ -237,19 +264,13 @@ def get_node_ip():
     return node_ip_address
 
 
-def __convert_list(data, tuple_allowed, list_allowed):
-    if not list_allowed and tuple_allowed:
-        return tuple(data)
-    elif not list_allowed and not tuple_allowed:
+def __convert_list_tuple(data, allow_tuple, allow_list):
+    if not allow_list and not allow_tuple:
         raise ValueError("value of x and y should be a ndarray, but get a list instead")
+    if isinstance(data, list):
+        if not allow_list and allow_tuple:
+            return tuple(data)
     else:
-        return data
-
-
-def __convert_tuple(data, tuple_allowed, list_allowed):
-    if not tuple_allowed and list_allowed:
-        return list(data)
-    elif not list_allowed and not tuple_allowed:
-        raise ValueError("value of x and y should be a ndarray, but get a tuple instead")
-    else:
-        return data
+        if not allow_tuple and allow_list:
+            return list(data)
+    return data

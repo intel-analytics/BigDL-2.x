@@ -84,16 +84,16 @@ class MXNetRunner(object):
             if isinstance(train_data, RayPartition):
                 from zoo.orca.data.utils import ray_partition_get_data_label
                 data, label = ray_partition_get_data_label(train_data.get_data(),
-                                                           tuple_allowed=False,
-                                                           list_allowed=False)
+                                                           allow_tuple=False,
+                                                           allow_list=False)
                 train_data_iter = mx.io.NDArrayIter(data=data, label=label,
                                                     batch_size=batch_size, shuffle=True)
                 if train_resize_batch_num is not None:
                     train_data_iter = mx.io.ResizeIter(train_data_iter, train_resize_batch_num)
                 if validation_data:
                     data_val, label_val = ray_partition_get_data_label(validation_data.get_data(),
-                                                                       tuple_allowed=False,
-                                                                       list_allowed=False)
+                                                                       allow_tuple=False,
+                                                                       allow_list=False)
                     val_data_iter = mx.io.NDArrayIter(data=data_val, label=label_val,
                                                       batch_size=batch_size, shuffle=True)
                 else:
