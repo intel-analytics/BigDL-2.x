@@ -387,7 +387,7 @@ object PythonFeatureSet{
       case ndArray: NDArray[_] =>
         Array(ndArrayToTensor(ndArray))
       case ndArrays: util.ArrayList[_] =>
-        if(ndArrays.size() > 0) {
+        if (ndArrays.size() > 0) {
           ndArrays.get(0) match {
             case _: NDArray[_] =>
               ndArrays.asInstanceOf[util.ArrayList[NDArray[_]]].asScala.toArray.map { input =>
