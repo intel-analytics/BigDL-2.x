@@ -195,14 +195,17 @@ class RayContext(object):
     _active_ray_context = None
 
     def __init__(self, sc, redis_port=None, password="123456", object_store_memory=None,
-                 verbose=False, env=None, extra_params=None):
+                 verbose=False, env=None, extra_params=None,
+                 num_ray_nodes=None, ray_node_cpu_cores=None):
         """
         The RayContext would initiate a ray cluster on top of the configuration of SparkContext.
         After creating RayContext, call the init method to set up the cluster.
 
         - For Spark local mode: The total available cores is equal to Spark local cores.
         - For Spark cluster mode: The number of raylets is equal to number of executors.
-        The number of available cores for each raylet is equal to executor cores.
+        The number of available cores for each raylet is equal to the executor cores.
+        You are allowed to specify num_ray_nodes and ray_node_cpu_cores for configurations
+        to start raylets.
 
         :param sc: An instance of SparkContext.
         :param redis_port: redis port for the "head" node.
@@ -215,6 +218,14 @@ class RayContext(object):
         :param env: The environment variable dict for running ray processes. Default is None.
         :param extra_params: The key value dict for extra options to launch ray.
         For example, extra_params={"temp-dir": "/tmp/ray/"}
+        :param num_ray_nodes: The number of raylets to start across the cluster. For Spark local
+        mode, you don't need to specify this value. For Spark cluster mode, it is default to be
+        the number of executors. If spark.executor.instances can't be detected in your SparkContext,
+        you need to explicitly specify this.
+        :param ray_node_cpu_cores: The number of available cores for each raylet. For Spark local
+        mode, it is default to be Spark local cores. For Spark cluster mode, it is default to be
+        the executor cores. If spark.executor.cores or spark.cores.max can't be detected in your
+        SparkContext, you need to explicitly specify this.
         """
         assert sc is not None, "sc cannot be None, please create a SparkContext first"
         self.sc = sc
@@ -229,13 +240,33 @@ class RayContext(object):
         self._address_info = None
         if self.is_local:
             self.num_ray_nodes = 1
-            self.ray_node_cpu_cores = self._get_spark_local_cores()
+            self.ray_node_cpu_cores = ray_node_cpu_cores if ray_node_cpu_cores \
+                else self._get_spark_local_cores()
         # For Spark local mode, directly call ray.init() and ray.shutdown().
         # ray.shutdown() would clear up all the ray related processes.
         # Ray Manager is only needed for Spark cluster mode to monitor ray processes.
         else:
-            self.num_ray_nodes = int(self.sc.getConf().get("spark.executor.instances"))
-            self.ray_node_cpu_cores = int(self.sc.getConf().get("spark.executor.cores"))
+            if ray_node_cpu_cores:
+                self.ray_node_cpu_cores = ray_node_cpu_cores
+            elif self.sc.getConf().contains("spark.executor.cores"):
+                self.ray_node_cpu_cores = int(self.sc.getConf().get("spark.executor.cores"))
+            else:
+                raise Exception("spark.executor.cores not detected in the SparkContext, "
+                                "you need to manually specify num_ray_nodes and ray_node_cpu_cores "
+                                "for RayContext to start ray services")
+            if num_ray_nodes:
+                self.num_ray_nodes = num_ray_nodes
+            elif self.sc.getConf().contains("spark.executor.instances"):
+                self.num_ray_nodes = int(self.sc.getConf().get("spark.executor.instances"))
+            elif self.sc.getConf().contains("spark.cores.max"):
+                import math
+                self.num_ray_nodes = math.floor(
+                    int(self.sc.getConf().get("spark.cores.max")) / self.ray_node_cpu_cores)
+            else:
+                raise Exception("spark.executor.cores not detected in the SparkContext, "
+                                "you need to manually specify num_ray_nodes and ray_node_cpu_cores "
+                                "for RayContext to start ray services")
+
             self.python_loc = os.environ['PYSPARK_PYTHON']
             self.redis_port = random.randint(10000, 65535) if not redis_port else redis_port
             self.ray_service = RayServiceFuncGenerator(
@@ -355,7 +386,6 @@ class RayContext(object):
         return self
 
     def _start_restricted_worker(self, num_cores, node_ip_address):
-
         extra_param = {"node-ip-address": node_ip_address}
         if self.extra_params is not None:
             extra_param.update(self.extra_params)
