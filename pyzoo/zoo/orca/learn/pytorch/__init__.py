@@ -17,3 +17,4 @@
 from .pytorch_trainer import PyTorchTrainer
 from .training_operator import TrainingOperator
 from .pytorch_horovod_estimator import PyTorchHorovodEstimator
+from .estimator import Estimator
