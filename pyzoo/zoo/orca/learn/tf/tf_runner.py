@@ -34,9 +34,17 @@ import os
 
 import ray
 import ray.services
-from ray.util.sgd import utils
-
+from contextlib import closing
+import logging
+import socket
 logger = logging.getLogger(__name__)
+
+
+def find_free_port():
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(("", 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]
 
 
 def _try_import_strategy():
@@ -229,4 +237,4 @@ class TFRunner:
 
     def find_free_port(self):
         """Finds a free port on the current node."""
-        return utils.find_free_port()
+        return find_free_port()

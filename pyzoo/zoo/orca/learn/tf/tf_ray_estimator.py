@@ -66,6 +66,13 @@ class TFRayEstimator(HorovodRayRunner):
         self.config = {} if config is None else config
         self.verbose = verbose
 
+        ray_ctx = RayContext.get()
+        if "inter_op_parallelism" not in self.config:
+            self.config["inter_op_parallelism"] = 1
+
+        if "intra_op_parallelism" not in config:
+            self.config["intra_op_parallelism"] = ray_ctx.ray_node_cpu_cores
+
         params = {
             "model_creator": model_creator,
             "data_creator": data_creator,
@@ -74,13 +81,7 @@ class TFRayEstimator(HorovodRayRunner):
             "verbose": self.verbose,
         }
 
-        if "inter_op_parallelism" not in self.config:
-            self.config["inter_op_parallelism"] = 1
-
-        if "intra_op_parallelism" not in config:
-            self.config["intra_op_parallelism"] = self.cores_per_node
-
-        super().__init__(RayContext.get(), worker_cls=TFWorker, worker_param=params)
+        super().__init__(ray_ctx, worker_cls=TFWorker, worker_param=params)
 
         # Generate actor class
         # todo: are these resource quotas right?
