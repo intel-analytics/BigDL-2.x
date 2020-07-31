@@ -1666,46 +1666,7 @@ private[zoo] class InternalDistriOptimizerV2[T: ClassTag] (
       case _ => throw new IllegalArgumentException
     }
 
-    val models = if (null != cachedModels) {
-      val bcVMethods = cachedModels.sparkContext.broadcast(validationMethod)
-      cachedModels.map{cache =>
-        CacheV2[T](
-          cache.localModels,
-          cache.modelWeights,
-          cache.modelGradients,
-          cache.localCriterions,
-          cache.localStates,
-          cache.moduleTimeList,
-          Array.tabulate(_subModelNumber)(_ =>
-            Some(bcVMethods.value.map(_.clone()))),
-          cache.optimMethods,
-          cache.parameterSynchronizer,
-          cache.parameter,
-          cache.parameterSplits,
-          cache.parameterProcessers
-        )
-      }
-    } else {
-      val bcVMethods = validateRDD.sparkContext.broadcast(validationMethod)
-      val bcModel = ModelBroadcast[T]().broadcast(sc, _model)
-      validateRDD.mapPartitions{_ =>
-        Iterator.single(CacheV2[T](
-          Array.tabulate(_subModelNumber)(_ => bcModel.value()),
-          null,
-          null,
-          null,
-          null,
-          null,
-          Array.tabulate(_subModelNumber) { _ =>
-            Some(bcVMethods.value.map(_.clone()))},
-          null,
-          null,
-          null,
-          null,
-          null
-        ))
-      }
-    }
+    val models = this.cachedModels
 
     // get current iteration from optimMethod
     val step = if (null != optimMethods && optimMethods.size != 0) {
