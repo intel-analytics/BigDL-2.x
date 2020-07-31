@@ -155,7 +155,7 @@ object Utils {
   }
 
   /**
-   * convert a row to tensor given column feature information of WideAndDeep model.
+   * prepare tensor for wide part of WideAndDeep model based on SparseDense.
    *
    * @param r          Row of userId, itemId, features and label
    * @param columnInfo ColumnFeatureInfo specify information of different features
@@ -181,7 +181,7 @@ object Utils {
   }
 
   /**
-   * convert a row to tensor given column feature information of WideAndDeep model.
+   * prepare tensor for wide part of WideAndDeep model based on sequential api and LookupTableSparse.
    *
    * @param r          Row of userId, itemId, features and label
    * @param columnInfo ColumnFeatureInfo specify information of different features

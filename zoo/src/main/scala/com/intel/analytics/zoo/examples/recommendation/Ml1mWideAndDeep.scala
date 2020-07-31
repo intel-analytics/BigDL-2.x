@@ -43,17 +43,16 @@ object Ml1mWideAndDeep {
       loadPublicData(sqlContext, params.inputDir)
 
     ratingsDF.groupBy("label").count().show()
-    val bucketSize = 100
     val localColumnInfo = ColumnFeatureInfo(
-      wideBaseCols = Array("occupation", "gender"),
-      wideBaseDims = Array(21, 3),
-      wideCrossCols = Array("age-gender"),
-      wideCrossDims = Array(bucketSize),
-      indicatorCols = Array("genres", "gender"),
+      wideBaseCols = Array("genderind","ageind","occupation", "genresfull","genres1st"),
+      wideBaseDims = Array(8, 3, 21, 500, 19),
+      wideCrossCols = Array("gender-age", "gender-age-occupation", "gender-genres"),
+      wideCrossDims = Array(500, 500, 500),
+      indicatorCols = Array("genres1st", "genderind"),
       indicatorDims = Array(19, 3),
-      embedCols = Array("userId", "itemId"),
-      embedInDims = Array(userCount, itemCount),
-      embedOutDims = Array(64, 64),
+      embedCols = Array("userId", "itemId", "genres1st", "occupation"),
+      embedInDims = Array(userCount, itemCount, 19, 21),
+      embedOutDims = Array(64, 64, 64, 64),
       continuousCols = Array("age"))
 
     val wideAndDeep: WideAndDeep[Float] = WideAndDeep[Float](
@@ -71,8 +70,8 @@ object Ml1mWideAndDeep {
     val validationRdds = validationpairFeatureRdds.map(x => x.sample)
 
     val optimMethod = new Adam[Float](
-      learningRate = 1e-2,
-      learningRateDecay = 1e-5)
+      learningRate = 1e-3,
+      learningRateDecay = 1e-6)
 
     wideAndDeep.compile(optimizer = optimMethod,
       loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
@@ -88,13 +87,13 @@ object Ml1mWideAndDeep {
     resultsClass.take(5).foreach(println)
 
     val userItemPairPrediction = wideAndDeep.predictUserItemPair(validationpairFeatureRdds)
-    userItemPairPrediction.take(50).foreach(println)
+    userItemPairPrediction.take(20).foreach(println)
 
     val userRecs = wideAndDeep.recommendForUser(validationpairFeatureRdds, 3)
     val itemRecs = wideAndDeep.recommendForItem(validationpairFeatureRdds, 3)
 
-    userRecs.take(10).foreach(println)
-    itemRecs.take(10).foreach(println)
+    userRecs.take(5).foreach(println)
+    itemRecs.take(5).foreach(println)
 
     println("finished...")
     sc.stop()
@@ -116,7 +115,7 @@ object Ml1mWideAndDeep {
     val itemDF = sqlContext.read.text(dataPath + "/movies.dat").as[String]
       .map(x => {
         val line = x.split("::")
-        Item(line(0).toInt, line(1), line(2).split('|')(0))
+        Item(line(0).toInt, line(1), line(2))//.split('|')(0))
       }).toDF()
 
     val minMaxRow = ratings.agg(max("userId"), max("itemId")).collect()(0)
@@ -133,36 +132,34 @@ object Ml1mWideAndDeep {
                       columnInfo: ColumnFeatureInfo,
                       modelType: String): RDD[UserItemFeature[Float]] = {
 
-    // age and gender as cross features, gender its self as wide base features
-    val genderUDF = udf(Utils.categoricalFromVocabList(Array("F", "M")))
-    val bucketUDF = udf(Utils.buckBucket(100))
-    val genresList = Array("Crime", "Romance", "Thriller", "Adventure", "Drama", "Children's",
-      "War", "Documentary", "Fantasy", "Mystery", "Musical", "Animation", "Film-Noir", "Horror",
-      "Western", "Comedy", "Action", "Sci-Fi")
-    val genresUDF = udf(Utils.categoricalFromVocabList(genresList))
-
-    val userDfUse = userDF
-      .withColumn("age-gender", bucketUDF(col("age"), col("gender")))
-      .withColumn("gender", genderUDF(col("gender")))
-
-    // genres as indicator
-    val itemDfUse = itemDF
-      .withColumn("genres", genresUDF(col("genres")))
-
     val unioned = if (isImplicit) {
       val negativeDF = Utils.getNegativeSamples(ratingDF)
       negativeDF.unionAll(ratingDF.withColumn("label", lit(2)))
     }
     else ratingDF
 
-    // userId, itemId as embedding features
-    val joined = unioned
-      .join(itemDfUse, Array("itemId"))
-      .join(userDfUse, Array("userId"))
-      .select(unioned("userId"), unioned("itemId"), col("label"), col("gender"), col("age"),
-        col("occupation"), col("genres"), col("age-gender"))
+    val genresList = Array("Crime", "Romance", "Thriller", "Adventure", "Drama", "Children's",
+      "War", "Documentary", "Fantasy", "Mystery", "Musical", "Animation", "Film-Noir", "Horror",
+      "Western", "Comedy", "Action", "Sci-Fi")
+    val genresUDF = udf(Utils.categoricalFromVocabList(genresList))
+    val genderUDF = udf(Utils.categoricalFromVocabList(Array("F", "M")))
+    val ageUDF = udf(Utils.categoricalFromVocabList(Array("1","18","25","35","45","50","56")))
+    val bucket1UDF = udf(Utils.buckBuckets(500)(_:String))
+    val bucket2UDF = udf(Utils.buckBuckets(500)(_:String,_:String))
+    val bucket3UDF = udf(Utils.buckBuckets(500)(_: String, _: String, _: String))
 
-    val rddOfSample = joined.rdd.map(r => {
+    val dataUse = unioned
+      .join(itemDF, Array("itemId"))
+      .join(userDF, Array("userId"))
+      .withColumn("genderind", genderUDF(col("gender")))
+      .withColumn("ageind", ageUDF(col("age")))
+      .withColumn("gender-age", bucket2UDF(col("gender"), col("age")))
+      .withColumn("gender-age-occupation", bucket3UDF(col("gender"), col("age"), col("occupation")))
+      .withColumn("gender-genres", bucket2UDF(col("gender"), col("genres")))
+      .withColumn("genres1st", genresUDF(col("genres")))
+      .withColumn("genresfull", bucket1UDF(col("genres")))
+
+    val rddOfSample = dataUse.rdd.map(r => {
       val uid = r.getAs[Int]("userId")
       val iid = r.getAs[Int]("itemId")
       UserItemFeature(uid, iid, Utils.row2Sample(r, columnInfo, modelType))
