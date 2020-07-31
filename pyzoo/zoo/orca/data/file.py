@@ -16,6 +16,8 @@
 
 import os
 
+from zoo.common.utils import callZooFunc
+
 
 def open_text(path):
     # Return a list of lines
@@ -92,50 +94,19 @@ def load_numpy(path):
 
 
 def exists(path):
-    if path.startswith("hdfs"):  # hdfs://url:port/file_path
-        import pyarrow as pa
-        fs = pa.hdfs.connect()
-        return fs.exists(path)
-    elif path.startswith("s3"):  # s3://bucket/file_path
-        access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
-        secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
-        import boto3
-        s3_client = boto3.Session(
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key).client('s3', verify=False)
-        path_parts = path.split("://")[1].split('/')
-        bucket = path_parts.pop(0)
-        key = "/".join(path_parts)
-        try:
-            s3_client.get_object(Bucket=bucket, Key=key)
-        except Exception as ex:
-            if ex.response['Error']['Code'] == 'NoSuchKey':
-                return False
-            raise ex
-        return True
-    else:
-        return os.path.exists(path)
+    # local path
+    if not (path.startswith("hdfs://") or path.startswith("s3://") or
+                path.startswith("file://")):
+        path = os.path.abspath(path)
+    return callZooFunc("float", "exists", path)
 
 
 def makedirs(path):
-    if path.startswith("hdfs"):  # hdfs://url:port/file_path
-        import pyarrow as pa
-        fs = pa.hdfs.connect()
-        if not fs.exists(path):
-            return fs.mkdir(path)
-    elif path.startswith("s3"):  # s3://bucket/file_path
-        access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
-        secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
-        import boto3
-        s3_client = boto3.Session(
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key).client('s3', verify=False)
-        path_parts = path.split("://")[1].split('/')
-        bucket = path_parts.pop(0)
-        key = "/".join(path_parts)
-        return s3_client.put_object(Bucket=bucket, Key=key, Body='')
-    else:
-        return os.makedirs(path)
+    # local path
+    if not (path.startswith("hdfs://") or path.startswith("s3://") or
+                path.startswith("file://")):
+        path = os.path.abspath(path)
+    callZooFunc("float", "mkdirs", path)
 
 
 def write_text(path, text):

@@ -136,14 +136,6 @@ def callZooFunc(bigdl_type, name, *args):
     raise error
 
 
-def exists(path):
-    return callZooFunc("float", "exists", path)
-
-
-def mkdirs(path):
-    callZooFunc("float", "mkdirs", path)
-
-
 class JTensor(BJTensor):
 
     def __init__(self, storage, shape, bigdl_type="float", indices=None):
