@@ -197,13 +197,13 @@ object FrontEndApp extends Supportive {
           }
         }
       }
-
-
-      val serverContext = defineServerContext(arguments.httpsKeyStorePassword,
-        arguments.httpsKeyStorePath)
-      Http().bindAndHandle(route, arguments.interface, port = arguments.securePort,
-        connectionContext = serverContext)
-      logger.info(s"https started at https://${arguments.interface}:${arguments.securePort}")
+      if (arguments.httpsEnabled) {
+        val serverContext = defineServerContext(arguments.httpsKeyStorePassword,
+          arguments.httpsKeyStorePath)
+        Http().bindAndHandle(route, arguments.interface, port = arguments.securePort,
+          connectionContext = serverContext)
+        logger.info(s"https started at https://${arguments.interface}:${arguments.securePort}")
+      }
       Http().bindAndHandle(route, arguments.interface, arguments.port)
       logger.info(s"http started at http://${arguments.interface}:${arguments.port}")
       system.scheduler.schedule(10 milliseconds, 10 milliseconds,
@@ -271,6 +271,9 @@ object FrontEndApp extends Supportive {
     opt[Boolean]('s', "redisSecureEnabled")
       .action((x, c) => c.copy(redisSecureEnabled = x))
       .text("redis secure enabled or not")
+    opt[Boolean]('s', "httpsEnabled")
+      .action((x, c) => c.copy(httpsEnabled = x))
+      .text("https enabled or not")
     opt[String]('p', "redissTrustStorePath")
       .action((x, c) => c.copy(redissTrustStorePath = x))
       .text("rediss trustStore path")
@@ -316,9 +319,10 @@ case class FrontEndAppArguments(
     tokenBucketEnabled: Boolean = false,
     tokensPerSecond: Int = 100,
     tokenAcquireTimeout: Int = 100,
-    httpsKeyStorePath: String = getClass.getClassLoader.getResource("keys/keystore.pkcs12").getPath,
+    httpsEnabled: Boolean = false,
+    httpsKeyStorePath: String = null,
     httpsKeyStorePassword: String = "1234qwer",
-    redisSecureEnabled: Boolean = true,
-    redissTrustStorePath: String = getClass.getClassLoader.getResource("keys/keystore.jks").getPath,
+    redisSecureEnabled: Boolean = false,
+    redissTrustStorePath: String = null,
     redissTrustStorePassword: String = "1234qwer"
 )
