@@ -22,7 +22,7 @@ import torch.nn as nn
 
 from zoo import init_spark_on_yarn, init_spark_on_local
 from zoo.ray import RayContext
-from zoo.orca.learn.pytorch.pytorch_horovod_estimator import PyTorchHorovodEstimator
+from zoo.orca.learn.pytorch import Estimator
 
 
 class LinearDataset(torch.utils.data.Dataset):
@@ -60,24 +60,26 @@ def scheduler_creator(optimizer, config):
     return torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.9)
 
 
-def data_creator(config):
-    """Returns training dataloader, validation dataloader."""
+def train_data_creator(config):
     train_dataset = LinearDataset(2, 5, size=config.get("data_size", 1000))
-    val_dataset = LinearDataset(2, 5, size=config.get("val_size", 400))
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
         batch_size=config.get("batch_size", 32),
     )
+    return train_loader
+
+
+def validation_data_creator(config):
+    val_dataset = LinearDataset(2, 5, size=config.get("val_size", 400))
     validation_loader = torch.utils.data.DataLoader(
         val_dataset,
         batch_size=config.get("batch_size", 32))
-    return train_loader, validation_loader
+    return validation_loader
 
 
 def train_example():
-    trainer1 = PyTorchHorovodEstimator(
+    estimator = Estimator.from_model_creator(
         model_creator=model_creator,
-        data_creator=data_creator,
         optimizer_creator=optimizer_creator,
         loss_creator=nn.MSELoss,
         scheduler_creator=scheduler_creator,
@@ -88,9 +90,10 @@ def train_example():
         })
 
     # train 5 epochs
-    for i in range(5):
-        stats = trainer1.train()
-        print(stats)
+    stats = estimator.fit(train_data_creator, epochs=5)
+    print("train stats: {}".format(stats))
+    val_stats = estimator.evaluate(validation_data_creator)
+    print("validation stats: {}".format(val_stats))
 
 
 parser = argparse.ArgumentParser()
@@ -127,7 +130,7 @@ if __name__ == "__main__":
         sc = init_spark_on_yarn(
             hadoop_conf=args.hadoop_conf,
             conda_name=args.conda_name,
-            num_executor=args.slave_num,
+            num_executors=args.slave_num,
             executor_cores=args.executor_cores,
             executor_memory=args.executor_memory,
             driver_memory=args.driver_memory,

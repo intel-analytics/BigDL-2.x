@@ -16,8 +16,8 @@
 from py4j.protocol import Py4JError
 
 from zoo.orca.data.utils import *
+from zoo.orca import OrcaContext
 from zoo.common.nncontext import init_nncontext
-from zoo import ZooContext
 
 
 class XShards(object):
@@ -46,6 +46,17 @@ class XShards(object):
         :return: an int
         """
         pass
+
+    @classmethod
+    def load_pickle(cls, path, minPartitions=None):
+        """
+        Load XShards from pickle files.
+        :param path: The pickle file path/directory
+        :param minPartitions: The minimum partitions for the XShards
+        :return: SparkXShards
+        """
+        sc = init_nncontext()
+        return SparkXShards(sc.pickleFile(path, minPartitions))
 
 
 class RayXShards(XShards):
@@ -137,7 +148,7 @@ class SparkXShards(XShards):
         if transient:
             self.eager = False
         else:
-            self.eager = ZooContext._orca_eager_mode
+            self.eager = OrcaContext._eager_mode
             self.rdd.cache()
         if self.eager:
             self.compute()
@@ -266,11 +277,6 @@ class SparkXShards(XShards):
     def save_pickle(self, path, batchSize=10):
         self.rdd.saveAsPickleFile(path, batchSize)
         return self
-
-    @classmethod
-    def load_pickle(cls, path, minPartitions=None):
-        sc = init_nncontext()
-        return SparkXShards(sc.pickleFile(path, minPartitions))
 
     def __del__(self):
         self.uncache()

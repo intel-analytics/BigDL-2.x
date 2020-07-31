@@ -24,7 +24,7 @@ import io
 
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.pytorch.torch_runner import TorchRunner
-from torch.utils.data import DataLoader, IterableDataset
+from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from zoo.orca.learn.horovod.horovod_ray_runner import HorovodRayRunner, HorovodWorker
 from zoo.ray import RayContext
@@ -40,10 +40,6 @@ class TorchWorker(HorovodWorker, TorchRunner):
     def setup_components(self):
         import horovod.torch as hvd
 
-        logger.debug("Loading data.")
-        if self.data_creator and callable(self.data_creator):
-            self._initialize_dataloaders()
-
         logger.debug("Creating model")
         self.models = self.model_creator(self.config)
         if not isinstance(self.models, collections.Iterable):
@@ -53,8 +49,6 @@ class TorchWorker(HorovodWorker, TorchRunner):
 
         assert all(isinstance(model, nn.Module) for model in self.models), (
             "All models must be PyTorch models: {}.".format(self.models))
-        if torch.cuda.is_available():
-            self.models = [model.cuda() for model in self.models]
 
         logger.debug("Creating optimizer.")
         self.optimizers = self.optimizer_creator(self.given_models,
@@ -72,30 +66,24 @@ class TorchWorker(HorovodWorker, TorchRunner):
         self._create_schedulers_if_available()
         self._create_loss()
 
-    def _wrap_dataloaders(self):
-        def with_sampler(loader):
-            import horovod.torch as hvd
-            # Automatically set the DistributedSampler
-            data_loader_args = {
-                "dataset": loader.dataset,
-                "batch_size": loader.batch_size,
-                "shuffle": False,
-                "num_workers": loader.num_workers,
-                "collate_fn": loader.collate_fn,
-                "pin_memory": loader.pin_memory,
-                "drop_last": loader.drop_last,
-                "timeout": loader.timeout,
-                "worker_init_fn": loader.worker_init_fn,
-                "sampler": DistributedSampler(loader.dataset,
-                                              num_replicas=hvd.size(),
-                                              rank=hvd.rank())
-            }
-            return DataLoader(**data_loader_args)
-
-        self.train_loader = with_sampler(self.train_loader)
-
-        if self.validation_loader:
-            self.validation_loader = with_sampler(self.validation_loader)
+    def with_sampler(self, loader):
+        import horovod.torch as hvd
+        # Automatically set the DistributedSampler
+        data_loader_args = {
+            "dataset": loader.dataset,
+            "batch_size": loader.batch_size,
+            "shuffle": False,
+            "num_workers": loader.num_workers,
+            "collate_fn": loader.collate_fn,
+            "pin_memory": loader.pin_memory,
+            "drop_last": loader.drop_last,
+            "timeout": loader.timeout,
+            "worker_init_fn": loader.worker_init_fn,
+            "sampler": DistributedSampler(loader.dataset,
+                                          num_replicas=hvd.size(),
+                                          rank=hvd.rank())
+        }
+        return DataLoader(**data_loader_args)
 
     def setup_ddp_and_operator(self):
         """Runs distributed coordination components.
@@ -105,16 +93,11 @@ class TorchWorker(HorovodWorker, TorchRunner):
         """
         import horovod.torch as hvd
 
-        # Wrap dataloaders
-        self._wrap_dataloaders()
-
         self.training_operator = self.training_operator_cls(
             self.config,
             models=self.models,
             optimizers=self.optimizers,
             criterion=self.criterion,
-            train_loader=self.train_loader,
-            validation_loader=self.validation_loader,
             world_rank=hvd.rank(),
             schedulers=self.schedulers,
             use_tqdm=self.use_tqdm)
@@ -129,11 +112,9 @@ class TorchWorker(HorovodWorker, TorchRunner):
         From: github.com/pytorch/pytorch/issues/10622#issuecomment-474733769
         """
         _buffer = io.BytesIO(byte_obj)
-        to_gpu = self.use_gpu and torch.cuda.is_available()
         state_dict = torch.load(
             _buffer,
-            map_location=("cpu" if not to_gpu else
-                          lambda storage, loc: storage.cuda()))
+            map_location="cpu")
         return self.load_state_dict(state_dict)
 
 
@@ -142,14 +123,10 @@ from ray.exceptions import RayActorError
 
 def check_for_failure(remote_values):
     """Checks remote values for any that returned and failed.
-
-    Args:
-        remote_values (list): List of object IDs representing functions
+    :param remote_values: List of object IDs representing functions
             that may fail in the middle of execution. For example, running
             a SGD training loop in multiple parallel actor calls.
-
-    Returns:
-        Bool for success in executing given remote tasks.
+    :return Bool for success in executing given remote tasks.
     """
     unfinished = remote_values
     try:
@@ -168,7 +145,6 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
             *,
             model_creator,
             optimizer_creator,
-            data_creator,
             loss_creator=None,
             scheduler_creator=None,
             training_operator_cls=TrainingOperator,
@@ -177,16 +153,13 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
             scheduler_step_freq="batch"
     ):
 
-        if not (callable(model_creator) and callable(optimizer_creator)
-                and callable(data_creator)):
+        if not (callable(model_creator) and callable(optimizer_creator)):
             raise ValueError(
-                "Must provide a callable model_creator, optimizer_creator, "
-                "and data_creator.")
+                "Must provide a callable model_creator and optimizer_creator")
 
         self.model_creator = model_creator
         self.optimizer_creator = optimizer_creator
         self.loss_creator = loss_creator
-        self.data_creator = data_creator
         self.scheduler_creator = scheduler_creator
         self.training_operator_cls = training_operator_cls
         self.scheduler_step_freq = scheduler_step_freq
@@ -202,7 +175,6 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
 
         self.param = dict(
             model_creator=self.model_creator,
-            data_creator=self.data_creator,
             optimizer_creator=self.optimizer_creator,
             loss_creator=self.loss_creator,
             scheduler_creator=self.scheduler_creator,
@@ -242,13 +214,44 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
         ray.get(remote_operator_setups)
 
     def train(self,
+              data_creator,
               num_steps=None,
               profile=False,
               reduce_results=True,
               info=None):
+        """Runs a training epoch.
 
-        success, worker_stats = self._train_epoch(
-            num_steps=num_steps, profile=profile, info=info)
+        Calls `operator.train_epoch()` on N parallel workers simultaneously
+        underneath the hood.
+        :param data_creator: (callable) a funtion that takes a config dict as input
+                  and return a data loader containing the training data.
+        :param num_steps: (int) Number of batches to compute update steps on.
+                This corresponds also to the number of times
+                ``TrainingOperator.train_batch`` is called.
+        :param profile: (bool) Returns time stats for the training procedure.
+        :param reduce_results: (bool) Whether to average all metrics across
+                all workers into one dict. If a metric is a non-numerical
+                value (or nested dictionaries), one value will be randomly
+                selected among the workers. If False, returns a list of dicts.
+        :param info: (dict) Optional dictionary passed to the training
+                operator for ``train_epoch`` and ``train_batch``.
+
+        :return
+            (dict | list) A dictionary of metrics for training.
+                You can provide custom metrics by passing in a custom
+                ``training_operator_cls``. If ``reduce_results=False``,
+                this will return a list of metric dictionaries whose
+                length will be equal to ``num_workers``.
+        """
+        if not callable(data_creator):
+            raise ValueError(
+                "Must provide a callable data_creator, "
+                "but got a data_creator of type: {}".format(type(data_creator)))
+
+        success, worker_stats = self._train_epoch(data_creator,
+                                                  num_steps=num_steps,
+                                                  profile=profile,
+                                                  info=info)
 
         if reduce_results:
             return self._process_stats(worker_stats)
@@ -269,8 +272,9 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
                 stats[stat_key] = worker_stats[0][stat_key]
         return stats
 
-    def _train_epoch(self, num_steps=None, profile=False, info=None):
-        params = dict(num_steps=num_steps, profile=profile, info=info)
+    def _train_epoch(self, data_creator, num_steps=None, profile=False, info=None):
+        params = dict(data_creator=data_creator,
+                      num_steps=num_steps, profile=profile, info=info)
 
         remote_worker_stats = []
         for i, w in enumerate(self.remote_workers):
@@ -283,23 +287,30 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
 
         return success, None
 
-    def validate(self, num_steps=None, profile=False, info=None):
+    def validate(self, data_creator, num_steps=None, profile=False, info=None):
         """Evaluates the model on the validation data set.
 
-        Args:
-            num_steps (int): Number of batches to compute update steps on.
-                This corresponds also to the number of times
+        :param data_creator: (callable) a funtion that takes a config dict as input
+                  and return a data loader containing the validation data.
+        :param num_steps: (int) Number of batches to compute update steps on.
+               This corresponds also to the number of times
                 ``TrainingOperator.validate_batch`` is called.
-            profile (bool): Returns time stats for the evaluation procedure.
-            info (dict): Optional dictionary passed to the training
+        :param profile: (bool) Returns time stats for the evaluation procedure.
+        :param info: (dict) Optional dictionary passed to the training
                 operator for `validate` and `validate_batch`.
-
-        Returns:
-            A dictionary of metrics for validation.
+        :return: A dictionary of metrics for validation.
                 You can provide custom metrics by passing in a custom
                 ``training_operator_cls``.
         """
-        params = dict(num_steps=num_steps, profile=profile, info=info)
+        if not callable(data_creator):
+            raise ValueError(
+                "Must provide a callable data_creator, "
+                "but got a data_creator of type: {}".format(type(data_creator)))
+
+        params = dict(data_creator=data_creator,
+                      num_steps=num_steps,
+                      profile=profile,
+                      info=info)
 
         remote_worker_stats = [
             w.validate.remote(**params) for w in self.remote_workers

@@ -23,9 +23,31 @@ function parse_yaml {
       }
    }'
 }
+while [ "$1" != "" ]; do
+    case $1 in
+        -e | --engine )         shift
+                                backend=$1
+                                ;;
+        -c | --config_path )    shift
+                                config_path=$1
+                                ;;
+        -t | --omp )            shift
+                                export OMP_NUM_THREADS=$1
+                                ;;
+        -h | --help )           usage
+                                exit
+                                ;;
+        * )                     usage
+                                exit 1
+    esac
+    shift
+done
 
-parse_yaml config.yaml
-eval $(parse_yaml config.yaml)
+if [ -z "${config_path// }" ]; then
+  config_path=config.yaml
+
+parse_yaml $config_path
+eval $(parse_yaml $config_path)
 
 if [ -z "${spark_master}" ]; then
     echo "master of spark cluster not set, using default value local[*]"
@@ -80,39 +102,44 @@ else
     ${REDIS_HOME}/src/redis-cli config set maxclients 10000
 fi
 
-# try to start tensorboard
-#if [[ ! -e "TensorboardEventLogs" ]]; then
-#    mkdir TensorboardEventLogs
-#fi
-#tensorboard --logdir ./TensorboardEventLogs --port 6006 --host 0.0.0.0 &
+
 
 # if jar paths are not set, try to use them in current directory
 if [ -z "${ZOO_JAR}" ]; then
     ZOO_JAR=zoo.jar
 fi
-if [ -z "${BIGDL_JAR}" ]; then
-  if [ -f "bigdl.jar" ]; then
-      BIGDL_JAR=bigdl.jar
-      mkdir tmp
-      (cd tmp; unzip -uo ../zoo.jar)
-      (cd tmp; unzip -uo ../bigdl.jar)
-      jar -cvf all-in-one.jar -C tmp .
-  else
-      BIGDL_JAR=
-  fi
-fi
-if [ -z "${SPARK_REDIS_JAR}" ]; then
-    SPARK_REDIS_JAR=spark-redis-2.4.0-jar-with-dependencies.jar
-fi
+#if [ -z "${BIGDL_JAR}" ]; then
+#  if [ -f "bigdl.jar" ]; then
+#      BIGDL_JAR=bigdl.jar
+#      mkdir tmp
+#      (cd tmp; unzip -uo ../zoo.jar)
+#      (cd tmp; unzip -uo ../bigdl.jar)
+#      jar -cvf all-in-one.jar -C tmp .
+#  else
+#      BIGDL_JAR=
+#  fi
+#fi
+#if [ -z "${SPARK_REDIS_JAR}" ]; then
+#    SPARK_REDIS_JAR=spark-redis-2.4.0-jar-with-dependencies.jar
+#fi
 
-if [ -z "${1// }" ]; then
-    echo "Using default setting, starting Cluster Serving with Flink backend"
-    ${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p 1 zoo.jar
+
+if [ -z "${backend// }" ]; then
+    echo "Starting Cluster Serving with Flink backend"
+
+      ${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p 1 zoo.jar -c $config_path
 else
-  if [ $1 != "spark" ]; then
-    echo "You provided invalid parameter when start serving, supported parameter is spark, your is "$1
+  if [ $backend != "spark" ]; then
+    echo "You provided invalid parameter when start serving, supported parameter is spark, your is "$backend
     exit 1
   fi
+  # try to start tensorboard
+  if [[ ! -e "TensorboardEventLogs" ]]; then
+      mkdir TensorboardEventLogs
+  fi
+  tensorboard --logdir ./TensorboardEventLogs --port 6006 --host 0.0.0.0 &
+
+
     if [ "${params_performance_mode}" == "ON" ] && [ "${spark_master}" == "local[*]" ]; then
      echo -e "\033[36mPerformance mode is ON, Start standalone cluster... \033[0m"
      if [ -f "cluster-with-numactl.sh" ]; then
@@ -135,7 +162,7 @@ else
       echo -e "\033[31m${PARAMS[1]}, use local[*] instead \033[0m"
      fi
     fi
-    ${SPARK_HOME}/bin/spark-submit --master ${spark_master} --driver-memory ${spark_driver_memory} --executor-memory ${spark_executor_memory} --num-executors ${spark_num_executors} --executor-cores ${spark_executor_cores} --total-executor-cores ${spark_total_executor_cores} --jars ${SPARK_REDIS_JAR},${BIGDL_JAR} --class com.intel.analytics.zoo.serving.SparkStreamingClusterServing ${ZOO_JAR} >> cluster-serving.log
+    ${SPARK_HOME}/bin/spark-submit --master ${spark_master} --driver-memory ${spark_driver_memory} --executor-memory ${spark_executor_memory} --num-executors ${spark_num_executors} --executor-cores ${spark_executor_cores} --total-executor-cores ${spark_total_executor_cores} --class com.intel.analytics.zoo.serving.SparkStreamingClusterServing ${ZOO_JAR}
 fi
 
 

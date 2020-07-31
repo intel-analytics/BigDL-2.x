@@ -104,6 +104,11 @@ object Conventions {
 case class SparseTensor[T](shape: List[Int], data: List[T], indices: List[List[Int]])
 
 case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
+  if (instances == null) {
+    throw new ServingRuntimeException("no instance can be found, " +
+      "please check your input or json(keyword should be 'instances')")
+  }
+
   def constructTensors(): Seq[mutable.LinkedHashMap[String, (
     (mutable.ArrayBuffer[Int], Any), (mutable.ArrayBuffer[Int], mutable.ArrayBuffer[Any])
     )]] = {

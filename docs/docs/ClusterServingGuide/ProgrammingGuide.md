@@ -22,8 +22,6 @@ This page contains the guide for you to run Analytics Zoo Cluster Serving, inclu
    
    4. [Model inference](#4-model-inference)
 
-   5. [HTTP Server](#5-http-server)
-
 * [Optional Operations](#optional-operations)
 
      - [Update Model or Configurations](#update-model-or-configurations)
@@ -119,28 +117,19 @@ docker run --name cluster-serving --net=host -v /path/to/HADOOP_CONF_DIR:/opt/wo
 ```
 
 #### Manual installation
+
+##### Requirements
 Non-Docker users need to install [Flink](https://archive.apache.org/dist/flink/flink-1.10.0/), 1.10.0 by default, for users choose Spark as backend, install [Spark](https://archive.apache.org/dist/spark/spark-2.4.3/spark-2.4.3-bin-hadoop2.7.tgz), 2.4.3 by default, [Redis](https://redis.io/topics/quickstart), 0.5.0 by default and [TensorBoard](https://www.tensorflow.org/tensorboard/get_started) if you choose Spark backend and need visualization.
 
 After preparing dependencies above, make sure the environment variable `$FLINK_HOME` (/path/to/flink-FLINK_VERSION-bin), or `$SPARK_HOME` (/path/to/spark-SPARK_VERSION-bin-hadoop-HADOOP_VERSION), `$REDIS_HOME`(/path/to/redis-REDIS_VERSION) is set before following steps. 
 
 For Spark user only, use `pip install tensorboard` to install TensorBoard.
 
-Install Analytics Zoo by Download Release or Pip.
+##### Install Cluster Serving
 
-##### Download Release
-Download Analytics Zoo from [release page](https://analytics-zoo.github.io/master/#release-download/) on the local node. 
+For users who need to deploy and start Cluster Serving, download Cluster Serving zip from [here]() and unzip it, then run `source cluster-serving-prepare.sh`. A demo `cluster-serving-demo.sh` is also prepared and users can run it to check if Cluster Serving could work.
 
-Unzip the file and go into directory `analytics-zoo`, run `export ANALYTICS_ZOO_HOME=$(pwd)` to set `$ANALYTICS_ZOO_HOME` variable.
-
-Run `source analytics-zoo/bin/analytics-zoo-env.sh` to set environment.
-
-Go to `analytics-zoo/bin/cluster-serving`, run `cluster-serving-init`.
-
-Run `export OMP_NUM_THREADS=all` if you want to use all cores on your machine to do inference in parallel manner.
-##### Pip
-Use `pip install analytics-zoo` to install release stable version. For latest nightly built version, download the wheel at [download page](https://sourceforge.net/projects/analytics-zoo/files/zoo-py/) and use `pip` to install it.
-
-Then, go to any directory, run `cluster-serving-init`.
+For users who need to do inference, aka. predict data only, download Analytics Zoo python zip from [here]() and run `export PYTHONPATH=$PYTHONPATH:/path/to/zip` to add this zip to `PYTHONPATH` environment variable.
 
 Run `export OMP_NUM_THREADS=all` if you want to use all cores on your machine to do inference in parallel manner.
 ### 2. Configuration
@@ -272,86 +261,40 @@ For Spark users only, the field `spark` contains your spark configuration.
 
 For more details of these config, please refer to [Spark Official Document](https://spark.apache.org/docs/latest/configuration.html)
 ### 3. Launching Service
+
+#### Start and Stop
 We provide following scripts to start, stop, restart Cluster Serving. 
-#### Start
+##### Start
 You can use following command to start Cluster Serving.
 ```
 cluster-serving-start
 ```
 This command will start Redis and TensorBoard (for spark users only) if they are not running.
 
-For spark users, if you choose spark streaming, run `spark-streaming-cluster-serving-start`. If you choose spark structured streaming, run `spark-structured-streaming-cluster-serving-start`.
+If you want to pass config `config.yaml` manually, run `cluster-serving-start -c config_path`
+For spark users, if you choose spark streaming, run `cluster-serving-start --backend spark`.
 
-#### Stop
+##### Stop
 You can use following command to stop Cluster Serving. Data in Redis and TensorBoard service will persist.
 ```
 cluster-serving-stop
 ```
-#### Restart
+##### Restart
 You can use following command to restart Cluster Serving.
 ```
 cluster-serving-restart
 ```
-#### Shut Down
+##### Shut Down
 You can use following command to shutdown Cluster Serving. This operation will stop all running services related to Cluster Serving, specifically, Redis and TensorBoard. Note that your data in Redis will be removed when you shutdown. 
 ```
 cluster-serving-shutdown
 ```
 
 If you are using Docker, you could also run `docker rm` to shutdown Cluster Serving.
-### 4. Model Inference
-We support Python API and HTTP RESTful API for conducting inference with Data Pipeline in Cluster Serving. 
+#### HTTP Server (for sync API only)
+If you want to use sync API for inference, you should start a provided HTTP server first. User can submit HTTP requests to the HTTP server through RESTful APIs. The HTTP server will parse the input requests and pub them to Redis input queues, then retrieve the output results and render them as json results in HTTP responses.
 
-#### Python API
-For Python API, the requirements of python packages are `opencv-python`(for raw image only), `pyyaml`, `redis`. You can use `InputQueue` and `OutputQueue` to connect to data pipeline by providing the pipeline url, e.g. `my_input_queue = InputQueue(host, port)` and `my_output_queue = OutputQueue(host, port)`. If parameters are not provided, default url `localhost:6379` would be used.
-
-We provide some basic usages here, for more details, please see [API Guide](APIGuide.md).
-##### Input and Output API
-To input data to queue, you need a `InputQueue` instance, and using `enqueue` method, for each input, give a key correspond to your model or give arbitrary key if your model does not care about it.
-
-To enqueue an image
-```
-from zoo.serving.client import InputQueue
-input_api = InputQueue()
-input_api.enqueue('my-image1', user_define_key={"path: 'path/to/image1'})
-```
-To enqueue an instance containing 1 image and 2 ndarray
-```
-from zoo.serving.client import InputQueue
-import numpy as np
-input_api = InputQueue()
-t1 = np.array([1,2])
-t2 = np.array([[1,2], [3,4]])
-input_api.enqueue('my-instance', img={"path": 'path/to/image'}, tensor1=t1, tensor2=t2)
-```
-There are 4 types of inputs in total, string, image, tensor, sparse tensor, which could represents nearly all types of models. For more details of usage, go to [API Guide](APIGuide.md)
-
-To get data from queue, you need a `OutputQueue` instance, and using `query` or `dequeue` method. The `query` method takes image uri as parameter and returns the corresponding result. The `dequeue` method takes no parameter and just returns all results and also delete them in data queue. See following example.
-```
-from zoo.serving.client import OutputQueue
-output_api = OutputQueue()
-img1_result = output_api.query('img1')
-all_result = output_api.dequeue() # the output queue is empty after this code
-```
-##### Output Format
-Consider the code above, in [Input and Output API](#input-and-output-api) Section.
-```
-img1_result = output_api.query('img1')
-```
-The `img1_result` is a json format string, like following:
-```
-'{"class_1":"prob_1","class_2":"prob_2",...,"class_n","prob_n"}'
-```
-Where `n` is the number of `top_n` in your configuration file. This string could be parsed by `json.loads`.
-```
-import json
-result_class_prob_map = json.loads(img1_result)
-```
-
-#### HTTP RESTful API
-For HTTP RESTful API, we provide a HTTP server to support RESTful HTTP requests. User can submit HTTP requests to the HTTP server through RESTful APIs. The HTTP server will parse the input requests and pub them to Redis input queues, and also retrieve the output results and render them as json results in HTTP responses. The serving backend will leverage the cluster serving.
-
-##### Start the HTTP Server
+##### Prepare
 User can download a analytics-zoo-${VERSION}-http.jar from the Nexus Repository with GAVP: 
 ```
 <groupId>com.intel.analytics.zoo</groupId>
@@ -362,7 +305,8 @@ User can also build from the source code:
 ```
 mvn clean package -P spark_2.4+ -Dmaven.test.skip=true
 ```
-After that, start the HTTP server with below command.
+##### Start the HTTP Server
+User can start the HTTP server with following command.
 ```
 java -jar analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ZOO_VERSION}-http.jar
 ```
@@ -392,7 +336,76 @@ All the supported parameter are listed here:
 
 **User can adjust these options to tune the performance of the HTTP server.**
 
-##### RESTful API
+
+### 4. Model Inference
+We support Python API and HTTP RESTful API for conducting inference with Data Pipeline in Cluster Serving. 
+
+#### Python API
+For Python API, the requirements of python packages are `opencv-python`(for raw image only), `pyyaml`, `redis`. You can use `InputQueue` and `OutputQueue` to connect to data pipeline by providing the pipeline url, e.g. `my_input_queue = InputQueue(host, port)` and `my_output_queue = OutputQueue(host, port)`. If parameters are not provided, default url `localhost:6379` would be used.
+
+We provide some basic usages here, for more details, please see [API Guide](APIGuide.md).
+##### Async API
+Async API provide method to enqueue data, the method would not block and user can query the data anytime afterwards.
+
+To input data to queue, you need a `InputQueue` instance, and using `enqueue` method, for each input, give a key correspond to your model or give arbitrary key if your model does not care about it.
+
+To enqueue an image
+```
+from zoo.serving.client import InputQueue
+input_api = InputQueue()
+input_api.enqueue('my-image1', user_define_key={"path: 'path/to/image1'})
+```
+To enqueue an instance containing 1 image and 2 ndarray
+```
+from zoo.serving.client import InputQueue
+import numpy as np
+input_api = InputQueue()
+t1 = np.array([1,2])
+t2 = np.array([[1,2], [3,4]])
+input_api.enqueue('my-instance', img={"path": 'path/to/image'}, tensor1=t1, tensor2=t2)
+```
+There are 4 types of inputs in total, string, image, tensor, sparse tensor, which could represents nearly all types of models. For more details of usage, go to [API Guide](APIGuide.md)
+
+To get data from queue, you need a `OutputQueue` instance, and using `query` or `dequeue` method. The `query` method takes image uri as parameter and returns the corresponding result. The `dequeue` method takes no parameter and just returns all results and also delete them in data queue. See following example.
+```
+from zoo.serving.client import OutputQueue
+output_api = OutputQueue()
+img1_result = output_api.query('img1')
+all_result = output_api.dequeue() # the output queue is empty after this code
+```
+Consider the code above,
+```
+img1_result = output_api.query('img1')
+```
+The `img1_result` is a json format string, like following:
+```
+'{"class_1":"prob_1","class_2":"prob_2",...,"class_n","prob_n"}'
+```
+Where `n` is the number of `top_n` in your configuration file. This string could be parsed by `json.loads`.
+```
+import json
+result_class_prob_map = json.loads(img1_result)
+```
+##### Sync API
+Sync API provide method to predict data, the method would block until the result is available.
+
+User need to create a `InputQueue` instance with `sync=True` and `frontend_url=frontend_server_url` argument.
+```
+from zoo.serving.client import InputQueue
+input_api = InputQueue(sync=True, frontend_url=frontend_server_url)
+response = input_api.predict(request_json_string)
+print(response.text)
+```
+example of `request_json_string` is 
+```
+'{
+  "instances" : [ {
+    "ids" : [ 100.0, 88.0 ]
+  }]
+}'
+```
+This API is also a python support of [Restful API](#restful-api) section, so for more details of input format, refer to it.
+#### RESTful API
 This part describes API endpoints and end-to-end examples on usage. 
 The requests and responses are in JSON format. The composition of them depends on the requests type or verb. See the APIs for details.
 In case of error, all APIs will return a JSON object in the response body with error as key and the error message as the value:
@@ -624,7 +637,6 @@ Response example:
   }
 ]
 ```
-
 ## Optional Operations
 ### Update Model or Configurations
 To update your model, you could replace your model file in your model directory, and restart Cluster Serving by `cluster-serving-restart`. Note that you could also change your configurations in `config.yaml` and restart serving.

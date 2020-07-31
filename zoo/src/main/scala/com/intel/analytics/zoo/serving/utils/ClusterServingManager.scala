@@ -16,11 +16,13 @@
 
 package com.intel.analytics.zoo.serving.utils
 
+import java.io.{FileOutputStream, ObjectOutputStream, PrintWriter}
 import java.util.concurrent.Executors
 
 import org.apache.spark.sql.streaming._
 import java.util.concurrent.TimeUnit.SECONDS
 
+import org.apache.flink.core.execution.JobClient
 import org.apache.spark.streaming.StreamingContext
 
 object ClusterServingManager {
@@ -53,5 +55,23 @@ object ClusterServingManager {
       queryTerminator(helper, query), 1, 1, SECONDS
     )
 
+  }
+  def writeObjectToFile(cli: JobClient): Unit = {
+    try {
+//      val fileOut = new FileOutputStream("/tmp/cluster-serving-job-id")
+//      val objectOut = new ObjectOutputStream(fileOut)
+//      objectOut.writeObject(obj)
+//      objectOut.close()
+      new PrintWriter("/tmp/cluster-serving-job-id") {
+        write(cli.getJobID.toHexString)
+        close
+      }
+      println("Cluster Serving Flink job id written to file.")
+    }
+    catch {
+      case e: Exception =>
+        e.printStackTrace()
+        println("Failed to write job id written to file. You may not manager job by id now.")
+    }
   }
 }
