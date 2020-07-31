@@ -205,7 +205,7 @@ class RayContext(object):
         - For Spark local mode: The total available cores for Ray is equal to the number of
         Spark local cores.
         - For Spark cluster mode: The number of raylets to be created is equal to the number of
-        Spark executors. The number of cores allocated for each raylet is equal to number of
+        Spark executors. The number of cores allocated for each raylet is equal to the number of
         Spark executor cores.
         You are allowed to specify num_ray_nodes and ray_node_cpu_cores for configurations
         to start raylets.
