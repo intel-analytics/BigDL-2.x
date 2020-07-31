@@ -94,19 +94,45 @@ def load_numpy(path):
 
 
 def exists(path):
-    # local path
-    if not (path.startswith("hdfs://") or path.startswith("s3://") or
-                path.startswith("file://")):
-        path = os.path.abspath(path)
-    return callZooFunc("float", "exists", path)
+    if path.startswith("s3"):  # s3://bucket/file_path
+        access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
+        secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
+        import boto3
+        s3_client = boto3.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key).client('s3', verify=False)
+        path_parts = path.split("://")[1].split('/')
+        bucket = path_parts.pop(0)
+        key = "/".join(path_parts)
+        try:
+            s3_client.get_object(Bucket=bucket, Key=key)
+        except Exception as ex:
+            if ex.response['Error']['Code'] == 'NoSuchKey':
+                return False
+            raise ex
+        return True
+    elif path.startswith("hdfs://"):
+        return callZooFunc("float", "exists", path)
+    else:
+        return os.path.exists(path)
 
 
 def makedirs(path):
-    # local path
-    if not (path.startswith("hdfs://") or path.startswith("s3://") or
-                path.startswith("file://")):
-        path = os.path.abspath(path)
-    callZooFunc("float", "mkdirs", path)
+    if path.startswith("s3"):  # s3://bucket/file_path
+        access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
+        secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
+        import boto3
+        s3_client = boto3.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key).client('s3', verify=False)
+        path_parts = path.split("://")[1].split('/')
+        bucket = path_parts.pop(0)
+        key = "/".join(path_parts)
+        return s3_client.put_object(Bucket=bucket, Key=key, Body='')
+    elif path.startswith("hdfs://"):
+        callZooFunc("float", "mkdirs", path)
+    else:
+        return os.makedirs(path)
 
 
 def write_text(path, text):

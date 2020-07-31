@@ -68,6 +68,15 @@ class TestFile:
         file_path = os.path.join(self.resource_path, "orca/data/abc.npy")
         assert not exists(file_path)
 
+    def test_exists_s3(self):
+        access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
+        secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+        if access_key_id and secret_access_key:
+            file_path = "s3://analytics-zoo-data/nyc_taxi.csv"
+            assert exists(file_path)
+            file_path = "s3://analytics-zoo-data/abc.csv"
+            assert not exists(file_path)
+
     def test_mkdirs_local(self):
         temp = tempfile.mkdtemp()
         path = os.path.join(temp, "dir1")
@@ -77,6 +86,19 @@ class TestFile:
         makedirs(path)
         assert exists(path)
         shutil.rmtree(temp)
+
+    def test_mkdirs_s3(self):
+        access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
+        secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+        if access_key_id and secret_access_key:
+            file_path = "s3://analytics-zoo-data/temp/abc/"
+            makedirs(file_path)
+            assert exists(file_path)
+            import boto3
+            s3_client = boto3.Session(
+                aws_access_key_id=access_key_id,
+                aws_secret_access_key=secret_access_key).client('s3', verify=False)
+            s3_client.delete_object(Bucket='analytics-zoo-data', Key='temp/abc/')
 
     def test_write_text_local(self):
         temp = tempfile.mkdtemp()

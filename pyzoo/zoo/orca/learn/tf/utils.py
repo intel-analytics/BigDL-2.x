@@ -195,11 +195,11 @@ def save_tf_checkpoint_to_remote(sess, checkpoint_path, saver=None):
         new_lines = []
         lines = f.readlines()
         # replace model_checkpoint_path and all_model_checkpoint_paths to checkpoint name
-        #  instead of absolute checkpoint path
+        #  instead of the absolute checkpoint path
         for line in lines:
             if re.compile("^model_checkpoint_path: \"(.*)\"$").match(line):
                 new_lines.append("model_checkpoint_path: \"{}\"\n".format(ckpt_name))
-            elif  re.compile("^all_model_checkpoint_paths: \"(.*)\"$").match(line):
+            elif re.compile("^all_model_checkpoint_paths: \"(.*)\"$").match(line):
                 new_lines.append("all_model_checkpoint_paths: \"{}\"\n".format(ckpt_name))
             else:
                 new_lines.append(line)
@@ -228,6 +228,7 @@ def get_checkpoint_state_remote(checkpoint_dir):
     # get checkpoint file
     temp = tempfile.mkdtemp()
     get_remote_file_to_local(join(checkpoint_dir, "checkpoint"), join(temp, "checkpoint"))
+    ckpt_name = None
     with open(join(temp, "checkpoint")) as f:
         lines = f.readlines()
         # get checkpoint name from 'checkpoint' file
@@ -236,6 +237,9 @@ def get_checkpoint_state_remote(checkpoint_dir):
             if m:
                 ckpt_name = m.group(1)
                 break
+    if ckpt_name is None:
+        shutil.rmtree(temp)
+        return None
     # filter checkpoint files
     checkpoint_files = [file for file in file_list if basename(file).startswith(ckpt_name)]
     if not checkpoint_files:
