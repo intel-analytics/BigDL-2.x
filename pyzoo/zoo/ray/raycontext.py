@@ -204,7 +204,7 @@ class RayContext(object):
 
         - For Spark local mode: The total available cores for Ray is equal to the number of
         Spark local cores.
-        - For Spark cluster mode: The number of raylets to be created is equal to number of
+        - For Spark cluster mode: The number of raylets to be created is equal to the number of
         Spark executors. The number of cores allocated for each raylet is equal to number of
         Spark executor cores.
         You are allowed to specify num_ray_nodes and ray_node_cpu_cores for configurations
@@ -251,8 +251,8 @@ class RayContext(object):
             if ray_node_cpu_cores:
                 ray_node_cpu_cores = int(ray_node_cpu_cores)
                 if ray_node_cpu_cores > spark_cores:
-                    warnings.warn("ray_node_cpu_cores is larger than available Spark cores, make sure "
-                                  "there are enough resources on your machine")
+                    warnings.warn("ray_node_cpu_cores is larger than available Spark cores, "
+                                  "make sure there are enough resources on your machine")
                 self.ray_node_cpu_cores = ray_node_cpu_cores
             else:
                 self.ray_node_cpu_cores = spark_cores
@@ -267,8 +267,8 @@ class RayContext(object):
             if ray_node_cpu_cores:
                 ray_node_cpu_cores = int(ray_node_cpu_cores)
                 if executor_cores and ray_node_cpu_cores > executor_cores:
-                    warnings.warn("ray_node_cpu_cores is larger than Spark executor cores, make sure "
-                                  "there are enough resources on your cluster")
+                    warnings.warn("ray_node_cpu_cores is larger than Spark executor cores, "
+                                  "make sure there are enough resources on your cluster")
                 self.ray_node_cpu_cores = ray_node_cpu_cores
             elif executor_cores:
                 self.ray_node_cpu_cores = executor_cores
@@ -287,8 +287,8 @@ class RayContext(object):
             if num_ray_nodes:
                 num_ray_nodes = int(num_ray_nodes)
                 if num_executors and num_ray_nodes > num_executors:
-                    warnings.warn("num_ray_nodes is larger than the number of Spark executors, make sure "
-                                  "there are enough resources on your cluster")
+                    warnings.warn("num_ray_nodes is larger than the number of Spark executors, "
+                                  "make sure there are enough resources on your cluster")
                 self.num_ray_nodes = num_ray_nodes
             elif num_executors:
                 self.num_ray_nodes = num_executors
