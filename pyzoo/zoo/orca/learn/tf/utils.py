@@ -206,7 +206,8 @@ def save_tf_checkpoint_to_remote(sess, checkpoint_path, saver=None):
     with open(join(temp, "checkpoint"), 'w') as f:
         f.writelines(new_lines)
     # move to remote
-    [put_local_file_to_remote(join(temp, file), join(remote_dir, file), over_write=True) for file in os.listdir(temp)]
+    [put_local_file_to_remote(join(temp, file), join(remote_dir, file), over_write=True)
+     for file in os.listdir(temp)]
     shutil.rmtree(temp)
 
 
