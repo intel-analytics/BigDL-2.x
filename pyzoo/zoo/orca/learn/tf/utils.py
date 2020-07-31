@@ -175,7 +175,14 @@ def convert_predict_to_dataframe(df, prediction_rdd):
     result_df = result_rdd.toDF(schema)
     return result_df
 
+
 def save_tf_checkpoint_to_remote(sess, checkpoint_path, saver=None):
+    """
+    Save tf checkpoint to remote path without using native tensorflow accessing remote method.
+    :param sess: tf session to be saved.
+    :param checkpoint_path: remote checkpoint path. Could be local, hdfs, s3 filesystems.
+    :param saver: tf saver to save checkpoint
+    """
     ckpt_name = basename(checkpoint_path)
     remote_dir = dirname(checkpoint_path)
     # save to local checkpoint
@@ -187,6 +194,8 @@ def save_tf_checkpoint_to_remote(sess, checkpoint_path, saver=None):
     with open(join(temp, "checkpoint")) as f:
         new_lines = []
         lines = f.readlines()
+        # replace model_checkpoint_path and all_model_checkpoint_paths to checkpoint name
+        #  instead of absolute checkpoint path
         for line in lines:
             if re.compile("^model_checkpoint_path: \"(.*)\"$").match(line):
                 new_lines.append("model_checkpoint_path: \"{}\"\n".format(ckpt_name))
@@ -202,6 +211,11 @@ def save_tf_checkpoint_to_remote(sess, checkpoint_path, saver=None):
 
 
 def get_checkpoint_state_remote(checkpoint_dir):
+    """
+    Get tf checkpoint state from remote checkpoint directory
+    :param checkpoint_dir: remote tensorflow checkpoint directory
+    :return: tf checkpoint protobuf
+    """
     # check if checkpoint file exists
     file_list = get_file_list(checkpoint_dir)
     has_checkpoint = False
@@ -216,6 +230,7 @@ def get_checkpoint_state_remote(checkpoint_dir):
     get_remote_file_to_local(join(checkpoint_dir, "checkpoint"), join(temp, "checkpoint"))
     with open(join(temp, "checkpoint")) as f:
         lines = f.readlines()
+        # get checkpoint name from 'checkpoint' file
         for line in lines:
             m = re.compile("^model_checkpoint_path: \"(.*)\"$").match(line)
             if m:
@@ -226,7 +241,7 @@ def get_checkpoint_state_remote(checkpoint_dir):
     if not checkpoint_files:
         shutil.rmtree(temp)
         return None
-    # get checkpoint files
+    # get checkpoint files to local
     [get_remote_file_to_local(file, join(temp, basename(file))) for file in checkpoint_files]
     # get checkpoint state
     ckpt = tf.train.get_checkpoint_state(temp)
@@ -240,12 +255,19 @@ def get_checkpoint_state_remote(checkpoint_dir):
 
 
 def load_tf_checkpoint_from_remote(sess, checkpoint_path, saver=None):
+    """
+    Load tf checkpoint from remote checkpoint path
+    :param sess: tf session to be loaded to.
+    :param checkpoint_path: remote tf checkpoint path
+    :param saver: tf saver to load checkpoint
+    """
     ckpt_name = basename(checkpoint_path)
     checkpoint_dir = dirname(checkpoint_path)
+    # get remote file lists
     file_list = get_file_list(checkpoint_dir)
     # filter checkpoint files
     checkpoint_files = [file for file in file_list if basename(file).startswith(ckpt_name)]
-    # get checkpoint files
+    # get checkpoint files to local
     temp = tempfile.mkdtemp()
     [get_remote_file_to_local(file, join(temp, basename(file))) for file in checkpoint_files]
     if saver is None:
