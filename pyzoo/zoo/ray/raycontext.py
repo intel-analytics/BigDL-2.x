@@ -206,7 +206,7 @@ class RayContext(object):
         Spark local cores.
         - For Spark cluster mode: The number of raylets to be created is equal to the number of
         Spark executors. The number of cores allocated for each raylet is equal to the number of
-        Spark executor cores.
+        cores for each Spark executor.
         You are allowed to specify num_ray_nodes and ray_node_cpu_cores for configurations
         to start raylets.
 
@@ -229,10 +229,11 @@ class RayContext(object):
         Spark executors to make sure there are enough resources in your cluster.
         :param ray_node_cpu_cores: The number of available cores for each raylet.
         For Spark local mode, it is default to be the number of Spark local cores.
-        For Spark cluster mode, it is default to be the number of Spark executor cores. If
+        For Spark cluster mode, it is default to be the number of cores for each Spark executor. If
         spark.executor.cores or spark.cores.max can't be detected in your SparkContext, you need to
         explicitly specify this. It is recommended that ray_node_cpu_cores is not larger than the
-        number of Spark executor cores to make sure there are enough resources in your cluster.
+        number of cores for each Spark executor to make sure there are enough resources in your
+        cluster.
         """
         assert sc is not None, "sc cannot be None, please create a SparkContext first"
         self.sc = sc
