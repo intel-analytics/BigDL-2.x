@@ -119,6 +119,7 @@ object Utils {
       case "wide" =>
         TensorSample[Float](Array(wideTensor), Array(label))
       case "deep" =>
+        println(wideTensor)
         TensorSample[Float](deepTensor, Array(label))
       case _ =>
         throw new IllegalArgumentException("unknown type")
@@ -168,7 +169,7 @@ object Utils {
     var acc = 0
     val indices: Array[Int] = (0 to wideLength - 1).map(i => {
       val index = r.getAs[Int](wideColumns(i))
-      if (i == 0) index
+      if (i == 0) {index}
       else {
         acc = acc + wideDims(i - 1)
         acc + index
