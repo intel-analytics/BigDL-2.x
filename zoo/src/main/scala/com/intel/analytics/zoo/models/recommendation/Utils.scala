@@ -119,7 +119,6 @@ object Utils {
       case "wide" =>
         TensorSample[Float](Array(wideTensor), Array(label))
       case "deep" =>
-        println(wideTensor)
         TensorSample[Float](deepTensor, Array(label))
       case _ =>
         throw new IllegalArgumentException("unknown type")
