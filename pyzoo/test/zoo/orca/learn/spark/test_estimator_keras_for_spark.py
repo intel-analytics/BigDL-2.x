@@ -271,9 +271,7 @@ class TestEstimatorForKeras(TestCase):
         assert 'prediction' in prediction_df.columns
         predictions = prediction_df.collect()
         assert len(predictions) == 10
-
-
-
+        
 
 if __name__ == "__main__":
     import pytest
