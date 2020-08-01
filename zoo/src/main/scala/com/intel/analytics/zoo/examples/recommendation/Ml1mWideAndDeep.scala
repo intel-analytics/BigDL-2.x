@@ -115,7 +115,7 @@ object Ml1mWideAndDeep {
     val itemDF = sqlContext.read.text(dataPath + "/movies.dat").as[String]
       .map(x => {
         val line = x.split("::")
-        Item(line(0).toInt, line(1), line(2))//.split('|')(0))
+        Item(line(0).toInt, line(1), line(2))
       }).toDF()
 
     val minMaxRow = ratings.agg(max("userId"), max("itemId")).collect()(0)
