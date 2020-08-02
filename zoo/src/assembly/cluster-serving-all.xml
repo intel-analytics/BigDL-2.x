@@ -23,6 +23,7 @@
             <directory>${project.parent.basedir}/zoo/target</directory>
             <includes>
                 <include>analytics-zoo-*-serving.jar</include>
+                <include>analytics-zoo-*-http.jar</include>
             </includes>
         </fileSet>
 
