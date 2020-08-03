@@ -198,7 +198,6 @@ object FrontEndApp extends Supportive {
         }
       }
 
-
       if (arguments.httpsEnabled) {
         val serverContext = defineServerContext(arguments.httpsKeyStorePassword,
           arguments.httpsKeyStorePath)
@@ -276,6 +275,9 @@ object FrontEndApp extends Supportive {
     opt[Boolean]('s', "redisSecureEnabled")
       .action((x, c) => c.copy(redisSecureEnabled = x))
       .text("redis secure enabled or not")
+    opt[Boolean]('s', "httpsEnabled")
+      .action((x, c) => c.copy(httpsEnabled = x))
+      .text("https enabled or not")
     opt[String]('p', "redissTrustStorePath")
       .action((x, c) => c.copy(redissTrustStorePath = x))
       .text("rediss trustStore path")

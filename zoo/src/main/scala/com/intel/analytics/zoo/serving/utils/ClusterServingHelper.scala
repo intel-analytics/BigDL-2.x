@@ -227,7 +227,11 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     }
     else {
       println(configList.toString + key + " getted: " + configValue)
-      return configValue.toString
+      if (configValue.isInstanceOf[Boolean] || configValue.isInstanceOf[Int]) {
+        configValue
+      } else {
+        configValue.toString
+      }
     }
   }
 
