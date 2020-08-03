@@ -75,33 +75,6 @@ def get_wide_tensor(row, column_info):
     return JTensor.sparse(values, np.array(indices), shape)
 
 
-def get_wide_tensor_sequential(row, column_info):
-    """
-    prepare tensor for wide part of WideAndDeep model based on sequential api and LookupTableSparse
-
-    :param row: Row of userId, itemId, features and label
-    :param column_info: ColumnFeatureInfo specify information of different features
-    :return: an array of tensors as input for wide part of a WideAndDeep model
-    """
-
-    wide_columns = column_info.wide_base_cols + column_info.wide_cross_cols
-    wide_dims = column_info.wide_base_dims + column_info.wide_cross_dims
-    wide_length = len(wide_columns)
-    acc = 0
-    indices = []
-    for i in range(0, wide_length):
-        index = row[wide_columns[i]]
-        if i == 0:
-            res = index
-        else:
-            acc += wide_dims[i - 1]
-            res = acc + index
-        indices.append(res)
-    values = np.array([i + 1 for i in indices])
-    shape = np.array([sum(wide_dims)])
-    return JTensor.sparse(values, np.array(indices), shape)
-
-
 def get_deep_tensors(row, column_info):
     """
     convert a row to tensors given column feature information of a WideAndDeep model
