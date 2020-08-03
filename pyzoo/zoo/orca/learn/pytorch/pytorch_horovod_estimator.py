@@ -215,6 +215,7 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
 
     def train(self,
               data_creator,
+              epochs=1,
               num_steps=None,
               profile=False,
               reduce_results=True,
@@ -225,6 +226,7 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
         underneath the hood.
         :param data_creator: (callable) a funtion that takes a config dict as input
                   and return a data loader containing the training data.
+        :param epochs: (int) Number of epochs to train the model
         :param num_steps: (int) Number of batches to compute update steps on.
                 This corresponds also to the number of times
                 ``TrainingOperator.train_batch`` is called.
@@ -248,10 +250,11 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
                 "Must provide a callable data_creator, "
                 "but got a data_creator of type: {}".format(type(data_creator)))
 
-        success, worker_stats = self._train_epoch(data_creator,
-                                                  num_steps=num_steps,
-                                                  profile=profile,
-                                                  info=info)
+        success, worker_stats = self._train_epochs(data_creator,
+                                                   epochs=epochs,
+                                                   num_steps=num_steps,
+                                                   profile=profile,
+                                                   info=info)
 
         if reduce_results:
             return self._process_stats(worker_stats)
@@ -272,13 +275,13 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
                 stats[stat_key] = worker_stats[0][stat_key]
         return stats
 
-    def _train_epoch(self, data_creator, num_steps=None, profile=False, info=None):
-        params = dict(data_creator=data_creator,
+    def _train_epochs(self, data_creator, epochs=1, num_steps=None, profile=False, info=None):
+        params = dict(data_creator=data_creator, epochs=epochs,
                       num_steps=num_steps, profile=profile, info=info)
 
         remote_worker_stats = []
         for i, w in enumerate(self.remote_workers):
-            stats = w.train_epoch.remote(**params)
+            stats = w.train_epochs.remote(**params)
             remote_worker_stats.append(stats)
 
         success = check_for_failure(remote_worker_stats)

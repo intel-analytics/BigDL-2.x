@@ -156,8 +156,28 @@ class TorchRunner:
         return (isinstance(loader, DataLoader)
                 and not isinstance(loader.dataset, IterableDataset))
 
+    def train_epochs(self, data_creator, epochs=1, num_steps=None, profile=False, info=None):
+        should_wrap = False
+        with FileLock(
+                os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
+            loader = data_creator(self.config)
+        if TorchRunner.should_wrap_dataloader(loader):
+            loader = self.with_sampler(loader)
+            should_wrap = True
+        stats_list = list()
+        for i in range(epochs):
+            if should_wrap:
+                data_loader = iter(loader)
+                if num_steps:
+                    loader = itertools.islice(data_loader, num_steps)
+            else:
+                data_loader = loader
+            stats = self.train_epoch(data_loader, num_steps=num_steps, profile=profile, info=info)
+            stats_list.append(stats)
+        return stats_list
+
     def train_epoch(self,
-                    data_creator,
+                    data_loader,
                     num_steps=None,
                     profile=False,
                     info=None):
@@ -171,14 +191,7 @@ class TorchRunner:
             SCHEDULER_STEP: self.scheduler_step_freq
         })
         with self.timers.record("train_epoch"):
-            with FileLock(
-                    os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
-                loader = data_creator(self.config)
-            if TorchRunner.should_wrap_dataloader(loader):
-                loader = iter(self.with_sampler(loader))
-                if num_steps:
-                    loader = itertools.islice(loader, num_steps)
-            train_stats = self.training_operator.train_epoch(loader, info)
+            train_stats = self.training_operator.train_epoch(data_loader, info)
 
         self.epochs += 1
         # This is so that `epochs` is first in ordering.

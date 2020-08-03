@@ -90,12 +90,8 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
                     this will return a list of metric dictionaries whose
                     length will be equal to ``num_workers``.
         """
-        stats_list = list()
-        for i in range(epochs):
-            stats = self.estimator.train(data_creator=data, num_steps=num_steps, profile=profile,
-                                         reduce_results=reduce_results, info=info)
-            stats_list.append(stats)
-        return stats_list
+        return self.estimator.train(data_creator=data, epochs=epochs, num_steps=num_steps,
+                                    profile=profile, reduce_results=reduce_results, info=info)
 
     def predict(self, data, **kwargs):
         pass
