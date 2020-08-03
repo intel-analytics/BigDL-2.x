@@ -406,11 +406,15 @@ object PythonFeatureSet{
   private[zoo] def ndArrayToTensor(ndArray: NDArray[_]): Tensor[Float] = {
     val array = ndArray.asInstanceOf[NDArray[Array[_]]]
     val data = array.getData()
-    data(0) match {
-      case _: Float =>
-        Tensor[Float](data.asInstanceOf[Array[Float]], array.getDimensions)
-      case _ =>
-        Tensor[Float](data.map(_.toString.toFloat), array.getDimensions)
+    if (data.length > 0) {
+      data(0) match {
+        case _: Float =>
+          Tensor[Float](data.asInstanceOf[Array[Float]], array.getDimensions)
+        case _ =>
+          Tensor[Float](data.map(_.toString.toFloat), array.getDimensions)
+      }
+    } else {
+      Tensor[Float]()
     }
   }
 }
