@@ -45,7 +45,7 @@ object Ml1mWideAndDeep {
     ratingsDF.groupBy("label").count().show()
     val localColumnInfo = ColumnFeatureInfo(
       wideBaseCols = Array("genderind","ageind","occupation", "genresfull","genres1st"),
-      wideBaseDims = Array(8, 3, 21, 500, 19),
+      wideBaseDims = Array(3, 8, 21, 500, 19),
       wideCrossCols = Array("gender-age", "gender-age-occupation", "gender-genres"),
       wideCrossDims = Array(500, 500, 500),
       indicatorCols = Array("genres1st", "genderind"),

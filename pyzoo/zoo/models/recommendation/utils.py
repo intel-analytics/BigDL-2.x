@@ -51,7 +51,6 @@ def get_negative_samples(indexed):
 def get_wide_tensor(row, column_info):
     """
     prepare tensor for wide part of WideAndDeep model based on SparseDense
-    based on SparseDense
 
     :param row: Row of userId, itemId, features and label
     :param column_info: ColumnFeatureInfo specify information of different features
