@@ -1,8 +1,10 @@
-#!/usr/bin/python3
+#!/bin/bash
+cp $CS_PATH/zoo.jar .
+cp $CS_PATH/config.yaml .
 
 
-from zoo.serving.server import ClusterServing
 
-serving = ClusterServing()
+#from zoo.serving.server import ClusterServing
+#serving = ClusterServing()
 
-print("Cluster Serving has been properly set up.")
+#print("Cluster Serving has been properly set up.")
