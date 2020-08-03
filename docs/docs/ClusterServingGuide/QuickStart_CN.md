@@ -1,7 +1,7 @@
 # 天池大赛 Cluster Serving Quick Start 中文版
 
 ## 安装
-前置需求：Redis 0.5.0，Flink 1.11.0，在官网安装即可，安装后设置环境变量`REDIS_HOME=/path/to/redis-0.5.0, FLINK_HOME=/path/to/flink-1.11.0`
+前置需求：Redis 5.0.5，Flink 1.11.0，在官网安装即可，安装后设置环境变量`REDIS_HOME=/path/to/redis-0.5.0, FLINK_HOME=/path/to/flink-1.11.0`
 
 下载`analytics-zoo-xxx-cluster-serving-all.zip`，解压后运行`source cluster-serving-prepare.sh`
 
