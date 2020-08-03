@@ -7,7 +7,11 @@
 
 若要使用同步API运行`java -jar analytics-zoo-xxx-http.jar`启动同步服务
 
-若想以当前目录为工作目录，则一切就绪，若想以其他目录为工作目录，进入目录后命令行运行`cluster-serving-init`
+如果要在IDE里面运行，需要在IDE环境变量中设置`PYTHONPATH=/path/to/analytics-zoo-xxx-python-api.zip`
+
+若想以当前目录为工作目录，则一切就绪
+
+若想以其他目录为工作目录，进入目录后，设置环境变量`export CS_PATH=/path/to/analytics-zoo-xxx-cluster-serving-all`（解压zip包的目录），之后命令行运行`cluster-serving-init`
 ## 配置
 修改`config.yaml`，配置模型路径为包含模型的文件夹路径，样例如下，假设用户模型为Tensorflow SavedModel模型，结构为
 ```
