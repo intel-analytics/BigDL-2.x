@@ -197,6 +197,7 @@ object FrontEndApp extends Supportive {
           }
         }
       }
+
       if (arguments.httpsEnabled) {
         val serverContext = defineServerContext(arguments.httpsKeyStorePassword,
           arguments.httpsKeyStorePath)
@@ -262,6 +263,9 @@ object FrontEndApp extends Supportive {
     opt[Int]('a', "tokenAcquireTimeout")
       .action((x, c) => c.copy(tokenAcquireTimeout = x))
       .text("token acquire timeout")
+    opt[Boolean]('s', "httpsEnabled")
+      .action((x, c) => c.copy(httpsEnabled = x))
+      .text("https enabled or not")
     opt[String]('p', "httpsKeyStorePath")
       .action((x, c) => c.copy(httpsKeyStorePath = x))
       .text("https keyStore path")

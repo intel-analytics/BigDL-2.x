@@ -22,27 +22,45 @@ import com.intel.analytics.zoo.serving.utils.SerParams
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
 import org.apache.log4j.Logger
-import redis.clients.jedis.{Jedis, JedisPool}
+import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig}
 
 
 class FlinkRedisSink(params: SerParams) extends RichSinkFunction[List[(String, String)]] {
   var redisPool: JedisPool = null
   var jedis: Jedis = null
   var logger: Logger = null
+
   override def open(parameters: Configuration): Unit = {
-    redisPool = new JedisPool(params.redisHost, params.redisPort)
-//    db = RedisIO.getRedisClient(redisPool)
     logger = Logger.getLogger(getClass)
+
+    if (params.redisSecureEnabled) {
+      System.setProperty("javax.net.ssl.trustStore", params.redisSecureTrustStorePath)
+      System.setProperty("javax.net.ssl.trustStorePassword", params.redisSecureTrustStorePassword)
+      System.setProperty("javax.net.ssl.keyStoreType", "JKS")
+      System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
+      System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStorePassword)
+    }
+
+    redisPool = new JedisPool(new JedisPoolConfig(),
+      params.redisHost, params.redisPort, params.redisSecureEnabled)
+    params.redisSecureEnabled match {
+      case true => logger.info(s"FlinkRedisSink connect to secured Redis successfully.")
+      case false => logger.info(s"FlinkRedisSink connect to plain Redis successfully.")
+    }
+    jedis = RedisIO.getRedisClient(redisPool)
+
   }
 
   override def close(): Unit = {
-    redisPool.close()
+    if (null != redisPool) {
+      redisPool.close()
+    }
   }
 
 
   override def invoke(value: List[(String, String)]): Unit = {
 //    logger.info(s"Preparing to write result to redis")
-    jedis = RedisIO.getRedisClient(redisPool)
+
     val ppl = jedis.pipelined()
     value.foreach(v => RedisIO.writeHashMap(ppl, v._1, v._2))
     ppl.sync()
