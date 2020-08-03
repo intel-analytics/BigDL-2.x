@@ -133,7 +133,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
 
     val secureConfig = configList.get("secure").asInstanceOf[HM]
     redisSecureEnabled = if (getYaml(secureConfig, "secure_enabled", false) != null) {
-      getYaml(secureConfig, "secure_enabled", false).asInstanceOf[String].toBoolean
+      getYaml(secureConfig, "secure_enabled", "false").asInstanceOf[String].toBoolean
     } else {
       false
     }
