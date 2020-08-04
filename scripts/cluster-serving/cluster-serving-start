@@ -118,6 +118,10 @@ fi
 
 if [ -z "${backend// }" ]; then
     echo "Starting Cluster Serving with Flink backend"
+    if [ -z "${FLINK_HOME}" ]; then
+      echo "FLINK_HOME variable is not set, you need to set it to start Cluster Serving with Flink backend."
+      exit 1
+    fi
     ${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p $par_num zoo.jar -c $config_path
 else
   if [ $backend != "spark" ]; then
