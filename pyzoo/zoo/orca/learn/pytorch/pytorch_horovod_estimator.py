@@ -21,6 +21,8 @@ import collections
 import numpy as np
 import numbers
 import io
+import os
+import tempfile
 
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.pytorch.torch_runner import TorchRunner
@@ -28,6 +30,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from zoo.orca.learn.horovod.horovod_ray_runner import HorovodRayRunner, HorovodWorker
 from zoo.ray import RayContext
+from filelock import FileLock
 import ray
 
 logger = logging.getLogger(__name__)
@@ -250,16 +253,18 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
                 "Must provide a callable data_creator, "
                 "but got a data_creator of type: {}".format(type(data_creator)))
 
-        success, worker_stats = self._train_epochs(data_creator,
+        success, epoch_stats = self._train_epochs(data_creator,
                                                    epochs=epochs,
                                                    num_steps=num_steps,
                                                    profile=profile,
                                                    info=info)
 
         if reduce_results:
-            return self._process_stats(worker_stats)
+            for i in range(len(epoch_stats)):
+                epoch_stats[i] = self._process_stats(epoch_stats[i])
+            return epoch_stats
         else:
-            return worker_stats
+            return epoch_stats
 
     def _process_stats(self, worker_stats):
         stats = {
@@ -276,19 +281,46 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
         return stats
 
     def _train_epochs(self, data_creator, epochs=1, num_steps=None, profile=False, info=None):
-        params = dict(data_creator=data_creator, epochs=epochs,
-                      num_steps=num_steps, profile=profile, info=info)
+        with FileLock(
+                os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
+            loader = data_creator(self.config)
+        if TorchRunner.should_wrap_dataloader(loader):
+            loader = self.with_sampler(loader)
+        stats_list = list()
+        for i in range(epochs):
+            params = dict(data_loader=loader,
+                          num_steps=num_steps, profile=profile, info=info)
 
-        remote_worker_stats = []
-        for i, w in enumerate(self.remote_workers):
-            stats = w.train_epochs.remote(**params)
-            remote_worker_stats.append(stats)
+            remote_worker_stats = []
+            for i, w in enumerate(self.remote_workers):
+                stats = w.train_epoch.remote(**params)
+                remote_worker_stats.append(stats)
 
-        success = check_for_failure(remote_worker_stats)
-        if success:
-            return success, ray.get(remote_worker_stats)
+            success = check_for_failure(remote_worker_stats)
+            if success:
+                stats_list.append(ray.get(remote_worker_stats))
+            else:
+                return success, None
+        return True, stats_list
 
-        return success, None
+    def with_sampler(self, loader):
+        import horovod.torch as hvd
+        # Automatically set the DistributedSampler
+        data_loader_args = {
+            "dataset": loader.dataset,
+            "batch_size": loader.batch_size,
+            "shuffle": False,
+            "num_workers": loader.num_workers,
+            "collate_fn": loader.collate_fn,
+            "pin_memory": loader.pin_memory,
+            "drop_last": loader.drop_last,
+            "timeout": loader.timeout,
+            "worker_init_fn": loader.worker_init_fn,
+            "sampler": DistributedSampler(loader.dataset,
+                                          num_replicas=hvd.size(),
+                                          rank=hvd.rank())
+        }
+        return DataLoader(**data_loader_args)
 
     def validate(self, data_creator, num_steps=None, profile=False, info=None):
         """Evaluates the model on the validation data set.

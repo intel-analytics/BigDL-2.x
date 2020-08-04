@@ -78,6 +78,8 @@ def validation_data_creator(config):
 
 
 def train_example():
+    import horovod.torch as hvd
+    hvd.init()
     estimator = Estimator.from_model_creator(
         model_creator=model_creator,
         optimizer_creator=optimizer_creator,
