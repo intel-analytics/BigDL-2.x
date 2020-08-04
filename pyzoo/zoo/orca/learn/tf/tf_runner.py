@@ -56,7 +56,7 @@ def _try_import_strategy():
 class TFRunner:
     """Manages a TensorFlow model for training."""
 
-    def __init__(self, model_creator, data_creator, compile_args,
+    def __init__(self, model_creator, data_creator, compile_args_creator,
                  config=None,
                  verbose=False):
         """Initializes the runner.
@@ -69,14 +69,14 @@ class TFRunner:
 
         self.model_creator = model_creator
         self.data_creator = data_creator
-        self.compile_args = compile_args
+        self.compile_args_creator = compile_args_creator
         self.config = {} if config is None else config
         self.inter_op_parallelism = self.config.get("inter_op_parallelism", 1)
         self.intra_op_parallelism = self.config.get("intra_op_parallelism", 1)
         import tensorflow as tf
         tf.config.threading.set_inter_op_parallelism_threads(self.inter_op_parallelism)
         tf.config.threading.set_intra_op_parallelism_threads(self.intra_op_parallelism)
-        os.environ["OMP_NUM_THREADS"] = str(self.intra_op_parallelism)
+        os.environ["OMP_NUM_THREADS"] = self.config.get("OMP_NUM_THREADS", str(self.intra_op_parallelism))
         os.environ["KMP_BLOCKING_TIME"] = self.config.get("KMP_BLOCKING_TIME",
                                                           os.environ.get("KMP_BLOCKING_TIME", "0"))
 
@@ -90,7 +90,7 @@ class TFRunner:
 
         logger.debug("Creating model")
         self.model = self.model_creator(self.config)
-        self.model.compile(**self.compile_args)
+        self.model.compile(**self.compile_args_creator(self.config))
         self.backend = "tf-local"
 
     def setup_horovod(self):
@@ -101,9 +101,10 @@ class TFRunner:
         self.test_dataset = test_dataset.shard(hvd.size(), hvd.rank())
 
         self.model = self.model_creator(self.config)
-        self.compile_args["optimizer"] = hvd.DistributedOptimizer(self.compile_args["optimizer"])
+        compile_args = self.compile_args_creator(self.config)
+        compile_args["optimizer"] = hvd.DistributedOptimizer(compile_args["optimizer"])
 
-        self.model.compile(**self.compile_args)
+        self.model.compile(**compile_args)
         self.backend = "horovod"
 
     def setup_distributed(self, urls, world_rank, world_size):
@@ -143,7 +144,7 @@ class TFRunner:
         logger.debug("Creating model with MultiWorkerMirroredStrategy")
         with self.strategy.scope():
             self.model = self.model_creator(self.config)
-            self.model.compile(**self.compile_args)
+            self.model.compile(**self.compile_args_creator(self.config))
 
         # For use in model.evaluate()
         self.local_model = None

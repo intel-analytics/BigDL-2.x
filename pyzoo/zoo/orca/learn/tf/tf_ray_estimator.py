@@ -37,7 +37,7 @@ class TFWorker(HorovodWorker, TFRunner):
 class TFRayEstimator(HorovodRayRunner):
     def __init__(self,
                  model_creator,
-                 compile_args,
+                 compile_args_creator,
                  data_creator,
                  config=None,
                  verbose=False,
@@ -62,7 +62,7 @@ class TFRayEstimator(HorovodRayRunner):
         """
         self.model_creator = model_creator
         self.data_creator = data_creator
-        self.compile_args = compile_args
+        self.compile_args_creator = compile_args_creator
         self.config = {} if config is None else config
         self.verbose = verbose
 
@@ -76,17 +76,13 @@ class TFRayEstimator(HorovodRayRunner):
         params = {
             "model_creator": model_creator,
             "data_creator": data_creator,
-            "compile_args": compile_args,
+            "compile_args_creator": compile_args_creator,
             "config": self.config,
             "verbose": self.verbose,
         }
 
         super().__init__(ray_ctx, worker_cls=TFWorker, worker_param=params)
 
-        # Generate actor class
-        # todo: are these resource quotas right?
-        # should they be exposed to the client codee?
-        # Compute URL for initializing distributed setup
         if backend == "tf":
             ips = ray.get(
                 [worker.get_node_ip.remote() for worker in self.remote_workers])
@@ -101,6 +97,8 @@ class TFRayEstimator(HorovodRayRunner):
                 worker.setup_distributed.remote(urls, i, len(self.remote_workers))
                 for i, worker in enumerate(self.remote_workers)])
         elif backend == "horovod":
+            # it is necessary to call self.run first to set horovod environment
+            self.run(lambda : print("worker initialized"))
             ray.get([
                 worker.setup_horovod.remote()
                 for i, worker in enumerate(self.remote_workers)])
