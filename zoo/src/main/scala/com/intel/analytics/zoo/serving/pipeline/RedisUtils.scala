@@ -29,12 +29,13 @@ object RedisUtils {
         s"Max memory ${redisInfo("maxmemory")}. Trimming old redis stream...")
       db.xtrim("image_stream",
         (db.xlen("image_stream") * cutRatio).toLong, true)
-      val cuttedRedisInfo = RedisUtils.getMapFromInfo(db.info())
+      var cuttedRedisInfo = RedisUtils.getMapFromInfo(db.info())
       while (cuttedRedisInfo("used_memory").toLong >=
         cuttedRedisInfo("maxmemory").toLong * inputThreshold) {
         logger.info(s"Used memory ${redisInfo("used_memory")}, " +
           s"Max memory ${redisInfo("maxmemory")}. " +
           s"Your result field has exceeded the limit, please dequeue.")
+        cuttedRedisInfo = RedisUtils.getMapFromInfo(db.info())
         Thread.sleep(10000)
       }
     }
