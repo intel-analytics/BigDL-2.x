@@ -24,7 +24,7 @@ import os
 from numpy.testing import assert_array_almost_equal
 
 from zoo.automl.model import XGBoostRegressor
-from zoo.automl.feature.echo_transformer import EchoTransformer
+from zoo.automl.feature.echo_transformer import IdentityTransformer
 
 
 class TestXgbregressor(ZooTestCase):
@@ -38,7 +38,7 @@ class TestXgbregressor(ZooTestCase):
         val_df = pd.DataFrame({"f": np.random.randn(5),
                                "t": np.random.randint(5)})
 
-        ft = EchoTransformer(feature_cols=feature_cols, target_col=target_col)
+        ft = IdentityTransformer(feature_cols=feature_cols, target_col=target_col)
         self.x, self.y = ft.transform(train_df)
         self.val_x, self.val_y = ft.transform(val_df)
 

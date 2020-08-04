@@ -26,7 +26,7 @@ import ray
 from zoo.automl.search.abstract import *
 from zoo.automl.search.RayTuneSearchEngine import RayTuneSearchEngine
 from zoo.automl.common.metrics import Evaluator
-from zoo.automl.feature.echo_transformer import EchoTransformer
+from zoo.automl.feature.echo_transformer import IdentityTransformer
 
 from zoo.automl.model import XGBoostRegressor
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
@@ -222,7 +222,7 @@ class XgbRegressorPredictor(object):
             model = XGBoostRegressor()
             return model
         model = model_create_func()
-        ft = EchoTransformer(self.feature_cols, self.target_col)
+        ft = IdentityTransformer(self.feature_cols, self.target_col)
 
         # prepare parameters for search engine
         search_space = recipe.search_space(None)

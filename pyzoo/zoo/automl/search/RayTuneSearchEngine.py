@@ -18,8 +18,6 @@ import ray
 from ray import tune
 from copy import copy, deepcopy
 
-from zoo.automl.model import TimeSequenceModel
-from zoo.automl.model import XGBoostRegressor
 from zoo.automl.search.abstract import *
 from zoo.automl.common.util import *
 from ray.tune import Trainable

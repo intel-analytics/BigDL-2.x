@@ -27,7 +27,7 @@ from featuretools.variable_types import Text, Numeric, DatetimeTimeIndex
 import json
 
 
-class EchoTransformer(BaseFeatureTransformer):
+class IdentityTransformer(BaseFeatureTransformer):
     """
     echo transformer
     """
