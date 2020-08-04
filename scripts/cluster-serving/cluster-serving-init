@@ -1,8 +1,15 @@
-#!/usr/bin/python3
+#!/bin/bash
+
+if [ -z "$CS_PATH" ]; then
+  echo "You must set environment variable CS_PATH, please refer to document."
+  exit 1
+fi
+cp $CS_PATH/zoo.jar .
+cp $CS_PATH/config.yaml .
 
 
-from zoo.serving.server import ClusterServing
 
-serving = ClusterServing()
+#from zoo.serving.server import ClusterServing
+#serving = ClusterServing()
 
-print("Cluster Serving has been properly set up.")
+#print("Cluster Serving has been properly set up.")

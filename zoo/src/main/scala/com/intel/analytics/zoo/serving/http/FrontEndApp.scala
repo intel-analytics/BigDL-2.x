@@ -197,7 +197,6 @@ object FrontEndApp extends Supportive {
           }
         }
       }
-
       if (arguments.httpsEnabled) {
         val serverContext = defineServerContext(arguments.httpsKeyStorePassword,
           arguments.httpsKeyStorePath)

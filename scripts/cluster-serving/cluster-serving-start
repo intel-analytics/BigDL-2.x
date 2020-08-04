@@ -45,6 +45,7 @@ done
 
 if [ -z "${config_path// }" ]; then
   config_path=config.yaml
+fi
 
 parse_yaml $config_path
 eval $(parse_yaml $config_path)
@@ -164,6 +165,3 @@ else
     fi
     ${SPARK_HOME}/bin/spark-submit --master ${spark_master} --driver-memory ${spark_driver_memory} --executor-memory ${spark_executor_memory} --num-executors ${spark_num_executors} --executor-cores ${spark_executor_cores} --total-executor-cores ${spark_total_executor_cores} --class com.intel.analytics.zoo.serving.SparkStreamingClusterServing ${ZOO_JAR}
 fi
-
-
-

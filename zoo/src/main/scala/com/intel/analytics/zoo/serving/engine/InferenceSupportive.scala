@@ -91,7 +91,7 @@ object InferenceSupportive {
       } catch {
         case _ =>
           logger.info("Your input format is invalid to your model, this batch is skipped")
-          null
+          pathByteBatch.toParArray.map(x => (x._1, ""))
       }
     })
     postProcessed.filter(x => x != null)
