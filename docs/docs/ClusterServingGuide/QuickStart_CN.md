@@ -24,7 +24,7 @@ $ wget https://archive.apache.org/dist/flink/flink-1.11.0/flink-1.11.0-bin-scala
 $ tar xzf flink-1.11.0-bin-scala_2.11.tgz
 ```
 ### 安装Cluster Serving
-下载`analytics-zoo-xxx-cluster-serving-all.zip`，解压后运行`source cluster-serving-prepare.sh`
+下载`analytics-zoo-xxx-cluster-serving-all.zip`[下载地址](https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.10.0-spark_2.4.3/0.9.0-SNAPSHOT/analytics-zoo-bigdl_0.10.0-spark_2.4.3-0.9.0-20200804.085942-62-cluster-serving-all.zip)，解压后进入`cluster-serving`目录，运行`source cluster-serving-prepare.sh`
 
 若要使用同步API运行`java -jar analytics-zoo-xxx-http.jar`启动同步服务
 
@@ -32,7 +32,7 @@ $ tar xzf flink-1.11.0-bin-scala_2.11.tgz
 
 若想以当前目录为工作目录，则一切就绪
 
-若想以其他目录为工作目录，进入目录后，设置环境变量`export CS_PATH=/path/to/analytics-zoo-xxx-cluster-serving-all`（解压zip包的目录），之后命令行运行`cluster-serving-init`
+若想以其他目录为工作目录，进入目录后，设置环境变量`export CS_PATH=/path/to/analytics-zoo-xxx-cluster-serving-all/cluster-serving`（解压zip包的目录），之后命令行运行`cluster-serving-init`
 ## 配置
 修改`config.yaml`，配置模型路径为包含模型的文件夹路径，样例如下，假设用户模型为Tensorflow SavedModel模型，结构为
 ```
