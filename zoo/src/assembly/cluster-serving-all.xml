@@ -24,6 +24,7 @@
             <includes>
                 <include>analytics-zoo-*-serving.jar</include>
                 <include>analytics-zoo-*-http.jar</include>
+                <include>analytics-zoo-*-cluster-serving-python.zip</include>
             </includes>
         </fileSet>
 
@@ -34,14 +35,5 @@
                 <include>quick_start.py</include>
             </includes>
         </fileSet>
-
-        <fileSet>
-            <outputDirectory>/cluster-serving</outputDirectory>
-            <directory>${project.parent.basedir}/zoo/target</directory>
-            <includes>
-                <include>analytics-zoo-*-python-api.zip</include>
-            </includes>
-        </fileSet>
-
     </fileSets>
 </assembly>
