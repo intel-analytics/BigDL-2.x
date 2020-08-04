@@ -818,7 +818,6 @@
                             </descriptors>
                         </configuration>
                     </execution>
-
                     <execution>
                         <id>serving-python</id>
                         <inherited>false</inherited>

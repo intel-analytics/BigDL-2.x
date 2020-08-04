@@ -2,7 +2,6 @@
 
 chmod a+x ./*
 
-
 mv *-serving.jar zoo.jar
 mv *-cluster-serving-python.zip zoo-python.zip
 
