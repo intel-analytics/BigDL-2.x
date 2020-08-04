@@ -31,6 +31,7 @@ import akka.util.Timeout
 
 trait JedisEnabledActor extends Actor with Supportive {
   val actorName = self.path.name
+  override val logger = LoggerFactory.getLogger(getClass)
 
   def retrieveJedis(
       redisHost: String,
@@ -48,6 +49,10 @@ trait JedisEnabledActor extends Actor with Supportive {
       }
       val jedisPoolConfig = new JedisPoolConfig()
       val jedisPool = new JedisPool(new JedisPoolConfig(), redisHost, redisPort, redisSecureEnabled)
+      redisSecureEnabled match {
+        case true => logger.info(s"$actorName connect to secured Redis successfully.")
+        case false => logger.info(s"$actorName connect to plain Redis successfully.")
+      }
       jedisPool.getResource()
     }
 }
@@ -136,7 +141,7 @@ class RedisGetActor(
     redisSecureEnabled: Boolean,
     redissTrustStorePath: String,
     redissTrustStorePassword: String) extends JedisEnabledActor {
-  override val logger = LoggerFactory.getLogger(classOf[RedisPutActor])
+  override val logger = LoggerFactory.getLogger(classOf[RedisGetActor])
   val jedis = retrieveJedis(redisHost, redisPort,
     redisSecureEnabled, redissTrustStorePath, redissTrustStorePassword)
 

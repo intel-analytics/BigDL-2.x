@@ -49,7 +49,7 @@ object ClusterServing {
     helper.initArgs()
     params = new SerParams(helper)
     val serving = StreamExecutionEnvironment.getExecutionEnvironment
-    serving.addSource(new FlinkRedisSource(params)).setParallelism(1)
+    serving.addSource(new FlinkRedisSource(params))
       .map(new FlinkInference(params))
       .addSink(new FlinkRedisSink(params))
     val jobClient = serving.executeAsync()
