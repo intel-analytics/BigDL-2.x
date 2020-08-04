@@ -834,6 +834,21 @@
                         </configuration>
                     </execution>
 
+                    <execution>
+                        <id>serving-python</id>
+                        <inherited>false</inherited>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/assembly/cluster-serving-python.xml
+                                </descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+
                 </executions>
             </plugin>
             <plugin>
