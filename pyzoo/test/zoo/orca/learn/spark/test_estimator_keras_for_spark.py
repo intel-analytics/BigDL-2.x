@@ -272,6 +272,57 @@ class TestEstimatorForKeras(TestCase):
         predictions = prediction_df.collect()
         assert len(predictions) == 10
 
+    def test_estimator_keras_tensorboard(self):
+        import zoo.orca.data.pandas
+
+        model = self.create_model()
+        file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
+
+        def transform(df):
+            result = {
+                "x": (df['user'].to_numpy().reshape([-1, 1]),
+                      df['item'].to_numpy().reshape([-1, 1])),
+                "y": df['label'].to_numpy()
+            }
+            return result
+
+        data_shard = data_shard.transform_shard(transform)
+
+        temp = tempfile.mkdtemp()
+        model_dir = os.path.join(temp, "test_model")
+
+        est = Estimator.from_keras(keras_model=model, model_dir=model_dir)
+
+        assert est.get_train_summary("Loss") is None
+        assert est.get_validation_summary("Top1Accuracy") is None
+
+        est.fit(data=data_shard,
+                batch_size=8,
+                epochs=10,
+                validation_data=data_shard)
+
+        train_loss = est.get_train_summary("Loss")
+        assert len(train_loss) > 0
+        val_scores = est.get_validation_summary("Top1Accuracy")
+        assert len(val_scores) > 0
+
+        # no model dir
+        est = Estimator.from_keras(keras_model=model)
+        log_dir = os.path.join(temp, "log")
+        est.set_tensorboard(log_dir, "test")
+        
+        est.fit(data=data_shard,
+                batch_size=8,
+                epochs=10,
+                validation_data=data_shard)
+
+        train_loss = est.get_train_summary("Loss")
+        val_scores = est.get_validation_summary("Loss")
+        assert len(train_loss) > 0
+        assert len(val_scores) > 0
+        shutil.rmtree(temp)
+
 
 if __name__ == "__main__":
     import pytest
