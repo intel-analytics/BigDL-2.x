@@ -124,6 +124,7 @@ if [ -z "${backend// }" ]; then
     fi
     ${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p $par_num zoo.jar -c $config_path
 else
+  echo "You are using non-default backend"
   if [ $backend != "spark" ]; then
     echo "You provided invalid parameter when start serving, supported parameter is spark, your is "$backend
     exit 1
