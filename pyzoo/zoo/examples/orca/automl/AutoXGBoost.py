@@ -19,7 +19,7 @@ import argparse
 from sklearn.model_selection import train_test_split
 from zoo import init_spark_on_local, init_spark_on_yarn
 from zoo.ray import RayContext
-from zoo.orca.automl.AutoXGBoost.regressor import Regressor
+from zoo.orca.automl.AutoXGBoost import AutoXGBoost
 from zoo.automl.config.recipe import *
 
 if __name__ == '__main__':
@@ -57,12 +57,12 @@ if __name__ == '__main__':
     target_col = "Age-Adjusted Incidence Rate"
     train_df, val_df = train_test_split(df, test_size=0.2, random_state=2)
 
-    tsp = Regressor(feature_cols=feature_cols, target_col=target_col)
-    pipeline = tsp.fit(train_df,
-                       validation_df=val_df,
-                       metric="mse",
-                       recipe=XgbRegressorGridRandomRecipe(n_estimators=[800, 1000],
-                                                           max_depth=[10, 15]))
+    estimator = AutoXGBoost().regressor(feature_cols=feature_cols, target_col=target_col)
+    pipeline = estimator.fit(train_df,
+                             validation_df=val_df,
+                             metric="mse",
+                             recipe=XgbRegressorGridRandomRecipe(n_estimators=[800, 1000],
+                                                                 max_depth=[10, 15]))
     print("Training completed.")
 
     pred_df = pipeline.predict(val_df)

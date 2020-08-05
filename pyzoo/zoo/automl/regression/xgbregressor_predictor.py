@@ -26,7 +26,7 @@ import ray
 from zoo.automl.search.abstract import *
 from zoo.automl.search.RayTuneSearchEngine import RayTuneSearchEngine
 from zoo.automl.common.metrics import Evaluator
-from zoo.automl.feature.echo_transformer import IdentityTransformer
+from zoo.automl.feature.identity_transformer import IdentityTransformer
 
 from zoo.automl.model import XGBoostRegressor
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline

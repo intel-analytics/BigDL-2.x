@@ -18,15 +18,16 @@ from zoo.automl.regression.xgbregressor_predictor import XgbRegressorPredictor
 from zoo.automl.config.recipe import *
 
 
-class Regressor(object):
-    def __init__(self,
-                 feature_cols,
-                 target_col,
-                 name="automl",
-                 logs_dir="~/zoo_automl_logs"):
+class AutoXGBoost(object):
+    def regressor(self,
+                  feature_cols,
+                  target_col,
+                  name="automl",
+                  logs_dir="~/zoo_automl_logs"):
         # models
         self.tsp = XgbRegressorPredictor(feature_cols, target_col,
                                          name, logs_dir)
+        return self.tsp
 
     def fit(self,
             input_df,
