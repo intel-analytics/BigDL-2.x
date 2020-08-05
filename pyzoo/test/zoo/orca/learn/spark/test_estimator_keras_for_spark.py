@@ -272,6 +272,29 @@ class TestEstimatorForKeras(TestCase):
         predictions = prediction_df.collect()
         assert len(predictions) == 10
 
+    def test_estimator_keras_tf_dataset(self):
+
+        model = self.create_model()
+
+        dataset = tf.data.Dataset.from_tensor_slices((np.random.randint(0, 200, size=(100, 1)),
+                                                      np.random.randint(0, 50, size=(100, 1)),
+                                                      np.ones(shape=(100,), dtype=np.int32)))
+        dataset = dataset.map(lambda user, item, label: [(user, item), label])
+        est = Estimator.from_keras(keras_model=model)
+        est.fit(data=dataset,
+                batch_size=8,
+                epochs=10,
+                validation_data=dataset)
+
+        eval_result = est.evaluate(dataset)
+        assert 'acc Top1Accuracy' in eval_result
+
+        dataset = tf.data.Dataset.from_tensor_slices((np.random.randint(0, 200, size=(100, 1)),
+                                                      np.random.randint(0, 50, size=(100, 1))))
+
+        predictions = est.predict(dataset).collect()
+        assert len(predictions[0]) == 2
+
 
 if __name__ == "__main__":
     import pytest

@@ -201,6 +201,8 @@ class TFOptimizerWrapper(Estimator):
         predicted_rdd = tfnet.predict(dataset)
         if isinstance(data, DataFrame):
             return convert_predict_to_dataframe(data, predicted_rdd)
+        elif isinstance(data, tf.data.Dataset):
+            return convert_predict_to_xshard(predicted_rdd)
         else:
             return predicted_rdd
 

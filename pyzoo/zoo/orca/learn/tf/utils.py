@@ -19,6 +19,7 @@ from os.path import join, basename, dirname
 import re
 import shutil
 import tensorflow as tf
+import numpy as np
 from pyspark.sql.dataframe import DataFrame
 
 from zoo.orca.data import SparkXShards
@@ -134,6 +135,21 @@ def convert_predict_to_dataframe(df, prediction_rdd):
     schema = StructType(df.schema.fields + [StructField('prediction', type)])
     result_df = result_rdd.toDF(schema)
     return result_df
+
+
+def convert_predict_to_xshard(prediction_rdd):
+    def transform_predict(iter):
+        predictions = list(iter)
+        # list of np array
+        if isinstance(predictions[0], list):
+            predictions = np.array(predictions).T.tolist()
+            result = [np.array(predict) for predict in predictions]
+            return [{'prediction': result}]
+        # np array
+        else:
+            return [{'prediction': np.array(predictions)}]
+
+    return SparkXShards(prediction_rdd.mapPartitions(transform_predict))
 
 
 def find_latest_checkpoint(model_dir):
