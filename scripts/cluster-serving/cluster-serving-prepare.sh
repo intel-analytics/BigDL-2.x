@@ -2,7 +2,14 @@
 
 chmod a+x ./*
 
-export PYTHONPATH=$PYTHONPATH:./analytics-zoo-bigdl_0.10.0-spark_2.4.3-0.9.0-SNAPSHOT-python-api.zip
-mv analytics-zoo-bigdl_0.10.0-spark_2.4.3-0.9.0-SNAPSHOT-serving.jar zoo.jar
+mv *-serving.jar zoo.jar
+mv *-cluster-serving-python.zip zoo-python.zip
 
-echo "cluster serving env is ready"
+export PYTHONPATH=$PYTHONPATH:$(pwd)/zoo-python.zip
+
+chmod a+x cluster-serving-*
+export CS_PATH=$(pwd)
+#export PATH=$PATH:$CS_PATH
+cp cluster-serving-* /usr/local/bin/
+
+echo "cluster serving environment is ready"

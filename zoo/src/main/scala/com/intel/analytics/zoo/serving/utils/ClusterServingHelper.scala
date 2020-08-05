@@ -132,11 +132,12 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     redisPort = redis.split(":").last.trim
 
     val secureConfig = configList.get("secure").asInstanceOf[HM]
-    redisSecureEnabled = if (getYaml(secureConfig, "secure_enabled", false) != null) {
-      getYaml(secureConfig, "secure_enabled", false).asInstanceOf[Boolean]
-    } else {
-      false
-    }
+//    redisSecureEnabled = if (getYaml(secureConfig, "secure_enabled", false) != false) {
+//      getYaml(secureConfig, "secure_enabled", false).asInstanceOf[Boolean]
+//    } else {
+//      false
+//    }
+    redisSecureEnabled = getYaml(secureConfig, "secure_enabled", false).asInstanceOf[Boolean]
 
     val defaultPath = try {
       getClass.getClassLoader.getResource("keys/keystore.jks").getPath
@@ -395,6 +396,9 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     val f = new File(localModelPath)
     val fileList = f.listFiles
 
+    if (fileList == null) {
+      println("Your model path provided is empty, please check your model path.")
+    }
     // model type is always null, not support pass model type currently
     if (modelType == null) {
 

@@ -61,9 +61,10 @@ object InferenceSupportive {
          * original Tensor, thus if reuse of Tensor is needed,
          * have to squeeze it back.
          */
-        //      dimCheck(t, "add", params)
+        dimCheck(t, "add", params)
         val result = params.model.doPredict(t)
         dimCheck(result, "remove", params)
+        dimCheck(t, "remove", params)
         val t3 = System.nanoTime()
         println(s"Inference and Dim check time ${(t3 - t2) / 1e9} s")
         val kvResult = if (result.isTensor) {
@@ -91,7 +92,7 @@ object InferenceSupportive {
       } catch {
         case _ =>
           logger.info("Your input format is invalid to your model, this batch is skipped")
-          null
+          pathByteBatch.toParArray.map(x => (x._1, ""))
       }
     })
     postProcessed.filter(x => x != null)
@@ -123,9 +124,6 @@ object InferenceSupportive {
         newSize = newSize :+ elem
       }
       t(key).asInstanceOf[Tensor[Float]].resize(newSize)
-      if (params.modelType == "openvino") {
-        t(key).asInstanceOf[Tensor[Float]].addSingletonDimension()
-      }
     })
     if (params.dataShape.size == 1) {
       t.keySet.foreach(key => {
