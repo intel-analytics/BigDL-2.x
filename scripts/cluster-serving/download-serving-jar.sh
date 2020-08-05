@@ -15,10 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+if [ -z "${ANALYTICS_ZOO_VERSION}" ]; then
+  export ANALYTICS_ZOO_VERSION=0.9.0-SNAPSHOT
+  export BIGDL_VERSION=0.10.0
+  export SPARK_VERSION=2.4.3
+  echo "You did not specify ANALYTICS_ZOO_VERSION, will download "$ANALYTICS_ZOO_VERSION
+fi
 
-echo $ANALYTICS_ZOO_VERSION
-echo $BIGDL_VERSION
-echo $SPARK_VERSION
+echo "ANALYTICS_ZOO_VERSION is "$ANALYTICS_ZOO_VERSION
+echo "BIGDL_VERSION is "$BIGDL_VERSION
+echo "SPARK_VERSION is "$SPARK_VERSION
 SPARK_MAJOR_VERSION=${SPARK_VERSION%%.[0-9]}
 echo $SPARK_MAJOR_VERSION
 
@@ -28,3 +34,4 @@ if [[ $ANALYTICS_ZOO_VERSION == *"SNAPSHOT"* ]]; then
 else
   wget https://repo1.maven.org/maven2/com/intel/analytics/zoo/analytics-zoo-bigdl_$BIGDL_VERSION-spark_$SPARK_VERSION/$ANALYTICS_ZOO_VERSION/analytics-zoo-bigdl_$BIGDL_VERSION-spark_$SPARK_VERSION-$ANALYTICS_ZOO_VERSION-serving.jar
 fi
+mv analytics-*-serving.jar zoo.jar
