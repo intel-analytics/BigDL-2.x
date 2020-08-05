@@ -75,6 +75,9 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
         if isinstance(data, DataFrame):
             assert isinstance(validation_data, DataFrame), \
                 "train data and validation data should be both Spark DataFrame"
+        if isinstance(data, tf.data.Dataset):
+            assert isinstance(validation_data, tf.data.Dataset), \
+                "train data and validation data should be both tf.data.Dataset"
 
     if isinstance(data, SparkXShards):
         dataset = xshards_to_tf_dataset(data,
@@ -97,8 +100,16 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
                                            sequential_order,
                                            shuffle
                                            )
+    elif isinstance(data, tf.data.Dataset):
+        dataset = TFDataset.from_tf_data_dataset(data,
+                                                 batch_size,
+                                                 batch_per_thread,
+                                                 hard_code_batch_size,
+                                                 validation_data,
+                                                 sequential_order,
+                                                 shuffle)
     else:
-        raise ValueError("data must be SparkXShards or orca.data.tf.Dataset or Spark DataFrame")
+        raise ValueError("data must be SparkXShards or orca.data.tf.Dataset or Spark DataFrame or tf.data.Dataset")
 
     return dataset
 
