@@ -30,7 +30,7 @@ class PostProcessingSpec extends FlatSpec with Matchers {
 
   "TopN filter" should "work properly" in {
     val t1 = Tensor(Storage(Array(3.0f, 2, 1, 4, 5)))
-    val ansString = new PostProcessing(t1).topN(2)
+    val ansString = new PostProcessing(t1).rankTopN(2)
     val truthString = "[[4,5.0][3,4.0]]"
     assert(ansString == truthString)
   }

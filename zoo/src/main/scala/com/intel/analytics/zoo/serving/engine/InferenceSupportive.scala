@@ -63,6 +63,7 @@ object InferenceSupportive {
          */
         //      dimCheck(t, "add", params)
         val result = params.model.doPredict(t)
+        dimCheck(t, "remove", params)
         dimCheck(result, "remove", params)
         val t3 = System.nanoTime()
         println(s"Inference and Dim check time ${(t3 - t2) / 1e9} s")
