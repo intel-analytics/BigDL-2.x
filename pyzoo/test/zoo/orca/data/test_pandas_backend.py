@@ -245,8 +245,8 @@ class TestSparkXShards(TestCase):
         assert isinstance(result2.first(), KeyError)
 
     def test_transform_with_repartition(self):
-        file_path = os.path.join(self.resource_path, "orca/data/json")
-        data_shard = zoo.orca.data.pandas.read_json(file_path, orient='columns', lines=True)
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
         partitions = data_shard.rdd.glom().collect()
         for par in partitions:
             assert len(par) <= 1
@@ -254,16 +254,21 @@ class TestSparkXShards(TestCase):
         def negative(df, column_name):
             df[column_name] = df[column_name] * (-1)
             return df
-        shard2 = data_shard.transform_shard(negative, "value")
+        shard2 = data_shard.transform_shard(negative, "sale_price")
 
-        shard3 = shard2.repartition(1)
+        shard3 = shard2.repartition(4)
         partitions3 = shard3.rdd.glom().collect()
         for par in partitions3:
             assert len(par) <= 1
 
-        shard4 = shard3.transform_shard(negative, "value")
+        shard4 = shard2.repartition(1)
         partitions4 = shard4.rdd.glom().collect()
         for par in partitions4:
+            assert len(par) <= 1
+
+        shard5 = shard4.transform_shard(negative, "sale_price")
+        partitions5 = shard5.rdd.glom().collect()
+        for par in partitions5:
             assert len(par) <= 1
 
 
