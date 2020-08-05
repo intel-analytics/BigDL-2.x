@@ -219,7 +219,6 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
     def train(self,
               data_creator,
               epochs=1,
-              num_steps=None,
               profile=False,
               reduce_results=True,
               info=None):
@@ -230,9 +229,6 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
         :param data_creator: (callable) a funtion that takes a config dict as input
                   and return a data loader containing the training data.
         :param epochs: (int) Number of epochs to train the model
-        :param num_steps: (int) Number of batches to compute update steps on.
-                This corresponds also to the number of times
-                ``TrainingOperator.train_batch`` is called.
         :param profile: (bool) Returns time stats for the training procedure.
         :param reduce_results: (bool) Whether to average all metrics across
                 all workers into one dict. If a metric is a non-numerical
@@ -253,11 +249,11 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
                 "Must provide a callable data_creator, "
                 "but got a data_creator of type: {}".format(type(data_creator)))
 
-        success, epoch_stats = self._train_epochs(data_creator,
-                                                   epochs=epochs,
-                                                   num_steps=num_steps,
-                                                   profile=profile,
-                                                   info=info)
+        success, worker_stats = self._train_epochs(data_creator,
+                                                  epochs=epochs,
+                                                  profile=profile,
+                                                  info=info)
+        epoch_stats = list(map(list, zip(*worker_stats)))
 
         if reduce_results:
             for i in range(len(epoch_stats)):
@@ -280,47 +276,18 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
                 stats[stat_key] = worker_stats[0][stat_key]
         return stats
 
-    def _train_epochs(self, data_creator, epochs=1, num_steps=None, profile=False, info=None):
-        with FileLock(
-                os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
-            loader = data_creator(self.config)
-        if TorchRunner.should_wrap_dataloader(loader):
-            loader = self.with_sampler(loader)
-        stats_list = list()
-        for i in range(epochs):
-            params = dict(data_loader=loader,
-                          num_steps=num_steps, profile=profile, info=info)
+    def _train_epochs(self, data_creator, epochs=1, profile=False, info=None):
+        params = dict(data_creator=data_creator, epochs=epochs, profile=profile, info=info)
+        remote_worker_stats = []
+        for i, w in enumerate(self.remote_workers):
+            stats = w.train_epochs.remote(**params)
+            remote_worker_stats.append(stats)
 
-            remote_worker_stats = []
-            for i, w in enumerate(self.remote_workers):
-                stats = w.train_epoch.remote(**params)
-                remote_worker_stats.append(stats)
-
-            success = check_for_failure(remote_worker_stats)
-            if success:
-                stats_list.append(ray.get(remote_worker_stats))
-            else:
-                return success, None
-        return True, stats_list
-
-    def with_sampler(self, loader):
-        import horovod.torch as hvd
-        # Automatically set the DistributedSampler
-        data_loader_args = {
-            "dataset": loader.dataset,
-            "batch_size": loader.batch_size,
-            "shuffle": False,
-            "num_workers": loader.num_workers,
-            "collate_fn": loader.collate_fn,
-            "pin_memory": loader.pin_memory,
-            "drop_last": loader.drop_last,
-            "timeout": loader.timeout,
-            "worker_init_fn": loader.worker_init_fn,
-            "sampler": DistributedSampler(loader.dataset,
-                                          num_replicas=hvd.size(),
-                                          rank=hvd.rank())
-        }
-        return DataLoader(**data_loader_args)
+        success = check_for_failure(remote_worker_stats)
+        if success:
+            return success, ray.get(remote_worker_stats)
+        else:
+            return success, None
 
     def validate(self, data_creator, num_steps=None, profile=False, info=None):
         """Evaluates the model on the validation data set.

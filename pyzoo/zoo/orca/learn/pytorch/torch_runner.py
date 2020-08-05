@@ -147,35 +147,35 @@ class TorchRunner:
         """Finds a free port on the current node."""
         return utils.find_free_port()
 
+    def with_sampler(self, loader):
+        raise NotImplementedError("Please implement with_sampler in the subclass of TorchRunner")
+
     @staticmethod
     def should_wrap_dataloader(loader):
         from torch.utils.data import DataLoader, IterableDataset
         return (isinstance(loader, DataLoader)
                 and not isinstance(loader.dataset, IterableDataset))
 
-    # def train_epochs(self, data_creator, epochs=1, num_steps=None, profile=False, info=None):
-    #     should_wrap = False
-    #     with FileLock(
-    #             os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
-    #         loader = data_creator(self.config)
-    #     if TorchRunner.should_wrap_dataloader(loader):
-    #         loader = self.with_sampler(loader)
-    #         should_wrap = True
-    #     stats_list = list()
-    #     for i in range(epochs):
-    #         if should_wrap:
-    #             data_loader = iter(loader)
-    #             if num_steps:
-    #                 data_loader = itertools.islice(data_loader, num_steps)
-    #         else:
-    #             data_loader = loader
-    #         stats = self.train_epoch(data_loader, num_steps=num_steps, profile=profile, info=info)
-    #         stats_list.append(stats)
-    #     return stats_list
+    def train_epochs(self, data_creator, epochs=1, profile=False, info=None):
+        should_wrap = False
+        with FileLock(
+                os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
+            loader = data_creator(self.config)
+        if TorchRunner.should_wrap_dataloader(loader):
+            loader = self.with_sampler(loader)
+            should_wrap = True
+        stats_list = list()
+        for i in range(epochs):
+            if should_wrap:
+                data_loader = iter(loader)
+            else:
+                data_loader = loader
+            stats = self.train_epoch(data_loader, profile=profile, info=info)
+            stats_list.append(stats)
+        return stats_list
 
     def train_epoch(self,
                     data_loader,
-                    num_steps=None,
                     profile=False,
                     info=None):
         """Runs a training epoch and updates the model parameters."""
@@ -184,14 +184,9 @@ class TorchRunner:
         self._toggle_profiling(profile=profile)
 
         info.update({
-            NUM_STEPS: num_steps,
             SCHEDULER_STEP: self.scheduler_step_freq
         })
         with self.timers.record("train_epoch"):
-            if TorchRunner.should_wrap_dataloader(data_loader):
-                data_loader = iter(data_loader)
-                if num_steps:
-                    data_loader = itertools.islice(data_loader, num_steps)
             train_stats = self.training_operator.train_epoch(data_loader, info)
 
         self.epochs += 1
