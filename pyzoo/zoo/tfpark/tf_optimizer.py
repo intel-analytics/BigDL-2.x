@@ -689,7 +689,9 @@ class TFOptimizer:
             val_methods = to_list(bigdl_val_methods)
             bigdl_metrics = {}
             for i, method in enumerate(val_methods):
-                bigdl_metrics['bigdl_metirc_' + str(i)] = BigDLMetric(method, val_outputs, val_labels)
+                bigdl_metrics['bigdl_metirc_' + str(i)] = BigDLMetric(method,
+                                                                      val_outputs,
+                                                                      val_labels)
             if metrics is None:
                 metrics = bigdl_metrics
             else:
