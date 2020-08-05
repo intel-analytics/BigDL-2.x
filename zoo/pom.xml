@@ -114,7 +114,7 @@
                 <dependency>
                     <groupId>io.netty</groupId>
                     <artifactId>netty-all</artifactId>
-                    <version>4.1.27.Final</version>
+                    <version>4.1.48.Final</version>
                 </dependency>
                 <dependency>
                     <groupId>org.slf4j</groupId>
@@ -301,12 +301,12 @@
             <scope>${spark-scope}</scope>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>org.apache.spark</groupId>-->
-<!--            <artifactId>spark-core_${scala.major.version}</artifactId>-->
-<!--            <version>${spark.version}</version>-->
-<!--            <scope>${spark-scope}</scope>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.spark</groupId>-->
+        <!--            <artifactId>spark-core_${scala.major.version}</artifactId>-->
+        <!--            <version>${spark.version}</version>-->
+        <!--            <scope>${spark-scope}</scope>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-actor_2.11</artifactId>
@@ -439,11 +439,27 @@
             <groupId>org.apache.arrow</groupId>
             <artifactId>arrow-vector</artifactId>
             <version>0.17.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-common</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.arrow</groupId>
             <artifactId>arrow-memory</artifactId>
             <version>0.17.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-buffer</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-common</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.github.fppt</groupId>
@@ -607,7 +623,7 @@
                     <relocations>
                         <relocation>
                             <pattern>com.google.protobuf</pattern>
-                            <shadedPattern>com.intel.analytics.zoo.shaded.protobuf</shadedPattern>
+                            <shadedPattern>com.intel.analytics.shaded.protobuf_v_3_5_1</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>io.netty</pattern>
@@ -617,10 +633,10 @@
                             <pattern>org.apache.arrow</pattern>
                             <shadedPattern>com.intel.analytics.zoo.shaded.arrow</shadedPattern>
                         </relocation>
-                        <relocation>
-                            <pattern>com.google.protobuf</pattern>
-                            <shadedPattern>com.intel.analytics.shaded.protobuf_v_3_5_1</shadedPattern>
-                        </relocation>
+                        <!--<relocation>-->
+                        <!--<pattern>org.tensorflow</pattern>-->
+                        <!--<shadedPattern>com.intel.analytics.zoo.shaded.tensorflow</shadedPattern>-->
+                        <!--</relocation>-->
                     </relocations>
                 </configuration>
                 <executions>
@@ -689,10 +705,12 @@
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>http</shadedClassifierName>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>reference.conf</resource>
                                 </transformer>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
                                         <Main-Class>com.intel.analytics.zoo.serving.http.FrontEndApp</Main-Class>
                                     </manifestEntries>
@@ -800,6 +818,37 @@
                             </descriptors>
                         </configuration>
                     </execution>
+
+                    <execution>
+                        <id>make-cluster-serving-all</id>
+                        <inherited>false</inherited>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/assembly/cluster-serving-all.xml
+                                </descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>serving-python</id>
+                        <inherited>false</inherited>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/assembly/cluster-serving-python.xml
+                                </descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+
                 </executions>
             </plugin>
             <plugin>
