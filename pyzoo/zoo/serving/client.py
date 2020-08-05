@@ -17,6 +17,8 @@
 import redis
 import time
 from zoo.serving.schema import *
+import httpx
+import json
 
 
 class API:
@@ -34,8 +36,6 @@ class API:
 
         self.db = redis.StrictRedis(host=host,
                                     port=port, db=0)
-        # self.db = redis.StrictRedis(host="10.239.47.210",
-        #                             port="16380", db=0)
         try:
             self.db.xgroup_create("image_stream", "serving")
             self.db.xgroup_create("tensor_stream", "serving")
@@ -44,14 +44,35 @@ class API:
 
 
 class InputQueue(API):
-    def __init__(self, host=None, port=None):
+    def __init__(self, host=None, port=None, sync=False, frontend_url=None):
         super().__init__(host, port)
-        self.c, self.h, self.w = None, None, None
+        self.sync = sync
+        self.frontend_url = frontend_url
+        if self.sync:
+            try:
+                res = httpx.get(frontend_url)
+                if res.status_code == 200:
+                    print("Attempt connecting to Cluster Serving frontend success")
+                else:
+                    raise ConnectionError()
+            except Exception as e:
+                print("Connection error, please check your HTTP server. Error msg is ", e)
+                self.conn.close()
         self.stream_name = "serving_stream"
 
         # TODO: these params can be read from config in future
         self.input_threshold = 0.6
         self.interval_if_error = 1
+
+    def predict(self, request_str):
+        """
+        Sync API, block waiting until get response
+        :return:
+        """
+        response = httpx.post(self.frontend_url + "/predict", data=request_str)
+        predictions = json.loads(response.text)['predictions']
+        processed = predictions[0].lstrip("{value=").rstrip("}")
+        return processed
 
     def enqueue(self, uri, **data):
         sink = pa.BufferOutputStream()

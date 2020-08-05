@@ -1,8 +1,16 @@
-#!/usr/bin/python3
+#!/bin/bash
 
-
-from zoo.serving.server import ClusterServing
-
-serving = ClusterServing()
-
-print("Cluster Serving has been properly set up.")
+if [ -z "$CS_PATH" ]; then
+  # try call py script, otherwise error
+  # pip install will add following script to path, but no pip would not
+  if cluster-serving-py-setup.py ; then
+    echo "You are installing Cluster Serving by pip, downloading..."
+  else
+    echo "You must provide CS_PATH variable to get prepared in a new working directory"
+    exit 1
+  fi
+else
+  cp $CS_PATH/zoo.jar .
+  cp $CS_PATH/config.yaml .
+  echo "Cluster Serving environment is set up."
+fi

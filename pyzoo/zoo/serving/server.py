@@ -18,71 +18,21 @@ import subprocess
 import shutil
 import glob
 import os
-import urllib.request
-from zoo.util.engine import get_analytics_zoo_classpath
 
 
 class ClusterServing:
 
     def __init__(self):
-        self.name = 'cluster-serving'
-        self.proc = None
         self.conf_path = os.path.abspath(
-            __file__ + "/../../share/bin/cluster-serving/config.yaml")
+            __file__ + "/../../conf/config.yaml")
         self.zoo_jar = 'zoo.jar'
-        self.bigdl_jar = 'bigdl.jar'
-        # self.spark_redis_jar = 'spark-redis-2.4.0-jar-with-dependencies.jar'
 
-        # self.download_spark_redis_jar()
         self.copy_config()
+        self.download_zoo_jar()
 
-        self.copy_zoo_jar()
-
-        if not os.path.exists('model'):
-            os.mkdir('model')
-
-    def try_copy_bigdl_jar(self):
-        try:
-            from bigdl.util.engine import get_bigdl_classpath
-            bigdl_jar_src = get_bigdl_classpath()
-            if bigdl_jar_src == "":
-                raise Exception("BigDL jar not discovered.")
-            shutil.copyfile(bigdl_jar_src, self.bigdl_jar)
-            print("BigDL jar copied from ", bigdl_jar_src)
-
-        except Exception:
-            print("WARNING: if you are running Cluster Serving using pip, you have misconfig"
-                  "with bigdl python package, otherwise, ignore this WARNING.")
-
-    def copy_zoo_jar(self):
-        jar_path = get_analytics_zoo_classpath()
-        if jar_path:
-            self.try_copy_bigdl_jar()
-        else:
-            """
-            not install by pip, so run prepare_env here
-            """
-            build_jar_paths = glob.glob(os.path.abspath(
-
-                __file__ + "/../../../../dist/lib/*.jar"))
-            prebuilt_jar_paths = glob.glob(os.path.abspath(
-                __file__ + "/../../../../*.jar"))
-            jar_paths = build_jar_paths + prebuilt_jar_paths
-
-            assert len(jar_paths) > 0, "No zoo jar is found"
-            assert len(jar_paths) == 1, "Expecting one jar: %s" % len(jar_paths)
-            jar_path = jar_paths[0]
-        shutil.copyfile(jar_path, self.zoo_jar)
-
-    def download_spark_redis_jar(self):
-        if not os.path.exists(self.spark_redis_jar):
-            print("Downloading spark-redis dependency...")
-            urllib.request.urlretrieve('https://oss.sonatype.org/content/repositories/'
-                                       'public/com/redislabs/spark-redis/2.4.0/'
-                                       + self.spark_redis_jar,
-                                       self.spark_redis_jar)
-        else:
-            print("spark-redis jar already exist.")
+    def download_zoo_jar(self):
+        if not os.path.exists(self.zoo_jar):
+            subprocess.Popen(['download-serving-jar.sh'])
 
     def copy_config(self):
         if os.path.exists("config.yaml"):
@@ -103,8 +53,11 @@ class ClusterServing:
 
             if not os.path.exists(self.conf_path):
                 raise EOFError("Can not find your config file.")
+        else:
+            print('Config file found in pip package, copying...')
         try:
             shutil.copyfile(self.conf_path, 'config.yaml')
+            print('Config file ready.')
         except Exception as e:
             print(e)
             print("WARNING: An initialized config file already exists.")

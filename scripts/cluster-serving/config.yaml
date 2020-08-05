@@ -16,7 +16,7 @@ data:
   shape: [3,224,224]
   # type must be provided, e.g, [image, tensor, sparse_tensor, tensor], if only one input brackets could be omitted
   type: image
-  # default, topN(1)
+  # default, None
   filter:
 params:
   # default, 4
@@ -25,7 +25,14 @@ params:
   performance_mode:
 redis:
   # default, 4g
-  maxmem: 
+  maxmem:
+secure:
+  # default: no
+  secure_enabled:
+  # default:
+  secure_trust_store_path:
+  # default:
+  secure_struct_store_password:
 spark:
   # default, local[*]
   master: 

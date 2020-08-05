@@ -24,7 +24,7 @@ import com.intel.analytics.zoo.serving.utils.{FileUtils, SerParams}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.source.{RichSourceFunction, SourceFunction}
 import org.apache.log4j.Logger
-import redis.clients.jedis.{Jedis, JedisPool, StreamEntryID}
+import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, StreamEntryID}
 
 import scala.collection.JavaConverters._
 
@@ -38,21 +38,33 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
 
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
-    redisPool = new JedisPool(params.redisHost, params.redisPort)
+
+    if (params.redisSecureEnabled) {
+      System.setProperty("javax.net.ssl.trustStore", params.redisSecureTrustStorePath)
+      System.setProperty("javax.net.ssl.trustStorePassword", params.redisSecureTrustStorePassword)
+      System.setProperty("javax.net.ssl.keyStoreType", "JKS")
+      System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
+      System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStorePassword)
+    }
+
+    redisPool = new JedisPool(new JedisPoolConfig(),
+      params.redisHost, params.redisPort, 5000, params.redisSecureEnabled)
+    params.redisSecureEnabled match {
+      case true => logger.info(s"FlinkRedisSource connect to secured Redis successfully.")
+      case false => logger.info(s"FlinkRedisSource connect to plain Redis successfully.")
+    }
     jedis = RedisIO.getRedisClient(redisPool)
     try {
-      jedis.xgroupCreate("serving_stream", "serving",
-        new StreamEntryID(0, 0), true)
+      jedis.xgroupCreate("serving_stream", "serving", new StreamEntryID(0, 0), true)
     } catch {
       case e: Exception =>
         println(s"$e exist group")
     }
-
   }
 
   override def run(sourceContext: SourceFunction
     .SourceContext[List[(String, String)]]): Unit = while (isRunning) {
-//    logger.info(s">>> get from source begin ${System.currentTimeMillis()} ms")
+    // logger.info(s">>> get from source begin ${System.currentTimeMillis()} ms")
     val start = System.nanoTime()
     val groupName = "serving"
     val consumerName = "consumer-" + UUID.randomUUID().toString
@@ -63,7 +75,7 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
       1,
       false,
       new SimpleEntry("serving_stream", StreamEntryID.UNRECEIVED_ENTRY))
-//    logger.info(s">>> get from source readed redis ${System.currentTimeMillis()} ms")
+    // logger.info(s">>> get from source readed redis ${System.currentTimeMillis()} ms")
     if (response != null) {
       for (streamMessages <- response.asScala) {
         val key = streamMessages.getKey
@@ -74,17 +86,7 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
         sourceContext.collect(it)
       }
       RedisUtils.checkMemory(jedis, 0.6, 0.5)
-
     }
-//    if (FileUtils.checkStop() || FileUtils.checkModified(params.modelDir, params.lastModified)) {
-//      println(s"Source: check stop is ${FileUtils.checkStop().toString}")
-//      println(s"Source: check modify is
-//          ${FileUtils.checkModified(params.modelDir, params.lastModified)}")
-//      logger.info(s"Source: check stop is ${FileUtils.checkStop().toString}")
-//      logger.info(s"Source: check modify is
-//          ${FileUtils.checkModified(params.modelDir, params.lastModified)}")
-//      isRunning = false
-//    }
   }
 
   override def cancel(): Unit = {

@@ -1,0 +1,39 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+    <id>cluster-serving-all</id>
+    <formats>
+        <format>dir</format>
+        <format>zip</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <fileSets>
+        <fileSet>
+            <outputDirectory>/cluster-serving</outputDirectory>
+            <directory>${project.parent.basedir}/scripts/cluster-serving</directory>
+        </fileSet>
+
+        <fileSet>
+            <outputDirectory>/test_image</outputDirectory>
+            <directory>${project.parent.basedir}/docker/cluster-serving/resources/test_image</directory>
+        </fileSet>
+
+        <fileSet>
+            <outputDirectory>/cluster-serving</outputDirectory>
+            <directory>${project.parent.basedir}/zoo/target</directory>
+            <includes>
+                <include>analytics-zoo-*-serving.jar</include>
+                <include>analytics-zoo-*-http.jar</include>
+                <include>analytics-zoo-*-cluster-serving-python.zip</include>
+            </includes>
+        </fileSet>
+
+        <fileSet>
+            <outputDirectory>/cluster-serving</outputDirectory>
+            <directory>${project.parent.basedir}/pyzoo/zoo/serving</directory>
+            <includes>
+                <include>quick_start.py</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+</assembly>

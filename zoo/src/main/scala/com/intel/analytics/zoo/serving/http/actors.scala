@@ -31,13 +31,30 @@ import akka.util.Timeout
 
 trait JedisEnabledActor extends Actor with Supportive {
   val actorName = self.path.name
+  override val logger = LoggerFactory.getLogger(getClass)
 
-  def retrieveJedis(redisHost: String, redisPort: Int): Jedis =
+  def retrieveJedis(
+      redisHost: String,
+      redisPort: Int,
+      redisSecureEnabled: Boolean,
+      redissTrustStorePath: String,
+      redissTrustStorePassword: String): Jedis =
     timing(s"$actorName retrieve redis connection")() {
-    val jedisPoolConfig = new JedisPoolConfig()
-    val jedisPool = new JedisPool(new JedisPoolConfig(), redisHost, redisPort)
-    jedisPool.getResource()
-  }
+      if (redisSecureEnabled) {
+        System.setProperty("javax.net.ssl.trustStore", redissTrustStorePath)
+        System.setProperty("javax.net.ssl.trustStorePassword", redissTrustStorePassword)
+        System.setProperty("javax.net.ssl.keyStoreType", "JKS")
+        System.setProperty("javax.net.ssl.keyStore", redissTrustStorePath)
+        System.setProperty("javax.net.ssl.keyStorePassword", redissTrustStorePassword)
+      }
+      val jedisPoolConfig = new JedisPoolConfig()
+      val jedisPool = new JedisPool(new JedisPoolConfig(), redisHost, redisPort, redisSecureEnabled)
+      redisSecureEnabled match {
+        case true => logger.info(s"$actorName connect to secured Redis successfully.")
+        case false => logger.info(s"$actorName connect to plain Redis successfully.")
+      }
+      jedisPool.getResource()
+    }
 }
 
 
@@ -47,9 +64,13 @@ class RedisPutActor(
     redisInputQueue: String,
     redisOutputQueue: String,
     timeWindow: Int,
-    countWindow: Int) extends JedisEnabledActor {
+    countWindow: Int,
+    redisSecureEnabled: Boolean,
+    redissTrustStorePath: String,
+    redissTrustStorePassword: String) extends JedisEnabledActor {
   override val logger = LoggerFactory.getLogger(classOf[RedisPutActor])
-  val jedis = retrieveJedis(redisHost, redisPort)
+  val jedis = retrieveJedis(redisHost, redisPort,
+    redisSecureEnabled, redissTrustStorePath, redissTrustStorePassword)
 
   var start = System.currentTimeMillis()
   val cache = MutableSet[PredictionInput]()
@@ -116,9 +137,13 @@ class RedisGetActor(
     redisHost: String,
     redisPort: Int,
     redisInputQueue: String,
-    redisOutputQueue: String) extends JedisEnabledActor {
-  override val logger = LoggerFactory.getLogger(classOf[RedisPutActor])
-  val jedis = retrieveJedis(redisHost, redisPort)
+    redisOutputQueue: String,
+    redisSecureEnabled: Boolean,
+    redissTrustStorePath: String,
+    redissTrustStorePassword: String) extends JedisEnabledActor {
+  override val logger = LoggerFactory.getLogger(classOf[RedisGetActor])
+  val jedis = retrieveJedis(redisHost, redisPort,
+    redisSecureEnabled, redissTrustStorePath, redissTrustStorePassword)
 
   override def receive: Receive = {
     case message: PredictionQueryMessage =>
