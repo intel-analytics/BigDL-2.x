@@ -18,8 +18,6 @@ import subprocess
 import shutil
 import glob
 import os
-import urllib.request
-from zoo.util.engine import get_analytics_zoo_classpath
 
 
 class ClusterServing:
