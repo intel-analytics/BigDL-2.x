@@ -19,11 +19,8 @@ from os.path import join, basename, dirname
 import re
 import shutil
 import tensorflow as tf
-<<<<<<< HEAD
 import numpy as np
-=======
 from pyspark.sql.dataframe import DataFrame
->>>>>>> b4449399e16dc835d77cf5f753b7ef813d10024b
 
 from zoo.orca.data import SparkXShards
 from zoo.orca.data.tf.data import Dataset, TFDataDataset2
