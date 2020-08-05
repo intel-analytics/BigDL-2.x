@@ -35,7 +35,7 @@ class PostProcessingSpec extends FlatSpec with Matchers {
     assert(ansString == truthString)
   }
   "PickTopN filter" should "work properly" in {
-    val t1 = Tensor(data=Array(2.0f,2,3,3), shape = Array(2,2))
+    val t1 = Tensor(data = Array(2.0f, 2, 3, 3), shape = Array(2, 2))
     val ansString = new PostProcessing(t1).pickTopN(1)
     val truthString = "[[2.0,2.0]]"
     assert(ansString == truthString)
