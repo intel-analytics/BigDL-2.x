@@ -157,20 +157,14 @@ class TorchRunner:
                 and not isinstance(loader.dataset, IterableDataset))
 
     def train_epochs(self, data_creator, epochs=1, profile=False, info=None):
-        should_wrap = False
         with FileLock(
                 os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
             loader = data_creator(self.config)
         if TorchRunner.should_wrap_dataloader(loader):
             loader = self.with_sampler(loader)
-            should_wrap = True
         stats_list = list()
         for i in range(epochs):
-            if should_wrap:
-                data_loader = iter(loader)
-            else:
-                data_loader = loader
-            stats = self.train_epoch(data_loader, profile=profile, info=info)
+            stats = self.train_epoch(loader, profile=profile, info=info)
             stats_list.append(stats)
         return stats_list
 
