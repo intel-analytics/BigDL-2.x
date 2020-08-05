@@ -69,14 +69,12 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
                                                  config=config,
                                                  scheduler_step_freq=scheduler_step_freq)
 
-    def fit(self, data, epochs=1, num_steps=None, profile=False, reduce_results=True, info=None):
+    def fit(self, data, epochs=1, profile=False, reduce_results=True, info=None):
         """
 
         :param data: (callable) a funtion that takes a config dict as input and return a data
             loader containing the training data.
         :param epochs: (int) Number of epochs to train the model
-        :param num_steps: (int) Number of batches to compute update steps on.
-            This corresponds also to the number of times `TrainingOperator.train_batch`` is called.
         :param profile: (bool) Returns time stats for the training procedure.
         :param reduce_results: (bool) Whether to average all metrics across all workers into one
             dict. If a metric is a non-numerical value (or nested dictionaries), one value will be

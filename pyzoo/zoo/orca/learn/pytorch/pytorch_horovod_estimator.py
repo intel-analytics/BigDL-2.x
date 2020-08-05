@@ -21,8 +21,6 @@ import collections
 import numpy as np
 import numbers
 import io
-import os
-import tempfile
 
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.pytorch.torch_runner import TorchRunner
@@ -30,7 +28,6 @@ from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from zoo.orca.learn.horovod.horovod_ray_runner import HorovodRayRunner, HorovodWorker
 from zoo.ray import RayContext
-from filelock import FileLock
 import ray
 
 logger = logging.getLogger(__name__)
