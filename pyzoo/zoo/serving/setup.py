@@ -46,7 +46,10 @@ For source code and more information, please visit our GitHub page:
 
 analytics_zoo_home = os.path.abspath(__file__ + "/../../../../")
 SCRIPTS_TARGET = os.path.join(analytics_zoo_home, "scripts/cluster-serving/")
-
+TMP_PATH = "zoo/conf"
+if os.path.exists(TMP_PATH):
+    rmtree(TMP_PATH)
+copytree(SCRIPTS_TARGET, TMP_PATH)
 try:
     with open('../../zoo/__init__.py', 'r') as f:
         for line in f.readlines():
@@ -74,8 +77,9 @@ def setup_package():
         author_email='bigdl-user-group@googlegroups.com',
         license='Apache License, Version 2.0',
         url='https://github.com/intel-analytics/analytics-zoo',
-        packages=['zoo.serving'],
+        packages=['zoo.serving', 'zoo.conf'],
         package_dir={'zoo.serving': '../serving/'},
+        package_data={"zoo.conf": ['config.yaml']},
         include_package_data=False,
         scripts=scripts,
         install_requires=['redis', 'pyyaml', 'httpx', 'pyarrow', 'opencv-python'],

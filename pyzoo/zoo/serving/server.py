@@ -24,7 +24,7 @@ class ClusterServing:
 
     def __init__(self):
         self.conf_path = os.path.abspath(
-            __file__ + "/../../share/bin/cluster-serving/config.yaml")
+            __file__ + "/../../conf/config.yaml")
         self.zoo_jar = 'zoo.jar'
 
         self.copy_config()
@@ -53,8 +53,11 @@ class ClusterServing:
 
             if not os.path.exists(self.conf_path):
                 raise EOFError("Can not find your config file.")
+        else:
+            print('Config file found in pip package, copying...')
         try:
             shutil.copyfile(self.conf_path, 'config.yaml')
+            print('Config file ready.')
         except Exception as e:
             print(e)
             print("WARNING: An initialized config file already exists.")
