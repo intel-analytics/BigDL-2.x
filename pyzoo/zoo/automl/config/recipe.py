@@ -40,6 +40,7 @@ class Recipe(metaclass=ABCMeta):
         runtime_config = {
             "training_iteration": self.training_iteration,
             "num_samples": self.num_samples,
+            "is_bad": True
         }
         if self.reward_metric is not None:
             runtime_config["reward_metric"] = self.reward_metric
@@ -570,3 +571,73 @@ class XgbRegressorGridRandomRecipe(Recipe):
             "min_child_weight": self.min_child_weight,
             "lr": self.lr
         }
+
+
+class XgbRegressorTestRecipe(Recipe):
+    def __init__(
+            self,
+            num_rand_samples=1,
+            n_estimators_range=[8, 15],
+            max_depth_range=[10, 15],
+            max_features_range=[0.1, 0.8],
+            n_bins=16
+    ):
+        """
+        """
+        super(self.__class__, self).__init__()
+
+        self.num_samples = num_rand_samples
+
+        self.n_estimators = tune.randint(n_estimators_range[0], n_estimators_range[1])
+        self.max_depth = tune.randint(max_depth_range[0], max_depth_range[1])
+        self.max_features = tune.loguniform(max_features_range[0], max_features_range[1])
+        self.n_bins=n_bins
+
+    def search_space(self, all_available_features):
+        return {
+            # -------- feature related parameters
+            "model": "XGBRegressor",
+
+            "n_estimators": self.n_estimators,
+            "max_depth": self.max_depth,
+            "max_features": self.max_features,
+        }
+
+
+class XgbRegressorBayesRecipe(Recipe):
+    def __init__(
+            self,
+            num_rand_samples=1,
+            n_estimators_range=[8, 15],
+            max_depth_range=[10, 15],
+            max_features_range=[0.1, 0.8]
+    ):
+        """
+        """
+        super(self.__class__, self).__init__()
+
+        self.num_samples = num_rand_samples
+
+        self.n_estimators = n_estimators_range
+        self.max_depth = max_depth_range
+        self.max_features = max_features_range
+
+    def search_space(self, all_available_features):
+        return {
+            # -------- feature related parameters
+            "n_estimators": self.n_estimators,
+            "max_depth": self.max_depth,
+            "max_features": self.max_features,
+        }
+
+    def search_algorithm_params(self):
+        return {
+            "utility_kwargs": {
+                "kind": "ucb",
+                "kappa": 2.5,
+                "xi": 0.0
+            }
+        }
+
+    def search_algorithm(self):
+        return 'BayesOpt'

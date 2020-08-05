@@ -17,6 +17,7 @@ from abc import ABC
 import pickle
 import pandas as pd
 from xgboost.sklearn import XGBRegressor
+from xgboost.sklearn import XGBClassifier
 
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.model.abstract import BaseModel
@@ -31,6 +32,7 @@ class XGBoostRegressor(BaseModel):
         :param future_seq_len:
         """
         # models
+        self.model_type = config.get('model_type', 'regressor')
         self.n_estimators = config.get('n_estimators', 1000)
         self.max_depth = config.get('max_depth', 5)
         self.tree_method = config.get('tree_method', 'hist')
@@ -53,6 +55,7 @@ class XGBoostRegressor(BaseModel):
         self.model_init = False
 
     def set_params(self, **config):
+        self.model_type = config.get('model_type', self.model_type)
         self.n_estimators = config.get('n_estimators', self.n_estimators)
         self.max_depth = config.get('max_depth', self.max_depth)
         self.tree_method = config.get('tree_method', self.tree_method)
@@ -68,8 +71,6 @@ class XGBoostRegressor(BaseModel):
         self.reg_alpha = config.get('reg_alpha', self.reg_alpha)
         self.reg_lambda = config.get('reg_lambda', self.reg_lambda)
         self.verbosity = config.get('verbosity', self.verbosity)
-        if config.get('metric', 'mse') in ('rmse', 'mse'):
-            self.metric = 'rmse'
 
     def _build(self, **config):
         """
@@ -78,13 +79,24 @@ class XGBoostRegressor(BaseModel):
         :return:
         """
         self.set_params(**config)
-        self.model = XGBRegressor(n_estimators=self.n_estimators, max_depth=self.max_depth,
-                                  n_jobs=self.n_jobs, tree_method=self.tree_method,
-                                  random_state=self.random_state, learning_rate=self.learning_rate,
-                                  min_child_weight=self.min_child_weight, seed=self.seed,
-                                  subsample=self.subsample, colsample_bytree=self.colsample_bytree,
-                                  gamma=self.gamma, reg_alpha=self.reg_alpha,
-                                  reg_lambda=self.reg_lambda, verbosity=self.verbosity)
+        if self.model_type == "regressor":
+            self.model = XGBRegressor(n_estimators=self.n_estimators, max_depth=self.max_depth,
+                                      n_jobs=self.n_jobs, tree_method=self.tree_method,
+                                      random_state=self.random_state, learning_rate=self.learning_rate,
+                                      min_child_weight=self.min_child_weight, seed=self.seed,
+                                      subsample=self.subsample, colsample_bytree=self.colsample_bytree,
+                                      gamma=self.gamma, reg_alpha=self.reg_alpha,
+                                      reg_lambda=self.reg_lambda, verbosity=self.verbosity)
+        elif self.model_type == "classifier":
+            self.model = XGBClassifier(n_estimators=self.n_estimators, max_depth=self.max_depth,
+                                      n_jobs=self.n_jobs, tree_method=self.tree_method,
+                                      random_state=self.random_state, learning_rate=self.learning_rate,
+                                      min_child_weight=self.min_child_weight, seed=self.seed,
+                                      subsample=self.subsample, colsample_bytree=self.colsample_bytree,
+                                      gamma=self.gamma, reg_alpha=self.reg_alpha,
+                                      reg_lambda=self.reg_lambda, verbosity=self.verbosity)
+        else:
+            raise ValueError("model_type can only be \"regressor\" or \"classifier\"")
         self.model_init = True
 
     def fit_eval(self, x, y, validation_data=None, **config):
@@ -97,7 +109,7 @@ class XGBoostRegressor(BaseModel):
             nd is the number of series, Td is the time dimension
         :param y: None. target is extracted from x directly
         :param verbose:
-        :return: the evaluation metric value
+        :return: the evaluation value
         """
         if not self.model_init:
             self._build(**config)
@@ -106,7 +118,7 @@ class XGBoostRegressor(BaseModel):
             validation_data = [validation_data]
 
         self.model.fit(x, y, eval_set=validation_data)
-        res = self.model.evals_result_.get("validation_0").get(self.metric)[-1]
+        res = list(self.model.evals_result_.get("validation_0").values())[-1][-1]
         return res
 
     def predict(self, x):

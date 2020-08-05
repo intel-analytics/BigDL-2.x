@@ -88,8 +88,10 @@ class RayTuneSearchEngine(SearchEngine):
         if search_algorithm == 'BayesOpt':
             self.search_algorithm = BayesOptSearch(
                 self.search_space,
-                metric="reward_metric",
-                mode=metric_mode,
+                # metric="reward_metric",
+                # mode=metric_mode,
+                metric="score",
+                mode="max",
                 utility_kwargs=search_algorithm_params["utility_kwargs"]
             )
         else:
