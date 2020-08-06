@@ -57,7 +57,6 @@ class InputQueue(API):
                     raise ConnectionError()
             except Exception as e:
                 print("Connection error, please check your HTTP server. Error msg is ", e)
-                self.conn.close()
         self.stream_name = "serving_stream"
 
         # TODO: these params can be read from config in future
