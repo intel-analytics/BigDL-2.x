@@ -15,6 +15,9 @@
 #
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.pytorch.pytorch_horovod_estimator import PyTorchHorovodEstimator
+from zoo.pipeline.estimator.estimator import Estimator as SparkEstimator
+from bigdl.optim.optimizer import MaxEpoch
+from zoo.feature.common import FeatureSet
 
 
 class Estimator(object):
@@ -38,15 +41,23 @@ class Estimator(object):
                            config=None,
                            scheduler_step_freq="batch",
                            backend="ray"):
-        assert backend == "ray", "only ray backend is supported for now"
-        return PyTorchHorovodEstimatorWrapper(model_creator=model_creator,
-                                              optimizer_creator=optimizer_creator,
-                                              loss_creator=loss_creator,
-                                              scheduler_creator=scheduler_creator,
-                                              training_operator_cls=training_operator_cls,
-                                              initialization_hook=initialization_hook,
-                                              config=config,
-                                              scheduler_step_freq=scheduler_step_freq)
+        if backend == "ray":
+            return PyTorchHorovodEstimatorWrapper(model_creator=model_creator,
+                                                  optimizer_creator=optimizer_creator,
+                                                  loss_creator=loss_creator,
+                                                  scheduler_creator=scheduler_creator,
+                                                  training_operator_cls=training_operator_cls,
+                                                  initialization_hook=initialization_hook,
+                                                  config=config,
+                                                  scheduler_step_freq=scheduler_step_freq)
+        elif backend == "spark":
+            return PytorchSparkEstimatorWrapper(model=model_creator,
+                                                loss=loss_creator,
+                                                optimizer=optimizer_creator,
+                                                model_dir=None,
+                                                bigdl_type="float")
+        else:
+            raise ValueError("only ray and spark backend are supported for now")
 
 
 class PyTorchHorovodEstimatorWrapper(Estimator):
@@ -116,3 +127,46 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
         """
         return self.estimator.validate(data_creator=data, num_steps=num_steps, profile=profile,
                                        info=info)
+
+
+class PytorchSparkEstimatorWrapper(Estimator):
+    def __init__(self, model, loss, optimizer, model_dir=None, bigdl_type="float"):
+        from zoo.pipeline.api.torch import TorchModel, TorchLoss
+        self.loss = loss
+        if self.loss is None:
+            self.loss = TorchLoss()
+        else:
+            self.loss = TorchLoss.from_pytorch(loss)
+        if optimizer is None:
+            from bigdl.optim.optimizer import SGD
+            optimizer - SGD()
+        self.model = TorchModel.from_pytorch(model)
+        self.estimator = SparkEstimator(model, optimizer, model_dir, bigdl_type=bigdl_type)
+
+    def fit(self, data, epochs=1, batch_size=32, validation_data=None, validation_methods=None,
+            checkpoint_trigger=None):
+        from zoo.orca.learn.pytorch.utils import to_sample
+        end_trigger = MaxEpoch(epochs)
+        assert batch_size > 0, "batch_size should be greater than 0"
+
+        train_rdd = data.rdd.flatMap(to_sample)
+        train_feature_set = FeatureSet.sample_rdd(train_rdd)
+        if validation_data is None:
+            val_feature_set = None
+        else:
+            val_feature_set = FeatureSet.sample_rdd(validation_data.rdd.flatMap(to_sample))
+
+        self.estimator.train(train_feature_set, self.loss, end_trigger, checkpoint_trigger,
+                             val_feature_set, validation_methods, batch_size)
+        return self
+
+    def predict(self, data, **kwargs):
+        pass
+
+    def evaluate(self, data, validation_methods=None, batch_size=32):
+        from zoo.orca.learn.pytorch.utils import to_sample
+
+        assert data is not None, "validation data shouldn't be None"
+
+        val_feature_set = FeatureSet.sample_rdd(data.rdd.flatMap(to_sample))
+        return self.estimator.evaluate(val_feature_set, validation_methods, batch_size)
