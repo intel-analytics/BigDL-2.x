@@ -164,6 +164,9 @@ class TorchRunner:
                 loader = data_creator(self.config)
         else:
             loader = data_creator(self.config)
+
+        if TorchRunner.should_wrap_dataloader(loader):
+            loader = self.with_sampler(loader)
         stats_list = list()
         for i in range(epochs):
             stats = self.train_epoch(loader, profile=profile, info=info)
@@ -184,7 +187,7 @@ class TorchRunner:
         })
         with self.timers.record("train_epoch"):
             if TorchRunner.should_wrap_dataloader(data_loader):
-                data_loader = iter(self.with_sampler(data_loader))
+                data_loader = iter(data_loader)
             train_stats = self.training_operator.train_epoch(data_loader, info)
 
         self.epochs += 1
