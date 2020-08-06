@@ -311,7 +311,7 @@ class TestEstimatorForKeras(TestCase):
         est = Estimator.from_keras(keras_model=model)
         log_dir = os.path.join(temp, "log")
         est.set_tensorboard(log_dir, "test")
-        
+
         est.fit(data=data_shard,
                 batch_size=8,
                 epochs=10,

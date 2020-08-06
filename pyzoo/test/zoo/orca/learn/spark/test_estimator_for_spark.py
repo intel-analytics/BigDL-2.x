@@ -429,7 +429,6 @@ class TestEstimatorForGraph(TestCase):
         file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
-
         def transform(df):
             result = {
                 "x": (df['user'].to_numpy(), df['item'].to_numpy()),
@@ -484,9 +483,9 @@ class TestEstimatorForGraph(TestCase):
         )
 
         est2.fit(data=data_shard,
-                batch_size=8,
-                epochs=5,
-                validation_data=data_shard)
+                 batch_size=8,
+                 epochs=5,
+                 validation_data=data_shard)
 
         train_tp = est2.get_train_summary("Throughput")
         val_scores = est2.get_validation_summary("loss")
