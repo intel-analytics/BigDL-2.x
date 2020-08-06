@@ -297,6 +297,8 @@ class TFKerasWrapper(Estimator):
         predicted_rdd = self.model.predict(dataset, batch_size)
         if isinstance(data, DataFrame):
             return convert_predict_to_dataframe(data, predicted_rdd)
+        elif isinstance(data, tf.data.Dataset):
+            return convert_predict_to_xshard(predicted_rdd)
         else:
             return predicted_rdd
 

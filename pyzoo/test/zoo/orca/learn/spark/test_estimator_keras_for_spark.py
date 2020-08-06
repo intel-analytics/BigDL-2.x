@@ -293,7 +293,7 @@ class TestEstimatorForKeras(TestCase):
                                                       np.random.randint(0, 50, size=(100, 1))))
 
         predictions = est.predict(dataset).collect()
-        assert len(predictions[0]) == 2
+        assert predictions[0]['prediction'].shape[1] == 2
 
 
 if __name__ == "__main__":
