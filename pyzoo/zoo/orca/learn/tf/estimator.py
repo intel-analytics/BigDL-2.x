@@ -246,7 +246,8 @@ class TFOptimizerWrapper(Estimator):
         if self.log_dir and self.app_name:
             self.tf_optimizer.estimator.set_tensorboad(self.log_dir, self.app_name)
 
-        self.tf_optimizer.optimize(end_trigger=MaxEpoch(epochs), checkpoint_trigger=checkpoint_trigger)
+        self.tf_optimizer.optimize(end_trigger=MaxEpoch(epochs),
+                                   checkpoint_trigger=checkpoint_trigger)
         return self
 
     def predict(self, data, batch_size=4,
