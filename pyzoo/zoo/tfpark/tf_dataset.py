@@ -25,7 +25,7 @@ from bigdl.util.common import get_node_and_core_number
 from zoo.common.utils import callZooFunc
 from zoo.common import Sample, JTensor
 from zoo.common.nncontext import getOrCreateSparkContext
-from zoo.feature.common import FeatureSet, SampleToMiniBatch
+from zoo.feature.common import FeatureSet, SampleToMiniBatch, Preprocessing
 from zoo.feature.image import ImagePreprocessing, ImageFeatureToSample
 from zoo.util import nest
 
@@ -1007,10 +1007,7 @@ class TFImageDataset(TFDataset):
         return self.image_set.get_image().getNumPartitions()
 
 
-from bigdl.util.common import JavaValue
-
-
-class TFParkSampleToMiniBatch(JavaValue):
+class TFParkSampleToMiniBatch(Preprocessing):
     """
      a Transformer that converts Feature to (Feature, None).
     """
