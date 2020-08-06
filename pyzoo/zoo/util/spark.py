@@ -251,7 +251,7 @@ class SparkRunner:
         node_ip = get_node_ip()
         SparkRunner.standalone_env = {"SPARK_HOME": pyspark_home,
                                       "ZOO_STANDALONE_HOME": zoo_standalone_home,
-                                      # If not set this, sometimes by default master is the hostname but not ip,
+                                      # If not set this, by default master is hostname but not ip,
                                       "SPARK_MASTER_HOST": node_ip}
         # The scripts from pip don't have execution permission and need to first give permission.
         pro = subprocess.Popen(["chmod", "-R", "+x", "{}/sbin".format(zoo_standalone_home)])
@@ -262,8 +262,9 @@ class SparkRunner:
         os.waitpid(start_master_pro.pid, 0)
         master = "spark://{}:7077".format(node_ip)  # 7077 is the default port
         # Start worker
-        start_worker_pro = subprocess.Popen("{}/sbin/start-worker.sh {}".format(zoo_standalone_home, master),
-                                            shell=True, env=SparkRunner.standalone_env)
+        start_worker_pro = subprocess.Popen(
+            "{}/sbin/start-worker.sh {}".format(zoo_standalone_home, master),
+            shell=True, env=SparkRunner.standalone_env)
         os.waitpid(start_worker_pro.pid, 0)
 
         # Start pyspark-shell
@@ -304,9 +305,9 @@ class SparkRunner:
         env = SparkRunner.standalone_env
         if not env:
             raise Exception("Standalone cluster not initialized")
-        stop_worker_pro = subprocess.Popen("{}/sbin/stop-worker.sh".format(env["ZOO_STANDALONE_HOME"]),
-                                           shell=True, env=env)
+        stop_worker_pro = subprocess.Popen(
+            "{}/sbin/stop-worker.sh".format(env["ZOO_STANDALONE_HOME"]), shell=True, env=env)
         os.waitpid(stop_worker_pro.pid, 0)
-        stop_master_pro = subprocess.Popen("{}/sbin/stop-master.sh".format(env["ZOO_STANDALONE_HOME"]),
-                                           shell=True, env=env)
+        stop_master_pro = subprocess.Popen(
+            "{}/sbin/stop-master.sh".format(env["ZOO_STANDALONE_HOME"]), shell=True, env=env)
         os.waitpid(stop_master_pro.pid, 0)
