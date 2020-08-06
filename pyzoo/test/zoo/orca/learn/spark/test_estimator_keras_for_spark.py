@@ -181,7 +181,7 @@ class TestEstimatorForKeras(TestCase):
         import zoo.orca.data.pandas
 
         import tensorflow.keras.backend as K
-        K.clear_session()
+        # K.clear_session()
         tf.reset_default_graph()
         model = self.create_model()
         file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
@@ -210,7 +210,7 @@ class TestEstimatorForKeras(TestCase):
         eval_result = est.evaluate(data_shard)
         print(eval_result)
 
-        K.get_session().close()
+        # K.get_session().close()
         tf.reset_default_graph()
         model = self.create_model()
 
@@ -306,6 +306,9 @@ class TestEstimatorForKeras(TestCase):
         assert len(train_loss) > 0
         val_scores = est.get_validation_summary("Top1Accuracy")
         assert len(val_scores) > 0
+
+        # import tensorflow.keras.backend as K
+        # K.get_session().close()
 
         # no model dir
         est = Estimator.from_keras(keras_model=model)
