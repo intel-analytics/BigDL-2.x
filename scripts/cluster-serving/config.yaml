@@ -14,8 +14,6 @@ data:
   src:
   # shape must be provided, e.g, [[1,2],[3,224,224],[3,4]], if only one input brackets could be omitted
   shape: [3,224,224]
-  # type must be provided, e.g, [image, tensor, sparse_tensor, tensor], if only one input brackets could be omitted
-  type: image
   # default, None
   filter:
 params:
