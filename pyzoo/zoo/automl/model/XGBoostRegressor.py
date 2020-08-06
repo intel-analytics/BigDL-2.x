@@ -24,13 +24,15 @@ from zoo.automl.model.abstract import BaseModel
 
 class XGBoostRegressor(BaseModel):
 
-    def __init__(self, **config):
+    def __init__(self, config):
         """
         Initialize hyper parameters
         :param check_optional_config:
         :param future_seq_len:
         """
         # models
+        if not config:
+            config = {}
         self.n_estimators = config.get('n_estimators', 1000)
         self.max_depth = config.get('max_depth', 5)
         self.tree_method = config.get('tree_method', 'hist')

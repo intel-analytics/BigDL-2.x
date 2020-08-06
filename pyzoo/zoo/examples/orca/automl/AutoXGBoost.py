@@ -57,7 +57,11 @@ if __name__ == '__main__':
     target_col = "Age-Adjusted Incidence Rate"
     train_df, val_df = train_test_split(df, test_size=0.2, random_state=2)
 
-    estimator = AutoXGBoost().regressor(feature_cols=feature_cols, target_col=target_col)
+    config = {'random_state': 2,
+              'min_child_weight': 3,
+              'n_jobs': 2}
+    estimator = AutoXGBoost().regressor(feature_cols=feature_cols,
+                                        target_col=target_col, config=config)
     pipeline = estimator.fit(train_df,
                              validation_df=val_df,
                              metric="mse",

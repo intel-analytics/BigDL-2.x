@@ -51,6 +51,7 @@ class XgbRegressorPredictor(object):
     def __init__(self,
                  feature_cols,
                  target_col,
+                 config=None,
                  name="automl",
                  logs_dir="~/zoo_automl_logs"
                  ):
@@ -68,6 +69,7 @@ class XgbRegressorPredictor(object):
         self.name = name
         self.feature_cols = feature_cols
         self.target_col = target_col
+        self.config = config
 
     def fit(self,
             input_df,
@@ -115,6 +117,7 @@ class XgbRegressorPredictor(object):
         self.pipeline = self._hp_search(
             input_df,
             validation_df=validation_df,
+            config=self.config,
             metric=metric,
             recipe=recipe,
             mc=mc,
@@ -213,13 +216,14 @@ class XgbRegressorPredictor(object):
     def _hp_search(self,
                    input_df,
                    validation_df,
+                   config,
                    metric,
                    recipe,
                    mc,
                    resources_per_trial,
                    remote_dir):
         def model_create_func():
-            model = XGBoostRegressor()
+            model = XGBoostRegressor(config)
             return model
         model = model_create_func()
         ft = IdentityTransformer(self.feature_cols, self.target_col)
