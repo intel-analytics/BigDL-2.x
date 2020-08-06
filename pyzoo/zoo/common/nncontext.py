@@ -117,9 +117,7 @@ def init_spark_on_yarn(hadoop_conf,
     return sc
 
 
-def init_spark_standalone(conda_name,
-                          workers,
-                          num_executors,
+def init_spark_standalone(num_executors,
                           executor_cores,
                           executor_memory="10g",
                           driver_memory="1g",
@@ -134,8 +132,6 @@ def init_spark_standalone(conda_name,
     sparkrunner = SparkRunner(spark_log_level=spark_log_level,
                               redirect_spark_log=redirect_spark_log)
     sc = sparkrunner.init_spark_standalone(
-        conda_name=conda_name,
-        workers=workers,
         num_executors=num_executors,
         executor_cores=executor_cores,
         executor_memory=executor_memory,
