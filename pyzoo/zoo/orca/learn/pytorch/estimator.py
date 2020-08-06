@@ -28,16 +28,16 @@ class Estimator(object):
         pass
 
     @staticmethod
-    def from_model_creator(*,
-                           model_creator,
-                           optimizer_creator,
-                           loss_creator=None,
-                           scheduler_creator=None,
-                           training_operator_cls=TrainingOperator,
-                           initialization_hook=None,
-                           config=None,
-                           scheduler_step_freq="batch",
-                           backend="ray"):
+    def from_torch(*,
+                   model_creator,
+                   optimizer_creator,
+                   loss_creator=None,
+                   scheduler_creator=None,
+                   training_operator_cls=TrainingOperator,
+                   initialization_hook=None,
+                   config=None,
+                   scheduler_step_freq="batch",
+                   backend="ray"):
         assert backend == "ray", "only ray backend is supported for now"
         return PyTorchHorovodEstimatorWrapper(model_creator=model_creator,
                                               optimizer_creator=optimizer_creator,
