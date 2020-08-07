@@ -162,8 +162,8 @@ class TFOptimizerWrapper(Estimator):
             ):
         """
         Train this graph model with train data.
-        :param data: train data. It can be SparkXShards, Spark DataFrame, tf.data.Dataset.
-        If data is SparkXShard, each element needs to be {'x': a feature numpy array
+        :param data: train data. It can be XShards, Spark DataFrame, tf.data.Dataset.
+        If data is XShards, each element needs to be {'x': a feature numpy array
          or list of feature numpy arrays, 'y': a label numpy array or list of label numpy arrays}
         If data is tf.data.Dataset, each element is a tuple of input tensors.
         :param epochs: number of epochs to train.
@@ -232,8 +232,8 @@ class TFOptimizerWrapper(Estimator):
                 ):
         """
         Predict input data
-        :param data: data to be predicted. It can be SparkXShards, Spark DataFrame, or tf.data.Dataset.
-        If data is SparkXShard, each element needs to be {'x': a feature numpy array
+        :param data: data to be predicted. It can be XShards, Spark DataFrame, or tf.data.Dataset.
+        If data is XShards, each element needs to be {'x': a feature numpy array
          or list of feature numpy arrays}.
         If data is tf.data.Dataset, each element is a tuple of input tensors.
         :param batch_size: batch size per thread
@@ -241,14 +241,14 @@ class TFOptimizerWrapper(Estimator):
         :param hard_code_batch_size: whether to hard code batch size for prediction.
          The default value is False.
         :return: predicted result.
-         If input data is SparkXShards, the predict result is also a SparkXShards,
+         If input data is XShards, the predict result is also a XShards,
          and the schema for each result is: {'x': feature numpy array
          or list of feature numpy arrays, 'prediction': predicted numpy array or
           list of predicted numpy arrays}.
          If input data is Spark DataFrame, the predict result is a DataFrame which includes original
          columns plus 'prediction' column. The 'prediction' column can be FloatType, VectorUDT
          or Array of VectorUDT depending on model outputs shape.
-         If input data is tf.data.Dataset, the prediction result is a SparkXShards, and the schema
+         If input data is tf.data.Dataset, the prediction result is a XShards, and the schema
          for each element is: {'prediction':predicted numpy array or list of predicted numpy arrays
         """
 
@@ -284,8 +284,8 @@ class TFOptimizerWrapper(Estimator):
                  ):
         """
         Evaluate model.
-        :param data: evaluation data. It can be SparkXShards, Spark DataFrame, tf.data.Dataset.
-        If data is SparkXShard, each element needs to be {'x': a feature numpy array
+        :param data: evaluation data. It can be XShards, Spark DataFrame, tf.data.Dataset.
+        If data is XShards, each element needs to be {'x': a feature numpy array
          or list of feature numpy arrays, 'y': a label numpy array or list of label numpy arrays}
         If data is tf.data.Dataset, each element is a tuple of input tensors.
         :param batch_size: batch size per thread.
@@ -338,8 +338,8 @@ class TFKerasWrapper(Estimator):
             ):
         """
         Train this keras model with train data.
-        :param data: train data. It can be SparkXShards, Spark DataFrame, tf.data.Dataset.
-        If data is SparkXShard, each element needs to be {'x': a feature numpy array
+        :param data: train data. It can be XShards, Spark DataFrame, tf.data.Dataset.
+        If data is XShards, each element needs to be {'x': a feature numpy array
          or list of feature numpy arrays, 'y': a label numpy array or list of label numpy arrays}
         If data is tf.data.Dataset, each element is [feature tensor tuple, label tensor tuple]
         :param epochs: number of epochs to train.
@@ -386,8 +386,8 @@ class TFKerasWrapper(Estimator):
         """
         Predict input data
         :param data: data to be predicted.
-        It can be SparkXShards, Spark DataFrame, or tf.data.Dataset.
-        If data is SparkXShard, each element needs to be {'x': a feature numpy array
+        It can be XShards, Spark DataFrame, or tf.data.Dataset.
+        If data is XShard, each element needs to be {'x': a feature numpy array
          or list of feature numpy arrays}.
         If data is tf.data.Dataset, each element is feature tensor tuple
         :param batch_size: batch size per thread
@@ -395,14 +395,14 @@ class TFKerasWrapper(Estimator):
         :param hard_code_batch_size: if require hard code batch size for prediction.
          The default value is False.
         :return: predicted result.
-         If input data is SparkXShards, the predict result is also a SparkXShards,
+         If input data is XShards, the predict result is also a XShards,
          and the schema for each result is: {'x': feature numpy array
          or list of feature numpy arrays, 'prediction': predicted numpy array or
           list of predicted numpy arrays}.
          If input data is Spark DataFrame, the predict result is a DataFrame which includes
          original columns plus 'prediction' column. The 'prediction' column can be FloatType,
          VectorUDT or Array of VectorUDT depending on model outputs shape.
-         If input data is tf.data.Dataset, the prediction result is a SparkXShards, and the schema
+         If input data is tf.data.Dataset, the prediction result is a XShards, and the schema
          for each element is: {'prediction':predicted numpy array or list of predicted numpy arrays
         """
 
@@ -432,8 +432,8 @@ class TFKerasWrapper(Estimator):
                  ):
         """
         Evaluate model.
-        :param data: evaluation data. It can be SparkXShards, Spark DataFrame, tf.data.Dataset.
-        If data is SparkXShard, each element needs to be {'x': a feature numpy array
+        :param data: evaluation data. It can be XShards, Spark DataFrame, tf.data.Dataset.
+        If data is XShards, each element needs to be {'x': a feature numpy array
          or list of feature numpy arrays, 'y': a label numpy array or list of label numpy arrays}
         If data is tf.data.Dataset, each element is [feature tensor tuple, label tensor tuple]
         :param batch_size: batch size per thread.
