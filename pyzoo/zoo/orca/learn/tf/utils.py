@@ -130,6 +130,7 @@ def convert_predict_to_dataframe(df, prediction_rdd):
     result_df = result_rdd.toDF(schema)
     return result_df
 
+
 def convert_predict_to_xshard(data_shard, prediction_rdd):
     def transform_predict(iter):
         predictions = list(iter)
@@ -137,14 +138,13 @@ def convert_predict_to_xshard(data_shard, prediction_rdd):
         if isinstance(predictions[0], list):
             predictions = np.array(predictions).T.tolist()
             result = [np.array(predict) for predict in predictions]
-            return [result]
+            return [{'prediction': result}]
         # np array
         else:
-            return [np.array(predictions)]
+            return [{'prediction': np.array(predictions)}]
 
-    predict_rdd = prediction_rdd.mapPartitions(transform_predict)
-    return data_shard.rdd.zip(predict_rdd)\
-        .map(lambda x_predict: {'x': x_predict[0]['x'], 'prediction': x_predict[1]})
+    return SparkXShards(prediction_rdd.mapPartitions(transform_predict))
+
 
 def find_latest_checkpoint(model_dir):
     import os
