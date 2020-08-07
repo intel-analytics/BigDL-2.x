@@ -286,7 +286,9 @@ class SparkRunner:
             .set("spark.driver.memory", driver_memory) \
             .set("spark.executor.instances", num_executors) \
             .set("spark.executor.cores", executor_cores) \
-            .set("spark.cores.max", num_executors * executor_cores)
+            .set("spark.cores.max", num_executors * executor_cores) \
+            .set("spark.executorEnv.PYTHONHOME",
+                 "/".join(self._detect_python_location().split("/")[:-2]))
         if extra_executor_memory_for_ray:
             spark_conf.set("spark.executor.memoryOverhead",
                            extra_executor_memory_for_ray)
