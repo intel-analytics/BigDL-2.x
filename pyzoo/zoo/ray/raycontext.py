@@ -55,9 +55,9 @@ class RayServiceFuncGenerator(object):
     """
     def _prepare_env(self):
         modified_env = os.environ.copy()
-        cwd = os.getcwd()
-        modified_env["PATH"] = "{}/{}:{}".format(cwd, "/".join(self.python_loc.split("/")[:-1]),
-                                                 os.environ["PATH"])
+        if "PATH" in os.environ:
+            modified_env["PATH"] = "{}/{}:{}".format(os.getcwd(), "/".join(self.python_loc.split("/")[:-1]),
+                                                     os.environ["PATH"])
         modified_env.pop("MALLOC_ARENA_MAX", None)
         modified_env.pop("RAY_BACKEND_LOG_LEVEL", None)
         # Unset all MKL setting as Analytics Zoo would give default values when init env.
