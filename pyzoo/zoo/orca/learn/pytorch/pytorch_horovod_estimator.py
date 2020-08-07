@@ -247,9 +247,9 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
                 "but got a data_creator of type: {}".format(type(data_creator)))
 
         success, worker_stats = self._train_epochs(data_creator,
-                                                  epochs=epochs,
-                                                  profile=profile,
-                                                  info=info)
+                                                   epochs=epochs,
+                                                   profile=profile,
+                                                   info=info)
         epoch_stats = list(map(list, zip(*worker_stats)))
 
         if reduce_results:
