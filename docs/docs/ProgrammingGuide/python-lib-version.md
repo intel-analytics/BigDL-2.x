@@ -6,7 +6,6 @@ Name & version
 bayesian-optimization==1.1.0
 dask==2.14.0
 featuretools==0.13.4
-gym==0.17.1
 h5py==2.10.0
 imageio==2.8.0
 imageio-ffmpeg==0.4.1
@@ -24,15 +23,11 @@ Pillow==7.1.1
 protobuf==3.11.4
 psutil==5.7.0
 py4j==0.10.7
-pyarrow==0.17.0
 pyspark==2.4.3
-pytest==5.4.1
 ray==0.8.4
 redis==3.4.1
-requests==2.23.0
 scikit-learn==0.22.2.post1
 scipy==1.4.1
-seaborn==0.10.0
 six==1.14.0
 tensorboard==1.15.0
 tensorboardX==2.0
