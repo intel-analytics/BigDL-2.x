@@ -245,7 +245,8 @@ class SparkRunner:
         from zoo.util.engine import get_analytics_zoo_classpath
         from bigdl.util.engine import get_bigdl_classpath
 
-        os.environ["PYSPARK_PYTHON"] = self._detect_python_location()
+        if 'PYSPARK_PYTHON' not in os.environ:
+            os.environ["PYSPARK_PYTHON"] = self._detect_python_location()
         pyspark_home = os.path.abspath(pyspark.__file__ + "/../")
         zoo_standalone_home = os.path.abspath(__file__ + "/../../share/bin/standalone")
         node_ip = get_node_ip()
