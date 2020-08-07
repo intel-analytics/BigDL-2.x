@@ -110,7 +110,8 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
                                                  sequential_order,
                                                  shuffle)
     else:
-        raise ValueError("data must be SparkXShards or orca.data.tf.Dataset or Spark DataFrame or tf.data.Dataset")
+        raise ValueError("data must be SparkXShards or orca.data.tf.Dataset or "
+                         "Spark DataFrame or tf.data.Dataset")
 
     return dataset
 

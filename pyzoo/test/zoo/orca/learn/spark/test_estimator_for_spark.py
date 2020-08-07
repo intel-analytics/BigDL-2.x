@@ -447,8 +447,9 @@ class TestEstimatorForGraph(TestCase):
         result = est.evaluate(dataset, batch_size=4)
         assert 'loss' in result
 
-        predict_dataset = tf.data.Dataset.from_tensor_slices((np.random.randint(0, 200, size=(20,)),
-                                                      np.random.randint(0, 50, size=(20,))))
+        predict_dataset = tf.data.Dataset.from_tensor_slices((
+            np.random.randint(0, 200, size=(20,)),
+            np.random.randint(0, 50, size=(20,))))
         predictions = est.predict(predict_dataset).collect()
         assert predictions[0]['prediction'].shape[1] == 2
 
