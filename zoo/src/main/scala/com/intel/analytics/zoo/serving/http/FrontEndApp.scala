@@ -206,7 +206,7 @@ object FrontEndApp extends Supportive {
       }
       Http().bindAndHandle(route, arguments.interface, arguments.port)
       logger.info(s"http started at http://${arguments.interface}:${arguments.port}")
-      system.scheduler.schedule(10 milliseconds, 10 milliseconds,
+      system.scheduler.schedule(10 milliseconds, 1 milliseconds,
         redisPutter, PredictionInputFlushMessage())(system.dispatcher)
     }
   }
