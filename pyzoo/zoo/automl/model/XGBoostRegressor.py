@@ -18,6 +18,7 @@ import pickle
 import pandas as pd
 from xgboost.sklearn import XGBRegressor
 
+from bigdl.util.common import get_node_and_core_number
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.model.abstract import BaseModel
 
@@ -36,12 +37,12 @@ class XGBoostRegressor(BaseModel):
         self.n_estimators = config.get('n_estimators', 1000)
         self.max_depth = config.get('max_depth', 5)
         self.tree_method = config.get('tree_method', 'hist')
-        self.n_jobs = config.get('n_jobs', -1)
+        _, core_num = get_node_and_core_number()
+        self.n_jobs = config.get('n_jobs', core_num)
         self.random_state = config.get('random_state', 2)
         self.learning_rate = config.get('learning_rate', 0.1)
         self.min_child_weight = config.get('min_child_weight', 1)
         self.seed = config.get('seed', 0)
-
         self.subsample = config.get('subsample', 0.8)
         self.colsample_bytree = config.get('colsample_bytree', 0.8)
         self.gamma = config.get('gamma', 0)
