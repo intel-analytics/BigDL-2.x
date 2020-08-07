@@ -52,8 +52,29 @@ class Estimator(object):
                    labels=None, loss=None, optimizer=None,
                    clip_norm=None, clip_value=None,
                    metrics=None, updates=None,
-                   sess=None, model_dir=None, backend="spark"):
-        assert backend == "spark", "only spark backend is supported for now"
+                   sess=None, model_dir=None, backend="bigdl"):
+        """
+        Create an Estimator for tesorflow graph.
+        :param inputs: input tensorflow tensors.
+        :param outputs: output tensorflow tensors.
+        :param labels: label tensorflow tensors.
+        :param loss: The loss tensor of the TensorFlow model, should be a scalar
+        :param optimizer: tensorflow optimization method.
+        :param clip_norm: float >= 0. Gradients will be clipped when their L2 norm exceeds
+        this value.
+        :param clip_value:  a float >= 0 or a tuple of two floats.
+        If clip_value is a float, gradients will be clipped when their absolute value
+        exceeds this value.
+        If clip_value is a tuple of two floats, gradients will be clipped when their value less
+        than clip_value[0] or larger than clip_value[1].
+        :param metrics: metric tensor.
+        :param sess: the current TensorFlow Session, if you want to used a pre-trained model,
+        you should use the Session to load the pre-trained variables and pass it to estimator
+        :param model_dir: location to save model checkpoint and summaries.
+        :param backend: backend for estimator. Now it only can be "bigdl".
+        :return: an Estimator object.
+        """
+        assert backend == "bigdl", "only bigdl backend is supported for now"
         return TFOptimizerWrapper(inputs=inputs,
                                   outputs=outputs,
                                   labels=labels,
@@ -67,8 +88,15 @@ class Estimator(object):
                                   )
 
     @staticmethod
-    def from_keras(keras_model, model_dir=None, backend="spark"):
-        assert backend == "spark", "only spark backend is supported for now"
+    def from_keras(keras_model, model_dir=None, backend="bigdl"):
+        """
+        Create an Estimator from a tensorflow.keras model. The model must be compiled.
+        :param keras_model: the tensorflow.keras model, which must be compiled.
+        :param model_dir: location to save model checkpoint and summaries.
+        :param backend: backend for estimator. Now it only can be "bigdl".
+        :return: an Estimator object.
+        """
+        assert backend == "bigdl", "only bigdl backend is supported for now"
         return TFKerasWrapper(keras_model, model_dir)
 
 
@@ -132,6 +160,28 @@ class TFOptimizerWrapper(Estimator):
             feed_dict=None,
             checkpoint_trigger=None
             ):
+        """
+        Train this graph model with train data.
+        :param data: train data. It can be SparkXShards, Spark DataFrame, tf.data.Dataset.
+        If data is SparkXShard, each element needs to be {'x': a feature numpy array
+         or list of feature numpy arrays, 'y': a label numpy array or list of label numpy arrays}
+        If data is tf.data.Dataset, each element is a tuple of input tensors.
+        :param epochs: number of epochs to train.
+        :param batch_size: total batch size for each iteration.
+        :param feature_cols: feature column names if train data is Spark DataFrame.
+        :param labels_cols: label column names if train data is Spark DataFrame.
+        :param validation_data: validation data. Validation data type should be the same
+        as train data.
+        :param hard_code_batch_size: whether hard code batch size for training. Default is False.
+        :param session_config: tensorflow session configuration for training.
+        Should be object of tf.ConfigProto
+        :param feed_dict: a dictionary. The key is TensorFlow tensor, usually a
+        placeholder, the value of the dictionary is a tuple of two elements. The first one of
+        the tuple is the value to feed to the tensor in training phase and the second one
+        is the value to feed to the tensor in validation phase.
+        :param checkpoint_trigger: when to trigger checkpoint during training.
+        Should be bigdl optimzer trigger, like EveryEpoch(), SeveralIteration(num_iterations),etc.
+        """
 
         assert self.labels is not None, \
             "labels is None; it should not be None in training"
@@ -154,7 +204,7 @@ class TFOptimizerWrapper(Estimator):
                              )
 
         if feed_dict is not None:
-            tensor_with_value = {key: (value, value) for key, value in feed_dict.items()}
+            tensor_with_value = {key: (value[0], value[1]) for key, value in feed_dict.items()}
         else:
             tensor_with_value = None
 
@@ -180,6 +230,27 @@ class TFOptimizerWrapper(Estimator):
                 feature_cols=None,
                 hard_code_batch_size=False
                 ):
+        """
+        Predict input data
+        :param data: data to be predicted. It can be SparkXShards, Spark DataFrame, or tf.data.Dataset.
+        If data is SparkXShard, each element needs to be {'x': a feature numpy array
+         or list of feature numpy arrays}.
+        If data is tf.data.Dataset, each element is a tuple of input tensors.
+        :param batch_size: batch size per thread
+        :param feature_cols: list of feature column names if input data is Spark DataFrame.
+        :param hard_code_batch_size: whether to hard code batch size for prediction.
+         The default value is False.
+        :return: predicted result.
+         If input data is SparkXShards, the predict result is also a SparkXShards,
+         and the schema for each result is: {'x': feature numpy array
+         or list of feature numpy arrays, 'prediction': predicted numpy array or
+          list of predicted numpy arrays}.
+         If input data is Spark DataFrame, the predict result is a DataFrame which includes original
+         columns plus 'prediction' column. The 'prediction' column can be FloatType, VectorUDT
+         or Array of VectorUDT depending on model outputs shape.
+         If input data is tf.data.Dataset, the prediction result is a SparkXShards, and the schema
+         for each element is: {'prediction':predicted numpy array or list of predicted numpy arrays
+        """
 
         assert self.outputs is not None, \
             "output is None, it should not be None in prediction"
@@ -211,6 +282,18 @@ class TFOptimizerWrapper(Estimator):
                  labels_cols=None,
                  hard_code_batch_size=False
                  ):
+        """
+        Evaluate model.
+        :param data: evaluation data. It can be SparkXShards, Spark DataFrame, tf.data.Dataset.
+        If data is SparkXShard, each element needs to be {'x': a feature numpy array
+         or list of feature numpy arrays, 'y': a label numpy array or list of label numpy arrays}
+        If data is tf.data.Dataset, each element is a tuple of input tensors.
+        :param batch_size: batch size per thread.
+        :param feature_cols: feature_cols: feature column names if train data is Spark DataFrame.
+        :param labels_cols: label column names if train data is Spark DataFrame.
+        :param hard_code_batch_size: whether to hard code batch size for evaluation.
+        :return: evaluation result as a dictionary of {'metric name': metric value}
+        """
 
         assert self.metrics is not None, \
             "metrics is None, it should not be None in evaluate"
@@ -253,6 +336,24 @@ class TFKerasWrapper(Estimator):
             session_config=None,
             checkpoint_trigger=None
             ):
+        """
+        Train this keras model with train data.
+        :param data: train data. It can be SparkXShards, Spark DataFrame, tf.data.Dataset.
+        If data is SparkXShard, each element needs to be {'x': a feature numpy array
+         or list of feature numpy arrays, 'y': a label numpy array or list of label numpy arrays}
+        If data is tf.data.Dataset, each element is [feature tensor tuple, label tensor tuple]
+        :param epochs: number of epochs to train.
+        :param batch_size: total batch size for each iteration.
+        :param feature_cols: feature column names if train data is Spark DataFrame.
+        :param labels_cols: label column names if train data is Spark DataFrame.
+        :param validation_data: validation data. Validation data type should be the same
+        as train data.
+        :param hard_code_batch_size: whether hard code batch size for training. Default is False.
+        :param session_config: tensorflow session configuration for training.
+        Should be object of tf.ConfigProto
+        :param checkpoint_trigger: when to trigger checkpoint during training.
+        Should be bigdl optimzer trigger, like EveryEpoch(), SeveralIteration(num_iterations),etc.
+        """
 
         if isinstance(data, DataFrame):
             assert feature_cols is not None, \
@@ -282,6 +383,28 @@ class TFKerasWrapper(Estimator):
                 feature_cols=None,
                 hard_code_batch_size=False
                 ):
+        """
+        Predict input data
+        :param data: data to be predicted.
+        It can be SparkXShards, Spark DataFrame, or tf.data.Dataset.
+        If data is SparkXShard, each element needs to be {'x': a feature numpy array
+         or list of feature numpy arrays}.
+        If data is tf.data.Dataset, each element is feature tensor tuple
+        :param batch_size: batch size per thread
+        :param feature_cols: list of feature column names if input data is Spark DataFrame.
+        :param hard_code_batch_size: if require hard code batch size for prediction.
+         The default value is False.
+        :return: predicted result.
+         If input data is SparkXShards, the predict result is also a SparkXShards,
+         and the schema for each result is: {'x': feature numpy array
+         or list of feature numpy arrays, 'prediction': predicted numpy array or
+          list of predicted numpy arrays}.
+         If input data is Spark DataFrame, the predict result is a DataFrame which includes
+         original columns plus 'prediction' column. The 'prediction' column can be FloatType,
+         VectorUDT or Array of VectorUDT depending on model outputs shape.
+         If input data is tf.data.Dataset, the prediction result is a SparkXShards, and the schema
+         for each element is: {'prediction':predicted numpy array or list of predicted numpy arrays
+        """
 
         if isinstance(data, DataFrame):
             assert feature_cols is not None, \
@@ -307,6 +430,18 @@ class TFKerasWrapper(Estimator):
                  labels_cols=None,
                  hard_code_batch_size=False
                  ):
+        """
+        Evaluate model.
+        :param data: evaluation data. It can be SparkXShards, Spark DataFrame, tf.data.Dataset.
+        If data is SparkXShard, each element needs to be {'x': a feature numpy array
+         or list of feature numpy arrays, 'y': a label numpy array or list of label numpy arrays}
+        If data is tf.data.Dataset, each element is [feature tensor tuple, label tensor tuple]
+        :param batch_size: batch size per thread.
+        :param feature_cols: feature_cols: feature column names if train data is Spark DataFrame.
+        :param labels_cols: label column names if train data is Spark DataFrame.
+        :param hard_code_batch_size: whether to hard code batch size for evaluation.
+        :return: evaluation result as a dictionary of {'metric name': metric value}
+        """
 
         if isinstance(data, DataFrame):
             assert feature_cols is not None, \
