@@ -184,7 +184,7 @@ class QueryActor(redisGetActor: ActorRef) extends JedisEnabledActor {
       }
       // println(System.currentTimeMillis(), message.query.id, result)
       if(results.size == 0) {
-        context.system.scheduler.scheduleOnce(10 milliseconds, self, message)
+        context.system.scheduler.scheduleOnce(1 milliseconds, self, message)
       } else {
         message.target ! results
       }
