@@ -20,15 +20,16 @@ import java.util.AbstractMap.SimpleEntry
 import java.util.UUID
 
 import com.intel.analytics.zoo.serving.pipeline.{RedisIO, RedisUtils}
-import com.intel.analytics.zoo.serving.utils.{FileUtils, SerParams}
+import com.intel.analytics.zoo.serving.utils.{Conventions, FileUtils, SerParams}
 import org.apache.flink.configuration.Configuration
-import org.apache.flink.streaming.api.functions.source.{RichSourceFunction, SourceFunction}
+import org.apache.flink.streaming.api.functions.source.{RichParallelSourceFunction, RichSourceFunction, SourceFunction}
 import org.apache.log4j.Logger
 import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, StreamEntryID}
 
 import scala.collection.JavaConverters._
 
-class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(String, String)]] {
+class FlinkRedisSource(params: SerParams)
+  extends RichParallelSourceFunction[List[(String, String)]] {
   @volatile var isRunning = true
 
   var redisPool: JedisPool = null
@@ -55,7 +56,7 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
     }
     jedis = RedisIO.getRedisClient(redisPool)
     try {
-      jedis.xgroupCreate("serving_stream", "serving", new StreamEntryID(0, 0), true)
+      jedis.xgroupCreate(Conventions.SERVING_STREAM_NAME, "serving", new StreamEntryID(0, 0), true)
     } catch {
       case e: Exception =>
         println(s"$e exist group")
@@ -74,7 +75,7 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
       params.coreNum,
       1,
       false,
-      new SimpleEntry("serving_stream", StreamEntryID.UNRECEIVED_ENTRY))
+      new SimpleEntry(Conventions.SERVING_STREAM_NAME, StreamEntryID.UNRECEIVED_ENTRY))
     // logger.info(s">>> get from source readed redis ${System.currentTimeMillis()} ms")
     if (response != null) {
       for (streamMessages <- response.asScala) {
