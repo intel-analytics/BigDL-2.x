@@ -266,6 +266,7 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
         val fieldVector = vectorSchemaRoot.getVector(key)
         fieldVector.setInitialCapacity(1)
         fieldVector.allocateNew()
+
         val minorType = fieldVector.getMinorType()
         minorType match {
           case MinorType.INT =>
@@ -404,12 +405,14 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
             }
             indicesDataIntVector.setValueCount(indicesDataSize)
             indicesDataVector.setValueCount(indicesDataSize)
-
           case _ =>
         }
+        fieldVector.close()
+
       })
       arrowStreamWriter.writeBatch()
     }
+
     arrowStreamWriter.end()
     arrowStreamWriter.close()
     byteArrayOutputStream.flush()
