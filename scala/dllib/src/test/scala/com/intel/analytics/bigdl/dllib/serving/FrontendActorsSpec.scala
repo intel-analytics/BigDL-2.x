@@ -25,7 +25,6 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.github.fppt.jedismock.RedisServer
 import com.intel.analytics.zoo.serving.http.{PredictionInputMessage, _}
-import com.intel.analytics.zoo.serving.utils.Conventions
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import redis.clients.jedis.Jedis
 
@@ -44,7 +43,7 @@ class FrontendActorsSpec extends FlatSpec with Matchers with BeforeAndAfter with
   implicit var executionContext: ExecutionContextExecutor = _
   implicit var timeout: Timeout = _
 
-  val redisInputQueue = Conventions.SERVING_STREAM_NAME
+  val redisInputQueue = "image_stream"
   val redisOutputQueue = "result:"
 
   val input1 = BytesPredictionInput("aW1hZ2UgYnl0ZXM=")
