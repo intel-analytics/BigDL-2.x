@@ -18,7 +18,7 @@ class MemoryStressSpec extends FlatSpec with Matchers {
       val ins = JsonUtil.fromJson(classOf[Instances], inputStr)
       val bytes = ins.toArrow()
       val b64 = java.util.Base64.getEncoder.encodeToString(bytes)
-      if (i % 100 == 0) {
+      if (i % 100000 == 0) {
         println(s"$i record to arrow completed. result $b64")
       }
     })
