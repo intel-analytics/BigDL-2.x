@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.serving.pipeline
 
+import com.intel.analytics.zoo.serving.utils.Conventions
 import org.apache.log4j.Logger
 import redis.clients.jedis.Jedis
 
@@ -27,10 +28,10 @@ object RedisUtils {
       redisInfo("maxmemory").toLong * inputThreshold) {
       logger.info(s"Used memory ${redisInfo("used_memory")}, " +
         s"Max memory ${redisInfo("maxmemory")}. Your serving stream length is " +
-        s"${db.xlen("serving_stream")}. Trimming old redis stream...")
-      db.xtrim("serving_stream",
-        (db.xlen("serving_stream") * cutRatio).toLong, true)
-      logger.info(s"Trimmed stream, now your serving stream length is ${db.xlen("serving_stream")}")
+        s"${db.xlen(Conventions.SERVING_STREAM_NAME)}. Trimming old redis stream...")
+      db.xtrim(Conventions.SERVING_STREAM_NAME,
+        (db.xlen(Conventions.SERVING_STREAM_NAME) * cutRatio).toLong, true)
+      logger.info(s"Trimmed stream, now your serving stream length is ${db.xlen(Conventions.SERVING_STREAM_NAME)}")
       var cuttedRedisInfo = RedisUtils.getMapFromInfo(db.info())
       while (cuttedRedisInfo("used_memory").toLong >=
         cuttedRedisInfo("maxmemory").toLong * inputThreshold) {
