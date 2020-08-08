@@ -28,7 +28,8 @@ import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, StreamEntryID}
 
 import scala.collection.JavaConverters._
 
-class FlinkRedisSource(params: SerParams) extends RichParallelSourceFunction[List[(String, String)]] {
+class FlinkRedisSource(params: SerParams)
+  extends RichParallelSourceFunction[List[(String, String)]] {
   @volatile var isRunning = true
 
   var redisPool: JedisPool = null
