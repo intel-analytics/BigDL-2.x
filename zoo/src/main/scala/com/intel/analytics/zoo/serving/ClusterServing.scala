@@ -18,16 +18,21 @@
 package com.intel.analytics.zoo.serving
 
 
+import java.io.File
+
 import com.intel.analytics.zoo.serving.engine.{FlinkInference, FlinkRedisSink, FlinkRedisSource}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ClusterServingManager, SerParams}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ClusterServingManager, FileUtils, SerParams}
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
 
+import scala.util.control.Breaks._
+import scala.collection.JavaConverters._
+
+
 
 object ClusterServing {
-  case class ServingParams(configPath: String = "config.yaml", testMode: Boolean = false,
-                           sourceNum: Int = 1)
+  case class ServingParams(configPath: String = "config.yaml", testMode: Boolean = false)
 
   val parser = new OptionParser[ServingParams]("Text Classification Example") {
     opt[String]('c', "configPath")
