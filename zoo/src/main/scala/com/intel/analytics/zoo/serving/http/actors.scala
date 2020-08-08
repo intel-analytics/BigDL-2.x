@@ -150,6 +150,10 @@ class RedisGetActor(
       val results = get(redisOutputQueue, message.ids)
       if (null != results && results.size == message.ids.size) {
         sender() ! results
+        // result get, remove in redis here
+        message.ids.foreach(id =>
+          jedis.del("result:" + id)
+        )
       } else {
         sender() ! Seq[(String, util.Map[String, String])]()
       }
