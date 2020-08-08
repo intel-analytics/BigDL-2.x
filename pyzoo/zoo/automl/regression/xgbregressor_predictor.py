@@ -227,16 +227,6 @@ class XgbRegressorPredictor(object):
         model = model_create_func()
         ft = EchoTransformer(self.feature_cols, self.target_col)
 
-        # prepare parameters for search engine
-        search_space = recipe.search_space(None)
-        runtime_params = recipe.runtime_params()
-        num_samples = runtime_params['num_samples']
-        stop = dict(runtime_params)
-        search_algorithm_params = recipe.search_algorithm_params()
-        search_algorithm = recipe.search_algorithm()
-        fixed_params = recipe.fixed_params()
-        del stop['num_samples']
-
         from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
         metric_mode = TimeSequencePredictor._get_metric_mode(metric)
         searcher = RayTuneSearchEngine(logs_dir=self.logs_dir,
@@ -246,17 +236,13 @@ class XgbRegressorPredictor(object):
                                        )
         searcher.compile(input_df,
                          model_create_func=model_create_func(),
-                         search_space=search_space,
-                         stop=stop,
-                         search_algorithm_params=search_algorithm_params,
-                         search_algorithm=search_algorithm,
-                         fixed_params=fixed_params,
+                         recipe=recipe,
                          feature_transformers=ft,
                          validation_df=validation_df,
                          metric=metric,
                          metric_mode=metric_mode,
                          mc=mc,
-                         num_samples=num_samples)
+                         )
         # searcher.test_run()
         analysis = searcher.run()
 

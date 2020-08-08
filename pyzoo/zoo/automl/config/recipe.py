@@ -573,14 +573,13 @@ class XgbRegressorGridRandomRecipe(Recipe):
         }
 
 
-class XgbRegressorTestRecipe(Recipe):
+class XgbRegressorSkOptRecipe(Recipe):
     def __init__(
             self,
-            num_rand_samples=1,
-            n_estimators_range=[8, 15],
-            max_depth_range=[10, 15],
-            max_features_range=[0.1, 0.8],
-            n_bins=16
+            num_rand_samples=10,
+            n_estimators_range=(50, 1000),
+            max_depth_range=(2, 15),
+            max_features_range=(0.1, 0.8)
     ):
         """
         """
@@ -588,56 +587,41 @@ class XgbRegressorTestRecipe(Recipe):
 
         self.num_samples = num_rand_samples
 
-        self.n_estimators = tune.randint(n_estimators_range[0], n_estimators_range[1])
-        self.max_depth = tune.randint(max_depth_range[0], max_depth_range[1])
-        self.max_features = tune.loguniform(max_features_range[0], max_features_range[1])
-        self.n_bins=n_bins
+        self.n_estimators_range = n_estimators_range
+        self.max_depth_range = max_depth_range
+        self.max_features_range = max_features_range
 
     def search_space(self, all_available_features):
         return {
             # -------- feature related parameters
-            "model": "XGBRegressor",
-
-            "n_estimators": self.n_estimators,
-            "max_depth": self.max_depth,
-            "max_features": self.max_features,
+            "n_estimators": self.n_estimators_range,
+            "max_depth": self.max_depth_range,
+            "max_features": self.max_features_range,
         }
 
-
-class XgbRegressorBayesRecipe(Recipe):
-    def __init__(
-            self,
-            num_rand_samples=1,
-            n_estimators_range=[8, 15],
-            max_depth_range=[10, 15],
-            max_features_range=[0.1, 0.8]
-    ):
-        """
-        """
-        super(self.__class__, self).__init__()
-
-        self.num_samples = num_rand_samples
-
-        self.n_estimators = n_estimators_range
-        self.max_depth = max_depth_range
-        self.max_features = max_features_range
-
-    def search_space(self, all_available_features):
-        return {
-            # -------- feature related parameters
-            "n_estimators": self.n_estimators,
-            "max_depth": self.max_depth,
-            "max_features": self.max_features,
+    def fixed_params(self):
+        total_fixed_params = {
+            "n_estimators": tune.randint(self.n_estimators_range[0],
+                                         self.n_estimators_range[1]),
+            "max_depth": tune.randint(self.max_depth_range[0],
+                                      self.max_depth_range[1]),
+            "max_features": tune.loguniform(self.max_features_range[0],
+                                            self.max_features_range[1])
         }
+        return total_fixed_params
 
-    def search_algorithm_params(self):
-        return {
-            "utility_kwargs": {
-                "kind": "ucb",
-                "kappa": 2.5,
-                "xi": 0.0
-            }
-        }
+    def opt_params(self):
+        from skopt.space import Real, Integer
+        params = [
+            Integer(self.n_estimators_range[0], self.n_estimators_range[1]),
+            Integer(self.max_depth_range[0], self.max_depth_range[1]),
+            Real(
+                self.max_features_range[0],
+                self.max_features_range[1],
+                prior="log-uniform",
+            ),
+        ]
+        return params
 
     def search_algorithm(self):
-        return 'BayesOpt'
+        return 'SkOpt'

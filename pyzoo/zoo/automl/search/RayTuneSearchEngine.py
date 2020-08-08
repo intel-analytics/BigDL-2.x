@@ -53,12 +53,8 @@ class RayTuneSearchEngine(SearchEngine):
     def compile(self,
                 input_df,
                 model_create_func,
-                search_space,
-                num_samples=1,
-                stop=None,
-                search_algorithm=None,
-                search_algorithm_params=None,
-                fixed_params=None,
+                recipe,
+                schedule_algorithm=None,
                 feature_transformers=None,
                 # model=None,
                 future_seq_len=1,
@@ -81,21 +77,56 @@ class RayTuneSearchEngine(SearchEngine):
         :param metric:
         :return:
         """
+
+        # prepare parameters for search engine
+        search_space = recipe.search_space(None)
+        runtime_params = recipe.runtime_params()
+        num_samples = runtime_params['num_samples']
+        stop = dict(runtime_params)
+        search_algorithm_params = recipe.search_algorithm_params()
+        search_algorithm = recipe.search_algorithm()
+        fixed_params = recipe.fixed_params()
+        del stop['num_samples']
+
         self.search_space = self._prepare_tune_config(search_space)
         self.stop_criteria = stop
         self.num_samples = num_samples
+        if schedule_algorithm == 'AsyncHyperBand':
+            from ray.tune.schedulers import AsyncHyperBandScheduler
+            self.sched = AsyncHyperBandScheduler(
+                time_attr="training_iteration",
+                metric="reward_metric",
+                mode="min",
+                max_t=50,
+                grace_period=1,
+                reduction_factor=3,
+                brackets=3,
+            )
+        else:
+            from ray.tune.schedulers import FIFOScheduler
+            self.sched = FIFOScheduler()
 
         if search_algorithm == 'BayesOpt':
             self.search_algorithm = BayesOptSearch(
                 self.search_space,
-                # metric="reward_metric",
-                # mode=metric_mode,
-                metric="score",
-                mode="max",
+                metric="reward_metric",
+                mode=metric_mode,
                 utility_kwargs=search_algorithm_params["utility_kwargs"]
+            )
+        elif search_algorithm == 'SkOpt':
+            from skopt import Optimizer
+            from ray.tune.suggest.skopt import SkOptSearch
+            opt_params = recipe.opt_params()
+            optimizer = Optimizer(opt_params)
+            self.search_algorithm = SkOptSearch(
+                optimizer,
+                list(self.search_space.keys()),
+                metric="reward_metric",
+                mode=metric_mode,
             )
         else:
             self.search_algorithm = None
+
         self.fixed_params = fixed_params
 
         self.train_func = self._prepare_train_func(input_df=input_df,
@@ -128,6 +159,7 @@ class RayTuneSearchEngine(SearchEngine):
                 stop=self.stop_criteria,
                 config=self.search_space,
                 num_samples=self.num_samples,
+                scheduler=self.sched,
                 resources_per_trial=self.resources_per_trail,
                 verbose=1,
                 reuse_actors=True
@@ -139,11 +171,29 @@ class RayTuneSearchEngine(SearchEngine):
                 config=self.fixed_params,
                 stop=self.stop_criteria,
                 search_alg=self.search_algorithm,
+                scheduler=self.sched,
                 num_samples=self.num_samples,
                 resources_per_trial=self.resources_per_trail,
                 verbose=1,
                 reuse_actors=True
             )
+
+        # analysis = tune.run(
+        #     self.train_func,
+        #     name=self.name,
+        #     search_alg=self.search_algorithm,
+        #     scheduler=self.sched,
+        #     stop=self.stop_criteria,
+        #     config={
+        #         "n_estimators": tune.randint(self.n_estimators_range[0], self.n_estimators_range[1]),
+        #         "max_depth": tune.randint(self.max_depth_range[0], self.max_depth_range[1]),
+        #         "max_features": tune.loguniform(self.max_features_range[0], self.max_features_range[1]),
+        #     },
+        #     num_samples=self.num_samples,
+        #     resources_per_trial=self.resources_per_trail,
+        #     verbose=1,
+        #     reuse_actors=True
+        # )
         self.trials = analysis.trials
         return analysis
 

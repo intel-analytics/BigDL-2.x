@@ -241,16 +241,6 @@ class TimeSequencePredictor(object):
                 future_seq_len=self.future_seq_len)
         model = model_create_func()
 
-        # prepare parameters for search engine
-        search_space = recipe.search_space(feature_list)
-        runtime_params = recipe.runtime_params()
-        num_samples = runtime_params['num_samples']
-        stop = dict(runtime_params)
-        search_algorithm_params = recipe.search_algorithm_params()
-        search_algorithm = recipe.search_algorithm()
-        fixed_params = recipe.fixed_params()
-        del stop['num_samples']
-
         metric_mode = TimeSequencePredictor._get_metric_mode(metric)
         searcher = RayTuneSearchEngine(logs_dir=self.logs_dir,
                                        resources_per_trial=resources_per_trial,
@@ -259,18 +249,14 @@ class TimeSequencePredictor(object):
                                        )
         searcher.compile(input_df,
                          model_create_func=model_create_func(),
-                         search_space=search_space,
-                         stop=stop,
-                         search_algorithm_params=search_algorithm_params,
-                         search_algorithm=search_algorithm,
-                         fixed_params=fixed_params,
+                         recipe=recipe,
                          feature_transformers=ft,
                          future_seq_len=self.future_seq_len,
                          validation_df=validation_df,
                          metric=metric,
                          metric_mode=metric_mode,
                          mc=mc,
-                         num_samples=num_samples)
+                         )
         # searcher.test_run()
         analysis = searcher.run()
 

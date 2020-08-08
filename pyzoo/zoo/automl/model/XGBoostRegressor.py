@@ -93,7 +93,7 @@ class XGBoostRegressor(BaseModel):
                                       random_state=self.random_state, learning_rate=self.learning_rate,
                                       min_child_weight=self.min_child_weight, seed=self.seed,
                                       subsample=self.subsample, colsample_bytree=self.colsample_bytree,
-                                      gamma=self.gamma, reg_alpha=self.reg_alpha,
+                                      gamma=self.gamma, reg_alpha=self.reg_alpha, objective='binary:logistic',
                                       reg_lambda=self.reg_lambda, verbosity=self.verbosity)
         else:
             raise ValueError("model_type can only be \"regressor\" or \"classifier\"")
