@@ -65,7 +65,7 @@ object SparkStructuredStreamingClusterServing {
 //    val dataType = helper.dataType
     val dataShape = helper.dataShape
 
-    val (streamKey, dataField) = (Conventions.SERVING_STREAM_NAME, "data")
+    val (streamKey, dataField) = ("serving_stream", "data")
 
     val filter = helper.filter
 

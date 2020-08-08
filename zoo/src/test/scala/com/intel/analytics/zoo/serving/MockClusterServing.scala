@@ -20,7 +20,6 @@ import java.util
 import java.util.{AbstractMap, Base64, UUID}
 
 import com.intel.analytics.zoo.serving.http._
-import com.intel.analytics.zoo.serving.utils.Conventions
 import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, StreamEntryID}
 
 import scala.collection.JavaConverters._
@@ -33,7 +32,7 @@ object MockClusterServing extends App with Supportive {
   val jedisPool = new JedisPool(new JedisPoolConfig(), redisHost, redisPort)
   val jedis = jedisPool.getResource()
 
-  val redisInputQueue = Conventions.SERVING_STREAM_NAME
+  val redisInputQueue = "serving_stream"
   val redisOutputQueue = "result:"
 
   var redisStreamBatchCount = 56

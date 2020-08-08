@@ -23,7 +23,6 @@ import java.util.{HashMap, UUID}
 import akka.actor.ActorRef
 import com.codahale.metrics.Timer
 import com.google.common.collect.ImmutableList
-import com.intel.analytics.zoo.serving.utils.Conventions
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.complex._
 import org.apache.arrow.vector.dictionary.DictionaryProvider
@@ -94,6 +93,13 @@ object InstancesPredictionInput {
 case class PredictionOutput[Type](uuid: String, result: Type)
 
 class ImageFeature(val b64: String)
+
+object Conventions {
+  val ARROW_INT = new ArrowType.Int(32, true)
+  val ARROW_FLOAT = new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE)
+  val ARROW_BINARY = new ArrowType.Binary()
+  val ARROW_UTF8 = new ArrowType.Utf8
+}
 
 case class SparseTensor[T](shape: List[Int], data: List[T], indices: List[List[Int]])
 
@@ -266,7 +272,6 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
         val fieldVector = vectorSchemaRoot.getVector(key)
         fieldVector.setInitialCapacity(1)
         fieldVector.allocateNew()
-
         val minorType = fieldVector.getMinorType()
         minorType match {
           case MinorType.INT =>
@@ -405,14 +410,12 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
             }
             indicesDataIntVector.setValueCount(indicesDataSize)
             indicesDataVector.setValueCount(indicesDataSize)
+
           case _ =>
         }
-        fieldVector.close()
-
       })
       arrowStreamWriter.writeBatch()
     }
-
     arrowStreamWriter.end()
     arrowStreamWriter.close()
     byteArrayOutputStream.flush()
