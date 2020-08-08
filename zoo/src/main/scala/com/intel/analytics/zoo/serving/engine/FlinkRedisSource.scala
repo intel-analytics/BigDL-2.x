@@ -22,13 +22,13 @@ import java.util.UUID
 import com.intel.analytics.zoo.serving.pipeline.{RedisIO, RedisUtils}
 import com.intel.analytics.zoo.serving.utils.{Conventions, FileUtils, SerParams}
 import org.apache.flink.configuration.Configuration
-import org.apache.flink.streaming.api.functions.source.{RichSourceFunction, SourceFunction}
+import org.apache.flink.streaming.api.functions.source.{RichParallelSourceFunction, RichSourceFunction, SourceFunction}
 import org.apache.log4j.Logger
 import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, StreamEntryID}
 
 import scala.collection.JavaConverters._
 
-class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(String, String)]] {
+class FlinkRedisSource(params: SerParams) extends RichParallelSourceFunction[List[(String, String)]] {
   @volatile var isRunning = true
 
   var redisPool: JedisPool = null

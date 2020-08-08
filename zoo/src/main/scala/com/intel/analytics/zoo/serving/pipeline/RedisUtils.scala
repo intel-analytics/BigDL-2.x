@@ -31,7 +31,8 @@ object RedisUtils {
         s"${db.xlen(Conventions.SERVING_STREAM_NAME)}. Trimming old redis stream...")
       db.xtrim(Conventions.SERVING_STREAM_NAME,
         (db.xlen(Conventions.SERVING_STREAM_NAME) * cutRatio).toLong, true)
-      logger.info(s"Trimmed stream, now your serving stream length is ${db.xlen(Conventions.SERVING_STREAM_NAME)}")
+      logger.info(s"Trimmed stream, now your serving stream length is " +
+        s"${db.xlen(Conventions.SERVING_STREAM_NAME)}")
       var cuttedRedisInfo = RedisUtils.getMapFromInfo(db.info())
       while (cuttedRedisInfo("used_memory").toLong >=
         cuttedRedisInfo("maxmemory").toLong * inputThreshold) {
