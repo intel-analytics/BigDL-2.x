@@ -20,7 +20,7 @@ import org.apache.arrow.vector.types.FloatingPointPrecision
 import org.apache.arrow.vector.types.pojo.ArrowType
 
 object Conventions {
-  val SERVING_STREAM_NAME= "serving_stream"
+  val SERVING_STREAM_NAME = "serving_stream"
   val ARROW_INT = new ArrowType.Int(32, true)
   val ARROW_FLOAT = new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE)
   val ARROW_BINARY = new ArrowType.Binary()
