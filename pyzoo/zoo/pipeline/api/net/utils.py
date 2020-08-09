@@ -55,7 +55,8 @@ def find_tensors(sources, predicate):
                 else:
                     raise ValueError("Unrecognized Node: {}".format(node))
                 for input_tensor in inputs:
-                    # this is necessary because there may be a cycle in the graph such as tf.while_loop
+                    # this is necessary because there may be a cycle in the graph
+                    # such as tf.while_loop
                     if input_tensor.name not in visited:
                         queue.append(input_tensor)
     return list(results)
