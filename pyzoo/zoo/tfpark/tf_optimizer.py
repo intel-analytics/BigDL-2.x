@@ -119,7 +119,8 @@ class TFModel(object):
         if tensors_with_value:
             for t, v in tensors_with_value.items():
                 if t.name in names:
-                    raise ValueError(f"tensor {t} already in inputs, cannot put it in tensor_with_value")
+                    msg = f"tensor {t} already in inputs, cannot put it in tensor_with_value"
+                    raise ValueError(msg)
                 additional_inputs.append(t)
                 additional_values.append(v)
 
