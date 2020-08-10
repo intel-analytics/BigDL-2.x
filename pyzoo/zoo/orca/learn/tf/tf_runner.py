@@ -56,7 +56,7 @@ def _try_import_strategy():
 class TFRunner:
     """Manages a TensorFlow model for training."""
 
-    def __init__(self, model_creator, data_creator, compile_args_creator,
+    def __init__(self, model_creator, compile_args_creator,
                  config=None,
                  verbose=False):
         """Initializes the runner.
@@ -68,7 +68,6 @@ class TFRunner:
         """
 
         self.model_creator = model_creator
-        self.data_creator = data_creator
         self.compile_args_creator = compile_args_creator
         self.config = {} if config is None else config
         self.inter_op_parallelism = self.config.get("inter_op_parallelism", 1)
@@ -85,9 +84,6 @@ class TFRunner:
 
     def setup(self):
         """Initializes the model."""
-        logger.debug("Creating dataset")
-        self.train_dataset, self.test_dataset = self.data_creator(self.config)
-
         logger.debug("Creating model")
         self.model = self.model_creator(self.config)
         self.model.compile(**self.compile_args_creator(self.config))
@@ -96,7 +92,6 @@ class TFRunner:
     def setup_horovod(self):
         import horovod.tensorflow.keras as hvd
         hvd.init()
-        train_dataset, test_dataset = self.data_creator(self.config)
         self.train_dataset = train_dataset.shard(hvd.size(), hvd.rank())
         self.test_dataset = test_dataset.shard(hvd.size(), hvd.rank())
 
@@ -150,8 +145,23 @@ class TFRunner:
         self.local_model = None
         self.backend = "tf-distributed"
 
-    def step(self):
+    def step(self, data_creator):
         """Runs a training epoch and updates the model parameters."""
+
+        datasets = data_creator(self.config)
+        if isinstance(datasets, tuple):
+            train_dataset = datasets[0]
+            test_dataset = datasets[1]
+        else:
+            train_dataset = datasets
+            test_dataset = None
+
+        if self.backend == "horovod":
+            import horovod.tensorflow.keras as hvd
+            train_dataset = train_dataset.shard(hvd.size(), hvd.rank())
+            if test_dataset is not None:
+                test_dataset = test_dataset.shard(hvd.size(), hvd.rank())
+
         fit_default_config = {"verbose": self.verbose}
         fit_default_config.update(self.config.get("fit_config", {}))
 
@@ -169,7 +179,7 @@ class TFRunner:
             else:
                 fit_default_config["callbacks"] = bcast_callback
 
-        history = self.model.fit(self.train_dataset, **fit_default_config)
+        history = self.model.fit(train_dataset, validataion_data=test_dataset, **fit_default_config)
         if history is None:
             stats = {}
         else:
@@ -178,8 +188,19 @@ class TFRunner:
         self.epoch += 1
         return stats
 
-    def validate(self):
+    def validate(self, data_creator):
         """Evaluates the model on the validation data set."""
+
+        datasets = data_creator(self.config)
+        if isinstance(datasets, tuple):
+            raise ValueError("Only validation dataset should be provided ")
+        else:
+            test_dataset = datasets
+
+        if self.backend == "horovod":
+            import horovod.tensorflow.keras as hvd
+            test_dataset = test_dataset.shard(hvd.size(), hvd.rank())
+
         stats = {}
         evaluate_config = {"verbose": self.verbose}
         evaluate_config.update(self.config.get("evaluate_config", {}))
@@ -191,14 +212,14 @@ class TFRunner:
             else:
                 evaluate_config["verbose"] = 0
 
-        results = self.model.evaluate(self.test_dataset, **evaluate_config)
+        results = self.model.evaluate(test_dataset, **evaluate_config)
         if results is None:
             # Using local Model since model.evaluate() returns None
             # for MultiWorkerMirroredStrategy
             logger.warning("Running a local model to get validation score.")
             self.local_model = self.model_creator(self.config)
             self.local_model.set_weights(self.model.get_weights())
-            results = self.local_model.evaluate(self.test_dataset,
+            results = self.local_model.evaluate(test_dataset,
                                                 **evaluate_config)
 
         if isinstance(results, list):
@@ -229,8 +250,6 @@ class TFRunner:
     def shutdown(self):
         """Attempts to shut down the worker."""
         del self.model
-        del self.train_dataset
-        del self.test_dataset
 
     def get_node_ip(self):
         """Returns the IP address of the current node."""

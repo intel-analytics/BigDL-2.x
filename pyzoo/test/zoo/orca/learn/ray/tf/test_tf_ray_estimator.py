@@ -57,7 +57,7 @@ def linear_dataset(a=2, size=1000):
     return x, y
 
 
-def simple_dataset(config):
+def create_train_datasets(config):
     batch_size = config["batch_size"]
     x_train, y_train = linear_dataset(size=NUM_TRAIN_SAMPLES)
     x_test, y_test = linear_dataset(size=NUM_TEST_SAMPLES)
@@ -71,12 +71,22 @@ def simple_dataset(config):
     return train_dataset, test_dataset
 
 
+def create_test_dataset(config):
+    batch_size = config["batch_size"]
+    x_test, y_test = linear_dataset(size=NUM_TEST_SAMPLES)
+
+    test_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test))
+    test_dataset = test_dataset.batch(batch_size)
+
+    return test_dataset
+
+
 def simple_model(config):
     model = Sequential([Dense(10, input_shape=(1,)), Dense(1)])
     return model
 
 
-def compile_args():
+def compile_args(config):
     import tensorflow as tf
     args = {
         "optimizer": tf.keras.optimizers.Adam(),
@@ -90,21 +100,20 @@ class TestTFRayEstimator(TestCase):
     def test_fit_and_evaluate(self):
         trainer = TFRayEstimator(
             model_creator=simple_model,
-            compile_args=compile_args(),
-            data_creator=simple_dataset,
+            compile_args_creator=compile_args,
             verbose=True,
             config=create_config(32))
 
         # model baseline performance
-        start_stats = trainer.evaluate()
+        start_stats = trainer.evaluate(create_test_dataset)
         print(start_stats)
 
         # train for 2 epochs
-        trainer.fit()
-        trainer.fit()
+        trainer.fit(create_train_datasets)
+        trainer.fit(create_train_datasets)
 
         # model performance after training (should improve)
-        end_stats = trainer.evaluate()
+        end_stats = trainer.evaluate(create_test_dataset)
         print(end_stats)
 
         # sanity check that training worked

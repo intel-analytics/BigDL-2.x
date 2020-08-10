@@ -38,7 +38,6 @@ class TFRayEstimator(HorovodRayRunner):
     def __init__(self,
                  model_creator,
                  compile_args_creator,
-                 data_creator,
                  config=None,
                  verbose=False,
                  backend="tf"):
@@ -61,7 +60,6 @@ class TFRayEstimator(HorovodRayRunner):
             verbose (bool): Prints output of one model if true.
         """
         self.model_creator = model_creator
-        self.data_creator = data_creator
         self.compile_args_creator = compile_args_creator
         self.config = {} if config is None else config
         self.verbose = verbose
@@ -75,7 +73,6 @@ class TFRayEstimator(HorovodRayRunner):
 
         params = {
             "model_creator": model_creator,
-            "data_creator": data_creator,
             "compile_args_creator": compile_args_creator,
             "config": self.config,
             "verbose": self.verbose,
@@ -106,22 +103,22 @@ class TFRayEstimator(HorovodRayRunner):
             raise Exception("Only \"tf\" and \"horovod\" are legal "
                             "value of backend, but got {}".format(backend))
 
-    def fit(self):
+    def fit(self, data_creator):
         """Runs a training epoch."""
 
         # see ./tf_runner.py:setup_distributed
         # for an explanation of only taking the first worker's data
-        worker_stats = ray.get([w.step.remote() for w in self.remote_workers])
+        worker_stats = ray.get([w.step.remote(data_creator) for w in self.remote_workers])
         stats = worker_stats[0].copy()
         return stats
 
-    def evaluate(self):
+    def evaluate(self, data_creator):
         """Evaluates the model on the validation data set."""
         logger.info("Starting validation step.")
 
         # see ./tf_runner.py:setup_distributed
         # for an explanation of only taking the first worker's data
-        stats = ray.get([w.validate.remote() for w in self.remote_workers])
+        stats = ray.get([w.validate.remote(data_creator) for w in self.remote_workers])
         stats = stats[0].copy()
         return stats
 

@@ -193,10 +193,8 @@ if __name__ == "__main__":
     }
     trainer = TFRayEstimator(
         model_creator=model_creator,
-        data_creator=data_creator,
         compile_args_creator=compile_args_creator,
         verbose=True,
         config=config, backend="horovod")
 
-    print(trainer.fit())
-    print(trainer.evaluate())
+    print(trainer.fit(data_creator2))
