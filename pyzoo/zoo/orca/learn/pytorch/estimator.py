@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from zoo.orca.learn.pytorch.training_operator import TrainingOperator
-from zoo.orca.learn.pytorch.pytorch_horovod_estimator import PyTorchHorovodEstimator
 from zoo.pipeline.estimator.estimator import Estimator as SparkEstimator
+from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from bigdl.optim.optimizer import MaxEpoch
 from zoo.feature.common import FeatureSet
 
@@ -31,17 +30,17 @@ class Estimator(object):
         pass
 
     @staticmethod
-    def from_model_creator(*,
-                           model_creator,
-                           optimizer_creator,
-                           loss_creator=None,
-                           scheduler_creator=None,
-                           training_operator_cls=TrainingOperator,
-                           initialization_hook=None,
-                           config=None,
-                           scheduler_step_freq="batch",
-                           backend="ray"):
-        if backend == "ray":
+    def from_torch(*,
+                   model_creator,
+                   optimizer_creator,
+                   loss_creator=None,
+                   scheduler_creator=None,
+                   training_operator_cls=TrainingOperator,
+                   initialization_hook=None,
+                   config=None,
+                   scheduler_step_freq="batch",
+                   backend="horovod"):
+        if backend == "horovod":
             return PyTorchHorovodEstimatorWrapper(model_creator=model_creator,
                                                   optimizer_creator=optimizer_creator,
                                                   loss_creator=loss_creator,
@@ -50,14 +49,14 @@ class Estimator(object):
                                                   initialization_hook=initialization_hook,
                                                   config=config,
                                                   scheduler_step_freq=scheduler_step_freq)
-        elif backend == "spark":
+        elif backend == "bigdl":
             return PytorchSparkEstimatorWrapper(model=model_creator,
                                                 loss=loss_creator,
                                                 optimizer=optimizer_creator,
                                                 model_dir=None,
                                                 bigdl_type="float")
         else:
-            raise ValueError("only ray and spark backend are supported for now")
+            raise ValueError("only horovod and bigdl backend are supported for now")
 
 
 class PyTorchHorovodEstimatorWrapper(Estimator):
@@ -71,6 +70,7 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
                  initialization_hook=None,
                  config=None,
                  scheduler_step_freq="batch"):
+        from zoo.orca.learn.pytorch.pytorch_horovod_estimator import PyTorchHorovodEstimator
         self.estimator = PyTorchHorovodEstimator(model_creator=model_creator,
                                                  optimizer_creator=optimizer_creator,
                                                  loss_creator=loss_creator,
@@ -139,9 +139,9 @@ class PytorchSparkEstimatorWrapper(Estimator):
             self.loss = TorchLoss.from_pytorch(loss)
         if optimizer is None:
             from bigdl.optim.optimizer import SGD
-            optimizer - SGD()
+            optimizer = SGD()
         self.model = TorchModel.from_pytorch(model)
-        self.estimator = SparkEstimator(model, optimizer, model_dir, bigdl_type=bigdl_type)
+        self.estimator = SparkEstimator(self.model, optimizer, model_dir, bigdl_type=bigdl_type)
 
     def fit(self, data, epochs=1, batch_size=32, validation_data=None, validation_methods=None,
             checkpoint_trigger=None):

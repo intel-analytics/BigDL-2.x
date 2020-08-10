@@ -264,7 +264,7 @@ def override(interface_class):
 def to_sample(data):
     from bigdl.util.common import Sample
     from zoo.orca.data.utils import check_type_and_convert
-    data = check_type_and_convert(data, allow_list=False, allow_tuple=False)
+    data = check_type_and_convert(data, allow_list=True, allow_tuple=False)
     features = data["x"]
     labels = data["y"]
     length = features[0].shape[0]
