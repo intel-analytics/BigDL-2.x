@@ -410,9 +410,8 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
 
       })
       arrowStreamWriter.writeBatch()
-      vectorSchemaRoot.close()
     }
-
+    vectorSchemaRoot.close()
     arrowStreamWriter.end()
     arrowStreamWriter.close()
     byteArrayOutputStream.flush()
