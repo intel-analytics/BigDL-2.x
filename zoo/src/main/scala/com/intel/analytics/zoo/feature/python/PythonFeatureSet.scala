@@ -115,7 +115,9 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
   }
 
   def createFeatureSetFromPyTorch(
-        dataloader: Array[Byte], creator: Boolean): FeatureSet[MiniBatch[Float]] = {
+        dataloader: Array[Byte],
+        creator: Boolean,
+        toZoo: Boolean): FeatureSet[MiniBatch[Float]] = {
     val trainPostfix = "_train"
     val evalPostfix = "_eval"
     val loaderName: String =
@@ -188,10 +190,15 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
            |""".stripMargin
     }
 
-    FeatureSet.python[MiniBatch[Float]](dataloader, getLoader, getIterator, getNext,
-      s"np.ones([${loaderName}_bs_node, 1])",
-      s"np.ones([${loaderName}_bs_node, 1])",
-      -1, imports, loaderName)
+    if (toZoo) {
+      FeatureSet.python[MiniBatch[Float]](dataloader, getLoader, getIterator, getNext,
+        "ptensor_to_numpy(_data[0])", "ptensor_to_numpy(_data[1])", -1, imports)
+    } else {
+      FeatureSet.python[MiniBatch[Float]](dataloader, getLoader, getIterator, getNext,
+        s"np.ones([${loaderName}_bs_node, 1])",
+        s"np.ones([${loaderName}_bs_node, 1])",
+        -1, imports, loaderName)
+    }
   }
 
 }
