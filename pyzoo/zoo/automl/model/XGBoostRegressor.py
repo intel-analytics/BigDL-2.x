@@ -25,7 +25,7 @@ from zoo.automl.model.abstract import BaseModel
 
 class XGBoostRegressor(BaseModel):
 
-    def __init__(self, config):
+    def __init__(self, config=None):
         """
         Initialize hyper parameters
         :param check_optional_config:
@@ -105,7 +105,7 @@ class XGBoostRegressor(BaseModel):
         if not self.model_init:
             self._build(**config)
 
-        if validation_data is not list:
+        if validation_data is not None and type(validation_data) is not list:
             validation_data = [validation_data]
 
         self.model.fit(x, y, eval_set=validation_data)

@@ -24,18 +24,20 @@ import os
 from numpy.testing import assert_array_almost_equal
 
 from zoo.automl.model import XGBoostRegressor
-from zoo.automl.feature.echo_transformer import IdentityTransformer
+from zoo.automl.feature.identity_transformer import IdentityTransformer
 
 
 class TestXgbregressor(ZooTestCase):
     def setup_method(self, method):
         # super().setup_method(method)
-        self.model = XGBoostRegressor(n_estimators=5, max_depth=2, tree_method='hist')
-        feature_cols = ["f"]
+        self.model = XGBoostRegressor({'n_estimators': 5, 'max_depth': 2, 'tree_method': 'hist'})
+        feature_cols = ["f", "f2"]
         target_col = "t"
         train_df = pd.DataFrame({"f": np.random.randn(20),
+                                 "f2": np.random.randn(20),
                                  "t": np.random.randint(20)})
         val_df = pd.DataFrame({"f": np.random.randn(5),
+                               "f2": np.random.randn(5),
                                "t": np.random.randint(5)})
 
         ft = IdentityTransformer(feature_cols=feature_cols, target_col=target_col)
