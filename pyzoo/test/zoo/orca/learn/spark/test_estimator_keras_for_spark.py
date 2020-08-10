@@ -182,7 +182,7 @@ class TestEstimatorForKeras(TestCase):
         import zoo.orca.data.pandas
 
         import tensorflow.keras.backend as K
-        tf.reset_default_graph()
+        # tf.reset_default_graph()
         model = self.create_model()
         file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path)
@@ -211,7 +211,7 @@ class TestEstimatorForKeras(TestCase):
         print(eval_result)
 
         # K.get_session().close()
-        tf.reset_default_graph()
+        # tf.reset_default_graph()
         model = self.create_model()
 
         est = Estimator.from_keras(keras_model=model, model_dir=model_dir)
