@@ -187,7 +187,7 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
     }
 
     FeatureSet.python[MiniBatch[Float]](dataloader, getLoader, getIterator, getNext,
-      "ptensor_to_numpy(_data[0])", "ptensor_to_numpy(_data[1])", -1, imports)
+      "np.ones(bs_node)", "np.ones(bs_node)", -1, imports)
   }
 
 }

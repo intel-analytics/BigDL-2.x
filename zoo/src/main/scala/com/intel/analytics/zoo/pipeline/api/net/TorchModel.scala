@@ -112,7 +112,7 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
     PythonInterpreter.exec(forwardCode)
     println(s"run forward cost: ${(System.nanoTime() - startTime) / 1e9}")
     val outputNd = PythonFeatureSet.toArrayTensor(
-      PythonInterpreter.getValue[NDArray[_]]("ptensor_to_numpy(output.data)"))
+      PythonInterpreter.getValue[NDArray[_]]("ptensor_to_numpy(output)"))
     if (outputNd.length == 1) {
       output = outputNd(0)
     } else {
