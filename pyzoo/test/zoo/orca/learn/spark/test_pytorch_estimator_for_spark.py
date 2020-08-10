@@ -31,7 +31,7 @@ resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 class SimpleModel(nn.Module):
     def __init__(self):
         super(SimpleModel, self).__init__()
-        self.fc = nn.Linear(2, 2)
+        self.fc = nn.Linear(1, 1)
 
     def forward(self, x):
         x = self.fc(x)
@@ -40,14 +40,14 @@ class SimpleModel(nn.Module):
 
 class TestEstimatorForSpark(TestCase):
     def test_bigdl_pytorch_estimator(self):
-        model = SimpleModel()
+        model = nn.Linear(1, 1)
 
         def loss_func(input, target):
             return nn.CrossEntropyLoss().forward(input, target.flatten().long())
 
         def transform(df):
             result = {
-                "x": [df['user'].to_numpy(), df['item'].to_numpy()],
+                "x": df['item'].to_numpy(),
                 "y": df['label'].to_numpy()
             }
             return result
