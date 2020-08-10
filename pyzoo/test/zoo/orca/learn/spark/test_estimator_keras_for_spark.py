@@ -287,7 +287,7 @@ class TestEstimatorForKeras(TestCase):
         assert len(predictions) == 10
 
     def test_estimator_keras_tf_dataset(self):
-        
+
         tf.reset_default_graph()
 
         model = self.create_model()
