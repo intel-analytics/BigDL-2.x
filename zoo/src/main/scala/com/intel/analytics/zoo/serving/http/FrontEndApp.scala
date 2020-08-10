@@ -20,8 +20,8 @@ import java.io.File
 import java.security.{KeyStore, SecureRandom}
 import java.util
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
-import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.{ConnectionContext, Http}
 import akka.http.scaladsl.server.Directives.{complete, path, _}
@@ -30,6 +30,7 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.codahale.metrics.MetricRegistry
 import com.google.common.util.concurrent.RateLimiter
+import com.intel.analytics.zoo.serving.utils.Conventions
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Await
@@ -206,7 +207,7 @@ object FrontEndApp extends Supportive {
       }
       Http().bindAndHandle(route, arguments.interface, arguments.port)
       logger.info(s"http started at http://${arguments.interface}:${arguments.port}")
-      system.scheduler.schedule(10 milliseconds, 10 milliseconds,
+      system.scheduler.schedule(10 milliseconds, 1 milliseconds,
         redisPutter, PredictionInputFlushMessage())(system.dispatcher)
     }
   }
@@ -314,7 +315,7 @@ case class FrontEndAppArguments(
     securePort: Int = 10023,
     redisHost: String = "localhost",
     redisPort: Int = 6379,
-    redisInputQueue: String = "serving_stream",
+    redisInputQueue: String = Conventions.SERVING_STREAM_NAME,
     redisOutputQueue: String = "result:",
     parallelism: Int = 1000,
     timeWindow: Int = 0,
