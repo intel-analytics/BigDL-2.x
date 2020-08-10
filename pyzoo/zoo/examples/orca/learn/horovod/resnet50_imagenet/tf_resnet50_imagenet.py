@@ -1,23 +1,23 @@
 import tensorflow as tf
 
-_RESNET_LR_SCHEDULE = [  # (multiplier, epoch to start) tuples
-    (1.0, 5), (0.1, 30), (0.01, 60), (0.001, 80)
-]
-_RESNET_LR_BOUNDARIES = list(p[1] for p in _RESNET_LR_SCHEDULE[1:])
-_RESNET_LR_MULTIPLIERS = list(p[0] for p in _RESNET_LR_SCHEDULE)
-_RESNET_LR_WARMUP_EPOCHS = _RESNET_LR_SCHEDULE[0][1]
-
-BASE_LEARNING_RATE = 0.1
+# _RESNET_LR_SCHEDULE = [  # (multiplier, epoch to start) tuples
+#     (1.0, 5), (0.1, 30), (0.01, 60), (0.001, 80)
+# ]
+# _RESNET_LR_BOUNDARIES = list(p[1] for p in _RESNET_LR_SCHEDULE[1:])
+# _RESNET_LR_MULTIPLIERS = list(p[0] for p in _RESNET_LR_SCHEDULE)
+# _RESNET_LR_WARMUP_EPOCHS = _RESNET_LR_SCHEDULE[0][1]
+#
+# BASE_LEARNING_RATE = 0.1
 
 
 def model_creator(config):
     wd = config["wd"]
     import tensorflow as tf
     import tensorflow.keras as keras
-    from tensorflow.keras.mixed_precision import experimental as mixed_precision
-    policy = mixed_precision.Policy('mixed_bfloat16')
-    policy = mixed_precision.Policy('float32')
-    mixed_precision.set_policy(policy)
+    # from tensorflow.keras.mixed_precision import experimental as mixed_precision
+    # policy = mixed_precision.Policy('mixed_bfloat16')
+    # policy = mixed_precision.Policy('float32')
+    # mixed_precision.set_policy(policy)
 
     model = tf.keras.applications.resnet50.ResNet50(weights=None)
     model_config = model.get_config()
@@ -45,6 +45,18 @@ def compile_args_creator(config):
     param = dict(loss=keras.losses.categorical_crossentropy, optimizer=opt,
                  metrics=['accuracy', 'top_k_categorical_accuracy'])
     return param
+
+def data_creator2(config):
+    from .imagenet_preprocessing import input_fn
+    train_dataset = input_fn(is_training=True,
+             data_dir=config["data_dir"],
+             batch_size=config["batch_size"])
+
+    val_dataset = input_fn(is_training=False,
+                           data_dir=config["data_dir"],
+                           batch_size=config["batch_size"])
+
+    return train_dataset, val_dataset
 
 
 def data_creator(config):
@@ -170,12 +182,13 @@ if __name__ == "__main__":
         "num_worker": ray_ctx.num_ray_nodes,
         "train_dir": "/home/yang/sources/datasets/imagenet-raw-image/imagenet-2012-small/train",
         "val_dir": "/home/yang/sources/datasets/imagenet-raw-image/imagenet-2012-small/train",
+        "data_dir": "hdfs:///yang/imagenet_tf_record",
         "fit_config": {
             "steps_per_epoch": 1280000 // (256 * num_workers),
             "callbacks": [lr_schdule]
         },
         "evaluate_config": {
-            "steps": (5000 // (256 * num_workers)),
+            "steps": (50000 // (256 * num_workers)),
         }
     }
     trainer = TFRayEstimator(

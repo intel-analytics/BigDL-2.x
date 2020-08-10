@@ -38,7 +38,6 @@ from __future__ import print_function
 import tensorflow as tf
 import os
 
-
 _DEFAULT_IMAGE_SIZE = 224
 _NUM_CHANNELS = 3
 _NUM_CLASSES = 1001
@@ -60,7 +59,7 @@ _NUM_EXAMPLES_NAME = "num_examples"
 def process_record_dataset(dataset, is_training, batch_size, shuffle_buffer,
                            parse_record_fn, num_epochs=1, num_gpus=None,
                            examples_per_epoch=None, dtype=tf.float32):
-  """Given a Dataset with raw records, return an iterator over the records.
+    """Given a Dataset with raw records, return an iterator over the records.
 
   Args:
     dataset: A Dataset representing raw records
@@ -80,40 +79,41 @@ def process_record_dataset(dataset, is_training, batch_size, shuffle_buffer,
     Dataset of (image, label) pairs ready for iteration.
   """
 
-  # We prefetch a batch at a time, This can help smooth out the time taken to
-  # load input files as we go through shuffling and processing.
-  dataset = dataset.prefetch(buffer_size=batch_size)
-  if is_training:
-    # Shuffle the records. Note that we shuffle before repeating to ensure
-    # that the shuffling respects epoch boundaries.
-    dataset = dataset.shuffle(buffer_size=shuffle_buffer)
+    # We prefetch a batch at a time, This can help smooth out the time taken to
+    # load input files as we go through shuffling and processing.
+    dataset = dataset.prefetch(buffer_size=batch_size)
+    if is_training:
+        # Shuffle the records. Note that we shuffle before repeating to ensure
+        # that the shuffling respects epoch boundaries.
+        dataset = dataset.shuffle(buffer_size=shuffle_buffer)
 
-  # If we are training over multiple epochs before evaluating, repeat the
-  # dataset for the appropriate number of epochs.
-  # dataset = dataset.repeat(num_epochs)
-  #
-  # Parse the raw records into images and labels. Testing has shown that setting
-  # num_parallel_batches > 1 produces no improvement in throughput, since
-  # batch_size is almost always much greater than the number of CPU cores.
-  dataset = dataset.apply(
-      tf.data.experimental.map_and_batch(
-          lambda value: parse_record_fn(value, is_training, dtype),
-          batch_size=batch_size,
-          num_parallel_batches=1))
+    # If we are training over multiple epochs before evaluating, repeat the
+    # dataset for the appropriate number of epochs.
+    # dataset = dataset.repeat(num_epochs)
+    #
+    # Parse the raw records into images and labels. Testing has shown that setting
+    # num_parallel_batches > 1 produces no improvement in throughput, since
+    # batch_size is almost always much greater than the number of CPU cores.
+    dataset = dataset.apply(
+        tf.data.experimental.map_and_batch(
+            lambda value: parse_record_fn(value, is_training, dtype),
+            batch_size=batch_size,
+            num_parallel_batches=1))
 
-  # Operations between the final prefetch and the get_next call to the iterator
-  # will happen synchronously during run time. We prefetch here again to
-  # background all of the above processing work and keep it out of the
-  # critical training path. Setting buffer_size to tf.contrib.data.AUTOTUNE
-  # allows DistributionStrategies to adjust how many batches to fetch based
-  # on how many devices are present.
-  dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+    # Operations between the final prefetch and the get_next call to the iterator
+    # will happen synchronously during run time. We prefetch here again to
+    # background all of the above processing work and keep it out of the
+    # critical training path. Setting buffer_size to tf.contrib.data.AUTOTUNE
+    # allows DistributionStrategies to adjust how many batches to fetch based
+    # on how many devices are present.
+    dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 
-  return dataset
+    return dataset
+
 
 def input_fn(is_training, data_dir, batch_size, num_epochs=1, num_gpus=None,
              dtype=tf.float32):
-  """Input function which provides batches for train or eval.
+    """Input function which provides batches for train or eval.
 
   Args:
     is_training: A boolean denoting whether the input is for training.
@@ -126,45 +126,46 @@ def input_fn(is_training, data_dir, batch_size, num_epochs=1, num_gpus=None,
   Returns:
     A dataset that can be used for iteration.
   """
-  filenames = get_filenames(is_training, data_dir)
-  dataset = tf.data.Dataset.from_tensor_slices(filenames)
+    filenames = get_filenames(is_training, data_dir)
+    dataset = tf.data.Dataset.from_tensor_slices(filenames)
 
-  if is_training:
-    # Shuffle the input files
-    dataset = dataset.shuffle(buffer_size=_NUM_TRAIN_FILES)
+    if is_training:
+        # Shuffle the input files
+        dataset = dataset.shuffle(buffer_size=_NUM_TRAIN_FILES)
 
-  # Convert to individual records
-  dataset = dataset.interleave(tf.data.TFRecordDataset, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    # Convert to individual records
+    dataset = dataset.interleave(tf.data.TFRecordDataset, num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
-  return process_record_dataset(
-      dataset=dataset,
-      is_training=is_training,
-      batch_size=batch_size,
-      shuffle_buffer=_SHUFFLE_BUFFER,
-      parse_record_fn=parse_record,
-      num_epochs=num_epochs,
-      num_gpus=num_gpus,
-      examples_per_epoch=_NUM_IMAGES['train'] if is_training else None,
-      dtype=dtype
-  )
+    return process_record_dataset(
+        dataset=dataset,
+        is_training=is_training,
+        batch_size=batch_size,
+        shuffle_buffer=_SHUFFLE_BUFFER,
+        parse_record_fn=parse_record,
+        num_epochs=num_epochs,
+        num_gpus=num_gpus,
+        examples_per_epoch=_NUM_IMAGES['train'] if is_training else None,
+        dtype=dtype
+    )
+
 
 ###############################################################################
 # Data processing
 ###############################################################################
 def get_filenames(is_training, data_dir):
-  """Return filenames for dataset."""
-  if is_training:
-    return [
-        os.path.join(data_dir, 'train-%05d-of-01024' % i)
-        for i in range(_NUM_TRAIN_FILES)]
-  else:
-    return [
-        os.path.join(data_dir, 'validation-%05d-of-00128' % i)
-        for i in range(128)]
+    """Return filenames for dataset."""
+    if is_training:
+        return [
+            os.path.join(data_dir, 'train-%05d-of-01024' % i)
+            for i in range(_NUM_TRAIN_FILES)]
+    else:
+        return [
+            os.path.join(data_dir, 'validation-%05d-of-00128' % i)
+            for i in range(128)]
 
 
 def _parse_example_proto(example_serialized):
-  """Parses an Example proto containing a training example of an image.
+    """Parses an Example proto containing a training example of an image.
 
   The output of the build_image_data.py image preprocessing script is a dataset
   containing serialized Example protocol buffers. Each Example proto contains
@@ -197,31 +198,31 @@ def _parse_example_proto(example_serialized):
       where each coordinate is [0, 1) and the coordinates are arranged as
       [ymin, xmin, ymax, xmax].
   """
-  # Dense features in Example proto.
-  feature_map = {
-      'image/encoded': tf.io.FixedLenFeature([], dtype=tf.string,
-                                          default_value=''),
-      'image/class/label': tf.io.FixedLenFeature([], dtype=tf.int64,
-                                              default_value=-1),
-      'image/class/text': tf.io.FixedLenFeature([], dtype=tf.string,
-                                             default_value=''),
-  }
-  sparse_float32 = tf.io.VarLenFeature(dtype=tf.float32)
-  # Sparse features in Example proto.
-  feature_map.update(
-      {k: sparse_float32 for k in ['image/object/bbox/xmin',
-                                   'image/object/bbox/ymin',
-                                   'image/object/bbox/xmax',
-                                   'image/object/bbox/ymax']})
+    # Dense features in Example proto.
+    feature_map = {
+        'image/encoded': tf.io.FixedLenFeature([], dtype=tf.string,
+                                               default_value=''),
+        'image/class/label': tf.io.FixedLenFeature([], dtype=tf.int64,
+                                                   default_value=-1),
+        'image/class/text': tf.io.FixedLenFeature([], dtype=tf.string,
+                                                  default_value=''),
+    }
+    sparse_float32 = tf.io.VarLenFeature(dtype=tf.float32)
+    # Sparse features in Example proto.
+    feature_map.update(
+        {k: sparse_float32 for k in ['image/object/bbox/xmin',
+                                     'image/object/bbox/ymin',
+                                     'image/object/bbox/xmax',
+                                     'image/object/bbox/ymax']})
 
-  features = tf.io.parse_single_example(serialized=example_serialized, features=feature_map)
-  label = tf.cast(features['image/class/label'], dtype=tf.int32)
+    features = tf.io.parse_single_example(serialized=example_serialized, features=feature_map)
+    label = tf.cast(features['image/class/label'], dtype=tf.int32)
 
-  return features['image/encoded'], label
+    return features['image/encoded'], label
 
 
 def parse_record(raw_record, is_training, dtype):
-  """Parses a record containing a training example of an image.
+    """Parses a record containing a training example of an image.
 
   The input record is parsed into a label and image, and the image is passed
   through preprocessing steps (cropping, flipping, and so on).
@@ -235,17 +236,17 @@ def parse_record(raw_record, is_training, dtype):
   Returns:
     Tuple with processed image tensor and one-hot-encoded label tensor.
   """
-  image_buffer, label = _parse_example_proto(raw_record)
+    image_buffer, label = _parse_example_proto(raw_record)
 
-  image = preprocess_image(
-      image_buffer=image_buffer,
-      output_height=_DEFAULT_IMAGE_SIZE,
-      output_width=_DEFAULT_IMAGE_SIZE,
-      num_channels=_NUM_CHANNELS,
-      is_training=is_training)
-  image = tf.cast(image, dtype)
+    image = preprocess_image(
+        image_buffer=image_buffer,
+        output_height=_DEFAULT_IMAGE_SIZE,
+        output_width=_DEFAULT_IMAGE_SIZE,
+        num_channels=_NUM_CHANNELS,
+        is_training=is_training)
+    image = tf.cast(image, dtype)
 
-  return image, label
+    return image, label
 
 
 _R_MEAN = 123.68
@@ -260,7 +261,7 @@ _RESIZE_MIN = 256
 
 
 def _decode_crop_and_flip(image_buffer, num_channels):
-  """Crops the given image to a random part of the image, and randomly flips.
+    """Crops the given image to a random part of the image, and randomly flips.
 
   We use the fused decode_and_crop op, which performs better than the two ops
   used separately in series, but note that this requires that the image be
@@ -274,47 +275,47 @@ def _decode_crop_and_flip(image_buffer, num_channels):
     3-D tensor with cropped image.
 
   """
-  # A large fraction of image datasets contain a human-annotated bounding box
-  # delineating the region of the image containing the object of interest.  We
-  # choose to create a new bounding box for the object which is a randomly
-  # distorted version of the human-annotated bounding box that obeys an
-  # allowed range of aspect ratios, sizes and overlap with the human-annotated
-  # bounding box. If no box is supplied, then we assume the bounding box is
-  # the entire image.
+    # A large fraction of image datasets contain a human-annotated bounding box
+    # delineating the region of the image containing the object of interest.  We
+    # choose to create a new bounding box for the object which is a randomly
+    # distorted version of the human-annotated bounding box that obeys an
+    # allowed range of aspect ratios, sizes and overlap with the human-annotated
+    # bounding box. If no box is supplied, then we assume the bounding box is
+    # the entire image.
 
-  min_object_covered=0.1
-  aspect_ratio_range=[0.75, 1.33]
-  area_range=[0.05, 1.0]
-  max_attempts=100
+    min_object_covered = 0.1
+    aspect_ratio_range = [0.75, 1.33]
+    area_range = [0.05, 1.0]
+    max_attempts = 100
 
-  bbox = tf.constant([0.0, 0.0, 1.0, 1.0],
-                     dtype=tf.float32, shape=[1, 1, 4])   #From the entire image
-  sample_distorted_bounding_box = tf.image.sample_distorted_bounding_box(
-      image_size=tf.image.extract_jpeg_shape(image_buffer),
-      bounding_boxes=bbox,
-      min_object_covered=min_object_covered,
-      aspect_ratio_range=aspect_ratio_range,
-      area_range=area_range,
-      max_attempts=max_attempts,
-      use_image_if_no_bounding_boxes=True)
-  bbox_begin, bbox_size, _ = sample_distorted_bounding_box
+    bbox = tf.constant([0.0, 0.0, 1.0, 1.0],
+                       dtype=tf.float32, shape=[1, 1, 4])  # From the entire image
+    sample_distorted_bounding_box = tf.image.sample_distorted_bounding_box(
+        image_size=tf.image.extract_jpeg_shape(image_buffer),
+        bounding_boxes=bbox,
+        min_object_covered=min_object_covered,
+        aspect_ratio_range=aspect_ratio_range,
+        area_range=area_range,
+        max_attempts=max_attempts,
+        use_image_if_no_bounding_boxes=True)
+    bbox_begin, bbox_size, _ = sample_distorted_bounding_box
 
-  # Reassemble the bounding box in the format the crop op requires.
-  offset_y, offset_x, _ = tf.unstack(bbox_begin)
-  target_height, target_width, _ = tf.unstack(bbox_size)
-  crop_window = tf.stack([offset_y, offset_x, target_height, target_width])
+    # Reassemble the bounding box in the format the crop op requires.
+    offset_y, offset_x, _ = tf.unstack(bbox_begin)
+    target_height, target_width, _ = tf.unstack(bbox_size)
+    crop_window = tf.stack([offset_y, offset_x, target_height, target_width])
 
-  # Use the fused decode and crop op here, which is faster than each in series.
-  cropped = tf.image.decode_and_crop_jpeg(
-      image_buffer, crop_window, channels=num_channels)
+    # Use the fused decode and crop op here, which is faster than each in series.
+    cropped = tf.image.decode_and_crop_jpeg(
+        image_buffer, crop_window, channels=num_channels)
 
-  # Flip to add a little more random distortion in.
-  cropped = tf.image.random_flip_left_right(cropped)
-  return cropped
+    # Flip to add a little more random distortion in.
+    cropped = tf.image.random_flip_left_right(cropped)
+    return cropped
 
 
 def _central_crop(image, crop_height, crop_width):
-  """Performs central crops of the given image list.
+    """Performs central crops of the given image list.
 
   Args:
     image: a 3-D image tensor
@@ -324,19 +325,19 @@ def _central_crop(image, crop_height, crop_width):
   Returns:
     3-D tensor with cropped image.
   """
-  shape = tf.shape(input=image)
-  height, width = shape[0], shape[1]
+    shape = tf.shape(input=image)
+    height, width = shape[0], shape[1]
 
-  amount_to_be_cropped_h = (height - crop_height)
-  crop_top = amount_to_be_cropped_h // 2
-  amount_to_be_cropped_w = (width - crop_width)
-  crop_left = amount_to_be_cropped_w // 2
-  return tf.slice(
-      image, [crop_top, crop_left, 0], [crop_height, crop_width, -1])
+    amount_to_be_cropped_h = (height - crop_height)
+    crop_top = amount_to_be_cropped_h // 2
+    amount_to_be_cropped_w = (width - crop_width)
+    crop_left = amount_to_be_cropped_w // 2
+    return tf.slice(
+        image, [crop_top, crop_left, 0], [crop_height, crop_width, -1])
 
 
 def _mean_image_subtraction(image, means, num_channels):
-  """Subtracts the given means from each image channel.
+    """Subtracts the given means from each image channel.
 
   For example:
     means = [123.68, 116.779, 103.939]
@@ -357,20 +358,20 @@ def _mean_image_subtraction(image, means, num_channels):
       than three or if the number of channels in `image` doesn't match the
       number of values in `means`.
   """
-  if image.get_shape().ndims != 3:
-    raise ValueError('Input must be of size [height, width, C>0]')
+    if image.get_shape().ndims != 3:
+        raise ValueError('Input must be of size [height, width, C>0]')
 
-  if len(means) != num_channels:
-    raise ValueError('len(means) must match the number of channels')
+    if len(means) != num_channels:
+        raise ValueError('len(means) must match the number of channels')
 
-  # We have a 1-D tensor of means; convert to 3-D.
-  means = tf.expand_dims(tf.expand_dims(means, 0), 0)
+    # We have a 1-D tensor of means; convert to 3-D.
+    means = tf.expand_dims(tf.expand_dims(means, 0), 0)
 
-  return image - means
+    return image - means
 
 
 def _smallest_size_at_least(height, width, resize_min):
-  """Computes new shape with the smallest side equal to `smallest_side`.
+    """Computes new shape with the smallest side equal to `smallest_side`.
 
   Computes new shape with the smallest side equal to `smallest_side` while
   preserving the original aspect ratio.
@@ -385,23 +386,23 @@ def _smallest_size_at_least(height, width, resize_min):
     new_height: an int32 scalar tensor indicating the new height.
     new_width: an int32 scalar tensor indicating the new width.
   """
-  resize_min = tf.cast(resize_min, tf.float32)
+    resize_min = tf.cast(resize_min, tf.float32)
 
-  # Convert to floats to make subsequent calculations go smoothly.
-  height, width = tf.cast(height, tf.float32), tf.cast(width, tf.float32)
+    # Convert to floats to make subsequent calculations go smoothly.
+    height, width = tf.cast(height, tf.float32), tf.cast(width, tf.float32)
 
-  smaller_dim = tf.minimum(height, width)
-  scale_ratio = resize_min / smaller_dim
+    smaller_dim = tf.minimum(height, width)
+    scale_ratio = resize_min / smaller_dim
 
-  # Convert back to ints to make heights and widths that TF ops will accept.
-  new_height = tf.cast(height * scale_ratio, tf.int32)
-  new_width = tf.cast(width * scale_ratio, tf.int32)
+    # Convert back to ints to make heights and widths that TF ops will accept.
+    new_height = tf.cast(height * scale_ratio, tf.int32)
+    new_width = tf.cast(width * scale_ratio, tf.int32)
 
-  return new_height, new_width
+    return new_height, new_width
 
 
 def _aspect_preserving_resize(image, resize_min):
-  """Resize images preserving the original aspect ratio.
+    """Resize images preserving the original aspect ratio.
 
   Args:
     image: A 3-D image `Tensor`.
@@ -412,16 +413,16 @@ def _aspect_preserving_resize(image, resize_min):
     resized_image: A 3-D tensor containing the resized image.
   """
 
-  shape = tf.shape(input=image)
-  height, width = shape[0], shape[1]
+    shape = tf.shape(input=image)
+    height, width = shape[0], shape[1]
 
-  new_height, new_width = _smallest_size_at_least(height, width, resize_min)
+    new_height, new_width = _smallest_size_at_least(height, width, resize_min)
 
-  return _resize_image(image, new_height, new_width)
+    return _resize_image(image, new_height, new_width)
 
 
 def _resize_image(image, height, width):
-  """Simple wrapper around tf.resize_images.
+    """Simple wrapper around tf.resize_images.
 
   This is primarily to make sure we use the same `ResizeMethod` and other
   details each time.
@@ -435,13 +436,13 @@ def _resize_image(image, height, width):
     resized_image: A 3-D tensor containing the resized image. The first two
       dimensions have the shape [height, width].
   """
-  return tf.image.resize(
-      image, [height, width], method=tf.image.ResizeMethod.BILINEAR)
+    return tf.image.resize(
+        image, [height, width], method=tf.image.ResizeMethod.BILINEAR)
 
 
 def preprocess_image(image_buffer, output_height, output_width,
                      num_channels, is_training=False):
-  """Preprocesses the given image.
+    """Preprocesses the given image.
 
   Preprocessing includes decoding, cropping, and resizing for both training
   and eval images. Training preprocessing, however, introduces some random
@@ -458,17 +459,17 @@ def preprocess_image(image_buffer, output_height, output_width,
   Returns:
     A preprocessed image.
   """
-  if is_training:
-    # For training, we want to randomize some of the distortions.
-    image = _decode_crop_and_flip(image_buffer, num_channels)
+    if is_training:
+        # For training, we want to randomize some of the distortions.
+        image = _decode_crop_and_flip(image_buffer, num_channels)
 
-    image = _resize_image(image, output_height, output_width)
-  else:
-    # For validation, we want to decode, resize, then just crop the middle.
-    image = tf.image.decode_jpeg(image_buffer, channels=num_channels)
-    image = _aspect_preserving_resize(image, _RESIZE_MIN)
-    image = _central_crop(image, output_height, output_width)
+        image = _resize_image(image, output_height, output_width)
+    else:
+        # For validation, we want to decode, resize, then just crop the middle.
+        image = tf.image.decode_jpeg(image_buffer, channels=num_channels)
+        image = _aspect_preserving_resize(image, _RESIZE_MIN)
+        image = _central_crop(image, output_height, output_width)
 
-  image.set_shape([output_height, output_width, num_channels])
+    image.set_shape([output_height, output_width, num_channels])
 
-  return _mean_image_subtraction(image, _CHANNEL_MEANS, num_channels)
+    return _mean_image_subtraction(image, _CHANNEL_MEANS, num_channels)
