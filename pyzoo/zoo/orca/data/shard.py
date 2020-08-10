@@ -53,7 +53,7 @@ class XShards(object):
         Load XShards from pickle files.
         :param path: The pickle file path/directory
         :param minPartitions: The minimum partitions for the XShards
-        :return: SparkXShards
+        :return: SparkXShards object
         """
         sc = init_nncontext()
         return SparkXShards(sc.pickleFile(path, minPartitions))
@@ -142,6 +142,9 @@ class RayPartition(object):
 
 
 class SparkXShards(XShards):
+    """
+    A collection of data which can be pre-processed in parallel on Spark
+    """
     def __init__(self, rdd, transient=False):
         self.rdd = rdd
         self.user_cached = False
@@ -155,19 +158,37 @@ class SparkXShards(XShards):
         self.type = {}
 
     def transform_shard(self, func, *args):
+        """
+        Return a new SparkXShards by applying a function to each element of this SparkXShards
+        :param func: python function to process data. The first argument is the data element.
+        :param args: other arguments in this function.
+        :return:
+        """
         transformed_shard = SparkXShards(self.rdd.map(lambda data: func(data, *args)))
         self._uncache()
         return transformed_shard
 
     def collect(self):
+        """
+        Returns a list that contains all of the elements in this SparkXShards
+        :return: a list of data elements.
+        """
         return self.rdd.collect()
 
     def cache(self):
+        """
+        Persist this SparkXShards in memory
+        :return:
+        """
         self.user_cached = True
         self.rdd.cache()
         return self
 
     def uncache(self):
+        """
+        Make this SparkXShards as non-persistent, and remove all blocks for it from memory
+        :return:
+        """
         self.user_cached = False
         if self.is_cached():
             try:
@@ -188,14 +209,31 @@ class SparkXShards(XShards):
         return self
 
     def num_partitions(self):
+        """
+        Get number of partitions for this SparkXShards.
+        :return: number of partitions.
+        """
         return self.rdd.getNumPartitions()
 
     def repartition(self, num_partitions):
+        """
+        Return a new SparkXShards that has exactly num_partitions partitions.
+        :param num_partitions: target number of partitions
+        :return: a new SparkXshards object.
+        """
         repartitioned_shard = SparkXShards(self.rdd.repartition(num_partitions))
         self._uncache()
         return repartitioned_shard
 
     def partition_by(self, cols, num_partitions=None):
+        """
+        Return a new SparkXShards partitioned using the specified columns.
+        This is only applicable for SparkXShards of Pandas DataFrame.
+        :param cols: specified columns to partition by.
+        :param num_partitions: target number of partitions. If not specified,
+        the new SparkXShards would keep the current partition number.
+        :return: a new SparkXShards.
+        """
         if self._get_class_name() == 'pandas.core.frame.DataFrame':
             import pandas as pd
             schema = self._get_schema()
