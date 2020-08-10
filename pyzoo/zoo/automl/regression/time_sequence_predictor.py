@@ -239,6 +239,7 @@ class TimeSequencePredictor(object):
             model = TimeSequenceModel(
                 check_optional_config=False,
                 future_seq_len=self.future_seq_len)
+            return model
         model = model_create_func()
 
         # prepare parameters for search engine
