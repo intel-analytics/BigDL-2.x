@@ -24,6 +24,8 @@ $ tar xzf flink-1.11.0-bin-scala_2.11.tgz
 当可以看到`zoo.jar, analytics-zoo-*-http.jar, config.yaml`时，即为安装完成
 
 运行`java -jar analytics-zoo-xxx-http.jar`启动同步服务
+
+PS: `zoo.jar`为集成了Flink分布式推理代码的依赖，`cluster-serving-start`会根据工作目录的配置文件`config.yaml`启动`zoo.jar`中的代码，`analytics-zoo-*-http.jar`为同步服务的依赖，本次天池大赛中不需要用到PS内的信息，对Cluster Serving的更多了解请移步[github官方文档](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ClusterServingGuide/ProgrammingGuide.md)
 ## 配置
 修改`config.yaml`，配置模型路径为包含模型的文件夹路径，样例如下，假设用户模型为Tensorflow SavedModel模型，结构为
 ```
