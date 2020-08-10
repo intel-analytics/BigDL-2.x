@@ -71,6 +71,8 @@ class TestEstimatorForKeras(TestCase):
     def test_estimator_keras_xshards(self):
         import zoo.orca.data.pandas
 
+        tf.reset_default_graph()
+
         model = self.create_model()
         file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path)
@@ -109,6 +111,8 @@ class TestEstimatorForKeras(TestCase):
 
     def test_estimator_keras_xshards_options(self):
         import zoo.orca.data.pandas
+
+        tf.reset_default_graph()
 
         model = self.create_model()
         file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
@@ -158,6 +162,8 @@ class TestEstimatorForKeras(TestCase):
     def test_estimator_keras_xshards_clip(self):
         import zoo.orca.data.pandas
 
+        tf.reset_default_graph()
+
         model = self.create_model_with_clip()
         file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path)
@@ -182,7 +188,8 @@ class TestEstimatorForKeras(TestCase):
         import zoo.orca.data.pandas
 
         import tensorflow.keras.backend as K
-        # tf.reset_default_graph()
+        tf.reset_default_graph()
+
         model = self.create_model()
         file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path)
@@ -211,7 +218,8 @@ class TestEstimatorForKeras(TestCase):
         print(eval_result)
 
         # K.get_session().close()
-        # tf.reset_default_graph()
+        tf.reset_default_graph()
+
         model = self.create_model()
 
         est = Estimator.from_keras(keras_model=model, model_dir=model_dir)
@@ -227,6 +235,9 @@ class TestEstimatorForKeras(TestCase):
         shutil.rmtree(temp)
 
     def test_estimator_keras_dataframe(self):
+
+        tf.reset_default_graph()
+
         model = self.create_model()
         sc = init_nncontext()
         sqlcontext = SQLContext(sc)
@@ -253,6 +264,9 @@ class TestEstimatorForKeras(TestCase):
         assert len(predictions) == 10
 
     def test_estimator_keras_dataframe_no_fit(self):
+
+        tf.reset_default_graph()
+
         model = self.create_model()
         sc = init_nncontext()
         sqlcontext = SQLContext(sc)
@@ -273,6 +287,8 @@ class TestEstimatorForKeras(TestCase):
         assert len(predictions) == 10
 
     def test_estimator_keras_tf_dataset(self):
+        
+        tf.reset_default_graph()
 
         model = self.create_model()
 
