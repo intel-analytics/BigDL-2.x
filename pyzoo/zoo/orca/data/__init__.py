@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-from .shard import SparkXShards, SharedValue, partition
+from .shard import SparkXShards, SharedValue

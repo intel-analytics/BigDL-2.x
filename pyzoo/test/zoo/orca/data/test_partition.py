@@ -16,16 +16,17 @@
 
 from unittest import TestCase
 import pytest
+import numpy as np
+from zoo.orca.data.shard import XShards
 
 
 class TestSparkBackend(TestCase):
 
     def test_partition_ndarray(self):
-        import numpy as np
-        import zoo.orca.data as orca_data
+
         data = np.random.randn(10, 4)
 
-        xshards = orca_data.partition(data)
+        xshards = XShards.partition(data)
 
         data_parts = xshards.rdd.collect()
 
@@ -33,12 +34,10 @@ class TestSparkBackend(TestCase):
         assert np.allclose(data, reconstructed)
 
     def test_partition_tuple(self):
-        import numpy as np
-        import zoo.orca.data as orca_data
         data1 = np.random.randn(10, 4)
         data2 = np.random.randn(10, 4)
 
-        xshards = orca_data.partition((data1, data2))
+        xshards = XShards.partition((data1, data2))
 
         data_parts = xshards.rdd.collect()
 
@@ -51,12 +50,10 @@ class TestSparkBackend(TestCase):
         assert np.allclose(data2, reconstructed2)
 
     def test_partition_list(self):
-        import numpy as np
-        import zoo.orca.data as orca_data
         data1 = np.random.randn(10, 4)
         data2 = np.random.randn(10, 4)
 
-        xshards = orca_data.partition([data1, data2])
+        xshards = XShards.partition([data1, data2])
 
         data_parts = xshards.rdd.collect()
 
@@ -69,12 +66,10 @@ class TestSparkBackend(TestCase):
         assert np.allclose(data2, reconstructed2)
 
     def test_partition_dict(self):
-        import numpy as np
-        import zoo.orca.data as orca_data
         data1 = np.random.randn(10, 4)
         data2 = np.random.randn(10, 4)
 
-        xshards = orca_data.partition({"x": data1, "y": data2})
+        xshards = XShards.partition({"x": data1, "y": data2})
 
         data_parts = xshards.rdd.collect()
 
@@ -87,12 +82,10 @@ class TestSparkBackend(TestCase):
         assert np.allclose(data2, reconstructed2)
 
     def test_partition_nested(self):
-        import numpy as np
-        import zoo.orca.data as orca_data
         data1 = np.random.randn(10, 4)
         data2 = np.random.randn(10, 4)
 
-        xshards = orca_data.partition({"x": (data1, ), "y": [data2]})
+        xshards = XShards.partition({"x": (data1, ), "y": [data2]})
 
         data_parts = xshards.rdd.collect()
 
