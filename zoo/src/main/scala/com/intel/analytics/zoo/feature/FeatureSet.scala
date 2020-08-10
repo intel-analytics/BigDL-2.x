@@ -427,10 +427,10 @@ class PythonFeatureSet[T: ClassTag](
     inputName: String,
     targetName: String = "",
     totalSize: Int,
-    imports: String = "") extends DistributedFeatureSet[T] {
+    imports: String = "",
+    loaderName: String = s"loader${Integer.toHexString(java.util.UUID.randomUUID().hashCode())}"
+  ) extends DistributedFeatureSet[T] {
   import PythonFeatureSet._
-  protected val namePostfix = Integer.toHexString(java.util.UUID.randomUUID().hashCode())
-  protected val loaderName = s"loader${namePostfix}"
 
   loadPythonSet(loaderName, getLoader, dataset, imports, cachedRdd)
 
@@ -651,7 +651,9 @@ object FeatureSet {
       inputName: String,
       targetName: String,
       totalSize: Int,
-      imports: String = ""): PythonFeatureSet[T] = {
+      imports: String = "",
+      loaderName: String = s"loader${Integer.toHexString(java.util.UUID.randomUUID().hashCode())}"
+    ): PythonFeatureSet[T] = {
     new PythonFeatureSet[T](dataset, getLoader, getIterator, getNext,
       inputName, targetName, totalSize, imports)
   }

@@ -371,8 +371,8 @@ class FeatureSet(DataSet):
         :param bigdl_type: numeric type
         :return: A feature set
         """
-        import torch.nn.dataloader
-        if isinstance(dataloader, torch.nn.dataloader):
+        import torch
+        if isinstance(dataloader, torch.utils.data.DataLoader):
             node_num, core_num = get_node_and_core_number()
             if dataloader.batch_size % node_num != 0:
                 true_bs = math.ceil(dataloader.batch_size / node_num) * node_num
@@ -391,15 +391,6 @@ class FeatureSet(DataSet):
         else:
             raise ValueError("Unsupported dataloader type, please pass pytorch dataloader" + \
                              " or a function to create pytorch dataloader.")
-
-    @classmethod
-    def pytorch_dataloader_creator(cls, creator, bigdl_type="float"):
-        """
-        Create FeatureSet from pytorch dataloader
-        :param creator: a function return pytorch dataloader
-        :param bigdl_type: numeric type
-        :return: A feature set
-        """
 
     def transform(self, transformer):
         """
