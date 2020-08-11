@@ -2,7 +2,7 @@
 
 model:
   # model path must be provided
-  path: model
+  path: resources/model
   # mode, default is recommended, if error is raised, set single
   mode:
   # the inputs of the tensorflow model, separated by ","
@@ -14,9 +14,7 @@ data:
   src:
   # shape must be provided, e.g, [[1,2],[3,224,224],[3,4]], if only one input brackets could be omitted
   shape: [3,224,224]
-  # type must be provided, e.g, [image, tensor, sparse_tensor, tensor], if only one input brackets could be omitted
-  type: image
-  # default, topN(1)
+  # default, None
   filter:
 params:
   # default, 4

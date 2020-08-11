@@ -21,6 +21,10 @@ import httpx
 import json
 
 
+def perdict(frontend_url, request_str):
+    httpx.post(frontend_url + "/predict", data=request_str)
+
+
 class API:
     """
     base level of API control
@@ -52,12 +56,13 @@ class InputQueue(API):
             try:
                 res = httpx.get(frontend_url)
                 if res.status_code == 200:
+                    httpx.PoolLimits(max_keepalive=1, max_connections=1)
+                    self.cli = httpx.Client()
                     print("Attempt connecting to Cluster Serving frontend success")
                 else:
                     raise ConnectionError()
             except Exception as e:
                 print("Connection error, please check your HTTP server. Error msg is ", e)
-                self.conn.close()
         self.stream_name = "serving_stream"
 
         # TODO: these params can be read from config in future
@@ -69,7 +74,7 @@ class InputQueue(API):
         Sync API, block waiting until get response
         :return:
         """
-        response = httpx.post(self.frontend_url + "/predict", data=request_str)
+        response = self.cli.post(self.frontend_url + "/predict", data=request_str)
         predictions = json.loads(response.text)['predictions']
         processed = predictions[0].lstrip("{value=").rstrip("}")
         return processed

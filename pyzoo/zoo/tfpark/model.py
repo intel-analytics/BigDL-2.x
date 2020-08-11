@@ -37,6 +37,10 @@ class KerasModel(object):
         self.model_dir = model_dir
         import tensorflow as tf
         self.real_batch_size = tf.shape(self.model.inputs[0])[0]
+        self.metric_tensors = {}
+
+    def add_metric(self, tensor, name):
+        self.metric_tensors[name] = tensor
 
     @property
     def metrics_names(self):
@@ -138,6 +142,7 @@ class KerasModel(object):
         elif distributed:
             dataset = TFDataset.from_ndarrays((x, y), val_tensors=validation_data,
                                               batch_size=batch_size)
+            dataset = _standarize_feature_label_dataset(dataset, self.model)
             self._fit_distributed(dataset, epochs, **kwargs)
 
         else:
@@ -152,6 +157,7 @@ class KerasModel(object):
     def _fit_distributed(self, dataset, epochs, **kwargs):
         self.tf_optimizer = TFOptimizer.from_keras(self.model, dataset,
                                                    model_dir=self.model_dir,
+                                                   metrics=self.metric_tensors,
                                                    **kwargs)
 
         self.tf_optimizer.optimize(MaxEpoch(epochs))
@@ -310,6 +316,8 @@ def _standarize_feature_label_dataset(dataset, model):
             return {k: np.expand_dims(y, axis=-1) if y.ndim == 0 else y for k, y in ys.items()}
         elif isinstance(ys, list):
             return [np.expand_dims(y, axis=-1) if y.ndim == 0 else y for y in ys]
+        elif isinstance(ys, tuple):
+            return tuple([np.expand_dims(y, axis=-1) if y.ndim == 0 else y for y in ys])
         else:
             return np.expand_dims(ys, axis=-1) if ys.ndim == 0 else ys
 
@@ -321,7 +329,7 @@ def _standarize_feature_label_dataset(dataset, model):
     def _reorder(x, names):
         if isinstance(x, dict):
             return [x[name] for name in names]
-        elif isinstance(x, list):
+        elif isinstance(x, list) or isinstance(x, tuple):
             return x
         else:
             return [x]
