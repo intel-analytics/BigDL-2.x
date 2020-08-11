@@ -73,7 +73,7 @@ class XShards(object):
         total_core_num = node_num * core_num
         import numpy as np
         type_err_msg = """
-The types supported in zoo.orca.data.shard are
+The types supported in zoo.orca.data.XShards.partition are
 1. np.ndarray
 2. a tuple, list, dict of np.ndarray
 3. nested structure made of tuple, list, dict with ndarray as the leaf value

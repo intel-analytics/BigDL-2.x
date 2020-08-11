@@ -17,7 +17,7 @@
 from unittest import TestCase
 import pytest
 import numpy as np
-from zoo.orca.data.shard import XShards
+from zoo.orca.data import XShards
 
 
 class TestSparkBackend(TestCase):
