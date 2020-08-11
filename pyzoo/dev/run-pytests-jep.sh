@@ -20,6 +20,7 @@ cd "`dirname $0`"
 
 echo "Running Jep tests"
 python -m pytest -v ../test/zoo/pipeline/api/torch/
+                 -v ../test/zoo/orca/learn/jep/
 exit_status_1=$?
 if [ $exit_status_1 -ne 0 ];
 then
