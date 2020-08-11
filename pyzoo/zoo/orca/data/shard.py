@@ -26,7 +26,7 @@ class XShards(object):
     """
     def transform_shard(self, func, *args):
         """
-        Transform each shard in the XShards using func
+        Transform each shard in the XShards using specified function.
         :param func: pre-processing function
         :param args: arguments for the pre-processing function
         :return: DataShard
@@ -159,8 +159,8 @@ class SparkXShards(XShards):
 
     def transform_shard(self, func, *args):
         """
-        Return a new SparkXShards by applying a function to each element of this SparkXShards
-        :param func: python function to process data. The first argument is the data element.
+        Return a new SparkXShards by applying a function to each shard of this SparkXShards
+        :param func: python function to process data. The first argument is the data shard.
         :param args: other arguments in this function.
         :return:
         """
