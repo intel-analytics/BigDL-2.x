@@ -185,9 +185,10 @@ class PytorchSparkEstimatorWrapper(Estimator):
 
         if isinstance(data, SparkXShards):
             val_feature_set = FeatureSet.sample_rdd(data.rdd.flatMap(to_sample))
+            return self.estimator.evaluate(val_feature_set, validation_methods, batch_size)
         elif isinstance(data, DataLoader):
             val_feature_set = FeatureSet.pytorch_dataloader(data)
+            return self.estimator.evaluate_minibatch(val_feature_set, validation_methods)
         else:
             raise ValueError("Data should be a SparkXShards or a DataLoader, but get " +
                              data.__class__.__name__)
-        return self.estimator.evaluate(val_feature_set, validation_methods, batch_size)
