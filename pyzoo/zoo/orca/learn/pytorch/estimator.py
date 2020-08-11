@@ -19,6 +19,8 @@ from zoo.orca.data import SparkXShards
 from bigdl.optim.optimizer import MaxEpoch
 from zoo.feature.common import FeatureSet
 
+from torch.utils.data import DataLoader
+
 
 class Estimator(object):
     def fit(self, data, epochs, **kwargs):
@@ -141,7 +143,6 @@ class PytorchSparkEstimatorWrapper(Estimator):
     def fit(self, data, epochs=1, batch_size=32, validation_data=None, validation_methods=None,
             checkpoint_trigger=None):
         from zoo.orca.learn.pytorch.utils import to_sample
-        from torch.utils.data import DataLoader
 
         end_trigger = MaxEpoch(epochs)
         assert batch_size > 0, "batch_size should be greater than 0"
@@ -169,6 +170,9 @@ class PytorchSparkEstimatorWrapper(Estimator):
 
             self.estimator.train_minibatch(train_feature_set, self.loss, end_trigger,
                                            checkpoint_trigger, val_feature_set, validation_methods)
+        else:
+            raise ValueError("Data and validation data should be SparkXShards or DataLoaders "
+                             "but get " + data.__class__.__name__)
         return self
 
     def predict(self, data, **kwargs):
@@ -179,5 +183,11 @@ class PytorchSparkEstimatorWrapper(Estimator):
 
         assert data is not None, "validation data shouldn't be None"
 
-        val_feature_set = FeatureSet.sample_rdd(data.rdd.flatMap(to_sample))
+        if isinstance(data, SparkXShards):
+            val_feature_set = FeatureSet.sample_rdd(data.rdd.flatMap(to_sample))
+        elif isinstance(data, DataLoader):
+            val_feature_set = FeatureSet.pytorch_dataloader(data)
+        else:
+            raise ValueError("Data should be a SparkXShards or a DataLoader, but get " +
+                             data.__class__.__name__)
         return self.estimator.evaluate(val_feature_set, validation_methods, batch_size)

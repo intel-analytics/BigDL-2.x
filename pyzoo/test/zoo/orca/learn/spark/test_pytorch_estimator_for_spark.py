@@ -19,51 +19,36 @@ from unittest import TestCase
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.data import TensorDataset
 import numpy as np
 
 from zoo.orca.data.pandas import read_csv
 from zoo.orca.learn.pytorch import Estimator
 from zoo.pipeline.api.keras.metrics import Accuracy
-from bigdl.optim.optimizer import SGD, EveryEpoch
+from bigdl.optim.optimizer import SGD, EveryEpoch, Adam
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
 
-class SimpleModel(nn.Module):
-    def __init__(self):
-        super(SimpleModel, self).__init__()
-        self.fc = nn.Linear(1, 1)
-
-    def forward(self, x):
-        x = self.fc(x)
-        return F.log_softmax(x, dim=1)
-
-
-class LinearDataset(torch.utils.data.Dataset):
-    """y = a * x + b"""
-
-    def __init__(self, a, b, size=1000):
-        x = np.arange(0, 10, 10 / size, dtype=np.float32)
-        self.x = torch.from_numpy(x)
-        self.y = torch.from_numpy(a * x + b)
-
-    def __getitem__(self, index):
-        return self.x[index, None], self.y[index, None]
-
-    def __len__(self):
-        return len(self.x)
-
-
 class TestEstimatorForSpark(TestCase):
     def test_bigdl_pytorch_estimator_shard(self):
-        model = nn.Linear(1, 1)
+        class SimpleModel(nn.Module):
+            def __init__(self):
+                super(SimpleModel, self).__init__()
+                self.fc = nn.Linear(2, 2)
+
+            def forward(self, x):
+                x = self.fc(x)
+                return F.log_softmax(x, dim=1)
+
+        model = SimpleModel()
 
         def loss_func(input, target):
             return nn.CrossEntropyLoss().forward(input, target.flatten().long())
 
         def transform(df):
             result = {
-                "x": df['item'].to_numpy(),
+                "x": [df['user'].to_numpy(), df['item'].to_numpy()],
                 "y": df['label'].to_numpy()
             }
             return result
@@ -78,20 +63,33 @@ class TestEstimatorForSpark(TestCase):
                       validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
 
     def test_bigdl_pytorch_estimator_dataloader(self):
-        model = nn.Linear(1, 1)
+        class SimpleModel(nn.Module):
+            def __init__(self):
+                super(SimpleModel, self).__init__()
+                self.dense1 = nn.Linear(2, 4)
+                self.bn1 = torch.nn.BatchNorm1d(4)
+                self.dense2 = nn.Linear(4, 1)
 
-        estimator = Estimator.from_torch(model_creator=model, loss_creator=nn.MSELoss,
-                                         optimizer_creator=SGD(), backend="bigdl")
+            def forward(self, x):
+                x = self.dense1(x)
+                x = self.bn1(x)
+                x = torch.sigmoid(self.dense2(x))
+                return x
 
-        train_dataset = LinearDataset(2, 5, size=1000)
+        model = SimpleModel()
+
+        estimator = Estimator.from_torch(model_creator=model, loss_creator=nn.BCELoss,
+                                         optimizer_creator=Adam(), backend="bigdl")
+
+        inputs = torch.Tensor([[1, 2], [1, 3], [3, 2], [5, 6], [8, 9], [1, 9]])
+        targets = torch.Tensor([[0], [0], [0], [1], [1], [1]])
         train_loader = torch.utils.data.DataLoader(
-            train_dataset,
-            batch_size=32,
+            TensorDataset(inputs, targets),
+            batch_size=2,
         )
-        val_dataset = LinearDataset(2, 5, size=400)
         val_loader = torch.utils.data.DataLoader(
-            val_dataset,
-            batch_size=32,
+            TensorDataset(inputs, targets),
+            batch_size=2,
         )
         estimator.fit(data=train_loader, epochs=2, validation_data=val_loader,
                       validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
