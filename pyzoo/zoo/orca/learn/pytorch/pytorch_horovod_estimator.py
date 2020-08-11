@@ -318,17 +318,10 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
     def get_model(self):
         """Returns the learned model(s)."""
         state = self.get_state_dict()
-        unwrapped = []
-        models = self.model_creator(self.config)
-        if not isinstance(models, collections.Iterable):
-            models = [models]
-
-        for model, state_dict in zip(models, state["models"]):
-            model.load_state_dict(state_dict)
-            unwrapped += [model.module if hasattr(model, "module") else model]
-        if len(unwrapped) == 1:
-            return unwrapped[0]
-        return unwrapped
+        model = self.model_creator(self.config)
+        model_state = state["models"][0]
+        model.load_state_dict(model_state)
+        return model.module if hasattr(model, "module") else model
 
     def save(self, checkpoint):
         """Saves the Estimator state to the provided checkpoint path.
