@@ -270,6 +270,11 @@ class SparkXShards(XShards):
                             " of Pandas DataFrame")
 
     def unique(self):
+        """
+        Return a unique list of elements of this SparkXShards.
+        This is only applicable for SparkXShards of Pandas Series.
+        :return: a unique list of elements of this SparkXShards.
+        """
         if self._get_class_name() == 'pandas.core.series.Series':
             import pandas as pd
             rdd = self.rdd.map(lambda s: s.unique())
@@ -313,6 +318,12 @@ class SparkXShards(XShards):
             .reduce(lambda l1, l2: l1 + l2)
 
     def save_pickle(self, path, batchSize=10):
+        """
+        Save this SparkXShards as a SequenceFile of serialized objects.
+        The serializer used is pyspark.serializers.PickleSerializer, default batch size is 10.
+        :param path: target path.
+        :param batchSize: batch size for each sequence file chunk.
+        """
         self.rdd.saveAsPickleFile(path, batchSize)
         return self
 
@@ -332,6 +343,10 @@ class SparkXShards(XShards):
 
     # Tested on pyarrow 0.17.0; 0.16.0 would get errors.
     def to_ray(self):
+        """
+        Put data of this SparkXShards to Ray cluster object store.
+        :return: a new RayXShards which contains data of this SparkXShards.
+        """
         from zoo.ray import RayContext
         ray_ctx = RayContext.get()
         object_store_address = ray_ctx.address_info["object_store_address"]
