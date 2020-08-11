@@ -252,16 +252,19 @@ class SparkRunner:
             pyspark_home = os.path.abspath(pyspark.__file__ + "/../")
             zoo_standalone_home = os.path.abspath(__file__ + "/../../share/bin/standalone")
             node_ip = get_node_ip()
-            SparkRunner.standalone_env = {"SPARK_HOME": pyspark_home,
-                                          "ZOO_STANDALONE_HOME": zoo_standalone_home,
-                                          # If not set this, by default master is hostname but not ip,
-                                          "SPARK_MASTER_HOST": node_ip}
-            # The scripts from pip don't have execution permission and need to first give permission.
+            SparkRunner.standalone_env = {
+                "SPARK_HOME": pyspark_home,
+                "ZOO_STANDALONE_HOME": zoo_standalone_home,
+                # If not set this, by default master is hostname but not ip,
+                "SPARK_MASTER_HOST": node_ip}
+            # The scripts installed from pip don't have execution permission
+            # and need to first give them permission.
             pro = subprocess.Popen(["chmod", "-R", "+x", "{}/sbin".format(zoo_standalone_home)])
             os.waitpid(pro.pid, 0)
             # Start master
-            start_master_pro = subprocess.Popen("{}/sbin/start-master.sh".format(zoo_standalone_home),
-                                                shell=True, env=SparkRunner.standalone_env)
+            start_master_pro = subprocess.Popen(
+                "{}/sbin/start-master.sh".format(zoo_standalone_home),
+                shell=True, env=SparkRunner.standalone_env)
             os.waitpid(start_master_pro.pid, 0)
             spark_master = "spark://{}:7077".format(node_ip)  # 7077 is the default port
             # Start worker
