@@ -364,7 +364,7 @@ class FeatureSet(DataSet):
         return cls(jvalue=jvalue)
 
     @classmethod
-    def pytorch_dataloader(cls, dataloader, to_zoo=False, bigdl_type="float"):
+    def pytorch_dataloader(cls, dataloader, to_zoo=True, bigdl_type="float"):
         """
         Create FeatureSet from pytorch dataloader
         :param dataloader: a pytorch dataloader, or a function return pytorch dataloader.
