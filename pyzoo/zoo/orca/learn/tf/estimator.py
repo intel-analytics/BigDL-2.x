@@ -69,7 +69,6 @@ class Estimator(object):
         # Arguments
         tag: The string variable represents the scalar wanted
         """
-        # exception handle
         if self.tf_optimizer:
             return self.tf_optimizer.estimator.get_train_summary(tag)
 
@@ -135,9 +134,9 @@ class Estimator(object):
                                   )
 
     @staticmethod
-    def from_keras(keras_model, model_dir=None, backend="spark"):
+    def from_keras(keras_model, metrics=None, model_dir=None, backend="spark"):
         assert backend == "spark", "only spark backend is supported for now"
-        return TFKerasWrapper(keras_model, model_dir)
+        return TFKerasWrapper(keras_model, metrics, model_dir)
 
 
 class TFOptimizerWrapper(Estimator):
@@ -275,6 +274,8 @@ class TFOptimizerWrapper(Estimator):
         predicted_rdd = tfnet.predict(dataset)
         if isinstance(data, DataFrame):
             return convert_predict_to_dataframe(data, predicted_rdd)
+        elif isinstance(data, SparkXShards):
+            return convert_predict_to_xshard(data, predicted_rdd)
         else:
             return predicted_rdd
 
@@ -310,9 +311,10 @@ class TFOptimizerWrapper(Estimator):
 
 
 class TFKerasWrapper(Estimator):
-    def __init__(self, keras_model, model_dir):
+    def __init__(self, keras_model, metrics, model_dir):
         self.model = KerasModel(keras_model, model_dir)
         self.load_checkpoint = False
+        self.metrics = metrics
         self.tf_optimizer = None
         self.log_dir = None
         self.app_name = None
@@ -343,7 +345,8 @@ class TFKerasWrapper(Estimator):
 
         self.tf_optimizer = TFOptimizer.from_keras(self.model.model, dataset,
                                                    model_dir=self.model.model_dir,
-                                                   session_config=session_config)
+                                                   session_config=session_config,
+                                                   metrics=self.metrics)
 
         if self.load_checkpoint:
             self.tf_optimizer.load_checkpoint(self.checkpoint_path, self.checkpoint_version)
@@ -374,6 +377,8 @@ class TFKerasWrapper(Estimator):
         predicted_rdd = self.model.predict(dataset, batch_size)
         if isinstance(data, DataFrame):
             return convert_predict_to_dataframe(data, predicted_rdd)
+        elif isinstance(data, SparkXShards):
+            return convert_predict_to_xshard(data, predicted_rdd)
         else:
             return predicted_rdd
 

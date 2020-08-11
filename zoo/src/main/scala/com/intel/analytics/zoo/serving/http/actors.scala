@@ -150,6 +150,10 @@ class RedisGetActor(
       val results = get(redisOutputQueue, message.ids)
       if (null != results && results.size == message.ids.size) {
         sender() ! results
+        // result get, remove in redis here
+        message.ids.foreach(id =>
+          jedis.del("result:" + id)
+        )
       } else {
         sender() ! Seq[(String, util.Map[String, String])]()
       }
@@ -184,7 +188,7 @@ class QueryActor(redisGetActor: ActorRef) extends JedisEnabledActor {
       }
       // println(System.currentTimeMillis(), message.query.id, result)
       if(results.size == 0) {
-        context.system.scheduler.scheduleOnce(10 milliseconds, self, message)
+        context.system.scheduler.scheduleOnce(1 milliseconds, self, message)
       } else {
         message.target ! results
       }
