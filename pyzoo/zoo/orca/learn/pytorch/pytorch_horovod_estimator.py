@@ -317,7 +317,7 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
 
     def get_model(self):
         """Returns the learned model(s)."""
-        state = self.save_state_dict()
+        state = self.get_state_dict()
         unwrapped = []
         models = self.model_creator(self.config)
         if not isinstance(models, collections.Iterable):
@@ -335,11 +335,11 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
 
         :param checkpoint: (str) Path to target checkpoint file.
         """
-        state_dict = self.save_state_dict()
+        state_dict = self.get_state_dict()
         torch.save(state_dict, checkpoint)
         return checkpoint
 
-    def save_state_dict(self):
+    def get_state_dict(self):
         stream_ids = [
             worker.state_stream.remote()
             for worker in self.remote_workers
