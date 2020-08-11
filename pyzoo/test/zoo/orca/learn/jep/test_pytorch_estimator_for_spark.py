@@ -57,10 +57,11 @@ class TestEstimatorForSpark(TestCase):
         data_shard = read_csv(file_path)
         data_shard = data_shard.transform_shard(transform)
 
-        estimator = Estimator.from_torch(model_creator=model, loss_creator=loss_func,
-                                         optimizer_creator=SGD(), backend="bigdl")
+        estimator = Estimator.from_torch(model=model, loss=loss_func,
+                                         optimizer=SGD(), backend="bigdl")
         estimator.fit(data=data_shard, epochs=4, batch_size=2, validation_data=data_shard,
                       validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
+        estimator.evaluate(data=data_shard, validation_methods=[Accuracy()], batch_size=2)
 
     def test_bigdl_pytorch_estimator_dataloader(self):
         class SimpleModel(nn.Module):
@@ -78,8 +79,8 @@ class TestEstimatorForSpark(TestCase):
 
         model = SimpleModel()
 
-        estimator = Estimator.from_torch(model_creator=model, loss_creator=nn.BCELoss(),
-                                         optimizer_creator=Adam(), backend="bigdl")
+        estimator = Estimator.from_torch(model=model, loss=nn.BCELoss(),
+                                         optimizer=Adam(), backend="bigdl")
 
         inputs = torch.Tensor([[1, 2], [1, 3], [3, 2], [5, 6], [8, 9], [1, 9]])
         targets = torch.Tensor([[0], [0], [0], [1], [1], [1]])
@@ -93,6 +94,7 @@ class TestEstimatorForSpark(TestCase):
         )
         estimator.fit(data=train_loader, epochs=2, validation_data=val_loader,
                       validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
+        estimator.evaluate(data=val_loader, validation_methods=[Accuracy()], batch_size=2)
 
 
 if __name__ == "__main__":

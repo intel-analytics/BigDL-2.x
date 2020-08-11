@@ -34,9 +34,9 @@ class Estimator(object):
 
     @staticmethod
     def from_torch(*,
-                   model_creator,
-                   optimizer_creator,
-                   loss_creator=None,
+                   model,
+                   optimizer,
+                   loss=None,
                    scheduler_creator=None,
                    training_operator_cls=TrainingOperator,
                    initialization_hook=None,
@@ -44,18 +44,18 @@ class Estimator(object):
                    scheduler_step_freq="batch",
                    backend="horovod"):
         if backend == "horovod":
-            return PyTorchHorovodEstimatorWrapper(model_creator=model_creator,
-                                                  optimizer_creator=optimizer_creator,
-                                                  loss_creator=loss_creator,
+            return PyTorchHorovodEstimatorWrapper(model_creator=model,
+                                                  optimizer_creator=optimizer,
+                                                  loss_creator=loss,
                                                   scheduler_creator=scheduler_creator,
                                                   training_operator_cls=training_operator_cls,
                                                   initialization_hook=initialization_hook,
                                                   config=config,
                                                   scheduler_step_freq=scheduler_step_freq)
         elif backend == "bigdl":
-            return PytorchSparkEstimatorWrapper(model=model_creator,
-                                                loss=loss_creator,
-                                                optimizer=optimizer_creator,
+            return PytorchSparkEstimatorWrapper(model=model,
+                                                loss=loss,
+                                                optimizer=optimizer,
                                                 model_dir=None,
                                                 bigdl_type="float")
         else:
