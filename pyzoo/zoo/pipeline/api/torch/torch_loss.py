@@ -18,7 +18,7 @@ from bigdl.nn.criterion import Criterion
 from pyspark.serializers import CloudPickleSerializer
 
 if sys.version < '3.7':
-    print("detect python < 3.7, if you meet zlib not available " +
+    print("WARN: detect python < 3.7, if you meet zlib not available " +
           "exception on yarn, please update your python to 3.7")
 
 
