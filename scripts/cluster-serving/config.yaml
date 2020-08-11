@@ -2,7 +2,7 @@
 
 model:
   # model path must be provided
-  path: model
+  path: resources/model
   # mode, default is recommended, if error is raised, set single
   mode:
   # the inputs of the tensorflow model, separated by ","
