@@ -45,7 +45,7 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
          |import torch.nn.functional as F
          |import torchvision
          |from zoo.util.nest import ptensor_to_numpy
-         |from zoo.pipeline.api.torch.utils import training_param
+         |from zoo.pipeline.api.torch.utils import trainable_param
          |
          |from pyspark.serializers import CloudPickleSerializer
          |by = bytes(b % 256 for b in model_bytes)
@@ -69,7 +69,7 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
   val setWeightCode =
     s"""
         |w = torch.Tensor(newWeight)
-        |torch.nn.utils.vector_to_parameters(w, training_param(${getName()}))
+        |torch.nn.utils.vector_to_parameters(w, trainable_param(${getName()}))
         |
         |""".stripMargin
 
@@ -159,7 +159,7 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
   override def zeroGradParameters(): Unit = {
     val zeroGradCode =
       s"""
-        |for param in training_param(${this.getName()}):
+        |for param in trainable_param(${this.getName()}):
         |    param.grad.fill_(0)
         |""".stripMargin
     PythonInterpreter.exec(zeroGradCode)

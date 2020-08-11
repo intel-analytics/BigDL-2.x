@@ -17,7 +17,7 @@ from torch.utils.data.sampler import Sampler
 import math
 
 
-def training_param(model):
+def trainable_param(model):
     training = []
     for p in model.parameters():
         if p.requires_grad:
