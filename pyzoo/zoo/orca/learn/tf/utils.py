@@ -112,7 +112,8 @@ def convert_predict_to_dataframe(df, prediction_rdd):
     def combine(pair):
         # list of np array
         if isinstance(pair[1], list):
-            row = Row(*([pair[0][col] for col in pair[0].__fields__] + [[Vectors.dense(elem) for elem in pair[1]]]))
+            row = Row(*([pair[0][col] for col in pair[0].__fields__] +
+                        [[Vectors.dense(elem) for elem in pair[1]]]))
             return row, ArrayType(VectorUDT())
         # scalar
         elif len(pair[1].shape) == 0:
