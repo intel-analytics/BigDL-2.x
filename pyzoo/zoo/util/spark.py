@@ -273,7 +273,8 @@ class SparkRunner:
                 shell=True, env=SparkRunner.standalone_env)
             os.waitpid(start_worker_pro.pid, 0)
         else:  # A Spark standalone cluster has already been started by the user.
-            assert spark_master.startswith("spark://")
+            assert spark_master.startswith("spark://"), \
+                "Please input a valid master address for Spark standalone: spark://master:port"
 
         # Start pyspark-shell
         submit_args = " --master " + spark_master
