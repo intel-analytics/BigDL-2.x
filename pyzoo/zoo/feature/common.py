@@ -364,7 +364,7 @@ class FeatureSet(DataSet):
         return cls(jvalue=jvalue)
 
     @classmethod
-    def pytorch_dataloader(cls, dataloader, to_zoo = False, bigdl_type="float"):
+    def pytorch_dataloader(cls, dataloader, to_zoo=False, bigdl_type="float"):
         """
         Create FeatureSet from pytorch dataloader
         :param dataloader: a pytorch dataloader, or a function return pytorch dataloader.
@@ -390,7 +390,7 @@ class FeatureSet(DataSet):
             jvalue = callZooFunc(bigdl_type, "createFeatureSetFromPyTorch", bys, True, to_zoo)
             return cls(jvalue=jvalue)
         else:
-            raise ValueError("Unsupported dataloader type, please pass pytorch dataloader" + \
+            raise ValueError("Unsupported dataloader type, please pass pytorch dataloader" +
                              " or a function to create pytorch dataloader.")
 
     def transform(self, transformer):

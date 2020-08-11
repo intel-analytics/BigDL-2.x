@@ -72,8 +72,8 @@ class TestPytorch(TestCase):
                                     [1], [1], [1]])
             return DataLoader(TensorDataset(inputs, targets), batch_size=2)
 
-        train_featureset = FeatureSet.pytorch_dataloader_creator(train_dataloader)
-        val_featureset = FeatureSet.pytorch_dataloader_creator(train_dataloader)
+        train_featureset = FeatureSet.pytorch_dataloader(train_dataloader)
+        val_featureset = FeatureSet.pytorch_dataloader(train_dataloader)
         zooOptimizer = Adam()
         estimator = Estimator(az_model, optim_methods=zooOptimizer)
         estimator.train_minibatch(train_featureset, zoo_loss, end_trigger=MaxEpoch(4),

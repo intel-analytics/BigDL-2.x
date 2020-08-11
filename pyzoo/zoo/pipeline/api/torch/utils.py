@@ -23,7 +23,7 @@ def training_param(model):
         if p.requires_grad:
             training.append(p)
     return training
-    
+
 
 class DistributedSequentialSampler(Sampler):
     """

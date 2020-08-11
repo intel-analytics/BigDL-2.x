@@ -51,7 +51,7 @@ class TorchModel(Layer):
         :param model: a PyTorch model
         """
         weights = []
-        for param in training_param(model) :
+        for param in training_param(model):
             weights.append(param.view(-1))
         flatten_weight = torch.nn.utils.parameters_to_vector(weights).data.numpy()
         bys = CloudPickleSerializer.dumps(CloudPickleSerializer, model)
