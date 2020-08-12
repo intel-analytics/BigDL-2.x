@@ -75,7 +75,8 @@ class TFRunner:
         import tensorflow as tf
         tf.config.threading.set_inter_op_parallelism_threads(self.inter_op_parallelism)
         tf.config.threading.set_intra_op_parallelism_threads(self.intra_op_parallelism)
-        os.environ["OMP_NUM_THREADS"] = self.config.get("OMP_NUM_THREADS", str(self.intra_op_parallelism))
+        os.environ["OMP_NUM_THREADS"] = self.config.get("OMP_NUM_THREADS",
+                                                        str(self.intra_op_parallelism))
         os.environ["KMP_BLOCKING_TIME"] = self.config.get("KMP_BLOCKING_TIME",
                                                           os.environ.get("KMP_BLOCKING_TIME", "0"))
 
@@ -159,9 +160,10 @@ class TFRunner:
 
         if self.backend == "horovod":
             import horovod.tensorflow.keras as hvd
-            hvd_callbacks = [hvd.callbacks.BroadcastGlobalVariablesCallback(0), hvd.callbacks.MetricAverageCallback()]
+            hvd_callbacks = [hvd.callbacks.BroadcastGlobalVariablesCallback(0),
+                             hvd.callbacks.MetricAverageCallback()]
             if hvd.rank() != 0:
-                verbose=0
+                verbose = 0
 
             if callbacks is not None:
                 callbacks = hvd_callbacks + callbacks

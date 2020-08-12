@@ -224,7 +224,8 @@ def input_fn(is_training, data_dir, batch_size):
         dataset = dataset.shuffle(buffer_size=_NUM_TRAIN_FILES)
 
     # Convert to individual records
-    dataset = dataset.interleave(tf.data.TFRecordDataset, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    dataset = dataset.interleave(tf.data.TFRecordDataset,
+                                 num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     return process_record_dataset(
         dataset=dataset,
@@ -249,8 +250,9 @@ def model_creator(config):
     for layer, layer_config in zip(model.layers, model_config['layers']):
         if hasattr(layer, 'kernel_regularizer'):
             regularizer = keras.regularizers.l2(wd)
-            layer_config['config']['kernel_regularizer'] = {'class_name': regularizer.__class__.__name__,
-                                                            'config': regularizer.get_config()}
+            regularizer_config = {'class_name': regularizer.__class__.__name__,
+                                  'config': regularizer.get_config()}
+            layer_config['config']['kernel_regularizer'] = regularizer_config
         if type(layer) == keras.layers.BatchNormalization:
             layer_config['config']['momentum'] = 0.9
             layer_config['config']['epsilon'] = 1e-5

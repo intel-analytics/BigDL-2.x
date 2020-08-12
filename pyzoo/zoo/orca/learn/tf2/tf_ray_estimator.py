@@ -95,7 +95,7 @@ class Estimator(HorovodRayRunner):
                 for i, worker in enumerate(self.remote_workers)])
         elif backend == "horovod":
             # it is necessary to call self.run first to set horovod environment
-            self.run(lambda : print("worker initialized"))
+            self.run(lambda: print("worker initialized"))
             ray.get([
                 worker.setup_horovod.remote()
                 for i, worker in enumerate(self.remote_workers)])
