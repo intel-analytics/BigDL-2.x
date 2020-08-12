@@ -26,6 +26,7 @@ from zoo.ray import RayContext
 NUM_TRAIN_SAMPLES = 1000
 NUM_TEST_SAMPLES = 400
 
+
 def linear_dataset(a=2, size=1000):
     x = np.random.rand(size)
     y = x / 2
@@ -87,7 +88,7 @@ class TestTFRayEstimator(TestCase):
             model_creator=simple_model,
             compile_args_creator=compile_args,
             verbose=True,
-            config = config)
+            config=config)
 
         # model baseline performance
         start_stats = trainer.evaluate(create_test_dataset,
