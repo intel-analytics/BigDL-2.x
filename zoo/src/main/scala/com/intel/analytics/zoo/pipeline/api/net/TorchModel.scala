@@ -134,10 +134,18 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
     println(s"run backward cost: ${(System.nanoTime() - startTime) / 1e9}")
     val getWeightCode =
       s"""
-        |grads=[]
-        |for param in ${getName()}.parameters():
-        |    grads.append(param.grad.view(-1))
-        |grad=torch.nn.utils.parameters_to_vector(grads)
+        |grads = []
+        |none_grads = []
+        |for name, param in ${getName()}.named_parameters():
+        |    if param.requires_grad:
+        |        if param.grad is not None:
+        |            grads.append(param.grad.view(-1))
+        |        else:
+        |            none_grads.append(name)
+        |if len(none_grads) > 0:
+        |    raise Exception("Detect no gradient layer: " + " ,".join(none_grads) +
+        |                    ". Please set their require_grad to False.")
+        |grad = torch.nn.utils.parameters_to_vector(grads)
         |""".stripMargin
     PythonInterpreter.exec(getWeightCode)
     // TODO: Optimize this
