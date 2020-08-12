@@ -40,7 +40,7 @@ class Estimator(HorovodRayRunner):
                  compile_args_creator,
                  config=None,
                  verbose=False,
-                 backend="tf"):
+                 backend="horovod"):
         """Sets up the TensorFlow trainer.
 
         Args:
