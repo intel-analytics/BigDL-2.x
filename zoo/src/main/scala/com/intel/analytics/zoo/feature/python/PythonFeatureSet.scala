@@ -191,12 +191,12 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
            |""".stripMargin
     }
     val inputsName = if (features == null || features == "") {
-      s"torch.Tensor(${loaderName}_bs_node, 1)._fill(-1)"
+      s"torch.Tensor(${loaderName}_bs_node, 1)"
     } else {
       features
     }
     val targetsName = if (labels == null || labels == "") {
-      s"torch.Tensor(${loaderName}_bs_node, 1)._fill(-1)"
+      s"torch.Tensor(${loaderName}_bs_node, 1)"
     } else {
       labels
     }
