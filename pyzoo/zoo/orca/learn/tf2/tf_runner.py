@@ -92,9 +92,6 @@ class TFRunner:
     def setup_horovod(self):
         import horovod.tensorflow.keras as hvd
         hvd.init()
-        self.train_dataset = train_dataset.shard(hvd.size(), hvd.rank())
-        self.test_dataset = test_dataset.shard(hvd.size(), hvd.rank())
-
         self.model = self.model_creator(self.config)
         compile_args = self.compile_args_creator(self.config)
         compile_args["optimizer"] = hvd.DistributedOptimizer(compile_args["optimizer"])
@@ -133,8 +130,6 @@ class TFRunner:
         #
         # because of this, we only really ever need to query its state
         self.strategy = MultiWorkerMirroredStrategy()
-
-        self.train_dataset, self.test_dataset = self.data_creator(self.config)
 
         logger.debug("Creating model with MultiWorkerMirroredStrategy")
         with self.strategy.scope():
