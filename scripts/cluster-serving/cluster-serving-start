@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # check if started
-if [ -f "running" ]; then
-    echo "Serving is already running!"
-    exit 1
-fi
+#if [ -f "running" ]; then
+#    echo "Serving is already running!"
+#    exit 1
+#fi
 
 # parse config file
 function parse_yaml {

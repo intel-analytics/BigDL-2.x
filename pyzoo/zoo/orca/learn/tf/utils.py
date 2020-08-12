@@ -19,6 +19,7 @@ from os.path import join, basename, dirname
 import re
 import shutil
 import tensorflow as tf
+import numpy as np
 from pyspark.sql.dataframe import DataFrame
 
 from zoo.orca.data import SparkXShards
@@ -75,6 +76,9 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
         if isinstance(data, DataFrame):
             assert isinstance(validation_data, DataFrame), \
                 "train data and validation data should be both Spark DataFrame"
+        if isinstance(data, tf.data.Dataset):
+            assert isinstance(validation_data, tf.data.Dataset), \
+                "train data and validation data should be both tf.data.Dataset"
 
     if isinstance(data, SparkXShards):
         dataset = xshards_to_tf_dataset(data,
@@ -97,22 +101,37 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
                                            sequential_order,
                                            shuffle
                                            )
+    elif isinstance(data, tf.data.Dataset):
+        dataset = TFDataset.from_tf_data_dataset(data,
+                                                 batch_size,
+                                                 batch_per_thread,
+                                                 hard_code_batch_size,
+                                                 validation_data,
+                                                 sequential_order,
+                                                 shuffle)
     else:
-        raise ValueError("data must be SparkXShards or orca.data.tf.Dataset or Spark DataFrame")
+        raise ValueError("data must be SparkXShards or orca.data.tf.Dataset or "
+                         "Spark DataFrame or tf.data.Dataset")
 
     return dataset
 
 
 def convert_predict_to_dataframe(df, prediction_rdd):
     from pyspark.sql import Row
-    from pyspark.sql.types import StructType, StructField, FloatType
+    from pyspark.sql.types import StructType, StructField, FloatType, ArrayType
     from pyspark.ml.linalg import VectorUDT, Vectors
 
     def combine(pair):
+        # list of np array
+        if isinstance(pair[1], list):
+            row = Row(*([pair[0][col] for col in pair[0].__fields__] +
+                        [[Vectors.dense(elem) for elem in pair[1]]]))
+            return row, ArrayType(VectorUDT())
         # scalar
-        if len(pair[1].shape) == 0:
+        elif len(pair[1].shape) == 0:
             row = Row(*([pair[0][col] for col in pair[0].__fields__] + [float(pair[1].item(0))]))
             return row, FloatType()
+        # np array
         else:
             row = Row(*([pair[0][col] for col in pair[0].__fields__] + [Vectors.dense(pair[1])]))
             return row, VectorUDT()
@@ -123,6 +142,21 @@ def convert_predict_to_dataframe(df, prediction_rdd):
     schema = StructType(df.schema.fields + [StructField('prediction', type)])
     result_df = result_rdd.toDF(schema)
     return result_df
+
+
+def convert_predict_to_xshard(prediction_rdd):
+    def transform_predict(iter):
+        predictions = list(iter)
+        # list of np array
+        if isinstance(predictions[0], list):
+            predictions = np.array(predictions).T.tolist()
+            result = [np.array(predict) for predict in predictions]
+            return [{'prediction': result}]
+        # np array
+        else:
+            return [{'prediction': np.array(predictions)}]
+
+    return SparkXShards(prediction_rdd.mapPartitions(transform_predict))
 
 
 def find_latest_checkpoint(model_dir):
