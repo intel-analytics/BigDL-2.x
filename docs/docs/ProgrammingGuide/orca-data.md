@@ -5,30 +5,32 @@ Analytics Zoo Orca data provides data-parallel pre-processing support for Python
 
 It supports data pre-processing from different data sources, like TensorFlow DataSet, PyTorch DataLoader, MXNet DataLoader, etc. and it supports various data format, like Pandas DataFrame, Numpy, Images, Parquet.
 
-The distributed backend engine can be [Spark](https://spark.apache.org/) or [Ray](https://github.com/ray-project/ray). We now support Spark-based transformations to do the pre-processing, and provide functionality to seamlessly move data to Ray cluster for later Ray based training/inference. 
+The distributed backend engine can be [Spark](https://spark.apache.org/) or [Ray](https://github.com/ray-project/ray). We now support Spark-based transformations to do the pre-processing, and provide functionality to seamlessly put data to Ray cluster for later training/inference on Ray. 
 
 ---
 ## **XShards**
 
 XShards is a collection of data in Orca data API. For different backend, we have two XShards: SparkXShards and RayXShards.
 
-SparkXShards is a collection of data which can be pre-processed in parallel on Spark. SparkXShards can accept various data sources, like csv/json/parquet, Numpy, TensorFlow DataSet, Image, etc. And do the specified processing in parallel on Spark using common Python libraries such as Pandas, Numpy, PIL, TensorFlow Dataset, PyTorch DataLoader, etc.
+**SparkXShards** is a collection of data which can be pre-processed in parallel on Spark. SparkXShards can accept various data sources, like csv/json/parquet, Numpy, TensorFlow DataSet, Image, etc. And do the specified processing in parallel on Spark using common Python libraries such as Pandas, Numpy, PIL, TensorFlow Dataset, PyTorch DataLoader, etc.
 
-RayXShards is a collection of data which can be pre-processed in parallel on Ray. We support ingesting data in parallel to Ray from SparkXShards, and users can performance later training/inference on Ray.
+To get the more examples on SparkXShards APIs, you can refert to [Example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/orca/data)
+
+**RayXShards** is a collection of data which can be processed in parallel on Ray. We support ingesting data in parallel to Ray from SparkXShards, and users can performance later training/inference on Ray.
 
 
 ### **XShards General Operations**
 
-#### **Pre-processing on XShards**
+#### **Pre-processing on SparkXShards**
 
-You can do pre-processing with your customized function on XShards using below API:
+You can do pre-processing with your customized function on SparkXShards using below API:
 ```
 transform_shard(func, *args)
 ```
 * `func` is your pre-processing function. In this function, you can do the pre-processing with the data using common Python libraries such as Pandas, Numpy, PIL, TensorFlow Dataset, PyTorch DataLoader, etc., then return the processed object. 
 * `args` are the augurments for the pre-processing function.
 
-This method would parallelly pre-process each element in the XShards with the customized function, and return a new XShards after transformation.
+This method would parallelly pre-process each element in the SparkXShards with the customized function, and return a new SparkXShards after transformation.
 
 ##### **SharedValue**
 SharedValue can be used to give every node a copy of a large input dataset in an efficient manner.
@@ -49,13 +51,12 @@ You can get all of elements in XShards with such API:
 ```
 collect()
 ```
-This method returns a list that contains all of the elements in this XShards.
+This method returns a list that contains all of the elements in this XShards. This API works on both SparkXShards and RayXshards.
 
-To get the more examples on orca data API, you can refert to [Example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/orca/data)
 
-#### **Repartition XShards**
+#### **Repartition SparkXShards**
 
-You can repartition XShards to different number of partitions.
+You can repartition SparkXShards to different number of partitions.
 ```
 repartition(num_partitions)
 ```
@@ -64,7 +65,7 @@ repartition(num_partitions)
 The method returns a new SparkXShards that has exactly num_partitions partitions.
 
 
-#### **Split XShards**
+#### **Split SparkXShards**
 
 You can split one XShards into multiple SparkXShards. Each element in the SparkXShards needs be a list or tuple with same length.
 ```
@@ -72,7 +73,7 @@ split()
 ```
 This method returns splits of SparkXShards. If each element in the input SparkDataShard is not a list or tuple, return list of input SparkDataShards.
 
-#### **Save/Load XShards**
+#### **Save/Load SparkXShards**
 
 You can save SparkXShards as SequenceFiles of serialized objects.
 The serializer used is pyspark.serializers.PickleSerializer.
@@ -82,7 +83,7 @@ save_pickle(path, batchSize=10)
 * `path` is target save path.
 * `batchSize` batch size for each chunk in sequence file.
 
-And you can load pickle file to XShards if you use save_pickle() to save data.
+And you can load pickle file to SparkXShards if you use save_pickle() to save data.
 ```
 zoo.orca.data.XShards.load_pickle(path, minPartitions=None)
 ```
@@ -103,7 +104,7 @@ This method save data of SparkXShards to Ray object store, and return a new RayX
 
 ### **XShards with Pandas DataFrame**
 
-#### **Read data into XShards**
+#### **Read data into SparkXShards**
 
 You can read csv/json files/directory into XShards with such APIs:
 ```
@@ -136,7 +137,7 @@ This method return a unique list of elements of the SparkXShards of Pandas Serie
 
 ### **XShards with Numpy**
 
-#### **Load Numpy data in XShards**
+#### **Load local numpy data to SparkXShards**
 
 You can partition local in memory data and form a SparkXShards.
 ```
