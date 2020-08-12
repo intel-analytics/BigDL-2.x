@@ -92,7 +92,7 @@ def data_creator(config):
 import argparse
 from zoo.ray import RayContext
 from zoo import init_spark_on_yarn, init_spark_on_local
-from zoo.orca.learn.tf.tf_ray_estimator import TFRayEstimator
+from zoo.orca.learn.tf2.tf_ray_estimator import Estimator
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--hadoop_conf", type=str,
@@ -191,7 +191,7 @@ if __name__ == "__main__":
             "steps": (50000 // (256 * num_workers)),
         }
     }
-    trainer = TFRayEstimator(
+    trainer = Estimator(
         model_creator=model_creator,
         compile_args_creator=compile_args_creator,
         verbose=True,

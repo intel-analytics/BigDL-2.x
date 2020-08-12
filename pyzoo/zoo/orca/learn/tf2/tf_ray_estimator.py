@@ -14,15 +14,15 @@
 # limitations under the License.
 #
 
-import numpy as np
 import logging
 import pickle
 
+import numpy as np
 import ray
 
-from zoo.orca.learn.tf.tf_runner import TFRunner
-from zoo.orca.learn.horovod.horovod_ray_runner import HorovodWorker
 from zoo.orca.learn.horovod.horovod_ray_runner import HorovodRayRunner
+from zoo.orca.learn.horovod.horovod_ray_runner import HorovodWorker
+from zoo.orca.learn.tf2.tf_runner import TFRunner
 from zoo.ray import RayContext
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class TFWorker(HorovodWorker, TFRunner):
         super().__init__(*args, **kwargs)
 
 
-class TFRayEstimator(HorovodRayRunner):
+class Estimator(HorovodRayRunner):
     def __init__(self,
                  model_creator,
                  compile_args_creator,
@@ -103,22 +103,42 @@ class TFRayEstimator(HorovodRayRunner):
             raise Exception("Only \"tf\" and \"horovod\" are legal "
                             "value of backend, but got {}".format(backend))
 
-    def fit(self, data_creator):
+    def fit(self, data_creator, epochs=1, verbose=1,
+            callbacks=None, validation_data_creator=None, class_weight=None, initial_epoch=0,
+            steps_per_epoch=None, validation_steps=None, validation_freq=1):
         """Runs a training epoch."""
 
-        # see ./tf_runner.py:setup_distributed
-        # for an explanation of only taking the first worker's data
-        worker_stats = ray.get([w.step.remote(data_creator) for w in self.remote_workers])
+        params = dict(
+            data_creator=data_creator,
+            epochs=epochs,
+            verbose=verbose,
+            callbacks=callbacks,
+            validation_data_creator=validation_data_creator,
+            class_weight=class_weight,
+            initial_epoch=initial_epoch,
+            steps_per_epoch=steps_per_epoch,
+            validation_steps=validation_steps,
+            validation_freq=validation_freq,
+        )
+        worker_stats = ray.get([w.step.remote(**params) for w in self.remote_workers])
         stats = worker_stats[0].copy()
         return stats
 
-    def evaluate(self, data_creator):
+    def evaluate(self, data_creator, verbose=1, sample_weight=None,
+                 steps=None, callbacks=None, return_dict=False):
         """Evaluates the model on the validation data set."""
         logger.info("Starting validation step.")
-
+        params = dict(
+            data_creator=data_creator,
+            verbose=verbose,
+            sample_weight=sample_weight,
+            steps=steps,
+            callbacks=callbacks,
+            return_dict=return_dict
+        )
         # see ./tf_runner.py:setup_distributed
         # for an explanation of only taking the first worker's data
-        stats = ray.get([w.validate.remote(data_creator) for w in self.remote_workers])
+        stats = ray.get([w.validate.remote(**params) for w in self.remote_workers])
         stats = stats[0].copy()
         return stats
 

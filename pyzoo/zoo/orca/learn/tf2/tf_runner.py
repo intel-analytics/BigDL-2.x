@@ -145,15 +145,15 @@ class TFRunner:
         self.local_model = None
         self.backend = "tf-distributed"
 
-    def step(self, data_creator):
+    def step(self, data_creator, epochs=1, verbose=1,
+             callbacks=None, validation_data_creator=None, class_weight=None, initial_epoch=0,
+             steps_per_epoch=None, validation_steps=None, validation_freq=1):
         """Runs a training epoch and updates the model parameters."""
 
-        datasets = data_creator(self.config)
-        if isinstance(datasets, tuple):
-            train_dataset = datasets[0]
-            test_dataset = datasets[1]
+        train_dataset = data_creator(self.config)
+        if validation_data_creator is not None:
+            test_dataset = validation_data_creator(self.config)
         else:
-            train_dataset = datasets
             test_dataset = None
 
         if self.backend == "horovod":
@@ -162,24 +162,27 @@ class TFRunner:
             if test_dataset is not None:
                 test_dataset = test_dataset.shard(hvd.size(), hvd.rank())
 
-        fit_default_config = {"verbose": self.verbose}
-        fit_default_config.update(self.config.get("fit_config", {}))
-
         if self.backend == "horovod":
             import horovod.tensorflow.keras as hvd
-            bcast_callback = [hvd.callbacks.BroadcastGlobalVariablesCallback(0)]
-            if hvd.rank() == 0:
-                fit_default_config["verbose"] = 1
-            else:
-                fit_default_config["verbose"] = 0
+            hvd_callbacks = [hvd.callbacks.BroadcastGlobalVariablesCallback(0), hvd.callbacks.MetricAverageCallback()]
+            if hvd.rank() != 0:
+                verbose=0
 
-            if "callbacks" in fit_default_config:
-                callbacks = fit_default_config["callbacks"]
-                fit_default_config["callbacks"] = bcast_callback + callbacks
+            if callbacks is not None:
+                callbacks = hvd_callbacks + callbacks
             else:
-                fit_default_config["callbacks"] = bcast_callback
+                callbacks = hvd_callbacks
 
-        history = self.model.fit(train_dataset, validataion_data=test_dataset, **fit_default_config)
+        history = self.model.fit(train_dataset,
+                                 epochs=epochs,
+                                 verbose=verbose,
+                                 callbacks=callbacks,
+                                 validataion_data=test_dataset,
+                                 class_weight=class_weight,
+                                 initial_epoch=initial_epoch,
+                                 steps_per_epoch=steps_per_epoch,
+                                 validation_steps=validation_steps,
+                                 validation_freq=validation_freq)
         if history is None:
             stats = {}
         else:
@@ -188,39 +191,36 @@ class TFRunner:
         self.epoch += 1
         return stats
 
-    def validate(self, data_creator):
+    def validate(self, data_creator, verbose=1, sample_weight=None,
+                 steps=None, callbacks=None, return_dict=False):
         """Evaluates the model on the validation data set."""
 
-        datasets = data_creator(self.config)
-        if isinstance(datasets, tuple):
-            raise ValueError("Only validation dataset should be provided ")
-        else:
-            test_dataset = datasets
+        dataset = data_creator(self.config)
 
         if self.backend == "horovod":
             import horovod.tensorflow.keras as hvd
-            test_dataset = test_dataset.shard(hvd.size(), hvd.rank())
-
-        stats = {}
-        evaluate_config = {"verbose": self.verbose}
-        evaluate_config.update(self.config.get("evaluate_config", {}))
+            dataset = dataset.shard(hvd.size(), hvd.rank())
 
         if self.backend == "horovod":
             import horovod.tensorflow.keras as hvd
-            if hvd.rank() == 0:
-                evaluate_config["verbose"] = 1
-            else:
-                evaluate_config["verbose"] = 0
+            if hvd.rank() != 0:
+                verbose = 0
 
-        results = self.model.evaluate(test_dataset, **evaluate_config)
+        params = dict(
+            verbose=verbose,
+            sample_weight=sample_weight,
+            steps=steps,
+            callbacks=callbacks,
+            return_dict=return_dict
+        )
+        results = self.model.evaluate(dataset, **params)
         if results is None:
             # Using local Model since model.evaluate() returns None
             # for MultiWorkerMirroredStrategy
             logger.warning("Running a local model to get validation score.")
             self.local_model = self.model_creator(self.config)
             self.local_model.set_weights(self.model.get_weights())
-            results = self.local_model.evaluate(test_dataset,
-                                                **evaluate_config)
+            results = self.local_model.evaluate(dataset, **params)
 
         if isinstance(results, list):
             stats = {
@@ -228,7 +228,7 @@ class TFRunner:
                 for k, v in zip(self.model.metrics_names, results)
             }
         else:
-            stats = {"loss": results}
+            stats = {"results": results}
 
         return stats
 

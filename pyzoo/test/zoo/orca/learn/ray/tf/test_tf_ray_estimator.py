@@ -14,38 +14,17 @@
 # limitations under the License.
 #
 from unittest import TestCase
-from zoo.orca.learn.tf.tf_ray_estimator import TFRayEstimator
-import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
+
 import numpy as np
+import tensorflow as tf
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.models import Sequential
+
+from zoo.orca.learn.tf2 import Estimator
+from zoo.ray import RayContext
 
 NUM_TRAIN_SAMPLES = 1000
 NUM_TEST_SAMPLES = 400
-
-
-def scheduler(epoch):
-    if epoch < 2:
-        return 0.001
-    else:
-        return 0.001 * tf.math.exp(0.1 * (2 - epoch))
-
-
-def create_config(batch_size):
-    import tensorflow as tf
-
-    return {
-        # todo: batch size needs to scale with # of workers
-        "batch_size": batch_size,
-        "fit_config": {
-            "epochs": 5,
-            "callbacks": [tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=0)]
-        },
-        "evaluate_config": {
-            "steps": NUM_TEST_SAMPLES // batch_size,
-        },
-    }
-
 
 def linear_dataset(a=2, size=1000):
     x = np.random.rand(size)
@@ -98,22 +77,37 @@ def compile_args(config):
 
 class TestTFRayEstimator(TestCase):
     def test_fit_and_evaluate(self):
-        trainer = TFRayEstimator(
+        ray_ctx = RayContext.get()
+        batch_size = 32
+        global_batch_size = batch_size * ray_ctx.num_ray_nodes
+        config = {
+            "batch": batch_size
+        }
+        trainer = Estimator(
             model_creator=simple_model,
             compile_args_creator=compile_args,
             verbose=True,
-            config=create_config(32))
+            config = config)
 
         # model baseline performance
-        start_stats = trainer.evaluate(create_test_dataset)
+        start_stats = trainer.evaluate(create_test_dataset,
+                                       steps=NUM_TEST_SAMPLES // global_batch_size)
         print(start_stats)
 
+        def scheduler(epoch):
+            if epoch < 2:
+                return 0.001
+            else:
+                return 0.001 * tf.math.exp(0.1 * (2 - epoch))
+
+        scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=1)
         # train for 2 epochs
-        trainer.fit(create_train_datasets)
-        trainer.fit(create_train_datasets)
+        trainer.fit(create_train_datasets, epochs=5, callbacks=[scheduler])
+        trainer.fit(create_train_datasets, epochs=5, initial_epoch=5, callbacks=[scheduler])
 
         # model performance after training (should improve)
-        end_stats = trainer.evaluate(create_test_dataset)
+        end_stats = trainer.evaluate(create_test_dataset,
+                                     steps=NUM_TEST_SAMPLES // global_batch_size)
         print(end_stats)
 
         # sanity check that training worked
