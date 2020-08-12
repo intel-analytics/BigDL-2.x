@@ -264,7 +264,7 @@ def compile_args_creator(config):
     import tensorflow.keras as keras
     opt = keras.optimizers.SGD(momentum=momentum)
     param = dict(loss=keras.losses.sparse_categorical_crossentropy, optimizer=opt,
-                 metrics=['accuracy', 'top_k_categorical_accuracy'])
+                 metrics=['accuracy', 'top_k_sparse_categorical_accuracy'])
     return param
 
 
