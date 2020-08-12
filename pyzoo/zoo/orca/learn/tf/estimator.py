@@ -35,11 +35,20 @@ class Estimator(object):
         pass
 
     def load(self, path, version):
+        """
+        Load specified Orca checkpoint
+        :param path: checkpoint path
+        :param version: checkpoint version
+        """
         self.load_checkpoint = True
         self.checkpoint_path = path
         self.checkpoint_version = version
 
     def load_latest_checkpoint(self, path):
+        """
+        Load latest Orca checkpoint under specified directory.
+        :param path: checkpoint directory
+        """
         ckpt_path, version = find_latest_checkpoint(path)
         if ckpt_path is None:
             raise Exception("Cannot find checkpoint")
@@ -64,8 +73,7 @@ class Estimator(object):
     def get_train_summary(self, tag=None):
         """
         Get the scalar from model train summary
-        Return 2-D array like object which could be converted
-        by nd.array()
+        Return list of summary data of [iteration_number, scalar_value, timestamp]
         # Arguments
         tag: The string variable represents the scalar wanted
         """
@@ -77,8 +85,7 @@ class Estimator(object):
     def get_validation_summary(self, tag=None):
         """
         Get the scalar from model validation summary
-        Return 2-D array like object which could be converted
-        by np.array()
+        Return list of summary data of [iteration_number, scalar_value, timestamp]
 
         Note: The metric and tag may not be consistent
         Please look up following form to pass tag parameter
