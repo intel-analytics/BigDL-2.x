@@ -271,13 +271,6 @@ def compile_args_creator(config):
 
 
 def train_data_creator(config):
-    import os
-    import subprocess
-    hadoop_home = os.environ["HADOOP_HOME"]
-    class_path = subprocess.run([os.path.join(hadoop_home, "bin/hadoop"), "classpath", "--glob"],
-                                stdout=subprocess.PIPE).stdout.decode('utf-8').strip()
-    os.environ["CLASSPATH"] = os.environ["CLASSPATH"] + ":" + class_path
-
     train_dataset = input_fn(is_training=True,
                              data_dir=config["data_dir"],
                              batch_size=config["batch_size"])
@@ -286,13 +279,6 @@ def train_data_creator(config):
 
 
 def val_data_creator(config):
-    import os
-    import subprocess
-    hadoop_home = os.environ["HADOOP_HOME"]
-    class_path = subprocess.run([os.path.join(hadoop_home, "bin/hadoop"), "classpath", "--glob"],
-                                stdout=subprocess.PIPE).stdout.decode('utf-8').strip()
-    os.environ["CLASSPATH"] = os.environ["CLASSPATH"] + ":" + class_path
-
     val_dataset = input_fn(is_training=False,
                            data_dir=config["data_dir"],
                            batch_size=config["batch_size"])
@@ -358,16 +344,13 @@ if __name__ == "__main__":
             executor_memory=args.executor_memory,
             driver_memory=args.driver_memory,
             driver_cores=args.driver_cores,
-            conf={
-                # libjvm.so is required for reading tfrecord on hdfs
-                "spark.driver.extraLibraryPath": "${JAVA_HOME}/jre/lib/amd64/server"},
             extra_executor_memory_for_ray=args.extra_executor_memory_for_ray)
         ray_ctx = RayContext(
             sc=sc,
             object_store_memory=args.object_store_memory)
         ray_ctx.init()
     else:
-        sc = init_spark_on_local(conf={"spark.driver.extraLibraryPath": "${JAVA_HOME}/jre/lib/amd64/server"})
+        sc = init_spark_on_local()
         ray_ctx = RayContext(
             sc=sc,
             object_store_memory=args.object_store_memory)
