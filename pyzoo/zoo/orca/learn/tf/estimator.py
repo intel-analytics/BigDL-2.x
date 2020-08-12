@@ -234,7 +234,8 @@ class TFOptimizerWrapper(Estimator):
         Train this graph model with train data.
         :param data: train data. It can be XShards, Spark DataFrame, tf.data.Dataset.
         If data is XShards, each element needs to be {'x': a feature numpy array
-         or a tuple of feature numpy arrays, 'y': a label numpy array or a tuple of label numpy arrays}
+         or a tuple of feature numpy arrays, 'y': a label numpy array or a tuple of
+         label numpy arrays}
         If data is tf.data.Dataset, each element is a tuple of input tensors.
         :param epochs: number of epochs to train.
         :param batch_size: total batch size for each iteration.
@@ -357,7 +358,8 @@ class TFOptimizerWrapper(Estimator):
         Evaluate model.
         :param data: evaluation data. It can be XShards, Spark DataFrame, tf.data.Dataset.
         If data is XShards, each element needs to be {'x': a feature numpy array
-         or a tuple of feature numpy arrays, 'y': a label numpy array or a tuple of label numpy arrays}
+         or a tuple of feature numpy arrays, 'y': a label numpy array or a tuple of
+         label numpy arrays}
         If data is tf.data.Dataset, each element is a tuple of input tensors.
         :param batch_size: batch size per thread.
         :param feature_cols: feature_cols: feature column names if train data is Spark DataFrame.
@@ -414,7 +416,8 @@ class TFKerasWrapper(Estimator):
         Train this keras model with train data.
         :param data: train data. It can be XShards, Spark DataFrame, tf.data.Dataset.
         If data is XShards, each element needs to be {'x': a feature numpy array
-         or a tuple of feature numpy arrays, 'y': a label numpy array or a tuple of label numpy arrays}
+         or a tuple of feature numpy arrays, 'y': a label numpy array or a tuple of
+         label numpy arrays}
         If data is tf.data.Dataset, each element is [feature tensor tuple, label tensor tuple]
         :param epochs: number of epochs to train.
         :param batch_size: total batch size for each iteration.
@@ -509,7 +512,8 @@ class TFKerasWrapper(Estimator):
         Evaluate model.
         :param data: evaluation data. It can be XShards, Spark DataFrame, tf.data.Dataset.
         If data is XShards, each element needs to be {'x': a feature numpy array
-         or a tuple of feature numpy arrays, 'y': a label numpy array or a tuple of label numpy arrays}
+         or a tuple of feature numpy arrays, 'y': a label numpy array or a tuple of
+         label numpy arrays}
         If data is tf.data.Dataset, each element is [feature tensor tuple, label tensor tuple]
         :param batch_size: batch size per thread.
         :param feature_cols: feature_cols: feature column names if train data is Spark DataFrame.
