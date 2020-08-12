@@ -151,9 +151,7 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
             initialization_hook=None,
             config=None,
             scheduler_step_freq="batch",
-            use_tqdm=False,
-    ):
-
+            use_tqdm=False):
         if not (callable(model_creator) and callable(optimizer_creator)):
             raise ValueError(
                 "Must provide a callable model_creator and optimizer_creator")

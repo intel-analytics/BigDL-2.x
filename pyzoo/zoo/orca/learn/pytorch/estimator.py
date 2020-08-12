@@ -37,6 +37,7 @@ class Estimator(object):
                    initialization_hook=None,
                    config=None,
                    scheduler_step_freq="batch",
+                   use_tqdm=False,
                    backend="ray"):
         assert backend == "ray", "only ray backend is supported for now"
         return PyTorchHorovodEstimatorWrapper(model_creator=model_creator,
@@ -46,7 +47,8 @@ class Estimator(object):
                                               training_operator_cls=training_operator_cls,
                                               initialization_hook=initialization_hook,
                                               config=config,
-                                              scheduler_step_freq=scheduler_step_freq)
+                                              scheduler_step_freq=scheduler_step_freq,
+                                              use_tqdm=use_tqdm)
 
 
 class PyTorchHorovodEstimatorWrapper(Estimator):
@@ -59,7 +61,8 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
                  training_operator_cls=TrainingOperator,
                  initialization_hook=None,
                  config=None,
-                 scheduler_step_freq="batch"):
+                 scheduler_step_freq="batch",
+                 use_tqdm=False):
         self.estimator = PyTorchHorovodEstimator(model_creator=model_creator,
                                                  optimizer_creator=optimizer_creator,
                                                  loss_creator=loss_creator,
@@ -67,7 +70,8 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
                                                  training_operator_cls=training_operator_cls,
                                                  initialization_hook=initialization_hook,
                                                  config=config,
-                                                 scheduler_step_freq=scheduler_step_freq)
+                                                 scheduler_step_freq=scheduler_step_freq,
+                                                 use_tqdm=use_tqdm)
 
     def fit(self, data, epochs=1, profile=False, reduce_results=True, info=None):
         """
