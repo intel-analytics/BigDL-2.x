@@ -32,6 +32,18 @@ class Estimator(object):
     def evaluate(self, data, **kwargs):
         pass
 
+    def get_model(self):
+        pass
+
+    def save(self, checkpoint):
+        pass
+
+    def load(self, checkpoint):
+        pass
+
+    def shutdown(self, force=False):
+        pass
+
     @staticmethod
     def from_torch(*,
                    model,
@@ -125,6 +137,28 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
         return self.estimator.validate(data_creator=data, num_steps=num_steps, profile=profile,
                                        info=info)
 
+    def get_model(self):
+        """Returns the learned model(s)."""
+        return self.estimator.get_model()
+
+    def save(self, checkpoint):
+        """Saves the Estimator state to the provided checkpoint path.
+
+        :param checkpoint: (str) Path to target checkpoint file.
+        """
+        return self.estimator.save(checkpoint=checkpoint)
+
+    def load(self, checkpoint):
+        """Loads the Estimator and all workers from the provided checkpoint.
+
+        :param checkpoint: (str) Path to target checkpoint file.
+        """
+        return self.estimator.load(checkpoint=checkpoint)
+
+    def shutdown(self, force=False):
+        """Shuts down workers and releases resources."""
+        return self.estimator.shutdown(force=force)
+
 
 class PytorchSparkEstimatorWrapper(Estimator):
     def __init__(self, model, loss, optimizer, model_dir=None, bigdl_type="float"):
@@ -159,20 +193,20 @@ class PytorchSparkEstimatorWrapper(Estimator):
 
             self.estimator.train(train_feature_set, self.loss, end_trigger, checkpoint_trigger,
                                  val_feature_set, validation_methods, batch_size)
-        elif isinstance(data, DataLoader):
+        elif isinstance(data, DataLoader) or callable(data):
             train_feature_set = FeatureSet.pytorch_dataloader(data)
             if validation_data is None:
                 val_feature_set = None
             else:
-                assert isinstance(validation_data, DataLoader), "validation_data should be a " \
-                                                                "pytorch DataLoader"
+                assert isinstance(validation_data, DataLoader) or callable(data), \
+                    "validation_data should be a pytorch DataLoader or a callable data_creator"
                 val_feature_set = FeatureSet.pytorch_dataloader(validation_data)
 
             self.estimator.train_minibatch(train_feature_set, self.loss, end_trigger,
                                            checkpoint_trigger, val_feature_set, validation_methods)
         else:
-            raise ValueError("Data and validation data should be SparkXShards or DataLoaders "
-                             "but get " + data.__class__.__name__)
+            raise ValueError("Data and validation data should be SparkXShards, DataLoaders or "
+                             "callable data_creators but get " + data.__class__.__name__)
         return self
 
     def predict(self, data, **kwargs):
@@ -186,9 +220,21 @@ class PytorchSparkEstimatorWrapper(Estimator):
         if isinstance(data, SparkXShards):
             val_feature_set = FeatureSet.sample_rdd(data.rdd.flatMap(to_sample))
             return self.estimator.evaluate(val_feature_set, validation_methods, batch_size)
-        elif isinstance(data, DataLoader):
+        elif isinstance(data, DataLoader) or callable(data):
             val_feature_set = FeatureSet.pytorch_dataloader(data)
             return self.estimator.evaluate_minibatch(val_feature_set, validation_methods)
         else:
-            raise ValueError("Data should be a SparkXShards or a DataLoader, but get " +
-                             data.__class__.__name__)
+            raise ValueError("Data should be a SparkXShards, a DataLoader or a callable "
+                             "data_creator, but get " + data.__class__.__name__)
+
+    def get_model(self):
+        pass
+
+    def save(self, checkpoint):
+        pass
+
+    def load(self, checkpoint):
+        pass
+
+    def shutdown(self, force=False):
+        pass
