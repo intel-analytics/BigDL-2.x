@@ -72,6 +72,9 @@ ENV PYTHONPATH 		${CS_HOME}/serving-python.zip
 
 ENV OMP_NUM_THREADS	all
 
-CMD ["bash"]
+RUN sed -i "s/jobmanager\.heap\.size:.*/jobmanager\.heap\.size: 8g/g" $FLINK_HOME/conf/flink-conf.yaml && \
+    sed -i "s/taskmanager\.memory\.process\.size:.*/taskmanager\.memory\.process\.size: 8g/g" $FLINK_HOME/conf/flink-conf.yaml
+
+CMD /bin/bash -c $FLINK_HOME/bin/start-cluster.sh && tail -f /dev/null
 
 
