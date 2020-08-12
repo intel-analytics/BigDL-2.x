@@ -19,7 +19,6 @@ from zoo.ray import RayContext
 import os
 import argparse
 
-
 _DEFAULT_IMAGE_SIZE = 224
 _NUM_CHANNELS = 3
 _NUM_CLASSES = 1001
@@ -42,7 +41,6 @@ _RESIZE_MIN = 256
 
 
 def _decode_crop_and_flip(image_buffer, num_channels):
-
     min_object_covered = 0.1
     aspect_ratio_range = [0.75, 1.33]
     area_range = [0.05, 1.0]
@@ -329,8 +327,11 @@ parser.add_argument("--object_store_memory", type=str, default="4g",
                     help="The memory to store data on local."
                          "You can change it depending on your own cluster setting.")
 parser.add_argument("--batch_size_per_worker", type=int, default=256)
-parser.add_argument("--data_dir", type=str)
-
+parser.add_argument("--data_dir", type=str, help="the directory of tfrecords of imagenet, follow"
+                                                 " https://github.com/IntelAI/models/blob/"
+                                                 "v1.6.1/docs/image_recognition/tensorflow/"
+                                                 "Tutorial.md#initial-setup for generating"
+                                                 " data file")
 
 if __name__ == "__main__":
 
