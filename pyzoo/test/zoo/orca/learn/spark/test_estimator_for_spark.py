@@ -18,6 +18,7 @@ import tensorflow as tf
 from pyspark.sql.context import SQLContext
 import tempfile
 import shutil
+import numpy as np
 
 from unittest import TestCase
 
@@ -88,6 +89,7 @@ class TestEstimatorForGraph(TestCase):
 
         data_shard = data_shard.transform_shard(transform)
         predictions = est.predict(data_shard).collect()
+        assert 'prediction' in predictions[0]
         print(predictions)
 
     def test_estimator_graph_fit(self):
@@ -419,6 +421,111 @@ class TestEstimatorForGraph(TestCase):
         assert ckpt.model_checkpoint_path == os.path.join(temp, "simple.ckpt")
         assert ckpt.all_model_checkpoint_paths[0] == os.path.join(temp, "simple.ckpt")
         load_tf_checkpoint_from_remote(sess, os.path.join(temp, "simple.ckpt"), saver)
+        shutil.rmtree(temp)
+
+    def test_estimator_graph_tf_dataset(self):
+
+        tf.reset_default_graph()
+
+        model = SimpleModel()
+
+        dataset = tf.data.Dataset.from_tensor_slices((np.random.randint(0, 200, size=(100,)),
+                                                      np.random.randint(0, 50, size=(100,)),
+                                                      np.ones(shape=(100,), dtype=np.int32)))
+
+        est = Estimator.from_graph(
+            inputs=[model.user, model.item],
+            labels=[model.label],
+            outputs=[model.logits],
+            loss=model.loss,
+            optimizer=tf.train.AdamOptimizer(),
+            metrics={"loss": model.loss})
+        est.fit(data=dataset,
+                batch_size=8,
+                epochs=10,
+                validation_data=dataset)
+
+        result = est.evaluate(dataset, batch_size=4)
+        assert 'loss' in result
+
+        predict_dataset = tf.data.Dataset.from_tensor_slices((
+            np.random.randint(0, 200, size=(20,)),
+            np.random.randint(0, 50, size=(20,))))
+        predictions = est.predict(predict_dataset).collect()
+        assert predictions[0]['prediction'].shape[1] == 2
+
+    def test_estimator_graph_tensorboard(self):
+
+        tf.reset_default_graph()
+
+        model = SimpleModel()
+
+        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
+
+        def transform(df):
+            result = {
+                "x": (df['user'].to_numpy(), df['item'].to_numpy()),
+                "y": df['label'].to_numpy()
+            }
+            return result
+
+        data_shard = data_shard.transform_shard(transform)
+
+        temp = tempfile.mkdtemp()
+        # only set model dir, summary generated under model dir
+        model_dir = os.path.join(temp, "test_model")
+
+        est = Estimator.from_graph(
+            inputs=[model.user, model.item],
+            labels=[model.label],
+            loss=model.loss,
+            optimizer=tf.train.AdamOptimizer(),
+            metrics={"loss": model.loss},
+            model_dir=model_dir
+        )
+        est.fit(data=data_shard,
+                batch_size=8,
+                epochs=5,
+                validation_data=data_shard)
+
+        train_tp = est.get_train_summary("Throughput")
+        val_scores = est.get_validation_summary("loss")
+        assert len(train_tp) > 0
+        assert len(val_scores) > 0
+
+        # set tensorboard dir to different directory
+        est.set_tensorboard("model", "test")
+
+        est.fit(data=data_shard,
+                batch_size=8,
+                epochs=5,
+                validation_data=data_shard)
+
+        train_tp = est.get_train_summary("Throughput")
+        val_scores = est.get_validation_summary("loss")
+        assert len(train_tp) > 0
+        assert len(val_scores) > 0
+
+        # no model dir, no tensorboard dir, no summary saved
+        est2 = Estimator.from_graph(
+            inputs=[model.user, model.item],
+            labels=[model.label],
+            loss=model.loss,
+            optimizer=tf.train.AdamOptimizer(),
+            metrics={"loss": model.loss}
+        )
+
+        est2.fit(data=data_shard,
+                 batch_size=8,
+                 epochs=5,
+                 validation_data=data_shard)
+
+        train_tp = est2.get_train_summary("Throughput")
+        val_scores = est2.get_validation_summary("loss")
+        assert train_tp is None
+        assert val_scores is None
+
         shutil.rmtree(temp)
 
 
