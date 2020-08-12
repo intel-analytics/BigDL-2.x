@@ -201,8 +201,8 @@ class PythonFeatureSet[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
       labels
     }
     FeatureSet.python[MiniBatch[Float]](dataloader, getLoader, getIterator, getNext,
-        s"ptensor_to_numpy(${features})",
-        s"ptensor_to_numpy(${labels})", -1, imports)
+        s"ptensor_to_numpy(${inputsName})",
+        s"ptensor_to_numpy(${targetsName})", -1, imports)
   }
 
 }
