@@ -337,7 +337,8 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
             worker.state_stream.remote()
             for worker in self.remote_workers
         ]
-        [stream_id], stream_ids = ray.wait(stream_ids)
+        # get the first task id that finished executing.
+        [stream_id], stream_ids = ray.wait(stream_ids, num_returns=1, timeout=None)
         byte_obj = ray.get(stream_id)
         _buffer = io.BytesIO(byte_obj)
         state_dict = torch.load(
@@ -353,7 +354,7 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
         state_dict = torch.load(checkpoint)
         self.load_state_dict(state_dict)
 
-    def load_state_dict(self, state_dict, blocking=False):
+    def load_state_dict(self, state_dict, blocking=True):
         _buffer = io.BytesIO()
         torch.save(state_dict, _buffer)
         state_stream = _buffer.getvalue()
