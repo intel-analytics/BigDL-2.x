@@ -224,6 +224,7 @@ class XgbRegressorPredictor(object):
                    remote_dir):
         def model_create_func():
             model = XGBoostRegressor(config)
+            model.set_params(n_jobs=resources_per_trial)
             return model
         model = model_create_func()
         ft = IdentityTransformer(self.feature_cols, self.target_col)
