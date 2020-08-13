@@ -61,7 +61,6 @@ class TestEstimatorForSpark(TestCase):
                                          optimizer=SGD(), backend="bigdl")
         estimator.fit(data=data_shard, epochs=4, batch_size=2, validation_data=data_shard,
                       validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
-        estimator.evaluate(data=data_shard, validation_methods=[Accuracy()], batch_size=2)
 
     def test_bigdl_pytorch_estimator_dataloader(self):
         class SimpleModel(nn.Module):
@@ -94,7 +93,33 @@ class TestEstimatorForSpark(TestCase):
         )
         estimator.fit(data=train_loader, epochs=2, validation_data=val_loader,
                       validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
-        estimator.evaluate(data=val_loader, validation_methods=[Accuracy()], batch_size=2)
+
+    def test_bigdl_pytorch_estimator_dataloader_creator(self):
+        class SimpleModel(nn.Module):
+            def __init__(self):
+                super(SimpleModel, self).__init__()
+                self.dense1 = nn.Linear(2, 4)
+                self.bn1 = torch.nn.BatchNorm1d(4)
+                self.dense2 = nn.Linear(4, 1)
+
+            def forward(self, x):
+                x = self.dense1(x)
+                x = self.bn1(x)
+                x = torch.sigmoid(self.dense2(x))
+                return x
+
+        model = SimpleModel()
+
+        estimator = Estimator.from_torch(model=model, loss=nn.BCELoss(),
+                                         optimizer=Adam(), backend="bigdl")
+
+        def get_dataloader():
+            inputs = torch.Tensor([[1, 2], [1, 3], [3, 2], [5, 6], [8, 9], [1, 9]])
+            targets = torch.Tensor([[0], [0], [0], [1], [1], [1]])
+            return torch.utils.data.DataLoader(TensorDataset(inputs, targets), batch_size=2)
+
+        estimator.fit(data=get_dataloader, epochs=2, validation_data=get_dataloader,
+                      validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
 
 
 if __name__ == "__main__":
