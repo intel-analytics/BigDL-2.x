@@ -18,10 +18,10 @@ import ray
 from ray import tune
 from copy import copy, deepcopy
 
-from zoo.automl.model import TimeSequenceModel
 from zoo.automl.search.abstract import *
 from zoo.automl.common.util import *
 from ray.tune import Trainable
+import ray.tune.track
 from ray.tune.suggest.bayesopt import BayesOptSearch
 
 
@@ -50,6 +50,7 @@ class RayTuneSearchEngine(SearchEngine):
 
     def compile(self,
                 input_df,
+                model_create_func,
                 search_space,
                 num_samples=1,
                 stop=None,
@@ -94,6 +95,7 @@ class RayTuneSearchEngine(SearchEngine):
         self.fixed_params = fixed_params
 
         self.train_func = self._prepare_train_func(input_df=input_df,
+                                                   model_create_func=model_create_func,
                                                    feature_transformers=feature_transformers,
                                                    future_seq_len=future_seq_len,
                                                    validation_df=validation_df,
@@ -196,6 +198,7 @@ class RayTuneSearchEngine(SearchEngine):
 
     @staticmethod
     def _prepare_train_func(input_df,
+                            model_create_func,
                             feature_transformers,
                             future_seq_len,
                             metric,
@@ -233,8 +236,13 @@ class RayTuneSearchEngine(SearchEngine):
             # global_model = ray.get(model_id)
             trial_ft = deepcopy(global_ft)
             # trial_model = deepcopy(global_model)
-            trial_model = TimeSequenceModel(check_optional_config=False,
-                                            future_seq_len=future_seq_len)
+            # print("config is ", config)
+            # if 'model' in config.keys() and config['model'] == 'XGBRegressor':
+            #     trial_model = XGBoostRegressor()
+            # else:
+            #     trial_model = TimeSequenceModel(check_optional_config=False,
+            #
+            trial_model = model_create_func
 
             # handling input
             global_input_df = ray.get(input_df_id)
@@ -256,6 +264,7 @@ class RayTuneSearchEngine(SearchEngine):
             # fit model
             best_reward_m = -999
             metric_op = 1 if metric_mode is "max" else -1
+            # print("config:", config)
             for i in range(1, 101):
                 result = trial_model.fit_eval(x_train,
                                               y_train,
