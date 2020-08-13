@@ -64,7 +64,7 @@ class Estimator(object):
                                                   training_operator_cls=training_operator_cls,
                                                   initialization_hook=initialization_hook,
                                                   config=config,
-                                                  scheduler_step_freq=scheduler_step_freq, 
+                                                  scheduler_step_freq=scheduler_step_freq,
                                                   use_tqdm=use_tqdm)
         elif backend == "bigdl":
             return PytorchSparkEstimatorWrapper(model=model,
