@@ -14,9 +14,16 @@
 # limitations under the License.
 #
 
-from .abstract import *
-from .VanillaLSTM import *
-from .Seq2Seq import *
-from .time_sequence import *
-from .tcmf_model import *
-from .XGBoostRegressor import *
+from zoo.automl.regression.xgbregressor_predictor import XgbRegressorPredictor
+from zoo.automl.config.recipe import *
+
+
+class AutoXGBoost(object):
+    @staticmethod
+    def regressor(feature_cols,
+                  target_col,
+                  config=None,
+                  name="automl",
+                  logs_dir="~/zoo_automl_logs"):
+        tsp = XgbRegressorPredictor(feature_cols, target_col, config, name, logs_dir)
+        return tsp

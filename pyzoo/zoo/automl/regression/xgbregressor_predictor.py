@@ -26,15 +26,15 @@ import ray
 from zoo.automl.search.abstract import *
 from zoo.automl.search.RayTuneSearchEngine import RayTuneSearchEngine
 from zoo.automl.common.metrics import Evaluator
-from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
+from zoo.automl.feature.identity_transformer import IdentityTransformer
 
-from zoo.automl.model import TimeSequenceModel
-from zoo.automl.pipeline.time_sequence import TimeSequencePipeline, load_ts_pipeline
+from zoo.automl.model import XGBoostRegressor
+from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
 from zoo.automl.common.util import *
 from zoo.automl.config.recipe import *
 
 
-class TimeSequencePredictor(object):
+class XgbRegressorPredictor(object):
     """
     Trains a model that predicts future time sequence from past sequence.
     Past sequence should be > 1. Future sequence can be > 1.
@@ -49,13 +49,11 @@ class TimeSequencePredictor(object):
     """
 
     def __init__(self,
+                 feature_cols,
+                 target_col,
+                 config=None,
                  name="automl",
-                 logs_dir="~/zoo_automl_logs",
-                 future_seq_len=1,
-                 dt_col="datetime",
-                 target_col="value",
-                 extra_features_col=None,
-                 drop_missing=True,
+                 logs_dir="~/zoo_automl_logs"
                  ):
         """
         Constructor of Time Sequence Predictor
@@ -68,18 +66,16 @@ class TimeSequencePredictor(object):
         """
         self.logs_dir = logs_dir
         self.pipeline = None
-        self.future_seq_len = future_seq_len
-        self.dt_col = dt_col
-        self.target_col = target_col
-        self.extra_features_col = extra_features_col
-        self.drop_missing = drop_missing
         self.name = name
+        self.feature_cols = feature_cols
+        self.target_col = target_col
+        self.config = config
 
     def fit(self,
             input_df,
-            validation_df=None,
-            metric="mse",
-            recipe=SmokeRecipe(),
+            validation_df,
+            metric="rmse",
+            recipe=XgbRegressorGridRandomRecipe(),
             mc=False,
             resources_per_trial={"cpu": 2},
             distributed=False,
@@ -106,7 +102,7 @@ class TimeSequencePredictor(object):
         :return: self
         """
 
-        self._check_input(input_df, validation_df, metric)
+        # self._check_input(input_df, validation_df, metric)
         if distributed:
             if hdfs_url is not None:
                 remote_dir = os.path.join(hdfs_url, "ray_results", self.name)
@@ -121,6 +117,7 @@ class TimeSequencePredictor(object):
         self.pipeline = self._hp_search(
             input_df,
             validation_df=validation_df,
+            config=self.config,
             metric=metric,
             recipe=recipe,
             mc=mc,
@@ -163,52 +160,52 @@ class TimeSequencePredictor(object):
         """
         return self.pipeline.predict(input_df)
 
-    def _check_input_format(self, input_df):
-        if isinstance(input_df, list) and all(
-                [isinstance(d, pd.DataFrame) for d in input_df]):
-            input_is_list = True
-            return input_is_list
-        elif isinstance(input_df, pd.DataFrame):
-            input_is_list = False
-            return input_is_list
-        else:
-            raise ValueError(
-                "input_df should be a data frame or a list of data frames")
-
-    def _check_missing_col(self, input_df):
-        cols_list = [self.dt_col, self.target_col]
-        if self.extra_features_col is not None:
-            if not isinstance(self.extra_features_col, (list,)):
-                raise ValueError(
-                    "extra_features_col needs to be either None or a list")
-            cols_list.extend(self.extra_features_col)
-
-        missing_cols = set(cols_list) - set(input_df.columns)
-        if len(missing_cols) != 0:
-            raise ValueError("Missing Columns in the input data frame:" +
-                             ','.join(list(missing_cols)))
-
-    def _check_input(self, input_df, validation_df, metric):
-        input_is_list = self._check_input_format(input_df)
-        if not input_is_list:
-            self._check_missing_col(input_df)
-            if validation_df is not None:
-                self._check_missing_col(validation_df)
-        else:
-            for d in input_df:
-                self._check_missing_col(d)
-            if validation_df is not None:
-                for val_d in validation_df:
-                    self._check_missing_col(val_d)
-
-        allowed_fit_metrics = ["mse", "mae", "r2"]
-        if metric not in allowed_fit_metrics:
-            raise ValueError("metric " + metric + " is not supported")
+    # def _check_input_format(self, input_df):
+    #     if isinstance(input_df, list) and all(
+    #             [isinstance(d, pd.DataFrame) for d in input_df]):
+    #         input_is_list = True
+    #         return input_is_list
+    #     elif isinstance(input_df, pd.DataFrame):
+    #         input_is_list = False
+    #         return input_is_list
+    #     else:
+    #         raise ValueError(
+    #             "input_df should be a data frame or a list of data frames")
+    #
+    # def _check_missing_col(self, input_df):
+    #     cols_list = [self.feature_cols, self.target_col]
+    #     if self.extra_features_col is not None:
+    #         if not isinstance(self.extra_features_col, (list,)):
+    #             raise ValueError(
+    #                 "extra_features_col needs to be either None or a list")
+    #         cols_list.extend(self.extra_features_col)
+    #
+    #     missing_cols = set(cols_list) - set(input_df.columns)
+    #     if len(missing_cols) != 0:
+    #         raise ValueError("Missing Columns in the input data frame:" +
+    #                          ','.join(list(missing_cols)))
+    #
+    # def _check_input(self, input_df, validation_df, metric):
+    #     input_is_list = self._check_input_format(input_df)
+    #     if not input_is_list:
+    #         self._check_missing_col(input_df)
+    #         if validation_df is not None:
+    #             self._check_missing_col(validation_df)
+    #     else:
+    #         for d in input_df:
+    #             self._check_missing_col(d)
+    #         if validation_df is not None:
+    #             for val_d in validation_df:
+    #                 self._check_missing_col(val_d)
+    #
+    #     allowed_fit_metrics = ["mse", "mae", "r2"]
+    #     if metric not in allowed_fit_metrics:
+    #         raise ValueError("metric " + metric + " is not supported")
 
     @staticmethod
     def _get_metric_mode(metric):
         max_mode_metrics = ["r2"]
-        min_mode_metrics = ["mse", "mae"]
+        min_mode_metrics = ["rmse", "mae"]
         if metric in min_mode_metrics:
             return "min"
         elif metric in max_mode_metrics:
@@ -219,31 +216,21 @@ class TimeSequencePredictor(object):
     def _hp_search(self,
                    input_df,
                    validation_df,
+                   config,
                    metric,
                    recipe,
                    mc,
                    resources_per_trial,
                    remote_dir):
-        ft = TimeSequenceFeatureTransformer(self.future_seq_len,
-                                            self.dt_col,
-                                            self.target_col,
-                                            self.extra_features_col,
-                                            self.drop_missing)
-        if isinstance(input_df, list):
-            feature_list = ft.get_feature_list(input_df[0])
-        else:
-            feature_list = ft.get_feature_list(input_df)
-
         def model_create_func():
-            # model = VanillaLSTM(check_optional_config=False)
-            model = TimeSequenceModel(
-                check_optional_config=False,
-                future_seq_len=self.future_seq_len)
+            model = XGBoostRegressor(config)
+            model.set_params(n_jobs=resources_per_trial)
             return model
         model = model_create_func()
+        ft = IdentityTransformer(self.feature_cols, self.target_col)
 
         # prepare parameters for search engine
-        search_space = recipe.search_space(feature_list)
+        search_space = recipe.search_space(None)
         runtime_params = recipe.runtime_params()
         num_samples = runtime_params['num_samples']
         stop = dict(runtime_params)
@@ -252,6 +239,7 @@ class TimeSequencePredictor(object):
         fixed_params = recipe.fixed_params()
         del stop['num_samples']
 
+        from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
         metric_mode = TimeSequencePredictor._get_metric_mode(metric)
         searcher = RayTuneSearchEngine(logs_dir=self.logs_dir,
                                        resources_per_trial=resources_per_trial,
@@ -266,7 +254,6 @@ class TimeSequencePredictor(object):
                          search_algorithm=search_algorithm,
                          fixed_params=fixed_params,
                          feature_transformers=ft,
-                         future_seq_len=self.future_seq_len,
                          validation_df=validation_df,
                          metric=metric,
                          metric_mode=metric_mode,

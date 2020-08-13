@@ -158,7 +158,7 @@ class TimeSequencePipeline(Pipeline):
 
         x, y = self.feature_transformers.transform(input_df, is_train=True)
         y_pred = self.model.predict(x)
-        if y_pred.shape[1] == 1:
+        if len(y_pred.shape) > 1 and y_pred.shape[1] == 1:
             multioutput = 'uniform_average'
         y_unscale, y_pred_unscale = self.feature_transformers.post_processing(input_df,
                                                                               y_pred,
@@ -212,6 +212,20 @@ class TimeSequencePipeline(Pipeline):
 def load_ts_pipeline(file):
     feature_transformers = TimeSequenceFeatureTransformer()
     model = TimeSequenceModel(check_optional_config=False)
+
+    all_config = restore_zip(file, feature_transformers, model)
+    ts_pipeline = TimeSequencePipeline(feature_transformers=feature_transformers,
+                                       model=model,
+                                       config=all_config)
+    print("Restore pipeline from", file)
+    return ts_pipeline
+
+
+def load_xgboost_pipeline(file):
+    from zoo.automl.feature.identity_transformer import IdentityTransformer
+    from zoo.automl.model import XGBoostRegressor
+    feature_transformers = IdentityTransformer()
+    model = XGBoostRegressor()
 
     all_config = restore_zip(file, feature_transformers, model)
     ts_pipeline = TimeSequencePipeline(feature_transformers=feature_transformers,
