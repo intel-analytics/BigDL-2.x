@@ -200,8 +200,11 @@ class TorchRunner:
         self._toggle_profiling(profile=profile)
 
         with self.timers.record("validation"):
-            with FileLock(
-                    os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
+            if OrcaContext.serialize_data_creation:
+                with FileLock(
+                        os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
+                    loader = data_creator(self.config)
+            else:
                 loader = data_creator(self.config)
             if TorchRunner.should_wrap_dataloader(loader):
                 loader = iter(self.with_sampler(loader))
