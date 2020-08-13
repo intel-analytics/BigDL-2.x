@@ -34,16 +34,16 @@ class Estimator(object):
     def evaluate(self, data, **kwargs):
         pass
 
-    def load(self, path, version):
+    def load_orca_checkpoint(self, path, version):
         self.load_checkpoint = True
         self.checkpoint_path = path
         self.checkpoint_version = version
 
-    def load_latest_checkpoint(self, path):
+    def load_latest_orca_checkpoint(self, path):
         ckpt_path, version = find_latest_checkpoint(path)
         if ckpt_path is None:
             raise Exception("Cannot find checkpoint")
-        self.load(ckpt_path, version)
+        self.load_orca_checkpoint(ckpt_path, version)
 
     def set_tensorboard(self, log_dir, app_name):
         """
@@ -166,6 +166,15 @@ class Estimator(object):
         """
         assert backend == "bigdl", "only bigdl backend is supported for now"
         return TFKerasWrapper(keras_model, metrics, model_dir)
+
+    def save(self, path):
+        """
+        Save model in this estimator.
+        For tensorflow graph model, it would save the checkpoint.
+        For tensorflow keras model, it would save keras model.
+        :param path: save path.
+        """
+        pass
 
 
 class TFOptimizerWrapper(Estimator):
@@ -392,6 +401,9 @@ class TFOptimizerWrapper(Estimator):
                                 sess=self.sess,
                                 dataset=dataset, metrics=self.metrics)
 
+    def save(self, path):
+        save_tf_checkpoint(self.sess, path)
+
 
 class TFKerasWrapper(Estimator):
     def __init__(self, keras_model, metrics, model_dir):
@@ -536,3 +548,6 @@ class TFKerasWrapper(Estimator):
                              )
 
         return self.model.evaluate(dataset, batch_per_thread=batch_size)
+
+    def save(self, path):
+        self.model.save_model(path)
