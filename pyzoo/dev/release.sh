@@ -111,7 +111,7 @@ if [ -d "${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/analytics_zoo_serving.egg-info"
 fi
 
 if [ ${upload} == true ]; then
-    serving_whl=echo `ls dist/analytics_zoo_serving-*.whl`
+    serving_whl=dist/analytics_zoo_serving-*.whl
     serving_upload_command="twine upload ${serving_whl}"
     echo "Command for uploading to pypi: $serving_upload_command"
     $serving_upload_command
