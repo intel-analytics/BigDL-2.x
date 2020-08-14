@@ -17,6 +17,8 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
+import java.io.File
+
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
 class EncryptSpec extends FunSuite with Matchers with BeforeAndAfterAll
@@ -26,12 +28,31 @@ class EncryptSpec extends FunSuite with Matchers with BeforeAndAfterAll
   val secrect = "analytics-zoo"
   val salt = "intel-analytics"
 
+  var tempDir: File = _
+
+  override def beforeAll(): Unit = {
+    tempDir = new File(System.getProperty("java.io.tmpdir"))
+    println(tempDir)
+  }
+
+  override def afterAll(): Unit = {
+    tempDir.delete()
+  }
+
   test("plain text should be encrypted") {
     val encrypted = encryptWithAES256(plain, secrect, salt)
     // println(encrypted)
     val decrypted = decryptWithAES256(encrypted, secrect, salt)
     // println(decrypted)
     decrypted should be (plain)
+  }
+
+  test("plain file should be encrypted") {
+    val file = getClass.getResource("/application.conf")
+    val encryptedFile = tempDir.getAbsolutePath + "/" + file.getFile.split("/").last + ".encrpyted"
+    println(encryptedFile)
+    encryptFileWithAES256(file.getFile, secrect, salt, encryptedFile)
+    new File(encryptedFile).exists() should be (true)
   }
 
 }

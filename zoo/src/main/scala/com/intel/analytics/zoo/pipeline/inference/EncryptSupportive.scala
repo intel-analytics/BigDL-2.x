@@ -20,8 +20,6 @@ import java.util.Base64
 import javax.crypto.{Cipher, SecretKeyFactory}
 import javax.crypto.spec.{IvParameterSpec, PBEKeySpec, SecretKeySpec}
 
-import scala.io.Source
-
 trait EncryptSupportive {
 
   def encryptWithAES256(content: String, secret: String, salt: String): String = {
@@ -50,7 +48,13 @@ trait EncryptSupportive {
     new String(cipher.doFinal(Base64.getDecoder().decode(content)))
   }
 
-  def encryptFileWithAES256(filePath: String, secret: String, salt: String): Boolean = {
+  def encryptFileWithAES256(filePath: String, secret: String, salt: String, outputFile: String)
+  : Boolean = {
+    val source = scala.io.Source.fromFile(filePath)
+    val content = try source.mkString finally source.close()
+    val encrypted = encryptWithAES256(content, secret, salt)
+    val encryptedFilePath = filePath + ".encrypted"
+
     false
   }
 
