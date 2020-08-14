@@ -38,7 +38,7 @@ import java.time.LocalDateTime
 
 import scala.reflect.ClassTag
 
-class ClusterServingHelper(_configPath: String = "config.yaml") {
+class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: String = null) {
   type HM = LinkedHashMap[String, String]
 
   val configPath = _configPath
@@ -96,7 +96,11 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
 
     // parse model field
     val modelConfig = configList.get("model").asInstanceOf[HM]
-    modelDir = getYaml(modelConfig, "path", null).asInstanceOf[String]
+    modelDir = if (_modelDir == null) {
+      getYaml(modelConfig, "path", null).asInstanceOf[String]
+    } else {
+      _modelDir
+    }
     modelInputs = getYaml(modelConfig, "inputs", "").asInstanceOf[String]
     modelOutputs = getYaml(modelConfig, "outputs", "").asInstanceOf[String]
     inferenceMode = getYaml(modelConfig, "mode", "").asInstanceOf[String]
@@ -474,11 +478,8 @@ object ClusterServingHelper {
    * @return
    */
   def loadModelfromDir(confPath: String, modelDir: String): InferenceModel = {
-    // load other configs
-    val helper = new ClusterServingHelper(confPath)
+    val helper = new ClusterServingHelper(confPath, modelDir)
     helper.initArgs()
-    // load model path in executor tmp dir and rewrite that in driver config
-    helper.parseModelType(modelDir)
     helper.loadInferenceModel()
   }
 }
