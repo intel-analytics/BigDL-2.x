@@ -25,12 +25,26 @@ import numpy as np
 from zoo.orca.data.pandas import read_csv
 from zoo.orca.learn.pytorch import Estimator
 from zoo.pipeline.api.keras.metrics import Accuracy
+from zoo.common.nncontext import *
 from bigdl.optim.optimizer import SGD, EveryEpoch, Adam
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
 
 class TestEstimatorForSpark(TestCase):
+
+    def setUp(self):
+        """ setup any state tied to the execution of the given method in a
+        class.  setup_method is invoked for every test method of a class.
+        """
+        self.sc = init_spark_on_local(4)
+
+    def tearDown(self):
+        """ teardown any state that was previously setup with a setup_method
+        call.
+        """
+        self.sc.stop()
+
     def test_bigdl_pytorch_estimator_shard(self):
         class SimpleModel(nn.Module):
             def __init__(self):
