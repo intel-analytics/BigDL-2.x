@@ -29,13 +29,13 @@ from zoo.automl.common.metrics import Evaluator
 from zoo.automl.feature.identity_transformer import IdentityTransformer
 
 
-from zoo.automl.model import XGBoostRegressor
+from zoo.automl.model import XGBoost
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
 from zoo.automl.common.util import *
 from zoo.automl.config.recipe import *
 
 
-class XgbRegressorPredictor(object):
+class XgbPredictor(object):
     """
     Trains a model that predicts future time sequence from past sequence.
     Past sequence should be > 1. Future sequence can be > 1.
@@ -52,7 +52,7 @@ class XgbRegressorPredictor(object):
     def __init__(self,
                  feature_cols,
                  target_col,
-                 modelType="regression",
+                 model_type="regressor",
                  config=None,
                  name="automl",
                  logs_dir="~/zoo_automl_logs"
@@ -71,8 +71,8 @@ class XgbRegressorPredictor(object):
         self.name = name
         self.feature_cols = feature_cols
         self.target_col = target_col
-        self.modelType = modelType
         self.config = config
+        self.model_type = model_type
 
     def fit(self,
             input_df,
@@ -204,17 +204,6 @@ class XgbRegressorPredictor(object):
     #     allowed_fit_metrics = ["mse", "mae", "r2"]
     #     if metric not in allowed_fit_metrics:
     #         raise ValueError("metric " + metric + " is not supported")
-    #
-    # @staticmethod
-    # def _get_metric_mode(metric):
-    #     max_mode_metrics = ["r2"]
-    #     min_mode_metrics = ["rmse", "mae"]
-    #     if metric in min_mode_metrics:
-    #         return "min"
-    #     elif metric in max_mode_metrics:
-    #         return "max"
-    #     else:
-    #         return ValueError, "metric " + metric + " is not supported"
 
     def _hp_search(self,
                    input_df,
@@ -226,7 +215,7 @@ class XgbRegressorPredictor(object):
                    resources_per_trial,
                    remote_dir):
         def model_create_func():
-            model = XGBoostRegressor(config=config)
+            model = XGBoost(self.model_type, config=config)
             model.set_params(n_jobs=resources_per_trial)
             return model
 

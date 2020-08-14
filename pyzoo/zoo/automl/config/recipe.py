@@ -40,7 +40,6 @@ class Recipe(metaclass=ABCMeta):
         runtime_config = {
             "training_iteration": self.training_iteration,
             "num_samples": self.num_samples,
-            "is_bad": True
         }
         if self.reward_metric is not None:
             runtime_config["reward_metric"] = self.reward_metric

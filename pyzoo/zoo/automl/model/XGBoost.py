@@ -23,9 +23,9 @@ from zoo.automl.common.metrics import Evaluator
 from zoo.automl.model.abstract import BaseModel
 
 
-class XGBoostRegressor(BaseModel):
+class XGBoost(BaseModel):
 
-    def __init__(self, config=None):
+    def __init__(self, model_type, config=None):
         """
         Initialize hyper parameters
         :param check_optional_config:
@@ -35,7 +35,7 @@ class XGBoostRegressor(BaseModel):
         if not config:
             config = {}
 
-        self.model_type = config.get('model_type', 'regressor')
+        self.model_type = model_type
         self.n_estimators = config.get('n_estimators', 1000)
         self.max_depth = config.get('max_depth', 5)
         self.tree_method = config.get('tree_method', 'hist')
@@ -57,7 +57,6 @@ class XGBoostRegressor(BaseModel):
         self.model_init = False
 
     def set_params(self, **config):
-        self.model_type = config.get('model_type', self.model_type)
         self.n_estimators = config.get('n_estimators', self.n_estimators)
         self.max_depth = config.get('max_depth', self.max_depth)
         self.tree_method = config.get('tree_method', self.tree_method)
@@ -76,7 +75,6 @@ class XGBoostRegressor(BaseModel):
 
         if config.get('metric', 'mse') in ('rmse', 'mse'):
             self.metric = 'rmse'
-
 
     def _build(self, **config):
         """
@@ -124,8 +122,8 @@ class XGBoostRegressor(BaseModel):
             validation_data = [validation_data]
 
         self.model.fit(x, y, eval_set=validation_data)
-        res = self.model.evals_result_.get("validation_0").get(self.metric)[-1]
-        # res = list(self.model.evals_result_.get("validation_0").values())[-1][-1]
+        # res = self.model.evals_result_.get("validation_0").get(self.metric)[-1]
+        res = list(self.model.evals_result_.get("validation_0").values())[-1][-1]
         return res
 
     def predict(self, x):
