@@ -17,7 +17,7 @@ from abc import ABCMeta, abstractmethod
 from zoo.automl.model.tcmf import DeepGLO
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.model.abstract import BaseModel
-from zoo.orca.data import SparkXShards
+from zoo.orca.data import SparkXShards, XShards
 import pickle
 import numpy as np
 import pandas as pd
@@ -287,7 +287,7 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         :param model_path: the model file
         :return: the restored model
         """
-        self.internal = SparkXShards.load_pickle(model_path, minPartitions=minPartitions)
+        self.internal = XShards.load_pickle(model_path, minPartitions=minPartitions)
 
 
 class TCMFLocalModelWrapper(ModelWrapper):

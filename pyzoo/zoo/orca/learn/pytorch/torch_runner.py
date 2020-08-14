@@ -42,6 +42,7 @@ import torch
 import torch.nn as nn
 
 import ray
+from zoo.orca import OrcaContext
 from zoo.orca.learn.pytorch.constants import SCHEDULER_STEP, NUM_STEPS
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.pytorch import utils
@@ -64,7 +65,6 @@ class TorchRunner:
                  scheduler_creator=None,
                  training_operator_cls=None,
                  config=None,
-                 serialize_data_creation=True,
                  use_tqdm=False,
                  scheduler_step_freq=None):
         self.model_creator = model_creator
@@ -83,7 +83,6 @@ class TorchRunner:
         self.train_loader = None
         self.validation_loader = None
         self.training_operator = None
-        self.serialize_data_creation = serialize_data_creation
         self.use_tqdm = use_tqdm
         self.scheduler_step_freq = scheduler_step_freq
 
@@ -150,9 +149,30 @@ class TorchRunner:
     def with_sampler(self, loader):
         raise NotImplementedError("Please implement with_sampler in the subclass of TorchRunner")
 
+    @staticmethod
+    def should_wrap_dataloader(loader):
+        from torch.utils.data import DataLoader, IterableDataset
+        return (isinstance(loader, DataLoader)
+                and not isinstance(loader.dataset, IterableDataset))
+
+    def train_epochs(self, data_creator, epochs=1, profile=False, info=None):
+        if OrcaContext.serialize_data_creation:
+            with FileLock(
+                    os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
+                loader = data_creator(self.config)
+        else:
+            loader = data_creator(self.config)
+
+        if TorchRunner.should_wrap_dataloader(loader):
+            loader = self.with_sampler(loader)
+        stats_list = list()
+        for i in range(epochs):
+            stats = self.train_epoch(loader, profile=profile, info=info)
+            stats_list.append(stats)
+        return stats_list
+
     def train_epoch(self,
-                    data_creator,
-                    num_steps=None,
+                    data_loader,
                     profile=False,
                     info=None):
         """Runs a training epoch and updates the model parameters."""
@@ -161,17 +181,11 @@ class TorchRunner:
         self._toggle_profiling(profile=profile)
 
         info.update({
-            NUM_STEPS: num_steps,
             SCHEDULER_STEP: self.scheduler_step_freq
         })
         with self.timers.record("train_epoch"):
-            with FileLock(
-                    os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
-                loader = self.with_sampler(data_creator(self.config))
-            iterator = iter(loader)
-            if num_steps:
-                iterator = itertools.islice(iterator, num_steps)
-            train_stats = self.training_operator.train_epoch(iterator, info)
+            data_loader = iter(data_loader)
+            train_stats = self.training_operator.train_epoch(data_loader, info)
 
         self.epochs += 1
         # This is so that `epochs` is first in ordering.
@@ -185,16 +199,19 @@ class TorchRunner:
         info = info or {}
         self._toggle_profiling(profile=profile)
 
-        with self.timers.record("validation"):
+        if OrcaContext.serialize_data_creation:
             with FileLock(
                     os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
-                loader = self.with_sampler(data_creator(self.config))
-            iterator = iter(loader)
-            if num_steps:
-                iterator = itertools.islice(
-                    iter(self.validation_loader), num_steps)
-            validation_stats = self.training_operator.validate(
-                iterator, info=info)
+                loader = data_creator(self.config)
+        else:
+            loader = data_creator(self.config)
+
+        with self.timers.record("validation"):
+            if TorchRunner.should_wrap_dataloader(loader):
+                loader = iter(self.with_sampler(loader))
+                if num_steps:
+                    loader = itertools.islice(loader, num_steps)
+            validation_stats = self.training_operator.validate(loader, info=info)
         if profile:
             validation_stats.update(profile=self.timers.stats())
         return validation_stats

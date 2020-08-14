@@ -31,57 +31,71 @@ object InferenceSupportive {
     val postProcessed = preProcessed.grouped(params.coreNum).flatMap(pathByteBatch => {
       val thisBatchSize = pathByteBatch.size
       (0 until thisBatchSize).toParArray.map(idx => {
-        val t = pathByteBatch(idx)._2
-        val result = params.model.doPredict(t)
-        val value = PostProcessing(result.toTensor[Float], params.filter)
-        (pathByteBatch(idx)._1, value)
-      })
+        try {
+          val t = pathByteBatch(idx)._2
+          val result = params.model.doPredict(t)
+          val value = PostProcessing(result.toTensor[Float], params.filter)
+          (pathByteBatch(idx)._1, value)
+        } catch {
+          case _ =>
+            logger.info("Your input format is invalid to your model, this batch is skipped")
+            null
+        }
+      }).filter(x => x != null)
     })
     postProcessed
   }
   def multiThreadInference(preProcessed: Iterator[(String, Activity)],
                            params: SerParams): Iterator[(String, String)] = {
+    println("Inference new batch ..................")
     val postProcessed = preProcessed.grouped(params.coreNum).flatMap(pathByteBatch => {
-      val thisBatchSize = pathByteBatch.size
+      try {
+        val thisBatchSize = pathByteBatch.size
 
-      val t1 = System.nanoTime()
-      val t = batchInput(pathByteBatch, params)
-      val t2 = System.nanoTime()
-      println(s"Batch input (copy, resize) time ${(t2 - t1) / 1e9} s")
-      /**
-       * addSingletonDimension method will modify the
-       * original Tensor, thus if reuse of Tensor is needed,
-       * have to squeeze it back.
-       */
-//      dimCheck(t, "add", params)
-      val result = params.model.doPredict(t)
-      dimCheck(result, "remove", params)
-      val t3 = System.nanoTime()
-      println(s"Inference and Dim check time ${(t3 - t2) / 1e9} s")
-      val kvResult = if (result.isTensor) {
-        (0 until thisBatchSize).toParArray.map(i => {
-          val value = PostProcessing(result.toTensor[Float].select(1, i + 1), params.filter)
-          (pathByteBatch(i)._1, value)
-        })
-      } else if (result.isTable) {
-        val dataTable = result.toTable
-        (0 until thisBatchSize).toParArray.map(i => {
-          var value = ""
-          dataTable.keySet.foreach(key => {
-            value += PostProcessing(dataTable(key).asInstanceOf[Tensor[Float]]
-              .select(1, i + 1), params.filter)
+        val t1 = System.nanoTime()
+        val t = batchInput(pathByteBatch, params)
+        val t2 = System.nanoTime()
+        println(s"Batch input (copy, resize) time ${(t2 - t1) / 1e9} s")
+        /**
+         * addSingletonDimension method will modify the
+         * original Tensor, thus if reuse of Tensor is needed,
+         * have to squeeze it back.
+         */
+        dimCheck(t, "add", params)
+        val result = params.model.doPredict(t)
+        dimCheck(result, "remove", params)
+        dimCheck(t, "remove", params)
+        val t3 = System.nanoTime()
+        println(s"Inference and Dim check time ${(t3 - t2) / 1e9} s")
+        val kvResult = if (result.isTensor) {
+          (0 until thisBatchSize).toParArray.map(i => {
+            val value = PostProcessing(result.toTensor[Float].select(1, i + 1), params.filter)
+            (pathByteBatch(i)._1, value)
           })
-          (pathByteBatch(i)._1, value)
-        })
-      } else {
-        throw new Exception("Wrong output format, neither Tensor nor Table.")
+        } else if (result.isTable) {
+          val dataTable = result.toTable
+          (0 until thisBatchSize).toParArray.map(i => {
+            var value = ""
+            dataTable.keySet.foreach(key => {
+              value += PostProcessing(dataTable(key).asInstanceOf[Tensor[Float]]
+                .select(1, i + 1), params.filter)
+            })
+            (pathByteBatch(i)._1, value)
+          })
+        } else {
+          throw new Exception("Wrong output format, neither Tensor nor Table.")
+        }
+        val t4 = System.nanoTime()
+        println(s"Post-processing time ${(t4 - t3) / 1e9} s")
+        println(s"Inference logic total time ${(t4 - t1) / 1e9} s")
+        kvResult
+      } catch {
+        case _ =>
+          logger.info("Your input format is invalid to your model, this batch is skipped")
+          pathByteBatch.toParArray.map(x => (x._1, ""))
       }
-      val t4 = System.nanoTime()
-      println(s"Post-processing time ${(t4 - t3) / 1e9} s")
-      println(s"Inference logic total time ${(t4 - t1) / 1e9} s")
-      kvResult
     })
-    postProcessed
+    postProcessed.filter(x => x != null)
   }
   def batchInput(seq: Seq[(String, Activity)],
     params: SerParams): Activity = {
@@ -110,11 +124,8 @@ object InferenceSupportive {
         newSize = newSize :+ elem
       }
       t(key).asInstanceOf[Tensor[Float]].resize(newSize)
-      if (params.modelType == "openvino") {
-        t(key).asInstanceOf[Tensor[Float]].addSingletonDimension()
-      }
     })
-    if (params.dataShape.length == 1) {
+    if (params.dataShape.size == 1) {
       t.keySet.foreach(key => {
         return t(key).asInstanceOf[Tensor[Float]]
       })

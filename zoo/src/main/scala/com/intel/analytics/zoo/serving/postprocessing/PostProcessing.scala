@@ -78,15 +78,46 @@ class PostProcessing(tensor: Tensor[Float]) {
   /**
    * TopN filter, take 1-D size (n) tensor as input
    * @param topN
-   * @return 2-D size (topN, 2) tensor
+   * @return string, representing 2-D size (topN, 2) tensor
    */
-  def topN(topN: Int): String = {
+  def rankTopN(topN: Int): String = {
     val list = TensorUtils.getTopN(topN, t)
     var res: String = ""
     res += "["
     (0 until list.size).foreach(i =>
       res += "[" + list(i)._1.toString + "," + list(i)._2.toString + "]"
     )
+    res += "]"
+    res
+  }
+
+  /**
+   * Pick TopN value of output tensor
+   * only (1) * record_size * box_value_number is supported
+   * thus only 2 or 3 dimension is valid for now
+   */
+  def pickTopN(topN: Int): String = {
+    require(t.dim() == 2 || t.dim() == 3,
+      "pickTopN post-processing only take 2 or 3 output dim tensor")
+    val thisT = if (t.dim() == 3) {
+      t.squeeze(1)
+    } else {
+      t
+    }
+    require(thisT.dim() == 2,
+      "Your input dim is 3 but squeeze operation fails, please open issue to Analytics Zoo team")
+    var res: String = ""
+    res += "["
+    (1 to topN).foreach(topIdx => {
+      res += "["
+      (1 to t.size(2)).foreach(boxIdx => {
+        res += t.valueAt(topIdx, boxIdx)
+        if (boxIdx != thisT.size(2)) {
+          res += ","
+        }
+      })
+      res += "]"
+    })
     res += "]"
     res
   }
@@ -105,7 +136,10 @@ object PostProcessing {
       val res = filterType match {
         case "topN" =>
           require(filterArgs.length == 1, "topN filter only support 1 argument, please check.")
-          cls.topN(filterArgs(0).toInt)
+          cls.rankTopN(filterArgs(0).toInt)
+        case "pickTopN" =>
+          require(filterArgs.length == 1, "pickTopN filter only support 1 argument, please check.")
+          cls.pickTopN(filterArgs(0).toInt)
         case _ => ""
       }
       res

@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.serving.pipeline
 
+import com.intel.analytics.zoo.serving.utils.Conventions
 import org.apache.log4j.Logger
 import redis.clients.jedis.Jedis
 
@@ -26,15 +27,19 @@ object RedisUtils {
     if (redisInfo("used_memory").toLong >=
       redisInfo("maxmemory").toLong * inputThreshold) {
       logger.info(s"Used memory ${redisInfo("used_memory")}, " +
-        s"Max memory ${redisInfo("maxmemory")}. Trimming old redis stream...")
-      db.xtrim("image_stream",
-        (db.xlen("image_stream") * cutRatio).toLong, true)
-      val cuttedRedisInfo = RedisUtils.getMapFromInfo(db.info())
+        s"Max memory ${redisInfo("maxmemory")}. Your serving stream length is " +
+        s"${db.xlen(Conventions.SERVING_STREAM_NAME)}. Trimming old redis stream...")
+      db.xtrim(Conventions.SERVING_STREAM_NAME,
+        (db.xlen(Conventions.SERVING_STREAM_NAME) * cutRatio).toLong, true)
+      logger.info(s"Trimmed stream, now your serving stream length is " +
+        s"${db.xlen(Conventions.SERVING_STREAM_NAME)}")
+      var cuttedRedisInfo = RedisUtils.getMapFromInfo(db.info())
       while (cuttedRedisInfo("used_memory").toLong >=
         cuttedRedisInfo("maxmemory").toLong * inputThreshold) {
         logger.info(s"Used memory ${redisInfo("used_memory")}, " +
           s"Max memory ${redisInfo("maxmemory")}. " +
           s"Your result field has exceeded the limit, please dequeue.")
+        cuttedRedisInfo = RedisUtils.getMapFromInfo(db.info())
         Thread.sleep(10000)
       }
     }

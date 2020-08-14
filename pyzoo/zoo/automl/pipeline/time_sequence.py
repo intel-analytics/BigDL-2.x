@@ -222,9 +222,9 @@ def load_ts_pipeline(file):
 
 
 def load_xgboost_pipeline(file):
-    from zoo.automl.feature.echo_transformer import EchoTransformer
+    from zoo.automl.feature.identity_transformer import IdentityTransformer
     from zoo.automl.model import XGBoostRegressor
-    feature_transformers = EchoTransformer()
+    feature_transformers = IdentityTransformer()
     model = XGBoostRegressor()
 
     all_config = restore_zip(file, feature_transformers, model)

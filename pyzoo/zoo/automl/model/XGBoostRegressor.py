@@ -17,21 +17,24 @@ from abc import ABC
 import pickle
 import pandas as pd
 from xgboost.sklearn import XGBRegressor
-from xgboost.sklearn import XGBClassifier
 
+from xgboost.sklearn import XGBClassifier
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.model.abstract import BaseModel
 
 
 class XGBoostRegressor(BaseModel):
 
-    def __init__(self, **config):
+    def __init__(self, config=None):
         """
         Initialize hyper parameters
         :param check_optional_config:
         :param future_seq_len:
         """
         # models
+        if not config:
+            config = {}
+
         self.model_type = config.get('model_type', 'regressor')
         self.n_estimators = config.get('n_estimators', 1000)
         self.max_depth = config.get('max_depth', 5)
@@ -41,7 +44,6 @@ class XGBoostRegressor(BaseModel):
         self.learning_rate = config.get('learning_rate', 0.1)
         self.min_child_weight = config.get('min_child_weight', 1)
         self.seed = config.get('seed', 0)
-
         self.subsample = config.get('subsample', 0.8)
         self.colsample_bytree = config.get('colsample_bytree', 0.8)
         self.gamma = config.get('gamma', 0)
@@ -72,6 +74,10 @@ class XGBoostRegressor(BaseModel):
         self.reg_lambda = config.get('reg_lambda', self.reg_lambda)
         self.verbosity = config.get('verbosity', self.verbosity)
 
+        if config.get('metric', 'mse') in ('rmse', 'mse'):
+            self.metric = 'rmse'
+
+
     def _build(self, **config):
         """
         build the models and initialize.
@@ -97,6 +103,7 @@ class XGBoostRegressor(BaseModel):
                                       reg_lambda=self.reg_lambda, verbosity=self.verbosity)
         else:
             raise ValueError("model_type can only be \"regressor\" or \"classifier\"")
+
         self.model_init = True
 
     def fit_eval(self, x, y, validation_data=None, **config):
@@ -109,16 +116,16 @@ class XGBoostRegressor(BaseModel):
             nd is the number of series, Td is the time dimension
         :param y: None. target is extracted from x directly
         :param verbose:
-        :return: the evaluation value
+        :return: the evaluation metric value
         """
         if not self.model_init:
             self._build(**config)
-
-        if validation_data is not list:
+        if validation_data is not None and type(validation_data) is not list:
             validation_data = [validation_data]
 
         self.model.fit(x, y, eval_set=validation_data)
-        res = list(self.model.evals_result_.get("validation_0").values())[-1][-1]
+        res = self.model.evals_result_.get("validation_0").get(self.metric)[-1]
+        # res = list(self.model.evals_result_.get("validation_0").values())[-1][-1]
         return res
 
     def predict(self, x):

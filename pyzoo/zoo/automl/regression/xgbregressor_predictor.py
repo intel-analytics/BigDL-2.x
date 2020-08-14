@@ -26,7 +26,8 @@ import ray
 from zoo.automl.search.abstract import *
 from zoo.automl.search.RayTuneSearchEngine import RayTuneSearchEngine
 from zoo.automl.common.metrics import Evaluator
-from zoo.automl.feature.echo_transformer import EchoTransformer
+from zoo.automl.feature.identity_transformer import IdentityTransformer
+
 
 from zoo.automl.model import XGBoostRegressor
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
@@ -52,6 +53,7 @@ class XgbRegressorPredictor(object):
                  feature_cols,
                  target_col,
                  modelType="regression",
+                 config=None,
                  name="automl",
                  logs_dir="~/zoo_automl_logs"
                  ):
@@ -70,6 +72,7 @@ class XgbRegressorPredictor(object):
         self.feature_cols = feature_cols
         self.target_col = target_col
         self.modelType = modelType
+        self.config = config
 
     def fit(self,
             input_df,
@@ -117,6 +120,7 @@ class XgbRegressorPredictor(object):
         self.pipeline = self._hp_search(
             input_df,
             validation_df=validation_df,
+            config=self.config,
             metric=metric,
             recipe=recipe,
             mc=mc,
@@ -203,7 +207,7 @@ class XgbRegressorPredictor(object):
     #
     # @staticmethod
     # def _get_metric_mode(metric):
-    #     max_mode_metrics = ["r2", "score"]
+    #     max_mode_metrics = ["r2"]
     #     min_mode_metrics = ["rmse", "mae"]
     #     if metric in min_mode_metrics:
     #         return "min"
@@ -215,17 +219,29 @@ class XgbRegressorPredictor(object):
     def _hp_search(self,
                    input_df,
                    validation_df,
+                   config,
                    metric,
                    recipe,
                    mc,
                    resources_per_trial,
                    remote_dir):
         def model_create_func():
-            model = XGBoostRegressor(model_type=self.modelType)
+            model = XGBoostRegressor(config=config)
+            model.set_params(n_jobs=resources_per_trial)
             return model
 
         model = model_create_func()
-        ft = EchoTransformer(self.feature_cols, self.target_col)
+        ft = IdentityTransformer(self.feature_cols, self.target_col)
+
+        # prepare parameters for search engine
+        search_space = recipe.search_space(None)
+        runtime_params = recipe.runtime_params()
+        num_samples = runtime_params['num_samples']
+        stop = dict(runtime_params)
+        search_algorithm_params = recipe.search_algorithm_params()
+        search_algorithm = recipe.search_algorithm()
+        fixed_params = recipe.fixed_params()
+        del stop['num_samples']
 
         from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
         metric_mode = TimeSequencePredictor._get_metric_mode(metric)
