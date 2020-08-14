@@ -12,8 +12,6 @@ model:
 data:
   # default, localhost:6379
   src:
-  # shape must be provided, e.g, [[1,2],[3,224,224],[3,4]], if only one input brackets could be omitted
-  shape:
   # default, None
   filter:
 params:
