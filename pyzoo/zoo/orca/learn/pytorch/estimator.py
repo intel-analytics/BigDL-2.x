@@ -27,6 +27,18 @@ class Estimator(object):
     def evaluate(self, data, **kwargs):
         pass
 
+    def get_model(self):
+        pass
+
+    def save(self, checkpoint):
+        pass
+
+    def load(self, checkpoint):
+        pass
+
+    def shutdown(self, force=False):
+        pass
+
     @staticmethod
     def from_torch(*,
                    model_creator,
@@ -37,6 +49,7 @@ class Estimator(object):
                    initialization_hook=None,
                    config=None,
                    scheduler_step_freq="batch",
+                   use_tqdm=False,
                    backend="ray"):
         assert backend == "ray", "only ray backend is supported for now"
         return PyTorchHorovodEstimatorWrapper(model_creator=model_creator,
@@ -46,7 +59,8 @@ class Estimator(object):
                                               training_operator_cls=training_operator_cls,
                                               initialization_hook=initialization_hook,
                                               config=config,
-                                              scheduler_step_freq=scheduler_step_freq)
+                                              scheduler_step_freq=scheduler_step_freq,
+                                              use_tqdm=use_tqdm)
 
 
 class PyTorchHorovodEstimatorWrapper(Estimator):
@@ -59,7 +73,8 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
                  training_operator_cls=TrainingOperator,
                  initialization_hook=None,
                  config=None,
-                 scheduler_step_freq="batch"):
+                 scheduler_step_freq="batch",
+                 use_tqdm=False):
         self.estimator = PyTorchHorovodEstimator(model_creator=model_creator,
                                                  optimizer_creator=optimizer_creator,
                                                  loss_creator=loss_creator,
@@ -67,7 +82,8 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
                                                  training_operator_cls=training_operator_cls,
                                                  initialization_hook=initialization_hook,
                                                  config=config,
-                                                 scheduler_step_freq=scheduler_step_freq)
+                                                 scheduler_step_freq=scheduler_step_freq,
+                                                 use_tqdm=use_tqdm)
 
     def fit(self, data, epochs=1, profile=False, reduce_results=True, info=None):
         """
@@ -110,3 +126,25 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
         """
         return self.estimator.validate(data_creator=data, num_steps=num_steps, profile=profile,
                                        info=info)
+
+    def get_model(self):
+        """Returns the learned model(s)."""
+        return self.estimator.get_model()
+
+    def save(self, checkpoint):
+        """Saves the Estimator state to the provided checkpoint path.
+
+        :param checkpoint: (str) Path to target checkpoint file.
+        """
+        return self.estimator.save(checkpoint=checkpoint)
+
+    def load(self, checkpoint):
+        """Loads the Estimator and all workers from the provided checkpoint.
+
+        :param checkpoint: (str) Path to target checkpoint file.
+        """
+        return self.estimator.load(checkpoint=checkpoint)
+
+    def shutdown(self, force=False):
+        """Shuts down workers and releases resources."""
+        return self.estimator.shutdown(force=force)
