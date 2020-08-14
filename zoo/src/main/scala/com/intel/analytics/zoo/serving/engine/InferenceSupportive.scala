@@ -125,7 +125,7 @@ object InferenceSupportive {
       }
       t(key).asInstanceOf[Tensor[Float]].resize(newSize)
     })
-    if (params.dataShape.size == 1) {
+    if (t.keySet.size == 1) {
       t.keySet.foreach(key => {
         return t(key).asInstanceOf[Tensor[Float]]
       })
