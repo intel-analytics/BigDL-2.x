@@ -38,6 +38,15 @@ import java.time.LocalDateTime
 
 import scala.reflect.ClassTag
 
+/**
+ * The helper of Cluster Serving
+ * by default, all parameters are loaded by config including model directory
+ * However, in some condition, models are distributed to remote machine
+ * and locate in tmp directory, but other configs are still needed.
+ * Thus model directory could be passed and overwrite that in config YAML
+ * @param _configPath the path of Cluster Serving config YAML
+ * @param _modelDir the path of model, if null, will read from config YAML
+ */
 class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: String = null) {
   type HM = LinkedHashMap[String, String]
 
