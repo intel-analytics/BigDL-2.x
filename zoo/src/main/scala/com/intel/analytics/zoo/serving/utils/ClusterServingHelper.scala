@@ -62,7 +62,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
   var chwFlag: Boolean = true
 
 //  var dataType: Array[DataTypeEnumVal] = null
-  var dataShape: Array[Array[Int]] = Array[Array[Int]]()
+//  var dataShape: Array[Array[Int]] = Array[Array[Int]]()
   var filter: String = null
 
   var logFile: FileWriter = null
@@ -156,7 +156,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
 //    for (i <- shapeList) {
 //      dataShape = dataShape :+ i
 //    }
-    dataShape = ConfigUtils.parseShape(shapeStr.asInstanceOf[String])
+//    dataShape = ConfigUtils.parseShape(shapeStr.asInstanceOf[String])
     val typeStr = getYaml(dataConfig, "type", "image")
     require(typeStr != null, "data type in config must be specified.")
 //    dataType = ConfigUtils.parseType(typeStr)
@@ -228,11 +228,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     }
     else {
       println(configList.toString + key + " getted: " + configValue)
-      if (configValue.isInstanceOf[Boolean] || configValue.isInstanceOf[Int]) {
-        configValue
-      } else {
-        configValue.toString
-      }
+      configValue
     }
   }
 
