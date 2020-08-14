@@ -32,7 +32,7 @@ from bigdl.optim.optimizer import SGD, EveryEpoch, Adam
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
 
-class TestEstimatorForSpark(TestCase):
+class TestEstimatorForSparkCreator(TestCase):
 
     def setUp(self):
         """ setup any state tied to the execution of the given method in a
@@ -46,35 +46,31 @@ class TestEstimatorForSpark(TestCase):
         """
         self.sc.stop()
 
-    def test_bigdl_pytorch_estimator_shard(self):
+    def test_bigdl_pytorch_estimator_dataloader_creator(self):
         class SimpleModel(nn.Module):
             def __init__(self):
                 super(SimpleModel, self).__init__()
-                self.fc = nn.Linear(2, 2)
+                self.dense1 = nn.Linear(2, 4)
+                self.bn1 = torch.nn.BatchNorm1d(4)
+                self.dense2 = nn.Linear(4, 1)
 
             def forward(self, x):
-                x = self.fc(x)
-                return F.log_softmax(x, dim=1)
+                x = self.dense1(x)
+                x = self.bn1(x)
+                x = torch.sigmoid(self.dense2(x))
+                return x
 
         model = SimpleModel()
 
-        def loss_func(input, target):
-            return nn.CrossEntropyLoss().forward(input, target.flatten().long())
+        estimator = Estimator.from_torch(model=model, loss=nn.BCELoss(),
+                                         optimizer=Adam(), backend="bigdl")
 
-        def transform(df):
-            result = {
-                "x": [df['user'].to_numpy(), df['item'].to_numpy()],
-                "y": df['label'].to_numpy()
-            }
-            return result
+        def get_dataloader():
+            inputs = torch.Tensor([[1, 2], [1, 3], [3, 2], [5, 6], [8, 9], [1, 9]])
+            targets = torch.Tensor([[0], [0], [0], [1], [1], [1]])
+            return torch.utils.data.DataLoader(TensorDataset(inputs, targets), batch_size=2)
 
-        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-        data_shard = read_csv(file_path)
-        data_shard = data_shard.transform_shard(transform)
-
-        estimator = Estimator.from_torch(model=model, loss=loss_func,
-                                         optimizer=SGD(), backend="bigdl")
-        estimator.fit(data=data_shard, epochs=4, batch_size=2, validation_data=data_shard,
+        estimator.fit(data=get_dataloader, epochs=2, validation_data=get_dataloader,
                       validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
 
 
