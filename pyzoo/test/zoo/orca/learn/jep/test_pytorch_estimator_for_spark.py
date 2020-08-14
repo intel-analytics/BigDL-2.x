@@ -13,21 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
 from unittest import TestCase
 
 import pytest
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import TensorDataset
-import numpy as np
 
 from zoo.orca.data.pandas import read_csv
 from zoo.orca.learn.pytorch import Estimator
 from zoo.pipeline.api.keras.metrics import Accuracy
 from zoo.common.nncontext import *
 from bigdl.optim.optimizer import SGD, EveryEpoch, Adam
+from zoo.orca import OrcaContext
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
@@ -68,6 +65,7 @@ class TestEstimatorForSpark(TestCase):
             }
             return result
 
+        OrcaContext.pandas_read_backend = "pandas"
         file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
         data_shard = read_csv(file_path)
         data_shard = data_shard.transform_shard(transform)
