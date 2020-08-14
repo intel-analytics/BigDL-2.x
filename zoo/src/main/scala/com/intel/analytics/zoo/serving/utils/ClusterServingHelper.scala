@@ -57,17 +57,10 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
   var redisPort: String = null
   var nodeNum: Int = 1
   var coreNum: Int = 1
-  var engineType: String = null
   var blasFlag: Boolean = false
   var chwFlag: Boolean = true
 
-//  var dataType: Array[DataTypeEnumVal] = null
-//  var dataShape: Array[Array[Int]] = Array[Array[Int]]()
   var filter: String = null
-
-  var logFile: FileWriter = null
-  var logErrorFlag: Boolean = true
-  var logSummaryFlag: Boolean = false
 
   /**
    * model related
@@ -116,13 +109,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
      * And also other frameworks supporting multiple engine type
      */
 
-    logFile = {
-      val logF = new File("./cluster-serving.log")
-      if (Files.exists(Paths.get("./cluster-serving.log"))) {
-        logF.createNewFile()
-      }
-      new FileWriter(logF, true)
-    }
+
 
     if (modelType.startsWith("tensorflow")) {
       chwFlag = false
@@ -136,11 +123,6 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
     redisPort = redis.split(":").last.trim
 
     val secureConfig = configList.get("secure").asInstanceOf[HM]
-//    redisSecureEnabled = if (getYaml(secureConfig, "secure_enabled", false) != false) {
-//      getYaml(secureConfig, "secure_enabled", false).asInstanceOf[Boolean]
-//    } else {
-//      false
-//    }
     redisSecureEnabled = getYaml(secureConfig, "secure_enabled", false).asInstanceOf[Boolean]
 
     val defaultPath = try {
@@ -163,8 +145,6 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
 //    dataShape = ConfigUtils.parseShape(shapeStr.asInstanceOf[String])
     val typeStr = getYaml(dataConfig, "type", "image")
     require(typeStr != null, "data type in config must be specified.")
-//    dataType = ConfigUtils.parseType(typeStr)
-
 
     filter = getYaml(dataConfig, "filter", "").asInstanceOf[String]
 
@@ -177,7 +157,6 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
         blasFlag = true
       }
       else blasFlag = false
-
     }
     else blasFlag = false
 
@@ -356,8 +335,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
    * @param msg
    */
   def logError(msg: String): Unit = {
-
-    if (logErrorFlag) logFile.write(dateTime + " --- " + msg + "\n")
+    println(dateTime + " --- " + msg + "\n")
     throw new Error(msg)
   }
 
