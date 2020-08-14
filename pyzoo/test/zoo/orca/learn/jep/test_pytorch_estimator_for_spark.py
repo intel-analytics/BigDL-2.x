@@ -16,6 +16,7 @@
 import os
 from unittest import TestCase
 
+import pytest
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -137,5 +138,4 @@ class TestEstimatorForSpark(TestCase):
 
 
 if __name__ == "__main__":
-    import pytest
     pytest.main([__file__])
