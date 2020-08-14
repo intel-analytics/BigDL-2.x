@@ -466,3 +466,19 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
   }
 
 }
+object ClusterServingHelper {
+  /**
+   * Wrapped method of load model directly from a directory
+   * WARNING: coreNum parameter is not controlled in this method
+   * this may lead to OpenVINO model loading batchSize and
+   * InferenceModel concurrentNum at this moment
+   * @param modelDir
+   * @return
+   */
+  def loadModelfromDir(modelDir: String, coreNum: Int = 4): InferenceModel = {
+    val helper = new ClusterServingHelper()
+    helper.coreNum = coreNum
+    helper.parseModelType(modelDir)
+    helper.loadInferenceModel()
+  }
+}

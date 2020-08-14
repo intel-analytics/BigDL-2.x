@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.PreProcessing
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
-import com.intel.analytics.zoo.serving.utils.SerParams
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams}
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.configuration.Configuration
 import org.apache.log4j.Logger
@@ -28,7 +28,8 @@ import org.apache.log4j.Logger
 
 class FlinkInference(params: SerParams)
   extends RichMapFunction[List[(String, String)], List[(String, String)]] {
-  var model: InferenceModel = null
+
+
   var t: Tensor[Float] = null
   var logger: Logger = null
   var inferenceCnt: Int = 0
@@ -36,6 +37,9 @@ class FlinkInference(params: SerParams)
   var post: PostProcessing = null
 
   override def open(parameters: Configuration): Unit = {
+    val myDir = getRuntimeContext.getDistributedCache.getFile("cluster-serving-model").getPath
+    println(s"Model is distributed to executor path ${myDir}")
+    params.model = ClusterServingHelper.loadModelfromDir(myDir, params.coreNum)
     inferenceCnt = 0
     logger = Logger.getLogger(getClass)
     pre = new PreProcessing(params)

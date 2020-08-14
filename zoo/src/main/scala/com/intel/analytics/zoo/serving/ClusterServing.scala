@@ -47,7 +47,7 @@ object ClusterServing {
     helper.initArgs()
     params = new SerParams(helper)
     val serving = StreamExecutionEnvironment.getExecutionEnvironment
-
+    serving.registerCachedFile(params.modelDir, "cluster-serving-model")
     if (testMode) {
       println("Running Cluster Serving in test mode with parallelism 1")
       serving.addSource(new FlinkRedisSource(params)).setParallelism(1)
