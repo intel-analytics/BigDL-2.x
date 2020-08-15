@@ -164,7 +164,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
 
 
     filter = getYaml(dataConfig, "filter", "").asInstanceOf[String]
-    resize = getYaml(dataConfig, "resize", "").asInstanceOf[Boolean]
+    resize = getYaml(dataConfig, "resize", true).asInstanceOf[Boolean]
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
     coreNum = getYaml(paramsConfig, "core_number", 4).asInstanceOf[Int]
@@ -247,39 +247,13 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
   }
 
   /**
-   * Inference Model do not use this method for model loading
-   * This method is kept for future, not used now
-   * @param ev
-   * @tparam T
-   * @return
-   */
-  def loadModel[T: ClassTag]()
-                            (implicit ev: TensorNumeric[T]): RDD[Module[Float]] = {
-    // deprecated
-    val rmodel = modelType match {
-      case "caffe" => Net.loadCaffe[Float](defPath, weightPath)
-      case "torch" => Net.loadTorch[Float](weightPath)
-      case "bigdl" => Net.loadBigDL[Float](weightPath)
-      case "keras" => Net.load[Float](weightPath)
-    }
-    val model = rmodel.quantize().evaluate()
-
-
-    val bcModel = ModelBroadcast[Float]().broadcast(sc, model)
-    val cachedModel = sc.range(1, 100, EngineRef.getNodeNumber())
-      .coalesce(EngineRef.getNodeNumber())
-      .mapPartitions(v => Iterator.single(bcModel.value(false, true))).cache()
-    cachedModel
-  }
-
-  /**
    * Load inference model
    * The concurrent number of inference model depends on
    * backend engine type
    * @return
    */
   def loadInferenceModel(): InferenceModel = {
-    val parallelNum = if (blasFlag) coreNum else 1
+    val parallelNum = if (inferenceMode == "single") coreNum else 1
     val model = new InferenceModel(parallelNum)
 
     // Used for Tensorflow Model, it could not have intraThreadNum > 2^8
