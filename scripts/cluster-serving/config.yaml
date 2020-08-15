@@ -14,6 +14,8 @@ data:
   src:
   # default, None
   filter:
+  # default, true
+  resize:
 params:
   # default, 4
   core_number:

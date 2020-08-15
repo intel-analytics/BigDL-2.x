@@ -39,4 +39,5 @@ class SerParams(helper: ClusterServingHelper, loadModel: Boolean = true) extends
   } else {
     null
   }
+  val resize = helper.resize
 }

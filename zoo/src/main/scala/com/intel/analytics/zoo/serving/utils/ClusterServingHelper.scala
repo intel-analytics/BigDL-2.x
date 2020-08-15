@@ -64,6 +64,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
 //  var dataType: Array[DataTypeEnumVal] = null
 //  var dataShape: Array[Array[Int]] = Array[Array[Int]]()
   var filter: String = null
+  var resize: Boolean = false
 
   var logFile: FileWriter = null
   var logErrorFlag: Boolean = true
@@ -163,6 +164,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
 
 
     filter = getYaml(dataConfig, "filter", "").asInstanceOf[String]
+    resize = getYaml(dataConfig, "resize", "").asInstanceOf[Boolean]
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
     coreNum = getYaml(paramsConfig, "core_number", 4).asInstanceOf[Int]
