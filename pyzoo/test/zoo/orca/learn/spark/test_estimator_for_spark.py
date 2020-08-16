@@ -557,7 +557,7 @@ class TestEstimatorForGraph(TestCase):
 
         temp = tempfile.mkdtemp()
         model_checkpoint = os.path.join(temp, 'test.ckpt')
-        est.save(model_checkpoint)
+        est.save_tf_checkpoint(model_checkpoint)
         est.sess.close()
 
         tf.reset_default_graph()

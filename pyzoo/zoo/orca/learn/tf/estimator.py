@@ -167,13 +167,16 @@ class Estimator(object):
         assert backend == "bigdl", "only bigdl backend is supported for now"
         return TFKerasWrapper(keras_model, metrics, model_dir)
 
-    def save(self, path):
+    def save_tf_checkpoint(self, path):
         """
-        Save model in this estimator.
+        Save tensorflow checkpoint model in this estimator.
         For tensorflow graph model, it would save the checkpoint.
         For tensorflow keras model, it would save keras model.
         :param path: save path.
         """
+        pass
+
+    def save_keras_model(self, path):
         pass
 
 
@@ -401,8 +404,11 @@ class TFOptimizerWrapper(Estimator):
                                 sess=self.sess,
                                 dataset=dataset, metrics=self.metrics)
 
-    def save(self, path):
+    def save_tf_checkpoint(self, path):
         save_tf_checkpoint(self.sess, path)
+
+    def save_keras_model(self, path):
+        raise Exception("No keras model in this estimator")
 
 
 class TFKerasWrapper(Estimator):
@@ -549,5 +555,8 @@ class TFKerasWrapper(Estimator):
 
         return self.model.evaluate(dataset, batch_per_thread=batch_size)
 
-    def save(self, path):
+    def save_tf_checkpoint(self, path):
+        raise Exception("save tensorflow checkpoint is not supported")
+
+    def save_keras_model(self, path):
         self.model.save_model(path)

@@ -413,7 +413,7 @@ class TestEstimatorForKeras(TestCase):
 
         temp = tempfile.mkdtemp()
         model_path = os.path.join(temp, 'test.h5')
-        est.save(model_path)
+        est.save_keras_model(model_path)
 
         tf.reset_default_graph()
 
