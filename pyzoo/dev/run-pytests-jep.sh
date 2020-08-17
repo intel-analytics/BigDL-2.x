@@ -19,7 +19,11 @@
 cd "`dirname $0`"
 
 echo "Running Jep tests"
-python -m pytest -v ../test/zoo/pipeline/api/torch/
+python -m pytest -v ../test/zoo/orca/learn/jep/test_pytorch_estimator_for_spark.py
+python -m pytest -v ../test/zoo/orca/learn/jep/test_pytorch_estimator_for_dataloader.py
+python -m pytest -v ../test/zoo/orca/learn/jep/test_pytorch_estimator_for_spark_creator.py
+python -m pytest -v ../test/zoo/pipeline/api/torch/test_torch_estimator.py
+python -m pytest -v ../test/zoo/pipeline/api/torch/test_torch.py
 exit_status_1=$?
 if [ $exit_status_1 -ne 0 ];
 then

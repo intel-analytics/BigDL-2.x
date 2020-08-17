@@ -13,8 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from zoo.pipeline.estimator.estimator import Estimator as SparkEstimator
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
-from zoo.orca.learn.pytorch.pytorch_horovod_estimator import PyTorchHorovodEstimator
+from zoo.orca.data import SparkXShards
+from bigdl.optim.optimizer import MaxEpoch
+from zoo.feature.common import FeatureSet
+
+from torch.utils.data import DataLoader
 
 
 class Estimator(object):
@@ -27,26 +32,48 @@ class Estimator(object):
     def evaluate(self, data, **kwargs):
         pass
 
+    def get_model(self):
+        pass
+
+    def save(self, checkpoint):
+        pass
+
+    def load(self, checkpoint):
+        pass
+
+    def shutdown(self, force=False):
+        pass
+
     @staticmethod
-    def from_model_creator(*,
-                           model_creator,
-                           optimizer_creator,
-                           loss_creator=None,
-                           scheduler_creator=None,
-                           training_operator_cls=TrainingOperator,
-                           initialization_hook=None,
-                           config=None,
-                           scheduler_step_freq="batch",
-                           backend="ray"):
-        assert backend == "ray", "only ray backend is supported for now"
-        return PyTorchHorovodEstimatorWrapper(model_creator=model_creator,
-                                              optimizer_creator=optimizer_creator,
-                                              loss_creator=loss_creator,
-                                              scheduler_creator=scheduler_creator,
-                                              training_operator_cls=training_operator_cls,
-                                              initialization_hook=initialization_hook,
-                                              config=config,
-                                              scheduler_step_freq=scheduler_step_freq)
+    def from_torch(*,
+                   model,
+                   optimizer,
+                   loss=None,
+                   scheduler_creator=None,
+                   training_operator_cls=TrainingOperator,
+                   initialization_hook=None,
+                   config=None,
+                   scheduler_step_freq="batch",
+                   use_tqdm=False,
+                   backend="horovod"):
+        if backend == "horovod":
+            return PyTorchHorovodEstimatorWrapper(model_creator=model,
+                                                  optimizer_creator=optimizer,
+                                                  loss_creator=loss,
+                                                  scheduler_creator=scheduler_creator,
+                                                  training_operator_cls=training_operator_cls,
+                                                  initialization_hook=initialization_hook,
+                                                  config=config,
+                                                  scheduler_step_freq=scheduler_step_freq,
+                                                  use_tqdm=use_tqdm)
+        elif backend == "bigdl":
+            return PytorchSparkEstimatorWrapper(model=model,
+                                                loss=loss,
+                                                optimizer=optimizer,
+                                                model_dir=None,
+                                                bigdl_type="float")
+        else:
+            raise ValueError("only horovod and bigdl backend are supported for now")
 
 
 class PyTorchHorovodEstimatorWrapper(Estimator):
@@ -59,7 +86,9 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
                  training_operator_cls=TrainingOperator,
                  initialization_hook=None,
                  config=None,
-                 scheduler_step_freq="batch"):
+                 scheduler_step_freq="batch",
+                 use_tqdm=False):
+        from zoo.orca.learn.pytorch.pytorch_horovod_estimator import PyTorchHorovodEstimator
         self.estimator = PyTorchHorovodEstimator(model_creator=model_creator,
                                                  optimizer_creator=optimizer_creator,
                                                  loss_creator=loss_creator,
@@ -67,16 +96,15 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
                                                  training_operator_cls=training_operator_cls,
                                                  initialization_hook=initialization_hook,
                                                  config=config,
-                                                 scheduler_step_freq=scheduler_step_freq)
+                                                 scheduler_step_freq=scheduler_step_freq,
+                                                 use_tqdm=use_tqdm)
 
-    def fit(self, data, epochs=1, num_steps=None, profile=False, reduce_results=True, info=None):
+    def fit(self, data, epochs=1, profile=False, reduce_results=True, info=None):
         """
 
         :param data: (callable) a funtion that takes a config dict as input and return a data
             loader containing the training data.
         :param epochs: (int) Number of epochs to train the model
-        :param num_steps: (int) Number of batches to compute update steps on.
-            This corresponds also to the number of times `TrainingOperator.train_batch`` is called.
         :param profile: (bool) Returns time stats for the training procedure.
         :param reduce_results: (bool) Whether to average all metrics across all workers into one
             dict. If a metric is a non-numerical value (or nested dictionaries), one value will be
@@ -90,12 +118,8 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
                     this will return a list of metric dictionaries whose
                     length will be equal to ``num_workers``.
         """
-        stats_list = list()
-        for i in range(epochs):
-            stats = self.estimator.train(data_creator=data, num_steps=num_steps, profile=profile,
-                                         reduce_results=reduce_results, info=info)
-            stats_list.append(stats)
-        return stats_list
+        return self.estimator.train(data_creator=data, epochs=epochs,
+                                    profile=profile, reduce_results=reduce_results, info=info)
 
     def predict(self, data, **kwargs):
         pass
@@ -116,3 +140,93 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
         """
         return self.estimator.validate(data_creator=data, num_steps=num_steps, profile=profile,
                                        info=info)
+
+    def get_model(self):
+        """Returns the learned model(s)."""
+        return self.estimator.get_model()
+
+    def save(self, checkpoint):
+        """Saves the Estimator state to the provided checkpoint path.
+
+        :param checkpoint: (str) Path to target checkpoint file.
+        """
+        return self.estimator.save(checkpoint=checkpoint)
+
+    def load(self, checkpoint):
+        """Loads the Estimator and all workers from the provided checkpoint.
+
+        :param checkpoint: (str) Path to target checkpoint file.
+        """
+        return self.estimator.load(checkpoint=checkpoint)
+
+    def shutdown(self, force=False):
+        """Shuts down workers and releases resources."""
+        return self.estimator.shutdown(force=force)
+
+
+class PytorchSparkEstimatorWrapper(Estimator):
+    def __init__(self, model, loss, optimizer, model_dir=None, bigdl_type="float"):
+        from zoo.pipeline.api.torch import TorchModel, TorchLoss
+        self.loss = loss
+        if self.loss is None:
+            self.loss = TorchLoss()
+        else:
+            self.loss = TorchLoss.from_pytorch(loss)
+        if optimizer is None:
+            from bigdl.optim.optimizer import SGD
+            optimizer = SGD()
+        self.model = TorchModel.from_pytorch(model)
+        self.estimator = SparkEstimator(self.model, optimizer, model_dir, bigdl_type=bigdl_type)
+
+    def fit(self, data, epochs=1, batch_size=32, validation_data=None, validation_methods=None,
+            checkpoint_trigger=None):
+        from zoo.orca.learn.pytorch.utils import to_sample
+
+        end_trigger = MaxEpoch(epochs)
+        assert batch_size > 0, "batch_size should be greater than 0"
+
+        if isinstance(data, SparkXShards):
+            train_rdd = data.rdd.flatMap(to_sample)
+            train_feature_set = FeatureSet.sample_rdd(train_rdd)
+            if validation_data is None:
+                val_feature_set = None
+            else:
+                assert isinstance(validation_data, SparkXShards), "validation_data should be a " \
+                                                                  "SparkXShards"
+                val_feature_set = FeatureSet.sample_rdd(validation_data.rdd.flatMap(to_sample))
+
+            self.estimator.train(train_feature_set, self.loss, end_trigger, checkpoint_trigger,
+                                 val_feature_set, validation_methods, batch_size)
+        elif isinstance(data, DataLoader) or callable(data):
+            train_feature_set = FeatureSet.pytorch_dataloader(data, "", "")
+            if validation_data is None:
+                val_feature_set = None
+            else:
+                assert isinstance(validation_data, DataLoader) or callable(data), \
+                    "validation_data should be a pytorch DataLoader or a callable data_creator"
+                val_feature_set = FeatureSet.pytorch_dataloader(validation_data)
+
+            self.estimator.train_minibatch(train_feature_set, self.loss, end_trigger,
+                                           checkpoint_trigger, val_feature_set, validation_methods)
+        else:
+            raise ValueError("Data and validation data should be SparkXShards, DataLoaders or "
+                             "callable data_creators but get " + data.__class__.__name__)
+        return self
+
+    def predict(self, data, **kwargs):
+        pass
+
+    def evaluate(self, data, validation_methods=None, batch_size=32):
+        raise NotImplementedError
+
+    def get_model(self):
+        return self.model.to_pytorch()
+
+    def save(self, checkpoint):
+        pass
+
+    def load(self, checkpoint):
+        pass
+
+    def shutdown(self, force=False):
+        pass

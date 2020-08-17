@@ -3,9 +3,9 @@
 chmod a+x ./*
 
 mv *-serving.jar zoo.jar
-mv *-cluster-serving-python.zip zoo-python.zip
+mv *-cluster-serving-python.zip serving-python.zip
 
-export PYTHONPATH=$PYTHONPATH:$(pwd)/zoo-python.zip
+export PYTHONPATH=$PYTHONPATH:$(pwd)/serving-python.zip
 
 chmod a+x cluster-serving-*
 export CS_PATH=$(pwd)
