@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
+import java.io.PrintWriter
 import java.util.Base64
 import javax.crypto.{Cipher, SecretKeyFactory}
 import javax.crypto.spec.{IvParameterSpec, PBEKeySpec, SecretKeySpec}
@@ -48,14 +49,27 @@ trait EncryptSupportive {
     new String(cipher.doFinal(Base64.getDecoder().decode(content)))
   }
 
-  def encryptFileWithAES256(filePath: String, secret: String, salt: String, outputFile: String)
-  : Boolean = {
-    val source = scala.io.Source.fromFile(filePath)
+  def encryptFileWithAES256(filePath: String, secret: String, salt: String, outputFile: String,
+  encoding: String = "UTF-8")
+  : Unit = {
+    val source = scala.io.Source.fromFile(filePath, encoding)
     val content = try source.mkString finally source.close()
     val encrypted = encryptWithAES256(content, secret, salt)
-    val encryptedFilePath = filePath + ".encrypted"
+    new PrintWriter(outputFile) { write(encrypted); close }
+  }
 
-    false
+  def decryptFileWithAES256(filePath: String, secret: String, salt: String): String = {
+    val source = scala.io.Source.fromFile(filePath)
+    val content = try source.mkString finally source.close()
+    decryptWithAES256(content, secret, salt)
+  }
+
+  def decryptFileWithAES256(filePath: String, secret: String, salt: String, outputFile: String)
+  : Unit = {
+    val source = scala.io.Source.fromFile(filePath)
+    val content = try source.mkString finally source.close()
+    val decrypted = decryptWithAES256(content, secret, salt)
+    new PrintWriter(outputFile) { write(decrypted); close }
   }
 
 }

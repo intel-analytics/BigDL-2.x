@@ -31,8 +31,8 @@ class EncryptSpec extends FunSuite with Matchers with BeforeAndAfterAll
   var tempDir: File = _
 
   override def beforeAll(): Unit = {
-    tempDir = new File(System.getProperty("java.io.tmpdir"))
-    println(tempDir)
+    tempDir = new File(System.getProperty("java.io.tmpdir") + "/" + System.currentTimeMillis())
+    tempDir.mkdir()
   }
 
   override def afterAll(): Unit = {
@@ -41,18 +41,35 @@ class EncryptSpec extends FunSuite with Matchers with BeforeAndAfterAll
 
   test("plain text should be encrypted") {
     val encrypted = encryptWithAES256(plain, secrect, salt)
-    // println(encrypted)
     val decrypted = decryptWithAES256(encrypted, secrect, salt)
-    // println(decrypted)
     decrypted should be (plain)
   }
 
   test("plain file should be encrypted") {
     val file = getClass.getResource("/application.conf")
     val encryptedFile = tempDir.getAbsolutePath + "/" + file.getFile.split("/").last + ".encrpyted"
-    println(encryptedFile)
     encryptFileWithAES256(file.getFile, secrect, salt, encryptedFile)
     new File(encryptedFile).exists() should be (true)
+    val decrypted = decryptFileWithAES256(encryptedFile, secrect, salt)
+    val decryptedFile = encryptedFile + ".decrypted"
+    decryptFileWithAES256(encryptedFile, secrect, salt, decryptedFile)
+    new File(decryptedFile).exists() should be (true)
+    val source = scala.io.Source.fromFile(file.getFile)
+    val plain = try source.mkString finally source.close()
+    decrypted should be (plain)
   }
 
+  /*
+  test("test model") {
+    val dir = "/root/glorysdj/models/openvino_res50"
+    val modelFile = s"$dir/resnet_v1_50.xml"
+    val weightFile = s"$dir/resnet_v1_50.bin"
+    val decryptedModelFile = modelFile + ".encrpyted"
+    val decryptedWeightFile = weightFile + ".encrpyted"
+    // encryptFileWithAES256(modelFile, secrect, salt, decryptedModelFile, "ISO-8859-1")
+    // encryptFileWithAES256(weightFile, secrect, salt, decryptedWeightFile, "ISO-8859-1")
+    val model = new InferenceModel(1)
+    model.doLoadEncryptedOpenVINO(decryptedModelFile, decryptedWeightFile, secrect, salt)
+  }
+  */
 }
