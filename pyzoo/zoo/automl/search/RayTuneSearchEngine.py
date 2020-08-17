@@ -177,22 +177,6 @@ class RayTuneSearchEngine(SearchEngine):
                 reuse_actors=True
             )
 
-        # analysis = tune.run(
-        #     self.train_func,
-        #     name=self.name,
-        #     search_alg=self.search_algorithm,
-        #     scheduler=self.sched,
-        #     stop=self.stop_criteria,
-        #     config={
-        #         "n_estimators": tune.randint(self.n_estimators_range[0], self.n_estimators_range[1]),
-        #         "max_depth": tune.randint(self.max_depth_range[0], self.max_depth_range[1]),
-        #         "max_features": tune.loguniform(self.max_features_range[0], self.max_features_range[1]),
-        #     },
-        #     num_samples=self.num_samples,
-        #     resources_per_trial=self.resources_per_trail,
-        #     verbose=1,
-        #     reuse_actors=True
-        # )
         self.trials = analysis.trials
         return analysis
 

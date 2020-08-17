@@ -79,7 +79,7 @@ if __name__ == '__main__':
         "delayed_threshold": 10,
     }
     pdf = pd.read_csv(opt.path, names=input_cols, nrows=dataset_config["nrows"])
-    # turn into binary classification [i.e. flight delays beyond delayed_threshold minutes are considered late ]
+
     pdf["ArrDelayBinary"] = 1.0 * (
         pdf["ArrDelay"] > dataset_config["delayed_threshold"]
     )
@@ -115,9 +115,9 @@ if __name__ == '__main__':
     start = time.time()
     pipeline = tsp.fit(train_df,
                        validation_df=val_df,
-                       metric="score",
+                       metric="logloss",
                        recipe=XgbRegressorSkOptRecipe())
     end = time.time()
     print("elapse: ", (end-start))
-    accuracy = pipeline.evaluate(val_df, metrics=["score"])
+    accuracy = pipeline.evaluate(val_df, metrics=["accuracy"])
     print("Evaluate: accuracy is", accuracy)

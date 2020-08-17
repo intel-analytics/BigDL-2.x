@@ -207,8 +207,8 @@ class TimeSequencePredictor(object):
 
     @staticmethod
     def _get_metric_mode(metric):
-        max_mode_metrics = ["r2", "score"]
-        min_mode_metrics = ["mse", "mae"]
+        max_mode_metrics = ["r2"]
+        min_mode_metrics = ["mse", "mae", "logloss"]
         if metric in min_mode_metrics:
             return "min"
         elif metric in max_mode_metrics:
@@ -236,10 +236,10 @@ class TimeSequencePredictor(object):
 
         def model_create_func():
             # model = VanillaLSTM(check_optional_config=False)
-            model = TimeSequenceModel(
+            _model = TimeSequenceModel(
                 check_optional_config=False,
                 future_seq_len=self.future_seq_len)
-            return model
+            return _model
 
         model = model_create_func()
 

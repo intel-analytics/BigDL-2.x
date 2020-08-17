@@ -216,7 +216,8 @@ class XgbPredictor(object):
                    remote_dir):
         def model_create_func():
             model = XGBoost(self.model_type, config=config)
-            model.set_params(n_jobs=resources_per_trial)
+            if "cpu" in resources_per_trial:
+                model.set_params(n_jobs=resources_per_trial.get("cpu"))
             return model
 
         model = model_create_func()

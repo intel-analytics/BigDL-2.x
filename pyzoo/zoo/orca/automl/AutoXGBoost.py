@@ -30,9 +30,10 @@ class AutoXGBoost(object):
 
     @staticmethod
     def classifier(feature_cols,
-                  target_col,
-                  config=None,
-                  name="automl",
-                  logs_dir="~/zoo_automl_logs"):
-        tsp = XgbPredictor(feature_cols, target_col, config, name, logs_dir)
+                   target_col,
+                   config=None,
+                   name="automl",
+                   logs_dir="~/zoo_automl_logs"):
+        tsp = XgbPredictor(feature_cols, target_col, 'classifier',
+                           config, name, logs_dir)
         return tsp

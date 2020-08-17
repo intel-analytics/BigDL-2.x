@@ -25,7 +25,7 @@ from zoo.automl.model.abstract import BaseModel
 
 class XGBoost(BaseModel):
 
-    def __init__(self, model_type, config=None):
+    def __init__(self, model_type="regressor", config=None):
         """
         Initialize hyper parameters
         :param check_optional_config:
@@ -50,8 +50,14 @@ class XGBoost(BaseModel):
         self.reg_alpha = config.get('reg_alpha', 0)
         self.reg_lambda = config.get('reg_lambda', 1)
         self.verbosity = config.get('verbosity', 0)
-        if config.get('metric', 'mse') in ('rmse', 'mse'):
-            self.metric = 'rmse'
+
+        if 'metric' not in config:
+            if self.model_type == 'regressor':
+                self.metric = 'rmse'
+            elif self.model_type == 'classifier':
+                self.metric = 'logloss'
+        else:
+            self.metric = config['metric']
 
         self.model = None
         self.model_init = False
@@ -72,9 +78,7 @@ class XGBoost(BaseModel):
         self.reg_alpha = config.get('reg_alpha', self.reg_alpha)
         self.reg_lambda = config.get('reg_lambda', self.reg_lambda)
         self.verbosity = config.get('verbosity', self.verbosity)
-
-        if config.get('metric', 'mse') in ('rmse', 'mse'):
-            self.metric = 'rmse'
+        self.metric = config.get('metric', self.metric)
 
     def _build(self, **config):
         """
@@ -86,19 +90,24 @@ class XGBoost(BaseModel):
         if self.model_type == "regressor":
             self.model = XGBRegressor(n_estimators=self.n_estimators, max_depth=self.max_depth,
                                       n_jobs=self.n_jobs, tree_method=self.tree_method,
-                                      random_state=self.random_state, learning_rate=self.learning_rate,
+                                      random_state=self.random_state,
+                                      learning_rate=self.learning_rate,
                                       min_child_weight=self.min_child_weight, seed=self.seed,
-                                      subsample=self.subsample, colsample_bytree=self.colsample_bytree,
+                                      subsample=self.subsample,
+                                      colsample_bytree=self.colsample_bytree,
                                       gamma=self.gamma, reg_alpha=self.reg_alpha,
                                       reg_lambda=self.reg_lambda, verbosity=self.verbosity)
         elif self.model_type == "classifier":
             self.model = XGBClassifier(n_estimators=self.n_estimators, max_depth=self.max_depth,
-                                      n_jobs=self.n_jobs, tree_method=self.tree_method,
-                                      random_state=self.random_state, learning_rate=self.learning_rate,
-                                      min_child_weight=self.min_child_weight, seed=self.seed,
-                                      subsample=self.subsample, colsample_bytree=self.colsample_bytree,
-                                      gamma=self.gamma, reg_alpha=self.reg_alpha, objective='binary:logistic',
-                                      reg_lambda=self.reg_lambda, verbosity=self.verbosity)
+                                       n_jobs=self.n_jobs, tree_method=self.tree_method,
+                                       random_state=self.random_state,
+                                       learning_rate=self.learning_rate,
+                                       min_child_weight=self.min_child_weight, seed=self.seed,
+                                       subsample=self.subsample,
+                                       colsample_bytree=self.colsample_bytree,
+                                       gamma=self.gamma, reg_alpha=self.reg_alpha,
+                                       objective='binary:logistic',
+                                       reg_lambda=self.reg_lambda, verbosity=self.verbosity)
         else:
             raise ValueError("model_type can only be \"regressor\" or \"classifier\"")
 
@@ -121,9 +130,8 @@ class XGBoost(BaseModel):
         if validation_data is not None and type(validation_data) is not list:
             validation_data = [validation_data]
 
-        self.model.fit(x, y, eval_set=validation_data)
-        # res = self.model.evals_result_.get("validation_0").get(self.metric)[-1]
-        res = list(self.model.evals_result_.get("validation_0").values())[-1][-1]
+        self.model.fit(x, y, eval_set=validation_data, eval_metric=self.metric)
+        res = self.model.evals_result_.get("validation_0").get(self.metric)[-1]
         return res
 
     def predict(self, x):
@@ -138,6 +146,7 @@ class XGBoost(BaseModel):
             raise Exception("Input invalid x of None")
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling predict")
+        self.model.n_jobs = self.n_jobs
         out = self.model.predict(x)
         output_df = pd.DataFrame(out)
 
@@ -161,6 +170,7 @@ class XGBoost(BaseModel):
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling predict")
 
+        self.model.n_jobs = self.n_jobs
         y_pred = self.predict(x)
         return [Evaluator.evaluate(m, y, y_pred) for m in metrics]
 

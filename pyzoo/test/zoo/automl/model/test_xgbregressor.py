@@ -30,7 +30,7 @@ from zoo.automl.feature.identity_transformer import IdentityTransformer
 class TestXgbregressor(ZooTestCase):
     def setup_method(self, method):
         # super().setup_method(method)
-        self.model = XGBoost({'n_estimators': 5, 'max_depth': 2, 'tree_method': 'hist'})
+        self.model = XGBoost(config={'n_estimators': 5, 'max_depth': 2, 'tree_method': 'hist'})
         feature_cols = ["f", "f2"]
         target_col = "t"
         train_df = pd.DataFrame({"f": np.random.randn(20),
