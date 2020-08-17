@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.automl.regression.xgbregressor_predictor import XgbPredictor
+from zoo.automl.regression.xgb_predictor import XgbPredictor
 from zoo.automl.config.recipe import *
 
 
