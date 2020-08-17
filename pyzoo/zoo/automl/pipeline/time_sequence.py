@@ -221,11 +221,11 @@ def load_ts_pipeline(file):
     return ts_pipeline
 
 
-def load_xgboost_pipeline(file):
+def load_xgboost_pipeline(file, model_type="regressor"):
     from zoo.automl.feature.identity_transformer import IdentityTransformer
     from zoo.automl.model import XGBoost
     feature_transformers = IdentityTransformer()
-    model = XGBoost()
+    model = XGBoost(model_type=model_type)
 
     all_config = restore_zip(file, feature_transformers, model)
     ts_pipeline = TimeSequencePipeline(feature_transformers=feature_transformers,
