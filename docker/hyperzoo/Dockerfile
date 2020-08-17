@@ -117,9 +117,23 @@ RUN /opt/download-analytics-zoo.sh && \
     rm -rf /opt/analytics-zoo-examples/python/zoo/examples
 
 #cluster-serving
+#RUN mkdir -p /opt/cluster-serving && \
+#    wget https://oss.sonatype.org/content/repositories/public/com/redislabs/spark-redis/2.4.0/spark-redis-2.4.0-jar-with-dependencies.jar && \
+#    mv spark-redis-2.4.0-jar-with-dependencies.jar /opt/cluster-serving && \
+#    mkdir -p /opt/cluster-serving/model && \
+#    mkdir -p /opt/cluster-serving/test_image && \
+#    unzip -p $ANALYTICS_ZOO_HOME/lib/*.zip zoo/serving/quick_start.py > /opt/cluster-serving/quick_start.py
+#ADD https://raw.githubusercontent.com/intel-analytics/analytics-zoo/master/pyzoo/test/zoo/resources/serving_quick_start/cat1.jpeg /opt/cluster-serving/test_image
+#ADD https://raw.githubusercontent.com/intel-analytics/analytics-zoo/master/pyzoo/test/zoo/resources/serving_quick_start/dog1.jpeg /opt/cluster-serving/test_image
+#ADD https://raw.githubusercontent.com/intel-analytics/analytics-zoo/master/pyzoo/test/zoo/resources/serving_quick_start/fish1.jpeg /opt/cluster-serving/test_image
+#ADD https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/tf-res50/frozen_inference_graph.pb /opt/cluster-serving/model/tf_res50/frozen_inference_graph.pb
+#ADD https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/tf-res50/graph_meta.json /opt/cluster-serving/model/tf_res50/graph_meta.json
+#RUN chmod a+x ${ANALYTICS_ZOO_HOME}/bin/cluster-serving/*
+#RUN cd /opt/cluster-serving && cluster-serving-init && cd ..
+
 #flink
 RUN wget https://archive.apache.org/dist/flink/flink-1.10.0/flink-${FLINK_VERSION}-bin-scala_2.11.tgz && \
-    tar xzf flink-*.tgz && \
+    tar xzf flink-*.tgz  /opt/work && \
     rm flink-*.tgz
 
 
@@ -143,21 +157,6 @@ ENV OMP_NUM_THREADS     all
 RUN sed -i "s/jobmanager\.heap\.size:.*/jobmanager\.heap\.size: 8g/g" $FLINK_HOME/conf/flink-conf.yaml && \
     sed -i "s/taskmanager\.memory\.process\.size:.*/taskmanager\.memory\.process\.size: 8g/g" $FLINK_HOME/conf/flink-conf.yaml
 
-
-
-#RUN mkdir -p /opt/cluster-serving && \
-#    wget https://oss.sonatype.org/content/repositories/public/com/redislabs/spark-redis/2.4.0/spark-redis-2.4.0-jar-with-dependencies.jar && \
-#    mv spark-redis-2.4.0-jar-with-dependencies.jar /opt/cluster-serving && \
-#    mkdir -p /opt/cluster-serving/model && \
-#    mkdir -p /opt/cluster-serving/test_image && \
-#    unzip -p $ANALYTICS_ZOO_HOME/lib/*.zip zoo/serving/quick_start.py > /opt/cluster-serving/quick_start.py
-#ADD https://raw.githubusercontent.com/intel-analytics/analytics-zoo/master/pyzoo/test/zoo/resources/serving_quick_start/cat1.jpeg /opt/cluster-serving/test_image 
-#ADD https://raw.githubusercontent.com/intel-analytics/analytics-zoo/master/pyzoo/test/zoo/resources/serving_quick_start/dog1.jpeg /opt/cluster-serving/test_image
-#ADD https://raw.githubusercontent.com/intel-analytics/analytics-zoo/master/pyzoo/test/zoo/resources/serving_quick_start/fish1.jpeg /opt/cluster-serving/test_image 
-#ADD https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/tf-res50/frozen_inference_graph.pb /opt/cluster-serving/model/tf_res50/frozen_inference_graph.pb
-#ADD https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/tf-res50/graph_meta.json /opt/cluster-serving/model/tf_res50/graph_meta.json
-#RUN chmod a+x ${ANALYTICS_ZOO_HOME}/bin/cluster-serving/*
-#RUN cd /opt/cluster-serving && cluster-serving-init && cd ..
 
 WORKDIR /opt/spark/work-dir
 
