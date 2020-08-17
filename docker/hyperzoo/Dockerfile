@@ -133,7 +133,7 @@ RUN /opt/download-analytics-zoo.sh && \
 
 #flink
 RUN wget https://archive.apache.org/dist/flink/flink-1.10.0/flink-${FLINK_VERSION}-bin-scala_2.11.tgz && \
-    tar xzf flink-*.tgz  /opt/work && \
+    tar xzf flink-*.tgz  -C /opt/work && \
     rm flink-*.tgz
 
 
