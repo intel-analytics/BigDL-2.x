@@ -181,7 +181,7 @@ object Utils {
   }
 
   /**
-   * prepare tensor for wide part of WideAndDeep model based on sequential api and LookupTableSparse.
+   * prepare tensor for wide part of WideAndDeep based on sequential api and LookupTableSparse.
    *
    * @param r          Row of userId, itemId, features and label
    * @param columnInfo ColumnFeatureInfo specify information of different features

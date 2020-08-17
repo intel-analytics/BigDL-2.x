@@ -44,7 +44,7 @@ object Ml1mWideAndDeep {
 
     ratingsDF.groupBy("label").count().show()
     val localColumnInfo = ColumnFeatureInfo(
-      wideBaseCols = Array("genderind","ageind","occupation", "genresfull","genres1st"),
+      wideBaseCols = Array("genderind", "ageind", "occupation", "genresfull", "genres1st"),
       wideBaseDims = Array(3, 8, 21, 500, 19),
       wideCrossCols = Array("gender-age", "gender-age-occupation", "gender-genres"),
       wideCrossDims = Array(500, 500, 500),
@@ -143,9 +143,9 @@ object Ml1mWideAndDeep {
       "Western", "Comedy", "Action", "Sci-Fi")
     val genresUDF = udf(Utils.categoricalFromVocabList(genresList))
     val genderUDF = udf(Utils.categoricalFromVocabList(Array("F", "M")))
-    val ageUDF = udf(Utils.categoricalFromVocabList(Array("1","18","25","35","45","50","56")))
-    val bucket1UDF = udf(Utils.buckBuckets(500)(_:String))
-    val bucket2UDF = udf(Utils.buckBuckets(500)(_:String,_:String))
+    val ageUDF = udf(Utils.categoricalFromVocabList(Array("1", "18", "25", "35", "45", "50", "56")))
+    val bucket1UDF = udf(Utils.buckBuckets(500)(_: String))
+    val bucket2UDF = udf(Utils.buckBuckets(500)(_: String, _: String))
     val bucket3UDF = udf(Utils.buckBuckets(500)(_: String, _: String, _: String))
 
     val dataUse = unioned
