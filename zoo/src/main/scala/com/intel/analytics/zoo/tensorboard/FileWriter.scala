@@ -21,7 +21,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.tensorflow.framework
-import org.tensorflow.framework.{GraphDef,GradientDef}
+import org.tensorflow.framework.{GraphDef, GradientDef}
 import org.tensorflow.util.Event
 
 /**
