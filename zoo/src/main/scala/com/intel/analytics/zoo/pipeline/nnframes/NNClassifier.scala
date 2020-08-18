@@ -587,8 +587,6 @@ class XGBRegressorModel private[zoo](val model: XGBoostRegressionModel) {
   }
 
   def transform(dataset: DataFrame): DataFrame = {
-    require(featuresCol!=None, "Please set feature columns before transform")
-
     import org.apache.spark.sql.functions.{col, udf}
     import org.apache.spark.ml.linalg.Vector
     val asDense = udf((v: Vector) => v.toDense)
