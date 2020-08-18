@@ -126,7 +126,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
       val bInput = InferenceSupportive.batchInput(Seq(("", input)), param)
       val result = model.doPredict(bInput)
       val value = PostProcessing(result.toTensor[Float]
-        .squeeze(1).select(1, 1), "topN(1)")
+        .squeeze(1), "topN(1)", 1)
       val clz = value.split(",")(0).stripPrefix("[[")
       predictMap = predictMap + (file.getName -> clz)
     }
