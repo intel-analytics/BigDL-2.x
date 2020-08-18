@@ -27,7 +27,7 @@ class XgboostTrainSpec extends ZooSpecHelper {
   var sqlContext : SQLContext = _
 
   override def doBefore(): Unit = {
-    val conf = Engine.createSparkConf().setAppName("Test NNClassifier").setMaster("local[1]")
+    val conf = Engine.createSparkConf().setAppName("Test NNClassifier").setMaster("local[4]")
     sc = SparkContext.getOrCreate(conf)
     sqlContext = new SQLContext(sc)
   }
