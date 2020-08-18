@@ -38,7 +38,16 @@ import java.time.LocalDateTime
 
 import scala.reflect.ClassTag
 
-class ClusterServingHelper(_configPath: String = "config.yaml") {
+/**
+ * The helper of Cluster Serving
+ * by default, all parameters are loaded by config including model directory
+ * However, in some condition, models are distributed to remote machine
+ * and locate in tmp directory, but other configs are still needed.
+ * Thus model directory could be passed and overwrite that in config YAML
+ * @param _configPath the path of Cluster Serving config YAML
+ * @param _modelDir the path of model, if null, will read from config YAML
+ */
+class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: String = null) {
   type HM = LinkedHashMap[String, String]
 
   val configPath = _configPath
@@ -57,18 +66,11 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
   var redisPort: String = null
   var nodeNum: Int = 1
   var coreNum: Int = 1
-  var engineType: String = null
   var blasFlag: Boolean = false
   var chwFlag: Boolean = true
 
-//  var dataType: Array[DataTypeEnumVal] = null
-//  var dataShape: Array[Array[Int]] = Array[Array[Int]]()
   var filter: String = null
   var resize: Boolean = false
-
-  var logFile: FileWriter = null
-  var logErrorFlag: Boolean = true
-  var logSummaryFlag: Boolean = false
 
   /**
    * model related
@@ -97,7 +99,11 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
 
     // parse model field
     val modelConfig = configList.get("model").asInstanceOf[HM]
-    modelDir = getYaml(modelConfig, "path", null).asInstanceOf[String]
+    modelDir = if (_modelDir == null) {
+      getYaml(modelConfig, "path", null).asInstanceOf[String]
+    } else {
+      _modelDir
+    }
     modelInputs = getYaml(modelConfig, "inputs", "").asInstanceOf[String]
     modelOutputs = getYaml(modelConfig, "outputs", "").asInstanceOf[String]
     inferenceMode = getYaml(modelConfig, "mode", "").asInstanceOf[String]
@@ -113,13 +119,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
      * And also other frameworks supporting multiple engine type
      */
 
-    logFile = {
-      val logF = new File("./cluster-serving.log")
-      if (Files.exists(Paths.get("./cluster-serving.log"))) {
-        logF.createNewFile()
-      }
-      new FileWriter(logF, true)
-    }
+
 
     if (modelType.startsWith("tensorflow")) {
       chwFlag = false
@@ -133,11 +133,6 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     redisPort = redis.split(":").last.trim
 
     val secureConfig = configList.get("secure").asInstanceOf[HM]
-//    redisSecureEnabled = if (getYaml(secureConfig, "secure_enabled", false) != false) {
-//      getYaml(secureConfig, "secure_enabled", false).asInstanceOf[Boolean]
-//    } else {
-//      false
-//    }
     redisSecureEnabled = getYaml(secureConfig, "secure_enabled", false).asInstanceOf[Boolean]
 
     val defaultPath = try {
@@ -151,17 +146,8 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     redisSecureTrustStorePassword = getYaml(
       secureConfig, "secure_struct_store_password", "1234qwer").asInstanceOf[String]
 
-    val shapeStr = getYaml(dataConfig, "shape", "3,224,224").asInstanceOf[String]
-    require(shapeStr != null, "data shape in config must be specified.")
-//    val shapeList = shape.split(",").map(x => x.trim.toInt)
-//    for (i <- shapeList) {
-//      dataShape = dataShape :+ i
-//    }
-//    dataShape = ConfigUtils.parseShape(shapeStr.asInstanceOf[String])
     val typeStr = getYaml(dataConfig, "type", "image")
     require(typeStr != null, "data type in config must be specified.")
-//    dataType = ConfigUtils.parseType(typeStr)
-
 
     filter = getYaml(dataConfig, "filter", "").asInstanceOf[String]
     resize = getYaml(dataConfig, "resize", true).asInstanceOf[Boolean]
@@ -175,7 +161,6 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
         blasFlag = true
       }
       else blasFlag = false
-
     }
     else blasFlag = false
 
@@ -328,8 +313,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
    * @param msg
    */
   def logError(msg: String): Unit = {
-
-    if (logErrorFlag) logFile.write(dateTime + " --- " + msg + "\n")
+    println(dateTime + " --- " + msg + "\n")
     throw new Error(msg)
   }
 
@@ -441,4 +425,17 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
 
   }
 
+}
+object ClusterServingHelper {
+  /**
+   * This method is only used in executor node
+   * where model is distributed to remote in Flink tmp dir
+   * @param modelDir
+   * @return
+   */
+  def loadModelfromDir(confPath: String, modelDir: String): InferenceModel = {
+    val helper = new ClusterServingHelper(confPath, modelDir)
+    helper.initArgs()
+    helper.loadInferenceModel()
+  }
 }
