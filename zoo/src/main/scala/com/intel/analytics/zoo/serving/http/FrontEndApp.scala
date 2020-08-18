@@ -137,9 +137,8 @@ object FrontEndApp extends Supportive with EncryptSupportive {
             }).toList
             complete(jacksonJsonSerializer.serialize(servingMetrics))
           }
-        } ~(path("model-secure") & parameters('secret.as[String], 'salt.as[String])) {
+        } ~ (path("model-secure") & parameters('secret.as[String], 'salt.as[String])) {
           (secret, salt) => {
-            println(secret, salt)
             try {
               val dycryptSecret = decryptWithAES256(secret, Conventions.INTERNAL_SECRET,
                 Conventions.INTERNAL_SALT)
