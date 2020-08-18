@@ -22,6 +22,7 @@ from zoo.zouwu.preprocessing.impute.abstract import BaseImpute
 
 from sklearn.preprocessing import MinMaxScaler
 
+
 class MF():
     """
     Impute missing data with Matrix Factorization value
@@ -40,7 +41,7 @@ class MF():
         self.alpha = alpha
         self.beta = beta
         self.iterations = iterations
-        self.not_nan_index = (np.isnan(self.X) == False)
+        self.not_nan_index = 1 if np.isnan(self.X) == False else 0
     pass
 
     def train(self):
@@ -103,8 +104,8 @@ class MF():
             If RuntimeWarning: overflow encountered in multiply,
             then turn down the learning rate alpha.
             """
-            self.U[i, :] += self.alpha * (2 * e * self.V[j, :] - self.beta * self.U[i,:])
-            self.V[j, :] += self.alpha * (2 * e * self.U[i, :] - self.beta * self.V[j,:])
+            self.U[i, :] += self.alpha * (2 * e * self.V[j, :] - self.beta * self.U[i, :])
+            self.V[j, :] += self.alpha * (2 * e * self.U[i, :] - self.beta * self.V[j, :])
 
     def get_x(self, i, j):
         """
@@ -128,7 +129,8 @@ class MF():
             for j in range(self.num_features):
                 if np.isnan(X[i, j]):
                     X[i, j] = X_hat[i, j]
-        return X   
+        return X
+
 
 class MFFill(BaseImpute):
     """
@@ -140,16 +142,16 @@ class MFFill(BaseImpute):
         """
     pass
 
-    def scaling(self,x):
+    def scaling(self, x):
         scaler = MinMaxScaler(feature_range=(-1, 1))
         scaler.fit(x)
         scaled_x = scaler.transform(x)
         return scaled_x, scaler
 
-    def inverse_scale(self,scaler, x):
+    def inverse_scale(self, scaler, x):
         return scaler.inverse_transform(x)
 
-    def impute(self, df, k=1, alpha=0.01, beta=0.1, iterations=100):
+    def impute(self, df, k=1, alpha=0.01, beta=0.1, iterations=50):
         """
         impute data
         :params df(dataframe): input dataframe
@@ -157,13 +159,13 @@ class MFFill(BaseImpute):
         :params alpha (float) : learning rate
         :params beta (float)  : regularization parameter
         """
-        scaled_df,scaler = self.scaling(x=df.values)
+        scaled_df, scaler = self.scaling(x=df.values)
         mf_df = pd.DataFrame(scaled_df)
         mf = MF(mf_df, k=k, alpha=alpha, beta=beta, iterations=iterations)
         mf.train()
         X_hat = mf.full_matrix()
         X_comp = mf.replace_nan(X_hat)
-        filled_unscaled = self.inverse_scale(scaler,X_comp)
+        filled_unscaled = self.inverse_scale(scaler, X_comp)
         filled_df = pd.DataFrame(filled_unscaled)
         filled_df.columns = df.columns
         filled_df.index = df.index

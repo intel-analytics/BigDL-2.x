@@ -20,6 +20,7 @@ import sklearn.metrics as metrics
 
 from zoo.zouwu.preprocessing.impute.abstract import BaseImpute
 
+
 class MeanFill(BaseImpute):
     """
     Impute missing data with mean value

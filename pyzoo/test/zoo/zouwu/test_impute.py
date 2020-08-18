@@ -53,21 +53,21 @@ class TestDataImputation(ZooTestCase):
         imputed_data = last_fill.impute(self.data)
         assert imputed_data.isna().sum().sum() == 0
         mse = last_fill.evaluate(imputed_data, 0.1)
-        
+
     def test_meanfill(self):
         mean_fill = MeanFill()
         mse_missing = mean_fill.evaluate(self.data, 0.1)
         imputed_data = mean_fill.impute(self.data)
         assert imputed_data.isna().sum().sum() == 0
         mse = mean_fill.evaluate(imputed_data, 0.1)
-    
+
     def test_mffill(self):
         mf_fill = MFFill()
         mse_missing = mf_fill.evaluate(self.data, 0.1)
         imputed_data = mf_fill.impute(self.data)
         assert imputed_data.isna().sum().sum() == 0
         mse = mf_fill.evaluate(imputed_data, 0.1)
-        
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
