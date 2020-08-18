@@ -154,7 +154,8 @@ object PostProcessing {
     if (t.isTable) {
       var value = ""
       t.toTable.keySet.foreach(key => {
-        val cls = new PostProcessing(t.toTable(key).asInstanceOf[Tensor[Float]].select(1, index), filter)
+        val cls = new PostProcessing(t.toTable(key)
+          .asInstanceOf[Tensor[Float]].select(1, index), filter)
         value += cls.processTensor()
       })
       value

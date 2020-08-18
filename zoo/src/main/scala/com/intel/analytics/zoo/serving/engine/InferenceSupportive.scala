@@ -36,7 +36,8 @@ object InferenceSupportive {
         (pathByte._1, value)
       } catch {
         case e: Exception =>
-          logger.info(s"${e}, Your input ${pathByte._1} format is invalid to your model, this record is skipped")
+          logger.info(s"${e}, " +
+            s"Your input ${pathByte._1} format is invalid to your model, this record is skipped")
           (pathByte._1, "")
       }
     })
@@ -100,7 +101,7 @@ object InferenceSupportive {
       })
     })
     // Resize and specific control
-    if (params.resize){
+    if (params.resize) {
       t.keySet.foreach(key => {
         val singleTensorSize = inputSample(key).asInstanceOf[Tensor[Float]].size()
         var newSize = Array(thisBatchSize)
