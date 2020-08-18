@@ -7,7 +7,7 @@ ARG BIGDL_VERSION=0.10.0
 ARG SPARK_VERSION=2.4.3
 ARG FLINK_VERSION=1.10.0
 
-ENV FLINK_HOME                  /opt/work/flink-${FLINK_VERSION}
+ENV FLINK_HOME                          /opt/flink-${FLINK_VERSION}
 ENV ANALYTICS_ZOO_VERSION               ${ANALYTICS_ZOO_VERSION}
 ENV SPARK_VERSION                       ${SPARK_VERSION}
 ENV BIGDL_VERSION                       ${BIGDL_VERSION}
@@ -133,7 +133,7 @@ RUN /opt/download-analytics-zoo.sh && \
 
 #flink
 RUN wget https://archive.apache.org/dist/flink/flink-1.10.0/flink-${FLINK_VERSION}-bin-scala_2.11.tgz && \
-    tar xzf flink-*.tgz  -C /opt/work && \
+    tar xzf flink-*.tgz  -C /opt && \
     rm flink-*.tgz
 
 
