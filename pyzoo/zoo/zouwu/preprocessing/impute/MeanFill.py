@@ -38,4 +38,5 @@ class MeanFill(BaseImpute):
         :return: imputed dataframe
         """
         mean = df.mean()
+        mean.fillna(0)
         return df.fillna(mean)
