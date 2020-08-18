@@ -50,7 +50,7 @@ def get_negative_samples(indexed):
 
 def get_wide_tensor(row, column_info):
     """
-    convert a row to tensor given column feature information of a WideAndDeep model
+    prepare tensor for wide part of WideAndDeep model based on SparseDense
 
     :param row: Row of userId, itemId, features and label
     :param column_info: ColumnFeatureInfo specify information of different features
@@ -70,7 +70,7 @@ def get_wide_tensor(row, column_info):
             acc += wide_dims[i - 1]
             res = acc + index
         indices.append(res)
-    values = np.array([i + 1 for i in indices])
+    values = np.ones(len(indices))
     shape = np.array([sum(wide_dims)])
     return JTensor.sparse(values, np.array(indices), shape)
 
