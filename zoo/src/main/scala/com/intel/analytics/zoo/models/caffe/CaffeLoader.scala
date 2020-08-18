@@ -22,8 +22,8 @@ import caffe.Caffe._
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.nn._
-import com.intel.analytics.bigdl.shaded.protobuf.TextFormat.ParseException
-import com.intel.analytics.bigdl.shaded.protobuf.{CodedInputStream, GeneratedMessage, TextFormat}
+import com.intel.analytics.shaded.protobuf_v_3_5_1.TextFormat.ParseException
+import com.intel.analytics.shaded.protobuf_v_3_5_1.{CodedInputStream, GeneratedMessage, TextFormat}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{Node, Table}
