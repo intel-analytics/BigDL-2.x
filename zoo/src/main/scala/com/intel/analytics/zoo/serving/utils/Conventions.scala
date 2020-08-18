@@ -27,4 +27,8 @@ object Conventions {
   val ARROW_FLOAT = new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE)
   val ARROW_BINARY = new ArrowType.Binary()
   val ARROW_UTF8 = new ArrowType.Utf8
+
+  val MODEL_SECURED_KEY = "model_secured"
+  val MODEL_SECURED_SECRET = "secret"
+  val MODEL_SECURED_SALT = "salt"
 }
