@@ -25,7 +25,8 @@ class AutoXGBoost(object):
                   config=None,
                   name="automl",
                   logs_dir="~/zoo_automl_logs"):
-        tsp = XgbPredictor(feature_cols, target_col, config, name, logs_dir)
+        tsp = XgbPredictor(feature_cols, target_col, 'regressor',
+                           config, name, logs_dir)
         return tsp
 
     @staticmethod

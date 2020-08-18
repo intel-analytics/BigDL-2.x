@@ -52,6 +52,7 @@ class RayTuneSearchEngine(SearchEngine):
     def compile(self,
                 input_df,
                 model_create_func,
+                search_space,
                 recipe,
                 schedule_algorithm=None,
                 feature_transformers=None,
@@ -78,7 +79,6 @@ class RayTuneSearchEngine(SearchEngine):
         """
 
         # prepare parameters for search engine
-        search_space = recipe.search_space(None)
         runtime_params = recipe.runtime_params()
         num_samples = runtime_params['num_samples']
         stop = dict(runtime_params)

@@ -208,7 +208,7 @@ class TimeSequencePredictor(object):
     @staticmethod
     def _get_metric_mode(metric):
         max_mode_metrics = ["r2"]
-        min_mode_metrics = ["mse", "mae", "logloss"]
+        min_mode_metrics = ["mse", "mae", "rmse", "logloss"]
         if metric in min_mode_metrics:
             return "min"
         elif metric in max_mode_metrics:
@@ -245,13 +245,13 @@ class TimeSequencePredictor(object):
 
         # prepare parameters for search engine
         search_space = recipe.search_space(feature_list)
-        runtime_params = recipe.runtime_params()
-        num_samples = runtime_params['num_samples']
-        stop = dict(runtime_params)
-        search_algorithm_params = recipe.search_algorithm_params()
-        search_algorithm = recipe.search_algorithm()
-        fixed_params = recipe.fixed_params()
-        del stop['num_samples']
+        # runtime_params = recipe.runtime_params()
+        # num_samples = runtime_params['num_samples']
+        # stop = dict(runtime_params)
+        # search_algorithm_params = recipe.search_algorithm_params()
+        # search_algorithm = recipe.search_algorithm()
+        # fixed_params = recipe.fixed_params()
+        # del stop['num_samples']
 
         metric_mode = TimeSequencePredictor._get_metric_mode(metric)
         searcher = RayTuneSearchEngine(logs_dir=self.logs_dir,
@@ -261,6 +261,7 @@ class TimeSequencePredictor(object):
                                        )
         searcher.compile(input_df,
                          model_create_func=model_create_func(),
+                         search_space=search_space,
                          recipe=recipe,
                          feature_transformers=ft,
                          future_seq_len=self.future_seq_len,
