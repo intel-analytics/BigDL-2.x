@@ -43,7 +43,7 @@ class MF():
         self.iterations = iterations
         mask = (-df.isna())*1
         self.not_nan_index = mask.to_numpy()
-        
+
     pass
 
     def train(self):
