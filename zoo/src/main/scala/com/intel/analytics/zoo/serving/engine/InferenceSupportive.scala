@@ -37,8 +37,10 @@ object InferenceSupportive {
           val value = PostProcessing(result.toTensor[Float], params.filter)
           (pathByteBatch(idx)._1, value)
         } catch {
-          case _ =>
-            logger.info("Your input format is invalid to your model, this batch is skipped")
+          case e:Exception =>
+            logger.error(e.getMessage)
+            e.printStackTrace()
+            logger.error("Your input format is invalid to your model, this batch is skipped")
             null
         }
       }).filter(x => x != null)
