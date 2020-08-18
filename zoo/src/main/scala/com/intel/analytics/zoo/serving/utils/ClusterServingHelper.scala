@@ -36,6 +36,8 @@ import org.apache.spark.sql.SparkSession
 import org.yaml.snakeyaml.Yaml
 import java.time.LocalDateTime
 
+import redis.clients.jedis.Jedis
+
 import scala.reflect.ClassTag
 
 /**
@@ -81,9 +83,12 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
   /**
    * secure related
    */
-  var redisSecureEnabled: Boolean = true
+  var redisSecureEnabled: Boolean = false
   var redisSecureTrustStorePath: String = null
   var redisSecureTrustStorePassword: String = null
+
+  var modelEncrypted: Boolean = false
+
   /**
    * Initialize the parameters by loading config file
    * create log file, set backend engine type flag
@@ -144,6 +149,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
       .asInstanceOf[String]
     redisSecureTrustStorePassword = getYaml(
       secureConfig, "secure_struct_store_password", "1234qwer").asInstanceOf[String]
+    modelEncrypted = getYaml(secureConfig, "model_encrypted", false).asInstanceOf[Boolean]
 
     val typeStr = getYaml(dataConfig, "type", "image")
     require(typeStr != null, "data type in config must be specified.")
@@ -273,6 +279,21 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
       64
     }
 
+    var secret: String = null
+    var salt: String = null
+    if (modelEncrypted) {
+      val jedis = new Jedis(redisHost, redisPort.toInt)
+      while (secret == null || salt == null) {
+        secret = jedis.hget(Conventions.MODEL_SECURED_KEY, Conventions.MODEL_SECURED_SECRET)
+        salt = jedis.hget(Conventions.MODEL_SECURED_KEY, Conventions.MODEL_SECURED_SALT)
+        logger.info("Waiting for Model Encrypted Secret and Salt in Redis," +
+          "please put them in model_secured -> secret and " +
+          "model_secured -> salt")
+        logger.info("Retrying in 3 seconds...")
+        Thread.sleep(3000)
+      }
+
+    }
     modelType match {
       case "caffe" => model.doLoadCaffe(defPath, weightPath, blas = blasFlag)
       case "bigdl" => model.doLoadBigDL(weightPath, blas = blasFlag)
@@ -294,8 +315,12 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
         model.doLoadTensorflow(weightPath, "savedModel", inputs, outputs)
       case "pytorch" => model.doLoadPyTorch(weightPath)
       case "keras" => logError("Keras currently not supported in Cluster Serving")
-      case "openvino" => model.doLoadOpenVINO(defPath, weightPath, coreNum)
+      case "openvino" => modelEncrypted match {
+        case true => model.doLoadEncryptedOpenVINO(defPath, weightPath, secret, salt, coreNum)
+        case false => model.doLoadOpenVINO(defPath, weightPath, coreNum)
+      }
       case _ => logError("Invalid model type, please check your model directory")
+
     }
     model
 
