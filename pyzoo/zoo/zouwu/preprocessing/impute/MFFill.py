@@ -41,11 +41,9 @@ class MF():
         self.alpha = alpha
         self.beta = beta
         self.iterations = iterations
-        if np.isnan(self.X) is True:
-            self.not_nan_index = 0
-        else:
-            self.not_nan_index = 1
-        # self.not_nan_index = 1 if np.isnan(self.X) == False else 0
+        mask = (-df.isna())*1
+        self.not_nan_index = mask.to_numpy()
+        
     pass
 
     def train(self):
@@ -155,7 +153,7 @@ class MFFill(BaseImpute):
     def inverse_scale(self, scaler, x):
         return scaler.inverse_transform(x)
 
-    def impute(self, df, k=1, alpha=0.01, beta=0.1, iterations=50):
+    def impute(self, df, k=1, alpha=0.01, beta=0.1, iterations=100):
         """
         impute data
         :params df(dataframe): input dataframe
@@ -173,4 +171,5 @@ class MFFill(BaseImpute):
         filled_df = pd.DataFrame(filled_unscaled)
         filled_df.columns = df.columns
         filled_df.index = df.index
+        print(filled_df.isna().sum().sum())
         return filled_df
