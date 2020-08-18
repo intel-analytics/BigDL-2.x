@@ -41,7 +41,11 @@ class MF():
         self.alpha = alpha
         self.beta = beta
         self.iterations = iterations
-        self.not_nan_index = 1 if np.isnan(self.X) == False else 0
+        if np.isnan(self.X) is True:
+            self.not_nan_index = 0
+        else:
+            self.not_nan_index = 1
+        # self.not_nan_index = 1 if np.isnan(self.X) == False else 0
     pass
 
     def train(self):
