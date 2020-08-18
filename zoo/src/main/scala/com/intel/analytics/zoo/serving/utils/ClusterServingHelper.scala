@@ -145,13 +145,6 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
     redisSecureTrustStorePassword = getYaml(
       secureConfig, "secure_struct_store_password", "1234qwer").asInstanceOf[String]
 
-    val shapeStr = getYaml(dataConfig, "shape", "3,224,224").asInstanceOf[String]
-    require(shapeStr != null, "data shape in config must be specified.")
-//    val shapeList = shape.split(",").map(x => x.trim.toInt)
-//    for (i <- shapeList) {
-//      dataShape = dataShape :+ i
-//    }
-//    dataShape = ConfigUtils.parseShape(shapeStr.asInstanceOf[String])
     val typeStr = getYaml(dataConfig, "type", "image")
     require(typeStr != null, "data type in config must be specified.")
 
