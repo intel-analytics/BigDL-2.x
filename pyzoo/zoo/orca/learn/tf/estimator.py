@@ -169,15 +169,17 @@ class Estimator(object):
 
     def save_tf_checkpoint(self, path):
         """
-        Save tensorflow checkpoint model in this estimator.
-        For tensorflow graph model, it would save the checkpoint.
-        For tensorflow keras model, it would save keras model.
-        :param path: save path.
+        Save tensorflow checkpoint in this estimator.
+        :param path: tensorflow checkpoint path.
         """
-        pass
+        raise NotImplementedError()
 
     def save_keras_model(self, path):
-        pass
+        """
+        Save tensorflow keras model in this estimator.
+        :param path: keras model save path.
+        """
+        raise NotImplementedError()
 
 
 class TFOptimizerWrapper(Estimator):
@@ -407,9 +409,6 @@ class TFOptimizerWrapper(Estimator):
     def save_tf_checkpoint(self, path):
         save_tf_checkpoint(self.sess, path)
 
-    def save_keras_model(self, path):
-        raise Exception("No keras model in this estimator")
-
 
 class TFKerasWrapper(Estimator):
     def __init__(self, keras_model, metrics, model_dir):
@@ -554,9 +553,6 @@ class TFKerasWrapper(Estimator):
                              )
 
         return self.model.evaluate(dataset, batch_per_thread=batch_size)
-
-    def save_tf_checkpoint(self, path):
-        raise Exception("save tensorflow checkpoint is not supported")
 
     def save_keras_model(self, path):
         self.model.save_model(path)
