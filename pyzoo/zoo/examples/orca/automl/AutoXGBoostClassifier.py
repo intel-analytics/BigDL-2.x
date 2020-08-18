@@ -20,9 +20,9 @@ import numpy as np
 import pandas as pd
 
 from sklearn.model_selection import train_test_split
-from zoo.automl.regression.xgb_predictor import *
 from zoo import init_spark_on_local, init_spark_on_yarn
 from zoo.ray import RayContext
+from zoo.orca.automl.AutoXGBoost import AutoXGBoost
 from zoo.automl.config.recipe import *
 
 if __name__ == '__main__':
@@ -107,13 +107,12 @@ if __name__ == '__main__':
     max_features_range = (0.1, 0.8)
 
     input_cols.remove("ArrDelay")
-    tsp = XgbPredictor(feature_cols=input_cols,
-                       target_col="ArrDelayBinary",
-                       model_type="classifier")
+    estimator = AutoXGBoost().classifier(feature_cols=input_cols,
+                                        target_col="ArrDelayBinary")
 
     import time
     start = time.time()
-    pipeline = tsp.fit(train_df,
+    pipeline = estimator.fit(train_df,
                        validation_df=val_df,
                        metric="logloss",
                        recipe=XgbRegressorSkOptRecipe())

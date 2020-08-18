@@ -54,8 +54,8 @@ class Recipe(metaclass=ABCMeta):
     def search_algorithm(self):
         return None
 
-    def scheduler_params(self):
-        pass
+    def scheduler_algorithm(self):
+        return None
 
 
 class SmokeRecipe(Recipe):
@@ -624,3 +624,6 @@ class XgbRegressorSkOptRecipe(Recipe):
 
     def search_algorithm(self):
         return 'SkOpt'
+
+    def scheduler_algorithm(self):
+        return "AsyncHyperBand"

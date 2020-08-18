@@ -54,7 +54,6 @@ class RayTuneSearchEngine(SearchEngine):
                 model_create_func,
                 search_space,
                 recipe,
-                schedule_algorithm=None,
                 feature_transformers=None,
                 # model=None,
                 future_seq_len=1,
@@ -85,6 +84,7 @@ class RayTuneSearchEngine(SearchEngine):
         search_algorithm_params = recipe.search_algorithm_params()
         search_algorithm = recipe.search_algorithm()
         fixed_params = recipe.fixed_params()
+        schedule_algorithm = recipe.scheduler_algorithm()
         del stop['num_samples']
 
         self.search_space = self._prepare_tune_config(search_space)
