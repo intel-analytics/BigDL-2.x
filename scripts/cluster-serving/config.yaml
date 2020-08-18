@@ -23,22 +23,11 @@ redis:
   # default, 4g
   maxmem:
 secure:
-  # default: no
+  # default: false
   secure_enabled:
   # default:
   secure_trust_store_path:
   # default:
   secure_struct_store_password:
-spark:
-  # default, local[*]
-  master: 
-  # default, 4g
-  driver_memory:
-  # default, 1g
-  executor_memory:
-  # default, 1
-  num_executors:
-  # default, 4
-  executor_cores:
-  # default, 4
-  total_executor_cores:
+  # default: false
+  model_encrypted:
