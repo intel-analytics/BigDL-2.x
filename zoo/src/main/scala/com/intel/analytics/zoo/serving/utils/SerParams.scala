@@ -36,10 +36,8 @@ class SerParams(helper: ClusterServingHelper, loadModel: Boolean = true) extends
   val redisSecureTrustStorePath = helper.redisSecureTrustStorePath
   val redisSecureTrustStorePassword = helper.redisSecureTrustStorePassword
   println(s"loading params, time is ${sdf.format(lastModified)}")
-//  var model = if (loadModel) {
-//    helper.loadInferenceModel()
-//  } else {
-//    null
-//  }
+
+  val resize = helper.resize
+
   var model: InferenceModel = null
 }
