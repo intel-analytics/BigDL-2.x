@@ -65,7 +65,6 @@ class TorchRunner:
                  scheduler_creator=None,
                  training_operator_cls=None,
                  config=None,
-                 serialize_data_creation=True,
                  use_tqdm=False,
                  scheduler_step_freq=None):
         self.model_creator = model_creator
@@ -84,7 +83,6 @@ class TorchRunner:
         self.train_loader = None
         self.validation_loader = None
         self.training_operator = None
-        self.serialize_data_creation = serialize_data_creation
         self.use_tqdm = use_tqdm
         self.scheduler_step_freq = scheduler_step_freq
 
@@ -186,8 +184,7 @@ class TorchRunner:
             SCHEDULER_STEP: self.scheduler_step_freq
         })
         with self.timers.record("train_epoch"):
-            if TorchRunner.should_wrap_dataloader(data_loader):
-                data_loader = iter(data_loader)
+            data_loader = iter(data_loader)
             train_stats = self.training_operator.train_epoch(data_loader, info)
 
         self.epochs += 1
@@ -202,10 +199,14 @@ class TorchRunner:
         info = info or {}
         self._toggle_profiling(profile=profile)
 
-        with self.timers.record("validation"):
+        if OrcaContext.serialize_data_creation:
             with FileLock(
                     os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
                 loader = data_creator(self.config)
+        else:
+            loader = data_creator(self.config)
+
+        with self.timers.record("validation"):
             if TorchRunner.should_wrap_dataloader(loader):
                 loader = iter(self.with_sampler(loader))
                 if num_steps:

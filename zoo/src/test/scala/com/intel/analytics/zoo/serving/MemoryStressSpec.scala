@@ -30,7 +30,7 @@ class MemoryStressSpec extends FlatSpec with Matchers {
                      |]
                      |}
                      |""".stripMargin
-    (0 until 10000000).foreach(i => {
+    (0 until 10).foreach(i => {
       val ins = JsonUtil.fromJson(classOf[Instances], inputStr)
       val bytes = ins.toArrow()
       val b64 = java.util.Base64.getEncoder.encodeToString(bytes)
