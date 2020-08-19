@@ -27,7 +27,7 @@ class XgboostTrainSpec extends ZooSpecHelper {
   var sqlContext : SQLContext = _
 
   override def doBefore(): Unit = {
-    val conf = Engine.createSparkConf().setAppName("Test NNClassifier").setMaster("local[4]")
+    val conf = Engine.createSparkConf().setAppName("Test NNClassifier").setMaster("local[1]")
     sc = SparkContext.getOrCreate(conf)
     sqlContext = new SQLContext(sc)
   }
@@ -55,6 +55,7 @@ class XgboostTrainSpec extends ZooSpecHelper {
     val assembledDf = vectorAssembler.transform(df).select("features", "label").cache()
 
     val xgbRf0 = new XGBRegressor()
+    xgbRf0.setNthread(1)
     val xgbRegressorModel0 = xgbRf0.fit(assembledDf)
     val y0 = xgbRegressorModel0.transform(assembledDf)
 
