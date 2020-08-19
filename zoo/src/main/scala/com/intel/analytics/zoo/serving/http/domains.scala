@@ -44,6 +44,8 @@ case class PredictionInputFlushMessage() extends ServingMessage
 
 case class PredictionQueryMessage(ids: Seq[String]) extends ServingMessage
 
+case class SecuredModelSecretSaltMessage(secret: String, salt: String) extends ServingMessage
+
 case class PredictionQueryWithTargetMessage(query: PredictionQueryMessage, target: ActorRef)
   extends ServingMessage
 
