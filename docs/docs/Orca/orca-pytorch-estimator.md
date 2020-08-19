@@ -12,7 +12,7 @@ __Ubuntu 16.04 or later__ and __macOS 10.12.6 or later__.
 
 ### Orca PyTorch Estimator
 
-Orca PyTorch Estimator is an estimator to do PyTorch training/evaluation/prediction on Spark in a d distributed fashion.
+Orca PyTorch Estimator is an estimator to do PyTorch training/evaluation/prediction on Spark in a distributed fashion.
 
 It can support various data types, like XShards, PyTorch DataLoader, PyTorch DataLoader creator, etc.
 
@@ -36,9 +36,9 @@ Estimator.from_torch(*,
                    use_tqdm=False,
                    backend="horovod"):
 ```
-* `model`: PyTorch model if backend="bigdl", PyTorch model creator if backend="horovod"
-* `optimizer`: bigdl optimizer if backend="bigdl", PyTorch optimizer creator if backend="horovod"
-* `loss`: PyTorch loss if backend="bigdl", PyTorch loss creator if backend="horovod"
+* `model`: PyTorch model if `backend="bigdl"`, PyTorch model creator if `backend="horovod"`
+* `optimizer`: bigdl optimizer if `backend="bigdl"`, PyTorch optimizer creator if `backend="horovod"`
+* `loss`: PyTorch loss if `backend="bigdl"`, PyTorch loss creator if `backend="horovod"`
 * `scheduler_creator`: parameter for horovod. a learning rate scheduler wrapping the optimizer. You will need to set ``TorchTrainer(scheduler_step_freq="epoch")`` for the scheduler to be incremented correctly. If using a scheduler for validation loss, be sure to call ``trainer.update_scheduler(validation_loss)``
 * `training_operator_cls`: parameter for horovod. Custom training operator class that subclasses the TrainingOperator class. This class will be copied onto all remote workers and used to specify custom training and validation operations. Defaults to TrainingOperator.
 * `initialization_hook`: parameter for horovod.
@@ -49,7 +49,7 @@ Estimator.from_torch(*,
 
 #### Use horovod Estimator
 ##### Train model
-After an Estimator created, you can call estimator API to train PyTorch model:
+After an Estimator is created, you can call estimator API to train PyTorch model:
 ```
 fit(self, data, epochs=1, profile=False, reduce_results=True, info=None)
 ```
@@ -86,7 +86,7 @@ You can shut down workers and releases resources using `shutdown(self, force=Fal
 #### Use BigDL Estimator
 
 ##### Train model
-After an Estimator created, you can call estimator API to train PyTorch model:
+After an Estimator is created, you can call estimator API to train PyTorch model:
 ```
 fit(self, data, epochs=1, batch_size=32, validation_data=None, validation_methods=None, checkpoint_trigger=None):
 ```
