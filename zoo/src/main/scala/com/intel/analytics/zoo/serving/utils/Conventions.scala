@@ -31,7 +31,4 @@ object Conventions {
   val MODEL_SECURED_KEY = "model_secured"
   val MODEL_SECURED_SECRET = "secret"
   val MODEL_SECURED_SALT = "salt"
-
-  val INTERNAL_SECRET = "1234qwer"
-  val INTERNAL_SALT = "intel-analytics-zoo"
 }

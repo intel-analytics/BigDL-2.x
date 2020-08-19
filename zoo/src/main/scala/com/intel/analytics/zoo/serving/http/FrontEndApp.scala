@@ -137,14 +137,14 @@ object FrontEndApp extends Supportive with EncryptSupportive {
             }).toList
             complete(jacksonJsonSerializer.serialize(servingMetrics))
           }
-        } ~ (path("model-secure") & parameters('secret.as[String], 'salt.as[String])) {
-          (secret, salt) => {
+        } ~ (post & path("model-secure") &
+          extract(_.request.entity.contentType) & entity(as[String])) {
+          (contentType, content) => {
             try {
-              val dycryptSecret = decryptWithAES256(secret, Conventions.INTERNAL_SECRET,
-                Conventions.INTERNAL_SALT)
-              val dycryptSalt = decryptWithAES256(salt, Conventions.INTERNAL_SECRET,
-                Conventions.INTERNAL_SALT)
-              val message = SecuredModelSecretSaltMessage(dycryptSecret, dycryptSalt)
+              val secrets = content.split("&")
+              val secret = secrets(0).split("=")(1)
+              val salt = secrets(1).split("=")(1)
+              val message = SecuredModelSecretSaltMessage(secret, salt)
               val result = Await.result(redisPutter ? message, timeout.duration)
                 .asInstanceOf[Boolean]
               result match {
@@ -154,7 +154,8 @@ object FrontEndApp extends Supportive with EncryptSupportive {
             } catch {
               case e: Exception =>
                 e.printStackTrace()
-                val error = ServingError(e.getMessage)
+                val error = ServingError(e.getMessage + "\n please post a content like " +
+                  "secret=xxx&salt=xxxx")
                 complete(500, error.toString)
             }
 
