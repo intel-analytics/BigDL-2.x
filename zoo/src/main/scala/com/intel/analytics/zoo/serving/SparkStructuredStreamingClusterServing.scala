@@ -193,7 +193,7 @@ object SparkStructuredStreamingClusterServing {
             serParams.model = bcModel.value
             println(s"Take Broadcasted model time ${(System.nanoTime() - t1) / 1e9} s")
             it.grouped(serParams.coreNum).flatMap(itemBatch => {
-              InferenceSupportive.multiThreadInference(itemBatch.toIterator, serParams)
+              InferenceSupportive.singleThreadInference(itemBatch.toIterator, serParams)
             })
           })
 
