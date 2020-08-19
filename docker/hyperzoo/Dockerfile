@@ -48,11 +48,11 @@ RUN apt-get update --fix-missing && \
     chgrp root /etc/passwd && chmod ug+rw /etc/passwd
 
 #java
-RUN wget https://enos.itcollege.ee/~jpoial/allalaadimised/jdk8/jdk-8u241-linux-x64.tar.gz && \
-    gunzip jdk-8u241-linux-x64.tar.gz && \
-    tar -xf jdk-8u241-linux-x64.tar -C /opt && \
-    rm jdk-8u241-linux-x64.tar && \
-    ln -s /opt/jdk1.8.0_241 /opt/jdk
+RUN wget https://enos.itcollege.ee/~jpoial/allalaadimised/jdk8/jdk-8u261-linux-x64.tar.gz  && \
+    gunzip jdk-8u261-linux-x64.tar.gz && \
+    tar -xf jdk-8u261-linux-x64.tar -C /opt && \
+    rm jdk-8u261-linux-x64.tar && \
+    ln -s /opt/jdk1.8.0_261 /opt/jdk
 
 #spark
 RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
