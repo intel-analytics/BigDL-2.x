@@ -171,7 +171,7 @@ class TFRunner:
                 callbacks = hvd_callbacks
 
         history = self.model.fit(train_dataset,
-                                 epochs=epochs,
+                                 epochs=self.epoch + epochs,
                                  verbose=verbose,
                                  callbacks=callbacks,
                                  validation_data=test_dataset,
