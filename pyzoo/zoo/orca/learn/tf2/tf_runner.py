@@ -239,8 +239,6 @@ class TFRunner:
 
     def set_state(self, state):
         """Sets the state of the model."""
-
-        self.model = self.model_creator(self.config)
         self.epoch = state["epoch"]
         self.model.set_weights(state["weights"])
 
