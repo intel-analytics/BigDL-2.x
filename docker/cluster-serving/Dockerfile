@@ -19,7 +19,7 @@ ENV PATH			${JAVA_HOME}/bin:${ANALYTICS_ZOO_HOME}/bin/cluster-serving:${PATH}
 RUN apt-get update && \
     apt-get install -y apt-utils vim curl nano wget unzip maven git numactl net-tools && \
     apt-get install -y gcc g++ make && \
-    apt-get install -y libsm6 libxext6 libxrender-dev
+    apt-get install -y libsm6 libxext6 libxrender-dev libgl1-mesa-dev
 
 #python
 RUN apt-get install -y python3-minimal && \
@@ -57,8 +57,9 @@ RUN wget https://archive.apache.org/dist/flink/flink-1.10.0/flink-${FLINK_VERSIO
 ADD *.sh /opt/work/scripts/
 RUN chmod a+x /opt/work/scripts/*.*
 
-RUN /opt/work/scripts/download-cluster-serving-all-zip.sh
-RUN cd cluster-serving && \
+RUN /opt/work/scripts/download-cluster-serving-all-zip.sh && \
+    rm analytics-*-cluster-serving-all.zip && \
+    cd cluster-serving && \
     ./cluster-serving-setup.sh
 
 ADD resources/ /opt/work/cluster-serving/resources/
@@ -72,6 +73,9 @@ ENV PYTHONPATH 		${CS_HOME}/serving-python.zip
 
 ENV OMP_NUM_THREADS	all
 
-CMD ["bash"]
+RUN sed -i "s/jobmanager\.heap\.size:.*/jobmanager\.heap\.size: 8g/g" $FLINK_HOME/conf/flink-conf.yaml && \
+    sed -i "s/taskmanager\.memory\.process\.size:.*/taskmanager\.memory\.process\.size: 8g/g" $FLINK_HOME/conf/flink-conf.yaml
+
+CMD /bin/bash -c $FLINK_HOME/bin/start-cluster.sh && tail -f /dev/null
 
 

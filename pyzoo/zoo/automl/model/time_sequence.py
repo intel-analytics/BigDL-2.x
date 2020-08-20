@@ -123,9 +123,9 @@ class TimeSequenceModel(BaseModel):
         self.model.save(model_path, config_path)
 
     def restore(self, model_path, **config):
-        assert "future_seq_len" in config
+        # assert "future_seq_len" in config
         assert "model" in config
-        self.future_seq_len = config["future_seq_len"]
+        self.future_seq_len = config.get("future_seq_len", 0)
         self._sel_model(config=config, verbose=0)
         # self._model_selection(future_seq_len=config["future_seq_len"], verbose=0)
         self.model.restore(model_path, **config)

@@ -36,9 +36,20 @@ import org.apache.spark.sql.SparkSession
 import org.yaml.snakeyaml.Yaml
 import java.time.LocalDateTime
 
+import redis.clients.jedis.Jedis
+
 import scala.reflect.ClassTag
 
-class ClusterServingHelper(_configPath: String = "config.yaml") {
+/**
+ * The helper of Cluster Serving
+ * by default, all parameters are loaded by config including model directory
+ * However, in some condition, models are distributed to remote machine
+ * and locate in tmp directory, but other configs are still needed.
+ * Thus model directory could be passed and overwrite that in config YAML
+ * @param _configPath the path of Cluster Serving config YAML
+ * @param _modelDir the path of model, if null, will read from config YAML
+ */
+class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: String = null) {
   type HM = LinkedHashMap[String, String]
 
   val configPath = _configPath
@@ -57,17 +68,11 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
   var redisPort: String = null
   var nodeNum: Int = 1
   var coreNum: Int = 1
-  var engineType: String = null
   var blasFlag: Boolean = false
   var chwFlag: Boolean = true
 
-//  var dataType: Array[DataTypeEnumVal] = null
-  var dataShape: Array[Array[Int]] = Array[Array[Int]]()
   var filter: String = null
-
-  var logFile: FileWriter = null
-  var logErrorFlag: Boolean = true
-  var logSummaryFlag: Boolean = false
+  var resize: Boolean = false
 
   /**
    * model related
@@ -79,9 +84,12 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
   /**
    * secure related
    */
-  var redisSecureEnabled: Boolean = true
+  var redisSecureEnabled: Boolean = false
   var redisSecureTrustStorePath: String = null
   var redisSecureTrustStorePassword: String = null
+
+  var modelEncrypted: Boolean = false
+
   /**
    * Initialize the parameters by loading config file
    * create log file, set backend engine type flag
@@ -96,7 +104,11 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
 
     // parse model field
     val modelConfig = configList.get("model").asInstanceOf[HM]
-    modelDir = getYaml(modelConfig, "path", null).asInstanceOf[String]
+    modelDir = if (_modelDir == null) {
+      getYaml(modelConfig, "path", null).asInstanceOf[String]
+    } else {
+      _modelDir
+    }
     modelInputs = getYaml(modelConfig, "inputs", "").asInstanceOf[String]
     modelOutputs = getYaml(modelConfig, "outputs", "").asInstanceOf[String]
     inferenceMode = getYaml(modelConfig, "mode", "").asInstanceOf[String]
@@ -112,13 +124,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
      * And also other frameworks supporting multiple engine type
      */
 
-    logFile = {
-      val logF = new File("./cluster-serving.log")
-      if (Files.exists(Paths.get("./cluster-serving.log"))) {
-        logF.createNewFile()
-      }
-      new FileWriter(logF, true)
-    }
+
 
     if (modelType.startsWith("tensorflow")) {
       chwFlag = false
@@ -132,11 +138,6 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     redisPort = redis.split(":").last.trim
 
     val secureConfig = configList.get("secure").asInstanceOf[HM]
-//    redisSecureEnabled = if (getYaml(secureConfig, "secure_enabled", false) != false) {
-//      getYaml(secureConfig, "secure_enabled", false).asInstanceOf[Boolean]
-//    } else {
-//      false
-//    }
     redisSecureEnabled = getYaml(secureConfig, "secure_enabled", false).asInstanceOf[Boolean]
 
     val defaultPath = try {
@@ -149,20 +150,13 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
       .asInstanceOf[String]
     redisSecureTrustStorePassword = getYaml(
       secureConfig, "secure_struct_store_password", "1234qwer").asInstanceOf[String]
+    modelEncrypted = getYaml(secureConfig, "model_encrypted", false).asInstanceOf[Boolean]
 
-    val shapeStr = getYaml(dataConfig, "shape", "3,224,224").asInstanceOf[String]
-    require(shapeStr != null, "data shape in config must be specified.")
-//    val shapeList = shape.split(",").map(x => x.trim.toInt)
-//    for (i <- shapeList) {
-//      dataShape = dataShape :+ i
-//    }
-    dataShape = ConfigUtils.parseShape(shapeStr.asInstanceOf[String])
     val typeStr = getYaml(dataConfig, "type", "image")
     require(typeStr != null, "data type in config must be specified.")
-//    dataType = ConfigUtils.parseType(typeStr)
-
 
     filter = getYaml(dataConfig, "filter", "").asInstanceOf[String]
+    resize = getYaml(dataConfig, "resize", true).asInstanceOf[Boolean]
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
     coreNum = getYaml(paramsConfig, "core_number", 4).asInstanceOf[Int]
@@ -173,7 +167,6 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
         blasFlag = true
       }
       else blasFlag = false
-
     }
     else blasFlag = false
 
@@ -228,11 +221,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
     }
     else {
       println(configList.toString + key + " getted: " + configValue)
-      if (configValue.isInstanceOf[Boolean] || configValue.isInstanceOf[Int]) {
-        configValue
-      } else {
-        configValue.toString
-      }
+      configValue
     }
   }
 
@@ -249,39 +238,13 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
   }
 
   /**
-   * Inference Model do not use this method for model loading
-   * This method is kept for future, not used now
-   * @param ev
-   * @tparam T
-   * @return
-   */
-  def loadModel[T: ClassTag]()
-                            (implicit ev: TensorNumeric[T]): RDD[Module[Float]] = {
-    // deprecated
-    val rmodel = modelType match {
-      case "caffe" => Net.loadCaffe[Float](defPath, weightPath)
-      case "torch" => Net.loadTorch[Float](weightPath)
-      case "bigdl" => Net.loadBigDL[Float](weightPath)
-      case "keras" => Net.load[Float](weightPath)
-    }
-    val model = rmodel.quantize().evaluate()
-
-
-    val bcModel = ModelBroadcast[Float]().broadcast(sc, model)
-    val cachedModel = sc.range(1, 100, EngineRef.getNodeNumber())
-      .coalesce(EngineRef.getNodeNumber())
-      .mapPartitions(v => Iterator.single(bcModel.value(false, true))).cache()
-    cachedModel
-  }
-
-  /**
    * Load inference model
    * The concurrent number of inference model depends on
    * backend engine type
    * @return
    */
   def loadInferenceModel(): InferenceModel = {
-    val parallelNum = if (blasFlag) coreNum else 1
+    val parallelNum = if (inferenceMode == "single") coreNum else 1
     val model = new InferenceModel(parallelNum)
 
     // Used for Tensorflow Model, it could not have intraThreadNum > 2^8
@@ -292,6 +255,21 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
       64
     }
 
+    var secret: String = null
+    var salt: String = null
+    if (modelEncrypted) {
+      val jedis = new Jedis(redisHost, redisPort.toInt)
+      while (secret == null || salt == null) {
+        secret = jedis.hget(Conventions.MODEL_SECURED_KEY, Conventions.MODEL_SECURED_SECRET)
+        salt = jedis.hget(Conventions.MODEL_SECURED_KEY, Conventions.MODEL_SECURED_SALT)
+        logger.info("Waiting for Model Encrypted Secret and Salt in Redis," +
+          "please put them in model_secured -> secret and " +
+          "model_secured -> salt")
+        logger.info("Retrying in 3 seconds...")
+        Thread.sleep(3000)
+      }
+
+    }
     modelType match {
       case "caffe" => model.doLoadCaffe(defPath, weightPath, blas = blasFlag)
       case "bigdl" => model.doLoadBigDL(weightPath, blas = blasFlag)
@@ -313,8 +291,12 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
         model.doLoadTensorflow(weightPath, "savedModel", inputs, outputs)
       case "pytorch" => model.doLoadPyTorch(weightPath)
       case "keras" => logError("Keras currently not supported in Cluster Serving")
-      case "openvino" => model.doLoadOpenVINO(defPath, weightPath, coreNum)
+      case "openvino" => modelEncrypted match {
+        case true => model.doLoadEncryptedOpenVINO(defPath, weightPath, secret, salt, coreNum)
+        case false => model.doLoadOpenVINO(defPath, weightPath, coreNum)
+      }
       case _ => logError("Invalid model type, please check your model directory")
+
     }
     model
 
@@ -356,8 +338,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
    * @param msg
    */
   def logError(msg: String): Unit = {
-
-    if (logErrorFlag) logFile.write(dateTime + " --- " + msg + "\n")
+    println(dateTime + " --- " + msg + "\n")
     throw new Error(msg)
   }
 
@@ -469,4 +450,17 @@ class ClusterServingHelper(_configPath: String = "config.yaml") {
 
   }
 
+}
+object ClusterServingHelper {
+  /**
+   * This method is only used in executor node
+   * where model is distributed to remote in Flink tmp dir
+   * @param modelDir
+   * @return
+   */
+  def loadModelfromDir(confPath: String, modelDir: String): InferenceModel = {
+    val helper = new ClusterServingHelper(confPath, modelDir)
+    helper.initArgs()
+    helper.loadInferenceModel()
+  }
 }

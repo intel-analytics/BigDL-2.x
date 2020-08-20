@@ -21,10 +21,11 @@ from bigdl.nn.layer import Layer
 from bigdl.util.common import JTensor
 from zoo.common.utils import callZooFunc
 from pyspark.serializers import CloudPickleSerializer
+from zoo.pipeline.api.torch.utils import trainable_param
 
-if sys.version >= '3':
-    long = int
-    unicode = str
+if sys.version < '3.7':
+    print("WARN: detect python < 3.7, if you meet zlib not available " +
+          "exception on yarn, please update your python to 3.7")
 
 
 class TorchModel(Layer):
@@ -50,7 +51,7 @@ class TorchModel(Layer):
         :param model: a PyTorch model
         """
         weights = []
-        for param in model.parameters():
+        for param in trainable_param(model):
             weights.append(param.view(-1))
         flatten_weight = torch.nn.utils.parameters_to_vector(weights).data.numpy()
         bys = CloudPickleSerializer.dumps(CloudPickleSerializer, model)
@@ -67,7 +68,7 @@ class TorchModel(Layer):
         # set weights
         m = CloudPickleSerializer.loads(CloudPickleSerializer, self.module_bytes)
         w = torch.Tensor(new_weight[0])
-        torch.nn.utils.vector_to_parameters(w, m.parameters())
+        torch.nn.utils.vector_to_parameters(w, trainable_param(m))
 
         # set named buffers
         new_extra_params = callZooFunc(self.bigdl_type, "getModuleExtraParameters", self.value)

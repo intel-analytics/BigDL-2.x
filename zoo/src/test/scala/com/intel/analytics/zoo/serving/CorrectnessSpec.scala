@@ -91,7 +91,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     "tar -xvf /tmp/serving_val.tar -C /tmp/".!
     val helper = new ClusterServingHelper(configPath)
     helper.initArgs()
-    helper.dataShape = Array(Array(3, 224, 224))
+//    helper.dataShape = Array(Array(3, 224, 224))
     val param = new SerParams(helper)
     val model = helper.loadInferenceModel()
     val imagePath = "/tmp/imagenet_1k"
@@ -126,7 +126,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
       val bInput = InferenceSupportive.batchInput(Seq(("", input)), param)
       val result = model.doPredict(bInput)
       val value = PostProcessing(result.toTensor[Float]
-        .squeeze(1).select(1, 1), "topN(1)")
+        .squeeze(1), "topN(1)", 1)
       val clz = value.split(",")(0).stripPrefix("[[")
       predictMap = predictMap + (file.getName -> clz)
     }

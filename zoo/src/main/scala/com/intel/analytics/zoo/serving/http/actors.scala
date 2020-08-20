@@ -28,6 +28,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import akka.pattern.ask
 import akka.util.Timeout
+import com.intel.analytics.zoo.serving.utils.Conventions
 
 trait JedisEnabledActor extends Actor with Supportive {
   val actorName = self.path.name
@@ -95,6 +96,12 @@ class RedisPutActor(
             start = System.currentTimeMillis()
           }
         }
+      }
+    case message: SecuredModelSecretSaltMessage =>
+      silent(s"$actorName put secret and salt in redis")() {
+        jedis.hset(Conventions.MODEL_SECURED_KEY, Conventions.MODEL_SECURED_SECRET, message.secret)
+        jedis.hset(Conventions.MODEL_SECURED_KEY, Conventions.MODEL_SECURED_SALT, message.salt)
+        sender() ! true
       }
   }
 

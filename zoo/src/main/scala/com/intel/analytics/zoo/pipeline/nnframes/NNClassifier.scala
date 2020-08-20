@@ -21,9 +21,10 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.zoo.feature.common._
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.nnframes.NNModel.NNModelWriter
 import ml.dmlc.xgboost4j.scala.spark.{XGBoostClassificationModel, XGBoostHelper,
-XGBoostRegressor, XGBoostRegressionModel}
+XGBoostRegressionModel, XGBoostRegressor}
 import org.apache.spark.ml.DefaultParamsWriterWrapper
 import org.apache.spark.ml.adapter.SchemaUtils
 import org.apache.spark.ml.feature.VectorAssembler
@@ -369,6 +370,7 @@ object XGBClassifierModel {
 class XGBRegressor () {
 
   private val model = new XGBoostRegressor()
+  model.setNthread(EngineRef.getCoreNumber())
 
   def setLabelCol(labelColName : String) : this.type = {
     model.setLabelCol(labelColName)
@@ -566,6 +568,8 @@ class XGBRegressor () {
  */
 class XGBRegressorModel private[zoo](val model: XGBoostRegressionModel) {
   var predictionCol: String = null
+  var featuresCol: String = "features"
+
   def setPredictionCol(value: String): this.type = {
     predictionCol = value
     this
@@ -578,11 +582,17 @@ class XGBRegressorModel private[zoo](val model: XGBoostRegressionModel) {
 
   def setFeaturesCol(value: String): this.type = {
     model.setFeaturesCol(value)
+    featuresCol = value
     this
   }
 
   def transform(dataset: DataFrame): DataFrame = {
-    var output = model.transform(dataset)
+    import org.apache.spark.sql.functions.{col, udf}
+    import org.apache.spark.ml.linalg.Vector
+    val asDense = udf((v: Vector) => v.toDense)
+    val xgbInput = dataset.withColumn("DenseFeatures", asDense(col(featuresCol)))
+    model.setFeaturesCol("DenseFeatures")
+    var output = model.transform(xgbInput).drop("DenseFeatures")
     if(predictionCol != null) {
       output = output.withColumnRenamed("prediction", predictionCol)
     }

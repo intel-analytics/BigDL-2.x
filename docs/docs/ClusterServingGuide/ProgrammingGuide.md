@@ -42,13 +42,9 @@ This section provides a quick start example for you to run Analytics Zoo Cluster
 
 Use one command to run Cluster Serving container. (We provide quick start model in older version of docker image, for newest version, please refer to following sections and we remove the model to reduce the docker image size).
 ```
-docker run -itd --name cluster-serving --net=host intelanalytics/zoo-cluster-serving:0.9.0
+docker run --name cluster-serving -itd --net=host intelanalytics/zoo-cluster-serving:0.9.0
 ```
-Log into the container using `docker exec -it cluster-serving bash`.
-
-Increase the memory size `jobmanager.heap.size` and `taskmanager.memory.process.size` to 8g (recommended) in `$FLINK_HOME/conf/flink-conf.yaml`and use `$FLINK_HOME/bin/start-cluster.sh` to start the cluster.
-
-Go to Cluster Serving working directory by `cd cluster-serving`.
+Log into the container using `docker exec -it cluster-serving bash`, go to Cluster Serving working directory by `cd cluster-serving`.
 
 You can see prepared TensorFlow frozen ResNet50 model in `resources/model` directory with following structure.
 
@@ -58,10 +54,17 @@ cluster-serving |
                  -- frozen_graph.pb
                  -- graph_meta.json
 ```
+Modify `config.yaml` and add following to `filter:` config
+```
+data:
+  shape: [3,224,224]
+  filter: topN(1)
+```
+This will tell the shape of input image is [3,224,224] and rank Top-1 result of the model output.
 
 Start Cluster Serving using `cluster-serving-start`. 
 
-Run python program `python3 image_classification_and_object_detection_quick_start.py` to push data into queue and get inference result. 
+Run python program `python3 image_classification_and_object_detection_quick_start.py -i resources/test_image` to push data into queue and get inference result. 
 
 Then you can see the inference output in console. 
 ```
@@ -109,7 +112,7 @@ docker pull intelanalytics/zoo-cluster-serving
 ```
 then, (or directly run `docker run`, it will pull the image if it does not exist)
 ```
-docker run --name cluster-serving --net=host -itd intelanalytics/zoo-cluster-serving:0.9.0 bash
+docker run --name cluster-serving -itd --net=host intelanalytics/zoo-cluster-serving:0.9.0
 ```
 Log into the container
 ```
@@ -119,7 +122,7 @@ docker exec -it cluster-serving bash
 ##### Yarn user
 For Yarn user using docker, you have to set additional config, thus you need to call following when starting the container
 ```
-docker run --name cluster-serving --net=host -v /path/to/HADOOP_CONF_DIR:/opt/work/HADOOP_CONF_DIR -e HADOOP_CONF_DIR=/opt/work/HADOOP_CONF_DIR -itd intelanalytics/zoo-cluster-serving:0.9.0 bash
+docker run --name cluster-serving --net=host -v /path/to/HADOOP_CONF_DIR:/opt/work/HADOOP_CONF_DIR -e HADOOP_CONF_DIR=/opt/work/HADOOP_CONF_DIR -itd intelanalytics/zoo-cluster-serving:0.9.0
 ```
 
 #### Manual installation
@@ -132,14 +135,14 @@ After preparing dependencies above, make sure the environment variable `$FLINK_H
 
 
 ##### Install Cluster Serving by download release
-For users who need to deploy and start Cluster Serving, download Cluster Serving zip from [here]() and unzip it, then run `source cluster-serving-prepare.sh`. A demo `cluster-serving-demo.sh` is also prepared and users can run it to check if Cluster Serving could work.
+For users who need to deploy and start Cluster Serving, download Cluster Serving zip `analytics-zoo-xxx-cluster-serving-all.zip` from [here](https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.10.0-spark_2.4.3/0.9.0-SNAPSHOT/) and unzip it, then run `source cluster-serving-prepare.sh`. A demo `cluster-serving-demo.sh` is also prepared and users can run it to check if Cluster Serving could work.
 
-For users who need to do inference, aka. predict data only, download Analytics Zoo python zip from [here]() and run `export PYTHONPATH=$PYTHONPATH:/path/to/zip` to add this zip to `PYTHONPATH` environment variable.
+For users who need to do inference, aka. predict data only, download Analytics Zoo python zip `analytics-zoo-xxx-cluster-serving-python.zip` from [here](https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.10.0-spark_2.4.3/0.9.0-SNAPSHOT/) and run `export PYTHONPATH=$PYTHONPATH:/path/to/zip` to add this zip to `PYTHONPATH` environment variable.
 
 ##### Install Cluster Serving by pip
-Download package from [here](), run following command to install Cluster Serving
+Download package from [here](https://sourceforge.net/projects/analytics-zoo/files/cluster-serving-py/), run following command to install Cluster Serving
 ```
-pip install *.whl
+pip install analytics_zoo_serving-*.whl
 ```
 For users who need to deploy and start Cluster Serving, run `cluster-serving-init` to download and prepare dependencies.
 
