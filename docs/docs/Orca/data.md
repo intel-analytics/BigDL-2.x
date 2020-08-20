@@ -3,7 +3,7 @@
 
 Analytics Zoo Orca data provides data-parallel pre-processing support for Python AI.
 
-It supports data pre-processing from different data sources, like TensorFlow DataSet, PyTorch DataLoader, MXNet DataLoader, etc. and it supports various data format, like Pandas DataFrame, Numpy, Images, Parquet.
+It supports data pre-processing from different data sources, like TensorFlow DataSet, PyTorch DataLoader, MXNet DataLoader, etc. and it supports various data formats, like Pandas DataFrame, Numpy, Images, Parquet, etc.
 
 The distributed backend engine can be [Spark](https://spark.apache.org/) or [Ray](https://github.com/ray-project/ray). We now support Spark-based transformations to do the pre-processing, and provide functionality to seamlessly put data to Ray cluster for later training/inference on Ray. 
 

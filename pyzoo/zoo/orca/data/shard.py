@@ -209,7 +209,7 @@ class SparkXShards(XShards):
         Return a new SparkXShards by applying a function to each shard of this SparkXShards
         :param func: python function to process data. The first argument is the data shard.
         :param args: other arguments in this function.
-        :return:
+        :return: a new SparkXShards.
         """
         transformed_shard = SparkXShards(self.rdd.map(lambda data: func(data, *args)))
         self._uncache()
