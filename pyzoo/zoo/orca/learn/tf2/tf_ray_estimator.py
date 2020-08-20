@@ -106,7 +106,7 @@ class Estimator(HorovodRayRunner):
                             "value of backend, but got {}".format(backend))
 
     def fit(self, data_creator, epochs=1, verbose=1,
-            callbacks=None, validation_data_creator=None, class_weight=None, initial_epoch=0,
+            callbacks=None, validation_data_creator=None, class_weight=None,
             steps_per_epoch=None, validation_steps=None, validation_freq=1):
         """Runs a training epoch."""
 
@@ -117,7 +117,6 @@ class Estimator(HorovodRayRunner):
             callbacks=callbacks,
             validation_data_creator=validation_data_creator,
             class_weight=class_weight,
-            initial_epoch=initial_epoch,
             steps_per_epoch=steps_per_epoch,
             validation_steps=validation_steps,
             validation_freq=validation_freq,
