@@ -103,8 +103,8 @@ class TestTFRayEstimator(TestCase):
 
         scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=1)
         # train for 2 epochs
-        trainer.fit(create_train_datasets, epochs=5, callbacks=[scheduler])
-        trainer.fit(create_train_datasets, epochs=5, initial_epoch=5, callbacks=[scheduler])
+        trainer.fit(create_train_datasets, epochs=2, callbacks=[scheduler])
+        trainer.fit(create_train_datasets, epochs=2, callbacks=[scheduler])
 
         # model performance after training (should improve)
         end_stats = trainer.evaluate(create_test_dataset,
