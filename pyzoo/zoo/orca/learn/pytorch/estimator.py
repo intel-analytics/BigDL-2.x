@@ -180,7 +180,7 @@ class PytorchSparkEstimatorWrapper(Estimator):
 
     def fit(self, data, epochs=1, batch_size=32, validation_data=None, validation_methods=None,
             checkpoint_trigger=None):
-        from zoo.orca.learn.pytorch.utils import to_sample
+        from zoo.orca.data.utils import to_sample
 
         end_trigger = MaxEpoch(epochs)
         assert batch_size > 0, "batch_size should be greater than 0"
@@ -217,7 +217,7 @@ class PytorchSparkEstimatorWrapper(Estimator):
         pass
 
     def evaluate(self, data, validation_methods=None, batch_size=32):
-        from zoo.orca.learn.pytorch.utils import to_sample
+        from zoo.orca.data.utils import to_sample
 
         assert data is not None, "validation data shouldn't be None"
 
