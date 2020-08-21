@@ -40,15 +40,12 @@ def linear_dataset(a=2, size=1000):
 def create_train_datasets(config):
     batch_size = config["batch_size"]
     x_train, y_train = linear_dataset(size=NUM_TRAIN_SAMPLES)
-    x_test, y_test = linear_dataset(size=NUM_TEST_SAMPLES)
 
     train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
-    test_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test))
     train_dataset = train_dataset.shuffle(NUM_TRAIN_SAMPLES).batch(
         batch_size)
-    test_dataset = test_dataset.batch(batch_size)
 
-    return train_dataset, test_dataset
+    return train_dataset
 
 
 def create_test_dataset(config):
