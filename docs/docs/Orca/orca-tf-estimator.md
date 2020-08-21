@@ -181,7 +181,7 @@ If input data is Spark DataFrame, the predict result is a DataFrame which includ
 During training, Orca TF Estimator would save Orca checkpoint every epoch. You can also specify `checkpoint_trigger` in fit() to set checkpoint interval. The Orca checckpoints are saved in `model_dir` which is specified when you create estimator. You can load previous Orca checkpoint and resume train with it with such APIs:
  
 ```
-load_latest_checkpoint(path)
+load_latest_orca_checkpoint(path)
 ``` 
 * path: directory containing Orca checkpoint files.
 
@@ -190,7 +190,7 @@ This method load latest checkpoint under specified directory.
 If you want to load specified version of checkpoint, you can use:
 
 ```
-load(path, version)
+load_orca_checkpoint(path, version)
 ```
 * path: checkpoint directory which contains model.* and optimMethod-TFParkTraining.* files.
 * version: checkpoint version, which is the suffix of model.* file, i.e., for modle.4 file, the version is 4.
@@ -224,6 +224,21 @@ get_validation_summary(tag)
 * `tag`: The string variable represents the scalar wanted.
 
 This method gets the scalar from model validation summary. Return list of summary data of [iteration_number, scalar_value, timestamp]
+
+#### Save model
+After training, you can save model in the estimator with such APIs:
+```
+save_tf_checkpoint(path)
+```
+* `path`: tensorflow checkpoint path.
+
+If you use tensorflow graph model in this estimator, this method would save tensorflow checkpoint.
+```
+save_keras_model(path)
+```
+* `path`: keras model save path.
+
+If you use tensorflow keras model in this estimator, this method would save keras model in specified path.
 
 
 
