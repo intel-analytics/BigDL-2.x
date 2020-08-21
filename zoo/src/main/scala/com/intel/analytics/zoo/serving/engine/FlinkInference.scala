@@ -37,30 +37,41 @@ class FlinkInference(params: SerParams)
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
 
-    val localModelDir = getRuntimeContext.getDistributedCache
-      .getFile(Conventions.SERVING_MODEL_TMP_DIR).getPath
-    val localConfPath = getRuntimeContext.getDistributedCache
-      .getFile(Conventions.SERVING_CONF_TMP_PATH).getPath
-    logger.info(s"Config parameters loaded at executor at path ${localConfPath}, " +
-      s"Model loaded at executor at path ${localModelDir}")
-    params.model = ClusterServingHelper.loadModelfromDir(localConfPath, localModelDir)
+    if (!FlinkInference.initialized) {
+      FlinkInference.initialized = true
+      val localModelDir = getRuntimeContext.getDistributedCache
+        .getFile(Conventions.SERVING_MODEL_TMP_DIR).getPath
+      val localConfPath = getRuntimeContext.getDistributedCache
+        .getFile(Conventions.SERVING_CONF_TMP_PATH).getPath
+      logger.info(s"Config parameters loaded at executor at path ${localConfPath}, " +
+        s"Model loaded at executor at path ${localModelDir}")
+      val helper = new ClusterServingHelper(localConfPath, localModelDir)
+      helper.initArgs()
+      FlinkInference.model = helper.loadInferenceModel()
+//      FlinkInference.model = ClusterServingHelper.loadModelfromDir(localConfPath, localModelDir)
+    }
+
 
     pre = new PreProcessing(params)
   }
 
   override def map(in: List[(String, String)]): List[(String, String)] = {
     val t1 = System.nanoTime()
-
-    val preProcessed = in.grouped(params.coreNum).flatMap(itemBatch => {
-      itemBatch.indices.toParArray.map(i => {
-        val uri = itemBatch(i)._1
-        val input = pre.decodeArrowBase64(itemBatch(i)._2)
-        (uri, input)
-      })
-    })
     val postProcessed = if (params.inferenceMode == "single") {
+      val preProcessed = in.map(item => {
+        val uri = item._1
+        val input = pre.decodeArrowBase64(item._2)
+        (uri, input)
+      }).toIterator
       InferenceSupportive.singleThreadInference(preProcessed, params).toList
     } else {
+      val preProcessed = in.grouped(params.coreNum).flatMap(itemBatch => {
+        itemBatch.indices.toParArray.map(i => {
+          val uri = itemBatch(i)._1
+          val input = pre.decodeArrowBase64(itemBatch(i)._2)
+          (uri, input)
+        })
+      })
       InferenceSupportive.multiThreadInference(preProcessed, params).toList
     }
     val t2 = System.nanoTime()
@@ -68,4 +79,9 @@ class FlinkInference(params: SerParams)
       s"Throughput ${postProcessed.size / ((t2 - t1) / 1e9)}")
     postProcessed
   }
+}
+object FlinkInference {
+  @volatile var initialized: Boolean = false
+  var model: InferenceModel = null
+
 }

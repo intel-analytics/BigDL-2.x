@@ -31,7 +31,9 @@ object InferenceSupportive {
     val postProcessed = preProcessed.map(pathByte => {
       try {
         val t = typeCheck(pathByte._2)
-        val result = params.model.doPredict(t)
+        dimCheck(t, "add", params)
+        val result = FlinkInference.model.doPredict(t)
+        dimCheck(result, "remove", params)
         val value = PostProcessing(result.toTensor[Float], params.filter, 1)
         (pathByte._1, value)
       } catch {
@@ -60,7 +62,7 @@ object InferenceSupportive {
          * have to squeeze it back.
          */
         dimCheck(t, "add", params)
-        val result = params.model.doPredict(t)
+        val result = FlinkInference.model.doPredict(t)
         dimCheck(result, "remove", params)
         dimCheck(t, "remove", params)
         val t3 = System.nanoTime()
