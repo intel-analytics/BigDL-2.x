@@ -217,7 +217,19 @@ class PytorchSparkEstimatorWrapper(Estimator):
         pass
 
     def evaluate(self, data, validation_methods=None, batch_size=32):
-        raise NotImplementedError
+        from zoo.orca.learn.pytorch.utils import to_sample
+
+        assert data is not None, "validation data shouldn't be None"
+
+        if isinstance(data, SparkXShards):
+            val_feature_set = FeatureSet.sample_rdd(data.rdd.flatMap(to_sample))
+            return self.estimator.evaluate(val_feature_set, validation_methods, batch_size)
+        elif isinstance(data, DataLoader) or callable(data):
+            val_feature_set = FeatureSet.pytorch_dataloader(data, "", "")
+            return self.estimator.evaluate_minibatch(val_feature_set, validation_methods)
+        else:
+            raise ValueError("Data should be a SparkXShards, a DataLoader or a callable "
+                             "data_creator, but get " + data.__class__.__name__)
 
     def get_model(self):
         return self.model.to_pytorch()
