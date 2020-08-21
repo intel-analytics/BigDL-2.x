@@ -16,9 +16,6 @@
 from unittest import TestCase
 
 import numpy as np
-import tensorflow as tf
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.models import Sequential
 
 from zoo.orca.learn.tf2 import Estimator
 from zoo.ray import RayContext
@@ -38,6 +35,7 @@ def linear_dataset(a=2, size=1000):
 
 
 def create_train_datasets(config):
+    import tensorflow as tf
     batch_size = config["batch_size"]
     x_train, y_train = linear_dataset(size=NUM_TRAIN_SAMPLES)
 
@@ -49,6 +47,7 @@ def create_train_datasets(config):
 
 
 def create_test_dataset(config):
+    import tensorflow as tf
     batch_size = config["batch_size"]
     x_test, y_test = linear_dataset(size=NUM_TEST_SAMPLES)
 
@@ -59,7 +58,8 @@ def create_test_dataset(config):
 
 
 def simple_model(config):
-    model = Sequential([Dense(10, input_shape=(1,)), Dense(1)])
+    import tensorflow as tf
+    model = tf.keras.models.Sequential([tf.keras.layers.Dense(10, input_shape=(1,)), tf.keras.layers.Dense(1)])
     return model
 
 
@@ -75,6 +75,7 @@ def compile_args(config):
 
 class TestTFRayEstimator(TestCase):
     def test_fit_and_evaluate(self):
+        import tensorflow as tf
         ray_ctx = RayContext.get()
         batch_size = 32
         global_batch_size = batch_size * ray_ctx.num_ray_nodes
