@@ -82,7 +82,7 @@ class TestTFRayEstimator(TestCase):
         batch_size = 32
         global_batch_size = batch_size * ray_ctx.num_ray_nodes
         config = {
-            "batch": batch_size
+            "batch_size": batch_size
         }
         trainer = Estimator(
             model_creator=simple_model,
