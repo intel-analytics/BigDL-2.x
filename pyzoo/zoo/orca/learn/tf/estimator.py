@@ -34,25 +34,27 @@ class Estimator(object):
     def evaluate(self, data, **kwargs):
         pass
 
-    def load(self, path, version):
+    def load_orca_checkpoint(self, path, version):
         """
-        Load specified Orca checkpoint
-        :param path: checkpoint path
-        :param version: checkpoint version
+        Load specified Orca checkpoint.
+        :param path: checkpoint directory which contains model.* and
+        optimMethod-TFParkTraining.* files.
+        :param version: checkpoint version, which is the suffix of model.* file,
+        i.e., for modle.4 file, the version is 4.
         """
         self.load_checkpoint = True
         self.checkpoint_path = path
         self.checkpoint_version = version
 
-    def load_latest_checkpoint(self, path):
+    def load_latest_orca_checkpoint(self, path):
         """
         Load latest Orca checkpoint under specified directory.
-        :param path: checkpoint directory
+        :param path: directory containing Orca checkpoint files.
         """
         ckpt_path, version = find_latest_checkpoint(path)
         if ckpt_path is None:
             raise Exception("Cannot find checkpoint")
-        self.load(ckpt_path, version)
+        self.load_orca_checkpoint(ckpt_path, version)
 
     def set_tensorboard(self, log_dir, app_name):
         """
@@ -173,6 +175,20 @@ class Estimator(object):
         """
         assert backend == "bigdl", "only bigdl backend is supported for now"
         return TFKerasWrapper(keras_model, metrics, model_dir)
+
+    def save_tf_checkpoint(self, path):
+        """
+        Save tensorflow checkpoint in this estimator.
+        :param path: tensorflow checkpoint path.
+        """
+        raise NotImplementedError()
+
+    def save_keras_model(self, path):
+        """
+        Save tensorflow keras model in this estimator.
+        :param path: keras model save path.
+        """
+        raise NotImplementedError()
 
 
 class TFOptimizerWrapper(Estimator):
@@ -399,6 +415,9 @@ class TFOptimizerWrapper(Estimator):
                                 sess=self.sess,
                                 dataset=dataset, metrics=self.metrics)
 
+    def save_tf_checkpoint(self, path):
+        save_tf_checkpoint(self.sess, path)
+
 
 class TFKerasWrapper(Estimator):
     def __init__(self, keras_model, metrics, model_dir):
@@ -543,3 +562,6 @@ class TFKerasWrapper(Estimator):
                              )
 
         return self.model.evaluate(dataset, batch_per_thread=batch_size)
+
+    def save_keras_model(self, path):
+        self.model.save_model(path)
