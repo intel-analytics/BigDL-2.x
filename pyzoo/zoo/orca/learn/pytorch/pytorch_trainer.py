@@ -56,4 +56,4 @@ class PyTorchTrainer(object):
         return ray.get(self.trainer.get_model.remote())
 
     def shutdown(self, force=False):
-        self.trainer.shutdown.remote(force)
+        ray.get(self.trainer.shutdown.remote(force))
