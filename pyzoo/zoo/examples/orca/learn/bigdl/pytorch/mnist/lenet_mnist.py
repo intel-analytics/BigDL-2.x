@@ -107,7 +107,8 @@ def main():
     criterion = nn.NLLLoss()
 
     adam = Adam(args.lr)
-    zoo_estimator = Estimator.from_torch(model=model, optimizer=adam, loss=criterion)
+    zoo_estimator = Estimator.from_torch(model=model, optimizer=adam, loss=criterion,
+                                         backend="bigdl")
     from bigdl.optim.optimizer import EveryEpoch
     zoo_estimator.fit(data=train_loader, epochs=args.epochs, validation_data=test_loader,
                       validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
