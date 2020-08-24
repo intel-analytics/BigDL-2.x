@@ -39,7 +39,7 @@ class MXNetRunner(object):
         self.model_creator = model_creator
         self.loss_creator = loss_creator
         self.validation_metrics_creator = validation_metrics_creator
-        self.eval_metircs_creator = eval_metrics_creator
+        self.eval_metrics_creator = eval_metrics_creator
         self.is_worker = False
         env["DMLC_NODE_HOST"] = self.get_node_ip()
         if env["DMLC_ROLE"] == "worker":
@@ -54,8 +54,8 @@ class MXNetRunner(object):
 
             self.model = self.model_creator(self.config)
             self.loss = self.loss_creator(self.config) if self.loss_creator else None
-            self.eval_metrics = self.eval_metircs_creator(self.config) \
-                if self.eval_metircs_creator else None
+            self.eval_metrics = self.eval_metrics_creator(self.config) \
+                if self.eval_metrics_creator else None
             self.val_metrics = self.validation_metrics_creator(self.config) \
                 if self.validation_metrics_creator else None
             # For BaseModule, use symbolic API. Otherwise, use imperative API.
@@ -113,31 +113,29 @@ class MXNetRunner(object):
                     batch_start_time = time.time()
                     epoch_start_time = time.time()
                     for i, batch in enumerate(train_data_iter):
-                        data = gluon.utils.split_and_load(
-                            batch.data[0].astype("float32"), ctx_list=[mx.cpu()], batch_axis=0)
-                        label = gluon.utils.split_and_load(
-                            batch.label[0].astype("float32"), ctx_list=[mx.cpu()], batch_axis=0)
-                        outputs = []
-                        Ls = []
+                        data = batch.data
+                        label = batch.label
+                        if not isinstance(data, list):
+                            data = [data]
+                        if not isinstance(label, list):
+                            label = [label]
                         from mxnet import autograd as ag
                         with ag.record():
-                            for x, y in zip(data, label):
-                                z = self.model(x)  # forward
-                                L = self.loss(z, y)
-                                # store the loss and do backward on a batch for better speed
-                                Ls.append(L)
-                                outputs.append(z)
+                            output = self.model(*data)  # forward
+                            if not isinstance(output, list):
+                                output = [output]
+                            Ls = self.loss(*output, *label)
                             ag.backward(Ls)
-                        self.trainer.step(batch.data[0].shape[0])
+                        self.trainer.step(batch_size)
                         if self.eval_metrics:
-                            self.eval_metrics.update(label, outputs)
+                            self.eval_metrics.update(*label, *output)
                         if not (i + 1) % self.config["log_interval"]:
                             # This would be logged on driver for each worker process.
                             iteration_log = \
                                 "Epoch[%d] Batch[%d]  Speed: %f samples/sec  %s=%f" \
                                 % (epoch, i,
                                    batch_size / (time.time() - batch_start_time),
-                                   "loss", Ls[0].asnumpy().mean())
+                                   "loss", Ls.asnumpy().mean())
                             if self.eval_metrics:
                                 names, accs = self.eval_metrics.get()
                                 names, accs = to_list(names), to_list(accs)
