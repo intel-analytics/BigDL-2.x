@@ -112,6 +112,7 @@ def main():
     from bigdl.optim.optimizer import EveryEpoch
     zoo_estimator.fit(data=train_loader, epochs=args.epochs, validation_data=test_loader,
                       validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
+    zoo_estimator.evaluate(data=test_loader, validation_methods=[Accuracy()])
 
 
 if __name__ == '__main__':
