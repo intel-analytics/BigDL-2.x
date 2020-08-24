@@ -3,10 +3,10 @@ define their model and loss function with Pytorch API, and run it in a distribut
 with the wrapper layers provided by Analytics Zoo.
 
 # System Requirement
-Pytorch version: 1.5.0 or above
-torchvision: 0.6.0 or above
-jep: 3.9.0
-Python: 3.7
+Pytorch version: 1.5.0 or above  
+torchvision: 0.6.0 or above  
+jep: 3.9.0  
+Python: 3.7  
 
 # Pytorch API
 
@@ -122,8 +122,7 @@ if __name__ == '__main__':
     res.show(10, False)
 
 ```
-
-and we expects to see the output like:
+Please export `PYTHONHOME` env before you run this code, and we expects to see the output like:
 ```python
 +---------+-----+----------+
 |features |label|prediction|
