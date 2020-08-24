@@ -18,7 +18,7 @@ User may create a TorchModel by providing a Pytorch model, e.g.
     from zoo.pipeline.api.torch import TorchModel
     TorchModel.from_pytorch(torchvision.models.resnet18(pretrained=True))
 ```
-The above line creates TorchNet wrapping a ResNet model, and user can use the TorchNet for
+The above line creates TorchModel wrapping a ResNet model, and user can use the TorchModel for
 training or inference with Analytics Zoo.
 
 2. TorchLoss: TorchLoss is a wrapper for loss functions defined by Pytorch.
@@ -48,7 +48,7 @@ or from a custom loss function, which takes input and label as parameters
 ```
 
 # Examples
-Here we provide a simple end to end example, where we use TorchNet and TorchCriterion to
+Here we provide a simple end to end example, where we use TorchModel and TorchLoss to
 train a simple model with Spark DataFrame.
 ```python
 #
