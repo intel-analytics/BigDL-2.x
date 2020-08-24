@@ -133,5 +133,3 @@ Please export `PYTHONHOME` env before you run this code, and we expects to see t
 |[1.0,2.0]|0.0  |0.0       |
 +---------+-----+----------+
 ```
-
-More Pytorch examples (ResNet, Lenet etc.) are available [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/pytorch).
