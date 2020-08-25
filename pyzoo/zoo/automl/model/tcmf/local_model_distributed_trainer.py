@@ -1,0 +1,116 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader
+import torch.distributed as dist
+
+from zoo.automl.model.tcmf.local_model import TemporalConvNet
+
+import ray
+from ray.tune.logger import pretty_print
+from zoo.orca.learn.pytorch.pytorch_trainer import PyTorchTrainer
+
+
+# build data creator
+def get_tcmf_data_loader(config):
+    from zoo.automl.model.tcmf.data_loader import TCMFDataLoader
+    tcmf_data_loader = TCMFDataLoader(
+        Ymat=ray.get(config["Ymat_id"]),
+        vbsize=config["vbsize"],
+        hbsize=config["hbsize"],
+        end_index=config["end_index"],
+        val_len=config["val_len"],
+        covariates=ray.get(config["covariates_id"]),
+        Ycov=ray.get(config["Ycov_id"]),
+    )
+    return tcmf_data_loader
+
+
+class TcmfTrainDataset(torch.utils.data.IterableDataset):
+    def __init__(self, config):
+        super(TcmfTrainDataset).__init__()
+        self.tcmf_data_loader = get_tcmf_data_loader(config)
+        self.last_epoch = 0
+
+    def __iter__(self):
+        while self.tcmf_data_loader.epoch == self.last_epoch:
+            yield self.get_next_batch()
+        self.last_epoch += 1
+
+    def get_next_batch(self):
+        inp, out, _, _ = self.tcmf_data_loader.next_batch()
+        if dist.is_initialized():
+            num_workers = dist.get_world_size()
+            per_worker = inp.shape[0] // num_workers
+            inp_parts = torch.split(inp, per_worker)
+            out_parts = torch.split(out, per_worker)
+            worker_id = dist.get_rank()
+            inp = inp_parts[worker_id]
+            out = out_parts[worker_id]
+        return inp, out
+
+
+class TcmfValDataset(torch.utils.data.IterableDataset):
+    def __init__(self, config):
+        super(TcmfValDataset).__init__()
+        self.tcmf_data_loader = get_tcmf_data_loader(config)
+
+    def __iter__(self):
+        inp, out, _, _ = self.tcmf_data_loader.supply_test()
+        yield inp, out
+
+
+def data_creator(config):
+    train_loader = DataLoader(TcmfTrainDataset(config), batch_size=None)
+    val_loader = DataLoader(TcmfValDataset(config), batch_size=None)
+    return train_loader, val_loader
+
+
+def train_data_creator(config):
+    return DataLoader(TcmfTrainDataset(config), batch_size=None)
+
+
+# build loss creator
+def tcmf_loss(out, target):
+    criterion = nn.L1Loss()
+    return criterion(out, target) / torch.abs(target.data).mean()
+
+
+def loss_creator(config):
+    return tcmf_loss
+
+
+# build optimizer creator
+def optimizer_creator(model, config):
+    """Returns optimizer."""
+    return optim.Adam(model.parameters(), lr=config["lr"])
+
+
+# build model creator
+def model_creator(config):
+    return TemporalConvNet(
+        num_inputs=config["num_inputs"],
+        num_channels=config["num_channels"],
+        kernel_size=config["kernel_size"],
+        dropout=config["dropout"],
+        init=True,
+    )
+
+
+def train_yseq(num_workers, epochs, **config):
+    trainer = PyTorchTrainer(
+        model_creator=model_creator,
+        data_creator=data_creator,
+        optimizer_creator=optimizer_creator,
+        loss_creator=loss_creator,
+        num_workers=num_workers,
+        config=config)
+
+    stats = trainer.train(nb_epoch=epochs)
+    for s in stats:
+        print(pretty_print(s))
+
+    yseq = trainer.get_model()
+    trainer.shutdown()
+
+    return yseq

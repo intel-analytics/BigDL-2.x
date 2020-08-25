@@ -62,6 +62,7 @@ class TCMF(BaseModel):
         self.init_epoch = config.get("init_FX_epoch", 100)
         self.max_FX_epoch = config.get("max_FX_epoch", 300)
         self.max_TCN_epoch = config.get("max_TCN_epoch", 300)
+        self.num_workers = config.get("num_workers", 1)
 
     def _build(self, **config):
         """
@@ -112,7 +113,9 @@ class TCMF(BaseModel):
                                     y_iters=self.y_iters,
                                     init_epochs=self.init_epoch,
                                     max_FX_epoch=self.max_FX_epoch,
-                                    max_TCN_epoch=self.max_TCN_epoch)
+                                    max_TCN_epoch=self.max_TCN_epoch,
+                                    num_workers=self.num_workers,
+                                    )
         return self.model.Yseq.val_loss
 
     def fit_incremental(self, x):

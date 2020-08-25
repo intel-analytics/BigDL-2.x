@@ -54,19 +54,13 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 
-from zoo.automl.model.tcmf.data_loader import DataLoader
+from zoo.automl.model.tcmf.data_loader import TCMFDataLoader
 from zoo.automl.model.tcmf.local_model import TemporalConvNet, LocalModel
 from zoo.automl.model.tcmf.time import TimeCovariates
 
 import copy
 
-import random
-
 import pickle
-
-np.random.seed(111)
-torch.manual_seed(111)
-random.seed(111)
 
 
 def get_model(A, y, lamb=0):
@@ -342,10 +336,9 @@ class DeepGLO(object):
             end_index=self.end_index - self.val_len,
             val_len=self.val_len,
             lr=self.lr,
-            num_epochs=num_epochs,
         )
 
-        TC.train_model(early_stop=early_stop, tenacity=tenacity)
+        TC.train_model(num_epochs=num_epochs, early_stop=early_stop, tenacity=tenacity)
 
         self.Xseq = TC.seq
 
@@ -474,7 +467,9 @@ class DeepGLO(object):
             Ycov_wc[:, 1, self.period - 1::] = Ymat_now[:, 0: -(self.period - 1)]
         return Ycov_wc
 
-    def train_Yseq(self, num_epochs=20, early_stop=False, tenacity=7):
+    def train_Yseq(self, num_epochs=20,
+                   num_workers=1,
+                   ):
         Ycov = self.create_Ycov()
         self.Yseq = LocalModel(
             self.Ymat,
@@ -484,7 +479,6 @@ class DeepGLO(object):
             dropout=self.dropout,
             vbsize=self.vbsize,
             hbsize=self.hbsize,
-            num_epochs=num_epochs,
             lr=self.lr,
             val_len=self.val_len,
             test=True,
@@ -497,12 +491,14 @@ class DeepGLO(object):
             dti=self.dti,
             Ycov=Ycov,
         )
-
-        self.Yseq.train_model(early_stop=early_stop, tenacity=tenacity)
+        self.Yseq.train_model(num_epochs=num_epochs,
+                              num_workers=num_workers,
+                              early_stop=False)
 
     def train_all_models(
         self, Ymat, init_epochs=100, alt_iters=10, y_iters=200, tenacity=7, mod=5,
-            max_FX_epoch=300, max_TCN_epoch=300
+            max_FX_epoch=300, max_TCN_epoch=300,
+            num_workers=1,
     ):
         self.end_index = Ymat.shape[1]
 
@@ -539,7 +535,7 @@ class DeepGLO(object):
             self.X = X.float()
             self.F = F.float()
 
-        self.D = DataLoader(
+        self.D = TCMFDataLoader(
             Ymat=self.Ymat,
             vbsize=self.vbsize,
             hbsize=self.hbsize,
@@ -547,8 +543,7 @@ class DeepGLO(object):
             val_len=self.val_len,
             shuffle=False,
         )
-
-        print("Initializing Factors.....")
+        print("-"*50+"Initializing Factors.....")
         self.num_epochs = init_epochs
         self.train_factors()
 
@@ -571,7 +566,7 @@ class DeepGLO(object):
                 )
             else:
                 print(
-                    "--------------------------------------------Training Local Model. Iter#:{}"
+                    "--------------------------------------------Training Xseq Model. Iter#:{}"
                     .format(i)
                     + "-------------------------------------------------------"
                 )
@@ -584,8 +579,10 @@ class DeepGLO(object):
                     tenacity=tenacity,
                 )
 
-        self.num_epochs = y_iters
-        self.train_Yseq(num_epochs=y_iters, early_stop=True, tenacity=tenacity)
+        print("-"*50, "Start training Yseq", "-"*50)
+        self.train_Yseq(num_epochs=y_iters,
+                        num_workers=num_workers,
+                        )
 
     def get_time_covs(self, start_date, num_ts):
         if self.use_time:
