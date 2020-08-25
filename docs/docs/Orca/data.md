@@ -10,27 +10,20 @@ The distributed backend engine can be [Spark](https://spark.apache.org/) or [Ray
 ---
 ## **XShards**
 
-XShards is a collection of data in Orca data API. For different backend, we have two XShards: SparkXShards and RayXShards.
-
-**SparkXShards** is a collection of data which can be pre-processed in parallel on Spark. SparkXShards can accept various data sources, like csv/json/parquet, Numpy, TensorFlow DataSet, Image, etc. And do the specified processing in parallel on Spark using common Python libraries such as Pandas, Numpy, PIL, TensorFlow Dataset, PyTorch DataLoader, etc.
-
-To get the more examples on SparkXShards APIs, you can refert to [Example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/orca/data)
-
-**RayXShards** is a collection of data which can be processed in parallel on Ray. We support ingesting data in parallel to Ray from SparkXShards, and users can performance later training/inference on Ray.
-
+XShards is a collection of data in Orca data API. We provide different backends(Spark and Ray) for XShards.
 
 ### **XShards General Operations**
 
-#### **Pre-processing on SparkXShards**
+#### **Pre-processing on XShards**
 
-You can do pre-processing with your customized function on SparkXShards using below API:
+You can do pre-processing with your customized function on XShards using below API:
 ```
 transform_shard(func, *args)
 ```
 * `func` is your pre-processing function. In this function, you can do the pre-processing with the data using common Python libraries such as Pandas, Numpy, PIL, TensorFlow Dataset, PyTorch DataLoader, etc., then return the processed object. 
 * `args` are the augurments for the pre-processing function.
 
-This method would parallelly pre-process each element in the SparkXShards with the customized function, and return a new SparkXShards after transformation.
+This method would parallelly pre-process each element in the XShards with the customized function, and return a new XShards after transformation.
 
 ##### **SharedValue**
 SharedValue can be used to give every node a copy of a large input dataset in an efficient manner.
@@ -51,31 +44,31 @@ You can get all of elements in XShards with such API:
 ```
 collect()
 ```
-This method returns a list that contains all of the elements in this XShards. This API works on both SparkXShards and RayXshards.
+This method returns a list that contains all of the elements in this XShards. 
 
 
-#### **Repartition SparkXShards**
+#### **Repartition XShards**
 
-You can repartition SparkXShards to different number of partitions.
+You can repartition XShards to different number of partitions.
 ```
 repartition(num_partitions)
 ```
 * `num_partitions` is the target number of partitions for the new XShards.
 
-The method returns a new SparkXShards that has exactly num_partitions partitions.
+The method returns a new XShards that has exactly num_partitions partitions.
 
 
-#### **Split SparkXShards**
+#### **Split XShards**
 
-You can split one XShards into multiple SparkXShards. Each element in the SparkXShards needs be a list or tuple with same length.
+You can split one XShards into multiple XShards. Each element in the XShards needs be a list or tuple with same length.
 ```
 split()
 ```
-This method returns splits of SparkXShards. If each element in the input SparkDataShard is not a list or tuple, return list of input SparkDataShards.
+This method returns splits of XShards. If each element in the input SparkDataShard is not a list or tuple, return list of input SparkDataShards.
 
-#### **Save/Load SparkXShards**
+#### **Save/Load XShards**
 
-You can save SparkXShards as SequenceFiles of serialized objects.
+You can save XShards on Spark as SequenceFiles of serialized objects.
 The serializer used is pyspark.serializers.PickleSerializer.
 ```
 save_pickle(path, batchSize=10)
@@ -83,28 +76,28 @@ save_pickle(path, batchSize=10)
 * `path` is target save path.
 * `batchSize` batch size for each chunk in sequence file.
 
-And you can load pickle file to SparkXShards if you use save_pickle() to save data.
+And you can load pickle file to XShards if you use save_pickle() to save data.
 ```
 zoo.orca.data.XShards.load_pickle(path, minPartitions=None)
 ```
 * `path`: The pickle file path/directory.
 * `minPartitions`: The minimum partitions for the XShards.
 
-This method return a SparkXShards object from pickle files.
+This method return an XShards object from pickle files.
 
-#### **Move SparkXShards to Ray backend**
+#### **Move XShards on Spark to Ray backend**
 
-You can put data of the SparkXShards to Ray cluster object store for later processing on Ray.
+You can put data of the XShards on Spark to Ray cluster object store for later processing on Ray.
 ```
 to_ray()
 ```
-This method save data of SparkXShards to Ray object store, and return a new RayXShards which contains plasma ObjectID, the plasma object_store_address and the node IP on each partition.
+This method save data of XShards on Spark to Ray object store, and return a new RayXShards which contains plasma ObjectID, the plasma object_store_address and the node IP on each partition.
 
 
 
 ### **XShards with Pandas DataFrame**
 
-#### **Read data into SparkXShards**
+#### **Read data into XShards**
 
 You can read csv/json files/directory into XShards with such APIs:
 ```
@@ -115,37 +108,37 @@ zoo.orca.data.pandas.read_json(file_path, **kwargs)
 * The `file_path` could be a csv/json file, list of multiple csv/json file paths, a directory containing csv/json files. Supported file systems are local file system,` hdfs`, and `s3`.
 * `**kwargs` is read_csv/read_json options supported by pandas.
 
-After calling these APIs, you would get a XShards of Pandas DataFrame.
+After calling these APIs, you would get a XShards of Pandas DataFrame on Spark.
 
 #### **Partition by Pandas DataFrame columns**
-You can re-partition SparkXShards of Pandas DataFrame with specified columns.
+You can re-partition XShards of Pandas DataFrame with specified columns.
 ```
 partition_by(cols, num_partitions=None)
 ```
 * `cols`: DataFrame columns to partition by.
-* `num_partitions`: target number of partitions. If not specified, the new SparkXShards would keep the current partition number.
+* `num_partitions`: target number of partitions. If not specified, the new XShards would keep the current partition number.
 
-This method return a new SparkXShards partitioned using the specified columns.
+This method return a new XShards partitioned using the specified columns.
 
 #### **Get unique element list of XShards of Pandas Series**
 
-You can get a unique list of elements of this SparkXShards. This is useful when you want to count/get unique set of some column in the XShards of Pandas DataFrame. 
+You can get a unique list of elements of this XShards. This is useful when you want to count/get unique set of some column in the XShards of Pandas DataFrame. 
 ```
 unique()
 ```
-This method return a unique list of elements of the SparkXShards of Pandas Series.
+This method return a unique list of elements of the XShards of Pandas Series.
 
 ### **XShards with Numpy**
 
-#### **Load local numpy data to SparkXShards**
+#### **Load local numpy data to XShards**
 
-You can partition local in memory data and form a SparkXShards.
+You can partition local in memory data and form an XShards on Spark.
 ```
 zoo.orca.data.XShards.partition(data)
 ```
 * `data`: The local data can be numpy.ndarray, a tuple, list, dict of numpy.ndarray, or a nested structure made of tuple, list, dict with ndarray as the leaf value.
 
-This method returns a SparkXShards which dispatch local data in parallel on Spark.
+This method returns a XShards which dispatch local data in parallel on Spark.
 
 
 
