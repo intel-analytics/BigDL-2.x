@@ -20,6 +20,7 @@ import glob
 from pyspark import SparkContext
 from zoo.common.nncontext import init_spark_conf
 from zoo import init_nncontext
+from zoo.util.utils import detect_python_location
 
 
 class SparkRunner:
@@ -89,25 +90,8 @@ class SparkRunner:
 
         return sc
 
-    def _detect_python_location(self):
-        import subprocess
-        pro = subprocess.Popen(
-            "command -v python",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
-        out, err = pro.communicate()
-        out = out.decode("utf-8")
-        err = err.decode("utf-8")
-        errorcode = pro.returncode
-        if 0 != errorcode:
-            raise Exception(err +
-                            "Cannot detect current python location."
-                            "Please set it manually by python_location")
-        return out.strip()
-
     def _get_conda_python_path(self):
-        conda_env_path = "/".join(self._detect_python_location().split("/")[:-2])
+        conda_env_path = "/".join(detect_python_location().split("/")[:-2])
         python_interpreters = glob.glob("{}/lib/python*".format(conda_env_path))
         assert len(python_interpreters) == 1, \
             "Conda env should contain a single python, but got: {}".format(python_interpreters)
@@ -142,7 +126,7 @@ class SparkRunner:
         print("Start to getOrCreate SparkContext")
         if 'PYSPARK_PYTHON' not in os.environ:
             os.environ['PYSPARK_PYTHON'] = \
-                python_location if python_location else self._detect_python_location()
+                python_location if python_location else detect_python_location()
         master = "local[{}]".format(cores)
         zoo_conf = init_spark_conf(conf).setMaster(master)
         sc = init_nncontext(conf=zoo_conf, redirect_spark_log=self.redirect_spark_log)
@@ -247,7 +231,7 @@ class SparkRunner:
         from bigdl.util.engine import get_bigdl_classpath
 
         if 'PYSPARK_PYTHON' not in os.environ:
-            os.environ["PYSPARK_PYTHON"] = self._detect_python_location()
+            os.environ["PYSPARK_PYTHON"] = detect_python_location()
         if not master:
             pyspark_home = os.path.abspath(pyspark.__file__ + "/../")
             zoo_standalone_home = os.path.abspath(__file__ + "/../../share/bin/standalone")
@@ -297,7 +281,7 @@ class SparkRunner:
             .set("spark.executor.cores", executor_cores) \
             .set("spark.cores.max", num_executors * executor_cores) \
             .set("spark.executorEnv.PYTHONHOME",
-                 "/".join(self._detect_python_location().split("/")[:-2]))
+                 "/".join(detect_python_location().split("/")[:-2]))
         if extra_executor_memory_for_ray:
             spark_conf.set("spark.executor.memoryOverhead",
                            extra_executor_memory_for_ray)

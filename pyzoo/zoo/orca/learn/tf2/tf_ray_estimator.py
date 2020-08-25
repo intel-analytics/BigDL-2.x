@@ -66,6 +66,7 @@ class Estimator(HorovodRayRunner):
         self.verbose = verbose
 
         ray_ctx = RayContext.get()
+        ray_ctx.init()
         if "inter_op_parallelism" not in self.config:
             self.config["inter_op_parallelism"] = 1
 

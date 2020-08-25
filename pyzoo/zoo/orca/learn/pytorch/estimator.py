@@ -58,6 +58,8 @@ class Estimator(object):
                    workers_per_node=1,
                    backend="horovod"):
         if backend == "horovod":
+            from zoo.ray import RayContext
+            RayContext.get().init()
             return PyTorchHorovodEstimatorWrapper(model_creator=model,
                                                   optimizer_creator=optimizer,
                                                   loss_creator=loss,

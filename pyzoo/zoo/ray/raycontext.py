@@ -248,6 +248,7 @@ class RayContext(object):
         assert sc is not None, "sc cannot be None, please create a SparkContext first"
         self.sc = sc
         self.stopped = False
+        self.initialized = False
         self.is_local = is_local(sc)
         self.verbose = verbose
         self.redis_password = password
@@ -358,6 +359,7 @@ class RayContext(object):
             else:
                 self.ray_processesMonitor.clean_fn()
         self.stopped = True
+        self.initialized = False
 
     def purge(self):
         """
@@ -375,6 +377,7 @@ class RayContext(object):
                           numSlices=self.num_ray_nodes).barrier().mapPartitions(
                 self.ray_service.gen_stop()).collect()
         self.stopped = True
+        self.initialized = False
 
     def _get_spark_local_cores(self):
         local_symbol = re.match(r"local\[(.*)\]", self.sc.master).group(1)
@@ -394,17 +397,21 @@ class RayContext(object):
         Information contains node_ip_address, redis_address, object_store_address,
         raylet_socket_name, webui_url and session_dir.
         """
-        self.stopped = False
-        if self.is_local:
-            if self.env:
-                os.environ.update(self.env)
-            import ray
-            self._address_info = ray.init(num_cpus=self.ray_node_cpu_cores,
-                                          object_store_memory=self.object_store_memory,
-                                          resources=self.extra_params)
+        if self.initialized:
+            print("The Ray cluster has been launched.")
         else:
-            self._start_cluster()
-            self._address_info = self._start_driver(num_cores=driver_cores)
+            if self.is_local:
+                if self.env:
+                    os.environ.update(self.env)
+                import ray
+                self._address_info = ray.init(num_cpus=self.ray_node_cpu_cores,
+                                              object_store_memory=self.object_store_memory,
+                                              resources=self.extra_params)
+            else:
+                self._start_cluster()
+                self._address_info = self._start_driver(num_cores=driver_cores)
+            self.stopped = False
+            self.initialized = True
         return self._address_info
 
     @property
@@ -412,7 +419,7 @@ class RayContext(object):
         if self._address_info:
             return self._address_info
         else:
-            raise Exception("Ray cluster hasn't been initiated yet. Please call init first")
+            raise Exception("Ray cluster hasn't been launched yet. Please call init first")
 
     def _start_cluster(self):
         print("Start to launch ray on cluster")
