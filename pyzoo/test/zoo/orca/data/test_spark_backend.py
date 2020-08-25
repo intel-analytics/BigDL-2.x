@@ -185,6 +185,5 @@ class TestSparkBackend(TestCase):
         shutil.rmtree(temp)
 
 
-
 if __name__ == "__main__":
     pytest.main([__file__])

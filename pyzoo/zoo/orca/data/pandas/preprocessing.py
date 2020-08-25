@@ -298,4 +298,3 @@ def read_parquet(file_path,):
         print("An error occurred when reading parquet files")
         raise e
     return data_shards
-
