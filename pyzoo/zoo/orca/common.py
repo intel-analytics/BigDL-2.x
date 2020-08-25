@@ -134,5 +134,7 @@ def init_orca_context(mode="local", cores=2, memory='2g', num_nodes=1, **kwargs)
 
 
 def stop_orca_context():
-    RayContext.get().stop()
+    ray_ctx = RayContext.get()
+    if ray_ctx.initialized:
+        ray_ctx.stop()
     SparkContext.getOrCreate().stop()
