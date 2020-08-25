@@ -110,6 +110,12 @@ class MXNetRunner(object):
                 val_data_iter = validation_data(config, self.kv) if validation_data else None
             start_time = time.time()
             if self.trainer:  # Imperative API
+                def cpu_context(target_data):
+                    if isinstance(target_data, list):
+                        return [cpu_context(d) for d in target_data]
+                    else:
+                        return target_data.as_in_context(mx.cpu())
+
                 for epoch in range(epochs):
                     # DataLoader doesn't need to be reset.
                     if isinstance(train_data_iter, mx.io.DataIter):
@@ -119,8 +125,8 @@ class MXNetRunner(object):
                     batch_start_time = time.time()
                     epoch_start_time = time.time()
                     for i, batch in enumerate(train_data_iter):
-                        data = batch.data
-                        label = batch.label
+                        data = cpu_context(batch.data)
+                        label = cpu_context(batch.label)
                         if not isinstance(data, list):
                             data = [data]
                         if not isinstance(label, list):
@@ -166,14 +172,16 @@ class MXNetRunner(object):
                             val_data_iter.reset()
                         self.val_metrics.reset()
                         for batch in val_data_iter:
-                            data = gluon.utils.split_and_load(
-                                batch.data[0].astype("float32", copy=False),
-                                ctx_list=[mx.cpu()], batch_axis=0)
-                            label = gluon.utils.split_and_load(
-                                batch.label[0].astype("float32", copy=False),
-                                ctx_list=[mx.cpu()], batch_axis=0)
-                            outputs = [self.model(X) for X in data]
-                            self.val_metrics.update(label, outputs)
+                            data = cpu_context(batch.data)
+                            label = cpu_context(batch.label)
+                            if not isinstance(data, list):
+                                data = [data]
+                            if not isinstance(label, list):
+                                label = [label]
+                            output = self.model(*data)
+                            if not isinstance(output, list):
+                                output = [output]
+                            self.val_metrics.update(label, output)
                         epoch_val_log = "[Epoch %d] validation: " % epoch
                         names, accs = self.val_metrics.get()
                         names, accs = to_list(names), to_list(accs)
