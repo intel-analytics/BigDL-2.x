@@ -134,7 +134,7 @@ class MXNetRunner(object):
                             ag.backward(Ls)
                         self.trainer.step(batch_size)
                         if self.eval_metrics:
-                            self.eval_metrics.update(*label, *output)
+                            self.eval_metrics.update(label, output)
                         if not (i + 1) % self.config["log_interval"]:
                             # This would be logged on driver for each worker process.
                             iteration_log = \
