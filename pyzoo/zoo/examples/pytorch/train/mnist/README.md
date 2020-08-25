@@ -44,7 +44,7 @@ You can easily use the following commands to run this example:
     conda activate zoo
     export PYTHONHOME=[conda install path]/envs/zoo # use command "conda env list" to find the path of PYTHONEHOME.
     export ZOO_NUM_MKLTHREADS=4
-    python main.py
+    python lenet_mnist.py
     ```
 
 - Run with Yarn Client mode, upload data to hdfs first, export env `HADOOP_CONF_DIR` and `ZOO_CONDA_NAME`:  
@@ -53,7 +53,7 @@ You can easily use the following commands to run this example:
     export HADOOP_CONF_DIR=[path to your hadoop conf directory who has yarn-site.xml]
     export ZOO_CONDA_NAME=zoo #conda environment name you just prepared above
     export ZOO_NUM_MKLTHREADS=all
-    python main.py
+    python lenet_mnist.py
     ```
     
 In above commands
