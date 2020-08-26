@@ -406,6 +406,10 @@ class LocalModel(object):
         else:
             from zoo.automl.model.tcmf.local_model_distributed_trainer import train_yseq
             import ray
+
+            # check whether there has been an activate ray context yet.
+            from zoo.ray import RayContext
+            RayContext.get()
             Ymat_id = ray.put(self.Ymat)
             covariates_id = ray.put(self.covariates)
             Ycov_id = ray.put(self.Ycov)
