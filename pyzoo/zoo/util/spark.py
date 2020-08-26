@@ -149,7 +149,7 @@ class SparkRunner:
                            spark_yarn_archive=None,
                            conf=None,
                            jars=None):
-        print("Initializing Spark for yarn-client mode")
+        print("Initializing SparkContext for yarn-client mode")
         os.environ["HADOOP_CONF_DIR"] = hadoop_conf
         os.environ['HADOOP_USER_NAME'] = hadoop_user_name
         os.environ['PYSPARK_PYTHON'] = "{}/bin/python".format(self.PYTHON_ENV)
