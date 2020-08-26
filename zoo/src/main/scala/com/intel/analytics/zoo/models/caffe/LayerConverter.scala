@@ -20,7 +20,7 @@ import caffe.Caffe
 import caffe.Caffe.EltwiseParameter.EltwiseOp
 import caffe.Caffe.LRNParameter.NormRegion
 import caffe.Caffe.{BlobProto, PoolingParameter, _}
-import com.intel.analytics.bigdl.shaded.protobuf.GeneratedMessage
+import com.intel.analytics.shaded.protobuf_v_3_5_1.GeneratedMessage
 import com.intel.analytics.bigdl.nn.Graph._
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
