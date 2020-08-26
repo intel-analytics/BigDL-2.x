@@ -38,7 +38,7 @@ class FlinkInference(params: SerParams)
     logger = Logger.getLogger(getClass)
 
     if (ModelHolder.model == null) {
-      ModelHolder.model.synchronized {
+      ModelHolder.synchronized {
         if (ModelHolder.model == null) {
           val localModelDir = getRuntimeContext.getDistributedCache
             .getFile(Conventions.SERVING_MODEL_TMP_DIR).getPath
@@ -83,6 +83,6 @@ class FlinkInference(params: SerParams)
   }
 }
 object ModelHolder {
-  var model: InferenceModel = new InferenceModel()
+  var model: InferenceModel = null
 
 }
