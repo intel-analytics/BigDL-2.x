@@ -16,8 +16,8 @@
 
 import os
 from pyspark import SparkContext
-from zoo import ZooContext, init_nncontext
-from zoo import init_spark_on_local, init_spark_on_yarn, init_spark_standalone, stop_spark_standalone
+from zoo import ZooContext, init_nncontext, init_spark_on_local
+from zoo import init_spark_on_yarn, init_spark_standalone, stop_spark_standalone
 from zoo.ray import RayContext
 from zoo.util.utils import detect_python_location
 
@@ -90,7 +90,8 @@ class OrcaContext(metaclass=OrcaContextMeta):
     pass
 
 
-def init_orca_context(cluster_mode="", cores=2, memory='2g', num_nodes=1, init_ray_on_spark=False, **kwargs):
+def init_orca_context(cluster_mode="", cores=2, memory='2g', num_nodes=1,
+                      init_ray_on_spark=False, **kwargs):
     cluster_mode = cluster_mode.lower()
     spark_args = {}
     for key in ["conf", "spark_log_level", "redirect_spark_log"]:
@@ -106,29 +107,32 @@ def init_orca_context(cluster_mode="", cores=2, memory='2g', num_nodes=1, init_r
         sc = init_spark_on_local(cores, **spark_args)
     elif cluster_mode.startswith("yarn"):  # yarn or yarn-client
         if cluster_mode == "yarn-cluster":
-            raise ValueError("For yarn-cluster mode, please use the default cluster_mode and spark-submit instead")
+            raise ValueError('For yarn-cluster, please set cluster_mode to "" '
+                             'and use spark-submit instead')
         hadoop_conf = os.environ.get("HADOOP_CONF_DIR")
         if not hadoop_conf:
             assert "hadoop_conf" in kwargs,\
-                "Directory path to hadoop conf not found for yarn-client mode. Please either specify argument " \
-                "hadoop_conf or set the environment variable HADOOP_CONF_DIR"
+                "Directory path to hadoop conf not found for yarn-client mode. Please either " \
+                "specify argument hadoop_conf or set the environment variable HADOOP_CONF_DIR"
             hadoop_conf = kwargs["hadoop_conf"]
         python_location = detect_python_location()  # /path/to/conda/envs/conda_name/bin/python
         assert "envs" in python_location, "You must use a conda environment for yarn-client mode"
-        for key in ["driver_cores", "driver_memory", "extra_executor_memory_for_ray", "extra_python_lib",
-                    "penv_archive", "additional_archive", "hadoop_user_name", "spark_yarn_archive", "jars"]:
+        for key in ["driver_cores", "driver_memory", "extra_executor_memory_for_ray",
+                    "extra_python_lib", "penv_archive", "additional_archive",
+                    "hadoop_user_name", "spark_yarn_archive", "jars"]:
             if key in kwargs:
                 spark_args[key] = kwargs[key]
-        sc = init_spark_on_yarn(hadoop_conf=hadoop_conf, conda_name=python_location.split("/")[-3],
-                                num_executors=num_nodes, executor_cores=cores, executor_memory=memory,
-                                **spark_args)
+        sc = init_spark_on_yarn(hadoop_conf=hadoop_conf,
+                                conda_name=python_location.split("/")[-3],
+                                num_executors=num_nodes, executor_cores=cores,
+                                executor_memory=memory, **spark_args)
     elif cluster_mode == "standalone":
-        for key in ["driver_cores", "driver_memory", "extra_executor_memory_for_ray", "extra_python_lib",
-                    "jars", "master"]:
+        for key in ["driver_cores", "driver_memory", "extra_executor_memory_for_ray",
+                    "extra_python_lib", "jars", "master"]:
             if key in kwargs:
                 spark_args[key] = kwargs[key]
-        sc = init_spark_standalone(num_executors=num_nodes, executor_cores=cores, executor_memory=memory,
-                                   **spark_args)
+        sc = init_spark_standalone(num_executors=num_nodes, executor_cores=cores,
+                                   executor_memory=memory, **spark_args)
     else:
         raise ValueError("cluster_mode can only be local, yarn-client or standalone, "
                          "but got: %s".format(cluster_mode))

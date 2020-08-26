@@ -43,7 +43,7 @@ class JVMGuard:
                         pids)
         except Exception as err:
             print(traceback.format_exc())
-            print("Cannot sucessfully register pid into JVMGuard")
+            print("Cannot successfully register pid into JVMGuard")
             for pid in pids:
                 os.kill(pid, signal.SIGKILL)
             raise err
