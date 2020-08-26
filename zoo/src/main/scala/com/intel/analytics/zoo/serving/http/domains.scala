@@ -522,6 +522,7 @@ object Instances {
       })
       instances.append(map)
     }
+    arrowStreamReader.close()
     new Instances(instances.toList)
   }
 
