@@ -1,6 +1,6 @@
-# Distributed pytorch on MNIST dataset
+# Orca PyTorch estimator on MNIST dataset
 
-This is an example to show you how to use analytics-zoo to train a pytorch model on Spark. 
+This is an example to show you how to use analytics-zoo orca PyTorch Estimator to train a pytorch model on Spark.
 
 # Requirements
 * Python 3.7
@@ -10,7 +10,7 @@ This is an example to show you how to use analytics-zoo to train a pytorch model
 * jep 3.9.0
 
 ## Prepare environments
-We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the enviroments, especially if you want to run on a yarn cluster(yarn-client mode only). 
+We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the enviroments, especially if you want to run on a yarn cluster(yarn-client mode only).
 ```
 conda create -n zoo python=3.7 #zoo is conda enviroment name, you can set another name you like.
 conda activate zoo
@@ -44,18 +44,18 @@ You can easily use the following commands to run this example:
     conda activate zoo
     export PYTHONHOME=[conda install path]/envs/zoo # use command "conda env list" to find the path of PYTHONEHOME.
     export ZOO_NUM_MKLTHREADS=4
-    python main.py
+    python lenet_mnist.py
     ```
 
-- Run with Yarn Client mode, upload data to hdfs first, export env `HADOOP_CONF_DIR` and `ZOO_CONDA_NAME`:  
+- Run with Yarn Client mode, upload data to hdfs first, export env `HADOOP_CONF_DIR` and `ZOO_CONDA_NAME`:
     ```bash
     conda activate zoo
     export HADOOP_CONF_DIR=[path to your hadoop conf directory who has yarn-site.xml]
     export ZOO_CONDA_NAME=zoo #conda environment name you just prepared above
     export ZOO_NUM_MKLTHREADS=all
-    python main.py
+    python lenet_mnist.py
     ```
-    
+
 In above commands
 * --dir: the path to mnist dataset
 * --batch-size: The mini-batch size on each executor.

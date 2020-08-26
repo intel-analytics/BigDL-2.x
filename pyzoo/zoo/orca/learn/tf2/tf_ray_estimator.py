@@ -40,7 +40,8 @@ class Estimator(HorovodRayRunner):
                  compile_args_creator,
                  config=None,
                  verbose=False,
-                 backend="horovod"):
+                 backend="horovod",
+                 workers_per_node=1):
         """Sets up the TensorFlow trainer.
 
         Args:
@@ -69,7 +70,7 @@ class Estimator(HorovodRayRunner):
             self.config["inter_op_parallelism"] = 1
 
         if "intra_op_parallelism" not in config:
-            self.config["intra_op_parallelism"] = ray_ctx.ray_node_cpu_cores
+            self.config["intra_op_parallelism"] = ray_ctx.ray_node_cpu_cores // workers_per_node
 
         params = {
             "model_creator": model_creator,
@@ -78,7 +79,8 @@ class Estimator(HorovodRayRunner):
             "verbose": self.verbose,
         }
 
-        super().__init__(ray_ctx, worker_cls=TFWorker, worker_param=params)
+        super().__init__(ray_ctx, worker_cls=TFWorker, worker_param=params,
+                         workers_per_node=workers_per_node)
 
         if backend == "tf":
             ips = ray.get(
@@ -104,7 +106,7 @@ class Estimator(HorovodRayRunner):
                             "value of backend, but got {}".format(backend))
 
     def fit(self, data_creator, epochs=1, verbose=1,
-            callbacks=None, validation_data_creator=None, class_weight=None, initial_epoch=0,
+            callbacks=None, validation_data_creator=None, class_weight=None,
             steps_per_epoch=None, validation_steps=None, validation_freq=1):
         """Runs a training epoch."""
 
@@ -115,7 +117,6 @@ class Estimator(HorovodRayRunner):
             callbacks=callbacks,
             validation_data_creator=validation_data_creator,
             class_weight=class_weight,
-            initial_epoch=initial_epoch,
             steps_per_epoch=steps_per_epoch,
             validation_steps=validation_steps,
             validation_freq=validation_freq,
@@ -125,7 +126,7 @@ class Estimator(HorovodRayRunner):
         return stats
 
     def evaluate(self, data_creator, verbose=1, sample_weight=None,
-                 steps=None, callbacks=None, return_dict=False):
+                 steps=None, callbacks=None):
         """Evaluates the model on the validation data set."""
         logger.info("Starting validation step.")
         params = dict(
@@ -133,8 +134,7 @@ class Estimator(HorovodRayRunner):
             verbose=verbose,
             sample_weight=sample_weight,
             steps=steps,
-            callbacks=callbacks,
-            return_dict=return_dict
+            callbacks=callbacks
         )
         # see ./tf_runner.py:setup_distributed
         # for an explanation of only taking the first worker's data
