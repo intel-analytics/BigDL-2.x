@@ -178,6 +178,9 @@ def init_spark_standalone(num_executors,
 
 
 def stop_spark_standalone():
+    """
+    Stop the Spark standalone cluster created from init_spark_standalone (master not specified).
+    """
     from zoo.util.spark import SparkRunner
     SparkRunner.stop_spark_standalone()
 
@@ -234,14 +237,19 @@ def _read_stream(fd, fn):
 
 def init_nncontext(conf=None, spark_log_level="WARN", redirect_spark_log=True):
     """
-    Creates or gets a SparkContext with optimized configuration for BigDL performance.
-    The method will also initialize the BigDL engine.
+    Creates or gets a SparkContext with optimized configurations for BigDL performance.
+    This method will also initialize the BigDL engine.
 
-    Note: if you use spark-shell or Jupyter notebook, as the Spark context is created
-    before your code, you have to set Spark conf values through command line options
-    or properties file, and init BigDL engine manually.
+    Note: If you use spark-shell or Jupyter notebook, as the SparkContext is created
+    before your code, you have to set the Spark conf through command line options
+    or the properties file before calling this method. In this case, you are recommended
+    to use the launching scripts under `analytics-zoo/scripts`.
 
-    :param conf: User defined Spark conf
+    :param conf: You can append extra conf for Spark in key-value format.
+           i.e conf={"spark.executor.extraJavaOptions": "-XX:+PrintGCDetails"}.
+           Default to be None.
+    :param spark_log_level: The log level for Spark. Default to be 'WARN'.
+    :param redirect_spark_log: Whether to redirect the Spark log to local file. Default to be True.
     """
 
     # The following code copied and modified from

@@ -90,8 +90,27 @@ class OrcaContext(metaclass=OrcaContextMeta):
     pass
 
 
-def init_orca_context(cluster_mode="", cores=2, memory='2g', num_nodes=1,
+def init_orca_context(cluster_mode="", cores=2, memory="2g", num_nodes=1,
                       init_ray_on_spark=False, **kwargs):
+    """
+    Creates or gets a SparkContext for different Spark cluster modes (and launch Ray services
+    across the cluster).
+
+    :param cluster_mode: The mode for the Spark cluster. One of "", "local", "yarn-client" and
+           "standalone".
+           Default to be "" and in this case you can use spark-submit for yarn-cluster mode.
+    :param cores: The number of cores to be used on each node. Default to be 2.
+    :param memory: The memory allocated for each node. Default to be '2g'.
+    :param num_nodes: The number of cores available in the cluster. Default to be 1.
+           For Spark local, num_nodes should always be 1.
+    :param init_ray_on_spark: Whether to launch Ray services across the cluster.
+           Default to be False and in this case the Ray cluster would be launched lazily when
+           Ray is involved in Project Orca.
+    :param kwargs: The extra keyword arguments used for creating SparkContext and
+           launching Ray if any.
+
+    :return: An instance of SparkContext.
+    """
     cluster_mode = cluster_mode.lower()
     spark_args = {}
     for key in ["conf", "spark_log_level", "redirect_spark_log"]:
@@ -100,7 +119,7 @@ def init_orca_context(cluster_mode="", cores=2, memory='2g', num_nodes=1,
     if cluster_mode == "":
         sc = init_nncontext(**spark_args)
     elif cluster_mode == "local":
-        assert num_nodes == 1
+        assert num_nodes == 1, "For Spark local mode, num_nodes should be 1"
         os.environ["SPARK_DRIVER_MEMORY"] = memory
         if "python_location" in kwargs:
             spark_args["python_location"] = kwargs["python_location"]
@@ -151,6 +170,9 @@ def init_orca_context(cluster_mode="", cores=2, memory='2g', num_nodes=1,
 
 
 def stop_orca_context():
+    """
+    Stop the SparkContext (and stop Ray services across the cluster).
+    """
     ray_ctx = RayContext.get(initialize=False)
     if ray_ctx.initialized:
         ray_ctx.stop()
