@@ -55,8 +55,9 @@ object ZooBaseline extends Supportive {
 
     val model = helper.loadInferenceModel()
     val warmT = makeTensorFromShape(param.inputShape)
+    InferenceSupportive.typeCheck(warmT)
+    InferenceSupportive.dimCheck(warmT, "add", sParam)
     (0 until 10).foreach(_ => {
-      InferenceSupportive.dimCheck(warmT, "add", sParam)
       val result = model.doPredict(warmT)
     })
     print("Warming up finished, begin baseline test...")
@@ -66,6 +67,7 @@ object ZooBaseline extends Supportive {
       if (sParam.inferenceMode == "single") {
         (0 until param.testNum).foreach(_ => {
           val t = makeTensorFromShape(param.inputShape)
+          InferenceSupportive.typeCheck(t)
           InferenceSupportive.dimCheck(t, "add", sParam)
           val result = model.doPredict(t)
         })
@@ -75,7 +77,7 @@ object ZooBaseline extends Supportive {
           a = a :+ (i.toString(), T(makeTensorFromShape(param.inputShape)))
         )
         (0 until param.testNum).grouped(sParam.coreNum).flatMap(i => {
-          val t = timing("Batch input"){
+          val t = timing("Batch input") {
             InferenceSupportive.batchInput(a, sParam)
           }
           InferenceSupportive.dimCheck(t, "add", sParam)
