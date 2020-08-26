@@ -491,9 +491,10 @@ class DeepGLO(object):
             dti=self.dti,
             Ycov=Ycov,
         )
-        self.Yseq.train_model(num_epochs=num_epochs,
-                              num_workers=num_workers,
-                              early_stop=False)
+        val_loss = self.Yseq.train_model(num_epochs=num_epochs,
+                                         num_workers=num_workers,
+                                         early_stop=False)
+        return val_loss
 
     def train_all_models(
         self, Ymat, init_epochs=100, alt_iters=10, y_iters=200, tenacity=7, mod=5,
@@ -580,9 +581,10 @@ class DeepGLO(object):
                 )
 
         print("-"*50, "Start training Yseq", "-"*50)
-        self.train_Yseq(num_epochs=y_iters,
-                        num_workers=num_workers,
-                        )
+        val_loss = self.train_Yseq(num_epochs=y_iters,
+                                   num_workers=num_workers,
+                                   )
+        return val_loss
 
     def get_time_covs(self, start_date, num_ts):
         if self.use_time:

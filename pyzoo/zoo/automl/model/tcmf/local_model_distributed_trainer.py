@@ -110,7 +110,9 @@ def train_yseq(num_workers, epochs, **config):
     for s in stats:
         print(pretty_print(s))
 
+    worker_stats = trainer.validate(reduce_results=True)
+    val_loss = worker_stats['val_loss']
     yseq = trainer.get_model()
     trainer.shutdown()
 
-    return yseq
+    return yseq, val_loss

@@ -402,7 +402,7 @@ class LocalModel(object):
                     num_workers=1,
                     early_stop=False, tenacity=10):
         if num_workers == 1:
-            self.train_model_local(num_epochs=num_epochs, early_stop=early_stop, tenacity=tenacity)
+            return self.train_model_local(num_epochs=num_epochs, early_stop=early_stop, tenacity=tenacity)
         else:
             from zoo.automl.model.tcmf.local_model_distributed_trainer import train_yseq
             import ray
@@ -412,10 +412,14 @@ class LocalModel(object):
             trainer_config_keys = ["vbsize", "hbsize", "end_index", "val_len", "lr",
                                    "num_inputs", "num_channels", "kernel_size", "dropout"]
             trainer_config = {k: self.__dict__[k] for k in trainer_config_keys}
-            self.seq = train_yseq(epochs=num_epochs,
-                                  num_workers=num_workers,
-                                  Ymat_id=Ymat_id, covariates_id=covariates_id, Ycov_id=Ycov_id,
-                                  **trainer_config)
+            model, val_loss = train_yseq(epochs=num_epochs,
+                                         num_workers=num_workers,
+                                         Ymat_id=Ymat_id,
+                                         covariates_id=covariates_id,
+                                         Ycov_id=Ycov_id,
+                                         **trainer_config)
+            self.seq = model
+            return val_loss
 
     @staticmethod
     def loss(out, target):
@@ -431,8 +435,9 @@ class LocalModel(object):
         optimizer = optim.Adam(params=self.seq.parameters(), lr=self.lr)
         iter_count = 0
         loss_all = []
-        vae = float("inf")
+        min_val_loss = float("inf")
         scount = 0
+        val_loss = 0
         inp_test, out_target_test, _, _ = self.D.supply_test()
         while self.D.epoch < num_epochs:
             last_epoch = self.D.epoch
@@ -460,22 +465,13 @@ class LocalModel(object):
                 out_target_test = Variable(out_target_test)
                 out_test = self.seq(inp_test)
 
-                losst = LocalModel.loss(out_test, out_target_test)
-                ve = losst
+                val_loss = LocalModel.loss(out_test, out_target_test).item()
                 print("Entering Epoch:{}".format(current_epoch))
                 print("Train Loss:{}".format(np.mean(loss_all)))
-                print("Validation Loss:{}".format(ve))
-                self.val_loss = ve
-                if ve <= vae:
-                    vae = ve
+                print("Validation Loss:{}".format(val_loss))
+                if val_loss <= min_val_loss:
+                    min_val_loss = val_loss
                     scount = 0
-                    # self.saved_seq = TemporalConvNet(
-                    #     num_inputs=self.seq.num_inputs,
-                    #     num_channels=self.seq.num_channels,
-                    #     kernel_size=self.seq.kernel_size,
-                    #     dropout=self.seq.dropout,
-                    # )
-                    # self.saved_seq.load_state_dict(self.seq.state_dict())
                     self.saved_seq = pickle.loads(pickle.dumps(self.seq))
                 else:
                     scount += 1
@@ -483,6 +479,7 @@ class LocalModel(object):
                         self.seq = self.saved_seq
 
                         break
+        return val_loss
 
     def convert_to_input(self, data):
         n, m = data.shape
