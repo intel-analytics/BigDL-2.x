@@ -525,6 +525,7 @@ object Instances {
 
     arrowStreamReader.close()
     rootAllocator.close()
+    byteArrayInputStream.close()
     new Instances(instances.toList)
   }
 
