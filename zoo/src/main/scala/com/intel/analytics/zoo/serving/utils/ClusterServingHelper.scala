@@ -20,17 +20,13 @@ package com.intel.analytics.zoo.serving.utils
 import java.io.{File, FileInputStream, FileWriter}
 import java.nio.file.{Files, Path, Paths}
 
-import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.models.utils.ModelBroadcast
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
-import com.intel.analytics.zoo.pipeline.api.Net
+
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import java.util.LinkedHashMap
 
 import org.apache.log4j.Logger
-import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.yaml.snakeyaml.Yaml
@@ -243,8 +239,10 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
    * backend engine type
    * @return
    */
-  def loadInferenceModel(): InferenceModel = {
+  def loadInferenceModel(_parallelNum: Int = 1): InferenceModel = {
     val parallelNum = if (inferenceMode == "single") coreNum else 1
+    val batchSize: Int = coreNum / parallelNum
+    logger.info(s"Cluster Serving load Inference Model with Parallelism $parallelNum")
     val model = new InferenceModel(parallelNum)
 
     // Used for Tensorflow Model, it could not have intraThreadNum > 2^8
@@ -292,8 +290,8 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
       case "pytorch" => model.doLoadPyTorch(weightPath)
       case "keras" => logError("Keras currently not supported in Cluster Serving")
       case "openvino" => modelEncrypted match {
-        case true => model.doLoadEncryptedOpenVINO(defPath, weightPath, secret, salt, coreNum)
-        case false => model.doLoadOpenVINO(defPath, weightPath, coreNum)
+        case true => model.doLoadEncryptedOpenVINO(defPath, weightPath, secret, salt, batchSize)
+        case false => model.doLoadOpenVINO(defPath, weightPath, batchSize)
       }
       case _ => logError("Invalid model type, please check your model directory")
 

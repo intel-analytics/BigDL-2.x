@@ -129,7 +129,7 @@ object SparkStructuredStreamingClusterServing {
 
     val acc = new LongAccumulator()
     helper.sc.register(acc)
-    val serParams = new SerParams(helper, false)
+    val serParams = new SerParams(helper)
 
     val query = inputData.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
 
