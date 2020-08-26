@@ -15,11 +15,7 @@
 #
 
 import os
-from pyspark import SparkContext
-from zoo import ZooContext, init_nncontext, init_spark_on_local
-from zoo import init_spark_on_yarn, init_spark_standalone, stop_spark_standalone
-from zoo.ray import RayContext
-from zoo.util.utils import detect_python_location
+from zoo import ZooContext
 
 
 class OrcaContextMeta(type):
@@ -117,12 +113,14 @@ def init_orca_context(cluster_mode="", cores=2, memory="2g", num_nodes=1,
         if key in kwargs:
             spark_args[key] = kwargs[key]
     if cluster_mode == "":
+        from zoo import init_nncontext
         sc = init_nncontext(**spark_args)
     elif cluster_mode == "local":
         assert num_nodes == 1, "For Spark local mode, num_nodes should be 1"
         os.environ["SPARK_DRIVER_MEMORY"] = memory
         if "python_location" in kwargs:
             spark_args["python_location"] = kwargs["python_location"]
+        from zoo import init_spark_on_local
         sc = init_spark_on_local(cores, **spark_args)
     elif cluster_mode.startswith("yarn"):  # yarn or yarn-client
         if cluster_mode == "yarn-cluster":
@@ -134,6 +132,7 @@ def init_orca_context(cluster_mode="", cores=2, memory="2g", num_nodes=1,
                 "Directory path to hadoop conf not found for yarn-client mode. Please either " \
                 "specify argument hadoop_conf or set the environment variable HADOOP_CONF_DIR"
             hadoop_conf = kwargs["hadoop_conf"]
+        from zoo.util.utils import detect_python_location
         python_location = detect_python_location()  # /path/to/conda/envs/conda_name/bin/python
         assert "envs" in python_location, "You must use a conda environment for yarn-client mode"
         for key in ["driver_cores", "driver_memory", "extra_executor_memory_for_ray",
@@ -141,6 +140,7 @@ def init_orca_context(cluster_mode="", cores=2, memory="2g", num_nodes=1,
                     "hadoop_user_name", "spark_yarn_archive", "jars"]:
             if key in kwargs:
                 spark_args[key] = kwargs[key]
+        from zoo import init_spark_on_yarn
         sc = init_spark_on_yarn(hadoop_conf=hadoop_conf,
                                 conda_name=python_location.split("/")[-3],
                                 num_executors=num_nodes, executor_cores=cores,
@@ -150,6 +150,7 @@ def init_orca_context(cluster_mode="", cores=2, memory="2g", num_nodes=1,
                     "extra_python_lib", "jars", "master"]:
             if key in kwargs:
                 spark_args[key] = kwargs[key]
+        from zoo import init_spark_standalone
         sc = init_spark_standalone(num_executors=num_nodes, executor_cores=cores,
                                    executor_memory=memory, **spark_args)
     else:
@@ -160,6 +161,7 @@ def init_orca_context(cluster_mode="", cores=2, memory="2g", num_nodes=1,
                 "extra_params", "num_ray_nodes", "ray_node_cpu_cores"]:
         if key in kwargs:
             ray_args[key] = kwargs[key]
+    from zoo.ray import RayContext
     ray_ctx = RayContext(sc, **ray_args)
     if init_ray_on_spark:
         driver_cores = 0  # This is the default value.
@@ -173,10 +175,13 @@ def stop_orca_context():
     """
     Stop the SparkContext (and stop Ray services across the cluster).
     """
+    from pyspark import SparkContext
+    from zoo.ray import RayContext
     ray_ctx = RayContext.get(initialize=False)
     if ray_ctx.initialized:
         ray_ctx.stop()
     sc = SparkContext.getOrCreate()
     if sc.getConf().get("spark.master").startswith("spark://"):
+        from zoo import stop_spark_standalone
         stop_spark_standalone()
     sc.stop()
