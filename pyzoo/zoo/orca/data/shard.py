@@ -396,7 +396,6 @@ class SparkXShards(XShards):
         """
         from zoo.ray import RayContext
         ray_ctx = RayContext.get()
-        ray_ctx.init()
         object_store_address = ray_ctx.address_info["object_store_address"]
 
         def put_to_plasma(ids):

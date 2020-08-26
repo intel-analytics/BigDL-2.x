@@ -18,4 +18,4 @@ from .mxnet_trainer import Estimator
 from .utils import create_config
 from zoo.ray import RayContext
 
-RayContext.get().init()
+RayContext.get()

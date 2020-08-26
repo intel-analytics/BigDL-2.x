@@ -328,9 +328,12 @@ class RayContext(object):
         RayContext._active_ray_context = self
 
     @classmethod
-    def get(cls):
+    def get(cls, initialize=True):
         if RayContext._active_ray_context:
-            return RayContext._active_ray_context
+            ray_ctx = RayContext._active_ray_context
+            if initialize and not ray_ctx.initialized:
+                ray_ctx.init()
+            return ray_ctx
         else:
             raise Exception("No active RayContext. Please create a RayContext and init it first")
 

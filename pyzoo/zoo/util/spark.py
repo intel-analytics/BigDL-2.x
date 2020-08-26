@@ -85,9 +85,8 @@ class SparkRunner:
     def _create_sc(self, submit_args, conf):
         os.environ['PYSPARK_SUBMIT_ARGS'] = submit_args
         zoo_conf = init_spark_conf(conf)
-        sc = init_nncontext(conf=zoo_conf, redirect_spark_log=self.redirect_spark_log)
-        sc.setLogLevel(self.spark_log_level)
-
+        sc = init_nncontext(conf=zoo_conf, spark_log_level=self.spark_log_level,
+                            redirect_spark_log=self.redirect_spark_log)
         return sc
 
     def _get_conda_python_path(self):
@@ -129,8 +128,8 @@ class SparkRunner:
                 python_location if python_location else detect_python_location()
         master = "local[{}]".format(cores)
         zoo_conf = init_spark_conf(conf).setMaster(master)
-        sc = init_nncontext(conf=zoo_conf, redirect_spark_log=self.redirect_spark_log)
-        sc.setLogLevel(self.spark_log_level)
+        sc = init_nncontext(conf=zoo_conf, spark_log_level=self.spark_log_level,
+                            redirect_spark_log=self.redirect_spark_log)
         print("Successfully got a SparkContext")
         return sc
 
@@ -150,6 +149,7 @@ class SparkRunner:
                            spark_yarn_archive=None,
                            conf=None,
                            jars=None):
+        print("Initializing Spark for yarn-client mode")
         os.environ["HADOOP_CONF_DIR"] = hadoop_conf
         os.environ['HADOOP_USER_NAME'] = hadoop_user_name
         os.environ['PYSPARK_PYTHON'] = "{}/bin/python".format(self.PYTHON_ENV)
@@ -217,8 +217,8 @@ class SparkRunner:
                               num_executors,
                               executor_cores,
                               executor_memory="10g",
-                              driver_memory="1g",
                               driver_cores=4,
+                              driver_memory="1g",
                               master=None,
                               extra_executor_memory_for_ray=None,
                               extra_python_lib=None,
@@ -291,8 +291,8 @@ class SparkRunner:
         else:
             spark_conf.set("spark.executor.extraClassPath", zoo_bigdl_jar_path)
 
-        sc = init_nncontext(spark_conf, redirect_spark_log=self.redirect_spark_log)
-        sc.setLogLevel(self.spark_log_level)
+        sc = init_nncontext(spark_conf, spark_log_level=self.spark_log_level,
+                            redirect_spark_log=self.redirect_spark_log)
         return sc
 
     @staticmethod
