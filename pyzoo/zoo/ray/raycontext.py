@@ -247,7 +247,6 @@ class RayContext(object):
         """
         assert sc is not None, "sc cannot be None, please create a SparkContext first"
         self.sc = sc
-        self.stopped = False
         self.initialized = False
         self.is_local = is_local(sc)
         self.verbose = verbose
@@ -351,8 +350,8 @@ class RayContext(object):
         return ips[0]
 
     def stop(self):
-        if self.stopped:
-            print("This instance has been stopped.")
+        if not self.initialized:
+            print("The Ray cluster has not been launched.")
             return
         import ray
         ray.shutdown()
@@ -361,15 +360,14 @@ class RayContext(object):
                 print("Please start the runner first before closing it")
             else:
                 self.ray_processesMonitor.clean_fn()
-        self.stopped = True
         self.initialized = False
 
     def purge(self):
         """
         Invoke ray stop to clean ray processes.
         """
-        if self.stopped:
-            print("This instance has been stopped.")
+        if not self.initialized:
+            print("The Ray cluster has not been launched.")
             return
         if self.is_local:
             import ray
@@ -379,7 +377,6 @@ class RayContext(object):
                           self.num_ray_nodes,
                           numSlices=self.num_ray_nodes).barrier().mapPartitions(
                 self.ray_service.gen_stop()).collect()
-        self.stopped = True
         self.initialized = False
 
     def _get_spark_local_cores(self):
@@ -413,7 +410,6 @@ class RayContext(object):
             else:
                 self._start_cluster()
                 self._address_info = self._start_driver(num_cores=driver_cores)
-            self.stopped = False
             self.initialized = True
         return self._address_info
 
@@ -422,7 +418,7 @@ class RayContext(object):
         if self._address_info:
             return self._address_info
         else:
-            raise Exception("Ray cluster hasn't been launched yet. Please call init first")
+            raise Exception("The Ray cluster has not been launched yet. Please call init first")
 
     def _start_cluster(self):
         print("Start to launch ray on cluster")
