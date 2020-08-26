@@ -32,7 +32,7 @@ object InferenceSupportive {
       try {
         val t = typeCheck(pathByte._2)
         dimCheck(t, "add", params)
-        val result = FlinkInference.model.doPredict(t)
+        val result = ModelHolder.model.doPredict(t)
         dimCheck(result, "remove", params)
         val value = PostProcessing(result.toTensor[Float], params.filter, 1)
         (pathByte._1, value)
@@ -62,7 +62,7 @@ object InferenceSupportive {
          * have to squeeze it back.
          */
         dimCheck(t, "add", params)
-        val result = FlinkInference.model.doPredict(t)
+        val result = ModelHolder.model.doPredict(t)
         dimCheck(result, "remove", params)
         dimCheck(t, "remove", params)
         val t3 = System.nanoTime()

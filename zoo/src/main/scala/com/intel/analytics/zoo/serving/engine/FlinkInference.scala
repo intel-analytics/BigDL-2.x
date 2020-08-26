@@ -37,18 +37,20 @@ class FlinkInference(params: SerParams)
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
 
-    if (!FlinkInference.initialized) {
-      FlinkInference.initialized = true
-      val localModelDir = getRuntimeContext.getDistributedCache
-        .getFile(Conventions.SERVING_MODEL_TMP_DIR).getPath
-      val localConfPath = getRuntimeContext.getDistributedCache
-        .getFile(Conventions.SERVING_CONF_TMP_PATH).getPath
-      logger.info(s"Config parameters loaded at executor at path ${localConfPath}, " +
-        s"Model loaded at executor at path ${localModelDir}")
-      val helper = new ClusterServingHelper(localConfPath, localModelDir)
-      helper.initArgs()
-      FlinkInference.model = helper.loadInferenceModel()
-//      FlinkInference.model = ClusterServingHelper.loadModelfromDir(localConfPath, localModelDir)
+    if (ModelHolder.model == null) {
+      ModelHolder.model.synchronized {
+        if (ModelHolder.model == null) {
+          val localModelDir = getRuntimeContext.getDistributedCache
+            .getFile(Conventions.SERVING_MODEL_TMP_DIR).getPath
+          val localConfPath = getRuntimeContext.getDistributedCache
+            .getFile(Conventions.SERVING_CONF_TMP_PATH).getPath
+          logger.info(s"Config parameters loaded at executor at path ${localConfPath}, " +
+            s"Model loaded at executor at path ${localModelDir}")
+          val helper = new ClusterServingHelper(localConfPath, localModelDir)
+          helper.initArgs()
+          ModelHolder.model = helper.loadInferenceModel()
+        }
+      }
     }
 
 
@@ -80,8 +82,7 @@ class FlinkInference(params: SerParams)
     postProcessed
   }
 }
-object FlinkInference {
-  @volatile var initialized: Boolean = false
-  var model: InferenceModel = null
+object ModelHolder {
+  var model: InferenceModel = new InferenceModel()
 
 }
