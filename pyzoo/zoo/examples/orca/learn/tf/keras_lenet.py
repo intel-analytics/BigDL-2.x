@@ -62,10 +62,6 @@ def main(max_epoch):
 
     result = est.evaluate(testing_shards)
     print(result)
-    # >> [0.08865142822265625, 0.9722]
-
-    # the following assert is used for internal testing
-    assert result['acc Top1Accuracy'] > 0.95
 
     est.save_keras_model("/tmp/mnist_keras.h5")
 

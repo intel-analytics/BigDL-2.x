@@ -58,19 +58,7 @@ def main(max_epoch, data_num):
     # get data, pre-process and create TFDataset
     training_shards = get_data_xshards("train", sc)
     testing_shards = get_data_xshards("test", sc)
-    # (train_images_data, train_labels_data) = mnist.read_data_sets("/tmp/mnist", "train")
-    # (test_images_data, test_labels_data) = mnist.read_data_sets("/tmp/mnist", "train")
-    #
-    # train_images_data = (train_images_data[:data_num] - mnist.TRAIN_MEAN) / mnist.TRAIN_STD
-    # train_labels_data = train_labels_data[:data_num].astype(np.int)
-    # test_images_data = (test_images_data[:data_num] - mnist.TRAIN_MEAN) / mnist.TRAIN_STD
-    # test_labels_data = (test_labels_data[:data_num]).astype(np.int)
-    # dataset = TFDataset.from_ndarrays((train_images_data, train_labels_data),
-    #                                   batch_size=360,
-    #                                   val_tensors=(test_images_data, test_labels_data))
 
-    # # construct the model from TFDataset
-    # images, labels = dataset.tensors
     images = tf.placeholder(dtype=tf.float32, shape=(None, 28, 28, 1))
     labels = tf.placeholder(dtype=tf.int32, shape=(None,))
 
@@ -81,7 +69,7 @@ def main(max_epoch, data_num):
 
     acc = accuracy(logits, labels)
 
-    # create a optimizer
+    # create an estimator
     est = Estimator.from_graph(inputs=images,
                                outputs=logits,
                                labels=labels,
