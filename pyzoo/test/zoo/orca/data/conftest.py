@@ -18,7 +18,7 @@ import pytest
 
 
 @pytest.fixture(autouse=True, scope='package')
-def orca_data_fixture():
+def orca_context_fixture():
     import os
     from zoo.orca import OrcaContext, init_orca_context, stop_orca_context
     OrcaContext._eager_mode = True

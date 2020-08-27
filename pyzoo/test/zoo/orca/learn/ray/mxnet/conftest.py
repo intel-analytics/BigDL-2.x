@@ -17,9 +17,8 @@ import pytest
 
 
 @pytest.fixture(autouse=True, scope='package')
-def rayonspark_fixture():
+def orca_context_fixture():
     from zoo.orca import init_orca_context, stop_orca_context
-    init_orca_context(cluster_mode="local", cores=8, init_ray_on_spark=True,
-                      spark_log_level="INFO", object_store_memory="1g")
+    init_orca_context(init_ray_on_spark=True)
     yield
     stop_orca_context()
