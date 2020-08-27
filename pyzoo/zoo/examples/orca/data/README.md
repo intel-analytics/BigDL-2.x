@@ -12,6 +12,6 @@ Before you run the example, download the data(nyc_taxi.csv), and put into a dire
 ## Run after pip install
 You can easily use the following commands to run this example:
 ```bash
-nyc_path=the file path of nyc_taxi.csv
+nyc_path=the file path to nyc_taxi.csv
 
 python spark_pandas.py -f ${nyc_path} 

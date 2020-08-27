@@ -5,7 +5,7 @@ MXNetTrainer implemented in Analytics Zoo on top of [RayOnSpark](https://analyti
 We use the LeNet model to train on MNIST dataset for handwritten digit recognition. 
 See [here](https://mxnet.apache.org/api/python/docs/tutorials/packages/gluon/image/mnist.html) for the original single-node version of this example provided by MXNet.
 
-In the distributed setting, the whole MNIST dataset is splitted into several parts and each MXNet worker takes a part for data parallel training. 
+In the distributed setting, the whole MNIST dataset is divided into several parts and each MXNet worker takes a part for data parallel training. 
 At the same time, MXNet servers are responsible for aggregating the parameters and send back to workers.
 
 ## Prepare environments
@@ -30,11 +30,12 @@ python lenet_mnist.py -n 2
 ```
 See [here](#Options) for more configurable options for this example.
 
-## Run on yarn cluster for yarn-client mode after pip install 
+## Run on yarn cluster for yarn-client mode after pip install
 ```
-python lenet_mnist.py --hadoop_conf ...# path to your hadoop/yarn directory --conda_name ...# your conda name
+export HADOOP_CONF_DIR=path to your hadoop conf directory
+python lenet_mnist.py --cluster_mode yarn-client 
 ```
- 
+
 See [here](#Options) for more configurable options for this example.
 
 ## Options
@@ -44,11 +45,7 @@ See [here](#Options) for more configurable options for this example.
 - `-e` `--epochs` The number of epochs to train the model. Default is 10.
 - `-l` `--learning_rate` The learning rate for the TextClassifier model. Default is 0.01.
 - `--log_interval` The number of batches to wait before logging throughput and metrics information during the training process.
-
-**Options for yarn only**
-- `--hadoop_conf` This option is **required** when you want to run on yarn. The path to your configuration folder of hadoop.
-- `--conda_name` This option is **required** when you want to run on yarn. The name of your conda environment.
-- `--executor_cores` The number of executor cpu cores you want to use. Default is 4.
+- `--cores` The number of cores you want to use on each node. Default is 4.
 
 ## Results
 You can find the accuracy information from the log during the training process:
@@ -64,6 +61,5 @@ You can find the accuracy information from the log during the training process:
 (pid=34395) INFO:root:[Epoch 6] validation: accuracy=0.982171  
 (pid=34361) INFO:root:[Epoch 6] validation: accuracy=0.957131  
 ```
-Note that the training and validation accuracy of each worker may slightly differ as the accuracy of each worker is calculated
- based on its own portion of the whole dataset.
- 
+Note that the training and validation accuracy of each worker may slightly differ as the accuracy of each worker is calculated 
+based on its own portion of the whole dataset.

@@ -89,8 +89,8 @@ if __name__ == '__main__':
         description='Train a LeNet model for handwritten digit recognition.')
     parser.add_argument('--cluster_mode', type=str, default="local",
                         help='The mode for the Spark cluster.')
-    parser.add_argument('--executor_cores', type=int, default=4,
-                        help='The number of executor cores you want to use.')
+    parser.add_argument('--cores', type=int, default=4,
+                        help='The number of cores you want to use on each node.')
     parser.add_argument('-n', '--num_workers', type=int, default=2,
                         help='The number of MXNet workers to be launched.')
     parser.add_argument('-s', '--num_servers', type=int,
@@ -108,8 +108,7 @@ if __name__ == '__main__':
     opt = parser.parse_args()
 
     num_nodes = 1 if opt.cluster_mode == "local" else opt.num_workers
-    cores = "*" if opt.cluster_mode == "local" else opt.executor_cores
-    init_orca_context(cluster_mode=opt.cluster_mode, cores=cores, num_nodes=num_nodes)
+    init_orca_context(cluster_mode=opt.cluster_mode, cores=opt.cores, num_nodes=num_nodes)
 
     config = create_config(optimizer="sgd",
                            optimizer_params={'learning_rate': opt.learning_rate},
