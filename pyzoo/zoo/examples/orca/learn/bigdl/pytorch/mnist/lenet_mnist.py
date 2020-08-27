@@ -89,13 +89,12 @@ def main():
     if not os.environ.get('HADOOP_CONF_DIR'):
         sc = init_orca_context(cores=1, memory="20g")
     else:
-        num_executors = 2
-        num_cores_per_executor = 4
-        sc = init_orca_context(cluster_mode="yarn-client", cores=4, num_nodes=2,
-                               memory="2g", driver_memory="10g", driver_cores=1,
-                               conf={"spark.rpc.message.maxSize": "1024",
-                                     "spark.task.maxFailures": "1",
-                                     "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"})
+        sc = init_orca_context(
+            cluster_mode="yarn-client", cores=4, num_nodes=2, memory="2g",
+            driver_memory="10g", driver_cores=1,
+            conf={"spark.rpc.message.maxSize": "1024",
+                  "spark.task.maxFailures": "1",
+                  "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"})
 
     model = LeNet()
     model.train()

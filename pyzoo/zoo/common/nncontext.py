@@ -41,10 +41,10 @@ def init_spark_on_local(cores=2, conf=None, python_location=None, spark_log_leve
     :return: An instance of SparkContext.
     """
     from zoo.util.spark import SparkRunner
-    sparkrunner = SparkRunner(spark_log_level=spark_log_level,
-                              redirect_spark_log=redirect_spark_log)
-    return sparkrunner.init_spark_on_local(cores=cores, conf=conf,
-                                           python_location=python_location)
+    runner = SparkRunner(spark_log_level=spark_log_level,
+                         redirect_spark_log=redirect_spark_log)
+    return runner.init_spark_on_local(cores=cores, conf=conf,
+                                      python_location=python_location)
 
 
 def init_spark_on_yarn(hadoop_conf,
@@ -98,9 +98,9 @@ def init_spark_on_yarn(hadoop_conf,
     :return: An instance of SparkContext.
     """
     from zoo.util.spark import SparkRunner
-    sparkrunner = SparkRunner(spark_log_level=spark_log_level,
-                              redirect_spark_log=redirect_spark_log)
-    sc = sparkrunner.init_spark_on_yarn(
+    runner = SparkRunner(spark_log_level=spark_log_level,
+                         redirect_spark_log=redirect_spark_log)
+    sc = runner.init_spark_on_yarn(
         hadoop_conf=hadoop_conf,
         conda_name=conda_name,
         num_executors=num_executors,
@@ -161,9 +161,9 @@ def init_spark_standalone(num_executors,
     :return: An instance of SparkContext.
     """
     from zoo.util.spark import SparkRunner
-    sparkrunner = SparkRunner(spark_log_level=spark_log_level,
-                              redirect_spark_log=redirect_spark_log)
-    sc = sparkrunner.init_spark_standalone(
+    runner = SparkRunner(spark_log_level=spark_log_level,
+                         redirect_spark_log=redirect_spark_log)
+    sc = runner.init_spark_standalone(
         num_executors=num_executors,
         executor_cores=executor_cores,
         executor_memory=executor_memory,
