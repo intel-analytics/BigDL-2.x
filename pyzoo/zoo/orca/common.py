@@ -133,7 +133,7 @@ def init_orca_context(cluster_mode="local", cores=2, memory="2g", num_nodes=1,
     elif cluster_mode.startswith("yarn"):  # yarn or yarn-client
         if cluster_mode == "yarn-cluster":
             raise ValueError('For yarn-cluster, please set cluster_mode to "spark-submit" '
-                             'and submit the application use spark-submit instead')
+                             'and submit the application via spark-submit instead')
         hadoop_conf = os.environ.get("HADOOP_CONF_DIR")
         if not hadoop_conf:
             assert "hadoop_conf" in kwargs,\
