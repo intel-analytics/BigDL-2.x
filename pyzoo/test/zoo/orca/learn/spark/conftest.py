@@ -20,6 +20,6 @@ import pytest
 @pytest.fixture(autouse=True, scope='package')
 def orca_context_fixture():
     from zoo.orca import init_orca_context
-    sc = init_orca_context(cluster_mode="local", cores=4, spark_log_level="INFO")
+    sc = init_orca_context(cores=4, spark_log_level="INFO")
     yield sc
     sc.stop()
