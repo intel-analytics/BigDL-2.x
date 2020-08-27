@@ -15,6 +15,7 @@
 #
 from unittest import TestCase
 
+import os
 import pytest
 import torch.nn as nn
 import torch.nn.functional as F
@@ -24,7 +25,6 @@ from zoo.orca.data.pandas import read_csv
 from zoo.orca.learn.pytorch import Estimator
 from zoo.orca.learn.metrics import Accuracy
 from zoo.orca.learn.trigger import EveryEpoch
-from zoo.common.nncontext import *
 from bigdl.optim.optimizer import SGD
 from zoo.orca import OrcaContext
 
