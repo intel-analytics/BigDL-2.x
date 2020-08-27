@@ -402,7 +402,9 @@ class LocalModel(object):
                     num_workers=1,
                     early_stop=False, tenacity=10):
         if num_workers == 1:
-            return self.train_model_local(num_epochs=num_epochs, early_stop=early_stop, tenacity=tenacity)
+            return self.train_model_local(num_epochs=num_epochs,
+                                          early_stop=early_stop,
+                                          tenacity=tenacity)
         else:
             from zoo.automl.model.tcmf.local_model_distributed_trainer import train_yseq
             import ray
