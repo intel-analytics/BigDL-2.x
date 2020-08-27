@@ -16,7 +16,7 @@
 
 import os
 import subprocess
-import ray.services
+import ray
 from dmlc_tracker.tracker import get_host_ip
 from zoo.ray import RayContext
 from zoo.orca.learn.mxnet.mxnet_runner import MXNetRunner
