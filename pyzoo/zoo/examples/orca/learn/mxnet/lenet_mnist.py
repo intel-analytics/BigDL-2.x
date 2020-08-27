@@ -109,7 +109,7 @@ if __name__ == '__main__':
 
     num_nodes = 1 if opt.cluster_mode == "local" else opt.num_workers
     cores = "*" if opt.cluster_mode == "local" else opt.executor_cores
-    init_orca_context(cluster_mode=opt.cluster_mode, cores=opt.executor_cores, num_nodes=num_nodes)
+    init_orca_context(cluster_mode=opt.cluster_mode, cores=cores, num_nodes=num_nodes)
 
     config = create_config(optimizer="sgd",
                            optimizer_params={'learning_rate': opt.learning_rate},

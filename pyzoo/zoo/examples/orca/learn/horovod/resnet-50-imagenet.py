@@ -14,10 +14,9 @@
 # limitations under the License.
 #
 
-from zoo import init_spark_on_yarn, init_spark_on_local
-from zoo.ray import RayContext
 import os
 import argparse
+from zoo.orca import init_orca_context, stop_orca_context
 
 _DEFAULT_IMAGE_SIZE = 224
 _NUM_CHANNELS = 3
@@ -338,26 +337,13 @@ parser.add_argument("--data_dir", type=str, help="the directory of tfrecords of 
 if __name__ == "__main__":
 
     args = parser.parse_args()
-    if args.hadoop_conf:
-        sc = init_spark_on_yarn(
-            hadoop_conf=args.hadoop_conf,
-            conda_name=args.conda_name,
-            num_executors=args.worker_num,
-            executor_cores=args.executor_cores,
-            executor_memory=args.executor_memory,
-            driver_memory=args.driver_memory,
-            driver_cores=args.driver_cores,
-            extra_executor_memory_for_ray=args.extra_executor_memory_for_ray)
-        ray_ctx = RayContext(
-            sc=sc,
-            object_store_memory=args.object_store_memory)
-        ray_ctx.init()
-    else:
-        sc = init_spark_on_local()
-        ray_ctx = RayContext(
-            sc=sc,
-            object_store_memory=args.object_store_memory)
-        ray_ctx.init()
+    num_nodes = 1 if args.cluster_mode == "local" else args.worker_num
+    cores = 2 if args.cluster_mode == "local" else args.executor_cores
+    init_orca_context(cluster_mode=args.cluster_mode, cores=cores, num_nodes=num_nodes,
+                      memory=args.executor_memory, driver_memory=args.driver_memory,
+                      driver_cores=args.driver_cores,
+                      extra_executor_memory_for_ray=args.extra_executor_memory_for_ray,
+                      object_store_memory=args.object_store_memory)
 
     assert args.data_dir is not None, "--data_dir must be provided"
 
@@ -399,3 +385,4 @@ if __name__ == "__main__":
     )
 
     print(results)
+    stop_orca_context()
