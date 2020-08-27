@@ -102,7 +102,7 @@ if __name__ == '__main__':
                         help='The number of epochs to train the model.')
     parser.add_argument('-l', '--learning_rate', type=float, default=0.02,
                         help='Learning rate for the LeNet model.')
-    parser.add_argument('--log_interval', type=int, default=100,
+    parser.add_argument('--log_interval', type=int, default=20,
                         help='The number of batches to wait before logging throughput and '
                              'metrics information during the training process.')
     opt = parser.parse_args()
