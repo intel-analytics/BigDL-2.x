@@ -13,12 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 import pytest
 
 
 @pytest.fixture(autouse=True, scope='package')
 def estimator_for_spark_fixture():
-    from zoo import init_spark_on_local
-    sc = init_spark_on_local(cores=4, spark_log_level="INFO")
+    from zoo.orca import init_orca_context
+    sc = init_orca_context(cluster_mode="local", cores=4, spark_log_level="INFO")
     yield sc
     sc.stop()

@@ -241,7 +241,7 @@ def init_nncontext(conf=None, spark_log_level="WARN", redirect_spark_log=True):
     This method will also initialize the BigDL engine.
 
     Note: If you use spark-shell or Jupyter notebook, as the SparkContext is created
-    before your code, you have to set the Spark conf through command line options
+    before your code, you have to set the Spark configurations through command line options
     or the properties file before calling this method. In this case, you are recommended
     to use the launching scripts under `analytics-zoo/scripts`.
 

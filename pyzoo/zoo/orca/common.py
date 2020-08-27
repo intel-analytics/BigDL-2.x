@@ -94,7 +94,9 @@ def init_orca_context(cluster_mode="", cores=2, memory="2g", num_nodes=1,
 
     :param cluster_mode: The mode for the Spark cluster. One of "", "local", "yarn-client" and
            "standalone".
-           Default to be "" and in this case you can use spark-submit for yarn-cluster mode.
+           Default to be "" and in this case you can use spark-submit for yarn-cluster mode. Please
+           set the Spark configurations through command line options or the properties file. In this
+           case, you are recommended to use the launching scripts under `analytics-zoo/scripts`.
     :param cores: The number of cores to be used on each node. Default to be 2.
     :param memory: The memory allocated for each node. Default to be '2g'.
     :param num_nodes: The number of cores available in the cluster. Default to be 1.
