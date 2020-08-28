@@ -14,17 +14,17 @@ Before you start this guide, make sure a Databricks workspace is ready and a clu
 
 ### **Installing Analytics Zoo libraries**  
 
-1.In the left pane, select **Clusters**.
+1.In the left pane, click **Clusters** and select your cluster. 
 
-![Pic1](../Image/PlatformGuide/rsz_1clusters.png) 
+![Pic1](../Image/PlatformGuide/clusters.png) 
 
-2.Install Analytics Zoo python environment using PyPI. Click **Libraries > Install New > PyPI**.
+2.Install Analytics Zoo python environment using PyPI. Click **Libraries > Install New > PyPI**. Text "analytics-zoo" library.
 
 ![Pic2](../Image/PlatformGuide/pip.PNG) 
 
-3.Install Analytics Zoo prebuilt jar package. Click **Install New > Upload**. Download Analytics Zoo prebuilt release package from the [Release Page](../release-docs.md). Please note that you should choose the same spark version of package as your Databricks runtime version. Unzip it. Find the jar named "analytics-zoo-bigdl_*-spark_*-jar-with-dependencies.jar" in the lib directory. Drop the jar on Databricks.
+3.Install Analytics Zoo prebuilt jar package. Click **Libraries > Install New > Upload**. Download Analytics Zoo prebuilt release package from the [Release Page](../release-docs.md). Please note that you should choose the same spark version of package as your Databricks runtime version. Unzip it. Find the jar named "analytics-zoo-bigdl_*-spark_*-jar-with-dependencies.jar" in the lib directory. Drop the jar on Databricks.
 
-![Pic3](../Image/PlatformGuide/rsz_1install-jar.png) 
+![Pic3](../Image/PlatformGuide/rsz_install-jar.png) 
 
 4.Make sure the jar file and analytics-zoo installed using PyPI are installed on all clusters. In **Libraries** tab of your cluster, check installed libraries and click “Install automatically on all clusters” option in **Admin Settings**.
 
@@ -71,11 +71,11 @@ Prepending /databricks/python/lib/python3.6/site-packages/zoo/share/conf/spark-a
 
 If you would like to run a completed Analytics Zoo notebook, you can import an Analytics Zoo notebook from a URL directly. 
 
-![Pic6](../Image/PlatformGuide/import-notebook.png)
+![Pic6](../Image/PlatformGuide/importnotebook.PNG)
 
 For example, you may import a simple [Analytics Zoo tutorials notebook](https://github.com/intel-analytics/zoo-tutorials/blob/master/keras/2.1-a-first-look-at-a-neural-network.ipynb).
 
-![Pic7](../Image/PlatformGuide/importnotebook.PNG)
+![Pic7](../Image/PlatformGuide/import-zoo-notebook.PNG)
 
 Note the above notebook runs on Spark local default; to make it run on Databricks cluster, please change the first Python cell in the notebook to:
 
