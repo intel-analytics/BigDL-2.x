@@ -1049,7 +1049,7 @@ private[zoo] object InternalOptimizerUtil {
     KerasUtils.invokeMethod(DistriOptimizerV2,
       "clearState", models, implicitly[reflect.ClassTag[T]])
   }
-  
+
   def optimizeModels[T: ClassTag](
       args: Object*
       )(implicit ev: TensorNumeric[T]): Unit = {
@@ -1860,7 +1860,7 @@ object InternalDistriOptimizer {
 
 object InternalDistriOptimizerV2 {
   val logger = Logger.getLogger(this.getClass)
-  
+
   protected def validate[T](validationFeatureSet: FeatureSet[MiniBatch[T]],
                             validationMethods: Array[ValidationMethod[T]],
                             models: RDD[CacheV2[T]],
@@ -1919,7 +1919,7 @@ object InternalDistriOptimizerV2 {
     }
     results.map(a => (a._2, a._1)).toMap
   }
-  
+
   def unpersistCachedModel[T: ClassTag](
       models: RDD[CacheV2[T]] ): Unit = {
       models.mapPartitions { iter =>

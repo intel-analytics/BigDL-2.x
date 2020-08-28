@@ -482,14 +482,16 @@ def _get_bigdl_verion_conf():
 def load_conf(conf_str, split_char=None):
     return dict(line.split(split_char) for line in conf_str.split("\n") if
                 "#" not in line and line.strip())
-                
+
+
 def set_optimizer_version(optimizerVersion, bigdl_type="float"):
     """
     Set DistriOptimizer version.
     param optimizerVersion: should be "OptimizerV1" or "OptimizerV2".
     """
     callZooFunc(bigdl_type, "setOptimizerVersion", optimizerVersion)
-        
+
+
 def get_optimizer_version(bigdl_type="float"):
     """
     Get DistriOptimizer version.

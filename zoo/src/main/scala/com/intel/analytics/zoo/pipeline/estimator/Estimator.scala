@@ -147,7 +147,7 @@ class Estimator[T: ClassTag] private[zoo](
     trainSet match {
       case d: DistributedFeatureSet[MiniBatch[T]] =>
         if (internalEstimator == null) {
-          EngineRef.getOptimizerVersion() match{
+          EngineRef.getOptimizerVersion() match {
             case OptimizerV1 =>
               internalEstimator = new InternalDistriOptimizer[T](model, null, criterion)
                 .setCheckpointDir(modelDir)
@@ -221,7 +221,6 @@ class Estimator[T: ClassTag] private[zoo](
                 .setCheckpointDir(modelDir)
                 .setOptimMethods(optimMethods)
           }
-          
         case _ => throw new IllegalArgumentException("Unsupported FeatureSet type.")
       }
     }
