@@ -22,7 +22,7 @@ Before you start this guide, make sure a Databricks workspace is ready and a clu
 
 ![Pic2](../Image/PlatformGuide/pip.PNG) 
 
-3.Install Analytics Zoo prebuilt jar package. Click **Libraries > Install New > Upload**. Download Analytics Zoo prebuilt release package from the [Release Page](../release-docs.md). Please note that you should choose the same spark version of package as your Databricks runtime version. Unzip it. Find the jar named "analytics-zoo-bigdl_*-spark_*-jar-with-dependencies.jar" in the lib directory. Drop the jar on Databricks.
+3.Install Analytics Zoo prebuilt jar package. Click **Libraries > Install New > Upload > Jar**. Download Analytics Zoo prebuilt release package from the [Release Page](../release-docs.md). Please note that you should choose the same spark version of package as your Databricks runtime version. Unzip it. Find the jar named "analytics-zoo-bigdl_*-spark_*-jar-with-dependencies.jar" in the lib directory. Drop the jar on Databricks.
 
 ![Pic3](../Image/PlatformGuide/rsz_install-jar.png) 
 
@@ -69,7 +69,7 @@ Adding /databricks/python/lib/python3.6/site-packages/zoo/share/lib/analytics-zo
 Prepending /databricks/python/lib/python3.6/site-packages/zoo/share/conf/spark-analytics-zoo.conf to sys.path
 ```
 
-If you would like to run a completed Analytics Zoo notebook, you can import an Analytics Zoo notebook from a URL directly. 
+If you would like to run a completed Analytics Zoo notebook, you can import an Analytics Zoo notebook from a URL directly. Click **workspace > Import**.
 
 ![Pic6](../Image/PlatformGuide/importnotebook.PNG)
 
