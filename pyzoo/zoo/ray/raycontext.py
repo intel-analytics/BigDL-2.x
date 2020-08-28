@@ -49,6 +49,32 @@ class JVMGuard:
             raise err
 
 
+def kill_redundant_log_monitors(redis_address):
+
+    """
+    killing additional log_monitor.py process
+    if starting multiple ray nodes on the the machine,
+    there will be multiple ray log_monitor.py process
+    monitoring the same log dir. As a result, the logs
+    will be replicated multiple times and forward to driver.
+    see issue https://github.com/ray-project/ray/issues/10392
+    """
+
+    import psutil
+    import subprocess
+    log_monitor_processes = []
+    for proc in psutil.process_iter(["name", "cmdline"]):
+        cmdline = subprocess.list2cmdline(proc.cmdline())
+        is_log_monitor = "log_monitor.py" in cmdline
+        is_same_redis = "--redis-address={}".format(redis_address)
+        if is_log_monitor and is_same_redis in cmdline:
+            log_monitor_processes.append(proc)
+
+    if len(log_monitor_processes) > 1:
+        for proc in log_monitor_processes[1:]:
+            proc.kill()
+
+
 class RayServiceFuncGenerator(object):
     """
     This should be a pickable class.
@@ -204,6 +230,7 @@ class RayServiceFuncGenerator(object):
                             object_store_memory=self.object_store_memory,
                             extra_params=self.extra_params),
                         tag="raylet")
+                    kill_redundant_log_monitors(redis_address=redis_address)
 
             yield process_info
         return _start_ray_services
@@ -417,6 +444,9 @@ class RayContext(object):
             else:
                 self._start_cluster()
                 self._address_info = self._start_driver(num_cores=driver_cores)
+
+            print(self._address_info)
+            kill_redundant_log_monitors(self._address_info["redis_address"])
             self.initialized = True
         return self._address_info
 
