@@ -28,20 +28,20 @@ object InferenceSupportive {
   val logger = Logger.getLogger(getClass)
   def singleThreadInference(preProcessed: Iterator[(String, Activity)],
                            params: SerParams): Iterator[(String, String)] = {
-    val postProcessed = preProcessed.grouped(params.coreNum).flatMap(pathByteBatch => {
-      val thisBatchSize = pathByteBatch.size
-      (0 until thisBatchSize).toParArray.map(idx => {
-        try {
-          val t = pathByteBatch(idx)._2
-          val result = params.model.doPredict(t)
-          val value = PostProcessing(result.toTensor[Float], params.filter)
-          (pathByteBatch(idx)._1, value)
-        } catch {
-          case _ =>
-            logger.info("Your input format is invalid to your model, this batch is skipped")
-            null
-        }
-      }).filter(x => x != null)
+    val postProcessed = preProcessed.map(pathByte => {
+      try {
+        val t = typeCheck(pathByte._2)
+        dimCheck(t, "add", params)
+        val result = ModelHolder.model.doPredict(t)
+        dimCheck(result, "remove", params)
+        val value = PostProcessing(result.toTensor[Float], params.filter, 1)
+        (pathByte._1, value)
+      } catch {
+        case e: Exception =>
+          logger.info(s"${e}, " +
+            s"Your input ${pathByte._1} format is invalid to your model, this record is skipped")
+          (pathByte._1, "NaN")
+      }
     })
     postProcessed
   }
@@ -61,40 +61,27 @@ object InferenceSupportive {
          * original Tensor, thus if reuse of Tensor is needed,
          * have to squeeze it back.
          */
-        //      dimCheck(t, "add", params)
-        val result = params.model.doPredict(t)
+        dimCheck(t, "add", params)
+        val result = ModelHolder.model.doPredict(t)
         dimCheck(result, "remove", params)
+        dimCheck(t, "remove", params)
         val t3 = System.nanoTime()
         println(s"Inference and Dim check time ${(t3 - t2) / 1e9} s")
-        val kvResult = if (result.isTensor) {
-          (0 until thisBatchSize).toParArray.map(i => {
-            val value = PostProcessing(result.toTensor[Float].select(1, i + 1), params.filter)
-            (pathByteBatch(i)._1, value)
-          })
-        } else if (result.isTable) {
-          val dataTable = result.toTable
-          (0 until thisBatchSize).toParArray.map(i => {
-            var value = ""
-            dataTable.keySet.foreach(key => {
-              value += PostProcessing(dataTable(key).asInstanceOf[Tensor[Float]]
-                .select(1, i + 1), params.filter)
-            })
-            (pathByteBatch(i)._1, value)
-          })
-        } else {
-          throw new Exception("Wrong output format, neither Tensor nor Table.")
-        }
+        val kvResult = (0 until thisBatchSize).toParArray.map(i => {
+          val value = PostProcessing(result, params.filter, i + 1)
+          (pathByteBatch(i)._1, value)
+        })
         val t4 = System.nanoTime()
         println(s"Post-processing time ${(t4 - t3) / 1e9} s")
         println(s"Inference logic total time ${(t4 - t1) / 1e9} s")
         kvResult
       } catch {
-        case _ =>
-          logger.info("Your input format is invalid to your model, this batch is skipped")
-          null
+        case e: Exception =>
+          logger.info(s"${e}, Your input format is invalid to your model, this batch is skipped")
+          pathByteBatch.toParArray.map(x => (x._1, "NaN"))
       }
     })
-    postProcessed.filter(x => x != null)
+    postProcessed
   }
   def batchInput(seq: Seq[(String, Activity)],
     params: SerParams): Activity = {
@@ -116,18 +103,17 @@ object InferenceSupportive {
       })
     })
     // Resize and specific control
-    t.keySet.foreach(key => {
-      val singleTensorSize = inputSample(key).asInstanceOf[Tensor[Float]].size()
-      var newSize = Array(thisBatchSize)
-      for (elem <- singleTensorSize) {
-        newSize = newSize :+ elem
-      }
-      t(key).asInstanceOf[Tensor[Float]].resize(newSize)
-      if (params.modelType == "openvino") {
-        t(key).asInstanceOf[Tensor[Float]].addSingletonDimension()
-      }
-    })
-    if (params.dataShape.size == 1) {
+    if (params.resize) {
+      t.keySet.foreach(key => {
+        val singleTensorSize = inputSample(key).asInstanceOf[Tensor[Float]].size()
+        var newSize = Array(thisBatchSize)
+        for (elem <- singleTensorSize) {
+          newSize = newSize :+ elem
+        }
+        t(key).asInstanceOf[Tensor[Float]].resize(newSize)
+      })
+    }
+    if (t.keySet.size == 1) {
       t.keySet.foreach(key => {
         return t(key).asInstanceOf[Tensor[Float]]
       })
@@ -155,5 +141,25 @@ object InferenceSupportive {
       }
     }
     input
+  }
+  def typeCheck(input: Activity): Activity = {
+    if (input.isTable) {
+      if (input.toTable.keySet.size == 1) {
+        input.toTable.keySet.foreach(key => {
+          return input.toTable(key).asInstanceOf[Tensor[Float]].addSingletonDimension()
+        })
+      }
+      else {
+        input.toTable.keySet.foreach(key => {
+          input.toTable(key).asInstanceOf[Tensor[Float]].addSingletonDimension()
+        })
+      }
+      input.toTable
+    } else if (input.isTensor) {
+      input.toTensor[Float].addSingletonDimension()
+    } else {
+      logger.error("Your input of Inference is neither Table nor Tensor, please check.")
+      throw new Error("Your input is invalid, skipped.")
+    }
   }
 }

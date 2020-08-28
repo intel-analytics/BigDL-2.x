@@ -69,6 +69,8 @@ class Estimator(object):
         self.eval_metrics_creator = eval_metrics_creator
         self.num_workers = num_workers
         self.num_servers = num_servers if num_servers else self.num_workers
+        from zoo.ray import RayContext
+        RayContext.get()
 
         # Generate actor class
         # Add a dummy custom resource: _mxnet_worker and _mxnet_server to diff worker from server
@@ -134,7 +136,7 @@ class Estimator(object):
 
         :param epochs: The number of epochs to train the MXNet model. Default is 1.
 
-        :param batch_size: The number of samples per batch. Default is 32.
+        :param batch_size: The number of samples per batch for each worker. Default is 32.
 
         :param validation_data: An instance of SparkXShards or a function that takes config and
         kv as arguments and returns an MXNet DataIter/DataLoader for validation.

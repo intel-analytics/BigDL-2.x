@@ -44,6 +44,8 @@ class IdentityCriterion(Criterion):
 
 class TFValidationMethod(JavaValue):
     def __init__(self, val_method, name, output_indices, label_indices):
+        self.name = name
+        self.val_method = val_method
         JavaValue.__init__(self, None, "float",
                            val_method, name, output_indices, label_indices)
 
@@ -113,16 +115,16 @@ class TFModel(object):
     def _expand_inputs(inputs, tensors_with_value, loss):
         additional_inputs = []
         additional_values = []
-        all_required_inputs = find_placeholders([loss])
-        all_required_inputs_names = [v.name for v in all_required_inputs]
+        inputs = nest.flatten(inputs)
+        names = set([i.name for i in inputs])
+
         if tensors_with_value:
             for t, v in tensors_with_value.items():
-                if t.name in all_required_inputs_names:
-                    additional_inputs.append(t)
-                    additional_values.append(v)
-
-        if not isinstance(inputs, list):
-            inputs = nest.flatten(inputs)
+                if t.name in names:
+                    msg = f"tensor {t} already in inputs, cannot put it in tensor_with_value"
+                    raise ValueError(msg)
+                additional_inputs.append(t)
+                additional_values.append(v)
 
         return inputs, additional_inputs, additional_values
 
@@ -442,7 +444,6 @@ class TFOptimizer:
     def _get_vars_grads_from_train_op(train_op):
         def predicate(t):
             return t.name.split("/")[-1].startswith("zoo_identity_op_for_grad")
-
         grads = find_tensors([train_op], predicate)
         grad_ops = [grad.op for grad in grads]
         variables = []
@@ -570,7 +571,7 @@ class TFOptimizer:
                 metrics = {}
 
             for i, method in enumerate(val_methods):
-                metrics['bigdl_metirc_' + str(i)] = BigDLMetric(method, val_outputs, val_labels)
+                metrics['bigdl_metric_' + str(i)] = BigDLMetric(method, val_outputs, val_labels)
 
         return TFOptimizer._from_grads(loss, sess, inputs, labels, grads, variables, dataset,
                                        optim_method, clip_norm, clip_value,
@@ -599,7 +600,7 @@ class TFOptimizer:
 
     @classmethod
     def from_keras(cls, keras_model, dataset,
-                   session_config=None, model_dir=None):
+                   session_config=None, model_dir=None, metrics=None):
         """
         Create a TFOptimizer from a tensorflow.keras model. The model must be compiled.
         :param keras_model: the tensorflow.keras model, which must be compiled.
@@ -613,6 +614,9 @@ class TFOptimizer:
             model_targets = keras_model.targets
         else:
             model_targets = keras_model._targets
+
+        # target can be None if loss is None
+        model_targets = list(filter(lambda x: x is not None, model_targets))
 
         flatten_inputs = nest.flatten(dataset.feature_tensors)
         assert len(model_inputs) == len(flatten_inputs), \
@@ -682,13 +686,17 @@ class TFOptimizer:
 
         updates = keras_model.updates
 
-        metrics = None
-
         if bigdl_val_methods is not None:
             val_methods = to_list(bigdl_val_methods)
-            metrics = {}
+            bigdl_metrics = {}
             for i, method in enumerate(val_methods):
-                metrics['bigdl_metirc_' + str(i)] = BigDLMetric(method, val_outputs, val_labels)
+                bigdl_metrics['bigdl_metric_' + str(i)] = BigDLMetric(method,
+                                                                      val_outputs,
+                                                                      val_labels)
+            if metrics is None:
+                metrics = bigdl_metrics
+            else:
+                metrics.update(bigdl_metrics)
 
         return cls.from_train_op(train_op, loss, inputs=model_inputs, labels=model_targets,
                                  metrics=metrics, updates=updates, sess=sess, dataset=dataset,

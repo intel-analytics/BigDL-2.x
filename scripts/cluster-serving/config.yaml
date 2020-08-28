@@ -2,7 +2,7 @@
 
 model:
   # model path must be provided
-  path: model
+  path: resources/model
   # mode, default is recommended, if error is raised, set single
   mode:
   # the inputs of the tensorflow model, separated by ","
@@ -12,12 +12,10 @@ model:
 data:
   # default, localhost:6379
   src:
-  # shape must be provided, e.g, [[1,2],[3,224,224],[3,4]], if only one input brackets could be omitted
-  shape: [3,224,224]
-  # type must be provided, e.g, [image, tensor, sparse_tensor, tensor], if only one input brackets could be omitted
-  type: image
-  # default, topN(1)
+  # default, None
   filter:
+  # default, true
+  resize:
 params:
   # default, 4
   core_number:
@@ -27,22 +25,11 @@ redis:
   # default, 4g
   maxmem:
 secure:
-  # default: no
+  # default: false
   secure_enabled:
   # default:
   secure_trust_store_path:
   # default:
   secure_struct_store_password:
-spark:
-  # default, local[*]
-  master: 
-  # default, 4g
-  driver_memory:
-  # default, 1g
-  executor_memory:
-  # default, 1
-  num_executors:
-  # default, 4
-  executor_cores:
-  # default, 4
-  total_executor_cores:
+  # default: false
+  model_encrypted:

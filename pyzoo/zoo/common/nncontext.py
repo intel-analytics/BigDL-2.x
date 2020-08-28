@@ -30,13 +30,15 @@ def init_spark_on_local(cores=2, conf=None, python_location=None, spark_log_leve
                         redirect_spark_log=True):
     """
     Create a SparkContext with Zoo configuration in local machine.
-    :param cores: The default value is 2 and you can also set it to *
-     meaning all of the available cores. i.e `init_on_local(cores="*")`
-    :param conf: A key value dictionary appended to SparkConf.
+    :param cores: The number of cores for Spark local. Default to be 2. You can also set it to "*"
+           to use all the available cores. i.e `init_spark_on_local(cores="*")`
+    :param conf: You can append extra conf for Spark in key-value format.
+           i.e conf={"spark.executor.extraJavaOptions": "-XX:+PrintGCDetails"}.
+           Default to be None.
     :param python_location: The path to your running python executable.
-    :param spark_log_level: Log level of Spark
-    :param redirect_spark_log: Redirect the Spark log to local file or not.
-    :return:
+    :param spark_log_level: The log level for Spark. Default to be 'WARN'.
+    :param redirect_spark_log: Whether to redirect the Spark log to local file. Default to be True.
+    :return: An instance of SparkContext.
     """
     from zoo.util.spark import SparkRunner
     sparkrunner = SparkRunner(spark_log_level=spark_log_level,
@@ -104,8 +106,8 @@ def init_spark_on_yarn(hadoop_conf,
         num_executors=num_executors,
         executor_cores=executor_cores,
         executor_memory=executor_memory,
-        driver_memory=driver_memory,
         driver_cores=driver_cores,
+        driver_memory=driver_memory,
         extra_executor_memory_for_ray=extra_executor_memory_for_ray,
         extra_python_lib=extra_python_lib,
         penv_archive=penv_archive,
@@ -115,6 +117,72 @@ def init_spark_on_yarn(hadoop_conf,
         jars=jars,
         conf=conf)
     return sc
+
+
+def init_spark_standalone(num_executors,
+                          executor_cores,
+                          executor_memory="10g",
+                          driver_cores=4,
+                          driver_memory="1g",
+                          master=None,
+                          extra_executor_memory_for_ray=None,
+                          extra_python_lib=None,
+                          spark_log_level="WARN",
+                          redirect_spark_log=True,
+                          conf=None,
+                          jars=None):
+    """
+    Create a SparkContext with Analytics Zoo configurations on Spark standalone cluster of
+    a single node.
+    By default, a new Spark standalone cluster would be started first and the SparkContext
+    would use its master address. You need to call `stop_spark_standalone` after your program
+    finishes to shutdown the cluster.
+    You can also specify spark_master if you have already started a standalone cluster.
+
+    :param num_executors: The number of Spark executors.
+    :param executor_cores: The number of cores for each executor.
+    :param executor_memory: The memory for each executor. Default to be '2g'.
+    :param driver_cores: The number of cores for the Spark driver. Default to be 4.
+    :param driver_memory: The memory for the Spark driver. Default to be '1g'.
+    :param master: The master URL of an existing Spark standalone cluster: 'spark://master:port'.
+    You only need to specify this if you have already started a standalone cluster.
+    Default to be None and a new standalone cluster would be started in this case.
+    :param extra_executor_memory_for_ray: The extra memory for Ray services. Default to be None.
+    :param extra_python_lib: Extra python files or packages needed for distribution.
+           Default to be None.
+    :param spark_log_level: The log level for Spark. Default to be 'WARN'.
+    :param redirect_spark_log: Whether to redirect the Spark log to local file. Default to be True.
+    :param jars: Comma-separated list of jars to be included on driver and executor's classpath.
+           Default to be None.
+    :param conf: You can append extra conf for Spark in key-value format.
+           i.e conf={"spark.executor.extraJavaOptions": "-XX:+PrintGCDetails"}.
+           Default to be None.
+
+    :return: An instance of SparkContext.
+    """
+    from zoo.util.spark import SparkRunner
+    sparkrunner = SparkRunner(spark_log_level=spark_log_level,
+                              redirect_spark_log=redirect_spark_log)
+    sc = sparkrunner.init_spark_standalone(
+        num_executors=num_executors,
+        executor_cores=executor_cores,
+        executor_memory=executor_memory,
+        driver_cores=driver_cores,
+        driver_memory=driver_memory,
+        master=master,
+        extra_executor_memory_for_ray=extra_executor_memory_for_ray,
+        extra_python_lib=extra_python_lib,
+        conf=conf,
+        jars=jars)
+    return sc
+
+
+def stop_spark_standalone():
+    """
+    Stop the Spark standalone cluster created from init_spark_standalone (master not specified).
+    """
+    from zoo.util.spark import SparkRunner
+    SparkRunner.stop_spark_standalone()
 
 
 class ZooContextMeta(type):
@@ -167,16 +235,21 @@ def _read_stream(fd, fn):
             fn(buff.decode('utf-8'))
 
 
-def init_nncontext(conf=None, redirect_spark_log=True):
+def init_nncontext(conf=None, spark_log_level="WARN", redirect_spark_log=True):
     """
-    Creates or gets a SparkContext with optimized configuration for BigDL performance.
-    The method will also initialize the BigDL engine.
+    Creates or gets a SparkContext with optimized configurations for BigDL performance.
+    This method will also initialize the BigDL engine.
 
-    Note: if you use spark-shell or Jupyter notebook, as the Spark context is created
-    before your code, you have to set Spark conf values through command line options
-    or properties file, and init BigDL engine manually.
+    Note: If you use spark-shell or Jupyter notebook, as the SparkContext is created
+    before your code, you have to set the Spark conf through command line options
+    or the properties file before calling this method. In this case, you are recommended
+    to use the launching scripts under `analytics-zoo/scripts`.
 
-    :param conf: User defined Spark conf
+    :param conf: You can append extra conf for Spark in key-value format.
+           i.e conf={"spark.executor.extraJavaOptions": "-XX:+PrintGCDetails"}.
+           Default to be None.
+    :param spark_log_level: The log level for Spark. Default to be 'WARN'.
+    :param redirect_spark_log: Whether to redirect the Spark log to local file. Default to be True.
     """
 
     # The following code copied and modified from
@@ -209,6 +282,7 @@ def init_nncontext(conf=None, redirect_spark_log=True):
         sc = getOrCreateSparkContext(conf=None, appName=conf)
     else:
         sc = getOrCreateSparkContext(conf=conf)
+    sc.setLogLevel(spark_log_level)
 
     if ZooContext.log_output:
         if spark_jvm_proc.stdout is not None:

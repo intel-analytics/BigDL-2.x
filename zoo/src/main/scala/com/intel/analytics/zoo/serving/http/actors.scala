@@ -28,9 +28,11 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import akka.pattern.ask
 import akka.util.Timeout
+import com.intel.analytics.zoo.serving.utils.Conventions
 
 trait JedisEnabledActor extends Actor with Supportive {
   val actorName = self.path.name
+  override val logger = LoggerFactory.getLogger(getClass)
 
   def retrieveJedis(
       redisHost: String,
@@ -48,6 +50,10 @@ trait JedisEnabledActor extends Actor with Supportive {
       }
       val jedisPoolConfig = new JedisPoolConfig()
       val jedisPool = new JedisPool(new JedisPoolConfig(), redisHost, redisPort, redisSecureEnabled)
+      redisSecureEnabled match {
+        case true => logger.info(s"$actorName connect to secured Redis successfully.")
+        case false => logger.info(s"$actorName connect to plain Redis successfully.")
+      }
       jedisPool.getResource()
     }
 }
@@ -90,6 +96,12 @@ class RedisPutActor(
             start = System.currentTimeMillis()
           }
         }
+      }
+    case message: SecuredModelSecretSaltMessage =>
+      silent(s"$actorName put secret and salt in redis")() {
+        jedis.hset(Conventions.MODEL_SECURED_KEY, Conventions.MODEL_SECURED_SECRET, message.secret)
+        jedis.hset(Conventions.MODEL_SECURED_KEY, Conventions.MODEL_SECURED_SALT, message.salt)
+        sender() ! true
       }
   }
 
@@ -136,7 +148,7 @@ class RedisGetActor(
     redisSecureEnabled: Boolean,
     redissTrustStorePath: String,
     redissTrustStorePassword: String) extends JedisEnabledActor {
-  override val logger = LoggerFactory.getLogger(classOf[RedisPutActor])
+  override val logger = LoggerFactory.getLogger(classOf[RedisGetActor])
   val jedis = retrieveJedis(redisHost, redisPort,
     redisSecureEnabled, redissTrustStorePath, redissTrustStorePassword)
 
@@ -145,6 +157,10 @@ class RedisGetActor(
       val results = get(redisOutputQueue, message.ids)
       if (null != results && results.size == message.ids.size) {
         sender() ! results
+        // result get, remove in redis here
+        message.ids.foreach(id =>
+          jedis.del("result:" + id)
+        )
       } else {
         sender() ! Seq[(String, util.Map[String, String])]()
       }
@@ -179,7 +195,7 @@ class QueryActor(redisGetActor: ActorRef) extends JedisEnabledActor {
       }
       // println(System.currentTimeMillis(), message.query.id, result)
       if(results.size == 0) {
-        context.system.scheduler.scheduleOnce(10 milliseconds, self, message)
+        context.system.scheduler.scheduleOnce(1 milliseconds, self, message)
       } else {
         message.target ! results
       }

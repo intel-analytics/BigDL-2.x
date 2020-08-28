@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.serving.postprocessing
 
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.serving.utils.TensorUtils
 
@@ -30,7 +31,7 @@ import com.intel.analytics.zoo.serving.utils.TensorUtils
  * this string could be parsed by json in Python to a list
  * @param tensor
  */
-class PostProcessing(tensor: Tensor[Float]) {
+class PostProcessing(tensor: Tensor[Float], filter: String = "") {
   var t: Tensor[Float] = tensor
 
   /**
@@ -78,9 +79,9 @@ class PostProcessing(tensor: Tensor[Float]) {
   /**
    * TopN filter, take 1-D size (n) tensor as input
    * @param topN
-   * @return 2-D size (topN, 2) tensor
+   * @return string, representing 2-D size (topN, 2) tensor
    */
-  def topN(topN: Int): String = {
+  def rankTopN(topN: Int): String = {
     val list = TensorUtils.getTopN(topN, t)
     var res: String = ""
     res += "["
@@ -90,10 +91,38 @@ class PostProcessing(tensor: Tensor[Float]) {
     res += "]"
     res
   }
-}
-object PostProcessing {
-  def apply(t: Tensor[Float], filter: String = ""): String = {
-    val cls = new PostProcessing(t)
+
+  /**
+   * Pick TopN value of output tensor
+   * only (1) * record_size * box_value_number is supported
+   * thus only 2 or 3 dimension is valid for now
+   */
+  def pickTopN(topN: Int): String = {
+    require(t.dim() == 2 || t.dim() == 3,
+      "pickTopN post-processing only take 2 or 3 output dim tensor")
+    val thisT = if (t.dim() == 3) {
+      t.squeeze(1)
+    } else {
+      t
+    }
+    require(thisT.dim() == 2,
+      "Your input dim is 3 but squeeze operation fails, please open issue to Analytics Zoo team")
+    var res: String = ""
+    res += "["
+    (1 to topN).foreach(topIdx => {
+      res += "["
+      (1 to t.size(2)).foreach(boxIdx => {
+        res += t.valueAt(topIdx, boxIdx)
+        if (boxIdx != thisT.size(2)) {
+          res += ","
+        }
+      })
+      res += "]"
+    })
+    res += "]"
+    res
+  }
+  def processTensor(): String = {
     if (filter != "") {
       require(filter.last == ')',
         "please check your filter format, should be filter_name(filter_args)")
@@ -105,13 +134,37 @@ object PostProcessing {
       val res = filterType match {
         case "topN" =>
           require(filterArgs.length == 1, "topN filter only support 1 argument, please check.")
-          cls.topN(filterArgs(0).toInt)
+          rankTopN(filterArgs(0).toInt)
+        case "pickTopN" =>
+          require(filterArgs.length == 1, "pickTopN filter only support 1 argument, please check.")
+          pickTopN(filterArgs(0).toInt)
         case _ => ""
       }
       res
     }
     else {
-      cls.tensorToNdArrayString()
+      tensorToNdArrayString()
+    }
+  }
+}
+object PostProcessing {
+
+  def apply(t: Activity, filter: String = "", index: Int): String = {
+    require(index > 0, "If you pass index to post processing, index must be > 0")
+    if (t.isTable) {
+      var value = ""
+      t.toTable.keySet.foreach(key => {
+        val cls = new PostProcessing(t.toTable(key)
+          .asInstanceOf[Tensor[Float]].select(1, index), filter)
+        value += cls.processTensor()
+      })
+      value
+    } else if (t.isTensor) {
+      val cls = new PostProcessing(t.toTensor[Float].select(1, index), filter)
+      cls.processTensor()
+    } else {
+      throw new Error("Your input for Post-processing is invalid, " +
+        "neither Table nor Tensor, please check.")
     }
   }
 }

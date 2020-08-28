@@ -14,10 +14,15 @@
 # limitations under the License.
 #
 
-from http.client import HTTPSConnection
 import redis
 import time
 from zoo.serving.schema import *
+import httpx
+import json
+
+
+def perdict(frontend_url, request_str):
+    httpx.post(frontend_url + "/predict", data=request_str)
 
 
 class API:
@@ -35,8 +40,6 @@ class API:
 
         self.db = redis.StrictRedis(host=host,
                                     port=port, db=0)
-        # self.db = redis.StrictRedis(host="10.239.47.210",
-        #                             port="16380", db=0)
         try:
             self.db.xgroup_create("image_stream", "serving")
             self.db.xgroup_create("tensor_stream", "serving")
@@ -45,17 +48,21 @@ class API:
 
 
 class InputQueue(API):
-    def __init__(self, host=None, port=None, sync=False):
+    def __init__(self, host=None, port=None, sync=False, frontend_url=None):
         super().__init__(host, port)
         self.sync = sync
-        if sync:
+        self.frontend_url = frontend_url
+        if self.sync:
             try:
-                self.conn = HTTPSConnection("localhost", 8081)
-                self.conn.request("GET", "/")
-                self.conn.getresponse()
+                res = httpx.get(frontend_url)
+                if res.status_code == 200:
+                    httpx.PoolLimits(max_keepalive=1, max_connections=1)
+                    self.cli = httpx.Client()
+                    print("Attempt connecting to Cluster Serving frontend success")
+                else:
+                    raise ConnectionError()
             except Exception as e:
                 print("Connection error, please check your HTTP server. Error msg is ", e)
-                self.conn.close()
         self.stream_name = "serving_stream"
 
         # TODO: these params can be read from config in future
@@ -67,8 +74,10 @@ class InputQueue(API):
         Sync API, block waiting until get response
         :return:
         """
-        self.conn.request("POST", "predict", request_str)
-        return self.conn.getresponse()
+        response = self.cli.post(self.frontend_url + "/predict", data=request_str)
+        predictions = json.loads(response.text)['predictions']
+        processed = predictions[0].lstrip("{value=").rstrip("}")
+        return processed
 
     def enqueue(self, uri, **data):
         sink = pa.BufferOutputStream()

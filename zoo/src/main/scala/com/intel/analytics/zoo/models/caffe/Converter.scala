@@ -24,7 +24,7 @@ import caffe.Caffe._
 import com.intel.analytics.bigdl.nn.Graph._
 import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.shaded.protobuf.GeneratedMessage
+import com.intel.analytics.shaded.protobuf_v_3_5_1.GeneratedMessage
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.caffe.CaffeConversionException
 

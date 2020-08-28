@@ -16,8 +16,15 @@
 
 import os
 
+from zoo.common.utils import callZooFunc
+
 
 def open_text(path):
+    """
+    Read a text file to list of lines. It supports local, hdfs, s3 file systems.
+    :param path: text file path
+    :return: list of lines
+    """
     # Return a list of lines
     if path.startswith("hdfs"):  # hdfs://url:port/file_path
         import pyarrow as pa
@@ -44,6 +51,11 @@ def open_text(path):
 
 
 def open_image(path):
+    """
+    Open a image file. It supports local, hdfs, s3 file systems.
+    :param path: an image file path
+    :return: An :py:class:`~PIL.Image.Image` object.
+    """
     from PIL import Image
     if path.startswith("hdfs"):  # hdfs://url:port/file_path
         import pyarrow as pa
@@ -68,6 +80,14 @@ def open_image(path):
 
 
 def load_numpy(path):
+    """
+    Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.
+    It supports local, hdfs, s3 file systems.
+    :param path: file path
+    :return: array, tuple, dict, etc.
+        Data stored in the file. For ``.npz`` files, the returned instance
+        of NpzFile class must be closed to avoid leaking file descriptors.
+    """
     import numpy as np
     if path.startswith("hdfs"):  # hdfs://url:port/file_path
         import pyarrow as pa
@@ -92,11 +112,12 @@ def load_numpy(path):
 
 
 def exists(path):
-    if path.startswith("hdfs"):  # hdfs://url:port/file_path
-        import pyarrow as pa
-        fs = pa.hdfs.connect()
-        return fs.exists(path)
-    elif path.startswith("s3"):  # s3://bucket/file_path
+    """
+    Check if a path exists or not. It supports local, hdfs, s3 file systems.
+    :param path: file or directory path string.
+    :return: if path exists or not.
+    """
+    if path.startswith("s3"):  # s3://bucket/file_path
         access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
         secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
         import boto3
@@ -113,17 +134,19 @@ def exists(path):
                 return False
             raise ex
         return True
+    elif path.startswith("hdfs://"):
+        return callZooFunc("float", "exists", path)
     else:
         return os.path.exists(path)
 
 
 def makedirs(path):
-    if path.startswith("hdfs"):  # hdfs://url:port/file_path
-        import pyarrow as pa
-        fs = pa.hdfs.connect()
-        if not fs.exists(path):
-            return fs.mkdir(path)
-    elif path.startswith("s3"):  # s3://bucket/file_path
+    """
+    Make a directory with creating intermediate directories.
+    It supports local, hdfs, s3 file systems.
+    :param path: directory path string to be created.
+    """
+    if path.startswith("s3"):  # s3://bucket/file_path
         access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
         secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
         import boto3
@@ -134,11 +157,19 @@ def makedirs(path):
         bucket = path_parts.pop(0)
         key = "/".join(path_parts)
         return s3_client.put_object(Bucket=bucket, Key=key, Body='')
+    elif path.startswith("hdfs://"):
+        callZooFunc("float", "mkdirs", path)
     else:
         return os.makedirs(path)
 
 
 def write_text(path, text):
+    """
+    Write text to a file. It supports local, hdfs, s3 file systems.
+    :param path: file path
+    :param text: text string
+    :return: number of bytes written or AWS response(s3 file systems)
+    """
     if path.startswith("hdfs"):  # hdfs://url:port/file_path
         import pyarrow as pa
         fs = pa.hdfs.connect()

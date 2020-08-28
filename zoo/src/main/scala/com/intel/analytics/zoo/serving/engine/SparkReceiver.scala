@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.serving.engine
 
 import java.util.AbstractMap.SimpleEntry
 
+import com.intel.analytics.zoo.serving.utils.Conventions
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.receiver.Receiver
 import redis.clients.jedis.{Jedis, StreamEntryID}
@@ -31,7 +32,7 @@ class ServingReceiver (redisHost: String = "localhost", redisPort: Int = 6379)
   override def onStart(): Unit = {
     val jedis = new Jedis(redisHost, redisPort)
     try {
-      jedis.xgroupCreate("serving_stream", "serving",
+      jedis.xgroupCreate(Conventions.SERVING_STREAM_NAME, "serving",
         new StreamEntryID(0, 0), true)
     } catch {
       case e: Exception =>
@@ -43,7 +44,7 @@ class ServingReceiver (redisHost: String = "localhost", redisPort: Int = 6379)
 //      64,
 //      1,
 //      false,
-//      new SimpleEntry("serving_stream", new StreamEntryID(0, 0)))
+//      new SimpleEntry(Conventions.SERVING_STREAM_NAME, new StreamEntryID(0, 0)))
     while (!isStopped) {
       val response = jedis.xreadGroup(
         "serving",
@@ -51,7 +52,7 @@ class ServingReceiver (redisHost: String = "localhost", redisPort: Int = 6379)
         64,
         1,
         false,
-        new SimpleEntry("serving_stream", StreamEntryID.UNRECEIVED_ENTRY)
+        new SimpleEntry(Conventions.SERVING_STREAM_NAME, StreamEntryID.UNRECEIVED_ENTRY)
       )
       Thread.sleep(10)
       if (response != null) {
@@ -63,7 +64,7 @@ class ServingReceiver (redisHost: String = "localhost", redisPort: Int = 6379)
           entries.foreach(e => {
             val d = (e.getFields.get("uri"), e.getFields.get("data"))
             store(d)
-            ppl.xack("image_stream", "serving", e.getID)
+            ppl.xack(Conventions.SERVING_STREAM_NAME, "serving", e.getID)
           })
           ppl.sync()
         }

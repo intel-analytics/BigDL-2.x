@@ -63,9 +63,9 @@ object SparkStructuredStreamingClusterServing {
     val modelType = helper.modelType
     val blasFlag = helper.blasFlag
 //    val dataType = helper.dataType
-    val dataShape = helper.dataShape
+//    val dataShape = helper.dataShape
 
-    val (streamKey, dataField) = ("serving_stream", "data")
+    val (streamKey, dataField) = (Conventions.SERVING_STREAM_NAME, "data")
 
     val filter = helper.filter
 
@@ -129,7 +129,7 @@ object SparkStructuredStreamingClusterServing {
 
     val acc = new LongAccumulator()
     helper.sc.register(acc)
-    val serParams = new SerParams(helper, false)
+    val serParams = new SerParams(helper)
 
     val query = inputData.writeStream.foreachBatch{ (batchDF: DataFrame, batchId: Long) =>
 

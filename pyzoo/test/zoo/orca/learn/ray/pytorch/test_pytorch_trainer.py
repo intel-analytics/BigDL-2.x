@@ -20,7 +20,7 @@ import pytest
 
 import torch
 import torch.nn as nn
-from zoo.orca.learn.pytorch import PyTorchTrainer
+from zoo.orca.learn.pytorch.pytorch_trainer import PyTorchTrainer
 
 np.random.seed(1337)  # for reproducibility
 
@@ -71,6 +71,8 @@ class TestPyTorchTrainer(TestCase):
                                          "batch_size": 128})
         stats = trainer.train(nb_epoch=2)
         print(stats)
+        assert trainer.get_model()
+        trainer.shutdown()
 
 
 if __name__ == "__main__":

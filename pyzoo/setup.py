@@ -136,7 +136,7 @@ def setup_package():
         license='Apache License, Version 2.0',
         url='https://github.com/intel-analytics/analytics-zoo',
         packages=packages,
-        install_requires=['pyspark==2.4.3', 'bigdl==0.10.0', 'conda-pack==0.3.1'],
+        install_requires=['pyspark==2.4.3', 'bigdl==0.11.1', 'conda-pack==0.3.1'],
         extras_require={'ray': ['ray==0.8.4', 'psutil', 'aiohttp',
                                 'setproctitle', 'pyarrow==0.17.0'],
                         'automl': ['tensorflow>=1.15.0,<2.0.0', 'ray[tune]==0.8.4', 'psutil',
@@ -145,6 +145,7 @@ def setup_package():
         dependency_links=['https://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz'],
         include_package_data=True,
         package_data={"zoo.share": ['lib/analytics-zoo*with-dependencies.jar', 'conf/*', 'bin/*',
+                                    'bin/standalone/*', 'bin/standalone/sbin/*',
                                     'extra-resources/*']},
         scripts=scripts,
         classifiers=[

@@ -24,7 +24,7 @@ import io
 
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.pytorch.torch_runner import TorchRunner
-from torch.utils.data import DataLoader, IterableDataset
+from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from zoo.orca.learn.horovod.horovod_ray_runner import HorovodRayRunner, HorovodWorker
 from zoo.ray import RayContext
@@ -45,7 +45,7 @@ class TorchWorker(HorovodWorker, TorchRunner):
         if not isinstance(self.models, collections.Iterable):
             self.models = [self.models]
         else:
-            raise ValueError("not support single model for now")
+            raise ValueError("only support single model for now")
 
         assert all(isinstance(model, nn.Module) for model in self.models), (
             "All models must be PyTorch models: {}.".format(self.models))
@@ -117,7 +117,6 @@ class TorchWorker(HorovodWorker, TorchRunner):
             map_location="cpu")
         return self.load_state_dict(state_dict)
 
-
 from ray.exceptions import RayActorError
 
 
@@ -150,9 +149,9 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
             training_operator_cls=TrainingOperator,
             initialization_hook=None,
             config=None,
-            scheduler_step_freq="batch"
-    ):
-
+            scheduler_step_freq="batch",
+            use_tqdm=False,
+            workers_per_node=1):
         if not (callable(model_creator) and callable(optimizer_creator)):
             raise ValueError(
                 "Must provide a callable model_creator and optimizer_creator")
@@ -163,6 +162,7 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
         self.scheduler_creator = scheduler_creator
         self.training_operator_cls = training_operator_cls
         self.scheduler_step_freq = scheduler_step_freq
+        self.use_tqdm = use_tqdm
 
         if not training_operator_cls and not loss_creator:
             raise ValueError("If a loss_creator is not provided, you must "
@@ -180,8 +180,10 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
             scheduler_creator=self.scheduler_creator,
             training_operator_cls=self.training_operator_cls,
             scheduler_step_freq=self.scheduler_step_freq,
+            use_tqdm=self.use_tqdm,
             config=worker_config)
-        super().__init__(RayContext.get(), worker_cls=TorchWorker, worker_param=self.param)
+        super().__init__(RayContext.get(), worker_cls=TorchWorker,
+                         worker_param=self.param, workers_per_node=workers_per_node)
 
         def setup_pytorch():
             import torch
@@ -215,7 +217,7 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
 
     def train(self,
               data_creator,
-              num_steps=None,
+              epochs=1,
               profile=False,
               reduce_results=True,
               info=None):
@@ -225,9 +227,7 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
         underneath the hood.
         :param data_creator: (callable) a funtion that takes a config dict as input
                   and return a data loader containing the training data.
-        :param num_steps: (int) Number of batches to compute update steps on.
-                This corresponds also to the number of times
-                ``TrainingOperator.train_batch`` is called.
+        :param epochs: (int) Number of epochs to train the model
         :param profile: (bool) Returns time stats for the training procedure.
         :param reduce_results: (bool) Whether to average all metrics across
                 all workers into one dict. If a metric is a non-numerical
@@ -248,15 +248,18 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
                 "Must provide a callable data_creator, "
                 "but got a data_creator of type: {}".format(type(data_creator)))
 
-        success, worker_stats = self._train_epoch(data_creator,
-                                                  num_steps=num_steps,
-                                                  profile=profile,
-                                                  info=info)
+        success, worker_stats = self._train_epochs(data_creator,
+                                                   epochs=epochs,
+                                                   profile=profile,
+                                                   info=info)
+        epoch_stats = list(map(list, zip(*worker_stats)))
 
         if reduce_results:
-            return self._process_stats(worker_stats)
+            for i in range(len(epoch_stats)):
+                epoch_stats[i] = self._process_stats(epoch_stats[i])
+            return epoch_stats
         else:
-            return worker_stats
+            return epoch_stats
 
     def _process_stats(self, worker_stats):
         stats = {
@@ -272,20 +275,18 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
                 stats[stat_key] = worker_stats[0][stat_key]
         return stats
 
-    def _train_epoch(self, data_creator, num_steps=None, profile=False, info=None):
-        params = dict(data_creator=data_creator,
-                      num_steps=num_steps, profile=profile, info=info)
-
+    def _train_epochs(self, data_creator, epochs=1, profile=False, info=None):
+        params = dict(data_creator=data_creator, epochs=epochs, profile=profile, info=info)
         remote_worker_stats = []
         for i, w in enumerate(self.remote_workers):
-            stats = w.train_epoch.remote(**params)
+            stats = w.train_epochs.remote(**params)
             remote_worker_stats.append(stats)
 
         success = check_for_failure(remote_worker_stats)
         if success:
             return success, ray.get(remote_worker_stats)
-
-        return success, None
+        else:
+            return success, None
 
     def validate(self, data_creator, num_steps=None, profile=False, info=None):
         """Evaluates the model on the validation data set.
@@ -316,3 +317,81 @@ class PyTorchHorovodEstimator(HorovodRayRunner):
             w.validate.remote(**params) for w in self.remote_workers
         ]
         return self._process_stats(ray.get(remote_worker_stats))
+
+    def get_model(self):
+        """Returns the learned model(s)."""
+        state = self.get_state_dict()
+        model = self.model_creator(self.config)
+        model_state = state["models"][0]
+        model.load_state_dict(model_state)
+        return model.module if hasattr(model, "module") else model
+
+    def save(self, checkpoint):
+        """Saves the Estimator state to the provided checkpoint path.
+
+        :param checkpoint: (str) Path to target checkpoint file.
+        """
+        state_dict = self.get_state_dict()
+        torch.save(state_dict, checkpoint)
+        return checkpoint
+
+    def get_state_dict(self):
+        stream_ids = [
+            worker.state_stream.remote()
+            for worker in self.remote_workers
+        ]
+        # get the first task id that finished executing.
+        [stream_id], stream_ids = ray.wait(stream_ids, num_returns=1, timeout=None)
+        byte_obj = ray.get(stream_id)
+        _buffer = io.BytesIO(byte_obj)
+        state_dict = torch.load(
+            _buffer,
+            map_location="cpu")
+        return state_dict
+
+    def load(self, checkpoint):
+        """Loads the Estimator and all workers from the provided checkpoint.
+
+        :param checkpoint: (str) Path to target checkpoint file.
+        """
+        state_dict = torch.load(checkpoint)
+        self.load_state_dict(state_dict)
+
+    def load_state_dict(self, state_dict, blocking=True):
+        _buffer = io.BytesIO()
+        torch.save(state_dict, _buffer)
+        state_stream = _buffer.getvalue()
+        state_id = ray.put(state_stream)
+
+        remote_calls = [
+            worker.load_state_stream.remote(state_id)
+            for worker in self.remote_workers
+        ]
+        if blocking:
+            ray.get(remote_calls)
+
+    def shutdown(self, force=False):
+        """Shuts down workers and releases resources."""
+        if not force:
+            cleanup = [
+                worker.shutdown.remote() for worker in self.remote_workers
+            ]
+            try:
+                ray.get(cleanup)
+                [
+                    worker.__ray_terminate__.remote()
+                    for worker in self.remote_workers
+                ]
+            except RayActorError:
+                logger.warning(
+                    "Failed to shutdown gracefully, forcing a shutdown.")
+
+                for worker in self.remote_workers:
+                    logger.warning("Killing worker {}.".format(worker))
+                    ray.kill(worker)
+        else:
+            for worker in self.remote_workers:
+                logger.debug("Killing worker {}.".format(worker))
+                ray.kill(worker)
+
+        self.remote_workers = []

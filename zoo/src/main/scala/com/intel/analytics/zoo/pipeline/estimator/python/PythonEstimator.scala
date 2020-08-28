@@ -70,6 +70,13 @@ class PythonEstimator[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
     estimator.evaluate(validationMiniBatch, validationMethod.asScala.toArray)
   }
 
+  def estimatorEvaluateMiniBatch(
+      estimator: Estimator[T],
+      validationSet: FeatureSet[MiniBatch[T]],
+      validationMethod: JList[ValidationMethod[T]]): Map[ValidationMethod[T], ValidationResult] = {
+    estimator.evaluate(validationSet, validationMethod.asScala.toArray)
+  }
+
   def estimatorTrain(estimator: Estimator[T], trainSet: FeatureSet[Sample[T]],
                      criterion: Criterion[T],
                      endTrigger: Trigger = null,
@@ -145,5 +152,28 @@ class PythonEstimator[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
 
   def setGradientClippingByL2Norm(estimator: Estimator[T], clipNorm: Double): Unit = {
     estimator.setGradientClippingByL2Norm(clipNorm)
+  }
+
+  def estimatorSetTensorBoard(
+    estimator: Estimator[T],
+    logDir: String,
+    appName: String): Unit = {
+    estimator.setTensorBoard(logDir, appName)
+  }
+
+  def estimatorGetScalarFromSummary(estimator: Estimator[T], tag: String,
+                               target: String): JList[JList[Any]] = {
+    require(target == "Train" || target == "Validation",
+      "Invalid target, must be Train or Validation.")
+    val scalarArray = if (target == "Train") estimator.getTrainSummary(tag)
+    else estimator.getValidationSummary(tag)
+
+    if (scalarArray != null) {
+      scalarArray.toList.map { tuple =>
+        List(tuple._1, tuple._2, tuple._3).asJava.asInstanceOf[JList[Any]]
+      }.asJava
+    } else {
+      null
+    }
   }
 }

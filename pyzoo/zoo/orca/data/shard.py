@@ -18,6 +18,8 @@ from py4j.protocol import Py4JError
 from zoo.orca.data.utils import *
 from zoo.orca import OrcaContext
 from zoo.common.nncontext import init_nncontext
+from zoo import ZooContext, get_node_and_core_number
+from zoo.util import nest
 
 
 class XShards(object):
@@ -26,7 +28,7 @@ class XShards(object):
     """
     def transform_shard(self, func, *args):
         """
-        Transform each shard in the XShards using func
+        Transform each shard in the XShards using specified function.
         :param func: pre-processing function
         :param args: arguments for the pre-processing function
         :return: DataShard
@@ -46,6 +48,62 @@ class XShards(object):
         :return: an int
         """
         pass
+
+    @classmethod
+    def load_pickle(cls, path, minPartitions=None):
+        """
+        Load XShards from pickle files.
+        :param path: The pickle file path/directory
+        :param minPartitions: The minimum partitions for the XShards
+        :return: SparkXShards object
+        """
+        sc = init_nncontext()
+        return SparkXShards(sc.pickleFile(path, minPartitions))
+
+    @staticmethod
+    def partition(data):
+        """
+        Partition local in memory data and form a SparkXShards
+        :param data: np.ndarray, a tuple, list, dict of np.ndarray, or a nested structure
+        made of tuple, list, dict with ndarray as the leaf value
+        :return: a SparkXShards
+        """
+        sc = init_nncontext()
+        node_num, core_num = get_node_and_core_number()
+        total_core_num = node_num * core_num
+        import numpy as np
+        type_err_msg = """
+The types supported in zoo.orca.data.XShards.partition are
+1. np.ndarray
+2. a tuple, list, dict of np.ndarray
+3. nested structure made of tuple, list, dict with ndarray as the leaf value
+
+But got data of type {}
+        """.format(type(data))
+        supported_types = {list, tuple, dict}
+        if isinstance(data, np.ndarray):
+            arrays = np.array_split(data, total_core_num)
+            rdd = sc.parallelize(arrays)
+        else:
+            assert type(data) in supported_types, type_err_msg
+            flattened = nest.flatten(data)
+            data_length = len(flattened[0])
+            data_to_be_shard = []
+            for i in range(total_core_num):
+                data_to_be_shard.append([])
+            for x in flattened:
+                assert len(x) == data_length, \
+                    "the ndarrays in data must all have the same size in first dimension, " \
+                    "got first ndarray of size {} and another {}".format(data_length, len(x))
+                x_parts = np.array_split(x, total_core_num)
+                for idx, x_part in enumerate(x_parts):
+                    data_to_be_shard[idx].append(x_part)
+
+            data_to_be_shard = [nest.pack_sequence_as(data, shard) for shard in data_to_be_shard]
+            rdd = sc.parallelize(data_to_be_shard)
+
+        data_shards = SparkXShards(rdd)
+        return data_shards
 
 
 class RayXShards(XShards):
@@ -131,6 +189,9 @@ class RayPartition(object):
 
 
 class SparkXShards(XShards):
+    """
+    A collection of data which can be pre-processed in parallel on Spark
+    """
     def __init__(self, rdd, transient=False):
         self.rdd = rdd
         self.user_cached = False
@@ -144,6 +205,12 @@ class SparkXShards(XShards):
         self.type = {}
 
     def transform_shard(self, func, *args):
+        """
+        Return a new SparkXShards by applying a function to each shard of this SparkXShards
+        :param func: python function to process data. The first argument is the data shard.
+        :param args: other arguments in this function.
+        :return: a new SparkXShards.
+        """
         def transform(iter, func, *args):
             for x in iter:
                 yield func(x, *args)
@@ -154,14 +221,26 @@ class SparkXShards(XShards):
         return transformed_shard
 
     def collect(self):
+        """
+        Returns a list that contains all of the elements in this SparkXShards
+        :return: a list of data elements.
+        """
         return self.rdd.collect()
 
     def cache(self):
+        """
+        Persist this SparkXShards in memory
+        :return:
+        """
         self.user_cached = True
         self.rdd.cache()
         return self
 
     def uncache(self):
+        """
+        Make this SparkXShards as non-persistent, and remove all blocks for it from memory
+        :return:
+        """
         self.user_cached = False
         if self.is_cached():
             try:
@@ -182,9 +261,18 @@ class SparkXShards(XShards):
         return self
 
     def num_partitions(self):
+        """
+        Get number of partitions for this SparkXShards.
+        :return: number of partitions.
+        """
         return self.rdd.getNumPartitions()
 
     def repartition(self, num_partitions):
+        """
+        Return a new SparkXShards that has exactly num_partitions partitions.
+        :param num_partitions: target number of partitions
+        :return: a new SparkXshards object.
+        """
         if self._get_class_name() == 'pandas.core.frame.DataFrame':
             import pandas as pd
 
@@ -221,6 +309,14 @@ class SparkXShards(XShards):
         return repartitioned_shard
 
     def partition_by(self, cols, num_partitions=None):
+        """
+        Return a new SparkXShards partitioned using the specified columns.
+        This is only applicable for SparkXShards of Pandas DataFrame.
+        :param cols: specified columns to partition by.
+        :param num_partitions: target number of partitions. If not specified,
+        the new SparkXShards would keep the current partition number.
+        :return: a new SparkXShards.
+        """
         if self._get_class_name() == 'pandas.core.frame.DataFrame':
             import pandas as pd
             schema = self._get_schema()
@@ -257,6 +353,11 @@ class SparkXShards(XShards):
                             " of Pandas DataFrame")
 
     def unique(self):
+        """
+        Return a unique list of elements of this SparkXShards.
+        This is only applicable for SparkXShards of Pandas Series.
+        :return: a unique list of elements of this SparkXShards.
+        """
         if self._get_class_name() == 'pandas.core.series.Series':
             import pandas as pd
             rdd = self.rdd.map(lambda s: s.unique())
@@ -300,13 +401,14 @@ class SparkXShards(XShards):
             .reduce(lambda l1, l2: l1 + l2)
 
     def save_pickle(self, path, batchSize=10):
+        """
+        Save this SparkXShards as a SequenceFile of serialized objects.
+        The serializer used is pyspark.serializers.PickleSerializer, default batch size is 10.
+        :param path: target path.
+        :param batchSize: batch size for each sequence file chunk.
+        """
         self.rdd.saveAsPickleFile(path, batchSize)
         return self
-
-    @classmethod
-    def load_pickle(cls, path, minPartitions=None):
-        sc = init_nncontext()
-        return SparkXShards(sc.pickleFile(path, minPartitions))
 
     def __del__(self):
         self.uncache()
@@ -324,6 +426,10 @@ class SparkXShards(XShards):
 
     # Tested on pyarrow 0.17.0; 0.16.0 would get errors.
     def to_ray(self):
+        """
+        Put data of this SparkXShards to Ray cluster object store.
+        :return: a new RayXShards which contains data of this SparkXShards.
+        """
         from zoo.ray import RayContext
         ray_ctx = RayContext.get()
         object_store_address = ray_ctx.address_info["object_store_address"]
@@ -331,7 +437,7 @@ class SparkXShards(XShards):
         def put_to_plasma(ids):
             def f(index, iterator):
                 import pyarrow.plasma as plasma
-                from zoo.orca.data.utils import get_node_ip
+                from zoo.util.utils import get_node_ip
                 res = list(iterator)
                 client = plasma.connect(object_store_address)
                 target_id = ids[index]

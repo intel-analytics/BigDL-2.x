@@ -20,8 +20,8 @@ import com.intel.analytics.bigdl.utils.{Engine, ThreadPool}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import com.intel.analytics.bigdl.shaded.tensorflow.framework.GraphDef
-import com.intel.analytics.bigdl.shaded.tensorflow
+import org.tensorflow.framework
+import org.tensorflow.framework.{GraphDef, GradientDef}
 import org.tensorflow.util.Event
 
 /**
@@ -52,7 +52,7 @@ private[zoo] class FileWriter(val logDirectory : String, flushMillis: Int = 1000
    * @param globalStep a consistent global count of the event.
    * @return
    */
-  def addSummary(summary: tensorflow.framework.Summary, globalStep: Long): this.type = {
+  def addSummary(summary: framework.Summary, globalStep: Long): this.type = {
     val event = Event.newBuilder().setSummary(summary).build()
 //    val event = Builder()
     addEvent(event, globalStep)

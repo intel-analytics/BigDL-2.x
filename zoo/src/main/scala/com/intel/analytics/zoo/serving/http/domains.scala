@@ -23,6 +23,7 @@ import java.util.{HashMap, UUID}
 import akka.actor.ActorRef
 import com.codahale.metrics.Timer
 import com.google.common.collect.ImmutableList
+import com.intel.analytics.zoo.serving.utils.Conventions
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.complex._
 import org.apache.arrow.vector.dictionary.DictionaryProvider
@@ -42,6 +43,8 @@ case class PredictionInputMessage(inputs: Seq[PredictionInput]) extends ServingM
 case class PredictionInputFlushMessage() extends ServingMessage
 
 case class PredictionQueryMessage(ids: Seq[String]) extends ServingMessage
+
+case class SecuredModelSecretSaltMessage(secret: String, salt: String) extends ServingMessage
 
 case class PredictionQueryWithTargetMessage(query: PredictionQueryMessage, target: ActorRef)
   extends ServingMessage
@@ -93,13 +96,6 @@ object InstancesPredictionInput {
 case class PredictionOutput[Type](uuid: String, result: Type)
 
 class ImageFeature(val b64: String)
-
-object Conventions {
-  val ARROW_INT = new ArrowType.Int(32, true)
-  val ARROW_FLOAT = new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE)
-  val ARROW_BINARY = new ArrowType.Binary()
-  val ARROW_UTF8 = new ArrowType.Utf8
-}
 
 case class SparseTensor[T](shape: List[Int], data: List[T], indices: List[List[Int]])
 
@@ -272,6 +268,7 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
         val fieldVector = vectorSchemaRoot.getVector(key)
         fieldVector.setInitialCapacity(1)
         fieldVector.allocateNew()
+
         val minorType = fieldVector.getMinorType()
         minorType match {
           case MinorType.INT =>
@@ -410,12 +407,13 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
             }
             indicesDataIntVector.setValueCount(indicesDataSize)
             indicesDataVector.setValueCount(indicesDataSize)
-
           case _ =>
         }
+
       })
       arrowStreamWriter.writeBatch()
     }
+    vectorSchemaRoot.close()
     arrowStreamWriter.end()
     arrowStreamWriter.close()
     byteArrayOutputStream.flush()
@@ -524,6 +522,10 @@ object Instances {
       })
       instances.append(map)
     }
+
+    arrowStreamReader.close()
+    rootAllocator.close()
+    byteArrayInputStream.close()
     new Instances(instances.toList)
   }
 

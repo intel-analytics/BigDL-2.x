@@ -20,15 +20,16 @@ import java.util.AbstractMap.SimpleEntry
 import java.util.UUID
 
 import com.intel.analytics.zoo.serving.pipeline.{RedisIO, RedisUtils}
-import com.intel.analytics.zoo.serving.utils.{FileUtils, SerParams}
+import com.intel.analytics.zoo.serving.utils.{Conventions, FileUtils, SerParams}
 import org.apache.flink.configuration.Configuration
-import org.apache.flink.streaming.api.functions.source.{RichSourceFunction, SourceFunction}
+import org.apache.flink.streaming.api.functions.source.{RichParallelSourceFunction, RichSourceFunction, SourceFunction}
 import org.apache.log4j.Logger
-import redis.clients.jedis.{Jedis, JedisPool, StreamEntryID}
+import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, StreamEntryID}
 
 import scala.collection.JavaConverters._
 
-class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(String, String)]] {
+class FlinkRedisSource(params: SerParams)
+  extends RichParallelSourceFunction[List[(String, String)]] {
   @volatile var isRunning = true
 
   var redisPool: JedisPool = null
@@ -38,21 +39,33 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
 
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
-    redisPool = new JedisPool(params.redisHost, params.redisPort)
+
+    if (params.redisSecureEnabled) {
+      System.setProperty("javax.net.ssl.trustStore", params.redisSecureTrustStorePath)
+      System.setProperty("javax.net.ssl.trustStorePassword", params.redisSecureTrustStorePassword)
+      System.setProperty("javax.net.ssl.keyStoreType", "JKS")
+      System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
+      System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStorePassword)
+    }
+
+    redisPool = new JedisPool(new JedisPoolConfig(),
+      params.redisHost, params.redisPort, 5000, params.redisSecureEnabled)
+    params.redisSecureEnabled match {
+      case true => logger.info(s"FlinkRedisSource connect to secured Redis successfully.")
+      case false => logger.info(s"FlinkRedisSource connect to plain Redis successfully.")
+    }
     jedis = RedisIO.getRedisClient(redisPool)
     try {
-      jedis.xgroupCreate("serving_stream", "serving",
-        new StreamEntryID(0, 0), true)
+      jedis.xgroupCreate(Conventions.SERVING_STREAM_NAME, "serving", new StreamEntryID(0, 0), true)
     } catch {
       case e: Exception =>
         println(s"$e exist group")
     }
-
   }
 
   override def run(sourceContext: SourceFunction
     .SourceContext[List[(String, String)]]): Unit = while (isRunning) {
-//    logger.info(s">>> get from source begin ${System.currentTimeMillis()} ms")
+    // logger.info(s">>> get from source begin ${System.currentTimeMillis()} ms")
     val start = System.nanoTime()
     val groupName = "serving"
     val consumerName = "consumer-" + UUID.randomUUID().toString
@@ -62,8 +75,8 @@ class FlinkRedisSource(params: SerParams) extends RichSourceFunction[List[(Strin
       params.coreNum,
       1,
       false,
-      new SimpleEntry("serving_stream", StreamEntryID.UNRECEIVED_ENTRY))
-//    logger.info(s">>> get from source readed redis ${System.currentTimeMillis()} ms")
+      new SimpleEntry(Conventions.SERVING_STREAM_NAME, StreamEntryID.UNRECEIVED_ENTRY))
+    // logger.info(s">>> get from source readed redis ${System.currentTimeMillis()} ms")
     if (response != null) {
       for (streamMessages <- response.asScala) {
         val key = streamMessages.getKey

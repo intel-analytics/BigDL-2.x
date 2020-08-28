@@ -13,12 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from pyspark.sql.dataframe import DataFrame
+import tempfile
+import os
+from os.path import join, basename, dirname
+import re
+import shutil
 import tensorflow as tf
+import numpy as np
+from pyspark.sql.dataframe import DataFrame
 
-from zoo.tfpark.tf_dataset import TFDataset
 from zoo.orca.data import SparkXShards
 from zoo.orca.data.tf.data import Dataset, TFDataDataset2
+from zoo.tfpark.tf_dataset import TFDataset
+from zoo.orca.data.utils import get_spec, flatten_xy
+from zoo.common.utils import put_local_file_to_remote, get_remote_file_to_local, get_file_list,\
+    is_local_path
 
 
 def xshards_to_tf_dataset(data_shard,
@@ -28,43 +37,8 @@ def xshards_to_tf_dataset(data_shard,
                           sequential_order=False,
                           shuffle=True):
     # todo data_shard.head ?
-    import numpy as np
-
-    def check_data_type_and_to_list(data):
-        result = {}
-        assert isinstance(data, dict), "each shard should be an dict"
-        assert "x" in data, "key x should in each shard"
-        x = data["x"]
-        if isinstance(x, np.ndarray):
-            new_x = [x]
-        elif isinstance(x, tuple) and all([isinstance(xi, np.ndarray) for xi in x]):
-            new_x = x
-        else:
-            raise ValueError("value of x should be a ndarray or a tuple of ndarrays")
-        result["x"] = new_x
-        if "y" in data:
-            y = data["y"]
-            if isinstance(y, np.ndarray):
-                new_y = [y]
-            elif isinstance(y, tuple) and all([isinstance(yi, np.ndarray) for yi in y]):
-                new_y = y
-            else:
-                raise ValueError("value of x should be a ndarray or a tuple of ndarrays")
-            result["y"] = new_y
-        return result
-
-    def get_spec(data):
-        data = check_data_type_and_to_list(data)
-        feature_spec = [(feat.dtype, feat.shape[1:])
-                        for feat in data["x"]]
-        if "y" in data:
-            label_spec = [(label.dtype, label.shape[1:])
-                          for label in data["y"]]
-        else:
-            label_spec = None
-        return (feature_spec, label_spec)
-
-    (feature_spec, label_spec) = data_shard.rdd.map(get_spec).first()
+    feature_spec, label_spec = data_shard._for_each(get_spec(allow_tuple=True, allow_list=False))\
+        .first()
 
     feature_spec = [(tf.dtypes.as_dtype(spec[0]), spec[1]) for spec in feature_spec]
     label_spec = [(tf.dtypes.as_dtype(spec[0]), spec[1]) for spec in label_spec] \
@@ -73,27 +47,11 @@ def xshards_to_tf_dataset(data_shard,
     assert batch_size != -1 or batch_per_thread != -1, \
         "one of batch_size and batch_per_thread should be specified"
 
-    # todo this might be very slow
-    def flatten(data):
-        data = check_data_type_and_to_list(data)
-        features = data["x"]
-
-        has_label = "y" in data
-        labels = data["y"] if has_label else None
-        length = features[0].shape[0]
-
-        for i in range(length):
-            fs = [feat[i] for feat in features]
-            if has_label:
-                ls = [l[i] for l in labels]
-                yield (fs, ls)
-            else:
-                yield (fs,)
-
     val_rdd = None if validation_data_shard is None \
-        else validation_data_shard.rdd.flatMap(flatten)
+        else validation_data_shard.rdd.flatMap(flatten_xy(allow_tuple=True, allow_list=False))
 
-    dataset = TFDataset.from_rdd(data_shard.rdd.flatMap(flatten),
+    dataset = TFDataset.from_rdd(data_shard.rdd.flatMap(flatten_xy(allow_tuple=True,
+                                                                   allow_list=False)),
                                  features=feature_spec,
                                  labels=label_spec,
                                  batch_size=batch_size,
@@ -119,6 +77,9 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
         if isinstance(data, DataFrame):
             assert isinstance(validation_data, DataFrame), \
                 "train data and validation data should be both Spark DataFrame"
+        if isinstance(data, tf.data.Dataset):
+            assert isinstance(validation_data, tf.data.Dataset), \
+                "train data and validation data should be both tf.data.Dataset"
 
     if isinstance(data, SparkXShards):
         dataset = xshards_to_tf_dataset(data,
@@ -141,22 +102,37 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
                                            sequential_order,
                                            shuffle
                                            )
+    elif isinstance(data, tf.data.Dataset):
+        dataset = TFDataset.from_tf_data_dataset(data,
+                                                 batch_size,
+                                                 batch_per_thread,
+                                                 hard_code_batch_size,
+                                                 validation_data,
+                                                 sequential_order,
+                                                 shuffle)
     else:
-        raise ValueError("data must be SparkXShards or orca.data.tf.Dataset or Spark DataFrame")
+        raise ValueError("data must be SparkXShards or orca.data.tf.Dataset or "
+                         "Spark DataFrame or tf.data.Dataset")
 
     return dataset
 
 
 def convert_predict_to_dataframe(df, prediction_rdd):
     from pyspark.sql import Row
-    from pyspark.sql.types import StructType, StructField, FloatType
+    from pyspark.sql.types import StructType, StructField, FloatType, ArrayType
     from pyspark.ml.linalg import VectorUDT, Vectors
 
     def combine(pair):
+        # list of np array
+        if isinstance(pair[1], list):
+            row = Row(*([pair[0][col] for col in pair[0].__fields__] +
+                        [[Vectors.dense(elem) for elem in pair[1]]]))
+            return row, ArrayType(VectorUDT())
         # scalar
-        if len(pair[1].shape) == 0:
+        elif len(pair[1].shape) == 0:
             row = Row(*([pair[0][col] for col in pair[0].__fields__] + [float(pair[1].item(0))]))
             return row, FloatType()
+        # np array
         else:
             row = Row(*([pair[0][col] for col in pair[0].__fields__] + [Vectors.dense(pair[1])]))
             return row, VectorUDT()
@@ -167,3 +143,173 @@ def convert_predict_to_dataframe(df, prediction_rdd):
     schema = StructType(df.schema.fields + [StructField('prediction', type)])
     result_df = result_rdd.toDF(schema)
     return result_df
+
+
+def convert_predict_to_xshard(prediction_rdd):
+    def transform_predict(iter):
+        predictions = list(iter)
+        # list of np array
+        if isinstance(predictions[0], list):
+            predictions = np.array(predictions).T.tolist()
+            result = [np.array(predict) for predict in predictions]
+            return [{'prediction': result}]
+        # np array
+        else:
+            return [{'prediction': np.array(predictions)}]
+
+    return SparkXShards(prediction_rdd.mapPartitions(transform_predict))
+
+
+def find_latest_checkpoint(model_dir):
+    import os
+    import re
+    import datetime
+    ckpt_path = None
+    latest_version = None
+    for (root, dirs, files) in os.walk(model_dir, topdown=True):
+        temp_versions = []
+        timestamps = []
+        for dir in dirs:
+            if re.match('(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})$', dir) is not None:
+                try:
+                    # check if dir name is date time
+                    datetime.datetime.strptime(dir, '%Y-%m-%d_%H-%M-%S')
+                    timestamps.append(dir)
+                except:
+                    continue
+        if timestamps:
+            start_dir = os.path.join(root, max(timestamps))
+            return find_latest_checkpoint(start_dir)
+        for file_name in files:
+            if re.match("^optimMethod-TFParkTraining\.[0-9]+$", file_name) is not None:
+                version = int(file_name.split(".")[1])
+                temp_versions.append(version)
+        if temp_versions:
+            ckpt_path = root
+            latest_version = max(temp_versions)
+            break
+    return ckpt_path, latest_version
+
+
+def save_tf_checkpoint(sess, checkpoint_path, saver=None):
+    """
+    Save tf checkpoint without using native tensorflow remote access method.
+    :param sess: tf session to be saved.
+    :param checkpoint_path: checkpoint path. Could be local, hdfs, s3 filesystems.
+    :param saver: tf saver to save checkpoint
+    """
+    if is_local_path(checkpoint_path):
+        if saver is None:
+            saver = tf.train.Saver()
+        saver.save(sess, checkpoint_path)
+    else:
+        ckpt_name = basename(checkpoint_path)
+        remote_dir = dirname(checkpoint_path)
+        # save to local checkpoint
+        temp = tempfile.mkdtemp()
+        if saver is None:
+            saver = tf.train.Saver()
+        saver.save(sess, join(temp, ckpt_name))
+        # change checkpoint file
+        with open(join(temp, "checkpoint")) as f:
+            new_lines = []
+            lines = f.readlines()
+            # replace model_checkpoint_path and all_model_checkpoint_paths to checkpoint name
+            #  instead of the absolute checkpoint path
+            for line in lines:
+                if re.compile("^model_checkpoint_path: \"(.*)\"$").match(line):
+                    new_lines.append("model_checkpoint_path: \"{}\"\n".format(ckpt_name))
+                elif re.compile("^all_model_checkpoint_paths: \"(.*)\"$").match(line):
+                    new_lines.append("all_model_checkpoint_paths: \"{}\"\n".format(ckpt_name))
+                else:
+                    new_lines.append(line)
+        with open(join(temp, "checkpoint"), 'w') as f:
+            f.writelines(new_lines)
+        # move to remote
+        [put_local_file_to_remote(join(temp, file), join(remote_dir, file), over_write=True)
+         for file in os.listdir(temp)]
+        shutil.rmtree(temp)
+
+
+def get_checkpoint_state(checkpoint_dir):
+    """
+    Get tf checkpoint state from checkpoint directory without using native tensorflow accessing
+    remote method.
+    :param checkpoint_dir: tensorflow checkpoint directory. Could be local, hdfs, s3 filesystems.
+    :return: tf checkpoint protobuf
+    """
+    if is_local_path(checkpoint_dir):
+        return tf.train.get_checkpoint_state(checkpoint_dir)
+    else:
+        # check if checkpoint file exists
+        file_list = get_file_list(checkpoint_dir)
+        has_checkpoint = False
+        for file in file_list:
+            if basename(file) == 'checkpoint':
+                has_checkpoint = True
+                break
+        if not has_checkpoint:
+            return None
+        # get checkpoint file
+        temp = tempfile.mkdtemp()
+        get_remote_file_to_local(join(checkpoint_dir, "checkpoint"), join(temp, "checkpoint"))
+        ckpt_name = None
+        with open(join(temp, "checkpoint")) as f:
+            lines = f.readlines()
+            # get checkpoint name from 'checkpoint' file
+            for line in lines:
+                m = re.compile("^model_checkpoint_path: \"(.*)\"$").match(line)
+                if m:
+                    ckpt_name = m.group(1)
+                    break
+        if ckpt_name is None:
+            shutil.rmtree(temp)
+            return None
+        # filter checkpoint files
+        checkpoint_files = [file for file in file_list if basename(file).startswith(ckpt_name)]
+        if not checkpoint_files:
+            shutil.rmtree(temp)
+            return None
+        # get checkpoint files to local
+        [get_remote_file_to_local(file, join(temp, basename(file))) for file in checkpoint_files]
+        # get checkpoint state
+        ckpt = tf.train.get_checkpoint_state(temp)
+        if not ckpt:
+            shutil.rmtree(temp)
+            return None
+        ckpt.model_checkpoint_path = join(checkpoint_dir, ckpt_name)
+        ckpt.all_model_checkpoint_paths[:] = [join(checkpoint_dir, ckpt_name)]
+        shutil.rmtree(temp)
+        return ckpt
+
+
+def load_tf_checkpoint(sess, checkpoint_path, saver=None):
+    """
+    Load tensorflow checkpoint from checkpoint path without using native tensorflow accessing
+    remote method.
+    :param sess: tensorflow session to be loaded to.
+    :param checkpoint_path: tensorflow checkpoint path. Could be local, hdfs, s3 filesystems.
+    :param saver: tensorflow saver to load checkpoint
+    """
+    if is_local_path(checkpoint_path):
+        if saver is None:
+            saver = tf.train.Saver()
+        saver.restore(sess, checkpoint_path)
+    else:
+        ckpt_name = basename(checkpoint_path)
+        checkpoint_dir = dirname(checkpoint_path)
+        # get remote file lists
+        file_list = get_file_list(checkpoint_dir)
+        # filter checkpoint files
+        checkpoint_files = [file for file in file_list if basename(file).startswith(ckpt_name)]
+        # get checkpoint files to local
+        temp = tempfile.mkdtemp()
+        [get_remote_file_to_local(file, join(temp, basename(file))) for file in checkpoint_files]
+        if saver is None:
+            saver = tf.train.Saver()
+        try:
+            saver.restore(sess, join(temp, ckpt_name))
+        except Exception as e:
+            raise e
+        finally:
+            shutil.rmtree(temp)
