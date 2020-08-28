@@ -17,9 +17,8 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 import sys
 
-from zoo import init_nncontext
-
 from zoo.orca.learn.tf.estimator import Estimator
+from zoo.orca import init_orca_context, stop_orca_context
 
 sys.path.append("/tmp/models/slim")  # add the slim library
 from nets import lenet
@@ -34,13 +33,23 @@ def accuracy(logits, labels):
 
 
 def main(max_epoch):
-    sc = init_nncontext()
+    sc = init_orca_context(cluster_mode="local", cores=4, memory="2g")
 
     # get DataSet
     mnist_train = tfds.load(name="mnist", split="train")
     mnist_test = tfds.load(name="mnist", split="test")
 
+    # Normalizes images
+    def normalize_img(data):
+        data['image'] = tf.cast(data["image"], tf.float32) / 255.
+        return data
+
+    mnist_train = mnist_train.map(normalize_img, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    mnist_test = mnist_test.map(normalize_img, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
+    # tensorflow inputs
     images = tf.placeholder(dtype=tf.float32, shape=(None, 28, 28, 1))
+    # tensorflow labels
     labels = tf.placeholder(dtype=tf.int32, shape=(None,))
 
     with slim.arg_scope(lenet.lenet_arg_scope()):
@@ -66,10 +75,10 @@ def main(max_epoch):
     print(result)
 
     est.save_tf_checkpoint("/tmp/lenet/model")
+    stop_orca_context()
 
 
 if __name__ == '__main__':
-
     max_epoch = 5
 
     if len(sys.argv) > 1:

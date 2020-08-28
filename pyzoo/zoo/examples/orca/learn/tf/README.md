@@ -9,6 +9,7 @@ Follow the instructions [here](https://analytics-zoo.github.io/master/#PythonUse
 ## Environment Preparation
 ```
 pip install tensorflow==1.15 tensorflow-datasets==2.0
+pip install psutil
 ```
 
 ## Model Preparation
@@ -25,14 +26,24 @@ export PYTHONPATH=$PWD/models/research/slim:$PYTHONPATH
 ## Run tf graph model example after pip install
 
 ```bash
-export MASTER=local[4]
-export SPARK_DRIVER_MEMORY=2g
-python graph_lenet.py
+python lenet_mnist_graph.py
 ```
 ## Run tf graph model example with prebuilt package
 
 ```bash
 export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
 export SPARK_HOME=... # the root directory of Spark
-bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] graph_lenet.py
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] lenet_mnist_graph.py
+```
+
+## Run tf keras model example after pip install
+```bash
+python lenet_mnist_keras.py
+```
+
+## Run tf keras model example with prebuilt package
+```bash
+export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
+export SPARK_HOME=... # the root directory of Spark
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] lenet_mnist_keras.py
 ```
