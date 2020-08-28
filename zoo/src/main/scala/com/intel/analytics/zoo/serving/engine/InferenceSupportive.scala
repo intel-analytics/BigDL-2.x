@@ -40,7 +40,7 @@ object InferenceSupportive {
         case e: Exception =>
           logger.info(s"${e}, " +
             s"Your input ${pathByte._1} format is invalid to your model, this record is skipped")
-          (pathByte._1, "")
+          (pathByte._1, "NaN")
       }
     })
     postProcessed
@@ -78,10 +78,10 @@ object InferenceSupportive {
       } catch {
         case e: Exception =>
           logger.info(s"${e}, Your input format is invalid to your model, this batch is skipped")
-          pathByteBatch.toParArray.map(x => (x._1, ""))
+          pathByteBatch.toParArray.map(x => (x._1, "NaN"))
       }
     })
-    postProcessed.filter(x => x != null)
+    postProcessed
   }
   def batchInput(seq: Seq[(String, Activity)],
     params: SerParams): Activity = {
