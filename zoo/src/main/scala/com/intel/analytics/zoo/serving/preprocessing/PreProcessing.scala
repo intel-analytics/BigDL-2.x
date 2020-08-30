@@ -41,29 +41,37 @@ class PreProcessing(param: SerParams) {
 
 
   def decodeArrowBase64(s: String): Activity = {
-    byteBuffer = java.util.Base64.getDecoder.decode(s)
-    val instance = Instances.fromArrow(byteBuffer)
+    try {
+      byteBuffer = java.util.Base64.getDecoder.decode(s)
+      val instance = Instances.fromArrow(byteBuffer)
 
-    val kvMap = instance.instances.flatMap(insMap => {
-      val oneInsMap = insMap.map(kv =>
-        if (kv._2.isInstanceOf[String]) {
-          if (kv._2.asInstanceOf[String].contains("|")) {
-            (kv._1, decodeString(kv._2.asInstanceOf[String]))
+      val kvMap = instance.instances.flatMap(insMap => {
+        val oneInsMap = insMap.map(kv =>
+          if (kv._2.isInstanceOf[String]) {
+            if (kv._2.asInstanceOf[String].contains("|")) {
+              (kv._1, decodeString(kv._2.asInstanceOf[String]))
+            }
+            else {
+              (kv._1, decodeImage(kv._2.asInstanceOf[String]))
+            }
           }
           else {
-            (kv._1, decodeImage(kv._2.asInstanceOf[String]))
+            (kv._1, decodeTensor(kv._2.asInstanceOf[(
+              ArrayBuffer[Int], ArrayBuffer[Float], ArrayBuffer[Int], ArrayBuffer[Int])]))
           }
-        }
-        else {
-          (kv._1, decodeTensor(kv._2.asInstanceOf[(
-            ArrayBuffer[Int], ArrayBuffer[Float], ArrayBuffer[Int], ArrayBuffer[Int])]))
-        }
-      ).toList
-//      Seq(T(oneInsMap.head, oneInsMap.tail: _*))
-      val arr = oneInsMap.map(x => x._2)
-      Seq(T.array(arr.toArray))
-    })
-    kvMap.head
+        ).toList
+        //      Seq(T(oneInsMap.head, oneInsMap.tail: _*))
+        val arr = oneInsMap.map(x => x._2)
+        Seq(T.array(arr.toArray))
+      })
+      kvMap.head
+    }
+    catch {
+      case e: Exception =>
+        logger.error(s"Preprocessing error, msg ${e.getMessage}")
+        logger.error(s"Error stack trace ${e.getStackTrace.mkString("\n")}")
+        Tensor[Float]()
+    }
   }
   def decodeString(s: String): Tensor[String] = {
     val eleList = s.split("\\|")
