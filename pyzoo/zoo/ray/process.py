@@ -124,7 +124,7 @@ class ProcessMonitor:
                 print(slave)
 
     def clean_fn(self):
-        if self.raycontext.stopped:
+        if not self.raycontext.initialized:
             return
         import ray
         ray.shutdown()
