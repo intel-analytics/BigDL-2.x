@@ -23,6 +23,10 @@ from zoo.ray import RayContext
 NUM_TRAIN_SAMPLES = 1000
 NUM_TEST_SAMPLES = 400
 
+import os
+
+resource_path = os.path.join(
+    os.path.realpath(os.path.dirname(__file__)), "../../../../resources")
 
 def linear_dataset(a=2, size=1000):
     x = np.random.rand(size)
@@ -56,6 +60,33 @@ def create_test_dataset(config):
 
     return test_dataset
 
+def create_auto_shard_datasets(config):
+    import tensorflow as tf
+    data_path = os.path.join(resource_path, "orca/learn/test_auto_shard/*.csv")
+    dataset = tf.data.Dataset.list_files(data_path)
+    dataset = dataset.interleave(lambda x: tf.data.TextLineDataset(x)
+                       .map(lambda x: tf.string_to_number(x, out_dtype=tf.float32)))
+    dataset = dataset.batch(2)
+    return dataset
+
+def create_auto_shard_model(config):
+    import tensorflow as tf
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Lambda(lambda x: (x, x))
+    ])
+
+    return model
+
+def create_auto_shard_compile_args(config):
+    import tensorflow as tf
+    def loss_func(y1, y2):
+        return tf.reduce_mean(y1)
+    args = {
+        "optimizer": tf.keras.optimizers.SGD(lr=0.0),
+        "loss": loss_func,
+    }
+    return args
+
 
 def simple_model(config):
     import tensorflow as tf
@@ -75,7 +106,8 @@ def compile_args(config):
 
 
 class TestTFRayEstimator(TestCase):
-    def test_fit_and_evaluate(self):
+
+    def impl_test_fit_and_evaluate(self, backend):
         import tensorflow as tf
         ray_ctx = RayContext.get()
         batch_size = 32
@@ -87,7 +119,8 @@ class TestTFRayEstimator(TestCase):
             model_creator=simple_model,
             compile_args_creator=compile_args,
             verbose=True,
-            config=config)
+            config=config,
+            backend=backend)
 
         # model baseline performance
         start_stats = trainer.evaluate(create_test_dataset,
@@ -117,3 +150,25 @@ class TestTFRayEstimator(TestCase):
         print(f"dLoss: {dloss}, dMSE: {dmse}")
 
         assert dloss < 0 and dmse < 0, "training sanity check failed. loss increased!"
+
+    def test_fit_and_evaluate_tf(self):
+        self.impl_test_fit_and_evaluate(backend="tf")
+
+    def test_fit_and_evaluate_horovod(self):
+        self.impl_test_fit_and_evaluate(backend="horovod")
+
+    def impl_test_auto_shard(self, backend):
+        ray_ctx = RayContext.get()
+        trainer = Estimator(
+            model_creator=create_auto_shard_model,
+            compile_args_creator=create_auto_shard_compile_args,
+            verbose=True,
+            backend=backend)
+        stats = trainer.fit(create_auto_shard_datasets, epochs=1, steps_per_epoch=2)
+        assert stats["train_loss"] == 0.0
+
+    def test_auto_shard_tf(self):
+        self.impl_test_auto_shard("tf")
+
+    def test_auto_shard_horovod(self):
+        self.impl_test_auto_shard("horovod")
