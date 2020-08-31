@@ -17,6 +17,7 @@ import sys
 
 import tensorflow as tf
 import tensorflow_datasets as tfds
+import numpy as np
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.learn.tf.estimator import Estimator
 
@@ -36,9 +37,14 @@ def main(max_epoch):
     mnist_test = mnist_test.map(normalize_img, num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     model = tf.keras.Sequential(
-        [tf.keras.layers.Flatten(input_shape=(28, 28, 1)),
-         tf.keras.layers.Dense(64, activation='relu'),
-         tf.keras.layers.Dense(64, activation='relu'),
+        [tf.keras.layers.Conv2D(20, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
+                                input_shape=(28, 28, 1), padding='valid'),
+         tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
+         tf.keras.layers.Conv2D(50, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
+                                padding='valid'),
+         tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
+         tf.keras.layers.Flatten(),
+         tf.keras.layers.Dense(500, activation='tanh'),
          tf.keras.layers.Dense(10, activation='softmax'),
          ]
     )
