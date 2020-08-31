@@ -1675,18 +1675,6 @@ private[zoo] class InternalDistriOptimizerV2[T: ClassTag] (
         validationMethod: Array[ValidationMethod[T]]
       ): Map[ValidationMethod[T], ValidationResult] = {
     val validateRDD = validationSet.toDistributed().data(train = false)
-    val sc = validateRDD.sparkContext
-
-    val coresPerNode = EngineRef.getCoreNumber()
-    val _subModelNumber = EngineRef.getEngineType() match {
-      case MklBlas => if (TorchNet.isTorchNet(_model)) {
-        1
-      } else {
-        coresPerNode
-      }
-      case MklDnn => 1
-      case _ => throw new IllegalArgumentException
-    }
 
     val models = this.cachedModels
 

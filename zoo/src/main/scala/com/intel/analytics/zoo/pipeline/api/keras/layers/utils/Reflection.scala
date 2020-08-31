@@ -99,7 +99,7 @@ object EngineRef {
   }
 
   def setOptimizerVersion(optimizerVersion : OptimizerVersion): Unit = {
-    KerasUtils.invokeMethod(Engine, "setOptimizerVersion", 
+    KerasUtils.invokeMethod(Engine, "setOptimizerVersion",
       optimizerVersion).asInstanceOf[OptimizerVersion]
   }
 
