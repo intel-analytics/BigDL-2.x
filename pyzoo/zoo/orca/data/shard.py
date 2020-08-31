@@ -303,6 +303,38 @@ class SparkXShards(XShards):
                         return iter
                 rdd = self.rdd.coalesce(num_partitions)
                 repartitioned_shard = SparkXShards(rdd.mapPartitions(combine_df))
+        if self._get_class_name() == 'list':
+            if num_partitions > self.rdd.getNumPartitions():
+                import random
+                rdd = self.rdd\
+                    .flatMap(lambda data: [(random.random(), x) for x in data])\
+                    .partitionBy(num_partitions)
+                repartitioned_shard = SparkXShards(rdd.mapPartitions(
+                    lambda iter: [[value[1] for value in list(iter)]]))
+            else:
+                rdd = self.rdd.coalesce(num_partitions)
+                from functools import reduce
+                repartitioned_shard = SparkXShards(rdd.mapPartitions(
+                    lambda iter: reduce(lambda l1, l2: l1 + l2, iter)))
+        if self._get_class_name() == 'numpy.ndarray':
+            elem = self.rdd.first()
+            shape = elem.shape
+            dtype = elem.dtype
+            if len(shape) > 0:
+                if num_partitions > self.rdd.getNumPartitions():
+                    import random
+                    rdd = self.rdd\
+                        .flatMap(lambda data: [(random.random(), x) for x in list(data)])\
+                        .partitionBy(num_partitions)
+                    repartitioned_shard = SparkXShards(rdd.mapPartitions(
+                        lambda iter: np.stack([[value[1] for value in list(iter)]], axis=0).astype(dtype)))
+                else:
+                    rdd = self.rdd.coalesce(num_partitions)
+                    from functools import reduce
+                    repartitioned_shard = SparkXShards(rdd.mapPartitions(
+                        lambda iter: np.concatenate(list(iter), axis=0)))
+            else:
+                repartitioned_shard = SparkXShards(self.rdd.repartition(num_partitions))
         else:
             repartitioned_shard = SparkXShards(self.rdd.repartition(num_partitions))
         self._uncache()
