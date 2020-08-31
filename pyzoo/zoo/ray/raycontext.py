@@ -52,7 +52,7 @@ class JVMGuard:
 def kill_redundant_log_monitors(redis_address):
 
     """
-    Killing additional log_monitor.py processes.
+    Killing redundant log_monitor.py processes.
     If multiple ray nodes are started on the same machine,
     there will be multiple ray log_monitor.py processes
     monitoring the same log dir. As a result, the logs
