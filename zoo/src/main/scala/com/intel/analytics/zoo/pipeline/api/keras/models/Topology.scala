@@ -98,27 +98,13 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
           ds = local,
           criterion = this.criterion)
       case distriDataSet: DistributedDataSet[MiniBatch[T]] =>
-        EngineRef.getOptimizerVersion() match {
-          case OptimizerV1 =>
-            new InternalDistriOptimizer(_model = this,
-              _dataset = distriDataSet,
-              _criterion = this.criterion)
-          case OptimizerV2 =>
-            new InternalDistriOptimizerV2(_model = this,
-              _dataset = distriDataSet,
-              _criterion = this.criterion)
-        }
+        InternalOptimizer(model = this,
+          dataset = distriDataSet,
+          criterion = this.criterion)
       case distriFeatureSet: DistributedFeatureSet[MiniBatch[T]] =>
-        EngineRef.getOptimizerVersion() match {
-          case OptimizerV1 =>
-            new InternalDistriOptimizer(_model = this,
-              _dataset = distriFeatureSet.toDistributed(),
-              _criterion = this.criterion)
-          case OptimizerV2 =>
-            new InternalDistriOptimizerV2(_model = this,
-              _dataset = distriFeatureSet.toDistributed(),
-              _criterion = this.criterion)
-        }
+        InternalOptimizer(model = this,
+          dataset = distriFeatureSet.toDistributed(),
+          criterion = this.criterion)
       case _ =>
         throw new IllegalArgumentException(s"Unsupported DataSet type ${x.getClass.getName}," +
           s" excepted LocalDataSet, DistributedDataSet and DistributedFeatureSet.")
@@ -619,6 +605,27 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
   def summary(
       lineLength: Int = 120,
       positions: Array[Double] = Array(.33, .55, .67, 1)): Unit
+}
+
+object InternalOptimizer {
+  def apply[T: ClassTag](
+    model: Module[T],
+    dataset: DistributedDataSet[MiniBatch[T]],
+    criterion: Criterion[T]
+  )(implicit ev: TensorNumeric[T]): Optimizer[T, MiniBatch[T]] = {
+    EngineRef.getOptimizerVersion() match {
+      case OptimizerV1 =>
+        new InternalDistriOptimizer[T](
+          _model = model,
+          _dataset = dataset,
+          _criterion = criterion)
+      case OptimizerV2 =>
+        new InternalDistriOptimizerV2[T](
+          _model = model,
+          _dataset = dataset,
+          _criterion = criterion)
+    }
+  }
 }
 
 class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
