@@ -38,7 +38,7 @@ For example, you can set --dir to `/tmp/data` if your structure is like this:
 ## Run example
 You can run this example on local mode and yarn client mode.
 
-- Run with Spark Local mode
+- Run with Spark Local mode:
 ```bash
 conda activate zoo
 export PYTHONHOME=[conda install path]/envs/zoo # use command "conda env list" to find the path of PYTHONEHOME.
