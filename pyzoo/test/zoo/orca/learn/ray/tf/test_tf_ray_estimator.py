@@ -84,6 +84,7 @@ def create_auto_shard_model(config):
 
 def create_auto_shard_compile_args(config):
     import tensorflow as tf
+
     def loss_func(y1, y2):
         return tf.abs(y1[0] - y1[1]) + tf.abs(y2[0] - y2[1])
 
@@ -165,13 +166,13 @@ class TestTFRayEstimator(TestCase):
     def impl_test_auto_shard(self, backend):
 
         # file 1 contains all 0s, file 2 contains all 1s
-        # loss_func is constructed such that
-        # if shard by files, then each model will
-        # see the same records in the same batch
-        # so the loss should be 0.
-        # if shard by records, then each batch
-        # will have different records so the loss
-        # should not be 0
+        # If shard by files, then each model will
+        # see the same records in the same batch.
+        # If shard by records, then each batch
+        # will have different records.
+        # The loss func is constructed such that
+        # the former case will return 0, and the latter
+        # case will return non-zero.
 
         ray_ctx = RayContext.get()
         trainer = Estimator(

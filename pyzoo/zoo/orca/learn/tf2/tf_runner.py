@@ -157,7 +157,7 @@ class TFRunner:
             from tensorflow.python.distribute.input_ops import auto_shard_dataset
             train_dataset = auto_shard_dataset(train_dataset, hvd.size(), hvd.rank())
             if test_dataset is not None:
-               test_dataset = auto_shard_dataset(test_dataset, hvd.size(), hvd.rank())
+                test_dataset = auto_shard_dataset(test_dataset, hvd.size(), hvd.rank())
 
         if self.backend == "horovod":
             import horovod.tensorflow.keras as hvd
