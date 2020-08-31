@@ -52,12 +52,12 @@ class JVMGuard:
 def kill_redundant_log_monitors(redis_address):
 
     """
-    killing additional log_monitor.py process
-    if starting multiple ray nodes on the the machine,
-    there will be multiple ray log_monitor.py process
+    Killing additional log_monitor.py processes.
+    If multiple ray nodes are started on the same machine,
+    there will be multiple ray log_monitor.py processes
     monitoring the same log dir. As a result, the logs
-    will be replicated multiple times and forward to driver.
-    see issue https://github.com/ray-project/ray/issues/10392
+    will be replicated multiple times and forwarded to driver.
+    See issue https://github.com/ray-project/ray/issues/10392
     """
 
     import psutil
