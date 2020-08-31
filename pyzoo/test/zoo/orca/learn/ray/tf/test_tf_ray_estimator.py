@@ -16,6 +16,7 @@
 from unittest import TestCase
 
 import numpy as np
+import tensorflow as tf
 
 from zoo.orca.learn.tf2 import Estimator
 from zoo.ray import RayContext
@@ -115,9 +116,8 @@ def compile_args(config):
     }
     return args
 
-import tensorflow as tf
-class LRChecker(tf.keras.callbacks.Callback):
 
+class LRChecker(tf.keras.callbacks.Callback):
     def __init__(self, *args):
         super(LRChecker, self).__init__(*args)
 
@@ -243,13 +243,16 @@ class TestTFRayEstimator(TestCase):
                 backend="horovod", workers_per_node=workers_per_node)
             import horovod.tensorflow.keras as hvd
             callbacks = [
-                hvd.callbacks.LearningRateWarmupCallback(warmup_epochs=5, initial_lr=0.4, verbose=True),
-                hvd.callbacks.LearningRateScheduleCallback(start_epoch=5, end_epoch=10, multiplier=1., initial_lr=0.4),
-                hvd.callbacks.LearningRateScheduleCallback(start_epoch=10, end_epoch=15, multiplier=1e-1,
+                hvd.callbacks.LearningRateWarmupCallback(warmup_epochs=5, initial_lr=0.4,
+                                                         verbose=True),
+                hvd.callbacks.LearningRateScheduleCallback(start_epoch=5, end_epoch=10,
+                                                           multiplier=1., initial_lr=0.4),
+                hvd.callbacks.LearningRateScheduleCallback(start_epoch=10, end_epoch=15,
+                                                           multiplier=1e-1, initial_lr=0.4),
+                hvd.callbacks.LearningRateScheduleCallback(start_epoch=15, end_epoch=20,
+                                                           multiplier=1e-2, initial_lr=0.4),
+                hvd.callbacks.LearningRateScheduleCallback(start_epoch=20, multiplier=1e-3,
                                                            initial_lr=0.4),
-                hvd.callbacks.LearningRateScheduleCallback(start_epoch=15, end_epoch=20, multiplier=1e-2,
-                                                           initial_lr=0.4),
-                hvd.callbacks.LearningRateScheduleCallback(start_epoch=20, multiplier=1e-3, initial_lr=0.4),
                 LRChecker()
             ]
             for i in range(30):
