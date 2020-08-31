@@ -105,38 +105,20 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--cluster_mode', type=str, default="local",
                         help='The mode for the Spark cluster.')
-    parser.add_argument("--num_executors", type=int, default=2,
-                        help="The number of executors")
-    parser.add_argument("--executor_cores", type=int, default=8,
-                        help="The number of executor's cpu cores you want to use."
+    parser.add_argument("--num_nodes", type=int, default=1,
+                        help="The number of nodes to be used in the cluster. "
                              "You can change it depending on your own cluster setting.")
-    parser.add_argument("--executor_memory", type=str, default="10g",
-                        help="The size of executor's memory you want to use."
+    parser.add_argument("--cores", type=int, default=4,
+                        help="The number of cpu cores you want to use on each node. "
                              "You can change it depending on your own cluster setting.")
-    parser.add_argument("--driver_memory", type=str, default="2g",
-                        help="The size of driver's memory you want to use."
-                             "You can change it depending on your own cluster setting.")
-    parser.add_argument("--driver_cores", type=int, default=8,
-                        help="The number of driver's cpu cores you want to use."
-                             "You can change it depending on your own cluster setting.")
-    parser.add_argument("--extra_executor_memory_for_ray", type=str, default="20g",
-                        help="The extra executor memory to store some data."
-                             "You can change it depending on your own cluster setting.")
-    parser.add_argument("--object_store_memory", type=str, default="4g",
-                        help="The memory to store data on local."
+    parser.add_argument("--memory", type=str, default="10g",
+                        help="The memory you want to use on each node. "
                              "You can change it depending on your own cluster setting.")
     parser.add_argument("--workers_per_node", type=int, default=1,
                         help="The number of workers to run on each node")
-    parser.add_argument("--local_cores", type=int, default=4,
-                        help="The number of cores while running on local mode")
 
     args = parser.parse_args()
-    num_nodes = 1 if args.cluster_mode == "local" else args.num_executors
-    cores = args.local_cores if args.cluster_mode == "local" else args.executor_cores
-    init_orca_context(cluster_mode=args.cluster_mode, cores=cores, num_nodes=num_nodes,
-                      memory=args.executor_memory, driver_memory=args.driver_memory,
-                      driver_cores=args.driver_cores,
-                      extra_executor_memory_for_ray=args.extra_executor_memory_for_ray,
-                      object_store_memory=args.object_store_memory)
+    init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores,
+                      num_nodes=args.num_nodes, memory=args.memory)
     train_example(workers_per_node=args.workers_per_node)
     stop_orca_context()

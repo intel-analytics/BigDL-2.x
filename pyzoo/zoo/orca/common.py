@@ -105,8 +105,8 @@ def init_orca_context(cluster_mode="local", cores=2, memory="2g", num_nodes=1,
            pip, which is more convenient.
     :param cores: The number of cores to be used on each node. Default to be 2.
     :param memory: The memory allocated for each node. Default to be '2g'.
-    :param num_nodes: The number of cores available in the cluster. Default to be 1.
-           For Spark local, num_nodes should always be 1.
+    :param num_nodes: The number of nodes to be used in the cluster. Default to be 1.
+           For Spark local, num_nodes should always be 1 and you don't need to change it.
     :param init_ray_on_spark: Whether to launch Ray services across the cluster.
            Default to be False and in this case the Ray cluster would be launched lazily when
            Ray is involved in Project Orca.
@@ -132,7 +132,7 @@ def init_orca_context(cluster_mode="local", cores=2, memory="2g", num_nodes=1,
         sc = init_spark_on_local(cores, **spark_args)
     elif cluster_mode.startswith("yarn"):  # yarn or yarn-client
         if cluster_mode == "yarn-cluster":
-            raise ValueError('For yarn-cluster, please set cluster_mode to "spark-submit" '
+            raise ValueError('For yarn-cluster mode, please set cluster_mode to "spark-submit" '
                              'and submit the application via spark-submit instead')
         hadoop_conf = os.environ.get("HADOOP_CONF_DIR")
         if not hadoop_conf:
