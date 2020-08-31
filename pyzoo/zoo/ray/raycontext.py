@@ -22,7 +22,6 @@ import signal
 import warnings
 import multiprocessing
 
-from pyspark import BarrierTaskContext
 from zoo.ray.process import session_execute, ProcessMonitor
 from zoo.ray.utils import is_local
 from zoo.ray.utils import resource_to_bytes
@@ -169,6 +168,7 @@ class RayServiceFuncGenerator(object):
 
     def gen_ray_start(self):
         def _start_ray_services(iter):
+            from pyspark import BarrierTaskContext
             tc = BarrierTaskContext.get()
             # The address is sorted by partitionId according to the comments
             # Partition 0 is the Master
@@ -187,17 +187,24 @@ class RayServiceFuncGenerator(object):
 
             tc.barrier()
             if tc.partitionId() != 0:
-                print("partition id is : {}".format(tc.partitionId()))
-                process_info = self._start_ray_node(
-                    command=RayServiceFuncGenerator._get_raylet_command(
-                        redis_address=redis_address,
-                        ray_exec=self.ray_exec,
-                        password=self.password,
-                        ray_node_cpu_cores=self.ray_node_cpu_cores,
-                        labels=self.labels,
-                        object_store_memory=self.object_store_memory,
-                        extra_params=self.extra_params),
-                    tag="raylet")
+                import tempfile
+                import filelock
+
+                base_path = tempfile.gettempdir()
+                lock_path = os.path.join(base_path, "ray_on_spark_start.lock")
+                with filelock.FileLock(lock_path):
+                    print("partition id is : {}".format(tc.partitionId()))
+                    process_info = self._start_ray_node(
+                        command=RayServiceFuncGenerator._get_raylet_command(
+                            redis_address=redis_address,
+                            ray_exec=self.ray_exec,
+                            password=self.password,
+                            ray_node_cpu_cores=self.ray_node_cpu_cores,
+                            labels=self.labels,
+                            object_store_memory=self.object_store_memory,
+                            extra_params=self.extra_params),
+                        tag="raylet")
+
             yield process_info
         return _start_ray_services
 
@@ -340,6 +347,7 @@ class RayContext(object):
         total_cores = int(self.num_ray_nodes) * int(self.ray_node_cpu_cores)
 
         def info_fn(iter):
+            from pyspark import BarrierTaskContext
             tc = BarrierTaskContext.get()
             task_addrs = [taskInfo.address.split(":")[0] for taskInfo in tc.getTaskInfos()]
             yield task_addrs
