@@ -26,6 +26,7 @@ def main(max_epoch):
     sc = init_orca_context(cluster_mode="local", cores=4, memory="2g")
 
     # get DataSet
+    # as_supervised returns tuple (img, label) instead of dict {'image': img, 'label':label}
     mnist_train = tfds.load(name="mnist", split="train", as_supervised=True)
     mnist_test = tfds.load(name="mnist", split="test", as_supervised=True)
 
