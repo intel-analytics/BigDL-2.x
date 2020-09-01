@@ -467,14 +467,14 @@ class TFKerasWrapper(Estimator):
         if isinstance(data, tf.data.Dataset):
             assert isinstance(data.element_spec, tuple), \
                 "If data is tf.data.Dataset, each element should be " \
-                "(feature tensors, label tensor), where each feature/label tensors can be " \
+                "(feature tensors, label tensor), where each feature/label tensor can be " \
                 "either a single tensor or a tuple of tensors"
             if validation_data is not None:
                 assert isinstance(validation_data, tf.data.Dataset), \
                     "train data and validation data should be both tf.data.Dataset"
                 assert isinstance(validation_data.element_spec, tuple), \
                     "If validation_data is tf.data.Dataset, each element should be " \
-                    "(feature tensors, label tensor), where each feature/label tensors can be " \
+                    "(feature tensors, label tensor), where each feature/label tensor can be " \
                     "either a single tensor or a tuple of tensors"
 
         dataset = to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
