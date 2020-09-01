@@ -216,7 +216,7 @@ class SparkRunner:
     def init_spark_standalone(self,
                               num_executors,
                               executor_cores,
-                              executor_memory="10g",
+                              executor_memory="2g",
                               driver_cores=4,
                               driver_memory="1g",
                               master=None,
@@ -263,14 +263,9 @@ class SparkRunner:
 
         # Start pyspark-shell
         submit_args = " --master " + master
-        submit_args = submit_args + " --driver-cores {} --driver-memory {} --num-executors {}" \
-                                    " --executor-cores {} --executor-memory {}"\
-            .format(driver_cores, driver_memory, num_executors, executor_cores, executor_memory)
-        if extra_python_lib:
-            submit_args = submit_args + " --py-files {}".format(extra_python_lib)
-        if jars:
-            submit_args = submit_args + " --jars {}".format(jars)
-        submit_args = submit_args + " pyspark-shell"
+        submit_args = submit_args + gen_submit_args(
+            driver_cores, driver_memory, num_executors, executor_cores,
+            executor_memory, extra_python_lib, jars)
         os.environ['PYSPARK_SUBMIT_ARGS'] = submit_args
 
         zoo_bigdl_jar_path = ":".join([get_analytics_zoo_classpath(), get_bigdl_classpath()])
@@ -287,7 +282,7 @@ class SparkRunner:
                            extra_executor_memory_for_ray)
         if spark_conf.contains("spark.executor.extraClassPath"):
             spark_conf.set("spark.executor.extraClassPath", "{}:{}".format(
-                zoo_bigdl_jar_path, conf.get("spark.executor.extraClassPath")))
+                zoo_bigdl_jar_path, spark_conf.get("spark.executor.extraClassPath")))
         else:
             spark_conf.set("spark.executor.extraClassPath", zoo_bigdl_jar_path)
 
@@ -313,3 +308,64 @@ class SparkRunner:
         stop_master_pro = subprocess.Popen(
             "{}/sbin/stop-master.sh".format(env["ZOO_STANDALONE_HOME"]), shell=True, env=env)
         os.waitpid(stop_master_pro.pid, 0)
+
+    def init_spark_on_k8s(self,
+                          master,
+                          container_image,
+                          num_executors,
+                          executor_cores,
+                          executor_memory="2g",
+                          driver_memory="1g",
+                          driver_cores=4,
+                          extra_executor_memory_for_ray=None,
+                          extra_python_lib=None,
+                          conf=None,
+                          jars=None,
+                          python_location=None):
+        if python_location:
+            os.environ['PYSPARK_PYTHON'] = python_location
+
+        submit_args = " --master " + master + "--deploy-mode client"
+        submit_args = submit_args + gen_submit_args(
+            driver_cores, driver_memory, num_executors, executor_cores,
+            executor_memory, extra_python_lib, jars)
+        os.environ['PYSPARK_SUBMIT_ARGS'] = submit_args
+
+        # TODO: driver and executor python environments may vary? Thus may not be able to find
+        # zoo and bigdl jar on executor directly.
+        # Instead of specifying executor extraClassPath, submit the jars on driver via --jars.
+        from zoo.util.engine import get_analytics_zoo_classpath
+        from bigdl.util.engine import get_bigdl_classpath
+        zoo_bigdl_jar_path = ":".join([get_analytics_zoo_classpath(), get_bigdl_classpath()])
+        spark_conf = init_spark_conf(conf) \
+            .set("spark.driver.cores", driver_cores) \
+            .set("spark.driver.memory", driver_memory) \
+            .set("spark.executor.instances", num_executors) \
+            .set("spark.executor.cores", executor_cores) \
+            .set("spark.cores.max", num_executors * executor_cores) \
+            .set("spark.kubernetes.container.image", container_image)
+        if extra_executor_memory_for_ray:
+            spark_conf.set("spark.executor.memoryOverhead",
+                           extra_executor_memory_for_ray)
+        if spark_conf.contains("spark.executor.extraClassPath"):
+            spark_conf.set("spark.executor.extraClassPath", "{}:{}".format(
+                zoo_bigdl_jar_path, conf.get("spark.executor.extraClassPath")))
+        else:
+            spark_conf.set("spark.executor.extraClassPath", zoo_bigdl_jar_path)
+        # TODO: refactor code
+        sc = init_nncontext(spark_conf, spark_log_level=self.spark_log_level,
+                            redirect_spark_log=self.redirect_spark_log)
+        return sc
+
+
+def gen_submit_args(driver_cores, driver_memory, num_executors, executor_cores, executor_memory,
+                    extra_python_lib=None, jars=None):
+    submit_args = " --driver-cores {} --driver-memory {} --num-executors {} " \
+                  "--executor-cores {} --executor-memory {}" \
+        .format(driver_cores, driver_memory, num_executors, executor_cores, executor_memory)
+    if extra_python_lib:
+        submit_args = submit_args + " --py-files {}".format(extra_python_lib)
+    if jars:
+        submit_args = submit_args + " --jars {}".format(jars)
+    submit_args = submit_args + " pyspark-shell"
+    return submit_args
