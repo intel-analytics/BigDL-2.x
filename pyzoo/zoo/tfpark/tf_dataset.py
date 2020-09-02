@@ -771,9 +771,11 @@ class TFDataDataset(TFDataset):
                                                           drop_remainder=drop_remainder)
 
         shard_index = tf.placeholder(dtype=tf.int64, shape=())
-        tf_data_dataset = tf_data_dataset.shard(self._shard_num, shard_index)
+        from tensorflow.python.distribute.input_ops import auto_shard_dataset
+        tf_data_dataset = auto_shard_dataset(tf_data_dataset, self._shard_num, shard_index)
         if validation_dataset is not None:
-            validation_dataset = validation_dataset.shard(self._shard_num, shard_index)
+            validation_dataset = auto_shard_dataset(validation_dataset, self._shard_num,
+                                                    shard_index)
 
         self.shard_index = shard_index
         self.train_dataset = tf_data_dataset
