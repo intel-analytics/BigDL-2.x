@@ -325,7 +325,7 @@ class SparkRunner:
         if python_location:
             os.environ['PYSPARK_PYTHON'] = python_location
 
-        submit_args = " --master " + master + "--deploy-mode client"
+        submit_args = " --master " + master + " --deploy-mode client"
         submit_args = submit_args + gen_submit_args(
             driver_cores, driver_memory, num_executors, executor_cores,
             executor_memory, extra_python_lib, jars)
