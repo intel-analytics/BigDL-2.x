@@ -55,6 +55,7 @@ class Estimator(object):
                    config=None,
                    scheduler_step_freq="batch",
                    use_tqdm=False,
+                   workers_per_node=1,
                    backend="horovod"):
         if backend == "horovod":
             return PyTorchHorovodEstimatorWrapper(model_creator=model,
@@ -65,7 +66,8 @@ class Estimator(object):
                                                   initialization_hook=initialization_hook,
                                                   config=config,
                                                   scheduler_step_freq=scheduler_step_freq,
-                                                  use_tqdm=use_tqdm)
+                                                  use_tqdm=use_tqdm,
+                                                  workers_per_node=workers_per_node)
         elif backend == "bigdl":
             return PytorchSparkEstimatorWrapper(model=model,
                                                 loss=loss,
@@ -87,7 +89,8 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
                  initialization_hook=None,
                  config=None,
                  scheduler_step_freq="batch",
-                 use_tqdm=False):
+                 use_tqdm=False,
+                 workers_per_node=1):
         from zoo.orca.learn.pytorch.pytorch_horovod_estimator import PyTorchHorovodEstimator
         self.estimator = PyTorchHorovodEstimator(model_creator=model_creator,
                                                  optimizer_creator=optimizer_creator,
@@ -97,7 +100,8 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
                                                  initialization_hook=initialization_hook,
                                                  config=config,
                                                  scheduler_step_freq=scheduler_step_freq,
-                                                 use_tqdm=use_tqdm)
+                                                 use_tqdm=use_tqdm,
+                                                 workers_per_node=workers_per_node)
 
     def fit(self, data, epochs=1, profile=False, reduce_results=True, info=None):
         """
@@ -180,10 +184,14 @@ class PytorchSparkEstimatorWrapper(Estimator):
 
     def fit(self, data, epochs=1, batch_size=32, validation_data=None, validation_methods=None,
             checkpoint_trigger=None):
-        from zoo.orca.learn.pytorch.utils import to_sample
+        from zoo.orca.data.utils import to_sample
+        from zoo.orca.learn.metrics import Metrics
+        from zoo.orca.learn.trigger import Trigger
 
         end_trigger = MaxEpoch(epochs)
         assert batch_size > 0, "batch_size should be greater than 0"
+        validation_methods = Metrics.convert_metrics_list(validation_methods)
+        checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
 
         if isinstance(data, SparkXShards):
             train_rdd = data.rdd.flatMap(to_sample)
@@ -217,7 +225,21 @@ class PytorchSparkEstimatorWrapper(Estimator):
         pass
 
     def evaluate(self, data, validation_methods=None, batch_size=32):
-        raise NotImplementedError
+        from zoo.orca.data.utils import to_sample
+        from zoo.orca.learn.metrics import Metrics
+
+        assert data is not None, "validation data shouldn't be None"
+        validation_methods = Metrics.convert_metrics_list(validation_methods)
+
+        if isinstance(data, SparkXShards):
+            val_feature_set = FeatureSet.sample_rdd(data.rdd.flatMap(to_sample))
+            return self.estimator.evaluate(val_feature_set, validation_methods, batch_size)
+        elif isinstance(data, DataLoader) or callable(data):
+            val_feature_set = FeatureSet.pytorch_dataloader(data)
+            return self.estimator.evaluate_minibatch(val_feature_set, validation_methods)
+        else:
+            raise ValueError("Data should be a SparkXShards, a DataLoader or a callable "
+                             "data_creator, but get " + data.__class__.__name__)
 
     def get_model(self):
         return self.model.to_pytorch()

@@ -522,6 +522,10 @@ object Instances {
       })
       instances.append(map)
     }
+
+    arrowStreamReader.close()
+    rootAllocator.close()
+    byteArrayInputStream.close()
     new Instances(instances.toList)
   }
 

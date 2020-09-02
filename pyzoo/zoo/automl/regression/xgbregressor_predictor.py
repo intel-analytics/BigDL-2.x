@@ -21,7 +21,6 @@ import tempfile
 import zipfile
 import os
 import shutil
-import ray
 
 from zoo.automl.search.abstract import *
 from zoo.automl.search.RayTuneSearchEngine import RayTuneSearchEngine

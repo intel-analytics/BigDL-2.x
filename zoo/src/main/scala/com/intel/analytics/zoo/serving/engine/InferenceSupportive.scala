@@ -31,14 +31,16 @@ object InferenceSupportive {
     val postProcessed = preProcessed.map(pathByte => {
       try {
         val t = typeCheck(pathByte._2)
-        val result = params.model.doPredict(t)
+        dimCheck(t, "add", params)
+        val result = ModelHolder.model.doPredict(t)
+        dimCheck(result, "remove", params)
         val value = PostProcessing(result.toTensor[Float], params.filter, 1)
         (pathByte._1, value)
       } catch {
         case e: Exception =>
           logger.info(s"${e}, " +
             s"Your input ${pathByte._1} format is invalid to your model, this record is skipped")
-          (pathByte._1, "")
+          (pathByte._1, "NaN")
       }
     })
     postProcessed
@@ -60,7 +62,7 @@ object InferenceSupportive {
          * have to squeeze it back.
          */
         dimCheck(t, "add", params)
-        val result = params.model.doPredict(t)
+        val result = ModelHolder.model.doPredict(t)
         dimCheck(result, "remove", params)
         dimCheck(t, "remove", params)
         val t3 = System.nanoTime()
@@ -76,10 +78,10 @@ object InferenceSupportive {
       } catch {
         case e: Exception =>
           logger.info(s"${e}, Your input format is invalid to your model, this batch is skipped")
-          pathByteBatch.toParArray.map(x => (x._1, ""))
+          pathByteBatch.toParArray.map(x => (x._1, "NaN"))
       }
     })
-    postProcessed.filter(x => x != null)
+    postProcessed
   }
   def batchInput(seq: Seq[(String, Activity)],
     params: SerParams): Activity = {

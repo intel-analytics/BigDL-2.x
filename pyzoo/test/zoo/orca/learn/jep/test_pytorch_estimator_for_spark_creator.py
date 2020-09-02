@@ -19,15 +19,13 @@ from unittest import TestCase
 import pytest
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.utils.data import TensorDataset
-import numpy as np
 
-from zoo.orca.data.pandas import read_csv
+from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.learn.pytorch import Estimator
-from zoo.pipeline.api.keras.metrics import Accuracy
-from zoo.common.nncontext import *
-from bigdl.optim.optimizer import SGD, EveryEpoch, Adam
+from zoo.orca.learn.metrics import Accuracy
+from zoo.orca.learn.trigger import EveryEpoch
+from bigdl.optim.optimizer import Adam
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
@@ -38,13 +36,13 @@ class TestEstimatorForSparkCreator(TestCase):
         """ setup any state tied to the execution of the given method in a
         class.  setup_method is invoked for every test method of a class.
         """
-        self.sc = init_spark_on_local(4)
+        self.sc = init_orca_context(cores=4)
 
     def tearDown(self):
         """ teardown any state that was previously setup with a setup_method
         call.
         """
-        self.sc.stop()
+        stop_orca_context()
 
     def test_bigdl_pytorch_estimator_dataloader_creator(self):
         class SimpleModel(nn.Module):
@@ -72,6 +70,7 @@ class TestEstimatorForSparkCreator(TestCase):
 
         estimator.fit(data=get_dataloader, epochs=2, validation_data=get_dataloader,
                       validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
+        estimator.evaluate(data=get_dataloader, validation_methods=[Accuracy()])
         model = estimator.get_model()
         assert isinstance(model, nn.Module)
 
