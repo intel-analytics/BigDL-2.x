@@ -99,6 +99,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores,
-                      num_nodes=args.num_nodes, memory=args.memory)
+                      num_nodes=args.num_nodes, memory=args.memory, driver_memory="4g")
     main(args.max_epoch)
     stop_orca_context()
