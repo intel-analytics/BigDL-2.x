@@ -16,9 +16,7 @@
 import argparse
 
 import tensorflow as tf
-import tensorflow_datasets as tfds
-import sys
-
+from zoo.orca.data import XShards
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo.orca import init_orca_context, stop_orca_context
 
@@ -45,17 +43,11 @@ def lenet(images, is_training):
 
 def main(max_epoch):
 
-    # get DataSet
-    mnist_train = tfds.load(name="mnist", split="train")
-    mnist_test = tfds.load(name="mnist", split="test")
-
-    # Normalizes images
-    def normalize_img(data):
-        data['image'] = tf.cast(data["image"], tf.float32) / 255.
-        return data
-
-    mnist_train = mnist_train.map(normalize_img, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    mnist_test = mnist_test.map(normalize_img, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    (train_feature, train_label), (val_feature, val_label) = tf.keras.datasets.mnist.load_data()
+    train_feature = train_feature.reshape(-1, 28, 28, 1) / 255.0
+    val_feature = val_feature.reshape(-1, 28, 28, 1) / 255.0
+    train_data = XShards.partition({"x": train_feature, "y": train_label})
+    val_data = XShards.partition({"x": val_feature, "y": val_label})
 
     # tensorflow inputs
     images = tf.placeholder(dtype=tf.float32, shape=(None, 28, 28, 1))
@@ -77,13 +69,13 @@ def main(max_epoch):
                                loss=loss,
                                optimizer=tf.train.AdamOptimizer(),
                                metrics={"acc": acc})
-    est.fit(data=mnist_train,
+    est.fit(data=train_data,
             batch_size=320,
             epochs=max_epoch,
-            validation_data=mnist_test,
+            validation_data=val_data,
             feed_dict={is_training: (True, False)})
 
-    result = est.evaluate(mnist_test)
+    result = est.evaluate(val_data)
     print(result)
 
     est.save_tf_checkpoint("/tmp/lenet/model")

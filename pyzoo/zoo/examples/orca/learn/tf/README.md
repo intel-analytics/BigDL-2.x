@@ -11,7 +11,7 @@ Download and install latest analytics whl from source forge ([here](https://sour
 conda create -y -n analytics-zoo python==3.7.7
 conda activate analytics-zoo
 pip install analytics_zoo-${VERSION}-${TIMESTAMP}-py2.py3-none-${OS}_x86_64.whl
-pip install tensorflow==1.15 tensorflow-datasets==2.0
+pip install tensorflow==1.15.0
 pip install psutil
 ```
 

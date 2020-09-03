@@ -14,27 +14,21 @@
 # limitations under the License.
 #
 import argparse
-import sys
 
 import tensorflow as tf
-import tensorflow_datasets as tfds
 from zoo.orca import init_orca_context, stop_orca_context
+from zoo.orca.data import XShards
 from zoo.orca.learn.tf.estimator import Estimator
 
 
 def main(max_epoch):
 
     # get DataSet
-    # as_supervised returns tuple (img, label) instead of dict {'image': img, 'label':label}
-    mnist_train = tfds.load(name="mnist", split="train", as_supervised=True)
-    mnist_test = tfds.load(name="mnist", split="test", as_supervised=True)
-
-    # Normalizes images, unit8 -> float32
-    def normalize_img(image, label):
-        return tf.cast(image, tf.float32) / 255., label
-
-    mnist_train = mnist_train.map(normalize_img, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    mnist_test = mnist_test.map(normalize_img, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    (train_feature, train_label), (val_feature, val_label) = tf.keras.datasets.mnist.load_data()
+    train_feature = train_feature.reshape(-1, 28, 28, 1) / 255.0
+    val_feature = val_feature.reshape(-1, 28, 28, 1) / 255.0
+    train_data = XShards.partition({"x": train_feature, "y": train_label})
+    val_data = XShards.partition({"x": val_feature, "y": val_label})
 
     model = tf.keras.Sequential(
         [tf.keras.layers.Conv2D(20, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
@@ -54,12 +48,12 @@ def main(max_epoch):
                   metrics=['accuracy'])
 
     est = Estimator.from_keras(keras_model=model)
-    est.fit(data=mnist_train,
+    est.fit(data=train_data,
             batch_size=320,
             epochs=max_epoch,
-            validation_data=mnist_test)
+            validation_data=val_data)
 
-    result = est.evaluate(mnist_test)
+    result = est.evaluate(val_data)
     print(result)
 
     est.save_keras_model("/tmp/mnist_keras.h5")
