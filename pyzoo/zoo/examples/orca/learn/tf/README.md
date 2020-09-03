@@ -40,6 +40,6 @@ python lenet_mnist_keras.py --cluster_mode yarn-client --num_nodes 2 --cores 4 -
 The application is also be able to run on spark standalone cluster or in yarn cluster mode.
 Please refer to the following links to learn more details.
 
-1. [Orca Overview](https://analytics-zoo.github.io/master/#Orca/overview/) and [`init_orca_context`](link_to_be_added)
+1. [Orca Overview](https://analytics-zoo.github.io/master/#Orca/overview/) and [Orca Context](https://analytics-zoo.github.io/master/#Orca/context/)
 2. [Download and install Analytics Zoo](https://analytics-zoo.github.io/master/#PythonUserGuide/install/)
 
