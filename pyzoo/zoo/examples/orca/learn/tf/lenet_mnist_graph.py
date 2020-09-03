@@ -13,17 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import argparse
+
 import tensorflow as tf
 import tensorflow_datasets as tfds
 import sys
 
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo.orca import init_orca_context, stop_orca_context
-
-sys.path.append("/tmp/models/slim")  # add the slim library
-from nets import lenet
-
-slim = tf.contrib.slim
 
 
 def accuracy(logits, labels):
@@ -32,8 +29,21 @@ def accuracy(logits, labels):
     return tf.reduce_mean(is_correct)
 
 
+def lenet(images, is_training):
+    with tf.variable_scope('LeNet', [images]):
+        net = tf.layers.conv2d(images, 32, (5, 5), activation=tf.nn.relu, name='conv1')
+        net = tf.layers.max_pooling2d(net, (2, 2), 2, name='pool1')
+        net = tf.layers.conv2d(net, 64, (5, 5), activation=tf.nn.relu, name='conv2')
+        net = tf.layers.max_pooling2d(net, (2, 2), 2, name='pool2')
+        net = tf.layers.flatten(net)
+        net = tf.layers.dense(net, 1024, activation=tf.nn.relu, name='fc3')
+        net = tf.layers.dropout(
+            net, 0.5, training=is_training, name='dropout3')
+        logits = tf.layers.dense(net, 10)
+        return logits
+
+
 def main(max_epoch):
-    sc = init_orca_context(cores=4, memory="2g")
 
     # get DataSet
     mnist_train = tfds.load(name="mnist", split="train")
@@ -52,8 +62,9 @@ def main(max_epoch):
     # tensorflow labels
     labels = tf.placeholder(dtype=tf.int32, shape=(None,))
 
-    with slim.arg_scope(lenet.lenet_arg_scope()):
-        logits, end_points = lenet.lenet(images, num_classes=10, is_training=True)
+    is_training = tf.placeholder_with_default(False, shape=())
+
+    logits = lenet(images, is_training=is_training)
 
     loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
 
@@ -69,18 +80,33 @@ def main(max_epoch):
     est.fit(data=mnist_train,
             batch_size=320,
             epochs=max_epoch,
-            validation_data=mnist_test)
+            validation_data=mnist_test,
+            feed_dict={is_training: (True, False)})
 
     result = est.evaluate(mnist_test)
     print(result)
 
     est.save_tf_checkpoint("/tmp/lenet/model")
-    stop_orca_context()
 
 
 if __name__ == '__main__':
-    max_epoch = 5
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--cluster_mode', type=str, default="local",
+                        help='The mode for the Spark cluster.')
+    parser.add_argument("--num_nodes", type=int, default=1,
+                        help="The number of nodes to be used in the cluster. "
+                             "You can change it depending on your own cluster setting.")
+    parser.add_argument("--cores", type=int, default=4,
+                        help="The number of cpu cores you want to use on each node. "
+                             "You can change it depending on your own cluster setting.")
+    parser.add_argument("--memory", type=str, default="10g",
+                        help="The memory you want to use on each node. "
+                             "You can change it depending on your own cluster setting.")
 
-    if len(sys.argv) > 1:
-        max_epoch = int(sys.argv[1])
-    main(max_epoch)
+    parser.add_argument("--max_epoch", type=int, default=5)
+
+    args = parser.parse_args()
+    init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores,
+                      num_nodes=args.num_nodes, memory=args.memory)
+    main(args.max_epoch)
+    stop_orca_context()

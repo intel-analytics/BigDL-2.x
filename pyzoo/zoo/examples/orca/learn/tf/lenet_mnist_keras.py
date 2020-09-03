@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import argparse
 import sys
 
 import tensorflow as tf
@@ -22,7 +23,6 @@ from zoo.orca.learn.tf.estimator import Estimator
 
 
 def main(max_epoch):
-    sc = init_orca_context(cores=4, memory="2g")
 
     # get DataSet
     # as_supervised returns tuple (img, label) instead of dict {'image': img, 'label':label}
@@ -63,13 +63,24 @@ def main(max_epoch):
     print(result)
 
     est.save_keras_model("/tmp/mnist_keras.h5")
-    stop_orca_context()
-
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--cluster_mode', type=str, default="local",
+                        help='The mode for the Spark cluster.')
+    parser.add_argument("--num_nodes", type=int, default=1,
+                        help="The number of nodes to be used in the cluster. "
+                             "You can change it depending on your own cluster setting.")
+    parser.add_argument("--cores", type=int, default=4,
+                        help="The number of cpu cores you want to use on each node. "
+                             "You can change it depending on your own cluster setting.")
+    parser.add_argument("--memory", type=str, default="10g",
+                        help="The memory you want to use on each node. "
+                             "You can change it depending on your own cluster setting.")
+    parser.add_argument("--max_epoch", type=int, default=5)
 
-    max_epoch = 5
-
-    if len(sys.argv) > 1:
-        max_epoch = int(sys.argv[1])
-    main(max_epoch)
+    args = parser.parse_args()
+    init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores,
+                      num_nodes=args.num_nodes, memory=args.memory)
+    main(args.max_epoch)
+    stop_orca_context()
