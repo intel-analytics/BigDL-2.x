@@ -70,7 +70,7 @@ class FlinkInference(params: SerParams)
       val preProcessed = in.grouped(params.coreNum).flatMap(itemBatch => {
         Timer.timing("preprocess", itemBatch.size) {
           itemBatch.indices.toParArray.map(i => {
-            Timer.timing("other", 1) {
+            Timer.timing("preprocess one input", 1) {
               val uri = itemBatch(i)._1
               val input = pre.decodeArrowBase64(itemBatch(i)._2)
               (uri, input)
