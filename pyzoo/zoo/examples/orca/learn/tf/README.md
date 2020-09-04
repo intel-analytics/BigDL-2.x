@@ -5,7 +5,7 @@ Tensorflow and Keras on Spark.
 
 ## Environment Preparation
 
-Download and install latest analytics whl from source forge ([here](https://sourceforge.net/projects/analytics-zoo/files/zoo-py/)).
+Download and install latest analytics whl by following instructions ([here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#install-the-latest-nightly-build-wheels-for-pip).
 
 ```bash
 conda create -y -n analytics-zoo python==3.7.7
