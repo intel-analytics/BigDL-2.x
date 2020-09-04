@@ -100,6 +100,7 @@ object SparkStreamingClusterServing {
 
 
     val localSerParams = new SerParams(helper)
+    localSerParams.model = new InferenceModel()
     localSerParams.model.setInferenceSummary(
       InferenceSummary("./TensorboardEventLogs", helper.dateTime + "-ClusterServing"))
     val bcSer = helper.sc.broadcast(localSerParams)
