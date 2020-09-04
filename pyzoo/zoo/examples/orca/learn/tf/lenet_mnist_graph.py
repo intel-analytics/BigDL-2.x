@@ -16,7 +16,6 @@
 import argparse
 
 import tensorflow as tf
-from zoo.orca.data import XShards
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo.orca import init_orca_context, stop_orca_context
 
@@ -27,7 +26,7 @@ def accuracy(logits, labels):
     return tf.reduce_mean(is_correct)
 
 
-def lenet(images, is_training):
+def lenet(images):
     with tf.variable_scope('LeNet', [images]):
         net = tf.layers.conv2d(images, 32, (5, 5), activation=tf.nn.relu, name='conv1')
         net = tf.layers.max_pooling2d(net, (2, 2), 2, name='pool1')
@@ -35,28 +34,31 @@ def lenet(images, is_training):
         net = tf.layers.max_pooling2d(net, (2, 2), 2, name='pool2')
         net = tf.layers.flatten(net)
         net = tf.layers.dense(net, 1024, activation=tf.nn.relu, name='fc3')
-        net = tf.layers.dropout(
-            net, 0.5, training=is_training, name='dropout3')
         logits = tf.layers.dense(net, 10)
         return logits
+
+
+def preprocess(x, y):
+    return tf.to_float(tf.reshape(x, (-1, 28, 28, 1))) / 255.0, y
 
 
 def main(max_epoch):
 
     (train_feature, train_label), (val_feature, val_label) = tf.keras.datasets.mnist.load_data()
-    train_feature = train_feature.reshape(-1, 28, 28, 1) / 255.0
-    val_feature = val_feature.reshape(-1, 28, 28, 1) / 255.0
-    train_data = XShards.partition({"x": train_feature, "y": train_label})
-    val_data = XShards.partition({"x": val_feature, "y": val_label})
+
+    # tf.data.Dataset.from_tensor_slices is for demo only. For production use, please use
+    # file-based approach (e.g. tfrecord).
+    train_dataset = tf.data.Dataset.from_tensor_slices((train_feature, train_label))
+    train_dataset = train_dataset.map(preprocess)
+    val_dataset = tf.data.Dataset.from_tensor_slices((val_feature, val_label))
+    val_dataset = val_dataset.map(preprocess)
 
     # tensorflow inputs
     images = tf.placeholder(dtype=tf.float32, shape=(None, 28, 28, 1))
     # tensorflow labels
     labels = tf.placeholder(dtype=tf.int32, shape=(None,))
 
-    is_training = tf.placeholder_with_default(False, shape=())
-
-    logits = lenet(images, is_training=is_training)
+    logits = lenet(images)
 
     loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
 
@@ -69,13 +71,12 @@ def main(max_epoch):
                                loss=loss,
                                optimizer=tf.train.AdamOptimizer(),
                                metrics={"acc": acc})
-    est.fit(data=train_data,
+    est.fit(data=train_dataset,
             batch_size=320,
             epochs=max_epoch,
-            validation_data=val_data,
-            feed_dict={is_training: (True, False)})
+            validation_data=val_dataset)
 
-    result = est.evaluate(val_data)
+    result = est.evaluate(val_dataset)
     print(result)
 
     est.save_tf_checkpoint("/tmp/lenet/model")
@@ -84,21 +85,12 @@ def main(max_epoch):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cluster_mode', type=str, default="local",
-                        help='The mode for the Spark cluster.')
-    parser.add_argument("--num_nodes", type=int, default=1,
-                        help="The number of nodes to be used in the cluster. "
-                             "You can change it depending on your own cluster setting.")
-    parser.add_argument("--cores", type=int, default=4,
-                        help="The number of cpu cores you want to use on each node. "
-                             "You can change it depending on your own cluster setting.")
-    parser.add_argument("--memory", type=str, default="10g",
-                        help="The memory you want to use on each node. "
-                             "You can change it depending on your own cluster setting.")
-
-    parser.add_argument("--max_epoch", type=int, default=5)
+                        help='The mode for the Spark cluster. local or yarn.')
 
     args = parser.parse_args()
-    init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores,
-                      num_nodes=args.num_nodes, memory=args.memory, driver_memory="4g")
-    main(args.max_epoch)
+    if args.cluster_mode == "local":
+        init_orca_context(cluster_mode="local", cores=4)
+    elif args.cluster_mode == "yarn":
+        init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2, driver_memory="6g")
+    main(5)
     stop_orca_context()
