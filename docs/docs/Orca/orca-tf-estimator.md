@@ -114,9 +114,32 @@ fit(data,
    The first one of the tuple is the value to feed to the tensor in training phase and the second one is the value to feed to the tensor in validation phase.
 * `checkpoint_trigger`: when to trigger checkpoint during training. Should be bigdl optimzer trigger, like EveryEpoch(), SeveralIteration(num_iterations),etc.
 
-E.g. Train with Orca TF Estimator. 
+Example of Train with Orca TF Estimator. 
 
-1.  Train data is XShards. For XShards, you can refer [XShards documents](../data.md)
+1. Train data is tf.data.DataSet. E.g.
+```
+dataset = tf.data.Dataset.from_tensor_slices((np.random.randint(0, 200, size=(100,)),
+                                              np.random.randint(0, 50, size=(100,)),
+                                              np.ones(shape=(100,), dtype=np.int32)))
+est.fit(data=dataset,
+        batch_size=8,
+        epochs=10,
+        validation_data=dataset)
+```
+
+
+
+2.  Train data is Spark DataFrame. E.g.
+```
+est.fit(data=df,
+        batch_size=8,
+        epochs=10,
+        feature_cols=['user', 'item'],
+        labels_cols=['label'],
+        validation_data=df)
+```
+
+3.  Train data is [XShards](../data.md). E.g.
 ```
 file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
 data_shard = zoo.orca.data.pandas.read_csv(file_path)
@@ -136,26 +159,6 @@ est.fit(data=data_shard,
         validation_data=data_shard)
 ```
 
-2.  Train data is Spark DataFrame.
-```
-est.fit(data=df,
-        batch_size=8,
-        epochs=10,
-        feature_cols=['user', 'item'],
-        labels_cols=['label'],
-        validation_data=df)
-```
-
-3. Train data is tf.data.DataSet.
-```
-dataset = tf.data.Dataset.from_tensor_slices((np.random.randint(0, 200, size=(100,)),
-                                              np.random.randint(0, 50, size=(100,)),
-                                              np.ones(shape=(100,), dtype=np.int32)))
-est.fit(data=dataset,
-        batch_size=8,
-        epochs=10,
-        validation_data=dataset)
-```
 
 #### **Create Estimator with Keras model**
 
@@ -220,7 +223,31 @@ fit(data,
 * `session_config`: tensorflow session configuration for training. Should be object of tf.ConfigProto
 * `checkpoint_trigger`: when to trigger checkpoint during training. Should be bigdl optimzer trigger, like EveryEpoch(), SeveralIteration(num_iterations),etc.
 
-1. If train data is XShards, e.g.
+1. Train data is tf.data.DataSet. E.g.
+```
+dataset = tf.data.Dataset.from_tensor_slices((np.random.randint(0, 200, size=(100,)),
+                                              np.random.randint(0, 50, size=(100,)),
+                                              np.ones(shape=(100,), dtype=np.int32)))
+                                              
+dataset = dataset.map(lambda user, item, label: [(user, item), label])
+                                             
+est.fit(data=dataset,
+        batch_size=8,
+        epochs=10,
+        validation_data=dataset)
+```
+2.  Train data is Spark DataFrame. E.g.
+```
+est.fit(data=df,
+        batch_size=8,
+        epochs=10,
+        feature_cols=['user', 'item'],
+        labels_cols=['label'],
+        validation_data=df)
+```
+
+
+3. If train data is XShards, e.g.
 ```
 file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
 data_shard = zoo.orca.data.pandas.read_csv(file_path)
@@ -241,30 +268,6 @@ est.fit(data=data_shard,
         validation_data=data_shard)
 
 ```
-2.  Train data is Spark DataFrame. E.g.
-```
-est.fit(data=df,
-        batch_size=8,
-        epochs=10,
-        feature_cols=['user', 'item'],
-        labels_cols=['label'],
-        validation_data=df)
-```
-
-3. Train data is tf.data.DataSet. E.g.
-```
-dataset = tf.data.Dataset.from_tensor_slices((np.random.randint(0, 200, size=(100,)),
-                                              np.random.randint(0, 50, size=(100,)),
-                                              np.ones(shape=(100,), dtype=np.int32)))
-                                              
-dataset = dataset.map(lambda user, item, label: [(user, item), label])
-                                             
-est.fit(data=dataset,
-        batch_size=8,
-        epochs=10,
-        validation_data=dataset)
-```
-
 
 #### **Evaluate with Estimator**
 
@@ -314,8 +317,27 @@ If input data is XShards or tf.data.Dataset, the predict result is also a XShard
 
 If input data is Spark DataFrame, the predict result is a DataFrame which includes original columns plus 'prediction' column. The 'prediction' column can be FloatType, VectorUDT or Array of VectorUDT depending on model outputs shape.
 
+1. Predict data is tf.data.DataSet. The prediction result should be an XShards and each element is {'prediction': predicted numpy array or list of predicted numpy arrays}.
+```
+dataset = tf.data.Dataset.from_tensor_slices((np.random.randint(0, 200, size=(100, 1)),
+                                              np.random.randint(0, 50, size=(100, 1))))
+predictions = est.predict(dataset)
 
-1.  Predict data is XShards. The prediction result should be an XShards and each element is {'prediction': predicted numpy array or list of predicted numpy arrays}.
+prediction_shards = est.predict(data_shard)
+predictions = prediction_shards.collect()
+
+assert 'prediction' in predictions[0]
+```
+
+
+2. Predict data is Spark DataFrame. The predict result is a DataFrame which includes original columns plus 'prediction' column. 
+```
+prediction_df = est.predict(df, batch_size=4, feature_cols=['user', 'item'])
+
+assert 'prediction' in prediction_df.columns
+```
+
+3. Predict data is XShards. The prediction result should be an XShards and each element is {'prediction': predicted numpy array or list of predicted numpy arrays}.
 ```
 file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
 data_shard = zoo.orca.data.pandas.read_csv(file_path)
@@ -334,24 +356,7 @@ predictions = prediction_shards.collect()
 assert 'prediction' in predictions[0]
 ```
 
-2.  Predict data is Spark DataFrame. The predict result is a DataFrame which includes original columns plus 'prediction' column. 
-```
-prediction_df = est.predict(df, batch_size=4, feature_cols=['user', 'item'])
 
-assert 'prediction' in prediction_df.columns
-```
-
-3. Predict data is tf.data.DataSet. The prediction result should be an XShards and each element is {'prediction': predicted numpy array or list of predicted numpy arrays}.
-```
-dataset = tf.data.Dataset.from_tensor_slices((np.random.randint(0, 200, size=(100, 1)),
-                                              np.random.randint(0, 50, size=(100, 1))))
-predictions = est.predict(dataset)
-
-prediction_shards = est.predict(data_shard)
-predictions = prediction_shards.collect()
-
-assert 'prediction' in predictions[0]
-```
 
 #### **Checkpointing and Resume Training**
 
@@ -463,6 +468,8 @@ save_keras_model(path)
 * `path`: keras model save path.
 
 If you use tensorflow keras model in this estimator, this method would save keras model in specified path.
+
+E.g.
 ```
 temp = tempfile.mkdtemp()
 model_path = os.path.join(temp, 'test.h5')
