@@ -47,33 +47,30 @@ object InferenceSupportive {
   }
   def multiThreadInference(preProcessed: Iterator[(String, Activity)],
                            params: SerParams): Iterator[(String, String)] = {
-    println("Inference new batch ..................")
     val postProcessed = preProcessed.grouped(params.coreNum).flatMap(pathByteBatch => {
       try {
         val thisBatchSize = pathByteBatch.size
+        val t = Timer.timing("batch", thisBatchSize) {
+          batchInput(pathByteBatch, params)
+        }
 
-        val t1 = System.nanoTime()
-        val t = batchInput(pathByteBatch, params)
-        val t2 = System.nanoTime()
-        println(s"Batch input (copy, resize) time ${(t2 - t1) / 1e9} s")
         /**
          * addSingletonDimension method will modify the
          * original Tensor, thus if reuse of Tensor is needed,
          * have to squeeze it back.
          */
         dimCheck(t, "add", params)
-        val result = ModelHolder.model.doPredict(t)
+        val result = Timer.timing("inference", thisBatchSize) {
+          ModelHolder.model.doPredict(t)
+        }
         dimCheck(result, "remove", params)
         dimCheck(t, "remove", params)
-        val t3 = System.nanoTime()
-        println(s"Inference and Dim check time ${(t3 - t2) / 1e9} s")
-        val kvResult = (0 until thisBatchSize).toParArray.map(i => {
-          val value = PostProcessing(result, params.filter, i + 1)
-          (pathByteBatch(i)._1, value)
-        })
-        val t4 = System.nanoTime()
-        println(s"Post-processing time ${(t4 - t3) / 1e9} s")
-        println(s"Inference logic total time ${(t4 - t1) / 1e9} s")
+        val kvResult = Timer.timing("postprocess", thisBatchSize) {
+          (0 until thisBatchSize).toParArray.map(i => {
+            val value = PostProcessing(result, params.filter, i + 1)
+            (pathByteBatch(i)._1, value)
+          })
+        }
         kvResult
       } catch {
         case e: Exception =>
