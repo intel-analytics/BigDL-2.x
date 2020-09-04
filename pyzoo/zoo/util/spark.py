@@ -36,9 +36,10 @@ class SparkRunner:
         import pyspark
         print("Current pyspark location is : {}".format(pyspark.__file__))
 
-    def create_sc(self, submit_args, spark_conf):
+    def create_sc(self, submit_args, conf):
         submit_args = submit_args + " pyspark-shell"
         os.environ["PYSPARK_SUBMIT_ARGS"] = submit_args
+        spark_conf = init_spark_conf(conf)
         sc = init_nncontext(conf=spark_conf, spark_log_level=self.spark_log_level,
                             redirect_spark_log=self.redirect_spark_log)
         return sc
@@ -95,20 +96,20 @@ class SparkRunner:
                 driver_cores, driver_memory, num_executors, executor_cores,
                 executor_memory, extra_python_lib, jars)
 
-            spark_conf = create_spark_conf(conf, driver_cores, driver_memory, num_executors, executor_cores,
-                                           executor_memory, extra_executor_memory_for_ray)
-            spark_conf.set("spark.scheduler.minRegisteredResourcesRatio", "1.0")\
-                .set("spark.executorEnv.PYTHONHOME", executor_python_env)
+            conf = enrich_conf_for_spark(conf, driver_cores, driver_memory, num_executors,
+                                         executor_cores, executor_memory, extra_executor_memory_for_ray)
+            conf.update({"spark.scheduler.minRegisteredResourcesRatio": "1.0",
+                         "spark.executorEnv.PYTHONHOME": executor_python_env})
             if spark_yarn_archive:
-                spark_conf.set("spark.yarn.archive", spark_yarn_archive)
+                conf["spark.yarn.archive"] = spark_yarn_archive
             zoo_bigdl_path_on_executor = ":".join(list(get_executor_conda_zoo_classpath(executor_python_env)))
-            if spark_conf.contains("spark.executor.extraClassPath"):
-                spark_conf.set("spark.executor.extraClassPath", "{}:{}".format(
-                    zoo_bigdl_path_on_executor, spark_conf.get("spark.executor.extraClassPath")))
+            if "spark.executor.extraClassPath" in conf:
+                conf["spark.executor.extraClassPath"] = "{}:{}".format(
+                    zoo_bigdl_path_on_executor, conf["spark.executor.extraClassPath"])
             else:
-                spark_conf.set("spark.executor.extraClassPath", zoo_bigdl_path_on_executor)
+                conf["spark.executor.extraClassPath"] = zoo_bigdl_path_on_executor
 
-            sc = self.create_sc(submit_args, spark_conf)
+            sc = self.create_sc(submit_args, conf)
         finally:
             if conda_name and penv_archive and pack_env:
                 os.remove(penv_archive)
@@ -166,18 +167,18 @@ class SparkRunner:
             driver_cores, driver_memory, num_executors, executor_cores,
             executor_memory, extra_python_lib, jars)
 
-        spark_conf = create_spark_conf(conf, driver_cores, driver_memory, num_executors, executor_cores,
-                                       executor_memory, extra_executor_memory_for_ray)
-        spark_conf.set("spark.cores.max", num_executors * executor_cores)\
-            .set("spark.executorEnv.PYTHONHOME", "/".join(detect_python_location().split("/")[:-2]))
+        conf = enrich_conf_for_spark(conf, driver_cores, driver_memory, num_executors,
+                                     executor_cores, executor_memory, extra_executor_memory_for_ray)
+        conf.update({"spark.cores.max": num_executors * executor_cores,
+                     "spark.executorEnv.PYTHONHOME": "/".join(detect_python_location().split("/")[:-2])})
         zoo_bigdl_jar_path = ":".join(list(get_zoo_bigdl_classpath_on_driver()))
-        if spark_conf.contains("spark.executor.extraClassPath"):
-            spark_conf.set("spark.executor.extraClassPath", "{}:{}".format(
-                zoo_bigdl_jar_path, spark_conf.get("spark.executor.extraClassPath")))
+        if "spark.executor.extraClassPath" in conf:
+            conf["spark.executor.extraClassPath"] = "{}:{}".format(
+                zoo_bigdl_jar_path, conf["spark.executor.extraClassPath"])
         else:
-            spark_conf.set("spark.executor.extraClassPath", zoo_bigdl_jar_path)
+            conf["spark.executor.extraClassPath"] = zoo_bigdl_jar_path
 
-        sc = self.create_sc(submit_args, spark_conf)
+        sc = self.create_sc(submit_args, conf)
         return sc
 
     @staticmethod
@@ -220,21 +221,19 @@ class SparkRunner:
             driver_cores, driver_memory, num_executors, executor_cores,
             executor_memory, extra_python_lib, jars)
 
-        spark_conf = create_spark_conf(conf, driver_cores, driver_memory, num_executors, executor_cores,
-                                       executor_memory, extra_executor_memory_for_ray)
-        spark_conf.set("spark.cores.max", num_executors * executor_cores) \
-            .set("spark.kubernetes.container.image", container_image)
-        # TODO: driver and executor python environments may vary? Thus may not be able to find
-        # zoo and bigdl jar on executor directly.
-        # Instead of specifying executor extraClassPath, submit the jars on driver via --jars.
-        zoo_bigdl_jar_path = ":".join(list(get_zoo_bigdl_classpath_on_driver()))
-        if spark_conf.contains("spark.executor.extraClassPath"):
-            spark_conf.set("spark.executor.extraClassPath", "{}:{}".format(
-                zoo_bigdl_jar_path, conf.get("spark.executor.extraClassPath")))
+        conf = enrich_conf_for_spark(conf, driver_cores, driver_memory, num_executors,
+                                     executor_cores, executor_memory, extra_executor_memory_for_ray)
+        conf.update({"spark.cores.max": num_executors * executor_cores,
+                    "spark.kubernetes.container.image": container_image})
+        # Not targeted to use pip install. BIGDL_CLASSPATH is supposed to set.
+        assert "BIGDL_CLASSPATH" in os.environ
+        if "spark.executor.extraClassPath" in conf:
+            conf["spark.executor.extraClassPath"] = "{}:{}".format(
+                os.environ["BIGDL_CLASSPATH"], conf["spark.executor.extraClassPath"])
         else:
-            spark_conf.set("spark.executor.extraClassPath", zoo_bigdl_jar_path)
+            conf["spark.executor.extraClassPath"] = os.environ["BIGDL_CLASSPATH"]
 
-        sc = self.create_sc(submit_args, spark_conf)
+        sc = self.create_sc(submit_args, conf)
         return sc
 
 
@@ -250,14 +249,15 @@ def gen_submit_args(driver_cores, driver_memory, num_executors, executor_cores, 
     return submit_args
 
 
-def create_spark_conf(conf, driver_cores, driver_memory, num_executors, executor_cores, executor_memory,
-                      extra_executor_memory_for_ray=None):
-    spark_conf = init_spark_conf(conf) \
-        .set("spark.driver.cores", driver_cores) \
-        .set("spark.driver.memory", driver_memory) \
-        .set("spark.executor.instances", num_executors) \
-        .set("spark.executor.cores", executor_cores) \
-        .set("spark.executor.memory", executor_memory)
+def enrich_conf_for_spark(conf, driver_cores, driver_memory, num_executors, executor_cores,
+                          executor_memory, extra_executor_memory_for_ray=None):
+    if not conf:
+        conf = {}
+    conf.update({"spark.driver.cores": driver_cores,
+                 "spark.driver.memory": driver_memory,
+                 "spark.executor.instances": num_executors,
+                 "spark.executor.cores": executor_cores,
+                 "spark.executor.memory": executor_memory})
     if extra_executor_memory_for_ray:
-        spark_conf.set("spark.executor.memoryOverhead", extra_executor_memory_for_ray)
-    return spark_conf
+        conf["spark.executor.memoryOverhead"] = extra_executor_memory_for_ray
+    return conf
