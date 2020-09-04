@@ -29,11 +29,11 @@ python lenet_mnist_keras.py --cluster_mode local
 
 ## Run examples on yarn cluster
 ```bash
-python lenet_mnist_graph.py --cluster_mode yarn-client --num_nodes 2 --cores 4 --memory 4g
+python lenet_mnist_graph.py --cluster_mode yarn
 ```
 
 ```bash
-python lenet_mnist_keras.py --cluster_mode yarn-client --num_nodes 2 --cores 4 --memory 4g
+python lenet_mnist_keras.py --cluster_mode yarn
 ```
 
 ## Additional Resources
