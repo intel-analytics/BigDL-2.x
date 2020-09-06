@@ -265,28 +265,22 @@ def read_file_spark(file_path, file_type, **kwargs):
     return data_shards
 
 
-def read_parquet(file_path, repartition=True, columns=None, **kwargs):
+def read_parquet(file_path, columns=None, **kwargs):
     """
     Read parquet files to SparkXShards of pandas DataFrames.
 
     :param file_path: Parquet file path, a list of multiple parquet file paths, or a directory
     containing parquet files. Local file system, HDFS, and AWS S3 are supported.
-    :param repartition: Whether to repartition if number of partitions in this XShards is less than
-    spark executer numbers. Default is True.
     :param columns: list of column name, default=None.
     If not None, only these columns will be read from the file.
     :param kwargs: Any additional kwargs.
     :return: An instance of SparkXShards.
     """
     sc = init_nncontext()
-    node_num, core_num = get_node_and_core_number()
     from pyspark.sql import SQLContext
     sqlContext = SQLContext.getOrCreate(sc)
     spark = sqlContext.sparkSession
     df = spark.read.parquet(file_path)
-    if df.rdd.getNumPartitions() < node_num:
-        if repartition:
-            df = df.repartition(node_num)
 
     if columns:
         df = df.select(*columns)
