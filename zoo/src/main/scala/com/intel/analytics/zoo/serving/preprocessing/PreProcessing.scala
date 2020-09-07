@@ -73,7 +73,6 @@ class PreProcessing(param: SerParams) {
         logger.error(s"Error stack trace ${e.getStackTrace.mkString("\n")}")
         Tensor[Float]()
     }
-    
   }
   def decodeString(s: String): Tensor[String] = {
     val eleList = s.split("\\|")

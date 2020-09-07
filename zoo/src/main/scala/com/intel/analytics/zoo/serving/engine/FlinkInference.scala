@@ -61,9 +61,11 @@ class FlinkInference(params: SerParams)
     val t1 = System.nanoTime()
     val postProcessed = if (params.inferenceMode == "single") {
       val preProcessed = in.map(item => {
-        val uri = item._1
-        val input = pre.decodeArrowBase64(item._2)
-        (uri, input)
+        Timer.timing("preprocess one input", 1) {
+          val uri = item._1
+          val input = pre.decodeArrowBase64(item._2)
+          (uri, input)
+        }
       }).toIterator
       InferenceSupportive.singleThreadInference(preProcessed, params).toList
     } else {
@@ -85,7 +87,7 @@ class FlinkInference(params: SerParams)
     val t2 = System.nanoTime()
     logger.info(s"${postProcessed.size} records backend time ${(t2 - t1) / 1e9} s. " +
       s"Throughput ${postProcessed.size / ((t2 - t1) / 1e9)}")
-    Timer.print()
+//    Timer.print()
     postProcessed
   }
 }

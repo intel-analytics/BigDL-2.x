@@ -69,10 +69,11 @@ class FlinkRedisSource(params: SerParams)
     val start = System.nanoTime()
     val groupName = "serving"
     val consumerName = "consumer-" + UUID.randomUUID().toString
+    val readNumPerTime = if (params.inferenceMode == "single") 4 else params.coreNum
     val response = jedis.xreadGroup(
       groupName,
       consumerName,
-      params.coreNum,
+      readNumPerTime,
       1,
       false,
       new SimpleEntry(Conventions.SERVING_STREAM_NAME, StreamEntryID.UNRECEIVED_ENTRY))
