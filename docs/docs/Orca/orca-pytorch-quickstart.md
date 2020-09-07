@@ -9,7 +9,7 @@ Organizing your code with Orca makes your code:
 
 ### **Step 0: Prepare environment**
 We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the environments, especially if you want to run on a yarn cluster(yarn-client mode only).
-**Note:** You can install the latest analytics whl by following instructions ([here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#install-the-latest-nightly-build-wheels-for-pip).
+**Note:** You can install the latest analytics whl by following instructions ([here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#install-the-latest-nightly-build-wheels-for-pip)).
 ```
 conda create -n zoo python=3.7 #zoo is conda enviroment name, you can set another name you like.
 conda activate zoo
@@ -20,7 +20,7 @@ conda install pytorch torchvision -c pytorch #command for macOS
 ```
 
 ### **Step 1: Init Orca Context**
-```
+```python
 from zoo.orca import init_orca_context, stop_orca_context
 
 # run in local mode
@@ -38,7 +38,7 @@ sc = init_orca_context(
 * Reference: [Orca Context](https://analytics-zoo.github.io/master/#Orca/context/)
 
 ### **Step 2: Define PyTorch Model, Loss function and Optimizer**
-```
+```python
 import torch.nn as nn
 import torch.nn.functional as F
 from bigdl.optim.optimizer import Adam
@@ -67,9 +67,9 @@ criterion = nn.NLLLoss()
 adam = Adam(args.lr)
 ```
 
-### **Fit with Orca PyTorch Estimator**
+### **Step 3: Fit with Orca PyTorch Estimator**
 1. Define the data in whatever way you want. Orca just needs a dataloader, a callable datacreator or an Orca SparkXShards
-    ```
+    ```python
     torch.manual_seed(args.seed)
 
     train_loader = torch.utils.data.DataLoader(
@@ -88,12 +88,12 @@ adam = Adam(args.lr)
         batch_size=args.test_batch_size, shuffle=False) 
     ```
 2. Create an estimator
-    ```
+    ```python
     from zoo.orca.learn.pytorch import Estimator 
     zoo_estimator = Estimator.from_torch(model=model, optimizer=adam, loss=criterion, backend="bigdl") 
     ```
 3. Fit with estimator
-    ```
+    ```python
     from zoo.orca.learn.metrics import Accuracy
     from zoo.orca.learn.trigger import EveryEpoch 
     zoo_estimator.fit(data=train_loader, epochs=args.epochs, validation_data=test_loader,
