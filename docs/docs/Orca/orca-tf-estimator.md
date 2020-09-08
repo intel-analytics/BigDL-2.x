@@ -466,7 +466,7 @@ est.save_tf_checkpoint(model_checkpoint)
 save_keras_model(path, overwrite=True)
 ```
 * `path`: keras model save path.
-* `overwrite`: Boolean. Whether overwrite any existing model at the target location. Default: True
+* `overwrite`: Boolean. Whether to silently overwrite any existing file at the target location. Default: True.
 
 If you use tensorflow keras model in this estimator, this method would save keras model in specified path.
 

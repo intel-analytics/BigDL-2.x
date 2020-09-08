@@ -187,7 +187,7 @@ class Estimator(object):
         """
         Save tensorflow keras model in this estimator.
         :param path: keras model save path.
-        :param overwrite: Whether overwrite any existing model at the target location
+        :param overwrite: Whether to silently overwrite any existing file at the target location.
         """
         raise NotImplementedError()
 
