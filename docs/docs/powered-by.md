@@ -34,6 +34,7 @@ Learning on Apache Spark and Analytics Zoo](https://www.dellemc.com/resources/en
 * __NeuSoft/BMW__
 <br>[Neusoft RealSight APM partners with Intel to create an application performance management platform with active defense capabilities](https://platform.neusoft.com/2020/01/17/xw-intel.html) (in Chinese)
 * __NeuSoft/Mazda__
+<br>[JD, Neusoft and Intel Jointly Building Intelligent and Connected Vehicle Cloud for HaiMa(former Hainan Mazda)](https://www.neusoft.com/Products/Platforms/2472/4735110231.html)
 <br>[JD, Neusoft and Intel Jointly Building Intelligent and Connected Vehicle Cloud for Hainan-Mazda](https://platform.neusoft.com/2020/06/11/jjfa-haimaqiche.html) (in Chinese)
 * __Office Depot__
 <br>[Real-time Product Recommendations for Office Depot Using Apache Spark and Analytics Zoo on AWS](https://software.intel.com/en-us/articles/real-time-product-recommendations-for-office-depot-using-apache-spark-and-analytics-zoo-on)
@@ -47,6 +48,8 @@ Learning on Apache Spark and Analytics Zoo](https://www.dellemc.com/resources/en
 * __Telefonica__
  <br>[Running Analytics Zoo jobs on Telefónica Open Cloud’s MRS Service](https://medium.com/@fernando.delaiglesia/running-analytics-zoo-jobs-on-telef%C3%B3nica-open-clouds-mrs-service-2e64bc823c50)
 * __Tencent__
+<br>[Analytics Zoo helps Tencent Cloud improve the performance of its intelligent titanium machine learning platform](https://www.intel.cn/content/www/cn/zh/service-providers/analytics-zoo-helps-tencent-cloud-improve-ti-ml-platform-performance.html)
+<br>[Tencent* Cloud Leverages Analytics Zoo to Improve Performance of TI-ONE* ML Platform](https://software.intel.com/content/www/us/en/develop/articles/tencent-cloud-leverages-analytics-zoo-to-improve-performance-of-ti-one-ml-platform.html)
 <br>[Enhance Tencent's TUSI Identity Practice with Intel Analytics Zoo](https://mp.weixin.qq.com/s?__biz=MzAwNzc5NzM5Mw==&mid=2651030944&idx=1&sn=d6e06c6e14a7355971953a501689b232&chksm=808f8a5eb7f80348fc8e88c4c9e415341bf43ef6bdf3fd4f3001da89e2c9ba7fa2ed5deeb09a&mpshare=1&scene=1&srcid=0412WxM3eWdsLLoO2TYJGWbS&pass_ticket=E6l%2FfOZNKjhr05lsU7inAVCi7mAy5LFEehvEJOS2ZGdHg6%2FH%2BeBQisHA9sfXDOoy#rd) (in Chinese)
 * __UC Berkeley RISELab__
 <br>[RayOnSpark: Running Emerging AI Applications on Big Data Clusters with Ray and Analytics Zoo](https://medium.com/riselab/rayonspark-running-emerging-ai-applications-on-big-data-clusters-with-ray-and-analytics-zoo-923e0136ed6a)

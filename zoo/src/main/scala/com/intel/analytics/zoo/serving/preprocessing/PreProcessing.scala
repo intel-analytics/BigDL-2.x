@@ -23,10 +23,11 @@ import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.feature.image.OpenCVMethod
 import org.opencv.imgcodecs.Imgcodecs
 import org.apache.log4j.Logger
+
 import scala.collection.mutable.ArrayBuffer
 import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.zoo.serving.engine.Timer
 import com.intel.analytics.zoo.serving.http.Instances
-
 import com.intel.analytics.zoo.serving.utils.SerParams
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
@@ -43,7 +44,7 @@ class PreProcessing(param: SerParams) {
   def decodeArrowBase64(s: String): Activity = {
     try {
       byteBuffer = java.util.Base64.getDecoder.decode(s)
-      val instance = Instances.fromArrow(byteBuffer)
+      val instance = Timer.timing("decode arrow", 1)(Instances.fromArrow(byteBuffer))
 
       val kvMap = instance.instances.flatMap(insMap => {
         val oneInsMap = insMap.map(kv =>
@@ -52,7 +53,8 @@ class PreProcessing(param: SerParams) {
               (kv._1, decodeString(kv._2.asInstanceOf[String]))
             }
             else {
-              (kv._1, decodeImage(kv._2.asInstanceOf[String]))
+              Timer.timing("decode image", 1)((kv._1, decodeImage(kv._2.asInstanceOf[String])))
+
             }
           }
           else {
@@ -65,8 +67,7 @@ class PreProcessing(param: SerParams) {
         Seq(T.array(arr.toArray))
       })
       kvMap.head
-    }
-    catch {
+    } catch {
       case e: Exception =>
         logger.error(s"Preprocessing error, msg ${e.getMessage}")
         logger.error(s"Error stack trace ${e.getStackTrace.mkString("\n")}")

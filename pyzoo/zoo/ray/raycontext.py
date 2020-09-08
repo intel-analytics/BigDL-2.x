@@ -22,7 +22,6 @@ import signal
 import warnings
 import multiprocessing
 
-from pyspark import BarrierTaskContext
 from zoo.ray.process import session_execute, ProcessMonitor
 from zoo.ray.utils import is_local
 from zoo.ray.utils import resource_to_bytes
@@ -47,6 +46,32 @@ class JVMGuard:
             for pid in pids:
                 os.kill(pid, signal.SIGKILL)
             raise err
+
+
+def kill_redundant_log_monitors(redis_address):
+
+    """
+    Killing redundant log_monitor.py processes.
+    If multiple ray nodes are started on the same machine,
+    there will be multiple ray log_monitor.py processes
+    monitoring the same log dir. As a result, the logs
+    will be replicated multiple times and forwarded to driver.
+    See issue https://github.com/ray-project/ray/issues/10392
+    """
+
+    import psutil
+    import subprocess
+    log_monitor_processes = []
+    for proc in psutil.process_iter(["name", "cmdline"]):
+        cmdline = subprocess.list2cmdline(proc.cmdline())
+        is_log_monitor = "log_monitor.py" in cmdline
+        is_same_redis = "--redis-address={}".format(redis_address)
+        if is_log_monitor and is_same_redis in cmdline:
+            log_monitor_processes.append(proc)
+
+    if len(log_monitor_processes) > 1:
+        for proc in log_monitor_processes[1:]:
+            proc.kill()
 
 
 class RayServiceFuncGenerator(object):
@@ -81,7 +106,7 @@ class RayServiceFuncGenerator(object):
         if self.env:  # Add in env argument if any MKL setting is needed.
             modified_env.update(self.env)
         if self.verbose:
-            print("Executing with these environment setting:")
+            print("Executing with these environment settings:")
             for pair in modified_env.items():
                 print(pair)
             print("The $PATH is: {}".format(modified_env["PATH"]))
@@ -169,6 +194,7 @@ class RayServiceFuncGenerator(object):
 
     def gen_ray_start(self):
         def _start_ray_services(iter):
+            from pyspark import BarrierTaskContext
             tc = BarrierTaskContext.get()
             # The address is sorted by partitionId according to the comments
             # Partition 0 is the Master
@@ -204,6 +230,7 @@ class RayServiceFuncGenerator(object):
                             object_store_memory=self.object_store_memory,
                             extra_params=self.extra_params),
                         tag="raylet")
+                    kill_redundant_log_monitors(redis_address=redis_address)
 
             yield process_info
         return _start_ray_services
@@ -347,6 +374,7 @@ class RayContext(object):
         total_cores = int(self.num_ray_nodes) * int(self.ray_node_cpu_cores)
 
         def info_fn(iter):
+            from pyspark import BarrierTaskContext
             tc = BarrierTaskContext.get()
             task_addrs = [taskInfo.address.split(":")[0] for taskInfo in tc.getTaskInfos()]
             yield task_addrs
@@ -417,6 +445,9 @@ class RayContext(object):
             else:
                 self._start_cluster()
                 self._address_info = self._start_driver(num_cores=driver_cores)
+
+            print(self._address_info)
+            kill_redundant_log_monitors(self._address_info["redis_address"])
             self.initialized = True
         return self._address_info
 

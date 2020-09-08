@@ -13,12 +13,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import pytest
-
-
-@pytest.fixture(autouse=True, scope='function')
-def orca_context_fixture():
-    from zoo.orca import init_orca_context, stop_orca_context
-    sc = init_orca_context(cores=8)
-    yield
-    stop_orca_context()

@@ -27,7 +27,7 @@ import scopt.OptionParser
 
 object ClusterServing {
   case class ServingParams(configPath: String = "config.yaml", testMode: Boolean = false,
-                           sourceNum: Int = 1)
+                           timerMode: Boolean = false)
 
   val parser = new OptionParser[ServingParams]("Text Classification Example") {
     opt[String]('c', "configPath")
@@ -36,16 +36,22 @@ object ClusterServing {
     opt[Boolean]('t', "testMode")
       .text("Text Mode of Parallelism 1")
       .action((x, params) => params.copy(testMode = x))
+    opt[Boolean]("timerMode")
+      .text("Whether to open timer mode")
+      .action((x, params) => params.copy(timerMode = x))
   }
 
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
   var params: SerParams = null
   val logger = Logger.getLogger(getClass)
-  def run(configPath: String = "config.yaml", testMode: Boolean = false): Unit = {
+  def run(configPath: String = "config.yaml",
+          testMode: Boolean = false,
+          timerMode: Boolean = false): Unit = {
     val helper = new ClusterServingHelper(configPath)
     helper.initArgs()
     params = new SerParams(helper)
+    params.timerMode = timerMode
     val serving = StreamExecutionEnvironment.getExecutionEnvironment
     serving.registerCachedFile(configPath, Conventions.SERVING_CONF_TMP_PATH)
     serving.registerCachedFile(params.modelDir, Conventions.SERVING_MODEL_TMP_DIR)
@@ -66,6 +72,6 @@ object ClusterServing {
   }
   def main(args: Array[String]): Unit = {
     val param = parser.parse(args, ServingParams()).head
-    run(param.configPath, param.testMode)
+    run(param.configPath, param.testMode, param.timerMode)
   }
 }
