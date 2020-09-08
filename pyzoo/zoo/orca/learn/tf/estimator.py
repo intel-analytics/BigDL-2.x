@@ -183,7 +183,7 @@ class Estimator(object):
         """
         raise NotImplementedError()
 
-    def save_keras_model(self, path, overwrite):
+    def save_keras_model(self, path, overwrite=True):
         """
         Save tensorflow keras model in this estimator.
         :param path: keras model save path.

@@ -64,7 +64,7 @@ class KerasModel(object):
             self.model.load_weights(file_path, by_name)
         load_from_file(load_func, filepath)
 
-    def save_model(self, path, overwrite):
+    def save_model(self, path, overwrite=True):
         """
         Save the model to a single HDF5 file.
 
@@ -72,7 +72,7 @@ class KerasModel(object):
         :param overwrite: Boolean. Whether to silently overwrite any existing file at the target
                 location
         """
-        def save_func(file_path, over_write):
+        def save_func(file_path, over_write=True):
             self.model.save(file_path, overwrite=over_write)
         save_file(save_func, path, over_write=overwrite)
 
