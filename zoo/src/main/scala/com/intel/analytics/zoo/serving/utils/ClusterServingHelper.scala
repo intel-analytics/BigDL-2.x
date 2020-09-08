@@ -456,9 +456,14 @@ object ClusterServingHelper {
    * @param modelDir
    * @return
    */
-  def loadModelfromDir(confPath: String, modelDir: String): InferenceModel = {
+  def loadModelfromDirAndConfig(confPath: String, modelDir: String): InferenceModel = {
     val helper = new ClusterServingHelper(confPath, modelDir)
     helper.initArgs()
     helper.loadInferenceModel()
+  }
+  def loadModelfromDir(modelDir: String, concurrentNumber: Int = 1): InferenceModel = {
+    val helper = new ClusterServingHelper(_modelDir = modelDir)
+    helper.parseModelType(modelDir)
+    helper.loadInferenceModel(concurrentNumber)
   }
 }

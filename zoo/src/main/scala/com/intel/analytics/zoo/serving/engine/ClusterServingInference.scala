@@ -17,14 +17,13 @@
 package com.intel.analytics.zoo.serving.engine
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.bigdl.tensor
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
 import com.intel.analytics.zoo.serving.utils.SerParams
 import org.apache.log4j.Logger
 
-object InferenceSupportive {
+object ClusterServingInference {
   val logger = Logger.getLogger(getClass)
   def singleThreadInference(preProcessed: Iterator[(String, Activity)],
                            params: SerParams): Iterator[(String, String)] = {
