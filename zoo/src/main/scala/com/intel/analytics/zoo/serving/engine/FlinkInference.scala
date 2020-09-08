@@ -67,7 +67,12 @@ class FlinkInference(params: SerParams)
           (uri, input)
         }
       }).toIterator
-      InferenceSupportive.singleThreadInference(preProcessed, params).toList
+      if (params.modelType == "openvino") {
+        InferenceSupportive.singleThreadBatchInference(preProcessed, params).toList
+      } else {
+        InferenceSupportive.singleThreadInference(preProcessed, params).toList
+      }
+
     } else {
       val preProcessed = in.grouped(params.coreNum).flatMap(itemBatch => {
         Timer.timing("preprocess", itemBatch.size) {

@@ -247,9 +247,8 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
    * @return
    */
   def loadInferenceModel(): InferenceModel = {
-    val batchSize = if (inferenceMode == "single") 1 else coreNum
-    logger.info(s"Cluster Serving load Inference Model with Parallelism $modelPar, " +
-      s"batchSize $batchSize of model if fixed size of model available.")
+
+    logger.info(s"Cluster Serving load Inference Model with Parallelism $modelPar")
     val model = new InferenceModel(modelPar)
 
     // Used for Tensorflow Model, it could not have intraThreadNum > 2^8
@@ -297,8 +296,8 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
       case "pytorch" => model.doLoadPyTorch(weightPath)
       case "keras" => logError("Keras currently not supported in Cluster Serving")
       case "openvino" => modelEncrypted match {
-        case true => model.doLoadEncryptedOpenVINO(defPath, weightPath, secret, salt, batchSize)
-        case false => model.doLoadOpenVINO(defPath, weightPath, batchSize)
+        case true => model.doLoadEncryptedOpenVINO(defPath, weightPath, secret, salt, coreNum)
+        case false => model.doLoadOpenVINO(defPath, weightPath, coreNum)
       }
       case _ => logError("Invalid model type, please check your model directory")
 

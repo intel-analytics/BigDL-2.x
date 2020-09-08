@@ -81,7 +81,7 @@ object Timer {
     val result = f
     val end = System.currentTimeMillis
     val cost = (end - begin)
-    Logger.getLogger(getClass).info(s"$name time elapsed [${cost / 1000} s, ${cost % 1000} ms].")
+//    Logger.getLogger(getClass).info(s"$name time elapsed [${cost / 1000} s, ${cost % 1000} ms].")
     if (!timerMap.contains(name)) {
       timerMap += (name -> new Timer(false))
     }

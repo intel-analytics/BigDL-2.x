@@ -45,6 +45,36 @@ object InferenceSupportive {
     })
     postProcessed
   }
+  def singleThreadBatchInference(preProcessed: Iterator[(String, Activity)],
+                                 params: SerParams): Iterator[(String, String)] = {
+    val postProcessed = preProcessed.grouped(params.coreNum).flatMap(pathByte => {
+      try {
+        val thisBatchSize = pathByte.size
+        val t = Timer.timing("batch", thisBatchSize) {
+          batchInputSingleThread(pathByte, params)
+        }
+        dimCheck(t, "add", params)
+        val result = Timer.timing("inference", thisBatchSize) {
+          ModelHolder.model.doPredict(t)
+        }
+        dimCheck(result, "remove", params)
+        dimCheck(t, "remove", params)
+        val kvResult = Timer.timing("postprocess", thisBatchSize) {
+          (0 until thisBatchSize).toParArray.map(i => {
+            val value = PostProcessing(result, params.filter, i + 1)
+            (pathByte(i)._1, value)
+          })
+        }
+        kvResult
+      } catch {
+        case e: Exception =>
+          logger.info(s"${e.printStackTrace()}, " +
+            s"Your input format is invalid to your model, this batch is skipped")
+          pathByte.toParArray.map(x => (x._1, "NaN"))
+      }
+    })
+    postProcessed
+  }
   def multiThreadInference(preProcessed: Iterator[(String, Activity)],
                            params: SerParams): Iterator[(String, String)] = {
     val postProcessed = preProcessed.grouped(params.coreNum).flatMap(pathByteBatch => {
@@ -79,6 +109,43 @@ object InferenceSupportive {
       }
     })
     postProcessed
+  }
+  def batchInputSingleThread(seq: Seq[(String, Activity)],
+                             params: SerParams): Activity = {
+    val thisBatchSize = seq.size
+    println(s"This batch size is ${thisBatchSize.toString}")
+
+    val inputSample = seq.head._2.toTable
+    val kvTuples = inputSample.keySet.map(key => {
+      (key, Tensor[Float](params.coreNum +:
+        inputSample(key).asInstanceOf[Tensor[Float]].size()))
+    }).toList
+    val t = T(kvTuples.head, kvTuples.tail: _*)
+    // Batch tensor and copy
+    (0 until thisBatchSize).foreach(i => {
+      val dataTable = seq(i)._2.toTable
+      t.keySet.foreach(key => {
+        t(key).asInstanceOf[Tensor[Float]].select(1, i + 1)
+          .copy(dataTable(key).asInstanceOf[Tensor[Float]])
+      })
+    })
+    // Resize and specific control
+    if (params.resize) {
+      t.keySet.foreach(key => {
+        val singleTensorSize = inputSample(key).asInstanceOf[Tensor[Float]].size()
+        var newSize = Array(thisBatchSize)
+        for (elem <- singleTensorSize) {
+          newSize = newSize :+ elem
+        }
+        t(key).asInstanceOf[Tensor[Float]].resize(newSize)
+      })
+    }
+    if (t.keySet.size == 1) {
+      t.keySet.foreach(key => {
+        return t(key).asInstanceOf[Tensor[Float]]
+      })
+    }
+    t
   }
   def batchInput(seq: Seq[(String, Activity)],
     params: SerParams): Activity = {
