@@ -15,15 +15,17 @@
 #
 from unittest import TestCase
 
+import os
 import pytest
 import torch.nn as nn
 import torch.nn.functional as F
 
+from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.data.pandas import read_csv
 from zoo.orca.learn.pytorch import Estimator
-from zoo.pipeline.api.keras.metrics import Accuracy
-from zoo.common.nncontext import *
-from bigdl.optim.optimizer import SGD, EveryEpoch, Adam
+from zoo.orca.learn.metrics import Accuracy
+from zoo.orca.learn.trigger import EveryEpoch
+from bigdl.optim.optimizer import SGD
 from zoo.orca import OrcaContext
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
@@ -35,13 +37,13 @@ class TestEstimatorForSpark(TestCase):
         """ setup any state tied to the execution of the given method in a
         class.  setup_method is invoked for every test method of a class.
         """
-        self.sc = init_spark_on_local(4)
+        self.sc = init_orca_context(cores=4)
 
     def tearDown(self):
         """ teardown any state that was previously setup with a setup_method
         call.
         """
-        self.sc.stop()
+        stop_orca_context()
 
     def test_bigdl_pytorch_estimator_shard(self):
         class SimpleModel(nn.Module):

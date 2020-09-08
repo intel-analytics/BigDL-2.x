@@ -64,6 +64,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
   var redisPort: String = null
   var nodeNum: Int = 1
   var coreNum: Int = 1
+  var modelPar: Int = 1
   var blasFlag: Boolean = false
   var chwFlag: Boolean = true
 
@@ -156,6 +157,12 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
     coreNum = getYaml(paramsConfig, "core_number", 4).asInstanceOf[Int]
+    modelPar = if (getYaml(paramsConfig, "model_number", default = -1).asInstanceOf[Int] <= 0) {
+      if (inferenceMode == "single") coreNum else 1
+    } else {
+      getYaml(paramsConfig, "model_number", default = -1).asInstanceOf[Int]
+    }
+
 
     if (modelType == "caffe" || modelType == "bigdl") {
       if (System.getProperty("bigdl.engineType", "mklblas")
@@ -239,11 +246,10 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
    * backend engine type
    * @return
    */
-  def loadInferenceModel(_parallelNum: Int = 1): InferenceModel = {
-    val parallelNum = if (inferenceMode == "single") coreNum else 1
-    val batchSize: Int = coreNum / parallelNum
-    logger.info(s"Cluster Serving load Inference Model with Parallelism $parallelNum")
-    val model = new InferenceModel(parallelNum)
+  def loadInferenceModel(): InferenceModel = {
+
+    logger.info(s"Cluster Serving load Inference Model with Parallelism $modelPar")
+    val model = new InferenceModel(modelPar)
 
     // Used for Tensorflow Model, it could not have intraThreadNum > 2^8
     // in some models, thus intraThreadNum should be limited
@@ -290,8 +296,8 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
       case "pytorch" => model.doLoadPyTorch(weightPath)
       case "keras" => logError("Keras currently not supported in Cluster Serving")
       case "openvino" => modelEncrypted match {
-        case true => model.doLoadEncryptedOpenVINO(defPath, weightPath, secret, salt, batchSize)
-        case false => model.doLoadOpenVINO(defPath, weightPath, batchSize)
+        case true => model.doLoadEncryptedOpenVINO(defPath, weightPath, secret, salt, coreNum)
+        case false => model.doLoadOpenVINO(defPath, weightPath, coreNum)
       }
       case _ => logError("Invalid model type, please check your model directory")
 

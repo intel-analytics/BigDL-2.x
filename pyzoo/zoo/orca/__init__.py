@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-from .common import OrcaContext
+from .common import OrcaContext, init_orca_context, stop_orca_context
