@@ -68,17 +68,24 @@ class FlinkInference(params: SerParams)
       InferenceSupportive.singleThreadInference(preProcessed, params).toList
     } else {
       val preProcessed = in.grouped(params.coreNum).flatMap(itemBatch => {
-        itemBatch.indices.toParArray.map(i => {
-          val uri = itemBatch(i)._1
-          val input = pre.decodeArrowBase64(itemBatch(i)._2)
-          (uri, input)
-        })
+        Timer.timing("preprocess", itemBatch.size) {
+          itemBatch.indices.toParArray.map(i => {
+            Timer.timing("other", 1) {
+              val uri = itemBatch(i)._1
+              val input = pre.decodeArrowBase64(itemBatch(i)._2)
+              (uri, input)
+            }
+
+          })
+        }
+
       })
       InferenceSupportive.multiThreadInference(preProcessed, params).toList
     }
     val t2 = System.nanoTime()
     logger.info(s"${postProcessed.size} records backend time ${(t2 - t1) / 1e9} s. " +
       s"Throughput ${postProcessed.size / ((t2 - t1) / 1e9)}")
+    Timer.print()
     postProcessed
   }
 }

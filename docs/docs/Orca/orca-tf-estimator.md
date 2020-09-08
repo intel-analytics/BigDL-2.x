@@ -130,7 +130,6 @@ est.fit(data=dataset,
 ```
 
 
-
 2.  Train data is Spark DataFrame. E.g.
 ```
 est.fit(data=df,
@@ -327,7 +326,6 @@ predictions = prediction_shards.collect()
 
 assert 'prediction' in predictions[0]
 ```
-
 
 2. Predict data is Spark DataFrame. The predict result is a DataFrame which includes original columns plus `prediction` column. The `prediction` column can be FloatType, VectorUDT or Array of VectorUDT depending on model outputs shape.
 ```
