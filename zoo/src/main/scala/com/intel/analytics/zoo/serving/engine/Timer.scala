@@ -20,8 +20,17 @@ import java.util.PriorityQueue
 
 import org.apache.log4j.Logger
 
-
-class Timer(name: String = "") {
+/**
+ * Timer class
+ * @param _countFlag To determine whether this timer should be count into total
+ *                   Sequential operations in main workflow should be count
+ *                   but parallel operations in one stage should not
+ *                   e.g. The whole cost of preprocessing should be taken,
+ *                   but the preprocessing time per image, which is counted in
+ *                   parallel manner, should be set false, otherwise the statistic
+ *                   count time would be wrong
+ */
+class Timer(_countFlag: Boolean = true) {
   var total: Float = 0 // total cost up to now
   var record: Int = 0 // total record number up to now
   var batchNum: Int = 0 // total batch number up to now
@@ -32,6 +41,7 @@ class Timer(name: String = "") {
   var min: Long = Long.MaxValue // min cost up to now
   val topQ = new PriorityQueue[Long]()
   val nQ = 10
+  val countFlag = _countFlag
   topQ.add(Long.MinValue)
   def print(): Unit = {
     println(s"total cost $total, record num $record, average per input $average, " +
@@ -49,25 +59,33 @@ class Timer(name: String = "") {
   }
 }
 
+/**
+ * Singleton class Timer
+ * Cluster Serving main workflow contains 4 steps,
+ * preprocess, batch, inference, postprocess
+ * these 4 steps are taken into total statistics
+ * In addition to these, developers could add Timer anywhere in code
+ * and the statistics would not be taken into total workflow timing statistics
+ * To timing a piece of code, just use
+ * Timer.timing(snippet_name, record_number_in_this_snippet)(code_snippet)
+ */
 object Timer {
   var timerMap = Map[String, Timer]()
   timerMap += ("preprocess" -> new Timer())
   timerMap += ("batch" -> new Timer())
   timerMap += ("inference" -> new Timer())
   timerMap += ("postprocess" -> new Timer())
-  timerMap += ("other" -> new Timer())
 
   def timing[T](name: String, num: Int)(f: => T): T = {
     val begin = System.currentTimeMillis
     val result = f
     val end = System.currentTimeMillis
     val cost = (end - begin)
-    Logger.getLogger(getClass).info(s"$name time elapsed [${cost / 1000} s, ${cost % 1000} ms].")
-    if (timerMap.contains(name)) {
-      updateTimer(timerMap(name), cost, num)
-    } else {
-      updateTimer(timerMap("others"), cost, num)
+//    Logger.getLogger(getClass).info(s"$name time elapsed [${cost / 1000} s, ${cost % 1000} ms].")
+    if (!timerMap.contains(name)) {
+      timerMap += (name -> new Timer(false))
     }
+    updateTimer(timerMap(name), cost, num)
     result
   }
   def updateTimer(timer: Timer, cost: Long, num: Int): Unit = {
@@ -98,8 +116,15 @@ object Timer {
     timerMap.foreach(kv => {
       println(s"Time stat for ${kv._1} up to now")
       kv._2.print()
-      totalTime += kv._2.total
+      if (kv._2.countFlag) {
+        totalTime += kv._2.total
+      }
     })
     println(s"Total time of statistic $totalTime ms")
+    timerMap.foreach(kv => {
+      if (kv._2.countFlag) {
+        println(s"${kv._1} time cost total percentage ${(kv._2.total/totalTime) * 100} %")
+      }
+    })
   }
 }

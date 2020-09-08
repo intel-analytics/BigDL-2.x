@@ -19,6 +19,8 @@ data:
 params:
   # default, 4
   core_number:
+  # default: auto-adjust
+  model_number:
   # default: OFF
   performance_mode:
 redis:
