@@ -353,11 +353,6 @@ class RayContext(object):
                 verbose=self.verbose,
                 env=self.env,
                 extra_params=self.extra_params)
-            self._gather_cluster_ips()
-            from bigdl.util.common import init_executor_gateway
-            print("Start to launch the JVM guarding process")
-            init_executor_gateway(sc)
-            print("JVM guarding process has been successfully launched")
         RayContext._active_ray_context = self
 
     @classmethod
@@ -443,6 +438,10 @@ class RayContext(object):
                                               object_store_memory=self.object_store_memory,
                                               resources=self.extra_params)
             else:
+                self._gather_cluster_ips()
+                from bigdl.util.common import init_executor_gateway
+                init_executor_gateway(self.sc)
+                print("JavaGatewayServer launched on executors")
                 self._start_cluster()
                 self._address_info = self._start_driver(num_cores=driver_cores)
 
