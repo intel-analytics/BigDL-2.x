@@ -268,7 +268,7 @@ class LSTMGridRandomRecipe(Recipe):
                                                           all_available_features,
                                                           size=np.random.randint(
                                                               low=3,
-                                                              high=len(all_available_features)),
+                                                              high=len(all_available_features) + 1),
                                                           replace=False)))),
 
             "model": "LSTM",
