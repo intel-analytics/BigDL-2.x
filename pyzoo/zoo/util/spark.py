@@ -101,7 +101,7 @@ class SparkRunner:
                                          executor_cores, executor_memory,
                                          extra_executor_memory_for_ray)
             py_version = ".".join(platform.python_version().split(".")[0:2])
-            preload_so = self.PYTHON_ENV + "/lib/libpython" + py_version + "m.so"
+            preload_so = executor_python_env + "/lib/libpython" + py_version + "m.so"
             conf.update({"spark.scheduler.minRegisteredResourcesRatio": "1.0",
                          "spark.executorEnv.PYTHONHOME": executor_python_env,
                          "spark.executorEnv.LD_PRELOAD": preload_so})
