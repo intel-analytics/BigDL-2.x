@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
-import com.intel.analytics.zoo.serving.engine.InferenceSupportive
+import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.utils._
 import com.intel.analytics.zoo.serving.pipeline._
 import com.intel.analytics.zoo.serving.preprocessing.DataType
@@ -193,7 +193,8 @@ object SparkStructuredStreamingClusterServing {
             serParams.model = bcModel.value
             println(s"Take Broadcasted model time ${(System.nanoTime() - t1) / 1e9} s")
             it.grouped(serParams.coreNum).flatMap(itemBatch => {
-              InferenceSupportive.multiThreadInference(itemBatch.toIterator, serParams)
+              ClusterServingInference.multiThreadInference(itemBatch.toIterator, serParams.coreNum,
+                serParams.modelType, serParams.filter, serParams.resize, bcModel.value)
             })
           })
 
@@ -210,7 +211,8 @@ object SparkStructuredStreamingClusterServing {
             serParams.model = bcModel.value
             println(s"Take Broadcasted model time ${(System.nanoTime() - t1) / 1e9} s")
             it.grouped(serParams.coreNum).flatMap(itemBatch => {
-              InferenceSupportive.multiThreadInference(itemBatch.toIterator, serParams)
+              ClusterServingInference.multiThreadInference(itemBatch.toIterator, serParams.coreNum,
+                serParams.modelType, serParams.filter, serParams.resize, bcModel.value)
             })
           })
         }

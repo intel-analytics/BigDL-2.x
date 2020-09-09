@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
 import com.intel.analytics.zoo.serving.utils._
-import com.intel.analytics.zoo.serving.engine.InferenceSupportive
+import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.engine.ServingReceiver
 import com.intel.analytics.zoo.serving.pipeline.{RedisIO, RedisUtils}
 import org.apache.log4j.{Level, Logger}
@@ -100,7 +100,7 @@ object SparkStreamingClusterServing {
 
 
     val localSerParams = new SerParams(helper)
-    localSerParams.model = new InferenceModel()
+    localSerParams.model = helper.loadInferenceModel()
     localSerParams.model.setInferenceSummary(
       InferenceSummary("./TensorboardEventLogs", helper.dateTime + "-ClusterServing"))
     val bcSer = helper.sc.broadcast(localSerParams)
@@ -161,7 +161,8 @@ object SparkStreamingClusterServing {
             val serParams = bcSer.value
             println(s"Take Broadcasted model time ${(System.nanoTime() - t1) / 1e9} s")
             it.grouped(serParams.coreNum).flatMap(itemBatch => {
-              InferenceSupportive.multiThreadInference(itemBatch.toIterator, serParams)
+              ClusterServingInference.multiThreadInference(itemBatch.toIterator, serParams.coreNum,
+                serParams.modelType, serParams.filter, serParams.resize, serParams.model)
             })
           })
 
@@ -178,7 +179,8 @@ object SparkStreamingClusterServing {
             val serParams = bcSer.value
             println(s"Take Broadcasted model time ${(System.nanoTime() - t1) / 1e9} s")
             it.grouped(serParams.coreNum).flatMap(itemBatch => {
-              InferenceSupportive.multiThreadInference(itemBatch.toIterator, serParams)
+              ClusterServingInference.multiThreadInference(itemBatch.toIterator, serParams.coreNum,
+                serParams.modelType, serParams.filter, serParams.resize, serParams.model)
             })
           })
         }

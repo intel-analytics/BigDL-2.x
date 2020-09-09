@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.serving.baseline
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.zoo.serving.engine.InferenceSupportive
+import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigUtils, SerParams, Supportive}
 import scopt.OptionParser
 
@@ -55,8 +55,8 @@ object ZooBaseline extends Supportive {
 
     val model = helper.loadInferenceModel()
     val warmT = makeTensorFromShape(param.inputShape)
-    InferenceSupportive.typeCheck(warmT)
-    InferenceSupportive.dimCheck(warmT, "add", sParam)
+    ClusterServingInference.typeCheck(warmT)
+    ClusterServingInference.dimCheck(warmT, "add", sParam.modelType)
     (0 until 10).foreach(_ => {
       val result = model.doPredict(warmT)
     })
@@ -67,8 +67,8 @@ object ZooBaseline extends Supportive {
       if (sParam.inferenceMode == "single") {
         (0 until param.testNum).foreach(_ => {
           val t = makeTensorFromShape(param.inputShape)
-          InferenceSupportive.typeCheck(t)
-          InferenceSupportive.dimCheck(t, "add", sParam)
+          ClusterServingInference.typeCheck(t)
+          ClusterServingInference.dimCheck(t, "add", sParam.modelType)
           val result = model.doPredict(t)
         })
       } else {
@@ -78,9 +78,9 @@ object ZooBaseline extends Supportive {
         )
         (0 until param.testNum).grouped(sParam.coreNum).flatMap(i => {
           val t = timing("Batch input") {
-            InferenceSupportive.batchInput(a, sParam)
+            ClusterServingInference.batchInput(a, sParam.coreNum, true, sParam.resize)
           }
-          InferenceSupportive.dimCheck(t, "add", sParam)
+          ClusterServingInference.dimCheck(t, "add", sParam.modelType)
           val result = model.doPredict(t)
           Seq()
         }).toArray
