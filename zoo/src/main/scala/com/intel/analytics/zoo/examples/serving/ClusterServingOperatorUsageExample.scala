@@ -1,0 +1,51 @@
+package com.intel.analytics.zoo.examples.serving
+
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.zoo.serving.operator.{ClusterServingInferenceOperator, ClusterServingInput, ClusterServingParams}
+import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
+import org.apache.flink.streaming.api.functions.source.{RichParallelSourceFunction, SourceFunction}
+import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
+import org.apache.log4j.{Level, Logger}
+import scopt.OptionParser
+
+object ClusterServingOperatorUsageExample {
+  case class ExampleParams(modelPath: String = null)
+  val parser = new OptionParser[ExampleParams]("Cluster Serving Operator Usage Example") {
+    opt[String]('m', "modelPath")
+      .text("Model Path of Cluster Serving")
+      .action((x, params) => params.copy(modelPath = x))
+      .required()
+  }
+  Logger.getLogger("org").setLevel(Level.ERROR)
+  def main(args: Array[String]): Unit = {
+    val arg = parser.parse(args, ExampleParams()).head
+    val param = new ClusterServingParams(arg.modelPath)
+    val serving = StreamExecutionEnvironment.getExecutionEnvironment
+      serving.addSource(new MySource()).setParallelism(1)
+        .map(new ClusterServingInferenceOperator(param)).setParallelism(1)
+        .addSink(new MySink()).setParallelism(1)
+    serving.execute()
+  }
+
+}
+class MySource extends RichParallelSourceFunction[List[(String, Activity)]] {
+  var cnt = 0
+  @volatile var isRunning = true
+  override def run(ctx: SourceFunction.SourceContext[List[(String, Activity)]]): Unit = while (isRunning) {
+    cnt += 1
+    val valueArr = new Array[Float](128)
+    (0 until 128).foreach(i => valueArr(i) = i)
+    val input = ClusterServingInput(cnt.toString, valueArr)
+    ctx.collect(List((cnt.toString, input)))
+  }
+
+  override def cancel(): Unit = {
+  }
+}
+class MySink extends RichSinkFunction[List[(String, String)]] {
+  override def invoke(value: List[(String, String)], context: SinkFunction.Context[_]): Unit = {
+    value.foreach(kv => {
+      println(s"Id ${kv._1} Cluster Serving inference result is ${kv._2}")
+    })
+  }
+}
