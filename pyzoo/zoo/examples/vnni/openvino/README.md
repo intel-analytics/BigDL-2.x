@@ -13,7 +13,7 @@ TensorFlow models cannot be directly loaded by OpenVINO. It should be converted 
 
 The model we used is named [resnet-50-tf](https://github.com/openvinotoolkit/open_model_zoo/blob/master/models/public/resnet-50-tf/resnet-50-tf.md).
 
-If you prefer GUI workflow or don't want to install OpenVINO, you can use [OpenVINO DL Workbench](https://docs.openvinotoolkit.org/latest/_docs_Workbench_DG_Install_Workbench.html) with Docker container.
+If you prefer GUI workflow, you can use [OpenVINO DL Workbench](https://docs.openvinotoolkit.org/latest/_docs_Workbench_DG_Install_Workbench.html) with Docker container.
 
 __Sample Result files in MODEL_PATH__:
 ```
