@@ -16,19 +16,17 @@
 
 package com.intel.analytics.zoo.serving.operator
 
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.pipeline.inference.InferenceModel
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.serving.PreProcessing
-import com.intel.analytics.zoo.serving.engine.ClusterServingInference
-import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions, SerParams}
+import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, ModelHolder}
+import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.configuration.Configuration
 import org.apache.log4j.Logger
 
 
 class ClusterServingInferenceOperator(params: ClusterServingParams)
-  extends RichMapFunction[List[(String, String)], List[(String, String)]] {
+  extends RichMapFunction[List[(String, Activity)], List[(String, String)]] {
   var logger: Logger = null
   var pre: PreProcessing = null
 
@@ -39,34 +37,40 @@ class ClusterServingInferenceOperator(params: ClusterServingParams)
       ModelHolder.synchronized {
         if (ModelHolder.model == null) {
           logger.info("Loading Cluster Serving model...")
-          ModelHolder.model = ClusterServingHelper
+          val info = ClusterServingHelper
             .loadModelfromDir(params._modelPath, params._modelConcurrent)
+          ModelHolder.model = info._1
+          params._modelType = info._2
         }
       }
     }
 
-
-    pre = new PreProcessing(params)
   }
 
-  override def map(in: List[(String, String)]): List[(String, String)] = {
+  /**
+   * To inference input, user has to construct Activity first
+   * To construct Activity, use ClusterServingInput, e.g.
+   * A single dimension input [1,2,3]
+   * ClusterServingInput("my-input", Array(1,2,3))
+   * A 2 dimension input [[1,2], [3,4], [5,6]]
+   * ClusterServingInput("my-input", Array(1,2,3,4), Array(3,2))
+   * A multiple input [1], [[1,2],[3,4]]
+   * Format is ClusterServingInput(name, Array(valueArray: Array[Float], ShapeArray: Array[Int]))
+   * ClusterServingInput("my-input", Array((Array(1), Array(1)),
+   *                                       (Array(1,2,3,4), Array(2,2))
+   *                                       ))
+   * A String type input ["my", "input"]
+   * ClusterServingInput("my-string-input", Array("my", "input"))
+   * @param in The List of input where each element is a tuple (name: String, input: Activity)
+   * @return
+   */
+  override def map(in: List[(String, Activity)]): List[(String, String)] = {
     val t1 = System.nanoTime()
     val postProcessed = if (params._inferenceMode == "single") {
-      val preProcessed = in.map(item => {
-        val uri = item._1
-        val input = pre.decodeArrowBase64(item._2)
-        (uri, input)
-      }).toIterator
-      ClusterServingInference.singleThreadInference(preProcessed, params).toList
+      ClusterServingInference.singleThreadInference(in.toIterator, params._modelType, "").toList
     } else {
-      val preProcessed = in.grouped(params.coreNum).flatMap(itemBatch => {
-        itemBatch.indices.toParArray.map(i => {
-          val uri = itemBatch(i)._1
-          val input = pre.decodeArrowBase64(itemBatch(i)._2)
-          (uri, input)
-        })
-      })
-      ClusterServingInference.multiThreadInference(preProcessed, params).toList
+      ClusterServingInference.multiThreadInference(
+        in.toIterator, params._coreNum, params._modelType, "").toList
     }
     val t2 = System.nanoTime()
     logger.info(s"${postProcessed.size} records backend time ${(t2 - t1) / 1e9} s. " +
@@ -74,8 +78,5 @@ class ClusterServingInferenceOperator(params: ClusterServingParams)
     postProcessed
   }
 }
-object ModelHolder {
-  var model: InferenceModel = null
 
-}
 

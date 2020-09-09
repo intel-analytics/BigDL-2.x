@@ -20,24 +20,24 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
-import com.intel.analytics.zoo.serving.utils.SerParams
 import org.apache.log4j.Logger
 
 object ClusterServingInference {
   val logger = Logger.getLogger(getClass)
   def singleThreadInference(preProcessed: Iterator[(String, Activity)],
-                           params: SerParams): Iterator[(String, String)] = {
+                            modelType: String,
+                            filterType: String = null): Iterator[(String, String)] = {
     val postProcessed = preProcessed.map(pathByte => {
       try {
         val t = typeCheck(pathByte._2)
-        dimCheck(t, "add", params)
+        dimCheck(t, "add", modelType)
         val result = ModelHolder.model.doPredict(t)
-        dimCheck(result, "remove", params)
-        val value = PostProcessing(result.toTensor[Float], params.filter, 1)
+        dimCheck(result, "remove", modelType)
+        val value = PostProcessing(result.toTensor[Float], filterType, 1)
         (pathByte._1, value)
       } catch {
         case e: Exception =>
-          logger.info(s"${e}, " +
+          logger.info(s"${e.printStackTrace()}, " +
             s"Your input ${pathByte._1} format is invalid to your model, this record is skipped")
           (pathByte._1, "NaN")
       }
@@ -45,22 +45,25 @@ object ClusterServingInference {
     postProcessed
   }
   def singleThreadBatchInference(preProcessed: Iterator[(String, Activity)],
-                                 params: SerParams): Iterator[(String, String)] = {
-    val postProcessed = preProcessed.grouped(params.coreNum).flatMap(pathByte => {
+                                 batchSize: Int,
+                                 modelType: String,
+                                 filterType: String = "",
+                                 resizeFlag: Boolean = false): Iterator[(String, String)] = {
+    val postProcessed = preProcessed.grouped(batchSize).flatMap(pathByte => {
       try {
         val thisBatchSize = pathByte.size
         val t = Timer.timing("batch", thisBatchSize) {
-          batchInputSingleThread(pathByte, params)
+          batchInput(pathByte, batchSize, useMultiThreading = false, resizeFlag = resizeFlag)
         }
-        dimCheck(t, "add", params)
+        dimCheck(t, "add", modelType)
         val result = Timer.timing("inference", thisBatchSize) {
           ModelHolder.model.doPredict(t)
         }
-        dimCheck(result, "remove", params)
-        dimCheck(t, "remove", params)
+        dimCheck(result, "remove", modelType)
+        dimCheck(t, "remove", modelType)
         val kvResult = Timer.timing("postprocess", thisBatchSize) {
           (0 until thisBatchSize).toParArray.map(i => {
-            val value = PostProcessing(result, params.filter, i + 1)
+            val value = PostProcessing(result, filterType, i + 1)
             (pathByte(i)._1, value)
           })
         }
@@ -75,12 +78,15 @@ object ClusterServingInference {
     postProcessed
   }
   def multiThreadInference(preProcessed: Iterator[(String, Activity)],
-                           params: SerParams): Iterator[(String, String)] = {
-    val postProcessed = preProcessed.grouped(params.coreNum).flatMap(pathByteBatch => {
+                           batchSize: Int,
+                           modelType: String,
+                           filterType: String = "",
+                           resizeFlag: Boolean = false): Iterator[(String, String)] = {
+    val postProcessed = preProcessed.grouped(batchSize).flatMap(pathByteBatch => {
       try {
         val thisBatchSize = pathByteBatch.size
         val t = Timer.timing("batch", thisBatchSize) {
-          batchInput(pathByteBatch, params)
+          batchInput(pathByteBatch, batchSize, resizeFlag)
         }
 
         /**
@@ -88,15 +94,15 @@ object ClusterServingInference {
          * original Tensor, thus if reuse of Tensor is needed,
          * have to squeeze it back.
          */
-        dimCheck(t, "add", params)
+        dimCheck(t, "add", modelType)
         val result = Timer.timing("inference", thisBatchSize) {
           ModelHolder.model.doPredict(t)
         }
-        dimCheck(result, "remove", params)
-        dimCheck(t, "remove", params)
+        dimCheck(result, "remove", modelType)
+        dimCheck(t, "remove", modelType)
         val kvResult = Timer.timing("postprocess", thisBatchSize) {
           (0 until thisBatchSize).toParArray.map(i => {
-            val value = PostProcessing(result, params.filter, i + 1)
+            val value = PostProcessing(result, filterType, i + 1)
             (pathByteBatch(i)._1, value)
           })
         }
@@ -109,64 +115,40 @@ object ClusterServingInference {
     })
     postProcessed
   }
-  def batchInputSingleThread(seq: Seq[(String, Activity)],
-                             params: SerParams): Activity = {
-    val thisBatchSize = seq.size
-    println(s"This batch size is ${thisBatchSize.toString}")
 
-    val inputSample = seq.head._2.toTable
-    val kvTuples = inputSample.keySet.map(key => {
-      (key, Tensor[Float](params.coreNum +:
-        inputSample(key).asInstanceOf[Tensor[Float]].size()))
-    }).toList
-    val t = T(kvTuples.head, kvTuples.tail: _*)
-    // Batch tensor and copy
-    (0 until thisBatchSize).foreach(i => {
-      val dataTable = seq(i)._2.toTable
-      t.keySet.foreach(key => {
-        t(key).asInstanceOf[Tensor[Float]].select(1, i + 1)
-          .copy(dataTable(key).asInstanceOf[Tensor[Float]])
-      })
-    })
-    // Resize and specific control
-    if (params.resize) {
-      t.keySet.foreach(key => {
-        val singleTensorSize = inputSample(key).asInstanceOf[Tensor[Float]].size()
-        var newSize = Array(thisBatchSize)
-        for (elem <- singleTensorSize) {
-          newSize = newSize :+ elem
-        }
-        t(key).asInstanceOf[Tensor[Float]].resize(newSize)
-      })
-    }
-    if (t.keySet.size == 1) {
-      t.keySet.foreach(key => {
-        return t(key).asInstanceOf[Tensor[Float]]
-      })
-    }
-    t
-  }
   def batchInput(seq: Seq[(String, Activity)],
-    params: SerParams): Activity = {
+                 batchSize: Int,                 
+                 useMultiThreading: Boolean,
+                 resizeFlag: Boolean = true): Activity = {
     val thisBatchSize = seq.size
     println(s"This batch size is ${thisBatchSize.toString}")
 
     val inputSample = seq.head._2.toTable
     val kvTuples = inputSample.keySet.map(key => {
-      (key, Tensor[Float](params.coreNum +:
+      (key, Tensor[Float](batchSize +:
         inputSample(key).asInstanceOf[Tensor[Float]].size()))
     }).toList
     val t = T(kvTuples.head, kvTuples.tail: _*)
     // Batch tensor and copy
-    (0 until thisBatchSize).toParArray.foreach(i => {
-      val dataTable = seq(i)._2.toTable
-      t.keySet.foreach(key => {
-        t(key).asInstanceOf[Tensor[Float]].select(1, i + 1)
-          .copy(dataTable(key).asInstanceOf[Tensor[Float]])
+    if (!useMultiThreading) {
+      (0 until thisBatchSize).foreach(i => {
+        val dataTable = seq(i)._2.toTable
+        t.keySet.foreach(key => {
+          t(key).asInstanceOf[Tensor[Float]].select(1, i + 1)
+            .copy(dataTable(key).asInstanceOf[Tensor[Float]])
+        })
       })
-    })
+    } else {
+      (0 until thisBatchSize).toParArray.foreach(i => {
+        val dataTable = seq(i)._2.toTable
+        t.keySet.foreach(key => {
+          t(key).asInstanceOf[Tensor[Float]].select(1, i + 1)
+            .copy(dataTable(key).asInstanceOf[Tensor[Float]])
+        })
+      })
+    }    
     // Resize and specific control
-    if (params.resize) {
+    if (resizeFlag) {
       t.keySet.foreach(key => {
         val singleTensorSize = inputSample(key).asInstanceOf[Tensor[Float]].size()
         var newSize = Array(thisBatchSize)
@@ -183,8 +165,16 @@ object ClusterServingInference {
     }
     t
   }
-  def dimCheck(input: Activity, op: String, params: SerParams): Activity = {
-    if (params.modelType == "openvino") {
+
+  /**
+   * Add or remove the singleton dimension for some specific model types
+   * @param input the input to change dimension
+   * @param op String, "add" or "remove"
+   * @param modelType model type
+   * @return input with dimension changed
+   */
+  def dimCheck(input: Activity, op: String, modelType: String): Activity = {
+    if (modelType == "openvino") {
       if (input.isTensor) {
         op match {
           case "add" => input.asInstanceOf[Tensor[Float]].addSingletonDimension()
@@ -205,6 +195,13 @@ object ClusterServingInference {
     }
     input
   }
+
+  /**
+   * Use for single thread inference, to construct a batchSize = 1 input
+   * Also return a Tensor if input Table has only one element
+   * @param input Input table or tensor
+   * @return input with single element batch constructed
+   */
   def typeCheck(input: Activity): Activity = {
     if (input.isTable) {
       if (input.toTable.keySet.size == 1) {

@@ -123,7 +123,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
       val inputBase64 = new String(java.util.Base64.getEncoder
        .encode(instances.toArrow()))
       val input = pre.decodeArrowBase64(inputBase64)
-      val bInput = ClusterServingInference.batchInput(Seq(("", input)), param)
+      val bInput = ClusterServingInference.batchInput(Seq(("", input)), 1, true, false)
       val result = model.doPredict(bInput)
       val value = PostProcessing(result.toTensor[Float]
         .squeeze(1), "topN(1)", 1)

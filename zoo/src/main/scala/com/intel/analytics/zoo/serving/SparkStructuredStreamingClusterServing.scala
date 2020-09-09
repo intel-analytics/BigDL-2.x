@@ -193,7 +193,8 @@ object SparkStructuredStreamingClusterServing {
             serParams.model = bcModel.value
             println(s"Take Broadcasted model time ${(System.nanoTime() - t1) / 1e9} s")
             it.grouped(serParams.coreNum).flatMap(itemBatch => {
-              ClusterServingInference.multiThreadInference(itemBatch.toIterator, serParams)
+              ClusterServingInference.multiThreadInference(itemBatch.toIterator, serParams.coreNum,
+                serParams.modelType, serParams.filter, serParams.resize)
             })
           })
 
@@ -210,7 +211,8 @@ object SparkStructuredStreamingClusterServing {
             serParams.model = bcModel.value
             println(s"Take Broadcasted model time ${(System.nanoTime() - t1) / 1e9} s")
             it.grouped(serParams.coreNum).flatMap(itemBatch => {
-              ClusterServingInference.multiThreadInference(itemBatch.toIterator, serParams)
+              ClusterServingInference.multiThreadInference(itemBatch.toIterator, serParams.coreNum,
+                serParams.modelType, serParams.filter, serParams.resize)
             })
           })
         }

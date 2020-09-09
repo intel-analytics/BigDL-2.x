@@ -68,9 +68,11 @@ class FlinkInference(params: SerParams)
         }
       }).toIterator
       if (params.modelType == "openvino") {
-        InferenceSupportive.singleThreadBatchInference(preProcessed, params).toList
+        ClusterServingInference.singleThreadBatchInference(
+          preProcessed, params.coreNum, params.modelType, params.filter).toList
       } else {
-        InferenceSupportive.singleThreadInference(preProcessed, params).toList
+        ClusterServingInference.singleThreadInference(
+          preProcessed, params.modelType, params.filter).toList
       }
 
     } else {
@@ -87,7 +89,8 @@ class FlinkInference(params: SerParams)
         }
 
       })
-      InferenceSupportive.multiThreadInference(preProcessed, params).toList
+      ClusterServingInference.multiThreadInference(
+        preProcessed, params.coreNum, params.modelType, params.filter, params.resize).toList
     }
     val t2 = System.nanoTime()
     logger.info(s"${postProcessed.size} records backend time ${(t2 - t1) / 1e9} s. " +

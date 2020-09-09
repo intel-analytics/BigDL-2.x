@@ -56,7 +56,7 @@ object ZooBaseline extends Supportive {
     val model = helper.loadInferenceModel()
     val warmT = makeTensorFromShape(param.inputShape)
     ClusterServingInference.typeCheck(warmT)
-    ClusterServingInference.dimCheck(warmT, "add", sParam)
+    ClusterServingInference.dimCheck(warmT, "add", sParam.modelType)
     (0 until 10).foreach(_ => {
       val result = model.doPredict(warmT)
     })
@@ -68,7 +68,7 @@ object ZooBaseline extends Supportive {
         (0 until param.testNum).foreach(_ => {
           val t = makeTensorFromShape(param.inputShape)
           ClusterServingInference.typeCheck(t)
-          ClusterServingInference.dimCheck(t, "add", sParam)
+          ClusterServingInference.dimCheck(t, "add", sParam.modelType)
           val result = model.doPredict(t)
         })
       } else {
@@ -78,9 +78,9 @@ object ZooBaseline extends Supportive {
         )
         (0 until param.testNum).grouped(sParam.coreNum).flatMap(i => {
           val t = timing("Batch input") {
-            ClusterServingInference.batchInput(a, sParam)
+            ClusterServingInference.batchInput(a, sParam.coreNum, true, sParam.resize)
           }
-          ClusterServingInference.dimCheck(t, "add", sParam)
+          ClusterServingInference.dimCheck(t, "add", sParam.modelType)
           val result = model.doPredict(t)
           Seq()
         }).toArray
