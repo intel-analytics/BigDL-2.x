@@ -17,7 +17,9 @@
 package com.intel.analytics.zoo.examples.serving
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.zoo.serving.ClusterServing.params
 import com.intel.analytics.zoo.serving.operator.{ClusterServingInferenceOperator, ClusterServingInput, ClusterServingParams}
+import com.intel.analytics.zoo.serving.utils.Conventions
 import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
 import org.apache.flink.streaming.api.functions.source.{RichParallelSourceFunction, SourceFunction}
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
@@ -35,10 +37,12 @@ object ClusterServingOperatorUsageExample {
   Logger.getLogger("org").setLevel(Level.ERROR)
   def main(args: Array[String]): Unit = {
     val arg = parser.parse(args, ExampleParams()).head
-    val param = new ClusterServingParams(arg.modelPath)
+
     val serving = StreamExecutionEnvironment.getExecutionEnvironment
-      serving.addSource(new MySource()).setParallelism(1)
-        .map(new ClusterServingInferenceOperator(param)).setParallelism(1)
+    // Use Flink distributed cache to copy model to every executors
+    serving.registerCachedFile(arg.modelPath, Conventions.SERVING_MODEL_TMP_DIR)
+    serving.addSource(new MySource()).setParallelism(1)
+        .map(new ClusterServingInferenceOperator()).setParallelism(1)
         .addSink(new MySink()).setParallelism(1)
     serving.execute()
   }

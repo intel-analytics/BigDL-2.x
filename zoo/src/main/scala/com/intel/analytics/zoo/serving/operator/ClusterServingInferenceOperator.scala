@@ -19,26 +19,30 @@ package com.intel.analytics.zoo.serving.operator
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.serving.PreProcessing
 import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, ModelHolder}
-import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.configuration.Configuration
 import org.apache.log4j.Logger
 
 
-class ClusterServingInferenceOperator(params: ClusterServingParams)
+class ClusterServingInferenceOperator(var params: ClusterServingParams = null)
   extends RichMapFunction[List[(String, Activity)], List[(String, String)]] {
   var logger: Logger = null
   var pre: PreProcessing = null
 
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
-
+    if (params == null) {
+      params = new ClusterServingParams()
+    }
     if (ModelHolder.model == null) {
       ModelHolder.synchronized {
         if (ModelHolder.model == null) {
           logger.info("Loading Cluster Serving model...")
+          val localModelDir = getRuntimeContext.getDistributedCache
+            .getFile(Conventions.SERVING_MODEL_TMP_DIR).getPath
           val info = ClusterServingHelper
-            .loadModelfromDir(params._modelPath, params._modelConcurrent)
+            .loadModelfromDir(localModelDir, params._modelConcurrent)
           ModelHolder.model = info._1
           params._modelType = info._2
         }
