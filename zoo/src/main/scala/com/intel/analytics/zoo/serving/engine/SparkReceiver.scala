@@ -38,13 +38,8 @@ class ServingReceiver (redisHost: String = "localhost", redisPort: Int = 6379)
       case e: Exception =>
         println(s"$e exist group")
     }
-//    jedis.xreadGroup(
-//      "serving",
-//      "cli",
-//      64,
-//      1,
-//      false,
-//      new SimpleEntry(Conventions.SERVING_STREAM_NAME, new StreamEntryID(0, 0)))
+
+
     while (!isStopped) {
       val response = jedis.xreadGroup(
         "serving",

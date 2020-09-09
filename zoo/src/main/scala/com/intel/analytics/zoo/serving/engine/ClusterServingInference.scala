@@ -19,19 +19,27 @@ package com.intel.analytics.zoo.serving.engine
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
 import org.apache.log4j.Logger
 
+/**
+ * Inference Logic of Cluster Serving
+ * In Flink, ModelHolder will directly be used
+ * model parameter is reserved for Spark backend
+ */
 object ClusterServingInference {
   val logger = Logger.getLogger(getClass)
   def singleThreadInference(preProcessed: Iterator[(String, Activity)],
                             modelType: String,
-                            filterType: String = null): Iterator[(String, String)] = {
+                            filterType: String = null,
+                            model: InferenceModel = null): Iterator[(String, String)] = {
+    val localModel = if (model == null) ModelHolder.model else model
     val postProcessed = preProcessed.map(pathByte => {
       try {
         val t = typeCheck(pathByte._2)
         dimCheck(t, "add", modelType)
-        val result = ModelHolder.model.doPredict(t)
+        val result = localModel.doPredict(t)
         dimCheck(result, "remove", modelType)
         val value = PostProcessing(result.toTensor[Float], filterType, 1)
         (pathByte._1, value)
@@ -48,7 +56,9 @@ object ClusterServingInference {
                                  batchSize: Int,
                                  modelType: String,
                                  filterType: String = "",
-                                 resizeFlag: Boolean = false): Iterator[(String, String)] = {
+                                 resizeFlag: Boolean = false,
+                                 model: InferenceModel = null): Iterator[(String, String)] = {
+    val localModel = if (model == null) ModelHolder.model else model
     val postProcessed = preProcessed.grouped(batchSize).flatMap(pathByte => {
       try {
         val thisBatchSize = pathByte.size
@@ -57,7 +67,7 @@ object ClusterServingInference {
         }
         dimCheck(t, "add", modelType)
         val result = Timer.timing("inference", thisBatchSize) {
-          ModelHolder.model.doPredict(t)
+          localModel.doPredict(t)
         }
         dimCheck(result, "remove", modelType)
         dimCheck(t, "remove", modelType)
@@ -81,7 +91,9 @@ object ClusterServingInference {
                            batchSize: Int,
                            modelType: String,
                            filterType: String = "",
-                           resizeFlag: Boolean = false): Iterator[(String, String)] = {
+                           resizeFlag: Boolean = false,
+                           model: InferenceModel = null): Iterator[(String, String)] = {
+    val localModel = if (model == null) ModelHolder.model else model
     val postProcessed = preProcessed.grouped(batchSize).flatMap(pathByteBatch => {
       try {
         val thisBatchSize = pathByteBatch.size
@@ -96,7 +108,7 @@ object ClusterServingInference {
          */
         dimCheck(t, "add", modelType)
         val result = Timer.timing("inference", thisBatchSize) {
-          ModelHolder.model.doPredict(t)
+          localModel.doPredict(t)
         }
         dimCheck(result, "remove", modelType)
         dimCheck(t, "remove", modelType)
@@ -109,7 +121,7 @@ object ClusterServingInference {
         kvResult
       } catch {
         case e: Exception =>
-          logger.info(s"${e}, Your input format is invalid to your model, this batch is skipped")
+          logger.info(s"${e.printStackTrace()}, Your input format is invalid to your model, this batch is skipped")
           pathByteBatch.toParArray.map(x => (x._1, "NaN"))
       }
     })
