@@ -56,8 +56,8 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
 
   var sc: SparkContext = null
 
-  var modelInputs: String = null
-  var modelOutputs: String = null
+  var modelInputs: String = ""
+  var modelOutputs: String = ""
   var inferenceMode: String = null
 
   var redisHost: String = null
@@ -246,8 +246,10 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
    * backend engine type
    * @return
    */
-  def loadInferenceModel(): InferenceModel = {
-
+  def loadInferenceModel(concurrentNum: Int = 0): InferenceModel = {
+    if (concurrentNum > 0) {
+      modelPar = concurrentNum
+    }
     logger.info(s"Cluster Serving load Inference Model with Parallelism $modelPar")
     val model = new InferenceModel(modelPar)
 
@@ -462,9 +464,14 @@ object ClusterServingHelper {
    * @param modelDir
    * @return
    */
-  def loadModelfromDir(confPath: String, modelDir: String): InferenceModel = {
+  def loadModelfromDirAndConfig(confPath: String, modelDir: String): InferenceModel = {
     val helper = new ClusterServingHelper(confPath, modelDir)
     helper.initArgs()
     helper.loadInferenceModel()
+  }
+  def loadModelfromDir(modelDir: String, concurrentNumber: Int = 1): (InferenceModel, String) = {
+    val helper = new ClusterServingHelper(_modelDir = modelDir)
+    helper.parseModelType(modelDir)
+    (helper.loadInferenceModel(concurrentNumber), helper.modelType)
   }
 }
