@@ -131,7 +131,8 @@ def init_spark_standalone(num_executors,
                           spark_log_level="WARN",
                           redirect_spark_log=True,
                           conf=None,
-                          jars=None):
+                          jars=None,
+                          enable_numa_binding=False):
     """
     Create a SparkContext with Analytics Zoo configurations on Spark standalone cluster of
     a single node.
@@ -174,7 +175,8 @@ def init_spark_standalone(num_executors,
         extra_executor_memory_for_ray=extra_executor_memory_for_ray,
         extra_python_lib=extra_python_lib,
         conf=conf,
-        jars=jars)
+        jars=jars,
+        enable_numa_binding=enable_numa_binding)
     return sc
 
 
