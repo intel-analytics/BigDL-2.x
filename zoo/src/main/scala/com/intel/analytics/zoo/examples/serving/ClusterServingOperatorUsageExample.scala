@@ -47,12 +47,13 @@ object ClusterServingOperatorUsageExample {
 class MySource extends RichParallelSourceFunction[List[(String, Activity)]] {
   var cnt = 0
   @volatile var isRunning = true
-  override def run(ctx: SourceFunction.SourceContext[List[(String, Activity)]]): Unit = while (isRunning) {
-    cnt += 1
-    val valueArr = new Array[Float](128)
-    (0 until 128).foreach(i => valueArr(i) = i)
-    val input = ClusterServingInput(cnt.toString, valueArr)
-    ctx.collect(List((cnt.toString, input)))
+  override def run(ctx: SourceFunction.SourceContext[List[(String, Activity)]]): Unit =
+    while (isRunning) {
+      cnt += 1
+      val valueArr = new Array[Float](128)
+      (0 until 128).foreach(i => valueArr(i) = i)
+      val input = ClusterServingInput(cnt.toString, valueArr)
+      ctx.collect(List((cnt.toString, input)))
   }
 
   override def cancel(): Unit = {

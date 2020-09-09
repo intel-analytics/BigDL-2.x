@@ -121,7 +121,8 @@ object ClusterServingInference {
         kvResult
       } catch {
         case e: Exception =>
-          logger.info(s"${e.printStackTrace()}, Your input format is invalid to your model, this batch is skipped")
+          logger.info(s"${e.printStackTrace()}, " +
+            s"Your input format is invalid to your model, this batch is skipped")
           pathByteBatch.toParArray.map(x => (x._1, "NaN"))
       }
     })
@@ -129,7 +130,7 @@ object ClusterServingInference {
   }
 
   def batchInput(seq: Seq[(String, Activity)],
-                 batchSize: Int,                 
+                 batchSize: Int,
                  useMultiThreading: Boolean,
                  resizeFlag: Boolean = true): Activity = {
     val thisBatchSize = seq.size
@@ -158,7 +159,7 @@ object ClusterServingInference {
             .copy(dataTable(key).asInstanceOf[Tensor[Float]])
         })
       })
-    }    
+    }
     // Resize and specific control
     if (resizeFlag) {
       t.keySet.foreach(key => {
