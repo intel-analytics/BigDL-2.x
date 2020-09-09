@@ -2,9 +2,11 @@
 
 model:
   # model path must be provided
-  path: resources/model
+  path: /path/to/model
   # mode, default is recommended, if error is raised, set single
   mode:
+  # name, default is serving_stream, you need to specify if running multiple servings
+  name:
   # the inputs of the tensorflow model, separated by ","
   inputs:
   # the outputs of the tensorflow model, separated by ","
@@ -23,6 +25,8 @@ params:
   model_number:
   # default: OFF
   performance_mode:
+flink:
+  rest:
 redis:
   # default, 4g
   maxmem:

@@ -31,8 +31,8 @@ class API:
     select data pipeline here, Redis/Kafka/...
     interface preserved for API class
     """
-    def __init__(self, host=None, port=None):
-
+    def __init__(self, host=None, port=None, name="serving_stream"):
+        self.name = name
         if not host:
             host = "localhost"
         if not port:
@@ -41,8 +41,7 @@ class API:
         self.db = redis.StrictRedis(host=host,
                                     port=port, db=0)
         try:
-            self.db.xgroup_create("image_stream", "serving")
-            self.db.xgroup_create("tensor_stream", "serving")
+            self.db.xgroup_create(name, "serving")
         except Exception:
             print("redis group exist, will not create new one")
 
@@ -63,7 +62,6 @@ class InputQueue(API):
                     raise ConnectionError()
             except Exception as e:
                 print("Connection error, please check your HTTP server. Error msg is ", e)
-        self.stream_name = "serving_stream"
 
         # TODO: these params can be read from config in future
         self.input_threshold = 0.6
@@ -146,7 +144,7 @@ class InputQueue(API):
         try:
             if inf['used_memory'] >= inf['maxmemory'] * self.input_threshold:
                 raise redis.exceptions.ConnectionError
-            self.db.xadd(self.stream_name, data)
+            self.db.xadd(self.name, data)
             print("Write to Redis successful")
         except redis.exceptions.ConnectionError:
             print("Redis queue is full, please wait for inference "
@@ -168,7 +166,7 @@ class OutputQueue(API):
         super().__init__(host, port)
 
     def dequeue(self):
-        res_list = self.db.keys('result:*')
+        res_list = self.db.keys('cluster-serving_' + self.name + ':*')
         decoded = {}
         for res in res_list:
             res_dict = self.db.hgetall(res.decode('utf-8'))
@@ -179,7 +177,7 @@ class OutputQueue(API):
         return decoded
 
     def query(self, uri):
-        res_dict = self.db.hgetall("result:"+uri)
+        res_dict = self.db.hgetall('cluster-serving_' + self.name + ':' +uri)
 
         if not res_dict or len(res_dict) == 0:
             return "{}"

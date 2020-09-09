@@ -24,6 +24,7 @@ class SerParams(helper: ClusterServingHelper) extends Serializable {
   var redisHost = helper.redisHost
   var redisPort = helper.redisPort.toInt
   val coreNum = helper.coreNum
+  val jobName = helper.jobName
   val filter = helper.filter
   val chwFlag = helper.chwFlag
   val inferenceMode = helper.inferenceMode

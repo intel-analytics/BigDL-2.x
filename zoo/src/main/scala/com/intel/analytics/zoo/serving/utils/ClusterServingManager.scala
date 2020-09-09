@@ -58,10 +58,6 @@ object ClusterServingManager {
   }
   def writeObjectToFile(cli: JobClient): Unit = {
     try {
-//      val fileOut = new FileOutputStream("/tmp/cluster-serving-job-id")
-//      val objectOut = new ObjectOutputStream(fileOut)
-//      objectOut.writeObject(obj)
-//      objectOut.close()
       new PrintWriter("/tmp/cluster-serving-job-id") {
         write(cli.getJobID.toHexString)
         close
@@ -73,5 +69,8 @@ object ClusterServingManager {
         e.printStackTrace()
         println("Failed to write job id written to file. You may not manager job by id now.")
     }
+  }
+  def getJobIdfromClient(cli: JobClient): String = {
+    cli.getJobID.toHexString
   }
 }
