@@ -47,3 +47,17 @@ export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded A
 export SPARK_HOME=... # the root directory of Spark
 bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] lenet_mnist_keras.py
 ```
+
+## Run NCF example after pip install
+```bash
+python ncf.py
+```
+
+## Run NCF example with prebuilt package
+```bash
+export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
+export SPARK_HOME=... # the root directory of Spark
+bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] ncf.py
+```
+
+

@@ -256,7 +256,7 @@ def predict(predict_data, user_size, item_size):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Train a LeNet model for handwritten digit recognition.')
+        description='NCF example on movie len dataset.')
 
     parser.add_argument('--data_dir', type=str, default='/tmp',
                         help='the dir for downloaded data.')
