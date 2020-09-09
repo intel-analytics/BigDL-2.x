@@ -11,7 +11,7 @@ Environment Setting:
 - Set `ZOO_NUM_MKLTHREADS` to determine cores used by OpenVINO, e.g, `export ZOO_NUM_MKLTHREADS=10`. If it is set to `all`, e.g., `export ZOO_NUM_MKLTHREADS=all`, then OpenVINO will utilize all physical cores for Prediction.
 - Set `KMP_BLOCKTIME=200`, i.e., `export KMP_BLOCKTIME=200`
 
-## Datasets and pre-trained models
+## Datasets and OpenVINO models
 * Datasets: [ImageNet2012 Val](http://image-net.org/challenges/LSVRC/2012/index)
 * Models: Optimizing Pre-trained ResNet_v1_50 model with [OpenVINO](#prepare-openvino-model)
 
