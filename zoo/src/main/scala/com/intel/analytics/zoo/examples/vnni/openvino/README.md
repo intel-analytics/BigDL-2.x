@@ -19,7 +19,9 @@ Note that all paths used in this example should be full path, e.g., `/root/model
 
 ---
 ### Prepare OpenVINO Model
-TensorFlow models cannot be directly loaded by OpenVINO. It should be converted to OpenVINO optimized model and int8 optimized model first. Please install [OpenVINO](https://software.intel.com/en-us/openvino-toolkit), and covert models with `downloader` tool in [OpenVINO Open Model Zoo](https://github.com/openvinotoolkit/open_model_zoo). This tool is located in OpenVINO installation directory (`deployment_tools/open_model_zoo`). The model we used is named [resnet-50-tf](https://github.com/openvinotoolkit/open_model_zoo/blob/master/models/public/resnet-50-tf/resnet-50-tf.md).
+TensorFlow models cannot be directly loaded by OpenVINO. It should be converted to OpenVINO optimized model and int8 optimized model first. Please install [OpenVINO](https://software.intel.com/en-us/openvino-toolkit), and covert models with `downloader` tool in [OpenVINO Open Model Zoo](https://github.com/openvinotoolkit/open_model_zoo). This tool is located in OpenVINO installation directory (`deployment_tools/open_model_zoo`).
+
+The model we used is named [resnet-50-tf](https://github.com/openvinotoolkit/open_model_zoo/blob/master/models/public/resnet-50-tf/resnet-50-tf.md).
 
 If you prefer GUI workflow or don't want to install OpenVINO, you can use [OpenVINO DL Workbench](https://docs.openvinotoolkit.org/latest/_docs_Workbench_DG_Install_Workbench.html) with Docker container.
 
