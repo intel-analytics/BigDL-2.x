@@ -401,8 +401,7 @@ if __name__ == "__main__":
         compile_args_creator=compile_args_creator,
         verbose=True,
         config=config,
-        backend="horovod",
-        workers_per_node=args.workers_per_node)
+        backend="horovod")
 
     if args.benchmark:
         trainer.fit(

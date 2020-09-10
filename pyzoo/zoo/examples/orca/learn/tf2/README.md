@@ -38,5 +38,5 @@ to generate training and validation tf records data.
 Example command:
 
 ```
-python -u resnet-50-imagenet.py --cluster_mode standalone --worker_num 8 --executor_cores 18 --data_dir $TF_RECORDS_PATH --use_bf16 --enable_numa_binding
+python -u resnet-50-imagenet.py --cluster_mode standalone --worker_num 8 --cores 18 --data_dir $TF_RECORDS_PATH --use_bf16 --enable_numa_binding
 ```
