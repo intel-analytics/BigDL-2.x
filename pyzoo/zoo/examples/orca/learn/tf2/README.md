@@ -1,1 +1,32 @@
-# TO BE ADDED
+# Running Orca TF2 ResNet50 example
+
+
+## Environment
+
+First TensorFlow and horovod (built with gloo) need to be installed.
+
+You can follow the [horovod document](https://github.com/horovod/horovod/blob/master/docs/install.rst) to install the horovod with Gloo support.
+
+Here are the commands that work on for us on ubuntu 16.04. The exact steps may vary from different machines.
+
+```bash
+conda env create -n resnet python==3.7.7
+conda install -y cmake==3.16.0 -c conda-forge
+pip install tensorflow==2.1.0
+HOROVOD_WITH_PYTORCH=1; HOROVOD_WITH_GLOO=1; pip install --no-cache-dir horovod==0.19.2
+pip install analytics-zoo[ray]
+```
+
+## Training Data
+
+You can follow the instructions [here](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) here
+to generate training and validation tf records data.
+
+
+## Running multiple process in one machine using Spark Standalone
+
+Example command:
+
+```
+python -u resnet-50-imagenet.py --cluster_mode standalone --worker_num 8 --executor_cores 18 --data_dir $TF_RECORDS_PATH
+```
