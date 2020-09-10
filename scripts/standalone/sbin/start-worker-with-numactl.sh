@@ -1,58 +1,41 @@
 #!/usr/bin/env bash
 
-#
-# Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements.  See the NOTICE file distributed with
-# this work for additional information regarding copyright ownership.
-# The ASF licenses this file to You under the Apache License, Version 2.0
-# (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+function ht_enabled {
+  ret=`lscpu |grep "Thread(s) per core"|awk '{print $4}'`
+  if [ $ret -eq 1 ]; then
+    false
+  else
+    true
+  fi
+}
 
-# This script loads NUMA configurations if `numactl` exists, and
-# it might start multiple slaves on this machine for NUMA awareness.
-#
-# Environment Variables
-#
-#   SPARK_WORKER_INSTANCES  The number of worker instances to run on this
-#                           slave.  Default is 1.
-#   SPARK_WORKER_PORT       The base port number for the first worker. If set,
-#                           subsequent workers will increment this number.  If
-#                           unset, Spark will find a valid port number, but
-#                           with no guarantee of a predictable pattern.
-#   SPARK_WORKER_WEBUI_PORT The base port for the web interface of the first
-#                           worker.  Subsequent workers will increment this
-#                           number.  Default is 8081.
-
+# check if we can start performance mode
 if [ -z "${SPARK_HOME}" ]; then
-  export SPARK_HOME="$(cd "`dirname "$0"`"/..; pwd)"
-fi
-
-if ! type "numactl" > /dev/null 2>&1; then
-  echo "failed, please install numactl if you want to enable numa binding"
+  echo "failed,Please set SPARK_HOME environment variable"
   exit 1
 fi
 
-# NOTE: This exact class name is matched downstream by SparkSubmit.
-# Any changes need to be reflected there.
-CLASS="org.apache.spark.deploy.worker.Worker"
+if ! type "numactl" > /dev/null 2>&1; then
+  echo "failed, please install numactl package"
+  exit 1
+fi
+
+MASTER=$1
+_TOTAL_WORKERS=$SPARK_WORKER_INSTANCES
+#_WORKER_PER_SOCKET=$2  # worker num on each numa node
+
+TOTAL_CORE_NUM=`nproc`
+if ht_enabled; then
+  TOTAL_CORE_NUM=$((TOTAL_CORE_NUM / 2))
+fi
 
 . "${ZOO_STANDALONE_HOME}/sbin/spark-config.sh"
 
 . "${SPARK_HOME}/bin/load-spark-env.sh"
 
-# First argument should be the master; we need to store it aside because we may
-# need to insert arguments between it and the other arguments
-MASTER=$1
-shift
+# NOTE: This exact class name is matched downstream by SparkSubmit.
+# Any changes need to be reflected there.
+CLASS="org.apache.spark.deploy.worker.Worker"
 
 # Determine desired worker port
 if [ "$SPARK_WORKER_WEBUI_PORT" = "" ]; then
@@ -80,19 +63,11 @@ function start_instance {
      --webui-port "$WEBUI_PORT" $PORT_FLAG $PORT_NUM $MASTER "$@"
 }
 
-function ht_enabled {
-  ret=`lscpu |grep "Thread(s) per core"|awk '{print $4}'`
-  if [ $ret -eq 1 ]; then
-    false
-  else
-    true
-  fi
-}
-
+# Join an input array by a given separator
 function join_by() {
-    local IFS="$1"
-    shift
-    echo "$*"
+  local IFS="$1"
+  shift
+  echo "$*"
 }
 
 # Compute memory size for each NUMA node
@@ -100,7 +75,22 @@ IFS=$'\n'; _NUMA_HARDWARE_INFO=(`numactl --hardware`)
 _NUMA_NODE_NUM=`echo ${_NUMA_HARDWARE_INFO[0]} | sed -e "s/^available: \([0-9]*\) nodes .*$/\1/"`
 _TOTAL_MEM=`grep MemTotal /proc/meminfo | awk '{print $2}'`
 # Memory size of each NUMA node = (Total memory size - 1g) / Num of NUMA nodes
-_NUMA_MEM=$((((_TOTAL_MEM - 1048576) / 1048576) / $_NUMA_NODE_NUM))
+_1G=1048576
+_MEMORY_FOR_DRIVER=2  # reserve 2g memory for the driver
+_NUMA_MEM=$((((_TOTAL_MEM - _1G - (_1G * _MEMORY_FOR_DRIVER)) / _1G) / $_NUMA_NODE_NUM))
+if [[ $_NUMA_MEM -le 0 ]]; then
+  echo "failed,Not enough memory for numa binding"
+  exit 1
+fi
+
+if [[ $((_TOTAL_WORKERS % _NUMA_NODE_NUM)) -eq 0 ]]; then
+	_WORKER_PER_SOCKET=$((_TOTAL_WORKERS / _NUMA_NODE_NUM))
+else
+  echo "failed, SPARK_WORKER_INSTANCES should be a multiple of the number of numa nodes. Got SPARK_WORKER_INSTANCES: ${_TOTAL_WORKERS}, and numa node number: ${_NUMA_NODE_NUM}"
+  exit 1
+fi
+
+_WORKER_NAME_NO=1
 
 # Load NUMA configurations line-by-line and set `numactl` options
 for nnode in ${_NUMA_HARDWARE_INFO[@]}; do
@@ -109,12 +99,20 @@ for nnode in ${_NUMA_HARDWARE_INFO[@]}; do
     IFS=' ' _NUMA_CPUS=(${BASH_REMATCH[2]})
     _LENGTH=${#_NUMA_CPUS[@]}
     if ht_enabled; then _LENGTH=$((_LENGTH / 2)); fi
-    _NUMACTL="numactl -m ${_NUMA_NO} -C $(join_by , ${_NUMA_CPUS[@]:0:${_LENGTH}})"
-    echo ${_NUMACTL}
 
-    # Launch a worker with numactl
-    export SPARK_WORKER_CORES=${_LENGTH} # ${#_NUMA_CPUS[@]}
-    export SPARK_WORKER_MEMORY="${_NUMA_MEM}g"
-    start_instance "$_NUMACTL" "$_NUMA_NO" "$@"
+    _LENGTH=$((_LENGTH / _WORKER_PER_SOCKET))
+
+    for ((i = 0; i < $((_WORKER_PER_SOCKET)); i++)); do
+      core_start=$(( i * _LENGTH ))
+      _NUMACTL="numactl -m ${_NUMA_NO} -C $(join_by , ${_NUMA_CPUS[@]:${core_start}:${_LENGTH}})"
+      echo ${_NUMACTL}
+
+      # Launch a worker with numactl
+      export SPARK_WORKER_CORES=${_LENGTH} # core num per worker
+      export SPARK_WORKER_MEMORY="$((_NUMA_MEM / _WORKER_PER_SOCKET))g"
+      start_instance "$_NUMACTL" "$_WORKER_NAME_NO"
+      _WORKER_NAME_NO=$((_WORKER_NAME_NO + 1))
+    done
   fi
 done
+
