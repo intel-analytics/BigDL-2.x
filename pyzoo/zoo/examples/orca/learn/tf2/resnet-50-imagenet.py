@@ -195,9 +195,7 @@ def parse_record(raw_record, is_training, dtype):
         is_training=is_training)
     image = tf.cast(image, dtype)
 
-    label = tf.cast(
-        tf.cast(tf.reshape(label, shape=[1]), dtype=tf.int32) - 1,
-        dtype=tf.float32)
+    label = tf.cast(tf.reshape(label, shape=[1]), dtype=tf.float32)
 
     return image, label
 
@@ -309,22 +307,6 @@ def val_data_creator(config):
     return val_dataset
 
 
-def schedule(epoch, lr_multiplier):
-    if epoch < 5:
-        return 0.1 + 0.1 * (lr_multiplier - 1) * epoch / 5
-
-    if 5 <= epoch < 30:
-        return 0.1 * lr_multiplier
-
-    if 30 <= epoch < 60:
-        return 0.1 * 0.1 * lr_multiplier
-
-    if 60 <= epoch < 80:
-        return 0.1 * 0.01 * lr_multiplier
-
-    return 0.1 * 0.001 * lr_multiplier
-
-
 class LRLogger(tf.keras.callbacks.Callback):
     def __init__(self, *args):
         super(LRLogger, self).__init__(*args)
@@ -404,7 +386,7 @@ if __name__ == "__main__":
     callbacks = get_lr_schedule_callbacks(initial_lr)
 
     config = {
-        "wd": 0.0005,
+        "wd": 0.00005,
         "momentum": 0.9,
         "batch_size": global_batch_size,
         "warmup_epoch": 5,
@@ -425,7 +407,7 @@ if __name__ == "__main__":
     if args.benchmark:
         trainer.fit(
             data_creator=train_data_creator if not args.use_dummy_data else dummy_data_creator,
-            epochs=2,
+            epochs=3,
             steps_per_epoch=20,
             callbacks=callbacks,
         )
