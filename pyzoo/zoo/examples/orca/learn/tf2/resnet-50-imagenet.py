@@ -229,7 +229,8 @@ def input_fn(is_training, data_dir, batch_size):
         dataset = dataset.shuffle(buffer_size=_NUM_TRAIN_FILES)
 
     # Convert to individual records
-    dataset = dataset.interleave(tf.data.TFRecordDataset, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    dataset = dataset.interleave(tf.data.TFRecordDataset,
+                                 num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     return process_record_dataset(
         dataset=dataset,
@@ -256,8 +257,9 @@ def model_creator(config):
     for layer, layer_config in zip(model.layers, model_config['layers']):
         if hasattr(layer, 'kernel_regularizer'):
             regularizer = keras.regularizers.l2(wd)
-            layer_config['config']['kernel_regularizer'] = {'class_name': regularizer.__class__.__name__,
-                                                            'config': regularizer.get_config()}
+            rg_config = {'class_name': regularizer.__class__.__name__,
+                         'config': regularizer.get_config()}
+            layer_config['config']['kernel_regularizer'] = rg_config
         if type(layer) == keras.layers.BatchNormalization:
             layer_config['config']['momentum'] = 0.9
             layer_config['config']['epsilon'] = 1e-5
@@ -329,7 +331,8 @@ def get_lr_schedule_callbacks(initial_lr):
                                                    initial_lr=initial_lr),
         hvd.callbacks.LearningRateScheduleCallback(start_epoch=60, end_epoch=80, multiplier=1e-2,
                                                    initial_lr=initial_lr),
-        hvd.callbacks.LearningRateScheduleCallback(start_epoch=80, multiplier=1e-3, initial_lr=initial_lr),
+        hvd.callbacks.LearningRateScheduleCallback(start_epoch=80, multiplier=1e-3,
+                                                   initial_lr=initial_lr),
         LRLogger()
     ]
 
@@ -365,7 +368,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     num_nodes = 1 if args.cluster_mode == "local" else args.worker_num
     init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores, num_nodes=num_nodes,
-                      memory=args.memory, init_ray_on_spark=True, enable_numa_binding=args.enable_numa_binding)
+                      memory=args.memory, init_ray_on_spark=True,
+                      enable_numa_binding=args.enable_numa_binding)
 
     if not args.use_dummy_data:
         assert args.data_dir is not None, "--data_dir must be provided if not using dummy data"
@@ -413,10 +417,12 @@ if __name__ == "__main__":
     else:
         epoch = 0
         for i in range(5):
+            dummy = args.use_dummy_data
+
             results = trainer.fit(
-                data_creator=train_data_creator if not args.use_dummy_data else dummy_data_creator,
+                data_creator=train_data_creator if not dummy else dummy_data_creator,
                 epochs=18,
-                validation_data_creator=val_data_creator if not args.use_dummy_data else dummy_data_creator,
+                validation_data_creator=val_data_creator if not dummy else dummy_data_creator,
                 steps_per_epoch=_NUM_IMAGES['train'] // global_batch_size,
                 callbacks=callbacks,
                 validation_steps=_NUM_IMAGES['validation'] // global_batch_size,
