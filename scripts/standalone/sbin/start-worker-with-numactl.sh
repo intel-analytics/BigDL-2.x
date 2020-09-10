@@ -105,7 +105,7 @@ for nnode in ${_NUMA_HARDWARE_INFO[@]}; do
     for ((i = 0; i < $((_WORKER_PER_SOCKET)); i++)); do
       core_start=$(( i * _LENGTH ))
       _NUMACTL="numactl -m ${_NUMA_NO} -C $(join_by , ${_NUMA_CPUS[@]:${core_start}:${_PER_WORKER_LENGTH}})"
-      if ht_enabled; _NUMACTL="$_NUMACTL,$(join_by , ${_NUMA_CPUS[@]:$((core_start + _LENGTH)):${_PER_WORKER_LENGTH}})"
+      if ht_enabled; then _NUMACTL="$_NUMACTL,$(join_by , ${_NUMA_CPUS[@]:$((core_start + _LENGTH)):${_PER_WORKER_LENGTH}})"; fi
       echo ${_NUMACTL}
 
       # Launch a worker with numactl
