@@ -128,12 +128,14 @@ class TCMF(BaseModel):
         # TODO incrementally train models
         pass
 
-    def predict(self, x=None, horizon=24, mc=False, ):
+    def predict(self, x=None, horizon=24, mc=False, num_workers=1):
         """
         Predict horizon time-points ahead the input x in fit_eval
         :param x: We don't support input x currently.
         :param horizon: horizon length to predict
         :param mc:
+        :param num_workers: the number of workers to use. Note that there has to be an activate
+            RayContext if num_workers > 1.
         :return:
         """
         if x is not None:
@@ -144,6 +146,7 @@ class TCMF(BaseModel):
             future=horizon,
             bsize=90,
             normalize=False,
+            num_workers=num_workers,
         )
         return out[:, -horizon::]
 
