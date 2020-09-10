@@ -159,9 +159,9 @@ def init_spark_standalone(num_executors,
     :param conf: You can append extra conf for Spark in key-value format.
            i.e conf={"spark.executor.extraJavaOptions": "-XX:+PrintGCDetails"}.
            Default to be None.
-    :param enable_numa_binding: Whether to use numactl to start spark worker in order to bind different
-           worker processes to different cpus and memory areas. This is may increase performance on a
-           multi-sockets machine. Defaults to False.
+    :param enable_numa_binding: Whether to use numactl to start spark worker in order to bind
+           different worker processes to different cpus and memory areas. This is may lead to
+           better performance on a multi-sockets machine. Defaults to False.
 
     :return: An instance of SparkContext.
     """
