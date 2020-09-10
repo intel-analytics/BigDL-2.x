@@ -14,7 +14,13 @@ conda env create -n resnet python==3.7.7
 conda install -y cmake==3.16.0 -c conda-forge
 pip install tensorflow==2.1.0
 HOROVOD_WITH_PYTORCH=1; HOROVOD_WITH_GLOO=1; pip install --no-cache-dir horovod==0.19.2
-pip install analytics-zoo[ray]
+```
+
+Then download and install latest analytics whl by following instructions ([here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#install-the-latest-nightly-build-wheels-for-pip).
+
+E.g.
+```bash
+pip install analytics_zoo-${VERSION}-${TIMESTAMP}-py2.py3-none-${OS}_x86_64.whl[ray]
 ```
 
 ## Training Data
@@ -28,5 +34,5 @@ to generate training and validation tf records data.
 Example command:
 
 ```
-python -u resnet-50-imagenet.py --cluster_mode standalone --worker_num 8 --executor_cores 18 --data_dir $TF_RECORDS_PATH
+python -u resnet-50-imagenet.py --cluster_mode standalone --worker_num 8 --executor_cores 18 --data_dir $TF_RECORDS_PATH --use_bf16 --enable_numa_binding
 ```
