@@ -36,19 +36,14 @@ if [ -z "${SPARK_HOME}" ]; then
   export SPARK_HOME="$(cd "`dirname "$0"`"/..; pwd)"
 fi
 
+if ! type "numactl" > /dev/null 2>&1; then
+  echo "failed, please install numactl if you want to enable numa binding"
+  exit 1
+fi
+
 # NOTE: This exact class name is matched downstream by SparkSubmit.
 # Any changes need to be reflected there.
 CLASS="org.apache.spark.deploy.worker.Worker"
-
-if [[ $# -lt 1 ]] || [[ "$@" = *--help ]] || [[ "$@" = *-h ]]; then
-  echo "Usage: ./sbin/start-slave.sh [options] <master>"
-  pattern="Usage:"
-  pattern+="\|Using Spark's default log4j profile:"
-  pattern+="\|Registered signal handlers for"
-
-  "${SPARK_HOME}"/bin/spark-class $CLASS --help 2>&1 | grep -v "$pattern" 1>&2
-  exit 1
-fi
 
 . "${ZOO_STANDALONE_HOME}/sbin/spark-config.sh"
 
@@ -86,52 +81,40 @@ function start_instance {
 }
 
 function ht_enabled {
-  ret=`grep -o '^flags\b.*: .*\bht\b' /proc/cpuinfo | tail -1`
-  if [ x"${ret}" == "x" ]; then
+  ret=`lscpu |grep "Thread(s) per core"|awk '{print $4}'`
+  if [ $ret -eq 1 ]; then
     false
   else
     true
   fi
 }
 
-# Check if `numactl` exits
-if type "numactl" > /dev/null 2>&1; then
-  # Join an input array by a given separator
-  function join_by() {
+function join_by() {
     local IFS="$1"
     shift
     echo "$*"
-  }
+}
 
-  # Compute memory size for each NUMA node
-  IFS=$'\n'; _NUMA_HARDWARE_INFO=(`numactl --hardware`)
-  _NUMA_NODE_NUM=`echo ${_NUMA_HARDWARE_INFO[0]} | sed -e "s/^available: \([0-9]*\) nodes .*$/\1/"`
-  _TOTAL_MEM=`grep MemTotal /proc/meminfo | awk '{print $2}'`
-  # Memory size of each NUMA node = (Total memory size - 1g) / Num of NUMA nodes
-  _NUMA_MEM=$((((_TOTAL_MEM - 1048576) / 1048576) / $_NUMA_NODE_NUM))
+# Compute memory size for each NUMA node
+IFS=$'\n'; _NUMA_HARDWARE_INFO=(`numactl --hardware`)
+_NUMA_NODE_NUM=`echo ${_NUMA_HARDWARE_INFO[0]} | sed -e "s/^available: \([0-9]*\) nodes .*$/\1/"`
+_TOTAL_MEM=`grep MemTotal /proc/meminfo | awk '{print $2}'`
+# Memory size of each NUMA node = (Total memory size - 1g) / Num of NUMA nodes
+_NUMA_MEM=$((((_TOTAL_MEM - 1048576) / 1048576) / $_NUMA_NODE_NUM))
 
-  # Load NUMA configurations line-by-line and set `numactl` options
-  for nnode in ${_NUMA_HARDWARE_INFO[@]}; do
-    if [[ ${nnode} =~ ^node\ ([0-9]+)\ cpus:\ (.+)$ ]]; then
-      _NUMA_NO=${BASH_REMATCH[1]}
-      IFS=' ' _NUMA_CPUS=(${BASH_REMATCH[2]})
-      _LENGTH=${#_NUMA_CPUS[@]}
-      if ht_enabled; then _LENGTH=$((_LENGTH / 2)); fi
-      _NUMACTL="numactl -m ${_NUMA_NO} -C $(join_by , ${_NUMA_CPUS[@]:0:${_LENGTH}})"
-      echo ${_NUMACTL}
+# Load NUMA configurations line-by-line and set `numactl` options
+for nnode in ${_NUMA_HARDWARE_INFO[@]}; do
+  if [[ ${nnode} =~ ^node\ ([0-9]+)\ cpus:\ (.+)$ ]]; then
+    _NUMA_NO=${BASH_REMATCH[1]}
+    IFS=' ' _NUMA_CPUS=(${BASH_REMATCH[2]})
+    _LENGTH=${#_NUMA_CPUS[@]}
+    if ht_enabled; then _LENGTH=$((_LENGTH / 2)); fi
+    _NUMACTL="numactl -m ${_NUMA_NO} -C $(join_by , ${_NUMA_CPUS[@]:0:${_LENGTH}})"
+    echo ${_NUMACTL}
 
-      # Launch a worker with numactl
-      export SPARK_WORKER_CORES=${_LENGTH} # ${#_NUMA_CPUS[@]}
-      export SPARK_WORKER_MEMORY="${_NUMA_MEM}g"
-      start_instance "$_NUMACTL" "$_NUMA_NO" "$@"
-    fi
-  done
-else
-  if [ "$SPARK_WORKER_INSTANCES" = "" ]; then
-    start_instance "" 1 "$@"
-  else
-    for ((i=0; i<$SPARK_WORKER_INSTANCES; i++)); do
-      start_instance "" $(( 1 + $i )) "$@"
-    done
+    # Launch a worker with numactl
+    export SPARK_WORKER_CORES=${_LENGTH} # ${#_NUMA_CPUS[@]}
+    export SPARK_WORKER_MEMORY="${_NUMA_MEM}g"
+    start_instance "$_NUMACTL" "$_NUMA_NO" "$@"
   fi
-fi
+done
