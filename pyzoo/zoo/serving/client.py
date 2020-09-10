@@ -177,7 +177,7 @@ class OutputQueue(API):
         return decoded
 
     def query(self, uri):
-        res_dict = self.db.hgetall('cluster-serving_' + self.name + ':' +uri)
+        res_dict = self.db.hgetall('cluster-serving_' + self.name + ':' + uri)
 
         if not res_dict or len(res_dict) == 0:
             return "{}"

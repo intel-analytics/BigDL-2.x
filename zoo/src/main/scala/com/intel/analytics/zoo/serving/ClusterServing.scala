@@ -89,7 +89,8 @@ object ClusterServing {
   }
 }
 
-class ShutDownThrd(helper: ClusterServingHelper, jobId: String, jobClient: JobClient) extends Thread {
+class ShutDownThrd(helper: ClusterServingHelper, jobId: String, jobClient: JobClient)
+  extends Thread {
   override def run(): Unit = {
     println(s"Shutdown hook triggered, removing job $jobId in yaml")
     try {
