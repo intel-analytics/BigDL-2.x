@@ -40,3 +40,11 @@ Example command:
 ```
 python -u resnet-50-imagenet.py --cluster_mode standalone --worker_num 8 --cores 18 --data_dir $TF_RECORDS_PATH --use_bf16 --enable_numa_binding
 ```
+
+## Running fewer iterations for benchmarking 
+
+Example command:
+
+```
+python -u resnet-50-imagenet.py --cluster_mode standalone --worker_num 8 --cores 17 --data_dir $TF_RECORDS_PATH --use_bf16 --enable_numa_binding --benchmark
+```
