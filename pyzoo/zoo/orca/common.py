@@ -159,9 +159,8 @@ def init_orca_context(cluster_mode="local", cores=2, memory="2g", num_nodes=1,
         if cluster_mode == "k8s-cluster":
             raise ValueError('For k8s-cluster mode, please set cluster_mode to "spark-submit" '
                              'and submit the application via spark-submit instead')
-        assert "master" in kwargs, "k8s master address must be specified for k8s-client mode"
-        assert "container_image" in kwargs, "The name of the docker container image for Spark " \
-                                            "executors must be specified for k8s-client mode"
+        assert "master" in kwargs, "Please specify master for k8s-client mode"
+        assert "container_image" in kwargs, "Please specify container_image for k8s-client mode"
         for key in ["driver_cores", "driver_memory", "extra_executor_memory_for_ray",
                     "extra_python_lib", "jars", "python_location"]:
             if key in kwargs:
