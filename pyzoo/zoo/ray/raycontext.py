@@ -209,7 +209,7 @@ class RayServiceFuncGenerator(object):
             import filelock
             base_path = tempfile.gettempdir()
             master_flag_path = os.path.join(base_path, "ray_master_initialized")
-            if current_ip == master_ip:
+            if current_ip == master_ip:  # Start the ray master.
                 lock_path = os.path.join(base_path, "ray_master_start.lock")
                 # It is possible that multiple executors are on one node. In this case,
                 # the first executor that gets the lock would be the master and it would
@@ -225,7 +225,7 @@ class RayServiceFuncGenerator(object):
                         os.mknod(master_flag_path)
 
             tc.barrier()
-            if not process_info:
+            if not process_info:  # Start raylets.
                 lock_path = os.path.join(base_path, "raylet_start.lock")
                 with filelock.FileLock(lock_path):
                     print("partition id is : {}".format(tc.partitionId()))
