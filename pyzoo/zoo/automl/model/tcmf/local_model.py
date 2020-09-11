@@ -55,14 +55,10 @@ import torch.optim as optim
 from torch.autograd import Variable
 from torch.nn.utils import weight_norm
 
-from zoo.automl.model.tcmf.data_loader import DataLoader
+from zoo.automl.model.tcmf.data_loader import TCMFDataLoader
 from zoo.automl.model.tcmf.time import TimeCovariates
 
 import logging
-
-np.random.seed(111)
-torch.manual_seed(111)
-random.seed(111)
 
 logger = logging.getLogger(__name__)
 
@@ -298,8 +294,6 @@ class LocalModel(object):
         dropout=0.2,
         vbsize=300,
         hbsize=128,
-        num_epochs=100,
-        # num_epochs=1,
         lr=0.0005,
         val_len=10,
         test=True,
@@ -321,7 +315,6 @@ class LocalModel(object):
         dropout: dropout rate for each layer
         vbsize: vertical batch size
         hbsize: horizontal batch size
-        num_epochs: max. number of epochs
         lr: learning rate
         val_len: validation length
         test: always set to True
@@ -358,14 +351,13 @@ class LocalModel(object):
         self.hbsize = hbsize
         self.num_inputs = num_inputs
         self.num_channels = num_channels
-        self.num_epochs = num_epochs
         self.lr = lr
         self.val_len = val_len
         self.Ymat = Ymat
-        self.test = test
         self.end_index = end_index
         self.normalize = normalize
         self.kernel_size = kernel_size
+        self.dropout = dropout
         if normalize:
             Y = Ymat
             m = np.mean(Y[:, 0: self.end_index], axis=1)
@@ -395,7 +387,7 @@ class LocalModel(object):
 
         self.seq = self.seq.float()
 
-        self.D = DataLoader(
+        self.D = TCMFDataLoader(
             Ymat=self.Ymat,
             vbsize=vbsize,
             hbsize=hbsize,
@@ -406,16 +398,41 @@ class LocalModel(object):
         )
         self.val_len = val_len
 
-    def __loss__(self, out, target, dic=None):
+    def train_model(self, num_epochs=300,
+                    num_workers=1,
+                    early_stop=False, tenacity=10):
+        if num_workers == 1:
+            return self.train_model_local(num_epochs=num_epochs,
+                                          early_stop=early_stop,
+                                          tenacity=tenacity)
+        else:
+            from zoo.automl.model.tcmf.local_model_distributed_trainer import train_yseq
+            import ray
+
+            # check whether there has been an activate ray context yet.
+            from zoo.ray import RayContext
+            RayContext.get()
+            Ymat_id = ray.put(self.Ymat)
+            covariates_id = ray.put(self.covariates)
+            Ycov_id = ray.put(self.Ycov)
+            trainer_config_keys = ["vbsize", "hbsize", "end_index", "val_len", "lr",
+                                   "num_inputs", "num_channels", "kernel_size", "dropout"]
+            trainer_config = {k: self.__dict__[k] for k in trainer_config_keys}
+            model, val_loss = train_yseq(epochs=num_epochs,
+                                         num_workers=num_workers,
+                                         Ymat_id=Ymat_id,
+                                         covariates_id=covariates_id,
+                                         Ycov_id=Ycov_id,
+                                         **trainer_config)
+            self.seq = model
+            return val_loss
+
+    @staticmethod
+    def loss(out, target):
         criterion = nn.L1Loss()
         return criterion(out, target) / torch.abs(target.data).mean()
 
-    def __prediction__(self, data):
-        dic = None
-        out = self.seq(data)
-        return out, dic
-
-    def train_model(self, early_stop=False, tenacity=10):
+    def train_model_local(self, num_epochs=300, early_stop=False, tenacity=10):
         """
         early_stop: set true for using early stop
         tenacity: patience for early_stop
@@ -424,20 +441,20 @@ class LocalModel(object):
         optimizer = optim.Adam(params=self.seq.parameters(), lr=self.lr)
         iter_count = 0
         loss_all = []
-        loss_test_all = []
-        vae = float("inf")
+        min_val_loss = float("inf")
         scount = 0
-        while self.D.epoch < self.num_epochs:
+        val_loss = 0
+        inp_test, out_target_test, _, _ = self.D.supply_test()
+        while self.D.epoch < num_epochs:
             last_epoch = self.D.epoch
             inp, out_target, _, _ = self.D.next_batch()
-            if self.test:
-                inp_test, out_target_test, _, _ = self.D.supply_test()
+
             current_epoch = self.D.epoch
             inp = Variable(inp)
             out_target = Variable(out_target)
             optimizer.zero_grad()
-            out, dic = self.__prediction__(inp)
-            loss = self.__loss__(out, out_target, dic)
+            out = self.seq(inp)
+            loss = LocalModel.loss(out, out_target)
             iter_count = iter_count + 1
             for p in self.seq.parameters():
                 p.requires_grad = True
@@ -447,29 +464,20 @@ class LocalModel(object):
             optimizer.step()
 
             loss_all = loss_all + [loss.item()]
-            if self.test:
-                inp_test = Variable(inp_test)
-                out_target_test = Variable(out_target_test)
-                out_test, dic = self.__prediction__(inp_test)
-                losst = self.__loss__(out_test, out_target_test, dic)
-            loss_test_all = loss_test_all + [losst.item()]
 
             if current_epoch > last_epoch:
-                ve = loss_test_all[-1]
+                # validate:
+                inp_test = Variable(inp_test)
+                out_target_test = Variable(out_target_test)
+                out_test = self.seq(inp_test)
+
+                val_loss = LocalModel.loss(out_test, out_target_test).item()
                 print("Entering Epoch:{}".format(current_epoch))
                 print("Train Loss:{}".format(np.mean(loss_all)))
-                print("Validation Loss:{}".format(ve))
-                self.val_loss = ve
-                if ve <= vae:
-                    vae = ve
+                print("Validation Loss:{}".format(val_loss))
+                if val_loss <= min_val_loss:
+                    min_val_loss = val_loss
                     scount = 0
-                    # self.saved_seq = TemporalConvNet(
-                    #     num_inputs=self.seq.num_inputs,
-                    #     num_channels=self.seq.num_channels,
-                    #     kernel_size=self.seq.kernel_size,
-                    #     dropout=self.seq.dropout,
-                    # )
-                    # self.saved_seq.load_state_dict(self.seq.state_dict())
                     self.saved_seq = pickle.loads(pickle.dumps(self.seq))
                 else:
                     scount += 1
@@ -477,6 +485,7 @@ class LocalModel(object):
                         self.seq = self.saved_seq
 
                         break
+        return val_loss
 
     def convert_to_input(self, data):
         n, m = data.shape
@@ -513,7 +522,7 @@ class LocalModel(object):
             ycovs = self.convert_ycovs(data, ycovs)
             inp = torch.cat((inp, ycovs[:, :, 0: inp.size(2)]), 1)
 
-        out, dic = self.__prediction__(inp)
+        out = self.seq(inp)
         ci = inp.size(2)
         output = out[:, :, out.size(2) - 1].view(out.size(0), out.size(1), 1)
         if covariates is not None:
@@ -527,7 +536,7 @@ class LocalModel(object):
         out = torch.cat((inp, output), dim=2)
         for i in range(future - 1):
             inp = out
-            out, dic = self.__prediction__(inp)
+            out = self.seq(inp)
             output = out[:, :, out.size(2) - 1].view(out.size(0), out.size(1), 1)
             ci += 1
             if covariates is not None:

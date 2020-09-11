@@ -62,6 +62,7 @@ class TCMF(BaseModel):
         self.init_epoch = config.get("init_FX_epoch", 100)
         self.max_FX_epoch = config.get("max_FX_epoch", 300)
         self.max_TCN_epoch = config.get("max_TCN_epoch", 300)
+        self.num_workers = config.get("num_workers", 1)
 
     def _build(self, **config):
         """
@@ -107,13 +108,15 @@ class TCMF(BaseModel):
         """
         if not self.model_init:
             self._build(**config)
-        self.model.train_all_models(x,
-                                    alt_iters=self.alt_iters,
-                                    y_iters=self.y_iters,
-                                    init_epochs=self.init_epoch,
-                                    max_FX_epoch=self.max_FX_epoch,
-                                    max_TCN_epoch=self.max_TCN_epoch)
-        return self.model.Yseq.val_loss
+        val_loss = self.model.train_all_models(x,
+                                               alt_iters=self.alt_iters,
+                                               y_iters=self.y_iters,
+                                               init_epochs=self.init_epoch,
+                                               max_FX_epoch=self.max_FX_epoch,
+                                               max_TCN_epoch=self.max_TCN_epoch,
+                                               num_workers=self.num_workers,
+                                               )
+        return val_loss
 
     def fit_incremental(self, x):
         """
@@ -258,6 +261,7 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         :param x: input
         :return: result
         """
+
         def orca_predict(data):
             id_arr = data[0]
             tcmf = data[1]

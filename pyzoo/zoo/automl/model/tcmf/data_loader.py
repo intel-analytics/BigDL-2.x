@@ -49,7 +49,7 @@ import numpy as np
 import torch
 
 
-class DataLoader(object):
+class TCMFDataLoader(object):
     """
     Data Loader Class for DeepGLO
     """
