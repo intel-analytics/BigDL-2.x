@@ -94,4 +94,3 @@ if __name__ == '__main__':
         init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2, driver_memory="6g")
     main(5)
     stop_orca_context()
-

@@ -428,4 +428,4 @@ if __name__ == "__main__":
                 validation_steps=_NUM_IMAGES['validation'] // global_batch_size,
             )
             epoch += 18
-            trainer.save(os.path.join(args.log_dir, f"model-{epoch}.pkl")
+        trainer.save(os.path.join(args.log_dir, f"model-{epoch}.pkl"))
