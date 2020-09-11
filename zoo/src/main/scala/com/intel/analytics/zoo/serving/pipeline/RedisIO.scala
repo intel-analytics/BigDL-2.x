@@ -47,8 +47,8 @@ object RedisIO {
     }
     return jedis
   }
-  def writeHashMap(ppl: Pipeline, key: String, value: String): Unit = {
-    val hKey = "result:" + key
+  def writeHashMap(ppl: Pipeline, key: String, value: String, name: String): Unit = {
+    val hKey = "cluster-serving_" + name + ":" + key
     val hValue = Map[String, String]("value" -> value).asJava
     ppl.hmset(hKey, hValue)
   }

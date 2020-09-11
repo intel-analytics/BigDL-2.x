@@ -17,6 +17,8 @@
 package com.intel.analytics.zoo.serving
 
 
+import java.time.LocalDateTime
+
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{T, Table}
@@ -97,9 +99,9 @@ object SparkStructuredStreamingClusterServing {
 
     model = helper.loadInferenceModel()
     bcModel = helper.sc.broadcast(model)
-
+    val dateTime = LocalDateTime.now().toString
     model.setInferenceSummary(
-      InferenceSummary("./TensorboardEventLogs", helper.dateTime + "-ClusterServing"))
+      InferenceSummary("./TensorboardEventLogs", dateTime + "-ClusterServing"))
 
     val spark = helper.getSparkSession()
 
@@ -235,7 +237,7 @@ object SparkStructuredStreamingClusterServing {
           try {
             resDf.write
               .format("org.apache.spark.sql.redis")
-              .option("table", "result")
+              .option("table", "cluster-serving_" + serParams.jobName + ":")
               .option("key.column", "uri")
               .option("iterator.grouping.size", coreNum)
               .mode(SaveMode.Append).save()

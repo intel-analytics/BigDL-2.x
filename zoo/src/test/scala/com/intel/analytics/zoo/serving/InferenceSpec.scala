@@ -43,5 +43,4 @@ class InferenceSpec extends FlatSpec with Matchers {
     assert(res.toTensor[Float].valueAt(1) == 123)
     assert(res.toTensor[Float].valueAt(2) == 456)
   }
-
 }

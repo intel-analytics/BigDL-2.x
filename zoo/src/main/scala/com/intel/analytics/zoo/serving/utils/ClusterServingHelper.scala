@@ -22,18 +22,19 @@ import java.nio.file.{Files, Path, Paths}
 
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
-
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import java.util.LinkedHashMap
+import java.util.{LinkedHashMap, UUID}
 
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.yaml.snakeyaml.Yaml
 import java.time.LocalDateTime
+import java.util
 
+import org.apache.flink.core.execution.JobClient
 import redis.clients.jedis.Jedis
-
+import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 /**
@@ -49,10 +50,10 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
   type HM = LinkedHashMap[String, String]
 
   val configPath = _configPath
+  var jobName: String = _
 
   var lastModTime: String = null
   val logger: Logger = Logger.getLogger(getClass)
-  val dateTime = LocalDateTime.now.toString
 
   var sc: SparkContext = null
 
@@ -106,23 +107,17 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
     } else {
       _modelDir
     }
+    jobName = getYaml(modelConfig, "name", Conventions.SERVING_STREAM_NAME).asInstanceOf[String]
     modelInputs = getYaml(modelConfig, "inputs", "").asInstanceOf[String]
     modelOutputs = getYaml(modelConfig, "outputs", "").asInstanceOf[String]
     inferenceMode = getYaml(modelConfig, "mode", "").asInstanceOf[String]
 
     parseModelType(modelDir)
 
-
     /**
-     * reserved here to change engine type
-     * engine type should be able to change in run time
-     * but BigDL does not support this currently
-     * Once BigDL supports it, engine type could be set here
-     * And also other frameworks supporting multiple engine type
+     * Tensorflow usually use NHWC input
+     * While others use NCHW
      */
-
-
-
     if (modelType.startsWith("tensorflow")) {
       chwFlag = false
     }
@@ -172,11 +167,84 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
       else blasFlag = false
     }
     else blasFlag = false
-
-    new File("running").createNewFile()
-
   }
 
+  /**
+   * To check if one of the running jobs already have this name
+   * If yes, existed name is not allow to used, will not submit
+   * the job
+   * The running jobs info is stored in manager YAML
+   * @return false if running jobs exists this name
+   */
+  def checkManagerYaml(): Boolean = {
+    val yamlParser = new Yaml()
+
+    try {
+      new FileInputStream(new File(Conventions.TMP_MANAGER_YAML))
+    } catch {
+      case _ => new File(Conventions.TMP_MANAGER_YAML).createNewFile()
+    }
+    val input = new FileInputStream(new File(Conventions.TMP_MANAGER_YAML))
+    val loaded = yamlParser.load(input)
+      .asInstanceOf[LinkedHashMap[String, util.LinkedHashMap[String, String]]]
+    val configList = if (loaded != null) {
+      loaded
+    } else {
+      new LinkedHashMap[String, util.LinkedHashMap[String, String]]()
+    }
+    configList.asScala.foreach(m => {
+      if (m._2.get("name") == jobName) {
+        return false
+      }
+    })
+    true
+  }
+
+  /**
+   * Add or remove job info in manager YAML,
+   * manager YAML stores the info of running Cluster Serving jobs
+   * @param jobId the jobId of this job
+   * @param remove the flag to control whether to add job to manager YAML
+   *               or to remove the job in manager YAML
+   */
+  def updateManagerYaml(jobId: String, remove: Boolean = false): Unit = {
+    println("Updating YAML of Cluster Serving Manager")
+    val yamlParser = new Yaml()
+
+    try {
+      new FileInputStream(new File(Conventions.TMP_MANAGER_YAML))
+    } catch {
+      case _ => new File(Conventions.TMP_MANAGER_YAML).createNewFile()
+    }
+    val input = new FileInputStream(new File(Conventions.TMP_MANAGER_YAML))
+    val loaded = yamlParser.load(input)
+      .asInstanceOf[LinkedHashMap[String, util.LinkedHashMap[String, String]]]
+    val configList = if (loaded != null) {
+      loaded
+    } else {
+      new LinkedHashMap[String, util.LinkedHashMap[String, String]]()
+    }
+
+
+    if (remove) {
+      var uuid = ""
+      configList.asScala.foreach(m => {
+        if (m._2.get("id") == jobId) {
+          uuid = m._1
+        }
+      })
+      configList.remove(uuid)
+    } else {
+      val newJob = new HM()
+      newJob.put("name", jobName)
+      newJob.put("id", jobId)
+      println(s"Adding job $jobName to manager YAML")
+      configList.put(UUID.randomUUID().toString, newJob)
+    }
+
+    val outputWriter = new FileWriter(Conventions.TMP_MANAGER_YAML)
+    yamlParser.dump(configList, outputWriter)
+  }
   /**
    * Check stop signal, return true if signal detected
    * @return
@@ -344,7 +412,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
    * @param msg
    */
   def logError(msg: String): Unit = {
-    println(dateTime + " --- " + msg + "\n")
+    println("ERROR - " + msg + "\n")
     throw new Error(msg)
   }
 
