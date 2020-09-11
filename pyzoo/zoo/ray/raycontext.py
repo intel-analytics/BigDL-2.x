@@ -208,16 +208,21 @@ class RayServiceFuncGenerator(object):
             import tempfile
             import filelock
             base_path = tempfile.gettempdir()
-            if current_ip == master_ip:  # It is possible that multiple executors are on one node.
+            master_flag_path = os.path.join(base_path, "ray_master_initialized")
+            if current_ip == master_ip:
                 lock_path = os.path.join(base_path, "ray_master_start.lock")
-                flag_path = os.path.join(base_path, "ray_master_initialized")
+                # It is possible that multiple executors are on one node. In this case,
+                # the first executor that gets the lock would be the master and it would
+                # create a flag to indicate the master has initialized.
+                # The flag file is removed when ray start processes finish so that this
+                # won't affect other programs.
                 with filelock.FileLock(lock_path):
-                    if not os.path.exists(flag_path):
+                    if not os.path.exists(master_flag_path):
                         print("partition id is : {}".format(tc.partitionId()))
                         process_info = self._start_ray_node(command=self._gen_master_command(),
                                                             tag="ray-master")
                         process_info.master_addr = redis_address
-                        os.mknod(flag_path)
+                        os.mknod(master_flag_path)
 
             tc.barrier()
             if not process_info:
@@ -235,6 +240,8 @@ class RayServiceFuncGenerator(object):
                             extra_params=self.extra_params),
                         tag="raylet")
                     kill_redundant_log_monitors(redis_address=redis_address)
+            if os.path.exists(master_flag_path):
+                os.remove(master_flag_path)
 
             yield process_info
         return _start_ray_services

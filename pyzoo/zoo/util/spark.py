@@ -231,6 +231,7 @@ class SparkRunner:
                           conf=None,
                           jars=None,
                           python_location=None):
+        print("Initializing SparkContext for k8s-client mode")
         if "PYSPARK_PYTHON" not in os.environ:
             os.environ["PYSPARK_PYTHON"] = \
                 python_location if python_location else detect_python_location()
