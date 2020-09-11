@@ -92,8 +92,8 @@ def init_orca_context(cluster_mode="local", cores=2, memory="2g", num_nodes=1,
     Creates or gets a SparkContext for different Spark cluster modes (and launch Ray services
     across the cluster if necessary).
 
-    :param cluster_mode: The mode for the Spark cluster. One of "local", "yarn-client", "k8s-client",
-           "standalone" and "spark-submit". Default to be "local".
+    :param cluster_mode: The mode for the Spark cluster. One of "local", "yarn-client",
+           "k8s-client", "standalone" and "spark-submit". Default to be "local".
 
            For "spark-submit", you are supposed to use spark-submit to submit the application.
            In this case, please set the Spark configurations through command line options or
