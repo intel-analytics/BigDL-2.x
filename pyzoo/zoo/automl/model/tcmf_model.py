@@ -142,6 +142,21 @@ class TCMF(BaseModel):
             raise ValueError("We don't support input x directly.")
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling predict")
+        if num_workers > 1:
+            import ray
+            from zoo.ray import RayContext
+            try:
+                RayContext.get(initialize=False)
+            except:
+                try:
+                    # detect whether ray has been started.
+                    ray.put(None)
+                except:
+                    raise RuntimeError(f"There must be an activate ray context while running with "
+                                       f"{num_workers} workers. You can either start and init a "
+                                       f"RayContext by init_orca_context(..., init_ray_on_spark="
+                                       f"True) or start Ray with ray.init()")
+
         out = self.model.predict_horizon(
             future=horizon,
             bsize=90,

@@ -598,9 +598,6 @@ class LocalModel(object):
             if num_workers > 1:
                 import ray
                 import math
-                # check whether there has been an activate ray context yet.
-                from zoo.ray import RayContext
-                RayContext.get()
 
                 batch_num_per_worker = math.ceil(len(I) / num_workers)
                 indexes = [I[i:i + batch_num_per_worker + 1] for i in
