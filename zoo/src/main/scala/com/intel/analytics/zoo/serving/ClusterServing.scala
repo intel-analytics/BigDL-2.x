@@ -20,6 +20,7 @@ package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.zoo.serving.engine.{FlinkInference, FlinkRedisSink, FlinkRedisSource}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ClusterServingManager, Conventions, SerParams}
+import org.apache.flink.core.execution.JobClient
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
@@ -52,6 +53,10 @@ object ClusterServing {
     helper.initArgs()
     params = new SerParams(helper)
     params.timerMode = timerMode
+    if (!helper.checkManagerYaml()) {
+      println(s"ERROR - Cluster Serving with name ${helper.jobName} already exists, exited.")
+      return
+    }
     val serving = StreamExecutionEnvironment.getExecutionEnvironment
     serving.registerCachedFile(configPath, Conventions.SERVING_CONF_TMP_PATH)
     serving.registerCachedFile(params.modelDir, Conventions.SERVING_MODEL_TMP_DIR)
@@ -66,12 +71,33 @@ object ClusterServing {
         .addSink(new FlinkRedisSink(params))
     }
 
-    val jobClient = serving.executeAsync()
-    ClusterServingManager.writeObjectToFile(jobClient)
-//    serving.execute("Cluster Serving - Flink")
+    val jobClient = serving.executeAsync("Cluster Serving - " + helper.jobName)
+    val jobId = ClusterServingManager.getJobIdfromClient(jobClient)
+    Runtime.getRuntime.addShutdownHook(new ShutDownThrd(helper, jobId, jobClient))
+    helper.updateManagerYaml(jobId)
+    while (!jobClient.getJobStatus.get().isTerminalState) {
+//      println(s"Status is ${jobClient.getJobStatus.get().toString}, " +
+//        s"is terminate Boolean value is ${jobClient.getJobStatus.get().isTerminalState}")
+      Thread.sleep(3000)
+    }
+
+
   }
   def main(args: Array[String]): Unit = {
     val param = parser.parse(args, ServingParams()).head
     run(param.configPath, param.testMode, param.timerMode)
+  }
+}
+
+class ShutDownThrd(helper: ClusterServingHelper, jobId: String, jobClient: JobClient)
+  extends Thread {
+  override def run(): Unit = {
+    println(s"Shutdown hook triggered, removing job $jobId in yaml")
+    try {
+      jobClient.cancel()
+    } catch {
+      case _: Exception =>
+    }
+    helper.updateManagerYaml(jobId, remove = true)
   }
 }
