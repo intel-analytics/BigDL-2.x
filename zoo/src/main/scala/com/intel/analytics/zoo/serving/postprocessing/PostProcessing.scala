@@ -16,8 +16,11 @@
 
 package com.intel.analytics.zoo.serving.postprocessing
 
+import java.util.Base64
+
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.zoo.serving.arrow.ArrowSerializer
 import com.intel.analytics.zoo.serving.utils.TensorUtils
 
 
@@ -33,7 +36,15 @@ import com.intel.analytics.zoo.serving.utils.TensorUtils
  */
 class PostProcessing(tensor: Tensor[Float], filter: String = "") {
   var t: Tensor[Float] = tensor
+  val totalSize = TensorUtils.getTotalSize(t)
 
+//  def tensorToArrowByteString(): String = {
+//    val shape = t.size()
+//    val flatTensor = t.resize(totalSize).toArray()
+//    val serializer = new ArrowSerializer(flatTensor, shape)
+//    val byteArr = serializer.create()
+//    Base64.getEncoder.encodeToString(byteArr)
+//  }
   /**
    * Transform tensor into readable string,
    * could apply to any shape of tensor
@@ -42,13 +53,6 @@ class PostProcessing(tensor: Tensor[Float], filter: String = "") {
   def tensorToNdArrayString(): String = {
     val sizeArray = t.size()
     var strideArray = Array[Int]()
-    val totalSize = {
-      var res: Int = 1
-      (0 until sizeArray.length).foreach(i => res *= sizeArray(i))
-      res
-    }
-
-
     (0 until sizeArray.length).foreach(i => {
       var res: Int = 1
       (0 to i).foreach(j => {
@@ -149,22 +153,24 @@ class PostProcessing(tensor: Tensor[Float], filter: String = "") {
 }
 object PostProcessing {
 
-  def apply(t: Activity, filter: String = "", index: Int): String = {
-    require(index > 0, "If you pass index to post processing, index must be > 0")
-    if (t.isTable) {
-      var value = ""
-      t.toTable.keySet.foreach(key => {
-        val cls = new PostProcessing(t.toTable(key)
-          .asInstanceOf[Tensor[Float]].select(1, index), filter)
-        value += cls.processTensor()
-      })
-      value
-    } else if (t.isTensor) {
-      val cls = new PostProcessing(t.toTensor[Float].select(1, index), filter)
-      cls.processTensor()
-    } else {
-      throw new Error("Your input for Post-processing is invalid, " +
-        "neither Table nor Tensor, please check.")
-    }
+  def apply(t: Activity, filter: String = "", index: Int = -1): String = {
+    require(index > 0 , "index must > 0")
+    val byteArr = ArrowSerializer(t, index)
+    Base64.getEncoder.encodeToString(byteArr)
+//    if (t.isTable) {
+//      var value = ""
+//      t.toTable.keySet.foreach(key => {
+//        val cls = new PostProcessing(t.toTable(key)
+//          .asInstanceOf[Tensor[Float]].select(1, index), filter)
+//        value += cls.processTensor()
+//      })
+//      value
+//    } else if (t.isTensor) {
+//      val cls = new PostProcessing(t.toTensor[Float].select(1, index), filter)
+//      cls.processTensor()
+//    } else {
+//      throw new Error("Your input for Post-processing is invalid, " +
+//        "neither Table nor Tensor, please check.")
+//    }
   }
 }

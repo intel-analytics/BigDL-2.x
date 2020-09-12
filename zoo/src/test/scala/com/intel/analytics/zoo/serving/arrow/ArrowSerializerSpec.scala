@@ -2,58 +2,73 @@ package com.intel.analytics.zoo.serving.arrow
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectOutputStream}
 import java.util.Base64
 import java.nio.charset.StandardCharsets
+
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.ipc.{ArrowStreamReader, ArrowStreamWriter}
 import org.scalatest.{FlatSpec, Matchers}
-import org.apache.arrow.vector.{BitVector, FieldVector, VarCharVector, VectorSchemaRoot}
+import org.apache.arrow.vector.{BitVector, FieldVector, Float4Vector, IntVector, VarCharVector, VectorSchemaRoot}
 import java.nio.charset.StandardCharsets
+
+import com.intel.analytics.zoo.serving.arrow.ArrowSerializer.getSchema
+import org.apache.arrow.vector.dictionary.DictionaryProvider
 
 import scala.collection.JavaConverters._
 import org.apache.arrow.vector.types.pojo.Field
 
 class ArrowSerializerSpec extends FlatSpec with Matchers {
-  "Arrow Serialization" should "work" in {
-    val data = Array(1.2f,2,4,5,6)
-    val shape = Array(1,2,3,4,5)
-    val ser = new ArrowSerializer(data, shape)
-    val byteArr = ser.create()
-
+  "Arrow Serialization raw data" should "work" in {
     val allocator = new RootAllocator(Int.MaxValue)
-    val reader = new ArrowStreamReader(new ByteArrayInputStream(byteArr), allocator)
+    val data = Array(1.2f,2,4,5,6)
+    val shape = Array(1,2,3)
+    val ser = new ArrowSerializer(data, shape)
+    val vectorSchemaRoot = VectorSchemaRoot.create(getSchema, allocator)
+    vectorSchemaRoot.setRowCount(5)
+    ser.copyToSchemaRoot(vectorSchemaRoot)
+    val out = new ByteArrayOutputStream()
+    val writer = new ArrowStreamWriter(vectorSchemaRoot, null, out)
+    writer.start()
+    writer.writeBatch()
+    writer.end()
+    out.flush()
+    out.close()
+    val byteArr = out.toByteArray
+    val str = Base64.getEncoder.encodeToString(byteArr)
+    val readAllocator = new RootAllocator(Int.MaxValue)
+    val reader = new ArrowStreamReader(new ByteArrayInputStream(byteArr), readAllocator)
     val schema = reader.getVectorSchemaRoot.getSchema
     while (reader.loadNextBatch()) {
       val schemaRoot = reader.getVectorSchemaRoot
       schemaRoot
     }
-    require(schema.getFields.size() == 2, "schame number wrong.")
+    require(schema.getFields.size() == 2, "schema number wrong.")
   }
   "Arrow example" should "work" in {
     val allocator = new RootAllocator(Int.MaxValue)
-    val bitVector = new BitVector("boolean", allocator)
-    val varCharVector = new VarCharVector("varchar", allocator)
-    for (i <- 0 until 10) {
-      bitVector.setSafe(i, if (i % 2 == 0) 0
-      else 1)
-      varCharVector.setSafe(i, ("test" + i).getBytes(StandardCharsets.UTF_8))
-    }
-    bitVector.setValueCount(10)
-    varCharVector.setValueCount(10)
+    val dataVector = new Float4Vector("boolean", allocator)
+    val shapeVector = new IntVector("varchar", allocator)
+    val data = Array(1.2f,2,4,5,6)
+    val shape = Array(1,2,3)
+    val ser = new ArrowSerializer(data, shape)
+    ser.copyDataToVector(dataVector)
+    ser.copyShapeToVector(shapeVector)
+    val fields = List(dataVector.getField, shapeVector.getField)
+    val vectors = List[FieldVector](dataVector, shapeVector)
+    val vectorSchemaRoot = new VectorSchemaRoot(fields.asJava, vectors.asJava)
 
-    val fields = List(bitVector.getField, varCharVector.getField)
-    val vectors = List[FieldVector](bitVector, varCharVector)
-    val root = new VectorSchemaRoot(fields.asJava, vectors.asJava)
     val out = new ByteArrayOutputStream()
-    val writer = new ArrowStreamWriter(root, null, out)
+    val writer = new ArrowStreamWriter(vectorSchemaRoot, null, out)
     writer.start()
-    // write the first batch
     writer.writeBatch()
+    writer.end()
+    out.flush()
+    out.close()
     val readAllocator = new RootAllocator(Int.MaxValue)
     val reader = new ArrowStreamReader(new ByteArrayInputStream(out.toByteArray), readAllocator)
     val schema = reader.getVectorSchemaRoot.getSchema
     while (reader.loadNextBatch()) {
       val schemaRoot = reader.getVectorSchemaRoot
       schemaRoot.getFieldVectors.asScala.foreach(v => {
-        require(v.getValueCount == 10, "vector size wrong")
+        require(v.getValueCount == 5, "vector size wrong")
       })
     }
     require(schema.getFields.size() == 2, "schema number wrong.")

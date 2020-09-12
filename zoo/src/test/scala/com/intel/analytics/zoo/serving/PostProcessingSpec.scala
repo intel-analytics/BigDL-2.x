@@ -40,4 +40,9 @@ class PostProcessingSpec extends FlatSpec with Matchers {
     val truthString = "[[2.0,2.0]]"
     assert(ansString == truthString)
   }
+  "Arrow encode" should "work" in {
+    val t1 = Tensor(data = Array(2.0f, 2, 3, 3), shape = Array(2, 2))
+    val byteArr = PostProcessing(t1)
+    byteArr
+  }
 }
