@@ -30,7 +30,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 
 from zoo.orca import init_orca_context, stop_orca_context
-from zoo.orca.data import SparkXShards
+from zoo.orca.data import SparkXShards, XShards
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo import get_node_and_core_number
 from zoo.tfpark import *
@@ -73,44 +73,29 @@ def main(cluster_mode, max_epoch, file_path, batch_size):
     x_train_filenames, x_val_filenames, y_train_filenames, y_val_filenames = \
         train_test_split(x_train_filenames, y_train_filenames, test_size=0.2, random_state=42)
 
-    def load_and_process_image(file_paths):
-        results = list()
-        for path in file_paths:
-            array = mpimg.imread(path)
-            result = np.array(Image.fromarray(array).resize(size=(128, 128)))
-            result = result.astype(float)
-            result /= 255.0
-            results.append(result)
-        return np.stack(results)
+    def load_and_process_image(path):
+        array = mpimg.imread(path)
+        result = np.array(Image.fromarray(array).resize(size=(128, 128)))
+        result = result.astype(float)
+        result /= 255.0
+        return result
 
-    def load_and_process_image_label(file_paths):
-        results = list()
-        for path in file_paths:
-            array = mpimg.imread(path)
-            result = np.array(Image.fromarray(array).resize(size=(128, 128)))
-            result = np.expand_dims(result[:, :, 1], axis=-1)
-            result = result.astype(float)
-            result /= 255.0
-            results.append(result)
-        return np.stack(results)
+    def load_and_process_image_label(path):
+        array = mpimg.imread(path)
+        result = np.array(Image.fromarray(array).resize(size=(128, 128)))
+        result = np.expand_dims(result[:, :, 1], axis=-1)
+        result = result.astype(float)
+        result /= 255.0
+        return result
 
-    def get_data_shards(x_filenames, y_filenames):
-        node_num, core_num = get_node_and_core_number()
-        total_core_num = node_num * core_num
-        images = sc.parallelize(np.array_split(x_filenames, total_core_num)).map(
-            lambda filepaths: load_and_process_image(filepaths))
-        label_images = sc.parallelize(np.array_split(y_filenames, total_core_num)).map(
-            lambda filepaths: load_and_process_image_label(filepaths))
-        rdd = images.zip(label_images)
-        shards = SparkXShards(rdd)
-        shards = shards.transform_shard(lambda images_labels_tuple: {
-            "x": images_labels_tuple[0],
-            "y": images_labels_tuple[1]
-        })
-        return shards
-
-    train_shards = get_data_shards(x_train_filenames, y_train_filenames)
-    val_shards = get_data_shards(x_val_filenames, y_val_filenames)
+    train_images = np.stack([load_and_process_image(filepath) for filepath in x_train_filenames])
+    train_label_images = np.stack([load_and_process_image_label(filepath)
+                                   for filepath in y_train_filenames])
+    val_images = np.stack([load_and_process_image(filepath) for filepath in x_val_filenames])
+    val_label_images = np.stack([load_and_process_image_label(filepath)
+                                 for filepath in y_val_filenames])
+    train_shards = XShards.partition({"x": train_images, "y": train_label_images})
+    val_shards = XShards.partition({"x": val_images, "y": val_label_images})
 
     # Build the U-Net model
     def conv_block(input_tensor, num_filters):
@@ -208,6 +193,8 @@ def main(cluster_mode, max_epoch, file_path, batch_size):
     plt.suptitle("Examples of Input Image, Label, and Prediction")
     plt.show()
 
+    stop_orca_context()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -222,4 +209,3 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     main(args.cluster_mode, args.epochs, args.file_path, args.batch_size)
-    stop_orca_context()
