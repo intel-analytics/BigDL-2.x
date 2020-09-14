@@ -7,8 +7,8 @@ This is an example to demonstrate how to use Analytics-Zoo's Orca TF Estimator A
 Download and install latest analytics whl by following instructions ([here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#install-the-latest-nightly-build-wheels-for-pip)).
 
 ```bash
-conda create -n tf-na python=3.7
-conda activate tf-na
+conda create -n zoo python=3.7
+conda activate zoo
 pip install tensorflow==1.15
 pip install Pillow
 pip install pandas
@@ -31,3 +31,9 @@ python image_segmentation.py --cluster_mode local
 ```bash
 python image_segmentation.py --cluster_mode yarn 
 ```
+
+Options
+* `--cluster_mode` The mode for the Spark cluster. local or yarn. Default to be `local`.
+* `--file_path` The path to carvana train.zip, train_mask.zip and train_mask.csv.zip. Default to be `/tmp/carvana/`.
+* `--epochs` The number of epochs to train the model. Default to be 8.
+* `--batch_size` Batch size for training and prediction. Default to be 8.
