@@ -25,17 +25,18 @@ ANALYTICS_ZOO_PYTHON_DIR="$(cd ${RUN_SCRIPT_DIR}/../../pyzoo; pwd)"
 echo $ANALYTICS_ZOO_PYTHON_DIR
 
 if (( $# < 3)); then
-  echo "Usage: release.sh platform version upload mvn_parameters"
-  echo "Usage example: bash release.sh linux default true"
-  echo "Usage example: bash release.sh linux 0.6.0.dev0 true"
+  echo "Usage: release.sh platform version upload quick_build mvn_parameters"
+  echo "Usage example: bash release.sh linux default false true"
+  echo "Usage example: bash release.sh mac 0.6.0.dev0 true true"
   echo "If needed, you can also add other profiles such as: -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.4+"
   exit -1
 fi
 
 platform=$1
 version=$2
-upload=$3
-profiles=${*:4}
+quick=$3  # Whether to rebuild the jar
+upload=$4  # Whether to upload the whl to pypi
+profiles=${*:5}
 
 if [ "${version}" != "default" ]; then
     echo "User specified version: ${version}"
@@ -58,8 +59,12 @@ else
 fi
 
 build_command="${ANALYTICS_ZOO_HOME}/make-dist.sh ${dist_profile}"
-echo "Build command: ${build_command}"
+if [ "$quick" == "true" ]; then
+    echo "Skipping rebuilding the jar for Analytics Zoo"
+else
+    echo "Build command: ${build_command}"
 $build_command
+fi
 
 # delete org/tensorflow/util here
 export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/dist/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
