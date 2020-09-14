@@ -141,7 +141,7 @@ def main(cluster_mode, max_epoch, file_path, batch_size):
         y_pred_f = tf.reshape(y_pred, [-1])
         intersection = tf.reduce_sum(y_true_f * y_pred_f)
         score = (2. * intersection + smooth) / (
-                    tf.reduce_sum(y_true_f) + tf.reduce_sum(y_pred_f) + smooth)
+                tf.reduce_sum(y_true_f) + tf.reduce_sum(y_pred_f) + smooth)
         return score
 
     # Define custom loss function
