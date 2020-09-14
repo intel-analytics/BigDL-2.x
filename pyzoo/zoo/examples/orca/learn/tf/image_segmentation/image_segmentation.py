@@ -50,8 +50,7 @@ def main(cluster_mode, max_epoch, file_path, batch_size):
     if cluster_mode == "local":
         init_orca_context(cluster_mode="local", cores=4, memory="10g")
     elif cluster_mode == "yarn":
-        init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2,
-                               driver_memory="10g")
+        init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2, driver_memory="10g")
 
     load_data(file_path)
     img_dir = os.path.join(file_path, "train")
