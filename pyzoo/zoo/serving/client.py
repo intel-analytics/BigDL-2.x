@@ -196,7 +196,7 @@ class OutputQueue(API):
         r = [i for i in myreader]
         assert len(r) > 0
         if len(r) == 1:
-            return self.get_ndarray_from_record_batch(r)
+            return self.get_ndarray_from_record_batch(r[0])
         else:
             l = []
             for ele in r:
