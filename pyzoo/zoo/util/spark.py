@@ -104,11 +104,11 @@ class SparkRunner:
             preload_so = executor_python_env + "/lib/libpython" + py_version + "m.so"
             ld_path = executor_python_env + "/lib:" + executor_python_env + "/lib/python" +\
                 py_version + "/lib-dynload"
-            if "spark.executorEnv.LD_LIBRARY_PATH" in conf:
-                ld_path = "{}:{}".format(ld_path, conf["spark.executorEnv.LD_LIBRARY_PATH"])
+            if "spark.executor.extraLibraryPath" in conf:
+                ld_path = "{}:{}".format(ld_path, conf["spark.executor.extraLibraryPath"])
             conf.update({"spark.scheduler.minRegisteredResourcesRatio": "1.0",
                          "spark.executorEnv.PYTHONHOME": executor_python_env,
-                         "spark.executorEnv.LD_LIBRARY_PATH": ld_path,
+                         "spark.executor.extraLibraryPath": ld_path,
                          "spark.executorEnv.LD_PRELOAD": preload_so})
             if spark_yarn_archive:
                 conf["spark.yarn.archive"] = spark_yarn_archive
