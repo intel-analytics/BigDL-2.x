@@ -487,14 +487,16 @@ class LocalModel(object):
                         break
         return val_loss
 
-    def convert_to_input(self, data):
+    @staticmethod
+    def convert_to_input(data):
         n, m = data.shape
         inp = torch.from_numpy(data).view(1, n, m)
         inp = inp.transpose(0, 1).float()
 
         return inp
 
-    def convert_covariates(self, data, covs):
+    @staticmethod
+    def convert_covariates(data, covs):
         nd, td = data.shape
         rcovs = np.repeat(
             covs.reshape(1, covs.shape[0], covs.shape[1]), repeats=nd, axis=0
@@ -502,44 +504,35 @@ class LocalModel(object):
         rcovs = torch.from_numpy(rcovs).float()
         return rcovs
 
-    def convert_ycovs(self, data, ycovs):
-        nd, td = data.shape
+    @staticmethod
+    def convert_ycovs(data, ycovs):
         ycovs = torch.from_numpy(ycovs).float()
         return ycovs
 
-    def convert_from_output(self, T):
+    @staticmethod
+    def convert_from_output(T):
         out = T.view(T.size(0), T.size(2))
         return np.array(out.detach())
 
+    @staticmethod
     def predict_future_batch(
-        self, data, covariates=None, ycovs=None, future=10
+        data, covariates=None, ycovs=None, future=10, model=None,
     ):
-        inp = self.convert_to_input(data)
-        if covariates is not None:
-            cov = self.convert_covariates(data, covariates)
+        # init inp, cov, ycovs for Local model
+        valid_cov = covariates is not None
+        inp = LocalModel.convert_to_input(data)
+        if valid_cov:
+            cov = LocalModel.convert_covariates(data, covariates)
             inp = torch.cat((inp, cov[:, :, 0: inp.size(2)]), 1)
         if ycovs is not None:
-            ycovs = self.convert_ycovs(data, ycovs)
+            ycovs = LocalModel.convert_ycovs(data, ycovs)
             inp = torch.cat((inp, ycovs[:, :, 0: inp.size(2)]), 1)
 
-        out = self.seq(inp)
         ci = inp.size(2)
-        output = out[:, :, out.size(2) - 1].view(out.size(0), out.size(1), 1)
-        if covariates is not None:
-            output = torch.cat(
-                (output, cov[:, :, ci].view(cov.size(0), cov.size(1), 1)), 1
-            )
-        if ycovs is not None:
-            output = torch.cat(
-                (output, ycovs[:, :, ci].view(ycovs.size(0), ycovs.size(1), 1)), 1
-            )
-        out = torch.cat((inp, output), dim=2)
-        for i in range(future - 1):
-            inp = out
-            out = self.seq(inp)
+        for i in range(future):
+            out = model(inp)
             output = out[:, :, out.size(2) - 1].view(out.size(0), out.size(1), 1)
-            ci += 1
-            if covariates is not None:
+            if valid_cov:
                 output = torch.cat(
                     (output, cov[:, :, ci].view(cov.size(0), cov.size(1), 1)), 1
                 )
@@ -548,9 +541,25 @@ class LocalModel(object):
                     (output, ycovs[:, :, ci].view(ycovs.size(0), ycovs.size(1), 1)), 1
                 )
             out = torch.cat((inp, output), dim=2)
+            inp = out
+            ci += 1
         out = out[:, 0, :].view(out.size(0), 1, out.size(2))
-        y = self.convert_from_output(out)
+        y = LocalModel.convert_from_output(out)
+
         return y
+
+    @staticmethod
+    def _predict_future(data, ycovs, covariates, model, future, I):
+        out = None
+        for i in range(len(I) - 1):
+            bdata = data[range(I[i], I[i + 1]), :]
+            batch_ycovs = ycovs[range(I[i], I[i + 1]), :, :] \
+                if ycovs is not None else None
+            cur_out = LocalModel.predict_future_batch(
+                bdata, covariates, batch_ycovs, future, model,
+            )
+            out = np.vstack([out, cur_out]) if out is not None else cur_out
+        return out
 
     def predict_future(
         self,
@@ -560,6 +569,7 @@ class LocalModel(object):
         future=10,
         bsize=40,
         normalize=False,
+        num_workers=1,
     ):
         """
         data_in: input past data in same format of Ymat
@@ -568,6 +578,8 @@ class LocalModel(object):
         future: number of time-points to predict
         bsize: batch size for processing (determine according to gopu memory limits)
         normalize: should be set according to the normalization used in the class initialization
+        num_workers: number of workers to run prediction. if num_workers > 1, then prediction will
+        run in distributed mode and there has to be an activate RayContext.
         """
         with torch.no_grad():
             if normalize:
@@ -581,23 +593,38 @@ class LocalModel(object):
 
             I = list(np.arange(0, n, bsize))
             I.append(n)
-            bdata = data[range(I[0], I[1]), :]
-            if ycovs is not None:
-                out = self.predict_future_batch(
-                    bdata, covariates, ycovs[range(I[0], I[1]), :, :], future
-                )
-            else:
-                out = self.predict_future_batch(bdata, covariates, None, future)
 
-            for i in range(1, len(I) - 1):
-                bdata = data[range(I[i], I[i + 1]), :]
-                if ycovs is not None:
-                    temp = self.predict_future_batch(
-                        bdata, covariates, ycovs[range(I[i], I[i + 1]), :, :], future
-                    )
-                else:
-                    temp = self.predict_future_batch(bdata, covariates, None, future)
-                out = np.vstack([out, temp])
+            model = self.seq
+            if num_workers > 1:
+                import ray
+                import math
+
+                batch_num_per_worker = math.ceil(len(I) / num_workers)
+                indexes = [I[i:i + batch_num_per_worker + 1] for i in
+                           range(0, len(I) - 1, batch_num_per_worker)]
+                print("actual number of workers used in prediction is", len(indexes))
+                data_id = ray.put(data)
+                covariates_id = ray.put(covariates)
+                ycovs_id = ray.put(ycovs)
+                model_id = ray.put(model)
+
+                @ray.remote
+                def predict_future_worker(I):
+                    data = ray.get(data_id)
+                    covariates = ray.get(covariates_id)
+                    ycovs = ray.get(ycovs_id)
+                    model = ray.get(model_id)
+                    out = LocalModel._predict_future(data, ycovs, covariates, model, future, I)
+                    return out
+
+                remote_out = ray.get([predict_future_worker
+                                     .remote(index)
+                                      for index in indexes])
+
+                out = np.concatenate(remote_out, axis=0)
+
+            else:
+                out = LocalModel._predict_future(data, ycovs, covariates, model, future, I)
 
             if normalize:
                 temp = (out - self.mini) * self.s[:, None] + self.m[:, None]

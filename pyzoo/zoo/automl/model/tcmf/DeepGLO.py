@@ -184,7 +184,7 @@ class DeepGLO(object):
                 break
 
             if i % 1000 == 0:
-                print("Recovery Loss: " + str(loss.item()))
+                print(f"Recovery Loss of epoch {i} is: " + str(loss.item()))
                 lprev = loss.item()
 
         return Xn.detach()
@@ -617,7 +617,7 @@ class DeepGLO(object):
         return covs
 
     def predict_horizon(
-            self, ind=None, future=10, normalize=False, bsize=90
+            self, ind=None, future=10, normalize=False, bsize=90, num_workers=1,
     ):
         last_step = self.end_index
         if ind is None:
@@ -666,6 +666,7 @@ class DeepGLO(object):
             future=future,
             bsize=bsize,
             normalize=False,
+            num_workers=num_workers,
         )
 
         if normalize:
