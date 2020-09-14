@@ -42,7 +42,10 @@ class PostProcessingSpec extends FlatSpec with Matchers {
   }
   "Arrow encode" should "work" in {
     val t1 = Tensor(data = Array(2.0f, 2, 3, 3), shape = Array(2, 2))
-    val byteArr = PostProcessing(t1)
+    val t2 = Tensor(data = Array(2.0f, 2, 3, 3), shape = Array(2, 2))
+    (0 until 100).foreach(_ => PostProcessing(t1, "", 1))
+
+    val byteArr = PostProcessing(t2, "", 1)
     byteArr
   }
 }
