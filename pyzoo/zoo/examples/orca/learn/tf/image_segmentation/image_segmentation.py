@@ -30,10 +30,8 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 
 from zoo.orca import init_orca_context, stop_orca_context
-from zoo.orca.data import SparkXShards, XShards
+from zoo.orca.data import XShards
 from zoo.orca.learn.tf.estimator import Estimator
-from zoo import get_node_and_core_number
-from zoo.tfpark import *
 
 
 def load_data_from_zip(file_path, file):
@@ -50,9 +48,9 @@ def load_data(file_path):
 
 def main(cluster_mode, max_epoch, file_path, batch_size):
     if cluster_mode == "local":
-        sc = init_orca_context(cluster_mode="local", cores=4, memory="10g")
+        init_orca_context(cluster_mode="local", cores=4, memory="10g")
     elif cluster_mode == "yarn":
-        sc = init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2,
+        init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2,
                                driver_memory="10g")
 
     load_data(file_path)
@@ -177,7 +175,7 @@ def main(cluster_mode, max_epoch, file_path, batch_size):
     val_image_label = val_shards.collect()[0]
     val_image = val_image_label["x"]
     val_label = val_image_label["y"]
-    # visualize 5 predicted result
+    # visualize 5 predicted results
     plt.figure(figsize=(10, 20))
     for i in range(5):
         img = val_image[i]
