@@ -147,7 +147,7 @@ class PostProcessing(tensor: Tensor[Float], filter: String = "") {
 object PostProcessing {
 
   def apply(t: Activity, filter: String = "", index: Int = -1): String = {
-    require(index > 0 , "index must > 0")
+    require(index > 0, "index must > 0")
     val byteArr = ArrowSerializer.activityBatchToByte(t, index)
     Base64.getEncoder.encodeToString(byteArr)
 //    if (t.isTable) {

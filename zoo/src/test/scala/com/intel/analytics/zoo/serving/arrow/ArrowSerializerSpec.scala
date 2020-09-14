@@ -1,4 +1,22 @@
+/*
+ * Copyright 2018 Analytics Zoo Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.intel.analytics.zoo.serving.arrow
+
+
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectOutputStream}
 import java.util.Base64
 import java.nio.charset.StandardCharsets
@@ -18,8 +36,8 @@ import org.apache.arrow.vector.types.pojo.Field
 class ArrowSerializerSpec extends FlatSpec with Matchers {
   "Arrow Serialization raw data" should "work" in {
     val allocator = new RootAllocator(Int.MaxValue)
-    val data = Array(1.2f,2,4,5,6)
-    val shape = Array(1,2,3)
+    val data = Array(1.2f, 2, 4, 5, 6)
+    val shape = Array(1, 2, 3)
     val ser = new ArrowSerializer(data, shape)
     val vectorSchemaRoot = VectorSchemaRoot.create(getSchema, allocator)
     vectorSchemaRoot.setRowCount(5)
@@ -46,8 +64,8 @@ class ArrowSerializerSpec extends FlatSpec with Matchers {
     val allocator = new RootAllocator(Int.MaxValue)
     val dataVector = new Float4Vector("boolean", allocator)
     val shapeVector = new IntVector("varchar", allocator)
-    val data = Array(1.2f,2,4,5,6)
-    val shape = Array(1,2,3)
+    val data = Array(1.2f, 2, 4, 5, 6)
+    val shape = Array(1, 2, 3)
     val ser = new ArrowSerializer(data, shape)
     ser.copyDataToVector(dataVector)
     ser.copyShapeToVector(shapeVector)
