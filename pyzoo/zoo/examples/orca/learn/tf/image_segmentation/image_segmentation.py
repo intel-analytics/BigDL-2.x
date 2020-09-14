@@ -162,11 +162,14 @@ def main(cluster_mode, max_epoch, file_path, batch_size):
 
     # create an estimator from keras model
     est = Estimator.from_keras(keras_model=net)
+    # fit with estimator
     est.fit(data=train_shards,
             batch_size=batch_size,
             epochs=max_epoch)
+    # evaluate with estimator
     result = est.evaluate(val_shards)
     print(result)
+    # predict with estimator
     val_shards.cache()
     val_image_shards = val_shards.transform_shard(lambda val_dict: {"x": val_dict["x"]})
     pred_shards = est.predict(data=val_image_shards, batch_size=batch_size)
@@ -174,6 +177,7 @@ def main(cluster_mode, max_epoch, file_path, batch_size):
     val_image_label = val_shards.collect()[0]
     val_image = val_image_label["x"]
     val_label = val_image_label["y"]
+    # visualize 5 predicted result
     plt.figure(figsize=(10, 20))
     for i in range(5):
         img = val_image[i]
