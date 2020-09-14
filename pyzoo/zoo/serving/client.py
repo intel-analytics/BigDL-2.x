@@ -193,10 +193,18 @@ class OutputQueue(API):
         a = pa.BufferReader(b)
         c = a.read_buffer()
         myreader = pa.ipc.open_stream(c)
-        a = myreader.read_next_batch()
+        r = [i for i in myreader]
+        assert len(r) > 0
+        if len(r) == 1:
+            return self.get_ndarray_from_record_batch(r)
+        else:
+            l = []
+            for ele in r:
+                l.append(self.get_ndarray_from_record_batch(ele))
+            return l
 
-        data = a[0].to_numpy()
-        shape_list = a[1].to_pylist()
+    def get_ndarray_from_record_batch(self, record_batch):
+        data = record_batch[0].to_numpy()
+        shape_list = record_batch[1].to_pylist()
         shape = [i for i in shape_list if i]
         return data.reshape(shape)
-
