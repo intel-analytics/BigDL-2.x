@@ -38,13 +38,6 @@ class PostProcessing(tensor: Tensor[Float], filter: String = "") {
   var t: Tensor[Float] = tensor
   val totalSize = TensorUtils.getTotalSize(t)
 
-//  def tensorToArrowByteString(): String = {
-//    val shape = t.size()
-//    val flatTensor = t.resize(totalSize).toArray()
-//    val serializer = new ArrowSerializer(flatTensor, shape)
-//    val byteArr = serializer.create()
-//    Base64.getEncoder.encodeToString(byteArr)
-//  }
   /**
    * Transform tensor into readable string,
    * could apply to any shape of tensor
@@ -155,7 +148,7 @@ object PostProcessing {
 
   def apply(t: Activity, filter: String = "", index: Int = -1): String = {
     require(index > 0 , "index must > 0")
-    val byteArr = ArrowSerializer(t, index)
+    val byteArr = ArrowSerializer.activityBatchToByte(t, index)
     Base64.getEncoder.encodeToString(byteArr)
 //    if (t.isTable) {
 //      var value = ""

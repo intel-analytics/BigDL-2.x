@@ -1,7 +1,6 @@
 package com.intel.analytics.zoo.serving.arrow
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
-import java.util
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -14,21 +13,47 @@ import org.apache.arrow.vector.{FieldVector, Float4Vector, IntVector, VectorSche
 
 import scala.collection.JavaConverters._
 
+/**
+ * An ArrowSerializer is an instance to handle Arrow serialization of a Tensor
+ * Mulitple Tensor output, aka, Table, is processed by object ArrowSerializaer
+ * which construct multiple ArrowSerializer
+ * @param data data array of flattened Tensor
+ * @param shape shape array of Tensor
+ */
 class ArrowSerializer(data: Array[Float], shape: Array[Int]) {
-
-
+  /**
+   * Copy data array to Arrow float vector
+   * @param vector
+   */
   def copyDataToVector(vector: Float4Vector): Unit = {
     vector.allocateNew(data.size)
     (0 until data.size).foreach(i => vector.set(i, data(i)))
     vector.setValueCount(data.size)
   }
+  /**
+   * Copy shape array to Arrow shape vector
+   * @param vector
+   */
   def copyShapeToVector(vector: IntVector): Unit = {
     vector.allocateNew(shape.size)
     (0 until shape.size).foreach(i => vector.set(i, shape(i)))
     vector.setValueCount(data.size)
   }
-
   /**
+   * Copy the data and shape in this class into vectorSchemaRoot
+   * vectorSchemaRoot is then used to store the data
+   * which could be written to Arrow buffer
+   * @param vectorSchemaRoot
+   */
+  def copyToSchemaRoot(vectorSchemaRoot: VectorSchemaRoot): Unit = {
+    vectorSchemaRoot.setRowCount(data.size)
+    val dataVector = vectorSchemaRoot.getVector("data").asInstanceOf[Float4Vector]
+    val shapeVector = vectorSchemaRoot.getVector("shape").asInstanceOf[IntVector]
+    copyDataToVector(dataVector)
+    copyShapeToVector(shapeVector)
+  }
+  /**
+   * deprecated
    * Create a vector of data and shape of type ListVector
    * @return
    */
@@ -41,7 +66,7 @@ class ArrowSerializer(data: Array[Float], shape: Array[Int]) {
     dataList.startNewValue(0)
     copyDataToVector(dataVector)
     dataList.endValue(0, data.size)
-    dataList.setValueCount(5)
+    dataList.setValueCount(1)
     // copy shape into shape ListVector
     val shapeList = vectorSchemaRoot.getVector("shape").asInstanceOf[ListVector]
     val shapeVector = shapeList.getDataVector.asInstanceOf[IntVector]
@@ -52,22 +77,29 @@ class ArrowSerializer(data: Array[Float], shape: Array[Int]) {
 
     vectorSchemaRoot
   }
-  def copyToSchemaRoot(vectorSchemaRoot: VectorSchemaRoot): Unit = {
-    vectorSchemaRoot.setRowCount(data.size)
-    val dataVector = vectorSchemaRoot.getVector("data").asInstanceOf[Float4Vector]
-    val shapeVector = vectorSchemaRoot.getVector("shape").asInstanceOf[IntVector]
-    copyDataToVector(dataVector)
-    copyShapeToVector(shapeVector)
-  }
-
-
 }
+
+/**
+ * Object ArrowSerializer wraps the operations in class ArrowSerializer
+ * and could get either Tensor or Table and serialize it to array of byte
+ */
 object ArrowSerializer {
+  /**
+   * get Arrow schema of Tensor, which is regular schema of data and shape
+   * @return
+   */
   def getSchema: Schema = {
     val dataField = new Field("data", FieldType.nullable(Conventions.ARROW_FLOAT), null)
     val shapeField = new Field("shape", FieldType.nullable(Conventions.ARROW_INT), null)
     new Schema(List(dataField, shapeField).asJava, null)
   }
+  /**
+   * Write Tensor to VectorSchemaRoot, and use ArrowStreamWriter to write
+   * The ArrowStreamWriter is pointed to ByteArrayOutputStream in advance
+   * @param tensor Tensor to write
+   * @param vectorSchemaRoot VectorSchemaRoot to store data of Tensor
+   * @param writer ArrowStreamWriter to write Tensor
+   */
   def writeTensor(tensor: Tensor[Float],
                   vectorSchemaRoot: VectorSchemaRoot,
                   writer: ArrowStreamWriter): Unit = {
@@ -78,7 +110,14 @@ object ArrowSerializer {
     serializer.copyToSchemaRoot(vectorSchemaRoot)
     writer.writeBatch()
   }
-  def apply(t: Activity, idx: Int): Array[Byte] = {
+
+  /**
+   * Convert Activity batch to array of byte
+   * @param t Activity to convert
+   * @param idx index of Activity to convert in this batch
+   * @return array of byte converted
+   */
+  def activityBatchToByte(t: Activity, idx: Int): Array[Byte] = {
     val allocator = new RootAllocator(Int.MaxValue)
     val out = new ByteArrayOutputStream()
     val vectorSchemaRoot = VectorSchemaRoot.create(getSchema, allocator)
