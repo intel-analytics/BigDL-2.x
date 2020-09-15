@@ -22,6 +22,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from zoo import init_spark_on_local, init_spark_on_yarn
 from zoo.ray import RayContext
+from zoo.automl.model.XGBoost import XGBoost
 from zoo.orca.automl.AutoXGBoost import AutoXGBoost
 from zoo.automl.config.recipe import *
 
@@ -71,8 +72,8 @@ if __name__ == '__main__':
     ]
 
     # path = "./airline_14col.data"
-    # num_rows = 2500000  # number of rows to be used in this notebook; max: 115000000
-    num_rows = 2500
+    num_rows = 2500000  # number of rows to be used in this notebook; max: 115000000
+    # num_rows = 2500
 
     dataset_config = {
         "nrows": num_rows,  # Max Rows in dataset: 115000000
@@ -104,18 +105,39 @@ if __name__ == '__main__':
 
     n_estimators_range = (50, 1000)
     max_depth_range = (2, 15)
-    max_features_range = (0.1, 0.8)
+    # max_features_range = (0.1, 0.8)
 
     input_cols.remove("ArrDelay")
+    config = {"tree_method":'hist', "learning_rate":0.1, "gamma":0.1,
+              "min_child_weight":30, "reg_lambda":1, "scale_pos_weight":2,
+              "subsample":1, "n_jobs":56
+    }
+
+    # config2 = {"tree_method": 'hist', "learning_rate": 0.1, "gamma": 0.1,
+    #           "min_child_weight": 30, "reg_lambda": 1, "scale_pos_weight": 2,
+    #           "subsample": 1, "n_jobs": -1, "max_depth":15, "n_estimators":1000
+    #           }
+    # model = XGBoost(model_type="classifier",config=config2)
+    # train_x = train_df[input_cols]
+    # train_y = train_df[["ArrDelayBinary"]]
+    #
+    # val_x = val_df[input_cols]
+    # val_y = val_df[["ArrDelayBinary"]]
+    # t = model.fit_eval(train_x, train_y, (val_x, val_y))
+    # result = model.predict(val_x)
+    # evaluate_result = model.evaluate(val_x, val_y, metrics=['accuracy'])
+    # print("accuracy: ", evaluate_result)
+
     estimator = AutoXGBoost().classifier(feature_cols=input_cols,
-                                        target_col="ArrDelayBinary")
+                                        target_col="ArrDelayBinary",
+                                         config=config)
 
     import time
     start = time.time()
     pipeline = estimator.fit(train_df,
                        validation_df=val_df,
-                       metric="logloss",
-                       recipe=XgbRegressorSkOptRecipe())
+                       metric="error",
+                       recipe=XgbRegressorSkOptRecipe(num_rand_samples=30))
     end = time.time()
     print("elapse: ", (end-start))
     accuracy = pipeline.evaluate(val_df, metrics=["accuracy"])

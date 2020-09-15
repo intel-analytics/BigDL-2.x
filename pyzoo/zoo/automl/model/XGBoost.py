@@ -131,7 +131,7 @@ class XGBoost(BaseModel):
             validation_data = [validation_data]
 
         self.model.fit(x, y, eval_set=validation_data, eval_metric=self.metric)
-        res = self.model.evals_result_.get("validation_0").get(self.metric)[-1]
+        res = self.model.evals_result_.get("validation_0").get(self.metric)[0]
         return res
 
     def predict(self, x):
