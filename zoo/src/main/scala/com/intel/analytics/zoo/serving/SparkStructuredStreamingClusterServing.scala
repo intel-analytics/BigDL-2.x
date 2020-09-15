@@ -67,7 +67,7 @@ object SparkStructuredStreamingClusterServing {
 //    val dataType = helper.dataType
 //    val dataShape = helper.dataShape
 
-    val (streamKey, dataField) = (Conventions.SERVING_STREAM_NAME, "data")
+    val (streamKey, dataField) = (Conventions.SERVING_STREAM_DEFAULT_NAME, "data")
 
     val filter = helper.filter
 
@@ -237,7 +237,7 @@ object SparkStructuredStreamingClusterServing {
           try {
             resDf.write
               .format("org.apache.spark.sql.redis")
-              .option("table", "cluster-serving_" + serParams.jobName + ":")
+              .option("table", Conventions.RESULT_PREFIX + serParams.jobName + ":")
               .option("key.column", "uri")
               .option("iterator.grouping.size", coreNum)
               .mode(SaveMode.Append).save()

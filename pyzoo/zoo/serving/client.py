@@ -20,6 +20,8 @@ from zoo.serving.schema import *
 import httpx
 import json
 
+RESULT_PREFIX = "cluster-serving_"
+
 
 def perdict(frontend_url, request_str):
     httpx.post(frontend_url + "/predict", data=request_str)
@@ -166,7 +168,7 @@ class OutputQueue(API):
         super().__init__(host, port)
 
     def dequeue(self):
-        res_list = self.db.keys('cluster-serving_' + self.name + ':*')
+        res_list = self.db.keys(RESULT_PREFIX + self.name + ':*')
         decoded = {}
         for res in res_list:
             res_dict = self.db.hgetall(res.decode('utf-8'))
@@ -176,11 +178,16 @@ class OutputQueue(API):
             self.db.delete(res)
         return decoded
 
-    def query(self, uri):
-        res_dict = self.db.hgetall('cluster-serving_' + self.name + ':' + uri)
+    def query_and_delete(self, uri):
+        self.query(uri, True)
+
+    def query(self, uri, delete=False):
+        res_dict = self.db.hgetall(RESULT_PREFIX + self.name + ':' + uri)
 
         if not res_dict or len(res_dict) == 0:
             return "[]"
+        if delete:
+            self.db.delete(RESULT_PREFIX + self.name + ':' + uri)
         s = res_dict[b'value'].decode('utf-8')
         if s == "NaN":
             return s
