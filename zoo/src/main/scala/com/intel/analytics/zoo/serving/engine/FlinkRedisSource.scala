@@ -56,7 +56,8 @@ class FlinkRedisSource(params: SerParams)
     }
     jedis = RedisIO.getRedisClient(redisPool)
     try {
-      jedis.xgroupCreate(Conventions.SERVING_STREAM_DEFAULT_NAME, "serving", new StreamEntryID(0, 0), true)
+      jedis.xgroupCreate(Conventions.SERVING_STREAM_DEFAULT_NAME,
+        "serving", new StreamEntryID(0, 0), true)
     } catch {
       case e: Exception =>
         println(s"$e exist group")

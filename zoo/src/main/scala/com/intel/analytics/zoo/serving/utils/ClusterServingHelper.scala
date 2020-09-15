@@ -107,7 +107,8 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
     } else {
       _modelDir
     }
-    jobName = getYaml(modelConfig, "name", Conventions.SERVING_STREAM_DEFAULT_NAME).asInstanceOf[String]
+    jobName = getYaml(modelConfig,
+      "name", Conventions.SERVING_STREAM_DEFAULT_NAME).asInstanceOf[String]
     modelInputs = getYaml(modelConfig, "inputs", "").asInstanceOf[String]
     modelOutputs = getYaml(modelConfig, "outputs", "").asInstanceOf[String]
     inferenceMode = getYaml(modelConfig, "mode", "").asInstanceOf[String]
