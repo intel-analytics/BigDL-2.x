@@ -1,10 +1,7 @@
 from __future__ import print_function
 import argparse
 import torch
-import torch.nn as nn
 import torchvision
-import torch.nn.functional as F
-import torch.optim as optim
 from torchvision import datasets, transforms
 from bigdl.optim.optimizer import *
 from zoo.pipeline.api.torch import TorchModel, TorchLoss
@@ -12,14 +9,14 @@ from zoo.pipeline.estimator import *
 from zoo.common.nncontext import *
 from zoo.feature.common import FeatureSet
 from zoo.pipeline.api.keras.metrics import Accuracy, Top5Accuracy
-from zoo.pipeline.api.keras.objectives import SparseCategoricalCrossEntropy
+from zoo.util.utils import detect_python_location
 
-import time
 import math
 
 model_names = sorted(name for name in torchvision.models.__dict__
                      if name.islower() and not name.startswith("__")
                      and callable(torchvision.models.__dict__[name]))
+
 
 def main():
     parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
@@ -64,25 +61,36 @@ def main():
                         help='num of CPUs to use.')
     parser.add_argument('--nodes', default=1, type=int,
                         help='num of nodes to use.')
+    parser.add_argument('--executor_memory', default='20g', type=str,
+                        help='size of executor memory.')
+    parser.add_argument('--driver_memory', default='20g', type=str,
+                        help='size of driver memory.')
+    parser.add_argument('--driver_cores', default=1, type=int,
+                        help='num of driver cores to use.')
     args = parser.parse_args()
     # sc = init_nncontext()
-    # sc = init_spark_on_local(cores=args.cores, conf={"spark.driver.memory": "20g"})
-    hadoop_conf_dir = os.environ.get('HADOOP_CONF_DIR')
-    num_executors = args.nodes
-    num_cores_per_executor = args.cores
-    os.environ['ZOO_MKL_NUMTHREADS'] = str(num_cores_per_executor)
-    os.environ['OMP_NUM_THREADS'] = str(num_cores_per_executor)
-    sc = init_spark_on_yarn(
-        hadoop_conf=hadoop_conf_dir,
-        conda_name=os.environ["ZOO_CONDA_NAME"],  # The name of the created conda-env
-        num_executor=num_executors,
-        executor_cores=num_cores_per_executor,
-        executor_memory="20g",
-        driver_memory="20g",
-        driver_cores=1,
-        spark_conf={"spark.rpc.message.maxSize": "1024",
-                    "spark.task.maxFailures":  "1",
-                    "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"})
+    if os.environ.get('HADOOP_CONF_DIR') is None:
+        sc = init_spark_on_local(cores=args.cores, conf={"spark.driver.memory": "20g"})
+    else:
+        hadoop_conf_dir = os.environ.get('HADOOP_CONF_DIR')
+        num_executors = args.nodes
+        executor_memory = args.executor_memory
+        driver_memory = args.driver_memory
+        driver_cores = args.driver_cores
+        num_cores_per_executor = args.cores
+        os.environ['ZOO_MKL_NUMTHREADS'] = str(num_cores_per_executor)
+        os.environ['OMP_NUM_THREADS'] = str(num_cores_per_executor)
+        sc = init_spark_on_yarn(
+            hadoop_conf=hadoop_conf_dir,
+            conda_name=detect_python_location().split("/")[-3],  # The name of the created conda-env
+            num_executors=num_executors,
+            executor_cores=num_cores_per_executor,
+            executor_memory=executor_memory,
+            driver_memory=driver_memory,
+            driver_cores=driver_cores,
+            conf={"spark.rpc.message.maxSize": "1024",
+                  "spark.task.maxFailures": "1",
+                  "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"})
 
     # Data loading code
     traindir = os.path.join(args.data, 'train')
@@ -98,10 +106,9 @@ def main():
             transforms.ToTensor(),
             normalize,
         ]))
-    
+
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=True)
-
 
     model = torchvision.models.resnet50()
     val_loader = torch.utils.data.DataLoader(
@@ -115,7 +122,8 @@ def main():
 
     iterationPerEpoch = int(math.ceil(float(1281167) / args.batch_size))
     step = Step(iterationPerEpoch * 30, 0.1)
-    zooOptimizer = SGD(args.lr, momentum=args.momentum, dampening=0.0, leaningrate_schedule=step, weightdecay=args.weight_decay)
+    zooOptimizer = SGD(args.lr, momentum=args.momentum, dampening=0.0, leaningrate_schedule=step,
+                       weightdecay=args.weight_decay)
     zooModel = TorchModel.from_pytorch(model)
     criterion = torch.nn.CrossEntropyLoss()
     zooCriterion = TorchLoss.from_pytorch(criterion)
