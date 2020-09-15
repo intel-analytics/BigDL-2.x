@@ -24,6 +24,7 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
     val loadModelCode =
       s"""
          |import torch
+         |import io
          |from torch.optim.optimizer import Optimizer
          |from torch.optim.lr_scheduler import _LRScheduler
          |from zoo.pipeline.api.torch import zoo_pickle_module

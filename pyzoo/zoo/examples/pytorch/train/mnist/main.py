@@ -19,7 +19,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets, transforms
-from zoo.pipeline.api.torch import TorchModel, TorchLoss
+from zoo.pipeline.api.torch import TorchModel, TorchLoss, TorchOptim
 from zoo.pipeline.estimator import *
 from bigdl.optim.optimizer import SGD, Adam
 from zoo.common.nncontext import *
@@ -90,6 +90,7 @@ def main():
         num_cores_per_executor = 4
         hadoop_conf_dir = os.environ.get('HADOOP_CONF_DIR')
         zoo_conda_name = os.environ.get('ZOO_CONDA_NAME')  # The name of the created conda-env
+        #del os.environ['PYTHONHOME']
         sc = init_spark_on_yarn(
             hadoop_conf=hadoop_conf_dir,
             conda_name=zoo_conda_name,
@@ -106,10 +107,11 @@ def main():
     model.train()
     criterion = nn.NLLLoss()
 
-    adam = Adam(args.lr)
+    adam = torch.optim.Adam(model.parameters(), lr=args.lr)
     zoo_model = TorchModel.from_pytorch(model)
     zoo_criterion = TorchLoss.from_pytorch(criterion)
-    zoo_estimator = Estimator(zoo_model, optim_methods=adam)
+    zoo_optim = TorchOptim.from_pytorch(adam)
+    zoo_estimator = Estimator(zoo_model, optim_methods=zoo_optim)
     train_featureset = FeatureSet.pytorch_dataloader(train_loader)
     test_featureset = FeatureSet.pytorch_dataloader(test_loader)
     from bigdl.optim.optimizer import MaxEpoch, EveryEpoch
