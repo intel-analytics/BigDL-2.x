@@ -79,12 +79,21 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
 
   }
 
-  override def clearHistory(): Unit = ???
+  override def clearHistory(): Unit = {
 
-  override def getLearningRate(): Double = ???
+  }
+
+  override def getLearningRate(): Double = {
+    optimType match {
+      case Optim =>
+        PythonInterpreter.getValue[Double](s"${name}.defaults['lr']")
+      case _ =>
+        throw new IllegalArgumentException()
+    }
+  }
 
   override def loadFromTable(config: Table): TorchOptim.this.type = {
-    throw new UnsupportedOperationException()
+    this
   }
 
 }
