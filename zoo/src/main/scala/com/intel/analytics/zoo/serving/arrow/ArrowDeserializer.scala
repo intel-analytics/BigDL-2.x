@@ -70,6 +70,16 @@ class ArrowDeserializer {
     }
     result
   }
+  def getString(arr: Array[(Array[Float], Array[Int])]): String = {
+    val strArr = arr.map(dataAndShape => {
+      val dataStr = dataAndShape._1.mkString("[", ",", "]")
+      val shapeStr = dataAndShape._2.mkString("[", ",", "]")
+      "data=" + dataStr + ",shape=" + shapeStr + ";"
+    })
+    var str = ""
+    strArr.foreach(s => str += s)
+    str
+  }
 }
 
 /**
@@ -77,8 +87,9 @@ class ArrowDeserializer {
  * to Array of (dataArray, shapeArray)
  */
 object ArrowDeserializer {
-  def apply(b64string: String): Array[(Array[Float], Array[Int])] = {
+  def apply(b64string: String): String = {
     val deserializer = new ArrowDeserializer()
-    deserializer.create(b64string)
+    val arr = deserializer.create(b64string)
+    deserializer.getString(arr)
   }
 }

@@ -136,7 +136,7 @@ class FrontendActorsSpec extends FlatSpec with Matchers with BeforeAndAfter with
       items.foreach(item => {
         val key = s"${redisOutputQueue}${item.getId()}"
         val value = new util.HashMap[String, String]()
-        value.put("result", "mock-result")
+        value.put("value", "mock-result")
         println(key, value)
         jedis.hmset(key, value)
       })

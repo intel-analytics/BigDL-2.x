@@ -165,7 +165,11 @@ class RedisGetActor(
       if (null != results && results.size == message.ids.size) {
         results.foreach(x => {
           val b64string = x._2.get("value")
-          x._2.put("value", getString(ArrowDeserializer(b64string)))
+          try {
+            x._2.put("value", ArrowDeserializer(b64string))
+          } catch {
+            case _: Exception =>
+          }
         })
         sender() ! results
         // result get, remove in redis here
@@ -185,16 +189,7 @@ class RedisGetActor(
       }).filter(!_._2.isEmpty)
     }
   }
-  def getString(arr: Array[(Array[Float], Array[Int])]): String = {
-    val strArr = arr.map(dataAndShape => {
-      val dataStr = dataAndShape._1.mkString("[", ",", "]")
-      val shapeStr = dataAndShape._2.mkString("[", ",", "]")
-      "data=" + dataStr + ",shape=" + shapeStr + ";"
-    })
-    var str = ""
-    strArr.foreach(s => str += s)
-    str
-  }
+
 }
 
 class QueryActor(redisGetActor: ActorRef) extends JedisEnabledActor {
