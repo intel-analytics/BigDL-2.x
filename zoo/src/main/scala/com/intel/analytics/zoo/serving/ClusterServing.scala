@@ -20,6 +20,7 @@ package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.zoo.serving.engine.{FlinkInference, FlinkRedisSink, FlinkRedisSource}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ClusterServingManager, Conventions, SerParams}
+import org.apache.flink.core.execution.JobClient
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
@@ -27,7 +28,7 @@ import scopt.OptionParser
 
 object ClusterServing {
   case class ServingParams(configPath: String = "config.yaml", testMode: Boolean = false,
-                           sourceNum: Int = 1)
+                           timerMode: Boolean = false)
 
   val parser = new OptionParser[ServingParams]("Text Classification Example") {
     opt[String]('c', "configPath")
@@ -36,16 +37,26 @@ object ClusterServing {
     opt[Boolean]('t', "testMode")
       .text("Text Mode of Parallelism 1")
       .action((x, params) => params.copy(testMode = x))
+    opt[Boolean]("timerMode")
+      .text("Whether to open timer mode")
+      .action((x, params) => params.copy(timerMode = x))
   }
 
   Logger.getLogger("org").setLevel(Level.ERROR)
   Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
   var params: SerParams = null
   val logger = Logger.getLogger(getClass)
-  def run(configPath: String = "config.yaml", testMode: Boolean = false): Unit = {
+  def run(configPath: String = "config.yaml",
+          testMode: Boolean = false,
+          timerMode: Boolean = false): Unit = {
     val helper = new ClusterServingHelper(configPath)
     helper.initArgs()
     params = new SerParams(helper)
+    params.timerMode = timerMode
+    if (!helper.checkManagerYaml()) {
+      println(s"ERROR - Cluster Serving with name ${helper.jobName} already exists, exited.")
+      return
+    }
     val serving = StreamExecutionEnvironment.getExecutionEnvironment
     serving.registerCachedFile(configPath, Conventions.SERVING_CONF_TMP_PATH)
     serving.registerCachedFile(params.modelDir, Conventions.SERVING_MODEL_TMP_DIR)
@@ -60,12 +71,33 @@ object ClusterServing {
         .addSink(new FlinkRedisSink(params))
     }
 
-    val jobClient = serving.executeAsync()
-    ClusterServingManager.writeObjectToFile(jobClient)
-//    serving.execute("Cluster Serving - Flink")
+    val jobClient = serving.executeAsync("Cluster Serving - " + helper.jobName)
+    val jobId = ClusterServingManager.getJobIdfromClient(jobClient)
+    Runtime.getRuntime.addShutdownHook(new ShutDownThrd(helper, jobId, jobClient))
+    helper.updateManagerYaml(jobId)
+    while (!jobClient.getJobStatus.get().isTerminalState) {
+//      println(s"Status is ${jobClient.getJobStatus.get().toString}, " +
+//        s"is terminate Boolean value is ${jobClient.getJobStatus.get().isTerminalState}")
+      Thread.sleep(3000)
+    }
+
+
   }
   def main(args: Array[String]): Unit = {
     val param = parser.parse(args, ServingParams()).head
-    run(param.configPath, param.testMode)
+    run(param.configPath, param.testMode, param.timerMode)
+  }
+}
+
+class ShutDownThrd(helper: ClusterServingHelper, jobId: String, jobClient: JobClient)
+  extends Thread {
+  override def run(): Unit = {
+    println(s"Shutdown hook triggered, removing job $jobId in yaml")
+    try {
+      jobClient.cancel()
+    } catch {
+      case _: Exception =>
+    }
+    helper.updateManagerYaml(jobId, remove = true)
   }
 }

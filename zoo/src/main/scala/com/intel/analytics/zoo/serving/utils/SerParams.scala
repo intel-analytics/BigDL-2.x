@@ -24,6 +24,7 @@ class SerParams(helper: ClusterServingHelper) extends Serializable {
   var redisHost = helper.redisHost
   var redisPort = helper.redisPort.toInt
   val coreNum = helper.coreNum
+  val jobName = helper.jobName
   val filter = helper.filter
   val chwFlag = helper.chwFlag
   val inferenceMode = helper.inferenceMode
@@ -34,6 +35,7 @@ class SerParams(helper: ClusterServingHelper) extends Serializable {
   val redisSecureEnabled = helper.redisSecureEnabled
   val redisSecureTrustStorePath = helper.redisSecureTrustStorePath
   val redisSecureTrustStorePassword = helper.redisSecureTrustStorePassword
+  var timerMode: Boolean = false
   println(s"loading params, time is ${sdf.format(lastModified)}")
 
   val resize = helper.resize

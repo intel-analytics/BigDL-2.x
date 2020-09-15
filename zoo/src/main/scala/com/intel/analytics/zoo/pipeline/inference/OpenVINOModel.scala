@@ -109,7 +109,17 @@ class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
     transferListOfActivityToActivityOfBatch(outputs, batchSize)
   }
 
-  override def copy(num: Int): Array[AbstractModel] = Array(this)
+  override def copy(num: Int): Array[AbstractModel] = {
+    Array(this)
+//    val arr = new Array[AbstractModel](num)
+//    val modelBytes = this.modelHolder.modelBytes.clone()
+//    val weightBytes = this.modelHolder.weightBytes.clone()
+//    val modelHolder = new OpenVINOModelHolder(modelBytes, weightBytes)
+//    (0 until num).foreach(i => {
+//      arr(i) = new OpenVINOModel(modelHolder, isInt8, batchSize, DeviceType.CPU)
+//    })
+//    arr
+  }
 
   override def release(): Unit = {
     isReleased match {

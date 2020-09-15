@@ -17,9 +17,11 @@
 package com.intel.analytics.zoo.serving
 
 
+import java.time.LocalDateTime
+
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, InferenceSummary}
 import com.intel.analytics.zoo.serving.utils._
-import com.intel.analytics.zoo.serving.engine.InferenceSupportive
+import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.engine.ServingReceiver
 import com.intel.analytics.zoo.serving.pipeline.{RedisIO, RedisUtils}
 import org.apache.log4j.{Level, Logger}
@@ -97,11 +99,12 @@ object SparkStreamingClusterServing {
     val acc = new LongAccumulator()
     helper.sc.register(acc)
 
-
+    val dateTime = LocalDateTime.now().toString
 
     val localSerParams = new SerParams(helper)
+    localSerParams.model = helper.loadInferenceModel()
     localSerParams.model.setInferenceSummary(
-      InferenceSummary("./TensorboardEventLogs", helper.dateTime + "-ClusterServing"))
+      InferenceSummary("./TensorboardEventLogs", dateTime + "-ClusterServing"))
     val bcSer = helper.sc.broadcast(localSerParams)
 
     val jedis = new Jedis(localSerParams.redisHost, localSerParams.redisPort)
@@ -160,7 +163,8 @@ object SparkStreamingClusterServing {
             val serParams = bcSer.value
             println(s"Take Broadcasted model time ${(System.nanoTime() - t1) / 1e9} s")
             it.grouped(serParams.coreNum).flatMap(itemBatch => {
-              InferenceSupportive.multiThreadInference(itemBatch.toIterator, serParams)
+              ClusterServingInference.multiThreadInference(itemBatch.toIterator, serParams.coreNum,
+                serParams.modelType, serParams.filter, serParams.resize, serParams.model)
             })
           })
 
@@ -177,7 +181,8 @@ object SparkStreamingClusterServing {
             val serParams = bcSer.value
             println(s"Take Broadcasted model time ${(System.nanoTime() - t1) / 1e9} s")
             it.grouped(serParams.coreNum).flatMap(itemBatch => {
-              InferenceSupportive.multiThreadInference(itemBatch.toIterator, serParams)
+              ClusterServingInference.multiThreadInference(itemBatch.toIterator, serParams.coreNum,
+                serParams.modelType, serParams.filter, serParams.resize, serParams.model)
             })
           })
         }
@@ -185,7 +190,7 @@ object SparkStreamingClusterServing {
           val serParams = bcSer.value
           val jedis = new Jedis(serParams.redisHost, serParams.redisPort)
           val ppl = jedis.pipelined()
-          it.foreach(v => RedisIO.writeHashMap(ppl, v._1, v._2))
+          it.foreach(v => RedisIO.writeHashMap(ppl, v._1, v._2, serParams.jobName))
           ppl.sync()
           jedis.close()
           Iterator(None)
@@ -197,7 +202,7 @@ object SparkStreamingClusterServing {
          * Count the statistical data and write to summary
          */
         val microBatchEnd = System.nanoTime()
-        println(s"Currently recs in redis: ${jedis.xlen(Conventions.SERVING_STREAM_NAME)}")
+        println(s"Currently recs in redis: ${jedis.xlen(Conventions.SERVING_STREAM_DEFAULT_NAME)}")
         val microBatchLatency = (microBatchEnd - microBatchStart) / 1e9
         val microBatchThroughPut = (acc.value / microBatchLatency).toFloat
         logger.info(s"Inferece end. Input size ${acc.value}. " +

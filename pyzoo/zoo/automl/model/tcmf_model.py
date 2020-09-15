@@ -62,6 +62,7 @@ class TCMF(BaseModel):
         self.init_epoch = config.get("init_FX_epoch", 100)
         self.max_FX_epoch = config.get("max_FX_epoch", 300)
         self.max_TCN_epoch = config.get("max_TCN_epoch", 300)
+        self.num_workers = config.get("num_workers", 1)
 
     def _build(self, **config):
         """
@@ -107,13 +108,15 @@ class TCMF(BaseModel):
         """
         if not self.model_init:
             self._build(**config)
-        self.model.train_all_models(x,
-                                    alt_iters=self.alt_iters,
-                                    y_iters=self.y_iters,
-                                    init_epochs=self.init_epoch,
-                                    max_FX_epoch=self.max_FX_epoch,
-                                    max_TCN_epoch=self.max_TCN_epoch)
-        return self.model.Yseq.val_loss
+        val_loss = self.model.train_all_models(x,
+                                               alt_iters=self.alt_iters,
+                                               y_iters=self.y_iters,
+                                               init_epochs=self.init_epoch,
+                                               max_FX_epoch=self.max_FX_epoch,
+                                               max_TCN_epoch=self.max_TCN_epoch,
+                                               num_workers=self.num_workers,
+                                               )
+        return val_loss
 
     def fit_incremental(self, x):
         """
@@ -125,22 +128,40 @@ class TCMF(BaseModel):
         # TODO incrementally train models
         pass
 
-    def predict(self, x=None, horizon=24, mc=False, ):
+    def predict(self, x=None, horizon=24, mc=False, num_workers=1):
         """
         Predict horizon time-points ahead the input x in fit_eval
         :param x: We don't support input x currently.
         :param horizon: horizon length to predict
         :param mc:
+        :param num_workers: the number of workers to use. Note that there has to be an activate
+            RayContext if num_workers > 1.
         :return:
         """
         if x is not None:
             raise ValueError("We don't support input x directly.")
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling predict")
+        if num_workers > 1:
+            import ray
+            from zoo.ray import RayContext
+            try:
+                RayContext.get(initialize=False)
+            except:
+                try:
+                    # detect whether ray has been started.
+                    ray.put(None)
+                except:
+                    raise RuntimeError(f"There must be an activate ray context while running with "
+                                       f"{num_workers} workers. You can either start and init a "
+                                       f"RayContext by init_orca_context(..., init_ray_on_spark="
+                                       f"True) or start Ray with ray.init()")
+
         out = self.model.predict_horizon(
             future=horizon,
             bsize=90,
             normalize=False,
+            num_workers=num_workers,
         )
         return out[:, -horizon::]
 
@@ -258,6 +279,7 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         :param x: input
         :return: result
         """
+
         def orca_predict(data):
             id_arr = data[0]
             tcmf = data[1]
