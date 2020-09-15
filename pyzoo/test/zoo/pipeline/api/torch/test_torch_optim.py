@@ -83,6 +83,5 @@ class TestPytorchOptim(TestCase):
         trained_model = az_model.to_pytorch()
 
 
-
 if __name__ == "__main__":
     pytest.main([__file__])
