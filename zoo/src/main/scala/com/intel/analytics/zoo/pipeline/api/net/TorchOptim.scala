@@ -26,10 +26,10 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
          |import torch
          |from torch.optim.optimizer import Optimizer
          |from torch.optim.lr_scheduler import _LRScheduler
+         |from zoo.pipeline.api.torch import zoo_pickle_module
          |
-         |from pyspark.serializers import CloudPickleSerializer
          |optim_by = bytes(b % 256 for b in optim_bytes)
-         |$name = CloudPickleSerializer.loads(CloudPickleSerializer, optim_by)
+         |$name = torch.load(io.BytesIO(optim_by), pickle_module=zoo_pickle_module)
          |""".stripMargin
     PythonInterpreter.exec(loadModelCode)
     if (PythonInterpreter.getValue[Boolean](s"isinstance($name, Optimizer)")) {
@@ -37,7 +37,7 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
     } else if (PythonInterpreter.getValue[Boolean](s"isinstance($name, _LRScheduler)")) {
       LrSchedule
     } else {
-      throw new IllegalArgumentException("Unknown optimizer type")
+      throw new IllegalArgumentException(s"Unknown optimizer type")
     }
   }
 
@@ -46,7 +46,7 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
 
   override def optimize(feval: Tensor[T] => (T, Tensor[T]), parameter: Tensor[T]): (Tensor[T], Array[T]) = {
     optimType match {
-      case LrSchedule =>
+      case Optim =>
         val (fx, dfdx) = feval(parameter)
         val weightName = "weight"
         if (!init) {
@@ -73,6 +73,8 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
           PythonInterpreter.getValue(s"${weightName}.data.numpy()").asInstanceOf[NDArray[_]])
         parameter.copy(updatedParameter.toTensor[T])
         (parameter, Array(fx))
+      case LrSchedule =>
+        throw new IllegalArgumentException()
     }
 
   }
@@ -93,4 +95,7 @@ object TorchOptim{
   case object LrSchedule extends OptimType
   case object Optim extends OptimType
 
+  def apply[T](optimBytes: Array[Byte])(implicit ev: TensorNumeric[T]): TorchOptim[T] = {
+    new TorchOptim[T](optimBytes)
+  }
 }
