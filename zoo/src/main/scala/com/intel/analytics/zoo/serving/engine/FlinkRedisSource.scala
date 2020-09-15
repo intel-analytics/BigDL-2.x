@@ -56,7 +56,7 @@ class FlinkRedisSource(params: SerParams)
     }
     jedis = RedisIO.getRedisClient(redisPool)
     try {
-      jedis.xgroupCreate(Conventions.SERVING_STREAM_NAME, "serving", new StreamEntryID(0, 0), true)
+      jedis.xgroupCreate(Conventions.SERVING_STREAM_DEFAULT_NAME, "serving", new StreamEntryID(0, 0), true)
     } catch {
       case e: Exception =>
         println(s"$e exist group")
@@ -80,7 +80,7 @@ class FlinkRedisSource(params: SerParams)
       readNumPerTime,
       1,
       false,
-      new SimpleEntry(Conventions.SERVING_STREAM_NAME, StreamEntryID.UNRECEIVED_ENTRY))
+      new SimpleEntry(Conventions.SERVING_STREAM_DEFAULT_NAME, StreamEntryID.UNRECEIVED_ENTRY))
     if (response != null) {
       for (streamMessages <- response.asScala) {
         val key = streamMessages.getKey

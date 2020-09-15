@@ -44,8 +44,8 @@ class FrontendActorsSpec extends FlatSpec with Matchers with BeforeAndAfter with
   implicit var executionContext: ExecutionContextExecutor = _
   implicit var timeout: Timeout = _
 
-  val redisInputQueue = Conventions.SERVING_STREAM_NAME
-  val redisOutputQueue = "result:"
+  val redisInputQueue = Conventions.SERVING_STREAM_DEFAULT_NAME
+  val redisOutputQueue = Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":"
 
   val input1 = BytesPredictionInput("aW1hZ2UgYnl0ZXM=")
   val input2 = BytesPredictionInput("aW1hZ2UgYnl0ZXM=")
