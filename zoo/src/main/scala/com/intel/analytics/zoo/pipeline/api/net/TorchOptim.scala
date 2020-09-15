@@ -95,7 +95,7 @@ object TorchOptim{
   case object LrSchedule extends OptimType
   case object Optim extends OptimType
 
-  def apply[T](optimBytes: Array[Byte])(implicit ev: TensorNumeric[T]): TorchOptim[T] = {
+  def apply[T: ClassTag](optimBytes: Array[Byte])(implicit ev: TensorNumeric[T]): TorchOptim[T] = {
     new TorchOptim[T](optimBytes)
   }
 }
