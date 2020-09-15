@@ -20,7 +20,7 @@ import torchvision
 import pytest
 
 from unittest import TestCase
-from zoo.pipeline.api.torch import TorchModel, TorchLoss, TorchOptim
+from zoo.pipeline.api.torch import TorchModel, TorchLoss
 from zoo.common.nncontext import *
 from torch.utils.data import TensorDataset, DataLoader
 from zoo.pipeline.estimator import *
@@ -179,45 +179,6 @@ class TestPytorch(TestCase):
                                   validation_method=[Accuracy()])
 
         trained_model = az_model.to_pytorch()
-
-    def test_torch_optim(self):
-        class SimpleTorchModel(nn.Module):
-            def __init__(self):
-                super(SimpleTorchModel, self).__init__()
-                self.dense1 = nn.Linear(2, 4)
-                self.bn1 = torch.nn.BatchNorm1d(4)
-                self.dense2 = nn.Linear(4, 1)
-
-            def forward(self, x):
-                x = self.dense1(x)
-                x = self.bn1(x)
-                x = torch.sigmoid(self.dense2(x))
-                return x
-
-        torch_model = SimpleTorchModel()
-        loss_fn = torch.nn.BCELoss()
-        torch_optim = torch.optim.Adam(torch_model.parameters())
-        az_model = TorchModel.from_pytorch(torch_model)
-        zoo_loss = TorchLoss.from_pytorch(loss_fn)
-
-        def train_dataloader():
-            inputs = torch.Tensor([[1, 2], [1, 3], [3, 2],
-                                   [5, 6], [8, 9], [1, 9]])
-            targets = torch.Tensor([[0], [0], [0],
-                                    [1], [1], [1]])
-            return DataLoader(TensorDataset(inputs, targets), batch_size=2)
-
-        train_featureset = FeatureSet.pytorch_dataloader(train_dataloader)
-        val_featureset = FeatureSet.pytorch_dataloader(train_dataloader)
-        zoo_optimizer = TorchOptim.from_pytorch(torch_optim)
-        estimator = Estimator(az_model, optim_methods=zoo_optimizer)
-        estimator.train_minibatch(train_featureset, zoo_loss, end_trigger=MaxEpoch(4),
-                                  checkpoint_trigger=EveryEpoch(),
-                                  validation_set=val_featureset,
-                                  validation_method=[Accuracy()])
-
-        trained_model = az_model.to_pytorch()
-
 
 
 if __name__ == "__main__":

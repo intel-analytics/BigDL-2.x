@@ -90,7 +90,6 @@ def main():
         num_cores_per_executor = 4
         hadoop_conf_dir = os.environ.get('HADOOP_CONF_DIR')
         zoo_conda_name = os.environ.get('ZOO_CONDA_NAME')  # The name of the created conda-env
-        #del os.environ['PYTHONHOME']
         sc = init_spark_on_yarn(
             hadoop_conf=hadoop_conf_dir,
             conda_name=zoo_conda_name,
