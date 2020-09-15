@@ -20,11 +20,13 @@ from zoo.serving.schema import *
 import httpx
 import json
 
+RESULT_PREFIX = "cluster-serving_"
+
 
 def perdict(frontend_url, request_str):
     httpx.post(frontend_url + "/predict", data=request_str)
 
-RESULT_PREFIX = "cluster-serving_"
+
 class API:
     """
     base level of API control
