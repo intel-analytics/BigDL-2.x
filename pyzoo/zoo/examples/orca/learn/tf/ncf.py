@@ -136,7 +136,6 @@ class NCF(object):
         self.user = tf.placeholder(dtype=tf.int32, shape=(None,))
         self.item = tf.placeholder(dtype=tf.int32, shape=(None,))
         self.label = tf.placeholder(dtype=tf.int32, shape=(None,))
-        self.label = tf.cast(self.label, tf.float32)
 
         with tf.name_scope("GMF"):
             user_embed_GMF = tf.contrib.layers.embed_sequence(self.user,
@@ -190,12 +189,13 @@ class NCF(object):
                                           units=5,
                                           name='predict')
 
-            # unstack logits into [batch_size, num_total]
-            self.logits_dense = tf.reshape(self.logits, [-1])
+            self.logits_softmax = tf.nn.softmax(self.logits)
+
+            self.class_number = tf.argmax(self.logits_softmax, 1)
 
         with tf.name_scope("loss"):
             self.loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
-                labels=self.label, logits=self.logits_dense, name='loss'))
+                labels=self.label, logits=self.logits, name='loss'))
 
         with tf.name_scope("optimzation"):
             self.optim = tf.train.AdamOptimizer(1e-3, name='Adam')
@@ -207,7 +207,7 @@ def train(train_data, test_data, user_size, item_size):
 
         estimator = zoo.orca.learn.tf.estimator.Estimator.from_graph(
             inputs=[model.user, model.item],
-            outputs=[model.logits_dense],
+            outputs=[model.class_number],
             labels=[model.label],
             loss=model.loss,
             optimizer=model.optim,
@@ -234,6 +234,8 @@ def predict(predict_data, user_size, item_size):
 
     predict_data = predict_data.transform_shard(to_predict)
 
+    tf.reset_default_graph()
+
     with tf.Session() as sess:
         model = NCF(opt.embedding_size, user_size, item_size)
 
@@ -243,7 +245,7 @@ def predict(predict_data, user_size, item_size):
 
         estimator = zoo.orca.learn.tf.estimator.Estimator.from_graph(
             inputs=[model.user, model.item],
-            outputs=[model.logits_dense],
+            outputs=[model.class_number],
             labels=[model.label],
             sess=sess,
             model_dir=opt.model_dir
