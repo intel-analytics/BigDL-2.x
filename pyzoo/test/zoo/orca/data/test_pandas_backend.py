@@ -287,7 +287,8 @@ class TestSparkXShards(TestCase):
             assert len(par) <= 1
 
         # shards of numpy array
-        data = [np.array([1, 2, 3, 4]), np.array([5, 6, 7, 8]), np.array([9, 10, 11, 12]), np.array([13, 14, 15, 16])]
+        data = [np.array([1, 2, 3, 4]), np.array([5, 6, 7, 8]),
+                np.array([9, 10, 11, 12]), np.array([13, 14, 15, 16])]
         sc = init_nncontext()
         rdd = sc.parallelize(data)
         data_shard = SparkXShards(rdd)
@@ -299,7 +300,7 @@ class TestSparkXShards(TestCase):
         partitions2 = shard3.rdd.glom().collect()
         for par in partitions2:
             assert len(par) <= 1
-            
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

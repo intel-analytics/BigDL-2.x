@@ -327,7 +327,8 @@ class SparkXShards(XShards):
                         .flatMap(lambda data: [(random.random(), x) for x in list(data)])\
                         .partitionBy(num_partitions)
                     repartitioned_shard = SparkXShards(rdd.mapPartitions(
-                        lambda iter: np.stack([[value[1] for value in list(iter)]], axis=0).astype(dtype)))
+                        lambda iter: np.stack([[value[1] for value in list(iter)]], axis=0)
+                        .astype(dtype)))
                 else:
                     rdd = self.rdd.coalesce(num_partitions)
                     from functools import reduce
