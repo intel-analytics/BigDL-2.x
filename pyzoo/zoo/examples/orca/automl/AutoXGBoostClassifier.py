@@ -72,8 +72,8 @@ if __name__ == '__main__':
     ]
 
     # path = "./airline_14col.data"
-    num_rows = 2500000  # number of rows to be used in this notebook; max: 115000000
-    # num_rows = 2500
+    # num_rows = 2500000  # number of rows to be used in this notebook; max: 115000000
+    num_rows = 2500
 
     dataset_config = {
         "nrows": num_rows,  # Max Rows in dataset: 115000000

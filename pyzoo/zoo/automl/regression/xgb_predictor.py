@@ -267,10 +267,10 @@ class XgbPredictor(object):
 
     def _make_pipeline(self, analysis, metric_mode, feature_transformers, model, remote_dir):
         metric = "reward_metric"
-        best_config = analysis.get_best_config(metric=metric, mode=metric_mode)
-        best_logdir = analysis.get_best_logdir(metric=metric, mode=metric_mode)
+        best_config = analysis.get_best_config(metric=metric, mode="max")
+        best_logdir = analysis.get_best_logdir(metric=metric, mode="max")
         print("best log dir is ", best_logdir)
-        dataframe = analysis.dataframe(metric=metric, mode=metric_mode)
+        dataframe = analysis.dataframe(metric=metric, mode="max")
         # print(dataframe)
         model_path = os.path.join(best_logdir, dataframe["checkpoint"].iloc[0])
         config = convert_bayes_configs(best_config).copy()

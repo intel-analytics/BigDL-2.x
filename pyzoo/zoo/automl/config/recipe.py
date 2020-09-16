@@ -578,7 +578,6 @@ class XgbRegressorSkOptRecipe(Recipe):
             num_rand_samples=10,
             n_estimators_range=(50, 1000),
             max_depth_range=(2, 15),
-            # max_features_range=(0.1, 0.8)
     ):
         """
         """
@@ -588,14 +587,12 @@ class XgbRegressorSkOptRecipe(Recipe):
 
         self.n_estimators_range = n_estimators_range
         self.max_depth_range = max_depth_range
-        # self.max_features_range = max_features_range
 
     def search_space(self, all_available_features):
         return {
             # -------- feature related parameters
             "n_estimators": self.n_estimators_range,
             "max_depth": self.max_depth_range,
-            # "max_features": self.max_features_range,
         }
 
     def fixed_params(self):
@@ -604,21 +601,14 @@ class XgbRegressorSkOptRecipe(Recipe):
                                          self.n_estimators_range[1]),
             "max_depth": tune.randint(self.max_depth_range[0],
                                       self.max_depth_range[1]),
-            # "max_features": tune.loguniform(self.max_features_range[0],
-            #                                 self.max_features_range[1])
         }
         return total_fixed_params
 
     def opt_params(self):
-        from skopt.space import Real, Integer
+        from skopt.space import Integer
         params = [
             Integer(self.n_estimators_range[0], self.n_estimators_range[1]),
             Integer(self.max_depth_range[0], self.max_depth_range[1]),
-            # Real(
-            #     self.max_features_range[0],
-            #     self.max_features_range[1],
-            #     prior="log-uniform",
-            # ),
         ]
         return params
 

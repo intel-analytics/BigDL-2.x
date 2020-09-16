@@ -95,7 +95,7 @@ class RayTuneSearchEngine(SearchEngine):
             self.sched = AsyncHyperBandScheduler(
                 time_attr="training_iteration",
                 metric="reward_metric",
-                mode="min",
+                mode="max",
                 max_t=50,
                 grace_period=1,
                 reduction_factor=3,
@@ -109,7 +109,7 @@ class RayTuneSearchEngine(SearchEngine):
             self.search_algorithm = BayesOptSearch(
                 self.search_space,
                 metric="reward_metric",
-                mode=metric_mode,
+                mode="max",
                 utility_kwargs=search_algorithm_params["utility_kwargs"]
             )
         elif search_algorithm == 'SkOpt':
@@ -121,7 +121,7 @@ class RayTuneSearchEngine(SearchEngine):
                 optimizer,
                 list(self.search_space.keys()),
                 metric="reward_metric",
-                mode=metric_mode,
+                mode="max",
             )
         else:
             self.search_algorithm = None

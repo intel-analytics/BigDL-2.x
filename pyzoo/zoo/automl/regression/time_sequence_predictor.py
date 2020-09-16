@@ -207,8 +207,8 @@ class TimeSequencePredictor(object):
 
     @staticmethod
     def _get_metric_mode(metric):
-        max_mode_metrics = ["r2", "auc", "error"]
-        min_mode_metrics = ["mse", "mae", "rmse", "logloss"]
+        max_mode_metrics = ["r2"]
+        min_mode_metrics = ["mse", "mae", "rmse", "logloss", "error"]
         if metric in min_mode_metrics:
             return "min"
         elif metric in max_mode_metrics:
