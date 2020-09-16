@@ -57,9 +57,6 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
 
   var sc: SparkContext = null
 
-  var modelInputs: String = ""
-  var modelOutputs: String = ""
-
   var redisHost: String = null
   var redisPort: String = null
   var nodeNum: Int = 1
@@ -108,8 +105,6 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
     }
     jobName = getYaml(modelConfig,
       "name", Conventions.SERVING_STREAM_DEFAULT_NAME).asInstanceOf[String]
-    modelInputs = getYaml(modelConfig, "inputs", "").asInstanceOf[String]
-    modelOutputs = getYaml(modelConfig, "outputs", "").asInstanceOf[String]
 
     parseModelType(modelDir)
 
@@ -343,19 +338,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
       case "tensorflowFrozenModel" =>
         model.doLoadTensorflow(weightPath, "frozenModel", 1, 1, true)
       case "tensorflowSavedModel" =>
-        modelInputs = modelInputs.filterNot((x: Char) => x.isWhitespace)
-        modelOutputs = modelOutputs.filterNot((x: Char) => x.isWhitespace)
-        val inputs = if (modelInputs == "") {
-          null
-        } else {
-          modelInputs.split(",")
-        }
-        val outputs = if (modelOutputs == "") {
-          null
-        } else {
-          modelOutputs.split(",")
-        }
-        model.doLoadTensorflow(weightPath, "savedModel", inputs, outputs)
+        model.doLoadTensorflow(weightPath, "savedModel", null, null)
       case "pytorch" => model.doLoadPyTorch(weightPath)
       case "keras" => logError("Keras currently not supported in Cluster Serving," +
         "consider transform it to Tensorflow")
