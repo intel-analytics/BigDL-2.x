@@ -134,7 +134,7 @@ class TestZouwuModelForecast(ZooTestCase):
         assert (yhat == yhat_loaded).all()
         target_value = np.random.rand(300, horizon)
         target_value = dict({"y": target_value})
-        model.evaluate(x=None, target_value=target_value, metric=['mse'])
+        assert model.evaluate(x=None, target_value=target_value, metric=['mse'])
 
     def test_forecast_tcmf_without_id(self):
         from zoo.zouwu.model.forecast import TCMFForecaster
