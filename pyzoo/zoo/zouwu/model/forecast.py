@@ -188,7 +188,7 @@ class TCMFForecaster(Forecaster):
         :param metric: the metrics
         :return:
         """
-        self.internal.evaluate(y=target_value, x=x, metric=metric)
+        return self.internal.evaluate(y=target_value, x=x, metric=metric)
 
     def predict(self,
                 x=None,
