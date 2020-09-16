@@ -61,7 +61,7 @@ class NNEstimatorWrapper(Estimator):
         from zoo.orca.learn.metrics import Metrics
         from zoo.orca.learn.trigger import Trigger
         self.estimator.setBatchSize(batch_size).setMaxEpoch(epochs)\
-            .setCachingSample(caching_sample).setFeatureCol(feature_col)
+            .setCachingSample(caching_sample).setFeaturesCol(feature_col)
         if val_data is not None:
             assert val_trigger is not None and val_methods is not None, \
                 "You should provide val_trigger and val_methods if you provide val_data."
@@ -92,7 +92,7 @@ class NNEstimatorWrapper(Estimator):
         self.model.setBatchSize(batch_size)
         if sample_preprocessing is not None:
             self.model.setSamplePreprocessing(sample_preprocessing)
-        self.model.transform(data)
+        return self.model.transform(data)
 
     def evaluate(self, data, **kwargs):
         pass
@@ -109,9 +109,12 @@ class NNEstimatorWrapper(Estimator):
             "You should provide optimizer and loss function"
         from zoo.pipeline.nnframes import NNModel
         model = NNModel.load(checkpoint)
-        return NNEstimatorWrapper(model=model, optimizer=optimizer, loss=loss,
-                                  feature_preprocessing=feature_preprocessing,
-                                  label_preprocessing=label_preprocessing)
+        nnn = model.model
+        self.estimator = NNEstimator(model.model, loss, feature_preprocessing=feature_preprocessing,
+                                     label_preprocessing=label_preprocessing)\
+            .setOptimMethod(optimizer)
+        self.model = model
+        return self
 
     def shutdown(self, force=False):
         raise NotImplementedError
