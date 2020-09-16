@@ -305,12 +305,12 @@ class SparkXShards(XShards):
                 repartitioned_shard = SparkXShards(rdd.mapPartitions(combine_df))
         elif self._get_class_name() == 'list':
             if num_partitions > self.rdd.getNumPartitions():
-                import random
-                rdd = self.rdd\
-                    .flatMap(lambda data: [(random.random(), x) for x in data])\
-                    .partitionBy(num_partitions)
+                rdd = self.rdd \
+                    .flatMap(lambda data: data) \
+                    .repartition(num_partitions)
+
                 repartitioned_shard = SparkXShards(rdd.mapPartitions(
-                    lambda iter: [[value[1] for value in list(iter)]]))
+                    lambda iter: [list(iter)]))
             else:
                 rdd = self.rdd.coalesce(num_partitions)
                 from functools import reduce
@@ -322,12 +322,11 @@ class SparkXShards(XShards):
             dtype = elem.dtype
             if len(shape) > 0:
                 if num_partitions > self.rdd.getNumPartitions():
-                    import random
                     rdd = self.rdd\
-                        .flatMap(lambda data: [(random.random(), x) for x in list(data)])\
-                        .partitionBy(num_partitions)
+                        .flatMap(lambda data: list(data))\
+                        .repartition(num_partitions)                    
                     repartitioned_shard = SparkXShards(rdd.mapPartitions(
-                        lambda iter: np.stack([[value[1] for value in list(iter)]], axis=0)
+                        lambda iter: np.stack([list(iter)], axis=0)
                         .astype(dtype)))
                 else:
                     rdd = self.rdd.coalesce(num_partitions)
