@@ -30,6 +30,15 @@ import org.apache.log4j.Logger
  */
 object ClusterServingInference {
   val logger = Logger.getLogger(getClass)
+
+  /**
+   * Default and recommended mode, use single thread in operations
+   * @param preProcessed
+   * @param modelType
+   * @param filterType
+   * @param model
+   * @return
+   */
   def singleThreadInference(preProcessed: Iterator[(String, Activity)],
                             modelType: String,
                             filterType: String = null,
@@ -52,18 +61,31 @@ object ClusterServingInference {
     })
     postProcessed
   }
+
+  /**
+   * Current used for OpenVINO model, use multiple thread to inference, and single thread
+   * to do other operations, normally only one model is used, and every thread in pipeline
+   * try to get this model if it goes to inference stage
+   * Do not need to set resize label, because only OpenVINO use it, and OpenVINO only support
+   * fixed size of input, thus mutable batch size is not supported
+   * @param preProcessed
+   * @param batchSize
+   * @param modelType
+   * @param filterType
+   * @param model
+   * @return
+   */
   def singleThreadBatchInference(preProcessed: Iterator[(String, Activity)],
                                  batchSize: Int,
                                  modelType: String,
                                  filterType: String = "",
-                                 resizeFlag: Boolean = false,
                                  model: InferenceModel = null): Iterator[(String, String)] = {
     val localModel = if (model == null) ModelHolder.model else model
     val postProcessed = preProcessed.grouped(batchSize).flatMap(pathByte => {
       try {
         val thisBatchSize = pathByte.size
         val t = Timer.timing("batch", thisBatchSize) {
-          batchInput(pathByte, batchSize, useMultiThreading = false, resizeFlag = resizeFlag)
+          batchInput(pathByte, batchSize, useMultiThreading = false, resizeFlag = false)
         }
         dimCheck(t, "add", modelType)
         val result = Timer.timing("inference", thisBatchSize) {
@@ -87,6 +109,17 @@ object ClusterServingInference {
     })
     postProcessed
   }
+
+  /**
+   * deprecated, only used in Spark backend
+   * @param preProcessed
+   * @param batchSize
+   * @param modelType
+   * @param filterType
+   * @param resizeFlag
+   * @param model
+   * @return
+   */
   def multiThreadInference(preProcessed: Iterator[(String, Activity)],
                            batchSize: Int,
                            modelType: String,
