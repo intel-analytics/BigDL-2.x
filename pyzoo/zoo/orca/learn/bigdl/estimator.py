@@ -35,18 +35,17 @@ class Estimator(object):
     def load(self, checkpoint):
         pass
 
-    def shutdown(self, force=False):
-        pass
-
     @staticmethod
-    def from_bigdl(*, model, loss, feature_preprocessing=None, label_preprocessing=None,
+    def from_bigdl(*, model, optimizer, loss, feature_preprocessing=None, label_preprocessing=None,
                    input_type="spark_dataframe"):
         if input_type == "spark_dataframe":
-            pass
+            return NNEstimatorWrapper(model=model, optimizer=optimizer, loss=loss,
+                                      feature_preprocessing=feature_preprocessing,
+                                      label_preprocessing=label_preprocessing)
         elif input_type == "featureset":
-            pass
+            raise NotImplementedError
         else:
-            raise ValueError("only horovod and bigdl backend are supported for now")
+            raise ValueError("only spark_dataframe and featureset input type are supported for now")
 
 
 class NNEstimatorWrapper(Estimator):
@@ -54,35 +53,65 @@ class NNEstimatorWrapper(Estimator):
                  label_preprocessing=None):
         self.estimator = NNEstimator(model, loss, feature_preprocessing,
                                      label_preprocessing).setOptimMethod(optimizer)
+        self.model = model
 
-    def fit(self, data, epochs, feature_col, batch_size=32, caching_sample=True, val_data=None,
-            val_trigger=None, val_methods=None, train_summary=None, val_summary=None,
-            checkpoint_path=None, checkpoint_trigger=None):
+    def fit(self, data, epochs, feature_col="features", batch_size=32, caching_sample=True,
+            val_data=None, val_trigger=None, val_methods=None, train_summary_dir=None,
+            val_summary_dir=None, app_name=None, checkpoint_path=None, checkpoint_trigger=None):
+        from zoo.orca.learn.metrics import Metrics
+        from zoo.orca.learn.trigger import Trigger
         self.estimator.setBatchSize(batch_size).setMaxEpoch(epochs)\
             .setCachingSample(caching_sample).setFeatureCol(feature_col)
         if val_data is not None:
-            pass
-        if train_summary is not None:
-            pass
-        if val_summary is not None:
-            pass
+            assert val_trigger is not None and val_methods is not None, \
+                "You should provide val_trigger and val_methods if you provide val_data."
+            val_trigger = Trigger.convert_trigger(val_trigger)
+            val_methods = Metrics.convert_metrics_list(val_methods)
+            self.estimator.setValidation(val_trigger, val_data, val_methods, batch_size)
+        if train_summary_dir is not None:
+            from bigdl.optim.optimizer import TrainSummary
+            assert app_name is not None, \
+                "You should provide app_name if you provide train_summary_dir"
+            train_summary = TrainSummary(log_dir=train_summary_dir, app_name=app_name)
+            self.estimator.setTrainSummary(train_summary)
+        if val_summary_dir is not None:
+            from bigdl.optim.optimizer import ValidationSummary
+            assert app_name is not None, \
+                "You should provide app_name if you provide val_summary_dir"
+            val_summary = ValidationSummary(log_dir=val_summary_dir, app_name=app_name)
+            self.estimator.setValidationSummary(val_summary)
         if checkpoint_path is not None:
-            pass
+            assert checkpoint_trigger is not None, \
+                "You should provide checkpoint_trigger if you provide checkpoint_path"
+            checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
+            self.estimator.setCheckpoint(checkpoint_path, checkpoint_trigger)
 
-    def predict(self, data, **kwargs):
-        pass
+        self.model = self.estimator.fit(data)
+
+    def predict(self, data, batch_size=8, sample_preprocessing=None):
+        self.model.setBatchSize(batch_size)
+        if sample_preprocessing is not None:
+            self.model.setSamplePreprocessing(sample_preprocessing)
+        self.model.transform(data)
 
     def evaluate(self, data, **kwargs):
         pass
 
     def get_model(self):
-        pass
+        return self.model
 
     def save(self, checkpoint):
-        pass
+        self.model.save(checkpoint)
 
-    def load(self, checkpoint):
-        pass
+    def load(self, checkpoint, optimizer=None, loss=None, feature_preprocessing=None,
+                 label_preprocessing=None):
+        assert optimizer is not None and loss is not None, \
+            "You should provide optimizer and loss function"
+        from zoo.pipeline.nnframes import NNModel
+        model = NNModel.load(checkpoint)
+        return NNEstimatorWrapper(model=model, optimizer=optimizer, loss=loss,
+                                  feature_preprocessing=feature_preprocessing,
+                                  label_preprocessing=label_preprocessing)
 
     def shutdown(self, force=False):
-        pass
+        raise NotImplementedError
