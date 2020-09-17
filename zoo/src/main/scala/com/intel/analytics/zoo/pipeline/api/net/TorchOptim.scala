@@ -63,37 +63,48 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
   override def optimize(
         feval: Tensor[T] => (T, Tensor[T]),
         parameter: Tensor[T]): (Tensor[T], Array[T]) = {
-    optimType match {
+    val weightName = postfix + "_weight"
+    val gradientName = postfix + "gradient"
+    val (initCode, stepCode) = optimType match {
       case Optim =>
-        val (fx, dfdx) = feval(parameter)
-        val weightName = "weight"
-        if (!init) {
-          PythonInterpreter.set(weightName, new NDArray[Array[Float]](
-            parameter.toTensor[Float].storage().array()))
-          val initCode =
-            s"""
-               |$weightName = torch.tensor($weightName, requires_grad=True)
-               |$weightName = torch.autograd.Variable($weightName)
-               |${name}.__init__([${weightName}], **${name}.defaults)
-               |""".stripMargin
-          PythonInterpreter.exec(initCode)
-        }
-        val gradientName = "gradient"
-        PythonInterpreter.set("gradient", new NDArray[Array[Float]](
-          dfdx.toTensor[Float].storage().array()))
-        val stepCode =
+        (s"""
+           |$weightName = torch.tensor($weightName, requires_grad=True)
+           |$weightName = torch.autograd.Variable($weightName)
+           |${name}.__init__([${weightName}], **${name}.defaults)
+           |""".stripMargin,
           s"""
              |${weightName}.grad = torch.tensor(${gradientName})
              |${name}.step()
              |""".stripMargin
-        PythonInterpreter.exec(stepCode)
-        val updatedParameter = PythonFeatureSet.ndArrayToTensor(
-          PythonInterpreter.getValue(s"${weightName}.data.numpy()").asInstanceOf[NDArray[_]])
-        parameter.copy(updatedParameter.toTensor[T])
-        (parameter, Array(fx))
+        )
       case LrSchedule =>
-        throw new IllegalArgumentException()
+        (s"""
+           |$weightName = torch.tensor($weightName, requires_grad=True)
+           |$weightName = torch.autograd.Variable($weightName)
+           |${name}.optimizer.__init__([${weightName}], **${name}.optimizer.defaults)
+           |""".stripMargin,
+          s"""
+             |${weightName}.grad = torch.tensor(${gradientName})
+             |${name}.optimizer.step()
+             |${name}.step()
+             |""".stripMargin
+        )
     }
+
+    val (fx, dfdx) = feval(parameter)
+    if (!init) {
+      PythonInterpreter.set(weightName, new NDArray[Array[Float]](
+        parameter.toTensor[Float].storage().array()))
+      PythonInterpreter.exec(initCode)
+      init = true
+    }
+    PythonInterpreter.set(gradientName, new NDArray[Array[Float]](
+      dfdx.toTensor[Float].storage().array()))
+    PythonInterpreter.exec(stepCode)
+    val updatedParameter = PythonFeatureSet.ndArrayToTensor(
+      PythonInterpreter.getValue(s"${weightName}.data.numpy()").asInstanceOf[NDArray[_]])
+    parameter.copy(updatedParameter.toTensor[T])
+    (parameter, Array(fx))
 
   }
 
