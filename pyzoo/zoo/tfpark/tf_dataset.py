@@ -593,7 +593,8 @@ class TFDataset(object):
     def from_tf_data_dataset(dataset, batch_size=-1,
                              batch_per_thread=-1, hard_code_batch_size=False,
                              validation_dataset=None,
-                             sequential_order=False, shuffle=True, remove_checking=False):
+                             sequential_order=False, shuffle=True,
+                             remove_checking=False, batch_outside=False):
         """
         Create a TFDataset from a tf.data.Dataset.
 
@@ -623,7 +624,7 @@ class TFDataset(object):
         """
         return TFDataDataset(dataset, batch_size, batch_per_thread,
                              hard_code_batch_size, validation_dataset,
-                             sequential_order, shuffle, remove_checking)
+                             sequential_order, shuffle, remove_checking, batch_outside)
 
     @staticmethod
     def from_dataframe(df, feature_cols, labels_cols=None, batch_size=-1,
@@ -693,15 +694,22 @@ class TFDataDataset(TFDataset):
     def __init__(self, tf_data_dataset, batch_size,
                  batch_per_thread, hard_code_batch_size=False,
                  validation_dataset=None,
-                 sequential_order=False, shuffle=True, remove_checking=False):
+                 sequential_order=False,
+                 shuffle=True,
+                 remove_checking=False, batch_outside=False):
 
         from tensorflow.python.data.ops import dataset_ops
         import tensorflow as tf
 
         # rule 1: we assume that the dataset user passed is not batched
-        rules = [(
-            lambda dataset, is_training: isinstance(dataset, dataset_ops.BatchDataset),
-            "Dataset should not be batched, please use a dataset without the batch operation"),
+        if not batch_outside:
+            rules = [(
+                    lambda dataset, is_training: isinstance(dataset, dataset_ops.BatchDataset),
+                    "Dataset should not be batched, please use a dataset without the batch operation")]
+        else:
+            rules = []
+
+        rules += [
             (
                 lambda dataset, is_training: isinstance(dataset, dataset_ops.RepeatDataset),
                 "Dataset should not be repeated, please use a dataset without the repeat operation")
@@ -723,14 +731,17 @@ class TFDataDataset(TFDataset):
             from tensorflow.python.keras.engine import training_utils
             training_utils.verify_dataset_shuffled(tf_data_dataset)
 
-        flatten_shapes = nest.flatten(tf_data_dataset.output_shapes)
-        flatten_types = nest.flatten(tf_data_dataset.output_types)
+        flatten_shapes = nest.flatten(tf.compat.v1.data.get_output_shapes(tf_data_dataset))
+        if batch_outside:
+            flatten_shapes = [shape[1:] for shape in flatten_shapes]
+        flatten_types = nest.flatten(tf.compat.v1.data.get_output_types(tf_data_dataset))
 
         flatten_tensor_structure = [TensorMeta(dtype=flatten_types[i],
                                                shape=list(flatten_shapes[i]),
                                                name="zoo_input_{}".format(i))
                                     for i in range(len(flatten_shapes))]
-        structure = tf_data_dataset.output_types
+        structure = tf.compat.v1.data.get_output_types(tf_data_dataset)
+
         if isinstance(structure, tf.DType):
             structure = (structure,)
         tensor_structure = nest.pack_sequence_as(structure,
@@ -762,10 +773,10 @@ class TFDataDataset(TFDataset):
 
         if self.hard_code_batch_size:
             self.drop_remainder = True
-
-        tf_data_dataset = tf_data_dataset.batch(self._per_partition_batch_size,
-                                                drop_remainder=self.drop_remainder)
-        if validation_dataset is not None:
+        if not batch_outside:
+            tf_data_dataset = tf_data_dataset.batch(self._per_partition_batch_size,
+                                                    drop_remainder=self.drop_remainder)
+        if validation_dataset is not None and not batch_outside:
             drop_remainder = self.hard_code_batch_size
             validation_dataset = validation_dataset.batch(self._per_partition_batch_size,
                                                           drop_remainder=drop_remainder)
@@ -779,10 +790,10 @@ class TFDataDataset(TFDataset):
 
         self.shard_index = shard_index
         self.train_dataset = tf_data_dataset
-        self.train_iterator = self.train_dataset.make_initializable_iterator()
+        self.train_iterator = tf.compat.v1.data.make_initializable_iterator(self.train_dataset)
         self.train_next_ops = nest.flatten(self.train_iterator.get_next())
         self.output_types = [t.as_datatype_enum
-                             for t in nest.flatten(self.train_dataset.output_types)]
+                             for t in nest.flatten(tf.compat.v1.data.get_output_types(self.train_dataset))]
 
         self.validation_dataset = validation_dataset
         self.validation_iterator = None
@@ -791,7 +802,7 @@ class TFDataDataset(TFDataset):
         self._train_init_op_name = self.train_iterator.initializer.name
         self._train_output_names = [op.name for op in self.train_next_ops]
         if validation_dataset is not None:
-            self.validation_iterator = self.validation_dataset.make_initializable_iterator()
+            self.validation_iterator = tf.compat.v1.data.make_initializable_iterator(self.validation_dataset)
             self.validation_next_ops = nest.flatten(self.validation_iterator.get_next())
             self._val_init_op_name = self.validation_iterator.initializer.name
             self._val_output_names = [op.name for op in self.validation_next_ops]
