@@ -99,7 +99,7 @@ def main():
     model.train()
     criterion = nn.NLLLoss()
 
-    adam = torch.optim.adam(model.parameters(), args.lr)
+    adam = torch.optim.Adam(model.parameters(), args.lr)
     zoo_estimator = Estimator.from_torch(model=model, optimizer=adam, loss=criterion,
                                          backend="bigdl")
     zoo_estimator.fit(data=train_loader, epochs=args.epochs, validation_data=test_loader,
