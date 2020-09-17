@@ -44,7 +44,7 @@ class TestEstimatorForKeras(TestCase):
         df = self.sqlContext.createDataFrame(data, schema)
         return df
 
-    def test_nnEstimator_construct_with_differnt_params(self):
+    def test_nnEstimator(self):
         linear_model = Sequential().add(Linear(2, 2))
         mse_criterion = MSECriterion()
         df = self.get_estimator_df()
@@ -74,8 +74,6 @@ class TestEstimatorForKeras(TestCase):
             assert len(res1_c) == len(res3_c)
             for idx in range(len(res1_c)):
                 assert res1_c[idx]["prediction"] == res3_c[idx]["prediction"]
-
-        print("aaa")
 
 
 if __name__ == "__main__":

@@ -53,7 +53,7 @@ class NNEstimatorWrapper(Estimator):
                  label_preprocessing=None):
         self.estimator = NNEstimator(model, loss, feature_preprocessing,
                                      label_preprocessing).setOptimMethod(optimizer)
-        self.model = model
+        self.model = None
 
     def fit(self, data, epochs, feature_col="features", batch_size=32, caching_sample=True,
             val_data=None, val_trigger=None, val_methods=None, train_summary_dir=None,
@@ -88,32 +88,41 @@ class NNEstimatorWrapper(Estimator):
 
         self.model = self.estimator.fit(data)
 
-    def predict(self, data, batch_size=8, sample_preprocessing=None):
-        self.model.setBatchSize(batch_size)
-        if sample_preprocessing is not None:
-            self.model.setSamplePreprocessing(sample_preprocessing)
-        return self.model.transform(data)
+    def predict(self, data, batch_size=8, feature_col="features", sample_preprocessing=None):
+        if self.model is not None:
+            self.model.setBatchSize(batch_size).setFeaturesCol(feature_col)
+            if sample_preprocessing is not None:
+                self.model.setSamplePreprocessing(sample_preprocessing)
+            return self.model.transform(data)
+        else:
+            raise ValueError("You should fit before calling predict")
 
     def evaluate(self, data, **kwargs):
         pass
 
     def get_model(self):
-        return self.model
+        if self.model is not None:
+            return self.model
+        else:
+            raise ValueError("You should fit before calling get_model")
 
     def save(self, checkpoint):
-        self.model.save(checkpoint)
+        if self.model is not None:
+            self.model.model.saveModel(checkpoint + ".bigdl", checkpoint + ".bin", True)
+        else:
+            raise ValueError("You should fit before calling save")
 
     def load(self, checkpoint, optimizer=None, loss=None, feature_preprocessing=None,
                  label_preprocessing=None):
         assert optimizer is not None and loss is not None, \
             "You should provide optimizer and loss function"
+        from zoo.pipeline.api.net import Net
         from zoo.pipeline.nnframes import NNModel
-        model = NNModel.load(checkpoint)
-        nnn = model.model
-        self.estimator = NNEstimator(model.model, loss, feature_preprocessing=feature_preprocessing,
+        model = Net.load_bigdl(checkpoint + ".bigdl", checkpoint + ".bin")
+        self.estimator = NNEstimator(model, loss, feature_preprocessing=feature_preprocessing,
                                      label_preprocessing=label_preprocessing)\
             .setOptimMethod(optimizer)
-        self.model = model
+        self.model = NNModel(model, feature_preprocessing=feature_preprocessing)
         return self
 
     def shutdown(self, force=False):
