@@ -21,7 +21,7 @@ stop_orca_context()
 
 For "spark-submit", you are supposed to use spark-submit to submit the application. In this case, please set the Spark configurations through command line options or
 the properties file. You need to use "spark-submit" for yarn-cluster or k8s-cluster mode. To make things easier, you are recommended to use the 
-launching [scripts](https://github.com/intel-analytics/analytics-zoo/tree/master/scripts) we provide.
+launch [scripts](https://github.com/intel-analytics/analytics-zoo/tree/master/scripts) we provide.
 
 For other cluster modes, you are recommended to install and run analytics-zoo through pip, which is more convenient.
 
