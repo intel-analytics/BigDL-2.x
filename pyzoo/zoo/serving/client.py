@@ -77,13 +77,29 @@ class InputQueue(API):
         :param request_data: string of request, or data for async enqueue
         :return:
         """
+        def json_to_ndarray_dict(json_str):
+            ndarray_dict = {}
+            data_dict = json.loads(json_str)['instances'][0]
+            for key in data_dict.keys():
+                ndarray_dict[key] = np.array(data_dict[key])
+            return ndarray_dict
+
         if self.frontend_url:
             response = self.cli.post(self.frontend_url + "/predict", data=request_data)
             predictions = json.loads(response.text)['predictions']
             processed = predictions[0].lstrip("{value=").rstrip("}")
         else:
+            try:
+                json.loads(request_data)
+                input_dict = json_to_ndarray_dict(request_data)
+            except Exception as e:
+                if isinstance(request_data, dict):
+                    input_dict = request_data
+                else:
+                    input_dict = {'t': request_data}
+
             uri = str(uuid.uuid4())
-            self.enqueue(uri, t=request_data)
+            self.enqueue(uri, **input_dict)
             processed = "[]"
             while retry > 0:
                 processed = self.output_queue.query_and_delete(uri)
