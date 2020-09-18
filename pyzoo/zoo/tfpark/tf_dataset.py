@@ -593,8 +593,10 @@ class TFDataset(object):
     def from_tf_data_dataset(dataset, batch_size=-1,
                              batch_per_thread=-1, hard_code_batch_size=False,
                              validation_dataset=None,
-                             sequential_order=False, shuffle=True,
-                             remove_checking=False, batch_outside=False):
+                             sequential_order=False,
+                             shuffle=True,
+                             remove_checking=False, batch_outside=False,
+                             inter_threads=None, intra_threads=None):
         """
         Create a TFDataset from a tf.data.Dataset.
 
@@ -624,7 +626,8 @@ class TFDataset(object):
         """
         return TFDataDataset(dataset, batch_size, batch_per_thread,
                              hard_code_batch_size, validation_dataset,
-                             sequential_order, shuffle, remove_checking, batch_outside)
+                             sequential_order, shuffle, remove_checking, batch_outside,
+                             inter_threads, intra_threads)
 
     @staticmethod
     def from_dataframe(df, feature_cols, labels_cols=None, batch_size=-1,
@@ -694,18 +697,26 @@ class TFDataDataset(TFDataset):
     def __init__(self, tf_data_dataset, batch_size,
                  batch_per_thread, hard_code_batch_size=False,
                  validation_dataset=None,
-                 sequential_order=False,
-                 shuffle=True,
-                 remove_checking=False, batch_outside=False):
+                 sequential_order=False, shuffle=True,
+                 remove_checking=False, batch_outside=False,
+                 inter_threads=None, intra_threads=None):
+        if intra_threads is None:
+            intra_threads = self.core_num
+
+        if inter_threads is None:
+            inter_threads = 1
 
         from tensorflow.python.data.ops import dataset_ops
         import tensorflow as tf
 
+        self.inter_threads = inter_threads
+        self.intra_threads = intra_threads
+
         # rule 1: we assume that the dataset user passed is not batched
         if not batch_outside:
             rules = [(
-                    lambda dataset, is_training: isinstance(dataset, dataset_ops.BatchDataset),
-                    "Dataset should not be batched, please use a dataset without the batch operation")]
+                lambda dataset, is_training: isinstance(dataset, dataset_ops.BatchDataset),
+                "Dataset should not be batched, please use a dataset without the batch operation")]
         else:
             rules = []
 
@@ -734,6 +745,7 @@ class TFDataDataset(TFDataset):
         flatten_shapes = nest.flatten(tf.compat.v1.data.get_output_shapes(tf_data_dataset))
         if batch_outside:
             flatten_shapes = [shape[1:] for shape in flatten_shapes]
+
         flatten_types = nest.flatten(tf.compat.v1.data.get_output_types(tf_data_dataset))
 
         flatten_tensor_structure = [TensorMeta(dtype=flatten_types[i],
@@ -741,7 +753,6 @@ class TFDataDataset(TFDataset):
                                                name="zoo_input_{}".format(i))
                                     for i in range(len(flatten_shapes))]
         structure = tf.compat.v1.data.get_output_types(tf_data_dataset)
-
         if isinstance(structure, tf.DType):
             structure = (structure,)
         tensor_structure = nest.pack_sequence_as(structure,
@@ -793,7 +804,8 @@ class TFDataDataset(TFDataset):
         self.train_iterator = tf.compat.v1.data.make_initializable_iterator(self.train_dataset)
         self.train_next_ops = nest.flatten(self.train_iterator.get_next())
         self.output_types = [t.as_datatype_enum
-                             for t in nest.flatten(tf.compat.v1.data.get_output_types(self.train_dataset))]
+                             for t in nest.flatten(
+                tf.compat.v1.data.get_output_types(self.train_dataset))]
 
         self.validation_dataset = validation_dataset
         self.validation_iterator = None
@@ -802,7 +814,8 @@ class TFDataDataset(TFDataset):
         self._train_init_op_name = self.train_iterator.initializer.name
         self._train_output_names = [op.name for op in self.train_next_ops]
         if validation_dataset is not None:
-            self.validation_iterator = tf.compat.v1.data.make_initializable_iterator(self.validation_dataset)
+            self.validation_iterator = tf.compat.v1.data.make_initializable_iterator(
+                self.validation_dataset)
             self.validation_next_ops = nest.flatten(self.validation_iterator.get_next())
             self._val_init_op_name = self.validation_iterator.initializer.name
             self._val_output_names = [op.name for op in self.validation_next_ops]
@@ -834,7 +847,8 @@ class TFDataDataset(TFDataset):
     def _get_training_data(self):
         jvalue = callZooFunc("float", "createTFDataFeatureSet",
                              self.graph_def, self._train_init_op_name, self.table_init_name,
-                             self._train_output_names, self.output_types, self.shard_index.name)
+                             self._train_output_names, self.output_types, self.shard_index.name,
+                             self.inter_threads, self.intra_threads)
         return FeatureSet(jvalue=jvalue)
 
     def _get_validation_data(self):
@@ -842,7 +856,8 @@ class TFDataDataset(TFDataset):
             jvalue = callZooFunc("float", "createTFDataFeatureSet",
                                  self.graph_def, self._val_init_op_name, self.table_init_name,
                                  self._val_output_names,
-                                 self.output_types, self.shard_index.name)
+                                 self.output_types, self.shard_index.name, self.inter_threads,
+                                 self.intra_threads)
             return FeatureSet(jvalue=jvalue)
         return None
 
