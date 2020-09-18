@@ -26,6 +26,8 @@ from zoo.pipeline.nnframes import *
 from zoo.feature.common import *
 from zoo.orca.learn.bigdl import Estimator
 from bigdl.optim.optimizer import *
+from zoo.pipeline.api.keras import layers as ZLayer
+from zoo.pipeline.api.keras.models import Model as ZModel
 
 
 class TestEstimatorForKeras(TestCase):
@@ -75,6 +77,60 @@ class TestEstimatorForKeras(TestCase):
             for idx in range(len(res1_c)):
                 assert res1_c[idx]["prediction"] == res3_c[idx]["prediction"]
             est2.fit(df, 1, batch_size=4, optimizer=Adam())
+
+    def test_nnEstimator_multiInput(self):
+        zx1 = ZLayer.Input(shape=(1,))
+        zx2 = ZLayer.Input(shape=(1,))
+        zz = ZLayer.merge([zx1, zx2], mode="concat")
+        zy = ZLayer.Dense(2)(zz)
+        zmodel = ZModel([zx1, zx2], zy)
+
+        criterion = MSECriterion()
+        df = self.get_estimator_df()
+        estimator = Estimator.from_bigdl(model=zmodel, loss=criterion,
+                                         feature_preprocessing=[[1], [1]])
+        estimator.fit(df, epochs=5, batch_size=4)
+        pred = estimator.predict(df)
+        pred_data = pred.collect()
+        assert type(pred).__name__ == 'DataFrame'
+
+    def test_nnEstimator_multiInput_cols(self):
+        from pyspark.ml.linalg import Vectors
+        from pyspark.sql import SparkSession
+
+        spark = SparkSession \
+            .builder \
+            .getOrCreate()
+
+        df = spark.createDataFrame(
+            [(1, 35, 109.0, Vectors.dense([2.0, 5.0, 0.5, 0.5]), 1.0),
+             (2, 58, 2998.0, Vectors.dense([4.0, 10.0, 0.5, 0.5]), 2.0),
+             (3, 18, 123.0, Vectors.dense([3.0, 15.0, 0.5, 0.5]), 1.0),
+             (4, 18, 123.0, Vectors.dense([3.0, 15.0, 0.5, 0.5]), 1.0)],
+            ["user", "age", "income", "history", "label"])
+
+        x1 = ZLayer.Input(shape=(1,))
+        x2 = ZLayer.Input(shape=(2,))
+        x3 = ZLayer.Input(shape=(2, 2,))
+
+        user_embedding = ZLayer.Embedding(5, 10)(x1)
+        flatten = ZLayer.Flatten()(user_embedding)
+        dense1 = ZLayer.Dense(2)(x2)
+        gru = ZLayer.LSTM(4, input_shape=(2, 2))(x3)
+
+        merged = ZLayer.merge([flatten, dense1, gru], mode="concat")
+        zy = ZLayer.Dense(2)(merged)
+
+        zmodel = ZModel([x1, x2, x3], zy)
+        criterion = ClassNLLCriterion()
+        est = Estimator.from_bigdl(model=zmodel, loss=criterion,
+                                   feature_preprocessing=[[1], [2], [2, 2]])
+        est.fit(df, epochs=1, batch_size=4, optimizer=Adam(learningrate=0.1),
+                feature_cols=["user", "age", "income", "history"])
+
+        res = est.predict(df, feature_cols=["user", "age", "income", "history"])
+        res_c = res.collect()
+        assert type(res).__name__ == 'DataFrame'
 
 
 if __name__ == "__main__":

@@ -35,33 +35,100 @@ class Estimator(object):
     def load(self, checkpoint):
         pass
 
+    def clear_gradient_clipping(self):
+        pass
+
+    def set_constant_gradient_clipping(self, min, max):
+        pass
+
+    def set_l2_norm_gradient_clipping(self, clip_norm):
+        pass
+
+    def get_train_summary(self):
+        pass
+
+    def get_validation_summary(self):
+        pass
+
     @staticmethod
-    def from_bigdl(*, model, loss, feature_preprocessing=None, label_preprocessing=None,
-                   input_type="spark_dataframe"):
+    def from_bigdl(*, model, loss, optimizer=None, feature_preprocessing=None,
+                   label_preprocessing=None, input_type="spark_dataframe"):
+        """
+        Construct an Estimator with BigDL model, loss function and Preprocessing for feature and
+        label data.
+        :param model: BigDL Model to be trained.
+        :param loss: BigDL criterion.
+        :param optimizer: BigDL optimizer.
+        :param feature_preprocessing: The param converts the data in feature column to a
+               Tensor or to a Sample directly. It expects a List of Int as the size of the
+               converted Tensor, or a Preprocessing[F, Tensor[T]]
+
+               If a List of Int is set as feature_preprocessing, it can only handle the case that
+               feature column contains the following data types:
+               Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The
+               feature data are converted to Tensors with the specified sizes before
+               sending to the model. Internally, a SeqToTensor is generated according to the
+               size, and used as the feature_preprocessing.
+
+               Alternatively, user can set feature_preprocessing as Preprocessing[F, Tensor[T]]
+               that transforms the feature data to a Tensor[T]. Some pre-defined Preprocessing are
+               provided in package zoo.feature. Multiple Preprocessing can be combined as a
+               ChainedPreprocessing.
+
+               The feature_preprocessing will also be copied to the generated NNModel and applied
+               to feature column during transform.
+        :param label_preprocessing: similar to feature_preprocessing, but applies to Label data.
+        :param input_type: The data type of training data. Only `spark_dataframe` and `
+            spark_xshards` are supported
+        :return:
+        """
+
         if input_type == "spark_dataframe":
-            return NNEstimatorWrapper(model=model, loss=loss,
+            return NNEstimatorWrapper(model=model, loss=loss, optimizer=optimizer,
                                       feature_preprocessing=feature_preprocessing,
                                       label_preprocessing=label_preprocessing)
-        elif input_type == "featureset":
+        elif input_type == "spark_xshards":
+            if optimizer is None:
+                from bigdl.optim.optimizer import SGD
+                optimizer = SGD()
             raise NotImplementedError
         else:
-            raise ValueError("only spark_dataframe and featureset input type are supported for now")
+            raise ValueError("only spark_dataframe and spark_xshards input type are supported "
+                             "for now")
 
 
 class NNEstimatorWrapper(Estimator):
-    def __init__(self, *, model, loss, feature_preprocessing=None, label_preprocessing=None):
+    def __init__(self, *, model, loss, optimizer=None, feature_preprocessing=None,
+                 label_preprocessing=None):
         self.estimator = NNEstimator(model, loss, feature_preprocessing, label_preprocessing)
+        if optimizer is not None:
+            self.estimator.setOptimMethod(optimizer)
         self.model = None
 
-    def fit(self, data, epochs, feature_col="features", optimizer=None, batch_size=32,
+    def fit(self, data, epochs, feature_cols="features", optimizer=None, batch_size=32,
             caching_sample=True, val_data=None, val_trigger=None, val_methods=None,
             train_summary_dir=None, val_summary_dir=None, app_name=None, checkpoint_path=None,
             checkpoint_trigger=None):
         from zoo.orca.learn.metrics import Metrics
         from zoo.orca.learn.trigger import Trigger
-        assert optimizer is not None, "Please provide optimizer"
+        if isinstance(feature_cols, list):
+            if len(feature_cols) == 1:
+                feature_cols = feature_cols[0]
+            else:
+                from pyspark.ml.feature import VectorAssembler
+                assembler = VectorAssembler(
+                    inputCols=feature_cols,
+                    outputCol="features")
+                data = assembler.transform(data)
+                if val_data is not None:
+                    val_data = assembler.transform(val_data)
+                feature_cols = "features"
+
         self.estimator.setBatchSize(batch_size).setMaxEpoch(epochs)\
-            .setCachingSample(caching_sample).setFeaturesCol(feature_col).setOptimMethod(optimizer)
+            .setCachingSample(caching_sample).setFeaturesCol(feature_cols)
+
+        if optimizer is not None:
+            self.estimator.setOptimMethod(optimizer)
 
         if val_data is not None:
             assert val_trigger is not None and val_methods is not None, \
@@ -89,9 +156,19 @@ class NNEstimatorWrapper(Estimator):
 
         self.model = self.estimator.fit(data)
 
-    def predict(self, data, batch_size=8, feature_col="features", sample_preprocessing=None):
+    def predict(self, data, batch_size=8, feature_cols="features", sample_preprocessing=None):
         if self.model is not None:
-            self.model.setBatchSize(batch_size).setFeaturesCol(feature_col)
+            if isinstance(feature_cols, list):
+                if len(feature_cols) == 1:
+                    feature_cols = feature_cols[0]
+                else:
+                    from pyspark.ml.feature import VectorAssembler
+                    assembler = VectorAssembler(
+                        inputCols=feature_cols,
+                        outputCol="features")
+                    data = assembler.transform(data)
+                    feature_cols = "features"
+            self.model.setBatchSize(batch_size).setFeaturesCol(feature_cols)
             if sample_preprocessing is not None:
                 self.model.setSamplePreprocessing(sample_preprocessing)
             return self.model.transform(data)
@@ -126,5 +203,17 @@ class NNEstimatorWrapper(Estimator):
         self.model = NNModel(model, feature_preprocessing=feature_preprocessing)
         return self
 
-    def shutdown(self, force=False):
-        raise NotImplementedError
+    def clear_gradient_clipping(self):
+        self.estimator.clearGradientClipping()
+
+    def set_constant_gradient_clipping(self, min, max):
+        self.estimator.setConstantGradientClipping(min, max)
+
+    def set_l2_norm_gradient_clipping(self, clip_norm):
+        self.estimator.setGradientClippingByL2Norm(clip_norm)
+
+    def get_train_summary(self):
+        return self.estimator.getTrainSummary()
+
+    def get_validation_summary(self):
+        return self.estimator.getValidationSummary()
