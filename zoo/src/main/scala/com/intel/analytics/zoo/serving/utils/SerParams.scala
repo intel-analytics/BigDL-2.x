@@ -27,7 +27,6 @@ class SerParams(helper: ClusterServingHelper) extends Serializable {
   val jobName = helper.jobName
   val filter = helper.filter
   val chwFlag = helper.chwFlag
-  val inferenceMode = helper.inferenceMode
   val modelType = helper.modelType
   val modelDir = helper.modelDir
   val lastModified = FileUtils.getLastModified(helper.modelDir)
