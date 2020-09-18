@@ -52,8 +52,8 @@ class API:
 class InputQueue(API):
     def __init__(self, host=None, port=None, sync=True, frontend_url=None):
         super().__init__(host, port)
-        frontend_url = None
-        if frontend_url:
+        self.frontend_url = None
+        if self.frontend_url:
             # frontend_url is provided, using frontend
             try:
                 res = httpx.get(frontend_url)
