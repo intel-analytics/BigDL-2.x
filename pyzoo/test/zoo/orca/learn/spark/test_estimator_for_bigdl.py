@@ -48,10 +48,10 @@ class TestEstimatorForKeras(TestCase):
         linear_model = Sequential().add(Linear(2, 2))
         mse_criterion = MSECriterion()
         df = self.get_estimator_df()
-        est = Estimator.from_bigdl(model=linear_model, optimizer=Adam(), loss=mse_criterion,
+        est = Estimator.from_bigdl(model=linear_model, loss=mse_criterion,
                                    feature_preprocessing=SeqToTensor([2]),
                                    label_preprocessing=SeqToTensor([2]))
-        est.fit(df, 1, batch_size=4)
+        est.fit(df, 1, batch_size=4, optimizer=Adam())
         nn_model = est.get_model()
         res1 = nn_model.transform(df)
         res2 = est.predict(df)
@@ -65,7 +65,7 @@ class TestEstimatorForKeras(TestCase):
         with tempfile.TemporaryDirectory() as tempdirname:
             temp_path = os.path.join(tempdirname, "model")
             est.save(temp_path)
-            est2 = Estimator.from_bigdl(model=linear_model, optimizer=Adam(), loss=mse_criterion)
+            est2 = Estimator.from_bigdl(model=linear_model, loss=mse_criterion)
             est2.load(temp_path, optimizer=Adam(), loss=mse_criterion,
                       feature_preprocessing=SeqToTensor([2]), label_preprocessing=SeqToTensor([2]))
             res3 = est2.predict(df)
@@ -74,6 +74,7 @@ class TestEstimatorForKeras(TestCase):
             assert len(res1_c) == len(res3_c)
             for idx in range(len(res1_c)):
                 assert res1_c[idx]["prediction"] == res3_c[idx]["prediction"]
+            est2.fit(df, 1, batch_size=4, optimizer=Adam())
 
 
 if __name__ == "__main__":

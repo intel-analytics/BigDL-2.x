@@ -36,10 +36,10 @@ class Estimator(object):
         pass
 
     @staticmethod
-    def from_bigdl(*, model, optimizer, loss, feature_preprocessing=None, label_preprocessing=None,
+    def from_bigdl(*, model, loss, feature_preprocessing=None, label_preprocessing=None,
                    input_type="spark_dataframe"):
         if input_type == "spark_dataframe":
-            return NNEstimatorWrapper(model=model, optimizer=optimizer, loss=loss,
+            return NNEstimatorWrapper(model=model, loss=loss,
                                       feature_preprocessing=feature_preprocessing,
                                       label_preprocessing=label_preprocessing)
         elif input_type == "featureset":
@@ -49,19 +49,20 @@ class Estimator(object):
 
 
 class NNEstimatorWrapper(Estimator):
-    def __init__(self, *, model, optimizer, loss, feature_preprocessing=None,
-                 label_preprocessing=None):
-        self.estimator = NNEstimator(model, loss, feature_preprocessing,
-                                     label_preprocessing).setOptimMethod(optimizer)
+    def __init__(self, *, model, loss, feature_preprocessing=None, label_preprocessing=None):
+        self.estimator = NNEstimator(model, loss, feature_preprocessing, label_preprocessing)
         self.model = None
 
-    def fit(self, data, epochs, feature_col="features", batch_size=32, caching_sample=True,
-            val_data=None, val_trigger=None, val_methods=None, train_summary_dir=None,
-            val_summary_dir=None, app_name=None, checkpoint_path=None, checkpoint_trigger=None):
+    def fit(self, data, epochs, feature_col="features", optimizer=None, batch_size=32,
+            caching_sample=True, val_data=None, val_trigger=None, val_methods=None,
+            train_summary_dir=None, val_summary_dir=None, app_name=None, checkpoint_path=None,
+            checkpoint_trigger=None):
         from zoo.orca.learn.metrics import Metrics
         from zoo.orca.learn.trigger import Trigger
+        assert optimizer is not None, "Please provide optimizer"
         self.estimator.setBatchSize(batch_size).setMaxEpoch(epochs)\
-            .setCachingSample(caching_sample).setFeaturesCol(feature_col)
+            .setCachingSample(caching_sample).setFeaturesCol(feature_col).setOptimMethod(optimizer)
+
         if val_data is not None:
             assert val_trigger is not None and val_methods is not None, \
                 "You should provide val_trigger and val_methods if you provide val_data."
@@ -113,7 +114,7 @@ class NNEstimatorWrapper(Estimator):
             raise ValueError("You should fit before calling save")
 
     def load(self, checkpoint, optimizer=None, loss=None, feature_preprocessing=None,
-                 label_preprocessing=None):
+             label_preprocessing=None):
         assert optimizer is not None and loss is not None, \
             "You should provide optimizer and loss function"
         from zoo.pipeline.api.net import Net
