@@ -26,7 +26,8 @@ import scopt.OptionParser
 object ZooBaseline extends Supportive {
   case class Params(configPath: String = "config.yaml",
                     testNum: Int = 1000,
-                    inputShape: String = "3, 224, 224")
+                    inputShape: String = "3, 224, 224",
+                    singleMode: Boolean = false)
   val parser = new OptionParser[Params]("Text Classification Example") {
     opt[String]('c', "configPath")
       .text("Config Path of Cluster Serving")
@@ -37,6 +38,9 @@ object ZooBaseline extends Supportive {
     opt[String]('s', "inputShape")
       .text("Input Shape, split by coma")
       .action((x, params) => params.copy(inputShape = x))
+    opt[Boolean]("singleMode")
+      .text("Use single mode to test")
+      .action((x, params) => params.copy(singleMode = x))
   }
   def makeTensorFromShape(shapeStr: String): Activity = {
     val shapeArr = ConfigUtils.parseShape(shape = shapeStr)
@@ -64,7 +68,7 @@ object ZooBaseline extends Supportive {
     Thread.sleep(3000)
 
     timing(s"Baseline for input ${param.testNum.toString}") {
-      if (sParam.inferenceMode == "single") {
+      if (param.singleMode) {
         (0 until param.testNum).foreach(_ => {
           val t = makeTensorFromShape(param.inputShape)
           ClusterServingInference.typeCheck(t)

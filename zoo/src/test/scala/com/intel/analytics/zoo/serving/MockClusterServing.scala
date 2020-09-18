@@ -33,7 +33,7 @@ object MockClusterServing extends App with Supportive {
   val jedisPool = new JedisPool(new JedisPoolConfig(), redisHost, redisPort)
   val jedis = jedisPool.getResource()
 
-  val redisInputQueue = Conventions.SERVING_STREAM_NAME
+  val redisInputQueue = Conventions.SERVING_STREAM_DEFAULT_NAME
   val redisOutputQueue = "result:"
 
   var redisStreamBatchCount = 56

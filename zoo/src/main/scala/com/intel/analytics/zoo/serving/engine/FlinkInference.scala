@@ -59,14 +59,13 @@ class FlinkInference(params: SerParams)
 
   override def map(in: List[(String, String)]): List[(String, String)] = {
     val t1 = System.nanoTime()
-    val postProcessed = if (params.inferenceMode == "single") {
+    val postProcessed = {
       val preProcessed = in.map(item => {
-        Timer.timing("preprocess one input", 1) {
-          val uri = item._1
-          val input = pre.decodeArrowBase64(item._2)
-          (uri, input)
-        }
+        val uri = item._1
+        val input = pre.decodeArrowBase64(item._2)
+        (uri, input)
       }).toIterator
+
       if (params.modelType == "openvino") {
         ClusterServingInference.singleThreadBatchInference(
           preProcessed, params.coreNum, params.modelType, params.filter).toList
@@ -75,22 +74,6 @@ class FlinkInference(params: SerParams)
           preProcessed, params.modelType, params.filter).toList
       }
 
-    } else {
-      val preProcessed = in.grouped(params.coreNum).flatMap(itemBatch => {
-        Timer.timing("preprocess", itemBatch.size) {
-          itemBatch.indices.toParArray.map(i => {
-            Timer.timing("preprocess one input", 1) {
-              val uri = itemBatch(i)._1
-              val input = pre.decodeArrowBase64(itemBatch(i)._2)
-              (uri, input)
-            }
-
-          })
-        }
-
-      })
-      ClusterServingInference.multiThreadInference(
-        preProcessed, params.coreNum, params.modelType, params.filter, params.resize).toList
     }
     val t2 = System.nanoTime()
     logger.info(s"${postProcessed.size} records backend time ${(t2 - t1) / 1e9} s. " +

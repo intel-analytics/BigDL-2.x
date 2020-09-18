@@ -202,7 +202,7 @@ object SparkStreamingClusterServing {
          * Count the statistical data and write to summary
          */
         val microBatchEnd = System.nanoTime()
-        println(s"Currently recs in redis: ${jedis.xlen(Conventions.SERVING_STREAM_NAME)}")
+        println(s"Currently recs in redis: ${jedis.xlen(Conventions.SERVING_STREAM_DEFAULT_NAME)}")
         val microBatchLatency = (microBatchEnd - microBatchStart) / 1e9
         val microBatchThroughPut = (acc.value / microBatchLatency).toFloat
         logger.info(s"Inferece end. Input size ${acc.value}. " +

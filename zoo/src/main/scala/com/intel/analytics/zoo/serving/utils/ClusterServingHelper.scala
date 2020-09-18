@@ -57,10 +57,6 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
 
   var sc: SparkContext = null
 
-  var modelInputs: String = ""
-  var modelOutputs: String = ""
-  var inferenceMode: String = null
-
   var redisHost: String = null
   var redisPort: String = null
   var nodeNum: Int = 1
@@ -107,10 +103,8 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
     } else {
       _modelDir
     }
-    jobName = getYaml(modelConfig, "name", Conventions.SERVING_STREAM_NAME).asInstanceOf[String]
-    modelInputs = getYaml(modelConfig, "inputs", "").asInstanceOf[String]
-    modelOutputs = getYaml(modelConfig, "outputs", "").asInstanceOf[String]
-    inferenceMode = getYaml(modelConfig, "mode", "").asInstanceOf[String]
+    jobName = getYaml(modelConfig,
+      "name", Conventions.SERVING_STREAM_DEFAULT_NAME).asInstanceOf[String]
 
     parseModelType(modelDir)
 
@@ -152,11 +146,9 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
     coreNum = getYaml(paramsConfig, "core_number", 4).asInstanceOf[Int]
-    modelPar = if (getYaml(paramsConfig, "model_number", default = -1).asInstanceOf[Int] <= 0) {
-      if (inferenceMode == "single") coreNum else 1
-    } else {
-      getYaml(paramsConfig, "model_number", default = -1).asInstanceOf[Int]
-    }
+
+    val modelParDefault = if (modelType == "openvino") 1 else coreNum
+    modelPar = getYaml(paramsConfig, "model_number", default = modelParDefault).asInstanceOf[Int]
 
 
     if (modelType == "caffe" || modelType == "bigdl") {
@@ -315,6 +307,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
    * @return
    */
   def loadInferenceModel(concurrentNum: Int = 0): InferenceModel = {
+    // Allow concurrent number overwrite
     if (concurrentNum > 0) {
       modelPar = concurrentNum
     }
@@ -323,11 +316,6 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
 
     // Used for Tensorflow Model, it could not have intraThreadNum > 2^8
     // in some models, thus intraThreadNum should be limited
-    val maxParallel = if (coreNum <= 64) {
-      coreNum
-    } else {
-      64
-    }
 
     var secret: String = null
     var salt: String = null
@@ -348,23 +336,12 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
       case "caffe" => model.doLoadCaffe(defPath, weightPath, blas = blasFlag)
       case "bigdl" => model.doLoadBigDL(weightPath, blas = blasFlag)
       case "tensorflowFrozenModel" =>
-        model.doLoadTensorflow(weightPath, "frozenModel", maxParallel, 1, true)
+        model.doLoadTensorflow(weightPath, "frozenModel", 1, 1, true)
       case "tensorflowSavedModel" =>
-        modelInputs = modelInputs.filterNot((x: Char) => x.isWhitespace)
-        modelOutputs = modelOutputs.filterNot((x: Char) => x.isWhitespace)
-        val inputs = if (modelInputs == "") {
-          null
-        } else {
-          modelInputs.split(",")
-        }
-        val outputs = if (modelOutputs == "") {
-          null
-        } else {
-          modelOutputs.split(",")
-        }
-        model.doLoadTensorflow(weightPath, "savedModel", inputs, outputs)
+        model.doLoadTensorflow(weightPath, "savedModel", null, null)
       case "pytorch" => model.doLoadPyTorch(weightPath)
-      case "keras" => logError("Keras currently not supported in Cluster Serving")
+      case "keras" => logError("Keras currently not supported in Cluster Serving," +
+        "consider transform it to Tensorflow")
       case "openvino" => modelEncrypted match {
         case true => model.doLoadEncryptedOpenVINO(defPath, weightPath, secret, salt, coreNum)
         case false => model.doLoadOpenVINO(defPath, weightPath, coreNum)
