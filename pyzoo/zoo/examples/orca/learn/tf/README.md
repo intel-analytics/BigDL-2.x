@@ -27,6 +27,10 @@ python lenet_mnist_graph.py --cluster_mode local
 python lenet_mnist_keras.py --cluster_mode local
 ```
 
+```bash
+python ncf.py --cluster_mode local
+```
+
 ## Run examples on yarn cluster
 ```bash
 python lenet_mnist_graph.py --cluster_mode yarn
@@ -36,23 +40,8 @@ python lenet_mnist_graph.py --cluster_mode yarn
 python lenet_mnist_keras.py --cluster_mode yarn
 ```
 
-## Run tf keras model example with prebuilt package
 ```bash
-export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
-export SPARK_HOME=... # the root directory of Spark
-bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] lenet_mnist_keras.py
-```
-
-## Run NCF example after pip install
-```bash
-python ncf.py
-```
-
-## Run NCF example with prebuilt package
-```bash
-export ANALYTICS_ZOO_HOME=... # the directory where you extract the downloaded Analytics Zoo zip package
-export SPARK_HOME=... # the root directory of Spark
-bash $ANALYTICS_ZOO_HOME/bin/spark-submit-python-with-zoo.sh --master local[4] ncf.py
+python ncf.py --cluster_mode yarn
 ```
 
 ## Additional Resources

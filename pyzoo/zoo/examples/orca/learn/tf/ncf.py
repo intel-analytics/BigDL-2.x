@@ -23,6 +23,7 @@ import tensorflow as tf
 from bigdl.dataset import base
 from sklearn.model_selection import train_test_split
 
+from zoo.orca import init_orca_context, stop_orca_context
 import zoo.orca.learn.tf.estimator
 from zoo.orca.data import SharedValue
 import zoo.orca.data.pandas
@@ -86,23 +87,18 @@ def load_data(data_dir):
         fin.close()
         fout.close()
 
+    # read movive len csv to XShards of Pandas Dataframe
     full_data = zoo.orca.data.pandas.read_csv(new_rating_files, sep=':', header=None, names=COLUMN_NAMES,
-                                              usecols=[0, 1, 2], dtype={0: np.int32, 1: np.int32, 2: np.int32}) \
-        .partition_by('user')
+                                              usecols=[0, 1, 2], dtype={0: np.int32, 1: np.int32, 2: np.int32})
 
     user_set = set(full_data['user'].unique())
     item_set = set(full_data['item'].unique())
 
-    user_size = len(user_set)
-    item_size = len(item_set)
-    print('user size %d' % user_size)
-    print('item size %d' % item_size)
-
-    user_map = re_index(user_set)
-    item_map = re_index(item_set)
-
-    # set index for user, item
-    full_data = set_index(full_data, user_map, item_map)
+    min_user_id = min(user_set)
+    max_user_id = max(user_set)
+    min_item_id = min(item_set)
+    max_item_id = max(item_set)
+    print(min_user_id, max_user_id, min_item_id, max_item_id)
 
     # update label starting from 0
     def update_label(df):
@@ -115,7 +111,7 @@ def load_data(data_dir):
     def split_train_test(data):
         # splitting the full set into train and test sets.
         train, test = train_test_split(data, test_size=0.2, random_state=100)
-        return (train, test)
+        return train, test
 
     train_data, test_data = full_data.transform_shard(split_train_test).split()
 
@@ -128,7 +124,7 @@ def load_data(data_dir):
 
     train_data = train_data.transform_shard(to_train_val_shard)
     test_data = test_data.transform_shard(to_train_val_shard)
-    return (train_data, test_data, user_size, item_size)
+    return train_data, test_data, max_user_id, max_item_id
 
 
 class NCF(object):
@@ -139,12 +135,12 @@ class NCF(object):
 
         with tf.name_scope("GMF"):
             user_embed_GMF = tf.contrib.layers.embed_sequence(self.user,
-                                                              vocab_size=user_size,
+                                                              vocab_size=user_size + 1,
                                                               embed_dim=embed_size,
                                                               unique=False
                                                               )
             item_embed_GMF = tf.contrib.layers.embed_sequence(self.item,
-                                                              vocab_size=item_size,
+                                                              vocab_size=item_size + 1,
                                                               embed_dim=embed_size,
                                                               unique=False
                                                               )
@@ -153,13 +149,13 @@ class NCF(object):
         # MLP part starts
         with tf.name_scope("MLP"):
             user_embed_MLP = tf.contrib.layers.embed_sequence(self.user,
-                                                              vocab_size=user_size,
+                                                              vocab_size=user_size + 1,
                                                               embed_dim=embed_size,
                                                               unique=False,
                                                               )
 
             item_embed_MLP = tf.contrib.layers.embed_sequence(self.item,
-                                                              vocab_size=item_size,
+                                                              vocab_size=item_size + 1,
                                                               embed_dim=embed_size,
                                                               unique=False
                                                               )
@@ -199,7 +195,7 @@ class NCF(object):
 
         with tf.name_scope("optimzation"):
             self.optim = tf.train.AdamOptimizer(1e-3, name='Adam')
-            self.optimzer = self.optim.minimize(self.loss)
+            self.optimizer = self.optim.minimize(self.loss)
 
 
 def train(train_data, test_data, user_size, item_size):
@@ -219,7 +215,6 @@ def train(train_data, test_data, user_size, item_size):
                       epochs=opt.epochs,
                       validation_data=test_data
                       )
-
 
         checkpoint_path = os.path.join(opt.model_dir, "NCF.ckpt")
         estimator.save_tf_checkpoint(checkpoint_path)
@@ -246,7 +241,6 @@ def predict(predict_data, user_size, item_size):
         estimator = zoo.orca.learn.tf.estimator.Estimator.from_graph(
             inputs=[model.user, model.item],
             outputs=[model.class_number],
-            labels=[model.label],
             sess=sess,
             model_dir=opt.model_dir
         )
@@ -259,7 +253,8 @@ def predict(predict_data, user_size, item_size):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='NCF example on movie len dataset.')
-
+    parser.add_argument('--cluster_mode', type=str, default="local",
+                        help='The mode for the Spark cluster. local or yarn.')
     parser.add_argument('--data_dir', type=str, default='/tmp',
                         help='the dir for downloaded data.')
     parser.add_argument('--embedding_size', type=int, default=16,
@@ -272,10 +267,16 @@ if __name__ == '__main__':
                         help='The number of epochs to train the model.')
 
     opt = parser.parse_args()
+    if opt.cluster_mode == "local":
+        init_orca_context(cluster_mode="local", cores=4)
+    elif opt.cluster_mode == "yarn":
+        init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2, driver_memory="6g")
 
-    (train_data, test_data, user_size, item_size) = load_data(opt.data_dir)
+    (train_data, test_data, max_user_id, max_item_id) = load_data(opt.data_dir)
 
-    train(train_data, test_data, user_size, item_size)
+    train(train_data, test_data, max_user_id, max_item_id)
 
-    predict(test_data, user_size, item_size)
+    predict(test_data, max_user_id, max_item_id)
+
+    stop_orca_context()
 
