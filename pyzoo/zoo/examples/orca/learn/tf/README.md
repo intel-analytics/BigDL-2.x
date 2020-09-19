@@ -13,6 +13,8 @@ conda activate analytics-zoo
 pip install analytics_zoo-${VERSION}-${TIMESTAMP}-py2.py3-none-${OS}_x86_64.whl
 pip install tensorflow==1.15.0
 pip install psutil
+pip install pandas
+pip install scikit-learn
 ```
 
 Note: conda environment is required to run on Yarn, but not strictly necessary for running on local.

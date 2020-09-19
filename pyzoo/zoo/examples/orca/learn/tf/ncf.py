@@ -27,7 +27,6 @@ from zoo.orca import init_orca_context, stop_orca_context
 import zoo.orca.learn.tf.estimator
 from zoo.orca.data import SharedValue
 import zoo.orca.data.pandas
-from zoo.orca.learn.tf.utils import get_checkpoint_state, save_tf_checkpoint, load_tf_checkpoint
 
 SOURCE_URL = 'http://files.grouplens.org/datasets/movielens/'
 COLUMN_NAMES = ['user', 'item', 'label']
@@ -261,7 +260,7 @@ if __name__ == '__main__':
                         help='the size for embedding user and item.')
     parser.add_argument('--model_dir', type=str, default='./',
                         help='the dir for saving model.')
-    parser.add_argument('-b', '--batch_size', type=int, default=128,
+    parser.add_argument('-b', '--batch_size', type=int, default=1280,
                         help='size of mini-batch')
     parser.add_argument('-e', '--epochs', type=int, default=10,
                         help='The number of epochs to train the model.')
