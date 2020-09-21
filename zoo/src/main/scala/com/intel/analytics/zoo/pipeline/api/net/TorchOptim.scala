@@ -25,17 +25,22 @@ import jep.NDArray
 import org.apache.spark.TaskContext
 
 import scala.reflect.ClassTag
+import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil
+import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil.getStateFromOptiMethod
 
 class TorchOptim[@specialized(Float, Double) T: ClassTag](
     torchOptim: Array[Byte])(implicit ev: TensorNumeric[T]) extends OptimMethod[T] {
   import TorchOptim._
+  import InternalOptimizerUtil.getStateFromOptiMethod
 
+  @transient
   protected val postfix = Integer.toHexString(java.util.UUID.randomUUID().hashCode())
   @transient
   protected lazy val optimType: OptimType = {
     val partId = TaskContext.getPartitionId()
     name = s"optim_${postfix}_${partId}"
     PythonInterpreter.set("optim_bytes", torchOptim)
+    val currentEpoch = getEpoch(this)
     val loadModelCode =
       s"""
          |import torch
@@ -48,55 +53,74 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
          |$name = torch.load(io.BytesIO(optim_by), pickle_module=zoo_pickle_module)
          |""".stripMargin
     PythonInterpreter.exec(loadModelCode)
+    weightName = name + "_weight"
+    gradientName = name + "gradient"
+    lrStepCode = s"""
+                  |${name}.step()
+                  |""".stripMargin
     if (PythonInterpreter.getValue[Boolean](s"isinstance($name, Optimizer)")) {
+      initCode = s"""
+           |$weightName = torch.tensor($weightName, requires_grad=True)
+           |$weightName = torch.autograd.Variable($weightName)
+           |${name}.__init__([${weightName}], **${name}.defaults)
+           |""".stripMargin
+      stepCode = s"""
+           |${weightName}.grad = torch.tensor(${gradientName})
+           |${name}.step()
+           |""".stripMargin
       Optim
     } else if (PythonInterpreter.getValue[Boolean](s"isinstance($name, _LRScheduler)")) {
+      initCode = s"""
+           |$weightName = torch.tensor($weightName, requires_grad=True)
+           |$weightName = torch.autograd.Variable($weightName)
+           |${name}.optimizer.__init__([${weightName}], **${name}.optimizer.defaults)
+           |${name}.step(${currentEpoch})
+           |""".stripMargin
+      stepCode = s"""
+           |${weightName}.grad = torch.tensor(${gradientName})
+           |${name}.optimizer.step()
+           |""".stripMargin
       LrSchedule
     } else {
-      throw new IllegalArgumentException(s"Unknown optimizer type")
+      val unknowType = PythonInterpreter.getValue[String](s"str(type($name))")
+      throw new IllegalArgumentException(s"Unknown optimizer type: " + unknowType)
     }
   }
 
-  var name = ""
-  var init = false
+  @transient
+  protected var name = ""
+  @transient
+  protected var weightName = ""
+  @transient
+  protected var gradientName = ""
+  @transient
+  protected var initCode = ""
+  @transient
+  protected var lrStepCode = ""
+  @transient
+  protected var stepCode = ""
+  @transient
+  protected var init = false
+  @transient
+  protected var lastEpoch = -1
 
   override def optimize(
         feval: Tensor[T] => (T, Tensor[T]),
         parameter: Tensor[T]): (Tensor[T], Array[T]) = {
-    val weightName = postfix + "_weight"
-    val gradientName = postfix + "gradient"
-    val (initCode, stepCode) = optimType match {
-      case Optim =>
-        (s"""
-           |$weightName = torch.tensor($weightName, requires_grad=True)
-           |$weightName = torch.autograd.Variable($weightName)
-           |${name}.__init__([${weightName}], **${name}.defaults)
-           |""".stripMargin,
-          s"""
-             |${weightName}.grad = torch.tensor(${gradientName})
-             |${name}.step()
-             |""".stripMargin
-        )
-      case LrSchedule =>
-        (s"""
-           |$weightName = torch.tensor($weightName, requires_grad=True)
-           |$weightName = torch.autograd.Variable($weightName)
-           |${name}.optimizer.__init__([${weightName}], **${name}.optimizer.defaults)
-           |""".stripMargin,
-          s"""
-             |${weightName}.grad = torch.tensor(${gradientName})
-             |${name}.optimizer.step()
-             |${name}.step()
-             |""".stripMargin
-        )
-    }
-
+    optimType
+    val epoch = getEpoch(this)
     val (fx, dfdx) = feval(parameter)
+    print(dfdx)
+    print(parameter)
     if (!init) {
+      lastEpoch = epoch
       PythonInterpreter.set(weightName, new NDArray[Array[Float]](
         parameter.toTensor[Float].storage().array()))
       PythonInterpreter.exec(initCode)
       init = true
+    }
+    if (optimType == LrSchedule && lastEpoch < epoch) {
+      PythonInterpreter.exec(lrStepCode)
     }
     PythonInterpreter.set(gradientName, new NDArray[Array[Float]](
       dfdx.toTensor[Float].storage().array()))
@@ -135,5 +159,10 @@ object TorchOptim{
 
   def apply[T: ClassTag](optimBytes: Array[Byte])(implicit ev: TensorNumeric[T]): TorchOptim[T] = {
     new TorchOptim[T](optimBytes)
+  }
+
+  protected[net] def getEpoch[T: ClassTag](optim: TorchOptim[T]): Int = {
+    // BigDL's epoch starts from 1, while torch starts from 0.
+    InternalOptimizerUtil.getStateFromOptiMethod(optim)[Int]("epoch") - 1
   }
 }

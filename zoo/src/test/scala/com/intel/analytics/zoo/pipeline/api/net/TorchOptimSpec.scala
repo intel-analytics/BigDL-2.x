@@ -18,9 +18,11 @@ package com.intel.analytics.zoo.pipeline.api.net
 import java.nio.file.{Files, Paths}
 
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.utils.Table
 import com.intel.analytics.zoo.common.{PythonInterpreter, PythonInterpreterTest}
 import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil.getStateFromOptiMethod
 import org.apache.log4j.{Level, Logger}
 
 @PythonInterpreterTest
@@ -71,8 +73,8 @@ class TorchOptimSpec extends ZooSpecHelper{
     val code = lenet +
       s"""
          |model = LeNet()
-         |adam = torch.optim.Adam(model.parameters(), lr=0.1)
-         |torch.save(adam, "$tmpname", pickle_module=zoo_pickle_module)
+         |optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
+         |torch.save(optimizer, "$tmpname", pickle_module=zoo_pickle_module)
          |""".stripMargin
     PythonInterpreter.exec(code)
     val bys = Files.readAllBytes(Paths.get(tmpname))
@@ -105,10 +107,9 @@ class TorchOptimSpec extends ZooSpecHelper{
     torchOptim.optimize(_ => (1f, gradient), weight)
     weight should be (Tensor[Float](Array(0.99f, 0.98f, 0.97f, 0.96f), Array(4)))
     val gradient2 = Tensor[Float](Array(0.2f, 0.2f, 0.2f, 0.2f), Array(4))
+    val state = getStateFromOptiMethod(torchOptim)
+    state("epoch") = 2
     torchOptim.optimize(_ => (1f, gradient2), weight)
     weight should be (Tensor[Float](Array(0.971f, 0.961f, 0.951f, 0.941f), Array(4)))
   }
-
-
-
 }
