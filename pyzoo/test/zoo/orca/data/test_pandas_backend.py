@@ -252,6 +252,7 @@ class TestSparkXShards(TestCase):
 
         file_path = os.path.join(self.resource_path, "orca/data/json")
         data_shard = zoo.orca.data.pandas.read_json(file_path, orient='columns', lines=True)
+        data_shard = data_shard.repartition(2)
         data_shard.cache()
         transformed_shard = data_shard.transform_shard(negative, "value", 2)
         zipped_shard = data_shard.zip(transformed_shard)
