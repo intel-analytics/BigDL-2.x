@@ -263,6 +263,42 @@ class TestZouwuModelForecast(ZooTestCase):
         assert final_df.shape == (300 * horizon, 3)
         OrcaContext.pandas_read_backend = "spark"
 
+    def test_forecast_tcmf_distributed(self):
+        from zoo.zouwu.model.forecast import TCMFForecaster
+        import tempfile
+        model = TCMFForecaster(y_iters=1,
+                               init_FX_epoch=1,
+                               max_FX_epoch=1,
+                               max_TCN_epoch=1,
+                               alt_iters=2)
+        horizon = np.random.randint(1, 50)
+        # construct data
+        id = np.arange(300)
+        data = np.random.rand(300, 480)
+        input = dict({'id': id, 'y': data})
+
+        from zoo.orca import init_orca_context, stop_orca_context
+
+        init_orca_context(cores=4, spark_log_level="INFO", init_ray_on_spark=True,
+                          object_store_memory="1g")
+        model.fit(input, num_workers=4)
+
+        with tempfile.TemporaryDirectory() as tempdirname:
+            model.save(tempdirname)
+            loaded_model = TCMFForecaster.load(tempdirname, distributed=False)
+        yhat = model.predict(x=None, horizon=horizon, num_workers=4)
+        yhat_loaded = loaded_model.predict(x=None, horizon=horizon, num_workers=4)
+        yhat_id = yhat_loaded["id"]
+        assert (yhat_id == id).all()
+        yhat = yhat["prediction"]
+        yhat_loaded = yhat_loaded["prediction"]
+        assert yhat.shape == (300, horizon)
+        assert (yhat == yhat_loaded).all()
+        target_value = np.random.rand(300, horizon)
+        target_value = dict({"y": target_value})
+        assert model.evaluate(x=None, target_value=target_value, metric=['mse'])
+        stop_orca_context()
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

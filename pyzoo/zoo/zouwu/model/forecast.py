@@ -104,8 +104,8 @@ class TCMFForecaster(Forecaster):
             Whether factor matrices are initialized by NMF
         :param period: int, default is 24.
             Periodicity of input time series, leave it out if not known
-        :param y_iters: int, default is 300.
-            Max number of iterations while training the hybrid model.
+        :param y_iters: int, default is 10.
+            Number of iterations while training the hybrid model.
         :param init_FX_epoch: int, default is 100.
             Number of iterations while initializing factors
         :param max_FX_epoch: int, default is 300.
@@ -143,12 +143,14 @@ class TCMFForecaster(Forecaster):
         }
 
     def fit(self,
-            x, incremental=False):
+            x, incremental=False, num_workers=None):
         """
         fit the model
         :param x: the input for fit. Only dict of ndarray and SparkXShards of dict of ndarray
             are supported. Example: {'id': id_arr, 'y': data_ndarray}
         :param incremental: if the fit is incremental
+        :param num_workers: the number of workers you want to use for fit. If None, it defaults to
+        num_ray_nodes in the created RayContext.
         :return:
         """
         if incremental:
@@ -164,7 +166,7 @@ class TCMFForecaster(Forecaster):
                                  "an xShards of dict of ndarray")
 
             try:
-                self.internal.fit(x, incremental)
+                self.internal.fit(x, incremental, num_workers=num_workers)
             except Exception as inst:
                 self.internal = None
                 raise inst
@@ -193,18 +195,20 @@ class TCMFForecaster(Forecaster):
                 x=None,
                 horizon=24,
                 covariates=None,
+                num_workers=1,
                 ):
         """
         predict
         :param x: the input. We don't support input x directly
         :param horizon: horizon length to look forward.
         :param covariates: the global covariates
+        :param num_workers: the number of workers to use in predict. It defaults to 1.
         :return:
         """
         if self.internal is None:
             raise Exception("You should run fit before calling predict()")
         else:
-            return self.internal.predict(x, horizon)
+            return self.internal.predict(x, horizon, num_workers=num_workers)
 
     def save(self, path):
         if self.internal is None:

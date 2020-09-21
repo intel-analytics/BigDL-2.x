@@ -401,6 +401,13 @@ class LocalModel(object):
     def train_model(self, num_epochs=300,
                     num_workers=1,
                     early_stop=False, tenacity=10):
+        if num_workers is None:
+            from zoo.ray import RayContext
+            try:
+                ray_ctx = RayContext.get(initialize=False)
+                num_workers = ray_ctx.num_ray_nodes
+            except:
+                num_workers = 1
         if num_workers == 1:
             return self.train_model_local(num_epochs=num_epochs,
                                           early_stop=early_stop,
@@ -602,7 +609,7 @@ class LocalModel(object):
                 batch_num_per_worker = math.ceil(len(I) / num_workers)
                 indexes = [I[i:i + batch_num_per_worker + 1] for i in
                            range(0, len(I) - 1, batch_num_per_worker)]
-                print("actual number of workers used in prediction is", len(indexes))
+                logger.info(f"actual number of workers used in prediction is {len(indexes)}")
                 data_id = ray.put(data)
                 covariates_id = ray.put(covariates)
                 ycovs_id = ray.put(ycovs)

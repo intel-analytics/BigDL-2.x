@@ -57,11 +57,10 @@ class TCMF(BaseModel):
         self.svd = config.get("svd", True)
         self.period = config.get("period", 24)
         self.alt_iters = config.get("alt_iters", 10)
-        self.y_iters = config.get("y_iters", 300)
+        self.y_iters = config.get("y_iters", 10)
         self.init_epoch = config.get("init_FX_epoch", 100)
         self.max_FX_epoch = config.get("max_FX_epoch", 300)
         self.max_TCN_epoch = config.get("max_TCN_epoch", 300)
-        self.num_workers = config.get("num_workers", 1)
 
     def _build(self, **config):
         """
@@ -93,7 +92,7 @@ class TCMF(BaseModel):
         )
         self.model_init = True
 
-    def fit_eval(self, x, y=None, verbose=0, **config):
+    def fit_eval(self, x, y=None, verbose=0, num_workers=None, **config):
         """
         Fit on the training data from scratch.
         Since the rolling process is very customized in this model,
@@ -103,6 +102,7 @@ class TCMF(BaseModel):
             nd is the number of series, Td is the time dimension
         :param y: None. target is extracted from x directly
         :param verbose:
+        :param num_workers: number of workers to use.
         :return: the evaluation metric value
         """
         if not self.model_init:
@@ -113,7 +113,7 @@ class TCMF(BaseModel):
                                                init_epochs=self.init_epoch,
                                                max_FX_epoch=self.max_FX_epoch,
                                                max_TCN_epoch=self.max_TCN_epoch,
-                                               num_workers=self.num_workers,
+                                               num_workers=num_workers,
                                                )
         return val_loss
 
@@ -241,7 +241,10 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         self.internal = None
         self.config = config
 
-    def fit(self, x, incremental=False):
+    def fit(self, x, incremental=False, num_workers=None):
+        if num_workers:
+            raise ValueError("We don't support passing num_workers in fit "
+                             "with input of xShards of dict")
         def orca_train_model(d, config):
             tcmf = TCMF()
             tcmf._build(**config)
@@ -272,13 +275,15 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         """
         raise NotImplementedError
 
-    def predict(self, x, horizon=24):
+    def predict(self, x, horizon=24, num_workers=1):
         """
         Prediction.
         :param x: input
         :return: result
         """
-
+        if num_workers and num_workers != 1:
+            raise ValueError("We don't support passing num_workers in predict "
+                             "with input of xShards of dict")
         def orca_predict(data):
             id_arr = data[0]
             tcmf = data[1]
@@ -319,13 +324,13 @@ class TCMFLocalModelWrapper(ModelWrapper):
         self.internal._build(**self.config)
         self.id_arr = None
 
-    def fit(self, x, incremental=False):
+    def fit(self, x, incremental=False, num_workers=None):
         if isinstance(x, dict):
             self.id_arr, train_data = split_id_and_train_data(x, False)
             if incremental:
                 self.internal.fit_incremental(train_data)
             else:
-                self.internal.fit_eval(train_data)
+                self.internal.fit_eval(train_data, num_workers=num_workers)
         else:
             raise ValueError("value of x should be a dict of ndarray")
 
@@ -348,13 +353,13 @@ class TCMFLocalModelWrapper(ModelWrapper):
         else:
             raise ValueError("value of y should be a dict of ndarray")
 
-    def predict(self, x, horizon=24):
+    def predict(self, x, horizon=24, num_workers=1):
         """
         Prediction.
         :param x: input
         :return: result
         """
-        pred = self.internal.predict(x=x, horizon=horizon)
+        pred = self.internal.predict(x=x, horizon=horizon, num_workers=num_workers)
         result = dict()
         if self.id_arr is not None:
             result['id'] = self.id_arr
