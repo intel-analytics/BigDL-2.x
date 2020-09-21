@@ -65,6 +65,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+console = logging.StreamHandler()
+logger.addHandler(console)
 
 
 def get_model(A, y, lamb=0):
@@ -549,7 +551,7 @@ class DeepGLO(object):
             shuffle=False,
         )
         # print("-"*50+"Initializing Factors.....")
-        logger.info("Initializing Factors.....")
+        logger.info("Initializing Factors")
         self.num_epochs = init_epochs
         self.train_factors()
 
@@ -561,9 +563,7 @@ class DeepGLO(object):
 
         for i in range(1, alt_iters):
             if i % 2 == 0:
-                logger.info(
-                    "Training Factors. Iter#:{}".format(i)
-                )
+                logger.info("Training Factors. Iter#:{}".format(i))
                 self.num_epochs = max_FX_epoch
                 self.train_factors(
                     seed=False, early_stop=True, tenacity=tenacity, mod=mod
@@ -574,9 +574,7 @@ class DeepGLO(object):
                 #     .format(i)
                 #     + "-------------------------------------------------------"
                 # )
-                logger.info(
-                        "Training Xseq Model. Iter#:{}"
-                        .format(i))
+                logger.info("Training Xseq Model. Iter#:{}".format(i))
 
                 self.num_epochs = max_TCN_epoch
                 T = np.array(self.X.detach())

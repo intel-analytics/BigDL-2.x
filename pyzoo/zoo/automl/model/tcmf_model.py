@@ -107,6 +107,8 @@ class TCMF(BaseModel):
         """
         if not self.model_init:
             self._build(**config)
+        if num_workers is None:
+            num_workers = TCMF.get_default_num_workers()
         val_loss = self.model.train_all_models(x,
                                                alt_iters=self.alt_iters,
                                                y_iters=self.y_iters,
@@ -127,6 +129,16 @@ class TCMF(BaseModel):
         # TODO incrementally train models
         pass
 
+    @staticmethod
+    def get_default_num_workers():
+        from zoo.ray import RayContext
+        try:
+            ray_ctx = RayContext.get(initialize=False)
+            num_workers = ray_ctx.num_ray_nodes
+        except:
+            num_workers = 1
+        return num_workers
+
     def predict(self, x=None, horizon=24, mc=False, num_workers=1):
         """
         Predict horizon time-points ahead the input x in fit_eval
@@ -141,6 +153,8 @@ class TCMF(BaseModel):
             raise ValueError("We don't support input x directly.")
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling predict")
+        if num_workers is None:
+            num_workers = TCMF.get_default_num_workers()
         if num_workers > 1:
             import ray
             from zoo.ray import RayContext
@@ -245,6 +259,7 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         if num_workers:
             raise ValueError("We don't support passing num_workers in fit "
                              "with input of xShards of dict")
+
         def orca_train_model(d, config):
             tcmf = TCMF()
             tcmf._build(**config)
@@ -284,6 +299,7 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         if num_workers and num_workers != 1:
             raise ValueError("We don't support passing num_workers in predict "
                              "with input of xShards of dict")
+
         def orca_predict(data):
             id_arr = data[0]
             tcmf = data[1]
