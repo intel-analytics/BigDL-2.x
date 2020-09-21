@@ -70,12 +70,8 @@ class ClusterServingInferenceOperator(var params: ClusterServingParams = null)
    */
   override def map(in: List[(String, Activity)]): List[(String, String)] = {
     val t1 = System.nanoTime()
-    val postProcessed = if (params._inferenceMode == "single") {
+    val postProcessed =
       ClusterServingInference.singleThreadInference(in.toIterator, params._modelType, "").toList
-    } else {
-      ClusterServingInference.multiThreadInference(
-        in.toIterator, params._coreNum, params._modelType, "").toList
-    }
     val t2 = System.nanoTime()
     logger.info(s"${postProcessed.size} records backend time ${(t2 - t1) / 1e9} s. " +
       s"Throughput ${postProcessed.size / ((t2 - t1) / 1e9)}")

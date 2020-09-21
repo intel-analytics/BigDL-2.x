@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.examples.serving
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.serving.ClusterServing.params
+import com.intel.analytics.zoo.serving.arrow.ArrowDeserializer
 import com.intel.analytics.zoo.serving.operator.{ClusterServingInferenceOperator, ClusterServingInput, ClusterServingParams}
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
@@ -66,7 +67,7 @@ class MySource extends RichParallelSourceFunction[List[(String, Activity)]] {
 class MySink extends RichSinkFunction[List[(String, String)]] {
   override def invoke(value: List[(String, String)], context: SinkFunction.Context[_]): Unit = {
     value.foreach(kv => {
-      println(s"Id ${kv._1} Cluster Serving inference result is ${kv._2}")
+      println(s"Id ${kv._1} Cluster Serving inference result is ${ArrowDeserializer(kv._2)}")
     })
   }
 }

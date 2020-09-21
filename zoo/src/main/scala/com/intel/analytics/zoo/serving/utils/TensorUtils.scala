@@ -19,6 +19,11 @@ package com.intel.analytics.zoo.serving.utils
 import com.intel.analytics.bigdl.tensor.Tensor
 
 object TensorUtils {
+  def getTotalSize(t: Tensor[Float]): Int = {
+    var res: Int = 1
+    (0 until t.size().length).foreach(i => res *= t.size()(i))
+    res
+  }
   def getTopN(n: Int, t: Tensor[Float]): List[(Int, Float)] = {
     val arr = t.toArray().toList
     val idx = (0 until arr.size)

@@ -16,7 +16,9 @@
 
 package com.intel.analytics.zoo.serving.http
 
+import java.io.ByteArrayInputStream
 import java.util
+import java.util.Base64
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{Actor, ActorRef}
@@ -28,7 +30,12 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import akka.pattern.ask
 import akka.util.Timeout
+import com.intel.analytics.zoo.serving.arrow.ArrowDeserializer
 import com.intel.analytics.zoo.serving.utils.Conventions
+import org.apache.arrow.memory.RootAllocator
+import org.apache.arrow.vector.holders.NullableIntHolder
+import org.apache.arrow.vector.{Float4Vector, IntVector}
+import org.apache.arrow.vector.ipc.ArrowStreamReader
 
 trait JedisEnabledActor extends Actor with Supportive {
   val actorName = self.path.name
@@ -156,10 +163,18 @@ class RedisGetActor(
     case message: PredictionQueryMessage =>
       val results = get(redisOutputQueue, message.ids)
       if (null != results && results.size == message.ids.size) {
+        results.foreach(x => {
+          val b64string = x._2.get("value")
+          try {
+            x._2.put("value", ArrowDeserializer(b64string))
+          } catch {
+            case _: Exception =>
+          }
+        })
         sender() ! results
         // result get, remove in redis here
         message.ids.foreach(id =>
-          jedis.del("result:" + id)
+          jedis.del(Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":" + id)
         )
       } else {
         sender() ! Seq[(String, util.Map[String, String])]()
@@ -174,6 +189,7 @@ class RedisGetActor(
       }).filter(!_._2.isEmpty)
     }
   }
+
 }
 
 class QueryActor(redisGetActor: ActorRef) extends JedisEnabledActor {
