@@ -270,9 +270,13 @@ class TestSparkXShards(TestCase):
             data_shard.zip(transformed_shard)
         self.assertTrue('The two SparkXShards should have the same number of partitions' in
                         str(context.exception))
-        combined_shard = transformed_shard.partition_by("value", transformed_shard.num_partitions())
+        dict_data = [{"x": 1, "y": 2}, {"x": 2, "y": 3}]
+        sc = init_nncontext()
+        rdd = sc.parallelize(dict_data)
+        dict_shard = SparkXShards(rdd)
+        dict_shard = dict_shard.repartition(1)
         with self.assertRaises(Exception) as context:
-            transformed_shard.zip(combined_shard)
+            transformed_shard.zip(dict_shard)
         self.assertTrue('The two SparkXShards should have the same number of elements in '
                         'each partition' in str(context.exception))
 
