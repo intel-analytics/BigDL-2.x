@@ -105,11 +105,13 @@ class TorchOptimSpec extends ZooSpecHelper{
     val weight = Tensor[Float](4).fill(1)
     val gradient = Tensor[Float](Array(0.1f, 0.2f, 0.3f, 0.4f), Array(4))
     torchOptim.optimize(_ => (1f, gradient), weight)
+    torchOptim.getLearningRate() should be (0.1)
     weight should be (Tensor[Float](Array(0.99f, 0.98f, 0.97f, 0.96f), Array(4)))
     val gradient2 = Tensor[Float](Array(0.2f, 0.2f, 0.2f, 0.2f), Array(4))
     val state = getStateFromOptiMethod(torchOptim)
     state("epoch") = 2
     torchOptim.optimize(_ => (1f, gradient2), weight)
+    torchOptim.getLearningRate() should be (0.095)
     weight should be (Tensor[Float](Array(0.971f, 0.961f, 0.951f, 0.941f), Array(4)))
   }
 }

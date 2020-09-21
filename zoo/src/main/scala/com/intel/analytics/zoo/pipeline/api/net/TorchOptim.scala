@@ -26,12 +26,10 @@ import org.apache.spark.TaskContext
 
 import scala.reflect.ClassTag
 import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil
-import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil.getStateFromOptiMethod
 
 class TorchOptim[@specialized(Float, Double) T: ClassTag](
     torchOptim: Array[Byte])(implicit ev: TensorNumeric[T]) extends OptimMethod[T] {
   import TorchOptim._
-  import InternalOptimizerUtil.getStateFromOptiMethod
 
   @transient
   protected val postfix = Integer.toHexString(java.util.UUID.randomUUID().hashCode())
@@ -110,8 +108,6 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
     optimType
     val epoch = getEpoch(this)
     val (fx, dfdx) = feval(parameter)
-    print(dfdx)
-    print(parameter)
     if (!init) {
       lastEpoch = epoch
       PythonInterpreter.set(weightName, new NDArray[Array[Float]](
@@ -140,6 +136,9 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
     optimType match {
       case Optim =>
         PythonInterpreter.getValue[Double](s"${name}.defaults['lr']")
+      case lrSchedule =>
+        // TODO: multi LR support.
+        PythonInterpreter.getValue[Double](s"${name}.get_lr()[0]")
       case _ =>
         throw new IllegalArgumentException()
     }
@@ -147,6 +146,21 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
 
   override def loadFromTable(config: Table): TorchOptim.this.type = {
     this
+  }
+
+  override def updateHyperParameter(): Unit = {
+    if (optimType == LrSchedule) {
+      val epoch = getEpoch(this)
+      PythonInterpreter.exec(s"${name}.step(${epoch})")
+    }
+  }
+
+  override def getHyperParameter(): String = {
+    if (optimType == LrSchedule) {
+      s"Current learning rate is ${getLearningRate()}. "
+    } else {
+      ""
+    }
   }
 
 }
