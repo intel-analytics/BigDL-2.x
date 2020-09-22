@@ -37,7 +37,7 @@ class LastFillImpute(BaseImputation):
 
 class FillZeroImpute(BaseImputation):
     """
-    LastFill imputation
+    FillZero imputation
     """
     def impute(self, input_df):
         input_df.fillna(0)
