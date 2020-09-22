@@ -72,7 +72,6 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
            |$weightName = torch.tensor($weightName, requires_grad=True)
            |$weightName = torch.autograd.Variable($weightName)
            |${name}.optimizer.__init__([${weightName}], **${name}.optimizer.defaults)
-           |${name}.step(${currentEpoch})
            |""".stripMargin
       stepCode = s"""
            |${weightName}.grad = torch.tensor(${gradientName})
@@ -138,7 +137,7 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
         PythonInterpreter.getValue[Double](s"${name}.defaults['lr']")
       case lrSchedule =>
         // TODO: multi LR support.
-        PythonInterpreter.getValue[Double](s"${name}.get_lr()[0]")
+        PythonInterpreter.getValue[Double](s"${name}.get_last_lr()[0]")
       case _ =>
         throw new IllegalArgumentException()
     }
