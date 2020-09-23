@@ -464,6 +464,17 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     doLoadBigDL(modelPath, weightPath)
   }
 
+  /**
+     * loads a pytorch model
+     *
+     * @param modelPath  the path of the prototxt file
+     */
+    def doLoadPyTorch(modelPath: String): Unit = {
+      clearModelQueue()
+      this.originalModel = InferenceModelFactory.loadFloatModelForPyTorch(modelPath)
+      offerModelQueue()
+    }
+
   @deprecated
   def doPredict(input: JList[JFloat], shape: JList[JInt]): JList[JFloat] = {
     timing("model predict") {
