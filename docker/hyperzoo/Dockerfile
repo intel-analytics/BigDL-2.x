@@ -34,10 +34,12 @@ ENV HADOOP_CONF_DIR                     /opt/hadoop-conf
 ENV ANALYTICS_ZOO_HOME                  /opt/analytics-zoo-${ANALYTICS_ZOO_VERSION}
 ENV BIGDL_CLASSPATH                     ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar
 ENV JAVA_HOME                           /opt/jdk
+ENV PYTHONHOME                          /root/miniconda3
 ENV REDIS_HOME                          /opt/redis-5.0.5
 ENV CS_HOME                             /opt/work/cluster-serving
 ENV PYTHONPATH                          ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip:${SPARK_HOME}/python/lib/pyspark.zip:${SPARK_HOME}/python/lib/py4j-*.zip:${CS_HOME}/serving-python.zip:/opt/models/research/slim
-ENV PATH                                ${ANALYTICS_ZOO_HOME}/bin/cluster-serving:${JAVA_HOME}/bin:${PATH}
+ENV PATH                                ${ANALYTICS_ZOO_HOME}/bin/cluster-serving:${JAVA_HOME}/bin:${PYTHONHOME}/bin:${PATH}
+
 
 RUN apt-get update --fix-missing && \
     apt-get install -y apt-utils vim curl nano wget unzip maven git && \
@@ -47,6 +49,14 @@ RUN apt-get update --fix-missing && \
     ln -sv /bin/bash /bin/sh && \
     echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su && \
     chgrp root /etc/passwd && chmod ug+rw /etc/passwd
+
+#conda
+RUN wget \
+    https://repo.anaconda.com/miniconda/Miniconda3-py37_4.8.3-Linux-x86_64.sh \
+    && mkdir /root/.conda \
+    && bash Miniconda3-py37_4.8.3-Linux-x86_64.sh -b \
+    && rm -f Miniconda3-py37_4.8.3-Linux-x86_64.sh
+
 
 #java
 RUN wget https://enos.itcollege.ee/~jpoial/allalaadimised/jdk8/jdk-8u261-linux-x64.tar.gz  && \
@@ -80,6 +90,8 @@ RUN apt-get install -y python3-minimal && \
     pip install tornado==5.1.1 && \
     python3 -m ipykernel.kernelspec && \
     pip install tensorboard && \
+    pip install jep && \
+    pip install cloudpickle && \
     pip install opencv-python && \
     pip install pyyaml && \
     pip install redis && \
@@ -139,8 +151,6 @@ ADD freeze_checkpoint.py /opt/work
 
 RUN chmod a+x /opt/work/cluster-serving/*
 
-
-ENV OMP_NUM_THREADS     all
 
 RUN sed -i "s/jobmanager\.heap\.size:.*/jobmanager\.heap\.size: 8g/g" $FLINK_HOME/conf/flink-conf.yaml && \
     sed -i "s/taskmanager\.memory\.process\.size:.*/taskmanager\.memory\.process\.size: 8g/g" $FLINK_HOME/conf/flink-conf.yaml
