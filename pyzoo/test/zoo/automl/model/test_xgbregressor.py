@@ -23,7 +23,7 @@ import pandas as pd
 import os
 from numpy.testing import assert_array_almost_equal
 
-from zoo.automl.model import XGBoostRegressor
+from zoo.automl.model.XGBoostRegressor import XGBoostRegressor
 from zoo.automl.feature.identity_transformer import IdentityTransformer
 
 

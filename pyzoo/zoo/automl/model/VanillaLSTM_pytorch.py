@@ -16,11 +16,8 @@
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
 
-from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 from zoo.automl.model.abstract import BaseModel
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator

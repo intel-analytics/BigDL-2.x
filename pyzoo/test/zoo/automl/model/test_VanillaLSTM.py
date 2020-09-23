@@ -17,9 +17,11 @@
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.automl.model.VanillaLSTM import *
+from zoo.automl.model.VanillaLSTM import VanillaLSTM
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 from numpy.testing import assert_array_almost_equal
+import numpy as np
+import pandas as pd
 
 
 class TestVanillaLSTM(ZooTestCase):

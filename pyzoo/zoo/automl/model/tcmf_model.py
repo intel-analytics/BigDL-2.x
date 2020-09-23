@@ -20,7 +20,6 @@ from zoo.automl.model.abstract import BaseModel
 from zoo.orca.data import SparkXShards, XShards
 import pickle
 import numpy as np
-import pandas as pd
 
 
 class TCMF(BaseModel):
