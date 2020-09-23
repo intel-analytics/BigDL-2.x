@@ -139,7 +139,7 @@ class TCMF(BaseModel):
             num_workers = 1
         return num_workers
 
-    def predict(self, x=None, horizon=24, mc=False, num_workers=1):
+    def predict(self, x=None, horizon=24, mc=False, num_workers=None):
         """
         Predict horizon time-points ahead the input x in fit_eval
         :param x: We don't support input x currently.

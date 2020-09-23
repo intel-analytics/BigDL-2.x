@@ -30,3 +30,11 @@ if [ $exit_status_1 -ne 0 ];
 then
     exit $exit_status_1
 fi
+
+echo "Running zouwu tcmf distributed test"
+python -m pytest -v ../test/zoo/zouwu/test_model_forecast.py::TestZouwuModelForecast::test_forecast_tcmf_distributed
+exit_status_2=$?
+if [ $exit_status_2 -ne 0 ];
+then
+    exit $exit_status_2
+fi

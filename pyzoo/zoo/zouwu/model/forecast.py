@@ -150,7 +150,7 @@ class TCMFForecaster(Forecaster):
             are supported. Example: {'id': id_arr, 'y': data_ndarray}
         :param incremental: if the fit is incremental
         :param num_workers: the number of workers you want to use for fit. If None, it defaults to
-        num_ray_nodes in the created RayContext.
+        num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
         :return:
         """
         if incremental:
