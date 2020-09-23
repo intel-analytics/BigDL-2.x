@@ -16,24 +16,24 @@
 
 import pytest
 import numpy as np
-from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 import tensorflow as tf
 import pandas as pd
 
 from zoo.zouwu.model.forecast.lstm_forecaster import LSTMForecaster
 from zoo.zouwu.model.forecast.mtnet_forecaster import MTNetForecaster
+from unittest import TestCase
 
 
-class TestZouwuModelForecast(ZooTestCase):
+class TestZouwuModelForecast(TestCase):
 
-    def setup_method(self, method):
+    def setUp(self):
         tf.keras.backend.clear_session()
         # super(TestZouwuModelForecast, self).setup_method(method)
         self.ft = TimeSequenceFeatureTransformer()
         self.create_data()
 
-    def teardown_method(self, method):
+    def tearDown(self):
         pass
 
     def create_data(self):
