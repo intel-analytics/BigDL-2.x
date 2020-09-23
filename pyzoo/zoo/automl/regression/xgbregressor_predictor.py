@@ -78,7 +78,7 @@ class XgbRegressorPredictor(object):
             mc=False,
             resources_per_trial={"cpu": 2},
             distributed=False,
-            hdfs_url=None
+            hdfs_url=None,
             ):
         """
         Trains the model for time sequence prediction.
@@ -121,7 +121,8 @@ class XgbRegressorPredictor(object):
             recipe=recipe,
             mc=mc,
             resources_per_trial=resources_per_trial,
-            remote_dir=remote_dir)
+            remote_dir=remote_dir,
+        )
         return self.pipeline
 
     def evaluate(self,
@@ -220,10 +221,10 @@ class XgbRegressorPredictor(object):
                    recipe,
                    mc,
                    resources_per_trial,
-                   remote_dir):
+                   remote_dir,):
         def model_create_func():
             model = XGBoostRegressor(config)
-            model.set_params(n_jobs=resources_per_trial)
+            model.set_params(n_jobs=resources_per_trial.get("cpu", 1))
             return model
         model = model_create_func()
         ft = IdentityTransformer(self.feature_cols, self.target_col)
@@ -257,7 +258,7 @@ class XgbRegressorPredictor(object):
                          metric=metric,
                          metric_mode=metric_mode,
                          mc=mc,
-                         num_samples=num_samples)
+                         num_samples=num_samples,)
         # searcher.test_run()
         analysis = searcher.run()
 
