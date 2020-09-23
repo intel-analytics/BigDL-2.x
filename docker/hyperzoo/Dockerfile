@@ -34,11 +34,10 @@ ENV HADOOP_CONF_DIR                     /opt/hadoop-conf
 ENV ANALYTICS_ZOO_HOME                  /opt/analytics-zoo-${ANALYTICS_ZOO_VERSION}
 ENV BIGDL_CLASSPATH                     ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar
 ENV JAVA_HOME                           /opt/jdk
-ENV PYTHONHOME                          /root/miniconda3
 ENV REDIS_HOME                          /opt/redis-5.0.5
 ENV CS_HOME                             /opt/work/cluster-serving
 ENV PYTHONPATH                          ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip:${SPARK_HOME}/python/lib/pyspark.zip:${SPARK_HOME}/python/lib/py4j-*.zip:${CS_HOME}/serving-python.zip:/opt/models/research/slim
-ENV PATH                                ${ANALYTICS_ZOO_HOME}/bin/cluster-serving:${JAVA_HOME}/bin:${PYTHONHOME}/bin:${PATH}
+ENV PATH                                ${ANALYTICS_ZOO_HOME}/bin/cluster-serving:${JAVA_HOME}/bin:/root/miniconda3/bin:${PATH}
 
 
 RUN apt-get update --fix-missing && \
