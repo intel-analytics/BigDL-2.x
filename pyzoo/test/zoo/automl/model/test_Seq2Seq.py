@@ -20,9 +20,12 @@ import tempfile
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.automl.model.Seq2Seq import *
+from zoo.automl.model.Seq2Seq import LSTMSeq2Seq
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 from numpy.testing import assert_array_almost_equal
+import pandas as pd
+import numpy as np
+from zoo.automl.common.util import save, restore
 
 
 class TestSeq2Seq(ZooTestCase):

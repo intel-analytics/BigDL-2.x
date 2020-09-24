@@ -32,7 +32,7 @@ import com.intel.analytics.zoo.serving.utils.SerParams
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 
-class PreProcessing(param: SerParams) {
+class PreProcessing(chwFlag: Boolean = true) {
   val logger = Logger.getLogger(getClass)
 
   var tensorBuffer: Array[Tensor[Float]] = null
@@ -93,7 +93,7 @@ class PreProcessing(param: SerParams) {
     OpenCVMat.toFloatPixels(mat, arrayBuffer)
 
     val imageTensor = Tensor[Float](arrayBuffer, Array(height, width, channel))
-    if (param.chwFlag) {
+    if (chwFlag) {
       imageTensor.transpose(1, 3)
         .transpose(2, 3).contiguous()
     } else {

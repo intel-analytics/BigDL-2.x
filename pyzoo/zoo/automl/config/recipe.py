@@ -565,6 +565,7 @@ class XgbRegressorGridRandomRecipe(Recipe):
             # -------- feature related parameters
             "model": "XGBRegressor",
 
+            "imputation": tune.choice(["LastFillImpute", "FillZeroImpute"]),
             "n_estimators": self.n_estimators,
             "max_depth": self.max_depth,
             "min_child_weight": self.min_child_weight,
