@@ -16,7 +16,6 @@
 
 import pytest
 import numpy as np
-import pandas as pd
 
 from unittest import TestCase
 
@@ -116,6 +115,7 @@ class TestZouwuModelForecastWithoutFt(TestCase):
         from zoo.zouwu.model.forecast import TCMFForecaster
         from zoo.orca import OrcaContext
         import zoo.orca.data.pandas
+        import pandas as pd
         import tempfile
         OrcaContext.pandas_read_backend = "pandas"
 
