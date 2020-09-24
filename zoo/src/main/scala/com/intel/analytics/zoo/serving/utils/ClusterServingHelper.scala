@@ -147,7 +147,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
     val paramsConfig = configList.get("params").asInstanceOf[HM]
     coreNum = getYaml(paramsConfig, "core_number", 4).asInstanceOf[Int]
 
-    val modelParDefault = if (modelType == "openvino") 1 else coreNum
+    val modelParDefault = if (modelType == "openvino") coreNum else coreNum
     modelPar = getYaml(paramsConfig, "model_number", default = modelParDefault).asInstanceOf[Int]
 
 

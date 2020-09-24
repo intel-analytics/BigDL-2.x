@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.serving
 
 
 import com.intel.analytics.zoo.serving.engine.{FlinkInference, FlinkRedisSink, FlinkRedisSource}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ClusterServingManager, Conventions, SerParams}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions, SerParams}
 import org.apache.flink.core.execution.JobClient
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.log4j.{Level, Logger}
@@ -72,7 +72,7 @@ object ClusterServing {
     }
 
     val jobClient = serving.executeAsync("Cluster Serving - " + helper.jobName)
-    val jobId = ClusterServingManager.getJobIdfromClient(jobClient)
+    val jobId = jobClient.getJobID.toHexString
     Runtime.getRuntime.addShutdownHook(new ShutDownThrd(helper, jobId, jobClient))
     helper.updateManagerYaml(jobId)
     while (!jobClient.getJobStatus.get().isTerminalState) {

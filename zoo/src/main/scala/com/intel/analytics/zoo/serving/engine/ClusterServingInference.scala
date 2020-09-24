@@ -36,19 +36,17 @@ object ClusterServingInference {
    * @param preProcessed
    * @param modelType
    * @param filterType
-   * @param model
    * @return
    */
   def singleThreadInference(preProcessed: Iterator[(String, Activity)],
                             modelType: String,
-                            filterType: String = null,
-                            model: InferenceModel = null): Iterator[(String, String)] = {
-    val localModel = if (model == null) ModelHolder.model else model
+                            filterType: String = null): Iterator[(String, String)] = {
+
     val postProcessed = preProcessed.map(pathByte => {
       try {
         val t = typeCheck(pathByte._2)
         dimCheck(t, "add", modelType)
-        val result = localModel.doPredict(t)
+        val result = ModelHolder.model.doPredict(t)
         dimCheck(result, "remove", modelType)
         val value = PostProcessing(result.toTensor[Float], filterType, 1)
         (pathByte._1, value)
@@ -72,39 +70,33 @@ object ClusterServingInference {
    * @param batchSize
    * @param modelType
    * @param filterType
-   * @param model
    * @return
    */
   def singleThreadBatchInference(preProcessed: Iterator[(String, Activity)],
                                  batchSize: Int,
                                  modelType: String,
-                                 filterType: String = "",
-                                 model: InferenceModel = null): Iterator[(String, String)] = {
-    val localModel = if (model == null) ModelHolder.model else model
+                                 filterType: String = ""): Iterator[(String, String)] = {
     val postProcessed = preProcessed.grouped(batchSize).flatMap(pathByte => {
       try {
         val thisBatchSize = pathByte.size
-        val t = Timer.timing("batch", thisBatchSize) {
-          batchInput(pathByte, batchSize, useMultiThreading = false, resizeFlag = false)
-        }
+
+        val t = batchInput(pathByte, batchSize, useMultiThreading = false, resizeFlag = false)
         dimCheck(t, "add", modelType)
-        val result = Timer.timing("inference", thisBatchSize) {
-          localModel.doPredict(t)
-        }
+        val result =
+          ModelHolder.model.doPredict(t)
         dimCheck(result, "remove", modelType)
         dimCheck(t, "remove", modelType)
-        val kvResult = Timer.timing("postprocess", thisBatchSize) {
-          (0 until thisBatchSize).toParArray.map(i => {
+        val kvResult =
+          (0 until thisBatchSize).map(i => {
             val value = PostProcessing(result, filterType, i + 1)
             (pathByte(i)._1, value)
           })
-        }
         kvResult
       } catch {
         case e: Exception =>
           logger.info(s"${e.printStackTrace()}, " +
             s"Your input format is invalid to your model, this batch is skipped")
-          pathByte.toParArray.map(x => (x._1, "NaN"))
+          pathByte.map(x => (x._1, "NaN"))
       }
     })
     postProcessed
@@ -117,22 +109,18 @@ object ClusterServingInference {
    * @param modelType
    * @param filterType
    * @param resizeFlag
-   * @param model
    * @return
    */
   def multiThreadInference(preProcessed: Iterator[(String, Activity)],
                            batchSize: Int,
                            modelType: String,
                            filterType: String = "",
-                           resizeFlag: Boolean = false,
-                           model: InferenceModel = null): Iterator[(String, String)] = {
-    val localModel = if (model == null) ModelHolder.model else model
+                           resizeFlag: Boolean = false): Iterator[(String, String)] = {
     val postProcessed = preProcessed.grouped(batchSize).flatMap(pathByteBatch => {
       try {
         val thisBatchSize = pathByteBatch.size
-        val t = Timer.timing("batch", thisBatchSize) {
+        val t =
           batchInput(pathByteBatch, batchSize, resizeFlag)
-        }
 
         /**
          * addSingletonDimension method will modify the
@@ -140,17 +128,15 @@ object ClusterServingInference {
          * have to squeeze it back.
          */
         dimCheck(t, "add", modelType)
-        val result = Timer.timing("inference", thisBatchSize) {
-          localModel.doPredict(t)
-        }
+        val result =
+          ModelHolder.model.doPredict(t)
         dimCheck(result, "remove", modelType)
         dimCheck(t, "remove", modelType)
-        val kvResult = Timer.timing("postprocess", thisBatchSize) {
+        val kvResult =
           (0 until thisBatchSize).toParArray.map(i => {
             val value = PostProcessing(result, filterType, i + 1)
             (pathByteBatch(i)._1, value)
           })
-        }
         kvResult
       } catch {
         case e: Exception =>
