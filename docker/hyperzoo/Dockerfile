@@ -50,22 +50,18 @@ RUN apt-get update --fix-missing && \
     chgrp root /etc/passwd && chmod ug+rw /etc/passwd
 
 #conda
-RUN wget \
-    https://repo.anaconda.com/miniconda/Miniconda3-py37_4.8.3-Linux-x86_64.sh \
-    && mkdir /root/.conda \
-    && bash Miniconda3-py37_4.8.3-Linux-x86_64.sh -b \
-    && rm -f Miniconda3-py37_4.8.3-Linux-x86_64.sh
-
-
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-py37_4.8.3-Linux-x86_64.sh && \
+    mkdir /root/.conda && \
+    bash Miniconda3-py37_4.8.3-Linux-x86_64.sh -b && \
+    rm -f Miniconda3-py37_4.8.3-Linux-x86_64.sh && \
 #java
-RUN wget https://enos.itcollege.ee/~jpoial/allalaadimised/jdk8/jdk-8u261-linux-x64.tar.gz  && \
+    wget https://enos.itcollege.ee/~jpoial/allalaadimised/jdk8/jdk-8u261-linux-x64.tar.gz  && \
     gunzip jdk-8u261-linux-x64.tar.gz && \
     tar -xf jdk-8u261-linux-x64.tar -C /opt && \
     rm jdk-8u261-linux-x64.tar && \
-    ln -s /opt/jdk1.8.0_261 /opt/jdk
-
+    ln -s /opt/jdk1.8.0_261 /opt/jdk && \
 #spark
-RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
+    wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     tar -zxvf spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     mv spark-${SPARK_VERSION}-bin-hadoop2.7 /opt/spark && \
     rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
@@ -103,10 +99,9 @@ RUN apt-get install -y python3-minimal && \
     pip install gym gym[atari] && \
     pip install lz4 && \
     pip install ray[rllib] && \
-    git clone https://github.com/tensorflow/models/ /opt/models
-
+    git clone https://github.com/tensorflow/models/ /opt/models && \
 #redis
-RUN wget http://download.redis.io/releases/redis-5.0.5.tar.gz && \
+    wget http://download.redis.io/releases/redis-5.0.5.tar.gz && \
     tar xzf redis-5.0.5.tar.gz -C /opt && \
     rm redis-5.0.5.tar.gz && \
     cd /opt/redis-5.0.5 && \
