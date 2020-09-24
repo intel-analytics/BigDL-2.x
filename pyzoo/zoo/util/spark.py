@@ -237,7 +237,7 @@ class SparkRunner:
                           jars=None,
                           python_location=None):
         print("Initializing SparkContext for k8s-client mode")
-        executor_python_env = "/root/miniconda3"
+        executor_python_env = "/".join(detect_python_location().split("/")[:-2])
         if "PYSPARK_PYTHON" not in os.environ:
             os.environ["PYSPARK_PYTHON"] = \
                 python_location if python_location else detect_python_location()
