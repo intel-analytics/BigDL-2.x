@@ -20,7 +20,7 @@
 
 cd "`dirname $0`"
 
-export PYSPARK_PYTHON=python
+export PYSPARK_PYTHON=pythonconda
 export PYSPARK_DRIVER_PYTHON=python
 
 echo "Running RayOnSpark tests"
@@ -32,7 +32,7 @@ then
 fi
 
 echo "Running zouwu tcmf distributed test"
-python -m pytest -v ../test/zoo/zouwu/test_model_forecast.py::TestZouwuModelForecast::test_forecast_tcmf_distributed
+python -m pytest -v ../test/zoo/zouwu/test_model_forecast_without_ft.py::TestZouwuModelForecastWithoutFt::test_forecast_tcmf_distributed
 exit_status_2=$?
 if [ $exit_status_2 -ne 0 ];
 then
