@@ -50,6 +50,7 @@ class TestEstimatorForKeras(TestCase):
         return df
 
     def test_nnEstimator(self):
+        from zoo.pipeline.nnframes import NNModel
         linear_model = Sequential().add(Linear(2, 2))
         mse_criterion = MSECriterion()
         df = self.get_estimator_df()
@@ -57,7 +58,7 @@ class TestEstimatorForKeras(TestCase):
                                    feature_preprocessing=SeqToTensor([2]),
                                    label_preprocessing=SeqToTensor([2]))
         est.fit(df, 1, batch_size=4, optimizer=Adam())
-        nn_model = est.get_model()
+        nn_model = NNModel(est.get_model(), feature_preprocessing=SeqToTensor([2]))
         res1 = nn_model.transform(df)
         res2 = est.predict(df)
         res1_c = res1.collect()
@@ -73,6 +74,13 @@ class TestEstimatorForKeras(TestCase):
             est2 = Estimator.from_bigdl(model=linear_model, loss=mse_criterion)
             est2.load(temp_path, optimizer=Adam(), loss=mse_criterion,
                       feature_preprocessing=SeqToTensor([2]), label_preprocessing=SeqToTensor([2]))
+            with self.assertRaises(Exception) as context:
+                est2.predict(df)
+            self.assertTrue('You should fit or set_input_type before calling predict'
+                            in str(context.exception))
+            est2.set_input_type(input_type="Spark_DataFrame")
+            est.set_constant_gradient_clipping(0.1, 1.2)
+            est.clear_gradient_clipping()
             res3 = est2.predict(df)
             res3_c = res3.collect()
             assert type(res3).__name__ == 'DataFrame'
@@ -80,6 +88,17 @@ class TestEstimatorForKeras(TestCase):
             for idx in range(len(res1_c)):
                 assert res1_c[idx]["prediction"] == res3_c[idx]["prediction"]
             est2.fit(df, 1, batch_size=4, optimizer=Adam())
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+
+        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+        data_shard = read_csv(file_path)
+        with self.assertRaises(Exception) as context:
+            est.fit(data_shard, 1, batch_size=4, optimizer=Adam())
+        self.assertTrue('This estimator only support spark DataFrame as training data'
+                        in str(context.exception))
+        with self.assertRaises(Exception) as context:
+            est.predict(data_shard)
+        self.assertTrue('Data should be spark DataFrame but get' in str(context.exception))
 
     def test_nnEstimator_multiInput(self):
         zx1 = ZLayer.Input(shape=(1,))
@@ -154,16 +173,26 @@ class TestEstimatorForKeras(TestCase):
         optim_method = SGD(learningrate=0.01)
 
         estimator = Estimator.from_bigdl(model=model, optimizer=optim_method,
-                                         loss=ClassNLLCriterion(), backend="bigdl")
+                                         loss=ClassNLLCriterion())
+        with self.assertRaises(Exception) as context:
+            estimator.set_constant_gradient_clipping(0.1, 1.2)
+        self.assertTrue('Please call set_input_type before calling set_constant_gradient_clipping.'
+                        in str(context.exception))
+        estimator.set_input_type(input_type="sparkXshards")
         estimator.set_constant_gradient_clipping(0.1, 1.2)
         r1 = estimator.predict(data=data_shard)
         r_c = r1.collect()
-        estimator.fit(data=data_shard, epochs=5, batch_size=8, validation_data=data_shard,
-                      validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
+        estimator.fit(data=data_shard, epochs=5, batch_size=8, val_data=data_shard,
+                      val_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
         estimator.evaluate(data=data_shard, validation_methods=[Accuracy()], batch_size=8)
         result = estimator.predict(data=data_shard)
+        assert type(result).__name__ == 'SparkXShards'
         result_c = result.collect()
-        print("aa")
+        df = self.get_estimator_df()
+        with self.assertRaises(Exception) as context:
+            estimator.fit(df, epochs=1)
+        self.assertTrue('Data and validation data should be SparkXShards, but get'
+                        in str(context.exception))
 
 
 if __name__ == "__main__":

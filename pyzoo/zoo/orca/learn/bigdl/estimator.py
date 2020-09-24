@@ -72,7 +72,7 @@ class Estimator(object):
 
     @staticmethod
     def from_bigdl(*, model, loss, optimizer=None, feature_preprocessing=None,
-                   label_preprocessing=None, model_dir=None, backend="sparkml"):
+                   label_preprocessing=None, model_dir=None):
         """
         Construct an Estimator with BigDL model, loss function and Preprocessing for feature and
         label data.
@@ -100,228 +100,11 @@ class Estimator(object):
         :param label_preprocessing: similar to feature_preprocessing, but applies to Label data.
         :param model_dir: The path to save model. During the training, if checkpoint_trigger is
             defined and triggered, the model will be saved to model_dir.
-        :param input_type: The data type of training data. Only `spark_dataframe` and `
-            spark_xshards` are supported
         :return:
         """
-
-        if backend == "sparkml":
-            return NNEstimatorWrapper(model=model, loss=loss, optimizer=optimizer,
-                                      feature_preprocessing=feature_preprocessing,
-                                      label_preprocessing=label_preprocessing)
-        elif backend == "bigdl":
-            return SparkEstimatorWrapper(model=model, loss=loss, optimizer=optimizer,
-                                         model_dir=model_dir)
-        else:
-            raise ValueError("only sparkml and bigdl backend are supported "
-                             "for now")
-
-
-class NNEstimatorWrapper(Estimator):
-    def __init__(self, *, model, loss, optimizer=None, feature_preprocessing=None,
-                 label_preprocessing=None):
-        self.estimator = NNEstimator(model, loss, feature_preprocessing, label_preprocessing)
-        if optimizer is not None:
-            self.estimator.setOptimMethod(optimizer)
-        self.model = None
-
-    def fit(self, data, epochs, feature_cols="features", optimizer=None, batch_size=32,
-            caching_sample=True, val_data=None, val_trigger=None, val_methods=None,
-            train_summary_dir=None, val_summary_dir=None, app_name=None, checkpoint_path=None,
-            checkpoint_trigger=None):
-        from zoo.orca.learn.metrics import Metrics
-        from zoo.orca.learn.trigger import Trigger
-        if isinstance(feature_cols, list):
-            if len(feature_cols) == 1:
-                feature_cols = feature_cols[0]
-            else:
-                from pyspark.ml.feature import VectorAssembler
-                assembler = VectorAssembler(
-                    inputCols=feature_cols,
-                    outputCol="features")
-                data = assembler.transform(data)
-                if val_data is not None:
-                    val_data = assembler.transform(val_data)
-                feature_cols = "features"
-
-        self.estimator.setBatchSize(batch_size).setMaxEpoch(epochs)\
-            .setCachingSample(caching_sample).setFeaturesCol(feature_cols)
-
-        if optimizer is not None:
-            self.estimator.setOptimMethod(optimizer)
-
-        if val_data is not None:
-            assert val_trigger is not None and val_methods is not None, \
-                "You should provide val_trigger and val_methods if you provide val_data."
-            val_trigger = Trigger.convert_trigger(val_trigger)
-            val_methods = Metrics.convert_metrics_list(val_methods)
-            self.estimator.setValidation(val_trigger, val_data, val_methods, batch_size)
-        if train_summary_dir is not None:
-            from bigdl.optim.optimizer import TrainSummary
-            assert app_name is not None, \
-                "You should provide app_name if you provide train_summary_dir"
-            train_summary = TrainSummary(log_dir=train_summary_dir, app_name=app_name)
-            self.estimator.setTrainSummary(train_summary)
-        if val_summary_dir is not None:
-            from bigdl.optim.optimizer import ValidationSummary
-            assert app_name is not None, \
-                "You should provide app_name if you provide val_summary_dir"
-            val_summary = ValidationSummary(log_dir=val_summary_dir, app_name=app_name)
-            self.estimator.setValidationSummary(val_summary)
-        if checkpoint_path is not None:
-            assert checkpoint_trigger is not None, \
-                "You should provide checkpoint_trigger if you provide checkpoint_path"
-            checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
-            self.estimator.setCheckpoint(checkpoint_path, checkpoint_trigger)
-
-        self.model = self.estimator.fit(data)
-        return self
-
-    def predict(self, data, batch_size=8, feature_cols="features", sample_preprocessing=None):
-        if self.model is not None:
-            if isinstance(feature_cols, list):
-                if len(feature_cols) == 1:
-                    feature_cols = feature_cols[0]
-                else:
-                    from pyspark.ml.feature import VectorAssembler
-                    assembler = VectorAssembler(
-                        inputCols=feature_cols,
-                        outputCol="features")
-                    data = assembler.transform(data)
-                    feature_cols = "features"
-            self.model.setBatchSize(batch_size).setFeaturesCol(feature_cols)
-            if sample_preprocessing is not None:
-                self.model.setSamplePreprocessing(sample_preprocessing)
-            return self.model.transform(data)
-        else:
-            raise ValueError("You should fit before calling predict")
-
-    def evaluate(self, data, **kwargs):
-        pass
-
-    def get_model(self):
-        if self.model is not None:
-            return self.model
-        else:
-            raise ValueError("You should fit before calling get_model")
-
-    def save(self, checkpoint):
-        if self.model is not None:
-            self.model.model.saveModel(checkpoint + ".bigdl", checkpoint + ".bin", True)
-        else:
-            raise ValueError("You should fit before calling save")
-
-    def load(self, checkpoint, optimizer=None, loss=None, feature_preprocessing=None,
-             label_preprocessing=None):
-        assert loss is not None, "You should provide loss function"
-        from zoo.pipeline.api.net import Net
-        from zoo.pipeline.nnframes import NNModel
-        model = Net.load_bigdl(checkpoint + ".bigdl", checkpoint + ".bin")
-        self.estimator = NNEstimator(model, loss, feature_preprocessing=feature_preprocessing,
-                                     label_preprocessing=label_preprocessing)
-        if optimizer is not None:
-            self.estimator.setOptimMethod(optimizer)
-        self.model = NNModel(model, feature_preprocessing=feature_preprocessing)
-        return self
-
-    def clear_gradient_clipping(self):
-        self.estimator.clearGradientClipping()
-
-    def set_constant_gradient_clipping(self, min, max):
-        self.estimator.setConstantGradientClipping(min, max)
-
-    def set_l2_norm_gradient_clipping(self, clip_norm):
-        self.estimator.setGradientClippingByL2Norm(clip_norm)
-
-    def get_train_summary(self):
-        return self.estimator.getTrainSummary()
-
-    def get_validation_summary(self):
-        return self.estimator.getValidationSummary()
-
-
-class SparkEstimatorWrapper(Estimator):
-    def __init__(self, *, model, loss, optimizer=None, model_dir=None, bigdl_type="float"):
-        self.loss = loss
-        if optimizer is None:
-            from bigdl.optim.optimizer import SGD
-            optimizer = SGD()
-        self.model = model
-        self.estimator = SparkEstimator(self.model, optimizer, model_dir, bigdl_type=bigdl_type)
-
-    def fit(self, data, epochs=1, batch_size=32, validation_data=None, validation_methods=None,
-            checkpoint_trigger=None):
-        from zoo.orca.data.utils import to_sample
-        from zoo.orca.learn.metrics import Metrics
-        from zoo.orca.learn.trigger import Trigger
-
-        end_trigger = MaxEpoch(epochs)
-        assert batch_size > 0, "batch_size should be greater than 0"
-        validation_methods = Metrics.convert_metrics_list(validation_methods)
-        checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
-
-        if isinstance(data, SparkXShards):
-            train_rdd = data.rdd.flatMap(to_sample)
-            train_feature_set = FeatureSet.sample_rdd(train_rdd)
-            if validation_data is None:
-                val_feature_set = None
-            else:
-                assert isinstance(validation_data, SparkXShards), "validation_data should be a " \
-                                                                  "SparkXShards"
-                val_feature_set = FeatureSet.sample_rdd(validation_data.rdd.flatMap(to_sample))
-
-            self.estimator.train(train_feature_set, self.loss, end_trigger, checkpoint_trigger,
-                                 val_feature_set, validation_methods, batch_size)
-        else:
-            raise ValueError("Data and validation data should be SparkXShards, but get " +
-                             data.__class__.__name__)
-        return self
-
-    def predict(self, data, **kwargs):
-        from zoo.orca.data.utils import to_sample
-        if isinstance(data, SparkXShards):
-            sample_rdd = data.rdd.flatMap(to_sample)
-            return self.model.predict(sample_rdd)
-        else:
-            raise ValueError("Data should be SparkXShards, but get " +
-                             data.__class__.__name__)
-
-    def evaluate(self, data, validation_methods=None, batch_size=32):
-        from zoo.orca.data.utils import to_sample
-        from zoo.orca.learn.metrics import Metrics
-
-        assert data is not None, "validation data shouldn't be None"
-        validation_methods = Metrics.convert_metrics_list(validation_methods)
-
-        if isinstance(data, SparkXShards):
-            val_feature_set = FeatureSet.sample_rdd(data.rdd.flatMap(to_sample))
-            return self.estimator.evaluate(val_feature_set, validation_methods, batch_size)
-        else:
-            raise ValueError("Data should be a SparkXShards, but get " + data.__class__.__name__)
-
-    def get_model(self):
-        return self.model
-
-    def save(self, checkpoint):
-        pass
-
-    def load(self, checkpoint):
-        pass
-
-    def clear_gradient_clipping(self):
-        self.estimator.clear_gradient_clipping()
-
-    def set_constant_gradient_clipping(self, min, max):
-        self.estimator.set_constant_gradient_clipping(min, max)
-
-    def set_l2_norm_gradient_clipping(self, clip_norm):
-        self.estimator.set_l2_norm_gradient_clipping(clip_norm)
-
-    def get_train_summary(self):
-        self.estimator.get_train_summary()
-
-    def get_validation_summary(self):
-        self.estimator.get_validation_summary()
+        return BigDLEstimatorWrapper(model=model, loss=loss, optimizer=optimizer,
+                                     feature_preprocessing=feature_preprocessing,
+                                     label_preprocessing=label_preprocessing, model_dir=model_dir)
 
 
 class BigDLEstimatorWrapper(Estimator):
@@ -439,6 +222,8 @@ class BigDLEstimatorWrapper(Estimator):
             if isinstance(self.estimator, NNEstimator):
                 if self.nn_model is None:
                     raise ValueError("You should fit or set_input_type before calling predict")
+                assert isinstance(data, DataFrame), "Data should be spark DataFrame but get " + \
+                                                    data.__class__.__name__
                 if isinstance(feature_cols, list):
                     if len(feature_cols) == 1:
                         feature_cols = feature_cols[0]
@@ -456,8 +241,10 @@ class BigDLEstimatorWrapper(Estimator):
             else:
                 from zoo.orca.data.utils import to_sample
                 if isinstance(data, SparkXShards):
+                    from zoo.orca.learn.tf.utils import convert_predict_to_xshard
                     sample_rdd = data.rdd.flatMap(to_sample)
-                    return self.model.predict(sample_rdd)
+                    result_rdd = self.model.predict(sample_rdd)
+                    return convert_predict_to_xshard(result_rdd)
                 else:
                     raise ValueError("Data should be SparkXShards, but get " +
                                      data.__class__.__name__)
