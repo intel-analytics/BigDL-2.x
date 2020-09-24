@@ -140,7 +140,6 @@ ADD freeze_checkpoint.py /opt/work
 RUN chmod a+x /opt/work/cluster-serving/*
 
 
-ENV OMP_NUM_THREADS     all
 
 RUN sed -i "s/jobmanager\.heap\.size:.*/jobmanager\.heap\.size: 8g/g" $FLINK_HOME/conf/flink-conf.yaml && \
     sed -i "s/taskmanager\.memory\.process\.size:.*/taskmanager\.memory\.process\.size: 8g/g" $FLINK_HOME/conf/flink-conf.yaml
