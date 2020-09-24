@@ -22,12 +22,15 @@ from bigdl.nn.layer import *
 from pyspark.sql.types import *
 
 from zoo.common.nncontext import *
-from zoo.pipeline.nnframes import *
 from zoo.feature.common import *
 from zoo.orca.learn.bigdl import Estimator
 from bigdl.optim.optimizer import *
 from zoo.pipeline.api.keras import layers as ZLayer
 from zoo.pipeline.api.keras.models import Model as ZModel
+from zoo.orca.data import SparkXShards
+from zoo.orca.learn.metrics import Accuracy
+from zoo.orca.learn.trigger import EveryEpoch
+from zoo.orca.data.pandas import read_csv
 
 
 class TestEstimatorForKeras(TestCase):
@@ -131,6 +134,36 @@ class TestEstimatorForKeras(TestCase):
         res = est.predict(df, feature_cols=["user", "age", "income", "history"])
         res_c = res.collect()
         assert type(res).__name__ == 'DataFrame'
+
+    def test_xshards_spark_estimator(self):
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+
+        def transform(df):
+            result = {
+                "x": [df['user'].to_numpy(), df['item'].to_numpy()],
+                "y": df['label'].to_numpy()
+            }
+            return result
+
+        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+        data_shard = read_csv(file_path)
+        data_shard = data_shard.transform_shard(transform)
+        model = Sequential()
+        model.add(Linear(2, 2))
+        model.add(LogSoftMax())
+        optim_method = SGD(learningrate=0.01)
+
+        estimator = Estimator.from_bigdl(model=model, optimizer=optim_method,
+                                         loss=ClassNLLCriterion(), backend="bigdl")
+        estimator.set_constant_gradient_clipping(0.1, 1.2)
+        r1 = estimator.predict(data=data_shard)
+        r_c = r1.collect()
+        estimator.fit(data=data_shard, epochs=5, batch_size=8, validation_data=data_shard,
+                      validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
+        estimator.evaluate(data=data_shard, validation_methods=[Accuracy()], batch_size=8)
+        result = estimator.predict(data=data_shard)
+        result_c = result.collect()
+        print("aa")
 
 
 if __name__ == "__main__":
