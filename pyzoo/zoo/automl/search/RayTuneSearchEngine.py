@@ -16,7 +16,7 @@
 
 import ray
 from ray import tune
-from copy import copy, deepcopy
+from copy import deepcopy
 
 from zoo.automl.search.abstract import *
 from zoo.automl.common.util import *
