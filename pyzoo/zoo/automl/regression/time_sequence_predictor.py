@@ -15,21 +15,12 @@
 # limitations under the License.
 #
 
-
-import numpy as np
-import tempfile
-import zipfile
-import os
-import shutil
-import ray
-
-from zoo.automl.search.abstract import *
 from zoo.automl.search.RayTuneSearchEngine import RayTuneSearchEngine
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 
-from zoo.automl.model import TimeSequenceModel
-from zoo.automl.pipeline.time_sequence import TimeSequencePipeline, load_ts_pipeline
+from zoo.automl.model.time_sequence import TimeSequenceModel
+from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
 from zoo.automl.common.util import *
 from zoo.automl.config.recipe import *
 

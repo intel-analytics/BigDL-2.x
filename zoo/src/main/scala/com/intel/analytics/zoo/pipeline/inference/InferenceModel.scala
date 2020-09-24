@@ -16,30 +16,23 @@
 
 package com.intel.analytics.zoo.pipeline.inference
 
-import java.io.FileWriter
 import java.lang.{Float => JFloat, Integer => JInt}
 import java.util
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.{List => JList}
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.sun.xml.internal.bind.v2.TODO
 
 import scala.collection.JavaConverters._
-import scala.reflect.ClassTag
 
 class InferenceModel(private var autoScalingEnabled: Boolean = true,
                      private var concurrentNum: Int = 20,
                      private var originalModel: AbstractModel = null,
                      private[inference] var modelQueue:
                      LinkedBlockingQueue[AbstractModel] = null)
-  extends InferenceSupportive with Serializable {
+  extends InferenceSupportive with EncryptSupportive with Serializable {
 
   require(concurrentNum > 0, "concurrentNum should > 0")
-
-  @transient var inferenceSummary: InferenceSummary = null
   /**
    * default constructor, will create a InferenceModel with auto-scaling enabled.
    *
@@ -296,6 +289,22 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     offerModelQueue()
   }
 
+  /**
+   * load an encrypted OpenVINO IR
+   *
+   * @param modelPath   the path of encrypted openvino ir xml file
+   * @param weightPath  the path of encrypted openvino ir bin file
+   * @param secret      the secret
+   * @param salt        the salt
+   * @param batchSize   the batchSize
+   */
+  def doLoadEncryptedOpenVINO(modelPath: String, weightPath: String, secret: String,
+      salt: String, batchSize: Int = 0): Unit = {
+    val modelBytes = decryptFileWithAES256(modelPath, secret, salt).getBytes("ISO-8859-1")
+    val weightBytes = decryptFileWithAES256(weightPath, secret, salt).getBytes("ISO-8859-1")
+    doLoadOpenVINO(modelBytes, weightBytes, batchSize)
+  }
+
   private def doLoadTensorflowModel(modelPath: String,
                                     modelType: String,
                                     intraOpParallelismThreads: Int,
@@ -540,7 +549,13 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
       }
     }
   }
+  def blockModel(): Unit = {
+    while (modelQueue.peek() == null) {
+      val model = modelQueue.take()
+      modelQueue.offer(model)
+    }
 
+  }
   private def retrieveModel(): AbstractModel = {
     var model: AbstractModel = null
     autoScalingEnabled match {
@@ -586,12 +601,6 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
         models.map(this.modelQueue.offer(_))
     }
   }
-
-  def setInferenceSummary(value: InferenceSummary): this.type = {
-    this.inferenceSummary = value
-    this
-  }
-
 
   def getOriginalModel: AbstractModel = originalModel
 

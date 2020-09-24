@@ -15,19 +15,9 @@
 # limitations under the License.
 #
 
-
-import numpy as np
-import tempfile
-import zipfile
-import os
-import shutil
-import ray
-
-from zoo.automl.search.abstract import *
 from zoo.automl.search.RayTuneSearchEngine import RayTuneSearchEngine
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.feature.identity_transformer import IdentityTransformer
-
 
 from zoo.automl.model import XGBoost
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
@@ -82,7 +72,7 @@ class XgbPredictor(object):
             mc=False,
             resources_per_trial={"cpu": 2},
             distributed=False,
-            hdfs_url=None
+            hdfs_url=None,
             ):
         """
         Trains the model for time sequence prediction.
@@ -125,7 +115,8 @@ class XgbPredictor(object):
             recipe=recipe,
             mc=mc,
             resources_per_trial=resources_per_trial,
-            remote_dir=remote_dir)
+            remote_dir=remote_dir,
+        )
         return self.pipeline
 
     def evaluate(self,
@@ -213,13 +204,12 @@ class XgbPredictor(object):
                    recipe,
                    mc,
                    resources_per_trial,
-                   remote_dir):
+                   remote_dir,):
         def model_create_func():
             _model = XGBoost(model_type=self.model_type, config=config)
             if "cpu" in resources_per_trial:
                 _model.set_params(n_jobs=resources_per_trial.get("cpu"))
             return _model
-
         model = model_create_func()
         ft = IdentityTransformer(self.feature_cols, self.target_col)
 
@@ -248,8 +238,7 @@ class XgbPredictor(object):
                          validation_df=validation_df,
                          metric=metric,
                          metric_mode=metric_mode,
-                         mc=mc,
-                         )
+                         mc=mc,)
         # searcher.test_run()
         analysis = searcher.run()
 

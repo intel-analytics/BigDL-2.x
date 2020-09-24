@@ -2,45 +2,32 @@
 
 model:
   # model path must be provided
-  path: resources/model
-  # mode, default is recommended, if error is raised, set single
-  mode:
-  # the inputs of the tensorflow model, separated by ","
-  inputs:
-  # the outputs of the tensorflow model, separated by ","
-  outputs:
+  path: /path/to/model
+  # name, default is serving_stream, you need to specify if running multiple servings
+  name:
 data:
   # default, localhost:6379
   src:
-  # shape must be provided, e.g, [[1,2],[3,224,224],[3,4]], if only one input brackets could be omitted
-  shape:
   # default, None
   filter:
 params:
   # default, 4
   core_number:
+  # default: model number will auto-adapt to core_number, do not set it if not sure about the behavior
+  model_number:
   # default: OFF
   performance_mode:
+flink:
+  rest:
 redis:
   # default, 4g
   maxmem:
 secure:
-  # default: no
+  # default: false
   secure_enabled:
   # default:
   secure_trust_store_path:
   # default:
   secure_struct_store_password:
-spark:
-  # default, local[*]
-  master: 
-  # default, 4g
-  driver_memory:
-  # default, 1g
-  executor_memory:
-  # default, 1
-  num_executors:
-  # default, 4
-  executor_cores:
-  # default, 4
-  total_executor_cores:
+  # default: false
+  model_encrypted:

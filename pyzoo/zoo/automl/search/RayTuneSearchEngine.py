@@ -16,11 +16,12 @@
 
 import ray
 from ray import tune
-from copy import copy, deepcopy
+from copy import deepcopy
 
 
 from zoo.automl.search.abstract import *
 from zoo.automl.common.util import *
+from zoo.automl.impute.impute import *
 from ray.tune import Trainable
 import ray.tune.track
 from ray.tune.suggest.bayesopt import BayesOptSearch
@@ -136,7 +137,8 @@ class RayTuneSearchEngine(SearchEngine):
                                                    metric=metric,
                                                    metric_mode=metric_mode,
                                                    mc=mc,
-                                                   remote_dir=self.remote_dir)
+                                                   remote_dir=self.remote_dir
+                                                   )
         # self.trainable_class = self._prepare_trainable_class(input_df,
         #                                                      feature_transformers,
         #                                                      # model,
@@ -242,7 +244,7 @@ class RayTuneSearchEngine(SearchEngine):
                             metric_mode,
                             validation_df=None,
                             mc=False,
-                            remote_dir=None
+                            remote_dir=None,
                             ):
         """
         Prepare the train function for ray tune
@@ -281,9 +283,18 @@ class RayTuneSearchEngine(SearchEngine):
             #
             trial_model = model_create_func
 
+            imputer = None
+            if "imputation" in config:
+                if config["imputation"] == "LastFillImpute":
+                    imputer = LastFillImpute()
+                elif config["imputation"] == "FillZeroImpute":
+                    imputer = FillZeroImpute()
+
             # handling input
             global_input_df = ray.get(input_df_id)
             trial_input_df = deepcopy(global_input_df)
+            if imputer:
+                trial_input_df = imputer.impute(trial_input_df)
             config = convert_bayes_configs(config).copy()
             # print("config is ", config)
             (x_train, y_train) = trial_ft.fit_transform(trial_input_df, **config)

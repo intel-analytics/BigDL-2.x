@@ -31,6 +31,7 @@
 import logging
 import json
 import os
+import numpy as np
 
 import ray
 import ray.services
@@ -135,29 +136,46 @@ class TFRunner:
         logger.debug("Creating model with MultiWorkerMirroredStrategy")
         with self.strategy.scope():
             self.model = self.model_creator(self.config)
-            self.model.compile(**self.compile_args_creator(self.config))
 
         # For use in model.evaluate()
         self.local_model = None
         self.backend = "tf-distributed"
 
     def step(self, data_creator, epochs=1, verbose=1,
-             callbacks=None, validation_data_creator=None, class_weight=None, initial_epoch=0,
+             callbacks=None, validation_data_creator=None, class_weight=None,
              steps_per_epoch=None, validation_steps=None, validation_freq=1):
         """Runs a training epoch and updates the model parameters."""
 
-        train_dataset = data_creator(self.config)
-        if validation_data_creator is not None:
-            test_dataset = validation_data_creator(self.config)
-        else:
-            test_dataset = None
-
+        # process datasets
         if self.backend == "horovod":
             import horovod.tensorflow.keras as hvd
-            train_dataset = train_dataset.shard(hvd.size(), hvd.rank())
+            config = self.config.copy()
+            assert "batch_size" in config, "batch_size must be set in config"
+            config["batch_size"] = config["batch_size"] // hvd.size()
+            train_dataset = data_creator(config)
+            if validation_data_creator is not None:
+                test_dataset = validation_data_creator(config)
+            else:
+                test_dataset = None
+            from tensorflow.python.distribute.input_ops import auto_shard_dataset
+            train_dataset = auto_shard_dataset(train_dataset, hvd.size(), hvd.rank())
             if test_dataset is not None:
-                test_dataset = test_dataset.shard(hvd.size(), hvd.rank())
+                test_dataset = auto_shard_dataset(test_dataset, hvd.size(), hvd.rank())
+        elif self.backend == "tf-distributed":
+            with self.strategy.scope():
+                train_dataset = data_creator(self.config)
+                if validation_data_creator is not None:
+                    test_dataset = validation_data_creator(self.config)
+                else:
+                    test_dataset = None
+        else:
+            train_dataset = data_creator(self.config)
+            if validation_data_creator is not None:
+                test_dataset = validation_data_creator(self.config)
+            else:
+                test_dataset = None
 
+        # process other arguments
         if self.backend == "horovod":
             import horovod.tensorflow.keras as hvd
             hvd_callbacks = [hvd.callbacks.BroadcastGlobalVariablesCallback(0),
@@ -169,14 +187,17 @@ class TFRunner:
                 callbacks = hvd_callbacks + callbacks
             else:
                 callbacks = hvd_callbacks
+        elif self.backend == "tf-distributed":
+            if self.strategy.cluster_resolver.task_id != 0:
+                verbose = 0
 
         history = self.model.fit(train_dataset,
-                                 epochs=epochs,
+                                 epochs=self.epoch + epochs,
                                  verbose=verbose,
                                  callbacks=callbacks,
-                                 validataion_data=test_dataset,
+                                 validation_data=test_dataset,
                                  class_weight=class_weight,
-                                 initial_epoch=initial_epoch,
+                                 initial_epoch=self.epoch,
                                  steps_per_epoch=steps_per_epoch,
                                  validation_steps=validation_steps,
                                  validation_freq=validation_freq)
@@ -185,22 +206,34 @@ class TFRunner:
         else:
             stats = {"train_" + k: v[-1] for k, v in history.history.items()}
 
-        self.epoch += 1
+        self.epoch += epochs
         return stats
 
     def validate(self, data_creator, verbose=1, sample_weight=None,
-                 steps=None, callbacks=None, return_dict=False):
+                 steps=None, callbacks=None):
         """Evaluates the model on the validation data set."""
-
-        dataset = data_creator(self.config)
 
         if self.backend == "horovod":
             import horovod.tensorflow.keras as hvd
-            dataset = dataset.shard(hvd.size(), hvd.rank())
+            config = self.config.copy()
+            assert "batch_size" in config, "batch_size must be set in config"
+            config["batch_size"] = config["batch_size"] // hvd.size()
+            dataset = data_creator(config)
+            from tensorflow.python.distribute.input_ops import auto_shard_dataset
+            dataset = auto_shard_dataset(dataset, hvd.size(), hvd.rank())
+
+        elif self.backend == "tf-distributed":
+            with self.strategy.scope():
+                dataset = data_creator(self.config)
+        else:
+            dataset = data_creator(self.config)
 
         if self.backend == "horovod":
             import horovod.tensorflow.keras as hvd
             if hvd.rank() != 0:
+                verbose = 0
+        elif self.backend == "tf-distributed":
+            if self.strategy.cluster_resolver.task_id != 0:
                 verbose = 0
 
         params = dict(
@@ -208,7 +241,6 @@ class TFRunner:
             sample_weight=sample_weight,
             steps=steps,
             callbacks=callbacks,
-            return_dict=return_dict
         )
         results = self.model.evaluate(dataset, **params)
         if results is None:
@@ -239,8 +271,6 @@ class TFRunner:
 
     def set_state(self, state):
         """Sets the state of the model."""
-
-        self.model = self.model_creator(self.config)
         self.epoch = state["epoch"]
         self.model.set_weights(state["weights"])
 

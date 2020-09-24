@@ -110,7 +110,7 @@ if __name__ == '__main__':
     input_cols.remove("ArrDelay")
     config = {"tree_method":'hist', "learning_rate":0.1, "gamma":0.1,
               "min_child_weight":30, "reg_lambda":1, "scale_pos_weight":2,
-              "subsample":1, "n_jobs":56
+              "subsample":1, "n_jobs":4
     }
 
     # config2 = {"tree_method": 'hist', "learning_rate": 0.1, "gamma": 0.1,
@@ -137,7 +137,7 @@ if __name__ == '__main__':
     pipeline = estimator.fit(train_df,
                        validation_df=val_df,
                        metric="error",
-                       recipe=XgbRegressorSkOptRecipe(num_rand_samples=30))
+                       recipe=XgbRegressorSkOptRecipe(num_rand_samples=3))
     end = time.time()
     print("elapse: ", (end-start))
     accuracy = pipeline.evaluate(val_df, metrics=["accuracy"])

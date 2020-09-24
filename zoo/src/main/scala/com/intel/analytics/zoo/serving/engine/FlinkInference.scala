@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.PreProcessing
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
-import com.intel.analytics.zoo.serving.utils.SerParams
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions, SerParams}
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.configuration.Configuration
 import org.apache.log4j.Logger
@@ -28,37 +28,64 @@ import org.apache.log4j.Logger
 
 class FlinkInference(params: SerParams)
   extends RichMapFunction[List[(String, String)], List[(String, String)]] {
-  var model: InferenceModel = null
+
   var t: Tensor[Float] = null
   var logger: Logger = null
-  var inferenceCnt: Int = 0
   var pre: PreProcessing = null
   var post: PostProcessing = null
 
   override def open(parameters: Configuration): Unit = {
-    inferenceCnt = 0
     logger = Logger.getLogger(getClass)
-    pre = new PreProcessing(params)
+
+    if (ModelHolder.model == null) {
+      ModelHolder.synchronized {
+        if (ModelHolder.model == null) {
+          val localModelDir = getRuntimeContext.getDistributedCache
+            .getFile(Conventions.SERVING_MODEL_TMP_DIR).getPath
+          val localConfPath = getRuntimeContext.getDistributedCache
+            .getFile(Conventions.SERVING_CONF_TMP_PATH).getPath
+          logger.info(s"Config parameters loaded at executor at path ${localConfPath}, " +
+            s"Model loaded at executor at path ${localModelDir}")
+          val helper = new ClusterServingHelper(localConfPath, localModelDir)
+          helper.initArgs()
+          ModelHolder.model = helper.loadInferenceModel()
+        }
+      }
+    }
+
+
+    pre = new PreProcessing(params.chwFlag)
   }
 
   override def map(in: List[(String, String)]): List[(String, String)] = {
     val t1 = System.nanoTime()
-
-    val preProcessed = in.grouped(params.coreNum).flatMap(itemBatch => {
-      itemBatch.indices.toParArray.map(i => {
-        val uri = itemBatch(i)._1
-        val input = pre.decodeArrowBase64(itemBatch(i)._2)
+    val postProcessed = {
+      val preProcessed = in.map(item => {
+        ModelHolder.model.blockModel()
+        val uri = item._1
+        val input = pre.decodeArrowBase64(item._2)
         (uri, input)
-      })
-    })
-    val postProcessed = if (params.inferenceMode == "single") {
-      InferenceSupportive.singleThreadInference(preProcessed, params).toList
-    } else {
-      InferenceSupportive.multiThreadInference(preProcessed, params).toList
+      }).toIterator
+
+      if (params.modelType == "openvino") {
+        ClusterServingInference.singleThreadBatchInference(
+          preProcessed, params.coreNum, params.modelType, params.filter).toList
+      } else {
+        ClusterServingInference.singleThreadInference(
+          preProcessed, params.modelType, params.filter).toList
+      }
+
     }
     val t2 = System.nanoTime()
     logger.info(s"${postProcessed.size} records backend time ${(t2 - t1) / 1e9} s. " +
       s"Throughput ${postProcessed.size / ((t2 - t1) / 1e9)}")
+    if (params.timerMode) {
+//      Timer.print()
+    }
     postProcessed
   }
+}
+object ModelHolder {
+  var model: InferenceModel = null
+
 }

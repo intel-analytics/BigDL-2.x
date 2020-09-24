@@ -62,7 +62,7 @@ class FlinkRedisSink(params: SerParams) extends RichSinkFunction[List[(String, S
 //    logger.info(s"Preparing to write result to redis")
 
     val ppl = jedis.pipelined()
-    value.foreach(v => RedisIO.writeHashMap(ppl, v._1, v._2))
+    value.foreach(v => RedisIO.writeHashMap(ppl, v._1, v._2, params.jobName))
     ppl.sync()
     jedis.close()
     logger.info(s"${value.size} records written to redis")

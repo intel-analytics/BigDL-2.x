@@ -192,14 +192,30 @@ def ray_partition_get_data_label(partition_data, allow_tuple=True, allow_list=Tr
     return data, label
 
 
+# todo: this might be very slow
+def to_sample(data):
+    from bigdl.util.common import Sample
+    data = check_type_and_convert(data, allow_list=True, allow_tuple=False)
+    features = data["x"]
+    labels = data["y"]
+    length = features[0].shape[0]
+
+    for i in range(length):
+        fs = [feat[i] for feat in features]
+        ls = [l[i] for l in labels]
+        yield Sample.from_ndarray(np.array(fs), np.array(ls))
+
+
 def read_pd_hdfs_file_list(iterator, file_type, **kwargs):
     import pyarrow as pa
     fs = pa.hdfs.connect()
-
+    dfs = []
     for x in iterator:
         with fs.open(x, 'rb') as f:
             df = read_pd_file(f, file_type, **kwargs)
-            yield df
+            dfs.append(df)
+    import pandas as pd
+    return [pd.concat(dfs)]
 
 
 def read_pd_s3_file_list(iterator, file_type, **kwargs):
@@ -210,13 +226,16 @@ def read_pd_s3_file_list(iterator, file_type, **kwargs):
         aws_access_key_id=access_key_id,
         aws_secret_access_key=secret_access_key,
     ).client('s3', verify=False)
+    dfs = []
     for x in iterator:
         path_parts = x.split("://")[1].split('/')
         bucket = path_parts.pop(0)
         key = "/".join(path_parts)
         obj = s3_client.get_object(Bucket=bucket, Key=key)
         df = read_pd_file(obj['Body'], file_type, **kwargs)
-        yield df
+        dfs.append(df)
+    import pandas as pd
+    return [pd.concat(dfs)]
 
 
 def read_pd_file(path, file_type, **kwargs):

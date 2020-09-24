@@ -20,27 +20,20 @@ import pickle
 import numpy as np
 import ray
 
-from zoo.orca.learn.horovod.horovod_ray_runner import HorovodRayRunner
-from zoo.orca.learn.horovod.horovod_ray_runner import HorovodWorker
 from zoo.orca.learn.tf2.tf_runner import TFRunner
 from zoo.ray import RayContext
 
 logger = logging.getLogger(__name__)
 
 
-class TFWorker(HorovodWorker, TFRunner):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
-class Estimator(HorovodRayRunner):
+class Estimator:
     def __init__(self,
                  model_creator,
-                 compile_args_creator,
+                 compile_args_creator=None,
                  config=None,
                  verbose=False,
-                 backend="horovod"):
+                 backend="tf",
+                 workers_per_node=1):
         """Sets up the TensorFlow trainer.
 
         Args:
@@ -69,7 +62,11 @@ class Estimator(HorovodRayRunner):
             self.config["inter_op_parallelism"] = 1
 
         if "intra_op_parallelism" not in config:
-            self.config["intra_op_parallelism"] = ray_ctx.ray_node_cpu_cores
+            self.config["intra_op_parallelism"] = ray_ctx.ray_node_cpu_cores // workers_per_node
+
+        if backend == "horovod":
+            assert compile_args_creator is not None, "compile_args_creator should not be None," \
+                                                     " when backend is set to horovod"
 
         params = {
             "model_creator": model_creator,
@@ -78,9 +75,13 @@ class Estimator(HorovodRayRunner):
             "verbose": self.verbose,
         }
 
-        super().__init__(ray_ctx, worker_cls=TFWorker, worker_param=params)
-
         if backend == "tf":
+            cores_per_node = ray_ctx.ray_node_cpu_cores // workers_per_node
+            num_nodes = ray_ctx.num_ray_nodes * workers_per_node
+
+            worker_class = ray.remote(num_cpus=cores_per_node)(TFRunner)
+            self.remote_workers = [worker_class.remote(**params)
+                                   for i in range(0, num_nodes)]
             ips = ray.get(
                 [worker.get_node_ip.remote() for worker in self.remote_workers])
             ports = ray.get(
@@ -95,7 +96,13 @@ class Estimator(HorovodRayRunner):
                 for i, worker in enumerate(self.remote_workers)])
         elif backend == "horovod":
             # it is necessary to call self.run first to set horovod environment
-            self.run(lambda: print("worker initialized"))
+            from zoo.orca.learn.horovod.horovod_ray_runner import HorovodRayRunner
+            horovod_runner = HorovodRayRunner(ray_ctx,
+                                              worker_cls=TFRunner,
+                                              worker_param=params,
+                                              workers_per_node=workers_per_node)
+            horovod_runner.run(lambda: print("worker initialized"))
+            self.remote_workers = horovod_runner.remote_workers
             ray.get([
                 worker.setup_horovod.remote()
                 for i, worker in enumerate(self.remote_workers)])
@@ -103,8 +110,19 @@ class Estimator(HorovodRayRunner):
             raise Exception("Only \"tf\" and \"horovod\" are legal "
                             "value of backend, but got {}".format(backend))
 
+    @classmethod
+    def from_keras(cls, model_creator,
+                   config=None,
+                   verbose=False,
+                   workers_per_node=1,
+                   compile_args_creator=None,
+                   backend="tf"):
+        return cls(model_creator, config=config,
+                   verbose=verbose, workers_per_node=workers_per_node,
+                   backend=backend, compile_args_creator=compile_args_creator)
+
     def fit(self, data_creator, epochs=1, verbose=1,
-            callbacks=None, validation_data_creator=None, class_weight=None, initial_epoch=0,
+            callbacks=None, validation_data_creator=None, class_weight=None,
             steps_per_epoch=None, validation_steps=None, validation_freq=1):
         """Runs a training epoch."""
 
@@ -115,7 +133,6 @@ class Estimator(HorovodRayRunner):
             callbacks=callbacks,
             validation_data_creator=validation_data_creator,
             class_weight=class_weight,
-            initial_epoch=initial_epoch,
             steps_per_epoch=steps_per_epoch,
             validation_steps=validation_steps,
             validation_freq=validation_freq,
@@ -125,7 +142,7 @@ class Estimator(HorovodRayRunner):
         return stats
 
     def evaluate(self, data_creator, verbose=1, sample_weight=None,
-                 steps=None, callbacks=None, return_dict=False):
+                 steps=None, callbacks=None):
         """Evaluates the model on the validation data set."""
         logger.info("Starting validation step.")
         params = dict(
@@ -133,8 +150,7 @@ class Estimator(HorovodRayRunner):
             verbose=verbose,
             sample_weight=sample_weight,
             steps=steps,
-            callbacks=callbacks,
-            return_dict=return_dict
+            callbacks=callbacks
         )
         # see ./tf_runner.py:setup_distributed
         # for an explanation of only taking the first worker's data

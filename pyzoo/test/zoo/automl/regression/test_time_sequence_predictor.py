@@ -16,8 +16,7 @@
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.automl.config.recipe import *
-from zoo.automl.model import BaseModel
+from zoo.automl.model.abstract import BaseModel
 from zoo.automl.regression.time_sequence_predictor import *
 
 

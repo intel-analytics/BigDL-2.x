@@ -41,12 +41,9 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import *
 from tensorflow.keras.initializers import TruncatedNormal, Constant
 import tensorflow.keras.backend as K
-import math
 
 import tensorflow as tf
-# _Linear = core_rnn_cell._Linear
 from zoo.automl.common.metrics import Evaluator
-import pandas as pd
 from zoo.automl.model.abstract import BaseModel
 from zoo.automl.common.util import save_config
 

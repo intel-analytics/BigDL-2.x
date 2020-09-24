@@ -76,9 +76,12 @@ def read_file_spark(file_path, file_type, **kwargs):
                 lambda iter: read_pd_s3_file_list(iter, file_type, **kwargs))
         else:
             def loadFile(iterator):
+                dfs = []
                 for x in iterator:
                     df = read_pd_file(x, file_type, **kwargs)
-                    yield df
+                    dfs.append(df)
+                import pandas as pd
+                return [pd.concat(dfs)]
 
             pd_rdd = rdd.mapPartitions(loadFile)
     else:  # Spark backend; spark.read.csv/json accepts a folder path as input
@@ -261,5 +264,43 @@ def read_file_spark(file_path, file_type, **kwargs):
         print("An error occurred when reading files with '%s' backend, you may switch to '%s' "
               "backend for another try. You can set the backend using "
               "OrcaContext.pandas_read_backend" % (backend, alternative_backend))
+        raise e
+    return data_shards
+
+
+def read_parquet(file_path, columns=None, **kwargs):
+    """
+    Read parquet files to SparkXShards of pandas DataFrames.
+
+    :param file_path: Parquet file path, a list of multiple parquet file paths, or a directory
+    containing parquet files. Local file system, HDFS, and AWS S3 are supported.
+    :param columns: list of column name, default=None.
+    If not None, only these columns will be read from the file.
+    :param kwargs: Any additional kwargs.
+    :return: An instance of SparkXShards.
+    """
+    sc = init_nncontext()
+    from pyspark.sql import SQLContext
+    sqlContext = SQLContext.getOrCreate(sc)
+    spark = sqlContext.sparkSession
+    df = spark.read.parquet(file_path)
+
+    if columns:
+        df = df.select(*columns)
+
+    def to_pandas(columns):
+        def f(iter):
+            import pandas as pd
+            data = list(iter)
+            pd_df = pd.DataFrame(data, columns=columns)
+            return [pd_df]
+
+        return f
+
+    pd_rdd = df.rdd.mapPartitions(to_pandas(df.columns))
+    try:
+        data_shards = SparkXShards(pd_rdd)
+    except Exception as e:
+        print("An error occurred when reading parquet files")
         raise e
     return data_shards

@@ -20,6 +20,8 @@ from zoo.serving.schema import *
 import httpx
 import json
 
+RESULT_PREFIX = "cluster-serving_"
+
 
 def perdict(frontend_url, request_str):
     httpx.post(frontend_url + "/predict", data=request_str)
@@ -31,8 +33,8 @@ class API:
     select data pipeline here, Redis/Kafka/...
     interface preserved for API class
     """
-    def __init__(self, host=None, port=None):
-
+    def __init__(self, host=None, port=None, name="serving_stream"):
+        self.name = name
         if not host:
             host = "localhost"
         if not port:
@@ -41,8 +43,7 @@ class API:
         self.db = redis.StrictRedis(host=host,
                                     port=port, db=0)
         try:
-            self.db.xgroup_create("image_stream", "serving")
-            self.db.xgroup_create("tensor_stream", "serving")
+            self.db.xgroup_create(name, "serving")
         except Exception:
             print("redis group exist, will not create new one")
 
@@ -63,7 +64,6 @@ class InputQueue(API):
                     raise ConnectionError()
             except Exception as e:
                 print("Connection error, please check your HTTP server. Error msg is ", e)
-        self.stream_name = "serving_stream"
 
         # TODO: these params can be read from config in future
         self.input_threshold = 0.6
@@ -146,7 +146,7 @@ class InputQueue(API):
         try:
             if inf['used_memory'] >= inf['maxmemory'] * self.input_threshold:
                 raise redis.exceptions.ConnectionError
-            self.db.xadd(self.stream_name, data)
+            self.db.xadd(self.name, data)
             print("Write to Redis successful")
         except redis.exceptions.ConnectionError:
             print("Redis queue is full, please wait for inference "
@@ -168,7 +168,7 @@ class OutputQueue(API):
         super().__init__(host, port)
 
     def dequeue(self):
-        res_list = self.db.keys('result:*')
+        res_list = self.db.keys(RESULT_PREFIX + self.name + ':*')
         decoded = {}
         for res in res_list:
             res_dict = self.db.hgetall(res.decode('utf-8'))
@@ -178,9 +178,38 @@ class OutputQueue(API):
             self.db.delete(res)
         return decoded
 
-    def query(self, uri):
-        res_dict = self.db.hgetall("result:"+uri)
+    def query_and_delete(self, uri):
+        self.query(uri, True)
+
+    def query(self, uri, delete=False):
+        res_dict = self.db.hgetall(RESULT_PREFIX + self.name + ':' + uri)
 
         if not res_dict or len(res_dict) == 0:
-            return "{}"
-        return res_dict[b'value'].decode('utf-8')
+            return "[]"
+        if delete:
+            self.db.delete(RESULT_PREFIX + self.name + ':' + uri)
+        s = res_dict[b'value'].decode('utf-8')
+        if s == "NaN":
+            return s
+        return self.get_ndarray_from_b64(s)
+
+    def get_ndarray_from_b64(self, b64str):
+        b = base64.b64decode(b64str)
+        a = pa.BufferReader(b)
+        c = a.read_buffer()
+        myreader = pa.ipc.open_stream(c)
+        r = [i for i in myreader]
+        assert len(r) > 0
+        if len(r) == 1:
+            return self.get_ndarray_from_record_batch(r[0])
+        else:
+            l = []
+            for ele in r:
+                l.append(self.get_ndarray_from_record_batch(ele))
+            return l
+
+    def get_ndarray_from_record_batch(self, record_batch):
+        data = record_batch[0].to_numpy()
+        shape_list = record_batch[1].to_pylist()
+        shape = [i for i in shape_list if i]
+        return data.reshape(shape)

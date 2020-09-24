@@ -32,8 +32,7 @@ python -m pytest -v --doctest-modules ../zoo \
     --ignore=../zoo/automl/ \
     --ignore=../zoo/zouwu/ \
     --ignore=../test/zoo/pipeline/api/torch/ \
-    --ignore=../zoo/orca/data/ \
-    --ignore=../zoo/orca/learn/ \
+    --ignore=../zoo/orca/ \
     --ignore=../zoo/models/recommendation/txt.py
 exit_status_1=$?
 if [ $exit_status_1 -ne 0 ];
@@ -72,8 +71,7 @@ if [[ $py_version == *"Python 2.7"* ]]; then
        --ignore=../test/zoo/ray/ \
        --ignore=../test/zoo/zouwu/ \
        --ignore=../test/zoo/pipeline/api/torch/ \
-       --ignore=../test/zoo/orca/data/ \
-       --ignore=../test/zoo/orca/learn/ \
+       --ignore=../test/zoo/orca/ \
        --ignore=../zoo/models/recommendation/txt.py
     exit_status_2=$?
     if [ $exit_status_2 -ne 0 ];
@@ -109,8 +107,7 @@ else
        --ignore=../test/zoo/ray/ \
        --ignore=../test/zoo/zouwu/ \
        --ignore=../test/zoo/pipeline/api/torch/ \
-       --ignore=../test/zoo/orca/data/ \
-       --ignore=../test/zoo/orca/learn/ \
+       --ignore=../test/zoo/orca/ \
        --ignore=../zoo/models/recommendation/txt.py
     exit_status_3=$?
     if [ $exit_status_3 -ne 0 ];

@@ -19,11 +19,10 @@ from abc import ABCMeta, abstractmethod
 from zoo.automl.model.MTNet_keras import MTNetKeras as MTNetKerasModel
 from zoo.automl.model.VanillaLSTM import VanillaLSTM as LSTMKerasModel
 from zoo.tfpark import KerasModel as TFParkKerasModel
-from zoo.automl.model import TCMFLocalModelWrapper, TCMFDistributedModelWrapper
+from zoo.automl.model.tcmf_model import TCMFLocalModelWrapper, TCMFDistributedModelWrapper
 from zoo.orca.data import SparkXShards
 
 import tensorflow as tf
-import pandas as pd
 
 
 class Forecaster(metaclass=ABCMeta):
@@ -188,7 +187,7 @@ class TCMFForecaster(Forecaster):
         :param metric: the metrics
         :return:
         """
-        self.internal.evaluate(y=target_value, x=x, metric=metric)
+        return self.internal.evaluate(y=target_value, x=x, metric=metric)
 
     def predict(self,
                 x=None,

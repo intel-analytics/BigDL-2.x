@@ -5,7 +5,7 @@ MAINTAINER The Analytics Zoo Authors https://github.com/intel-analytics/analytic
 WORKDIR /opt/work
 
 ARG SPARK_VERSION=2.4.3 
-ARG BIGDL_VERSION=0.10.0
+ARG BIGDL_VERSION=0.11.1
 ARG ANALYTICS_ZOO_VERSION=0.9.0-SNAPSHOT
 ARG FLINK_VERSION=1.10.0
 
@@ -57,8 +57,9 @@ RUN wget https://archive.apache.org/dist/flink/flink-1.10.0/flink-${FLINK_VERSIO
 ADD *.sh /opt/work/scripts/
 RUN chmod a+x /opt/work/scripts/*.*
 
-RUN /opt/work/scripts/download-cluster-serving-all-zip.sh
-RUN cd cluster-serving && \
+RUN /opt/work/scripts/download-cluster-serving-all-zip.sh && \
+    rm analytics-*-cluster-serving-all.zip && \
+    cd cluster-serving && \
     ./cluster-serving-setup.sh
 
 ADD resources/ /opt/work/cluster-serving/resources/

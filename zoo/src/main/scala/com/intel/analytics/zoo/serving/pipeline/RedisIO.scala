@@ -16,6 +16,7 @@
 
 package com.intel.analytics.zoo.serving.pipeline
 
+import com.intel.analytics.zoo.serving.utils.Conventions
 import org.apache.log4j.Logger
 import redis.clients.jedis.exceptions.JedisConnectionException
 import redis.clients.jedis.{Jedis, JedisPool, Pipeline}
@@ -45,10 +46,10 @@ object RedisIO {
       }
       Thread.sleep(10)
     }
-    return jedis
+    jedis
   }
-  def writeHashMap(ppl: Pipeline, key: String, value: String): Unit = {
-    val hKey = "result:" + key
+  def writeHashMap(ppl: Pipeline, key: String, value: String, name: String): Unit = {
+    val hKey = Conventions.RESULT_PREFIX + name + ":" + key
     val hValue = Map[String, String]("value" -> value).asJava
     ppl.hmset(hKey, hValue)
   }

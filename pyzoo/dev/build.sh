@@ -21,15 +21,16 @@ RUN_SCRIPT_DIR=$(cd $(dirname $0) ; pwd)
 echo $RUN_SCRIPT_DIR
 
 if (( $# < 2)); then
-  echo "Usage: build.sh platform version mvn_parameters"
-  echo "Usage example: bash build.sh linux default"
-  echo "Usage example: bash build.sh linux 0.6.0.dev0"
+  echo "Usage: build.sh platform version quick_build mvn_parameters"
+  echo "Usage example: bash build.sh linux default true"
+  echo "Usage example: bash build.sh linux 0.6.0.dev0 false"
   echo "If needed, you can also add other profiles such as: -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.4+"
   exit -1
 fi
 
 platform=$1
 version=$2
-profiles=${*:3}
+quick=$3
+profiles=${*:4}
 
-bash ${RUN_SCRIPT_DIR}/release.sh ${platform} ${version} false ${profiles}
+bash ${RUN_SCRIPT_DIR}/release.sh ${platform} ${version} ${quick} false ${profiles}

@@ -25,17 +25,18 @@ ANALYTICS_ZOO_PYTHON_DIR="$(cd ${RUN_SCRIPT_DIR}/../../pyzoo; pwd)"
 echo $ANALYTICS_ZOO_PYTHON_DIR
 
 if (( $# < 3)); then
-  echo "Usage: release.sh platform version upload mvn_parameters"
-  echo "Usage example: bash release.sh linux default true"
-  echo "Usage example: bash release.sh linux 0.6.0.dev0 true"
+  echo "Usage: release.sh platform version upload quick_build mvn_parameters"
+  echo "Usage example: bash release.sh linux default false true"
+  echo "Usage example: bash release.sh mac 0.6.0.dev0 true true"
   echo "If needed, you can also add other profiles such as: -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.4+"
   exit -1
 fi
 
 platform=$1
 version=$2
-upload=$3
-profiles=${*:4}
+quick=$3  # Whether to rebuild the jar
+upload=$4  # Whether to upload the whl to pypi
+profiles=${*:5}
 
 if [ "${version}" != "default" ]; then
     echo "User specified version: ${version}"
@@ -58,13 +59,16 @@ else
 fi
 
 build_command="${ANALYTICS_ZOO_HOME}/make-dist.sh ${dist_profile}"
-echo "Build command: ${build_command}"
+if [ "$quick" == "true" ]; then
+    echo "Skipping rebuilding the jar for Analytics Zoo"
+else
+    echo "Build command: ${build_command}"
 $build_command
+fi
 
 # delete org/tensorflow/util here
 export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/dist/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
 echo "analytics zoo jar location is at ${ANALYTICS_ZOO_JAR}"
-zip -d ${ANALYTICS_ZOO_JAR} org/tensorflow/util/Event*
 
 cd $ANALYTICS_ZOO_PYTHON_DIR
 sdist_command="python setup.py sdist"
@@ -97,3 +101,23 @@ if [ ${upload} == true ]; then
     echo "Command for uploading to pypi: $upload_command"
     $upload_command
 fi
+# build and upload serving wheel
+cd ${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving
+python setup.py bdist_wheel
+
+if [ -d "${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/build" ]; then
+   echo "Removing serving/build"
+   rm -r ${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/build
+fi
+if [ -d "${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/analytics_zoo_serving.egg-info" ]; then
+   echo "Removing serving/analytics_zoo_serving.egg-info"
+   rm -r ${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/analytics_zoo_serving.egg-info
+fi
+
+if [ ${upload} == true ]; then
+    serving_whl=dist/analytics_zoo_serving-*.whl
+    serving_upload_command="twine upload ${serving_whl}"
+    echo "Command for uploading to pypi: $serving_upload_command"
+    $serving_upload_command
+fi
+cd ${ANALYTICS_ZOO_PYTHON_DIR}
