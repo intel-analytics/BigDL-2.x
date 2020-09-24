@@ -101,7 +101,7 @@ object MockSinglePipelineBaseline extends Supportive {
         a = a :+ (i.toString(), b64string)
       )
       (0 until param.testNum).grouped(sParam.coreNum).flatMap(batch => {
-        val preprocessed = timer.timing("Preprocess", batch.size){
+        val preprocessed = timer.timing("Preprocess", batch.size) {
           (0 until batch.size).toParArray.map(i => {
             val deserializer = new ArrowDeserializer()
             val arr = deserializer.create(b64string)
@@ -119,7 +119,7 @@ object MockSinglePipelineBaseline extends Supportive {
           }
           ClusterServingInference.dimCheck(t, "remove", sParam.modelType)
           ClusterServingInference.dimCheck(result, "remove", sParam.modelType)
-          val postprocessed = timer.timing("Postprocess", batch.size){
+          val postprocessed = timer.timing("Postprocess", batch.size) {
             (0 until sParam.coreNum).map(i => {
               ArrowSerializer.activityBatchToByte(result, i + 1)
             })

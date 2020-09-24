@@ -121,7 +121,7 @@ object MockParallelPipelineBaseline extends Supportive {
           }
           ClusterServingInference.dimCheck(t, "remove", sParam.modelType)
           ClusterServingInference.dimCheck(result, "remove", sParam.modelType)
-          val postprocessed = timer.timing("Postprocess", sParam.coreNum){
+          val postprocessed = timer.timing("Postprocess", sParam.coreNum) {
             (0 until sParam.coreNum).map(i => {
               ArrowSerializer.activityBatchToByte(result, i + 1)
             })
