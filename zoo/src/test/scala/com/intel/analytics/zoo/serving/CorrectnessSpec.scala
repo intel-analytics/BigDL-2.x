@@ -104,7 +104,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     val fileList = f.listFiles
     logger.info(s"${fileList.size} images about to enqueue...")
 
-    val pre = new PreProcessing(param)
+    val pre = new PreProcessing(param.chwFlag)
     pre.arrayBuffer = Array(new Array[Float](3 * 224 * 224))
     var predictMap = Map[String, String]()
 

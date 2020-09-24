@@ -54,13 +54,14 @@ class FlinkInference(params: SerParams)
     }
 
 
-    pre = new PreProcessing(params)
+    pre = new PreProcessing(params.chwFlag)
   }
 
   override def map(in: List[(String, String)]): List[(String, String)] = {
     val t1 = System.nanoTime()
     val postProcessed = {
       val preProcessed = in.map(item => {
+        ModelHolder.model.blockModel()
         val uri = item._1
         val input = pre.decodeArrowBase64(item._2)
         (uri, input)
@@ -79,7 +80,7 @@ class FlinkInference(params: SerParams)
     logger.info(s"${postProcessed.size} records backend time ${(t2 - t1) / 1e9} s. " +
       s"Throughput ${postProcessed.size / ((t2 - t1) / 1e9)}")
     if (params.timerMode) {
-      Timer.print()
+//      Timer.print()
     }
     postProcessed
   }

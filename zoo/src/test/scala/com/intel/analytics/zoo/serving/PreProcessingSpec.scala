@@ -16,7 +16,6 @@
 
 package com.intel.analytics.zoo.serving
 
-import com.intel.analytics.zoo.serving.utils.ConfigUtils
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.JavaConverters._
@@ -24,11 +23,6 @@ import scala.collection.mutable.ArrayBuffer
 
 class PreProcessingSpec extends FlatSpec with Matchers {
   "base64 string to tensor" should "work" in {
-  }
-  "parse shape" should "work" in {
-    val shapeArray1 = ConfigUtils.parseShape("[[1,3], [3,224,224]]")
-    val shapeArray2 = ConfigUtils.parseShape("[3,224,224]")
-    val shapeArray3 = ConfigUtils.parseShape("3,224,224")
   }
   "create buffer" should "work" in {
     val a = Array(3, 224, 224)
@@ -51,13 +45,13 @@ class PreProcessingSpec extends FlatSpec with Matchers {
     val iShape = ArrayBuffer(2, 3)
     val data = ArrayBuffer(3f, 4, 5)
     val shape = ArrayBuffer(100, 10000)
-    val pre = new PreProcessing(null)
+    val pre = new PreProcessing()
     val info = (shape, data, iShape, iData)
     val a = pre.decodeTensor(info)
     a
   }
   "decode string tensor" should "work" in {
-    val pre = new PreProcessing(null)
+    val pre = new PreProcessing()
     val str = "abc|dff|aoa"
     val tensor = pre.decodeString(str)
     assert(tensor.valueAt(1) == "abc")
