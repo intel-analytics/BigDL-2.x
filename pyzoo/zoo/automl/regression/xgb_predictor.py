@@ -215,13 +215,6 @@ class XgbPredictor(object):
 
         # prepare parameters for search engine
         search_space = recipe.search_space(None)
-        # runtime_params = recipe.runtime_params()
-        # num_samples = runtime_params['num_samples']
-        # stop = dict(runtime_params)
-        # search_algorithm_params = recipe.search_algorithm_params()
-        # search_algorithm = recipe.search_algorithm()
-        # fixed_params = recipe.fixed_params()
-        # del stop['num_samples']
 
         from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
         metric_mode = TimeSequencePredictor._get_metric_mode(metric)

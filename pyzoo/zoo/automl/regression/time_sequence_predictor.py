@@ -236,13 +236,6 @@ class TimeSequencePredictor(object):
 
         # prepare parameters for search engine
         search_space = recipe.search_space(feature_list)
-        # runtime_params = recipe.runtime_params()
-        # num_samples = runtime_params['num_samples']
-        # stop = dict(runtime_params)
-        # search_algorithm_params = recipe.search_algorithm_params()
-        # search_algorithm = recipe.search_algorithm()
-        # fixed_params = recipe.fixed_params()
-        # del stop['num_samples']
 
         metric_mode = TimeSequencePredictor._get_metric_mode(metric)
         searcher = RayTuneSearchEngine(logs_dir=self.logs_dir,

@@ -108,36 +108,20 @@ if __name__ == '__main__':
     # max_features_range = (0.1, 0.8)
 
     input_cols.remove("ArrDelay")
-    config = {"tree_method":'hist', "learning_rate":0.1, "gamma":0.1,
-              "min_child_weight":30, "reg_lambda":1, "scale_pos_weight":2,
-              "subsample":1, "n_jobs":4
-    }
-
-    # config2 = {"tree_method": 'hist', "learning_rate": 0.1, "gamma": 0.1,
-    #           "min_child_weight": 30, "reg_lambda": 1, "scale_pos_weight": 2,
-    #           "subsample": 1, "n_jobs": -1, "max_depth":15, "n_estimators":1000
-    #           }
-    # model = XGBoost(model_type="classifier",config=config2)
-    # train_x = train_df[input_cols]
-    # train_y = train_df[["ArrDelayBinary"]]
-    #
-    # val_x = val_df[input_cols]
-    # val_y = val_df[["ArrDelayBinary"]]
-    # t = model.fit_eval(train_x, train_y, (val_x, val_y))
-    # result = model.predict(val_x)
-    # evaluate_result = model.evaluate(val_x, val_y, metrics=['accuracy'])
-    # print("accuracy: ", evaluate_result)
+    config = {"tree_method": 'hist', "learning_rate": 0.1, "gamma": 0.1,
+              "min_child_weight": 30, "reg_lambda": 1, "scale_pos_weight": 2,
+              "subsample": 1, "n_jobs": 4}
 
     estimator = AutoXGBoost().classifier(feature_cols=input_cols,
-                                        target_col="ArrDelayBinary",
+                                         target_col="ArrDelayBinary",
                                          config=config)
 
     import time
     start = time.time()
     pipeline = estimator.fit(train_df,
-                       validation_df=val_df,
-                       metric="error",
-                       recipe=XgbRegressorSkOptRecipe(num_rand_samples=3))
+                             validation_df=val_df,
+                             metric="error",
+                             recipe=XgbRegressorSkOptRecipe(num_rand_samples=3))
     end = time.time()
     print("elapse: ", (end-start))
     accuracy = pipeline.evaluate(val_df, metrics=["accuracy"])

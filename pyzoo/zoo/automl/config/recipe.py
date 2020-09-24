@@ -568,8 +568,8 @@ class XgbRegressorGridRandomRecipe(Recipe):
             "imputation": tune.choice(["LastFillImpute", "FillZeroImpute"]),
             "n_estimators": self.n_estimators,
             "max_depth": self.max_depth,
-            # "min_child_weight": self.min_child_weight,
-            # "lr": self.lr
+            "min_child_weight": self.min_child_weight,
+            "lr": self.lr
         }
 
 
