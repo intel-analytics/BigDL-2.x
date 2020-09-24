@@ -72,9 +72,10 @@ class InputQueue(API):
         self.input_threshold = 0.6
         self.interval_if_error = 1
 
-    def predict(self, request_data, retry=5, time_sleep=0.001):
+    def predict(self, request_data, timeout=5):
         """
-        :param request_data: string of request, or data for async enqueue
+        :param request_data:
+        :param time_sleep:
         :return:
         """
         def json_to_ndarray_dict(json_str):
@@ -101,12 +102,13 @@ class InputQueue(API):
             uri = str(uuid.uuid4())
             self.enqueue(uri, **input_dict)
             processed = "[]"
-            while retry > 0:
+            time_sleep = 0.001
+            while time_sleep < timeout:
                 processed = self.output_queue.query_and_delete(uri)
                 if processed != "[]":
                     break
                 time.sleep(time_sleep)
-                retry -= 1
+                time_sleep += 0.001
         return processed
 
     def enqueue(self, uri, **data):
