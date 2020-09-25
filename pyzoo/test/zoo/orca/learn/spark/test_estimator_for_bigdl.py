@@ -79,8 +79,8 @@ class TestEstimatorForKeras(TestCase):
             self.assertTrue('You should fit or set_input_type before calling predict'
                             in str(context.exception))
             est2.set_input_type(input_type="Spark_DataFrame")
-            est.set_constant_gradient_clipping(0.1, 1.2)
-            est.clear_gradient_clipping()
+            est2.set_constant_gradient_clipping(0.1, 1.2)
+            est2.clear_gradient_clipping()
             res3 = est2.predict(df)
             res3_c = res3.collect()
             assert type(res3).__name__ == 'DataFrame'
