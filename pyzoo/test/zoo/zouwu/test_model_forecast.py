@@ -21,8 +21,8 @@ from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 import tensorflow as tf
 import pandas as pd
 
-from zoo.zouwu.model.forecast import LSTMForecaster
-from zoo.zouwu.model.forecast import MTNetForecaster
+from zoo.zouwu.model.forecast.lstm_forecaster import LSTMForecaster
+from zoo.zouwu.model.forecast.mtnet_forecaster import MTNetForecaster
 
 
 class TestZouwuModelForecast(ZooTestCase):
@@ -93,7 +93,7 @@ class TestZouwuModelForecast(ZooTestCase):
         model.predict([x_test_long, x_test_short])
 
     def test_forecast_tcmf(self):
-        from zoo.zouwu.model.forecast import TCMFForecaster
+        from zoo.zouwu.model.forecast.tcmf_forecaster import TCMFForecaster
         import tempfile
         model = TCMFForecaster(max_y_iterations=1,
                                init_FX_epoch=1,
@@ -137,7 +137,7 @@ class TestZouwuModelForecast(ZooTestCase):
         assert model.evaluate(x=None, target_value=target_value, metric=['mse'])
 
     def test_forecast_tcmf_without_id(self):
-        from zoo.zouwu.model.forecast import TCMFForecaster
+        from zoo.zouwu.model.forecast.tcmf_forecaster import TCMFForecaster
         import tempfile
         model = TCMFForecaster(max_y_iterations=1,
                                init_FX_epoch=1,
@@ -182,7 +182,7 @@ class TestZouwuModelForecast(ZooTestCase):
         model.evaluate(x=None, target_value=target_value, metric=['mse'])
 
     def test_forecast_tcmf_xshards(self):
-        from zoo.zouwu.model.forecast import TCMFForecaster
+        from zoo.zouwu.model.forecast.tcmf_forecaster import TCMFForecaster
         from zoo.orca import OrcaContext
         import zoo.orca.data.pandas
         import tempfile
