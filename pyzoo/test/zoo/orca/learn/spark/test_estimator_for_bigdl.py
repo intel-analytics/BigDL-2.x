@@ -90,7 +90,7 @@ class TestEstimatorForKeras(TestCase):
             est2.fit(df, 1, batch_size=4, optimizer=Adam())
         resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
-        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+        file_path = os.path.join(resource_path, "orca/learn/ncf2.csv")
         data_shard = read_csv(file_path)
         with self.assertRaises(Exception) as context:
             est.fit(data_shard, 1, batch_size=4, optimizer=Adam())
@@ -164,7 +164,7 @@ class TestEstimatorForKeras(TestCase):
             }
             return result
 
-        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+        file_path = os.path.join(resource_path, "orca/learn/ncf2.csv")
         data_shard = read_csv(file_path)
         data_shard = data_shard.transform_shard(transform)
         model = Sequential()
