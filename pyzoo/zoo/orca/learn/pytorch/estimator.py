@@ -50,9 +50,10 @@ class Estimator(object):
     def from_torch(*,
                    model,
                    optimizer,
+                   data_creator=None,
                    loss=None,
                    scheduler_creator=None,
-                   training_operator_cls=TrainingOperator,
+                   training_operator_cls=None,
                    initialization_hook=None,
                    config=None,
                    scheduler_step_freq="batch",
@@ -61,6 +62,8 @@ class Estimator(object):
                    model_dir=None,
                    backend="horovod"):
         if backend == "horovod":
+            if training_operator_cls is None:
+                training_operator_cls = TrainingOperator
             return PyTorchHorovodEstimatorWrapper(model_creator=model,
                                                   optimizer_creator=optimizer,
                                                   loss_creator=loss,
@@ -77,6 +80,20 @@ class Estimator(object):
                                                 optimizer=optimizer,
                                                 model_dir=model_dir,
                                                 bigdl_type="float")
+        elif backend == "ray_sgd":
+            assert data_creator is not None, \
+                "data_creator should not be None for Pytorch estimator with ray sgd backend."
+            return PyTorchTrainerWrapper(model_creator=model,
+                                         data_creator=data_creator,
+                                         optimizer_creator=optimizer,
+                                         loss_creator=loss,
+                                         scheduler_creator=scheduler_creator,
+                                         training_operator_cls=training_operator_cls,
+                                         initialization_hook=initialization_hook,
+                                         config=config,
+                                         use_tqdm=use_tqdm,
+                                         scheduler_step_freq=scheduler_step_freq
+                                         )
         else:
             raise ValueError("only horovod and bigdl backend are supported for now")
 
@@ -284,3 +301,85 @@ class PytorchSparkEstimatorWrapper(Estimator):
         :return:
         """
         self.estimator.set_l2_norm_gradient_clipping(clip_norm=clip_norm)
+
+
+class PyTorchTrainerWrapper(Estimator):
+    def __init__(self, *,
+                 model_creator,
+                 data_creator,
+                 optimizer_creator,
+                 loss_creator,
+                 scheduler_creator,
+                 training_operator_cls,
+                 initialization_hook,
+                 config,
+                 use_tqdm,
+                 scheduler_step_freq
+                ):
+        from zoo.orca.learn.pytorch.pytorch_trainer import PyTorchTrainer
+        self.pytorch_trainer = PyTorchTrainer(model_creator=model_creator,
+                                              data_creator=data_creator,
+                                              optimizer_creator=optimizer_creator,
+                                              loss_creator=loss_creator,
+                                              scheduler_creator=scheduler_creator,
+                                              training_operator_cls=training_operator_cls,
+                                              initialization_hook=initialization_hook,
+                                              config=config,
+                                              num_workers=None,
+                                              use_fp16=False,
+                                              use_tqdm=use_tqdm,
+                                              scheduler_step_freq=scheduler_step_freq
+                                              )
+
+    def fit(self, epochs=1, profile=False, reduce_results=True, info=None):
+        """
+
+        :param epochs: (int) Number of epochs to train the model
+        :return: (list) A list of stats whose length will be equal to ``epochs``.
+                stats is a dictionary of metrics for training.
+                    You can provide custom metrics by passing in a custom
+                    ``training_operator_cls``. If ``reduce_results=False``,
+                    this will return a list of metric dictionaries whose
+                    length will be equal to ``num_workers``.
+        """
+        return self.pytorch_trainer.train(nb_epoch=epochs, profile=profile,
+                                          reduce_results=reduce_results, info=info)
+
+    def predict(self, data, **kwargs):
+        raise NotImplementedError()
+
+    def evaluate(self, num_steps=None, profile=False, info=None):
+        """
+
+        :param num_steps: (int) Number of batches to compute update steps on.
+               This corresponds also to the number of times ``TrainingOperator.validate_batch``
+               is called.
+        :param profile: (bool) Returns time stats for the evaluation procedure.
+        :param info: (dict) Optional dictionary passed to the training operator for `validate`
+            and `validate_batch`.
+        :return: A dictionary of metrics for validation.
+            You can provide custom metrics by passing in a custom ``training_operator_cls``.
+        """
+        return self.pytorch_trainer.validate(num_steps=num_steps, profile=profile, info=info)
+
+    def get_model(self):
+        """Returns the learned model(s)."""
+        return self.pytorch_trainer.get_model()
+
+    def save(self, checkpoint):
+        """Saves the Estimator state to the provided checkpoint path.
+
+        :param checkpoint: (str) Path to target checkpoint file.
+        """
+        return self.pytorch_trainer.save(checkpoint=checkpoint)
+
+    def load(self, checkpoint):
+        """Loads the Estimator and all workers from the provided checkpoint.
+
+        :param checkpoint: (str) Path to target checkpoint file.
+        """
+        return self.pytorch_trainer.load(checkpoint=checkpoint)
+
+    def shutdown(self, force=False):
+        """Shuts down workers and releases resources."""
+        return self.pytorch_trainer.shutdown(force=force)

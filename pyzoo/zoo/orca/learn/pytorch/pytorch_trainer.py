@@ -32,6 +32,7 @@ class PyTorchTrainer(object):
         ray_ctx = RayContext.get()
         if not num_workers:
             num_workers = ray_ctx.num_ray_nodes
+
         self.trainer = RemoteTrainer.remote(model_creator=model_creator,
                                             data_creator=data_creator,
                                             optimizer_creator=optimizer_creator,
@@ -46,16 +47,18 @@ class PyTorchTrainer(object):
                                             use_tqdm=use_tqdm,
                                             scheduler_step_freq=scheduler_step_freq)
 
-    def train(self, nb_epoch=1):
+    def train(self, nb_epoch=1, profile=False, reduce_results=True, info=None):
         """Trains a PyTorch model for several epochs."""
         stats_list = list()
         for i in range(nb_epoch):
-            stats = ray.get(self.trainer.train.remote())
+            stats = ray.get(self.trainer.train.remote(profile=profile,
+                                                      reduce_results=reduce_results,
+                                                      info=info))
             stats_list.append(stats)
         return stats_list
 
-    def validate(self, num_steps=None, profile=False, reduce_results=True, info=None):
-        return ray.get(self.trainer.validate.remote(num_steps, profile, reduce_results, info))
+    def validate(self, num_steps=None, profile=False, info=None):
+        return ray.get(self.trainer.validate.remote(num_steps, profile, info))
 
     def get_model(self):
         """Returns the learned model(s)."""
@@ -63,3 +66,20 @@ class PyTorchTrainer(object):
 
     def shutdown(self, force=False):
         ray.get(self.trainer.shutdown.remote(force))
+
+    def save(self, checkpoint):
+        """
+        Saves the Trainer state to the provided checkpoint path.
+
+        Args:
+            checkpoint (str): Path to target checkpoint file.
+        """
+        ray.get(self.trainer.save.remote(checkpoint))
+
+    def load(self, checkpoint):
+        """Loads the Trainer and all workers from the provided checkpoint.
+
+        Args:
+            checkpoint (str): Path to target checkpoint file.
+        """
+        ray.get(self.trainer.load.remote(checkpoint))
