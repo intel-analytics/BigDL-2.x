@@ -23,7 +23,7 @@ from unittest import TestCase
 class TestZouwuModelForecastWithoutFt(TestCase):
 
     def test_forecast_tcmf(self):
-        from zoo.zouwu.model.forecast import TCMFForecaster
+        from zoo.zouwu.model.forecast.tcmf_forecaster import TCMFForecaster
         import tempfile
         model = TCMFForecaster(y_iters=1,
                                init_FX_epoch=1,
@@ -67,7 +67,7 @@ class TestZouwuModelForecastWithoutFt(TestCase):
         assert model.evaluate(x=None, target_value=target_value, metric=['mse'])
 
     def test_forecast_tcmf_without_id(self):
-        from zoo.zouwu.model.forecast import TCMFForecaster
+        from zoo.zouwu.model.forecast.tcmf_forecaster import TCMFForecaster
         import tempfile
         model = TCMFForecaster(y_iters=1,
                                init_FX_epoch=1,
@@ -112,7 +112,7 @@ class TestZouwuModelForecastWithoutFt(TestCase):
         model.evaluate(x=None, target_value=target_value, metric=['mse'])
 
     def test_forecast_tcmf_xshards(self):
-        from zoo.zouwu.model.forecast import TCMFForecaster
+        from zoo.zouwu.model.forecast.tcmf_forecaster import TCMFForecaster
         from zoo.orca import OrcaContext
         import zoo.orca.data.pandas
         import pandas as pd
@@ -195,7 +195,7 @@ class TestZouwuModelForecastWithoutFt(TestCase):
         OrcaContext.pandas_read_backend = "spark"
 
     def test_forecast_tcmf_distributed(self):
-        from zoo.zouwu.model.forecast import TCMFForecaster
+        from zoo.zouwu.model.forecast.tcmf_forecaster import TCMFForecaster
         import tempfile
         model = TCMFForecaster(y_iters=1,
                                init_FX_epoch=1,
