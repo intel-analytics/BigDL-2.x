@@ -57,7 +57,7 @@ class TCMF(BaseModel):
         self.svd = config.get("svd", True)
         self.period = config.get("period", 24)
         self.alt_iters = config.get("alt_iters", 10)
-        self.y_iters = config.get("max_y_iterations", 300)
+        self.y_iters = config.get("y_iters", 300)
         self.init_epoch = config.get("init_FX_epoch", 100)
         self.max_FX_epoch = config.get("max_FX_epoch", 300)
         self.max_TCN_epoch = config.get("max_TCN_epoch", 300)

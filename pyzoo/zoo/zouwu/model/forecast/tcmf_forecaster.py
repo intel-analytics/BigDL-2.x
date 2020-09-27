@@ -14,29 +14,9 @@
 # limitations under the License.
 #
 
-from abc import ABCMeta, abstractmethod
-
-from zoo.automl.model.MTNet_keras import MTNetKeras as MTNetKerasModel
-from zoo.automl.model.VanillaLSTM import VanillaLSTM as LSTMKerasModel
-from zoo.tfpark import KerasModel as TFParkKerasModel
 from zoo.automl.model.tcmf_model import TCMFLocalModelWrapper, TCMFDistributedModelWrapper
 from zoo.orca.data import SparkXShards
-
-import tensorflow as tf
-
-
-class Forecaster(metaclass=ABCMeta):
-    @abstractmethod
-    def fit(self, **kwargs):
-        pass
-
-    @abstractmethod
-    def evaluate(self, **kwargs):
-        pass
-
-    @abstractmethod
-    def predict(self, **kwargs):
-        pass
+from zoo.zouwu.model.forecast.abstract import Forecaster
 
 
 class TCMFForecaster(Forecaster):
@@ -59,7 +39,7 @@ class TCMFForecaster(Forecaster):
                  dti=None,
                  svd=True,
                  period=24,
-                 y_iters=300,
+                 y_iters=10,
                  init_FX_epoch=100,
                  max_FX_epoch=300,
                  max_TCN_epoch=300,
@@ -104,8 +84,8 @@ class TCMFForecaster(Forecaster):
             Whether factor matrices are initialized by NMF
         :param period: int, default is 24.
             Periodicity of input time series, leave it out if not known
-        :param y_iters: int, default is 300.
-            Max number of iterations while training the hybrid model.
+        :param y_iters: int, default is 10.
+            Number of iterations while training the hybrid model.
         :param init_FX_epoch: int, default is 100.
             Number of iterations while initializing factors
         :param max_FX_epoch: int, default is 300.
@@ -143,12 +123,14 @@ class TCMFForecaster(Forecaster):
         }
 
     def fit(self,
-            x, incremental=False):
+            x, incremental=False, num_workers=None):
         """
         fit the model
         :param x: the input for fit. Only dict of ndarray and SparkXShards of dict of ndarray
             are supported. Example: {'id': id_arr, 'y': data_ndarray}
         :param incremental: if the fit is incremental
+        :param num_workers: the number of workers you want to use for fit. If None, it defaults to
+        num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
         :return:
         """
         if incremental:
@@ -193,12 +175,14 @@ class TCMFForecaster(Forecaster):
                 x=None,
                 horizon=24,
                 covariates=None,
+                num_workers=1,
                 ):
         """
         predict
         :param x: the input. We don't support input x directly
         :param horizon: horizon length to look forward.
         :param covariates: the global covariates
+        :param num_workers: the number of workers to use in predict. It defaults to 1.
         :return:
         """
         if self.internal is None:
@@ -228,172 +212,3 @@ class TCMFForecaster(Forecaster):
             loaded_model.internal = TCMFLocalModelWrapper(loaded_model.config)
             loaded_model.internal.load(path)
         return loaded_model
-
-
-class TFParkForecaster(TFParkKerasModel, Forecaster, metaclass=ABCMeta):
-    """
-    Base class for TFPark KerasModel based Forecast models.
-    """
-
-    def __init__(self):
-        """
-        Initializer.
-        Turns the tf.keras model returned from _build into a tfpark.KerasModel
-        """
-        self.model = self._build()
-        assert (isinstance(self.model, tf.keras.Model))
-        super().__init__(self.model)
-
-    @abstractmethod
-    def _build(self):
-        """
-        Build a tf.keras model.
-       :return: a tf.keras model (compiled)
-        """
-        pass
-
-
-class LSTMForecaster(TFParkForecaster):
-    """
-    Vanilla LSTM Forecaster
-    """
-
-    def __init__(self,
-                 target_dim=1,
-                 feature_dim=1,
-                 lstm_1_units=16,
-                 dropout_1=0.2,
-                 lstm_2_units=8,
-                 dropout_2=0.2,
-                 metric="mean_squared_error",
-                 lr=0.001,
-                 loss="mse",
-                 uncertainty: bool = False
-                 ):
-        """
-        Build a LSTM Forecast Model.
-
-        :param target_dim: dimension of model output
-        :param feature_dim: dimension of input feature
-        :param lstm_1_units: num of units for the 1st LSTM layer
-        :param dropout_1: p for the 1st dropout layer
-        :param lstm_2_units: num of units for the 2nd LSTM layer
-        :param dropout_2: p for the 2nd dropout layer
-        :param metric: the metric for validation and evaluation
-        :param lr: learning rate
-        :param uncertainty: whether to return uncertainty
-        :param loss: the target function you want to optimize on
-        """
-        #
-        self.target_dim = target_dim
-        self.check_optional_config = False
-        self.uncertainty = uncertainty
-
-        self.model_config = {
-            "lr": lr,
-            "lstm_1_units": lstm_1_units,
-            "dropout_1": dropout_1,
-            "lstm_2_units": lstm_2_units,
-            "dropout_2": dropout_2,
-            "metric": metric,
-            "feature_num": feature_dim,
-            "loss": loss
-        }
-        self.internal = None
-
-        super().__init__()
-
-    def _build(self):
-        """
-        Build LSTM Model in tf.keras
-        """
-        # build model with TF/Keras
-        self.internal = LSTMKerasModel(
-            check_optional_config=self.check_optional_config,
-            future_seq_len=self.target_dim)
-        return self.internal._build(mc=self.uncertainty,
-                                    **self.model_config)
-
-
-class MTNetForecaster(TFParkForecaster):
-    """
-    MTNet Forecast Model
-    """
-
-    def __init__(self,
-                 target_dim=1,
-                 feature_dim=1,
-                 long_series_num=1,
-                 series_length=1,
-                 ar_window_size=1,
-                 cnn_height=1,
-                 cnn_hid_size=32,
-                 rnn_hid_sizes=[16, 32],
-                 lr=0.001,
-                 loss="mae",
-                 cnn_dropout=0.2,
-                 rnn_dropout=0.2,
-                 metric="mean_squared_error",
-                 uncertainty: bool = False,
-                 ):
-        """
-        Build a MTNet Forecast Model.
-        :param target_dim: the dimension of model output
-        :param feature_dim: the dimension of input feature
-        :param long_series_num: the number of series for the long-term memory series
-        :param series_length: the series size for long-term and short-term memory series
-        :param ar_window_size: the auto regression window size in MTNet
-        :param cnn_hid_size: the hidden layer unit for cnn in encoder
-        :param rnn_hid_sizes: the hidden layers unit for rnn in encoder
-        :param cnn_height: cnn filter height in MTNet
-        :param metric: the metric for validation and evaluation
-        :param uncertainty: whether to enable calculation of uncertainty
-        :param lr: learning rate
-        :param loss: the target function you want to optimize on
-        :param cnn_dropout: the dropout possibility for cnn in encoder
-        :param rnn_dropout: the dropout possibility for rnn in encoder
-        """
-        self.check_optional_config = False
-        self.mc = uncertainty
-        self.model_config = {
-            "feature_num": feature_dim,
-            "output_dim": target_dim,
-            "metrics": [metric],
-            "mc": uncertainty,
-            "time_step": series_length,
-            "long_num": long_series_num,
-            "ar_window": ar_window_size,
-            "cnn_height": cnn_height,
-            "past_seq_len": (long_series_num + 1) * series_length,
-            "cnn_hid_size": cnn_hid_size,
-            "rnn_hid_sizes": rnn_hid_sizes,
-            "lr": lr,
-            "cnn_dropout": cnn_dropout,
-            "rnn_dropout": rnn_dropout,
-            "loss": loss
-        }
-        self._internal = None
-
-        super().__init__()
-
-    def _build(self):
-        """
-        build a MTNet model in tf.keras
-       :return: a tf.keras MTNet model
-        """
-        # TODO change this function call after MTNet fixes
-        self.internal = MTNetKerasModel(
-            check_optional_config=self.check_optional_config,
-            future_seq_len=self.model_config.get('output_dim'))
-        self.internal.apply_config(config=self.model_config)
-        return self.internal.build()
-
-    def preprocess_input(self, x):
-        """
-        The original rolled features needs an extra step to process.
-        This should be called before train_x, validation_x, and test_x
-        :param x: the original samples from rolling
-        :return: a tuple (long_term_x, short_term_x)
-                which are long term and short term history respectively
-        """
-        return self.internal._reshape_input_x(x)
