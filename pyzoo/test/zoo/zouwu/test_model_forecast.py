@@ -95,7 +95,7 @@ class TestZouwuModelForecast(ZooTestCase):
     def test_forecast_tcmf(self):
         from zoo.zouwu.model.forecast.tcmf_forecaster import TCMFForecaster
         import tempfile
-        model = TCMFForecaster(max_y_iterations=1,
+        model = TCMFForecaster(y_iters=1,
                                init_FX_epoch=1,
                                max_FX_epoch=1,
                                max_TCN_epoch=1,
@@ -139,7 +139,7 @@ class TestZouwuModelForecast(ZooTestCase):
     def test_forecast_tcmf_without_id(self):
         from zoo.zouwu.model.forecast.tcmf_forecaster import TCMFForecaster
         import tempfile
-        model = TCMFForecaster(max_y_iterations=1,
+        model = TCMFForecaster(y_iters=1,
                                init_FX_epoch=1,
                                max_FX_epoch=1,
                                max_TCN_epoch=1,
@@ -208,7 +208,7 @@ class TestZouwuModelForecast(ZooTestCase):
         def get_pred(d):
             return d["prediction"]
 
-        model = TCMFForecaster(max_y_iterations=1,
+        model = TCMFForecaster(y_iters=1,
                                init_FX_epoch=1,
                                max_FX_epoch=1,
                                max_TCN_epoch=1,

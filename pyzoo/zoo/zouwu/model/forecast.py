@@ -59,7 +59,7 @@ class TCMFForecaster(Forecaster):
                  dti=None,
                  svd=True,
                  period=24,
-                 max_y_iterations=300,
+                 y_iters=300,
                  init_FX_epoch=100,
                  max_FX_epoch=300,
                  max_TCN_epoch=300,
@@ -104,7 +104,7 @@ class TCMFForecaster(Forecaster):
             Whether factor matrices are initialized by NMF
         :param period: int, default is 24.
             Periodicity of input time series, leave it out if not known
-        :param max_y_iterations: int, default is 300.
+        :param y_iters: int, default is 300.
             Max number of iterations while training the hybrid model.
         :param init_FX_epoch: int, default is 100.
             Number of iterations while initializing factors
@@ -135,7 +135,7 @@ class TCMFForecaster(Forecaster):
             "dti": dti,
             "svd": svd,
             "period": period,
-            "max_y_iterations": max_y_iterations,
+            "y_iters": y_iters,
             "init_FX_epoch": init_FX_epoch,
             "max_FX_epoch": max_FX_epoch,
             "max_TCN_epoch": max_TCN_epoch,

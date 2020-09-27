@@ -29,7 +29,7 @@ class TestTCMF(ZooTestCase):
         seq_len = 480
         self.num_samples = 300
         self.config = {
-            "max_y_iterations": 1,
+            "y_iters": 1,
             "init_FX_epoch": 1,
             "max_FX_epoch": 1,
             "max_TCN_epoch": 1,
