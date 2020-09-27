@@ -22,6 +22,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.{List => JList}
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.zoo.serving.engine.ModelHolder
 
 import scala.collection.JavaConverters._
 
@@ -509,7 +510,11 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   }
 
   private def predict(inputActivity: Activity): Activity = {
-    val model: AbstractModel = retrieveModel()
+    val model = ModelHolder.synchronized {
+      ModelHolder.modelQueueing += 1
+      while (modelQueue.peek() == null) ModelHolder.wait()
+      retrieveModel()
+    }
     try {
       val begin = System.nanoTime()
       val result = model.predict(inputActivity)
@@ -524,7 +529,13 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
       model match {
         case null =>
         case _ =>
-          val success = modelQueue.offer(model)
+          val success =
+          ModelHolder.synchronized {
+            ModelHolder.modelQueueing -= 1
+            ModelHolder.notifyAll()
+            modelQueue.offer(model)
+          }
+
           success match {
             case true =>
             case false => model.release()
@@ -565,7 +576,8 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
           model = modelQueue.take
         } catch {
           case e: InterruptedException =>
-            throw new InferenceRuntimeException("no model available", e);
+            throw new InferenceRuntimeException("no model available \n"
+              + e.getStackTrace.mkString("\n"))
         }
       case true =>
         // if auto-scaling is enabled, will poll a model, no waiting but scale 1 model if necessary.

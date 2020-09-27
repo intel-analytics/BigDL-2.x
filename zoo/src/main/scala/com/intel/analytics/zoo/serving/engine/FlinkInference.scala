@@ -16,6 +16,9 @@
 
 package com.intel.analytics.zoo.serving.engine
 
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
+
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.PreProcessing
@@ -61,10 +64,14 @@ class FlinkInference(params: SerParams)
     val t1 = System.nanoTime()
     val postProcessed = {
       val preProcessed = in.map(item => {
-        ModelHolder.model.blockModel()
+        ModelHolder.synchronized{
+          while (ModelHolder.modelQueueing != 0) ModelHolder.wait()
+        }
+
         val uri = item._1
         val input = pre.decodeArrowBase64(item._2)
         (uri, input)
+
       }).toIterator
 
       if (params.modelType == "openvino") {
@@ -87,5 +94,5 @@ class FlinkInference(params: SerParams)
 }
 object ModelHolder {
   var model: InferenceModel = null
-
+  var modelQueueing = 0
 }

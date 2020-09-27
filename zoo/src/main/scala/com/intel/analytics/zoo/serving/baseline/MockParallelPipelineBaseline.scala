@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.serving.PreProcessing
 import com.intel.analytics.zoo.serving.arrow.{ArrowDeserializer, ArrowSerializer}
-import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, Timer}
+import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, ModelHolder, Timer}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams, Supportive}
 import scopt.OptionParser
 
@@ -79,12 +79,12 @@ object MockParallelPipelineBaseline extends Supportive {
     helper.initArgs()
     val sParam = new SerParams(helper)
 
-    val model = helper.loadInferenceModel()
+    ModelHolder.model = helper.loadInferenceModel()
     val warmT = makeTensorFromShape(param.inputShape)
     ClusterServingInference.typeCheck(warmT)
     ClusterServingInference.dimCheck(warmT, "add", sParam.modelType)
     (0 until 10).foreach(_ => {
-      val result = model.doPredict(warmT)
+      val result = ModelHolder.model.doPredict(warmT)
     })
     println("Warming up finished, begin baseline test...generating Base64 string")
 
@@ -106,6 +106,9 @@ object MockParallelPipelineBaseline extends Supportive {
         (0 until param.testNum).grouped(sParam.coreNum).flatMap(i => {
           val preprocessed = timer.timing("Preprocess", sParam.coreNum) {
             a.map(item => {
+              ModelHolder.synchronized{
+                while (ModelHolder.modelQueueing != 0) ModelHolder.wait()
+              }
               val deserializer = new ArrowDeserializer()
               val arr = deserializer.create(b64string)
               val tensor = Tensor(arr(0)._1, arr(0)._2)
@@ -117,7 +120,7 @@ object MockParallelPipelineBaseline extends Supportive {
           }
           ClusterServingInference.dimCheck(t, "add", sParam.modelType)
           val result = timer.timing("Inference", sParam.coreNum) {
-            model.doPredict(t)
+            ModelHolder.model.doPredict(t)
           }
           ClusterServingInference.dimCheck(t, "remove", sParam.modelType)
           ClusterServingInference.dimCheck(result, "remove", sParam.modelType)
