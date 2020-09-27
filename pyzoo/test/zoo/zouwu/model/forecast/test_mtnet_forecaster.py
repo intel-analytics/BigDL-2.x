@@ -20,16 +20,14 @@ from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 import tensorflow as tf
 import pandas as pd
 
-from zoo.zouwu.model.forecast.lstm_forecaster import LSTMForecaster
 from zoo.zouwu.model.forecast.mtnet_forecaster import MTNetForecaster
 from unittest import TestCase
 
 
-class TestZouwuModelForecast(TestCase):
+class TestZouwuModelMTNetForecaster(TestCase):
 
     def setUp(self):
         tf.keras.backend.clear_session()
-        # super(TestZouwuModelForecast, self).setup_method(method)
         self.ft = TimeSequenceFeatureTransformer()
         self.create_data()
 
@@ -61,17 +59,6 @@ class TestZouwuModelForecast(TestCase):
                                                   future_seq_len=look_forward)
         self.x_test = gen_test_sample(data=np.random.randn(16, 4),
                                       past_seq_len=look_back)
-
-    def test_forecast_lstm(self):
-        # TODO hacking to fix a bug
-        model = LSTMForecaster(target_dim=1, feature_dim=self.x_train.shape[-1])
-        model.fit(self.x_train,
-                  self.y_train,
-                  validation_data=(self.x_val, self.y_val),
-                  batch_size=8,
-                  distributed=False)
-        model.evaluate(self.x_val, self.y_val)
-        model.predict(self.x_test)
 
     def test_forecast_mtnet(self):
         # TODO hacking to fix a bug
