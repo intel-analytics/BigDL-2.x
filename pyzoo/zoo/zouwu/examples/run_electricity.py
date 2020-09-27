@@ -53,11 +53,19 @@ parser.add_argument("--data_dir", type=str,
                     help="the directory of electricity data file, you can download by running "
                          "https://github.com/rajatsen91/deepglo/blob/master/datasets/"
                          "download-data.sh. Note that we only need electricity.npy.")
-parser.add_argument("--use_dummy_data", action='store_true', default=True,
+parser.add_argument("--use_dummy_data", action='store_true', default=False,
                     help="Whether to use dummy data")
-parser.add_argument("--smoke", action='store_true', default=True,
+parser.add_argument("--smoke", action='store_true', default=False,
                     help="Whether to run smoke test")
-
+parser.add_argument("--predict_local", action='store_true', default=False,
+                    help="You can set this if want to run distributed training on yarn and "
+                         "run distributed inference on local.")
+parser.add_argument("--num_predict_cores", type=int, default=4,
+                    help="The number of cores you want to use for prediction on local."
+                         "You should only parse this arg if you set predict_local to true.")
+parser.add_argument("--num_predict_workers", type=int, default=4,
+                    help="The number of workers you want to use for prediction on local. "
+                         "You should only parse this arg if you set predict_local to true.")
 
 if __name__ == "__main__":
 
@@ -108,14 +116,17 @@ if __name__ == "__main__":
         model.save(tempdirname)
         loaded_model = TCMFForecaster.load(tempdirname, distributed=False)
 
-    # If you use cluster to fit and want to predict in local, you could use:
-    # stop_orca_context()
-    # import ray
-    # ray.init(num_cpus=...)
-    # model.predict(num_workers=...)
+    if args.predict_local:
+        logger.info('Stopping context for yarn cluster and init context on local.')
+        stop_orca_context()
+        import ray
+        ray.init(num_cpus=args.num_predict_cores)
+        logger.info('Start prediction.')
+        yhat = model.predict(x=None, horizon=24, num_workers=args.num_predict_workers)
 
-    logger.info('Start prediction.')
-    yhat = model.predict(x=None, horizon=24, num_workers=args.num_workers)
+    else:
+        logger.info('Start prediction.')
+        yhat = model.predict(x=None, horizon=24, num_workers=args.num_workers)
     logger.info("Prediction ends")
     yhat = yhat["prediction"]
     target_value = dict({"y": target_data})
