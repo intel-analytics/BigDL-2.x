@@ -20,7 +20,7 @@
 
 cd "`dirname $0`"
 
-export PYSPARK_PYTHON=pythonconda
+export PYSPARK_PYTHON=python
 export PYSPARK_DRIVER_PYTHON=python
 
 echo "Running RayOnSpark tests"
