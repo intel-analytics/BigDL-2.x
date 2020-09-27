@@ -178,7 +178,7 @@ class TCMF(BaseModel):
         )
         return out[:, -horizon::]
 
-    def evaluate(self, x=None, y=None, metrics=None):
+    def evaluate(self, x=None, y=None, metrics=None, num_workers=1):
         """
         Evaluate on the prediction results and y. We predict horizon time-points ahead the input x
         in fit_eval before evaluation, where the horizon length equals the second dimension size of
@@ -187,6 +187,7 @@ class TCMF(BaseModel):
         :param y: target. We interpret the second dimension of y as the horizon length for
             evaluation.
         :param metrics: a list of metrics in string format
+        :param num_workers: the number of workers to use in evaluate. It defaults to 1.
         :return: a list of metric evaluation results
         """
         if x is not None:
@@ -200,7 +201,7 @@ class TCMF(BaseModel):
             horizon = 1
         else:
             horizon = y.shape[1]
-        result = self.predict(horizon=horizon)
+        result = self.predict(horizon=horizon, num_workers=num_workers)
 
         if y.shape[1] == 1:
             multioutput = 'uniform_average'
@@ -280,12 +281,13 @@ class TCMFDistributedModelWrapper(ModelWrapper):
             raise ValueError("value of x should be an xShards of dict, "
                              "but isn't an xShards")
 
-    def evaluate(self, x, y, metric=None):
+    def evaluate(self, x, y, metric=None, num_workers=1):
         """
         Evaluate the model
         :param x: input
         :param y: target
         :param metric:
+        :param num_workers:
         :return: a list of metric evaluation results
         """
         raise NotImplementedError
@@ -294,6 +296,8 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         """
         Prediction.
         :param x: input
+        :param horizon:
+        :param num_workers
         :return: result
         """
         if num_workers and num_workers != 1:
@@ -350,12 +354,13 @@ class TCMFLocalModelWrapper(ModelWrapper):
         else:
             raise ValueError("value of x should be a dict of ndarray")
 
-    def evaluate(self, x, y, metric=None):
+    def evaluate(self, x, y, metric=None, num_workers=1):
         """
         Evaluate the model
         :param x: input
         :param y: target
         :param metric:
+        :param num_workers:
         :return: a list of metric evaluation results
         """
         if isinstance(y, dict):
@@ -365,7 +370,7 @@ class TCMFLocalModelWrapper(ModelWrapper):
                     raise ValueError("the value of y should be an ndarray")
             else:
                 raise ValueError("key y doesn't exist in y")
-            return self.internal.evaluate(y=y, x=x, metrics=metric)
+            return self.internal.evaluate(y=y, x=x, metrics=metric, num_workers=num_workers)
         else:
             raise ValueError("value of y should be a dict of ndarray")
 
@@ -373,6 +378,8 @@ class TCMFLocalModelWrapper(ModelWrapper):
         """
         Prediction.
         :param x: input
+        :param horizon
+        :param num_workers
         :return: result
         """
         pred = self.internal.predict(x=x, horizon=horizon, num_workers=num_workers)
