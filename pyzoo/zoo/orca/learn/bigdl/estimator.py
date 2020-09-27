@@ -296,8 +296,27 @@ class BigDLEstimatorWrapper(Estimator):
 
     def load(self, checkpoint, optimizer=None, loss=None, feature_preprocessing=None,
              label_preprocessing=None, model_dir=None, is_checkpoint=False):
+        if loss is not None:
+            self.loss = loss
+        if optimizer is not None:
+            self.optimizer = optimizer
+        if feature_preprocessing is not None:
+            self.feature_preprocessing = feature_preprocessing
+        if label_preprocessing is not None:
+            self.label_preprocessing = label_preprocessing
+        if model_dir is not None:
+            self.model_dir = model_dir
+
         if is_checkpoint:
-            raise NotImplementedError()
+            from zoo.orca.learn.utils import find_latest_checkpoint
+            from zoo.pipeline.api.net import Net
+            from bigdl.nn.layer import Model
+            from bigdl.optim.optimizer import OptimMethod
+            import os
+            path, prefix, version = find_latest_checkpoint(checkpoint, model_type="bigdl")
+            self.model = Model.load(os.path.join(path, "model.{}".format(version)))
+            self.optimizer = OptimMethod.load(os.path.join(path, "{}.{}".format(prefix, version)))
+            self.estimator = SparkEstimator(self.model, self.optimizer, self.model_dir)
         else:
             from zoo.pipeline.api.net import Net
             self.model = Net.load_bigdl(checkpoint + ".bigdl", checkpoint + ".bin")

@@ -172,27 +172,37 @@ class TestEstimatorForKeras(TestCase):
         model.add(LogSoftMax())
         optim_method = SGD(learningrate=0.01)
 
-        estimator = Estimator.from_bigdl(model=model, optimizer=optim_method,
-                                         loss=ClassNLLCriterion())
-        with self.assertRaises(Exception) as context:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            estimator = Estimator.from_bigdl(model=model, optimizer=optim_method,
+                                             loss=ClassNLLCriterion(), model_dir=temp_dir_name)
+            with self.assertRaises(Exception) as context:
+                estimator.set_constant_gradient_clipping(0.1, 1.2)
+            self.assertTrue('Please call set_input_type before calling set_constant_gradient_'
+                            'clipping.' in str(context.exception))
+            estimator.set_input_type(input_type="sparkXshards")
             estimator.set_constant_gradient_clipping(0.1, 1.2)
-        self.assertTrue('Please call set_input_type before calling set_constant_gradient_clipping.'
-                        in str(context.exception))
-        estimator.set_input_type(input_type="sparkXshards")
-        estimator.set_constant_gradient_clipping(0.1, 1.2)
-        r1 = estimator.predict(data=data_shard)
-        r_c = r1.collect()
-        estimator.fit(data=data_shard, epochs=5, batch_size=8, val_data=data_shard,
-                      val_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
-        estimator.evaluate(data=data_shard, validation_methods=[Accuracy()], batch_size=8)
-        result = estimator.predict(data=data_shard)
-        assert type(result).__name__ == 'SparkXShards'
-        result_c = result.collect()
-        df = self.get_estimator_df()
-        with self.assertRaises(Exception) as context:
-            estimator.fit(df, epochs=1)
-        self.assertTrue('Data and validation data should be SparkXShards, but get'
-                        in str(context.exception))
+            r1 = estimator.predict(data=data_shard)
+            r_c = r1.collect()
+            estimator.fit(data=data_shard, epochs=5, batch_size=8, val_data=data_shard,
+                          val_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
+            estimator.evaluate(data=data_shard, validation_methods=[Accuracy()], batch_size=8)
+            result = estimator.predict(data=data_shard)
+            assert type(result).__name__ == 'SparkXShards'
+            result_c = result.collect()
+            df = self.get_estimator_df()
+            with self.assertRaises(Exception) as context:
+                estimator.fit(df, epochs=1)
+            self.assertTrue('Data and validation data should be SparkXShards, but get'
+                            in str(context.exception))
+
+            est2 = Estimator.from_bigdl(model=None, optimizer=None, loss=None, model_dir=None)
+            est2.load(temp_dir_name, loss=ClassNLLCriterion(), is_checkpoint=True)
+            r2 = est2.predict(data=data_shard)
+            r2_c = r2.collect()
+            assert (result_c[0]["prediction"] == r2_c[0]["prediction"]).all()
+            est2.fit(data=data_shard, epochs=5, batch_size=8, val_data=data_shard,
+                     val_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
+            est2.evaluate(data=data_shard, validation_methods=[Accuracy()], batch_size=8)
 
 
 if __name__ == "__main__":
