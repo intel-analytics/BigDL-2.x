@@ -159,7 +159,7 @@ class TCMFForecaster(Forecaster):
                  x=None,
                  metric=['mae'],
                  covariates=None,
-                 num_workers=1,
+                 num_workers=None,
                  ):
         """
         evaluate the model
@@ -168,7 +168,8 @@ class TCMFForecaster(Forecaster):
         :param covariates: global covariates
         :param x: the input
         :param metric: the metrics
-        :param num_workers: the number of workers to use in evaluate. It defaults to 1.
+        :param num_workers: the number of workers to use in evaluate. If None, it defaults to
+        num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
         :return:
         """
         return self.internal.evaluate(y=target_value, x=x, metric=metric, num_workers=num_workers)
@@ -177,14 +178,15 @@ class TCMFForecaster(Forecaster):
                 x=None,
                 horizon=24,
                 covariates=None,
-                num_workers=1,
+                num_workers=None,
                 ):
         """
         predict
         :param x: the input. We don't support input x directly
         :param horizon: horizon length to look forward.
         :param covariates: the global covariates
-        :param num_workers: the number of workers to use in predict. It defaults to 1.
+        :param num_workers: the number of workers to use in predict. If None, it defaults to
+        num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
         :return:
         """
         if self.internal is None:

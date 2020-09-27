@@ -178,7 +178,7 @@ class TCMF(BaseModel):
         )
         return out[:, -horizon::]
 
-    def evaluate(self, x=None, y=None, metrics=None, num_workers=1):
+    def evaluate(self, x=None, y=None, metrics=None, num_workers=None):
         """
         Evaluate on the prediction results and y. We predict horizon time-points ahead the input x
         in fit_eval before evaluation, where the horizon length equals the second dimension size of
@@ -201,7 +201,7 @@ class TCMF(BaseModel):
             horizon = 1
         else:
             horizon = y.shape[1]
-        result = self.predict(horizon=horizon, num_workers=num_workers)
+        result = self.predict(x=None, horizon=horizon, num_workers=num_workers)
 
         if y.shape[1] == 1:
             multioutput = 'uniform_average'
@@ -281,7 +281,7 @@ class TCMFDistributedModelWrapper(ModelWrapper):
             raise ValueError("value of x should be an xShards of dict, "
                              "but isn't an xShards")
 
-    def evaluate(self, x, y, metric=None, num_workers=1):
+    def evaluate(self, x, y, metric=None, num_workers=None):
         """
         Evaluate the model
         :param x: input
@@ -292,7 +292,7 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         """
         raise NotImplementedError
 
-    def predict(self, x, horizon=24, num_workers=1):
+    def predict(self, x, horizon=24, num_workers=None):
         """
         Prediction.
         :param x: input
@@ -354,7 +354,7 @@ class TCMFLocalModelWrapper(ModelWrapper):
         else:
             raise ValueError("value of x should be a dict of ndarray")
 
-    def evaluate(self, x, y, metric=None, num_workers=1):
+    def evaluate(self, x, y, metric=None, num_workers=None):
         """
         Evaluate the model
         :param x: input
@@ -374,7 +374,7 @@ class TCMFLocalModelWrapper(ModelWrapper):
         else:
             raise ValueError("value of y should be a dict of ndarray")
 
-    def predict(self, x, horizon=24, num_workers=1):
+    def predict(self, x, horizon=24, num_workers=None):
         """
         Prediction.
         :param x: input
