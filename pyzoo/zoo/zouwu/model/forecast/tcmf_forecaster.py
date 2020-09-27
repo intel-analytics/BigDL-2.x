@@ -146,7 +146,7 @@ class TCMFForecaster(Forecaster):
                                  "an xShards of dict of ndarray")
 
             try:
-                self.internal.fit(x, incremental, num_workers=num_workers)
+                self.internal.fit(x, incremental)
             except Exception as inst:
                 self.internal = None
                 raise inst
@@ -188,7 +188,7 @@ class TCMFForecaster(Forecaster):
         if self.internal is None:
             raise Exception("You should run fit before calling predict()")
         else:
-            return self.internal.predict(x, horizon, num_workers=num_workers)
+            return self.internal.predict(x, horizon)
 
     def save(self, path):
         if self.internal is None:
