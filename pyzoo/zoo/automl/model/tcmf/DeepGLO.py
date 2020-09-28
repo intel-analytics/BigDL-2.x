@@ -61,6 +61,12 @@ from zoo.automl.model.tcmf.time import TimeCovariates
 import copy
 
 import pickle
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+console = logging.StreamHandler()
+logger.addHandler(console)
 
 
 def get_model(A, y, lamb=0):
@@ -544,7 +550,8 @@ class DeepGLO(object):
             val_len=self.val_len,
             shuffle=False,
         )
-        print("-"*50+"Initializing Factors.....")
+        # print("-"*50+"Initializing Factors.....")
+        logger.info("Initializing Factors")
         self.num_epochs = init_epochs
         self.train_factors()
 
@@ -552,25 +559,23 @@ class DeepGLO(object):
             alt_iters += 1
 
         # print("Starting Alternate Training.....")
-        print("Starting Alternate Training.....")
+        logger.info("Starting Alternate Training.....")
 
         for i in range(1, alt_iters):
             if i % 2 == 0:
-                print(
-                    "--------------------------------------------Training Factors. Iter#:{}"
-                    .format(i)
-                    + "-------------------------------------------------------"
-                )
+                logger.info("Training Factors. Iter#:{}".format(i))
                 self.num_epochs = max_FX_epoch
                 self.train_factors(
                     seed=False, early_stop=True, tenacity=tenacity, mod=mod
                 )
             else:
-                print(
-                    "--------------------------------------------Training Xseq Model. Iter#:{}"
-                    .format(i)
-                    + "-------------------------------------------------------"
-                )
+                # logger.info(
+                #     "--------------------------------------------Training Xseq Model. Iter#:{}"
+                #     .format(i)
+                #     + "-------------------------------------------------------"
+                # )
+                logger.info("Training Xseq Model. Iter#:{}".format(i))
+
                 self.num_epochs = max_TCN_epoch
                 T = np.array(self.X.detach())
                 self.train_Xseq(
@@ -580,7 +585,7 @@ class DeepGLO(object):
                     tenacity=tenacity,
                 )
 
-        print("-"*50, "Start training Yseq", "-"*50)
+        logger.info("Start training Yseq.....")
         val_loss = self.train_Yseq(num_epochs=y_iters,
                                    num_workers=num_workers,
                                    )

@@ -23,7 +23,7 @@ from zoo.automl.model.tcmf.local_model import TemporalConvNet
 
 import ray
 from ray.tune.logger import pretty_print
-from zoo.orca.learn.pytorch.pytorch_trainer import PyTorchTrainer
+import horovod.torch as hvd
 
 
 # build data creator
@@ -41,9 +41,9 @@ def get_tcmf_data_loader(config):
     return tcmf_data_loader
 
 
-class TcmfTrainDataset(torch.utils.data.IterableDataset):
+class TcmfTrainDatasetDist(torch.utils.data.IterableDataset):
     def __init__(self, config):
-        super(TcmfTrainDataset).__init__()
+        super(TcmfTrainDatasetDist).__init__()
         self.tcmf_data_loader = get_tcmf_data_loader(config)
         self.last_epoch = 0
 
@@ -65,6 +65,33 @@ class TcmfTrainDataset(torch.utils.data.IterableDataset):
         return inp, out
 
 
+class TcmfTrainDatasetHorovod(torch.utils.data.IterableDataset):
+    def __init__(self, config):
+        super(TcmfTrainDatasetHorovod).__init__()
+        self.tcmf_data_loader = get_tcmf_data_loader(config)
+        self.last_epoch = 0
+
+    def __iter__(self):
+        while self.tcmf_data_loader.epoch == self.last_epoch:
+            yield self.get_next_batch()
+        self.last_epoch += 1
+
+    def get_next_batch(self):
+        inp, out, _, _ = self.tcmf_data_loader.next_batch()
+        # if hvd.is_initialized():
+        try:
+            num_workers = hvd.size()
+            per_worker = inp.shape[0] // num_workers
+            inp_parts = torch.split(inp, per_worker)
+            out_parts = torch.split(out, per_worker)
+            worker_id = hvd.rank()
+            inp = inp_parts[worker_id]
+            out = out_parts[worker_id]
+        except:
+            pass
+        return inp, out
+
+
 class TcmfValDataset(torch.utils.data.IterableDataset):
     def __init__(self, config):
         super(TcmfValDataset).__init__()
@@ -76,13 +103,17 @@ class TcmfValDataset(torch.utils.data.IterableDataset):
 
 
 def data_creator(config):
-    train_loader = DataLoader(TcmfTrainDataset(config), batch_size=None)
+    train_loader = DataLoader(TcmfTrainDatasetDist(config), batch_size=None)
     val_loader = DataLoader(TcmfValDataset(config), batch_size=None)
     return train_loader, val_loader
 
 
 def train_data_creator(config):
-    return DataLoader(TcmfTrainDataset(config), batch_size=None)
+    return DataLoader(TcmfTrainDatasetHorovod(config), batch_size=None)
+
+
+def val_data_creator(config):
+    return DataLoader(TcmfValDataset(config), batch_size=None)
 
 
 # build loss creator
@@ -112,7 +143,8 @@ def model_creator(config):
     )
 
 
-def train_yseq(num_workers, epochs, **config):
+def train_yseq_dist(num_workers, epochs, **config):
+    from zoo.orca.learn.pytorch.pytorch_trainer import PyTorchTrainer
     trainer = PyTorchTrainer(
         model_creator=model_creator,
         data_creator=data_creator,
@@ -129,5 +161,25 @@ def train_yseq(num_workers, epochs, **config):
     val_loss = worker_stats['val_loss']
     yseq = trainer.get_model()
     trainer.shutdown()
+    return yseq, val_loss
 
+
+def train_yseq_hvd(workers_per_node, epochs, **config):
+    from zoo.orca.learn.pytorch import Estimator
+    estimator = Estimator.from_torch(
+        model=model_creator,
+        optimizer=optimizer_creator,
+        loss=loss_creator,
+        workers_per_node=workers_per_node,
+        config=config)
+
+    stats = estimator.fit(train_data_creator, epochs=epochs)
+    for s in stats:
+        print(pretty_print(s))
+    val_stats = estimator.evaluate(val_data_creator)
+    val_loss = val_stats['val_loss']
+
+    # retrieve the model
+    yseq = estimator.get_model()
+    estimator.shutdown()
     return yseq, val_loss
