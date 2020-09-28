@@ -203,8 +203,12 @@ class KerasNet(ZooKerasLayer):
         Train a model for a fixed number of epochs on a DataSet.
 
         # Arguments
-        x: Input data. A Numpy array or RDD of Sample, ImageSet or TextSet.
-        y: Labels. A Numpy array. Default is None if x is already Sample RDD or ImageSet or TextSet.
+        x: Input data. We support multiple data types. x can be a Numpy array or RDD of Sample
+        or RDD of Numpy array or ImageSet or TextSet or FeatureSet.
+        y: Labels. If x is a Numpy array, y must be a Numpy array.
+        If x is RDD of Sample or ImageSet or TextSet or FeatureSet that already contains labels,
+        y should be None, which is the default value.
+        If x is RDD of Numpy array, y should also be RDD of Numpy array.
         batch_size: Number of samples per gradient update. Default is 32.
         nb_epoch: Number of epochs to train.
         validation_data: Tuple (x_val, y_val) where x_val and y_val are both Numpy arrays.
@@ -213,7 +217,6 @@ class KerasNet(ZooKerasLayer):
         distributed: Boolean. Whether to train the model in distributed mode or local mode.
                      Default is True. In local mode, x and y must both be Numpy arrays.
         """
-
         if distributed:
             if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
                 if validation_data:
@@ -226,8 +229,15 @@ class KerasNet(ZooKerasLayer):
                     x, y = x[:split_index], y[:split_index]
                     validation_data = to_sample_rdd(*validation_data)
                 training_data = to_sample_rdd(x, y)
-            elif (isinstance(x, RDD) or isinstance(x, ImageSet) or isinstance(x, TextSet)) \
-                    or isinstance(x, FeatureSet) and not y:
+            elif isinstance(x, RDD):
+                if not y:  # x is RDD of Sample, y should be None
+                    training_data = x
+                else:  # x and y are both RDD of Numpy arrays
+                    assert isinstance(y, RDD), "x and y must be both RDD of Numpy arrays"
+                    from zoo.common.utils import Sample
+                    training_data = x.zip(y).map(lambda item: Sample.from_ndarray(item[0], item[1]))
+            elif isinstance(x, ImageSet) or isinstance(x, TextSet) or isinstance(x, FeatureSet):
+                assert not y, "y should be None if x is an ImageSet, TextSet or FeatureSet"
                 training_data = x
             else:
                 raise TypeError("Unsupported training data type: %s" % type(x))
