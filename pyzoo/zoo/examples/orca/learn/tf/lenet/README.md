@@ -34,12 +34,22 @@ python ncf.py --cluster_mode local
 ```
 
 ## Run examples on yarn cluster
+
+Please first make sure HADOOP_HOME and JAVA_HOME environment variable is correctly set.
+
+
 ```bash
-python lenet_mnist_graph.py --cluster_mode yarn
+source ${HADOOP_HOME}/libexec/hadoop-config.sh # setting HADOOP_HDFS_HOME, LD_LIBRARY_PATH, etc
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${JAVA_HOME}/jre/lib/amd64/server
+
+CLASSPATH=$(${HADOOP_HOME}/bin/hadoop classpath --glob) python lenet_mnist_graph.py --cluster_mode yarn
 ```
 
 ```bash
-python lenet_mnist_keras.py --cluster_mode yarn
+source ${HADOOP_HOME}/libexec/hadoop-config.sh # setting HADOOP_HDFS_HOME, LD_LIBRARY_PATH, etc
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${JAVA_HOME}/jre/lib/amd64/server
+
+CLASSPATH=$(${HADOOP_HOME}/bin/hadoop classpath --glob) python lenet_mnist_graph.py --cluster_mode yarn
 ```
 
 ```bash
