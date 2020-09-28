@@ -38,7 +38,8 @@ And here are the commands that work on for us on ubuntu 16.04. The exact steps m
 4. Install other packages
     ```bash
     pip install scikit-learn==0.22
-    pip install pandas
+    pip install pandas==1.0
+    pip install requests
     ```
 
 ## Prepare data
