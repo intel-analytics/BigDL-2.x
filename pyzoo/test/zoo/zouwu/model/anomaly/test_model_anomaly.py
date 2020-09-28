@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
-from zoo.zouwu.model.forecast import LSTMForecaster
+from zoo.zouwu.model.forecast.lstm_forecaster import LSTMForecaster
 from zoo.zouwu.model.anomaly import ThresholdDetector, ThresholdEstimator
 
 

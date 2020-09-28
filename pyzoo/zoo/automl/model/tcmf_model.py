@@ -57,11 +57,10 @@ class TCMF(BaseModel):
         self.svd = config.get("svd", True)
         self.period = config.get("period", 24)
         self.alt_iters = config.get("alt_iters", 10)
-        self.y_iters = config.get("max_y_iterations", 300)
+        self.y_iters = config.get("y_iters", 10)
         self.init_epoch = config.get("init_FX_epoch", 100)
         self.max_FX_epoch = config.get("max_FX_epoch", 300)
         self.max_TCN_epoch = config.get("max_TCN_epoch", 300)
-        self.num_workers = config.get("num_workers", 1)
 
     def _build(self, **config):
         """
@@ -93,7 +92,7 @@ class TCMF(BaseModel):
         )
         self.model_init = True
 
-    def fit_eval(self, x, y=None, verbose=0, **config):
+    def fit_eval(self, x, y=None, verbose=0, num_workers=None, **config):
         """
         Fit on the training data from scratch.
         Since the rolling process is very customized in this model,
@@ -103,17 +102,20 @@ class TCMF(BaseModel):
             nd is the number of series, Td is the time dimension
         :param y: None. target is extracted from x directly
         :param verbose:
+        :param num_workers: number of workers to use.
         :return: the evaluation metric value
         """
         if not self.model_init:
             self._build(**config)
+        if num_workers is None:
+            num_workers = TCMF.get_default_num_workers()
         val_loss = self.model.train_all_models(x,
                                                alt_iters=self.alt_iters,
                                                y_iters=self.y_iters,
                                                init_epochs=self.init_epoch,
                                                max_FX_epoch=self.max_FX_epoch,
                                                max_TCN_epoch=self.max_TCN_epoch,
-                                               num_workers=self.num_workers,
+                                               num_workers=num_workers,
                                                )
         return val_loss
 
@@ -127,7 +129,17 @@ class TCMF(BaseModel):
         # TODO incrementally train models
         pass
 
-    def predict(self, x=None, horizon=24, mc=False, num_workers=1):
+    @staticmethod
+    def get_default_num_workers():
+        from zoo.ray import RayContext
+        try:
+            ray_ctx = RayContext.get(initialize=False)
+            num_workers = ray_ctx.num_ray_nodes
+        except:
+            num_workers = 1
+        return num_workers
+
+    def predict(self, x=None, horizon=24, mc=False, num_workers=None):
         """
         Predict horizon time-points ahead the input x in fit_eval
         :param x: We don't support input x currently.
@@ -141,6 +153,8 @@ class TCMF(BaseModel):
             raise ValueError("We don't support input x directly.")
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling predict")
+        if num_workers is None:
+            num_workers = TCMF.get_default_num_workers()
         if num_workers > 1:
             import ray
             from zoo.ray import RayContext
@@ -164,7 +178,7 @@ class TCMF(BaseModel):
         )
         return out[:, -horizon::]
 
-    def evaluate(self, x=None, y=None, metrics=None):
+    def evaluate(self, x=None, y=None, metrics=None, num_workers=None):
         """
         Evaluate on the prediction results and y. We predict horizon time-points ahead the input x
         in fit_eval before evaluation, where the horizon length equals the second dimension size of
@@ -173,6 +187,7 @@ class TCMF(BaseModel):
         :param y: target. We interpret the second dimension of y as the horizon length for
             evaluation.
         :param metrics: a list of metrics in string format
+        :param num_workers: the number of workers to use in evaluate. It defaults to 1.
         :return: a list of metric evaluation results
         """
         if x is not None:
@@ -186,7 +201,7 @@ class TCMF(BaseModel):
             horizon = 1
         else:
             horizon = y.shape[1]
-        result = self.predict(horizon=horizon)
+        result = self.predict(x=None, horizon=horizon, num_workers=num_workers)
 
         if y.shape[1] == 1:
             multioutput = 'uniform_average'
@@ -241,7 +256,11 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         self.internal = None
         self.config = config
 
-    def fit(self, x, incremental=False):
+    def fit(self, x, incremental=False, num_workers=None):
+        if num_workers:
+            raise ValueError("We don't support passing num_workers in fit "
+                             "with input of xShards of dict")
+
         def orca_train_model(d, config):
             tcmf = TCMF()
             tcmf._build(**config)
@@ -262,22 +281,28 @@ class TCMFDistributedModelWrapper(ModelWrapper):
             raise ValueError("value of x should be an xShards of dict, "
                              "but isn't an xShards")
 
-    def evaluate(self, x, y, metric=None):
+    def evaluate(self, x, y, metric=None, num_workers=None):
         """
         Evaluate the model
         :param x: input
         :param y: target
         :param metric:
+        :param num_workers:
         :return: a list of metric evaluation results
         """
         raise NotImplementedError
 
-    def predict(self, x, horizon=24):
+    def predict(self, x, horizon=24, num_workers=None):
         """
         Prediction.
         :param x: input
+        :param horizon:
+        :param num_workers
         :return: result
         """
+        if num_workers and num_workers != 1:
+            raise ValueError("We don't support passing num_workers in predict "
+                             "with input of xShards of dict")
 
         def orca_predict(data):
             id_arr = data[0]
@@ -319,22 +344,23 @@ class TCMFLocalModelWrapper(ModelWrapper):
         self.internal._build(**self.config)
         self.id_arr = None
 
-    def fit(self, x, incremental=False):
+    def fit(self, x, incremental=False, num_workers=None):
         if isinstance(x, dict):
             self.id_arr, train_data = split_id_and_train_data(x, False)
             if incremental:
                 self.internal.fit_incremental(train_data)
             else:
-                self.internal.fit_eval(train_data)
+                self.internal.fit_eval(train_data, num_workers=num_workers)
         else:
             raise ValueError("value of x should be a dict of ndarray")
 
-    def evaluate(self, x, y, metric=None):
+    def evaluate(self, x, y, metric=None, num_workers=None):
         """
         Evaluate the model
         :param x: input
         :param y: target
         :param metric:
+        :param num_workers:
         :return: a list of metric evaluation results
         """
         if isinstance(y, dict):
@@ -344,17 +370,19 @@ class TCMFLocalModelWrapper(ModelWrapper):
                     raise ValueError("the value of y should be an ndarray")
             else:
                 raise ValueError("key y doesn't exist in y")
-            return self.internal.evaluate(y=y, x=x, metrics=metric)
+            return self.internal.evaluate(y=y, x=x, metrics=metric, num_workers=num_workers)
         else:
             raise ValueError("value of y should be a dict of ndarray")
 
-    def predict(self, x, horizon=24):
+    def predict(self, x, horizon=24, num_workers=None):
         """
         Prediction.
         :param x: input
+        :param horizon
+        :param num_workers
         :return: result
         """
-        pred = self.internal.predict(x=x, horizon=horizon)
+        pred = self.internal.predict(x=x, horizon=horizon, num_workers=num_workers)
         result = dict()
         if self.id_arr is not None:
             result['id'] = self.id_arr

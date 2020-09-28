@@ -406,24 +406,24 @@ class LocalModel(object):
                                           early_stop=early_stop,
                                           tenacity=tenacity)
         else:
-            from zoo.automl.model.tcmf.local_model_distributed_trainer import train_yseq
+            from zoo.automl.model.tcmf.local_model_distributed_trainer import train_yseq_hvd
             import ray
 
             # check whether there has been an activate ray context yet.
             from zoo.ray import RayContext
-            RayContext.get()
+            ray_ctx = RayContext.get()
             Ymat_id = ray.put(self.Ymat)
             covariates_id = ray.put(self.covariates)
             Ycov_id = ray.put(self.Ycov)
             trainer_config_keys = ["vbsize", "hbsize", "end_index", "val_len", "lr",
                                    "num_inputs", "num_channels", "kernel_size", "dropout"]
             trainer_config = {k: self.__dict__[k] for k in trainer_config_keys}
-            model, val_loss = train_yseq(epochs=num_epochs,
-                                         num_workers=num_workers,
-                                         Ymat_id=Ymat_id,
-                                         covariates_id=covariates_id,
-                                         Ycov_id=Ycov_id,
-                                         **trainer_config)
+            model, val_loss = train_yseq_hvd(epochs=num_epochs,
+                                             workers_per_node=num_workers // ray_ctx.num_ray_nodes,
+                                             Ymat_id=Ymat_id,
+                                             covariates_id=covariates_id,
+                                             Ycov_id=Ycov_id,
+                                             **trainer_config)
             self.seq = model
             return val_loss
 
@@ -602,7 +602,7 @@ class LocalModel(object):
                 batch_num_per_worker = math.ceil(len(I) / num_workers)
                 indexes = [I[i:i + batch_num_per_worker + 1] for i in
                            range(0, len(I) - 1, batch_num_per_worker)]
-                print("actual number of workers used in prediction is", len(indexes))
+                logger.info(f"actual number of workers used in prediction is {len(indexes)}")
                 data_id = ray.put(data)
                 covariates_id = ray.put(covariates)
                 ycovs_id = ray.put(ycovs)
