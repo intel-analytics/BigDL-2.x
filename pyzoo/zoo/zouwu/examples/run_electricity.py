@@ -105,8 +105,8 @@ if __name__ == "__main__":
     )
     ymat = np.load(args.data_dir) if not args.use_dummy_data else get_dummy_data()
     horizon = 24
-    train_data = ymat[: -horizon]
-    target_data = ymat[horizon:]
+    train_data = ymat[:, :-horizon]
+    target_data = ymat[:, -horizon:]
     logger.info('Start fitting.')
     model.fit({'y': train_data}, num_workers=args.num_workers)
     logger.info('Fitting ends.')
@@ -121,23 +121,23 @@ if __name__ == "__main__":
         stop_orca_context()
         import ray
         ray.init(num_cpus=args.num_predict_cores)
-        logger.info('Start prediction.')
-        yhat = model.predict(x=None, horizon=24, num_workers=args.num_predict_workers)
 
-    else:
-        logger.info('Start prediction.')
-        yhat = model.predict(x=None, horizon=24, num_workers=args.num_workers)
+    logger.info('Start prediction.')
+    yhat = model.predict(x=None, horizon=24,
+                         num_workers=args.num_predict_workers
+                         if args.predict_local else args.num_workers)
     logger.info("Prediction ends")
     yhat = yhat["prediction"]
     target_value = dict({"y": target_data})
 
-    # note that model.evaluate will do predict first then evaluate
+    # evaluate with prediction results
+    from zoo.automl.common.metrics import Evaluator
+    evaluate_mse = Evaluator.evaluate("mse", target_data, yhat)
+
+    # You can also evaluate directly without prediction results.
     mse, smape = model.evaluate(x=None, target_value=target_value, metric=['mse', 'smape'])
     print(f"Evaluation results: mse: {mse}, smape: {smape}")
 
-    # you can also evaluate directly with yhat.
-    from zoo.automl.common.metrics import Evaluator
-    evaluate_mse = Evaluator.evaluate("mse", target_data, yhat)
     logger.info("Evaluation ends")
 
     stop_orca_context()
