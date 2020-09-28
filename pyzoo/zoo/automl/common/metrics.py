@@ -212,6 +212,11 @@ def RMSE(y_true, y_pred, multioutput='raw_values'):
     return np.sqrt(MSE(y_true, y_pred, multioutput=multioutput))
 
 
+def Accuracy(y_true, y_pred, multioutput=None):
+    from sklearn.metrics._classification import accuracy_score
+    return accuracy_score(y_true, y_pred)
+
+
 class Evaluator(object):
     """
     Evaluate metrics for y_true and y_pred
@@ -232,6 +237,7 @@ class Evaluator(object):
         'smape': sMAPE,
         'mdape': MDAPE,
         'smdape': sMDAPE,
+        'accuracy': Accuracy,
     }
 
     @staticmethod

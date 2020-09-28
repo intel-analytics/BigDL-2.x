@@ -19,13 +19,13 @@ from zoo.automl.search.RayTuneSearchEngine import RayTuneSearchEngine
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.feature.identity_transformer import IdentityTransformer
 
-from zoo.automl.model.XGBoostRegressor import XGBoostRegressor
+from zoo.automl.model import XGBoost
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
 from zoo.automl.common.util import *
 from zoo.automl.config.recipe import *
 
 
-class XgbRegressorPredictor(object):
+class XgbPredictor(object):
     """
     Trains a model that predicts future time sequence from past sequence.
     Past sequence should be > 1. Future sequence can be > 1.
@@ -42,6 +42,7 @@ class XgbRegressorPredictor(object):
     def __init__(self,
                  feature_cols,
                  target_col,
+                 model_type="regressor",
                  config=None,
                  name="automl",
                  logs_dir="~/zoo_automl_logs"
@@ -61,6 +62,7 @@ class XgbRegressorPredictor(object):
         self.feature_cols = feature_cols
         self.target_col = target_col
         self.config = config
+        self.model_type = model_type
 
     def fit(self,
             input_df,
@@ -194,17 +196,6 @@ class XgbRegressorPredictor(object):
     #     if metric not in allowed_fit_metrics:
     #         raise ValueError("metric " + metric + " is not supported")
 
-    @staticmethod
-    def _get_metric_mode(metric):
-        max_mode_metrics = ["r2"]
-        min_mode_metrics = ["rmse", "mae"]
-        if metric in min_mode_metrics:
-            return "min"
-        elif metric in max_mode_metrics:
-            return "max"
-        else:
-            return ValueError, "metric " + metric + " is not supported"
-
     def _hp_search(self,
                    input_df,
                    validation_df,
@@ -215,21 +206,15 @@ class XgbRegressorPredictor(object):
                    resources_per_trial,
                    remote_dir,):
         def model_create_func():
-            model = XGBoostRegressor(config)
-            model.set_params(n_jobs=resources_per_trial.get("cpu", 1))
-            return model
+            _model = XGBoost(model_type=self.model_type, config=config)
+            if "cpu" in resources_per_trial:
+                _model.set_params(n_jobs=resources_per_trial.get("cpu"))
+            return _model
         model = model_create_func()
         ft = IdentityTransformer(self.feature_cols, self.target_col)
 
         # prepare parameters for search engine
         search_space = recipe.search_space(None)
-        runtime_params = recipe.runtime_params()
-        num_samples = runtime_params['num_samples']
-        stop = dict(runtime_params)
-        search_algorithm_params = recipe.search_algorithm_params()
-        search_algorithm = recipe.search_algorithm()
-        fixed_params = recipe.fixed_params()
-        del stop['num_samples']
 
         from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
         metric_mode = TimeSequencePredictor._get_metric_mode(metric)
@@ -241,16 +226,12 @@ class XgbRegressorPredictor(object):
         searcher.compile(input_df,
                          model_create_func=model_create_func(),
                          search_space=search_space,
-                         stop=stop,
-                         search_algorithm_params=search_algorithm_params,
-                         search_algorithm=search_algorithm,
-                         fixed_params=fixed_params,
+                         recipe=recipe,
                          feature_transformers=ft,
                          validation_df=validation_df,
                          metric=metric,
                          metric_mode=metric_mode,
-                         mc=mc,
-                         num_samples=num_samples,)
+                         mc=mc,)
         # searcher.test_run()
         analysis = searcher.run()
 
@@ -268,10 +249,10 @@ class XgbRegressorPredictor(object):
 
     def _make_pipeline(self, analysis, metric_mode, feature_transformers, model, remote_dir):
         metric = "reward_metric"
-        best_config = analysis.get_best_config(metric=metric, mode=metric_mode)
-        best_logdir = analysis.get_best_logdir(metric=metric, mode=metric_mode)
+        best_config = analysis.get_best_config(metric=metric, mode="max")
+        best_logdir = analysis.get_best_logdir(metric=metric, mode="max")
         print("best log dir is ", best_logdir)
-        dataframe = analysis.dataframe(metric=metric, mode=metric_mode)
+        dataframe = analysis.dataframe(metric=metric, mode="max")
         # print(dataframe)
         model_path = os.path.join(best_logdir, dataframe["checkpoint"].iloc[0])
         config = convert_bayes_configs(best_config).copy()

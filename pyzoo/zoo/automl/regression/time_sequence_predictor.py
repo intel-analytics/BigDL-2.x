@@ -199,7 +199,7 @@ class TimeSequencePredictor(object):
     @staticmethod
     def _get_metric_mode(metric):
         max_mode_metrics = ["r2"]
-        min_mode_metrics = ["mse", "mae"]
+        min_mode_metrics = ["mse", "mae", "rmse", "logloss", "error"]
         if metric in min_mode_metrics:
             return "min"
         elif metric in max_mode_metrics:
@@ -227,21 +227,15 @@ class TimeSequencePredictor(object):
 
         def model_create_func():
             # model = VanillaLSTM(check_optional_config=False)
-            model = TimeSequenceModel(
+            _model = TimeSequenceModel(
                 check_optional_config=False,
                 future_seq_len=self.future_seq_len)
-            return model
+            return _model
+
         model = model_create_func()
 
         # prepare parameters for search engine
         search_space = recipe.search_space(feature_list)
-        runtime_params = recipe.runtime_params()
-        num_samples = runtime_params['num_samples']
-        stop = dict(runtime_params)
-        search_algorithm_params = recipe.search_algorithm_params()
-        search_algorithm = recipe.search_algorithm()
-        fixed_params = recipe.fixed_params()
-        del stop['num_samples']
 
         metric_mode = TimeSequencePredictor._get_metric_mode(metric)
         searcher = RayTuneSearchEngine(logs_dir=self.logs_dir,
@@ -252,17 +246,14 @@ class TimeSequencePredictor(object):
         searcher.compile(input_df,
                          model_create_func=model_create_func(),
                          search_space=search_space,
-                         stop=stop,
-                         search_algorithm_params=search_algorithm_params,
-                         search_algorithm=search_algorithm,
-                         fixed_params=fixed_params,
+                         recipe=recipe,
                          feature_transformers=ft,
                          future_seq_len=self.future_seq_len,
                          validation_df=validation_df,
                          metric=metric,
                          metric_mode=metric_mode,
                          mc=mc,
-                         num_samples=num_samples)
+                         )
         # searcher.test_run()
         analysis = searcher.run()
 
