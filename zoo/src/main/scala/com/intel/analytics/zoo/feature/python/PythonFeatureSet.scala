@@ -45,12 +45,11 @@ object PythonFeatureSet {
     val nodeNumber = EngineRef.getNodeNumber()
     val loadOpenCvRdd = sc.parallelize(
       Array.tabulate(nodeNumber)(_ => "dummy123123"), nodeNumber * 10)
-      .mapPartitions(_ => (0 until 20000000).toIterator)
+      .mapPartitions(_ => (0 until 2000000).toIterator)
       .coalesce(nodeNumber)
       .setName("LoadOpenCvRdd")
-      .persist(StorageLevel.DISK_ONLY)
     loadOpenCvRdd.count()
-    loadOpenCvRdd.mapPartitions{v =>
+    loadOpenCvRdd.coalesce(nodeNumber).mapPartitions{v =>
       OpenCV.isOpenCVLoaded()
       v
     }.count()
