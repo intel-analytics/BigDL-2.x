@@ -701,6 +701,8 @@ class TFDataDataset(TFDataset):
                  remove_checking=False, batch_outside=False,
                  inter_threads=None, intra_threads=None):
 
+        from tensorflow.python.data.ops import dataset_ops
+        import tensorflow as tf
         # rule 1: we assume that the dataset user passed is not batched
         if not batch_outside:
             rules = [(
@@ -754,9 +756,6 @@ class TFDataDataset(TFDataset):
 
         if inter_threads is None:
             inter_threads = 1
-
-        from tensorflow.python.data.ops import dataset_ops
-        import tensorflow as tf
 
         self.inter_threads = inter_threads
 
