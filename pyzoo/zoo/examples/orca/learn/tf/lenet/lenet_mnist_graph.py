@@ -72,7 +72,10 @@ def main(max_epoch, dataset_dir):
     est.fit(data=mnist_train,
             batch_size=320,
             epochs=max_epoch,
-            validation_data=mnist_test)
+            validation_data=mnist_test,
+            # tfds mnist only has one file and cannot be sharded on files,
+            # falling back on sharding on records.
+            auto_shard_files=False)
 
     result = est.evaluate(mnist_test)
     print(result)
