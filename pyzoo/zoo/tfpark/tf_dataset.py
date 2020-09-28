@@ -752,13 +752,12 @@ class TFDataDataset(TFDataset):
         super(TFDataDataset, self).__init__(tensor_structure, batch_size,
                                             batch_per_thread, hard_code_batch_size)
         self.intra_threads = intra_threads
+        self.inter_threads = inter_threads
         if intra_threads is None:
             self.intra_threads = self.core_num
 
         if inter_threads is None:
             self.inter_threads = 1
-
-        self.inter_threads = inter_threads
 
         if self.batch_size > 0 and self.has_batch:
             # training case
