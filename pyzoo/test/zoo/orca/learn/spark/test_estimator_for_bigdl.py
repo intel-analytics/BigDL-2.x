@@ -171,7 +171,6 @@ class TestEstimatorForKeras(TestCase):
         model.add(Linear(2, 2))
         model.add(LogSoftMax())
         optim_method = SGD(learningrate=0.01)
-
         with tempfile.TemporaryDirectory() as temp_dir_name:
             estimator = Estimator.from_bigdl(model=model, optimizer=optim_method,
                                              loss=ClassNLLCriterion(), model_dir=temp_dir_name)
@@ -185,6 +184,8 @@ class TestEstimatorForKeras(TestCase):
             r_c = r1.collect()
             estimator.fit(data=data_shard, epochs=5, batch_size=8, val_data=data_shard,
                           val_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
+            temp_path = os.path.join(temp_dir_name, "save_model")
+            estimator.save(temp_path)
             estimator.evaluate(data=data_shard, validation_methods=[Accuracy()], batch_size=8)
             result = estimator.predict(data=data_shard)
             assert type(result).__name__ == 'SparkXShards'
@@ -194,15 +195,23 @@ class TestEstimatorForKeras(TestCase):
                 estimator.fit(df, epochs=1)
             self.assertTrue('Data and validation data should be SparkXShards, but get'
                             in str(context.exception))
-
+            # test load from checkpoint
             est2 = Estimator.from_bigdl(model=None, optimizer=None, loss=None, model_dir=None)
             est2.load(temp_dir_name, loss=ClassNLLCriterion(), is_checkpoint=True)
             r2 = est2.predict(data=data_shard)
             r2_c = r2.collect()
             assert (result_c[0]["prediction"] == r2_c[0]["prediction"]).all()
-            est2.fit(data=data_shard, epochs=5, batch_size=8, val_data=data_shard,
+            # resume training
+            est2.fit(data=data_shard, epochs=10, batch_size=8, val_data=data_shard,
                      val_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
             est2.evaluate(data=data_shard, validation_methods=[Accuracy()], batch_size=8)
+            # test load from saved model
+            est3 = Estimator.from_bigdl(model=None, optimizer=None, loss=None, model_dir=None)
+            est3.load(temp_path, optimizer=optim_method, loss=ClassNLLCriterion())
+            est3.set_input_type(input_type="sparkxshards")
+            r3 = est3.predict(data=data_shard)
+            r3_c = r3.collect()
+            assert (r3_c[0]["prediction"] == r2_c[0]["prediction"]).all()
 
 
 if __name__ == "__main__":
