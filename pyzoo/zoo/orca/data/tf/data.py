@@ -40,7 +40,6 @@ class TFDataDataset2(TFDataset):
         if inter_threads is None:
             self.inter_threads = 1
 
-
         if batch_size > 0:
             num_parts = dataset.xshards.num_partitions()
             if num_parts != node_num:
