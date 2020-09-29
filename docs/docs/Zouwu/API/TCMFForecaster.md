@@ -9,7 +9,7 @@ TCMFForecaster supports distributed training and inference. It is based on Orca 
 
 __Remarks__:
 
-- You can refer to [TCMFForecaster installation]() to install required packages.
+- You can refer to [TCMFForecaster installation](../tutorials/TCMFForecaster/#step-0-prepare-environment) to install required packages.
 - Your operating system (OS) is required to be one of the following 64-bit systems:
 __Ubuntu 16.04 or later__ and __macOS 10.12.6 or later__.
 ---
