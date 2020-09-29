@@ -511,12 +511,15 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
 
   private def predict(inputActivity: Activity): Activity = {
     val model = ModelHolder.synchronized {
+//      println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} get lock")
       ModelHolder.modelQueueing += 1
-      while (modelQueue.peek() == null) ModelHolder.wait()
+      while (ModelHolder.nonOMP != 0 || modelQueue.peek() == null) ModelHolder.wait()
+//      println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} try to get model")
       retrieveModel()
     }
     try {
       val begin = System.nanoTime()
+      InferenceSupportive.logger.info(s"Thread ${Thread.currentThread().getId} Inference start.")
       val result = model.predict(inputActivity)
       val end = System.nanoTime()
 

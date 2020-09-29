@@ -23,11 +23,11 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.serving.PreProcessing
 import com.intel.analytics.zoo.serving.arrow.{ArrowDeserializer, ArrowSerializer}
-import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, Timer}
+import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, ModelHolder, Timer}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams, Supportive}
 import scopt.OptionParser
 
-object MockSinglePipelineBaseline extends Supportive {
+object PreprocessingBaseline extends Supportive {
   case class Params(configPath: String = "config.yaml",
                     testNum: Int = 1000,
                     parNum: Int = 1,
@@ -79,60 +79,53 @@ object MockSinglePipelineBaseline extends Supportive {
     helper.initArgs()
     val sParam = new SerParams(helper)
 
-    val model = helper.loadInferenceModel()
     val warmT = makeTensorFromShape(param.inputShape)
-    val clusterServingInference = new ClusterServingInference(null, "openvino")
-    clusterServingInference.typeCheck(warmT)
-    clusterServingInference.dimCheck(warmT, "add", sParam.modelType)
-    (0 until 10).foreach(_ => {
-      val result = model.doPredict(warmT)
-    })
-    println("Warming up finished, begin baseline test...generating Base64 string")
-
     val b64string = getBase64StringOfTensor(warmT)
     println(s"Previewing base64 string, prefix is ${b64string.substring(0, 20)}")
-    Thread.sleep(3000)
-
-    val timer = new Timer()
-    timing(s"Base line for single pipeline " +
+    timing(s"Baseline for parallel pipeline ${param.parNum} " +
       s"with input ${param.testNum.toString}") {
-      var a = Seq[(String, String)]()
-      val pre = new PreProcessing(true)
-      (0 until sParam.coreNum).foreach( i =>
-        a = a :+ (i.toString(), b64string)
-      )
-      (0 until param.testNum).grouped(sParam.coreNum).flatMap(batch => {
-        val preprocessed = timer.timing("Preprocess", batch.size) {
-          (0 until batch.size).toParArray.map(i => {
-            val tensor = timer.timing(s"Thread ${Thread.currentThread().getId} Preprocess one record", sParam.coreNum) {
-              val deserializer = new ArrowDeserializer()
-              val arr = deserializer.create(b64string)
-              Tensor(arr(0)._1, arr(0)._2)
-            }
 
-            (a(i)._1, T(tensor))
-          }).toIterator
-        }
-        preprocessed.grouped(batch.size).flatMap(b => {
-          val t = timer.timing("Batch input", batch.size) {
-            clusterServingInference.batchInput(b, sParam.coreNum, true, sParam.resize)
-          }
-          clusterServingInference.dimCheck(t, "add", sParam.modelType)
-          val result = timer.timing("Inference", batch.size) {
-            model.doPredict(t)
-          }
-          clusterServingInference.dimCheck(t, "remove", sParam.modelType)
-          clusterServingInference.dimCheck(result, "remove", sParam.modelType)
-          val postprocessed = timer.timing("Postprocess", batch.size) {
-            (0 until sParam.coreNum).map(i => {
-              ArrowSerializer.activityBatchToByte(result, i + 1)
+      (0 until param.parNum).indices.toParArray.foreach(_ => {
+        val timer = new Timer()
+        var a = Seq[(String, String)]()
+        val pre = new PreProcessing(true)
+        (0 until sParam.coreNum).foreach( i =>
+          a = a :+ (i.toString(), b64string)
+        )
+        (0 until param.testNum).grouped(sParam.coreNum).flatMap(i => {
+          val preprocessed = timer.timing(s"Thread ${Thread.currentThread().getId} Preprocess", sParam.coreNum) {
+            a.map(item => {
+              ModelHolder.synchronized{
+                while (ModelHolder.modelQueueing != 0) {
+                  ModelHolder.wait()
+                }
+                ModelHolder.nonOMP += 1
+              }
+              val tensor = timer.timing(s"Thread ${Thread.currentThread().getId} Preprocess one record", sParam.coreNum) {
+                val deserializer = new ArrowDeserializer()
+                val arr = deserializer.create(b64string)
+                Tensor(arr(0)._1, arr(0)._2)
+              }
+              ModelHolder.synchronized {
+                ModelHolder.modelQueueing += 1
+              }
+              Thread.sleep(50)
+              ModelHolder.synchronized {
+                ModelHolder.modelQueueing -= 1
+              }
+              ModelHolder.synchronized{
+                ModelHolder.nonOMP -= 1
+                ModelHolder.notifyAll()
+              }
+              (item._1, T(tensor))
+
             })
           }
-          Seq(postprocessed)
-        })
+          Seq(preprocessed)
+        }).toArray
+        timer.print()
+      })
 
-      }).toArray
-      timer.print()
     }
 
 
@@ -140,4 +133,3 @@ object MockSinglePipelineBaseline extends Supportive {
 
   }
 }
-

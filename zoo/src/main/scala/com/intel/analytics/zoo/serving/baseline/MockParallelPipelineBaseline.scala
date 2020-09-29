@@ -81,8 +81,9 @@ object MockParallelPipelineBaseline extends Supportive {
 
     ModelHolder.model = helper.loadInferenceModel()
     val warmT = makeTensorFromShape(param.inputShape)
-    ClusterServingInference.typeCheck(warmT)
-    ClusterServingInference.dimCheck(warmT, "add", sParam.modelType)
+    val clusterServingInference = new ClusterServingInference(null, "openvino")
+    clusterServingInference.typeCheck(warmT)
+    clusterServingInference.dimCheck(warmT, "add", sParam.modelType)
     (0 until 10).foreach(_ => {
       val result = ModelHolder.model.doPredict(warmT)
     })
@@ -104,27 +105,50 @@ object MockParallelPipelineBaseline extends Supportive {
           a = a :+ (i.toString(), b64string)
         )
         (0 until param.testNum).grouped(sParam.coreNum).flatMap(i => {
-          val preprocessed = timer.timing("Preprocess", sParam.coreNum) {
+          val preprocessed = timer.timing(s"Thread ${Thread.currentThread().getId} Preprocess", sParam.coreNum) {
             a.map(item => {
+//              println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} attempting to preprocess")
               ModelHolder.synchronized{
-                while (ModelHolder.modelQueueing != 0) ModelHolder.wait()
+//                println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} get lock")
+                while (ModelHolder.modelQueueing != 0) {
+//                  println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} waiting at preprocess")
+                  ModelHolder.wait()
+                }
+                ModelHolder.nonOMP += 1
               }
-              val deserializer = new ArrowDeserializer()
-              val arr = deserializer.create(b64string)
-              val tensor = Tensor(arr(0)._1, arr(0)._2)
+//              println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} preprocess lock checked")
+              val tensor = timer.timing(s"Thread ${Thread.currentThread().getId} Preprocess one record", sParam.coreNum) {
+                val deserializer = new ArrowDeserializer()
+                val arr = deserializer.create(b64string)
+                Tensor(arr(0)._1, arr(0)._2)
+              }
+
+              ModelHolder.synchronized{
+                ModelHolder.nonOMP -= 1
+                ModelHolder.notifyAll()
+              }
+//              println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} preprocess finished")
               (item._1, T(tensor))
+
             })
           }
-          val t = timer.timing("Batch input", sParam.coreNum) {
-              ClusterServingInference.batchInput(preprocessed, sParam.coreNum, false, sParam.resize)
+          ModelHolder.synchronized {
+//            println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} get lock")
+            while (ModelHolder.modelQueueing != 0) {
+//              println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} waiting at batch")
+              ModelHolder.wait()
+            }
           }
-          ClusterServingInference.dimCheck(t, "add", sParam.modelType)
-          val result = timer.timing("Inference", sParam.coreNum) {
+          val t = timer.timing(s"Thread ${Thread.currentThread().getId} Batch input", sParam.coreNum) {
+              clusterServingInference.batchInput(preprocessed, sParam.coreNum, false, sParam.resize)
+          }
+          clusterServingInference.dimCheck(t, "add", sParam.modelType)
+          val result = timer.timing(s"Thread ${Thread.currentThread().getId} Inference", sParam.coreNum) {
             ModelHolder.model.doPredict(t)
           }
-          ClusterServingInference.dimCheck(t, "remove", sParam.modelType)
-          ClusterServingInference.dimCheck(result, "remove", sParam.modelType)
-          val postprocessed = timer.timing("Postprocess", sParam.coreNum) {
+          clusterServingInference.dimCheck(t, "remove", sParam.modelType)
+          clusterServingInference.dimCheck(result, "remove", sParam.modelType)
+          val postprocessed = timer.timing(s"Thread ${Thread.currentThread().getId} Postprocess", sParam.coreNum) {
             (0 until sParam.coreNum).map(i => {
               ArrowSerializer.activityBatchToByte(result, i + 1)
             })

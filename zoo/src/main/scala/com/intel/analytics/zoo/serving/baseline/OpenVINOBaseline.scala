@@ -83,8 +83,9 @@ object OpenVINOBaseline extends Supportive {
 
 
     val warmT = makeTensorFromShape(param.inputShape)
-    ClusterServingInference.typeCheck(warmT)
-    ClusterServingInference.dimCheck(warmT, "add", sParam.modelType)
+    val clusterServingInference = new ClusterServingInference(null, sParam.modelType)
+    clusterServingInference.typeCheck(warmT)
+    clusterServingInference.dimCheck(warmT, "add", sParam.modelType)
 
     println("Warming up finished, begin baseline test...generating Base64 string")
 
@@ -125,15 +126,15 @@ object OpenVINOBaseline extends Supportive {
             })
           }
           val t = timer.timing(s"Thread ${Thread.currentThread().getId} Batch input", sParam.coreNum) {
-            ClusterServingInference.batchInput(preprocessed, sParam.coreNum, false, sParam.resize)
+            clusterServingInference.batchInput(preprocessed, sParam.coreNum, false, sParam.resize)
           }
-          ClusterServingInference.dimCheck(t, "add", sParam.modelType)
+          clusterServingInference.dimCheck(t, "add", sParam.modelType)
           val result = timer.timing(s"Thread ${Thread.currentThread().getId} Inference", sParam.coreNum) {
             model.predict(t)
 //              model.forward(t)
           }
-          ClusterServingInference.dimCheck(t, "remove", sParam.modelType)
-          ClusterServingInference.dimCheck(result, "remove", sParam.modelType)
+          clusterServingInference.dimCheck(t, "remove", sParam.modelType)
+          clusterServingInference.dimCheck(result, "remove", sParam.modelType)
           val postprocessed = timer.timing(s"Thread ${Thread.currentThread().getId} Postprocess", sParam.coreNum) {
             (0 until sParam.coreNum).map(i => {
               ArrowSerializer.activityBatchToByte(result, i + 1)
