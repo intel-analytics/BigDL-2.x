@@ -143,15 +143,20 @@ pages:
   - Overview: Zouwu/overview.md
   - Reference Use Cases:
     - Network Traffic: Zouwu/UseCase/network-traffic.md
-  - Tutorial: Zouwu/tutorial.md 
+  - Tutorials:
+    - Built-in Models:
+        - LSTMForecaster and MTNetForecaster: Zouwu/tutorials/built-in models/LSTMForecasterAndMTNetForecaster.md
+        - TCMFForecaster: Zouwu/tutorials/TCMFForecaster.md
+    - AutoTS: Zouwu/tutorials/Autots.md
   - Algorithms:
     - MTNet: Zouwu/Algorithm/MTNetAlgorithm.md
     - LSTM: Zouwu/Algorithm/LSTMAlgorithm.md
   - API:
-    Built-in Models:
+    - Built-in Models:
        - LSTMForecaster: Zouwu/API/LSTMForecaster.md
        - MTNetForecaster: Zouwu/API/MTNetForecaster.md
-    AutoTS:
+       - TCMFForecaster: Zouwu/API/TCMFForecaster.md
+    - AutoTS:
        - AutoTSTrainer: Zouwu/API/AutoTSTrainer.md 
        - TSPipeline: Zouwu/API/TSPipeline.md
 - Project Orca:
