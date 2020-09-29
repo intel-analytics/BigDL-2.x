@@ -250,6 +250,7 @@ class TFOptimizerWrapper(Estimator):
             labels_cols=None,
             validation_data=None,
             hard_code_batch_size=False,
+            auto_shard_files=True,
             session_config=None,
             feed_dict=None,
             checkpoint_trigger=None
@@ -268,6 +269,8 @@ class TFOptimizerWrapper(Estimator):
         :param validation_data: validation data. Validation data type should be the same
         as train data.
         :param hard_code_batch_size: whether hard code batch size for training. Default is False.
+        :param auto_shard_files: whether to automatically detect if the dataset is file-based and
+        and apply sharding on files, otherwise sharding on records. Default is True.
         :param session_config: tensorflow session configuration for training.
         Should be object of tf.ConfigProto
         :param feed_dict: a dictionary. The key is TensorFlow tensor, usually a
@@ -295,7 +298,8 @@ class TFOptimizerWrapper(Estimator):
                              validation_data=validation_data,
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=hard_code_batch_size,
-                             sequential_order=False, shuffle=True
+                             sequential_order=False, shuffle=True,
+                             auto_shard_files=auto_shard_files
                              )
 
         if feed_dict is not None:
@@ -437,7 +441,8 @@ class TFKerasWrapper(Estimator):
             validation_data=None,
             hard_code_batch_size=False,
             session_config=None,
-            checkpoint_trigger=None
+            checkpoint_trigger=None,
+            auto_shard_files=True,
             ):
         """
         Train this keras model with train data.
@@ -482,8 +487,8 @@ class TFKerasWrapper(Estimator):
                              validation_data=validation_data,
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=hard_code_batch_size,
-                             sequential_order=False, shuffle=True
-                             )
+                             sequential_order=False, shuffle=True,
+                             auto_shard_files=auto_shard_files,)
 
         self.tf_optimizer = TFOptimizer.from_keras(self.model.model, dataset,
                                                    model_dir=self.model.model_dir,
