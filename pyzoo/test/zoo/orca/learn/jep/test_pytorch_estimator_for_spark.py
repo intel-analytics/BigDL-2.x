@@ -80,7 +80,7 @@ class TestEstimatorForSpark(TestCase):
             estimator.fit(data=data_shard, epochs=4, batch_size=2, validation_data=data_shard,
                           validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
             estimator.evaluate(data_shard, validation_methods=[Accuracy()], batch_size=2)
-            est2 = Estimator.from_torch(model=model, loss=None, optimizer=None, backend="bigdl")
+            est2 = Estimator.from_torch(model=model, loss=loss_func, optimizer=None, backend="bigdl")
             est2.load(temp_dir_name, loss=loss_func)
             est2.fit(data=data_shard, epochs=8, batch_size=2, validation_data=data_shard,
                      validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
