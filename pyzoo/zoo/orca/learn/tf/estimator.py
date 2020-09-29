@@ -331,7 +331,8 @@ class TFOptimizerWrapper(Estimator):
 
     def predict(self, data, batch_size=4,
                 feature_cols=None,
-                hard_code_batch_size=False
+                hard_code_batch_size=False,
+                auto_shard_files=True,
                 ):
         """
         Predict input data
@@ -363,7 +364,8 @@ class TFOptimizerWrapper(Estimator):
                              feature_cols=feature_cols, labels_cols=None,
                              hard_code_batch_size=hard_code_batch_size,
                              sequential_order=True,
-                             shuffle=False
+                             shuffle=False,
+                             auto_shard_files=auto_shard_files,
                              )
 
         flat_inputs = nest.flatten(self.inputs)
@@ -380,7 +382,8 @@ class TFOptimizerWrapper(Estimator):
     def evaluate(self, data, batch_size=32,
                  feature_cols=None,
                  labels_cols=None,
-                 hard_code_batch_size=False
+                 hard_code_batch_size=False,
+                 auto_shard_files=True,
                  ):
         """
         Evaluate model.
@@ -410,7 +413,8 @@ class TFOptimizerWrapper(Estimator):
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=hard_code_batch_size,
                              sequential_order=True,
-                             shuffle=False
+                             shuffle=False,
+                             auto_shard_files=auto_shard_files,
                              )
 
         flat_inputs = nest.flatten(self.inputs)
@@ -507,7 +511,8 @@ class TFKerasWrapper(Estimator):
 
     def predict(self, data, batch_size=4,
                 feature_cols=None,
-                hard_code_batch_size=False
+                hard_code_batch_size=False,
+                auto_shard_files=True,
                 ):
         """
         Predict input data
@@ -537,7 +542,8 @@ class TFKerasWrapper(Estimator):
                              validation_data=None,
                              feature_cols=feature_cols, labels_cols=None,
                              hard_code_batch_size=hard_code_batch_size,
-                             sequential_order=True, shuffle=False
+                             sequential_order=True, shuffle=False,
+                             auto_shard_files=auto_shard_files,
                              )
 
         predicted_rdd = self.model.predict(dataset, batch_size)
@@ -551,7 +557,8 @@ class TFKerasWrapper(Estimator):
     def evaluate(self, data, batch_size=4,
                  feature_cols=None,
                  labels_cols=None,
-                 hard_code_batch_size=False
+                 hard_code_batch_size=False,
+                 auto_shard_files=True
                  ):
         """
         Evaluate model.
@@ -577,7 +584,8 @@ class TFKerasWrapper(Estimator):
                              validation_data=None,
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=hard_code_batch_size,
-                             sequential_order=True, shuffle=False
+                             sequential_order=True, shuffle=False,
+                             auto_shard_files=auto_shard_files
                              )
 
         return self.model.evaluate(dataset, batch_per_thread=batch_size)
