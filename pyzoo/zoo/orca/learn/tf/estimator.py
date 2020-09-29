@@ -493,7 +493,7 @@ class TFKerasWrapper(Estimator):
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=hard_code_batch_size,
                              sequential_order=False, shuffle=True,
-                             auto_shard_files=auto_shard_files,)
+                             auto_shard_files=auto_shard_files)
 
         self.tf_optimizer = TFOptimizer.from_keras(self.model.model, dataset,
                                                    model_dir=self.model.model_dir,
