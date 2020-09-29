@@ -45,7 +45,7 @@ def find_latest_checkpoint(model_dir, model_type="bigdl"):
                     continue
         if timestamps:
             start_dir = os.path.join(root, max(timestamps))
-            return find_latest_checkpoint(start_dir)
+            return find_latest_checkpoint(start_dir, model_type=model_type)
         for file_name in files:
             if re.match("^optimMethod-" + optim_regex, file_name) is not None:
                 file_split = file_name.split(".")
