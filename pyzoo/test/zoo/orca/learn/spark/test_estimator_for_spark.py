@@ -460,7 +460,6 @@ class TestEstimatorForGraph(TestCase):
             return dataset
         self._test_estimator_graph_tf_dataset(dataset_creator)
 
-
     def test_estimator_graph_tf_dataset_v2(self):
 
         def dataset_creator():
