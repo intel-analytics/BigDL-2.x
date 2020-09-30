@@ -64,6 +64,13 @@ class TestZouwuModelTCMFForecaster(TestCase):
         target_value = np.random.rand(300, horizon)
         target_value = dict({"y": target_value})
         assert model.evaluate(x=None, target_value=target_value, metric=['mse'])
+         # inject new data
+        x_new = np.random.rand(300, horizon)
+        model.fit_incremental({'y': x_new})  # 1st time
+        # model.fit(x_new, incremental=True)  # 2nd time
+        yhat = model.predict(x=None, horizon=horizon)
+        yhat = yhat["prediction"]
+        assert yhat.shape == (300, horizon)
 
     def test_forecast_tcmf_without_id(self):
         model = TCMFForecaster(y_iters=1,

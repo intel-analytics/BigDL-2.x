@@ -123,19 +123,15 @@ class TCMFForecaster(Forecaster):
         }
 
     def fit(self,
-            x, incremental=False, num_workers=None):
+            x, num_workers=None):
         """
-        fit the model
+        fit the model on x from scratch
         :param x: the input for fit. Only dict of ndarray and SparkXShards of dict of ndarray
-            are supported. Example: {'id': id_arr, 'y': data_ndarray}
-        :param incremental: if the fit is incremental
+            are supported. Example: {'id': id_arr, 'y': data_ndarray}, and data_ndarray is of shape (n, T), where n is the number f target time series and T is the number of time steps.
         :param num_workers: the number of workers you want to use for fit. If None, it defaults to
         num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
         :return:
         """
-        if incremental:
-            raise NotImplementedError
-
         if self.internal is None:
             if isinstance(x, SparkXShards):
                 self.internal = TCMFDistributedModelWrapper(self.config)
@@ -153,6 +149,16 @@ class TCMFForecaster(Forecaster):
         else:
             raise Exception("This model has already been fully trained, "
                             "you can only run full training once.")
+
+    def fit_incremental(self, x_incr):
+        """
+        incrementally fit the model. Note that we only incrementally fit X_seq (TCN in global model)
+        :param x_incr: 2-D numpy array in shape (n, T_incr), where n is the number of target time
+        series, T_incr is the number of time steps incremented.
+            incremental data to be fitted.
+        :return:
+        """
+        self.internal.fit_incremental(x_incr)
 
     def evaluate(self,
                  target_value,
@@ -177,14 +183,12 @@ class TCMFForecaster(Forecaster):
     def predict(self,
                 x=None,
                 horizon=24,
-                covariates=None,
                 num_workers=None,
                 ):
         """
         predict
         :param x: the input. We don't support input x directly
         :param horizon: horizon length to look forward.
-        :param covariates: the global covariates
         :param num_workers: the number of workers to use in predict. If None, it defaults to
         num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
         :return:

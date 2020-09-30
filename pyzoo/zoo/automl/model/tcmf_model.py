@@ -123,11 +123,9 @@ class TCMF(BaseModel):
         """
         Incremental fitting given a pre-trained model.
         :param x: incremental data
-        :param config: fitting parameters
         :return:
         """
-        # TODO incrementally train models
-        pass
+        self.model.inject_new(x)
 
     @staticmethod
     def get_default_num_workers():
@@ -173,7 +171,6 @@ class TCMF(BaseModel):
         out = self.model.predict_horizon(
             future=horizon,
             bsize=90,
-            normalize=False,
             num_workers=num_workers,
         )
         return out[:, -horizon::]
