@@ -22,7 +22,7 @@ from bigdl.nn.criterion import *
 from bigdl.nn.layer import *
 from bigdl.optim.optimizer import *
 from numpy.testing import assert_allclose
-from pyspark.ml import Pipeline
+from pyspark.ml import Pipeline, PipelineModel
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.sql.types import *
 
@@ -75,6 +75,20 @@ class TestNNClassifer():
         schema = StructType([
             StructField("features", ArrayType(DoubleType(), False), False),
             StructField("label", DoubleType(), False)])
+        df = self.sqlContext.createDataFrame(data, schema)
+        return df
+
+    def get_pipeline_df(self):
+        data = self.sc.parallelize([
+            ((2.0, 1.0), (1.0, 2.0), 1.0),
+            ((1.0, 2.0), (2.0, 1.0), 2.0),
+            ((2.0, 1.0), (1.0, 2.0), 1.0),
+            ((1.0, 2.0), (2.0, 1.0), 2.0)])
+
+        schema = StructType([
+            StructField("features", ArrayType(DoubleType(), False), False),
+            StructField("label1", ArrayType(DoubleType(), False), False),
+            StructField("label2", DoubleType(), False)])
         df = self.sqlContext.createDataFrame(data, schema)
         return df
 
@@ -671,6 +685,33 @@ class TestNNClassifer():
             nnClassifierModel.save(modelPath)
             loaded_model = NNClassifierModel.load(modelPath)
             assert (isinstance(loaded_model, NNClassifierModel))
+            assert loaded_model.transform(df).count() == 4
+        finally:
+            try:
+                shutil.rmtree(tmp_dir)  # delete directory
+            except OSError as exc:
+                if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
+                    raise  # re-raise exception
+
+    def test_NNModel_NNClassifier_pipeline_save_load(self):
+        model1 = Sequential().add(Linear(2, 2))
+        criterion1 = MSECriterion()
+        estimator = NNEstimator(model1, criterion1).setMaxEpoch(1).setBatchSize(4)\
+            .setPredictionCol("prediction1").setLabelCol("label1")
+
+        model2 = Sequential().add(Linear(2, 2))
+        criterion = ClassNLLCriterion()
+        classifier = NNClassifier(model2, criterion, [2]).setMaxEpoch(1).setBatchSize(4)\
+            .setFeaturesCol("prediction1").setLabelCol("label2")
+
+        df = self.get_pipeline_df()
+        pipeline = Pipeline(stages=[estimator, classifier])
+        pipeline_model = pipeline.fit(df)
+        try:
+            tmp_dir = tempfile.mkdtemp()
+            modelPath = os.path.join(tmp_dir, "model")
+            pipeline_model.save(modelPath)
+            loaded_model = PipelineModel.load(modelPath)
             assert loaded_model.transform(df).count() == 4
         finally:
             try:

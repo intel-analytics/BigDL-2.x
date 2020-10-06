@@ -14,8 +14,10 @@
 # limitations under the License.
 #
 
+import json
 from pyspark.ml.param.shared import *
 from pyspark.ml.wrapper import JavaModel, JavaEstimator, JavaTransformer
+from pyspark.ml.util import JavaMLWritable, MLWritable, JavaMLReadable, MLReadable, JavaMLWriter, DefaultParamsReader, DefaultParamsWriter
 from bigdl.optim.optimizer import SGD
 from zoo.common.utils import callZooFunc
 from bigdl.util.common import *
@@ -450,7 +452,7 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         return nnModel
 
 
-class NNModel(JavaTransformer, HasFeaturesCol, HasPredictionCol, HasBatchSize,
+class NNModel(JavaTransformer, MLWritable, MLReadable, HasFeaturesCol, HasPredictionCol, HasBatchSize,
               HasSamplePreprocessing, JavaValue):
     """
     NNModel extends Spark ML Transformer and supports BigDL model with Spark DataFrame.
@@ -499,15 +501,32 @@ class NNModel(JavaTransformer, HasFeaturesCol, HasPredictionCol, HasBatchSize,
         self.bigdl_type = bigdl_type
         self.setBatchSize(self.value.getBatchSize())
 
-    def save(self, path):
-        self._transfer_params_to_java()
-        callZooFunc(self.bigdl_type, "saveNNModel", self.value, path)
-        return self
+    def write(self):
+        return NNNodelWriter(self)
 
     @staticmethod
     def load(path):
         jvalue = callZooFunc("float", "loadNNModel", path)
         return NNModel(model=None, feature_preprocessing=None, jvalue=jvalue)
+
+
+class NNNodelWriter(JavaMLWriter):
+    def __init__(self, instance):
+        super(NNNodelWriter, self).__init__(instance)
+
+    def save(self, path):
+        """Save the ML instance to the input path."""
+        super(NNNodelWriter, self).save(path)
+        # change class name in metadata to python class name
+        metadata = DefaultParamsReader.loadMetadata(path, self.sc)
+        py_type = metadata['class'].replace("com.intel.analytics.zoo", "zoo")
+        metadata['class'] = py_type
+        metadata_json = json.dumps(metadata, separators=[',', ':'])
+        # replace old metadata
+        metadataPath = os.path.join(path, "metadata")
+        import shutil
+        shutil.rmtree(metadataPath)
+        self.sc.parallelize([metadata_json], 1).saveAsTextFile(metadataPath)
 
 
 class NNClassifier(NNEstimator):
