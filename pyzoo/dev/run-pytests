@@ -72,7 +72,8 @@ if [[ $py_version == *"Python 2.7"* ]]; then
        --ignore=../test/zoo/zouwu/ \
        --ignore=../test/zoo/pipeline/api/torch/ \
        --ignore=../test/zoo/orca/ \
-       --ignore=../zoo/models/recommendation/txt.py
+       --ignore=../zoo/models/recommendation/txt.py \
+       --ignore=../test/zoo/automl/model/test_xgbregressor.py
     exit_status_2=$?
     if [ $exit_status_2 -ne 0 ];
     then
@@ -108,7 +109,8 @@ else
        --ignore=../test/zoo/zouwu/ \
        --ignore=../test/zoo/pipeline/api/torch/ \
        --ignore=../test/zoo/orca/ \
-       --ignore=../zoo/models/recommendation/txt.py
+       --ignore=../zoo/models/recommendation/txt.py \
+       --ignore=../test/zoo/automl/model/test_xgbregressor.py
     exit_status_3=$?
     if [ $exit_status_3 -ne 0 ];
     then
