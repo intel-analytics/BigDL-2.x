@@ -24,7 +24,7 @@ from bigdl.dataset import base
 from sklearn.model_selection import train_test_split
 
 from zoo.orca import init_orca_context, stop_orca_context
-import zoo.orca.learn.tf.estimator
+from zoo.orca.learn.tf.estimator import Estimator
 from zoo.orca.data import SharedValue
 import zoo.orca.data.pandas
 
@@ -200,7 +200,7 @@ class NCF(object):
 def train(train_data, test_data, user_size, item_size):
         model = NCF(opt.embedding_size, user_size, item_size)
 
-        estimator = zoo.orca.learn.tf.estimator.Estimator.from_graph(
+        estimator = Estimator.from_graph(
             inputs=[model.user, model.item],
             outputs=[model.class_number],
             labels=[model.label],
@@ -237,7 +237,7 @@ def predict(predict_data, user_size, item_size):
         checkpoint_path = os.path.join(opt.model_dir, "NCF.ckpt")
         saver.restore(sess, checkpoint_path)
 
-        estimator = zoo.orca.learn.tf.estimator.Estimator.from_graph(
+        estimator = Estimator.from_graph(
             inputs=[model.user, model.item],
             outputs=[model.class_number],
             sess=sess,
