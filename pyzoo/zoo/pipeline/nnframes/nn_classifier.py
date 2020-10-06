@@ -17,7 +17,7 @@
 import json
 from pyspark.ml.param.shared import *
 from pyspark.ml.wrapper import JavaModel, JavaEstimator, JavaTransformer
-from pyspark.ml.util import JavaMLWritable, MLWritable, JavaMLReadable, MLReadable, JavaMLWriter, DefaultParamsReader, DefaultParamsWriter
+from pyspark.ml.util import MLWritable, MLReadable, JavaMLWriter, DefaultParamsReader
 from bigdl.optim.optimizer import SGD
 from zoo.common.utils import callZooFunc
 from bigdl.util.common import *
@@ -452,8 +452,8 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         return nnModel
 
 
-class NNModel(JavaTransformer, MLWritable, MLReadable, HasFeaturesCol, HasPredictionCol, HasBatchSize,
-              HasSamplePreprocessing, JavaValue):
+class NNModel(JavaTransformer, MLWritable, MLReadable, HasFeaturesCol, HasPredictionCol,
+              HasBatchSize, HasSamplePreprocessing, JavaValue):
     """
     NNModel extends Spark ML Transformer and supports BigDL model with Spark DataFrame.
 
