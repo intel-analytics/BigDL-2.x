@@ -198,18 +198,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
             output_x, output_y = self._transform(input_df, mode)
         return output_x, output_y
 
-    # def _unscale(self, y):
-    #     # for standard scalar
-    #     value_mean = self.scaler.mean_[0]
-    #     value_scale = self.scaler.scale_[0]
-    #     y_unscale = y * value_scale + value_mean
-    #     return y_unscale
-
     def _unscale(self, y):
-        """
-        data needs to be normalized (scaled) before feeding into models. 
-        This is to inverse the effect of normlization to get reasonable forecast results.
-        """
         target_col_indexes = list(range(len(self.target_col)))
         dummy_feature_shape = self.scaler.scale_.shape[0]
         y_dummy = np.zeros((y.shape[0], dummy_feature_shape))
@@ -233,9 +222,10 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         """
         y_pred_df = y_pred_dt_df
         if self.future_seq_len > 1:
-            # TODO: update later
-            columns = ["{}_{}".format(self.target_col, i) for i in range(self.future_seq_len)]
-            y_pred_df[columns] = pd.DataFrame(y_pred_unscale)
+            for i in range(self.future_seq_len):
+                for j in range(self.target_col):
+                    column = self.target_col[j] + str(i)
+                    y_pred_df[column] = pd.DataFrame(y_pred_unscale[j])
         else:
             y_pred_df[self.target_col] = pd.DataFrame(y_pred_unscale)
         return y_pred_df
@@ -459,11 +449,10 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
             length = 1
         """
         x = dataframe[0:-future_seq_len].values
-        #y = dataframe.iloc[past_seq_len:, 0].values
         if len(self.target_col) == 1:
             y = dataframe.iloc[past_seq_len:, 0].values
         else:
-            y = dataframe.iloc[past_seq_len:, list(range(0,len(self.target_col)))].values
+            y = dataframe.iloc[past_seq_len:, list(range(0, len(self.target_col)))].values
         output_x, mask_x = self._roll_data(x, past_seq_len)
         output_y, mask_y = self._roll_data(y, future_seq_len)
         # assert output_x.shape[0] == output_y.shape[0],
@@ -538,8 +527,8 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         :return:
         """
         cols = input_df.columns.tolist()
-        new_cols = [self.dt_col] + self.target_col + [col for col in cols
-                                        if col != self.dt_col and col not in self.target_col]
+        new_cols = [self.dt_col] + self.target_col +\
+                   [col for col in cols if col != self.dt_col and col not in self.target_col]
         rearranged_data = input_df[new_cols].copy
         return rearranged_data
 

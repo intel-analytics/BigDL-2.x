@@ -220,12 +220,6 @@ class TimeSequencePredictor(object):
                                             self.target_col,
                                             self.extra_features_col,
                                             self.drop_missing)
-        # config = {"selected_features": json.dumps(['MONTH(datetime)', 'WEEKDAY(datetime)',
-        # 'DAY(datetime)', 'HOUR(datetime)', 'IS_WEEKEND(datetime)',
-        # 'IS_AWAKE(datetime)', 'IS_BUSY_HOURS(datetime)']),"past_seq_len": 84}
-        #
-        # t = ft.fit_transform(input_df, **config)
-        # t2=0
         if isinstance(input_df, list):
             feature_list = ft.get_feature_list(input_df[0])
         else:
