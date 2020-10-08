@@ -502,7 +502,7 @@ class TFOptimizer:
 
         tf_model = TFModel.create(loss, sess, inputs, labels, [], grads, variables, graph,
                                   tensor_with_value, session_config, metrics,
-                                  updates, model_dir=None, train_op=train_op)
+                                  updates, model_dir=model_dir, train_op=train_op)
         return cls(tf_model, optim_method, sess=sess, dataset=dataset,
                    clip_norm=clip_norm, clip_value=clip_value, model_dir=model_dir)
 
