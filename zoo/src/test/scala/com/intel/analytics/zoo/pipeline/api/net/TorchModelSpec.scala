@@ -19,9 +19,11 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.common.{PythonInterpreter, PythonInterpreterTest}
 import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import jep.NDArray
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
+
 
 @PythonInterpreterTest
 class TorchModelSpec extends ZooSpecHelper{
@@ -232,4 +234,27 @@ class TorchModelSpec extends ZooSpecHelper{
     PythonInterpreter.exec(genInputCode)
     model.forward(Tensor[Float]())
   }
+
+   "doLoadPyTorch" should "do load PyTorch Model without error" in {
+      ifskipTest()
+      val tmpname = createTmpFile().getAbsolutePath()
+      val code = inferenceModel +
+        s"""
+           |model = new InferenceModel()
+           |""".stripMargin
+      PythonInterpreter.exec(code)
+      val model = model.doLoadPytorch(tmpname)
+      model.evaluate()
+
+      val genInputCode =
+        s"""
+           |import numpy as np
+           |import torch
+           |input = torch.tensor(np.random.rand(4, 1, 28, 28), dtype=torch.float32)
+           |target = torch.tensor(np.ones([4]), dtype=torch.long)
+           |_data = (input, target)
+           |""".stripMargin
+      PythonInterpreter.exec(genInputCode)
+      val result = model.doPredict(Tensor[Float]())
+    }
 }
