@@ -262,8 +262,14 @@ class PytorchSparkEstimatorWrapper(Estimator):
             from zoo.pipeline.api.torch import TorchLoss
             self.loss = TorchLoss.from_pytorch(loss)
         path, prefix, version = find_latest_checkpoint(checkpoint, model_type="pytorch")
-        self.model = Model.load(os.path.join(path, "model.{}".format(version)))
-        optimizer = OptimMethod.load(os.path.join(path, "{}.{}".format(prefix, version)))
+        if path is None:
+            raise ValueError("Cannot find PyTorch checkpoint, please check your checkpoint path.")
+        try:
+            self.model = Model.load(os.path.join(path, "model.{}".format(version)))
+            optimizer = OptimMethod.load(os.path.join(path, "{}.{}".format(prefix, version)))
+        except Exception:
+            raise ValueError("Cannot load PyTorch checkpoint, please check your checkpoint path "
+                             "and checkpoint type.")
         self.estimator = SparkEstimator(self.model, optimizer, self.model_dir)
 
     def shutdown(self, force=False):
