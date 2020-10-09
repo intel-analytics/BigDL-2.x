@@ -637,12 +637,14 @@ object NNEstimatorSpec {
     original.params.foreach { p =>
       // skip optimMethod, because optimMethod does not define equals
       // and two estimator should not share the same instance of optimMethod.
-      if (original.isDefined(p) && p.name != "optimMethod") {
-        (original.getOrDefault(p), copied.getOrDefault(p)) match {
-          case (Array(values), Array(newValues)) =>
-            assert(values == newValues, s"Values do not match on param ${p.name}.")
-          case (value, newValue) =>
-            assert(value == newValue, s"Values do not match on param ${p.name}.")
+      if (original.isDefined(p)) {
+        if (p.name != "optimMethod") {
+          (original.getOrDefault(p), copied.getOrDefault(p)) match {
+            case (Array(values), Array(newValues)) =>
+              assert(values == newValues, s"Values do not match on param ${p.name}.")
+            case (value, newValue) =>
+              assert(value == newValue, s"Values do not match on param ${p.name}.")
+          }
         }
       } else {
         assert(!copied.isDefined(p), s"Param ${p.name} shouldn't be defined.")
