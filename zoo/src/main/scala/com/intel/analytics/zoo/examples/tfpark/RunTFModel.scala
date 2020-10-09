@@ -27,7 +27,8 @@ object RunTFModel {
     }
 
     parser.parse(args, TFModelParams()).map { param =>
-      val userSize = 21037404
+//      val userSize = 21037404
+      val userSize = 100
       val itemSize = 99
       val user = Tensor[Float](1000).apply1(_ => Random.nextInt(userSize))
       val item = Tensor[Float](1000).apply1(_ => Random.nextInt(itemSize))
@@ -35,13 +36,55 @@ object RunTFModel {
 
       val input = T(user, item, label)
       val model = TFTrainingHelper(param.modelPath)
+      val (weights, gradweights) = model.parameters()
+      for (i <- 0 until weights.length -1 ) {
+        println(s"weights ${i} size: ${weights(i).size().mkString(",")}")
+      }
+//      for (i <- 0 until gradweights.length -1 ){
+//        println(s"gradweights ${i} size: ${gradweights(i).size().mkString(",")}")
+//      }
+      val extraParams = model.getExtraParameter()
+      for (i <- 0 until extraParams.length -1 ){
+        println(s"extraParams ${i} size: ${extraParams(i).size().mkString(",")}")
+      }
+
+//      val graphOut = model.getGraphOut()
+//      for (i <- 0 until graphOut.length -1 ){
+//        println(s"graphOut ${i} size: ${graphOut(i).size().mkString(",")}")
+//      }
+
       val criterion = new IdentityCriterion()
       val output = model.forward(input)
-      print("fininsh forward")
+      println("fininsh forward")
       val loss = criterion.forward(output, output)
       val gradout = criterion.backward(output, output)
       model.backward(input, gradout)
-      print("fininsh forward/backward")
+      println("fininsh forward/backward")
+
+//      val (weights, gradweights) = model.parameters()
+//      for (i <- 0 until weights.length -1 ) {
+//        println(s"weights ${i} size: ${weights(i).size().mkString(",")}")
+//      }
+//      for (i <- 0 until gradweights.length -1 ){
+//        println(s"gradweights ${i} size: ${gradweights(i).size().mkString(",")}")
+//      }
+//      val extraParams = model.getExtraParameter()
+//      for (i <- 0 until extraParams.length -1 ){
+//        println(s"extraParams ${i} size: ${extraParams(i).size().mkString(",")}")
+//      }
+//
+//      val graphOut = model.getGraphOut()
+//      for (i <- 0 until graphOut.length -1 ){
+//        println(s"graphOut ${i} size: ${graphOut(i).size().mkString(",")}")
+//      }
+
+
+      val output2 = model.forward(input)
+      println("fininsh forward")
+      val loss2 = criterion.forward(output2, output2)
+      val gradout2 = criterion.backward(output2, output2)
+      model.backward(input, gradout2)
+      println("fininsh forward/backward")
 
     }
   }

@@ -127,6 +127,8 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
     }
   }
 
+  def getGraphOut(): Vector[Tensor[Float]] = graphOutputs
+
   protected def evaluateInternal(): Unit = {
     setVariableIntoTF(weights, variableAssignPlaceholders,
       variableTypes.map(TFUtils.tfenum2datatype), assignVariableOp)
