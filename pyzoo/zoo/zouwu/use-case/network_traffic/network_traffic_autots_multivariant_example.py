@@ -1,12 +1,31 @@
+#
+# Copyright 2018 Analytics Zoo Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+
 def get_drop_dates_and_len(df, allow_missing_num=3):
     """
     Find missing values and get records to drop
     """
-    missing_num = df.total.isnull().astype(int).groupby(df.total.notnull().astype(int).cumsum()).sum()
+    missing_num = df.total.isnull().astype(int)\
+        .groupby(df.total.notnull().astype(int).cumsum()).sum()
     drop_missing_num = missing_num[missing_num > allow_missing_num]
     drop_datetimes = df.iloc[drop_missing_num.index].index
     drop_len = drop_missing_num.values
     return drop_datetimes, drop_len
+
 
 def rm_missing_weeks(start_dts, missing_lens, df):
     """
@@ -28,14 +47,14 @@ def rm_missing_weeks(start_dts, missing_lens, df):
         df = df.drop(df[start:end].index)
     return df
 
-import os
-import numpy as np
 import pandas as pd
+from zoo.orca import init_orca_context, stop_orca_context
 
 raw_df = pd.read_csv("data/data.csv")
 
 df = pd.DataFrame(pd.to_datetime(raw_df.StartTime))
-df['AvgRate'] = raw_df.AvgRate.apply(lambda x: float(x[:-4]) if x.endswith("Mbps") else float(x[:-4]) * 1000)
+df['AvgRate'] = \
+    raw_df.AvgRate.apply(lambda x: float(x[:-4]) if x.endswith("Mbps") else float(x[:-4]) * 1000)
 df["total"] = raw_df["total"]
 df.set_index("StartTime", inplace=True)
 full_idx = pd.date_range(start=df.index.min(), end=df.index.max(), freq='2H')
@@ -46,11 +65,7 @@ df.ffill(inplace=True)
 df.index.name = "datetime"
 df = df.reset_index()
 
-from zoo import init_spark_on_local
-from zoo.ray import RayContext
-sc = init_spark_on_local(cores=4, spark_log_level="INFO")
-ray_ctx = RayContext(sc=sc, object_store_memory="1g")
-ray_ctx.init()
+init_orca_context(cores=4, memory="4g", init_ray_on_spark=True)
 
 from zoo.zouwu.autots.forecast import AutoTSTrainer
 from zoo.automl.config.recipe import *
@@ -80,14 +95,10 @@ ts_pipeline = trainer.fit(train_df, val_df,
                               batch_size=[1024]),
                           metric="mse")
 
-ts_pipeline.internal.config
 pred_df = ts_pipeline.predict(test_df)
 
 mse, smape = ts_pipeline.evaluate(test_df, metrics=["mse", "smape"])
 print("Evaluate: the mean square error is", mse)
 print("Evaluate: the smape value is", smape)
 
-ray_ctx.stop()
-sc.stop()
-
-
+stop_orca_context()
