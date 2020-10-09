@@ -310,12 +310,21 @@ class BigDLEstimatorWrapper(Estimator):
         if is_checkpoint:
             from zoo.orca.learn.utils import find_latest_checkpoint
             from zoo.pipeline.api.net import Net
-            from bigdl.nn.layer import Model
+            from bigdl.nn.layer import Model, Container
             from bigdl.optim.optimizer import OptimMethod
             import os
             path, prefix, version = find_latest_checkpoint(checkpoint, model_type="bigdl")
-            self.model = Model.load(os.path.join(path, "model.{}".format(version)))
-            self.optimizer = OptimMethod.load(os.path.join(path, "{}.{}".format(prefix, version)))
+            if path is None:
+                raise ValueError("Cannot find BigDL checkpoint, please check your checkpoint path.")
+            try:
+                self.model = Model.load(os.path.join(path, "model.{}".format(version)))
+                assert isinstance(self.model, Container), \
+                    "The loaded model should be a Container, please check your checkpoint type."
+                self.optimizer = OptimMethod.load(os.path.join(path,
+                                                               "{}.{}".format(prefix, version)))
+            except Exception:
+                raise ValueError("Cannot load BigDL checkpoint, please check your checkpoint path "
+                                 "and checkpoint type.")
             self.estimator = SparkEstimator(self.model, self.optimizer, self.model_dir)
         else:
             from zoo.pipeline.api.net import Net
