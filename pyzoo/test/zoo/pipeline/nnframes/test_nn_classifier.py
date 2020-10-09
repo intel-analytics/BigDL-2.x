@@ -595,7 +595,7 @@ class TestNNClassifer():
         train_summary.set_summary_trigger("LearningRate", SeveralIteration(1))
         val_summary = ValidationSummary(log_dir=tmp_dir, app_name="nnTest")
 
-        classfier = NNEstimator(model, criterion, SeqToTensor([2]))\
+        classfier = NNClassifier(model, criterion, SeqToTensor([2]))\
             .setBatchSize(4) \
             .setTrainSummary(train_summary).setMaxEpoch(5) \
             .setValidation(EveryEpoch(), val_df, [Top1Accuracy()], 2) \
