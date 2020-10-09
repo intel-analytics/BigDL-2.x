@@ -169,7 +169,7 @@ object ModelLoader extends InferenceSupportive {
   : AbstractModule[Activity, Activity, Float] = {
     timing("load model") {
       logger.info(s"load model from $modelPath")
-      val model = TorchNet(modelPath)
+      val model = TorchModel.loadModel(modelPath)
       logger.info(s"loaded model as $model")
       model
     }
@@ -179,7 +179,7 @@ object ModelLoader extends InferenceSupportive {
   : AbstractModule[Activity, Activity, Float] = {
     timing("load model") {
       logger.info(s"load model from $modelBytes")
-      val model = TorchNet(modelBytes)
+      val model = TorchModel.loadModel(modelPath)
       logger.info(s"loaded model as $model")
       model
     }
