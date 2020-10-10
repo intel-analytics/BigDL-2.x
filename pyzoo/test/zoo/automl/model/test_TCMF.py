@@ -37,13 +37,13 @@ class TestTCMF(ZooTestCase):
         }
         self.model = TCMF()
         self.Ymat = np.random.rand(self.num_samples, seq_len)
-        self.horizon = np.random.randint(1, 50)
+        self.horizon = np.random.randint(2, 50)
 
     def teardown_method(self, method):
         del self.model
         del self.Ymat
 
-    def test_fit_predict_evaluate(self):
+    def test_tcmf(self):
         self.model.fit_eval(x=self.Ymat, y=None, **self.config)
         # test predict
         result = self.model.predict(x=None, horizon=self.horizon)
@@ -54,22 +54,43 @@ class TestTCMF(ZooTestCase):
         assert len(evaluate_result) == 2
         assert len(evaluate_result[0]) == self.horizon
         assert len(evaluate_result[1]) == self.horizon
+        # test fit_incremental
+        Ymat_before = self.model.model.Ymat
+        self.model.fit_incremental(target)
+        Ymat_after = self.model.model.Ymat
+        assert Ymat_after.shape[1] - Ymat_before.shape[1] == self.horizon
+        incr_result = self.model.predict(x=None, horizon=self.horizon)
+        np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, result, incr_result)
 
-    def test_predict_evaluate_error(self):
-        with pytest.raises(ValueError):
+    def test_error(self):
+        with pytest.raises(ValueError, match="We don't support input x directly"):
             self.model.predict(x=1)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="We don't support input x directly"):
             self.model.evaluate(x=1, y=np.random.rand(self.num_samples, self.horizon))
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Input invalid y of None"):
             self.model.evaluate(x=None, y=None)
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception,
+                           match="Needs to call fit_eval or restore first before calling predict"):
             self.model.predict(x=None)
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception,
+                           match="Needs to call fit_eval or restore first before calling predict"):
             self.model.evaluate(x=None, y=np.random.rand(self.num_samples, self.horizon))
+
+        with pytest.raises(ValueError, match="Input invalid x of None"):
+            self.model.fit_incremental(x=None)
+
+        with pytest.raises(Exception, match="Needs to call fit_eval or restore first before "
+                                            "calling fit_incremental"):
+            self.model.fit_incremental(x=np.random.rand(self.num_samples, self.horizon))
+
+        with pytest.raises(Exception, match=f"Expected incremental input with {self.num_samples} "
+                                            f"time series, got {self.num_samples - 1} instead"):
+            self.model.fit_eval(x=self.Ymat, y=None, **self.config)
+            self.model.fit_incremental(x=np.random.rand(self.num_samples - 1, self.horizon))
 
     def test_save_restore(self):
         self.model.fit_eval(x=self.Ymat, y=None, **self.config)

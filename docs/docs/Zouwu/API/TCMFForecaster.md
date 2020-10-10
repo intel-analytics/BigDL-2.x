@@ -160,4 +160,4 @@ TCMFForecaster.load(path,
 * `minPartitions`: The minimum partitions for the XShards.
 
 #### **Check whether model is distributed**
-You can check whether model is distributed with `model.is_distributed()`.
+You can check whether model is distributed by input xshards with `model.is_xshards_distributed()`.

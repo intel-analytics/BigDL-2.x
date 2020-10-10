@@ -117,5 +117,5 @@ evaluate_mse = Evaluator.evaluate("mse", target_data, yhat)
 
 ```python
 model.save(dirname)
-loaded_model = TCMFForecaster.load(dirname, distributed=False)
+loaded_model = TCMFForecaster.load(dirname)
 ```

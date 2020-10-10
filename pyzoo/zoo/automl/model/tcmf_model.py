@@ -125,6 +125,11 @@ class TCMF(BaseModel):
         :param x: incremental data
         :return:
         """
+        if x is None:
+            raise ValueError("Input invalid x of None")
+        if self.model is None:
+            raise Exception("Needs to call fit_eval or restore first before calling "
+                            "fit_incremental")
         self.model.inject_new(x)
 
     @staticmethod
@@ -235,7 +240,7 @@ class ModelWrapper(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def is_distributed(self, **kwargs):
+    def is_xshards_distributed(self, **kwargs):
         pass
 
     @abstractmethod
@@ -247,13 +252,13 @@ class ModelWrapper(metaclass=ABCMeta):
         pass
 
 
-class TCMFDistributedModelWrapper(ModelWrapper):
+class TCMFXshardsModelWrapper(ModelWrapper):
 
     def __init__(self, config):
         self.internal = None
         self.config = config
 
-    def fit(self, x, incremental=False, num_workers=None):
+    def fit(self, x, num_workers=None):
         if num_workers:
             raise ValueError("We don't support passing num_workers in fit "
                              "with input of xShards of dict")
@@ -261,11 +266,8 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         def orca_train_model(d, config):
             tcmf = TCMF()
             tcmf._build(**config)
-            id_arr, train_data = split_id_and_train_data(d, True)
-            if incremental:
-                tcmf.fit_incremental(train_data)
-            else:
-                tcmf.fit_eval(train_data)
+            id_arr, train_data = split_id_and_data(d, True)
+            tcmf.fit_eval(train_data)
             return [id_arr, tcmf]
 
         if isinstance(x, SparkXShards):
@@ -277,6 +279,9 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         else:
             raise ValueError("value of x should be an xShards of dict, "
                              "but isn't an xShards")
+
+    def fit_incremental(self, x_incr):
+        raise NotImplementedError
 
     def evaluate(self, x, y, metric=None, num_workers=None):
         """
@@ -312,7 +317,7 @@ class TCMFDistributedModelWrapper(ModelWrapper):
 
         return self.internal.transform_shard(orca_predict)
 
-    def is_distributed(self):
+    def is_xshards_distributed(self):
         return True
 
     def save(self, model_path):
@@ -333,7 +338,7 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         self.internal = XShards.load_pickle(model_path, minPartitions=minPartitions)
 
 
-class TCMFLocalModelWrapper(ModelWrapper):
+class TCMFNdarrayModelWrapper(ModelWrapper):
 
     def __init__(self, config):
         self.internal = TCMF()
@@ -341,13 +346,36 @@ class TCMFLocalModelWrapper(ModelWrapper):
         self.internal._build(**self.config)
         self.id_arr = None
 
-    def fit(self, x, incremental=False, num_workers=None):
+    def fit(self, x, num_workers=None):
         if isinstance(x, dict):
-            self.id_arr, train_data = split_id_and_train_data(x, False)
-            if incremental:
-                self.internal.fit_incremental(train_data)
-            else:
-                self.internal.fit_eval(train_data, num_workers=num_workers)
+            self.id_arr, train_data = split_id_and_data(x, False)
+            self.internal.fit_eval(train_data, num_workers=num_workers)
+        else:
+            raise ValueError("value of x should be a dict of ndarray")
+
+    def _rearrange_data_by_id(self, id_new, data_new, method_name="fit_incremental"):
+        if np.array_equal(self.id_arr, id_new) or id_new is None:
+            return data_new
+        if self.id_arr is None:
+            raise ValueError(f"Got valid id in {method_name} and invalid id in fit.")
+        if set(id_new) != set(self.id_arr):
+            raise ValueError(f"The input ids in {method_name} differs from input ids in fit.")
+        return data_new[[id_new.index(_) for _ in self.id_arr]]
+
+    def fit_incremental(self, x_incr):
+        """
+        incrementally fit the model. Note that we only incrementally fit X_seq (TCN in global model)
+        :param x_incr: 2-D numpy array in shape (n, T_incr), where n is the number of target time
+        series, T_incr is the number of time steps incremented.
+            incremental data to be fitted.
+        :return:
+        """
+        if isinstance(x_incr, dict):
+            incr_id_arr, incr_train_data = split_id_and_data(x_incr, False)
+            incr_train_data = self._rearrange_data_by_id(id_new=incr_id_arr,
+                                                         data_new=incr_train_data,
+                                                         method_name="fit_incremental")
+            self.internal.fit_incremental(incr_train_data)
         else:
             raise ValueError("value of x should be a dict of ndarray")
 
@@ -361,12 +389,8 @@ class TCMFLocalModelWrapper(ModelWrapper):
         :return: a list of metric evaluation results
         """
         if isinstance(y, dict):
-            if 'y' in y:
-                y = y['y']
-                if not isinstance(y, np.ndarray):
-                    raise ValueError("the value of y should be an ndarray")
-            else:
-                raise ValueError("key y doesn't exist in y")
+            id_arr, y = split_id_and_data(y, False)
+            y = self._rearrange_data_by_id(id_new=id_arr, data_new=y, method_name='evaluate')
             return self.internal.evaluate(y=y, x=x, metrics=metric, num_workers=num_workers)
         else:
             raise ValueError("value of y should be a dict of ndarray")
@@ -386,7 +410,7 @@ class TCMFLocalModelWrapper(ModelWrapper):
         result["prediction"] = pred
         return result
 
-    def is_distributed(self):
+    def is_xshards_distributed(self):
         return False
 
     def save(self, model_path):
@@ -411,7 +435,7 @@ class TCMFLocalModelWrapper(ModelWrapper):
         self.internal.restore(model_path + "/model")
 
 
-def split_id_and_train_data(d, is_distributed):
+def split_id_and_data(d, is_xshards_distributed=False):
     if 'y' in d:
         train_data = d['y']
         if not isinstance(train_data, np.ndarray):
@@ -424,6 +448,6 @@ def split_id_and_train_data(d, is_distributed):
         if len(id_arr) != train_data.shape[0]:
             raise ValueError("the length of the id array should be equal to the number of "
                              "rows in the y")
-    elif is_distributed:
+    elif is_xshards_distributed:
         raise ValueError("key `id` doesn't exist in x")
     return id_arr, train_data

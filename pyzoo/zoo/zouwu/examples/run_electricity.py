@@ -114,7 +114,7 @@ if __name__ == "__main__":
     # you can save and load model as you want
     with tempfile.TemporaryDirectory() as tempdirname:
         model.save(tempdirname)
-        loaded_model = TCMFForecaster.load(tempdirname, distributed=False)
+        loaded_model = TCMFForecaster.load(tempdirname, is_xshards_distributed=False)
 
     if args.predict_local:
         logger.info('Stopping context for yarn cluster and init context on local.')

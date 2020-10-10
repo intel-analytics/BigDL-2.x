@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.automl.model.tcmf_model import TCMFLocalModelWrapper, TCMFDistributedModelWrapper
+from zoo.automl.model.tcmf_model import TCMFNdarrayModelWrapper, TCMFXshardsModelWrapper
 from zoo.orca.data import SparkXShards
 from zoo.zouwu.model.forecast.abstract import Forecaster
 
@@ -127,22 +127,23 @@ class TCMFForecaster(Forecaster):
         """
         fit the model on x from scratch
         :param x: the input for fit. Only dict of ndarray and SparkXShards of dict of ndarray
-            are supported. Example: {'id': id_arr, 'y': data_ndarray}, and data_ndarray is of shape (n, T), where n is the number f target time series and T is the number of time steps.
+            are supported. Example: {'id': id_arr, 'y': data_ndarray}, and data_ndarray is of shape
+            (n, T), where n is the number f target time series and T is the number of time steps.
         :param num_workers: the number of workers you want to use for fit. If None, it defaults to
         num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
-        :return:
+        :return: None
         """
         if self.internal is None:
             if isinstance(x, SparkXShards):
-                self.internal = TCMFDistributedModelWrapper(self.config)
+                self.internal = TCMFXshardsModelWrapper(self.config)
             elif isinstance(x, dict):
-                self.internal = TCMFLocalModelWrapper(self.config)
+                self.internal = TCMFNdarrayModelWrapper(self.config)
             else:
                 raise ValueError("value of x should be a dict of ndarray or "
                                  "an xShards of dict of ndarray")
 
             try:
-                self.internal.fit(x, incremental, num_workers=num_workers)
+                self.internal.fit(x, num_workers=num_workers)
             except Exception as inst:
                 self.internal = None
                 raise inst
@@ -153,10 +154,13 @@ class TCMFForecaster(Forecaster):
     def fit_incremental(self, x_incr):
         """
         incrementally fit the model. Note that we only incrementally fit X_seq (TCN in global model)
-        :param x_incr: 2-D numpy array in shape (n, T_incr), where n is the number of target time
-        series, T_incr is the number of time steps incremented.
-            incremental data to be fitted.
-        :return:
+        :param x_incr: incremental data to be fitted. It should be of the same format as input x in
+         fit, which is a dict of ndarray or SparkXShards of dict of ndarray.
+        Example: {'id': id_arr, 'y': incr_ndarray}, and incr_ndarray is of shape (n, T_incr), where
+        n is the number of target time series, T_incr is the number of time steps incremented. You
+        can choose not to input 'id' in x_incr, but if you do, the elements of id in x_incr should
+        be the same as id in x of fit.
+        :return: None.
         """
         self.internal.fit_incremental(x_incr)
 
@@ -204,19 +208,19 @@ class TCMFForecaster(Forecaster):
         else:
             self.internal.save(path)
 
-    def is_distributed(self):
+    def is_xshards_distributed(self):
         if self.internal is None:
-            raise ValueError("You should run fit before calling is_distributed()")
+            raise ValueError("You should run fit before calling is_xshards_distributed()")
         else:
-            return self.internal.is_distributed()
+            return self.internal.is_xshards_distributed()
 
     @classmethod
-    def load(cls, path, distributed=False, minPartitions=None):
+    def load(cls, path, is_xshards_distributed=False, minPartitions=None):
         loaded_model = TCMFForecaster()
-        if distributed:
-            loaded_model.internal = TCMFDistributedModelWrapper(loaded_model.config)
+        if is_xshards_distributed:
+            loaded_model.internal = TCMFXshardsModelWrapper(loaded_model.config)
             loaded_model.internal.load(path, minPartitions=minPartitions)
         else:
-            loaded_model.internal = TCMFLocalModelWrapper(loaded_model.config)
+            loaded_model.internal = TCMFNdarrayModelWrapper(loaded_model.config)
             loaded_model.internal.load(path)
         return loaded_model
