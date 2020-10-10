@@ -125,7 +125,7 @@ if __name__ == "__main__":
         ray.init(num_cpus=args.num_predict_cores)
 
     logger.info('Start prediction.')
-    yhat = model.predict(x=None, horizon=horizon,
+    yhat = model.predict(horizon=horizon,
                          num_workers=args.num_predict_workers
                          if args.predict_local else args.num_workers)
     logger.info("Prediction ends")
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     evaluate_mse = Evaluator.evaluate("mse", target_data, yhat)
 
     # You can also evaluate directly without prediction results.
-    mse, smape = model.evaluate(x=None, target_value=target_value, metric=['mse', 'smape'],
+    mse, smape = model.evaluate(target_value=target_value, metric=['mse', 'smape'],
                                 num_workers=args.num_predict_workers if args.predict_local
                                 else args.num_workers)
     print(f"Evaluation results: mse: {mse}, smape: {smape}")
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     model.fit_incremental({'y': target_data})
     logger.info("Start evaluation after fit incremental")
     incr_target_value = dict({"y": incr_target_data})
-    mse, smape = model.evaluate(x=None, target_value=incr_target_value, metric=['mse', 'smape'],
+    mse, smape = model.evaluate(target_value=incr_target_value, metric=['mse', 'smape'],
                                 num_workers=args.num_predict_workers
                                 if args.predict_local else args.num_workers)
     print(f"Evaluation results after incremental fitting: mse: {mse}, smape: {smape}")

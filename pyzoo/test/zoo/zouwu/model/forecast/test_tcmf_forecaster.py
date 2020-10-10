@@ -41,13 +41,13 @@ class TestZouwuModelTCMFForecaster(TestCase):
         self.model.fit(ndarray_input)
         assert not self.model.is_xshards_distributed()
         # test predict
-        yhat = self.model.predict(x=None, horizon=self.horizon)
+        yhat = self.model.predict(horizon=self.horizon)
 
         # test save load
         with tempfile.TemporaryDirectory() as tempdirname:
             self.model.save(tempdirname)
             loaded_model = TCMFForecaster.load(tempdirname, is_xshards_distributed=False)
-        yhat_loaded = loaded_model.predict(x=None, horizon=self.horizon)
+        yhat_loaded = loaded_model.predict(horizon=self.horizon)
         yhat_id = yhat_loaded["id"]
         np.testing.assert_equal(yhat_id, self.id)
         yhat = yhat["prediction"]
@@ -56,11 +56,11 @@ class TestZouwuModelTCMFForecaster(TestCase):
         np.testing.assert_array_almost_equal(yhat, yhat_loaded, decimal=4)
         # test evaluate
         target_value = dict({"y": self.data_new})
-        assert self.model.evaluate(x=None, target_value=target_value, metric=['mse'])
+        assert self.model.evaluate(target_value=target_value, metric=['mse'])
         # test fit_incremental
         self.model.fit_incremental({'y': self.data_new})  # 1st time
         self.model.fit_incremental({'y': self.data_new})  # 2nd time
-        yhat_incr = self.model.predict(x=None, horizon=self.horizon)
+        yhat_incr = self.model.predict(horizon=self.horizon)
         yhat_incr = yhat_incr["prediction"]
         assert yhat_incr.shape == (self.num_samples, self.horizon)
         np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, yhat, yhat_incr)
@@ -115,7 +115,7 @@ class TestZouwuModelTCMFForecaster(TestCase):
         target_value = dict({"y": self.data_new})
         target_value_fake = dict({"data": target_value})
         with self.assertRaises(Exception) as context:
-            self.model.evaluate(x=None, target_value=target_value_fake, metric=['mse'])
+            self.model.evaluate(target_value=target_value_fake, metric=['mse'])
         self.assertTrue("key y doesn't exist in y" in str(context.exception))
 
     def test_forecast_tcmf_without_id(self):
@@ -126,8 +126,8 @@ class TestZouwuModelTCMFForecaster(TestCase):
         with tempfile.TemporaryDirectory() as tempdirname:
             self.model.save(tempdirname)
             loaded_model = TCMFForecaster.load(tempdirname, is_xshards_distributed=False)
-        yhat = self.model.predict(x=None, horizon=self.horizon)
-        yhat_loaded = loaded_model.predict(x=None, horizon=self.horizon)
+        yhat = self.model.predict(horizon=self.horizon)
+        yhat_loaded = loaded_model.predict(horizon=self.horizon)
         assert "id" not in yhat_loaded
         yhat = yhat["prediction"]
         yhat_loaded = yhat_loaded["prediction"]
@@ -135,10 +135,10 @@ class TestZouwuModelTCMFForecaster(TestCase):
         np.testing.assert_array_almost_equal(yhat, yhat_loaded, decimal=4)
 
         target_value = dict({"y": self.data_new})
-        self.model.evaluate(x=None, target_value=target_value, metric=['mse'])
+        self.model.evaluate(target_value=target_value, metric=['mse'])
 
         self.model.fit_incremental({'y': self.data_new})  # 1st time
-        yhat_incr = self.model.predict(x=None, horizon=self.horizon)
+        yhat_incr = self.model.predict(horizon=self.horizon)
         yhat_incr = yhat_incr["prediction"]
         assert yhat_incr.shape == (self.num_samples, self.horizon)
         np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, yhat, yhat_incr)
@@ -206,10 +206,10 @@ class TestZouwuModelTCMFForecaster(TestCase):
             self.model.save(tempdirname + "/model")
             loaded_model = TCMFForecaster.load(tempdirname + "/model", is_xshards_distributed=True)
         horizon = np.random.randint(1, 50)
-        yhat_shard_origin = self.model.predict(x=None, horizon=horizon)
+        yhat_shard_origin = self.model.predict(horizon=horizon)
         yhat_list_origin = yhat_shard_origin.collect()
         yhat_list_origin = list(map(get_pred, yhat_list_origin))
-        yhat_shard = loaded_model.predict(x=None, horizon=horizon)
+        yhat_shard = loaded_model.predict(horizon=horizon)
         yhat_list = yhat_shard.collect()
         yhat_list = list(map(get_pred, yhat_list))
         yhat_origin = np.concatenate(yhat_list_origin)
@@ -236,8 +236,8 @@ class TestZouwuModelTCMFForecaster(TestCase):
         with tempfile.TemporaryDirectory() as tempdirname:
             self.model.save(tempdirname)
             loaded_model = TCMFForecaster.load(tempdirname, is_xshards_distributed=False)
-        yhat = self.model.predict(x=None, horizon=self.horizon, num_workers=4)
-        yhat_loaded = loaded_model.predict(x=None, horizon=self.horizon, num_workers=4)
+        yhat = self.model.predict(horizon=self.horizon, num_workers=4)
+        yhat_loaded = loaded_model.predict(horizon=self.horizon, num_workers=4)
         yhat_id = yhat_loaded["id"]
         np.testing.assert_equal(yhat_id, self.id)
         yhat = yhat["prediction"]
@@ -246,13 +246,13 @@ class TestZouwuModelTCMFForecaster(TestCase):
         np.testing.assert_equal(yhat, yhat_loaded)
 
         self.model.fit_incremental({'y': self.data_new})
-        yhat_incr = self.model.predict(x=None, horizon=self.horizon)
+        yhat_incr = self.model.predict(horizon=self.horizon)
         yhat_incr = yhat_incr["prediction"]
         assert yhat_incr.shape == (self.num_samples, self.horizon)
         np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, yhat, yhat_incr)
 
         target_value = dict({"y": self.data_new})
-        assert self.model.evaluate(x=None, target_value=target_value, metric=['mse'])
+        assert self.model.evaluate(target_value=target_value, metric=['mse'])
         stop_orca_context()
 
 
