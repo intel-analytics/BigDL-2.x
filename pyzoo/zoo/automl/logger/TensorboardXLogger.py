@@ -57,4 +57,4 @@ class TensorboardXLogger():
 
     def close(self):
         self._file_writer.close()
-    
+        
