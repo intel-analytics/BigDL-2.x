@@ -89,9 +89,13 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
     doLoadPyTorch(modelPath);
   }
 
+  /*
+  TODO @qiuxin
+
   public void loadPyTorch(byte[] modelBytes) {
     doLoadPyTorch(modelBytes);
   }
+  */
 
   public void loadOpenVINO(String modelFilePath, String weightFilePath, int batchSize) {
     doLoadOpenVINO(modelFilePath, weightFilePath, batchSize);
