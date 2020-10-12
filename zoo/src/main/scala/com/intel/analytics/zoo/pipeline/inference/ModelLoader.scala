@@ -175,7 +175,8 @@ object ModelLoader extends InferenceSupportive {
     }
   }
 
-  @TODO
+  /*
+  TODO @qiuxin may need loadModelByModelBytes
     def loadFloatModelForPyTorch(modelBytes: Array[Byte])
      : AbstractModule[Activity, Activity, Float] = {
        timing("load model") {
@@ -185,5 +186,6 @@ object ModelLoader extends InferenceSupportive {
          model
        }
      }
+  */
 }
 
