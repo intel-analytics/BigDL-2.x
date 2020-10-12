@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
 import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.pipeline.api.keras.layers.WordEmbedding
 import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
-import com.intel.analytics.zoo.pipeline.api.net.{GraphNet, TFNet, TorchNet}
+import com.intel.analytics.zoo.pipeline.api.net.{GraphNet, TFNet, TorchNet, TorchMOdel}
 import org.slf4j.LoggerFactory
 
 import scala.language.postfixOps
@@ -179,7 +179,7 @@ object ModelLoader extends InferenceSupportive {
   : AbstractModule[Activity, Activity, Float] = {
     timing("load model") {
       logger.info(s"load model from $modelBytes")
-      val model = TorchModel.loadModel(modelPath)
+      val model = TorchModel.loadModel(modelBytes)
       logger.info(s"loaded model as $model")
       model
     }
