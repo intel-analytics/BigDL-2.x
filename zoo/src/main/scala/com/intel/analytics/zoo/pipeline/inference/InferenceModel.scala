@@ -445,11 +445,14 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     offerModelQueue()
   }
 
-  private def doLoadPyTorchModel(modelBytes: Array[Byte]): Unit = {
-    clearModelQueue()
-    this.originalModel = InferenceModelFactory.loadFloatModelForPyTorch(modelBytes)
-    offerModelQueue()
-  }
+  /*
+  TODO @qiuxin same as ModelLoder's function
+   private def doLoadPyTorchModel(modelBytes: Array[Byte]): Unit = {
+     clearModelQueue()
+     this.originalModel = InferenceModelFactory.loadFloatModelForPyTorch(modelBytes)
+     offerModelQueue()
+   }
+  */
 
   /**
    * reloads the bigdl, analytics-zoo model
