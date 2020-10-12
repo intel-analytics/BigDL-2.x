@@ -2,7 +2,7 @@
 
 # export SPARK_HOME=$SPARK_HOME
 # export MASTER=local[4]
-# export ANALYTICS_ZOO_ROOT=$ANALYTICS_ZOO_ROOT
+export ANALYTICS_ZOO_ROOT=$ANALYTICS_ZOO_ROOT
 # export ANALYTICS_ZOO_HOME=$ANALYTICS_ZOO_ROOT/dist
 # export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
 # export ANALYTICS_ZOO_PYZIP=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*python-api.zip"`
