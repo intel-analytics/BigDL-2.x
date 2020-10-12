@@ -19,26 +19,31 @@ import numpy as np
 from zoo.zouwu.model.forecast.tcmf_forecaster import TCMFForecaster
 from unittest import TestCase
 import tempfile
+import pandas as pd
 
 
 class TestZouwuModelTCMFForecaster(TestCase):
 
     def setUp(self):
-        self.model = TCMFForecaster(y_iters=1,
-                                    init_FX_epoch=1,
-                                    max_FX_epoch=1,
-                                    max_TCN_epoch=1,
-                                    alt_iters=2)
+        self.model = TCMFForecaster()
         self.num_samples = 300
         self.horizon = np.random.randint(1, 50)
         seq_len = 480
         self.data = np.random.rand(self.num_samples, seq_len)
         self.id = np.arange(self.num_samples)
         self.data_new = np.random.rand(self.num_samples, self.horizon)
+        self.fit_params = dict(val_len=12,
+                               start_date="2020-1-1",
+                               freq="5min",
+                               y_iters=1,
+                               init_FX_epoch=1,
+                               max_FX_epoch=1,
+                               max_TCN_epoch=1,
+                               alt_iters=2)
 
     def test_ndarray_local(self):
         ndarray_input = {'id': self.id, 'y': self.data}
-        self.model.fit(ndarray_input)
+        self.model.fit(ndarray_input, **self.fit_params)
         assert not self.model.is_xshards_distributed()
         # test predict
         yhat = self.model.predict(horizon=self.horizon)
@@ -90,10 +95,28 @@ class TestZouwuModelTCMFForecaster(TestCase):
         self.assertTrue("the length of the id array should be equal to the number of"
                         in str(context.exception))
 
-        input = dict({'id': self.id, 'y': self.data})
-        self.model.fit(input)
+        input_right = dict({'id': self.id, 'y': self.data})
+
         with self.assertRaises(Exception) as context:
-            self.model.fit(input)
+            self.model.fit(input_right, covariates='None')
+        self.assertTrue("Input covariates must be a ndarray. Got"
+                        in str(context.exception))
+        with self.assertRaises(Exception) as context:
+            self.model.fit(input_right, covariates=np.random.randn(3, 45))
+        self.assertTrue("The second dimension shape of covariates should be"
+                        in str(context.exception))
+        with self.assertRaises(Exception) as context:
+            self.model.fit(input_right, dti='None')
+        self.assertTrue("Input dti must be a pandas DatetimeIndex. Got"
+                        in str(context.exception))
+        with self.assertRaises(Exception) as context:
+            self.model.fit(input_right, dti=pd.date_range('20130101', periods=self.horizon-1))
+        self.assertTrue("Input dti length should be equal to"
+                        in str(context.exception))
+
+        self.model.fit(input_right, **self.fit_params)
+        with self.assertRaises(Exception) as context:
+            self.model.fit(input_right)
         self.assertTrue('This model has already been fully trained' in str(context.exception))
 
         # fit_incremental
@@ -101,14 +124,6 @@ class TestZouwuModelTCMFForecaster(TestCase):
         with self.assertRaises(ValueError) as context:
             self.model.fit_incremental(data_id_diff)
         self.assertTrue('The input ids in fit_incremental differs from input ids in fit'
-                        in str(context.exception))
-
-        model1 = TCMFForecaster(y_iters=1, init_FX_epoch=1, max_FX_epoch=1, max_TCN_epoch=1,
-                                alt_iters=2)
-        model1.fit({'y': self.data})
-        with self.assertRaises(ValueError) as context:
-            model1.fit_incremental(data_id_diff)
-        self.assertTrue('Got valid id in fit_incremental and invalid id in fit.'
                         in str(context.exception))
 
         # evaluate
@@ -120,7 +135,7 @@ class TestZouwuModelTCMFForecaster(TestCase):
     def test_forecast_tcmf_without_id(self):
         # construct data
         input = dict({'y': self.data})
-        self.model.fit(input)
+        self.model.fit(input, **self.fit_params)
         assert not self.model.is_xshards_distributed()
         with tempfile.TemporaryDirectory() as tempdirname:
             self.model.save(tempdirname)
@@ -193,7 +208,7 @@ class TestZouwuModelTCMFForecaster(TestCase):
         self.assertTrue('You should run fit before calling is_xshards_distributed()'
                         in str(context.exception))
         shard_train = shard.transform_shard(preprocessing, 'id', 'y')
-        self.model.fit(shard_train)
+        self.model.fit(shard_train, **self.fit_params)
         assert self.model.is_xshards_distributed()
         with self.assertRaises(Exception) as context:
             self.model.fit(shard_train)
@@ -230,7 +245,7 @@ class TestZouwuModelTCMFForecaster(TestCase):
 
         init_orca_context(cores=4, spark_log_level="INFO", init_ray_on_spark=True,
                           object_store_memory="1g")
-        self.model.fit(input, num_workers=4)
+        self.model.fit(input, num_workers=4, **self.fit_params)
 
         with tempfile.TemporaryDirectory() as tempdirname:
             self.model.save(tempdirname)
