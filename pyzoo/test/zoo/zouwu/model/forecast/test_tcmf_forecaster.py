@@ -112,11 +112,10 @@ class TestZouwuModelTCMFForecaster(TestCase):
                         in str(context.exception))
 
         # evaluate
-        target_value = dict({"y": self.data_new})
-        target_value_fake = dict({"data": target_value})
+        target_value_fake = dict({"data": self.data_new})
         with self.assertRaises(Exception) as context:
             self.model.evaluate(target_value=target_value_fake, metric=['mse'])
-        self.assertTrue("key y doesn't exist in y" in str(context.exception))
+        self.assertTrue("key `y` doesn't exist in x" in str(context.exception))
 
     def test_forecast_tcmf_without_id(self):
         # construct data
