@@ -243,6 +243,7 @@ class TorchModelSpec extends ZooSpecHelper{
            |model = new InferenceModel()
            |""".stripMargin
       PythonInterpreter.exec(code)
+      val model = new InferenceModel()
       val pytorchModel = model.doLoadPytorch(tmpname)
       pytorchModel.evaluate()
 
