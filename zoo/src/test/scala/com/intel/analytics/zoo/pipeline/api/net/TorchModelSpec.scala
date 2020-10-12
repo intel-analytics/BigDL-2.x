@@ -238,13 +238,13 @@ class TorchModelSpec extends ZooSpecHelper{
    "doLoadPyTorch" should "do load PyTorch Model without error" in {
       ifskipTest()
       val tmpname = createTmpFile().getAbsolutePath()
-      val code = inferenceModel +
+      val code = InferenceModel +
         s"""
            |model = new InferenceModel()
            |""".stripMargin
       PythonInterpreter.exec(code)
-      val model = model.doLoadPytorch(tmpname)
-      model.evaluate()
+      val pytorchModel = model.doLoadPytorch(tmpname)
+      pytorchModel.evaluate()
 
       val genInputCode =
         s"""
@@ -255,6 +255,6 @@ class TorchModelSpec extends ZooSpecHelper{
            |_data = (input, target)
            |""".stripMargin
       PythonInterpreter.exec(genInputCode)
-      val result = model.doPredict(Tensor[Float]())
+      val result = pytorchModel.doPredict(Tensor[Float]())
     }
 }
