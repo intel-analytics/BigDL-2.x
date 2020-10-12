@@ -54,7 +54,10 @@ class TestZouwuAutoTS(ZooTestCase):
         assert isinstance(pipeline, TSPipeline)
         assert pipeline.internal.config is not None
         evaluate_result = pipeline.evaluate(self.validation_df)
-        assert evaluate_result[0].shape[0] == horizon
+        if horizon > 1:
+            assert evaluate_result[0].shape[0] == horizon
+        else:
+            assert evaluate_result[0]
         predict_df = pipeline.predict(self.validation_df)
         assert not predict_df.empty
 
@@ -77,7 +80,10 @@ class TestZouwuAutoTS(ZooTestCase):
         assert isinstance(pipeline, TSPipeline)
         assert pipeline.internal.config is not None
         evaluate_result = pipeline.evaluate(self.validation_df)
-        assert evaluate_result[0].shape[0] == horizon
+        if horizon > 1:
+            assert evaluate_result[0].shape[0] == horizon
+        else:
+            assert evaluate_result[0]
         predict_df = pipeline.predict(self.validation_df)
         assert not predict_df.empty
 
@@ -102,7 +108,10 @@ class TestZouwuAutoTS(ZooTestCase):
         assert isinstance(pipeline, TSPipeline)
         assert pipeline.internal.config is not None
         evaluate_result = pipeline.evaluate(self.validation_df)
-        assert evaluate_result[0].shape[0] == horizon
+        if horizon > 1:
+            assert evaluate_result[0].shape[0] == horizon
+        else:
+            assert evaluate_result[0]
         predict_df = pipeline.predict(self.validation_df)
         assert not predict_df.empty
 
