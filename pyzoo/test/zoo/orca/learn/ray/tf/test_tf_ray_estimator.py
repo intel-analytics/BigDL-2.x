@@ -17,7 +17,7 @@ from unittest import TestCase
 
 import numpy as np
 import tensorflow as tf
-
+import zoo.orca.data.pandas
 from zoo.orca.learn.tf2 import Estimator
 from zoo.ray import RayContext
 
@@ -292,3 +292,26 @@ class TestTFRayEstimator(TestCase):
         else:
             # skip tests in horovod lower version
             pass
+
+
+    def test_sparkxshards(self):
+
+        def transform(df):
+            data = df['feature'].values
+            label = df['label'].values
+            return {"x": np.expand_dims(data, axis=1), "y": label}
+        resource_path = os.path.join(os.path.split(__file__)[0], "../../../../resources")
+        train_file_path = os.path.join(resource_path, "orca/learn/simple_feature_label.csv")
+        train_data_shard = zoo.orca.data.pandas.read_csv(
+            train_file_path).transform_shard(transform)
+        config = {
+            "batch_size": 4,
+            "lr": 0.8
+        }
+        trainer = Estimator(
+            model_creator=model_creator,
+            verbose=True,
+            config=config)
+
+        trainer.fit(train_data_shard, epochs=1)
+        trainer.evaluate(train_data_shard)

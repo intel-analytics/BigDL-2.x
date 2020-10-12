@@ -19,12 +19,35 @@ import pickle
 
 import numpy as np
 import ray
+from zoo.orca.data.utils import ray_partition_get_data_label
 
 from zoo.orca.learn.tf2.tf_runner import TFRunner
 from zoo.ray import RayContext
 
 logger = logging.getLogger(__name__)
 
+
+def ray_partition_to_creator(partition):
+
+    if partition is None:
+        return None
+
+    def data_creator(config):
+        import tensorflow as tf
+        data, label = ray_partition_get_data_label(partition.get_data(),
+                                                   allow_tuple=True,
+                                                   allow_list=False)
+
+        dataset = tf.data.Dataset.from_tensor_slices((data, label))
+
+        options = tf.data.Options()
+        options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.OFF
+        dataset = dataset.with_options(options)
+
+        dataset = dataset.batch(config["batch_size"])
+        return dataset
+
+    return data_creator
 
 class Estimator:
     def __init__(self,
@@ -110,6 +133,8 @@ class Estimator:
             raise Exception("Only \"tf\" and \"horovod\" are legal "
                             "value of backend, but got {}".format(backend))
 
+        self.num_workers = len(self.remote_workers)
+
     @classmethod
     def from_keras(cls, model_creator,
                    config=None,
@@ -125,19 +150,50 @@ class Estimator:
             callbacks=None, validation_data_creator=None, class_weight=None,
             steps_per_epoch=None, validation_steps=None, validation_freq=1):
         """Runs a training epoch."""
-
         params = dict(
-            data_creator=data_creator,
             epochs=epochs,
             verbose=verbose,
             callbacks=callbacks,
-            validation_data_creator=validation_data_creator,
             class_weight=class_weight,
             steps_per_epoch=steps_per_epoch,
             validation_steps=validation_steps,
             validation_freq=validation_freq,
         )
-        worker_stats = ray.get([w.step.remote(**params) for w in self.remote_workers])
+
+        from zoo.orca.data import SparkXShards
+        if isinstance(data_creator, SparkXShards):
+            data = data_creator
+            if data.num_partitions() != self.num_workers:
+                data = data.repartition(self.num_workers)
+            data = data.to_ray()
+            # todo maybe it is more reasonable to assign partition to each
+            # remote_worker, instead of changing the order of self.remote_workers
+            self.remote_workers = data.colocate_actors(self.remote_workers)
+            train_data_list = data.get_partitions()
+            if validation_data_creator:
+                validation_data = validation_data_creator
+                assert isinstance(validation_data, SparkXShards)
+                if validation_data.num_partitions() != self.num_workers:
+                    validation_data = validation_data.repartition(self.num_workers)
+                validation_data = validation_data.to_ray()
+                val_data_list = validation_data.get_partitions()
+            else:
+                val_data_list = [None] * self.num_workers
+
+            params_list = []
+            for i in range(self.num_workers):
+                local_params = params.copy()
+                local_params["data_creator"] = ray_partition_to_creator(train_data_list[i])
+                local_params["validation_data_creator"] = ray_partition_to_creator(val_data_list[i])
+                params_list.append(local_params)
+
+        else:  # data_creator functions; should return Iter or DataLoader
+            params["data_creator"] = data_creator
+            params["validation_data_creator"] = validation_data_creator
+            params_list = [params] * self.num_workers
+
+        worker_stats = ray.get([self.remote_workers[i].step.remote(**params_list[i])
+                                for i in range(self.num_workers)])
         stats = worker_stats[0].copy()
         return stats
 
@@ -146,15 +202,34 @@ class Estimator:
         """Evaluates the model on the validation data set."""
         logger.info("Starting validation step.")
         params = dict(
-            data_creator=data_creator,
             verbose=verbose,
             sample_weight=sample_weight,
             steps=steps,
             callbacks=callbacks
         )
+        from zoo.orca.data import SparkXShards
+        if isinstance(data_creator, SparkXShards):
+            data = data_creator
+            if data.num_partitions() != self.num_workers:
+                data = data.repartition(self.num_workers)
+            data = data.to_ray()
+            # todo maybe it is more reasonable to assign partition to each
+            # remote_worker, instead of changing the order of self.remote_workers
+            self.remote_workers = data.colocate_actors(self.remote_workers)
+            data_list = data.get_partitions()
+            params_list = []
+            for i in range(self.num_workers):
+                local_params = params.copy()
+                local_params["data_creator"] = ray_partition_to_creator(data_list[i])
+                params_list.append(local_params)
+
+        else:  # data_creator functions; should return Iter or DataLoader
+            params["data_creator"] = data_creator
+            params_list = [params] * self.num_workers
+
         # see ./tf_runner.py:setup_distributed
         # for an explanation of only taking the first worker's data
-        stats = ray.get([w.validate.remote(**params) for w in self.remote_workers])
+        stats = ray.get([w.validate.remote(**params_list[i]) for i, w in enumerate(self.remote_workers)])
         stats = stats[0].copy()
         return stats
 
