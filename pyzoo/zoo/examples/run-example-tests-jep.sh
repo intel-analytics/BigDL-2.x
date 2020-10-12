@@ -18,9 +18,9 @@ if [ -f ${ANALYTICS_ZOO_ROOT}/data/mnist.zip ]
 then
     echo "mnist.zip already exists"
 else
-    wget -nv $FTP_URI/analytics-zoo-data/mnist.zip -P ${ANALYTICS_ZOO_ROOT}/data
+    wget -nv $FTP_URI/analytics-zoo-data/mnist.zip -P analytics-zoo-data/data
 fi
-unzip -q ${ANALYTICS_ZOO_ROOT}/data/mnist.zip -d ${ANALYTICS_ZOO_ROOT}/data
+unzip -q analytics-zoo-data/data/mnist.zip -d analytics-zoo-data/data
 
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/mnist/main.py --dir analytics-zoo-data/data
 
