@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.automl.regression.xgbregressor_predictor import XgbRegressorPredictor
+from zoo.automl.regression.xgb_predictor import XgbPredictor
 from zoo.automl.config.recipe import *
 
 
@@ -25,5 +25,16 @@ class AutoXGBoost(object):
                   config=None,
                   name="automl",
                   logs_dir="~/zoo_automl_logs"):
-        tsp = XgbRegressorPredictor(feature_cols, target_col, config, name, logs_dir)
+        tsp = XgbPredictor(feature_cols, target_col, 'regressor',
+                           config, name, logs_dir)
+        return tsp
+
+    @staticmethod
+    def classifier(feature_cols,
+                   target_col,
+                   config=None,
+                   name="automl",
+                   logs_dir="~/zoo_automl_logs"):
+        tsp = XgbPredictor(feature_cols, target_col, 'classifier',
+                           config, name, logs_dir)
         return tsp

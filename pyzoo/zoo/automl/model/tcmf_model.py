@@ -57,11 +57,10 @@ class TCMF(BaseModel):
         self.svd = config.get("svd", True)
         self.period = config.get("period", 24)
         self.alt_iters = config.get("alt_iters", 10)
-        self.y_iters = config.get("y_iters", 300)
+        self.y_iters = config.get("y_iters", 10)
         self.init_epoch = config.get("init_FX_epoch", 100)
         self.max_FX_epoch = config.get("max_FX_epoch", 300)
         self.max_TCN_epoch = config.get("max_TCN_epoch", 300)
-        self.num_workers = config.get("num_workers", 1)
 
     def _build(self, **config):
         """
@@ -93,7 +92,7 @@ class TCMF(BaseModel):
         )
         self.model_init = True
 
-    def fit_eval(self, x, y=None, verbose=0, **config):
+    def fit_eval(self, x, y=None, verbose=0, num_workers=None, **config):
         """
         Fit on the training data from scratch.
         Since the rolling process is very customized in this model,
@@ -103,17 +102,20 @@ class TCMF(BaseModel):
             nd is the number of series, Td is the time dimension
         :param y: None. target is extracted from x directly
         :param verbose:
+        :param num_workers: number of workers to use.
         :return: the evaluation metric value
         """
         if not self.model_init:
             self._build(**config)
+        if num_workers is None:
+            num_workers = TCMF.get_default_num_workers()
         val_loss = self.model.train_all_models(x,
                                                alt_iters=self.alt_iters,
                                                y_iters=self.y_iters,
                                                init_epochs=self.init_epoch,
                                                max_FX_epoch=self.max_FX_epoch,
                                                max_TCN_epoch=self.max_TCN_epoch,
-                                               num_workers=self.num_workers,
+                                               num_workers=num_workers,
                                                )
         return val_loss
 
@@ -121,13 +123,26 @@ class TCMF(BaseModel):
         """
         Incremental fitting given a pre-trained model.
         :param x: incremental data
-        :param config: fitting parameters
         :return:
         """
-        # TODO incrementally train models
-        pass
+        if x is None:
+            raise ValueError("Input invalid x of None")
+        if self.model is None:
+            raise Exception("Needs to call fit_eval or restore first before calling "
+                            "fit_incremental")
+        self.model.inject_new(x)
 
-    def predict(self, x=None, horizon=24, mc=False, num_workers=1):
+    @staticmethod
+    def get_default_num_workers():
+        from zoo.ray import RayContext
+        try:
+            ray_ctx = RayContext.get(initialize=False)
+            num_workers = ray_ctx.num_ray_nodes
+        except:
+            num_workers = 1
+        return num_workers
+
+    def predict(self, x=None, horizon=24, mc=False, num_workers=None):
         """
         Predict horizon time-points ahead the input x in fit_eval
         :param x: We don't support input x currently.
@@ -141,6 +156,8 @@ class TCMF(BaseModel):
             raise ValueError("We don't support input x directly.")
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling predict")
+        if num_workers is None:
+            num_workers = TCMF.get_default_num_workers()
         if num_workers > 1:
             import ray
             from zoo.ray import RayContext
@@ -159,12 +176,11 @@ class TCMF(BaseModel):
         out = self.model.predict_horizon(
             future=horizon,
             bsize=90,
-            normalize=False,
             num_workers=num_workers,
         )
         return out[:, -horizon::]
 
-    def evaluate(self, x=None, y=None, metrics=None):
+    def evaluate(self, x=None, y=None, metrics=None, num_workers=None):
         """
         Evaluate on the prediction results and y. We predict horizon time-points ahead the input x
         in fit_eval before evaluation, where the horizon length equals the second dimension size of
@@ -173,6 +189,7 @@ class TCMF(BaseModel):
         :param y: target. We interpret the second dimension of y as the horizon length for
             evaluation.
         :param metrics: a list of metrics in string format
+        :param num_workers: the number of workers to use in evaluate. It defaults to 1.
         :return: a list of metric evaluation results
         """
         if x is not None:
@@ -186,7 +203,7 @@ class TCMF(BaseModel):
             horizon = 1
         else:
             horizon = y.shape[1]
-        result = self.predict(horizon=horizon)
+        result = self.predict(x=None, horizon=horizon, num_workers=num_workers)
 
         if y.shape[1] == 1:
             multioutput = 'uniform_average'
@@ -223,7 +240,7 @@ class ModelWrapper(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def is_distributed(self, **kwargs):
+    def is_xshards_distributed(self, **kwargs):
         pass
 
     @abstractmethod
@@ -235,21 +252,22 @@ class ModelWrapper(metaclass=ABCMeta):
         pass
 
 
-class TCMFDistributedModelWrapper(ModelWrapper):
+class TCMFXshardsModelWrapper(ModelWrapper):
 
     def __init__(self, config):
         self.internal = None
         self.config = config
 
-    def fit(self, x, incremental=False):
+    def fit(self, x, num_workers=None):
+        if num_workers:
+            raise ValueError("We don't support passing num_workers in fit "
+                             "with input of xShards of dict")
+
         def orca_train_model(d, config):
             tcmf = TCMF()
             tcmf._build(**config)
-            id_arr, train_data = split_id_and_train_data(d, True)
-            if incremental:
-                tcmf.fit_incremental(train_data)
-            else:
-                tcmf.fit_eval(train_data)
+            id_arr, train_data = split_id_and_data(d, True)
+            tcmf.fit_eval(train_data)
             return [id_arr, tcmf]
 
         if isinstance(x, SparkXShards):
@@ -262,22 +280,31 @@ class TCMFDistributedModelWrapper(ModelWrapper):
             raise ValueError("value of x should be an xShards of dict, "
                              "but isn't an xShards")
 
-    def evaluate(self, x, y, metric=None):
+    def fit_incremental(self, x_incr):
+        raise NotImplementedError
+
+    def evaluate(self, x, y, metric=None, num_workers=None):
         """
         Evaluate the model
         :param x: input
         :param y: target
         :param metric:
+        :param num_workers:
         :return: a list of metric evaluation results
         """
         raise NotImplementedError
 
-    def predict(self, x, horizon=24):
+    def predict(self, x, horizon=24, num_workers=None):
         """
         Prediction.
         :param x: input
+        :param horizon:
+        :param num_workers
         :return: result
         """
+        if num_workers and num_workers != 1:
+            raise ValueError("We don't support passing num_workers in predict "
+                             "with input of xShards of dict")
 
         def orca_predict(data):
             id_arr = data[0]
@@ -290,7 +317,7 @@ class TCMFDistributedModelWrapper(ModelWrapper):
 
         return self.internal.transform_shard(orca_predict)
 
-    def is_distributed(self):
+    def is_xshards_distributed(self):
         return True
 
     def save(self, model_path):
@@ -311,7 +338,7 @@ class TCMFDistributedModelWrapper(ModelWrapper):
         self.internal = XShards.load_pickle(model_path, minPartitions=minPartitions)
 
 
-class TCMFLocalModelWrapper(ModelWrapper):
+class TCMFNdarrayModelWrapper(ModelWrapper):
 
     def __init__(self, config):
         self.internal = TCMF()
@@ -319,49 +346,71 @@ class TCMFLocalModelWrapper(ModelWrapper):
         self.internal._build(**self.config)
         self.id_arr = None
 
-    def fit(self, x, incremental=False):
+    def fit(self, x, num_workers=None):
         if isinstance(x, dict):
-            self.id_arr, train_data = split_id_and_train_data(x, False)
-            if incremental:
-                self.internal.fit_incremental(train_data)
-            else:
-                self.internal.fit_eval(train_data)
+            self.id_arr, train_data = split_id_and_data(x, False)
+            self.internal.fit_eval(train_data, num_workers=num_workers)
         else:
             raise ValueError("value of x should be a dict of ndarray")
 
-    def evaluate(self, x, y, metric=None):
+    def _rearrange_data_by_id(self, id_new, data_new, method_name="fit_incremental"):
+        if np.array_equal(self.id_arr, id_new) or id_new is None:
+            return data_new
+        if self.id_arr is None:
+            raise ValueError(f"Got valid id in {method_name} and invalid id in fit.")
+        if set(id_new) != set(self.id_arr):
+            raise ValueError(f"The input ids in {method_name} differs from input ids in fit.")
+        return data_new[[id_new.index(_) for _ in self.id_arr]]
+
+    def fit_incremental(self, x_incr):
+        """
+        incrementally fit the model. Note that we only incrementally fit X_seq (TCN in global model)
+        :param x_incr: 2-D numpy array in shape (n, T_incr), where n is the number of target time
+        series, T_incr is the number of time steps incremented.
+            incremental data to be fitted.
+        :return:
+        """
+        if isinstance(x_incr, dict):
+            incr_id_arr, incr_train_data = split_id_and_data(x_incr, False)
+            incr_train_data = self._rearrange_data_by_id(id_new=incr_id_arr,
+                                                         data_new=incr_train_data,
+                                                         method_name="fit_incremental")
+            self.internal.fit_incremental(incr_train_data)
+        else:
+            raise ValueError("value of x should be a dict of ndarray")
+
+    def evaluate(self, x, y, metric=None, num_workers=None):
         """
         Evaluate the model
         :param x: input
         :param y: target
         :param metric:
+        :param num_workers:
         :return: a list of metric evaluation results
         """
         if isinstance(y, dict):
-            if 'y' in y:
-                y = y['y']
-                if not isinstance(y, np.ndarray):
-                    raise ValueError("the value of y should be an ndarray")
-            else:
-                raise ValueError("key y doesn't exist in y")
-            return self.internal.evaluate(y=y, x=x, metrics=metric)
+            id_arr, y = split_id_and_data(y, False)
+            y = self._rearrange_data_by_id(id_new=id_arr, data_new=y, method_name='evaluate')
+            return self.internal.evaluate(y=y, x=x, metrics=metric, num_workers=num_workers)
         else:
             raise ValueError("value of y should be a dict of ndarray")
 
-    def predict(self, x, horizon=24):
+    def predict(self, x, horizon=24, num_workers=None):
         """
         Prediction.
         :param x: input
+        :param horizon
+        :param num_workers
         :return: result
         """
-        pred = self.internal.predict(x=x, horizon=horizon)
+        pred = self.internal.predict(x=x, horizon=horizon, num_workers=num_workers)
         result = dict()
         if self.id_arr is not None:
             result['id'] = self.id_arr
         result["prediction"] = pred
         return result
 
-    def is_distributed(self):
+    def is_xshards_distributed(self):
         return False
 
     def save(self, model_path):
@@ -386,7 +435,7 @@ class TCMFLocalModelWrapper(ModelWrapper):
         self.internal.restore(model_path + "/model")
 
 
-def split_id_and_train_data(d, is_distributed):
+def split_id_and_data(d, is_xshards_distributed=False):
     if 'y' in d:
         train_data = d['y']
         if not isinstance(train_data, np.ndarray):
@@ -399,6 +448,6 @@ def split_id_and_train_data(d, is_distributed):
         if len(id_arr) != train_data.shape[0]:
             raise ValueError("the length of the id array should be equal to the number of "
                              "rows in the y")
-    elif is_distributed:
+    elif is_xshards_distributed:
         raise ValueError("key `id` doesn't exist in x")
     return id_arr, train_data

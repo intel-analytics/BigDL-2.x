@@ -61,6 +61,12 @@ from zoo.automl.model.tcmf.time import TimeCovariates
 import copy
 
 import pickle
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+console = logging.StreamHandler()
+logger.addHandler(console)
 
 
 def get_model(A, y, lamb=0):
@@ -544,7 +550,8 @@ class DeepGLO(object):
             val_len=self.val_len,
             shuffle=False,
         )
-        print("-"*50+"Initializing Factors.....")
+        # print("-"*50+"Initializing Factors.....")
+        logger.info("Initializing Factors")
         self.num_epochs = init_epochs
         self.train_factors()
 
@@ -552,25 +559,23 @@ class DeepGLO(object):
             alt_iters += 1
 
         # print("Starting Alternate Training.....")
-        print("Starting Alternate Training.....")
+        logger.info("Starting Alternate Training.....")
 
         for i in range(1, alt_iters):
             if i % 2 == 0:
-                print(
-                    "--------------------------------------------Training Factors. Iter#:{}"
-                    .format(i)
-                    + "-------------------------------------------------------"
-                )
+                logger.info("Training Factors. Iter#:{}".format(i))
                 self.num_epochs = max_FX_epoch
                 self.train_factors(
                     seed=False, early_stop=True, tenacity=tenacity, mod=mod
                 )
             else:
-                print(
-                    "--------------------------------------------Training Xseq Model. Iter#:{}"
-                    .format(i)
-                    + "-------------------------------------------------------"
-                )
+                # logger.info(
+                #     "--------------------------------------------Training Xseq Model. Iter#:{}"
+                #     .format(i)
+                #     + "-------------------------------------------------------"
+                # )
+                logger.info("Training Xseq Model. Iter#:{}".format(i))
+
                 self.num_epochs = max_TCN_epoch
                 T = np.array(self.X.detach())
                 self.train_Xseq(
@@ -580,11 +585,53 @@ class DeepGLO(object):
                     tenacity=tenacity,
                 )
 
-        print("-"*50, "Start training Yseq", "-"*50)
+        logger.info("Start training Yseq.....")
         val_loss = self.train_Yseq(num_epochs=y_iters,
                                    num_workers=num_workers,
                                    )
         return val_loss
+
+    def append_new_y(self, Ymat_new):
+        # update Yseq
+        # normalize the incremented Ymat if needed
+        if self.normalize:
+            Ymat_new = (Ymat_new - self.m[:, None]) / self.s[:, None]
+            Ymat_new = Ymat_new + self.mini
+
+        # append the new Ymat onto the original, note that self.end_index equals to the no.of time
+        # steps of the original.
+        n, T_added = Ymat_new.shape
+        self.Ymat = np.concatenate((self.Ymat[:, : self.end_index], Ymat_new), axis=1)
+        self.end_index = self.end_index + T_added
+
+        n, T = self.Ymat.shape
+        t0 = self.end_index + 1
+        if t0 > T:
+            self.Ymat = np.hstack([self.Ymat, self.Ymat[:, -1].reshape(-1, 1)])
+
+        # update Yseq.covariates
+        last_step = self.end_index - T_added
+        new_covariates = self.get_future_time_covs(T_added, last_step)
+        self.Yseq.covariates = np.hstack([self.Yseq.covariates[:, :last_step], new_covariates])
+
+    def inject_new(self,
+                   Ymat_new,
+                   ):
+        if self.Ymat.shape[0] != Ymat_new.shape[0]:
+            raise ValueError("Expected incremental input with {} time series, got {} instead."
+                             .format(self.Ymat.shape[0], Ymat_new.shape[0]))
+        self.append_new_y(Ymat_new)
+        n, T = self.Ymat.shape
+        rank, XT = self.X.shape
+        future = T - XT
+        Xn = self.recover_future_X(
+            last_step=XT,
+            future=future,
+            num_epochs=100000,
+            alpha=0.3,
+            vanilla=True,
+        )
+        self.X = torch.cat([self.X, Xn], dim=1)
 
     def get_time_covs(self, start_date, num_ts):
         if self.use_time:
@@ -605,19 +652,23 @@ class DeepGLO(object):
             covariates = self.covariates
         return covariates
 
-    def get_prediction_time_covs(self, rg, horizon, last_step):
-        covs_past = self.Yseq.covariates[:, last_step - rg: last_step]
+    def get_future_time_covs(self, horizon, last_step):
         if self.freq[0].isalpha():
             freq = "1" + self.freq
         else:
             freq = self.freq
         future_start_date = pd.Timestamp(self.start_date) + pd.Timedelta(freq) * last_step
         covs_future = self.get_time_covs(start_date=future_start_date, num_ts=horizon)
+        return covs_future
+
+    def get_prediction_time_covs(self, rg, horizon, last_step):
+        covs_past = self.Yseq.covariates[:, last_step - rg: last_step]
+        covs_future = self.get_future_time_covs(horizon, last_step)
         covs = np.concatenate([covs_past, covs_future], axis=1)
         return covs
 
     def predict_horizon(
-            self, ind=None, future=10, normalize=False, bsize=90, num_workers=1,
+            self, ind=None, future=10, bsize=90, num_workers=1,
     ):
         last_step = self.end_index
         if ind is None:
@@ -669,7 +720,7 @@ class DeepGLO(object):
             num_workers=num_workers,
         )
 
-        if normalize:
+        if self.normalize:
             Y = Y - self.mini
             Y = Y * self.s[ind, None] + self.m[ind, None]
             return Y
