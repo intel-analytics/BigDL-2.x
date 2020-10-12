@@ -67,7 +67,7 @@ then
 fi
 
 echo "Fetching bert with ${BERT_COMMIT_ID}"
-GET_COMMAND="wget -nc https://github.com/google-research/bert/archive/${BERT_COMMIT_ID}.zip -P $DEST_DIR"
+GET_COMMAND="wget -nc $FTP_URI/bert/archive/${BERT_COMMIT_ID}.zip -P $DEST_DIR"
 echo "Running: $GET_COMMAND"
 $GET_COMMAND
 exit_status=$?
