@@ -51,7 +51,10 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         self.scaler = StandardScaler()
         self.config = None
         self.dt_col = dt_col
-        self.target_col = target_col
+        if isinstance(target_col, str):
+            self.target_col = [target_col]
+        else:
+            self.target_col = target_col
         self.extra_features_col = extra_features_col
         self.feature_data = None
         self.drop_missing = drop_missing
@@ -199,11 +202,13 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         return output_x, output_y
 
     def _unscale(self, y):
-        target_col_indexes = list(range(len(self.target_col)))
-        dummy_feature_shape = self.scaler.scale_.shape[0]
-        y_dummy = np.zeros((y.shape[0], dummy_feature_shape))
-        y_dummy[:, target_col_indexes] = y
-        y_unscale = self.scaler.inverse_transform(y_dummy)[:, target_col_indexes]
+        # for standard scalar
+        y_unscale = np.zeros(y.shape)
+        for i in range(len(self.target_col)):
+            value_mean = self.scaler.mean_[i]
+            value_scale = self.scaler.scale_[i]
+            y_unscale[:, i:i+self.future_seq_len] = \
+                y[:, i:i+self.future_seq_len] * value_scale + value_mean
         return y_unscale
 
     def unscale_uncertainty(self, y_uncertainty):
@@ -223,9 +228,9 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         y_pred_df = y_pred_dt_df
         if self.future_seq_len > 1:
             for i in range(self.future_seq_len):
-                for j in range(self.target_col):
+                for j in range(len(self.target_col)):
                     column = self.target_col[j] + str(i)
-                    y_pred_df[column] = pd.DataFrame(y_pred_unscale[j])
+                    y_pred_df[column] = pd.DataFrame(y_pred_unscale[:, i])
         else:
             y_pred_df[self.target_col] = pd.DataFrame(y_pred_unscale)
         return y_pred_df
