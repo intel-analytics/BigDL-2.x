@@ -73,6 +73,7 @@ class TimeSequenceModel(BaseModel):
         :return: the resulting metric
         """
         if not self.model:
+            config["output_dim"] = y.shape[-1]
             self._sel_model(config, verbose=1)
 
         return self.model.fit_eval(x, y,
