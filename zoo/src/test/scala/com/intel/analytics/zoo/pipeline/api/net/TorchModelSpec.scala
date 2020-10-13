@@ -276,7 +276,7 @@ class TorchModelSpec extends ZooSpecHelper{
 
         val bys = PythonInterpreter.getValue[Array[Byte]]("bym")
         val model = new InferenceModel()
-        val pytorchModel = model.doLoadPyTorch(bys)
+        val pytorchModel = model.doLoadPyTorchBytes(bys)
         val c = PythonInterpreter.getValue[Array[Byte]]("byc")
         val criterion = TorchLoss(c)
 
