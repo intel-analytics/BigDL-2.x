@@ -68,7 +68,7 @@ def main():
     torch.manual_seed(args.seed)
 
     train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST(args.dir, train=True,
+        datasets.MNIST(args.dir, train=True, download=True
                        transform=transforms.Compose([
                            transforms.ToTensor(),
                            transforms.Normalize((0.1307,), (0.3081,))
