@@ -21,14 +21,15 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{EngineType, Table}
 import com.intel.analytics.zoo.common.PythonInterpreter
 import com.intel.analytics.zoo.feature.PythonFeatureSet
-import jep.NDArray
 import org.apache.spark.TaskContext
 
 import scala.reflect.ClassTag
 import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil
+import com.intel.analytics.zoo.pipeline.api.net.TorchOptim.DecayType
 
 class TorchOptim[@specialized(Float, Double) T: ClassTag](
-    torchOptim: Array[Byte])(implicit ev: TensorNumeric[T]) extends OptimMethod[T] {
+    torchOptim: Array[Byte],
+    decayType: DecayType)(implicit ev: TensorNumeric[T]) extends OptimMethod[T] {
   import TorchOptim._
 
   @transient
@@ -53,9 +54,6 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
     PythonInterpreter.exec(loadModelCode)
     weightName = name + "_weight"
     gradientName = name + "gradient"
-    lrStepCode = s"""
-                  |${name}.step()
-                  |""".stripMargin
     if (PythonInterpreter.getValue[Boolean](s"isinstance($name, Optimizer)")) {
       initCode = s"""
            |$weightName = torch.tensor($weightName, requires_grad=True)
@@ -93,8 +91,6 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
   @transient
   protected var initCode = ""
   @transient
-  protected var lrStepCode = ""
-  @transient
   protected var stepCode = ""
   @transient
   protected var init = false
@@ -114,9 +110,7 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
       PythonInterpreter.exec(initCode)
       init = true
     }
-    if (optimType == LrSchedule && lastEpoch < epoch) {
-      PythonInterpreter.exec(lrStepCode)
-    }
+    updateHyperParameter()
     PythonInterpreter.set(gradientName, new NDArray[Array[Float]](
       dfdx.toTensor[Float].storage().array()))
     PythonInterpreter.exec(stepCode)
@@ -150,7 +144,22 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
   override def updateHyperParameter(): Unit = {
     if (optimType == LrSchedule) {
       val epoch = getEpoch(this)
-      PythonInterpreter.exec(s"${name}.step(${epoch})")
+      decayType match{
+        case TorchOptim.EpochDecay =>
+          if (lastEpoch < epoch) {
+            PythonInterpreter.exec(s"${name}.step()")
+            lastEpoch += 1
+          }
+        case TorchOptim.IterationDecay =>
+          PythonInterpreter.exec(s"${name}.step()")
+        case TorchOptim.EpochDecayByScore =>
+          if (lastEpoch < epoch) {
+            val valScore = getScore(this)
+            PythonInterpreter.set("val_score", valScore)
+            PythonInterpreter.exec(s"${name}.step(val_score)")
+            lastEpoch += 1
+          }
+      }
     }
   }
 
@@ -166,16 +175,52 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
 
 object TorchOptim{
   sealed trait OptimType
-
   case object LrSchedule extends OptimType
   case object Optim extends OptimType
 
-  def apply[T: ClassTag](optimBytes: Array[Byte])(implicit ev: TensorNumeric[T]): TorchOptim[T] = {
-    new TorchOptim[T](optimBytes)
+  sealed trait DecayType
+  case object EpochDecay extends DecayType
+  case object IterationDecay extends DecayType
+  case object EpochDecayByScore extends DecayType
+  // TODO: Support this later.
+//  case object IterationDecayByEpoch extends DecayType
+
+  def getDecayType(decayType: String): DecayType = {
+    decayType.toLowerCase() match {
+      case "epochdecay" =>
+        EpochDecay
+      case "iterationdecay" =>
+        IterationDecay
+      case "epochdecaybyscore" =>
+        EpochDecayByScore
+//      case "iterationdecaybyepoch" =>
+//        IterationDecayByEpoch
+      case _ =>
+        throw new IllegalArgumentException(s"unknow decay type: ${decayType}, expected:" +
+          s"EpochDecay, IterationDecay, EpochDecayByScore")
+    }
+
+  }
+
+  def apply[T: ClassTag](
+        optimBytes: Array[Byte],
+        decayType: String)(implicit ev: TensorNumeric[T]): TorchOptim[T] = {
+    apply[T](optimBytes, getDecayType(decayType))
+  }
+
+  def apply[T: ClassTag](
+        optimBytes: Array[Byte],
+        decayType: DecayType)(implicit ev: TensorNumeric[T]): TorchOptim[T] = {
+    new TorchOptim[T](optimBytes, decayType)
   }
 
   protected[net] def getEpoch[T: ClassTag](optim: TorchOptim[T]): Int = {
     // BigDL's epoch starts from 1, while torch starts from 0.
     InternalOptimizerUtil.getStateFromOptiMethod(optim)[Int]("epoch") - 1
+  }
+
+  protected[net] def getScore[T: ClassTag](optim: TorchOptim[T]): Float = {
+    // BigDL's epoch starts from 1, while torch starts from 0.
+    InternalOptimizerUtil.getStateFromOptiMethod(optim)[Float]("score")
   }
 }
