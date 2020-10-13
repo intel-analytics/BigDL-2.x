@@ -23,6 +23,7 @@ import com.intel.analytics.zoo.common.{PythonInterpreter, PythonInterpreterTest}
 import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil.getStateFromOptiMethod
+import com.intel.analytics.zoo.pipeline.api.net.TorchOptim.EpochDecay
 import org.apache.log4j.{Level, Logger}
 
 @PythonInterpreterTest
@@ -78,7 +79,7 @@ class TorchOptimSpec extends ZooSpecHelper{
          |""".stripMargin
     PythonInterpreter.exec(code)
     val bys = Files.readAllBytes(Paths.get(tmpname))
-    val torchOptim = TorchOptim[Float](bys)
+    val torchOptim = TorchOptim[Float](bys, EpochDecay)
 
     val weight = Tensor[Float](4).fill(1)
     val gradient = Tensor[Float](Array(0.1f, 0.2f, 0.3f, 0.4f), Array(4))
@@ -100,7 +101,7 @@ class TorchOptimSpec extends ZooSpecHelper{
          |""".stripMargin
     PythonInterpreter.exec(code)
     val bys = Files.readAllBytes(Paths.get(tmpname))
-    val torchOptim = TorchOptim[Float](bys)
+    val torchOptim = TorchOptim[Float](bys, EpochDecay)
 
     val weight = Tensor[Float](4).fill(1)
     val gradient = Tensor[Float](Array(0.1f, 0.2f, 0.3f, 0.4f), Array(4))
