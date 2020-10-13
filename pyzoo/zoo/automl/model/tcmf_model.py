@@ -229,7 +229,7 @@ class TCMF(BaseModel):
         if dti is not None and not isinstance(dti, pd.DatetimeIndex):
             raise ValueError("Input dti must be a pandas DatetimeIndex. Got",
                              type(dti))
-        if  dti is not None and len(dti) != ts_len:
+        if dti is not None and len(dti) != ts_len:
             raise ValueError(f"Input dti length should be equal to {ts_len}, "
                              f"but got {len(dti)} instead.")
 
