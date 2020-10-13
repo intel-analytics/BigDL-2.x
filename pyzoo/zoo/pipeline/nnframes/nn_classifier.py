@@ -15,6 +15,7 @@
 #
 
 import json
+from bigdl.nn.layer import Layer
 from pyspark.ml.param.shared import *
 from pyspark.ml.wrapper import JavaModel, JavaEstimator, JavaTransformer
 from pyspark.ml.util import MLWritable, MLReadable, JavaMLWriter, DefaultParamsReader
@@ -442,7 +443,8 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         # explicity reset SamplePreprocessing even though java_model already has the preprocessing,
         # so that python NNModel also has sample_preprocessing
         estPreprocessing = self.getSamplePreprocessing()
-        nnModel = NNModel(model=self.model, feature_preprocessing=None, jvalue=java_model,
+        model = Layer.from_jvalue(java_model.getModel(), bigdl_type=self.bigdl_type)
+        nnModel = NNModel(model=model, feature_preprocessing=None, jvalue=java_model,
                           bigdl_type=self.bigdl_type) \
             .setSamplePreprocessing(ChainedPreprocessing([ToTuple(), estPreprocessing]))
 
@@ -565,7 +567,8 @@ class NNClassifier(NNEstimator):
         # explicity reset SamplePreprocessing even though java_model already has the preprocessing,
         # so that python NNClassifierModel also has sample_preprocessing
         estPreprocessing = self.getSamplePreprocessing()
-        classifierModel = NNClassifierModel(model=self.model, feature_preprocessing=None,
+        model = Layer.from_jvalue(java_model.getModel(), bigdl_type=self.bigdl_type)
+        classifierModel = NNClassifierModel(model=model, feature_preprocessing=None,
                                             jvalue=java_model, bigdl_type=self.bigdl_type) \
             .setSamplePreprocessing(ChainedPreprocessing([ToTuple(), estPreprocessing]))
 

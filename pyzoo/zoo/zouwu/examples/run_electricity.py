@@ -105,8 +105,10 @@ if __name__ == "__main__":
     )
     ymat = np.load(args.data_dir) if not args.use_dummy_data else get_dummy_data()
     horizon = 24
-    train_data = ymat[:, :-horizon]
-    target_data = ymat[:, -horizon:]
+    train_data = ymat[:, : -2 * horizon]
+    target_data = ymat[:, -2 * horizon: -horizon]
+    incr_target_data = ymat[:, -horizon:]
+
     logger.info('Start fitting.')
     model.fit({'y': train_data}, num_workers=args.num_workers)
     logger.info('Fitting ends.')
@@ -114,7 +116,7 @@ if __name__ == "__main__":
     # you can save and load model as you want
     with tempfile.TemporaryDirectory() as tempdirname:
         model.save(tempdirname)
-        loaded_model = TCMFForecaster.load(tempdirname, distributed=False)
+        loaded_model = TCMFForecaster.load(tempdirname, is_xshards_distributed=False)
 
     if args.predict_local:
         logger.info('Stopping context for yarn cluster and init context on local.')
@@ -123,7 +125,7 @@ if __name__ == "__main__":
         ray.init(num_cpus=args.num_predict_cores)
 
     logger.info('Start prediction.')
-    yhat = model.predict(x=None, horizon=24,
+    yhat = model.predict(horizon=horizon,
                          num_workers=args.num_predict_workers
                          if args.predict_local else args.num_workers)
     logger.info("Prediction ends")
@@ -135,9 +137,21 @@ if __name__ == "__main__":
     evaluate_mse = Evaluator.evaluate("mse", target_data, yhat)
 
     # You can also evaluate directly without prediction results.
-    mse, smape = model.evaluate(x=None, target_value=target_value, metric=['mse', 'smape'])
+    mse, smape = model.evaluate(target_value=target_value, metric=['mse', 'smape'],
+                                num_workers=args.num_predict_workers if args.predict_local
+                                else args.num_workers)
     print(f"Evaluation results: mse: {mse}, smape: {smape}")
+    logger.info("Evaluation ends")
 
+    # incremental fitting
+    logger.info("Start fit incremental")
+    model.fit_incremental({'y': target_data})
+    logger.info("Start evaluation after fit incremental")
+    incr_target_value = dict({"y": incr_target_data})
+    mse, smape = model.evaluate(target_value=incr_target_value, metric=['mse', 'smape'],
+                                num_workers=args.num_predict_workers
+                                if args.predict_local else args.num_workers)
+    print(f"Evaluation results after incremental fitting: mse: {mse}, smape: {smape}")
     logger.info("Evaluation ends")
 
     stop_orca_context()

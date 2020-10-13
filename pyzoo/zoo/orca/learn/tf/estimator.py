@@ -17,6 +17,7 @@
 from bigdl.optim.optimizer import MaxEpoch
 
 from zoo.orca.learn.tf.utils import *
+from zoo.orca.learn.utils import find_latest_checkpoint
 from zoo.tfpark import KerasModel
 from zoo.tfpark import TFOptimizer, TFNet, ZooOptimizer
 from zoo.tfpark.tf_optimizer import StatelessMetric
@@ -51,7 +52,7 @@ class Estimator(object):
         Load latest Orca checkpoint under specified directory.
         :param path: directory containing Orca checkpoint files.
         """
-        ckpt_path, version = find_latest_checkpoint(path)
+        ckpt_path, _, version = find_latest_checkpoint(path, model_type="tf")
         if ckpt_path is None:
             raise Exception("Cannot find checkpoint")
         self.load_orca_checkpoint(ckpt_path, version)
@@ -250,6 +251,7 @@ class TFOptimizerWrapper(Estimator):
             labels_cols=None,
             validation_data=None,
             hard_code_batch_size=False,
+            auto_shard_files=True,
             session_config=None,
             feed_dict=None,
             checkpoint_trigger=None
@@ -268,6 +270,8 @@ class TFOptimizerWrapper(Estimator):
         :param validation_data: validation data. Validation data type should be the same
         as train data.
         :param hard_code_batch_size: whether hard code batch size for training. Default is False.
+        :param auto_shard_files: whether to automatically detect if the dataset is file-based and
+        and apply sharding on files, otherwise sharding on records. Default is True.
         :param session_config: tensorflow session configuration for training.
         Should be object of tf.ConfigProto
         :param feed_dict: a dictionary. The key is TensorFlow tensor, usually a
@@ -295,7 +299,8 @@ class TFOptimizerWrapper(Estimator):
                              validation_data=validation_data,
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=hard_code_batch_size,
-                             sequential_order=False, shuffle=True
+                             sequential_order=False, shuffle=True,
+                             auto_shard_files=auto_shard_files
                              )
 
         if feed_dict is not None:
@@ -327,7 +332,8 @@ class TFOptimizerWrapper(Estimator):
 
     def predict(self, data, batch_size=4,
                 feature_cols=None,
-                hard_code_batch_size=False
+                hard_code_batch_size=False,
+                auto_shard_files=True,
                 ):
         """
         Predict input data
@@ -359,7 +365,8 @@ class TFOptimizerWrapper(Estimator):
                              feature_cols=feature_cols, labels_cols=None,
                              hard_code_batch_size=hard_code_batch_size,
                              sequential_order=True,
-                             shuffle=False
+                             shuffle=False,
+                             auto_shard_files=auto_shard_files,
                              )
 
         flat_inputs = nest.flatten(self.inputs)
@@ -376,7 +383,8 @@ class TFOptimizerWrapper(Estimator):
     def evaluate(self, data, batch_size=32,
                  feature_cols=None,
                  labels_cols=None,
-                 hard_code_batch_size=False
+                 hard_code_batch_size=False,
+                 auto_shard_files=True,
                  ):
         """
         Evaluate model.
@@ -406,7 +414,8 @@ class TFOptimizerWrapper(Estimator):
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=hard_code_batch_size,
                              sequential_order=True,
-                             shuffle=False
+                             shuffle=False,
+                             auto_shard_files=auto_shard_files,
                              )
 
         flat_inputs = nest.flatten(self.inputs)
@@ -437,7 +446,8 @@ class TFKerasWrapper(Estimator):
             validation_data=None,
             hard_code_batch_size=False,
             session_config=None,
-            checkpoint_trigger=None
+            checkpoint_trigger=None,
+            auto_shard_files=True,
             ):
         """
         Train this keras model with train data.
@@ -482,8 +492,8 @@ class TFKerasWrapper(Estimator):
                              validation_data=validation_data,
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=hard_code_batch_size,
-                             sequential_order=False, shuffle=True
-                             )
+                             sequential_order=False, shuffle=True,
+                             auto_shard_files=auto_shard_files,)
 
         self.tf_optimizer = TFOptimizer.from_keras(self.model.model, dataset,
                                                    model_dir=self.model.model_dir,
@@ -502,7 +512,8 @@ class TFKerasWrapper(Estimator):
 
     def predict(self, data, batch_size=4,
                 feature_cols=None,
-                hard_code_batch_size=False
+                hard_code_batch_size=False,
+                auto_shard_files=True,
                 ):
         """
         Predict input data
@@ -532,7 +543,8 @@ class TFKerasWrapper(Estimator):
                              validation_data=None,
                              feature_cols=feature_cols, labels_cols=None,
                              hard_code_batch_size=hard_code_batch_size,
-                             sequential_order=True, shuffle=False
+                             sequential_order=True, shuffle=False,
+                             auto_shard_files=auto_shard_files,
                              )
 
         predicted_rdd = self.model.predict(dataset, batch_size)
@@ -546,7 +558,8 @@ class TFKerasWrapper(Estimator):
     def evaluate(self, data, batch_size=4,
                  feature_cols=None,
                  labels_cols=None,
-                 hard_code_batch_size=False
+                 hard_code_batch_size=False,
+                 auto_shard_files=True
                  ):
         """
         Evaluate model.
@@ -572,7 +585,8 @@ class TFKerasWrapper(Estimator):
                              validation_data=None,
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=hard_code_batch_size,
-                             sequential_order=True, shuffle=False
+                             sequential_order=True, shuffle=False,
+                             auto_shard_files=auto_shard_files
                              )
 
         return self.model.evaluate(dataset, batch_per_thread=batch_size)
