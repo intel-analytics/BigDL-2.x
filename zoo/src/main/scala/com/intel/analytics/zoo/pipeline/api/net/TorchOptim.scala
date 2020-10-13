@@ -21,6 +21,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{EngineType, Table}
 import com.intel.analytics.zoo.common.PythonInterpreter
 import com.intel.analytics.zoo.feature.PythonFeatureSet
+import jep.NDArray
 import org.apache.spark.TaskContext
 
 import scala.reflect.ClassTag
@@ -155,7 +156,7 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
         case TorchOptim.EpochDecayByScore =>
           if (lastEpoch < epoch) {
             val valScore = getScore(this)
-            PythonInterpreter.set("val_score", valScore)
+            PythonInterpreter.set("val_score", java.lang.Float.valueOf(valScore))
             PythonInterpreter.exec(s"${name}.step(val_score)")
             lastEpoch += 1
           }
