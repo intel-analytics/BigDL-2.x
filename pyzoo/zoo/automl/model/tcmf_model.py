@@ -80,7 +80,7 @@ class TCMF(BaseModel):
             num_workers = TCMF.get_default_num_workers()
         covariates = config.get('covariates', None)
         dti = config.get("dti", None)
-        TCMF._check_covariates_dti(covariates=covariates, dti=dti, ts_len=x.shape[1])
+        self._check_covariates_dti(covariates=covariates, dti=dti, ts_len=x.shape[1])
         val_loss = self.model.train_all_models(x,
                                                val_len=config.get("val_len", 24),
                                                start_date=config.get("start_date", "2020-4-1"),
@@ -110,7 +110,8 @@ class TCMF(BaseModel):
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling "
                             "fit_incremental")
-        TCMF._check_covariates_dti(covariates=covariates_new, dti=dti_new, ts_len=x.shape[1])
+        self._check_covariates_dti(covariates=covariates_new, dti=dti_new, ts_len=x.shape[1],
+                                   method_name='fit_incremental')
         self.model.inject_new(x,
                               covariates_new=covariates_new,
                               dti_new=dti_new)
@@ -144,7 +145,8 @@ class TCMF(BaseModel):
             raise ValueError("We don't support input x directly.")
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling predict")
-        TCMF._check_covariates_dti(covariates=future_covariates, dti=future_dti, ts_len=horizon)
+        self._check_covariates_dti(covariates=future_covariates, dti=future_dti, ts_len=horizon,
+                                   method_name="predict")
         if num_workers is None:
             num_workers = TCMF.get_default_num_workers()
         if num_workers > 1:
@@ -230,8 +232,7 @@ class TCMF(BaseModel):
     def _get_required_parameters(self):
         return {}
 
-    @staticmethod
-    def _check_covariates_dti(covariates=None, dti=None, ts_len=24):
+    def _check_covariates_dti(self, covariates=None, dti=None, ts_len=24, method_name='fit'):
         if covariates is not None and not isinstance(covariates, np.ndarray):
             raise ValueError("Input covariates must be a ndarray. Got", type(covariates))
         if covariates is not None and not covariates.ndim == 2:
@@ -241,11 +242,30 @@ class TCMF(BaseModel):
             raise ValueError(f"The second dimension shape of covariates should be {ts_len}, "
                              f"but got {covariates.shape[1]} instead.")
         if dti is not None and not isinstance(dti, pd.DatetimeIndex):
-            raise ValueError("Input dti must be a pandas DatetimeIndex. Got",
-                             type(dti))
+            raise ValueError("Input dti must be a pandas DatetimeIndex. Got", type(dti))
         if dti is not None and len(dti) != ts_len:
             raise ValueError(f"Input dti length should be equal to {ts_len}, "
                              f"but got {len(dti)} instead.")
+
+        if method_name != 'fit':
+            # covariates and dti should be consistent with that in fit
+            if self.model.covariates is None and covariates is not None:
+                raise ValueError(f"Find valid covariates in {method_name} but invalid covariates "
+                                 f"in fit. Please keep them in consistence!")
+            if self.model.covariates is not None and covariates is None:
+                raise ValueError(f"Find valid covariates in fit but invalid covariates in "
+                                 f"{method_name}. Please keep them in consistence!")
+            if self.model.covariates is not None \
+                    and self.model.covariates.shape[0] != covariates.shape[0]:
+                raise ValueError(f"The input covariates number in {method_name} should be the same "
+                                 f"as the input covariates number in fit. Got {covariates.shape[0]}"
+                                 f"and {self.model.covariates.shape[0]} respectively.")
+            if self.model.dti is None and dti is not None:
+                raise ValueError(f"Find valid dti in {method_name} but invalid dti in fit. "
+                                 f"Please keep them in consistence!")
+            if self.model.dti is not None and dti is None:
+                raise ValueError(f"Find valid dti in fit but invalid dti in {method_name}. "
+                                 f"Please keep them in consistence!")
 
 
 class ModelWrapper(metaclass=ABCMeta):
@@ -302,7 +322,7 @@ class TCMFXshardsModelWrapper(ModelWrapper):
             raise ValueError("value of x should be an xShards of dict, "
                              "but isn't an xShards")
 
-    def fit_incremental(self, x_incr, covariates_new=None, dti_new=None):
+    def fit_incremental(self, x_incr, covariates_incr=None, dti_incr=None):
         raise NotImplementedError
 
     def evaluate(self, x, y, metric=None, target_covariates=None,

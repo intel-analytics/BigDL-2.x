@@ -515,6 +515,8 @@ class DeepGLO(object):
         self.start_date = start_date
         self.freq = freq
         self.period = period
+        self.covariates = covariates
+        self.dti = dti
 
         if self.normalize:
             self.s = np.std(Ymat[:, 0:self.end_index], axis=1)

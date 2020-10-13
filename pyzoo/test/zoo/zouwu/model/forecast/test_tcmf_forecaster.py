@@ -28,8 +28,8 @@ class TestZouwuModelTCMFForecaster(TestCase):
         self.model = TCMFForecaster()
         self.num_samples = 300
         self.horizon = np.random.randint(1, 50)
-        seq_len = 480
-        self.data = np.random.rand(self.num_samples, seq_len)
+        self.seq_len = 480
+        self.data = np.random.rand(self.num_samples, self.seq_len)
         self.id = np.arange(self.num_samples)
         self.data_new = np.random.rand(self.num_samples, self.horizon)
         self.fit_params = dict(val_len=12,
@@ -41,7 +41,7 @@ class TestZouwuModelTCMFForecaster(TestCase):
                                max_TCN_epoch=1,
                                alt_iters=2)
 
-    def test_ndarray_local(self):
+    def test_forecast_tcmf_ndarray(self):
         ndarray_input = {'id': self.id, 'y': self.data}
         self.model.fit(ndarray_input, **self.fit_params)
         assert not self.model.is_xshards_distributed()
@@ -66,6 +66,52 @@ class TestZouwuModelTCMFForecaster(TestCase):
         self.model.fit_incremental({'y': self.data_new})  # 1st time
         self.model.fit_incremental({'y': self.data_new})  # 2nd time
         yhat_incr = self.model.predict(horizon=self.horizon)
+        yhat_incr = yhat_incr["prediction"]
+        assert yhat_incr.shape == (self.num_samples, self.horizon)
+        np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, yhat, yhat_incr)
+
+    def test_tcmf_ndarray_covariates_dti(self):
+        ndarray_input = {'id': self.id, 'y': self.data}
+        self.model.fit(ndarray_input,
+                       covariates=np.random.rand(3, self.seq_len),
+                       dti=pd.date_range('20130101', periods=self.seq_len),
+                       **self.fit_params)
+        future_covariates = np.random.randn(3, self.horizon)
+        future_dti = pd.date_range('20130101', periods=self.horizon)
+        # test predict
+        yhat = self.model.predict(horizon=self.horizon,
+                                  future_covariates=future_covariates,
+                                  future_dti=future_dti,
+                                  )
+
+        # test save load
+        with tempfile.TemporaryDirectory() as tempdirname:
+            self.model.save(tempdirname)
+            loaded_model = TCMFForecaster.load(tempdirname, is_xshards_distributed=False)
+        yhat_loaded = loaded_model.predict(horizon=self.horizon,
+                                           future_covariates=future_covariates,
+                                           future_dti=future_dti,
+                                           )
+        yhat_id = yhat_loaded["id"]
+        np.testing.assert_equal(yhat_id, self.id)
+        yhat = yhat["prediction"]
+        yhat_loaded = yhat_loaded["prediction"]
+        assert yhat.shape == (self.num_samples, self.horizon)
+        np.testing.assert_array_almost_equal(yhat, yhat_loaded, decimal=4)
+        # test evaluate
+        target_value = dict({"y": self.data_new})
+        assert self.model.evaluate(target_value=target_value,
+                                   target_covariates=future_covariates,
+                                   target_dti=future_dti,
+                                   metric=['mse'])
+        # test fit_incremental
+        self.model.fit_incremental({'y': self.data_new},
+                                   covariates_incr=future_covariates,
+                                   dti_incr=future_dti,)
+        yhat_incr = self.model.predict(horizon=self.horizon,
+                                       future_covariates=future_covariates,
+                                       future_dti=future_dti,
+                                       )
         yhat_incr = yhat_incr["prediction"]
         assert yhat_incr.shape == (self.num_samples, self.horizon)
         np.testing.assert_raises(AssertionError, np.testing.assert_array_equal, yhat, yhat_incr)
@@ -96,24 +142,6 @@ class TestZouwuModelTCMFForecaster(TestCase):
                         in str(context.exception))
 
         input_right = dict({'id': self.id, 'y': self.data})
-
-        with self.assertRaises(Exception) as context:
-            self.model.fit(input_right, covariates='None')
-        self.assertTrue("Input covariates must be a ndarray. Got"
-                        in str(context.exception))
-        with self.assertRaises(Exception) as context:
-            self.model.fit(input_right, covariates=np.random.randn(3, 45))
-        self.assertTrue("The second dimension shape of covariates should be"
-                        in str(context.exception))
-        with self.assertRaises(Exception) as context:
-            self.model.fit(input_right, dti='None')
-        self.assertTrue("Input dti must be a pandas DatetimeIndex. Got"
-                        in str(context.exception))
-        with self.assertRaises(Exception) as context:
-            self.model.fit(input_right, dti=pd.date_range('20130101', periods=self.horizon-1))
-        self.assertTrue("Input dti length should be equal to"
-                        in str(context.exception))
-
         self.model.fit(input_right, **self.fit_params)
         with self.assertRaises(Exception) as context:
             self.model.fit(input_right)
