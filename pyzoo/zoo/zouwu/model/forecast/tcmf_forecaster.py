@@ -191,21 +191,36 @@ class TCMFForecaster(Forecaster):
                  target_value,
                  x=None,
                  metric=['mae'],
-                 covariates=None,
+                 target_covariates=None,
+                 target_dti=None,
                  num_workers=None,
                  ):
         """
         evaluate the model
         :param target_value: target value for evaluation. We interpret its second dimension of
         as the horizon length for evaluation.
-        :param covariates: global covariates
-        :param x: the input
+        :param x: the input. We don't support input x directly
         :param metric: the metrics
+        :param target_covariates: covariates corresponding to target_value.
+            2-D ndarray or None.
+            The shape of ndarray should be (r, horizon), where r is the number of covariates.
+            Global covariates for all time series. If None, only default time coveriates will be
+            used while use_time is True. If not, the time coveriates used is the stack of input
+            covariates and default time coveriates.
+        :param target_dti: dti corresponding to target_value.
+            DatetimeIndex or None.
+            If None, use default fixed frequency DatetimeIndex generated with the last date of x in
+            fit and freq.
         :param num_workers: the number of workers to use in evaluate. If None, it defaults to
         num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
         :return:
         """
-        return self.internal.evaluate(y=target_value, x=x, metric=metric, num_workers=num_workers)
+        return self.internal.evaluate(y=target_value,
+                                      x=x,
+                                      metric=metric,
+                                      target_covariates=target_covariates,
+                                      target_dti=target_dti,
+                                      num_workers=num_workers)
 
     def predict(self,
                 x=None,

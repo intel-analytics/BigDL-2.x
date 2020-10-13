@@ -171,7 +171,8 @@ class TCMF(BaseModel):
         )
         return out[:, -horizon::]
 
-    def evaluate(self, x=None, y=None, metrics=None, num_workers=None):
+    def evaluate(self, x=None, y=None, metrics=None, target_covariates=None,
+                 target_dti=None, num_workers=None):
         """
         Evaluate on the prediction results and y. We predict horizon time-points ahead the input x
         in fit_eval before evaluation, where the horizon length equals the second dimension size of
@@ -180,6 +181,16 @@ class TCMF(BaseModel):
         :param y: target. We interpret the second dimension of y as the horizon length for
             evaluation.
         :param metrics: a list of metrics in string format
+        :param target_covariates: covariates corresponding to target_value.
+            2-D ndarray or None.
+            The shape of ndarray should be (r, horizon), where r is the number of covariates.
+            Global covariates for all time series. If None, only default time coveriates will be
+            used while use_time is True. If not, the time coveriates used is the stack of input
+            covariates and default time coveriates.
+        :param target_dti: dti corresponding to target_value.
+            DatetimeIndex or None.
+            If None, use default fixed frequency DatetimeIndex generated with the last date of x in
+            fit and freq.
         :param num_workers: the number of workers to use in evaluate. It defaults to 1.
         :return: a list of metric evaluation results
         """
@@ -194,7 +205,10 @@ class TCMF(BaseModel):
             horizon = 1
         else:
             horizon = y.shape[1]
-        result = self.predict(x=None, horizon=horizon, num_workers=num_workers)
+        result = self.predict(x=None, horizon=horizon,
+                              future_covariates=target_covariates,
+                              future_dti=target_dti,
+                              num_workers=num_workers)
 
         if y.shape[1] == 1:
             multioutput = 'uniform_average'
@@ -291,13 +305,16 @@ class TCMFXshardsModelWrapper(ModelWrapper):
     def fit_incremental(self, x_incr, covariates_new=None, dti_new=None):
         raise NotImplementedError
 
-    def evaluate(self, x, y, metric=None, num_workers=None):
+    def evaluate(self, x, y, metric=None, target_covariates=None,
+                 target_dti=None, num_workers=None):
         """
         Evaluate the model
         :param x: input
         :param y: target
         :param metric:
         :param num_workers:
+        :param target_covariates:
+        :param target_dti:
         :return: a list of metric evaluation results
         """
         raise NotImplementedError
@@ -404,19 +421,25 @@ class TCMFNdarrayModelWrapper(ModelWrapper):
         else:
             raise ValueError("value of x should be a dict of ndarray")
 
-    def evaluate(self, x, y, metric=None, num_workers=None):
+    def evaluate(self, x, y, metric=None, target_covariates=None,
+                 target_dti=None, num_workers=None):
         """
         Evaluate the model
         :param x: input
         :param y: target
         :param metric:
+        :param target_covariates:
+        :param target_dti
         :param num_workers:
         :return: a list of metric evaluation results
         """
         if isinstance(y, dict):
             id_arr, y = split_id_and_data(y, False)
             y = self._rearrange_data_by_id(id_new=id_arr, data_new=y, method_name='evaluate')
-            return self.internal.evaluate(y=y, x=x, metrics=metric, num_workers=num_workers)
+            return self.internal.evaluate(y=y, x=x, metrics=metric,
+                                          target_covariates=target_covariates,
+                                          target_dti=target_dti,
+                                          num_workers=num_workers)
         else:
             raise ValueError("value of y should be a dict of ndarray")
 
