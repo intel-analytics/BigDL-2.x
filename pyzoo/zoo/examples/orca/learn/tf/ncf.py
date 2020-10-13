@@ -87,8 +87,9 @@ def load_data(data_dir):
         fout.close()
 
     # read movive len csv to XShards of Pandas Dataframe
-    full_data = zoo.orca.data.pandas.read_csv(new_rating_files, sep=':', header=None, names=COLUMN_NAMES,
-                                              usecols=[0, 1, 2], dtype={0: np.int32, 1: np.int32, 2: np.int32})
+    full_data = zoo.orca.data.pandas.read_csv(new_rating_files, sep=':', header=None,
+                                              names=COLUMN_NAMES, usecols=[0, 1, 2],
+                                              dtype={0: np.int32, 1: np.int32, 2: np.int32})
 
     user_set = set(full_data['user'].unique())
     item_set = set(full_data['item'].unique())
@@ -278,4 +279,3 @@ if __name__ == '__main__':
     predict(test_data, max_user_id, max_item_id)
 
     stop_orca_context()
-
