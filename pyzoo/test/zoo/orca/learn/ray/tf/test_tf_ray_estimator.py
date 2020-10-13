@@ -293,7 +293,6 @@ class TestTFRayEstimator(TestCase):
             # skip tests in horovod lower version
             pass
 
-
     def test_sparkxshards(self):
 
         def transform(df):

@@ -49,6 +49,7 @@ def ray_partition_to_creator(partition):
 
     return data_creator
 
+
 class Estimator:
     def __init__(self,
                  model_creator,
@@ -229,7 +230,8 @@ class Estimator:
 
         # see ./tf_runner.py:setup_distributed
         # for an explanation of only taking the first worker's data
-        stats = ray.get([w.validate.remote(**params_list[i]) for i, w in enumerate(self.remote_workers)])
+        stats = ray.get([w.validate.remote(**params_list[i])
+                         for i, w in enumerate(self.remote_workers)])
         stats = stats[0].copy()
         return stats
 
