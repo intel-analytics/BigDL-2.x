@@ -61,7 +61,10 @@ class TimeSequencePredictor(object):
         self.pipeline = None
         self.future_seq_len = future_seq_len
         self.dt_col = dt_col
-        self.target_col = target_col
+        if isinstance(target_col, str):
+            self.target_col = [target_col]
+        else:
+            self.target_col = target_col
         self.extra_features_col = extra_features_col
         self.drop_missing = drop_missing
         self.name = name
