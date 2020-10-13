@@ -38,6 +38,8 @@ object RunTFModel {
       val model = TFTrainingHelper(param.modelPath)
       val graphDef = model.graphRunner.graphDef
       println(s"graph def size is: ${graphDef.length} bytes")
+      val runnerOutput = model.graphRunner.output
+      println(s"graphRunner output size is: ${runnerOutput.size}")
       val (weights, gradweights) = model.parameters()
       for (i <- 0 until weights.length -1 ) {
         println(s"weights ${i} size: ${weights(i).size().mkString(",")}")

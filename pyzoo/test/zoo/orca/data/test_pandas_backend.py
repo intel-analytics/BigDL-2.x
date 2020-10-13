@@ -361,8 +361,10 @@ class TestSparkXShards(TestCase):
                 if not os.path.exists(path):
                     os.makedirs(path)
                 if len(data) == 1:
+
+                    print("data 0 is :", data[0])
                     # np.save(os.path.join(path, str(index)), data[0])
-                    with open(os.path.join(path, str(index)), "w+") as f:
+                    with open(os.path.join(path, str(index)), "wb+") as f:
                         pickle.dump(data[0], f)
                 yield 0
             return save_func

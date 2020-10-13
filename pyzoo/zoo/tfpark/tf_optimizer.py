@@ -30,6 +30,8 @@ from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss, OptimM
 from zoo.pipeline.api.net.utils import find_placeholders, to_bigdl_optim_method, find_tensors
 from zoo.pipeline.estimator import Estimator
 from zoo.util import nest
+from zoo.orca.learn.tf.utils import change_checkpoint_path
+from zoo import init_nncontext
 
 
 if sys.version >= '3':
@@ -334,6 +336,11 @@ class TFModel(object):
                                                   inputs, labels, predictions, grads, variables,
                                                   graph, tensors_with_value, metrics, updates,
                                                   train_op)
+
+        # put model files to spark executors
+        change_checkpoint_path(os.path.join(model_dir, "checkpoint"))
+        sc = init_nncontext()
+        sc.addFile(model_dir, True)
 
         training_helper_layer = TFTrainingHelper(model_dir,
                                                  session_config, saver, meta, sess)

@@ -19,7 +19,7 @@ import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.optim._
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.common.{PythonZoo, RDDWrapper}
+import com.intel.analytics.zoo.common.{NNContext, PythonZoo, RDDWrapper}
 import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.tfpark._
 import org.apache.spark.api.java.JavaRDD

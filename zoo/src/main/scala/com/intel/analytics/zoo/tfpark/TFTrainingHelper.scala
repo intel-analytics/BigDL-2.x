@@ -374,7 +374,7 @@ object TFTrainingHelper {
         trainMeta.defaultTensorValue
       )
     }
-    helper.restoreFromCheckpoint()
+//    helper.restoreFromCheckpoint()
     helper
   }
 

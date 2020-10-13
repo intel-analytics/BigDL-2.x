@@ -210,21 +210,22 @@ def save_tf_checkpoint(sess, checkpoint_path, saver=None):
         if saver is None:
             saver = tf.train.Saver()
         saver.save(sess, join(temp, ckpt_name))
-        # change checkpoint file
-        with open(join(temp, "checkpoint")) as f:
-            new_lines = []
-            lines = f.readlines()
-            # replace model_checkpoint_path and all_model_checkpoint_paths to checkpoint name
-            #  instead of the absolute checkpoint path
-            for line in lines:
-                if re.compile("^model_checkpoint_path: \"(.*)\"$").match(line):
-                    new_lines.append("model_checkpoint_path: \"{}\"\n".format(ckpt_name))
-                elif re.compile("^all_model_checkpoint_paths: \"(.*)\"$").match(line):
-                    new_lines.append("all_model_checkpoint_paths: \"{}\"\n".format(ckpt_name))
-                else:
-                    new_lines.append(line)
-        with open(join(temp, "checkpoint"), 'w') as f:
-            f.writelines(new_lines)
+        change_checkpoint_path(join(temp, "checkpoint"), ckpt_name)
+        # # change checkpoint file
+        # with open(join(temp, "checkpoint")) as f:
+        #     new_lines = []
+        #     lines = f.readlines()
+        #     # replace model_checkpoint_path and all_model_checkpoint_paths to checkpoint name
+        #     #  instead of the absolute checkpoint path
+        #     for line in lines:
+        #         if re.compile("^model_checkpoint_path: \"(.*)\"$").match(line):
+        #             new_lines.append("model_checkpoint_path: \"{}\"\n".format(ckpt_name))
+        #         elif re.compile("^all_model_checkpoint_paths: \"(.*)\"$").match(line):
+        #             new_lines.append("all_model_checkpoint_paths: \"{}\"\n".format(ckpt_name))
+        #         else:
+        #             new_lines.append(line)
+        # with open(join(temp, "checkpoint"), 'w') as f:
+        #     f.writelines(new_lines)
         # move to remote
         [put_local_file_to_remote(join(temp, file), join(remote_dir, file), over_write=True)
          for file in os.listdir(temp)]
@@ -313,3 +314,21 @@ def load_tf_checkpoint(sess, checkpoint_path, saver=None):
             raise e
         finally:
             shutil.rmtree(temp)
+
+
+def change_checkpoint_path(checkpoint_path, ckpt_name):
+    # change checkpoint file
+    with open(checkpoint_path) as f:
+        new_lines = []
+        lines = f.readlines()
+        # replace model_checkpoint_path and all_model_checkpoint_paths to checkpoint name
+        #  instead of the absolute checkpoint path
+        for line in lines:
+            if re.compile("^model_checkpoint_path: \"(.*)\"$").match(line):
+                new_lines.append("model_checkpoint_path: \"{}\"\n".format(ckpt_name))
+            elif re.compile("^all_model_checkpoint_paths: \"(.*)\"$").match(line):
+                new_lines.append("all_model_checkpoint_paths: \"{}\"\n".format(ckpt_name))
+            else:
+                new_lines.append(line)
+    with open(checkpoint_path, 'w') as f:
+        f.writelines(new_lines)
