@@ -238,9 +238,10 @@ class TorchModelSpec extends ZooSpecHelper{
    "doLoadPyTorch" should "do load PyTorch Model without error" in {
       ifskipTest()
       val tmpname = createTmpFile().getAbsolutePath()
-      val code = InferenceModel +
+      val code = lenet +
         s"""
-           |model = new InferenceModel()
+           |model = LeNet()
+           |torch.save(model, "$tmpname", pickle_module=zoo_pickle_module)
            |""".stripMargin
       PythonInterpreter.exec(code)
       val model = new InferenceModel()
