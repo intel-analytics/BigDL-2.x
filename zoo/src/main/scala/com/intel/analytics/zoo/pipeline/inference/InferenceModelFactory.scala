@@ -130,7 +130,7 @@ object InferenceModelFactory extends InferenceSupportive {
   }
 
   /*
-  TODO @qiuxin same as ModelLoader.scala's function
+  TODO may will add modelBytes' function same as ModelLoader.scala's function
     def loadFloatModelForPyTorch(modelBytes: Array[Byte]): FloatModel = {
       val model = ModelLoader.loadFloatModelForPyTorch(modelBytes)
       model.evaluate()

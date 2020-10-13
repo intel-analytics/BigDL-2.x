@@ -90,7 +90,7 @@ public abstract class AbstractInferenceModel extends InferenceModel implements S
   }
 
   /*
-  TODO @qiuxin
+  TODO may need add modelBytes' function
 
   public void loadPyTorch(byte[] modelBytes) {
     doLoadPyTorch(modelBytes);

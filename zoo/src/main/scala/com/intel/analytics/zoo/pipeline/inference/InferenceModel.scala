@@ -243,7 +243,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   }
 
   /*
-  TODO @qiuxin
+  TODO may will add modelBytes' function
    /**
     * load a Torch model as TorchNet
     *
@@ -449,7 +449,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   }
 
   /*
-  TODO @qiuxin same as ModelLoder's function
+  TODO may add modelBytes' function same as ModelLoder's function
    private def doLoadPyTorchModel(modelBytes: Array[Byte]): Unit = {
      clearModelQueue()
      this.originalModel = InferenceModelFactory.loadFloatModelForPyTorch(modelBytes)

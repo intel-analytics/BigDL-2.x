@@ -176,7 +176,7 @@ object ModelLoader extends InferenceSupportive {
   }
 
   /*
-  TODO @qiuxin may need loadModelByModelBytes
+  TODO may will add modelBytes' function may need loadModelByModelBytes
     def loadFloatModelForPyTorch(modelBytes: Array[Byte])
      : AbstractModule[Activity, Activity, Float] = {
        timing("load model") {
