@@ -45,8 +45,9 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
       s"""
          |import torch
          |import io
-         |from torch.optim.optimizer import Optimizer
+         |from torch.optim.optimizer import *
          |from torch.optim.lr_scheduler import _LRScheduler
+         |from torch.optim.lr_scheduler import *
          |from zoo.pipeline.api.torch import zoo_pickle_module
          |
          |optim_by = bytes(b % 256 for b in optim_bytes)
@@ -76,7 +77,20 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
            |${weightName}.grad = torch.tensor(${gradientName})
            |${name}.optimizer.step()
            |""".stripMargin
-      LrSchedule
+      LrScheduler
+    } else if (PythonInterpreter.getValue[Boolean](s"isinstance($name, ReduceLROnPlateau)")) {
+      // ReduceLROnPlateau is not subclass of LRScheduler
+      require(decayType == EpochDecayByScore, "Plateau should use decayType EpochDecayByScore")
+      initCode = s"""
+           |$weightName = torch.tensor($weightName, requires_grad=True)
+           |$weightName = torch.autograd.Variable($weightName)
+           |${name}.optimizer.__init__([${weightName}], **${name}.optimizer.defaults)
+           |""".stripMargin
+      stepCode = s"""
+           |${weightName}.grad = torch.tensor(${gradientName})
+           |${name}.optimizer.step()
+           |""".stripMargin
+      Plateau
     } else {
       val unknowType = PythonInterpreter.getValue[String](s"str(type($name))")
       throw new IllegalArgumentException(s"Unknown optimizer type: " + unknowType)
@@ -110,8 +124,9 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
         parameter.toTensor[Float].storage().array()))
       PythonInterpreter.exec(initCode)
       init = true
+    } else {
+      updateHyperParameter()
     }
-    updateHyperParameter()
     PythonInterpreter.set(gradientName, new NDArray[Array[Float]](
       dfdx.toTensor[Float].storage().array()))
     PythonInterpreter.exec(stepCode)
@@ -130,9 +145,15 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
     optimType match {
       case Optim =>
         PythonInterpreter.getValue[Double](s"${name}.defaults['lr']")
-      case lrSchedule =>
+      case LrScheduler =>
         // TODO: multi LR support.
         PythonInterpreter.getValue[Double](s"${name}.get_last_lr()[0]")
+      case Plateau =>
+        if (PythonInterpreter.getValue[Boolean](s"hasattr(${name}, '_last_lr')")) {
+          PythonInterpreter.getValue[Double](s"${name}._last_lr[0]")
+        } else {
+          PythonInterpreter.getValue[Double](s"${name}.optimizer.defaults['lr']")
+        }
       case _ =>
         throw new IllegalArgumentException()
     }
@@ -143,7 +164,7 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
   }
 
   override def updateHyperParameter(): Unit = {
-    if (optimType == LrSchedule) {
+    if (optimType == LrScheduler || optimType == Plateau) {
       val epoch = getEpoch(this)
       decayType match{
         case TorchOptim.EpochDecay =>
@@ -165,7 +186,7 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
   }
 
   override def getHyperParameter(): String = {
-    if (optimType == LrSchedule) {
+    if (optimType == LrScheduler) {
       s"Current learning rate is ${getLearningRate()}. "
     } else {
       ""
@@ -176,8 +197,9 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
 
 object TorchOptim{
   sealed trait OptimType
-  case object LrSchedule extends OptimType
+  case object LrScheduler extends OptimType
   case object Optim extends OptimType
+  case object Plateau extends OptimType
 
   sealed trait DecayType
   case object EpochDecay extends DecayType
