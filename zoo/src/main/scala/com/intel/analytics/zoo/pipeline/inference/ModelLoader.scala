@@ -175,17 +175,14 @@ object ModelLoader extends InferenceSupportive {
     }
   }
 
-  /*
-  TODO may will add modelBytes' function may need loadModelByModelBytes
-    def loadFloatModelForPyTorch(modelBytes: Array[Byte])
-     : AbstractModule[Activity, Activity, Float] = {
-       timing("load model") {
-         logger.info(s"load model from $modelBytes")
-         val model = TorchModel.loadModel(modelBytes)
-         logger.info(s"loaded model as $model")
-         model
-       }
-     }
-  */
+  def loadFloatModelForPyTorch(modelBytes: Array[Byte])
+  : AbstractModule[Activity, Activity, Float] = {
+    timing("load model") {
+      logger.info(s"load model from $modelBytes")
+      val model = TorchModel(modelBytes, new Array[Float]（0）)
+      logger.info(s"loaded model as $model")
+      model
+    }
+  }
 }
 

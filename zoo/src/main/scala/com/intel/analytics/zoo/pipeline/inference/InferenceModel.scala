@@ -242,17 +242,14 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     doLoadPyTorchModel(modelPath)
   }
 
-  /*
-  TODO may will add modelBytes' function
-   /**
-    * load a Torch model as TorchNet
-    *
-    * @param modelBytes the bytes of the torch script
-    */
-   def doLoadPyTorch(modelBytes: Array[Byte]): Unit = {
-     doLoadPyTorchModel(modelBytes)
-   }
-  */
+  /**
+   * load a Torch model as TorchNet
+   *
+   * @param modelBytes the bytes of the torch script
+   */
+  def doLoadPyTorch(modelBytes: Array[Byte]): Unit = {
+    doLoadPyTorchModel(modelBytes)
+  }
 
   /**
    * loads a openvino IR

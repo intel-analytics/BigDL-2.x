@@ -259,4 +259,38 @@ class TorchModelSpec extends ZooSpecHelper{
       PythonInterpreter.exec(genInputCode)
       val result = pytorchModel.doPredict(Tensor[Float]())
     }
+
+    "doLoadPyTorch" should "also load PyTorch by modelBytes" in {
+        ifskipTest()
+        val code = lenet +
+          s"""
+             |model = LeNet()
+             |criterion = nn.CrossEntropyLoss()
+             |from pyspark.serializers import CloudPickleSerializer
+             |byc = CloudPickleSerializer.dumps(CloudPickleSerializer, criterion)
+             |bys = io.BytesIO()
+             |torch.save(model, bys, pickle_module=zoo_pickle_module)
+             |bym = bys.getvalue()
+             |""".stripMargin
+        PythonInterpreter.exec(code)
+
+        val bys = PythonInterpreter.getValue[Array[Byte]]("bym")
+        val model = new InferenceModel()
+        val pytorchModel = model.doLoadPyTorch(bys)
+        val c = PythonInterpreter.getValue[Array[Byte]]("byc")
+        val criterion = TorchLoss(c)
+
+        val genInputCode =
+          """
+            |import numpy as np
+            |input = torch.tensor(np.random.rand(4, 1, 28, 28), dtype=torch.float32)
+            |target = torch.tensor(np.ones([4]), dtype=torch.long)
+            |_data = (input, target)
+            |""".stripMargin
+        PythonInterpreter.exec(genInputCode)
+        pytorchModel.forward(Tensor[Float]())
+        criterion.forward(Tensor[Float](), Tensor[Float]())
+        criterion.backward(Tensor[Float](), Tensor[Float]())
+        pytorchModel.backward(Tensor[Float](), Tensor[Float]())
+      }
 }
