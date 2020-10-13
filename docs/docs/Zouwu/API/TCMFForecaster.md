@@ -119,14 +119,12 @@ model.fit(x,
 #### **Get prediction results of model**
 After Training, you can call forecaster API to get the prediction result of tcmf model. `model.predict` will output the prediction results of future `horizon` steps after `x` in `fit`.
 ```
-model.predict(x=None,
-              horizon=24,
+model.predict(horizon=24,
               future_covariates=None,
               future_dti=None,
               num_workers=None,
               )
 ```
-* `x`: the input. We don't support input x directly. This is just for consistence with the forecaster API.
 * `future_covariates`: covariates corresponding to future horizon steps data to predict.
         2-D ndarray or None.
         The shape of ndarray should be (r, horizon), where r is the number of covariates.
@@ -144,15 +142,25 @@ model.predict(x=None,
 After Training, you can call forecaster API to evaluate the tcmf model. `model.evaluate` will output the evaluation results for future `horizon` steps after `x` in `fit`.
 ```
 model.evaluate(target_value,
-               x=None,
                metric=['mae'],
-               covariates=None,
+               target_covariates=None,
+               target_dti=None,
                num_workers=None,
                )
 ```
 * `target_value`: target value for evaluation. It should be of the same format as input x in fit, which is a dict of ndarray or SparkXShards of dict of ndarray.
                   We interpret the second dimension of y in target value as the horizon length for evaluation.
-* `covariates`: global covariates corresponding to target value. Defaults to None.
+* `metric`: the metrics. A list of metric names.
+* `target_covariates`: covariates corresponding to target_value.
+        2-D ndarray or None.
+        The shape of ndarray should be (r, horizon), where r is the number of covariates.
+        Global covariates for all time series. If None, only default time coveriates will be
+        used while use_time is True. If not, the time coveriates used is the stack of input
+        covariates and default time coveriates.
+* `target_dti`: dti corresponding to target_value.
+        DatetimeIndex or None.
+        If None, use default fixed frequency DatetimeIndex generated with the last date of x in
+        fit and freq.
 * `num_workers`: the number of workers to use in evaluate. It is only effective while input target value is dict of ndarray. If None, it defaults to
         num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
 

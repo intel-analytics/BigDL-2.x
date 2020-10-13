@@ -325,7 +325,7 @@ class TCMFXshardsModelWrapper(ModelWrapper):
     def fit_incremental(self, x_incr, covariates_incr=None, dti_incr=None):
         raise NotImplementedError
 
-    def evaluate(self, x, y, metric=None, target_covariates=None,
+    def evaluate(self, y, metric=None, target_covariates=None,
                  target_dti=None, num_workers=None):
         """
         Evaluate the model
@@ -339,13 +339,12 @@ class TCMFXshardsModelWrapper(ModelWrapper):
         """
         raise NotImplementedError
 
-    def predict(self, x, horizon=24,
+    def predict(self, horizon=24,
                 future_covariates=None,
                 future_dti=None,
                 num_workers=None):
         """
         Prediction.
-        :param x: input
         :param horizon:
         :param future_covariates: covariates corresponding to future horizon steps data to predict.
         :param future_dti: dti corresponding to future horizon steps data to predict.
@@ -441,11 +440,10 @@ class TCMFNdarrayModelWrapper(ModelWrapper):
         else:
             raise ValueError("value of x should be a dict of ndarray")
 
-    def evaluate(self, x, y, metric=None, target_covariates=None,
+    def evaluate(self, y, metric=None, target_covariates=None,
                  target_dti=None, num_workers=None):
         """
         Evaluate the model
-        :param x: input
         :param y: target
         :param metric:
         :param target_covariates:
@@ -456,27 +454,26 @@ class TCMFNdarrayModelWrapper(ModelWrapper):
         if isinstance(y, dict):
             id_arr, y = split_id_and_data(y, False)
             y = self._rearrange_data_by_id(id_new=id_arr, data_new=y, method_name='evaluate')
-            return self.internal.evaluate(y=y, x=x, metrics=metric,
+            return self.internal.evaluate(y=y, metrics=metric,
                                           target_covariates=target_covariates,
                                           target_dti=target_dti,
                                           num_workers=num_workers)
         else:
             raise ValueError("value of y should be a dict of ndarray")
 
-    def predict(self, x, horizon=24,
+    def predict(self, horizon=24,
                 future_covariates=None,
                 future_dti=None,
                 num_workers=None):
         """
         Prediction.
-        :param x: input
         :param horizon
         :param future_covariates: covariates corresponding to future horizon steps data to predict.
         :param future_dti: dti corresponding to future horizon steps data to predict.
         :param num_workers
         :return: result
         """
-        pred = self.internal.predict(x=x, horizon=horizon, num_workers=num_workers,
+        pred = self.internal.predict(horizon=horizon, num_workers=num_workers,
                                      future_covariates=future_covariates,
                                      future_dti=future_dti,)
         result = dict()

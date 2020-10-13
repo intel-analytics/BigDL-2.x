@@ -108,7 +108,6 @@ model.fit(
 You can either directly call `model.evaluate` as
 ```
 model.evaluate(target_value,
-               x=None,
                metric=['mae'],
                target_covariates=None,
                target_dti=None,

@@ -189,7 +189,6 @@ class TCMFForecaster(Forecaster):
 
     def evaluate(self,
                  target_value,
-                 x=None,
                  metric=['mae'],
                  target_covariates=None,
                  target_dti=None,
@@ -199,8 +198,7 @@ class TCMFForecaster(Forecaster):
         evaluate the model
         :param target_value: target value for evaluation. We interpret its second dimension of
         as the horizon length for evaluation.
-        :param x: the input. We don't support input x directly
-        :param metric: the metrics
+        :param metric: the metrics. A list of metric names.
         :param target_covariates: covariates corresponding to target_value.
             2-D ndarray or None.
             The shape of ndarray should be (r, horizon), where r is the number of covariates.
@@ -216,14 +214,12 @@ class TCMFForecaster(Forecaster):
         :return:
         """
         return self.internal.evaluate(y=target_value,
-                                      x=x,
                                       metric=metric,
                                       target_covariates=target_covariates,
                                       target_dti=target_dti,
                                       num_workers=num_workers)
 
     def predict(self,
-                x=None,
                 horizon=24,
                 future_covariates=None,
                 future_dti=None,
@@ -231,7 +227,6 @@ class TCMFForecaster(Forecaster):
                 ):
         """
         predict
-        :param x: the input. We don't support input x directly
         :param horizon: horizon length to look forward.
         :param future_covariates: covariates corresponding to future horizon steps data to predict.
             2-D ndarray or None.
@@ -250,7 +245,7 @@ class TCMFForecaster(Forecaster):
         if self.internal is None:
             raise Exception("You should run fit before calling predict()")
         else:
-            return self.internal.predict(x, horizon,
+            return self.internal.predict(horizon,
                                          future_covariates=future_covariates,
                                          future_dti=future_dti,
                                          num_workers=num_workers)
