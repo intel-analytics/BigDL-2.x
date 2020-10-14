@@ -313,7 +313,6 @@ class TestTFRayEstimator(TestCase):
         trainer.fit(train_data_shard, epochs=1)
         trainer.evaluate(train_data_shard)
 
-
     def test_sparkxshards_with_inbalanced_data(self):
 
         train_data_shard = XShards.partition({"x": np.random.randn(100, 1),
