@@ -27,7 +27,7 @@ from zoo.ray import RayContext
 logger = logging.getLogger(__name__)
 
 
-def ray_partition_to_creator(partition):
+def ray_partition_to_creator(partition, max_length=None, shuffle=False):
 
     if partition is None:
         return None
@@ -39,7 +39,12 @@ def ray_partition_to_creator(partition):
                                                    allow_list=False)
 
         dataset = tf.data.Dataset.from_tensor_slices((data, label))
-
+        if max_length is not None:
+            # todo find a way to pad empty tensors?
+            dataset = dataset.repeat()
+            if shuffle:
+                dataset = dataset.shuffle(max_length)
+            dataset = dataset.take(max_length)
         options = tf.data.Options()
         options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.OFF
         dataset = dataset.with_options(options)
@@ -49,6 +54,13 @@ def ray_partition_to_creator(partition):
 
     return data_creator
 
+
+def data_length(data):
+    x = data["x"]
+    if isinstance(x, np.ndarray):
+        return x.shape[0]
+    else:
+        return x[0].shape[0]
 
 class Estimator:
     def __init__(self,
@@ -166,6 +178,12 @@ class Estimator:
             data = data_creator
             if data.num_partitions() != self.num_workers:
                 data = data.repartition(self.num_workers)
+
+
+            # todo currently we need this information to pad the short partitions
+            # so that every model run exactly the same number of steps in one epoch
+            max_length = data.rdd.map(data_length).max()
+            print(f"max length is {max_length}")
             data = data.to_ray()
             # todo maybe it is more reasonable to assign partition to each
             # remote_worker, instead of changing the order of self.remote_workers
@@ -176,16 +194,21 @@ class Estimator:
                 assert isinstance(validation_data, SparkXShards)
                 if validation_data.num_partitions() != self.num_workers:
                     validation_data = validation_data.repartition(self.num_workers)
+                val_max_length = data.rdd.map(data_length).max()
                 validation_data = validation_data.to_ray()
                 val_data_list = validation_data.get_partitions()
             else:
                 val_data_list = [None] * self.num_workers
-
+                val_max_length = -1 # does not take any effects
             params_list = []
             for i in range(self.num_workers):
                 local_params = params.copy()
-                local_params["data_creator"] = ray_partition_to_creator(train_data_list[i])
-                local_params["validation_data_creator"] = ray_partition_to_creator(val_data_list[i])
+                local_params["data_creator"] = ray_partition_to_creator(train_data_list[i],
+                                                                        max_length=max_length,
+                                                                        shuffle=True)
+                local_params["validation_data_creator"] = ray_partition_to_creator(val_data_list[i],
+                                                                                   max_length=val_max_length,
+                                                                                   shuffle=False)
                 params_list.append(local_params)
 
         else:  # data_creator functions; should return Iter or DataLoader
@@ -213,6 +236,7 @@ class Estimator:
             data = data_creator
             if data.num_partitions() != self.num_workers:
                 data = data.repartition(self.num_workers)
+            max_length = data.rdd.map(data_length).max()
             data = data.to_ray()
             # todo maybe it is more reasonable to assign partition to each
             # remote_worker, instead of changing the order of self.remote_workers
@@ -221,7 +245,9 @@ class Estimator:
             params_list = []
             for i in range(self.num_workers):
                 local_params = params.copy()
-                local_params["data_creator"] = ray_partition_to_creator(data_list[i])
+                local_params["data_creator"] = ray_partition_to_creator(data_list[i],
+                                                                        max_length=max_length,
+                                                                        shuffle=False)
                 params_list.append(local_params)
 
         else:  # data_creator functions; should return Iter or DataLoader

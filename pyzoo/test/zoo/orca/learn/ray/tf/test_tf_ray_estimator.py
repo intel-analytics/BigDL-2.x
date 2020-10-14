@@ -17,6 +17,8 @@ from unittest import TestCase
 
 import numpy as np
 import tensorflow as tf
+from zoo.orca.data import XShards
+
 import zoo.orca.data.pandas
 from zoo.orca.learn.tf2 import Estimator
 from zoo.ray import RayContext
@@ -295,14 +297,9 @@ class TestTFRayEstimator(TestCase):
 
     def test_sparkxshards(self):
 
-        def transform(df):
-            data = df['feature'].values
-            label = df['label'].values
-            return {"x": np.expand_dims(data, axis=1), "y": label}
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../../../resources")
-        train_file_path = os.path.join(resource_path, "orca/learn/simple_feature_label.csv")
-        train_data_shard = zoo.orca.data.pandas.read_csv(
-            train_file_path).transform_shard(transform)
+        train_data_shard = XShards.partition({"x": np.random.randn(100, 1),
+                                              "y": np.random.randint(0, 1, size=(100))})
+
         config = {
             "batch_size": 4,
             "lr": 0.8
@@ -310,7 +307,37 @@ class TestTFRayEstimator(TestCase):
         trainer = Estimator(
             model_creator=model_creator,
             verbose=True,
-            config=config)
+            config=config,
+            workers_per_node=2)
+
+        trainer.fit(train_data_shard, epochs=1)
+        trainer.evaluate(train_data_shard)
+
+
+    def test_sparkxshards_with_inbalanced_data(self):
+
+        train_data_shard = XShards.partition({"x": np.random.randn(100, 1),
+                                              "y": np.random.randint(0, 1, size=(100))})
+
+        def random_pad(data):
+            import numpy as np
+            import random
+            times = random.randint(1, 10)
+            data["x"] = np.concatenate([data["x"]] * times)
+            data["y"] = np.concatenate([data["y"]] * times)
+            return data
+
+        train_data_shard = train_data_shard.transform_shard(random_pad)
+
+        config = {
+            "batch_size": 4,
+            "lr": 0.8
+        }
+        trainer = Estimator(
+            model_creator=model_creator,
+            verbose=True,
+            config=config,
+            workers_per_node=2)
 
         trainer.fit(train_data_shard, epochs=1)
         trainer.evaluate(train_data_shard)
