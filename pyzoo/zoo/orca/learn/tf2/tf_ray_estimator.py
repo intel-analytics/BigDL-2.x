@@ -62,6 +62,7 @@ def data_length(data):
     else:
         return x[0].shape[0]
 
+
 class Estimator:
     def __init__(self,
                  model_creator,
@@ -179,7 +180,6 @@ class Estimator:
             if data.num_partitions() != self.num_workers:
                 data = data.repartition(self.num_workers)
 
-
             # todo currently we need this information to pad the short partitions
             # so that every model run exactly the same number of steps in one epoch
             max_length = data.rdd.map(data_length).max()
@@ -194,21 +194,22 @@ class Estimator:
                 assert isinstance(validation_data, SparkXShards)
                 if validation_data.num_partitions() != self.num_workers:
                     validation_data = validation_data.repartition(self.num_workers)
-                val_max_length = data.rdd.map(data_length).max()
+                val_max_length = validation_data.rdd.map(data_length).max()
                 validation_data = validation_data.to_ray()
                 val_data_list = validation_data.get_partitions()
             else:
                 val_data_list = [None] * self.num_workers
-                val_max_length = -1 # does not take any effects
+                val_max_length = -1  # does not take any effects
             params_list = []
             for i in range(self.num_workers):
                 local_params = params.copy()
                 local_params["data_creator"] = ray_partition_to_creator(train_data_list[i],
                                                                         max_length=max_length,
                                                                         shuffle=True)
-                local_params["validation_data_creator"] = ray_partition_to_creator(val_data_list[i],
-                                                                                   max_length=val_max_length,
-                                                                                   shuffle=False)
+                local_params["validation_data_creator"] =\
+                    ray_partition_to_creator(val_data_list[i],
+                                             max_length=val_max_length,
+                                             shuffle=False)
                 params_list.append(local_params)
 
         else:  # data_creator functions; should return Iter or DataLoader
