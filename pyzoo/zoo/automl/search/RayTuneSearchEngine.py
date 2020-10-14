@@ -180,10 +180,18 @@ class RayTuneSearchEngine(SearchEngine):
             )
 
         self.trials = analysis.trials
+
+        # Visualization code for ray (leaderboard)
         tf_config, tf_metric = self._log_adapt(analysis)
-        self.logger = TensorboardXLogger(os.path.join(self.logs_dir, self.name, "leaderboard"))
-        self.logger.run(tf_config, tf_metric)
-        self.logger.close()
+        try:
+            self.logger = TensorboardXLogger(os.path.join(self.logs_dir, self.name, "leaderboard"))
+            self.logger.run(tf_config, tf_metric)
+            self.logger.close()
+        except ImportError:
+            pass
+        except:
+            raise
+        
         return analysis
 
     def get_best_trials(self, k=1):

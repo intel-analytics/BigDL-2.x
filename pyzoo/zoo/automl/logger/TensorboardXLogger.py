@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from tensorboardX import SummaryWriter
-from tensorboardX.summary import hparams
+
 from ray.tune.utils import flatten_dict
 import numpy as np
 
@@ -25,6 +24,11 @@ class TensorboardXLogger():
     def __init__(self, logs_dir=None, writer=None):
         self.logs_dir = logs_dir
         self._file_writer = None
+        try:
+            from tensorboardX import SummaryWriter
+        except ImportError:
+            print("pip install tensorboardx to see TensorBoard log files.")
+            raise
         if writer:
             self._file_writer = writer
         else:
