@@ -210,7 +210,7 @@ def save_tf_checkpoint(sess, checkpoint_path, saver=None):
         if saver is None:
             saver = tf.train.Saver()
         saver.save(sess, join(temp, ckpt_name))
-        change_checkpoint_path(join(temp, "checkpoint"), ckpt_name)
+        change_path_in_checkpoint(join(temp, "checkpoint"), ckpt_name)
         # # change checkpoint file
         # with open(join(temp, "checkpoint")) as f:
         #     new_lines = []
@@ -316,7 +316,7 @@ def load_tf_checkpoint(sess, checkpoint_path, saver=None):
             shutil.rmtree(temp)
 
 
-def change_checkpoint_path(checkpoint_path, ckpt_name):
+def change_path_in_checkpoint(checkpoint_path, ckpt_name):
     # change checkpoint file
     with open(checkpoint_path) as f:
         new_lines = []

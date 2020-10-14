@@ -30,7 +30,7 @@ from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss, OptimM
 from zoo.pipeline.api.net.utils import find_placeholders, to_bigdl_optim_method, find_tensors
 from zoo.pipeline.estimator import Estimator
 from zoo.util import nest
-from zoo.orca.learn.tf.utils import change_checkpoint_path
+from zoo.orca.learn.tf.utils import change_path_in_checkpoint
 from zoo import init_nncontext
 
 
@@ -337,8 +337,8 @@ class TFModel(object):
                                                   graph, tensors_with_value, metrics, updates,
                                                   train_op)
 
-        # put model files to spark executors
-        change_checkpoint_path(os.path.join(model_dir, "checkpoint"))
+        # add model files for spark executors access
+        change_path_in_checkpoint(os.path.join(model_dir, "checkpoint"), "model")
         sc = init_nncontext()
         sc.addFile(model_dir, True)
 

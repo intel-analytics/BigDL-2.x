@@ -22,6 +22,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.core.TFNetNative
+import org.apache.spark.SparkFiles
 import org.slf4j.LoggerFactory
 import org.tensorflow.DataType
 import org.tensorflow.framework.GraphDef
@@ -64,7 +65,7 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
     extraParameters
   }
 
-  protected val extraParameters: Array[Tensor[Float]] = initVariables(extraVariables)
+  protected var extraParameters: Array[Tensor[Float]] = initVariables(extraVariables)
 
   protected val weights = initVariables(variables)
 
@@ -184,7 +185,7 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
     graphRunner.runTargets(targets = Vector(initOp.get))
   }
 
-  def restoreFromCheckpoint(): Unit = {
+  def restoreFromCheckpoint(checkpointPath: String): Unit = {
     graphRunner.restoreFromFile(checkpointPath)
     if (weights.length > 0) {
       getVariableFromTF(weights, variableNames = variables)
@@ -213,6 +214,10 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
 
   protected def beforeRunGradient() = {
     if (this.isTraining() || !weightsRestored) {
+      val localCheckpointPath = SparkFiles.get("checkpoint")
+      println(s"local checkpoint path is: ${localCheckpointPath}")
+      restoreFromCheckpoint(localCheckpointPath)
+
       Utils.timeIt("setTrainingVariableIntoTF") {
         setVariableIntoTF(weights, variableAssignPlaceholders,
           variableTypes.map(TFUtils.tfenum2datatype), assignVariableOp)
@@ -221,6 +226,9 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
     }
 
     if (!extraParameterRestored) {
+      val localCheckpointPath = SparkFiles.get("checkpoint")
+      restoreFromCheckpoint(localCheckpointPath)
+
       setVariableIntoTF(extraParameters, extraVariableAssignPlaceholders,
         extraVariableTypes.map(TFUtils.tfenum2datatype), assignExtraVariableOP)
       extraParameterRestored = true
