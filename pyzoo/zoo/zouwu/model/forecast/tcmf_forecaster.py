@@ -23,10 +23,8 @@ class TCMFForecaster(Forecaster):
     def __init__(self,
                  vbsize=128,
                  hbsize=256,
-                 channel_size_X=32,
-                 num_levels_X=5,
-                 channel_size_Y=16,
-                 num_levels_Y=5,
+                 num_channels_X=[32, 32, 32, 32, 32, 1],
+                 num_channels_Y=[16, 16, 16, 16, 16, 1],
                  kernel_size=7,
                  dropout=0.1,
                  rank=64,
@@ -41,16 +39,10 @@ class TCMFForecaster(Forecaster):
             Vertical batch size, which is the number of cells per batch.
         :param hbsize: int, default is 256.
             Horizontal batch size, which is the number of time series per batch.
-        :param channel_size_X: int, default is 32. Channel size of num_channels_X.
-        :param num_levels_X: int, default is 5. level num of num_channels_X.
-            The num_channels_X, which is list containing channel progression of temporal convolution
-             network for local model, is [channel_size_X] * num_levels_X + [1],
-            which defaults to [32, 32, 32, 32, 32, 1]
-        :param channel_size_Y: int, default is 16. Channel size of num_channels_Y.
-        :param num_levels_Y: int, default is 5. level num of num_channels_Y.
-            The num_channels_Y, which is list containing channel progression of temporal convolution
-             network for hybrid model, is [channel_size_Y] * num_levels_Y + [1],
-            which defaults to [16, 16, 16, 16, 16, 1]
+        :param num_channels_X: list, default=[32, 32, 32, 32, 32, 1].
+            List containing channel progression of temporal convolution network for local model
+        :param num_channels_Y: list, default=[16, 16, 16, 16, 16, 1]
+            List containing channel progression of temporal convolution network for hybrid model.
         :param kernel_size: int, default is 7.
             Kernel size for local models
         :param dropout: float, default is 0.1.
@@ -71,10 +63,8 @@ class TCMFForecaster(Forecaster):
         self.config = {
             "vbsize": vbsize,
             "hbsize": hbsize,
-            "channel_size_X": channel_size_X,
-            "num_levels_X": num_levels_X,
-            "channel_size_Y": channel_size_Y,
-            "num_levels_Y": num_levels_Y,
+            "num_channels_X": num_channels_X,
+            "num_channels_Y": num_channels_Y,
             "kernel_size": kernel_size,
             "dropout": dropout,
             "rank": rank,

@@ -81,10 +81,8 @@ if __name__ == "__main__":
     model = TCMFForecaster(
         vbsize=128,
         hbsize=256,
-        channel_size_X=32,
-        num_levels_X=5,
-        channel_size_Y=32,
-        num_levels_Y=5,
+        num_channels_X=[32, 32, 32, 32, 32, 1],
+        num_channels_Y=[32, 32, 32, 32, 32, 1],
         kernel_size=7,
         dropout=0.2,
         rank=64,

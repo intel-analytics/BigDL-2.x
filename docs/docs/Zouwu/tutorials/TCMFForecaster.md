@@ -70,10 +70,8 @@ from zoo.zouwu.model.forecast.tcmf_forecaster import TCMFForecaster
 model = TCMFForecaster(
         vbsize=128,
         hbsize=256,
-        channel_size_X=32,
-        num_levels_X=5,
-        channel_size_Y=16,
-        num_levels_Y=5,
+        num_channels_X=[32, 32, 32, 32, 32, 1],
+        num_channels_Y=[16, 16, 16, 16, 16, 1],
         kernel_size=7,
         dropout=0.1,
         rank=64,
