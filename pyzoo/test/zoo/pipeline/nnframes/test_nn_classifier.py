@@ -787,7 +787,8 @@ class TestNNClassifer():
             modelPath = os.path.join(tmp_dir, "model")
             pipeline_model.save(modelPath)
             loaded_model = PipelineModel.load(modelPath)
-            assert loaded_model.transform(df).count() == 4
+            df2 = self.get_pipeline_df()
+            assert loaded_model.transform(df2).count() == 4
         finally:
             try:
                 shutil.rmtree(tmp_dir)  # delete directory
