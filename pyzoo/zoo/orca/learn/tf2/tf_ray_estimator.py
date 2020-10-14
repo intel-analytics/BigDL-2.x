@@ -33,6 +33,7 @@ def ray_partition_to_creator(partition, max_length=None, shuffle=False):
         return None
 
     def data_creator(config):
+        assert "batch_size" in config, "batch_size must be set in config"
         import tensorflow as tf
         data, label = ray_partition_get_data_label(partition.get_data(),
                                                    allow_tuple=True,
@@ -162,7 +163,8 @@ class Estimator:
 
     def fit(self, data_creator, epochs=1, verbose=1,
             callbacks=None, validation_data_creator=None, class_weight=None,
-            steps_per_epoch=None, validation_steps=None, validation_freq=1):
+            steps_per_epoch=None, validation_steps=None, validation_freq=1,
+            data_config=None):
         """Runs a training epoch."""
         params = dict(
             epochs=epochs,
@@ -172,6 +174,7 @@ class Estimator:
             steps_per_epoch=steps_per_epoch,
             validation_steps=validation_steps,
             validation_freq=validation_freq,
+            data_config=data_config
         )
 
         from zoo.orca.data import SparkXShards
@@ -223,14 +226,15 @@ class Estimator:
         return stats
 
     def evaluate(self, data_creator, verbose=1, sample_weight=None,
-                 steps=None, callbacks=None):
+                 steps=None, callbacks=None, data_config=None):
         """Evaluates the model on the validation data set."""
         logger.info("Starting validation step.")
         params = dict(
             verbose=verbose,
             sample_weight=sample_weight,
             steps=steps,
-            callbacks=callbacks
+            callbacks=callbacks,
+            data_config=data_config,
         )
         from zoo.orca.data import SparkXShards
         if isinstance(data_creator, SparkXShards):
