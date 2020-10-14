@@ -246,7 +246,6 @@ class TorchModelSpec extends ZooSpecHelper{
       PythonInterpreter.exec(code)
       val model = new InferenceModel()
       val pytorchModel = model.doLoadPyTorch(tmpname)
-      pytorchModel.evaluate()
 
       val genInputCode =
         s"""
@@ -257,7 +256,8 @@ class TorchModelSpec extends ZooSpecHelper{
            |_data = (input, target)
            |""".stripMargin
       PythonInterpreter.exec(genInputCode)
-      val result = pytorchModel.doPredict(Tensor[Float]())
+      val result = pytorchModel.predict(Tensor[Float]())
+      result should not be (Tensor[Float](4, 10).fill(-2.3025851f))
     }
 
     "doLoadPyTorch" should "also load PyTorch by modelBytes" in {
@@ -277,20 +277,17 @@ class TorchModelSpec extends ZooSpecHelper{
         val bys = PythonInterpreter.getValue[Array[Byte]]("bym")
         val model = new InferenceModel()
         val pytorchModel = model.doLoadPyTorchBytes(bys)
-        val c = PythonInterpreter.getValue[Array[Byte]]("byc")
-        val criterion = TorchLoss(c)
 
         val genInputCode =
-          """
-            |import numpy as np
-            |input = torch.tensor(np.random.rand(4, 1, 28, 28), dtype=torch.float32)
-            |target = torch.tensor(np.ones([4]), dtype=torch.long)
-            |_data = (input, target)
-            |""".stripMargin
+          s"""
+             |import numpy as np
+             |import torch
+             |input = torch.tensor(np.random.rand(4, 1, 28, 28), dtype=torch.float32)
+             |target = torch.tensor(np.ones([4]), dtype=torch.long)
+             |_data = (input, target)
+             |""".stripMargin
         PythonInterpreter.exec(genInputCode)
-        pytorchModel.forward(Tensor[Float]())
-        criterion.forward(Tensor[Float](), Tensor[Float]())
-        criterion.backward(Tensor[Float](), Tensor[Float]())
-        pytorchModel.backward(Tensor[Float](), Tensor[Float]())
+        val result = pytorchModel.predict(Tensor[Float]())
+        result should not be (Tensor[Float](4, 10).fill(-2.3025851f))
       }
 }
