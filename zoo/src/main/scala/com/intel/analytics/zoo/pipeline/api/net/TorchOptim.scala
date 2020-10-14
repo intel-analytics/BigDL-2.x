@@ -166,7 +166,7 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
   override def updateHyperParameter(): Unit = {
     if (optimType == LrScheduler || optimType == Plateau) {
       val epoch = getEpoch(this)
-      decayType match{
+      decayType match {
         case TorchOptim.EpochDecay =>
           if (lastEpoch < epoch) {
             PythonInterpreter.exec(s"${name}.step()")
