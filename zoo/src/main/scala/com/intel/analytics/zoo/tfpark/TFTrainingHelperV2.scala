@@ -59,6 +59,9 @@ class TFTrainingHelperV2(graphRunner: GraphRunner,
   override def beforeRunGradient(): Unit = {
 
     if (!weightsRestored) {
+      println(s"local checkpoint path is: ${checkpointPath}")
+      restoreFromCheckpoint()
+
       Utils.timeIt("setTrainingVariableIntoTF") {
         setVariableIntoTF(weights, variableAssignPlaceholders,
           variableTypes.map(TFUtils.tfenum2datatype), assignVariableOp)
@@ -75,6 +78,9 @@ class TFTrainingHelperV2(graphRunner: GraphRunner,
 
 
     if (!extraParameterRestored) {
+      println(s"local checkpoint path is: ${checkpointPath}")
+      restoreFromCheckpoint()
+
       setVariableIntoTF(extraParameters, extraVariableAssignPlaceholders,
         extraVariableTypes.map(TFUtils.tfenum2datatype), assignExtraVariableOP)
       extraParameterRestored = true

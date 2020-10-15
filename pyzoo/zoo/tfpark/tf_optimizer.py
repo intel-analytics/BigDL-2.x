@@ -30,7 +30,7 @@ from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss, OptimM
 from zoo.pipeline.api.net.utils import find_placeholders, to_bigdl_optim_method, find_tensors
 from zoo.pipeline.estimator import Estimator
 from zoo.util import nest
-from zoo.orca.learn.tf.utils import change_path_in_checkpoint
+from zoo.util.tf import change_path_in_tf_checkpoint
 from zoo import init_nncontext
 
 
@@ -338,11 +338,37 @@ class TFModel(object):
                                                   train_op)
 
         # add model files for spark executors access
-        change_path_in_checkpoint(os.path.join(model_dir, "checkpoint"), "model")
         sc = init_nncontext()
-        sc.addFile(model_dir, True)
+        # def func(iterator):
+        #     from pyspark import SparkFiles
+        #     path1 = SparkFiles.get("checkpoint")
+        #     path2 = SparkFiles.get("model.data-00000-of-00001")
+        #     return [(path1, path2)]
+        #
+        # file_paths1 = sc.parallelize([1, 2, 3, 4]).mapPartitions(func).collect()
 
-        training_helper_layer = TFTrainingHelper(model_dir,
+        change_path_in_tf_checkpoint(os.path.join(model_dir, "checkpoint"), "model")
+        for file in os.listdir(model_dir):
+            sc.addFile(os.path.join(model_dir, file))
+        from pyspark import SparkFiles
+        driver_path = SparkFiles.getRootDirectory()
+
+        # sc.addFile(model_dir, True)
+
+        def func(iterator):
+            # from pyspark import SparkFiles
+            paths = []
+            for file in os.listdir(model_dir):
+                path = SparkFiles.get(file)
+                paths.append(path)
+            dir = SparkFiles.getRootDirectory()
+            paths.append(dir)
+
+            return [paths]
+
+        file_paths2 = sc.parallelize([1, 2, 3, 4]).mapPartitions(func).collect()
+
+        training_helper_layer = TFTrainingHelper(driver_path,
                                                  session_config, saver, meta, sess)
 
         criterion = IdentityCriterion()
@@ -509,7 +535,7 @@ class TFOptimizer:
 
         tf_model = TFModel.create(loss, sess, inputs, labels, [], grads, variables, graph,
                                   tensor_with_value, session_config, metrics,
-                                  updates, model_dir=model_dir, train_op=train_op)
+                                  updates, model_dir=None, train_op=train_op)
         return cls(tf_model, optim_method, sess=sess, dataset=dataset,
                    clip_norm=clip_norm, clip_value=clip_value, model_dir=model_dir)
 

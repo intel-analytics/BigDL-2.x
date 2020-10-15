@@ -18,6 +18,7 @@ import argparse
 import tensorflow as tf
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo.orca import init_orca_context, stop_orca_context
+from zoo import init_nncontext
 
 
 def accuracy(logits, labels):
@@ -89,7 +90,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     if args.cluster_mode == "local":
-        init_orca_context(cluster_mode="local", cores=4)
+        # init_orca_context(cluster_mode="local", cores=4)
+        init_nncontext()
     elif args.cluster_mode == "yarn":
         init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2, driver_memory="6g")
     main(5)

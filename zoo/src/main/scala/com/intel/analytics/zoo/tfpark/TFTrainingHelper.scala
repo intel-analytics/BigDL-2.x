@@ -57,6 +57,8 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
 
   this.setName("TFParkTraining")
 
+//  restoreFromCheckpoint()
+
   override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
     (weights, gradWeights)
   }
@@ -65,9 +67,11 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
     extraParameters
   }
 
+  @transient
   protected var extraParameters: Array[Tensor[Float]] = initVariables(extraVariables)
 
-  protected val weights = initVariables(variables)
+
+  protected var weights = initVariables(variables)
 
   private val weightsMap = {
     val map = collection.mutable.Map[String, Tensor[Float]]()
@@ -185,12 +189,15 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
     graphRunner.runTargets(targets = Vector(initOp.get))
   }
 
-  def restoreFromCheckpoint(checkpointPath: String): Unit = {
+  def restoreFromCheckpoint(): Unit = {
     graphRunner.restoreFromFile(checkpointPath)
     if (weights.length > 0) {
       getVariableFromTF(weights, variableNames = variables)
     }
 
+    if (extraParameters == null) {
+      extraParameters = initVariables(extraVariables)
+    }
     if (extraParameters.length > 0) {
       getVariableFromTF(extraParameters, variableNames = extraVariables)
     }
@@ -214,9 +221,9 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
 
   protected def beforeRunGradient() = {
     if (this.isTraining() || !weightsRestored) {
-      val localCheckpointPath = SparkFiles.get("checkpoint")
-      println(s"local checkpoint path is: ${localCheckpointPath}")
-      restoreFromCheckpoint(localCheckpointPath)
+//      val localCheckpointPath = SparkFiles.getRootDirectory() + "/model"
+      println(s"local checkpoint path is: ${checkpointPath}")
+      restoreFromCheckpoint()
 
       Utils.timeIt("setTrainingVariableIntoTF") {
         setVariableIntoTF(weights, variableAssignPlaceholders,
@@ -226,8 +233,8 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
     }
 
     if (!extraParameterRestored) {
-      val localCheckpointPath = SparkFiles.get("checkpoint")
-      restoreFromCheckpoint(localCheckpointPath)
+//      val localCheckpointPath = SparkFiles.get("checkpoint")
+      restoreFromCheckpoint()
 
       setVariableIntoTF(extraParameters, extraVariableAssignPlaceholders,
         extraVariableTypes.map(TFUtils.tfenum2datatype), assignExtraVariableOP)
@@ -382,7 +389,7 @@ object TFTrainingHelper {
         trainMeta.defaultTensorValue
       )
     }
-//    helper.restoreFromCheckpoint()
+    helper.restoreFromCheckpoint()
     helper
   }
 
