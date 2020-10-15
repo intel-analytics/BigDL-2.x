@@ -108,14 +108,14 @@ object MockParallelPipelineBaseline extends Supportive {
           val preprocessed = timer.timing(s"Thread ${Thread.currentThread().getId} Preprocess", sParam.coreNum) {
             a.map(item => {
 //              println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} attempting to preprocess")
-              ModelHolder.synchronized{
-//                println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} get lock")
+
                 while (ModelHolder.modelQueueing != 0) {
 //                  println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} waiting at preprocess")
-                  ModelHolder.wait()
+                  ModelHolder.lock.lock()
+                  ModelHolder.modelAvailable.awaitUninterruptibly()
+                  ModelHolder.lock.unlock()
                 }
-                ModelHolder.nonOMP += 1
-              }
+              println(s"${ModelHolder.modelQueueing} threads are queueing inference")
 //              println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} preprocess lock checked")
               val tensor = timer.timing(s"Thread ${Thread.currentThread().getId} Preprocess one record", sParam.coreNum) {
                 val deserializer = new ArrowDeserializer()
@@ -123,22 +123,12 @@ object MockParallelPipelineBaseline extends Supportive {
                 Tensor(arr(0)._1, arr(0)._2)
               }
 
-              ModelHolder.synchronized{
-                ModelHolder.nonOMP -= 1
-                ModelHolder.notifyAll()
-              }
 //              println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} preprocess finished")
               (item._1, T(tensor))
 
             })
           }
-          ModelHolder.synchronized {
-//            println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} get lock")
-            while (ModelHolder.modelQueueing != 0) {
-//              println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} waiting at batch")
-              ModelHolder.wait()
-            }
-          }
+
           val t = timer.timing(s"Thread ${Thread.currentThread().getId} Batch input", sParam.coreNum) {
               clusterServingInference.batchInput(preprocessed, sParam.coreNum, false, sParam.resize)
           }

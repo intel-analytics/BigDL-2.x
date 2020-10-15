@@ -104,12 +104,9 @@ object MockSinglePipelineBaseline extends Supportive {
       (0 until param.testNum).grouped(sParam.coreNum).flatMap(batch => {
         val preprocessed = timer.timing("Preprocess", batch.size) {
           (0 until batch.size).toParArray.map(i => {
-            val tensor = timer.timing(s"Thread ${Thread.currentThread().getId} Preprocess one record", sParam.coreNum) {
-              val deserializer = new ArrowDeserializer()
-              val arr = deserializer.create(b64string)
-              Tensor(arr(0)._1, arr(0)._2)
-            }
-
+            val deserializer = new ArrowDeserializer()
+            val arr = deserializer.create(b64string)
+            val tensor = Tensor(arr(0)._1, arr(0)._2)
             (a(i)._1, T(tensor))
           }).toIterator
         }

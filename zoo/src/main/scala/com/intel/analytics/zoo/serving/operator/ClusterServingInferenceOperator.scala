@@ -25,10 +25,10 @@ import org.apache.flink.configuration.Configuration
 import org.apache.log4j.Logger
 
 
-class ClusterServingInferenceOperator(var params: ClusterServingParams = null)
+class ClusterServingInferenceOperator(var params: ClusterServingParams = new ClusterServingParams())
   extends RichMapFunction[List[(String, Activity)], List[(String, String)]] {
   var logger: Logger = null
-  var inference = new ClusterServingInference(null, params._modelType)
+  var inference: ClusterServingInference = null
 
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
@@ -48,7 +48,7 @@ class ClusterServingInferenceOperator(var params: ClusterServingParams = null)
         }
       }
     }
-
+    inference = new ClusterServingInference(null, params._modelType)
   }
 
   /**

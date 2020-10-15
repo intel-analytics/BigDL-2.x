@@ -26,8 +26,6 @@ import org.apache.log4j.Logger
 
 /**
  * Inference Logic of Cluster Serving
- * In Flink, ModelHolder will directly be used
- * model parameter is reserved for Spark backend
  */
 class ClusterServingInference(preProcessing: PreProcessing,
                               modelType: String,
