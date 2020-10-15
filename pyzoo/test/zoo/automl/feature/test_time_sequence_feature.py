@@ -332,7 +332,7 @@ class TestTimeSequenceFeature(ZooTestCase):
 
             assert new_ft.future_seq_len == future_seq_len
             assert new_ft.dt_col == dt_col
-            assert new_ft.target_col == target_col
+            assert new_ft.target_col[0] == target_col
             assert new_ft.extra_features_col is None
             assert new_ft.drop_missing == drop_missing
 

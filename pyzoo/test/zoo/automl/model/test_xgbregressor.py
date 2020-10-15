@@ -23,14 +23,14 @@ import pandas as pd
 import os
 from numpy.testing import assert_array_almost_equal
 
-from zoo.automl.model.XGBoostRegressor import XGBoostRegressor
+from zoo.automl.model.XGBoost import XGBoost
 from zoo.automl.feature.identity_transformer import IdentityTransformer
 
 
 class TestXgbregressor(ZooTestCase):
     def setup_method(self, method):
         # super().setup_method(method)
-        self.model = XGBoostRegressor({'n_estimators': 5, 'max_depth': 2, 'tree_method': 'hist'})
+        self.model = XGBoost(config={'n_estimators': 5, 'max_depth': 2, 'tree_method': 'hist'})
         feature_cols = ["f", "f2"]
         target_col = "t"
         train_df = pd.DataFrame({"f": np.random.randn(20),
@@ -41,6 +41,7 @@ class TestXgbregressor(ZooTestCase):
                                "t": np.random.randint(5)})
 
         ft = IdentityTransformer(feature_cols=feature_cols, target_col=target_col)
+
         self.x, self.y = ft.transform(train_df)
         self.val_x, self.val_y = ft.transform(val_df)
 
@@ -63,7 +64,7 @@ class TestXgbregressor(ZooTestCase):
         model_file = "tmp.pkl"
         self.model.save(model_file)
         assert os.path.isfile(model_file)
-        new_model = XGBoostRegressor()
+        new_model = XGBoost()
         new_model.restore(model_file)
         assert new_model.model
         result_restore = new_model.predict(self.val_x)

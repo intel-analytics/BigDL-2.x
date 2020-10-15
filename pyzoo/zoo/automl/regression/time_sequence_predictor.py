@@ -44,7 +44,7 @@ class TimeSequencePredictor(object):
                  logs_dir="~/zoo_automl_logs",
                  future_seq_len=1,
                  dt_col="datetime",
-                 target_col="value",
+                 target_col=["value"],
                  extra_features_col=None,
                  drop_missing=True,
                  ):
@@ -61,7 +61,10 @@ class TimeSequencePredictor(object):
         self.pipeline = None
         self.future_seq_len = future_seq_len
         self.dt_col = dt_col
-        self.target_col = target_col
+        if isinstance(target_col, str):
+            self.target_col = [target_col]
+        else:
+            self.target_col = target_col
         self.extra_features_col = extra_features_col
         self.drop_missing = drop_missing
         self.name = name
@@ -167,7 +170,7 @@ class TimeSequencePredictor(object):
                 "input_df should be a data frame or a list of data frames")
 
     def _check_missing_col(self, input_df):
-        cols_list = [self.dt_col, self.target_col]
+        cols_list = [self.dt_col] + self.target_col
         if self.extra_features_col is not None:
             if not isinstance(self.extra_features_col, (list,)):
                 raise ValueError(
@@ -199,7 +202,7 @@ class TimeSequencePredictor(object):
     @staticmethod
     def _get_metric_mode(metric):
         max_mode_metrics = ["r2"]
-        min_mode_metrics = ["mse", "mae"]
+        min_mode_metrics = ["mse", "mae", "rmse", "logloss", "error"]
         if metric in min_mode_metrics:
             return "min"
         elif metric in max_mode_metrics:
@@ -227,21 +230,15 @@ class TimeSequencePredictor(object):
 
         def model_create_func():
             # model = VanillaLSTM(check_optional_config=False)
-            model = TimeSequenceModel(
+            _model = TimeSequenceModel(
                 check_optional_config=False,
                 future_seq_len=self.future_seq_len)
-            return model
+            return _model
+
         model = model_create_func()
 
         # prepare parameters for search engine
         search_space = recipe.search_space(feature_list)
-        runtime_params = recipe.runtime_params()
-        num_samples = runtime_params['num_samples']
-        stop = dict(runtime_params)
-        search_algorithm_params = recipe.search_algorithm_params()
-        search_algorithm = recipe.search_algorithm()
-        fixed_params = recipe.fixed_params()
-        del stop['num_samples']
 
         metric_mode = TimeSequencePredictor._get_metric_mode(metric)
         searcher = RayTuneSearchEngine(logs_dir=self.logs_dir,
@@ -252,17 +249,14 @@ class TimeSequencePredictor(object):
         searcher.compile(input_df,
                          model_create_func=model_create_func(),
                          search_space=search_space,
-                         stop=stop,
-                         search_algorithm_params=search_algorithm_params,
-                         search_algorithm=search_algorithm,
-                         fixed_params=fixed_params,
+                         recipe=recipe,
                          feature_transformers=ft,
                          future_seq_len=self.future_seq_len,
                          validation_df=validation_df,
                          metric=metric,
                          metric_mode=metric_mode,
                          mc=mc,
-                         num_samples=num_samples)
+                         )
         # searcher.test_run()
         analysis = searcher.run()
 
