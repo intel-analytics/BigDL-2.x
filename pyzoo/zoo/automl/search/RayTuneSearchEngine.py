@@ -185,7 +185,7 @@ class RayTuneSearchEngine(SearchEngine):
         # catch the ImportError Since it has been processed in TensorboardXLogger
         tf_config, tf_metric = self._log_adapt(analysis)
         try:
-            self.logger = TensorboardXLogger(os.path.join(self.logs_dir, self.name, "leaderboard"))
+            self.logger = TensorboardXLogger(os.path.join(self.logs_dir, self.name+"_leaderboard"))
             self.logger.run(tf_config, tf_metric)
             self.logger.close()
         except ImportError:
