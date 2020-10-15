@@ -126,7 +126,7 @@ class TestTimeSequencePipeline(ZooTestCase):
                                 future_seq_len + 1)
 
         y_pred_df = pipeline.predict(test_df[:-future_seq_len])
-        columns = ["{}{}".format(target_col, i) for i in range(future_seq_len)]
+        columns = ["{}_{}".format(target_col, i) for i in range(future_seq_len)]
         y_pred_value = y_pred_df[columns].values
 
         y_df = test_df[default_past_seq_len:]

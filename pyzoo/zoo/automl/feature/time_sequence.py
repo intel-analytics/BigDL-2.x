@@ -229,7 +229,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         if self.future_seq_len > 1:
             for i in range(self.future_seq_len):
                 for j in range(len(self.target_col)):
-                    column = self.target_col[j] + str(i)
+                    column = self.target_col[j] + "_" + str(i)
                     y_pred_df[column] = pd.DataFrame(y_pred_unscale[:, i])
         else:
             y_pred_df[self.target_col] = pd.DataFrame(y_pred_unscale)

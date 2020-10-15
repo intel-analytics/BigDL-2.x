@@ -502,7 +502,7 @@ class TestTimeSequenceFeature(ZooTestCase):
             assert output_value_df.shape == (sample_num - past_seq_len - future_seq_len + 1,
                                              future_seq_len + 1)
 
-            columns = ["{}{}".format(value_col, i) for i in range(future_seq_len)]
+            columns = ["{}_{}".format(value_col, i) for i in range(future_seq_len)]
             output_value = output_value_df[columns].values
             target_df = df[past_seq_len:].copy().reset_index(drop=True)
             target_value = feat._roll_test(target_df["values"], future_seq_len)
