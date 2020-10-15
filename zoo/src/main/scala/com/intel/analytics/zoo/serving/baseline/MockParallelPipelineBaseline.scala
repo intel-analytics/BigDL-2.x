@@ -108,13 +108,13 @@ object MockParallelPipelineBaseline extends Supportive {
           val preprocessed = timer.timing(s"Thread ${Thread.currentThread().getId} Preprocess", sParam.coreNum) {
             a.map(item => {
 //              println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} attempting to preprocess")
-
-                while (ModelHolder.modelQueueing != 0) {
-//                  println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} waiting at preprocess")
-                  ModelHolder.lock.lock()
-                  ModelHolder.modelAvailable.awaitUninterruptibly()
-                  ModelHolder.lock.unlock()
-                }
+//
+//                while (ModelHolder.modelQueueing != 0) {
+////                  println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} waiting at preprocess")
+//                  ModelHolder.lock.lock()
+//                  ModelHolder.modelAvailable.awaitUninterruptibly()
+//                  ModelHolder.lock.unlock()
+//                }
               println(s"${ModelHolder.modelQueueing} threads are queueing inference")
 //              println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} preprocess lock checked")
               val tensor = timer.timing(s"Thread ${Thread.currentThread().getId} Preprocess one record", sParam.coreNum) {
