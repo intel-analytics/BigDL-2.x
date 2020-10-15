@@ -68,6 +68,8 @@ class ArrowDeserializer {
       val vectorSchemaRoot = reader.getVectorSchemaRoot
       result = result :+ getFromSchemaRoot(vectorSchemaRoot)
     }
+//    readAllocator.close()
+    reader.close()
     result
   }
   def getString(arr: Array[(Array[Float], Array[Int])]): String = {

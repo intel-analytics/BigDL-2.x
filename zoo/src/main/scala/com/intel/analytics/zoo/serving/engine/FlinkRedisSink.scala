@@ -18,7 +18,7 @@
 package com.intel.analytics.zoo.serving.engine
 
 import com.intel.analytics.zoo.serving.pipeline.RedisIO
-import com.intel.analytics.zoo.serving.utils.SerParams
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions, SerParams}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
 import org.apache.log4j.Logger
@@ -26,7 +26,6 @@ import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig}
 
 
 class FlinkRedisSink(params: SerParams) extends RichSinkFunction[List[(String, String)]] {
-  var redisPool: JedisPool = null
   var jedis: Jedis = null
   var logger: Logger = null
 
@@ -40,33 +39,37 @@ class FlinkRedisSink(params: SerParams) extends RichSinkFunction[List[(String, S
       System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
       System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStorePassword)
     }
+    if (JedisPoolHolder.jedisPool == null) {
+      JedisPoolHolder.synchronized {
+        if (JedisPoolHolder.jedisPool == null) {
+          JedisPoolHolder.jedisPool = new JedisPool(new JedisPoolConfig(),
+            params.redisHost, params.redisPort, params.redisSecureEnabled)
+        }
+      }
+    }
 
-    redisPool = new JedisPool(new JedisPoolConfig(),
-      params.redisHost, params.redisPort, params.redisSecureEnabled)
     params.redisSecureEnabled match {
       case true => logger.info(s"FlinkRedisSink connect to secured Redis successfully.")
       case false => logger.info(s"FlinkRedisSink connect to plain Redis successfully.")
     }
-    jedis = RedisIO.getRedisClient(redisPool)
+    jedis = RedisIO.getRedisClient(JedisPoolHolder.jedisPool)
 
   }
 
   override def close(): Unit = {
-    if (null != redisPool) {
-      redisPool.close()
+    if (null != jedis) {
+      jedis.close()
     }
   }
 
-
-  override def invoke(value: List[(String, String)]): Unit = {
-//    logger.info(s"Preparing to write result to redis")
-
+  override def invoke(value: List[(String, String)], context: SinkFunction.Context[_]): Unit = {
     val ppl = jedis.pipelined()
     value.foreach(v => RedisIO.writeHashMap(ppl, v._1, v._2, params.jobName))
     ppl.sync()
-    jedis.close()
-    logger.info(s"${value.size} records written to redis")
-
+    logger.debug(s"${value.size} records written to redis")
   }
 
+}
+object JedisPoolHolder {
+  var jedisPool: JedisPool = null
 }
