@@ -21,7 +21,16 @@ VALID_NP_TYPES = [np.float32, np.float64, np.int32]
 
 
 class TensorboardXLogger():
-    def __init__(self, logs_dir=None, writer=None):
+    def __init__(self, logs_dir="", writer=None):
+        '''
+        Initialize a tensorboard logger
+
+        Note that this logger relies on tensorboardx and only provide tensorboard hparams log.
+        An ImportError will be raised for the lack of tensorboardx
+
+        :param logs_dir: root directory for the log, default to the current working dir
+        :param writer: shared tensorboardx SummaryWriter, default to None.
+        '''
         self.logs_dir = logs_dir
         self._file_writer = None
         try:
@@ -35,6 +44,27 @@ class TensorboardXLogger():
             self._file_writer = SummaryWriter(logdir=self.logs_dir)
     
     def run(self, config, metric):
+        '''
+        Write log files(event files)
+
+        The log files is arranged as following:
+        self.logs_dir
+        |--eventfile_all
+        |--Trail_1
+        |  |--eventfile_1
+        |--Trail_2
+        |  |--eventfile_2
+        ...
+        :param config: A dictionary. Keys are trail name, value is a dictionary indicates the trail config  
+        :param metric: A dictionary. Keys are trail name, value is a dictionary indicates the trail metric results
+
+        Example:
+        Config = {“run1”:{“lr”:0.001, “hidden_units”: 32}, “run2”:{“lr”:0.01, “hidden_units”: 64}}
+        Metric = {“run1”:{“acc”:0.91, “time”: 32.13}, “run2”:{“acc”:0.93, “time”: 61.33}}
+
+        Note that the keys of config and metric should be exactly the same
+        '''
+        # keys check
         assert len(config.keys() - metric.keys()) == 0
         
         # validation check
@@ -60,5 +90,8 @@ class TensorboardXLogger():
             self._file_writer.add_hparams(new_config[key], new_metric[key])
 
     def close(self):
+        '''
+        Close the logger
+        '''
         self._file_writer.close()
         
