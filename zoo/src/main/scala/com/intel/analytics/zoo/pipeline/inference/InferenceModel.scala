@@ -510,35 +510,22 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   }
 
   private def predict(inputActivity: Activity): Activity = {
-    val model = ModelHolder.synchronized {
-//      println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} get lock")
-      ModelHolder.modelQueueing += 1
-      while (ModelHolder.nonOMP != 0 || modelQueue.peek() == null) ModelHolder.wait()
-//      println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} try to get model")
-      retrieveModel()
-    }
+    val model = retrieveModel()
     try {
       val begin = System.nanoTime()
-      InferenceSupportive.logger.info(s"Thread ${Thread.currentThread().getId} Inference start.")
       val result = model.predict(inputActivity)
       val end = System.nanoTime()
 
       val latency = end - begin
-      val name = s"model predict for batch"
-      InferenceSupportive.logger.info(s"$name time elapsed [${latency/1e9} s, ${latency/1e6} ms].")
+      val name = s"Thread ${Thread.currentThread().getId} Inference"
+      InferenceSupportive.logger.info(s"$name time [${(latency/1e9).toInt} s, ${latency/1e6} ms].")
 
       result
     } finally {
       model match {
         case null =>
         case _ =>
-          val success =
-          ModelHolder.synchronized {
-            ModelHolder.modelQueueing -= 1
-            ModelHolder.notifyAll()
-            modelQueue.offer(model)
-          }
-
+          val success = modelQueue.offer(model)
           success match {
             case true =>
             case false => model.release()
@@ -563,13 +550,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
       }
     }
   }
-  def blockModel(): Unit = {
-    while (modelQueue.peek() == null) {
-      val model = modelQueue.take()
-      modelQueue.offer(model)
-    }
 
-  }
   private def retrieveModel(): AbstractModel = {
     var model: AbstractModel = null
     autoScalingEnabled match {
