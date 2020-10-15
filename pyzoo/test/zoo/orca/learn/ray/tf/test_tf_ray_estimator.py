@@ -354,7 +354,8 @@ class TestTFRayEstimator(TestCase):
             verbose=True,
             config=config,
             workers_per_node=2)
-        with pytest.raises(ray.exceptions.RayTaskError, match=r".*batch_size must be set in config*."):
+        with pytest.raises(ray.exceptions.RayTaskError,
+                           match=r".*batch_size must be set in config*."):
             trainer.fit(train_data_shard, epochs=1)
 
     def test_changing_config_during_fit(self):
