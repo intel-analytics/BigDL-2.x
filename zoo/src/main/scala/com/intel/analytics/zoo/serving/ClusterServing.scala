@@ -61,6 +61,7 @@ object ClusterServing {
     serving.registerCachedFile(configPath, Conventions.SERVING_CONF_TMP_PATH)
     serving.registerCachedFile(params.modelDir, Conventions.SERVING_MODEL_TMP_DIR)
     if (testMode > 0) {
+      Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.DEBUG)
       println("Running Cluster Serving in test mode with parallelism 1")
       serving.addSource(new FlinkRedisSource(params)).setParallelism(testMode)
         .map(new FlinkInference(params)).setParallelism(testMode)
