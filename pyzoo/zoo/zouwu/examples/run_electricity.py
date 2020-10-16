@@ -88,20 +88,9 @@ if __name__ == "__main__":
         rank=64,
         kernel_size_Y=7,
         learning_rate=0.0005,
-        val_len=24,
         normalize=False,
-        start_date="2012-1-1",
-        freq="H",
-        covariates=None,
         use_time=True,
-        dti=None,
         svd=True,
-        period=24,
-        y_iters=1 if args.smoke else 10,
-        init_FX_epoch=1 if args.smoke else 100,
-        max_FX_epoch=1 if args.smoke else 300,
-        max_TCN_epoch=1 if args.smoke else 300,
-        alt_iters=2 if args.smoke else 10,
     )
     ymat = np.load(args.data_dir) if not args.use_dummy_data else get_dummy_data()
     horizon = 24
@@ -110,7 +99,19 @@ if __name__ == "__main__":
     incr_target_data = ymat[:, -horizon:]
 
     logger.info('Start fitting.')
-    model.fit({'y': train_data}, num_workers=args.num_workers)
+    model.fit({'y': train_data},
+              val_len=24,
+              start_date="2012-1-1",
+              freq="H",
+              covariates=None,
+              dti=None,
+              period=24,
+              y_iters=1 if args.smoke else 10,
+              init_FX_epoch=1 if args.smoke else 100,
+              max_FX_epoch=1 if args.smoke else 300,
+              max_TCN_epoch=1 if args.smoke else 300,
+              alt_iters=2 if args.smoke else 10,
+              num_workers=args.num_workers)
     logger.info('Fitting ends.')
 
     # you can save and load model as you want
