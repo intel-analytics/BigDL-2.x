@@ -41,7 +41,7 @@ def lenet(images):
 
 def preprocess(data):
     data['image'] = tf.cast(data["image"], tf.float32) / 255.
-    return data
+    return data['image'], data['label']
 
 
 def main(max_epoch, dataset_dir):
@@ -78,7 +78,7 @@ def main(max_epoch, dataset_dir):
             # falling back on sharding on records.
             auto_shard_files=False)
 
-    result = est.evaluate(mnist_test)
+    result = est.evaluate(mnist_test, auto_shard_files=False)
     print(result)
 
     est.save_tf_checkpoint("/tmp/lenet/model")

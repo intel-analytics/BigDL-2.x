@@ -1,4 +1,4 @@
-# Orca TF Estimator Lenet
+# Orca TF Estimator
 
 This is an example to demonstrate how to use Analytics-Zoo's Orca TF Estimator API to run distributed
 Tensorflow and Keras on Spark.
@@ -22,30 +22,13 @@ Note: conda environment is required to run on Yarn, but not strictly necessary f
 ## Run examples on local
 
 ```bash
-python lenet_mnist_graph.py --cluster_mode local 
-```
-
-```bash
-python lenet_mnist_keras.py --cluster_mode local
+python ncf.py --cluster_mode local
 ```
 
 ## Run examples on yarn cluster
 
-Please first make sure HADOOP_HOME and JAVA_HOME environment variable is correctly set.
-
-
 ```bash
-source ${HADOOP_HOME}/libexec/hadoop-config.sh # setting HADOOP_HDFS_HOME, LD_LIBRARY_PATH, etc
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${JAVA_HOME}/jre/lib/amd64/server
-
-CLASSPATH=$(${HADOOP_HOME}/bin/hadoop classpath --glob) python lenet_mnist_graph.py --cluster_mode yarn
-```
-
-```bash
-source ${HADOOP_HOME}/libexec/hadoop-config.sh # setting HADOOP_HDFS_HOME, LD_LIBRARY_PATH, etc
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${JAVA_HOME}/jre/lib/amd64/server
-
-CLASSPATH=$(${HADOOP_HOME}/bin/hadoop classpath --glob) python lenet_mnist_graph.py --cluster_mode yarn
+python ncf.py --cluster_mode yarn
 ```
 
 ## Additional Resources
