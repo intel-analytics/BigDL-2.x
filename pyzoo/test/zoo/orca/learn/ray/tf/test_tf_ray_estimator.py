@@ -229,7 +229,7 @@ class TestTFRayEstimator(TestCase):
             model_creator=auto_shard_model_creator,
             verbose=True,
             config={"batch_size": 4},
-            backend="tf", workers_per_node=2)
+            backend="tf2", workers_per_node=2)
         stats = trainer.fit(create_auto_shard_datasets, epochs=1, steps_per_epoch=2)
         assert stats["train_loss"] == 0.0
 

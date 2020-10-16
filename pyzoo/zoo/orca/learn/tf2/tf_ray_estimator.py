@@ -70,7 +70,7 @@ class Estimator:
                  compile_args_creator=None,
                  config=None,
                  verbose=False,
-                 backend="tf",
+                 backend="tf2",
                  workers_per_node=1):
         """Sets up the TensorFlow trainer.
 
@@ -113,7 +113,7 @@ class Estimator:
             "verbose": self.verbose,
         }
 
-        if backend == "tf":
+        if backend == "tf2":
             cores_per_node = ray_ctx.ray_node_cpu_cores // workers_per_node
             num_nodes = ray_ctx.num_ray_nodes * workers_per_node
 
@@ -145,7 +145,7 @@ class Estimator:
                 worker.setup_horovod.remote()
                 for i, worker in enumerate(self.remote_workers)])
         else:
-            raise Exception("Only \"tf\" and \"horovod\" are legal "
+            raise Exception("Only \"tf2\" and \"horovod\" are legal "
                             "value of backend, but got {}".format(backend))
 
         self.num_workers = len(self.remote_workers)
@@ -156,7 +156,7 @@ class Estimator:
                    verbose=False,
                    workers_per_node=1,
                    compile_args_creator=None,
-                   backend="tf"):
+                   backend="tf2"):
         return cls(model_creator, config=config,
                    verbose=verbose, workers_per_node=workers_per_node,
                    backend=backend, compile_args_creator=compile_args_creator)
