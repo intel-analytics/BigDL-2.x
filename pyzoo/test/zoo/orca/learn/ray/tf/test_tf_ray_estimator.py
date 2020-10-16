@@ -209,7 +209,7 @@ class TestTFRayEstimator(TestCase):
         assert dloss < 0 and dmse < 0, "training sanity check failed. loss increased!"
 
     def test_fit_and_evaluate_tf(self):
-        self.impl_test_fit_and_evaluate(backend="tf")
+        self.impl_test_fit_and_evaluate(backend="tf2")
 
     def test_fit_and_evaluate_horovod(self):
         self.impl_test_fit_and_evaluate(backend="horovod")
