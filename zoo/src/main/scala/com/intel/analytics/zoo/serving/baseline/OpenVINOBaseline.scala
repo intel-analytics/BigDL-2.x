@@ -116,26 +116,32 @@ object OpenVINOBaseline extends Supportive {
           a = a :+ (i.toString(), b64string)
         )
         (0 until param.testNum).grouped(sParam.coreNum).flatMap(i => {
-          val preprocessed = timer.timing(s"Thread ${Thread.currentThread().getId} Preprocess", sParam.coreNum) {
+          val preprocessed = timer.timing(
+            s"Thread ${Thread.currentThread().getId} Preprocess", sParam.coreNum) {
             a.map(item => {
               val deserializer = new ArrowDeserializer()
               val arr = deserializer.create(b64string)
               val tensor = Tensor(arr(0)._1, arr(0)._2)
-              println(s"${System.currentTimeMillis()} Thread ${Thread.currentThread().getId} preprocess finished")
+              println(s"${System.currentTimeMillis()} " +
+                s"Thread ${Thread.currentThread().getId} preprocess finished")
               (item._1, T(tensor))
             })
           }
-          val t = timer.timing(s"Thread ${Thread.currentThread().getId} Batch input", sParam.coreNum) {
-            clusterServingInference.batchInput(preprocessed, sParam.coreNum, false, sParam.resize)
+          val t = timer.timing(
+            s"Thread ${Thread.currentThread().getId} Batch input", sParam.coreNum) {
+            clusterServingInference.batchInput(
+              preprocessed, sParam.coreNum, false, sParam.resize)
           }
           clusterServingInference.dimCheck(t, "add", sParam.modelType)
-          val result = timer.timing(s"Thread ${Thread.currentThread().getId} Inference", sParam.coreNum) {
+          val result = timer.timing(
+            s"Thread ${Thread.currentThread().getId} Inference", sParam.coreNum) {
             model.predict(t)
 //              model.forward(t)
           }
           clusterServingInference.dimCheck(t, "remove", sParam.modelType)
           clusterServingInference.dimCheck(result, "remove", sParam.modelType)
-          val postprocessed = timer.timing(s"Thread ${Thread.currentThread().getId} Postprocess", sParam.coreNum) {
+          val postprocessed = timer.timing(
+            s"Thread ${Thread.currentThread().getId} Postprocess", sParam.coreNum) {
             (0 until sParam.coreNum).map(i => {
               ArrowSerializer.activityBatchToByte(result, i + 1)
             })
