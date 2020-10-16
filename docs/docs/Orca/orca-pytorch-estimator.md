@@ -36,7 +36,7 @@ Estimator.from_torch(*,
                    use_tqdm=False,
                    workers_per_node=1,
                    model_dir=None,
-                   backend="horovod"):
+                   backend="bigdl"):
 ```
 * `model`: PyTorch model if `backend="bigdl"`, PyTorch model creator if `backend="horovod"`
 * `optimizer`: bigdl optimizer if `backend="bigdl"`, PyTorch optimizer creator if `backend="horovod"`
@@ -49,7 +49,7 @@ Estimator.from_torch(*,
 * `use_tqdm`: parameter for horovod. You can monitor training progress if use_tqdm=True.
 * `workers_per_node`: parameter for horovod. worker number on each node. default: 1.
 * `model_dir`: parameter for `bigdl`. The path to save model. During the training, if checkpoint_trigger is defined and triggered, the model will be saved to model_dir.
-* `backend`: You can choose "horovod" or "bigdl" as backend.
+* `backend`: You can choose "horovod" or "bigdl" as backend. Default: bigdl.
 
 ### Use horovod Estimator
 #### **Train model**

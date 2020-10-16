@@ -59,7 +59,7 @@ class Estimator(object):
                    use_tqdm=False,
                    workers_per_node=1,
                    model_dir=None,
-                   backend="horovod"):
+                   backend="bigdl"):
         if backend == "horovod":
             return PyTorchHorovodEstimatorWrapper(model_creator=model,
                                                   optimizer_creator=optimizer,
