@@ -28,14 +28,11 @@ import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams, S
 import scopt.OptionParser
 
 object PreprocessingBaseline extends Supportive {
-  case class Params(configPath: String = "config.yaml",
-                    testNum: Int = 1000,
+  case class Params(testNum: Int = 1000,
                     parNum: Int = 1,
-                    inputShape: String = "3, 224, 224")
+                    inputShape: String = "3, 224, 224",
+                    coreNum: Int = 4)
   val parser = new OptionParser[Params]("Text Classification Example") {
-    opt[String]('c', "configPath")
-      .text("Config Path of Cluster Serving")
-      .action((x, params) => params.copy(configPath = x))
     opt[Int]('n', "testNum")
       .text("Number of test input")
       .action((x, params) => params.copy(testNum = x))
@@ -45,6 +42,9 @@ object PreprocessingBaseline extends Supportive {
     opt[String]('s', "inputShape")
       .text("Input Shape, split by coma")
       .action((x, params) => params.copy(inputShape = x))
+    opt[Int]( "coreNum")
+      .text("core number")
+      .action((x, params) => params.copy(coreNum = x))
   }
   def parseShape(shape: String): Array[Array[Int]] = {
     val shapeListStr = shape.
@@ -75,9 +75,9 @@ object PreprocessingBaseline extends Supportive {
   }
   def main(args: Array[String]): Unit = {
     val param = parser.parse(args, Params()).head
-    val helper = new ClusterServingHelper()
-    helper.initArgs()
-    val sParam = new SerParams(helper)
+//    val helper = new ClusterServingHelper()
+//    helper.initArgs()
+//    val sParam = new SerParams(helper)
 
     val warmT = makeTensorFromShape(param.inputShape)
     val b64string = getBase64StringOfTensor(warmT)
@@ -89,12 +89,12 @@ object PreprocessingBaseline extends Supportive {
         val timer = new Timer()
         var a = Seq[(String, String)]()
         val pre = new PreProcessing(true)
-        (0 until sParam.coreNum).foreach( i =>
+        (0 until param.coreNum).foreach( i =>
           a = a :+ (i.toString(), b64string)
         )
-        (0 until param.testNum).grouped(sParam.coreNum).flatMap(i => {
+        (0 until param.testNum).grouped(param.coreNum).flatMap(i => {
           val preprocessed = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Preprocess", sParam.coreNum) {
+            s"Thread ${Thread.currentThread().getId} Preprocess", param.coreNum) {
             a.map(item => {
               ModelHolder.synchronized{
                 while (ModelHolder.modelQueueing != 0) {
@@ -103,7 +103,7 @@ object PreprocessingBaseline extends Supportive {
                 ModelHolder.nonOMP += 1
               }
               val tensor = timer.timing(
-                s"Thread ${Thread.currentThread().getId} Preprocess one record", sParam.coreNum) {
+                s"Thread ${Thread.currentThread().getId} Preprocess one record", param.coreNum) {
                 val deserializer = new ArrowDeserializer()
                 val arr = deserializer.create(b64string)
                 Tensor(arr(0)._1, arr(0)._2)
