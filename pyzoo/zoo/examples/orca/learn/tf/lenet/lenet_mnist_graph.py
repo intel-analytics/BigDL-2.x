@@ -20,6 +20,7 @@ import tensorflow_datasets as tfds
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo.orca import init_orca_context, stop_orca_context
 
+
 def accuracy(logits, labels):
     predictions = tf.argmax(logits, axis=1, output_type=labels.dtype)
     is_correct = tf.cast(tf.equal(predictions, labels), dtype=tf.float32)
@@ -47,9 +48,9 @@ def main(max_epoch, dataset_dir):
 
     mnist_train = tfds.load(name="mnist", split="train", data_dir=dataset_dir)
     mnist_test = tfds.load(name="mnist", split="test", data_dir=dataset_dir)
-    
-    mnist_train = mnist_train.map(normalize_img)
-    mnist_test = mnist_test.map(normalize_img)
+
+    mnist_train = mnist_train.map(preprocess)
+    mnist_test = mnist_test.map(preprocess)
 
     # tensorflow inputs
     images = tf.placeholder(dtype=tf.float32, shape=(None, 28, 28, 1))
@@ -95,5 +96,7 @@ if __name__ == '__main__':
     elif args.cluster_mode == "yarn":
         init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2, driver_memory="6g")
         dataset_dir = "hdfs:///tensorflow_datasets"
+    else:
+        raise ValueError("This example only support local or yarn mode")
 
     main(5, dataset_dir)
