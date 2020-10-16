@@ -358,9 +358,9 @@ class TFModel(object):
         def func(iterator):
             # from pyspark import SparkFiles
             paths = []
-            for file in os.listdir(model_dir):
-                path = SparkFiles.get(file)
-                paths.append(path)
+            # for file in os.listdir(model_dir):
+            #     path = SparkFiles.get(file)
+            #     paths.append(path)
             dir = SparkFiles.getRootDirectory()
             paths.append(dir)
 

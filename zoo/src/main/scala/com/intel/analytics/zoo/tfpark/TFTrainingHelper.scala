@@ -314,6 +314,12 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
     this.parameters()._1.zip(module.parameters()._1).foreach { case (target, source) =>
       target.copy(source)
     }
+    if (this.extraParameters == null) {
+      println("local model extra parameters is null")
+    }
+    if (module.extraParameters == null) {
+      println("loaded model extra parameters is null")
+    }
     this.extraParameters.zip(module.extraParameters).foreach { case (target, source) =>
       target.copy(source)
     }
