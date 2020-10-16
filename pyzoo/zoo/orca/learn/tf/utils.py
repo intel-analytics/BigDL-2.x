@@ -68,11 +68,6 @@ def is_tf_data_dataset(data):
     is_dataset_v2 = isinstance(data, tf.python.data.ops.dataset_ops.DatasetV2)
     return is_dataset or is_dataset_v2
 
-def is_tf_data_dataset(data):
-    is_dataset = isinstance(data, tf.data.Dataset)
-    is_dataset_v2 = isinstance(data, tf.python.data.ops.dataset_ops.DatasetV2)
-    return is_dataset or is_dataset_v2
-
 
 def to_dataset(data, batch_size, batch_per_thread, validation_data,
                feature_cols, labels_cols, hard_code_batch_size,
