@@ -74,7 +74,7 @@ class TFModelBroadcastV2[T: ClassTag]()
 
     // For quantized model if we don't clone weightsBias, the original model will be released also
     // when we delete all models used in `ModelBroadcast`.
-    putWeightBias(SerializationUtils.clone(weightsBias), model)
+    putWeightBias(weightsBias, model)
     initGradWeightBias(weightsBias, model)
     putExtraParams(extraParams, model)
 

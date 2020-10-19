@@ -357,18 +357,18 @@ class TFModel(object):
 
         # sc.addFile(model_dir, True)
 
-        def func(iterator):
-            # from pyspark import SparkFiles
-            paths = []
-            # for file in os.listdir(model_dir):
-            #     path = SparkFiles.get(file)
-            #     paths.append(path)
-            dir = SparkFiles.getRootDirectory()
-            paths.append(dir)
-
-            return [paths]
-
-        file_paths2 = sc.parallelize([1, 2, 3, 4]).mapPartitions(func).collect()
+        # def func(iterator):
+        #     # from pyspark import SparkFiles
+        #     paths = []
+        #     # for file in os.listdir(model_dir):
+        #     #     path = SparkFiles.get(file)
+        #     #     paths.append(path)
+        #     dir = SparkFiles.getRootDirectory()
+        #     paths.append(dir)
+        #
+        #     return [paths]
+        #
+        # file_paths2 = sc.parallelize([1, 2, 3, 4]).mapPartitions(func).collect()
 
         training_helper_layer = TFTrainingHelper(model_dir,
                                                  session_config, saver, meta, sess)
