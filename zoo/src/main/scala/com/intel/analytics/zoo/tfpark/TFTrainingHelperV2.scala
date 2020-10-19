@@ -66,15 +66,15 @@ class TFTrainingHelperV2(graphRunner: GraphRunner,
         i += 1
       }
 
-      println(s"restore weights: zoo checkpoint name is: ${zooCheckpointName}")
+//      println(s"restore weights: zoo checkpoint name is: ${zooCheckpointName}")
       if (!zooCheckpointName.isEmpty){
         val zooCheckpointPath = SparkFiles.getRootDirectory() + "/" + zooCheckpointName
         println(s"local zoo checkpoint path is: ${zooCheckpointPath}")
         loadZooCheckpoint(zooCheckpointPath)
       } else {
-
-        println(s"local checkpoint path is: ${checkpointPath}")
-        restoreFromCheckpoint()
+        val localCheckpointPath = SparkFiles.getRootDirectory() + "/model"
+        println(s"local checkpoint path is: ${localCheckpointPath}")
+        restoreFromCheckpoint(localCheckpointPath)
       }
 
       Utils.timeIt("setTrainingVariableIntoTF") {
@@ -99,9 +99,9 @@ class TFTrainingHelperV2(graphRunner: GraphRunner,
         println(s"local zoo checkpoint path is: ${zooCheckpointPath}")
         loadZooCheckpoint(zooCheckpointPath)
       } else {
-
-        println(s"local checkpoint path is: ${checkpointPath}")
-        restoreFromCheckpoint()
+        val localCheckpointPath = SparkFiles.getRootDirectory() + "/model"
+        println(s"local checkpoint path is: ${localCheckpointPath}")
+        restoreFromCheckpoint(localCheckpointPath)
       }
 
       setVariableIntoTF(extraParameters, extraVariableAssignPlaceholders,

@@ -353,7 +353,7 @@ class TFModel(object):
         for file in os.listdir(model_dir):
             sc.addFile(os.path.join(model_dir, file))
         from pyspark import SparkFiles
-        driver_path = SparkFiles.getRootDirectory()
+        # driver_path = SparkFiles.getRootDirectory()
 
         # sc.addFile(model_dir, True)
 
@@ -370,7 +370,7 @@ class TFModel(object):
 
         file_paths2 = sc.parallelize([1, 2, 3, 4]).mapPartitions(func).collect()
 
-        training_helper_layer = TFTrainingHelper(driver_path,
+        training_helper_layer = TFTrainingHelper(model_dir,
                                                  session_config, saver, meta, sess)
 
         criterion = IdentityCriterion()

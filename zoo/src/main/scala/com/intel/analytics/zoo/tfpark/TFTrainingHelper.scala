@@ -190,8 +190,8 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
     graphRunner.runTargets(targets = Vector(initOp.get))
   }
 
-  def restoreFromCheckpoint(): Unit = {
-    graphRunner.restoreFromFile(checkpointPath)
+  def restoreFromCheckpoint(ckptPath: String): Unit = {
+    graphRunner.restoreFromFile(ckptPath)
     if (weights.length > 0) {
       getVariableFromTF(weights, variableNames = variables)
     }
@@ -227,9 +227,9 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
         println(s"local zoo checkpoint path is: ${zooCheckpointPath}")
         loadZooCheckpoint(zooCheckpointPath)
       } else {
-
-        println(s"local checkpoint path is: ${checkpointPath}")
-        restoreFromCheckpoint()
+        val localCheckpointPath = SparkFiles.getRootDirectory() + "/model"
+        println(s"local checkpoint path is: ${localCheckpointPath}")
+        restoreFromCheckpoint(localCheckpointPath)
       }
 
       Utils.timeIt("setTrainingVariableIntoTF") {
@@ -247,9 +247,9 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
         println(s"local zoo checkpoint path is: ${zooCheckpointPath}")
         loadZooCheckpoint(zooCheckpointPath)
       } else {
-
-        println(s"local checkpoint path is: ${checkpointPath}")
-        restoreFromCheckpoint()
+        val localCheckpointPath = SparkFiles.getRootDirectory() + "/model"
+        println(s"local checkpoint path is: ${localCheckpointPath}")
+        restoreFromCheckpoint(localCheckpointPath)
       }
 
       setVariableIntoTF(extraParameters, extraVariableAssignPlaceholders,
@@ -416,7 +416,7 @@ object TFTrainingHelper {
         trainMeta.defaultTensorValue
       )
     }
-    helper.restoreFromCheckpoint()
+    helper.restoreFromCheckpoint(checkpointPath)
     helper
   }
 
