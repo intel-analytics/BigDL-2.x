@@ -7,7 +7,7 @@ import scala.reflect.ClassTag
 
 private[zoo] class TFModelBroadcastFactory extends ModelBroadcastFactory {
   override def create[T: ClassTag]()(implicit ev: TensorNumeric[T]): ModelBroadcast[T] = {
-    new TFModelBroadcast[T]()
+    new TFModelBroadcastV2[T]()
   }
 }
 

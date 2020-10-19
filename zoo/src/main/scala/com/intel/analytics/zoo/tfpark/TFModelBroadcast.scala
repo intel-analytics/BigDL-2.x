@@ -3,7 +3,7 @@ package com.intel.analytics.zoo.tfpark
 import java.io.{IOException, ObjectInputStream, ObjectOutputStream}
 
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.models.utils.ModelBroadcast
+import com.intel.analytics.bigdl.models.utils.{CachedModels, ModelBroadcast, ModelInfo}
 import com.intel.analytics.bigdl.nn.Container
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.nn.mkldnn.{MklDnnLayer, TensorMMap}
