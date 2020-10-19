@@ -129,7 +129,6 @@ est.fit(data=dataset,
         validation_data=dataset)
 ```
 
-
 2.  Train data is Spark DataFrame. E.g.
 ```
 est.fit(data=df,
@@ -238,6 +237,7 @@ est.fit(data=dataset,
         epochs=10,
         validation_data=dataset)
 ```
+
 2.  Train data is Spark DataFrame. E.g.
 ```
 est.fit(data=df,
@@ -314,7 +314,7 @@ predict(data, batch_size=4,
 * `hard_code_batch_size`: if require hard code batch size for prediction. The default value is False.
 
 This method returns a predicted result.
-        
+
 1. Predict data is tf.data.DataSet. The prediction result should be an XShards and each element is {'prediction': predicted numpy array or list of predicted numpy arrays}.
 ```
 dataset = tf.data.Dataset.from_tensor_slices((np.random.randint(0, 200, size=(100, 1)),
@@ -458,9 +458,10 @@ est.save_tf_checkpoint(model_checkpoint)
 
 ##### **Save TF Keras model**
 ```
-save_keras_model(path)
+save_keras_model(path, overwrite=True)
 ```
 * `path`: keras model save path.
+* `overwrite`: Boolean. Whether to silently overwrite any existing file at the target location. Default: True.
 
 If you use tensorflow keras model in this estimator, this method would save keras model in specified path.
 
@@ -468,6 +469,6 @@ E.g.
 ```
 temp = tempfile.mkdtemp()
 model_path = os.path.join(temp, 'test.h5')
-est.save_keras_model(model_path)
+est.save_keras_model(model_path, overwrite=True)
 ```
 

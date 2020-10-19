@@ -34,7 +34,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
 
     def __init__(self, future_seq_len=1,
                  dt_col="datetime",
-                 target_col="value",
+                 target_col=["value"],
                  extra_features_col=None,
                  drop_missing=True):
         """
@@ -51,7 +51,10 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         self.scaler = StandardScaler()
         self.config = None
         self.dt_col = dt_col
-        self.target_col = target_col
+        if isinstance(target_col, str):
+            self.target_col = [target_col]
+        else:
+            self.target_col = target_col
         self.extra_features_col = extra_features_col
         self.feature_data = None
         self.drop_missing = drop_missing
@@ -200,9 +203,12 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
 
     def _unscale(self, y):
         # for standard scalar
-        value_mean = self.scaler.mean_[0]
-        value_scale = self.scaler.scale_[0]
-        y_unscale = y * value_scale + value_mean
+        y_unscale = np.zeros(y.shape)
+        for i in range(len(self.target_col)):
+            value_mean = self.scaler.mean_[i]
+            value_scale = self.scaler.scale_[i]
+            y_unscale[:, i:i+self.future_seq_len] = \
+                y[:, i:i+self.future_seq_len] * value_scale + value_mean
         return y_unscale
 
     def unscale_uncertainty(self, y_uncertainty):
@@ -221,10 +227,12 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         """
         y_pred_df = y_pred_dt_df
         if self.future_seq_len > 1:
-            columns = ["{}_{}".format(self.target_col, i) for i in range(self.future_seq_len)]
-            y_pred_df[columns] = pd.DataFrame(y_pred_unscale)
+            for i in range(self.future_seq_len):
+                for j in range(len(self.target_col)):
+                    column = self.target_col[j] + "_" + str(i)
+                    y_pred_df[column] = pd.DataFrame(y_pred_unscale[:, i])
         else:
-            y_pred_df[self.target_col] = y_pred_unscale
+            y_pred_df[self.target_col] = pd.DataFrame(y_pred_unscale)
         return y_pred_df
 
     def post_processing(self, input_df, y_pred, is_train):
@@ -246,13 +254,13 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
             if isinstance(input_df, list):
                 y_unscale_list = []
                 for df in input_df:
-                    _, y_unscale = self._roll_train(df[[self.target_col]],
+                    _, y_unscale = self._roll_train(df[self.target_col],
                                                     self.past_seq_len,
                                                     self.future_seq_len)
                     y_unscale_list.append(y_unscale)
                 output_y_unscale = np.concatenate(y_unscale_list, axis=0)
             else:
-                _, output_y_unscale = self._roll_train(input_df[[self.target_col]],
+                _, output_y_unscale = self._roll_train(input_df[self.target_col],
                                                        self.past_seq_len,
                                                        self.future_seq_len)
             return output_y_unscale, y_pred_unscale
@@ -415,8 +423,12 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
     def _roll_data(self, data, seq_len):
         result = []
         mask = []
+
         for i in range(len(data) - seq_len + 1):
-            result.append(data[i: i + seq_len])
+            if seq_len == 1 and len(self.target_col) > 1:
+                result.append(data[i])
+            else:
+                result.append(data[i: i + seq_len])
 
             if pd.isna(data[i: i + seq_len]).any(axis=None):
                 mask.append(0)
@@ -442,7 +454,10 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
             length = 1
         """
         x = dataframe[0:-future_seq_len].values
-        y = dataframe.iloc[past_seq_len:, 0].values
+        if len(self.target_col) == 1:
+            y = dataframe.iloc[past_seq_len:, 0].values
+        else:
+            y = dataframe.iloc[past_seq_len:, list(range(0, len(self.target_col)))].values
         output_x, mask_x = self._roll_data(x, past_seq_len)
         output_y, mask_y = self._roll_data(y, future_seq_len)
         # assert output_x.shape[0] == output_y.shape[0],
@@ -517,9 +532,8 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         :return:
         """
         cols = input_df.columns.tolist()
-        new_cols = [self.dt_col,
-                    self.target_col] + [col for col in cols
-                                        if col != self.dt_col and col != self.target_col]
+        new_cols = [self.dt_col] + self.target_col +\
+                   [col for col in cols if col != self.dt_col and col not in self.target_col]
         rearranged_data = input_df[new_cols].copy
         return rearranged_data
 
@@ -561,7 +575,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         feature_cols = np.asarray(json.loads(config.get("selected_features")))
         # we do not include target col in candidates.
         # the first column is designed to be the default position of target column.
-        target_col = np.array([self.target_col])
+        target_col = np.array(self.target_col)
         cols = np.concatenate([target_col, feature_cols])
         target_feature_matrix = feature_matrix[cols]
         return target_feature_matrix.astype(float)

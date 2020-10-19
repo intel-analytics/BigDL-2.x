@@ -40,7 +40,7 @@ import org.opencv.imgproc.Imgproc
 import org.opencv.core._
 import org.apache.commons.io.FileUtils
 import com.intel.analytics.zoo.feature.image._
-import com.intel.analytics.zoo.serving.engine.InferenceSupportive
+import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.http.{Instances, JsonUtil}
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams}
@@ -104,8 +104,8 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     val fileList = f.listFiles
     logger.info(s"${fileList.size} images about to enqueue...")
 
-    val pre = new PreProcessing(param)
-    pre.arrayBuffer = Array(new Array[Float](3 * 224 * 224))
+    val pre = new PreProcessing(param.chwFlag)
+    val clusterServingInference = new ClusterServingInference(pre, param.modelType)
     var predictMap = Map[String, String]()
 
     for (file <- fileList) {
@@ -123,7 +123,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
       val inputBase64 = new String(java.util.Base64.getEncoder
        .encode(instances.toArrow()))
       val input = pre.decodeArrowBase64(inputBase64)
-      val bInput = InferenceSupportive.batchInput(Seq(("", input)), param)
+      val bInput = clusterServingInference.batchInput(Seq(("", input)), 1, true, false)
       val result = model.doPredict(bInput)
       val value = PostProcessing(result.toTensor[Float]
         .squeeze(1), "topN(1)", 1)

@@ -23,19 +23,17 @@ import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.feature.image.OpenCVMethod
 import org.opencv.imgcodecs.Imgcodecs
 import org.apache.log4j.Logger
+
 import scala.collection.mutable.ArrayBuffer
 import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.zoo.serving.engine.Timer
 import com.intel.analytics.zoo.serving.http.Instances
-
 import com.intel.analytics.zoo.serving.utils.SerParams
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 
-class PreProcessing(param: SerParams) {
+class PreProcessing(chwFlag: Boolean = true) {
   val logger = Logger.getLogger(getClass)
-
-  var tensorBuffer: Array[Tensor[Float]] = null
-  var arrayBuffer: Array[Array[Float]] = null
 
   var byteBuffer: Array[Byte] = null
 
@@ -53,6 +51,7 @@ class PreProcessing(param: SerParams) {
             }
             else {
               (kv._1, decodeImage(kv._2.asInstanceOf[String]))
+
             }
           }
           else {
@@ -65,12 +64,11 @@ class PreProcessing(param: SerParams) {
         Seq(T.array(arr.toArray))
       })
       kvMap.head
-    }
-    catch {
+    } catch {
       case e: Exception =>
         logger.error(s"Preprocessing error, msg ${e.getMessage}")
         logger.error(s"Error stack trace ${e.getStackTrace.mkString("\n")}")
-        Tensor[Float]()
+        T(Tensor[Float]())
     }
   }
   def decodeString(s: String): Tensor[String] = {
@@ -92,7 +90,7 @@ class PreProcessing(param: SerParams) {
     OpenCVMat.toFloatPixels(mat, arrayBuffer)
 
     val imageTensor = Tensor[Float](arrayBuffer, Array(height, width, channel))
-    if (param.chwFlag) {
+    if (chwFlag) {
       imageTensor.transpose(1, 3)
         .transpose(2, 3).contiguous()
     } else {

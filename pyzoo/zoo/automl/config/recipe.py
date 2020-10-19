@@ -54,8 +54,8 @@ class Recipe(metaclass=ABCMeta):
     def search_algorithm(self):
         return None
 
-    def scheduler_params(self):
-        pass
+    def scheduler_algorithm(self):
+        return None
 
 
 class SmokeRecipe(Recipe):
@@ -268,7 +268,7 @@ class LSTMGridRandomRecipe(Recipe):
                                                           all_available_features,
                                                           size=np.random.randint(
                                                               low=3,
-                                                              high=len(all_available_features)),
+                                                              high=len(all_available_features) + 1),
                                                           replace=False)))),
 
             "model": "LSTM",
@@ -565,8 +565,56 @@ class XgbRegressorGridRandomRecipe(Recipe):
             # -------- feature related parameters
             "model": "XGBRegressor",
 
+            "imputation": tune.choice(["LastFillImpute", "FillZeroImpute"]),
             "n_estimators": self.n_estimators,
             "max_depth": self.max_depth,
             "min_child_weight": self.min_child_weight,
             "lr": self.lr
         }
+
+
+class XgbRegressorSkOptRecipe(Recipe):
+    def __init__(
+            self,
+            num_rand_samples=10,
+            n_estimators_range=(50, 1000),
+            max_depth_range=(2, 15),
+    ):
+        """
+        """
+        super(self.__class__, self).__init__()
+
+        self.num_samples = num_rand_samples
+
+        self.n_estimators_range = n_estimators_range
+        self.max_depth_range = max_depth_range
+
+    def search_space(self, all_available_features):
+        return {
+            # -------- feature related parameters
+            "n_estimators": self.n_estimators_range,
+            "max_depth": self.max_depth_range,
+        }
+
+    def fixed_params(self):
+        total_fixed_params = {
+            "n_estimators": tune.randint(self.n_estimators_range[0],
+                                         self.n_estimators_range[1]),
+            "max_depth": tune.randint(self.max_depth_range[0],
+                                      self.max_depth_range[1]),
+        }
+        return total_fixed_params
+
+    def opt_params(self):
+        from skopt.space import Integer
+        params = [
+            Integer(self.n_estimators_range[0], self.n_estimators_range[1]),
+            Integer(self.max_depth_range[0], self.max_depth_range[1]),
+        ]
+        return params
+
+    def search_algorithm(self):
+        return 'SkOpt'
+
+    def scheduler_algorithm(self):
+        return "AsyncHyperBand"

@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# check if started
-#if [ -f "running" ]; then
-#    echo "Serving is already running!"
-#    exit 1
-#fi
-
 # parse config file
 function parse_yaml {
    local prefix=$2
@@ -25,9 +19,6 @@ function parse_yaml {
 }
 while [ "$1" != "" ]; do
     case $1 in
-        -e | --engine )         shift
-                                backend=$1
-                                ;;
         -c | --config_path )    shift
                                 config_path=$1
                                 ;;
@@ -56,33 +47,8 @@ fi
 parse_yaml $config_path
 eval $(parse_yaml $config_path)
 
-if [ -z "${spark_master}" ]; then
-    echo "master of spark cluster not set, using default value local[*]"
-    spark_master=local[*]
-fi
-if [ -z "${spark_driver_memory}" ]; then
-    echo "spark driver memory not set, using default value 4g"
-    spark_driver_memory=4g
-fi
-if [ -z "${spark_executor_memory}" ]; then
-    echo "spark executor memory not set, using default value 1g"
-    spark_executor_memory=1g
-fi
-if [ -z "${spark_num_executors}" ]; then
-    echo "spark num-executors not set, using default value 1"
-    spark_num_executors=1
-fi
-if [ -z "${spark_executor_cores}" ]; then
-    echo "spark executor-cores not set, using default value 4"
-    spark_executor_cores=4
-fi
-if [ -z "${spark_total_executor_cores}" ]; then
-    echo "spark executor-cores not set, using default value 4"
-    spark_total_executor_cores=4
-fi
-
-if [ -z "${params_engine_type}" ]; then    
-    params_engine_type=mklblas
+if [ -z "${model_name}" ]; then
+    model_name=serving_stream
 fi
 
 if [ -z "${redis_maxmem}" ]; then
@@ -90,11 +56,12 @@ if [ -z "${redis_maxmem}" ]; then
     redis_maxmem=8G
 fi
 
+LOG_DIR=log-cluster_serving-${model_name}.txt
 # try to start redis server
 if [ -z "${REDIS_HOME}" ]; then
     echo "REDIS_HOME variable is not set, skip redis start. Note that you need to set it otherwise Cluster Serving would not start or stop Redis for you."
 else
-    ${REDIS_HOME}/src/redis-server > redis.log &
+    ${REDIS_HOME}/src/redis-server >> $LOG_DIR &
     echo "redis server started, please check log in redis.log" && sleep 1
 
     # sleep for 1 sec to ensure server is ready and client could connect
@@ -116,47 +83,14 @@ if [ -z "${ZOO_JAR}" ]; then
 fi
 
 
-if [ -z "${backend// }" ]; then
-    echo "Starting Cluster Serving with Flink backend"
-    if [ -z "${FLINK_HOME}" ]; then
-      echo "FLINK_HOME variable is not set, you need to set it to start Cluster Serving with Flink backend."
-      exit 1
-    fi
-    ${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p $par_num zoo.jar -c $config_path
-else
-  echo "You are using non-default backend"
-  if [ $backend != "spark" ]; then
-    echo "You provided invalid parameter when start serving, supported parameter is spark, your is "$backend
-    exit 1
-  fi
-  # try to start tensorboard
-  if [[ ! -e "TensorboardEventLogs" ]]; then
-      mkdir TensorboardEventLogs
-  fi
-  tensorboard --logdir ./TensorboardEventLogs --port 6006 --host 0.0.0.0 &
-
-
-    if [ "${params_performance_mode}" == "ON" ] && [ "${spark_master}" == "local[*]" ]; then
-     echo -e "\033[36mPerformance mode is ON, Start standalone cluster... \033[0m"
-     if [ -f "cluster-with-numactl.sh" ]; then
-      OUTPUT=`./cluster-with-numactl.sh start | tail -1`
-     else
-      OUTPUT=`cluster-with-numactl.sh start | tail -1`
-     fi
-     IFS=','
-     PARAMS=($OUTPUT)
-     unset IFS
-     LENGTH=${#PARAMS[@]}
-     if [ $LENGTH -gt 2 ]; then
-      spark_master=${PARAMS[0]}
-      spark_executor_cores=${PARAMS[1]}
-      spark_num_executors=${PARAMS[2]}
-      spark_total_executor_cores=${PARAMS[3]}
-      spark_driver_memory=${PARAMS[4]}
-      export OMP_NUM_THREADS=${spark_executor_cores}
-     elif [ $LENGTH -eq 2 ]; then
-      echo -e "\033[31m${PARAMS[1]}, use local[*] instead \033[0m"
-     fi
-    fi
-    ${SPARK_HOME}/bin/spark-submit --master ${spark_master} --driver-memory ${spark_driver_memory} --executor-memory ${spark_executor_memory} --num-executors ${spark_num_executors} --executor-cores ${spark_executor_cores} --total-executor-cores ${spark_total_executor_cores} --class com.intel.analytics.zoo.serving.SparkStreamingClusterServing ${ZOO_JAR}
+echo "Starting Cluster Serving with Flink backend"
+if [ -z "${FLINK_HOME}" ]; then
+  echo "FLINK_HOME variable is not set, you need to set it to start Cluster Serving with Flink backend."
+  exit 1
 fi
+${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p $par_num zoo.jar -c $config_path >> $LOG_DIR &
+
+echo "Cluster Serving job submitted, check log in $LOG_DIR"
+echo "To list Cluster Serving job status, use cluster-serving-cli list"
+sleep 3
+tail -1 $LOG_DIR

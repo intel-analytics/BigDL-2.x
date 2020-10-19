@@ -334,23 +334,24 @@ object FrontEndApp extends Supportive with EncryptSupportive {
 }
 
 case class FrontEndAppArguments(
-    interface: String = "0.0.0.0",
-    port: Int = 10020,
-    securePort: Int = 10023,
-    redisHost: String = "localhost",
-    redisPort: Int = 6379,
-    redisInputQueue: String = Conventions.SERVING_STREAM_NAME,
-    redisOutputQueue: String = "result:",
-    parallelism: Int = 1000,
-    timeWindow: Int = 0,
-    countWindow: Int = 56,
-    tokenBucketEnabled: Boolean = false,
-    tokensPerSecond: Int = 100,
-    tokenAcquireTimeout: Int = 100,
-    httpsEnabled: Boolean = false,
-    httpsKeyStorePath: String = null,
-    httpsKeyStorePassword: String = "1234qwer",
-    redisSecureEnabled: Boolean = false,
-    redissTrustStorePath: String = null,
-    redissTrustStorePassword: String = "1234qwer"
+  interface: String = "0.0.0.0",
+  port: Int = 10020,
+  securePort: Int = 10023,
+  redisHost: String = "localhost",
+  redisPort: Int = 6379,
+  redisInputQueue: String = Conventions.SERVING_STREAM_DEFAULT_NAME,
+  redisOutputQueue: String =
+    Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":",
+  parallelism: Int = 1000,
+  timeWindow: Int = 0,
+  countWindow: Int = 56,
+  tokenBucketEnabled: Boolean = false,
+  tokensPerSecond: Int = 100,
+  tokenAcquireTimeout: Int = 100,
+  httpsEnabled: Boolean = false,
+  httpsKeyStorePath: String = null,
+  httpsKeyStorePassword: String = "1234qwer",
+  redisSecureEnabled: Boolean = false,
+  redissTrustStorePath: String = null,
+  redissTrustStorePassword: String = "1234qwer"
 )

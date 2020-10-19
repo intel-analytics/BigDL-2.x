@@ -14,10 +14,9 @@
 # limitations under the License.
 #
 
-from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense, LSTM, Dropout
 import tensorflow.keras as keras
-import os
 
 from zoo.automl.model.abstract import BaseModel
 from zoo.automl.common.util import *
@@ -70,20 +69,6 @@ class VanillaLSTM(BaseModel):
         out = Dense(self.future_seq_len)(dropout_2)
         self.model = Model(inputs=inp, outputs=out)
 
-        # self.model = Sequential()
-        # self.model.add(LSTM(
-        #     # input_shape=(config.get('input_shape_x', 20),
-        #     #             config.get('input_shape_y', 20)),
-        #     units=config.get('lstm_1_units', 20),
-        #     return_sequences=True))
-        # self.model.add(Dropout(config.get('dropout_1', 0.2)))
-        #
-        # self.model.add(LSTM(
-        #     units=config.get('lstm_2_units', 10),
-        #     return_sequences=False))
-        # self.model.add(Dropout(config.get('dropout_2', 0.2)))
-
-        # self.model.add(Dense(self.future_seq_len))
         self.model.compile(loss=self.loss,
                            metrics=[self.metric],
                            optimizer=keras.optimizers.RMSprop(lr=config.get('lr', 0.001)))

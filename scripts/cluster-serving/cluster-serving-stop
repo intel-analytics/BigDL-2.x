@@ -33,4 +33,12 @@ else
     echo "Serving is not running, stop operation ignored."
 fi
 
+if cluster-serving-cli; then
+  cluster-serving-cli stop
+else
+  if [ -z "CS_PATH" ]; then
+    echo "If you install Cluster Serving not by pip, please set CS_PATH variable"
+    exit 1
+  ${CS_PATH}/cluster-serving-cli stop
+fi
 

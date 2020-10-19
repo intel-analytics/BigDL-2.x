@@ -55,14 +55,10 @@ import torch.optim as optim
 from torch.autograd import Variable
 from torch.nn.utils import weight_norm
 
-from zoo.automl.model.tcmf.data_loader import DataLoader
+from zoo.automl.model.tcmf.data_loader import TCMFDataLoader
 from zoo.automl.model.tcmf.time import TimeCovariates
 
 import logging
-
-np.random.seed(111)
-torch.manual_seed(111)
-random.seed(111)
 
 logger = logging.getLogger(__name__)
 
@@ -298,8 +294,6 @@ class LocalModel(object):
         dropout=0.2,
         vbsize=300,
         hbsize=128,
-        num_epochs=100,
-        # num_epochs=1,
         lr=0.0005,
         val_len=10,
         test=True,
@@ -321,7 +315,6 @@ class LocalModel(object):
         dropout: dropout rate for each layer
         vbsize: vertical batch size
         hbsize: horizontal batch size
-        num_epochs: max. number of epochs
         lr: learning rate
         val_len: validation length
         test: always set to True
@@ -358,14 +351,13 @@ class LocalModel(object):
         self.hbsize = hbsize
         self.num_inputs = num_inputs
         self.num_channels = num_channels
-        self.num_epochs = num_epochs
         self.lr = lr
         self.val_len = val_len
         self.Ymat = Ymat
-        self.test = test
         self.end_index = end_index
         self.normalize = normalize
         self.kernel_size = kernel_size
+        self.dropout = dropout
         if normalize:
             Y = Ymat
             m = np.mean(Y[:, 0: self.end_index], axis=1)
@@ -395,7 +387,7 @@ class LocalModel(object):
 
         self.seq = self.seq.float()
 
-        self.D = DataLoader(
+        self.D = TCMFDataLoader(
             Ymat=self.Ymat,
             vbsize=vbsize,
             hbsize=hbsize,
@@ -406,16 +398,41 @@ class LocalModel(object):
         )
         self.val_len = val_len
 
-    def __loss__(self, out, target, dic=None):
+    def train_model(self, num_epochs=300,
+                    num_workers=1,
+                    early_stop=False, tenacity=10):
+        if num_workers == 1:
+            return self.train_model_local(num_epochs=num_epochs,
+                                          early_stop=early_stop,
+                                          tenacity=tenacity)
+        else:
+            from zoo.automl.model.tcmf.local_model_distributed_trainer import train_yseq_hvd
+            import ray
+
+            # check whether there has been an activate ray context yet.
+            from zoo.ray import RayContext
+            ray_ctx = RayContext.get()
+            Ymat_id = ray.put(self.Ymat)
+            covariates_id = ray.put(self.covariates)
+            Ycov_id = ray.put(self.Ycov)
+            trainer_config_keys = ["vbsize", "hbsize", "end_index", "val_len", "lr",
+                                   "num_inputs", "num_channels", "kernel_size", "dropout"]
+            trainer_config = {k: self.__dict__[k] for k in trainer_config_keys}
+            model, val_loss = train_yseq_hvd(epochs=num_epochs,
+                                             workers_per_node=num_workers // ray_ctx.num_ray_nodes,
+                                             Ymat_id=Ymat_id,
+                                             covariates_id=covariates_id,
+                                             Ycov_id=Ycov_id,
+                                             **trainer_config)
+            self.seq = model
+            return val_loss
+
+    @staticmethod
+    def loss(out, target):
         criterion = nn.L1Loss()
         return criterion(out, target) / torch.abs(target.data).mean()
 
-    def __prediction__(self, data):
-        dic = None
-        out = self.seq(data)
-        return out, dic
-
-    def train_model(self, early_stop=False, tenacity=10):
+    def train_model_local(self, num_epochs=300, early_stop=False, tenacity=10):
         """
         early_stop: set true for using early stop
         tenacity: patience for early_stop
@@ -424,20 +441,20 @@ class LocalModel(object):
         optimizer = optim.Adam(params=self.seq.parameters(), lr=self.lr)
         iter_count = 0
         loss_all = []
-        loss_test_all = []
-        vae = float("inf")
+        min_val_loss = float("inf")
         scount = 0
-        while self.D.epoch < self.num_epochs:
+        val_loss = 0
+        inp_test, out_target_test, _, _ = self.D.supply_test()
+        while self.D.epoch < num_epochs:
             last_epoch = self.D.epoch
             inp, out_target, _, _ = self.D.next_batch()
-            if self.test:
-                inp_test, out_target_test, _, _ = self.D.supply_test()
+
             current_epoch = self.D.epoch
             inp = Variable(inp)
             out_target = Variable(out_target)
             optimizer.zero_grad()
-            out, dic = self.__prediction__(inp)
-            loss = self.__loss__(out, out_target, dic)
+            out = self.seq(inp)
+            loss = LocalModel.loss(out, out_target)
             iter_count = iter_count + 1
             for p in self.seq.parameters():
                 p.requires_grad = True
@@ -447,29 +464,20 @@ class LocalModel(object):
             optimizer.step()
 
             loss_all = loss_all + [loss.item()]
-            if self.test:
-                inp_test = Variable(inp_test)
-                out_target_test = Variable(out_target_test)
-                out_test, dic = self.__prediction__(inp_test)
-                losst = self.__loss__(out_test, out_target_test, dic)
-            loss_test_all = loss_test_all + [losst.item()]
 
             if current_epoch > last_epoch:
-                ve = loss_test_all[-1]
+                # validate:
+                inp_test = Variable(inp_test)
+                out_target_test = Variable(out_target_test)
+                out_test = self.seq(inp_test)
+
+                val_loss = LocalModel.loss(out_test, out_target_test).item()
                 print("Entering Epoch:{}".format(current_epoch))
                 print("Train Loss:{}".format(np.mean(loss_all)))
-                print("Validation Loss:{}".format(ve))
-                self.val_loss = ve
-                if ve <= vae:
-                    vae = ve
+                print("Validation Loss:{}".format(val_loss))
+                if val_loss <= min_val_loss:
+                    min_val_loss = val_loss
                     scount = 0
-                    # self.saved_seq = TemporalConvNet(
-                    #     num_inputs=self.seq.num_inputs,
-                    #     num_channels=self.seq.num_channels,
-                    #     kernel_size=self.seq.kernel_size,
-                    #     dropout=self.seq.dropout,
-                    # )
-                    # self.saved_seq.load_state_dict(self.seq.state_dict())
                     self.saved_seq = pickle.loads(pickle.dumps(self.seq))
                 else:
                     scount += 1
@@ -477,15 +485,18 @@ class LocalModel(object):
                         self.seq = self.saved_seq
 
                         break
+        return val_loss
 
-    def convert_to_input(self, data):
+    @staticmethod
+    def convert_to_input(data):
         n, m = data.shape
         inp = torch.from_numpy(data).view(1, n, m)
         inp = inp.transpose(0, 1).float()
 
         return inp
 
-    def convert_covariates(self, data, covs):
+    @staticmethod
+    def convert_covariates(data, covs):
         nd, td = data.shape
         rcovs = np.repeat(
             covs.reshape(1, covs.shape[0], covs.shape[1]), repeats=nd, axis=0
@@ -493,44 +504,35 @@ class LocalModel(object):
         rcovs = torch.from_numpy(rcovs).float()
         return rcovs
 
-    def convert_ycovs(self, data, ycovs):
-        nd, td = data.shape
+    @staticmethod
+    def convert_ycovs(data, ycovs):
         ycovs = torch.from_numpy(ycovs).float()
         return ycovs
 
-    def convert_from_output(self, T):
+    @staticmethod
+    def convert_from_output(T):
         out = T.view(T.size(0), T.size(2))
         return np.array(out.detach())
 
+    @staticmethod
     def predict_future_batch(
-        self, data, covariates=None, ycovs=None, future=10
+        data, covariates=None, ycovs=None, future=10, model=None,
     ):
-        inp = self.convert_to_input(data)
-        if covariates is not None:
-            cov = self.convert_covariates(data, covariates)
+        # init inp, cov, ycovs for Local model
+        valid_cov = covariates is not None
+        inp = LocalModel.convert_to_input(data)
+        if valid_cov:
+            cov = LocalModel.convert_covariates(data, covariates)
             inp = torch.cat((inp, cov[:, :, 0: inp.size(2)]), 1)
         if ycovs is not None:
-            ycovs = self.convert_ycovs(data, ycovs)
+            ycovs = LocalModel.convert_ycovs(data, ycovs)
             inp = torch.cat((inp, ycovs[:, :, 0: inp.size(2)]), 1)
 
-        out, dic = self.__prediction__(inp)
         ci = inp.size(2)
-        output = out[:, :, out.size(2) - 1].view(out.size(0), out.size(1), 1)
-        if covariates is not None:
-            output = torch.cat(
-                (output, cov[:, :, ci].view(cov.size(0), cov.size(1), 1)), 1
-            )
-        if ycovs is not None:
-            output = torch.cat(
-                (output, ycovs[:, :, ci].view(ycovs.size(0), ycovs.size(1), 1)), 1
-            )
-        out = torch.cat((inp, output), dim=2)
-        for i in range(future - 1):
-            inp = out
-            out, dic = self.__prediction__(inp)
+        for i in range(future):
+            out = model(inp)
             output = out[:, :, out.size(2) - 1].view(out.size(0), out.size(1), 1)
-            ci += 1
-            if covariates is not None:
+            if valid_cov:
                 output = torch.cat(
                     (output, cov[:, :, ci].view(cov.size(0), cov.size(1), 1)), 1
                 )
@@ -539,9 +541,25 @@ class LocalModel(object):
                     (output, ycovs[:, :, ci].view(ycovs.size(0), ycovs.size(1), 1)), 1
                 )
             out = torch.cat((inp, output), dim=2)
+            inp = out
+            ci += 1
         out = out[:, 0, :].view(out.size(0), 1, out.size(2))
-        y = self.convert_from_output(out)
+        y = LocalModel.convert_from_output(out)
+
         return y
+
+    @staticmethod
+    def _predict_future(data, ycovs, covariates, model, future, I):
+        out = None
+        for i in range(len(I) - 1):
+            bdata = data[range(I[i], I[i + 1]), :]
+            batch_ycovs = ycovs[range(I[i], I[i + 1]), :, :] \
+                if ycovs is not None else None
+            cur_out = LocalModel.predict_future_batch(
+                bdata, covariates, batch_ycovs, future, model,
+            )
+            out = np.vstack([out, cur_out]) if out is not None else cur_out
+        return out
 
     def predict_future(
         self,
@@ -551,6 +569,7 @@ class LocalModel(object):
         future=10,
         bsize=40,
         normalize=False,
+        num_workers=1,
     ):
         """
         data_in: input past data in same format of Ymat
@@ -559,6 +578,8 @@ class LocalModel(object):
         future: number of time-points to predict
         bsize: batch size for processing (determine according to gopu memory limits)
         normalize: should be set according to the normalization used in the class initialization
+        num_workers: number of workers to run prediction. if num_workers > 1, then prediction will
+        run in distributed mode and there has to be an activate RayContext.
         """
         with torch.no_grad():
             if normalize:
@@ -572,23 +593,38 @@ class LocalModel(object):
 
             I = list(np.arange(0, n, bsize))
             I.append(n)
-            bdata = data[range(I[0], I[1]), :]
-            if ycovs is not None:
-                out = self.predict_future_batch(
-                    bdata, covariates, ycovs[range(I[0], I[1]), :, :], future
-                )
-            else:
-                out = self.predict_future_batch(bdata, covariates, None, future)
 
-            for i in range(1, len(I) - 1):
-                bdata = data[range(I[i], I[i + 1]), :]
-                if ycovs is not None:
-                    temp = self.predict_future_batch(
-                        bdata, covariates, ycovs[range(I[i], I[i + 1]), :, :], future
-                    )
-                else:
-                    temp = self.predict_future_batch(bdata, covariates, None, future)
-                out = np.vstack([out, temp])
+            model = self.seq
+            if num_workers > 1:
+                import ray
+                import math
+
+                batch_num_per_worker = math.ceil(len(I) / num_workers)
+                indexes = [I[i:i + batch_num_per_worker + 1] for i in
+                           range(0, len(I) - 1, batch_num_per_worker)]
+                logger.info(f"actual number of workers used in prediction is {len(indexes)}")
+                data_id = ray.put(data)
+                covariates_id = ray.put(covariates)
+                ycovs_id = ray.put(ycovs)
+                model_id = ray.put(model)
+
+                @ray.remote
+                def predict_future_worker(I):
+                    data = ray.get(data_id)
+                    covariates = ray.get(covariates_id)
+                    ycovs = ray.get(ycovs_id)
+                    model = ray.get(model_id)
+                    out = LocalModel._predict_future(data, ycovs, covariates, model, future, I)
+                    return out
+
+                remote_out = ray.get([predict_future_worker
+                                     .remote(index)
+                                      for index in indexes])
+
+                out = np.concatenate(remote_out, axis=0)
+
+            else:
+                out = LocalModel._predict_future(data, ycovs, covariates, model, future, I)
 
             if normalize:
                 temp = (out - self.mini) * self.s[:, None] + self.m[:, None]

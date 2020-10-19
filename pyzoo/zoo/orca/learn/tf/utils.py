@@ -20,10 +20,8 @@ import re
 import shutil
 import tensorflow as tf
 import numpy as np
-from pyspark.sql.dataframe import DataFrame
 
 from zoo.orca.data import SparkXShards
-from zoo.orca.data.tf.data import Dataset, TFDataDataset2
 from zoo.tfpark.tf_dataset import TFDataset
 from zoo.orca.data.utils import get_spec, flatten_xy
 from zoo.common.utils import put_local_file_to_remote, get_remote_file_to_local, get_file_list,\
@@ -60,59 +58,6 @@ def xshards_to_tf_dataset(data_shard,
                                  hard_code_batch_size=hard_code_batch_size,
                                  sequential_order=sequential_order,
                                  shuffle=shuffle)
-
-    return dataset
-
-
-def to_dataset(data, batch_size, batch_per_thread, validation_data,
-               feature_cols, labels_cols, hard_code_batch_size,
-               sequential_order, shuffle):
-    if validation_data:
-        if isinstance(data, SparkXShards):
-            assert isinstance(validation_data, SparkXShards), \
-                "train data and validation data should be both SparkXShards"
-        if isinstance(data, Dataset):
-            assert isinstance(validation_data, Dataset), \
-                "train data and validation data should be both orca.data.tf.Dataset"
-        if isinstance(data, DataFrame):
-            assert isinstance(validation_data, DataFrame), \
-                "train data and validation data should be both Spark DataFrame"
-        if isinstance(data, tf.data.Dataset):
-            assert isinstance(validation_data, tf.data.Dataset), \
-                "train data and validation data should be both tf.data.Dataset"
-
-    if isinstance(data, SparkXShards):
-        dataset = xshards_to_tf_dataset(data,
-                                        batch_size,
-                                        batch_per_thread,
-                                        validation_data,
-                                        hard_code_batch_size=hard_code_batch_size,
-                                        sequential_order=sequential_order,
-                                        shuffle=shuffle)
-    elif isinstance(data, Dataset):
-        dataset = TFDataDataset2(data, batch_size=batch_size,
-                                 batch_per_thread=batch_per_thread,
-                                 validation_dataset=validation_data)
-    elif isinstance(data, DataFrame):
-        dataset = TFDataset.from_dataframe(data, feature_cols, labels_cols,
-                                           batch_size,
-                                           batch_per_thread,
-                                           hard_code_batch_size,
-                                           validation_data,
-                                           sequential_order,
-                                           shuffle
-                                           )
-    elif isinstance(data, tf.data.Dataset):
-        dataset = TFDataset.from_tf_data_dataset(data,
-                                                 batch_size,
-                                                 batch_per_thread,
-                                                 hard_code_batch_size,
-                                                 validation_data,
-                                                 sequential_order,
-                                                 shuffle)
-    else:
-        raise ValueError("data must be SparkXShards or orca.data.tf.Dataset or "
-                         "Spark DataFrame or tf.data.Dataset")
 
     return dataset
 
@@ -158,37 +103,6 @@ def convert_predict_to_xshard(prediction_rdd):
             return [{'prediction': np.array(predictions)}]
 
     return SparkXShards(prediction_rdd.mapPartitions(transform_predict))
-
-
-def find_latest_checkpoint(model_dir):
-    import os
-    import re
-    import datetime
-    ckpt_path = None
-    latest_version = None
-    for (root, dirs, files) in os.walk(model_dir, topdown=True):
-        temp_versions = []
-        timestamps = []
-        for dir in dirs:
-            if re.match('(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})$', dir) is not None:
-                try:
-                    # check if dir name is date time
-                    datetime.datetime.strptime(dir, '%Y-%m-%d_%H-%M-%S')
-                    timestamps.append(dir)
-                except:
-                    continue
-        if timestamps:
-            start_dir = os.path.join(root, max(timestamps))
-            return find_latest_checkpoint(start_dir)
-        for file_name in files:
-            if re.match("^optimMethod-TFParkTraining\.[0-9]+$", file_name) is not None:
-                version = int(file_name.split(".")[1])
-                temp_versions.append(version)
-        if temp_versions:
-            ckpt_path = root
-            latest_version = max(temp_versions)
-            break
-    return ckpt_path, latest_version
 
 
 def save_tf_checkpoint(sess, checkpoint_path, saver=None):

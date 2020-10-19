@@ -19,12 +19,10 @@ import tempfile
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.automl.model import BaseModel
 from zoo.automl.pipeline.time_sequence import *
 from zoo.automl.regression.time_sequence_predictor import *
 import numpy as np
 import pandas as pd
-import ray
 from pandas.util.testing import assert_frame_equal
 from numpy.testing import assert_array_almost_equal
 

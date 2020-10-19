@@ -13,17 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import json
 
-from time import time
-from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, LSTM, Dense
 import tensorflow.keras as keras
 
-import os
-
-from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 from zoo.automl.model.abstract import BaseModel
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator

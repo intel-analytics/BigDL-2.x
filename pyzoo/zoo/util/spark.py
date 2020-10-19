@@ -15,6 +15,7 @@
 #
 
 import os
+import platform
 
 from pyspark import SparkContext
 from zoo import init_nncontext, init_spark_conf
@@ -99,8 +100,16 @@ class SparkRunner:
             conf = enrich_conf_for_spark(conf, driver_cores, driver_memory, num_executors,
                                          executor_cores, executor_memory,
                                          extra_executor_memory_for_ray)
+            py_version = ".".join(platform.python_version().split(".")[0:2])
+            preload_so = executor_python_env + "/lib/libpython" + py_version + "m.so"
+            ld_path = executor_python_env + "/lib:" + executor_python_env + "/lib/python" +\
+                py_version + "/lib-dynload"
+            if "spark.executor.extraLibraryPath" in conf:
+                ld_path = "{}:{}".format(ld_path, conf["spark.executor.extraLibraryPath"])
             conf.update({"spark.scheduler.minRegisteredResourcesRatio": "1.0",
-                         "spark.executorEnv.PYTHONHOME": executor_python_env})
+                         "spark.executorEnv.PYTHONHOME": executor_python_env,
+                         "spark.executor.extraLibraryPath": ld_path,
+                         "spark.executorEnv.LD_PRELOAD": preload_so})
             if spark_yarn_archive:
                 conf["spark.yarn.archive"] = spark_yarn_archive
             zoo_bigdl_path_on_executor = ":".join(
@@ -127,13 +136,16 @@ class SparkRunner:
                               extra_executor_memory_for_ray=None,
                               extra_python_lib=None,
                               conf=None,
-                              jars=None):
+                              jars=None,
+                              python_location=None,
+                              enable_numa_binding=False):
         import subprocess
         import pyspark
         from zoo.util.utils import get_node_ip
 
         if "PYSPARK_PYTHON" not in os.environ:
-            os.environ["PYSPARK_PYTHON"] = detect_python_location()
+            os.environ["PYSPARK_PYTHON"] = \
+                python_location if python_location else detect_python_location()
         if not master:
             pyspark_home = os.path.abspath(pyspark.__file__ + "/../")
             zoo_standalone_home = os.path.abspath(__file__ + "/../../share/bin/standalone")
@@ -153,13 +165,22 @@ class SparkRunner:
             start_master_pro = subprocess.Popen(
                 "{}/sbin/start-master.sh".format(zoo_standalone_home),
                 shell=True, env=SparkRunner.standalone_env)
-            os.waitpid(start_master_pro.pid, 0)
+            _, status = os.waitpid(start_master_pro.pid, 0)
+            if status != 0:
+                raise RuntimeError("starting master failed")
             master = "spark://{}:7077".format(node_ip)  # 7077 is the default port
             # Start worker
+            if enable_numa_binding:
+                worker_script = "start-worker-with-numactl.sh"
+                SparkRunner.standalone_env["SPARK_WORKER_INSTANCES"] = str(num_executors)
+            else:
+                worker_script = "start-worker.sh"
             start_worker_pro = subprocess.Popen(
-                "{}/sbin/start-worker.sh {}".format(zoo_standalone_home, master),
+                "{}/sbin/{} {}".format(zoo_standalone_home, worker_script, master),
                 shell=True, env=SparkRunner.standalone_env)
-            os.waitpid(start_worker_pro.pid, 0)
+            _, status = os.waitpid(start_worker_pro.pid, 0)
+            if status != 0:
+                raise RuntimeError("starting worker failed")
         else:  # A Spark standalone cluster has already been started by the user.
             assert master.startswith("spark://"), \
                 "Please input a valid master address for your Spark standalone cluster: " \
@@ -191,20 +212,16 @@ class SparkRunner:
     def stop_spark_standalone():
         import subprocess
         env = SparkRunner.standalone_env
-        if not env:
-            import pyspark
-            pyspark_home = os.path.abspath(pyspark.__file__ + "/../")
-            zoo_standalone_home = os.path.abspath(__file__ + "/../../share/bin/standalone")
-            pro = subprocess.Popen(["chmod", "-R", "+x", "{}/sbin".format(zoo_standalone_home)])
-            os.waitpid(pro.pid, 0)
-            env = {"SPARK_HOME": pyspark_home,
-                   "ZOO_STANDALONE_HOME": zoo_standalone_home}
-        stop_worker_pro = subprocess.Popen(
-            "{}/sbin/stop-worker.sh".format(env["ZOO_STANDALONE_HOME"]), shell=True, env=env)
-        os.waitpid(stop_worker_pro.pid, 0)
-        stop_master_pro = subprocess.Popen(
-            "{}/sbin/stop-master.sh".format(env["ZOO_STANDALONE_HOME"]), shell=True, env=env)
-        os.waitpid(stop_master_pro.pid, 0)
+        if env is not None:
+            stop_worker_pro = subprocess.Popen(
+                "{}/sbin/stop-worker.sh".format(env["ZOO_STANDALONE_HOME"]), shell=True, env=env)
+            os.waitpid(stop_worker_pro.pid, 0)
+            stop_master_pro = subprocess.Popen(
+                "{}/sbin/stop-master.sh".format(env["ZOO_STANDALONE_HOME"]), shell=True, env=env)
+            os.waitpid(stop_master_pro.pid, 0)
+        else:
+            # if env is None, then the standalone cluster is not started by analytics zoo
+            pass
 
     def init_spark_on_k8s(self,
                           master,
@@ -219,8 +236,11 @@ class SparkRunner:
                           conf=None,
                           jars=None,
                           python_location=None):
-        if python_location:
-            os.environ["PYSPARK_PYTHON"] = python_location
+        print("Initializing SparkContext for k8s-client mode")
+        python_env = "/".join(detect_python_location().split("/")[:-2])
+        if "PYSPARK_PYTHON" not in os.environ:
+            os.environ["PYSPARK_PYTHON"] = \
+                python_location if python_location else detect_python_location()
 
         submit_args = "--master " + master + " --deploy-mode client"
         submit_args = submit_args + gen_submit_args(
@@ -229,8 +249,17 @@ class SparkRunner:
 
         conf = enrich_conf_for_spark(conf, driver_cores, driver_memory, num_executors,
                                      executor_cores, executor_memory, extra_executor_memory_for_ray)
+        py_version = ".".join(platform.python_version().split(".")[0:2])
+        preload_so = python_env + "/lib/libpython" + py_version + "m.so"
+        ld_path = python_env + "/lib:" + python_env + "/lib/python" +\
+            py_version + "/lib-dynload"
+        if "spark.executor.extraLibraryPath" in conf:
+            ld_path = "{}:{}".format(ld_path, conf["spark.executor.extraLibraryPath"])
         conf.update({"spark.cores.max": num_executors * executor_cores,
-                    "spark.kubernetes.container.image": container_image})
+                     "spark.executorEnv.PYTHONHOME": python_env,
+                     "spark.executor.extraLibraryPath": ld_path,
+                     "spark.executorEnv.LD_PRELOAD": preload_so,
+                     "spark.kubernetes.container.image": container_image})
         # Not targeted to use pip install. BIGDL_CLASSPATH is supposed to set.
         if "BIGDL_CLASSPATH" in os.environ:
             zoo_bigdl_jar_path = os.environ["BIGDL_CLASSPATH"]
