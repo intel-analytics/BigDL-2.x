@@ -27,15 +27,12 @@ import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, ModelHol
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams, Supportive}
 import scopt.OptionParser
 
-object MockParallelPipelineBaseline extends Supportive {
-  case class Params(configPath: String = "config.yaml",
-                    testNum: Int = 1000,
+object PreprocessingBaseline extends Supportive {
+  case class Params(testNum: Int = 1000,
                     parNum: Int = 1,
-                    inputShape: String = "3, 224, 224")
+                    inputShape: String = "3, 224, 224",
+                    coreNum: Int = 4)
   val parser = new OptionParser[Params]("Text Classification Example") {
-    opt[String]('c', "configPath")
-      .text("Config Path of Cluster Serving")
-      .action((x, params) => params.copy(configPath = x))
     opt[Int]('n', "testNum")
       .text("Number of test input")
       .action((x, params) => params.copy(testNum = x))
@@ -45,6 +42,9 @@ object MockParallelPipelineBaseline extends Supportive {
     opt[String]('s', "inputShape")
       .text("Input Shape, split by coma")
       .action((x, params) => params.copy(inputShape = x))
+    opt[Int]( "coreNum")
+      .text("core number")
+      .action((x, params) => params.copy(coreNum = x))
   }
   def parseShape(shape: String): Array[Array[Int]] = {
     val shapeListStr = shape.
@@ -75,25 +75,13 @@ object MockParallelPipelineBaseline extends Supportive {
   }
   def main(args: Array[String]): Unit = {
     val param = parser.parse(args, Params()).head
-    val helper = new ClusterServingHelper()
-    helper.initArgs()
-    val sParam = new SerParams(helper)
+//    val helper = new ClusterServingHelper()
+//    helper.initArgs()
+//    val sParam = new SerParams(helper)
 
-    ModelHolder.model = helper.loadInferenceModel()
     val warmT = makeTensorFromShape(param.inputShape)
-    val clusterServingInference = new ClusterServingInference(null, "openvino")
-    clusterServingInference.typeCheck(warmT)
-    clusterServingInference.dimCheck(warmT, "add", sParam.modelType)
-    (0 until 10).foreach(_ => {
-      val result = ModelHolder.model.doPredict(warmT)
-    })
-    println("Warming up finished, begin baseline test...generating Base64 string")
-
     val b64string = getBase64StringOfTensor(warmT)
     println(s"Previewing base64 string, prefix is ${b64string.substring(0, 20)}")
-    Thread.sleep(3000)
-
-
     timing(s"Baseline for parallel pipeline ${param.parNum} " +
       s"with input ${param.testNum.toString}") {
 
@@ -101,48 +89,49 @@ object MockParallelPipelineBaseline extends Supportive {
         val timer = new Timer()
         var a = Seq[(String, String)]()
         val pre = new PreProcessing(true)
-        (0 until sParam.coreNum).foreach( i =>
+        (0 until param.coreNum).foreach( i =>
           a = a :+ (i.toString(), b64string)
         )
-        (0 until param.testNum).grouped(sParam.coreNum).flatMap(i => {
+        (0 until param.testNum).grouped(param.coreNum).flatMap(i => {
           val preprocessed = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Preprocess", sParam.coreNum) {
+            s"Thread ${Thread.currentThread().getId} Preprocess", param.coreNum) {
             a.map(item => {
-              println(s"${ModelHolder.modelQueueing} threads are queueing inference")
+              ModelHolder.synchronized{
+                while (ModelHolder.modelQueueing != 0) {
+                  ModelHolder.wait()
+                }
+                ModelHolder.nonOMP += 1
+              }
               val tensor = timer.timing(
-                s"Thread ${Thread.currentThread().getId} Preprocess one record", sParam.coreNum) {
+                s"Thread ${Thread.currentThread().getId} Preprocess one record", param.coreNum) {
                 val deserializer = new ArrowDeserializer()
                 val arr = deserializer.create(b64string)
                 Tensor(arr(0)._1, arr(0)._2)
+              }
+              ModelHolder.synchronized {
+                ModelHolder.modelQueueing += 1
+              }
+              Thread.sleep(50)
+              ModelHolder.synchronized {
+                ModelHolder.modelQueueing -= 1
+              }
+              ModelHolder.synchronized{
+                ModelHolder.nonOMP -= 1
+                ModelHolder.notifyAll()
               }
               (item._1, T(tensor))
 
             })
           }
-
-          val t = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Batch input", sParam.coreNum) {
-              clusterServingInference.batchInput(
-                preprocessed, sParam.coreNum, false, sParam.resize)
-          }
-          clusterServingInference.dimCheck(t, "add", sParam.modelType)
-          val result = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Inference", sParam.coreNum) {
-            ModelHolder.model.doPredict(t)
-          }
-          clusterServingInference.dimCheck(t, "remove", sParam.modelType)
-          clusterServingInference.dimCheck(result, "remove", sParam.modelType)
-          val postprocessed = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Postprocess", sParam.coreNum) {
-            (0 until sParam.coreNum).map(i => {
-              ArrowSerializer.activityBatchToByte(result, i + 1)
-            })
-          }
-
-          Seq(postprocessed)
+          Seq(preprocessed)
         }).toArray
         timer.print()
       })
+
     }
+
+
+
+
   }
 }
