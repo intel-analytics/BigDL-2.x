@@ -94,6 +94,8 @@ class TFTrainingHelper(Layer):
         self.saver.restore(self.sess, os.path.join(self.export_dir, "model"))
 
     def load_checkpoint(self, path):
+        sc = init_nncontext()
+        sc.addFile(path)
         callZooFunc(self.bigdl_type, "loadZooCheckpoint", self.value, path)
         self.get_weights_to_python()
 
@@ -764,6 +766,9 @@ class TFOptimizer:
         if checkpoint_trigger is None:
             checkpoint_trigger = EveryEpoch()
 
+        from pyspark import SparkContext
+        SparkContext.setSystemProperty("bigdl.ModelBroadcastFactory", "com.intel.analytics.zoo.tfpark.TFModelBroadcastFactory")
+
         if self.tf_model.val_methods and self.val_data is not None:
             self.estimator.train_minibatch(train_set=self.train_data,
                                            criterion=self.tf_model.criterion,
@@ -778,3 +783,5 @@ class TFOptimizer:
                                            checkpoint_trigger=checkpoint_trigger)
 
         self.tf_model.training_helper_layer.get_weights_to_python()
+        SparkContext.setSystemProperty("bigdl.ModelBroadcastFactory",
+                                       "com.intel.analytics.zoo.tfpark.TFModelBroadcastFactory")

@@ -124,6 +124,12 @@ private[zoo] class TFNetForInference(graphRunner: GraphRunner,
 
   @transient
   private lazy val variableInited = {
+    var i = 0
+    while (i < weights.length){
+      println(s"weights ${i} size: ${weights(i).size().mkString(",")}")
+      i += 1
+    }
+
     if (weights.length > 0) {
       setVariableIntoTF(weights, variableAssignPlaceholders,
         variableTypes.map(TFUtils.tfenum2datatype), assignVariableOps)
