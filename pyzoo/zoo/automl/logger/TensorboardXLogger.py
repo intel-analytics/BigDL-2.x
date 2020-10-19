@@ -16,8 +16,7 @@
 from ray.tune.utils import flatten_dict
 import numpy as np
 
-VALID_SUMMARY_TYPES = [int, float, np.float32, np.float64, np.int32]
-VALID_NP_TYPES = [np.float32, np.float64, np.int32]
+VALID_SUMMARY_TYPES = (int, float, np.float32, np.float64, np.int32)
 
 
 class TensorboardXLogger():
@@ -59,23 +58,20 @@ class TensorboardXLogger():
         :param metric: A dictionary. Keys are trail name, value is a dictionary indicates the trail metric results
 
         Example:
-        Config = {“run1”:{“lr”:0.001, “hidden_units”: 32}, “run2”:{“lr”:0.01, “hidden_units”: 64}}
-        Metric = {“run1”:{“acc”:0.91, “time”: 32.13}, “run2”:{“acc”:0.93, “time”: 61.33}}
+        Config = {"run1":{"lr":0.001, "hidden_units": 32}, "run2":{"lr":0.01, "hidden_units": 64}}
+        Metric = {"run1":{"acc":0.91, "time": 32.13}, "run2":{"acc":0.93, "time": 61.33}}
 
         Note that the keys of config and metric should be exactly the same
         '''
         # keys check
-        assert len(config.keys() - metric.keys()) == 0
+        assert len(config.keys() - metric.keys()) == 0 and len(metric.keys() - config.keys()) == 0, "The keys of config and metric should be exactly the same"
         
         # validation check
         new_metric = {}
         for key in metric.keys():
             new_metric[key] = {}
             for k, value in metric[key].items():
-                if (type(value) in VALID_SUMMARY_TYPES):
-                    if type(value) in VALID_NP_TYPES:
-                        if np.isnan(value):
-                            continue
+                if type(value) in VALID_SUMMARY_TYPES and not np.isnan(value):
                     new_metric[key][k] = value
         new_config = {}
         for key in config.keys():

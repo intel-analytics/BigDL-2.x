@@ -4,7 +4,7 @@
 
 AutoML visualization provides two kinds of visualization.
 
-1. During the searching process, the visualizations of each trail is shown and updated every 30 seconds.
+1. During the searching process, the visualizations of each trail are shown and updated every 30 seconds.
 2. After the searching process, a leaderboard of each trail's configs and metrics is shown.
 
 Note that: AutoML visualization is based on tensorboard and tensorboardx. They should be installed properly before the training starts.
@@ -14,10 +14,10 @@ Note that: AutoML visualization is based on tensorboard and tensorboardx. They s
 Before training, start the tensorboard server through
 
 ```shell
-tensorboard --logdir=/home/<username>/zoo_automl_logs/<job_name>/
+tensorboard --logdir=<logs_dir>/<job_name>/
 ```
 
-where `<username>` is your system log in name and `<job_name>` is the name parameter you set for your predictor (e.g. *TimeSequencePredictor* in Automated Time Series Prediction).
+`logs_dir` is the log directory you set for your predictor(e.g. *TimeSequencePredictor* in Automated Time Series Prediction). It is default to "/home/`username`/zoo_automl_logs", where `username` is your login username. `job_name` is the name parameter you set for your predictor.
 
 The data in SCALARS tag will be updated every 30 seconds for users to see the training progress.
 
@@ -28,10 +28,10 @@ The data in SCALARS tag will be updated every 30 seconds for users to see the tr
 After training, start the tensorboard server through
 
 ```shell
-tensorboard --logdir=/home/<username>/zoo_automl_logs/<job_name>_leaderboard/
+tensorboard --logdir=<logs_dir>/<job_name>_leaderboard/
 ```
 
-where `<username>` is your system log in name and `<job_name>` is the name parameter you set for your predictor (e.g. *TimeSequencePredictor* in Automated Time Series Prediction).
+where `logs_dir` and `job_name` are the same as stated in Scalar view.
 
 A leaderboard of each trail's configs and metrics is shown in the HPARAMS tag.
 
@@ -44,8 +44,8 @@ You can enable a tensorboard view in jupyter notebook by the following code
 ```python
 %load_ext tensorboard
 # for scalar view
-%tensorboard --logdir /home/<username>/zoo_automl_logs/<job_name>_leaderboard/
+%tensorboard --logdir <logs_dir>/<job_name>/
 # for leaderboard view
-%tensorboard --logdir /home/<username>/zoo_automl_logs/<job_name>/
+%tensorboard --logdir <logs_dir>/<job_name>_leaderboard/
 ```
 
