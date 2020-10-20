@@ -62,8 +62,10 @@ class TFModelBroadcastV2[T: ClassTag]()
     val weightsBias = getAndClearWeightBias(model.parameters())
     val extraParams = getAndClearExtraParameters(model.getExtraParameter())
     broadcastModel = sc.broadcast(ModelInfo[T](uuid, model))
-    broadcastParameters = sc.broadcast(weightsBias)
-    broadcastExtraParameters = sc.broadcast(extraParams)
+//    broadcastParameters = sc.broadcast(weightsBias)
+//    println("broadcasted weights")
+//    broadcastExtraParameters = sc.broadcast(extraParams)
+//    println("broadcasted extra params")
     var i = 0
     while (i < model.parameters()._1.length){
       println("when broadcast")
@@ -96,27 +98,28 @@ class TFModelBroadcastV2[T: ClassTag]()
     CachedModels.deleteAll(this.uuid)
 
     val localModel = broadcastModel.value.model.cloneModule()
+    localModel.reset()
     val uuid = broadcastModel.value.uuid
     CachedModels.add(uuid, localModel)
 
-    val parameters = if (shareWeight) {
-      broadcastParameters.value
-    } else {
-      SerializationUtils.clone(broadcastParameters.value)
-    }
-
-    // share weight
-    putWeightBias(parameters, localModel)
-//    // share Consts
-//    if (localModel.isInstanceOf[Container[_, _, T]] && broadcastConsts.value.nonEmpty) {
-//      putConsts(localModel.asInstanceOf[Container[_, _, T]], broadcastConsts.value)
+//    val parameters = if (shareWeight) {
+//      broadcastParameters.value
+//    } else {
+//      SerializationUtils.clone(broadcastParameters.value)
 //    }
-    // init gradient
-    if (initGradient) {
-      initGradWeightBias(broadcastParameters.value, localModel)
-    }
-
-    putExtraParams(broadcastExtraParameters.value, localModel)
+//
+//    // share weight
+//    putWeightBias(parameters, localModel)
+////    // share Consts
+////    if (localModel.isInstanceOf[Container[_, _, T]] && broadcastConsts.value.nonEmpty) {
+////      putConsts(localModel.asInstanceOf[Container[_, _, T]], broadcastConsts.value)
+////    }
+//    // init gradient
+//    if (initGradient) {
+//      initGradWeightBias(broadcastParameters.value, localModel)
+//    }
+//
+//    putExtraParams(broadcastExtraParameters.value, localModel)
 
 
     // share Consts
