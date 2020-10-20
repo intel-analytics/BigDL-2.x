@@ -64,7 +64,7 @@ class TensorboardXLogger():
         Note that the keys of config and metric should be exactly the same
         '''
         # keys check
-        assert len(config.keys() - metric.keys()) == 0 and len(metric.keys() - config.keys()) == 0, "The keys of config and metric should be exactly the same"
+        assert config.keys()  == metric.keys(), "The keys of config and metric should be exactly the same"
         
         # validation check
         new_metric = {}
@@ -77,7 +77,7 @@ class TensorboardXLogger():
         for key in config.keys():
             new_config[key] = {}
             for k, value in config[key].items():
-                if type(value) is not None:
+                if value is not None:
                     new_config[key][k] = value
         
         # hparams log write
