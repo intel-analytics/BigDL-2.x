@@ -76,16 +76,16 @@ class TFTrainingHelperV2(graphRunner: GraphRunner,
 
 
     if (!extraParameterRestored) {
-      println(s"restore extra params: zoo checkpoint name is: ${zooCheckpointName}")
-      if (!zooCheckpointName.isEmpty){
-        val zooCheckpointPath = SparkFiles.getRootDirectory() + "/" + zooCheckpointName
-        println(s"local zoo checkpoint path is: ${zooCheckpointPath}")
-        loadZooCheckpoint(zooCheckpointPath)
-      } else {
-        val localCheckpointPath = SparkFiles.getRootDirectory() + "/model"
-        println(s"local checkpoint path is: ${localCheckpointPath}")
-        restoreFromCheckpoint(localCheckpointPath)
-      }
+//      println(s"restore extra params: zoo checkpoint name is: ${zooCheckpointName}")
+//      if (!zooCheckpointName.isEmpty){
+//        val zooCheckpointPath = SparkFiles.getRootDirectory() + "/" + zooCheckpointName
+//        println(s"local zoo checkpoint path is: ${zooCheckpointPath}")
+//        loadZooCheckpoint(zooCheckpointPath)
+//      } else {
+//        val localCheckpointPath = SparkFiles.getRootDirectory() + "/model"
+//        println(s"local checkpoint path is: ${localCheckpointPath}")
+//        restoreFromCheckpoint(localCheckpointPath)
+//      }
 
       setVariableIntoTF(extraParameters, extraVariableAssignPlaceholders,
         extraVariableTypes.map(TFUtils.tfenum2datatype), assignExtraVariableOP)

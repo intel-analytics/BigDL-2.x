@@ -63,7 +63,7 @@ class TFModelBroadcastV2[T: ClassTag]()
     val extraParams = getAndClearExtraParameters(model.getExtraParameter())
     broadcastModel = sc.broadcast(ModelInfo[T](uuid, model))
     broadcastParameters = sc.broadcast(weightsBias)
-//    broadcastExtraParameters = sc.broadcast(extraParams)
+    broadcastExtraParameters = sc.broadcast(extraParams)
     var i = 0
     while (i < model.parameters()._1.length){
       println("when broadcast")
@@ -115,6 +115,8 @@ class TFModelBroadcastV2[T: ClassTag]()
     if (initGradient) {
       initGradWeightBias(broadcastParameters.value, localModel)
     }
+
+    putExtraParams(broadcastExtraParameters.value, localModel)
 
 
     // share Consts
