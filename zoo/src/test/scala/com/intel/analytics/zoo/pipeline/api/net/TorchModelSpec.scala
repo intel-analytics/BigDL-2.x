@@ -245,7 +245,7 @@ class TorchModelSpec extends ZooSpecHelper{
            |""".stripMargin
       PythonInterpreter.exec(code)
       val model = new InferenceModel()
-      val pytorchModel = model.doLoadPyTorch(tmpname)
+      model.doLoadPyTorch(tmpname)
 
       val genInputCode =
         s"""
@@ -256,7 +256,7 @@ class TorchModelSpec extends ZooSpecHelper{
            |_data = (input, target)
            |""".stripMargin
       PythonInterpreter.exec(genInputCode)
-      val result = pytorchModel.predict(Tensor[Float]())
+      val result = model.doPredict(Tensor[Float]())
       result should not be (Tensor[Float](4, 10).fill(-2.3025851f))
     }
 
@@ -276,7 +276,7 @@ class TorchModelSpec extends ZooSpecHelper{
 
         val bys = PythonInterpreter.getValue[Array[Byte]]("bym")
         val model = new InferenceModel()
-        val pytorchModel = model.doLoadPyTorchBytes(bys)
+        model.doLoadPyTorchBytes(bys)
 
         val genInputCode =
           s"""
@@ -287,7 +287,7 @@ class TorchModelSpec extends ZooSpecHelper{
              |_data = (input, target)
              |""".stripMargin
         PythonInterpreter.exec(genInputCode)
-        val result = pytorchModel.predict(Tensor[Float]())
+        val result = model.doPredict(Tensor[Float]())
         result should not be (Tensor[Float](4, 10).fill(-2.3025851f))
       }
 }
