@@ -219,18 +219,6 @@ private[zoo] class TFTrainingHelper protected (val graphRunner: GraphRunner,
 
   protected def beforeRunGradient() = {
     if (this.isTraining() || !weightsRestored) {
-//      val localCheckpointPath = SparkFiles.getRootDirectory() + "/model"
-      println(s"restore weights: zoo checkpoint name is: ${zooCheckpointName}")
-
-      if (!zooCheckpointName.isEmpty){
-        val zooCheckpointPath = SparkFiles.getRootDirectory() + "/" + zooCheckpointName
-        println(s"local zoo checkpoint path is: ${zooCheckpointPath}")
-        loadZooCheckpoint(zooCheckpointPath)
-      } else {
-        val localCheckpointPath = SparkFiles.getRootDirectory() + "/model"
-        println(s"local checkpoint path is: ${localCheckpointPath}")
-        restoreFromCheckpoint(localCheckpointPath)
-      }
 
       Utils.timeIt("setTrainingVariableIntoTF") {
         setVariableIntoTF(weights, variableAssignPlaceholders,

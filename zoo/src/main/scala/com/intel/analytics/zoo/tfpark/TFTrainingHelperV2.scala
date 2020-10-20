@@ -60,23 +60,6 @@ class TFTrainingHelperV2(graphRunner: GraphRunner,
   override def beforeRunGradient(): Unit = {
 
     if (!weightsRestored) {
-      var i = 0
-      while (i < weights.length){
-        println(s"weights ${i} size: ${weights(i).size().mkString(",")}")
-        i += 1
-      }
-
-//      println(s"restore weights: zoo checkpoint name is: ${zooCheckpointName}")
-      if (!zooCheckpointName.isEmpty){
-        val zooCheckpointPath = SparkFiles.getRootDirectory() + "/" + zooCheckpointName
-        println(s"local zoo checkpoint path is: ${zooCheckpointPath}")
-        loadZooCheckpoint(zooCheckpointPath)
-      } else {
-        val localCheckpointPath = SparkFiles.getRootDirectory() + "/model"
-        println(s"local checkpoint path is: ${localCheckpointPath}")
-        restoreFromCheckpoint(localCheckpointPath)
-      }
-
       Utils.timeIt("setTrainingVariableIntoTF") {
         setVariableIntoTF(weights, variableAssignPlaceholders,
           variableTypes.map(TFUtils.tfenum2datatype), assignVariableOp)
