@@ -21,6 +21,7 @@ import numpy as np
 import random
 import os.path
 
+
 class TestTensorboardXLogger(ZooTestCase):
 
     def setup_method(self, method):
@@ -28,18 +29,20 @@ class TestTensorboardXLogger(ZooTestCase):
 
     def teardown_method(self, method):
         pass
-    
+
     def test_tbxlogger_valid_type(self):
         trail_num = 100
         test_config = {}
         test_metric = {}
         for i in range(trail_num):
-            test_config["run_{}".format(i)] = {"config_good": random.randint(8,96),
-                                               "config_unstable": None if random.random()<0.5 else 1,
-                                               "config_bad": None}
-            test_metric["run_{}".format(i)] = {"matrix_good": random.randint(0,100)/100,
-                                               "matrix_unstable": np.nan if random.random()<0.5 else 1,
-                                               "matrix_bad": np.nan}
+            test_config["run_{}".format(i)] =\
+                {"config_good": random.randint(8, 96),
+                 "config_unstable": None if random.random() < 0.5 else 1,
+                 "config_bad": None}
+            test_metric["run_{}".format(i)] =\
+                {"matrix_good": random.randint(0, 100)/100,
+                 "matrix_unstable": np.nan if random.random() < 0.5 else 1,
+                 "matrix_bad": np.nan}
         logger = TensorboardXLogger(os.path.abspath(os.path.expanduser("~/test_tbxlogger")))
         logger.run(test_config, test_metric)
         logger.close()

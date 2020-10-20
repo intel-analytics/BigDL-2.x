@@ -192,7 +192,7 @@ class RayTuneSearchEngine(SearchEngine):
             pass
         except:
             raise
-        
+
         return analysis
 
     def get_best_trials(self, k=1):
@@ -459,7 +459,7 @@ class RayTuneSearchEngine(SearchEngine):
             else:
                 tune_config[k] = v
         return tune_config
-        
+
     def _log_adapt(self, analysis):
         # config
         config = analysis.get_all_configs()
@@ -467,5 +467,5 @@ class RayTuneSearchEngine(SearchEngine):
         metric_raw = analysis.fetch_trial_dataframes()
         metric = {}
         for key, value in metric_raw.items():
-                metric[key] = dict(zip(list(value.columns),list(value.iloc[-1].values)))
+                metric[key] = dict(zip(list(value.columns), list(value.iloc[-1].values)))
         return config, metric

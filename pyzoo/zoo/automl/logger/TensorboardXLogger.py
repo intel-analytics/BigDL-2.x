@@ -41,7 +41,7 @@ class TensorboardXLogger():
             self._file_writer = writer
         else:
             self._file_writer = SummaryWriter(logdir=self.logs_dir)
-    
+
     def run(self, config, metric):
         '''
         Write log files(event files)
@@ -54,8 +54,10 @@ class TensorboardXLogger():
         |--Trail_2
         |  |--eventfile_2
         ...
-        :param config: A dictionary. Keys are trail name, value is a dictionary indicates the trail config  
-        :param metric: A dictionary. Keys are trail name, value is a dictionary indicates the trail metric results
+        :param config: A dictionary. Keys are trail name,
+            value is a dictionary indicates the trail config
+        :param metric: A dictionary. Keys are trail name,
+            value is a dictionary indicates the trail metric results
 
         Example:
         Config = {"run1":{"lr":0.001, "hidden_units": 32}, "run2":{"lr":0.01, "hidden_units": 64}}
@@ -64,8 +66,9 @@ class TensorboardXLogger():
         Note that the keys of config and metric should be exactly the same
         '''
         # keys check
-        assert config.keys()  == metric.keys(), "The keys of config and metric should be exactly the same"
-        
+        assert config.keys() == metric.keys(),\
+            "The keys of config and metric should be exactly the same"
+
         # validation check
         new_metric = {}
         for key in metric.keys():
@@ -79,7 +82,7 @@ class TensorboardXLogger():
             for k, value in config[key].items():
                 if value is not None:
                     new_config[key][k] = value
-        
+
         # hparams log write
         for key in new_metric.keys():
             # new_config[key]["address"] = key
@@ -90,4 +93,3 @@ class TensorboardXLogger():
         Close the logger
         '''
         self._file_writer.close()
-        
