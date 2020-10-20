@@ -19,6 +19,8 @@ import pickle
 
 import numpy as np
 import ray
+
+from zoo.orca.data.shard import RayXShards
 from zoo.orca.data.utils import ray_partition_get_data_label
 
 from zoo.orca.learn.tf2.tf_runner import TFRunner
@@ -27,15 +29,12 @@ from zoo.ray import RayContext
 logger = logging.getLogger(__name__)
 
 
-def ray_partition_to_creator(partition, max_length=None, shuffle=False):
-
-    if partition is None:
-        return None
+def shards_ref_to_creator(shards_ref, max_length=None, shuffle=False):
 
     def data_creator(config):
         assert "batch_size" in config, "batch_size must be set in config"
         import tensorflow as tf
-        data, label = ray_partition_get_data_label(partition.get_data(),
+        data, label = ray_partition_get_data_label(ray.get(shards_ref),
                                                    allow_tuple=True,
                                                    allow_list=False)
 
@@ -186,42 +185,29 @@ class Estimator:
             # todo currently we need this information to pad the short partitions
             # so that every model run exactly the same number of steps in one epoch
             max_length = data.rdd.map(data_length).max()
-            print(f"max length is {max_length}")
-            data = data.to_ray()
-            # todo maybe it is more reasonable to assign partition to each
-            # remote_worker, instead of changing the order of self.remote_workers
-            self.remote_workers = data.colocate_actors(self.remote_workers)
-            train_data_list = data.get_partitions()
-            if validation_data_creator:
-                validation_data = validation_data_creator
-                assert isinstance(validation_data, SparkXShards)
-                if validation_data.num_partitions() != self.num_workers:
-                    validation_data = validation_data.repartition(self.num_workers)
-                val_max_length = validation_data.rdd.map(data_length).max()
-                validation_data = validation_data.to_ray()
-                val_data_list = validation_data.get_partitions()
-            else:
-                val_data_list = [None] * self.num_workers
-                val_max_length = -1  # does not take any effects
-            params_list = []
-            for i in range(self.num_workers):
-                local_params = params.copy()
-                local_params["data_creator"] = ray_partition_to_creator(train_data_list[i],
-                                                                        max_length=max_length,
-                                                                        shuffle=True)
-                local_params["validation_data_creator"] =\
-                    ray_partition_to_creator(val_data_list[i],
-                                             max_length=val_max_length,
-                                             shuffle=False)
-                params_list.append(local_params)
+            ray_xshards = RayXShards.from_spark_xshards(data)
 
+            # todo implement RayXShards.zip
+            assert validation_data_creator is None, "not supported validation " \
+                                                    "if train data is xshards right now"
+
+            def transform_func(worker, shards_ref):
+                params["data_creator"] = shards_ref_to_creator(shards_ref,
+                                                           max_length=max_length,
+                                                           shuffle=True)
+                return worker.step.remote(**params)
+
+            stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
+                                                                   transform_func,
+                                                                   gang_scheduling=True)
+            worker_stats = stats_shards.collect()
         else:  # data_creator functions; should return Iter or DataLoader
             params["data_creator"] = data_creator
             params["validation_data_creator"] = validation_data_creator
             params_list = [params] * self.num_workers
 
-        worker_stats = ray.get([self.remote_workers[i].step.remote(**params_list[i])
-                                for i in range(self.num_workers)])
+            worker_stats = ray.get([self.remote_workers[i].step.remote(**params_list[i])
+                                    for i in range(self.num_workers)])
         stats = worker_stats[0].copy()
         return stats
 
@@ -242,28 +228,27 @@ class Estimator:
             if data.num_partitions() != self.num_workers:
                 data = data.repartition(self.num_workers)
             max_length = data.rdd.map(data_length).max()
-            data = data.to_ray()
-            # todo maybe it is more reasonable to assign partition to each
-            # remote_worker, instead of changing the order of self.remote_workers
-            self.remote_workers = data.colocate_actors(self.remote_workers)
-            data_list = data.get_partitions()
-            params_list = []
-            for i in range(self.num_workers):
-                local_params = params.copy()
-                local_params["data_creator"] = ray_partition_to_creator(data_list[i],
-                                                                        max_length=max_length,
-                                                                        shuffle=False)
-                params_list.append(local_params)
+
+            ray_xshards = RayXShards.from_spark_xshards(data)
+
+            def transform_func(worker, shards_ref):
+                params["data_creator"] = shards_ref_to_creator(shards_ref,
+                                                               max_length=max_length,
+                                                               shuffle=False)
+                return worker.validate.remote(**params)
+
+            stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
+                                                                    transform_func,
+                                                                    gang_scheduling=True)
+            worker_stats = stats_shards.collect()
 
         else:  # data_creator functions; should return Iter or DataLoader
             params["data_creator"] = data_creator
             params_list = [params] * self.num_workers
 
-        # see ./tf_runner.py:setup_distributed
-        # for an explanation of only taking the first worker's data
-        stats = ray.get([w.validate.remote(**params_list[i])
-                         for i, w in enumerate(self.remote_workers)])
-        stats = stats[0].copy()
+            worker_stats = ray.get([w.validate.remote(**params_list[i])
+                            for i, w in enumerate(self.remote_workers)])
+        stats = worker_stats[0].copy()
         return stats
 
     def get_model(self):
