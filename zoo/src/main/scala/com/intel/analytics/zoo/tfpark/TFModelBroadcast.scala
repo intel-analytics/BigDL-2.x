@@ -395,8 +395,7 @@ object Util {
             retParams(i) = if (isCompacted) {
               Tensor[T](resultStorage, wb.storageOffset(), wb.size(), wb.stride())
             } else {
-              retParams(i).copy(wb)
-              retParams(i)
+              wb.clone()
             }
             //          wb.getTensorType match {
             //            case QuantizedType =>
