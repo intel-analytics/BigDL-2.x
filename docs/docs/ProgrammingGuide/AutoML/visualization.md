@@ -17,7 +17,7 @@ Before training, start the tensorboard server through
 tensorboard --logdir=<logs_dir>/<job_name>/
 ```
 
-`logs_dir` is the log directory you set for your predictor(e.g. *TimeSequencePredictor* in Automated Time Series Prediction). It is default to "/home/`username`/zoo_automl_logs", where `username` is your login username. `job_name` is the name parameter you set for your predictor.
+`logs_dir` is the log directory you set for your predictor(e.g. *TimeSequencePredictor* in Automated Time Series Prediction). It is default to "/home/\<username\>/zoo_automl_logs", where `username` is your login username. `job_name` is the name parameter you set for your predictor.
 
 The data in SCALARS tag will be updated every 30 seconds for users to see the training progress.
 
@@ -31,7 +31,7 @@ After training, start the tensorboard server through
 tensorboard --logdir=<logs_dir>/<job_name>_leaderboard/
 ```
 
-where `logs_dir` and `job_name` are the same as stated in Scalar view.
+where `logs_dir` and `job_name` are the same as stated in [Scalar view](#Scalar view).
 
 A leaderboard of each trail's configs and metrics is shown in the HPARAMS tag.
 
