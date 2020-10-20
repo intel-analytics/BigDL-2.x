@@ -768,6 +768,7 @@ class TFOptimizer:
 
         from pyspark import SparkContext
         SparkContext.setSystemProperty("bigdl.ModelBroadcastFactory", "com.intel.analytics.zoo.tfpark.TFModelBroadcastFactory")
+        SparkContext.setSystemProperty("bigdl.failure.retryTimes", "1")
 
         if self.tf_model.val_methods and self.val_data is not None:
             self.estimator.train_minibatch(train_set=self.train_data,
