@@ -94,4 +94,9 @@ object ArrowDeserializer {
     val arr = deserializer.create(b64string)
     deserializer.getString(arr)
   }
+  def getArray(b64string: String): Array[(Array[Float], Array[Int])] = {
+    val deserializer = new ArrowDeserializer()
+    val arr = deserializer.create(b64string)
+    arr
+  }
 }
