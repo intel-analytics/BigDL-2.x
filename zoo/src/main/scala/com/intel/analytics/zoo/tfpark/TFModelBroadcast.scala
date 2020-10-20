@@ -366,5 +366,69 @@ object Util {
 //    }
 //  }
 
+  private[zoo] def cloneParameters[T: ClassTag]
+  (parameters: Array[Tensor[T]])(implicit ev: TensorNumeric[T])
+  : Array[Tensor[T]] = {
+    if (parameters != null) {
+      if (parameters.length != 0) {
+        var i = 0
+        val retParams = new Array[Tensor[T]](parameters.length)
+        //      val isQuantized = parameters._1.exists(_.getTensorType == QuantizedType)
+        val (isCompacted, storage) = {
+          val storage = Storage(parameters(0).storage.array())
+          (parameters.map(_.nElement()).sum == storage.length(), storage)
+        }
+
+        val resultStorage = if (isCompacted) {
+          val resultStorage = Storage[T](storage.length())
+          System.arraycopy(storage, parameters(0).storageOffset() - 1,
+            resultStorage.array(), 0, storage.length())
+          resultStorage
+        } else {
+          null
+        }
+
+        // clone parameters
+        while (i < parameters.length) {
+          if (parameters(i) != null) {
+            val wb = parameters(i)
+            retParams(i) = if (isCompacted) {
+              Tensor[T](resultStorage, wb.storageOffset(), wb.size(), wb.stride())
+            } else {
+              retParams(i).copy(wb)
+              retParams(i)
+            }
+            //          wb.getTensorType match {
+            //            case QuantizedType =>
+            //              val quantTensor = wb.asInstanceOf[QuantizedTensor[T]]
+            //              weightsBias(i) = QuantizedTensor[T](quantTensor.getStorage, quantTensor.maxOfRow,
+            //                quantTensor.minOfRow, quantTensor.sumOfRow, quantTensor.size(), quantTensor.params)
+            //            case _ =>
+            //              weightsBias(i) = if (isCompacted) {
+            //                Tensor[T](storage, wb.storageOffset(), wb.size(), wb.stride())
+            //              } else {
+            //                Tensor[T](Storage(wb.storage().array()), wb.storageOffset(), wb.size(), wb.stride())
+            //              }
+            //          }
+            i += 1
+          }
+        }
+
+        i = 0
+        while (i < parameters.length){
+          println(s"original weights ${i} size: ${parameters(i).size().mkString(",")}")
+          println(s"cloned weights ${i} size: ${retParams(i).size().mkString(",")}")
+          i += 1
+        }
+
+        retParams
+      } else {
+        // just return an empty array when parameters is empty.
+        Array()
+      }
+    } else {
+      null
+    }
+  }
 }
 
