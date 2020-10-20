@@ -1825,8 +1825,7 @@ object InternalDistriOptimizer {
         val (parameter, gradientParameter) =
           InternalOptimizerUtil.getParametersFromModel(trainingModel)
 
-
-        val (weights, gradients) = models.mapPartitions(iter => {
+        val weightsGradients= models.mapPartitions(iter => {
           val cached = iter.next()
           val curPartitionId = TaskContext.getPartitionId()
           val (offset, size) =
@@ -1835,7 +1834,21 @@ object InternalDistriOptimizer {
           weightTensor.copy(cached.modelWeights.head.narrow(1, offset, size))
           Iterator.single((Map(curPartitionId -> weightTensor),
             Map(curPartitionId -> parameters.gradientPartition)))
-        }).reduce((a, b) => (a._1 ++ b._1, a._2 ++ b._2))
+        }).collect()
+
+        val (weights, gradients) = weightsGradients.reduce((a, b) => (a._1 ++ b._1, a._2 ++ b._2))
+
+
+//        val (weights, gradients) = models.mapPartitions(iter => {
+//          val cached = iter.next()
+//          val curPartitionId = TaskContext.getPartitionId()
+//          val (offset, size) =
+//            InternalOptimizerUtil.getLocalPartitionRangeFromParameters(parameters)
+//          val weightTensor = Tensor[T](size)
+//          weightTensor.copy(cached.modelWeights.head.narrow(1, offset, size))
+//          Iterator.single((Map(curPartitionId -> weightTensor),
+//            Map(curPartitionId -> parameters.gradientPartition)))
+//        }).reduce((a, b) => (a._1 ++ b._1, a._2 ++ b._2))
 
         val taskSize = parameters.size / partitionNum
         require(taskSize != 0, "parameter length should not less than partition number")
