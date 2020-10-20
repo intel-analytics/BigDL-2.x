@@ -381,7 +381,7 @@ object Util {
 
         val resultStorage = if (isCompacted) {
           val resultStorage = Storage[T](storage.length())
-          System.arraycopy(storage, parameters(0).storageOffset() - 1,
+          System.arraycopy(storage.array(), parameters(0).storageOffset() - 1,
             resultStorage.array(), 0, storage.length())
           resultStorage
         } else {
