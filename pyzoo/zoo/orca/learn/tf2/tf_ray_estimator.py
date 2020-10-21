@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+import itertools
 import logging
 import pickle
 
@@ -29,7 +29,7 @@ from zoo.ray import RayContext
 logger = logging.getLogger(__name__)
 
 
-def shards_ref_to_creator(shards_ref, max_length=None, shuffle=False):
+def shards_ref_to_creator(shards_ref, worker_size, max_length=None, shuffle=False):
 
     def data_creator(config):
         assert "batch_size" in config, "batch_size must be set in config"
@@ -49,7 +49,7 @@ def shards_ref_to_creator(shards_ref, max_length=None, shuffle=False):
         options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.OFF
         dataset = dataset.with_options(options)
 
-        dataset = dataset.batch(config["batch_size"])
+        dataset = dataset.batch(config["batch_size"] // worker_size)
         return dataset
 
     return data_creator
@@ -184,7 +184,10 @@ class Estimator:
 
             # todo currently we need this information to pad the short partitions
             # so that every model run exactly the same number of steps in one epoch
-            max_length = data.rdd.map(data_length).max()
+            max_length = data.rdd.map(data_length)\
+                .mapPartitions(lambda iterator: [sum(iterator)]).max()
+            print(f"max_length is {max_length}")
+            print(f"data count is {data.rdd.count()}")
             ray_xshards = RayXShards.from_spark_xshards(data)
 
             # todo implement RayXShards.zip
@@ -193,8 +196,9 @@ class Estimator:
 
             def transform_func(worker, shards_ref):
                 params["data_creator"] = shards_ref_to_creator(shards_ref,
-                                                           max_length=max_length,
-                                                           shuffle=True)
+                                                               self.num_workers,
+                                                               max_length=max_length,
+                                                               shuffle=True)
                 return worker.step.remote(**params)
 
             stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
@@ -208,6 +212,7 @@ class Estimator:
 
             worker_stats = ray.get([self.remote_workers[i].step.remote(**params_list[i])
                                     for i in range(self.num_workers)])
+            worker_stats = list(itertools.chain.from_iterable(worker_stats))
         stats = worker_stats[0].copy()
         return stats
 
@@ -233,6 +238,7 @@ class Estimator:
 
             def transform_func(worker, shards_ref):
                 params["data_creator"] = shards_ref_to_creator(shards_ref,
+                                                               self.num_workers,
                                                                max_length=max_length,
                                                                shuffle=False)
                 return worker.validate.remote(**params)
@@ -248,6 +254,7 @@ class Estimator:
 
             worker_stats = ray.get([w.validate.remote(**params_list[i])
                             for i, w in enumerate(self.remote_workers)])
+            worker_stats = list(itertools.chain.from_iterable(worker_stats))
         stats = worker_stats[0].copy()
         return stats
 

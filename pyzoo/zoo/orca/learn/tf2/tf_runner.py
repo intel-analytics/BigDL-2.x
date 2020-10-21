@@ -148,6 +148,7 @@ class TFRunner:
              callbacks=None, validation_data_creator=None, class_weight=None,
              steps_per_epoch=None, validation_steps=None, validation_freq=1,
              data_config=None):
+        import tensorflow as tf
         """Runs a training epoch and updates the model parameters."""
         config = self.config.copy()
         if data_config is not None:
@@ -212,7 +213,7 @@ class TFRunner:
             stats = {"train_" + k: v[-1] for k, v in history.history.items()}
 
         self.epoch += epochs
-        return stats
+        return [stats]
 
     def validate(self, data_creator, verbose=1, sample_weight=None,
                  steps=None, callbacks=None, data_config=None):
@@ -266,7 +267,7 @@ class TFRunner:
         else:
             stats = {"results": results}
 
-        return stats
+        return [stats]
 
     def get_state(self):
         """Returns the state of the runner."""
