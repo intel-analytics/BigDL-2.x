@@ -17,7 +17,7 @@
 from zoo.automl.regression.base_predictor import BasePredictor
 from zoo.automl.feature.identity_transformer import IdentityTransformer
 
-from zoo.automl.model import XGBoost
+from zoo.automl.model.XGBoost import XGBoost
 
 
 class XgbPredictor(BasePredictor):
@@ -62,10 +62,8 @@ class XgbPredictor(BasePredictor):
         ft = IdentityTransformer(self.feature_cols, self.target_col)
         return ft
 
-    def make_model_fn(self, resources_per_trial, config):
-        def model_fn():
-            _model = XGBoost(model_type=self.model_type, config=config)
-            if "cpu" in resources_per_trial:
-                _model.set_params(n_jobs=resources_per_trial.get("cpu"))
-            return _model
-        return model_fn
+    def create_model(self, resources_per_trial, config):
+        _model = XGBoost(model_type=self.model_type, config=config)
+        if "cpu" in resources_per_trial:
+            _model.set_params(n_jobs=resources_per_trial.get("cpu"))
+        return _model

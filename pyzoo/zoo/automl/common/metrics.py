@@ -240,12 +240,21 @@ class Evaluator(object):
         'accuracy': Accuracy,
     }
 
+    max_mode_metrics = ('r2', 'accuracy')
+
     @staticmethod
     def evaluate(metric, y_true, y_pred, multioutput='raw_values'):
-        if not Evaluator.check_metric(metric):
-            raise ValueError("metric " + metric + " is not supported")
+        Evaluator.check_metric(metric)
         return Evaluator.metrics_func[metric](y_true, y_pred, multioutput=multioutput)
 
     @staticmethod
     def check_metric(metric):
-        return True if metric in Evaluator.metrics_func.keys() else False
+        if metric not in Evaluator.metrics_func.keys():
+            raise ValueError("metric " + metric + " is not supported")
+
+    @staticmethod
+    def get_metric_mode(metric):
+        if metric in Evaluator.max_mode_metrics:
+            return "max"
+        else:
+            return "min"

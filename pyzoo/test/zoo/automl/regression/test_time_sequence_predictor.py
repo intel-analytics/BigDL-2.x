@@ -17,7 +17,11 @@ import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.model.abstract import BaseModel
-from zoo.automl.regression.time_sequence_predictor import *
+from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
+import pandas as pd
+import numpy as np
+from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
+from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 
 
 class TestTimeSequencePredictor(ZooTestCase):
@@ -53,6 +57,7 @@ class TestTimeSequencePredictor(ZooTestCase):
         assert pipeline.config is not None
 
     def test_fit_LSTMGridRandomRecipe(self):
+        from zoo.automl.config.recipe import LSTMGridRandomRecipe
         train_df, _, future_seq_len = self.create_dataset()
         tsp = TimeSequencePredictor(dt_col="datetime",
                                     target_col="value",
@@ -76,6 +81,7 @@ class TestTimeSequencePredictor(ZooTestCase):
         assert pipeline.config["past_seq_len"] == 2
 
     def test_fit_BayesRecipe(self):
+        from zoo.automl.config.recipe import BayesRecipe
         train_df, _, future_seq_len = self.create_dataset()
         tsp = TimeSequencePredictor(dt_col="datetime",
                                     target_col="value",

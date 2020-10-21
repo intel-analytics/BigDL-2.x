@@ -18,6 +18,7 @@ from zoo.automl.regression.base_predictor import BasePredictor
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 
 from zoo.automl.model.time_sequence import TimeSequenceModel
+import pandas as pd
 
 
 class TimeSequencePredictor(BasePredictor):
@@ -33,7 +34,6 @@ class TimeSequencePredictor(BasePredictor):
         result = tsp.predict(test_df)
 
     """
-
     def __init__(self,
                  name="automl",
                  logs_dir="~/zoo_automl_logs",
@@ -62,10 +62,25 @@ class TimeSequencePredictor(BasePredictor):
                                             self.drop_missing)
         return ft
 
-    def make_model_fn(self, resources_per_trial, config):
-        def model_fn():
-            _model = TimeSequenceModel(
-                check_optional_config=False,
-                future_seq_len=self.future_seq_len)
-            return _model
-        return model_fn
+    def create_model(self, resources_per_trial, config):
+        _model = TimeSequenceModel(
+            check_optional_config=False,
+            future_seq_len=self.future_seq_len)
+        return _model
+
+    def _check_missing_col(self, df):
+        cols_list = [self.dt_col] + self.target_col
+        if self.extra_features_col is not None:
+            if not isinstance(self.extra_features_col, (list,)):
+                raise ValueError(
+                    "extra_features_col needs to be either None or a list")
+            cols_list.extend(self.extra_features_col)
+
+        missing_cols = set(cols_list) - set(input_df.columns)
+        if len(missing_cols) != 0:
+            raise ValueError("Missing Columns in the input data frame:" +
+                             ','.join(list(missing_cols)))
+
+    def _check_df(self, df):
+        super()._check_df(df)
+        self._check_missing_col(input_df=df)

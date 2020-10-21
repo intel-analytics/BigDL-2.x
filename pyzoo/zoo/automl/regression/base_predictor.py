@@ -20,21 +20,11 @@ from zoo.automl.common.metrics import Evaluator
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
 from zoo.automl.common.util import *
 from zoo.automl.config.recipe import *
+from functools import partial
 
+ALLOWED_FIT_METRICS = ("mse", "mae", "r2")
 
 class BasePredictor(object):
-    """
-    Trains a model that predicts future time sequence from past sequence.
-    Past sequence should be > 1. Future sequence can be > 1.
-    For example, predict the next 2 data points from past 5 data points.
-    Output have only one target value (a scalar) for each data point in the sequence.
-    Input can have more than one features (value plus several features)
-    Example usage:
-        tsp = TimeSequencePredictor()
-        tsp.fit(input_df)
-        result = tsp.predict(test_df)
-
-    """
 
     def __init__(self,
                  name="automl",
@@ -48,8 +38,18 @@ class BasePredictor(object):
         raise NotImplementedError
 
     @abstractmethod
-    def make_model_fn(self, resource_per_trail, config):
+    def create_model(self, resource_per_trail, config):
         raise NotImplementedError
+
+    def _check_df(self, df):
+        assert isinstance(df, pd.DataFrame) and df.empty is False, \
+            "You should input a valid data frame"
+
+    @staticmethod
+    def _check_fit_metric(metric):
+        if metric not in ALLOWED_FIT_METRICS:
+            raise ValueError(f"metric {metric} is not supported for fit. "
+                             f"Input metric should be among {ALLOWED_FIT_METRICS}")
 
     def fit(self,
             input_df,
@@ -81,8 +81,10 @@ class BasePredictor(object):
                          hdfs_url will be used.
         :return: self
         """
-
-        self._check_input(input_df, validation_df, metric)
+        self._check_df(input_df)
+        if validation_df is not None:
+            self._check_df(validation_df)
+        BasePredictor._check_fit_metric(metric)
         if distributed:
             if hdfs_url is not None:
                 remote_dir = os.path.join(hdfs_url, "ray_results", self.name)
@@ -118,8 +120,7 @@ class BasePredictor(object):
                       "r_square".
         :return: a list of metric evaluation results.
         """
-        if not Evaluator.check_metric(metric):
-            raise ValueError("metric" + metric + "is not supported")
+        Evaluator.check_metric(metric)
         return self.pipeline.evaluate(input_df, metric)
 
     def predict(self,
@@ -139,59 +140,6 @@ class BasePredictor(object):
         """
         return self.pipeline.predict(input_df)
 
-    def _check_input_format(self, input_df):
-        if isinstance(input_df, list) and all(
-                [isinstance(d, pd.DataFrame) for d in input_df]):
-            input_is_list = True
-            return input_is_list
-        elif isinstance(input_df, pd.DataFrame):
-            input_is_list = False
-            return input_is_list
-        else:
-            raise ValueError(
-                "input_df should be a data frame or a list of data frames")
-
-    def _check_missing_col(self, input_df):
-        cols_list = [self.dt_col] + self.target_col
-        if self.extra_features_col is not None:
-            if not isinstance(self.extra_features_col, (list,)):
-                raise ValueError(
-                    "extra_features_col needs to be either None or a list")
-            cols_list.extend(self.extra_features_col)
-
-        missing_cols = set(cols_list) - set(input_df.columns)
-        if len(missing_cols) != 0:
-            raise ValueError("Missing Columns in the input data frame:" +
-                             ','.join(list(missing_cols)))
-
-    def _check_input(self, input_df, validation_df, metric):
-        input_is_list = self._check_input_format(input_df)
-        if not input_is_list:
-            self._check_missing_col(input_df)
-            if validation_df is not None:
-                self._check_missing_col(validation_df)
-        else:
-            for d in input_df:
-                self._check_missing_col(d)
-            if validation_df is not None:
-                for val_d in validation_df:
-                    self._check_missing_col(val_d)
-
-        allowed_fit_metrics = ["mse", "mae", "r2"]
-        if metric not in allowed_fit_metrics:
-            raise ValueError("metric " + metric + " is not supported")
-
-    @staticmethod
-    def _get_metric_mode(metric):
-        max_mode_metrics = ["r2"]
-        min_mode_metrics = ["mse", "mae", "rmse", "logloss", "error"]
-        if metric in min_mode_metrics:
-            return "min"
-        elif metric in max_mode_metrics:
-            return "max"
-        else:
-            return ValueError, "metric " + metric + " is not supported"
-
     def _hp_search(self,
                    input_df,
                    validation_df,
@@ -206,35 +154,31 @@ class BasePredictor(object):
         else:
             feature_list = ft.get_feature_list(input_df)
 
-        model_fn = self.make_model_fn()
-        model = model_fn()
+        model_fn = partial(self.create_model, resources_per_trial=resources_per_trial)
 
         # prepare parameters for search engine
         search_space = recipe.search_space(feature_list)
 
-        metric_mode = BasePredictor._get_metric_mode(metric)
         searcher = RayTuneSearchEngine(logs_dir=self.logs_dir,
                                        resources_per_trial=resources_per_trial,
                                        name=self.name,
                                        remote_dir=remote_dir,
                                        )
         searcher.compile(input_df,
-                         model_create_func=model_fn(),
+                         model_create_func=model_fn,
                          search_space=search_space,
                          recipe=recipe,
                          feature_transformers=ft,
                          validation_df=validation_df,
                          metric=metric,
-                         metric_mode=metric_mode,
                          mc=mc,
                          )
         # searcher.test_run()
         analysis = searcher.run()
 
         pipeline = self._make_pipeline(analysis,
-                                       metric_mode,
                                        feature_transformers=ft,
-                                       model=model,
+                                       model_create_fn=model_fn,
                                        remote_dir=remote_dir)
         return pipeline
 
@@ -243,16 +187,18 @@ class BasePredictor(object):
         for name, value in best_config.items():
             print(name, ":", value)
 
-    def _make_pipeline(self, analysis, metric_mode, feature_transformers, model, remote_dir):
+    def _make_pipeline(self, analysis, feature_transformers, model_create_fn,
+                       remote_dir):
         metric = "reward_metric"
-        best_config = analysis.get_best_config(metric=metric, mode=metric_mode)
-        best_logdir = analysis.get_best_logdir(metric=metric, mode=metric_mode)
+        best_config = analysis.get_best_config(metric=metric, mode="max")
+        best_logdir = analysis.get_best_logdir(metric=metric, mode="max")
         print("best log dir is ", best_logdir)
-        dataframe = analysis.dataframe(metric=metric, mode=metric_mode)
+        dataframe = analysis.dataframe(metric=metric, mode="max")
         # print(dataframe)
         model_path = os.path.join(best_logdir, dataframe["checkpoint"].iloc[0])
         config = convert_bayes_configs(best_config).copy()
         self._print_config(config)
+        model = model_create_fn(config=config)
         if remote_dir is not None:
             all_config = restore_hdfs(model_path,
                                       remote_dir,
