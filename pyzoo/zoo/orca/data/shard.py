@@ -20,6 +20,7 @@ from zoo.orca import OrcaContext
 from zoo.common.nncontext import init_nncontext
 from zoo import ZooContext, get_node_and_core_number
 from zoo.util import nest
+from zoo.orca.data.file import load_numpy, save_numpy, exists, makedirs, save_pickle, load_pickle
 
 
 class XShards(object):
@@ -58,7 +59,61 @@ class XShards(object):
         :return: SparkXShards object
         """
         sc = init_nncontext()
-        return SparkXShards(sc.pickleFile(path, minPartitions))
+        file_paths = get_file_list(path)
+        if not file_paths:
+            raise Exception("The file path is invalid or empty, please check your data")
+        if minPartitions is None:
+            num_files = len(file_paths)
+            node_num, core_num = get_node_and_core_number()
+            total_cores = node_num * core_num
+            num_partitions = num_files if num_files < total_cores else total_cores
+        else:
+            num_partitions = minPartitions
+        rdd = sc.parallelize(file_paths, num_partitions)
+
+        def load_pkl(iter):
+            data_list = []
+            for path in iter:
+                print(path)
+                data = load_pickle(path)
+                data_list.append(data)
+            yield merge(data_list)
+        rdd = rdd.mapPartitions(load_pkl)
+
+        return SparkXShards(rdd)
+        # return SparkXShards(sc.pickleFile(path, minPartitions))
+
+    @classmethod
+    def load_numpy(cls, path, minPartitions=None):
+        """
+        Load XShards from pickle files.
+        :param path: The pickle file path/directory
+        :param minPartitions: The minimum partitions for the XShards
+        :return: SparkXShards object
+        """
+        sc = init_nncontext()
+        file_paths = get_file_list(path)
+        if not file_paths:
+            raise Exception("The file path is invalid or empty, please check your data")
+        if minPartitions is None:
+            num_files = len(file_paths)
+            node_num, core_num = get_node_and_core_number()
+            total_cores = node_num * core_num
+            num_partitions = num_files if num_files < total_cores else total_cores
+        else:
+            num_partitions = minPartitions
+        rdd = sc.parallelize(file_paths, num_partitions)
+
+        def load_np(iter):
+            data_list = []
+            for path in iter:
+                print(path)
+                data = load_numpy(path, allow_pickle=True)
+                data_list.append(data)
+            yield merge(data_list)
+        rdd = rdd.mapPartitions(load_np)
+        return SparkXShards(rdd)
+        # return SparkXShards(sc.pickleFile(path, minPartitions))
 
     @staticmethod
     def partition(data):
@@ -465,8 +520,42 @@ class SparkXShards(XShards):
         :param path: target path.
         :param batchSize: batch size for each sequence file chunk.
         """
-        self.rdd.saveAsPickleFile(path, batchSize)
+        if not exists(path):
+            makedirs(path)
+
+        def save(path):
+            def save_func(index, iterator):
+                data = list(iterator)
+                assert len(data) <= 1
+
+                if len(data) == 1:
+                    print("data 0 is :", data[0])
+                    save_pickle(os.path.join(path, str(index) + ".pkl"), data[0])
+                yield 0
+
+            return save_func
+
+        self.rdd.mapPartitionsWithIndex(save(path)).collect()
+        # self.rdd.saveAsPickleFile(path, batchSize)
         return self
+
+    def save_numpy(self, path):
+        if not exists(path):
+            makedirs(path)
+
+        def save(path):
+            def save_func(index, iterator):
+                data = list(iterator)
+                assert len(data) <= 1
+
+                if len(data) == 1:
+                    print("data 0 is :", data[0])
+                    save_numpy(os.path.join(path, str(index) + ".npy"), data[0])
+                yield 0
+
+            return save_func
+
+        self.rdd.mapPartitionsWithIndex(save(path)).collect()
 
     def __del__(self):
         self.uncache()

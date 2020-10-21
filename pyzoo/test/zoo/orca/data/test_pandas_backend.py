@@ -25,7 +25,7 @@ import zoo.orca.data.pandas
 from zoo.orca import OrcaContext
 from zoo.orca.data import SharedValue
 from zoo.common.nncontext import *
-from zoo.orca.data import SparkXShards
+from zoo.orca.data import SparkXShards, XShards
 
 
 class TestSparkXShards(TestCase):
@@ -178,6 +178,16 @@ class TestSparkXShards(TestCase):
         data_shard.save_pickle(path)
         shards = zoo.orca.data.XShards.load_pickle(path)
         assert isinstance(shards, zoo.orca.data.SparkXShards)
+        data = shards.rdd.first()
+        import pandas as pd
+        assert isinstance(data, pd.DataFrame)
+
+        path = os.path.join(temp, "data.np")
+        data_shard.save_numpy(path)
+        shards = zoo.orca.data.XShards.load_numpy(path)
+        assert isinstance(shards, zoo.orca.data.SparkXShards)
+        data = shards.rdd.first()
+        import pandas as pd
         shutil.rmtree(temp)
 
     def test_transform(self):
@@ -335,6 +345,34 @@ class TestSparkXShards(TestCase):
         partitions2 = shard3.rdd.glom().collect()
         for par in partitions2:
             assert len(par) <= 1
+
+    def test_save_load_np(self):
+        import tempfile
+        temp = tempfile.mkdtemp()
+        file_path = os.path.join(self.resource_path, "orca/data/csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
+        def transform(df):
+            result = {
+                "x": (df['ID'].to_numpy(),
+                      df['sale_price'].to_numpy()),
+                "y": df['location'].to_numpy()
+            }
+            return result
+
+        data_shard = data_shard.transform_shard(transform)
+        path = os.path.join(temp, "data_pkl")
+        data_shard.save_numpy(path)
+
+        shards = XShards.load_numpy(path)
+        data = shards.rdd.first()
+        assert isinstance(data.item().item(), dict)
+
+        # data_shard.save_pickle(path)
+        # shards = zoo.orca.data.XShards.load_pickle(path)
+        assert isinstance(shards, zoo.orca.data.SparkXShards)
+        assert "x" in data.item().item()
+        assert "y" in data.item().item()
+        shutil.rmtree(temp)
 
 
 if __name__ == "__main__":
