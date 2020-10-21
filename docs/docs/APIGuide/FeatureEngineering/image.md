@@ -50,9 +50,9 @@ def rdd(data: RDD[ImageFeature]): DistributedImageSet
 Create DistributedImageSet from rdd of ImageFeature
 
 * data: array of ImageFeature
-  ```
-  def read(path: String, sc: SparkContext = null, minPartitions: Int = 1, resizeH: Int = -1, resizeW: Int = -1): ImageSet
-  ```
+```
+def read(path: String, sc: SparkContext = null, minPartitions: Int = 1, resizeH: Int = -1, resizeW: Int = -1): ImageSet
+```
 Read images as Image Set.
 If sc is defined, read image as DistributedImageSet from local file system or HDFS.
 If sc is null, Read image as LocalImageSet from local file system
