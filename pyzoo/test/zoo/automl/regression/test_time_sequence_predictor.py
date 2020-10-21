@@ -108,22 +108,6 @@ class TestTimeSequencePredictor(ZooTestCase):
         assert 'past_seq_len' in pipeline.config
         assert 3 <= pipeline.config["past_seq_len"] <= 5
 
-    def test_fit_df_list(self):
-        train_df, validation_df, future_seq_len = self.create_dataset()
-        tsp = TimeSequencePredictor(dt_col="datetime",
-                                    target_col="value",
-                                    future_seq_len=future_seq_len,
-                                    extra_features_col=None, )
-        train_df_list = [train_df] * 3
-        val_df_list = [validation_df] * 3
-        pipeline = tsp.fit(train_df_list, val_df_list)
-        assert isinstance(pipeline, TimeSequencePipeline)
-        assert isinstance(
-            pipeline.feature_transformers,
-            TimeSequenceFeatureTransformer)
-        assert isinstance(pipeline.model, BaseModel)
-        assert pipeline.config is not None
-
 
 if __name__ == '__main__':
     pytest.main([__file__])

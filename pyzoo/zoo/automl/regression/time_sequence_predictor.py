@@ -76,11 +76,11 @@ class TimeSequencePredictor(BasePredictor):
                     "extra_features_col needs to be either None or a list")
             cols_list.extend(self.extra_features_col)
 
-        missing_cols = set(cols_list) - set(input_df.columns)
+        missing_cols = set(cols_list) - set(df.columns)
         if len(missing_cols) != 0:
             raise ValueError("Missing Columns in the input data frame:" +
                              ','.join(list(missing_cols)))
 
     def _check_df(self, df):
         super()._check_df(df)
-        self._check_missing_col(input_df=df)
+        self._check_missing_col(df=df)
