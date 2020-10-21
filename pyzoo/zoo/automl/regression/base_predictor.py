@@ -24,6 +24,7 @@ from functools import partial
 
 ALLOWED_FIT_METRICS = ("mse", "mae", "r2")
 
+
 class BasePredictor(object):
 
     def __init__(self,

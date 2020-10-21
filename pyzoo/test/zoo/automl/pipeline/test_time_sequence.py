@@ -173,7 +173,7 @@ class TestTimeSequencePipeline(ZooTestCase):
     #     print("Evaluation result after restore and fit: "
     #           "Mean square error is: {}, R square is: {}.".format(new_mse, new_rs))
 
-    #def test_predict_df_list(self):
+    # def test_predict_df_list(self):
     #    target_col = "values"
     #    future_seq_len = np.random.randint(2, 6)
     #    train_df, test_df, tsp, test_sample_num = self.get_input_tsp(future_seq_len, target_col)
