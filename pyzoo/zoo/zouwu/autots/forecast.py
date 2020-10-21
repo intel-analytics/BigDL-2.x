@@ -38,9 +38,12 @@ class AutoTSTrainer:
         :param target_col: the target column to forecast
         :param extra_features_col: extra feature columns
         """
+        target_col_list = target_col
+        if isinstance(target_col, str):
+            target_col_list = [target_col]
         self.internal = TimeSequencePredictor(
             dt_col=dt_col,
-            target_col=target_col,
+            target_col=target_col_list,
             future_seq_len=horizon,
             extra_features_col=extra_features_col,
         )

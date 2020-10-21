@@ -32,11 +32,8 @@ import com.intel.analytics.zoo.serving.utils.SerParams
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 
-class PreProcessing(param: SerParams) {
+class PreProcessing(chwFlag: Boolean = true) {
   val logger = Logger.getLogger(getClass)
-
-  var tensorBuffer: Array[Tensor[Float]] = null
-  var arrayBuffer: Array[Array[Float]] = null
 
   var byteBuffer: Array[Byte] = null
 
@@ -44,7 +41,7 @@ class PreProcessing(param: SerParams) {
   def decodeArrowBase64(s: String): Activity = {
     try {
       byteBuffer = java.util.Base64.getDecoder.decode(s)
-      val instance = Timer.timing("decode arrow", 1)(Instances.fromArrow(byteBuffer))
+      val instance = Instances.fromArrow(byteBuffer)
 
       val kvMap = instance.instances.flatMap(insMap => {
         val oneInsMap = insMap.map(kv =>
@@ -53,7 +50,7 @@ class PreProcessing(param: SerParams) {
               (kv._1, decodeString(kv._2.asInstanceOf[String]))
             }
             else {
-              Timer.timing("decode image", 1)((kv._1, decodeImage(kv._2.asInstanceOf[String])))
+              (kv._1, decodeImage(kv._2.asInstanceOf[String]))
 
             }
           }
@@ -71,7 +68,7 @@ class PreProcessing(param: SerParams) {
       case e: Exception =>
         logger.error(s"Preprocessing error, msg ${e.getMessage}")
         logger.error(s"Error stack trace ${e.getStackTrace.mkString("\n")}")
-        Tensor[Float]()
+        T(Tensor[Float]())
     }
   }
   def decodeString(s: String): Tensor[String] = {
@@ -93,7 +90,7 @@ class PreProcessing(param: SerParams) {
     OpenCVMat.toFloatPixels(mat, arrayBuffer)
 
     val imageTensor = Tensor[Float](arrayBuffer, Array(height, width, channel))
-    if (param.chwFlag) {
+    if (chwFlag) {
       imageTensor.transpose(1, 3)
         .transpose(2, 3).contiguous()
     } else {

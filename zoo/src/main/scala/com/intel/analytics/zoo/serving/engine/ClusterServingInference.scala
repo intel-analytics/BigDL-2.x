@@ -20,26 +20,53 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
+import com.intel.analytics.zoo.serving.PreProcessing
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
 import org.apache.log4j.Logger
 
 /**
  * Inference Logic of Cluster Serving
- * In Flink, ModelHolder will directly be used
- * model parameter is reserved for Spark backend
  */
-object ClusterServingInference {
+class ClusterServingInference(preProcessing: PreProcessing,
+                              modelType: String,
+                              filterType: String = "",
+                              batchSize: Int = 4,
+                              resizeFlag: Boolean = true) {
   val logger = Logger.getLogger(getClass)
-  def singleThreadInference(preProcessed: Iterator[(String, Activity)],
-                            modelType: String,
-                            filterType: String = null,
-                            model: InferenceModel = null): Iterator[(String, String)] = {
-    val localModel = if (model == null) ModelHolder.model else model
-    val postProcessed = preProcessed.map(pathByte => {
+
+  def singleThreadPipeline(in: List[(String, String)]): List[(String, String)] = {
+    singleThreadInference(preProcess(in))
+  }
+  def multiThreadPipeline(in: List[(String, String)]): List[(String, String)] = {
+    multiThreadInference(preProcess(in, true))
+  }
+
+  def preProcess(in: List[(String, String)],
+                 multiThread: Boolean = false): List[(String, Activity)] = {
+    if (!multiThread) {
+      in.map(item => {
+        val uri = item._1
+        val input = preProcessing.decodeArrowBase64(item._2)
+        (uri, input)
+      })
+    } else {
+      val size = in.size
+      in.grouped(size).flatMap(itemBatch => {
+        (0 until size).toParArray.map(i => {
+          val uri = itemBatch(i)._1
+          val input = preProcessing.decodeArrowBase64(itemBatch(i)._2)
+          (uri, input)
+        })
+      }).toList
+    }
+  }
+  def singleThreadInference(in: List[(String, Activity)]): List[(String, String)] = {
+
+    val postProcessed = in.map(pathByte => {
       try {
         val t = typeCheck(pathByte._2)
         dimCheck(t, "add", modelType)
-        val result = localModel.doPredict(t)
+        val result = ModelHolder.model.doPredict(t)
         dimCheck(result, "remove", modelType)
         val value = PostProcessing(result.toTensor[Float], filterType, 1)
         (pathByte._1, value)
@@ -52,54 +79,54 @@ object ClusterServingInference {
     })
     postProcessed
   }
-  def singleThreadBatchInference(preProcessed: Iterator[(String, Activity)],
-                                 batchSize: Int,
-                                 modelType: String,
-                                 filterType: String = "",
-                                 resizeFlag: Boolean = false,
-                                 model: InferenceModel = null): Iterator[(String, String)] = {
-    val localModel = if (model == null) ModelHolder.model else model
-    val postProcessed = preProcessed.grouped(batchSize).flatMap(pathByte => {
+
+  /** Deprecated
+   * Current used for OpenVINO model, use multiple thread to inference, and single thread
+   * to do other operations, normally only one model is used, and every thread in pipeline
+   * try to get this model if it goes to inference stage
+   * Do not need to set resize label, because only OpenVINO use it, and OpenVINO only support
+   * fixed size of input, thus mutable batch size is not supported
+   */
+  def singleThreadBatchInference(in: List[(String, Activity)]): List[(String, String)] = {
+
+    val postProcessed = in.grouped(batchSize).flatMap(pathByte => {
       try {
         val thisBatchSize = pathByte.size
-        val t = Timer.timing("batch", thisBatchSize) {
-          batchInput(pathByte, batchSize, useMultiThreading = false, resizeFlag = resizeFlag)
+        ModelHolder.synchronized{
+          while (ModelHolder.modelQueueing != 0) ModelHolder.wait()
         }
+        val t = batchInput(pathByte, batchSize, useMultiThreading = false, resizeFlag = false)
         dimCheck(t, "add", modelType)
-        val result = Timer.timing("inference", thisBatchSize) {
-          localModel.doPredict(t)
-        }
+        val result =
+          ModelHolder.model.doPredict(t)
         dimCheck(result, "remove", modelType)
         dimCheck(t, "remove", modelType)
-        val kvResult = Timer.timing("postprocess", thisBatchSize) {
-          (0 until thisBatchSize).toParArray.map(i => {
+        ModelHolder.synchronized{
+          while (ModelHolder.modelQueueing != 0) ModelHolder.wait()
+        }
+        val kvResult =
+          (0 until thisBatchSize).map(i => {
             val value = PostProcessing(result, filterType, i + 1)
             (pathByte(i)._1, value)
           })
-        }
         kvResult
       } catch {
         case e: Exception =>
           logger.info(s"${e.printStackTrace()}, " +
             s"Your input format is invalid to your model, this batch is skipped")
-          pathByte.toParArray.map(x => (x._1, "NaN"))
+          pathByte.map(x => (x._1, "NaN"))
       }
     })
-    postProcessed
+    postProcessed.toList
   }
-  def multiThreadInference(preProcessed: Iterator[(String, Activity)],
-                           batchSize: Int,
-                           modelType: String,
-                           filterType: String = "",
-                           resizeFlag: Boolean = false,
-                           model: InferenceModel = null): Iterator[(String, String)] = {
-    val localModel = if (model == null) ModelHolder.model else model
-    val postProcessed = preProcessed.grouped(batchSize).flatMap(pathByteBatch => {
+
+  def multiThreadInference(in: List[(String, Activity)]): List[(String, String)] = {
+
+    val postProcessed = in.grouped(batchSize).flatMap(itemBatch => {
       try {
-        val thisBatchSize = pathByteBatch.size
-        val t = Timer.timing("batch", thisBatchSize) {
-          batchInput(pathByteBatch, batchSize, resizeFlag)
-        }
+        val size = itemBatch.size
+        val t =
+          batchInput(itemBatch, batchSize, true, resizeFlag)
 
         /**
          * addSingletonDimension method will modify the
@@ -107,26 +134,24 @@ object ClusterServingInference {
          * have to squeeze it back.
          */
         dimCheck(t, "add", modelType)
-        val result = Timer.timing("inference", thisBatchSize) {
-          localModel.doPredict(t)
-        }
+        val result =
+          ModelHolder.model.doPredict(t)
         dimCheck(result, "remove", modelType)
         dimCheck(t, "remove", modelType)
-        val kvResult = Timer.timing("postprocess", thisBatchSize) {
-          (0 until thisBatchSize).toParArray.map(i => {
+        val kvResult =
+          (0 until size).toParArray.map(i => {
             val value = PostProcessing(result, filterType, i + 1)
-            (pathByteBatch(i)._1, value)
+            (itemBatch(i)._1, value)
           })
-        }
         kvResult
       } catch {
         case e: Exception =>
           logger.info(s"${e.printStackTrace()}, " +
             s"Your input format is invalid to your model, this batch is skipped")
-          pathByteBatch.toParArray.map(x => (x._1, "NaN"))
+          itemBatch.toParArray.map(x => (x._1, "NaN"))
       }
     })
-    postProcessed
+    postProcessed.toList
   }
 
   def batchInput(seq: Seq[(String, Activity)],

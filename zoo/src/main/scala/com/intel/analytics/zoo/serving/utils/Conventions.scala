@@ -20,9 +20,10 @@ import org.apache.arrow.vector.types.FloatingPointPrecision
 import org.apache.arrow.vector.types.pojo.ArrowType
 
 object Conventions {
-  val SERVING_STREAM_NAME = "serving_stream"
+  val SERVING_STREAM_DEFAULT_NAME = "serving_stream"
   val SERVING_MODEL_TMP_DIR = "cluster-serving-model"
   val SERVING_CONF_TMP_PATH = "cluster-serving-conf.yaml"
+  val RESULT_PREFIX = "cluster-serving_"
   val TMP_MANAGER_YAML = "/tmp/cluster-serving-jobs.yaml"
   val ARROW_INT = new ArrowType.Int(32, true)
   val ARROW_FLOAT = new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE)

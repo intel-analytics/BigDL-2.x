@@ -3,25 +3,17 @@
 model:
   # model path must be provided
   path: /path/to/model
-  # mode, default is recommended, if error is raised, set single
-  mode:
   # name, default is serving_stream, you need to specify if running multiple servings
   name:
-  # the inputs of the tensorflow model, separated by ","
-  inputs:
-  # the outputs of the tensorflow model, separated by ","
-  outputs:
 data:
   # default, localhost:6379
   src:
   # default, None
   filter:
-  # default, true
-  resize:
 params:
   # default, 4
   core_number:
-  # default: auto-adjust
+  # default: model number will auto-adapt to core_number, do not set it if not sure about the behavior
   model_number:
   # default: OFF
   performance_mode:

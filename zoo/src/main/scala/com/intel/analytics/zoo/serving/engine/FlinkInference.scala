@@ -16,6 +16,9 @@
 
 package com.intel.analytics.zoo.serving.engine
 
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
+
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.PreProcessing
@@ -29,10 +32,8 @@ import org.apache.log4j.Logger
 class FlinkInference(params: SerParams)
   extends RichMapFunction[List[(String, String)], List[(String, String)]] {
 
-  var t: Tensor[Float] = null
   var logger: Logger = null
-  var pre: PreProcessing = null
-  var post: PostProcessing = null
+  var inference: ClusterServingInference = null
 
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
@@ -52,56 +53,31 @@ class FlinkInference(params: SerParams)
         }
       }
     }
-
-
-    pre = new PreProcessing(params)
+    inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
+      params.modelType, params.filter, params.coreNum, params.resize)
   }
 
   override def map(in: List[(String, String)]): List[(String, String)] = {
     val t1 = System.nanoTime()
-    val postProcessed = if (params.inferenceMode == "single") {
-      val preProcessed = in.map(item => {
-        Timer.timing("preprocess one input", 1) {
-          val uri = item._1
-          val input = pre.decodeArrowBase64(item._2)
-          (uri, input)
-        }
-      }).toIterator
+    val postProcessed = {
       if (params.modelType == "openvino") {
-        ClusterServingInference.singleThreadBatchInference(
-          preProcessed, params.coreNum, params.modelType, params.filter).toList
+        inference.multiThreadPipeline(in)
       } else {
-        ClusterServingInference.singleThreadInference(
-          preProcessed, params.modelType, params.filter).toList
+        inference.singleThreadPipeline(in)
       }
-
-    } else {
-      val preProcessed = in.grouped(params.coreNum).flatMap(itemBatch => {
-        Timer.timing("preprocess", itemBatch.size) {
-          itemBatch.indices.toParArray.map(i => {
-            Timer.timing("preprocess one input", 1) {
-              val uri = itemBatch(i)._1
-              val input = pre.decodeArrowBase64(itemBatch(i)._2)
-              (uri, input)
-            }
-
-          })
-        }
-
-      })
-      ClusterServingInference.multiThreadInference(
-        preProcessed, params.coreNum, params.modelType, params.filter, params.resize).toList
     }
+
     val t2 = System.nanoTime()
     logger.info(s"${postProcessed.size} records backend time ${(t2 - t1) / 1e9} s. " +
       s"Throughput ${postProcessed.size / ((t2 - t1) / 1e9)}")
     if (params.timerMode) {
-      Timer.print()
+//      Timer.print()
     }
     postProcessed
   }
 }
 object ModelHolder {
   var model: InferenceModel = null
-
+  var modelQueueing = 0
+  var nonOMP = 0
 }

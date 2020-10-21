@@ -20,6 +20,8 @@ from zoo.serving.schema import *
 import httpx
 import json
 
+RESULT_PREFIX = "cluster-serving_"
+
 
 def perdict(frontend_url, request_str):
     httpx.post(frontend_url + "/predict", data=request_str)
@@ -166,7 +168,7 @@ class OutputQueue(API):
         super().__init__(host, port)
 
     def dequeue(self):
-        res_list = self.db.keys('cluster-serving_' + self.name + ':*')
+        res_list = self.db.keys(RESULT_PREFIX + self.name + ':*')
         decoded = {}
         for res in res_list:
             res_dict = self.db.hgetall(res.decode('utf-8'))
@@ -176,9 +178,38 @@ class OutputQueue(API):
             self.db.delete(res)
         return decoded
 
-    def query(self, uri):
-        res_dict = self.db.hgetall('cluster-serving_' + self.name + ':' + uri)
+    def query_and_delete(self, uri):
+        self.query(uri, True)
+
+    def query(self, uri, delete=False):
+        res_dict = self.db.hgetall(RESULT_PREFIX + self.name + ':' + uri)
 
         if not res_dict or len(res_dict) == 0:
-            return "{}"
-        return res_dict[b'value'].decode('utf-8')
+            return "[]"
+        if delete:
+            self.db.delete(RESULT_PREFIX + self.name + ':' + uri)
+        s = res_dict[b'value'].decode('utf-8')
+        if s == "NaN":
+            return s
+        return self.get_ndarray_from_b64(s)
+
+    def get_ndarray_from_b64(self, b64str):
+        b = base64.b64decode(b64str)
+        a = pa.BufferReader(b)
+        c = a.read_buffer()
+        myreader = pa.ipc.open_stream(c)
+        r = [i for i in myreader]
+        assert len(r) > 0
+        if len(r) == 1:
+            return self.get_ndarray_from_record_batch(r[0])
+        else:
+            l = []
+            for ele in r:
+                l.append(self.get_ndarray_from_record_batch(ele))
+            return l
+
+    def get_ndarray_from_record_batch(self, record_batch):
+        data = record_batch[0].to_numpy()
+        shape_list = record_batch[1].to_pylist()
+        shape = [i for i in shape_list if i]
+        return data.reshape(shape)

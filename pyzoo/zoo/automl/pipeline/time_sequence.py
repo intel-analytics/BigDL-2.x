@@ -13,15 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
-import tempfile
 import time
 
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.pipeline.abstract import Pipeline
 from zoo.automl.common.util import *
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
-from zoo.automl.model import TimeSequenceModel
+from zoo.automl.model.time_sequence import TimeSequenceModel
 from zoo.automl.common.parameters import *
 
 
@@ -221,11 +219,11 @@ def load_ts_pipeline(file):
     return ts_pipeline
 
 
-def load_xgboost_pipeline(file):
+def load_xgboost_pipeline(file, model_type="regressor"):
     from zoo.automl.feature.identity_transformer import IdentityTransformer
-    from zoo.automl.model import XGBoostRegressor
+    from zoo.automl.model import XGBoost
     feature_transformers = IdentityTransformer()
-    model = XGBoostRegressor()
+    model = XGBoost(model_type=model_type)
 
     all_config = restore_zip(file, feature_transformers, model)
     ts_pipeline = TimeSequencePipeline(feature_transformers=feature_transformers,
