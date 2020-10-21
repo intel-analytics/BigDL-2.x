@@ -53,8 +53,13 @@ class TestZouwuAutoTS(ZooTestCase):
         pipeline = tsp.fit(self.train_df)
         assert isinstance(pipeline, TSPipeline)
         assert pipeline.internal.config is not None
-        pipeline.evaluate(self.validation_df)
-        pipeline.predict(self.validation_df)
+        evaluate_result = pipeline.evaluate(self.validation_df)
+        if horizon > 1:
+            assert evaluate_result[0].shape[0] == horizon
+        else:
+            assert evaluate_result[0]
+        predict_df = pipeline.predict(self.validation_df)
+        assert not predict_df.empty
 
     def test_AutoTrainer_LstmRecipe(self):
         horizon = np.random.randint(1, 6)
@@ -74,8 +79,13 @@ class TestZouwuAutoTS(ZooTestCase):
                            ))
         assert isinstance(pipeline, TSPipeline)
         assert pipeline.internal.config is not None
-        pipeline.evaluate(self.validation_df)
-        pipeline.predict(self.validation_df)
+        evaluate_result = pipeline.evaluate(self.validation_df)
+        if horizon > 1:
+            assert evaluate_result[0].shape[0] == horizon
+        else:
+            assert evaluate_result[0]
+        predict_df = pipeline.predict(self.validation_df)
+        assert not predict_df.empty
 
     def test_AutoTrainer_MTNetRecipe(self):
         horizon = np.random.randint(1, 6)
@@ -97,8 +107,13 @@ class TestZouwuAutoTS(ZooTestCase):
                            ))
         assert isinstance(pipeline, TSPipeline)
         assert pipeline.internal.config is not None
-        pipeline.evaluate(self.validation_df)
-        pipeline.predict(self.validation_df)
+        evaluate_result = pipeline.evaluate(self.validation_df)
+        if horizon > 1:
+            assert evaluate_result[0].shape[0] == horizon
+        else:
+            assert evaluate_result[0]
+        predict_df = pipeline.predict(self.validation_df)
+        assert not predict_df.empty
 
 
 if __name__ == "__main__":

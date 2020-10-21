@@ -509,15 +509,15 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   }
 
   private def predict(inputActivity: Activity): Activity = {
-    val model: AbstractModel = retrieveModel()
+    val model = retrieveModel()
     try {
       val begin = System.nanoTime()
       val result = model.predict(inputActivity)
       val end = System.nanoTime()
 
       val latency = end - begin
-      val name = s"model predict for batch"
-      InferenceSupportive.logger.info(s"$name time elapsed [${latency/1e9} s, ${latency/1e6} ms].")
+      val name = s"Thread ${Thread.currentThread().getId} Inference"
+      InferenceSupportive.logger.info(s"$name time [${latency/1e9} s, ${latency/1e6} ms].")
 
       result
     } finally {
@@ -549,13 +549,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
       }
     }
   }
-  def blockModel(): Unit = {
-    while (modelQueue.peek() == null) {
-      val model = modelQueue.take()
-      modelQueue.offer(model)
-    }
 
-  }
   private def retrieveModel(): AbstractModel = {
     var model: AbstractModel = null
     autoScalingEnabled match {
@@ -565,7 +559,8 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
           model = modelQueue.take
         } catch {
           case e: InterruptedException =>
-            throw new InferenceRuntimeException("no model available", e);
+            throw new InferenceRuntimeException("no model available \n"
+              + e.getStackTrace.mkString("\n"))
         }
       case true =>
         // if auto-scaling is enabled, will poll a model, no waiting but scale 1 model if necessary.

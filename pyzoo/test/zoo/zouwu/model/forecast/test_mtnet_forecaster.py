@@ -62,7 +62,8 @@ class TestZouwuModelMTNetForecaster(TestCase):
 
     def test_forecast_mtnet(self):
         # TODO hacking to fix a bug
-        model = MTNetForecaster(target_dim=1,
+        target_dim = 1
+        model = MTNetForecaster(target_dim=target_dim,
                                 feature_dim=self.x_train.shape[-1],
                                 long_series_num=self.long_num,
                                 series_length=self.time_step
@@ -76,8 +77,9 @@ class TestZouwuModelMTNetForecaster(TestCase):
                   validation_data=([x_val_long, x_val_short], self.y_val),
                   batch_size=32,
                   distributed=False)
-        model.evaluate([x_val_long, x_val_short], self.y_val)
-        model.predict([x_test_long, x_test_short])
+        assert model.evaluate([x_val_long, x_val_short], self.y_val)
+        predict_result = model.predict([x_test_long, x_test_short])
+        assert predict_result.shape == (self.x_test.shape[0], target_dim)
 
 
 if __name__ == "__main__":

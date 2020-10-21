@@ -171,7 +171,7 @@ def train_yseq_hvd(workers_per_node, epochs, **config):
         optimizer=optimizer_creator,
         loss=loss_creator,
         workers_per_node=workers_per_node,
-        config=config)
+        config=config, backend="horovod")
 
     stats = estimator.fit(train_data_creator, epochs=epochs)
     for s in stats:

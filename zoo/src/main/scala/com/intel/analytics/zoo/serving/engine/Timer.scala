@@ -30,14 +30,14 @@ class Timer() {
     var batchNum: Int = 0 // total batch number up to now
     var average: Float = 0 // average cost up to now
     var averageBatch: Float = 0 // average cost per batch up to now
-    var first: Long = 0 // first record to trigger warm up
-    var max: Long = Long.MinValue // max cost up to now
-    var min: Long = Long.MaxValue // min cost up to now
-    val topQ = new PriorityQueue[Long]()
+    var first: Double = 0 // first record to trigger warm up
+    var max: Double = Double.MinValue // max cost up to now
+    var min: Double = Double.MaxValue // min cost up to now
+    val topQ = new PriorityQueue[Double]()
     val nQ = 10
     val countFlag = _countFlag
     topQ.add(Long.MinValue)
-    def update(cost: Long, num: Int): Unit = {
+    def update(cost: Double, num: Int): Unit = {
       total += cost.toFloat
       record += num
       batchNum += 1
@@ -66,11 +66,11 @@ class Timer() {
   var timerMap = Map[String, TimerUnit]()
 
   def timing[T](name: String, num: Int)(f: => T): T = {
-    val begin = System.currentTimeMillis
+    val begin = System.nanoTime()
     val result = f
-    val end = System.currentTimeMillis
-    val cost = (end - begin)
-    Logger.getLogger(getClass).info(s"$name time elapsed [${cost / 1000} s, ${cost % 1000} ms].")
+    val end = System.nanoTime()
+    val cost = (end - begin) / 1e6
+    Logger.getLogger(getClass).info(s"$name time elapsed [${(cost / 1e3).toInt} s, $cost ms].")
     if (!timerMap.contains(name)) {
       timerMap += (name -> new TimerUnit())
     }
@@ -86,7 +86,7 @@ class Timer() {
         s"average per batch ${timer.averageBatch}, first ${timer.first}, " +
         s"max ${timer.max}, min ${timer.min} (ms/batch)")
       println(s"Top ${timer.nQ} of statistic:")
-      var tmpArr = Array[Long]()
+      var tmpArr = Array[Double]()
       (0 until timer.nQ + 1).foreach(i => {
         if (!timer.topQ.isEmpty) {
           tmpArr = tmpArr :+ timer.topQ.peek()

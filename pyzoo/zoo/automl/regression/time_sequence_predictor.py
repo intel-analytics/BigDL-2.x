@@ -44,7 +44,7 @@ class TimeSequencePredictor(object):
                  logs_dir="~/zoo_automl_logs",
                  future_seq_len=1,
                  dt_col="datetime",
-                 target_col="value",
+                 target_col=["value"],
                  extra_features_col=None,
                  drop_missing=True,
                  ):
@@ -61,7 +61,10 @@ class TimeSequencePredictor(object):
         self.pipeline = None
         self.future_seq_len = future_seq_len
         self.dt_col = dt_col
-        self.target_col = target_col
+        if isinstance(target_col, str):
+            self.target_col = [target_col]
+        else:
+            self.target_col = target_col
         self.extra_features_col = extra_features_col
         self.drop_missing = drop_missing
         self.name = name
@@ -167,7 +170,7 @@ class TimeSequencePredictor(object):
                 "input_df should be a data frame or a list of data frames")
 
     def _check_missing_col(self, input_df):
-        cols_list = [self.dt_col, self.target_col]
+        cols_list = [self.dt_col] + self.target_col
         if self.extra_features_col is not None:
             if not isinstance(self.extra_features_col, (list,)):
                 raise ValueError(

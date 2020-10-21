@@ -91,25 +91,14 @@ class DeepGLO(object):
         rank=64,
         kernel_size_Y=7,
         lr=0.0005,
-        val_len=24,
-        end_index=-24,
         normalize=False,
-        start_date="2016-1-1",
-        freq="H",
-        covariates=None,
         use_time=True,
-        dti=None,
         svd=False,
-        period=None,
         forward_cov=False,
     ):
-        self.start_date = start_date
-        self.freq = freq
-        self.covariates = covariates
+
         self.use_time = use_time
-        self.dti = dti
         self.dropout = dropout
-        self.period = period
         self.forward_cov = forward_cov
         self.Xseq = TemporalConvNet(
             num_inputs=1,
@@ -126,8 +115,6 @@ class DeepGLO(object):
         self.rank = rank
         self.kernel_size = kernel_size
         self.lr = lr
-        self.val_len = val_len
-        self.end_index = end_index
         self.normalize = normalize
         self.svd = svd
 
@@ -322,7 +309,7 @@ class DeepGLO(object):
         else:
             return Y
 
-    def train_Xseq(self, Ymat, num_epochs=20, early_stop=False, tenacity=3):
+    def train_Xseq(self, Ymat, num_epochs=20, val_len=24, early_stop=False, tenacity=3):
         seq = self.Xseq
         num_channels = self.num_channels_X
         kernel_size = self.kernel_size
@@ -339,8 +326,8 @@ class DeepGLO(object):
             vbsize=vbsize,
             hbsize=self.hbsize,
             normalize=False,
-            end_index=self.end_index - self.val_len,
-            val_len=self.val_len,
+            end_index=self.end_index - val_len,
+            val_len=val_len,
             lr=self.lr,
         )
 
@@ -353,6 +340,7 @@ class DeepGLO(object):
         reg_X=0.0,
         reg_F=0.0,
         mod=5,
+        val_len=24,
         early_stop=False,
         tenacity=3,
         ind=None,
@@ -399,11 +387,11 @@ class DeepGLO(object):
                     ind = ind
                 inp = self.predict_global(
                     ind,
-                    last_step=self.end_index - self.val_len,
-                    future=self.val_len,
+                    last_step=self.end_index - val_len,
+                    future=val_len,
                 )
-                R = self.Ymat[ind, self.end_index - self.val_len: self.end_index]
-                S = inp[:, -self.val_len::]
+                R = self.Ymat[ind, self.end_index - val_len: self.end_index]
+                S = inp[:, -val_len::]
                 ve = np.abs(R - S).mean() / np.abs(R).mean()
                 # print("Validation Loss (Global): ", ve)
                 print("Validation Loss (Global):{}".format(ve))
@@ -474,6 +462,9 @@ class DeepGLO(object):
         return Ycov_wc
 
     def train_Yseq(self, num_epochs=20,
+                   covariates=None,
+                   dti=None,
+                   val_len=24,
                    num_workers=1,
                    ):
         Ycov = self.create_Ycov()
@@ -486,15 +477,15 @@ class DeepGLO(object):
             vbsize=self.vbsize,
             hbsize=self.hbsize,
             lr=self.lr,
-            val_len=self.val_len,
+            val_len=val_len,
             test=True,
-            end_index=self.end_index - self.val_len,
+            end_index=self.end_index - val_len,
             normalize=False,
             start_date=self.start_date,
             freq=self.freq,
-            covariates=self.covariates,
+            covariates=covariates,
             use_time=self.use_time,
-            dti=self.dti,
+            dti=dti,
             Ycov=Ycov,
         )
         val_loss = self.Yseq.train_model(num_epochs=num_epochs,
@@ -503,11 +494,29 @@ class DeepGLO(object):
         return val_loss
 
     def train_all_models(
-        self, Ymat, init_epochs=100, alt_iters=10, y_iters=200, tenacity=7, mod=5,
-            max_FX_epoch=300, max_TCN_epoch=300,
+            self,
+            Ymat,
+            val_len=24,
+            start_date="2016-1-1",
+            freq="H",
+            covariates=None,
+            dti=None,
+            period=None,
+            init_epochs=100,
+            alt_iters=10,
+            y_iters=200,
+            tenacity=7,
+            mod=5,
+            max_FX_epoch=300,
+            max_TCN_epoch=300,
             num_workers=1,
     ):
         self.end_index = Ymat.shape[1]
+        self.start_date = start_date
+        self.freq = freq
+        self.period = period
+        self.covariates = covariates
+        self.dti = dti
 
         if self.normalize:
             self.s = np.std(Ymat[:, 0:self.end_index], axis=1)
@@ -547,13 +556,13 @@ class DeepGLO(object):
             vbsize=self.vbsize,
             hbsize=self.hbsize,
             end_index=self.end_index,
-            val_len=self.val_len,
+            val_len=val_len,
             shuffle=False,
         )
         # print("-"*50+"Initializing Factors.....")
         logger.info("Initializing Factors")
         self.num_epochs = init_epochs
-        self.train_factors()
+        self.train_factors(val_len=val_len)
 
         if alt_iters % 2 == 1:
             alt_iters += 1
@@ -566,7 +575,8 @@ class DeepGLO(object):
                 logger.info("Training Factors. Iter#:{}".format(i))
                 self.num_epochs = max_FX_epoch
                 self.train_factors(
-                    seed=False, early_stop=True, tenacity=tenacity, mod=mod
+                    seed=False, val_len=val_len,
+                    early_stop=True, tenacity=tenacity, mod=mod
                 )
             else:
                 # logger.info(
@@ -581,48 +591,110 @@ class DeepGLO(object):
                 self.train_Xseq(
                     Ymat=T,
                     num_epochs=self.num_epochs,
+                    val_len=val_len,
                     early_stop=True,
                     tenacity=tenacity,
                 )
 
         logger.info("Start training Yseq.....")
         val_loss = self.train_Yseq(num_epochs=y_iters,
+                                   covariates=covariates,
+                                   dti=dti,
+                                   val_len=val_len,
                                    num_workers=num_workers,
                                    )
         return val_loss
 
-    def get_time_covs(self, start_date, num_ts):
+    def append_new_y(self, Ymat_new, covariates_new=None, dti_new=None):
+        # update Yseq
+        # normalize the incremented Ymat if needed
+        if self.normalize:
+            Ymat_new = (Ymat_new - self.m[:, None]) / self.s[:, None]
+            Ymat_new = Ymat_new + self.mini
+
+        # append the new Ymat onto the original, note that self.end_index equals to the no.of time
+        # steps of the original.
+        n, T_added = Ymat_new.shape
+        self.Ymat = np.concatenate((self.Ymat[:, : self.end_index], Ymat_new), axis=1)
+        self.end_index = self.end_index + T_added
+
+        n, T = self.Ymat.shape
+        t0 = self.end_index + 1
+        if t0 > T:
+            self.Ymat = np.hstack([self.Ymat, self.Ymat[:, -1].reshape(-1, 1)])
+
+        # update Yseq.covariates
+        last_step = self.end_index - T_added
+        new_covariates = self.get_future_time_covs(T_added, last_step,
+                                                   future_covariates=covariates_new,
+                                                   future_dti=dti_new)
+        self.Yseq.covariates = np.hstack([self.Yseq.covariates[:, :last_step], new_covariates])
+
+    def inject_new(self,
+                   Ymat_new,
+                   covariates_new=None,
+                   dti_new=None):
+        if self.Ymat.shape[0] != Ymat_new.shape[0]:
+            raise ValueError("Expected incremental input with {} time series, got {} instead."
+                             .format(self.Ymat.shape[0], Ymat_new.shape[0]))
+        self.append_new_y(Ymat_new, covariates_new=covariates_new, dti_new=dti_new)
+        n, T = self.Ymat.shape
+        rank, XT = self.X.shape
+        future = T - XT
+        Xn = self.recover_future_X(
+            last_step=XT,
+            future=future,
+            num_epochs=100000,
+            alpha=0.3,
+            vanilla=True,
+        )
+        self.X = torch.cat([self.X, Xn], dim=1)
+
+    def get_time_covs(self, future_start_date, num_ts, future_covariates, future_dti):
         if self.use_time:
-            time = TimeCovariates(
-                start_date=start_date,
+            future_time = TimeCovariates(
+                start_date=future_start_date,
                 freq=self.freq,
                 normalized=True,
                 num_ts=num_ts
             )
-            if self.dti is not None:
-                time.dti = self.dti
-            time_covariates = time.get_covariates()
-            if self.covariates is None:
+            if future_dti is not None:
+                future_time.dti = future_dti
+            time_covariates = future_time.get_covariates()
+            if future_covariates is None:
                 covariates = time_covariates
             else:
-                covariates = np.vstack([time_covariates, self.covariates])
+                covariates = np.vstack([time_covariates, future_covariates])
         else:
-            covariates = self.covariates
+            covariates = future_covariates
         return covariates
 
-    def get_prediction_time_covs(self, rg, horizon, last_step):
-        covs_past = self.Yseq.covariates[:, last_step - rg: last_step]
+    def get_future_time_covs(self, horizon, last_step, future_covariates, future_dti):
         if self.freq[0].isalpha():
             freq = "1" + self.freq
         else:
             freq = self.freq
         future_start_date = pd.Timestamp(self.start_date) + pd.Timedelta(freq) * last_step
-        covs_future = self.get_time_covs(start_date=future_start_date, num_ts=horizon)
+        covs_future = self.get_time_covs(future_start_date=future_start_date,
+                                         num_ts=horizon,
+                                         future_covariates=future_covariates,
+                                         future_dti=future_dti)
+        return covs_future
+
+    def get_prediction_time_covs(self, rg, horizon, last_step, future_covariates, future_dti):
+        covs_past = self.Yseq.covariates[:, last_step - rg: last_step]
+        covs_future = self.get_future_time_covs(horizon, last_step, future_covariates, future_dti)
         covs = np.concatenate([covs_past, covs_future], axis=1)
         return covs
 
     def predict_horizon(
-            self, ind=None, future=10, normalize=False, bsize=90, num_workers=1,
+            self,
+            ind=None,
+            future=10,
+            future_covariates=None,
+            future_dti=None,
+            bsize=90,
+            num_workers=1,
     ):
         last_step = self.end_index
         if ind is None:
@@ -635,7 +707,7 @@ class DeepGLO(object):
             1 + 2 * (self.kernel_size - 1) * 2 ** (len(self.num_channels_X) - 1),
             1 + 2 * (self.kernel_size_Y - 1) * 2 ** (len(self.num_channels_Y) - 1),
         )
-        covs = self.get_prediction_time_covs(rg, future, last_step)
+        covs = self.get_prediction_time_covs(rg, future, last_step, future_covariates, future_dti)
 
         yc = self.predict_global(
             ind=ind,
@@ -674,7 +746,7 @@ class DeepGLO(object):
             num_workers=num_workers,
         )
 
-        if normalize:
+        if self.normalize:
             Y = Y - self.mini
             Y = Y * self.s[ind, None] + self.m[ind, None]
             return Y
