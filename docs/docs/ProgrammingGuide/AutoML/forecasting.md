@@ -18,7 +18,7 @@ sc = init_spark_on_local(cores=4)
 ray_ctx = RayContext(sc=sc)
 ray_ctx.init()
 ```
-   
+
 * run ray on yarn cluster, Example  
       
 ```python
@@ -77,14 +77,14 @@ ray_ctx.stop()
 ```python
 pipeline.save("/tmp/saved_pipeline/my.ppl")
 ```
- 
+
 * Load the _Pipeline_ object from a file 
 ```python
 from zoo.automl.pipeline.time_sequence import load_ts_pipeline
  
 pipeline = load_ts_pipeline("/tmp/saved_pipeline/my.ppl")
 ```
- 
+
 ### Prediction and Evaluation using _TimeSequencePipeline_ 
 
 A _TimeSequencePipeline_ contains a chain of feature transformers and models, which does end-to-end time sequence prediction on input data. _TimeSequencePipeline_ can be saved and loaded for future deployment.      
@@ -100,7 +100,7 @@ Output dataframe look likes below (assume predict n values forward). col `dateti
 ```python
 result_df = pipeline.predict(test_df)
 ```
- 
+
 * Evaluation using _Pipeline_ object
 
 ```python
