@@ -1808,6 +1808,7 @@ object InternalDistriOptimizer {
           iter.next().localModels.head.asInstanceOf[TFTrainingHelperV2].moveWeightsOutOfTF()
           Iterator.single(1)
         }).reduce(_ + _)
+//        val extraState
         val extraParamLength = models.map(_.localModels.head.getExtraParameter().length).first()
         val extraState = new Array[Tensor[T]](extraParamLength)
         (0 until extraParamLength).foreach(i =>

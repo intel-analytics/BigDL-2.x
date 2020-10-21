@@ -10,14 +10,16 @@ import com.intel.analytics.bigdl.nn.mkldnn.{MklDnnLayer, TensorMMap}
 import com.intel.analytics.bigdl.nn.tf.Const
 import com.intel.analytics.bigdl.tensor.{QuantizedTensor, QuantizedType, Storage, Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.{NumericWildcard, TensorNumeric}
+import com.intel.analytics.bigdl.nn.Module
+import com.intel.analytics.bigdl.optim.DistriOptimizer.CacheV1
 import com.intel.analytics.bigdl.utils.Engine
-
 import com.intel.analytics.bigdl.utils.intermediate.IRGraph
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.tfpark.Util._
 import org.apache.commons.lang3.SerializationUtils
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -222,8 +224,7 @@ object Util {
           (parameters.map(_.nElement()).sum == storage.length(), storage)
         }
 
-
-        // get extra parameters
+        // get parameters
         while (i < parameters.length) {
           if (parameters(i) != null) {
             val wb = parameters(i)
@@ -232,17 +233,11 @@ object Util {
             } else {
               Tensor[T](Storage(wb.storage().array()), wb.storageOffset(), wb.size(), wb.stride())
             }
-
             i += 1
           }
         }
         // clear parameters
         clearTensor(parameters)
-        i = 0
-        while (i < parameters.length){
-          println(s"cleared weights ${i} size: ${parameters(i).size().mkString(",")}")
-          i += 1
-        }
 
         retParams
       } else {
@@ -359,13 +354,6 @@ object Util {
           }
         }
 
-        i = 0
-        while (i < parameters.length){
-          println(s"original weights ${i} size: ${parameters(i).size().mkString(",")}")
-          println(s"cloned weights ${i} size: ${retParams(i).size().mkString(",")}")
-          i += 1
-        }
-
         retParams
       } else {
         // just return an empty array when parameters is empty.
@@ -375,5 +363,11 @@ object Util {
       null
     }
   }
+
+//  def collectParametersInChunk[T: ClassTag](models: RDD[CacheV1[T]], chunkSize: Int)(implicit ev: TensorNumeric[T]): Tensor[T]={
+//    val compactedParam = Module.flatten(parameters)
+//  }
 }
+
+
 
