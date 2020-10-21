@@ -17,7 +17,6 @@
 package com.intel.analytics.zoo.tfpark
 
 import com.intel.analytics.zoo.common.Utils
-import org.apache.spark.SparkFiles
 import org.tensorflow.DataType
 
 class TFTrainingHelperV2(graphRunner: GraphRunner,
@@ -76,17 +75,6 @@ class TFTrainingHelperV2(graphRunner: GraphRunner,
 
 
     if (!extraParameterRestored) {
-//      println(s"restore extra params: zoo checkpoint name is: ${zooCheckpointName}")
-//      if (!zooCheckpointName.isEmpty){
-//        val zooCheckpointPath = SparkFiles.getRootDirectory() + "/" + zooCheckpointName
-//        println(s"local zoo checkpoint path is: ${zooCheckpointPath}")
-//        loadZooCheckpoint(zooCheckpointPath)
-//      } else {
-//        val localCheckpointPath = SparkFiles.getRootDirectory() + "/model"
-//        println(s"local checkpoint path is: ${localCheckpointPath}")
-//        restoreFromCheckpoint(localCheckpointPath)
-//      }
-
       setVariableIntoTF(extraParameters, extraVariableAssignPlaceholders,
         extraVariableTypes.map(TFUtils.tfenum2datatype), assignExtraVariableOP)
       extraParameterRestored = true

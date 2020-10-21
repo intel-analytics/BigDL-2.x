@@ -47,7 +47,6 @@ object PythonTFPark {
 class PythonTFPark[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo[T] {
 
   def createTFTrainingHelper(modelPath: String, config: Array[Byte] = null): Module[Float] = {
-//    System.setProperty("bigdl.ModelBroadcastFactory", "com.intel.analytics.zoo.tfpark.TFModelBroadcastFactory")
     TFTrainingHelper(modelPath, config)
   }
 

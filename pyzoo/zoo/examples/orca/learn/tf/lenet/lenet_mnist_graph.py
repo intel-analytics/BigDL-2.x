@@ -19,7 +19,6 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo.orca import init_orca_context, stop_orca_context
-from zoo import init_nncontext
 
 
 def accuracy(logits, labels):

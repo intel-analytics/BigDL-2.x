@@ -27,7 +27,8 @@ class TFModelBroadcast[T: ClassTag]()
 //  private type NativeType = (String, (Array[TensorMMap], Array[TensorMMap]))
   private var broadcastModel: Broadcast[ModelInfo[T]] = _
   private var broadcastConsts: Broadcast[Map[String, Tensor[_]]] = _
-//  private var broadcastParameters: Broadcast[Array[Tensor[T]]] = _
+  private var broadcastParameters: Broadcast[Array[Tensor[T]]] = _
+  private var broadcastExtraParameters: Broadcast[Array[Tensor[T]]] = _
 //  private var broadcastParametersNative: Broadcast[Array[NativeType]] = _
   private var nodeNumber: Int = _
   private var coreNumber: Int = _
@@ -52,27 +53,24 @@ class TFModelBroadcast[T: ClassTag]()
 
 
     // broadcast Consts
-//    if (model.isInstanceOf[Container[_, _, T]]) {
-//      val moduleConsts = getAndClearConsts(model.asInstanceOf[Container[_, _, T]])
-//      // TODO: broadcast Const, model structure and weight in the same broadcast.
-//      broadcastConsts = sc.broadcast(moduleConsts)
-//    }
+    //    if (model.isInstanceOf[Container[_, _, T]]) {
+    //      val moduleConsts = getAndClearConsts(model.asInstanceOf[Container[_, _, T]])
+    //      // TODO: broadcast Const, model structure and weight in the same broadcast.
+    //      broadcastConsts = sc.broadcast(moduleConsts)
+    //    }
     // broadcast weight and model
     val weightsBias = getAndClearWeightBias(model.parameters())
     val extraParams = getAndClearExtraParameters(model.getExtraParameter())
     broadcastModel = sc.broadcast(ModelInfo[T](uuid, model))
-    var i = 0
-    while (i < model.parameters()._1.length){
-      println("when broadcast")
-      println(s"weights ${i} size: ${model.parameters()._1(i).size().mkString(",")}")
-      i += 1
-    }
-    //      broadcastParameters = sc.broadcast(weightsBias)
+    broadcastParameters = sc.broadcast(weightsBias)
+
+    broadcastExtraParameters = sc.broadcast(extraParams)
+    broadcastParameters = sc.broadcast(weightsBias)
 
     // For quantized model if we don't clone weightsBias, the original model will be released also
     // when we delete all models used in `ModelBroadcast`.
-    putWeightBias(SerializationUtils.clone(weightsBias), model)
-//    initGradWeightBias(weightsBias, model)
+    putWeightBias(cloneParameters(weightsBias), model)
+    initGradWeightBias(weightsBias, model)
     putExtraParams(extraParams, model)
 
     setNodeAndCore()
@@ -89,18 +87,32 @@ class TFModelBroadcast[T: ClassTag]()
     */
   override def value(initGradient: Boolean = false, shareWeight: Boolean = true): Module[T] = {
     EngineRef.setCoreNumber(coreNumber)
-//    Engine.setNodeAndCore(nodeNumber, coreNumber)
+    //    Engine.setNodeAndCore(nodeNumber, coreNumber)
     CachedModels.deleteAll(this.uuid)
 
     val localModel = broadcastModel.value.model.cloneModule()
     val uuid = broadcastModel.value.uuid
     CachedModels.add(uuid, localModel)
 
+    val parameters = if (shareWeight) {
+      broadcastParameters.value
+    } else {
+      SerializationUtils.clone(broadcastParameters.value)
+    }
+    //
+    // share weight
+    putWeightBias(parameters, localModel)
 
-    // share Consts
-//    if (localModel.isInstanceOf[Container[_, _, T]] && broadcastConsts.value.nonEmpty) {
-//      putConsts(localModel.asInstanceOf[Container[_, _, T]], broadcastConsts.value)
-//    }
+    //    // share Consts
+    //    if (localModel.isInstanceOf[Container[_, _, T]] && broadcastConsts.value.nonEmpty) {
+    //      putConsts(localModel.asInstanceOf[Container[_, _, T]], broadcastConsts.value)
+    //    }
+    // init gradient
+    if (initGradient) {
+      initGradWeightBias(broadcastParameters.value, localModel)
+    }
+
+    putExtraParams(broadcastExtraParameters.value, localModel)
 
     localModel
   }
@@ -220,18 +232,7 @@ object Util {
             } else {
               Tensor[T](Storage(wb.storage().array()), wb.storageOffset(), wb.size(), wb.stride())
             }
-            //          wb.getTensorType match {
-            //            case QuantizedType =>
-            //              val quantTensor = wb.asInstanceOf[QuantizedTensor[T]]
-            //              weightsBias(i) = QuantizedTensor[T](quantTensor.getStorage, quantTensor.maxOfRow,
-            //                quantTensor.minOfRow, quantTensor.sumOfRow, quantTensor.size(), quantTensor.params)
-            //            case _ =>
-            //              weightsBias(i) = if (isCompacted) {
-            //                Tensor[T](storage, wb.storageOffset(), wb.size(), wb.stride())
-            //              } else {
-            //                Tensor[T](Storage(wb.storage().array()), wb.storageOffset(), wb.size(), wb.stride())
-            //              }
-            //          }
+
             i += 1
           }
         }
@@ -253,15 +254,6 @@ object Util {
     }
   }
 
-
-//  private[bigdl] def clearParamsAndExtraParams[T: ClassTag]
-//  (parameters: (Array[Tensor[T]], Array[Tensor[T]]), extraParameters: Array[Tensor[T])(implicit ev: TensorNumeric[T])
-//  : Unit = {
-//    // clear parameters
-//    clearTensor(parameters._1)
-//    clearTensor(parameters._2)
-//    clearTensor(extraParameters)
-//  }
 
   private def clearTensor[T: ClassTag](tensors: Array[Tensor[T]])
                                       (implicit ev: TensorNumeric[T]): Unit = {
@@ -289,15 +281,6 @@ object Util {
     }
 
     def clearAndSet(old: Tensor[T], other: Tensor[T]): Unit = {
-      //      if (old.getTensorType == QuantizedType && other.getTensorType == QuantizedType) {
-      //        val quantOld = old.asInstanceOf[QuantizedTensor[T]]
-      //        val quantOther = other.asInstanceOf[QuantizedTensor[T]]
-      //
-      //        if (quantOld.getNativeStorage != quantOther.getNativeStorage) {
-      //          quantOld.release()
-      //        }
-      //      }
-
       old.set(other)
     }
   }
@@ -341,31 +324,6 @@ object Util {
     }
   }
 
-//  private[zoo] def getAndClearConsts[T: ClassTag](
-//                                                   model: Container[_, _, T])(implicit ev: TensorNumeric[T]): Map[String, Tensor[_]] = {
-//    val moduleConsts = model.findModules("Const")
-//      .map(_.asInstanceOf[Const[T, _]])
-//      .map(v => (v, v.value.shallowClone()))
-//    moduleConsts.foreach(_._1.value.set())
-//    val result = moduleConsts.map(v => (v._1.getName(), v._2)).toMap[String, Tensor[_]]
-//    require(result.size == moduleConsts.length, s"${model}'s Const node's name is duplicated," +
-//      s"please check your model.")
-//    result
-//  }
-
-//  private[zoo] def putConsts[T: ClassTag](
-//                                           model: Container[_, _, T],
-//                                           consts: Map[String, Tensor[_]])(implicit ev: TensorNumeric[T]): Unit = {
-//    val moduleConsts = model.findModules("Const")
-//      .map(_.asInstanceOf[Const[T, _]])
-//    moduleConsts.foreach { const =>
-//      val constValue = const.value.asInstanceOf[NumericWildcard]
-//      val constName = const.getName()
-//      constValue.asInstanceOf[Tensor[NumericWildcard]]
-//        .set(consts(constName).asInstanceOf[Tensor[NumericWildcard]])
-//    }
-//  }
-
   private[zoo] def cloneParameters[T: ClassTag]
   (parameters: Array[Tensor[T]])(implicit ev: TensorNumeric[T])
   : Array[Tensor[T]] = {
@@ -373,7 +331,7 @@ object Util {
       if (parameters.length != 0) {
         var i = 0
         val retParams = new Array[Tensor[T]](parameters.length)
-        //      val isQuantized = parameters._1.exists(_.getTensorType == QuantizedType)
+
         val (isCompacted, storage) = {
           val storage = Storage(parameters(0).storage.array())
           (parameters.map(_.nElement()).sum == storage.length(), storage)
@@ -397,18 +355,6 @@ object Util {
             } else {
               wb.clone()
             }
-            //          wb.getTensorType match {
-            //            case QuantizedType =>
-            //              val quantTensor = wb.asInstanceOf[QuantizedTensor[T]]
-            //              weightsBias(i) = QuantizedTensor[T](quantTensor.getStorage, quantTensor.maxOfRow,
-            //                quantTensor.minOfRow, quantTensor.sumOfRow, quantTensor.size(), quantTensor.params)
-            //            case _ =>
-            //              weightsBias(i) = if (isCompacted) {
-            //                Tensor[T](storage, wb.storageOffset(), wb.size(), wb.stride())
-            //              } else {
-            //                Tensor[T](Storage(wb.storage().array()), wb.storageOffset(), wb.size(), wb.stride())
-            //              }
-            //          }
             i += 1
           }
         }

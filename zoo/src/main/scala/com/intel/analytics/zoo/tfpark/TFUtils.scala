@@ -225,9 +225,6 @@ object TFUtils {
 
     }
   }
-
-
-
 }
 
 class IdentityCriterion extends AbstractCriterion[Activity, Activity, Float]() {
@@ -452,5 +449,4 @@ case class SessionConfig(intraOpParallelismThreads: Int = 1,
 
     (intraSeq ++ interSeq ++ perSessSeq).map(_.toByte).toArray
   }
-
 }

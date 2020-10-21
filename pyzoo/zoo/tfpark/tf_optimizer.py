@@ -30,8 +30,6 @@ from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss, OptimM
 from zoo.pipeline.api.net.utils import find_placeholders, to_bigdl_optim_method, find_tensors
 from zoo.pipeline.estimator import Estimator
 from zoo.util import nest
-from zoo.util.tf import change_path_in_tf_checkpoint
-from zoo import init_nncontext
 
 
 if sys.version >= '3':
@@ -94,8 +92,6 @@ class TFTrainingHelper(Layer):
         self.saver.restore(self.sess, os.path.join(self.export_dir, "model"))
 
     def load_checkpoint(self, path):
-        sc = init_nncontext()
-        sc.addFile(path)
         callZooFunc(self.bigdl_type, "loadZooCheckpoint", self.value, path)
         self.get_weights_to_python()
 
@@ -338,37 +334,6 @@ class TFModel(object):
                                                   inputs, labels, predictions, grads, variables,
                                                   graph, tensors_with_value, metrics, updates,
                                                   train_op)
-
-        # add model files for spark executors access
-        sc = init_nncontext()
-        # def func(iterator):
-        #     from pyspark import SparkFiles
-        #     path1 = SparkFiles.get("checkpoint")
-        #     path2 = SparkFiles.get("model.data-00000-of-00001")
-        #     return [(path1, path2)]
-        #
-        # file_paths1 = sc.parallelize([1, 2, 3, 4]).mapPartitions(func).collect()
-
-        change_path_in_tf_checkpoint(os.path.join(model_dir, "checkpoint"), "model")
-        for file in os.listdir(model_dir):
-            sc.addFile(os.path.join(model_dir, file))
-        from pyspark import SparkFiles
-        # driver_path = SparkFiles.getRootDirectory()
-
-        # sc.addFile(model_dir, True)
-
-        # def func(iterator):
-        #     # from pyspark import SparkFiles
-        #     paths = []
-        #     # for file in os.listdir(model_dir):
-        #     #     path = SparkFiles.get(file)
-        #     #     paths.append(path)
-        #     dir = SparkFiles.getRootDirectory()
-        #     paths.append(dir)
-        #
-        #     return [paths]
-        #
-        # file_paths2 = sc.parallelize([1, 2, 3, 4]).mapPartitions(func).collect()
 
         training_helper_layer = TFTrainingHelper(model_dir,
                                                  session_config, saver, meta, sess)
@@ -767,8 +732,8 @@ class TFOptimizer:
             checkpoint_trigger = EveryEpoch()
 
         from pyspark import SparkContext
-        SparkContext.setSystemProperty("bigdl.ModelBroadcastFactory", "com.intel.analytics.zoo.tfpark.TFModelBroadcastFactory")
-        SparkContext.setSystemProperty("bigdl.failure.retryTimes", "1")
+        SparkContext.setSystemProperty("bigdl.ModelBroadcastFactory",
+                                       "com.intel.analytics.zoo.tfpark.TFModelBroadcastFactory")
 
         if self.tf_model.val_methods and self.val_data is not None:
             self.estimator.train_minibatch(train_set=self.train_data,
@@ -784,5 +749,3 @@ class TFOptimizer:
                                            checkpoint_trigger=checkpoint_trigger)
 
         self.tf_model.training_helper_layer.get_weights_to_python()
-        SparkContext.setSystemProperty("bigdl.ModelBroadcastFactory",
-                                       "com.intel.analytics.zoo.tfpark.TFModelBroadcastFactory")

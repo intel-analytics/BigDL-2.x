@@ -336,49 +336,6 @@ class TestSparkXShards(TestCase):
         for par in partitions2:
             assert len(par) <= 1
 
-    def test_save_np(self):
-        import tempfile
-        temp = tempfile.mkdtemp()
-        file_path = os.path.join(self.resource_path, "orca/data/csv")
-        data_shard = zoo.orca.data.pandas.read_csv(file_path)
-        def transform(df):
-            result = {
-                "x": (df['ID'].to_numpy(),
-                      df['sale_price'].to_numpy()),
-                "y": df['location'].to_numpy()
-            }
-            return result
-
-        data_shard = data_shard.transform_shard(transform)
-        path = os.path.join(temp, "data_npy")
-        import numpy as np
-        import pickle
-
-        def save(path):
-            def save_func(index, iterator):
-                data = list(iterator)
-                assert len(data) <= 1
-                if not os.path.exists(path):
-                    os.makedirs(path)
-                if len(data) == 1:
-
-                    print("data 0 is :", data[0])
-                    # np.save(os.path.join(path, str(index)), data[0])
-                    with open(os.path.join(path, str(index)), "wb+") as f:
-                        pickle.dump(data[0], f)
-                yield 0
-            return save_func
-        data_shard.rdd.mapPartitionsWithIndex(save(path)).collect()
-
-        from zoo.orca.data.numpy.data import load_numpy
-        shards = load_numpy(path)
-        data = shards.rdd.first()
-
-        # data_shard.save_pickle(path)
-        # shards = zoo.orca.data.XShards.load_pickle(path)
-        assert isinstance(shards, zoo.orca.data.SparkXShards)
-        shutil.rmtree(temp)
-
 
 if __name__ == "__main__":
     pytest.main([__file__])

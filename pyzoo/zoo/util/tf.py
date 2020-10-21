@@ -357,21 +357,6 @@ def save_tf_checkpoint(sess, checkpoint_path, saver=None):
             saver = tf.train.Saver()
         saver.save(sess, os.path.join(temp, ckpt_name))
         change_path_in_tf_checkpoint(os.path.join(temp, "checkpoint"), ckpt_name)
-        # # change checkpoint file
-        # with open(join(temp, "checkpoint")) as f:
-        #     new_lines = []
-        #     lines = f.readlines()
-        #     # replace model_checkpoint_path and all_model_checkpoint_paths to checkpoint name
-        #     #  instead of the absolute checkpoint path
-        #     for line in lines:
-        #         if re.compile("^model_checkpoint_path: \"(.*)\"$").match(line):
-        #             new_lines.append("model_checkpoint_path: \"{}\"\n".format(ckpt_name))
-        #         elif re.compile("^all_model_checkpoint_paths: \"(.*)\"$").match(line):
-        #             new_lines.append("all_model_checkpoint_paths: \"{}\"\n".format(ckpt_name))
-        #         else:
-        #             new_lines.append(line)
-        # with open(join(temp, "checkpoint"), 'w') as f:
-        #     f.writelines(new_lines)
         # move to remote
         [put_local_file_to_remote(os.path.join(temp, file), os.path.join(remote_dir, file), over_write=True)
          for file in os.listdir(temp)]

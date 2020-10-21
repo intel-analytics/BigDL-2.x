@@ -16,15 +16,12 @@
 
 package com.intel.analytics.zoo.tfpark
 
-import java.nio.file.Paths
-
 import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.core.TFNetNative
-import org.apache.spark.SparkFiles
 import org.slf4j.LoggerFactory
 import org.tensorflow.DataType
 import org.tensorflow.framework.GraphDef
@@ -59,8 +56,6 @@ private[zoo] class TFTrainingHelper protected(val graphRunner: GraphRunner,
 
   this.setName("TFParkTraining")
 
-  //  restoreFromCheckpoint()
-
   override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
     (weights, gradWeights)
   }
@@ -69,10 +64,9 @@ private[zoo] class TFTrainingHelper protected(val graphRunner: GraphRunner,
     extraParameters
   }
 
-  protected var extraParameters: Array[Tensor[Float]] = initVariables(extraVariables)
+  protected val extraParameters: Array[Tensor[Float]] = initVariables(extraVariables)
 
-
-  protected var weights = initVariables(variables)
+  protected val weights = initVariables(variables)
 
   private val weightsMap = {
     val map = collection.mutable.Map[String, Tensor[Float]]()
@@ -190,20 +184,8 @@ private[zoo] class TFTrainingHelper protected(val graphRunner: GraphRunner,
     graphRunner.runTargets(targets = Vector(initOp.get))
   }
 
-  override def reset(): Unit = {
-    if (!zooCheckpointName.isEmpty) {
-      val zooCheckpointPath = SparkFiles.getRootDirectory() + "/" + zooCheckpointName
-      println(s"local zoo checkpoint path is: ${zooCheckpointPath}")
-      loadZooCheckpoint(zooCheckpointPath)
-    } else {
-      val localCheckpointPath = SparkFiles.getRootDirectory() + "/model"
-      println(s"local checkpoint path is: ${localCheckpointPath}")
-      restoreFromCheckpoint(localCheckpointPath)
-    }
-  }
-
-  def restoreFromCheckpoint(ckptPath: String): Unit = {
-    graphRunner.restoreFromFile(ckptPath)
+  def restoreFromCheckpoint(): Unit = {
+    graphRunner.restoreFromFile(checkpointPath)
     if (weights.length > 0) {
       getVariableFromTF(weights, variableNames = variables)
     }
@@ -231,7 +213,6 @@ private[zoo] class TFTrainingHelper protected(val graphRunner: GraphRunner,
 
   protected def beforeRunGradient() = {
     if (this.isTraining() || !weightsRestored) {
-
       Utils.timeIt("setTrainingVariableIntoTF") {
         setVariableIntoTF(weights, variableAssignPlaceholders,
           variableTypes.map(TFUtils.tfenum2datatype), assignVariableOp)
@@ -240,18 +221,6 @@ private[zoo] class TFTrainingHelper protected(val graphRunner: GraphRunner,
     }
 
     if (!extraParameterRestored) {
-      //      val localCheckpointPath = SparkFiles.get("checkpoint")
-      //      println(s"restore extra params: zoo checkpoint name is: ${zooCheckpointName}")
-      //      if (!zooCheckpointName.isEmpty){
-      //        val zooCheckpointPath = SparkFiles.getRootDirectory() + "/" + zooCheckpointName
-      //        println(s"local zoo checkpoint path is: ${zooCheckpointPath}")
-      //        loadZooCheckpoint(zooCheckpointPath)
-      //      } else {
-      //        val localCheckpointPath = SparkFiles.getRootDirectory() + "/model"
-      //        println(s"local checkpoint path is: ${localCheckpointPath}")
-      //        restoreFromCheckpoint(localCheckpointPath)
-      //      }
-
       setVariableIntoTF(extraParameters, extraVariableAssignPlaceholders,
         extraVariableTypes.map(TFUtils.tfenum2datatype), assignExtraVariableOP)
       extraParameterRestored = true
@@ -321,8 +290,6 @@ private[zoo] class TFTrainingHelper protected(val graphRunner: GraphRunner,
     gradInput
   }
 
-  protected var zooCheckpointName: String = ""
-
   def loadZooCheckpoint(path: String): Unit = {
     val module = Module.load(path).asInstanceOf[TFTrainingHelper]
     assert(module.variables sameElements this.variables,
@@ -341,9 +308,6 @@ private[zoo] class TFTrainingHelper protected(val graphRunner: GraphRunner,
     this.extraParameters.zip(module.extraParameters).foreach { case (target, source) =>
       target.copy(source)
     }
-    val checkpointName = Paths.get(path).getFileName.toString
-    zooCheckpointName = checkpointName
-    println(s"Set Zoo checkpoint name : ${checkpointName}")
   }
 }
 
@@ -416,7 +380,7 @@ object TFTrainingHelper {
         trainMeta.defaultTensorValue
       )
     }
-    helper.restoreFromCheckpoint(checkpointPath)
+    helper.restoreFromCheckpoint()
     helper
   }
 

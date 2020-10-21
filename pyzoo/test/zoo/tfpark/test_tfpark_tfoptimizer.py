@@ -23,8 +23,7 @@ import numpy as np
 import tempfile
 import os
 
-from zoo.tfpark.tf_optimizer import TFOptimizer
-from zoo.tfpark.tf_dataset import TFDataset
+from zoo.tfpark import TFDataset, TFOptimizer
 
 
 class TestTFParkTFOptimizer(ZooTestCase):
