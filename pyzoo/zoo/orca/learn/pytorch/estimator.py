@@ -62,16 +62,16 @@ class Estimator(object):
                    backend="bigdl"):
         if backend in {"horovod", "pytorch"}:
             return PyTorchRayEstimatorWrapper(model_creator=model,
-                                                  optimizer_creator=optimizer,
-                                                  loss_creator=loss,
-                                                  scheduler_creator=scheduler_creator,
-                                                  training_operator_cls=training_operator_cls,
-                                                  initialization_hook=initialization_hook,
-                                                  config=config,
-                                                  scheduler_step_freq=scheduler_step_freq,
-                                                  use_tqdm=use_tqdm,
-                                                  workers_per_node=workers_per_node,
-                                                  backend=backend)
+                                              optimizer_creator=optimizer,
+                                              loss_creator=loss,
+                                              scheduler_creator=scheduler_creator,
+                                              training_operator_cls=training_operator_cls,
+                                              initialization_hook=initialization_hook,
+                                              config=config,
+                                              scheduler_step_freq=scheduler_step_freq,
+                                              use_tqdm=use_tqdm,
+                                              workers_per_node=workers_per_node,
+                                              backend=backend)
         elif backend == "bigdl":
             return PytorchSparkEstimatorWrapper(model=model,
                                                 loss=loss,
