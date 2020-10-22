@@ -21,6 +21,7 @@ from copy import deepcopy
 
 from zoo.automl.search.abstract import *
 from zoo.automl.common.util import *
+from zoo.automl.common.metrics import Evaluator
 from zoo.automl.impute.impute import *
 from ray.tune import Trainable
 import ray.tune.track
@@ -56,12 +57,9 @@ class RayTuneSearchEngine(SearchEngine):
                 search_space,
                 recipe,
                 feature_transformers=None,
-                # model=None,
-                future_seq_len=1,
                 validation_df=None,
                 mc=False,
-                metric="mse",
-                metric_mode="min"):
+                metric="mse"):
         """
         Do necessary preparations for the engine
         :param input_df:
@@ -132,10 +130,8 @@ class RayTuneSearchEngine(SearchEngine):
         self.train_func = self._prepare_train_func(input_df=input_df,
                                                    model_create_func=model_create_func,
                                                    feature_transformers=feature_transformers,
-                                                   future_seq_len=future_seq_len,
                                                    validation_df=validation_df,
                                                    metric=metric,
-                                                   metric_mode=metric_mode,
                                                    mc=mc,
                                                    remote_dir=self.remote_dir
                                                    )
@@ -239,9 +235,7 @@ class RayTuneSearchEngine(SearchEngine):
     def _prepare_train_func(input_df,
                             model_create_func,
                             feature_transformers,
-                            future_seq_len,
                             metric,
-                            metric_mode,
                             validation_df=None,
                             mc=False,
                             remote_dir=None,
@@ -253,7 +247,6 @@ class RayTuneSearchEngine(SearchEngine):
         :param model: model or model selector
         :param validation_df: validation dataframe
         :param metric: the rewarding metric
-        :param metric_mode: the mode of rewarding metric. "min" or "max"
         :return: the train function
         """
         input_df_id = ray.put(input_df)
@@ -281,8 +274,8 @@ class RayTuneSearchEngine(SearchEngine):
             # else:
             #     trial_model = TimeSequenceModel(check_optional_config=False,
             #
-            trial_model = model_create_func
-
+            print(config.keys())
+            trial_model = model_create_func(config=config)
             imputer = None
             if "imputation" in config:
                 if config["imputation"] == "LastFillImpute":
@@ -311,7 +304,6 @@ class RayTuneSearchEngine(SearchEngine):
             # callbacks = [TuneCallback(tune_reporter)]
             # fit model
             best_reward_m = -999
-            metric_op = 1 if metric_mode is "max" else -1
             # print("config:", config)
             for i in range(1, 101):
                 result = trial_model.fit_eval(x_train,
@@ -321,7 +313,7 @@ class RayTuneSearchEngine(SearchEngine):
                                               metric=metric,
                                               # verbose=1,
                                               **config)
-                reward_m = metric_op * result
+                reward_m = result if Evaluator.get_metric_mode(metric) == "max" else -result
                 ckpt_name = "best.ckpt"
                 if reward_m > best_reward_m:
                     best_reward_m = reward_m
@@ -340,7 +332,6 @@ class RayTuneSearchEngine(SearchEngine):
                                  feature_transformers,
                                  future_seq_len,
                                  metric,
-                                 metric_mode,
                                  validation_df=None,
                                  mc=False,
                                  remote_dir=None
@@ -352,7 +343,6 @@ class RayTuneSearchEngine(SearchEngine):
         :param model: model or model selector
         :param validation_df: validation dataframe
         :param metric: the rewarding metric
-        :param metric_mode: the mode of rewarding metric. "min" or "max"
         :return: the train function
         """
         input_df_id = ray.put(input_df)
@@ -407,7 +397,7 @@ class RayTuneSearchEngine(SearchEngine):
                                                    validation_data=self.validation_data,
                                                    # verbose=1,
                                                    **self.config)
-                self.reward_m = self.metric_op * result
+                self.reward_m = result if Evaluator.get_metric_mode(metric) == "max" else -result
                 # if metric == "mean_squared_error":
                 #     self.reward_m = (-1) * result
                 #     # print("running iteration: ",i)
