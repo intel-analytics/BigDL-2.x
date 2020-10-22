@@ -227,7 +227,7 @@ class TorchRunner:
         from torch.utils.data import DataLoader
         try:
             from torch.utils.data import IterableDataset
-            not_iterable = not isinstance(loader.dataset, IterableDataset
+            not_iterable = not isinstance(loader.dataset, IterableDataset)
         except Exception as e:
             not_iterable = TorchRunner
         return (isinstance(loader, DataLoader)
