@@ -20,8 +20,6 @@ import pytest
 @pytest.fixture(autouse=True, scope='package')
 def orca_context_fixture():
     from zoo.orca import init_orca_context
-    from pyspark import SparkConf
-    conf = {"spark.files.overwrite": "true"}
-    sc = init_orca_context(cores=4, spark_log_level="INFO", conf=conf)
+    sc = init_orca_context(cores=4, spark_log_level="INFO")
     yield sc
     sc.stop()

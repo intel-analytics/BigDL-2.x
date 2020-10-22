@@ -731,10 +731,6 @@ class TFOptimizer:
         if checkpoint_trigger is None:
             checkpoint_trigger = EveryEpoch()
 
-        # from pyspark import SparkContext
-        # SparkContext.setSystemProperty("bigdl.ModelBroadcastFactory",
-        #                                "com.intel.analytics.zoo.tfpark.TFModelBroadcastFactory")
-
         if self.tf_model.val_methods and self.val_data is not None:
             self.estimator.train_minibatch(train_set=self.train_data,
                                            criterion=self.tf_model.criterion,
