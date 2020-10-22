@@ -224,9 +224,14 @@ class TorchRunner:
 
     @staticmethod
     def should_wrap_dataloader(loader):
-        from torch.utils.data import DataLoader, IterableDataset
+        from torch.utils.data import DataLoader
+        try:
+            from torch.utils.data import IterableDataset
+            not_iterable = not isinstance(loader.dataset, IterableDataset
+        except Exception as e:
+            not_iterable = TorchRunner
         return (isinstance(loader, DataLoader)
-                and not isinstance(loader.dataset, IterableDataset))
+                and not_iterable)
 
     def train_epochs(self, data_creator, epochs=1, profile=False, info=None):
         if OrcaContext.serialize_data_creation:
