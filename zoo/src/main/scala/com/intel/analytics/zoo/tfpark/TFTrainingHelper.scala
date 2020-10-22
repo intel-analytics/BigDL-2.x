@@ -56,7 +56,8 @@ private[zoo] class TFTrainingHelper protected(val graphRunner: GraphRunner,
 
   this.setName("TFParkTraining")
 
-  System.setProperty("bigdl.ModelBroadcastFactory", "com.intel.analytics.zoo.tfpark.TFModelBroadcastFactory")
+  System.setProperty("bigdl.ModelBroadcastFactory",
+    "com.intel.analytics.zoo.tfpark.TFModelBroadcastFactory")
 
   override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
     (weights, gradWeights)

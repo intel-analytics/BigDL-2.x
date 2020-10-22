@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Analytics Zoo Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.intel.analytics.zoo.tfpark
 
 import java.io.{IOException, ObjectInputStream, ObjectOutputStream}
@@ -41,15 +57,15 @@ class TFModelBroadcast[T: ClassTag]()
   }
 
   /**
-    * broadcast the model
-    * first get and clear Const values from the model
-    * then get and clear the weight and bias parameters from the model
-    * finally broadcast Const values, the parameters and model(without parameters) separately
-    *
-    * @param sc    SparkContext
-    * @param model model to broadcast
-    * @return this
-    */
+   * broadcast the model
+   * first get and clear Const values from the model
+   * then get and clear the weight and bias parameters from the model
+   * finally broadcast Const values, the parameters and model(without parameters) separately
+   *
+   * @param sc    SparkContext
+   * @param model model to broadcast
+   * @return this
+   */
   override def broadcast(sc: SparkContext, model: Module[T]): this.type = {
     CachedModels.deleteAll(uuid) // delete the models on driver
 
@@ -80,13 +96,13 @@ class TFModelBroadcast[T: ClassTag]()
   }
 
   /**
-    * get the broadcast model
-    * put the weight and bias back to the model
-    *
-    * @param initGradient If create a tensor for gradient when fetch the model. Please note that
-    *                     the gradient is not needed in model inference
-    * @return model
-    */
+   * get the broadcast model
+   * put the weight and bias back to the model
+   *
+   * @param initGradient If create a tensor for gradient when fetch the model. Please note that
+   *                     the gradient is not needed in model inference
+   * @return model
+   */
   override def value(initGradient: Boolean = false, shareWeight: Boolean = true): Module[T] = {
     EngineRef.setCoreNumber(coreNumber)
     //    Engine.setNodeAndCore(nodeNumber, coreNumber)
@@ -121,9 +137,6 @@ class TFModelBroadcast[T: ClassTag]()
 
   override def broadcast(sc: SparkContext, model: Module[T],
                          dummyInput: Activity): this.type = {
-    //    val cls = Class.forName("com.intel.analytics.bigdl.models.utils.ModelBroadcastImp");
-    //    val m = cls.getDeclaredMethod("broadcast", classOf[SparkContext], classOf[Module[T]], classOf[Activity]);
-    //    m.invoke(cls.newInstance(), sc, model, dummyInput)
     this.broadcast(sc, model)
     this
   }
@@ -278,9 +291,9 @@ object Util {
     }
   }
 
-  private[zoo] def putWeightBias[T: ClassTag](
-                                               broadcastWeightBias: Array[Tensor[T]],
-                                               localModel: Module[T])(implicit ev: TensorNumeric[T]): Unit = {
+  private[zoo] def putWeightBias[T: ClassTag](broadcastWeightBias: Array[Tensor[T]],
+                                              localModel: Module[T])(
+    implicit ev: TensorNumeric[T]): Unit = {
     val localWeightBias = localModel.parameters()._1
     var i = 0
     while (i < localWeightBias.length) {
@@ -295,9 +308,9 @@ object Util {
     }
   }
 
-  private[zoo] def putExtraParams[T: ClassTag](
-                                                broadcastExtraParams: Array[Tensor[T]],
-                                                localModel: Module[T])(implicit ev: TensorNumeric[T]): Unit = {
+  private[zoo] def putExtraParams[T: ClassTag](broadcastExtraParams: Array[Tensor[T]],
+                                               localModel: Module[T])(
+    implicit ev: TensorNumeric[T]): Unit = {
     val localExtraParams = localModel.getExtraParameter()
     if (localExtraParams != null) {
       var i = 0
@@ -312,9 +325,9 @@ object Util {
 
   }
 
-  private[zoo] def initGradWeightBias[T: ClassTag](
-                                                    broadcastWeightBias: Array[Tensor[T]],
-                                                    localModel: Module[T])(implicit ev: TensorNumeric[T]): Unit = {
+  private[zoo] def initGradWeightBias[T: ClassTag](broadcastWeightBias: Array[Tensor[T]],
+                                                   localModel: Module[T])(
+    implicit ev: TensorNumeric[T]): Unit = {
     val (localWeightBias, localGradWeightBias) = localModel.parameters()
     // init gradient with a compacted storage
     val storage = Storage[T](localGradWeightBias.map(_.nElement()).sum)
@@ -380,6 +393,3 @@ object Util {
   }
 
 }
-
-
-
