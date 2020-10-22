@@ -118,6 +118,21 @@ class TFModelBroadcast[T: ClassTag]()
 
     localModel
   }
+
+  override def broadcast(sc: SparkContext, model: Module[T],
+                         dummyInput: Activity): this.type = {
+    //    val cls = Class.forName("com.intel.analytics.bigdl.models.utils.ModelBroadcastImp");
+    //    val m = cls.getDeclaredMethod("broadcast", classOf[SparkContext], classOf[Module[T]], classOf[Activity]);
+    //    m.invoke(cls.newInstance(), sc, model, dummyInput)
+    this.broadcast(sc, model)
+    this
+  }
+
+  override def value(initGradient: Boolean, shareWeight: Boolean,
+                     dummyInput: Activity): Module[T] = {
+    val model = value(initGradient, shareWeight)
+    model
+  }
 }
 
 private[zoo] class ModelInfo[T: ClassTag](val uuid: String, @transient var model: Module[T])(
