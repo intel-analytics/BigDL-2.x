@@ -1810,15 +1810,13 @@ object InternalDistriOptimizer {
           Iterator.single(1)
         }).reduce(_ + _)
 
-//        val extraParamLength = models.map(_.localModels.head.getExtraParameter().length).first()
-//        val extraState = new Array[Tensor[T]](extraParamLength)
-//        (0 until extraParamLength).foreach(i =>
-//          extraState(i) = models.map(_.localModels.head.getExtraParameter()(i)).first()
-//        )
-////        val extraState = models.map(_.localModels.head.getExtraParameter()).first()
-//        trainingModel.setExtraParameter(extraState)
-        val compatExtraState = collectExtraParametersInChunk(models, Integer.MAX_VALUE - 10)
-        setParamtersFromCompat(compatExtraState, trainingModel.getExtraParameter())
+        val extraParamLength = models.map(_.localModels.head.getExtraParameter().length).first()
+        val extraState = new Array[Tensor[T]](extraParamLength)
+        (0 until extraParamLength).foreach(i =>
+          extraState(i) = models.map(_.localModels.head.getExtraParameter()(i)).first()
+        )
+//        val extraState = models.map(_.localModels.head.getExtraParameter()).first()
+        trainingModel.setExtraParameter(extraState)
 
         // make sure gradient is as the same length as weight
         val parameterArray = trainingModel.parameters()

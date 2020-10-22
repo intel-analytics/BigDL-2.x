@@ -364,40 +364,6 @@ object Util {
     }
   }
 
-  def collectExtraParametersInChunk[T: ClassTag](models: RDD[CacheV1[T]], chunkSize: Int)
-                                           (implicit ev: TensorNumeric[T]): Tensor[T]={
-    val compatParamRDD = models.map(model => Module.flatten(model.localModels.head.getExtraParameter()))
-    val paramLength = compatParamRDD.map(_.nElement()).first()
-    val ret = Tensor[T](paramLength)
-    var offset = 0
-    while (offset < paramLength){
-      if ((offset + chunkSize) < paramLength) {
-        val chunkTensor = compatParamRDD.map(_.narrow(1, offset + 1, chunkSize)).first()
-        System.arraycopy(chunkTensor.storage().array(), offset, ret.storage().array(), offset, chunkSize)
-        offset += chunkSize
-      } else {
-        val chunkTensor = compatParamRDD.map(_.narrow(1, offset + 1, paramLength - offset)).first()
-        System.arraycopy(chunkTensor.storage().array(), offset, ret.storage().array(), offset, paramLength - offset)
-        offset = paramLength
-      }
-    }
-    ret
-  }
-
-  def setParamtersFromCompat[T: ClassTag](compatTensor: Tensor[T], parameters: Array[Tensor[T]])
-                                         (implicit ev: TensorNumeric[T]): Unit = {
-    var i = 0
-    var offset = 0
-    while (i < parameters.length) {
-      if (parameters(i) != null) {
-        val param = parameters(i)
-        System.arraycopy(compatTensor.storage().array(), offset, param.storage().array(), param.storageOffset() - 1, param.nElement())
-        offset += param.nElement()
-      }
-      i += 1
-    }
-  }
-
 }
 
 
