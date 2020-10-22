@@ -123,4 +123,4 @@ class HorovodRayRunner:
 
     def run(self, func):
         ray.get([self.remote_workers[i].run.remote(self.per_worker_envs[i], func)
-                  for i in range(self.num_nodes)])
+                 for i in range(self.num_nodes)])

@@ -87,6 +87,10 @@ class TorchRunner:
         self.use_tqdm = use_tqdm
         self.scheduler_step_freq = scheduler_step_freq
 
+        self.backend = "torch-local"
+        self.rank = 0
+        self.size = 0
+
     def _create_loss(self):
         if not self.loss_creator:
             return
@@ -110,9 +114,6 @@ class TorchRunner:
     def setup(self, cores_per_node):
         import torch
         torch.set_num_threads(cores_per_node)
-        self.backend = "torch-local"
-        self.rank = 0
-        self.size = 0
 
     def setup_horovod(self):
         import horovod.torch as hvd
@@ -130,7 +131,7 @@ class TorchRunner:
             init_method=url,
             rank=world_rank,
             world_size=world_size)
-        self.backend= "torch-distributed"
+        self.backend = "torch-distributed"
         self.rank = world_rank
         self.size = world_size
         self.setup_components()
@@ -186,7 +187,8 @@ class TorchRunner:
 
     def setup_operator(self):
         """Create the training operator."""
-        self.training_operator = self.training_operator_cls(
+        self.training_operator =\
+            self.training_operator_cls(
                 self.config,
                 models=self.models,
                 optimizers=self.optimizers,

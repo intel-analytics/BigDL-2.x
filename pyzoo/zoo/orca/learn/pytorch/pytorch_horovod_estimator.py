@@ -120,13 +120,12 @@ class PyTorchHorovodEstimator:
                 for i, worker in enumerate(self.remote_workers)
             ])
 
-
         elif backend == "horovod":
             from zoo.orca.learn.horovod.horovod_ray_runner import HorovodRayRunner
             self.horovod_runner = HorovodRayRunner(ray_ctx,
-                                              worker_cls=TorchRunner,
-                                              worker_param=params,
-                                              workers_per_node=workers_per_node)
+                                                   worker_cls=TorchRunner,
+                                                   worker_param=params,
+                                                   workers_per_node=workers_per_node)
             self.remote_workers = self.horovod_runner.remote_workers
             cores_per_node = self.horovod_runner.cores_per_node
             ray.get([
@@ -141,7 +140,6 @@ class PyTorchHorovodEstimator:
         else:
             raise Exception("Only \"pytorch\" and \"horovod\" are legal "
                             "values of backend, but got {}".format(backend))
-
 
     def train(self,
               data_creator,
