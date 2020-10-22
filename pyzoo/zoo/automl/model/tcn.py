@@ -135,9 +135,6 @@ class TCNPytorch(BaseModel):
     def __init__(self, config, check_optional_config=False):
         self.check_optional_config = check_optional_config
         self._check_config(**config)
-        self._build(config)
-
-    def _build(self, config):
         self.model = model_creator(config)
         self.optimizer = optimizer_creator(self.model, config)
         self.criterion = loss_creator(config)
@@ -150,11 +147,13 @@ class TCNPytorch(BaseModel):
             train_loss = self.train_epoch(x, y)
             epoch_losses.append(train_loss)
         train_stats = {"loss": np.mean(epoch_losses), "last_loss": epoch_losses[-1]}
+        # todo: support input validation data None
         assert validation_data is not None, "You must input validation data!"
         val_stats = self._validate(validation_data[0], validation_data[1], metric=metric)
         return train_stats.update(val_stats)
 
     def train_epoch(self, x, y):
+        # todo: support torch data loader
         batch_size = self.config["batch_size"]
         self.model.train()
         batch_idx = 0
@@ -208,13 +207,26 @@ class TCNPytorch(BaseModel):
         uncertainty = result.std(axis=0)
         return prediction, uncertainty
 
+    def state_dict(self):
+        state = {
+            "config": self.config,
+            "model": self.model.state_dict(),
+            "optimizer": self.optimizer.state_dict(),
+        }
+        return state
+
+    def load_state_dict(self, state):
+        self.model.load_state_dict(state["model"])
+        self.config = state["config"]
+        self.optimizer.load_state_dict(state["optimizer"])
+
     def save(self, model_path, config_path, **config):
-        torch.save(self.model.state_dict(), model_path)
-        save_config(config_path, self.config)
+        state_dict = self.state_dict()
+        torch.save(state_dict, model_path)
 
     def restore(self, model_path, **config):
-        self._build(config)
-        self.model.load_state_dict(torch.load(model_path))
+        state_dict = torch.load(model_path)
+        self.load_state_dict(state_dict)
 
     def _get_required_parameters(self):
         return {
