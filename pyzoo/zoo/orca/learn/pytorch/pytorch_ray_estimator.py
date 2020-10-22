@@ -51,7 +51,7 @@ def check_for_failure(remote_values):
     return False
 
 
-class PyTorchHorovodEstimator:
+class PyTorchRayEstimator:
     def __init__(
             self,
             *,
