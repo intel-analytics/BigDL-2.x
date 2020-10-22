@@ -358,7 +358,8 @@ def save_tf_checkpoint(sess, checkpoint_path, saver=None):
         saver.save(sess, os.path.join(temp, ckpt_name))
         change_path_in_tf_checkpoint(os.path.join(temp, "checkpoint"), ckpt_name)
         # move to remote
-        [put_local_file_to_remote(os.path.join(temp, file), os.path.join(remote_dir, file), over_write=True)
+        [put_local_file_to_remote(os.path.join(temp, file), os.path.join(remote_dir, file),
+                                  over_write=True)
          for file in os.listdir(temp)]
         shutil.rmtree(temp)
 
@@ -385,7 +386,8 @@ def get_checkpoint_state(checkpoint_dir):
             return None
         # get checkpoint file
         temp = tempfile.mkdtemp()
-        get_remote_file_to_local(os.path.join(checkpoint_dir, "checkpoint"), os.path.join(temp, "checkpoint"))
+        get_remote_file_to_local(os.path.join(checkpoint_dir, "checkpoint"),
+                                 os.path.join(temp, "checkpoint"))
         ckpt_name = None
         with open(os.path.join(temp, "checkpoint")) as f:
             lines = f.readlines()
@@ -399,12 +401,14 @@ def get_checkpoint_state(checkpoint_dir):
             shutil.rmtree(temp)
             return None
         # filter checkpoint files
-        checkpoint_files = [file for file in file_list if os.path.basename(file).startswith(ckpt_name)]
+        checkpoint_files = [file for file in file_list
+                            if os.path.basename(file).startswith(ckpt_name)]
         if not checkpoint_files:
             shutil.rmtree(temp)
             return None
         # get checkpoint files to local
-        [get_remote_file_to_local(file, os.path.join(temp, os.path.basename(file))) for file in checkpoint_files]
+        [get_remote_file_to_local(file, os.path.join(temp, os.path.basename(file)))
+         for file in checkpoint_files]
         # get checkpoint state
         ckpt = tf.train.get_checkpoint_state(temp)
         if not ckpt:
@@ -435,10 +439,12 @@ def load_tf_checkpoint(sess, checkpoint_path, saver=None):
         # get remote file lists
         file_list = get_file_list(checkpoint_dir)
         # filter checkpoint files
-        checkpoint_files = [file for file in file_list if os.path.basename(file).startswith(ckpt_name)]
+        checkpoint_files = [file for file in file_list
+                            if os.path.basename(file).startswith(ckpt_name)]
         # get checkpoint files to local
         temp = tempfile.mkdtemp()
-        [get_remote_file_to_local(file, os.path.join(temp, os.path.basename(file))) for file in checkpoint_files]
+        [get_remote_file_to_local(file, os.path.join(temp, os.path.basename(file)))
+         for file in checkpoint_files]
         if saver is None:
             saver = tf.train.Saver()
         try:
