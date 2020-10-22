@@ -51,7 +51,6 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils._
 import com.intel.analytics.zoo.pipeline.api.net.{NetUtils, TorchModel, TorchNet}
 import com.intel.analytics.zoo.pipeline.estimator.{AbstractEstimator, ConstantClipping, GradientClipping, L2NormClipping}
 import com.intel.analytics.zoo.tfpark.{TFTrainingHelper, TFTrainingHelperV2}
-import com.intel.analytics.zoo.tfpark.Util.{collectExtraParametersInChunk, setParamtersFromCompat}
 import org.apache.commons.lang.exception.ExceptionUtils
 import org.apache.commons.lang3.SerializationUtils
 import org.apache.hadoop.conf.Configuration
