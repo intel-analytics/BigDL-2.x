@@ -35,6 +35,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# This file is adapted from
+# https://github.com/locuslab/TCN/blob/master/TCN/tcn.py
+# https://github.com/locuslab/TCN/blob/master/TCN/adding_problem/add_test.py
+
 import torch
 import torch.nn as nn
 from torch.nn.utils import weight_norm
