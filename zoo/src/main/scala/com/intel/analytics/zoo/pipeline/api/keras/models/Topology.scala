@@ -51,6 +51,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils._
 import com.intel.analytics.zoo.pipeline.api.net.{NetUtils, TorchModel, TorchNet}
 import com.intel.analytics.zoo.pipeline.estimator.{AbstractEstimator, ConstantClipping, GradientClipping, L2NormClipping}
 import com.intel.analytics.zoo.tfpark.{TFTrainingHelper, TFTrainingHelperV2}
+import com.intel.analytics.zoo.tfpark.Util.{collectExtraParametersInChunk, setParamtersFromCompat}
 import org.apache.commons.lang.exception.ExceptionUtils
 import org.apache.commons.lang3.SerializationUtils
 import org.apache.hadoop.conf.Configuration
@@ -1808,14 +1809,16 @@ object InternalDistriOptimizer {
           iter.next().localModels.head.asInstanceOf[TFTrainingHelperV2].moveWeightsOutOfTF()
           Iterator.single(1)
         }).reduce(_ + _)
-//        val extraState
-        val extraParamLength = models.map(_.localModels.head.getExtraParameter().length).first()
-        val extraState = new Array[Tensor[T]](extraParamLength)
-        (0 until extraParamLength).foreach(i =>
-          extraState(i) = models.map(_.localModels.head.getExtraParameter()(i)).first()
-        )
-//        val extraState = models.map(_.localModels.head.getExtraParameter()).first()
-        trainingModel.setExtraParameter(extraState)
+
+//        val extraParamLength = models.map(_.localModels.head.getExtraParameter().length).first()
+//        val extraState = new Array[Tensor[T]](extraParamLength)
+//        (0 until extraParamLength).foreach(i =>
+//          extraState(i) = models.map(_.localModels.head.getExtraParameter()(i)).first()
+//        )
+////        val extraState = models.map(_.localModels.head.getExtraParameter()).first()
+//        trainingModel.setExtraParameter(extraState)
+        val compatExtraState = collectExtraParametersInChunk(models, Integer.MAX_VALUE - 10)
+        setParamtersFromCompat(compatExtraState, trainingModel.getExtraParameter())
 
         // make sure gradient is as the same length as weight
         val parameterArray = trainingModel.parameters()
