@@ -161,7 +161,7 @@ class TorchRunner:
 
         logger.debug("Creating model")
         self.models = self.model_creator(self.config)
-        if not isinstance(self.models, collections.Iterable):
+        if not isinstance(self.models, Iterable):
             self.models = [self.models]
         else:
             raise ValueError("only support single model for now")
@@ -172,7 +172,7 @@ class TorchRunner:
         logger.debug("Creating optimizer.")
         self.optimizers = self.optimizer_creator(self.given_models,
                                                  self.config)
-        if not isinstance(self.optimizers, collections.Iterable):
+        if not isinstance(self.optimizers, Iterable):
             hvd.broadcast_parameters(self.models[0].state_dict(), root_rank=0)
             hvd.broadcast_optimizer_state(self.optimizers, root_rank=0)
             parameters = self.models[0].named_parameters()
@@ -329,7 +329,7 @@ class TorchRunner:
                 scheduler.load_state_dict(state_dict)
 
         self.epochs = state["epoch"]
-        self.training_operator.load_state_dict(state_dict["operator"])
+        self.training_operator.load_state_dict(state["operator"])
 
     def state_stream(self):
         """Returns a bytes object for the state dict."""
