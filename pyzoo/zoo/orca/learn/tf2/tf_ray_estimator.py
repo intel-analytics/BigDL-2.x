@@ -63,6 +63,20 @@ def data_length(data):
         return x[0].shape[0]
 
 
+def process_spark_xshards(spark_xshards, num_workers):
+    data = spark_xshards
+    if data.num_partitions() != num_workers:
+        data = data.repartition(num_workers)
+
+    # todo currently we need this information to pad the short partitions
+    # so that every model run exactly the same number of steps in one epoch
+    max_length = data.rdd.map(data_length) \
+        .mapPartitions(lambda iterator: [sum(iterator)]).max()
+    ray_xshards = RayXShards.from_spark_xshards(data)
+    return max_length, ray_xshards
+
+
+
 class Estimator:
     def __init__(self,
                  model_creator,
@@ -178,32 +192,36 @@ class Estimator:
 
         from zoo.orca.data import SparkXShards
         if isinstance(data_creator, SparkXShards):
-            data = data_creator
-            if data.num_partitions() != self.num_workers:
-                data = data.repartition(self.num_workers)
+            max_length, ray_xshards = process_spark_xshards(data_creator, self.num_workers)
 
-            # todo currently we need this information to pad the short partitions
-            # so that every model run exactly the same number of steps in one epoch
-            max_length = data.rdd.map(data_length)\
-                .mapPartitions(lambda iterator: [sum(iterator)]).max()
-            print(f"max_length is {max_length}")
-            print(f"data count is {data.rdd.count()}")
-            ray_xshards = RayXShards.from_spark_xshards(data)
+            if validation_data_creator is None:
+                def transform_func(worker, shards_ref):
+                    params["data_creator"] = shards_ref_to_creator(shards_ref,
+                                                                   self.num_workers,
+                                                                   max_length=max_length,
+                                                                   shuffle=True)
+                    return worker.step.remote(**params)
 
-            # todo implement RayXShards.zip
-            assert validation_data_creator is None, "not supported validation " \
-                                                    "if train data is xshards right now"
-
-            def transform_func(worker, shards_ref):
-                params["data_creator"] = shards_ref_to_creator(shards_ref,
-                                                               self.num_workers,
-                                                               max_length=max_length,
-                                                               shuffle=True)
-                return worker.step.remote(**params)
-
-            stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
-                                                                   transform_func,
-                                                                   gang_scheduling=True)
+                stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
+                                                                        transform_func,
+                                                                        gang_scheduling=True)
+            else:
+                val_max_length, val_ray_xshards = process_spark_xshards(validation_data_creator,
+                                                                    self.num_workers)
+                def zip_func(worker, this_shards_ref, that_shards_ref):
+                    params["data_creator"] = shards_ref_to_creator(this_shards_ref,
+                                                                   self.num_workers,
+                                                                   max_length=max_length,
+                                                                   shuffle=True)
+                    params["validation_data_creator"] = shards_ref_to_creator(that_shards_ref,
+                                                                   self.num_workers,
+                                                                   max_length=val_max_length,
+                                                                   shuffle=True)
+                    return worker.step.remote(**params)
+                stats_shards = ray_xshards.zip_shards_with_actors(val_ray_xshards,
+                                                                  self.remote_workers,
+                                                                  zip_func,
+                                                                  gang_scheduling=True)
             worker_stats = stats_shards.collect()
         else:  # data_creator functions; should return Iter or DataLoader
             params["data_creator"] = data_creator

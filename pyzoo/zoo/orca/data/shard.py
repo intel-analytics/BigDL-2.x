@@ -142,6 +142,13 @@ class RayXShards(XShards):
                                                               gang_scheduling)
         return RayXShards(new_ray_rdd)
 
+    def zip_shards_with_actors(self, xshards, actors, func, gang_scheduling=True):
+        new_ray_rdd = self.ray_rdd.zip_partitions_with_actors(xshards.ray_rdd,
+                                                              actors,
+                                                              func,
+                                                              gang_scheduling)
+        return RayXShards(new_ray_rdd)
+
     def collect(self):
         return self.ray_rdd.collect()
 
