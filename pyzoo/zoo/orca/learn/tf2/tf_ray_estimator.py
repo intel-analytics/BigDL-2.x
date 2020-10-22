@@ -223,7 +223,7 @@ class Estimator:
                                                                   zip_func,
                                                                   gang_scheduling=True)
             worker_stats = stats_shards.collect()
-        else:  # data_creator functions; should return Iter or DataLoader
+        else:
             params["data_creator"] = data_creator
             params["validation_data_creator"] = validation_data_creator
             params_list = [params] * self.num_workers
