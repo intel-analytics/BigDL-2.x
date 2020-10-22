@@ -36,7 +36,7 @@ def process_spark_xshards(spark_xshards, num_workers):
 
 def shards_ref_to_creator(shards_ref, shuffle=False):
 
-    def data_creator(config):
+    def data_creator(config, kv):
         import mxnet as mx
         assert "batch_size" in config, "batch_size must be set in config"
         data, label = ray_partition_get_data_label(ray.get(shards_ref),
