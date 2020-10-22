@@ -25,12 +25,14 @@ from zoo.ray import RayContext
 from zoo.orca.learn.mxnet.mxnet_runner import MXNetRunner
 from zoo.orca.learn.mxnet.utils import find_free_port
 
+
 def process_spark_xshards(spark_xshards, num_workers):
     data = spark_xshards
     if data.num_partitions() != num_workers:
         data = data.repartition(num_workers)
     ray_xshards = RayXShards.from_spark_xshards(data)
     return ray_xshards
+
 
 def shards_ref_to_creator(shards_ref, shuffle=False):
 
@@ -222,7 +224,8 @@ class Estimator(object):
                                                                   zip_func,
                                                                   gang_scheduling=True)
             server_stats = [server.train.remote(None, epochs, batch_size,
-                                                None, train_resize_batch_num) for server in self.servers]
+                                                None, train_resize_batch_num)
+                            for server in self.servers]
             worker_stats = stats_shards.collect()
             server_stats = ray.get(server_stats)
             server_stats = list(itertools.chain.from_iterable(server_stats))

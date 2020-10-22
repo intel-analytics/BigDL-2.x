@@ -122,14 +122,14 @@ class RayXShards(XShards):
         '''
         Assign each partition_ref (referencing a list of shards) to an actor,
         and run func for each actor and partition_ref pair.
-        
+
         Actors should have a `get_node_ip` method to achieve locality scheduling.
         The `get_node_ip` method should call ray.serivice.get_node_ip_address()
         to return the correct ip address.
-        
+
         The `func` should take an actor and a partition_ref as argument and
         invoke some remote func on that actor and return a new partition_ref.
-        
+
         Note that if you pass partition_ref directly to actor method, ray
         will resolve that partition_ref to the actual partition object, which
         is a list of shards. If you pass partition_ref indirectly through other
@@ -159,7 +159,6 @@ class RayXShards(XShards):
     def from_spark_xshards(spark_xshards):
         ray_rdd = RayRdd.from_spark_rdd(spark_xshards.rdd)
         return RayXShards(ray_rdd)
-
 
 
 class SparkXShards(XShards):

@@ -76,7 +76,6 @@ def process_spark_xshards(spark_xshards, num_workers):
     return max_length, ray_xshards
 
 
-
 class Estimator:
     def __init__(self,
                  model_creator,
@@ -207,17 +206,20 @@ class Estimator:
                                                                         gang_scheduling=True)
             else:
                 val_max_length, val_ray_xshards = process_spark_xshards(validation_data_creator,
-                                                                    self.num_workers)
+                                                                        self.num_workers)
+
                 def zip_func(worker, this_shards_ref, that_shards_ref):
                     params["data_creator"] = shards_ref_to_creator(this_shards_ref,
                                                                    self.num_workers,
                                                                    max_length=max_length,
                                                                    shuffle=True)
-                    params["validation_data_creator"] = shards_ref_to_creator(that_shards_ref,
-                                                                   self.num_workers,
-                                                                   max_length=val_max_length,
-                                                                   shuffle=True)
+                    params["validation_data_creator"] =\
+                        shards_ref_to_creator(that_shards_ref,
+                                              self.num_workers,
+                                              max_length=val_max_length,
+                                              shuffle=True)
                     return worker.step.remote(**params)
+
                 stats_shards = ray_xshards.zip_shards_with_actors(val_ray_xshards,
                                                                   self.remote_workers,
                                                                   zip_func,
@@ -271,7 +273,7 @@ class Estimator:
             params_list = [params] * self.num_workers
 
             worker_stats = ray.get([w.validate.remote(**params_list[i])
-                            for i, w in enumerate(self.remote_workers)])
+                                    for i, w in enumerate(self.remote_workers)])
             worker_stats = list(itertools.chain.from_iterable(worker_stats))
         stats = worker_stats[0].copy()
         return stats
