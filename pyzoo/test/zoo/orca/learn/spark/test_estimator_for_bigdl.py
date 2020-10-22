@@ -76,12 +76,12 @@ class TestEstimatorForKeras(TestCase):
         linear_model = Sequential().add(Linear(2, 2))
         mse_criterion = MSECriterion()
         df = self.get_estimator_df()
-        est = Estimator.from_bigdl(model=linear_model, loss=mse_criterion,
+        est = Estimator.from_bigdl(model=linear_model, loss=mse_criterion, optimizer=Adam(),
                                    feature_preprocessing=SeqToTensor([2]),
                                    label_preprocessing=SeqToTensor([2]))
         res0 = est.predict(df)
         res0_c = res0.collect()
-        est.fit(df, 1, batch_size=4, optimizer=Adam())
+        est.fit(df, 1, batch_size=4)
         nn_model = NNModel(est.get_model(), feature_preprocessing=SeqToTensor([2]))
         res1 = nn_model.transform(df)
         res2 = est.predict(df)
@@ -106,7 +106,7 @@ class TestEstimatorForKeras(TestCase):
             assert len(res1_c) == len(res3_c)
             for idx in range(len(res1_c)):
                 assert res1_c[idx]["prediction"] == res3_c[idx]["prediction"]
-            est2.fit(df, 4, batch_size=4, optimizer=Adam())
+            est2.fit(df, 4, batch_size=4)
 
         data = self.sc.parallelize([
             ((2.0, 1.0), (1.0, 2.0)),
@@ -126,7 +126,7 @@ class TestEstimatorForKeras(TestCase):
         for idx in range(len(res4_c)):
             assert abs(res4_c[idx]["prediction"][0][0] - res3_c[idx]["prediction"][0]) == 0
             assert abs(res4_c[idx]["prediction"][0][1] - res3_c[idx]["prediction"][1]) == 0
-        est.fit(data_shard, 1, batch_size=4, optimizer=Adam())
+        est.fit(data_shard, 1, batch_size=4)
         res5 = est.predict(data_shard)
         res5_c = res5.collect()
         res6 = est.predict(df)
@@ -180,14 +180,34 @@ class TestEstimatorForKeras(TestCase):
 
         zmodel = ZModel([x1, x2, x3], zy)
         criterion = ClassNLLCriterion()
-        est = Estimator.from_bigdl(model=zmodel, loss=criterion,
+        est = Estimator.from_bigdl(model=zmodel, loss=criterion, optimizer=Adam(learningrate=0.1),
                                    feature_preprocessing=[[1], [2], [2, 2]])
-        est.fit(df, epochs=1, batch_size=4, optimizer=Adam(learningrate=0.1),
-                feature_cols=["user", "age", "income", "history"])
+        est.fit(df, epochs=1, batch_size=4, feature_cols=["user", "age", "income", "history"])
 
         res = est.predict(df, feature_cols=["user", "age", "income", "history"])
         res_c = res.collect()
         assert type(res).__name__ == 'DataFrame'
+
+    def test_nnEstimator_multiOutput_cols(self):
+        from pyspark.ml.linalg import Vectors
+        from pyspark.sql import SparkSession
+
+        spark = SparkSession \
+            .builder \
+            .getOrCreate()
+
+        df = spark.createDataFrame(
+            [(1.0, 2.0, 1.0, 2.0),
+             (2.0, 2.0, 2.0, 1.0),
+             (3.0, 2.0, 1.0, 2.0),
+             (4.0, 1.0, 1.0, 2.0)],
+            ["user", "age", "label1", "label2"])
+        linear_model = Sequential().add(Linear(2, 2))
+        mse_criterion = MSECriterion()
+        est = Estimator.from_bigdl(model=linear_model, loss=mse_criterion, optimizer=Adam(),
+                                   feature_preprocessing=SeqToTensor([2]),
+                                   label_preprocessing=SeqToTensor([2]))
+        est.fit(df, 1, batch_size=4, feature_cols=["user", "age"], labels_cols=["label1", "label2"])
 
     def test_xshards_spark_estimator(self):
         resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")

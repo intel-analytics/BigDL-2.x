@@ -129,7 +129,7 @@ class BigDLEstimatorWrapper(Estimator):
         self.app_name = None
         self.is_last_fit_nn = False
 
-    def fit(self, data, epochs, feature_cols="features", optimizer=None, batch_size=32,
+    def fit(self, data, epochs, feature_cols="features", labels_cols="label", batch_size=32,
             caching_sample=True, val_data=None, val_trigger=None, val_methods=None,
             checkpoint_trigger=None):
         from zoo.orca.learn.metrics import Metrics
@@ -151,11 +151,22 @@ class BigDLEstimatorWrapper(Estimator):
                         val_data = assembler.transform(val_data)
                     feature_cols = "features"
 
-            self.nn_estimator.setBatchSize(batch_size).setMaxEpoch(epochs)\
-                .setCachingSample(caching_sample).setFeaturesCol(feature_cols)
+            if isinstance(labels_cols, list):
+                if len(labels_cols) == 1:
+                    labels_cols = labels_cols[0]
+                else:
+                    from pyspark.ml.feature import VectorAssembler
+                    assembler = VectorAssembler(
+                        inputCols=labels_cols,
+                        outputCol="label")
+                    data = assembler.transform(data)
+                    if val_data is not None:
+                        val_data = assembler.transform(val_data)
+                    labels_cols = "label"
 
-            if optimizer is not None:
-                self.nn_estimator.setOptimMethod(optimizer)
+            self.nn_estimator.setBatchSize(batch_size).setMaxEpoch(epochs)\
+                .setCachingSample(caching_sample).setFeaturesCol(feature_cols)\
+                .setLabelCol(labels_cols)
 
             if val_data is not None:
                 assert isinstance(val_data, DataFrame), "val_data should be a spark DataFrame."
