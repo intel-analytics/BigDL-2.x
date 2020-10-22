@@ -158,7 +158,7 @@ class Estimator:
                 for i, worker in enumerate(self.remote_workers)])
         else:
             raise Exception("Only \"tf2\" and \"horovod\" are legal "
-                            "value of backend, but got {}".format(backend))
+                            "values of backend, but got {}".format(backend))
 
         self.num_workers = len(self.remote_workers)
 
