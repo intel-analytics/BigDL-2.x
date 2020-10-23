@@ -80,7 +80,6 @@ train a simple model with Spark DataFrame.
 #
 import torch
 import torch.nn as nn
-from bigdl.optim.optimizer import Adam
 from zoo.common.nncontext import *
 from zoo.pipeline.api.torch import TorchModel, TorchLoss, TorchOptim
 from zoo.pipeline.nnframes import *
@@ -102,8 +101,7 @@ class SimpleTorchModel(nn.Module):
         return x
 
 if __name__ == '__main__':
-    sparkConf = init_spark_conf().setAppName("example_pytorch").setMaster('local[1]')
-    sc = init_nncontext(sparkConf)
+    sc = init_spark_on_local(cores=1)
     spark = SparkSession \
         .builder \
         .getOrCreate()
@@ -136,7 +134,7 @@ if __name__ == '__main__':
     res.show(10, False)
 
 ```
-Please export `PYTHONHOME` env before you run this code, and we expects to see the output like:
+We expects to see the output like:
 ```python
 +---------+-----+----------+
 |features |label|prediction|
