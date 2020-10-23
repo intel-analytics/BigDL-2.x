@@ -156,15 +156,20 @@ We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux)
 conda create -n zoo python=3.7 #zoo is conda enviroment name, you can set another name you like.
 conda activate zoo
 pip install analytics-zoo[torch]
-```
+```  
 Note that the extra dependencies (including BigDL, torch, torchvision, jep, cloudpickle, conda-pack) will be installed by specifying [torch].  
 
 3. How to determine how many resources do you use in analytics-zoo's distributed mode?  
+If you are running your jobs on yarn cluster, you can use `init_spark_on_yarn` from package `zoo.common.nncontext` to request cores and memorys from resource manager.  
+If you are running your jobs on Spark standalone cluster, you can use `init_spark_standalone` from package `zoo.common.nncontext` to request resources from Spark master.  
+If you are running your jobs on spark local mode(single-node, pseudo-distributed), you can use `init_spark_on_local` from package `zoo.common.nncontext` to declare how many cores and memorys.
 
-
-4. Supported torch and torchvision version? 1.5 or 1.6  
+4. Supported torch and torchvision version?
+We support torch 1.5.x and 1.6.x, torchvision's version should match torch's version.  
 
 5. How to migrate training from pytorch to AZ?  
+Here is a simple example migrate [pytorch mnist example](https://github.com/pytorch/examples/blob/60108edfa3838a823220e16428cb5f98e8e88d53/mnist/main.py) to [analytics-zoo mnist example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/pytorch/train/mnist).
+ 
 
 6. How to distribute inference with pytorch model?  
 
