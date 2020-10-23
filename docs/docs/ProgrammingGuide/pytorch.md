@@ -1,4 +1,4 @@
-Analytics-Zoo supports distributed Pytorch training and inferenceon on Apache Spark. User can
+Analytics-Zoo supports distributed Pytorch training and inference on on Apache Spark. User can
 define their model and loss function with Pytorch API, and run it in a distributed environment
 with the wrapper layers provided by Analytics Zoo.
 
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     res.show(10, False)
 
 ```
-We expects to see the output like:
+You can simply use `python` to execute the script above. We expects to see the output like:
 ```python
 +---------+-----+----------+
 |features |label|prediction|
@@ -145,3 +145,26 @@ We expects to see the output like:
 |[1.0,2.0]|0.0  |0.0       |
 +---------+-----+----------+
 ```
+
+# FAQ
+1. Does analytics-zoo's distributed pytorch support training or inference?
+Analytics-Zoo support both training and inference.
+
+2. How to prepare the environment?
+We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the enviroments, especially if you want to run on a yarn cluster(yarn-client mode only). 
+```
+conda create -n zoo python=3.7 #zoo is conda enviroment name, you can set another name you like.
+conda activate zoo
+pip install analytics-zoo[torch]
+```
+Note that the extra dependencies (including jep, cloudpickle, torch, torchvision) will be installed by specifying [torch].
+
+3. How to determine how many resources do you use in analytics-zoo's distributed mode?
+
+
+4. Supported torch and torchvision version? 1.5 or 1.6
+
+5. How to migrate training from pytorch to AZ?
+
+6. How to distribute inference with pytorch model?
+
