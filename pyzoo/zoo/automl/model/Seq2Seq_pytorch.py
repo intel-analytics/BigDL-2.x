@@ -196,7 +196,7 @@ class Seq2SeqPytorch(PytorchBaseModel):
 
     def _get_optional_parameters(self):
         return {
-                   'hidden_dim',
-                   'layer_num',
-                   'hidden_dim',
-               } | super()._get_optional_parameters()
+            'hidden_dim',
+            'layer_num',
+            'hidden_dim',
+        } | super()._get_optional_parameters()
