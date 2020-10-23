@@ -18,11 +18,12 @@ import json
 from bigdl.nn.layer import Layer
 from pyspark.ml.param.shared import *
 from pyspark.ml.wrapper import JavaModel, JavaEstimator, JavaTransformer
-from pyspark.ml.util import MLWritable, MLReadable, JavaMLWriter, DefaultParamsReader
+from pyspark.ml.util import MLWritable, MLReadable, JavaMLWriter
 from bigdl.optim.optimizer import SGD
 from zoo.common.utils import callZooFunc
 from bigdl.util.common import *
 from zoo.feature.common import *
+
 
 if sys.version >= '3':
     long = int
@@ -504,7 +505,7 @@ class NNModel(JavaTransformer, MLWritable, MLReadable, HasFeaturesCol, HasPredic
         self.setBatchSize(self.value.getBatchSize())
 
     def write(self):
-        return NNNodelWriter(self)
+        return NNModelWriter(self)
 
     @staticmethod
     def load(path):
@@ -512,15 +513,17 @@ class NNModel(JavaTransformer, MLWritable, MLReadable, HasFeaturesCol, HasPredic
         return NNModel(model=None, feature_preprocessing=None, jvalue=jvalue)
 
 
-class NNNodelWriter(JavaMLWriter):
+class NNModelWriter(JavaMLWriter):
     def __init__(self, instance):
-        super(NNNodelWriter, self).__init__(instance)
+        super(NNModelWriter, self).__init__(instance)
 
     def save(self, path):
         """Save the ML instance to the input path."""
-        super(NNNodelWriter, self).save(path)
+        super(NNModelWriter, self).save(path)
         # change class name in metadata to python class name
-        metadata = DefaultParamsReader.loadMetadata(path, self.sc)
+        metadataPath = os.path.join(path, "metadata")
+        metadataStr = self.sc.textFile(metadataPath, 1).first()
+        metadata = json.loads(metadataStr)
         py_type = metadata['class'].replace("com.intel.analytics.zoo", "zoo")
         metadata['class'] = py_type
         metadata_json = json.dumps(metadata, separators=[',', ':'])
