@@ -147,24 +147,24 @@ You can simply use `python` to execute the script above. We expects to see the o
 ```
 
 # FAQ
-1. Does analytics-zoo's distributed pytorch support training or inference?
+1. Does analytics-zoo's distributed pytorch support training or inference?  
 Analytics-Zoo support both training and inference.
 
-2. How to prepare the environment?
+2. How to prepare the environment?  
 We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the enviroments, especially if you want to run on a yarn cluster(yarn-client mode only). 
 ```
 conda create -n zoo python=3.7 #zoo is conda enviroment name, you can set another name you like.
 conda activate zoo
 pip install analytics-zoo[torch]
 ```
-Note that the extra dependencies (including jep, cloudpickle, torch, torchvision) will be installed by specifying [torch].
+Note that the extra dependencies (including jep, cloudpickle, torch, torchvision) will be installed by specifying [torch].  
 
-3. How to determine how many resources do you use in analytics-zoo's distributed mode?
+3. How to determine how many resources do you use in analytics-zoo's distributed mode?  
 
 
-4. Supported torch and torchvision version? 1.5 or 1.6
+4. Supported torch and torchvision version? 1.5 or 1.6  
 
-5. How to migrate training from pytorch to AZ?
+5. How to migrate training from pytorch to AZ?  
 
-6. How to distribute inference with pytorch model?
+6. How to distribute inference with pytorch model?  
 
