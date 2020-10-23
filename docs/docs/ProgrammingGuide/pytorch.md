@@ -16,7 +16,8 @@ Two wrappers are defined in Analytics Zoo for Pytorch:
 User may create a TorchModel by providing a Pytorch model, e.g.
     ```python
     from zoo.pipeline.api.torch import TorchModel
-    TorchModel.from_pytorch(torchvision.models.resnet18(pretrained=True))
+    import torchvision
+    zoo_model = TorchModel.from_pytorch(torchvision.models.resnet18(pretrained=True))
     ```
 The above line creates TorchModel wrapping a ResNet model, and user can use the TorchModel for
 training or inference with Analytics Zoo.
@@ -24,18 +25,18 @@ training or inference with Analytics Zoo.
 2. TorchLoss: TorchLoss is a wrapper for loss functions defined by Pytorch.
 User may create a TorchLoss from a Pytorch Criterion, 
     ```python
-    from torch import nn
+    import torch
     from zoo.pipeline.api.torch import TorchLoss
     
-    az_criterion = TorchLoss.from_pytorch(nn.MSELoss())
+    az_criterion = TorchLoss.from_pytorch(torch.nn.MSELoss())
     ```
     or from a custom loss function, which takes input and label as parameters
 
     ```python
-    from torch import nn
+    import torch
     from zoo.pipeline.api.torch import TorchLoss
     
-    criterion = nn.MSELoss()
+    criterion = torch.nn.MSELoss()
 
     # this loss function is calculating loss for a multi-output model
     def lossFunc(input, label):
@@ -46,6 +47,16 @@ User may create a TorchLoss from a Pytorch Criterion,
     
     az_criterion = TorchLoss.from_pytorch(lossFunc)
     ```
+    
+3. TorchOptim: TorchOptim wraps a torch optimizer for distributed training.
+   ```python
+   from zoo.pipeline.api.torch import TorchOptim
+   import torch
+   
+   model = torchvision.models.resnet18(pretrained=True))
+   adam = torch.optim.Adam(model.parameters())
+   zoo_optimizer = TorchOptim.from_pytorch(adam)
+   ```
 
 # Examples
 Here we provide a simple end to end example, where we use TorchModel and TorchLoss to
@@ -70,7 +81,7 @@ import torch
 import torch.nn as nn
 from bigdl.optim.optimizer import Adam
 from zoo.common.nncontext import *
-from zoo.pipeline.api.torch import TorchModel, TorchLoss
+from zoo.pipeline.api.torch import TorchModel, TorchLoss, TorchOptim
 from zoo.pipeline.nnframes import *
 
 from pyspark.ml.linalg import Vectors
@@ -105,13 +116,15 @@ if __name__ == '__main__':
 
     torch_model = SimpleTorchModel()
     torch_criterion = nn.MSELoss()
+    torch_optimizer = torch.optim.Adam(torch_model.parameters())
 
     az_model = TorchModel.from_pytorch(torch_model)
     az_criterion = TorchLoss.from_pytorch(torch_criterion)
+    az_optimizer = TorchOptim.from_pytorch(torch_optimizer)
 
     classifier = NNClassifier(az_model, az_criterion) \
         .setBatchSize(4) \
-        .setOptimMethod(Adam()) \
+        .setOptimMethod(az_optimizer) \
         .setLearningRate(0.01) \
         .setMaxEpoch(10)
 
