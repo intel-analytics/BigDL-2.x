@@ -157,7 +157,7 @@ conda create -n zoo python=3.7 #zoo is conda enviroment name, you can set anothe
 conda activate zoo
 pip install analytics-zoo[torch]
 ```
-Note that the extra dependencies (including jep, cloudpickle, torch, torchvision) will be installed by specifying [torch].  
+Note that the extra dependencies (including BigDL, torch, torchvision, jep, cloudpickle, conda-pack) will be installed by specifying [torch].  
 
 3. How to determine how many resources do you use in analytics-zoo's distributed mode?  
 
