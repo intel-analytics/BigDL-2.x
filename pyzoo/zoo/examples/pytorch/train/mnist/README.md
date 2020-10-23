@@ -14,10 +14,7 @@ We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux)
 ```
 conda create -n zoo python=3.7 #zoo is conda enviroment name, you can set another name you like.
 conda activate zoo
-pip install analytics-zoo==0.9.0.dev0 # or above
-pip install jep==3.9.0
-conda install pytorch torchvision cpuonly -c pytorch #command for linux
-conda install pytorch torchvision -c pytorch #command for macOS
+pip install analytics-zoo[torch]
 ```
 
 ## Prepare Dataset
@@ -42,7 +39,6 @@ You can run this example on local mode and yarn client mode.
 You can easily use the following commands to run this example:
     ```bash
     conda activate zoo
-    export PYTHONHOME=[conda install path]/envs/zoo # use command "conda env list" to find the path of PYTHONEHOME.
     export ZOO_NUM_MKLTHREADS=4
     python main.py
     ```
@@ -51,7 +47,6 @@ You can easily use the following commands to run this example:
     ```bash
     conda activate zoo
     export HADOOP_CONF_DIR=[path to your hadoop conf directory who has yarn-site.xml]
-    export ZOO_CONDA_NAME=zoo #conda environment name you just prepared above
     export ZOO_NUM_MKLTHREADS=all
     python main.py
     ```
