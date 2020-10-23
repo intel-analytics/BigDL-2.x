@@ -164,7 +164,7 @@ If you are running your jobs on yarn cluster, you can use `init_spark_on_yarn` f
 If you are running your jobs on Spark standalone cluster, you can use `init_spark_standalone` from package `zoo.common.nncontext` to request resources from Spark master.  
 If you are running your jobs on spark local mode(single-node, pseudo-distributed), you can use `init_spark_on_local` from package `zoo.common.nncontext` to declare how many cores and memorys.
 
-4. Supported torch and torchvision version?
+4. Supported torch and torchvision version?  
 We support torch 1.5.x and 1.6.x, torchvision's version should match torch's version.  
 
 5. How to migrate training from pytorch to AZ?  
