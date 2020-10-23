@@ -5,12 +5,13 @@ with the wrapper layers provided by Analytics Zoo.
 # System Requirement
 Pytorch version: 1.5.0 or above  
 torchvision: 0.6.0 or above  
+cloudpickle: 1.2.2
 jep: 3.9.0  
 Python: 3.7  
 
 # Pytorch API
 
-Two wrappers are defined in Analytics Zoo for Pytorch:
+A few wrappers are defined in Analytics Zoo for Pytorch:
 
 1. TorchModel: TorchModel is a wrapper class for Pytorch model.
 User may create a TorchModel by providing a Pytorch model, e.g.
