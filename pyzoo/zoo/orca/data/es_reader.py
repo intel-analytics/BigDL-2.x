@@ -20,8 +20,8 @@ from pyspark.sql import SQLContext
 
 class ESReader:
     """
-    Primary DataFrame-based loading data from elastic search interface, defining API to read data from ES
-    to DataFrame.
+    Primary DataFrame-based loading data from elastic search interface,
+    defining API to read data from ES to DataFrame.
     """
 
     def __init__(self):
@@ -31,7 +31,8 @@ class ESReader:
     def readData(esConfig, esResource, schema=None):
         """
         Read the data from elastic search into DataFrame.
-        :param esConfig Dictionary which represents configuration for elastic search(eg. ip, port etc).
+        :param esConfig Dictionary which represents configuration for
+               elastic search(eg. ip, port etc).
         :param esResource resource file in elastic search.
         :param schema Optional. Defines the schema of Spark dataframe.
                 If each column in Es is single value, don't need set schema.
@@ -55,10 +56,10 @@ class ESReader:
     def save2ES(esConfig, esResource, df):
         """
         Read the data from elastic search into DataFrame.
-        :param esConfig Dictionary which represents configuration for elastic search(eg. ip, port etc).
+        :param esConfig Dictionary which represents configuration for
+               elastic search(eg. ip, port etc).
         :param esResource resource file in elastic search.
         :param df Spark DataFrame that will be saved.
-        :return 
         """
         wdf = df.write.format("org.elasticsearch.spark.sql")\
             .option("es.resource", esResource)
