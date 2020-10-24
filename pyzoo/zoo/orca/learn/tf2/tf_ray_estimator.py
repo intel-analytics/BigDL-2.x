@@ -29,29 +29,9 @@ from zoo.ray import RayContext
 logger = logging.getLogger(__name__)
 
 
-def shards_ref_to_creator(shards_ref, worker_size, max_length=None, shuffle=False):
-
+def shards_ref_to_creator(shards_ref):
     def data_creator(config):
-        assert "batch_size" in config, "batch_size must be set in config"
-        import tensorflow as tf
-        data, label = ray_partition_get_data_label(ray.get(shards_ref),
-                                                   allow_tuple=True,
-                                                   allow_list=False)
-
-        dataset = tf.data.Dataset.from_tensor_slices((data, label))
-        if max_length is not None:
-            # todo find a way to pad empty tensors?
-            dataset = dataset.repeat()
-            if shuffle:
-                dataset = dataset.shuffle(max_length)
-            dataset = dataset.take(max_length)
-        options = tf.data.Options()
-        options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.OFF
-        dataset = dataset.with_options(options)
-
-        dataset = dataset.batch(config["batch_size"] // worker_size)
-        return dataset
-
+        return shards_ref
     return data_creator
 
 
@@ -195,10 +175,7 @@ class Estimator:
 
             if validation_data_creator is None:
                 def transform_func(worker, shards_ref):
-                    params["data_creator"] = shards_ref_to_creator(shards_ref,
-                                                                   self.num_workers,
-                                                                   max_length=max_length,
-                                                                   shuffle=True)
+                    params["data_creator"] = shards_ref_to_creator(shards_ref)
                     return worker.step.remote(**params)
 
                 stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
@@ -209,15 +186,9 @@ class Estimator:
                                                                         self.num_workers)
 
                 def zip_func(worker, this_shards_ref, that_shards_ref):
-                    params["data_creator"] = shards_ref_to_creator(this_shards_ref,
-                                                                   self.num_workers,
-                                                                   max_length=max_length,
-                                                                   shuffle=True)
+                    params["data_creator"] = shards_ref_to_creator(this_shards_ref)
                     params["validation_data_creator"] =\
-                        shards_ref_to_creator(that_shards_ref,
-                                              self.num_workers,
-                                              max_length=val_max_length,
-                                              shuffle=True)
+                        shards_ref_to_creator(that_shards_ref)
                     return worker.step.remote(**params)
 
                 stats_shards = ray_xshards.zip_shards_with_actors(val_ray_xshards,
@@ -257,10 +228,7 @@ class Estimator:
             ray_xshards = RayXShards.from_spark_xshards(data)
 
             def transform_func(worker, shards_ref):
-                params["data_creator"] = shards_ref_to_creator(shards_ref,
-                                                               self.num_workers,
-                                                               max_length=max_length,
-                                                               shuffle=False)
+                params["data_creator"] = shards_ref_to_creator(shards_ref)
                 return worker.validate.remote(**params)
 
             stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
