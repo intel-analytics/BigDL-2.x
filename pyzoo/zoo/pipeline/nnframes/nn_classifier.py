@@ -23,6 +23,7 @@ from bigdl.optim.optimizer import SGD
 from zoo.common.utils import callZooFunc
 from bigdl.util.common import *
 from zoo.feature.common import *
+from zoo import init_nncontext
 
 
 if sys.version >= '3':
@@ -520,9 +521,10 @@ class NNModelWriter(JavaMLWriter):
     def save(self, path):
         """Save the ML instance to the input path."""
         super(NNModelWriter, self).save(path)
+        sc = init_nncontext()
         # change class name in metadata to python class name
         metadataPath = os.path.join(path, "metadata")
-        metadataStr = self.sc.textFile(metadataPath, 1).first()
+        metadataStr = sc.textFile(metadataPath, 1).first()
         metadata = json.loads(metadataStr)
         py_type = metadata['class'].replace("com.intel.analytics.zoo", "zoo")
         metadata['class'] = py_type
