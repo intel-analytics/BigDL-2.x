@@ -20,7 +20,7 @@ from pyspark.ml.param.shared import *
 from pyspark.ml.wrapper import JavaModel, JavaEstimator, JavaTransformer
 from pyspark.ml.util import MLWritable, MLReadable, JavaMLWriter
 from bigdl.optim.optimizer import SGD
-from zoo.common.utils import callZooFunc
+from zoo.common.utils import callZooFunc, put_local_file_to_remote
 from bigdl.util.common import *
 from zoo.feature.common import *
 from zoo import init_nncontext
@@ -523,17 +523,21 @@ class NNModelWriter(JavaMLWriter):
         super(NNModelWriter, self).save(path)
         sc = init_nncontext()
         # change class name in metadata to python class name
-        metadataPath = os.path.join(path, "metadata")
-        metadataStr = sc.textFile(metadataPath, 1).first()
+        metadata_path = os.path.join(path, "metadata")
+        metadataStr = sc.textFile(metadata_path, 1).first()
         metadata = json.loads(metadataStr)
         py_type = metadata['class'].replace("com.intel.analytics.zoo", "zoo")
         metadata['class'] = py_type
         metadata_json = json.dumps(metadata, separators=[',', ':'])
         # replace old metadata
-        metadataPath = os.path.join(path, "metadata")
+        temp_dir = tempfile.mkdtemp()
+        temp_meta_path = os.path.join(temp_dir, "metadata")
+        sc.parallelize([metadata_json], 1).saveAsTextFile(temp_meta_path)
+        for file in os.listdir(temp_meta_path):
+            put_local_file_to_remote(os.path.join(temp_meta_path, file),
+                                     os.path.join(metadata_path, file), True)
         import shutil
-        shutil.rmtree(metadataPath)
-        self.sc.parallelize([metadata_json], 1).saveAsTextFile(metadataPath)
+        shutil.rmtree(temp_dir)
 
 
 class NNClassifier(NNEstimator):
