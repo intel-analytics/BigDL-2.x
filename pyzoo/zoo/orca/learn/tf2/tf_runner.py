@@ -101,9 +101,9 @@ class DatasetHandler:
         if isinstance(dataset, ray.ObjectID):
             assert steps is not None, "steps must be provided for xshard"
             dataset = self._handle_xshards(dataset,
-                                                 steps=steps,
-                                                 local_batch_size=local_batch_size,
-                                                 shuffle=False)
+                                           steps=steps,
+                                           local_batch_size=local_batch_size,
+                                           shuffle=False)
         else:
             dataset = self._handle_sharding(dataset)
 
@@ -141,10 +141,13 @@ class HorovodDatasetHanlder(DatasetHandler):
                                                    allow_tuple=True,
                                                    allow_list=False)
         dataset = tf.data.Dataset.from_tensor_slices((data, label))
-        dataset.repeat()
-        dataset.take(steps * local_batch_size)
+        options = tf.data.Options()
+        options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.OFF
+        dataset = dataset.with_options(options)
+        dataset = dataset.repeat()
+        dataset = dataset.take(steps * local_batch_size)
         if shuffle:
-            dataset.shuffle(local_batch_size * min(steps, 10))
+            dataset = dataset.shuffle(local_batch_size * min(steps, 10))
         dataset = dataset.batch(local_batch_size)
         return dataset
 
@@ -156,7 +159,7 @@ class HorovodDatasetHanlder(DatasetHandler):
     def _handle_batch_size(self, config):
         assert "batch_size" in config, "batch_size must be set in config"
         config["batch_size"] = config["batch_size"] // self.size
-        return config
+        return config, config["batch_size"]
 
 
 class TFDistributedDatasetHandler(DatasetHandler):
@@ -168,10 +171,13 @@ class TFDistributedDatasetHandler(DatasetHandler):
                                                    allow_list=False)
         def dataset_fn(input_context):
             dataset = tf.data.Dataset.from_tensor_slices((data, label))
-            dataset.repeat()
-            dataset.take(steps * local_batch_size)
+            options = tf.data.Options()
+            options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.OFF
+            dataset = dataset.with_options(options)
+            dataset = dataset.repeat()
+            dataset = dataset.take(steps * local_batch_size)
             if shuffle:
-                dataset.shuffle(local_batch_size * min(steps, 10))
+                dataset = dataset.shuffle(local_batch_size * min(steps, 10))
             dataset = dataset.batch(local_batch_size)
             return  dataset
 
@@ -198,10 +204,10 @@ class LocalDatasetHandler(DatasetHandler):
                                                    allow_tuple=True,
                                                    allow_list=False)
         dataset = tf.data.Dataset.from_tensor_slices((data, label))
-        dataset.repeat()
-        dataset.take(steps * local_batch_size)
+        dataset = dataset.repeat()
+        dataset = dataset.take(steps * local_batch_size)
         if shuffle:
-            dataset.shuffle(local_batch_size * min(steps, 10))
+            dataset = dataset.shuffle(local_batch_size * min(steps, 10))
         dataset = dataset.batch(local_batch_size)
         return dataset
 
@@ -252,6 +258,8 @@ class TFRunner:
         self.backend = "tf-local"
         self.size = 1
         self.rank = 0
+        from tensorflow.python.distribute import distribution_strategy_context as ds_context
+        self.strategy = ds_context.get_strategy()
 
     def setup_horovod(self):
         import horovod.tensorflow.keras as hvd
@@ -264,6 +272,8 @@ class TFRunner:
         self.backend = "horovod"
         self.size = hvd.size()
         self.rank = hvd.rank()
+        from tensorflow.python.distribute import distribution_strategy_context as ds_context
+        self.strategy = ds_context.get_strategy()
 
     def setup_distributed(self, urls, world_rank, world_size):
         """Sets up TensorFLow distributed environment and initializes the model.
@@ -319,14 +329,14 @@ class TFRunner:
         config = self.config.copy()
         if data_config is not None:
             config.update(data_config)
-
-        dataset_handler = DatasetHandler.get_handler(self.backend, self.rank, self.size)
-        train_dataset, test_dataset = dataset_handler\
-            .handle_datasets_train(data_creator,
-                                   validation_data_creator,
-                                   config=config, epochs=epochs,
-                                   steps_per_epoch=steps_per_epoch,
-                                   validation_steps=validation_steps)
+        with self.strategy.scope():
+            dataset_handler = DatasetHandler.get_handler(self.backend, self.rank, self.size)
+            train_dataset, test_dataset = dataset_handler\
+                .handle_datasets_train(data_creator,
+                                       validation_data_creator,
+                                       config=config, epochs=epochs,
+                                       steps_per_epoch=steps_per_epoch,
+                                       validation_steps=validation_steps)
         # process other arguments
         if self.backend == "horovod":
             import horovod.tensorflow.keras as hvd
@@ -368,13 +378,14 @@ class TFRunner:
         if data_config is not None:
             config.update(data_config)
 
-        dataset_handler = DatasetHandler.get_handler(self.backend,
-                                                     self.rank,
-                                                     self.size)
+        with self.strategy.scope():
+            dataset_handler = DatasetHandler.get_handler(self.backend,
+                                                         self.rank,
+                                                         self.size)
 
-        dataset = dataset_handler.handle_dataset_validation(data_creator,
-                                                            config=config,
-                                                            steps=steps)
+            dataset = dataset_handler.handle_dataset_validation(data_creator,
+                                                                config=config,
+                                                                steps=steps)
 
         if self.backend == "horovod":
             import horovod.tensorflow.keras as hvd
