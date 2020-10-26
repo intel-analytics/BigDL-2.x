@@ -420,6 +420,40 @@ class TFRunner:
 
         return [stats]
 
+    def predict(self, data_creator, batch_size, verbose, steps, callbacks, data_config):
+        config = self.config.copy()
+        if data_config is not None:
+            config.update(data_config)
+
+        dataset = data_creator(config)
+        if not isinstance(dataset, ray.ObjectID):
+            raise ValueError("Only xshards is supported for predict")
+
+        partition = ray.get(dataset)
+        params = dict(
+            batch_size=batch_size,
+            verbose=verbose,
+            steps=steps,
+            callbacks=callbacks,
+        )
+
+
+        if self.backend == "tf-distributed":
+            local_model = self.model_creator(self.config)
+            local_model.set_weights(self.model.get_weights())
+        else:
+            local_model = self.model
+
+
+        def predict_fn(shard):
+            y = local_model.predict(shard["x"], **params)
+            shard["prediction"] = y
+            return shard
+
+        new_part = [predict_fn(shard) for shard in partition]
+
+        return new_part
+
     def get_state(self):
         """Returns the state of the runner."""
         return {

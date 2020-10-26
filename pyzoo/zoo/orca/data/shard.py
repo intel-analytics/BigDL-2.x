@@ -155,6 +155,9 @@ class RayXShards(XShards):
     def num_partitions(self):
         return self.ray_rdd.num_partitions()
 
+    def to_spark_xshards(self):
+        return SparkXShards(self.ray_rdd.to_spark_rdd())
+
     @staticmethod
     def from_spark_xshards(spark_xshards):
         ray_rdd = RayRdd.from_spark_rdd(spark_xshards.rdd)

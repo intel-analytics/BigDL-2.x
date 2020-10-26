@@ -246,6 +246,36 @@ class Estimator:
         stats = worker_stats[0].copy()
         return stats
 
+
+    def predict(self, data_creator, batch_size, verbose=1,
+                 steps=None, callbacks=None, data_config=None):
+        """Evaluates the model on the validation data set."""
+        logger.info("Starting predict step.")
+        params = dict(
+            verbose=verbose,
+            batch_size=batch_size,
+            steps=steps,
+            callbacks=callbacks,
+            data_config=data_config,
+        )
+        from zoo.orca.data import SparkXShards
+        if isinstance(data_creator, SparkXShards):
+            ray_xshards = RayXShards.from_spark_xshards(data_creator)
+
+            def transform_func(worker, shards_ref):
+                params["data_creator"] = shards_ref_to_creator(shards_ref)
+                return worker.predict.remote(**params)
+
+            stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
+                                                                    transform_func,
+                                                                    gang_scheduling=False)
+            spark_xshards = stats_shards.to_spark_xshards()
+
+        else:
+            raise ValueError("Only xshards is supported for predict")
+
+        return spark_xshards
+
     def get_model(self):
         """Returns the learned model."""
         state = ray.get(self.remote_workers[0].get_state.remote())
