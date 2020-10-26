@@ -85,8 +85,9 @@ object InferenceBaseline extends Supportive {
 
     val model = helper.loadInferenceModel()
     val warmT = makeTensorFromShape(param.inputShape)
-    ClusterServingInference.typeCheck(warmT)
-    ClusterServingInference.dimCheck(warmT, "add", sParam.modelType)
+    val clusterServingInference = new ClusterServingInference(null, "openvino")
+    clusterServingInference.typeCheck(warmT)
+    clusterServingInference.dimCheck(warmT, "add", sParam.modelType)
     (0 until 10).foreach(_ => {
       val result = model.doPredict(warmT)
     })
@@ -107,14 +108,14 @@ object InferenceBaseline extends Supportive {
       )
       (0 until param.testNum).grouped(sParam.coreNum).flatMap(batch => {
           val t = timer.timing("Batch input", batch.size) {
-            ClusterServingInference.batchInput(a, sParam.coreNum, true, sParam.resize)
+            clusterServingInference.batchInput(a, sParam.coreNum, true, sParam.resize)
           }
-          ClusterServingInference.dimCheck(t, "add", sParam.modelType)
+          clusterServingInference.dimCheck(t, "add", sParam.modelType)
           val result = timer.timing("Inference", batch.size) {
             model.doPredict(t)
           }
-          ClusterServingInference.dimCheck(t, "remove", sParam.modelType)
-          ClusterServingInference.dimCheck(result, "remove", sParam.modelType)
+          clusterServingInference.dimCheck(t, "remove", sParam.modelType)
+          clusterServingInference.dimCheck(result, "remove", sParam.modelType)
 
           Seq()
       }).toArray

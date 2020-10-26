@@ -68,6 +68,8 @@ class ArrowDeserializer {
       val vectorSchemaRoot = reader.getVectorSchemaRoot
       result = result :+ getFromSchemaRoot(vectorSchemaRoot)
     }
+//    readAllocator.close()
+    reader.close()
     result
   }
   def getString(arr: Array[(Array[Float], Array[Int])]): String = {
@@ -91,5 +93,10 @@ object ArrowDeserializer {
     val deserializer = new ArrowDeserializer()
     val arr = deserializer.create(b64string)
     deserializer.getString(arr)
+  }
+  def getArray(b64string: String): Array[(Array[Float], Array[Int])] = {
+    val deserializer = new ArrowDeserializer()
+    val arr = deserializer.create(b64string)
+    arr
   }
 }

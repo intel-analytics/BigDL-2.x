@@ -22,5 +22,5 @@ class ClusterServingParams(modelConcurrent: Int = 1,
   val _modelConcurrent = modelConcurrent
   val _inferenceMode = inferenceMode
   val _coreNum = coreNum
-  var _modelType: String = _
+  var _modelType: String = "tensorflow"
 }

@@ -17,7 +17,11 @@ import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.model.abstract import BaseModel
-from zoo.automl.regression.time_sequence_predictor import *
+from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
+import pandas as pd
+import numpy as np
+from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
+from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 
 
 class TestTimeSequencePredictor(ZooTestCase):
@@ -53,6 +57,7 @@ class TestTimeSequencePredictor(ZooTestCase):
         assert pipeline.config is not None
 
     def test_fit_LSTMGridRandomRecipe(self):
+        from zoo.automl.config.recipe import LSTMGridRandomRecipe
         train_df, _, future_seq_len = self.create_dataset()
         tsp = TimeSequencePredictor(dt_col="datetime",
                                     target_col="value",
@@ -76,6 +81,7 @@ class TestTimeSequencePredictor(ZooTestCase):
         assert pipeline.config["past_seq_len"] == 2
 
     def test_fit_BayesRecipe(self):
+        from zoo.automl.config.recipe import BayesRecipe
         train_df, _, future_seq_len = self.create_dataset()
         tsp = TimeSequencePredictor(dt_col="datetime",
                                     target_col="value",
@@ -101,22 +107,6 @@ class TestTimeSequencePredictor(ZooTestCase):
                 if config_name.endswith('float')] == []
         assert 'past_seq_len' in pipeline.config
         assert 3 <= pipeline.config["past_seq_len"] <= 5
-
-    def test_fit_df_list(self):
-        train_df, validation_df, future_seq_len = self.create_dataset()
-        tsp = TimeSequencePredictor(dt_col="datetime",
-                                    target_col="value",
-                                    future_seq_len=future_seq_len,
-                                    extra_features_col=None, )
-        train_df_list = [train_df] * 3
-        val_df_list = [validation_df] * 3
-        pipeline = tsp.fit(train_df_list, val_df_list)
-        assert isinstance(pipeline, TimeSequencePipeline)
-        assert isinstance(
-            pipeline.feature_transformers,
-            TimeSequenceFeatureTransformer)
-        assert isinstance(pipeline.model, BaseModel)
-        assert pipeline.config is not None
 
 
 if __name__ == '__main__':

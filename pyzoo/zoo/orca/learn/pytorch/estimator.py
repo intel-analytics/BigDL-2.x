@@ -59,18 +59,19 @@ class Estimator(object):
                    use_tqdm=False,
                    workers_per_node=1,
                    model_dir=None,
-                   backend="horovod"):
-        if backend == "horovod":
-            return PyTorchHorovodEstimatorWrapper(model_creator=model,
-                                                  optimizer_creator=optimizer,
-                                                  loss_creator=loss,
-                                                  scheduler_creator=scheduler_creator,
-                                                  training_operator_cls=training_operator_cls,
-                                                  initialization_hook=initialization_hook,
-                                                  config=config,
-                                                  scheduler_step_freq=scheduler_step_freq,
-                                                  use_tqdm=use_tqdm,
-                                                  workers_per_node=workers_per_node)
+                   backend="bigdl"):
+        if backend in {"horovod", "pytorch"}:
+            return PyTorchRayEstimatorWrapper(model_creator=model,
+                                              optimizer_creator=optimizer,
+                                              loss_creator=loss,
+                                              scheduler_creator=scheduler_creator,
+                                              training_operator_cls=training_operator_cls,
+                                              initialization_hook=initialization_hook,
+                                              config=config,
+                                              scheduler_step_freq=scheduler_step_freq,
+                                              use_tqdm=use_tqdm,
+                                              workers_per_node=workers_per_node,
+                                              backend=backend)
         elif backend == "bigdl":
             return PytorchSparkEstimatorWrapper(model=model,
                                                 loss=loss,
@@ -78,10 +79,11 @@ class Estimator(object):
                                                 model_dir=model_dir,
                                                 bigdl_type="float")
         else:
-            raise ValueError("only horovod and bigdl backend are supported for now")
+            raise ValueError("only horovod, pytorch and bigdl backend are supported for now,"
+                             f" got backend: {backend}")
 
 
-class PyTorchHorovodEstimatorWrapper(Estimator):
+class PyTorchRayEstimatorWrapper(Estimator):
     def __init__(self,
                  *,
                  model_creator,
@@ -93,18 +95,20 @@ class PyTorchHorovodEstimatorWrapper(Estimator):
                  config=None,
                  scheduler_step_freq="batch",
                  use_tqdm=False,
+                 backend="pytorch",
                  workers_per_node=1):
-        from zoo.orca.learn.pytorch.pytorch_horovod_estimator import PyTorchHorovodEstimator
-        self.estimator = PyTorchHorovodEstimator(model_creator=model_creator,
-                                                 optimizer_creator=optimizer_creator,
-                                                 loss_creator=loss_creator,
-                                                 scheduler_creator=scheduler_creator,
-                                                 training_operator_cls=training_operator_cls,
-                                                 initialization_hook=initialization_hook,
-                                                 config=config,
-                                                 scheduler_step_freq=scheduler_step_freq,
-                                                 use_tqdm=use_tqdm,
-                                                 workers_per_node=workers_per_node)
+        from zoo.orca.learn.pytorch.pytorch_ray_estimator import PyTorchRayEstimator
+        self.estimator = PyTorchRayEstimator(model_creator=model_creator,
+                                             optimizer_creator=optimizer_creator,
+                                             loss_creator=loss_creator,
+                                             scheduler_creator=scheduler_creator,
+                                             training_operator_cls=training_operator_cls,
+                                             initialization_hook=initialization_hook,
+                                             config=config,
+                                             scheduler_step_freq=scheduler_step_freq,
+                                             use_tqdm=use_tqdm,
+                                             backend=backend,
+                                             workers_per_node=workers_per_node)
 
     def fit(self, data, epochs=1, profile=False, reduce_results=True, info=None):
         """
@@ -253,7 +257,7 @@ class PytorchSparkEstimatorWrapper(Estimator):
     def save(self, checkpoint):
         pass
 
-    def load(self, checkpoint, loss=None, model_dir=None):
+    def load(self, checkpoint, loss=None):
         from zoo.orca.learn.utils import find_latest_checkpoint
         from bigdl.nn.layer import Model
         from bigdl.optim.optimizer import OptimMethod

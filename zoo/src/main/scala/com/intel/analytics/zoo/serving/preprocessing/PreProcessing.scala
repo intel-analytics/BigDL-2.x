@@ -35,9 +35,6 @@ import org.opencv.imgproc.Imgproc
 class PreProcessing(chwFlag: Boolean = true) {
   val logger = Logger.getLogger(getClass)
 
-  var tensorBuffer: Array[Tensor[Float]] = null
-  var arrayBuffer: Array[Array[Float]] = null
-
   var byteBuffer: Array[Byte] = null
 
 
