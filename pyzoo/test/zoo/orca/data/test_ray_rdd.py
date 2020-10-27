@@ -29,6 +29,7 @@ def test_from_spark_rdd(orca_context_fixture):
 
     assert results == list(range(1000))
 
+
 def test_to_spark_rdd(orca_context_fixture):
     sc = orca_context_fixture
     rdd = sc.parallelize(range(1000))
@@ -46,6 +47,7 @@ class Add1Actor:
     def get_node_ip(self):
         import ray
         return ray.services.get_node_ip_address()
+
 
 def test_assign_partitions_to_actors(orca_context_fixture):
 
