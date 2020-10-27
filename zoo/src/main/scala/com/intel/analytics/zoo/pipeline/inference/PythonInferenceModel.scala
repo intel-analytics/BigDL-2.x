@@ -21,7 +21,7 @@ import com.intel.analytics.zoo.common.PythonZoo
 import java.util.{ArrayList, List => JList}
 
 import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
+import org.apache.spark.api.java.JavaRDD
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
@@ -104,10 +104,11 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
   }
 
   def inferenceModelDistriPredict(model: InferenceModel, sc: SparkContext,
-                                  inputs: RDD[JList[com.intel.analytics.bigdl.python.api.JTensor]],
-                                  inputIsTable: Boolean): RDD[JList[Object]] = {
+                                  inputs: JavaRDD[JList[com.intel.analytics.bigdl.python.api
+                                  .JTensor]],
+                                  inputIsTable: Boolean): JavaRDD[JList[Object]] = {
     val broadcastModel = sc.broadcast(model)
-    inputs.mapPartitions(partition => {
+    inputs.rdd.mapPartitions(partition => {
       val localModel = broadcastModel.value
       partition.map(inputs => {
         val inputActivity = jTensorsToActivity(inputs, inputIsTable)
