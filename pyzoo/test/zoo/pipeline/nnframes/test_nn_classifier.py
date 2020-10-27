@@ -768,61 +768,47 @@ class TestNNClassifer():
                     raise  # re-raise exception
 
     def test_NNModel_NNClassifier_pipeline_save_load(self):
+        if self.sc.version.startswith("2.3") or self.sc.version.startswith("2.4"):
+            from pyspark.ml.feature import MinMaxScaler
+            from pyspark.ml.linalg import Vectors
 
-        from pyspark.ml.feature import MinMaxScaler
-        from pyspark.ml.linalg import Vectors
-
-        df = self.sqlContext.createDataFrame(
-            [(Vectors.dense([2.0, 1.0]), 1.0),
-             (Vectors.dense([1.0, 2.0]), 2.0),
-             (Vectors.dense([2.0, 1.0]), 1.0),
-             (Vectors.dense([1.0, 2.0]), 2.0),
-             ], ["features", "label"])
-
-        scaler = MinMaxScaler().setInputCol("features").setOutputCol("scaled")
-        model = Sequential().add(Linear(2, 2))
-        criterion = ClassNLLCriterion()
-        classifier = NNClassifier(model, criterion)\
-            .setBatchSize(4) \
-            .setLearningRate(0.01).setMaxEpoch(1).setFeaturesCol("scaled")
-
-        pipeline = Pipeline(stages=[scaler, classifier])
-
-        pipeline_model = pipeline.fit(df)
-
-        # res = pipelineModel.transform(df)
-        # model1 = Sequential().add(Linear(2, 2))
-        # criterion1 = MSECriterion()
-        # estimator = NNEstimator(model1, criterion1).setMaxEpoch(1).setBatchSize(4)\
-        #     .setPredictionCol("prediction1").setLabelCol("label1")
-        #
-        # model2 = Sequential().add(Linear(2, 2))
-        # criterion = ClassNLLCriterion()
-        # classifier = NNClassifier(model2, criterion, [2]).setMaxEpoch(1).setBatchSize(4)\
-        #     .setFeaturesCol("prediction1").setLabelCol("label2")
-        #
-        # df = self.get_pipeline_df()
-        # pipeline = Pipeline(stages=[estimator, classifier])
-        # pipeline_model = pipeline.fit(df)
-        try:
-            tmp_dir = tempfile.mkdtemp()
-            modelPath = os.path.join(tmp_dir, "model")
-            pipeline_model.save(modelPath)
-            loaded_model = PipelineModel.load(modelPath)
-            df2 = self.sqlContext.createDataFrame(
+            df = self.sqlContext.createDataFrame(
                 [(Vectors.dense([2.0, 1.0]), 1.0),
                  (Vectors.dense([1.0, 2.0]), 2.0),
                  (Vectors.dense([2.0, 1.0]), 1.0),
                  (Vectors.dense([1.0, 2.0]), 2.0),
                  ], ["features", "label"])
-            # df2 = self.get_pipeline_df()
-            assert loaded_model.transform(df2).count() == 4
-        finally:
+
+            scaler = MinMaxScaler().setInputCol("features").setOutputCol("scaled")
+            model = Sequential().add(Linear(2, 2))
+            criterion = ClassNLLCriterion()
+            classifier = NNClassifier(model, criterion)\
+                .setBatchSize(4) \
+                .setLearningRate(0.01).setMaxEpoch(1).setFeaturesCol("scaled")
+
+            pipeline = Pipeline(stages=[scaler, classifier])
+
+            pipeline_model = pipeline.fit(df)
+
             try:
-                shutil.rmtree(tmp_dir)  # delete directory
-            except OSError as exc:
-                if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
-                    raise  # re-raise exception
+                tmp_dir = tempfile.mkdtemp()
+                modelPath = os.path.join(tmp_dir, "model")
+                pipeline_model.save(modelPath)
+                loaded_model = PipelineModel.load(modelPath)
+                df2 = self.sqlContext.createDataFrame(
+                    [(Vectors.dense([2.0, 1.0]), 1.0),
+                     (Vectors.dense([1.0, 2.0]), 2.0),
+                     (Vectors.dense([2.0, 1.0]), 1.0),
+                     (Vectors.dense([1.0, 2.0]), 2.0),
+                     ], ["features", "label"])
+
+                assert loaded_model.transform(df2).count() == 4
+            finally:
+                try:
+                    shutil.rmtree(tmp_dir)  # delete directory
+                except OSError as exc:
+                    if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
+                        raise  # re-raise exception
 
     def test_input_node_of_tfnet_from_session(self):
         import tensorflow as tff
