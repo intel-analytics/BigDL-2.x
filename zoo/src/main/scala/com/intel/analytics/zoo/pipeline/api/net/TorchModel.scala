@@ -73,7 +73,7 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
         |
         |""".stripMargin
 
-  def forwardCode(): String=
+  def forwardCode(): String =
     s"""
        |output_${taskId} = ${getName()}(input_${taskId})
        |""".stripMargin
