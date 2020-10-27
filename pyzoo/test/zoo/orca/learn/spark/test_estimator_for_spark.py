@@ -543,6 +543,35 @@ class TestEstimatorForGraph(TestCase):
 
         shutil.rmtree(temp)
 
+    def test_openvino(self):
+        from zoo.orca.learn.openvino.estimator import Estimator
+        from zoo.feature.image import ImageSet
+        from zoo.orca.data import SparkXShards
+        from bigdl.util.common import init_executor_gateway
+        sc = init_nncontext()
+        init_executor_gateway(sc)
+        path = "/home/yina/Documents/models/resnet50/openvino_res50/frozen_inference_graph.xml"
+        img_path = "/home/yina/Documents/analytics-zoo/pyzoo/test/zoo/resources/serving_quick_start"
+        est = Estimator.from_openvino(model_path=path)
+        images = ImageSet.read(img_path, sc,
+                               resize_height=224, resize_width=224).get_image()
+        a = images.glom().collect()
+        shards = SparkXShards(images)
+        b = shards.rdd.glom().collect()
+
+        def pre_processing(image):
+            return {"x": image.reshape((1, 1) + image.shape)}
+
+        shards = shards.transform_shard(pre_processing)
+        c = shards.collect()
+        # images = ImageSet.read(img_path, sc,
+        #                        resize_height=224, resize_width=224).get_image().collect()
+        # input_data = np.concatenate([image.reshape((1, 1) + image.shape) for image in images],
+        #                             axis=0)
+        result = est.predict(data=shards)
+        result_c = result.collect()
+        print("aaa")
+
     def test_estimator_graph_save_load(self):
         import zoo.orca.data.pandas
 
