@@ -568,7 +568,7 @@ class TestEstimatorForGraph(TestCase):
         #                        resize_height=224, resize_width=224).get_image().collect()
         # input_data = np.concatenate([image.reshape((1, 1) + image.shape) for image in images],
         #                             axis=0)
-        result = est.predict(data=shards)
+        result = est.predict(data=shards, sc=sc)
         result_c = result.collect()
         print("aaa")
 

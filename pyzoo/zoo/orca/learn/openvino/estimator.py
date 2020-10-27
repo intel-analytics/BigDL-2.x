@@ -55,17 +55,15 @@ class OpenvinoEstimatorWrapper(Estimator):
     def fit(self, data, epochs, **kwargs):
         raise NotImplementedError
 
-    def predict(self, data, **kwargs):
-        def predict_transform(dict_data, path):
+    def predict(self, data, sc=None):
+        def predict_transform(dict_data):
             assert isinstance(dict_data, dict), "each shard should be an dict"
             assert "x" in dict_data, "key x should in each shard"
-            model = InferenceModel()
-            model.load_openvino(model_path=path, weight_path=path[:path.rindex(".")] + ".bin")
-            result = model.predict(dict_data["x"])
-            return {"prediction": result}
+            return dict_data["x"]
 
         if isinstance(data, SparkXShards):
-            return data.transform_shard(predict_transform, self.path)
+            data = data.transform_shard(predict_transform)
+            self.model.distributed_predict(data.rdd, sc)
         elif isinstance(data, (np.ndarray, list, JTensor)):
             return self.model.predict(data)
         else:
