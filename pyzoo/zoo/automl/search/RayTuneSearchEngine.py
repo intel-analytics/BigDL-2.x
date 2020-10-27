@@ -26,7 +26,7 @@ from zoo.automl.impute.impute import *
 from ray.tune import Trainable
 import ray.tune.track
 from ray.tune.suggest.bayesopt import BayesOptSearch
-from zoo.automl.logger.TensorboardXLogger import TensorboardXLogger
+from zoo.automl.logger import TensorboardXLogger
 
 
 class RayTuneSearchEngine(SearchEngine):
