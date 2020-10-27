@@ -277,5 +277,6 @@ class TorchModelSpec extends ZooSpecHelper{
     (0 until 1024).foreach{i =>
       results(i).toTensor[Float].value() should be (exceptedTarget(i))
     }
+    sc.stop()
   }
 }
