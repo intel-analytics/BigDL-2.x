@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.PythonZoo
 import java.util.{ArrayList, List => JList}
 
-import org.apache.spark.SparkContext
+import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.api.java.JavaRDD
 
 import scala.reflect.ClassTag
@@ -103,7 +103,7 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
     activityToList(outputActivity)
   }
 
-  def inferenceModelDistriPredict(model: InferenceModel, sc: SparkContext,
+  def inferenceModelDistriPredict(model: InferenceModel, sc: JavaSparkContext,
                                   inputs: JavaRDD[JList[com.intel.analytics.bigdl.python.api
                                   .JTensor]],
                                   inputIsTable: Boolean): JavaRDD[JList[Object]] = {
