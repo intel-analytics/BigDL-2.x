@@ -119,15 +119,14 @@ class BigDLEstimatorWrapper(Estimator):
         self.nn_model = NNModel(self.model, feature_preprocessing=self.feature_preprocessing)
         self.nn_estimator = NNEstimator(self.model, self.loss, self.feature_preprocessing,
                                         self.label_preprocessing)
-        if self.optimizer is not None:
-            self.nn_estimator.setOptimMethod(self.optimizer)
         if self.optimizer is None:
             from bigdl.optim.optimizer import SGD
-            optimizer = SGD()
-        self.estimator = SparkEstimator(self.model, optimizer, self.model_dir)
+            self.optimizer = SGD()
+        self.nn_estimator.setOptimMethod(self.optimizer)
+        self.estimator = SparkEstimator(self.model, self.optimizer, self.model_dir)
         self.log_dir = None
         self.app_name = None
-        self.is_last_fit_nn = False
+        self.is_nnframe_fit = False
 
     def fit(self, data, epochs, feature_cols="features", labels_cols="label", batch_size=32,
             caching_sample=True, val_data=None, val_trigger=None, val_methods=None,
@@ -139,30 +138,14 @@ class BigDLEstimatorWrapper(Estimator):
 
         if isinstance(data, DataFrame):
             if isinstance(feature_cols, list):
-                if len(feature_cols) == 1:
-                    feature_cols = feature_cols[0]
-                else:
-                    from pyspark.ml.feature import VectorAssembler
-                    assembler = VectorAssembler(
-                        inputCols=feature_cols,
-                        outputCol="features")
-                    data = assembler.transform(data)
-                    if val_data is not None:
-                        val_data = assembler.transform(val_data)
-                    feature_cols = "features"
+                data, val_data, feature_cols = \
+                    BigDLEstimatorWrapper._combine_cols(data, feature_cols, col_type="feature",
+                                                        val_data=val_data)
 
             if isinstance(labels_cols, list):
-                if len(labels_cols) == 1:
-                    labels_cols = labels_cols[0]
-                else:
-                    from pyspark.ml.feature import VectorAssembler
-                    assembler = VectorAssembler(
-                        inputCols=labels_cols,
-                        outputCol="label")
-                    data = assembler.transform(data)
-                    if val_data is not None:
-                        val_data = assembler.transform(val_data)
-                    labels_cols = "label"
+                data, val_data, labels_cols = \
+                    BigDLEstimatorWrapper._combine_cols(data, labels_cols, col_type="label",
+                                                        val_data=val_data)
 
             self.nn_estimator.setBatchSize(batch_size).setMaxEpoch(epochs)\
                 .setCachingSample(caching_sample).setFeaturesCol(feature_cols)\
@@ -187,7 +170,7 @@ class BigDLEstimatorWrapper(Estimator):
                 self.nn_estimator.setCheckpoint(self.model_dir, checkpoint_trigger)
 
             self.nn_model = self.nn_estimator.fit(data)
-            self.is_last_fit_nn = True
+            self.is_nnframe_fit = True
         elif isinstance(data, SparkXShards):
             from zoo.orca.data.utils import to_sample
 
@@ -201,33 +184,26 @@ class BigDLEstimatorWrapper(Estimator):
                 if val_data is None:
                     val_feature_set = None
                 else:
-                    assert isinstance(val_data, SparkXShards), "val_data should be a SparkXShards"
+                    assert isinstance(val_data, SparkXShards), "val_data should be a XShards"
                     val_feature_set = FeatureSet.sample_rdd(val_data.rdd.flatMap(to_sample))
                 if self.log_dir is not None and self.app_name is not None:
                     self.estimator.set_tensorboad(self.log_dir, self.app_name)
                 self.estimator.train(train_feature_set, self.loss, end_trigger, checkpoint_trigger,
                                      val_feature_set, val_methods, batch_size)
-                self.is_last_fit_nn = False
+                self.is_nnframe_fit = False
             else:
-                raise ValueError("Data and validation data should be SparkXShards, but get " +
+                raise ValueError("Data and validation data should be XShards, but get " +
                                  data.__class__.__name__)
         else:
-            raise ValueError("Data should be SparkXShards or Spark DataFrame, but get " +
+            raise ValueError("Data should be XShards or Spark DataFrame, but get " +
                              data.__class__.__name__)
         return self
 
     def predict(self, data, batch_size=8, feature_cols="features", sample_preprocessing=None):
         if isinstance(data, DataFrame):
             if isinstance(feature_cols, list):
-                if len(feature_cols) == 1:
-                    feature_cols = feature_cols[0]
-                else:
-                    from pyspark.ml.feature import VectorAssembler
-                    assembler = VectorAssembler(
-                        inputCols=feature_cols,
-                        outputCol="features")
-                    data = assembler.transform(data)
-                    feature_cols = "features"
+                data, _, feature_cols = \
+                    BigDLEstimatorWrapper._combine_cols(data, feature_cols, col_type="feature")
             self.nn_model.setBatchSize(batch_size).setFeaturesCol(feature_cols)
             if sample_preprocessing is not None:
                 self.nn_model.setSamplePreprocessing(sample_preprocessing)
@@ -239,7 +215,7 @@ class BigDLEstimatorWrapper(Estimator):
             result_rdd = self.model.predict(sample_rdd)
             return convert_predict_to_xshard(result_rdd)
         else:
-            raise ValueError("Data should be SparkXShards or Spark DataFrame, but get " +
+            raise ValueError("Data should be XShards or Spark DataFrame, but get " +
                              data.__class__.__name__)
 
     def evaluate(self, data, validation_methods=None, batch_size=32):
@@ -255,7 +231,7 @@ class BigDLEstimatorWrapper(Estimator):
             val_feature_set = FeatureSet.sample_rdd(data.rdd.flatMap(to_sample))
             return self.estimator.evaluate(val_feature_set, validation_methods, batch_size)
         else:
-            raise ValueError("Data should be SparkXShards or Spark DataFrame, but get " +
+            raise ValueError("Data should be XShards or Spark DataFrame, but get " +
                              data.__class__.__name__)
 
     def set_tensorboard(self, log_dir, app_name):
@@ -315,12 +291,11 @@ class BigDLEstimatorWrapper(Estimator):
 
             self.nn_estimator = NNEstimator(self.model, self.loss, self.feature_preprocessing,
                                             self.label_preprocessing)
-            if self.optimizer is not None:
-                self.nn_estimator.setOptimMethod(self.optimizer)
-                self.estimator = SparkEstimator(self.model, self.optimizer, self.model_dir)
-            else:
+            if self.optimizer is None:
                 from bigdl.optim.optimizer import SGD
-                self.estimator = SparkEstimator(self.model, SGD(), self.model_dir)
+                self.optimizer = SGD()
+            self.nn_estimator.setOptimMethod(self.optimizer)
+            self.estimator = SparkEstimator(self.model, self.optimizer, self.model_dir)
             self.nn_model = NNModel(self.model, feature_preprocessing=self.feature_preprocessing)
         return self
 
@@ -337,13 +312,35 @@ class BigDLEstimatorWrapper(Estimator):
         self.estimator.set_l2_norm_gradient_clipping(clip_norm)
 
     def get_train_summary(self, tag=None):
-        if self.is_last_fit_nn:
+        if self.is_nnframe_fit:
             return self.nn_estimator.getTrainSummary()
         else:
             return self.estimator.get_train_summary(tag=tag)
 
     def get_validation_summary(self, tag=None):
-        if self.is_last_fit_nn:
+        if self.is_nnframe_fit:
             return self.nn_estimator.getValidationSummary()
         else:
             return self.estimator.get_validation_summary(tag=tag)
+
+    @staticmethod
+    def _combine_cols(data, cols, col_type="feature", val_data=None):
+        if col_type == "feature":
+            output_col_name = "features"
+        elif col_type == "label":
+            output_col_name = "label"
+        else:
+            raise ValueError("col_type only support feature and label, but get " + col_type)
+
+        if isinstance(cols, list):
+            if len(cols) == 1:
+                output_col_name = cols[0]
+            else:
+                from pyspark.ml.feature import VectorAssembler
+                assembler = VectorAssembler(
+                    inputCols=cols,
+                    outputCol=output_col_name)
+                data = assembler.transform(data)
+                if val_data is not None:
+                    val_data = assembler.transform(val_data)
+        return data, val_data, output_col_name

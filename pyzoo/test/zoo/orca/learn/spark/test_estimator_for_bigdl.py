@@ -208,6 +208,9 @@ class TestEstimatorForKeras(TestCase):
                                    feature_preprocessing=SeqToTensor([2]),
                                    label_preprocessing=SeqToTensor([2]))
         est.fit(df, 1, batch_size=4, feature_cols=["user", "age"], labels_cols=["label1", "label2"])
+        result = est.predict(df, feature_cols=["user", "age"])
+        result_c = result.collect()
+        assert type(result).__name__ == 'DataFrame'
 
     def test_xshards_spark_estimator(self):
         resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
