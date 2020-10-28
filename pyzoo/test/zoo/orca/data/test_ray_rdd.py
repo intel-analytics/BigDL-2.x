@@ -48,6 +48,9 @@ class Add1Actor:
         import ray
         return ray.services.get_node_ip_address()
 
+    def add_one(self, partition):
+        return [i + 1 for i in partition]
+
 
 def test_assign_partitions_to_actors(orca_context_fixture):
 
@@ -79,6 +82,50 @@ def test_assign_partitions_to_actors_one_to_one_fail(orca_context_fixture):
         parts_list, _ = ray_rdd.assign_partitions_to_actors(actors, one_to_one=True)
 
         assert excinfo.match("there must be the same number of actors and partitions")
+
+
+def test_map_partitions_with_actors(orca_context_fixture):
+
+    sc = orca_context_fixture
+    rdd = sc.parallelize(range(1000), 7)
+
+    ray_rdd = RayRdd.from_spark_rdd(rdd)
+
+    actors = [Add1Actor.remote() for i in range(3)]
+    map_func = lambda actor, part_ref: actor.add_one.remote(part_ref)
+    result_rdd = ray_rdd.map_partitions_with_actors(actors, map_func, gang_scheduling=False)
+    results = result_rdd.collect()
+
+    assert results == list(range(1, 1001))
+
+
+def test_map_partitions_with_actors_gang_scheduling_fail(orca_context_fixture):
+
+    sc = orca_context_fixture
+    rdd = sc.parallelize(range(1000), 7)
+
+    ray_rdd = RayRdd.from_spark_rdd(rdd)
+
+    actors = [Add1Actor.remote() for i in range(3)]
+    map_func = lambda actor, part_ref: actor.add_one.remote(part_ref)
+    with pytest.raises(AssertionError) as excinfo:
+        result_rdd = ray_rdd.map_partitions_with_actors(actors, map_func)
+        assert excinfo.match("there must be the same number of actors and partitions")
+
+
+def test_map_partitions_with_actors_gang_scheduling(orca_context_fixture):
+
+    sc = orca_context_fixture
+    rdd = sc.parallelize(range(1000), 7)
+
+    ray_rdd = RayRdd.from_spark_rdd(rdd)
+
+    actors = [Add1Actor.remote() for i in range(7)]
+    map_func = lambda actor, part_ref: actor.add_one.remote(part_ref)
+    result_rdd = ray_rdd.map_partitions_with_actors(actors, map_func, gang_scheduling=True)
+    results = result_rdd.collect()
+
+    assert results == list(range(1, 1001))
 
 
 if __name__ == "__main__":
