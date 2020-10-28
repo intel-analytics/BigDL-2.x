@@ -19,6 +19,7 @@ import time
 from zoo.serving.schema import *
 import httpx
 import json
+import uuid
 
 RESULT_PREFIX = "cluster-serving_"
 
@@ -49,11 +50,11 @@ class API:
 
 
 class InputQueue(API):
-    def __init__(self, host=None, port=None, sync=False, frontend_url=None):
+    def __init__(self, host=None, port=None, sync=True, frontend_url=None):
         super().__init__(host, port)
-        self.sync = sync
-        self.frontend_url = frontend_url
-        if self.sync:
+        self.frontend_url = None
+        if self.frontend_url:
+            # frontend_url is provided, using frontend
             try:
                 res = httpx.get(frontend_url)
                 if res.status_code == 200:
@@ -64,19 +65,50 @@ class InputQueue(API):
                     raise ConnectionError()
             except Exception as e:
                 print("Connection error, please check your HTTP server. Error msg is ", e)
+        else:
+            self.output_queue = OutputQueue(host, port)
 
         # TODO: these params can be read from config in future
         self.input_threshold = 0.6
         self.interval_if_error = 1
 
-    def predict(self, request_str):
+    def predict(self, request_data, timeout=5):
         """
-        Sync API, block waiting until get response
+        :param request_data:
+        :param time_sleep:
         :return:
         """
-        response = self.cli.post(self.frontend_url + "/predict", data=request_str)
-        predictions = json.loads(response.text)['predictions']
-        processed = predictions[0].lstrip("{value=").rstrip("}")
+        def json_to_ndarray_dict(json_str):
+            ndarray_dict = {}
+            data_dict = json.loads(json_str)['instances'][0]
+            for key in data_dict.keys():
+                ndarray_dict[key] = np.array(data_dict[key])
+            return ndarray_dict
+
+        if self.frontend_url:
+            response = self.cli.post(self.frontend_url + "/predict", data=request_data)
+            predictions = json.loads(response.text)['predictions']
+            processed = predictions[0].lstrip("{value=").rstrip("}")
+        else:
+            try:
+                json.loads(request_data)
+                input_dict = json_to_ndarray_dict(request_data)
+            except Exception as e:
+                if isinstance(request_data, dict):
+                    input_dict = request_data
+                else:
+                    input_dict = {'t': request_data}
+
+            uri = str(uuid.uuid4())
+            self.enqueue(uri, **input_dict)
+            processed = "[]"
+            time_sleep = 0.001
+            while time_sleep < timeout:
+                processed = self.output_queue.query_and_delete(uri)
+                if processed != "[]":
+                    break
+                time.sleep(time_sleep)
+                time_sleep += 0.001
         return processed
 
     def enqueue(self, uri, **data):
@@ -179,7 +211,7 @@ class OutputQueue(API):
         return decoded
 
     def query_and_delete(self, uri):
-        self.query(uri, True)
+        return self.query(uri, True)
 
     def query(self, uri, delete=False):
         res_dict = self.db.hgetall(RESULT_PREFIX + self.name + ':' + uri)
@@ -212,4 +244,5 @@ class OutputQueue(API):
         data = record_batch[0].to_numpy()
         shape_list = record_batch[1].to_pylist()
         shape = [i for i in shape_list if i]
-        return data.reshape(shape)
+        ndarray = data.reshape(shape)
+        return ndarray
