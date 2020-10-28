@@ -16,7 +16,7 @@
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.automl.logger.TensorboardXLogger import TensorboardXLogger
+from zoo.automl.logger import TensorboardXLogger
 import numpy as np
 import random
 import os.path
@@ -45,4 +45,12 @@ class TestTensorboardXLogger(ZooTestCase):
                  "matrix_bad": np.nan}
         logger = TensorboardXLogger(os.path.abspath(os.path.expanduser("~/test_tbxlogger")))
         logger.run(test_config, test_metric)
+        logger.close()
+
+    def test_tbxlogger_keys(self):
+        test_config = {"run1": {"lr": 0.01}}
+        test_metric = {"run2": {"lr": 0.02}}
+        logger = TensorboardXLogger(os.path.abspath(os.path.expanduser("~/test_tbxlogger")))
+        with pytest.raises(Exception):
+            logger.run(test_config, test_metric)
         logger.close()
