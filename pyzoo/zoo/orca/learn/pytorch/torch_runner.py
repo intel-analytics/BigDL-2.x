@@ -97,7 +97,7 @@ class TorchRunner:
         logger.debug("Creating loss.")
         if isinstance(self.loss_creator, torch.nn.modules.loss._Loss):
             self.criterion = self.loss_creator
-        else:
+        else:  # Torch loss is also callable.
             import types
             assert isinstance(self.loss_creator, types.FunctionType), \
                 "Must provide a torch loss instance or a loss_creator function"
