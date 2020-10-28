@@ -110,9 +110,10 @@ class PyTorchRayEstimator:
                 for i, worker in enumerate(self.remote_workers)
             ])
 
-            ip = ray.services.get_node_ip_address()
-            port = utils.find_free_port()
-            address = "tcp://{ip}:{port}".format(ip=ip, port=port)
+            head_worker = self.remote_workers[0]
+            address = ray.get(head_worker.setup_address.remote())
+
+            logger.info(f"initializing pytorch process group on {address}")
 
             ray.get([
                 worker.setup_torch_distribute.remote(address, i, num_nodes)
