@@ -24,8 +24,7 @@ from pyspark.sql.functions import col, udf
 from bigdl.optim.optimizer import *
 from zoo.common.nncontext import *
 from zoo.feature.image import *
-from zoo.pipeline.api.net.torch_net import TorchNet
-from zoo.pipeline.api.net.torch_criterion import TorchCriterion
+from zoo.pipeline.api.torch import TorchModel, TorchLoss
 from zoo.pipeline.nnframes import *
 from zoo.pipeline.api.keras.metrics import Accuracy
 
@@ -34,7 +33,9 @@ from zoo.pipeline.api.keras.metrics import Accuracy
 class CatDogModel(nn.Module):
     def __init__(self):
         super(CatDogModel, self).__init__()
-        self.features = torchvision.models.resnet18(pretrained=True).eval()
+        self.features = torchvision.models.resnet18(pretrained=True)
+        for parameter in self.features.parameters():
+            parameter.requires_grad_(False)
         self.dense1 = nn.Linear(1000, 2)
 
     def forward(self, x):
@@ -68,12 +69,12 @@ if __name__ == '__main__':
         num_cores_per_executor = 4
         sc = init_spark_on_local(cores=4, conf={"spark.driver.memory": "10g"})
 
-    torchnet = TorchNet.from_pytorch(CatDogModel(), [4, 3, 224, 224])
+    torchnet = TorchModel.from_pytorch(CatDogModel())
 
     def lossFunc(input, target):
         return nn.NLLLoss().forward(input, target.flatten().long())
 
-    torchcriterion = TorchCriterion.from_pytorch(lossFunc, [1, 2], torch.LongTensor([1]))
+    torchcriterion = TorchLoss.from_pytorch(lossFunc)
 
     # prepare training data as Spark DataFrame
     image_path = sys.argv[1]
