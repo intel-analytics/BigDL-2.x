@@ -101,7 +101,7 @@ class PyTorchRayEstimator:
         if backend == "pytorch":
             cores_per_node = ray_ctx.ray_node_cpu_cores // workers_per_node
             num_nodes = ray_ctx.num_ray_nodes * workers_per_node
-            RemoteRunner = ray.remote(num_cpus=1)(TorchRunner)
+            RemoteRunner = ray.remote(num_cpus=cores_per_node)(TorchRunner)
             self.remote_workers = [
                 RemoteRunner.remote(**params) for i in range(num_nodes)
             ]

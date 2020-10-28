@@ -119,6 +119,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores,
-                      num_nodes=args.num_nodes, memory=args.memory)
+                      num_nodes=args.num_nodes, memory=args.memory,
+                      init_ray_on_spark=True)
     train_example(workers_per_node=args.workers_per_node)
     stop_orca_context()

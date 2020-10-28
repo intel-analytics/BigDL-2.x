@@ -187,9 +187,10 @@ def init_orca_context(cluster_mode="local", cores=2, memory="2g", num_nodes=1,
                 "extra_params", "num_ray_nodes", "ray_node_cpu_cores"]:
         if key in kwargs:
             ray_args[key] = kwargs[key]
-    from zoo.ray import RayContext
-    ray_ctx = RayContext(sc, **ray_args)
+
     if init_ray_on_spark:
+        from zoo.ray import RayContext
+        ray_ctx = RayContext(sc, **ray_args)
         driver_cores = 0  # This is the default value.
         if "driver_cores" in kwargs:
             driver_cores = kwargs["driver_cores"]
