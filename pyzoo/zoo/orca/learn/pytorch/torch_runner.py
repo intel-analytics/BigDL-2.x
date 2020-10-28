@@ -95,10 +95,12 @@ class TorchRunner:
         if not self.loss_creator:
             return
         logger.debug("Creating loss.")
-        if inspect.isclass(self.loss_creator) and issubclass(
-                self.loss_creator, torch.nn.modules.loss._Loss):
-            self.criterion = self.loss_creator()
+        if isinstance(self.loss_creator, torch.nn.modules.loss._Loss):
+            self.criterion = self.loss_creator
         else:
+            import types
+            assert isinstance(self.loss_creator, types.FunctionType), \
+                "Must provide a torch loss instance or a loss_creator function"
             self.criterion = self.loss_creator(self.config)
 
     def _create_schedulers_if_available(self):
