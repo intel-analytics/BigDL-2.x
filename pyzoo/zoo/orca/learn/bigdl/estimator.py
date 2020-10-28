@@ -139,12 +139,12 @@ class BigDLEstimatorWrapper(Estimator):
         if isinstance(data, DataFrame):
             if isinstance(feature_cols, list):
                 data, val_data, feature_cols = \
-                    BigDLEstimatorWrapper._combine_cols(data, feature_cols, col_type="feature",
+                    BigDLEstimatorWrapper._combine_cols(data, feature_cols, col_name="features",
                                                         val_data=val_data)
 
             if isinstance(labels_cols, list):
                 data, val_data, labels_cols = \
-                    BigDLEstimatorWrapper._combine_cols(data, labels_cols, col_type="label",
+                    BigDLEstimatorWrapper._combine_cols(data, labels_cols, col_name="label",
                                                         val_data=val_data)
 
             self.nn_estimator.setBatchSize(batch_size).setMaxEpoch(epochs)\
@@ -203,7 +203,7 @@ class BigDLEstimatorWrapper(Estimator):
         if isinstance(data, DataFrame):
             if isinstance(feature_cols, list):
                 data, _, feature_cols = \
-                    BigDLEstimatorWrapper._combine_cols(data, feature_cols, col_type="feature")
+                    BigDLEstimatorWrapper._combine_cols(data, feature_cols, col_name="features")
             self.nn_model.setBatchSize(batch_size).setFeaturesCol(feature_cols)
             if sample_preprocessing is not None:
                 self.nn_model.setSamplePreprocessing(sample_preprocessing)
@@ -324,23 +324,16 @@ class BigDLEstimatorWrapper(Estimator):
             return self.estimator.get_validation_summary(tag=tag)
 
     @staticmethod
-    def _combine_cols(data, cols, col_type="feature", val_data=None):
-        if col_type == "feature":
-            output_col_name = "features"
-        elif col_type == "label":
-            output_col_name = "label"
-        else:
-            raise ValueError("col_type only support feature and label, but get " + col_type)
-
+    def _combine_cols(data, cols, col_name="features", val_data=None):
         if isinstance(cols, list):
             if len(cols) == 1:
-                output_col_name = cols[0]
+                col_name = cols[0]
             else:
                 from pyspark.ml.feature import VectorAssembler
                 assembler = VectorAssembler(
                     inputCols=cols,
-                    outputCol=output_col_name)
+                    outputCol=col_name)
                 data = assembler.transform(data)
                 if val_data is not None:
                     val_data = assembler.transform(val_data)
-        return data, val_data, output_col_name
+        return data, val_data, col_name
