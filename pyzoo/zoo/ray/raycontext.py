@@ -466,7 +466,8 @@ class RayContext(object):
                 init_executor_gateway(self.sc)
                 print("JavaGatewayServer has been successfully launched on executors")
                 redis_address = self._start_cluster()
-                self._address_info = self._start_driver(num_cores=driver_cores, redis_address=redis_address)
+                self._address_info = self._start_driver(num_cores=driver_cores,
+                                                        redis_address=redis_address)
 
             print(self._address_info)
             kill_redundant_log_monitors(self._address_info["redis_address"])
