@@ -496,12 +496,12 @@ class RayContext(object):
                                                    verbose=self.verbose)
         return self.ray_processesMonitor.master.master_addr
 
-    def _start_restricted_worker(self, num_cores, node_ip_address):
+    def _start_restricted_worker(self, num_cores, node_ip_address, redis_address):
         extra_param = {"node-ip-address": node_ip_address}
         if self.extra_params is not None:
             extra_param.update(self.extra_params)
         command = RayServiceFuncGenerator._get_raylet_command(
-            redis_address=self.redis_address,
+            redis_address=redis_address,
             ray_exec="ray",
             password=self.redis_password,
             ray_node_cpu_cores=num_cores,
@@ -516,9 +516,10 @@ class RayContext(object):
     def _start_driver(self, num_cores, redis_address):
         print("Start to launch ray driver on local")
         import ray.services
-        node_ip = ray.services.get_node_ip_address(self.redis_address)
+        node_ip = ray.services.get_node_ip_address(redis_address)
         self._start_restricted_worker(num_cores=num_cores,
-                                      node_ip_address=node_ip)
+                                      node_ip_address=node_ip,
+                                      redis_address=redis_address)
         ray.shutdown()
         return ray.init(address=redis_address,
                         redis_password=self.ray_service.password,
