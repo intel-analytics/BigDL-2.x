@@ -17,7 +17,7 @@
 import ray
 from ray import tune
 from copy import deepcopy
-
+import os
 
 from zoo.automl.search.abstract import *
 from zoo.automl.common.util import *
@@ -26,6 +26,7 @@ from zoo.automl.impute.impute import *
 from ray.tune import Trainable
 import ray.tune.track
 from ray.tune.suggest.bayesopt import BayesOptSearch
+from zoo.automl.logger import TensorboardXLogger
 
 
 class RayTuneSearchEngine(SearchEngine):
@@ -50,6 +51,7 @@ class RayTuneSearchEngine(SearchEngine):
         self.trials = None
         self.remote_dir = remote_dir
         self.name = name
+        self.logs_dir = os.path.abspath(os.path.expanduser(logs_dir))
 
     def compile(self,
                 input_df,
@@ -152,6 +154,7 @@ class RayTuneSearchEngine(SearchEngine):
         if not self.search_algorithm:
             analysis = tune.run(
                 self.train_func,
+                local_dir=self.logs_dir,
                 name=self.name,
                 stop=self.stop_criteria,
                 config=self.search_space,
@@ -164,6 +167,7 @@ class RayTuneSearchEngine(SearchEngine):
         else:
             analysis = tune.run(
                 self.train_func,
+                local_dir=self.logs_dir,
                 name=self.name,
                 config=self.fixed_params,
                 stop=self.stop_criteria,
@@ -176,6 +180,19 @@ class RayTuneSearchEngine(SearchEngine):
             )
 
         self.trials = analysis.trials
+
+        # Visualization code for ray (leaderboard)
+        # catch the ImportError Since it has been processed in TensorboardXLogger
+        tf_config, tf_metric = self._log_adapt(analysis)
+        try:
+            self.logger = TensorboardXLogger(os.path.join(self.logs_dir, self.name+"_leaderboard"))
+            self.logger.run(tf_config, tf_metric)
+            self.logger.close()
+        except ImportError:
+            pass
+        except:
+            raise
+
         return analysis
 
     def get_best_trials(self, k=1):
@@ -442,3 +459,13 @@ class RayTuneSearchEngine(SearchEngine):
             else:
                 tune_config[k] = v
         return tune_config
+
+    def _log_adapt(self, analysis):
+        # config
+        config = analysis.get_all_configs()
+        # metric
+        metric_raw = analysis.fetch_trial_dataframes()
+        metric = {}
+        for key, value in metric_raw.items():
+                metric[key] = dict(zip(list(value.columns), list(value.iloc[-1].values)))
+        return config, metric
