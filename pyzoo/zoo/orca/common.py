@@ -209,9 +209,10 @@ def stop_orca_context():
     if SparkContext._active_spark_context is not None:
         print("Stopping orca context")
         from zoo.ray import RayContext
-        ray_ctx = RayContext.get(initialize=False)
-        if ray_ctx.initialized:
-            ray_ctx.stop()
+        if RayContext._active_ray_context is not None:
+            ray_ctx = RayContext.get(initialize=False)
+            if ray_ctx.initialized:
+                ray_ctx.stop()
         sc = SparkContext.getOrCreate()
         if sc.getConf().get("spark.master").startswith("spark://"):
             from zoo import stop_spark_standalone
