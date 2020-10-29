@@ -276,7 +276,9 @@ def read_parquet(file_path, columns=None, schema=None, **options):
     containing parquet files. Local file system, HDFS, and AWS S3 are supported.
     :param columns: list of column name, default=None.
     If not None, only these columns will be read from the file.
-    :param kwargs: Any additional kwargs.
+    :param schema: pyspark.sql.types.StructType for the input schema or
+    a DDL-formatted string (For example col0 INT, col1 DOUBLE).
+    :param options: other options for reading parquet.
     :return: An instance of SparkXShards.
     """
     sc = init_nncontext()
