@@ -549,27 +549,33 @@ class TestEstimatorForGraph(TestCase):
         from zoo.orca.data import SparkXShards
         from bigdl.util.common import init_executor_gateway
         sc = init_nncontext()
-        init_executor_gateway(sc)
+        # init_executor_gateway(sc)
         path = "/home/yina/Documents/models/resnet50/openvino_res50/frozen_inference_graph.xml"
         img_path = "/home/yina/Documents/analytics-zoo/pyzoo/test/zoo/resources/serving_quick_start"
         est = Estimator.from_openvino(model_path=path)
         images = ImageSet.read(img_path, sc,
                                resize_height=224, resize_width=224).get_image()
-        a = images.glom().collect()
         shards = SparkXShards(images)
-        b = shards.rdd.glom().collect()
 
         def pre_processing(image):
-            return {"x": image.reshape((1, 1) + image.shape)}
+            # return {"x": image.reshape((1, 1) + image.shape)}
+            return {"x": np.expand_dims(image, axis=0)}
 
         shards = shards.transform_shard(pre_processing)
-        c = shards.collect()
-        # images = ImageSet.read(img_path, sc,
-        #                        resize_height=224, resize_width=224).get_image().collect()
+        b = shards.rdd.glom().collect()
+        num = shards.num_partitions()
+        result = est.predict(shards, sc=sc)
+        result_c = result.collect()
+        """
+        images = ImageSet.read(img_path, sc,
+                               resize_height=224, resize_width=224).get_image().collect()
+        images.extend(images)
         # input_data = np.concatenate([image.reshape((1, 1) + image.shape) for image in images],
         #                             axis=0)
-        result = est.predict(data=shards, sc=sc)
-        result_c = result.collect()
+        input_data = np.concatenate([np.expand_dims(image, axis=0) for image in images], axis=0)
+        result = est.predict(data=input_data, sc=sc)
+        """
+
         print("aaa")
 
     def test_estimator_graph_save_load(self):
