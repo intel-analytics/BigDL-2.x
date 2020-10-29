@@ -92,6 +92,9 @@ class OpenvinoEstimatorWrapper(Estimator):
                     for i in range(split_num):
                         data_to_be_rdd.append([])
                     for x in flattened:
+                        assert isinstance(x, np.ndarray), "the data in the data list should be " \
+                                                          "ndarrays, but get " + \
+                                                          x.__class__.__name__
                         assert len(x) == data_length, \
                             "the ndarrays in data must all have the same size in first dimension" \
                             ", got first ndarray of size {} and another {}".format(data_length,
