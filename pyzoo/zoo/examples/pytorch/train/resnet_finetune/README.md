@@ -3,21 +3,23 @@
 In this example we use a pre-trained ResNet model, adding an extra layer to the end, to train
 a dog-vs-cat image classification model.
 
-## Requirements
-* Python 3.6
-* JDK 1.8
-* Pytorch & TorchVision 1.1.0
+# Requirements
+* Python 3.7
+* torch 1.5.0 or above
+* torchvision 0.6.0 or above
 * Apache Spark 2.4.3(pyspark)
-* Analytics-Zoo 0.6.0-SNAPSHOT.dev8 and above
-* Jupyter Notebook, matplotlib
+* jep 3.9.0
+* Java 1.8
 
 ## Prepare environments
 We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the enviroments, especially if you want to run on a yarn cluster(yarn-client mode only). 
 ```
-conda create -n zoo python=3.6 #zoo is conda enviroment name, you can set another name you like.
+conda create -n zoo python=3.7 #zoo is conda enviroment name, you can set another name you like.
 conda activate zoo
-pip install analytics-zoo==0.6.0.dev8 jupyter matplotlib
-conda install pytorch-cpu torchvision-cpu -c pytorch
+pip install analytics-zoo==0.9.0.dev0 # or above
+pip install jep==3.9.0
+conda install pytorch torchvision cpuonly -c pytorch #command for linux
+conda install pytorch torchvision -c pytorch #command for macOS
 ```
 
 ## Image Fine Tuning
