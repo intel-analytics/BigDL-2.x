@@ -268,7 +268,7 @@ def read_file_spark(file_path, file_type, **kwargs):
     return data_shards
 
 
-def read_parquet(file_path, columns=None, **kwargs):
+def read_parquet(file_path, columns=None, schema=None, **options):
     """
     Read parquet files to SparkXShards of pandas DataFrames.
 
@@ -283,7 +283,8 @@ def read_parquet(file_path, columns=None, **kwargs):
     from pyspark.sql import SQLContext
     sqlContext = SQLContext.getOrCreate(sc)
     spark = sqlContext.sparkSession
-    df = spark.read.parquet(file_path)
+    # df = spark.read.parquet(file_path)
+    df = spark.read.load(file_path, "parquet", schema=schema, **options)
 
     if columns:
         df = df.select(*columns)
