@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.examples.serving
+package com.intel.analytics.zoo.serving.operator
 
 import com.intel.analytics.zoo.serving.arrow.ArrowDeserializer
 import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, ModelHolder}
-import com.intel.analytics.zoo.serving.operator.{ClusterServingInput, ClusterServingParams}
 import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
 import org.apache.flink.table.functions.{FunctionContext, ScalarFunction}
 
-class ClusterServingFunction(var clusterServingParams: ClusterServingParams = null,
-                             modelPath: String)
+class ClusterServingFunction()
   extends ScalarFunction {
-  if (clusterServingParams == null) {
-    clusterServingParams = new ClusterServingParams()
-  }
+  val clusterServingParams = new ClusterServingParams()
   var inference: ClusterServingInference = null
 
   override def open(context: FunctionContext): Unit = {
@@ -35,6 +31,7 @@ class ClusterServingFunction(var clusterServingParams: ClusterServingParams = nu
       ModelHolder.synchronized {
         if (ModelHolder.model == null) {
           println("Loading Cluster Serving model...")
+          val modelPath = context.getJobParameter("modelPath", "")
           val info = ClusterServingHelper
             .loadModelfromDir(modelPath, clusterServingParams._modelConcurrent)
           ModelHolder.model = info._1

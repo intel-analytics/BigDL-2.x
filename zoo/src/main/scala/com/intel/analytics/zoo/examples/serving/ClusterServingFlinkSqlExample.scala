@@ -17,15 +17,8 @@
 package com.intel.analytics.zoo.examples.serving
 
 
-import com.intel.analytics.zoo.serving.arrow.ArrowDeserializer
-import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, ModelHolder}
-import com.intel.analytics.zoo.serving.operator.{ClusterServingInferenceOperator, ClusterServingInput, ClusterServingParams}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
-import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
-import org.apache.flink.streaming.api.functions.source.{RichParallelSourceFunction, SourceFunction}
-import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
+import com.intel.analytics.zoo.serving.operator.{ClusterServingFunction, ClusterServingInferenceOperator, ClusterServingInput, ClusterServingParams}
 import org.apache.flink.table.api.{EnvironmentSettings, TableEnvironment}
-import org.apache.flink.table.functions.{FunctionContext, ScalarFunction}
 import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
 
@@ -46,8 +39,9 @@ object ClusterServingFlinkSqlExample {
     val arg = parser.parse(args, ExampleParams()).head
     val settings = EnvironmentSettings.newInstance().build()
     val tableEnv = TableEnvironment.create(settings)
+    tableEnv.getConfig.addJobParameter("modelPath", arg.modelPath)
     tableEnv.createTemporarySystemFunction("ClusterServingFunction",
-      new ClusterServingFunction(modelPath = arg.modelPath))
+      new ClusterServingFunction())
     tableEnv.executeSql("CREATE TABLE Input (`uri` STRING, data STRING) WITH (" +
       s"'connector' = 'filesystem', 'path' = '${arg.inputFile}', 'format' = 'csv')")
     // run a SQL query on the Table and retrieve the result as a new Table
