@@ -302,7 +302,6 @@ class TestEstimatorForKeras(TestCase):
         eval_result = est.evaluate(dataset)
         assert 'acc Top1Accuracy' in eval_result
 
-
     def test_estimator_keras_tensorboard(self):
         import zoo.orca.data.pandas
 
