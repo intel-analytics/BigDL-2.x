@@ -32,6 +32,7 @@ class ClusterServingFunction()
         if (ModelHolder.model == null) {
           println("Loading Cluster Serving model...")
           val modelPath = context.getJobParameter("modelPath", "")
+          require(modelPath != "", "You have not provide modelPath in job parameter.")
           val info = ClusterServingHelper
             .loadModelfromDir(modelPath, clusterServingParams._modelConcurrent)
           ModelHolder.model = info._1
