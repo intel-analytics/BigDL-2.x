@@ -79,7 +79,6 @@ class OpenvinoEstimatorWrapper(Estimator):
             if sc is None:
                 return self.model.predict(data)
             else:
-                from zoo.orca.learn.tf.utils import convert_predict_to_xshard
                 total_core_num = self.core_num * self.node_num
                 if isinstance(data, np.ndarray):
                     split_num = min(total_core_num, data.shape[0])
