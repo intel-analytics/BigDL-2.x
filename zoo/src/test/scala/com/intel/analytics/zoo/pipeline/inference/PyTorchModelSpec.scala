@@ -49,12 +49,30 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
     }
   }
 
+  val resnetModel =
+    s"""
+       |import torch
+       |import torchvision.models as models
+       |from zoo.pipeline.api.torch import zoo_pickle_module
+       |
+       |model = models.resnet18(pretrained = True)
+       |print("after load model and before save the model's path")
+       |torch.save(model, "$modelPath", pickle_module=zoo_pickle_module)
+       |print("before model two")
+       |modelMulti = models.resnet50(pretrained = True)
+       |print("before save model two")
+       |torch.save(modelMulti, "$modelPathMulti", pickle_module=zoo_pickle_module)
+       |print("after model code")
+       |print("before load model")
+       |""".stripMargin
+
   protected def beforeAll()  {
     println("before get path")
     model = new InferenceModel(currentNum) { }
     model2 = new InferenceModel(currentNum) { }
     modelPath = ZooSpecHelper.createTmpFile().getAbsolutePath()
     modelPathMulti = ZooSpecHelper.createTmpFile().getAbsolutePath()
+    PythonInterpreter.exec(resnetModel)
   }
 
   protected def afterAll() {
@@ -62,27 +80,9 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
     model2.doRelease()
   }
 
-  val resnetModel =
-    s"""
-       |import torch
-       |import torchvision.models as models
-       |from zoo.pipeline.api.torch import zoo_pickle_module
-       |
-       |model = models.resnet50(pretrained = True)
-       |print("after load model and before save the model's path")
-       |torch.save(model, "$modelPath", pickle_module=zoo_pickle_module)
-       |print("before model two")
-       |modelMulti = models.resnet101(pretrained = True)
-       |print("before save model two")
-       |torch.save(modelMulti, "$modelPathMulti", pickle_module=zoo_pickle_module)
-       |print("after model code")
-       |print("before load model")
-       |""".stripMargin
-
   "PyTorch Model" should "be loaded" in {
     beforeAll()
     ifskipTest()
-    PythonInterpreter.exec(resnetModel)
 
     val modelone = TorchModel.loadModel(modelPath)
     modelone.evaluate()
@@ -126,6 +126,7 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
   "PyTorch Model" should "do predict" in {
     beforeAll()
     ifskipTest()
+
     val inputTensor = Tensor[Float](1, 3, 224, 224).rand()
     model.doLoadPyTorch(modelPath)
     model2.doLoadPyTorch(modelPathMulti)
@@ -153,7 +154,7 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
   "PyTorch Models' weights" should "be the same" in {
     beforeAll()
     ifskipTest()
-    println("start test")
+
     val threads = List.range(0, currentNum).map(i => {
       new Thread() {
         override def run(): Unit = {
