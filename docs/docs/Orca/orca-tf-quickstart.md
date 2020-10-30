@@ -1,14 +1,14 @@
-## **Orca TensorFlow Quickstart**
 
 **In this guide we’ll show you how to organize your TensorFlow code into Orca in 3 steps**
 
-Organizing your code with Orca makes your code:
-* Keep all the flexibility
+Scaling your TensorFlow applications with Orca makes your code:
+
+* Well-organized and flexible
 * Easier to reproduce
-* Utilize distributed training without changing your model
+* Able to perform distributed training without changing your model
 
 ### **Step 0: Prepare environment**
-Download and install latest analytics whl by following instructions ([here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#install-the-latest-nightly-build-wheels-for-pip)).
+Download and install latest analytics whl by following [instructions](../../#PythonUserGuide/install/#install-the-latest-nightly-build-wheels-for-pip).
 
 ```bash
 conda create -y -n analytics-zoo python==3.7.7
@@ -18,7 +18,7 @@ pip install tensorflow==1.15.0
 pip install psutil
 ```
 
-Note: conda environment is required to run on Yarn, but not strictly necessary for running on local.
+**Note:** Conda environment is required to run on Yarn, but not strictly necessary for running on local.
 
 ### **Step 1: Init Orca Context**
 ```python
@@ -32,11 +32,11 @@ init_orca_context(cluster_mode="local", cores=4)
 # run in yarn client mode
 init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2, driver_memory="6g")
 ```
-* Reference: [Orca Context](https://analytics-zoo.github.io/master/#Orca/context/)
+View [Orca Context](../../#Orca/context/) for more details.
 
 ### **Step 2: Define Model, Loss Function and Metrics**
 
-#### **For Keras Users**
+* For Keras Users
 ```python
 model = tf.keras.Sequential(
     [tf.keras.layers.Conv2D(20, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
@@ -56,7 +56,7 @@ model.compile(optimizer=tf.keras.optimizers.RMSprop(),
               metrics=['accuracy'])
 ```
 
-#### **For Graph Users**
+* For Graph Users
 ```python
 def accuracy(logits, labels):
     predictions = tf.argmax(logits, axis=1, output_type=labels.dtype)
@@ -87,8 +87,8 @@ acc = accuracy(logits, labels)
 ```
 
 ### **Step 3: Fit with Orca TensorFlow Estimator**
-1. Define the dataset in whatever way you want. Orca just needs tf.data.Dataset, Spark DataFrame or Orca SparkXShards.
-```python
+1)  Define the dataset in whatever way you want. Orca supports [tf.data.Dataset](https://www.tensorflow.org/api_docs/python/tf/data/Dataset), [Spark DataFrame](https://spark.apache.org/docs/latest/sql-programming-guide.html) and [Orca SparkXShards](../../#Orca/data/).
+```pythoin
 def preprocess(x, y):
     return tf.to_float(tf.reshape(x, (-1, 28, 28, 1))) / 255.0, y
 
@@ -103,7 +103,8 @@ val_dataset = tf.data.Dataset.from_tensor_slices((val_feature, val_label))
 val_dataset = val_dataset.map(preprocess)
 ```
 
-2. Create an estimator
+2)  Create an Estimator
+
 * For Keras Users
 ```python
 est = Estimator.from_keras(keras_model=model)
@@ -118,21 +119,22 @@ est = Estimator.from_graph(inputs=images,
                            metrics={"acc": acc})
 ```
 
-3. Fit with estimator
+3)  Fit with Estimator
 ```python
 est.fit(data=train_dataset,
         batch_size=320,
-        epochs=max_epoch,
+        epochs=100,
         validation_data=val_dataset)
 ```
 
-4. Evaluate with estimator
+4)  Evaluate with Estimator
 ```python
 result = est.evaluate(val_dataset)
 print(result)
 ```
 
-5. Save Model
+5)  Save Model
+
 * For Keras Users
 ```python
 est.save_keras_model("/tmp/mnist_keras.h5")
@@ -142,4 +144,4 @@ est.save_keras_model("/tmp/mnist_keras.h5")
 est.save_tf_checkpoint("/tmp/lenet/model")
 ```
 
-**Note:** you should call `stop_orca_context()` when your application finishes.
+**Note:** You should call `stop_orca_context()` when your application finishes.
