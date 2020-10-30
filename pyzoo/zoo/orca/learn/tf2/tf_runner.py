@@ -189,8 +189,6 @@ class TFDistributedDatasetHandler(DatasetHandler):
         return dataset
 
     def _handle_sharding(self, dataset):
-        from tensorflow.python.distribute.input_ops import auto_shard_dataset
-        dataset = auto_shard_dataset(dataset, self.size, self.rank)
         return dataset
 
     def _handle_batch_size(self, config):
