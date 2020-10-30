@@ -49,29 +49,23 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
     }
   }
 
-  val resnetModel =
-    s"""
-       |import torch
-       |import torchvision.models as models
-       |from zoo.pipeline.api.torch import zoo_pickle_module
-       |
-       |model = models.resnet18(pretrained = True)
-       |print("after load model and before save the model's path")
-       |torch.save(model, "$modelPath", pickle_module=zoo_pickle_module)
-       |print("before model two")
-       |modelMulti = models.resnet50(pretrained = True)
-       |print("before save model two")
-       |torch.save(modelMulti, "$modelPathMulti", pickle_module=zoo_pickle_module)
-       |print("after model code")
-       |print("before load model")
-       |""".stripMargin
-
   protected def beforeAll()  {
     println("before get path")
     model = new InferenceModel(currentNum) { }
     model2 = new InferenceModel(currentNum) { }
     modelPath = ZooSpecHelper.createTmpFile().getAbsolutePath()
     modelPathMulti = ZooSpecHelper.createTmpFile().getAbsolutePath()
+    val resnetModel =
+    s"""
+       |import torch
+       |import torchvision.models as models
+       |from zoo.pipeline.api.torch import zoo_pickle_module
+       |
+       |model = models.resnet18(pretrained = True)
+       |torch.save(model, "$modelPath", pickle_module=zoo_pickle_module)
+       |modelMulti = models.resnet50(pretrained = True)
+       |torch.save(modelMulti, "$modelPathMulti", pickle_module=zoo_pickle_module)
+       |""".stripMargin
     PythonInterpreter.exec(resnetModel)
   }
 
