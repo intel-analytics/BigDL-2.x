@@ -169,17 +169,19 @@ class TFDistributedDatasetHandler(DatasetHandler):
         data, label = ray_partition_get_data_label(ray.get(dataset),
                                                    allow_tuple=True,
                                                    allow_list=False)
+
         def dataset_fn(input_context):
             dataset = tf.data.Dataset.from_tensor_slices((data, label))
             options = tf.data.Options()
-            options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.OFF
+            options.experimental_distribute.auto_shard_policy = \
+                tf.data.experimental.AutoShardPolicy.OFF
             dataset = dataset.with_options(options)
             dataset = dataset.repeat()
             dataset = dataset.take(steps * local_batch_size)
             if shuffle:
                 dataset = dataset.shuffle(local_batch_size * min(steps, 10))
             dataset = dataset.batch(local_batch_size)
-            return  dataset
+            return dataset
 
         from tensorflow.python.distribute import distribution_strategy_context as ds_context
         strategy = ds_context.get_strategy()
@@ -195,6 +197,7 @@ class TFDistributedDatasetHandler(DatasetHandler):
         assert "batch_size" in config, "batch_size must be set in config"
         local_batch_size = config["batch_size"] // self.size
         return config, local_batch_size
+
 
 class LocalDatasetHandler(DatasetHandler):
 
@@ -217,7 +220,6 @@ class LocalDatasetHandler(DatasetHandler):
     def _handle_batch_size(self, config):
         assert "batch_size" in config, "batch_size must be set in config"
         return config, config["batch_size"]
-
 
 
 class TFRunner:
@@ -437,13 +439,11 @@ class TFRunner:
             callbacks=callbacks,
         )
 
-
         if self.backend == "tf-distributed":
             local_model = self.model_creator(self.config)
             local_model.set_weights(self.model.get_weights())
         else:
             local_model = self.model
-
 
         def predict_fn(shard):
             y = local_model.predict(shard["x"], **params)

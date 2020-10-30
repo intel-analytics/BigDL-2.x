@@ -142,6 +142,7 @@ def flatten_xy(allow_tuple=True, allow_list=True):
                 yield (fs,)
     return _flatten_xy
 
+
 def ray_partition_get_data_label(partition_data,
                                  allow_tuple=True,
                                  allow_list=True,

@@ -93,6 +93,7 @@ def model_creator(config):
     model.compile(**compile_args(config))
     return model
 
+
 def identity_model_creator(config):
     model = tf.keras.models.Sequential([
         tf.keras.layers.InputLayer(input_shape=(1)),
@@ -394,7 +395,6 @@ class TestTFRayEstimator(TestCase):
             workers_per_node=2)
 
         trainer.evaluate(train_data_shard, data_config={"batch_size": 8})
-
 
     def test_predict_xshards(self):
         train_data_shard = XShards.partition({"x": np.random.randn(100, 1),

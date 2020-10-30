@@ -246,9 +246,8 @@ class Estimator:
         stats = worker_stats[0].copy()
         return stats
 
-
     def predict(self, data_creator, batch_size=None, verbose=1,
-                 steps=None, callbacks=None, data_config=None):
+                steps=None, callbacks=None, data_config=None):
         """Evaluates the model on the validation data set."""
         logger.info("Starting predict step.")
         params = dict(
