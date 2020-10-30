@@ -321,7 +321,7 @@ class TestTFRayEstimator(TestCase):
             config=config,
             workers_per_node=2)
 
-        trainer.fit(train_data_shard, epochs=1)
+        trainer.fit(train_data_shard, epochs=1, steps_per_epoch=25)
         trainer.evaluate(train_data_shard)
 
     def test_sparkxshards_with_inbalanced_data(self):
@@ -349,8 +349,8 @@ class TestTFRayEstimator(TestCase):
             config=config,
             workers_per_node=2)
 
-        trainer.fit(train_data_shard, epochs=1)
-        trainer.evaluate(train_data_shard)
+        trainer.fit(train_data_shard, epochs=1, steps_per_epoch=25)
+        trainer.evaluate(train_data_shard, steps=25)
 
     def test_require_batch_size(self):
         train_data_shard = XShards.partition({"x": np.random.randn(100, 1),
@@ -365,7 +365,7 @@ class TestTFRayEstimator(TestCase):
             workers_per_node=2)
         with pytest.raises(ray.exceptions.RayTaskError,
                            match=r".*batch_size must be set in config*."):
-            trainer.fit(train_data_shard, epochs=1)
+            trainer.fit(train_data_shard, epochs=1, steps_per_epoch=25)
 
     def test_changing_config_during_fit(self):
         train_data_shard = XShards.partition({"x": np.random.randn(100, 1),
@@ -379,7 +379,7 @@ class TestTFRayEstimator(TestCase):
             config=config,
             workers_per_node=2)
 
-        trainer.fit(train_data_shard, epochs=1, data_config={"batch_size": 8})
+        trainer.fit(train_data_shard, epochs=1, steps_per_epoch=25,  data_config={"batch_size": 8})
 
     def test_changing_config_during_evaluate(self):
         train_data_shard = XShards.partition({"x": np.random.randn(100, 1),
