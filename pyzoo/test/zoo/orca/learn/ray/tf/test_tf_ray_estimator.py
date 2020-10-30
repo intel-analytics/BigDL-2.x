@@ -93,6 +93,14 @@ def model_creator(config):
     model.compile(**compile_args(config))
     return model
 
+def identity_model_creator(config):
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.InputLayer(input_shape=(1)),
+        tf.keras.layers.Lambda(lambda x: tf.identity(x))
+    ])
+    model.compile()
+    return model
+
 
 def create_auto_shard_datasets(config):
     import tensorflow as tf
@@ -386,3 +394,32 @@ class TestTFRayEstimator(TestCase):
             workers_per_node=2)
 
         trainer.evaluate(train_data_shard, data_config={"batch_size": 8})
+
+
+    def test_predict_xshards(self):
+        train_data_shard = XShards.partition({"x": np.random.randn(100, 1),
+                                              "y": np.random.randint(0, 1, size=(100,))})
+        expected = train_data_shard.collect()
+
+        expected = [shard["x"] for shard in expected]
+
+        for x in expected:
+            print(x.shape)
+
+        expected = np.concatenate(expected)
+
+        config = {
+        }
+        trainer = Estimator(
+            model_creator=identity_model_creator,
+            verbose=True,
+            config=config,
+            workers_per_node=2)
+
+        result = trainer.predict(train_data_shard, batch_size=10).collect()
+
+        result = [shard["x"] for shard in result]
+
+        result = np.concatenate(result)
+
+        assert np.allclose(expected, result)
