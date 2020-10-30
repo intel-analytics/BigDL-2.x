@@ -70,9 +70,6 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
     println("before get path")
     model = new InferenceModel(currentNum) { }
     model2 = new InferenceModel(currentNum) { }
-    modelPath = ZooSpecHelper.createTmpFile().getAbsolutePath()
-    modelPathMulti = ZooSpecHelper.createTmpFile().getAbsolutePath()
-    PythonInterpreter.exec(resnetModel)
   }
 
   protected def afterAll() {
@@ -83,6 +80,9 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
   "PyTorch Model" should "be loaded" in {
     beforeAll()
     ifskipTest()
+    modelPath = ZooSpecHelper.createTmpFile().getAbsolutePath()
+    modelPathMulti = ZooSpecHelper.createTmpFile().getAbsolutePath()
+    PythonInterpreter.exec(resnetModel)
 
     val modelone = TorchModel.loadModel(modelPath)
     modelone.evaluate()
@@ -126,6 +126,9 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
   "PyTorch Model" should "do predict" in {
     beforeAll()
     ifskipTest()
+    modelPath = ZooSpecHelper.createTmpFile().getAbsolutePath()
+    modelPathMulti = ZooSpecHelper.createTmpFile().getAbsolutePath()
+    PythonInterpreter.exec(resnetModel)
 
     val inputTensor = Tensor[Float](1, 3, 224, 224).rand()
     model.doLoadPyTorch(modelPath)
@@ -154,6 +157,9 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
   "PyTorch Models' weights" should "be the same" in {
     beforeAll()
     ifskipTest()
+    modelPath = ZooSpecHelper.createTmpFile().getAbsolutePath()
+    modelPathMulti = ZooSpecHelper.createTmpFile().getAbsolutePath()
+    PythonInterpreter.exec(resnetModel)
 
     val threads = List.range(0, currentNum).map(i => {
       new Thread() {
