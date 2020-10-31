@@ -538,7 +538,5 @@ class TestTimeSequenceFeature(ZooTestCase):
         assert y.shape == (sample_num - past_seq_len, 1)
 
 
-
-
 if __name__ == "__main__":
     pytest.main([__file__])
