@@ -8,7 +8,7 @@ Scaling your TensorFlow applications with Orca makes your code:
 * Able to perform distributed training without changing your model
 
 ### **Step 0: Prepare environment**
-Download and install latest analytics whl by following [instructions](../../#PythonUserGuide/install/#install-the-latest-nightly-build-wheels-for-pip).
+Download and install latest analytics-zoo whl by following [instructions](../../#PythonUserGuide/install/#install-the-latest-nightly-build-wheels-for-pip).
 
 ```bash
 conda create -y -n analytics-zoo python==3.7.7

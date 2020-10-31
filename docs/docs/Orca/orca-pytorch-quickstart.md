@@ -9,7 +9,7 @@ Scaling your TensorFlow applications with Orca makes your code:
 
 ### **Step 0: Prepare environment**
 We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the environments, especially if you want to run on a yarn cluster(yarn-client mode only).  
-**Note:** You can install the latest analytics whl by following [instructions](../../#PythonUserGuide/install/#install-the-latest-nightly-build-wheels-for-pip).
+**Note:** You can install the latest analytics-zoo whl by following [instructions](../../#PythonUserGuide/install/#install-the-latest-nightly-build-wheels-for-pip).
 ```
 conda create -n zoo python=3.7 #zoo is conda enviroment name, you can set another name you like.
 conda activate zoo
