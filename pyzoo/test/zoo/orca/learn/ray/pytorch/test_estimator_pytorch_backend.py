@@ -90,7 +90,7 @@ def get_optimizer(model, config):
     return torch.optim.SGD(model.parameters(), lr=config.get("lr", 1e-2))
 
 
-class TestPyTorchTrainer(TestCase):
+class TestPyTorchEstimator(TestCase):
     def test_linear(self):
         estimator = Estimator.from_torch(model=get_model,
                                          optimizer=get_optimizer,
