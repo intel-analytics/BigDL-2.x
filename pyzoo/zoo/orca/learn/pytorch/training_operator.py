@@ -354,10 +354,6 @@ class TrainingOperator:
             # Can't directly call torch.squeeze() in case batch size is 1.
             for i in reversed(range(1, len(_target.size()))):
                 _target = torch.squeeze(_target, i)
-        error_msg = "Currently in validate, only accuracy for classification with zero-based " \
-                    "label is supported by default. You can override validate_batch in " \
-                    "TrainingOperator for other validation metrics"
-        assert len(_target.size()) == 1, error_msg
 
         if self.use_gpu:
             features = [
@@ -377,13 +373,20 @@ class TrainingOperator:
 
         np_output = _output.detach().numpy()
         np_target = _target.detach().numpy()
+        # validate will be called by TCMF to get val_loss for regression tasks.
+        # In this case, accuracy is calculated but not used and the result is wrong.
+        # So do not directly raise an Exception here to avoid errors in TCMF.
+        # TODO: Support other validation metrics.
+        if len(np_target.shape) != 1 or len(np_output.shape) > 2:
+            import warnings
+            warnings.warn("Currently in validate, only accuracy for classification with "
+                          "zero-based label is supported by default. You can override "
+                          "validate_batch in TrainingOperator for other validation metrics")
         import numpy as np
         if len(np_output.shape) == 1:  # Binary classification
             np_output = np.round(np_output, 0)
-        elif len(np_output.shape) == 2:  # Multi-class classification
+        else:  # Multi-class classification
             np_output = np.argmax(np_output, axis=1)
-        else:
-            raise Exception(error_msg)
 
         num_correct = np.sum((np_output == np_target).astype(np.uint8))
         num_samples = target.size(0)
