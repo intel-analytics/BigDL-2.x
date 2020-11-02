@@ -13,12 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
-import torch
 import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
-from pyspark.sql import SparkSession
 from pyspark.sql.types import StringType, DoubleType
 from pyspark.sql.functions import col, udf
 from bigdl.optim.optimizer import *

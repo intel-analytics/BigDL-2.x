@@ -228,56 +228,6 @@ unset SPARK_DRIVER_MEMORY
 now=$(date "+%s")
 time6=$((now-start))
 
-echo "#7 start example test for pytorch"
-#timer
-start=$(date "+%s")
-echo "start example test for pytorch SimpleTrainingExample"
-export MASTER=local[1]
-export SPARK_DRIVER_MEMORY=5g
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/SimpleTrainingExample.py
-exit_status=$?
-unset MASTER
-unset SPARK_DRIVER_MEMORY
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "pytorch SimpleTrainingExample failed"
-    exit $exit_status
-fi
-
-echo "start example test for pytorch mnist training"
-export SPARK_DRIVER_MEMORY=10g
-export MASTER=local[1]
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/Lenet_mnist.py
-exit_status=$?
-unset MASTER
-unset SPARK_DRIVER_MEMORY
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "pytorch mnist training failed"
-    exit $exit_status
-fi
-
-echo "start example test for pytorch resnet finetune"
-export SPARK_DRIVER_MEMORY=20g
-export MASTER=local[4]
-export ZOO_NUM_MKLTHREADS=all
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/resnet_finetune/resnet_finetune.py \
-    analytics-zoo-data/data/dogs-vs-cats/samples
-exit_status=$?
-unset MASTER
-unset ZOO_NUM_MKLTHREADS
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "pytorch resnet finetune failed"
-    exit $exit_status
-fi
-unset SPARK_DRIVER_MEMORY
-now=$(date "+%s")
-time7=$((now-start))
-
 echo "#8 start example test for tensorflow"
 #timer
 start=$(date "+%s")

@@ -83,7 +83,6 @@ def main():
     parser.add_argument('--driver_cores', default=1, type=int,
                         help='num of driver cores to use.')
     args = parser.parse_args()
-    # sc = init_nncontext()
     if os.environ.get('HADOOP_CONF_DIR') is None:
         sc = init_spark_on_local(cores=args.cores, conf={"spark.driver.memory": "20g"})
     else:
