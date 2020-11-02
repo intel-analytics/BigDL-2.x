@@ -1,22 +1,26 @@
 
-**In this guide we’ll show you how to organize your PyTorch code into Orca in 3 steps**
+**In this guide we’ll show you how to organize your PyTorch code into Orca in 3 steps.**
 
-Scaling your TensorFlow applications with Orca makes your code:
+Scaling your Pytorch applications with Orca makes your code:
 
 * Well-organized and flexible
 * Easier to reproduce
 * Able to perform distributed training without changing your model
 
 ### **Step 0: Prepare environment**
-We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the environments, especially if you want to run on a yarn cluster(yarn-client mode only).  
-**Note:** You can install the latest analytics-zoo whl by following [instructions](../../#PythonUserGuide/install/#install-the-latest-nightly-build-wheels-for-pip).
-```
-conda create -n zoo python=3.7 #zoo is conda enviroment name, you can set another name you like.
+We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the environments, especially if you want to run on a yarn cluster (yarn-client mode only).
+
+Download and install latest analytics-zoo whl by the following instructions [here](../PythonUserGuide/install/#install-the-latest-nightly-build-wheels-for-pip).  
+
+**Note:** Conda environment is required to run on Yarn, but not strictly necessary for running on local.
+
+```bash
+conda create -n zoo python=3.7 # zoo is conda enviroment name, you can set another name you like.
 conda activate zoo
-pip install analytics-zoo==0.9.0.dev0 # or above
+pip install analytics_zoo-${VERSION}-${TIMESTAMP}-py2.py3-none-${OS}_x86_64.whl 
 pip install jep==3.9.0
-conda install pytorch torchvision cpuonly -c pytorch #command for linux
-conda install pytorch torchvision -c pytorch #command for macOS
+conda install pytorch torchvision cpuonly -c pytorch # command for linux
+conda install pytorch torchvision -c pytorch # command for macOS
 ```
 
 ### **Step 1: Init Orca Context**
@@ -34,9 +38,9 @@ sc = init_orca_context(
         "spark.task.maxFailures": "1",
         "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"})
 ```
-**Note:** You should `export HADOOP_CONF_DIR=/path/to/hadoop/conf/dir` 
+**Note:** You should `export HADOOP_CONF_DIR=/path/to/hadoop/conf/dir`. 
 
-View [Orca Context](../../#Orca/context/) for more details.
+View [Orca Context](./context) for more details.
 
 ### **Step 2: Define PyTorch Model, Loss function and Optimizer**
 ```python
@@ -70,8 +74,11 @@ adam = Adam(1e-4)
 
 ### **Step 3: Fit with Orca PyTorch Estimator**  
 
-1)  Define the data in whatever way you want. Orca just needs a dataloader, a callable datacreator or an [Orca SparkXShards](../../#Orca/data/).
+1)  Define the data in whatever way you want. Orca just needs a [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html), a data creator function or [Orca SparkXShards](./data).
 ```python
+import torch
+from torchvision import datasets,transforms
+
 torch.manual_seed(0)
 dir='./dataset'
 batch_size=64
@@ -95,6 +102,7 @@ test_loader = torch.utils.data.DataLoader(
 2)  Create an Estimator
 ```python
 from zoo.orca.learn.pytorch import Estimator 
+
 zoo_estimator = Estimator.from_torch(model=model, optimizer=adam, loss=criterion, backend="bigdl") 
 ```
 
@@ -103,6 +111,7 @@ zoo_estimator = Estimator.from_torch(model=model, optimizer=adam, loss=criterion
 ```python
 from zoo.orca.learn.metrics import Accuracy
 from zoo.orca.learn.trigger import EveryEpoch 
+
 zoo_estimator.fit(data=train_loader, epochs=10, validation_data=test_loader,
                   validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch()) 
 ```
