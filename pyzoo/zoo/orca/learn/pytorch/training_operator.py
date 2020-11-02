@@ -349,11 +349,10 @@ class TrainingOperator:
         """
         # unpack features into list to support multiple inputs model
         *features, target = batch
-        _target = target
-        if len(_target.size()) > 1:
+        if len(target.size()) > 1:
             # Can't directly call torch.squeeze() in case batch size is 1.
-            for i in reversed(range(1, len(_target.size()))):
-                _target = torch.squeeze(_target, i)
+            for i in reversed(range(1, len(target.size()))):
+                target = torch.squeeze(target, i)
 
         if self.use_gpu:
             features = [
@@ -365,14 +364,13 @@ class TrainingOperator:
         with self.timers.record("eval_fwd"):
             output = self.model(*features)
             loss = self.criterion(output, target)
-            _output = output
-            if len(_output.size()) > 2:
+            if len(output.size()) > 2:
                 # In case there is extra trailing dimensions.
-                for i in reversed(range(1, len(_output.size()))):
-                    _output = torch.squeeze(_output, i)
+                for i in reversed(range(1, len(output.size()))):
+                    output = torch.squeeze(output, i)
 
-        np_output = _output.detach().numpy()
-        np_target = _target.detach().numpy()
+        np_output = output.detach().numpy()
+        np_target = target.detach().numpy()
         # validate will be called by TCMF to get val_loss for regression tasks.
         # In this case, accuracy is calculated but not used and the result is wrong.
         # So do not directly raise an Exception here to avoid errors in TCMF.
