@@ -59,6 +59,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
 
   var redisHost: String = null
   var redisPort: String = null
+  var redisTimeout: Int = 5000
   var nodeNum: Int = 1
   var coreNum: Int = 1
   var modelPar: Int = 1
@@ -159,6 +160,9 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
       else blasFlag = false
     }
     else blasFlag = false
+
+    val redisConfig = configList.get("redis").asInstanceOf[HM]
+    redisTimeout = getYaml(redisConfig, "timeout", 5000).asInstanceOf[Int]
   }
 
   /**
