@@ -89,15 +89,15 @@ def detect_conda_env_name():
     err = err.decode("utf-8")
     errorcode = pro.returncode
     if 0 != errorcode:
-        raise Exception(err +
-                        "Cannot find conda info.")
+        raise EnvironmentError(err +
+                               "Cannot find conda info.")
     for line in out.split('\n'):
         item = line.split(':')
         if len(item) == 2:
             if item[0].strip() == "active environment":
                 return item[1].strip()
-    raise Exception(err +
-                    "Failed to detect conda env name.")
+    raise EnvironmentError(err +
+                           "Failed to detect conda env name.")
 
 
 # This is adopted from conda-pack.
