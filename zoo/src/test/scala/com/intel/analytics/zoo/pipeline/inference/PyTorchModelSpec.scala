@@ -24,6 +24,7 @@ import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.net.TorchModel
 import org.apache.log4j.{Level, Logger}
+import Thread.UncaughtExceptionHandler
 
 import scala.language.postfixOps
 
@@ -36,6 +37,11 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
   val currentNum = 10
   var modelPath: String = _
   var modelPathMulti: String = _
+  val h: UncaughtExceptionHandler = new UncaughtExceptionHandler {
+    override def uncaughtException(t: Thread, e: Throwable): Unit = {
+      println("Uncaught exception:" + e)
+    }
+  }
 
   protected def ifskipTest(): Unit = {
     // Skip unitest if environment is not ready, PYTHONHOME should be set in environment
@@ -110,6 +116,7 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
         }
       }
     })
+    threads.foreach((_.setUncaughtExceptionHandler(h)))
     threads.foreach(_.start())
     threads.foreach(_.join())
 
@@ -139,6 +146,7 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
         }
       }
     })
+    threads.foreach((_.setUncaughtExceptionHandler(h)))
     threads.foreach(_.start())
     threads.foreach(_.join())
 
@@ -237,6 +245,7 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
         }
       }
     })
+    threads.foreach((_.setUncaughtExceptionHandler(h)))
     threads.foreach(_.start())
     threads.foreach(_.join())
 
