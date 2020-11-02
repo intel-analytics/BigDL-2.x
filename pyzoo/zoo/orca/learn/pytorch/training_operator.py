@@ -386,7 +386,7 @@ class TrainingOperator:
         else:  # Multi-class classification
             np_output = np.argmax(np_output, axis=1)
 
-        num_correct = np.sum((np_output == np_target).astype(np.uint8))
+        num_correct = np.sum(np_output == np_target)
         num_samples = target.size(0)
         return {
             "val_loss": loss.item(),
