@@ -534,7 +534,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         df = input_df.copy()
         df["id"] = df.index + 1
 
-        cutoff_time = np.datetime64(np.max(df[self.dt_col]))
+        cutoff_time = df[self.dt_col].max().to_numpy()
 
         es = ft.EntitySet(id="data")
         es = es.entity_from_dataframe(entity_id="time_seq",
