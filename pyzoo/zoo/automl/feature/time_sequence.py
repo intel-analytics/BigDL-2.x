@@ -391,14 +391,6 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
             if is_nan.any(axis=None):
                 raise ValueError("Missing values in input dataframe!")
 
-        # check if the last datetime is large than current time.
-        # In that case, feature tools generate NaN.
-        # This test is ignored now
-        # last_datetime = dt.iloc[-1]
-        # current_time = np.datetime64('today', 's')
-        # if last_datetime > current_time:
-        #     raise ValueError("Last date time is bigger than current time!")
-
         # check if the length of input data is smaller than requested.
         if mode == "test":
             min_input_len = self.past_seq_len

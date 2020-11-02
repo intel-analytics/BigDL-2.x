@@ -127,21 +127,6 @@ class TestTimeSequenceFeature(ZooTestCase):
         with pytest.raises(ValueError, match=r".* datetime .*"):
             feat.fit_transform(df, **config)
 
-        # if the last datetime is larger than current time, raise an error
-        # this test is ignored now
-        # dates = pd.date_range('1/1/2119', periods=8)
-        # values = np.random.randn(8)
-        # df = pd.DataFrame({"datetime": dates, "values": values})
-        # config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
-        #                                            'IS_BUSY_HOURS(datetime)',
-        #                                            'HOUR(datetime)']),
-        #           "past_seq_len": 2}
-        # feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
-        #                                       target_col="values", drop_missing=True)
-
-        # with pytest.raises(ValueError, match=r".* current .*"):
-        #     feat.fit_transform(df, **config)
-
     def test_input_data_len(self):
         sample_num = 100
         past_seq_len = 20
