@@ -97,7 +97,7 @@ def main():
         os.environ['OMP_NUM_THREADS'] = str(num_cores_per_executor)
         sc = init_spark_on_yarn(
             hadoop_conf=hadoop_conf_dir,
-            conda_name=detect_conda_env_name(),
+            conda_name=detect_conda_env_name(),  # auto detect current conda env name
             num_executors=num_executors,
             executor_cores=num_cores_per_executor,
             executor_memory=executor_memory,
