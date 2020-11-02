@@ -326,7 +326,7 @@ class TrainingOperator:
         return metric_meters.summary()
 
     def validate_batch(self, batch, batch_info):
-        """Calcuates the loss and accuracy over a given batch.
+        """Calculates the loss and accuracy over a given batch.
 
         You can override this method to provide arbitrary metrics.
 
@@ -349,6 +349,16 @@ class TrainingOperator:
         """
         # unpack features into list to support multiple inputs model
         *features, target = batch
+        _target = target
+        if len(_target.size()) > 1:
+            # Can't directly call torch.squeeze() in case batch size is 1.
+            for i in reversed(range(1, len(_target.size()))):
+                _target = torch.squeeze(_target, i)
+        error_msg = "Currently in validate, only accuracy for classification with zero-based " \
+                    "label is supported by default. You can override validate_batch in " \
+                    "TrainingOperator for other validation metrics"
+        assert len(_target.size()) == 1, error_msg
+
         if self.use_gpu:
             features = [
                 feature.cuda(non_blocking=True) for feature in features
@@ -356,13 +366,26 @@ class TrainingOperator:
             target = target.cuda(non_blocking=True)
 
         # compute output
-
         with self.timers.record("eval_fwd"):
             output = self.model(*features)
             loss = self.criterion(output, target)
-            _, predicted = torch.max(output.data, 1)
+            _output = output
+            if len(_output.size()) > 2:
+                # In case there is extra trailing dimensions.
+                for i in reversed(range(1, len(_output.size()))):
+                    _output = torch.squeeze(_output, i)
 
-        num_correct = (predicted == target).sum().item()
+        np_output = _output.detach().numpy()
+        np_target = _target.detach().numpy()
+        import numpy as np
+        if len(np_output.shape) == 1:  # Binary classification
+            np_output = np.round(np_output, 0)
+        elif len(np_output.shape) == 2:  # Multi-class classification
+            np_output = np.argmax(np_output, axis=1)
+        else:
+            raise Exception(error_msg)
+
+        num_correct = np.sum((np_output == np_target).astype(np.uint8))
         num_samples = target.size(0)
         return {
             "val_loss": loss.item(),
