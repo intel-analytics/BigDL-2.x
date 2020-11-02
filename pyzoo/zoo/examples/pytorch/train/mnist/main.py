@@ -25,7 +25,7 @@ from bigdl.optim.optimizer import SGD, Adam
 from zoo.common.nncontext import *
 from zoo.feature.common import FeatureSet
 from zoo.pipeline.api.keras.metrics import Accuracy
-from zoo.util.utils import detect_python_location
+from zoo.util.utils import detect_conda_env_name
 
 
 class Net(nn.Module):
@@ -90,7 +90,7 @@ def main():
         num_executors = 2
         num_cores_per_executor = 4
         hadoop_conf_dir = os.environ.get('HADOOP_CONF_DIR')
-        zoo_conda_name = detect_python_location().split("/")[-3]  # The name of the created conda-env
+        zoo_conda_name = detect_conda_env_name()  # auto detect current conda env name
         sc = init_spark_on_yarn(
             hadoop_conf=hadoop_conf_dir,
             conda_name=zoo_conda_name,

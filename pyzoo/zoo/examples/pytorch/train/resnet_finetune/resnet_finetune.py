@@ -27,7 +27,7 @@ from zoo.feature.image import *
 from zoo.pipeline.api.torch import TorchModel, TorchLoss
 from zoo.pipeline.nnframes import *
 from zoo.pipeline.api.keras.metrics import Accuracy
-from zoo.util.utils import detect_python_location
+from zoo.util.utils import detect_conda_env_name
 
 
 # Define model with Pytorch
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     if hadoop_conf_dir:
         num_executors = 2
         num_cores_per_executor = 4
-        zoo_conda_name = detect_python_location().split("/")[-3]  # The name of the created conda-env
+        zoo_conda_name = detect_conda_env_name()  # auto detect current conda env name
         sc = init_spark_on_yarn(
             hadoop_conf=hadoop_conf_dir,
             conda_name=zoo_conda_name,
