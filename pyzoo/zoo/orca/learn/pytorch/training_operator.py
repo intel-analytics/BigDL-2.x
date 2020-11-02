@@ -364,7 +364,7 @@ class TrainingOperator:
         with self.timers.record("eval_fwd"):
             output = self.model(*features)
             loss = self.criterion(output, target)
-            if len(output.size()) > 2:
+            if len(output.size()) > 1:
                 # In case there is extra trailing dimensions.
                 for i in reversed(range(1, len(output.size()))):
                     output = torch.squeeze(output, i)
