@@ -15,49 +15,48 @@ A few wrappers are defined in Analytics Zoo for Pytorch:
 
 1. TorchModel: TorchModel is a wrapper class for Pytorch model.
 User may create a TorchModel by providing a Pytorch model, e.g.
-    ```python
-    from zoo.pipeline.api.torch import TorchModel
-    import torchvision
-    zoo_model = TorchModel.from_pytorch(torchvision.models.resnet18(pretrained=True))
-    ```
+```python
+from zoo.pipeline.api.torch import TorchModel
+import torchvision
+zoo_model = TorchModel.from_pytorch(torchvision.models.resnet18(pretrained=True))
+```
 The above line creates TorchModel wrapping a ResNet model, and user can use the TorchModel for
 training or inference with Analytics Zoo.
 
 2. TorchLoss: TorchLoss is a wrapper for loss functions defined by Pytorch.
 User may create a TorchLoss from a Pytorch Criterion, 
-    ```python
-    import torch
-    from zoo.pipeline.api.torch import TorchLoss
-    
-    az_criterion = TorchLoss.from_pytorch(torch.nn.MSELoss())
-    ```
-    or from a custom loss function, which takes input and label as parameters
+```python
+import torch
+from zoo.pipeline.api.torch import TorchLoss
 
-    ```python
-    import torch
-    from zoo.pipeline.api.torch import TorchLoss
-    
-    criterion = torch.nn.MSELoss()
+az_criterion = TorchLoss.from_pytorch(torch.nn.MSELoss())
+```
+or from a custom loss function, which takes input and label as parameters
+```python
+import torch
+from zoo.pipeline.api.torch import TorchLoss
+ 
+criterion = torch.nn.MSELoss()
 
-    # this loss function is calculating loss for a multi-output model
-    def lossFunc(input, label):
-        loss1 = criterion(input[0], label[0])
-        loss2 = criterion(input[1], label[1])
-        loss = loss1 + 0.4 * loss2
-        return loss
+# this loss function is calculating loss for a multi-output model
+def lossFunc(input, label):
+    loss1 = criterion(input[0], label[0])
+    loss2 = criterion(input[1], label[1])
+    loss = loss1 + 0.4 * loss2
+    return loss
     
-    az_criterion = TorchLoss.from_pytorch(lossFunc)
-    ```
+az_criterion = TorchLoss.from_pytorch(lossFunc)
+```
     
 3. TorchOptim: TorchOptim wraps a torch optimizer for distributed training.
-   ```python
-   from zoo.pipeline.api.torch import TorchOptim
-   import torch
+```python
+from zoo.pipeline.api.torch import TorchOptim
+import torch
    
-   model = torchvision.models.resnet18(pretrained=True))
-   adam = torch.optim.Adam(model.parameters())
-   zoo_optimizer = TorchOptim.from_pytorch(adam)
-   ```
+model = torchvision.models.resnet18(pretrained=True))
+adam = torch.optim.Adam(model.parameters())
+zoo_optimizer = TorchOptim.from_pytorch(adam)
+```
 
 # Examples
 Here we provide a simple end to end example, where we use TorchModel and TorchLoss to
@@ -152,7 +151,7 @@ Analytics-Zoo support both training and inference.
 
 2. How to prepare the environment?  
 We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the enviroments, especially if you want to run on a yarn cluster(yarn-client mode only). 
-```
+```bash
 conda create -n zoo python=3.7 #zoo is conda enviroment name, you can set another name you like.
 conda activate zoo
 pip install analytics-zoo[torch]
@@ -171,5 +170,4 @@ We support torch 1.5.x and 1.6.x, torchvision's version should match torch's ver
 Here is a simple example migrate [pytorch mnist example](https://github.com/pytorch/examples/blob/60108edfa3838a823220e16428cb5f98e8e88d53/mnist/main.py) to [analytics-zoo mnist example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/pytorch/train/mnist).
  
 
-6. How to distribute inference with pytorch model?  
 
