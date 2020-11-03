@@ -7,7 +7,7 @@ Scaling your TensorFlow applications with Orca makes your code:
 * Easier to reproduce
 * Able to perform distributed training without changing your model
 
-### **Step 0: Prepare environment**
+### **Step 0: Prepare Environment**
 We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the environments, especially if you want to run on a yarn cluster (yarn-client mode only).
 
 Download and install latest analytics-zoo whl by the following instructions [here](../PythonUserGuide/install/#install-the-latest-nightly-build-wheels-for-pip).
@@ -62,6 +62,8 @@ model.compile(optimizer=tf.keras.optimizers.RMSprop(),
 
 * For Graph Users
 ```python
+import tensorflow as tf
+
 def accuracy(logits, labels):
     predictions = tf.argmax(logits, axis=1, output_type=labels.dtype)
     is_correct = tf.cast(tf.equal(predictions, labels), dtype=tf.float32)
@@ -84,9 +86,7 @@ images = tf.placeholder(dtype=tf.float32, shape=(None, 28, 28, 1))
 labels = tf.placeholder(dtype=tf.int32, shape=(None,))
 
 logits = lenet(images)
-
 loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
-
 acc = accuracy(logits, labels)
 ```
 
@@ -120,19 +120,19 @@ zoo_estimator = Estimator.from_keras(keras_model=model)
 from zoo.orca.learn.tf.estimator import Estimator
 
 zoo_estimator = Estimator.from_graph(inputs=images, 
-                           outputs=logits,
-                           labels=labels,
-                           loss=loss,
-                           optimizer=tf.train.AdamOptimizer(),
-                           metrics={"acc": acc})
+                                     outputs=logits,
+                                     labels=labels,
+                                     loss=loss,
+                                     optimizer=tf.train.AdamOptimizer(),
+                                     metrics={"acc": acc})
 ```
 
 3)  Fit with Estimator
 ```python
 zoo_estimator.fit(data=train_dataset,
-        batch_size=320,
-        epochs=100,
-        validation_data=val_dataset)
+                  batch_size=320,
+                  epochs=100,
+                  validation_data=val_dataset)
 ```
 
 4)  Evaluate with Estimator

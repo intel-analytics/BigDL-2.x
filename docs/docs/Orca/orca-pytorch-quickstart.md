@@ -7,7 +7,7 @@ Scaling your Pytorch applications with Orca makes your code:
 * Easier to reproduce
 * Able to perform distributed training without changing your model
 
-### **Step 0: Prepare environment**
+### **Step 0: Prepare Environment**
 We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the environments, especially if you want to run on a yarn cluster (yarn-client mode only).
 
 Download and install latest analytics-zoo whl by the following instructions [here](../PythonUserGuide/install/#install-the-latest-nightly-build-wheels-for-pip).  
@@ -77,7 +77,7 @@ adam = Adam(1e-4)
 1)  Define the data in whatever way you want. Orca just needs a [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html), a data creator function or [Orca SparkXShards](./data).
 ```python
 import torch
-from torchvision import datasets,transforms
+from torchvision import datasets, transforms
 
 torch.manual_seed(0)
 dir='./dataset'
