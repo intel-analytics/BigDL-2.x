@@ -64,40 +64,40 @@ def get_data():
     return df, val_df
 
 
-# 1. the way to enable auto tuning model from creators.
-init_orca_context(init_ray_on_spark=True)
-modelBuilder = ModelBuilder.from_pytorch(model_creator=model_creator,
-                                         optimizer_creator=optimizer_creator,
-                                         loss_creator=loss_creator)
+if __name__ == "__main__":
+    # 1. the way to enable auto tuning model from creators.
+    init_orca_context(init_ray_on_spark=True)
+    modelBuilder = ModelBuilder.from_pytorch(model_creator=model_creator,
+                                             optimizer_creator=optimizer_creator,
+                                             loss_creator=loss_creator)
 
-searcher = SearchEngineFactory.create_engine(backend="ray",
-                                             logs_dir="~/zoo_automl_logs",
-                                             resources_per_trial={"cpu": 2},
-                                             name="demo")
+    searcher = SearchEngineFactory.create_engine(backend="ray",
+                                                 logs_dir="~/zoo_automl_logs",
+                                                 resources_per_trial={"cpu": 2},
+                                                 name="demo")
 
-# pass input data, modelbuilder and recipe into searcher.compile. Note that if user doesn't pass
-# feature transformer, the default identity feature transformer will be used.
-df, val_df = get_data()
-searcher.compile(df,
-                 modelBuilder,
-                 recipe=SimpleRecipe(),
-                 feature_cols=["x"],
-                 target_col="y",
-                 validation_df=val_df)
+    # pass input data, modelbuilder and recipe into searcher.compile. Note that if user doesn't pass
+    # feature transformer, the default identity feature transformer will be used.
+    df, val_df = get_data()
+    searcher.compile(df,
+                     modelBuilder,
+                     recipe=SimpleRecipe(),
+                     feature_cols=["x"],
+                     target_col="y",
+                     validation_df=val_df)
 
-searcher.run()
-best_trials = searcher.get_best_trials(k=1)
-print(best_trials[0].config)
+    searcher.run()
+    best_trials = searcher.get_best_trials(k=1)
+    print(best_trials[0].config)
 
+    # 2. you can also use the model builder with a fix config
+    model = modelBuilder.build(config={
+        "lr": 1e-2,  # used in optimizer_creator
+        "batch_size": 32,  # used in data_creator
+    })
 
-# 2. you can also use the model builder with a fix config
-model = modelBuilder.build(config={
-            "lr": 1e-2,  # used in optimizer_creator
-            "batch_size": 32,  # used in data_creator
-        })
-
-val_result = model.fit_eval(x=df[["x"]],
-                            y=df[["y"]],
-                            validation_data=(val_df[["x"]], val_df["y"]),
-                            epochs=1)
-print(val_result)
+    val_result = model.fit_eval(x=df[["x"]],
+                                y=df[["y"]],
+                                validation_data=(val_df[["x"]], val_df["y"]),
+                                epochs=1)
+    print(val_result)
