@@ -167,7 +167,7 @@ If you are running your jobs on spark local mode(single-node, pseudo-distributed
 We support torch 1.5.x and 1.6.x, torchvision's version should match torch's version.  
 
 5. How to migrate training from pytorch to AZ?  
-Here is a simple example migrate [pytorch mnist example](https://github.com/pytorch/examples/blob/60108edfa3838a823220e16428cb5f98e8e88d53/mnist/main.py) to [analytics-zoo mnist example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/pytorch/train/mnist).
+Here is a simple example migrate [pytorch mnist example](https://github.com/pytorch/examples/blob/60108edfa3838a823220e16428cb5f98e8e88d53/mnist/main.py) to [analytics-zoo distributed pytorch mnist example](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/pytorch/train/mnist).
  
 
 
