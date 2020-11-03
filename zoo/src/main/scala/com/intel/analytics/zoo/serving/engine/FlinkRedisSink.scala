@@ -43,7 +43,7 @@ class FlinkRedisSink(params: SerParams) extends RichSinkFunction[List[(String, S
       JedisPoolHolder.synchronized {
         if (JedisPoolHolder.jedisPool == null) {
           JedisPoolHolder.jedisPool = new JedisPool(new JedisPoolConfig(),
-            params.redisHost, params.redisPort, params.redisSecureEnabled)
+            params.redisHost, params.redisPort, params.redisTimeout, params.redisSecureEnabled)
         }
       }
     }
