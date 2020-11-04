@@ -23,8 +23,8 @@ import pandas as pd
 import numpy as np
 import json
 
-time_attr = ("MINUTE", "DAY", "DAYOFYEAR", "HOUR", "WEEKDAY", "WEEKOFYEAR", "MONTH")
-additional_time_attr = ("IS_AWAKE", "IS_BUSY_HOURS", "IS_WEEKEND")
+TIME_ATTR = ("MINUTE", "DAY", "DAYOFYEAR", "HOUR", "WEEKDAY", "WEEKOFYEAR", "MONTH")
+ADDITIONAL_TIME_ATTR = ("IS_AWAKE", "IS_BUSY_HOURS", "IS_WEEKEND")
 
 
 class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
@@ -331,7 +331,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
 
     def get_feature_list(self, input_df):
         feature_list = []
-        for feature in (time_attr + additional_time_attr):
+        for feature in (TIME_ATTR + ADDITIONAL_TIME_ATTR):
             feature_list.append(feature + "({})".format(self.dt_col))
         if self.extra_features_col:
             feature_list += self.extra_features_col
@@ -527,7 +527,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         field = df[self.dt_col]
 
         # built in attr
-        for attr in time_attr:
+        for attr in TIME_ATTR:
             df[attr + "({})".format(self.dt_col)] = getattr(field.dt, attr.lower())
 
         # additional attr
