@@ -272,15 +272,12 @@ def _convert_list_tuple(data, allow_tuple, allow_list):
     return data
 
 
-
-
-
 def merge(data_list):
     classnames = [get_class_name(data) for data in data_list]
     assert classnames.count(get_class_name(data_list[0])) == len(classnames), \
     "should merge same type of data"
     if isinstance(data_list[0], np.ndarray):
-        return np.concatenate([data_list], axis=0)
+        return np.concatenate(data_list, axis=0)
     elif isinstance(data_list[0], dict):
         result = {}
         for key in data_list[0]:

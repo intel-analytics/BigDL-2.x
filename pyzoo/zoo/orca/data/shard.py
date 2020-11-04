@@ -110,7 +110,10 @@ class XShards(object):
                 print(path)
                 data = load_numpy(path, allow_pickle=False)
                 data_list.append(data)
-            yield merge(data_list)
+            if len(data_list) > 0 :
+                yield merge(data_list)
+            else:
+                yield iter
         rdd = rdd.mapPartitions(load_np)
         return SparkXShards(rdd)
 
