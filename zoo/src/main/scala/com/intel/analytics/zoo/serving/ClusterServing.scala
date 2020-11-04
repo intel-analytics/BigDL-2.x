@@ -55,6 +55,13 @@ object ClusterServing {
     params.timerMode = timerMode
     if (!helper.checkManagerYaml()) {
       println(s"ERROR - Cluster Serving with name ${helper.jobName} already exists, exited.")
+      println("You should check that there is no other Cluster Serving job with this name" +
+        " exists on this machine already.")
+      println(s"Hint: The default name is ${Conventions.SERVING_STREAM_DEFAULT_NAME}," +
+        s"if this is the name reported, then make sure you have cancelled the job before run" +
+        s"another one. ")
+      println("If you are sure the job is cancelled but still meet this error, report bug to us." +
+        "And use 'rm -rf /tmp/cluster-serving*' to reset the Cluster Serving manager file.")
       return
     }
     val serving = StreamExecutionEnvironment.getExecutionEnvironment

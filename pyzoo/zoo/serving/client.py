@@ -186,7 +186,8 @@ class InputQueue(API):
             time.sleep(self.interval_if_error)
 
         except redis.exceptions.ResponseError as e:
-            print(e, "Redis memory is full, please dequeue or delete.")
+            print(e, "Please check if Redis version > 5, "
+                     "if yes, memory may be full, try dequeue or delete.")
             time.sleep(self.interval_if_error)
 
     @staticmethod
