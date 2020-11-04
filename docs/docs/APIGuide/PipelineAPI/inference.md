@@ -34,6 +34,7 @@ Python requirements:
 2. [Caffe Models](https://github.com/BVLC/caffe/wiki/Model-Zoo)
 3. [TensorFlow Models](https://github.com/tensorflow/models)
 4. [OpenVINO models](https://software.intel.com/en-us/openvino-toolkit/documentation/pretrained-models)
+5. [PyTorch Models](https://pytorch.org/docs/stable/hub.html)
 
 ## **Load pre-trained model**
 ### **Load pre-trained Analytics Zoo model**
@@ -161,6 +162,35 @@ model.load_openvino(modelPath, weightPath)
 
 * `modelPath`: String. Path of pre-trained OpenVINO model.
 * `weightPath`: String. Path of pre-trained OpenVINO model weight.
+
+### **Load pre-trained PyTorch model**
+Load Pytorch model with corresponding `loadPyTorch` methods (`loadPyTorch` for Java and Python, `doLoadPyTorch` for Scala).
+
+**Java**
+
+```java
+public class ExtendedInferenceModel extends AbstractInferenceModel {
+}
+ExtendedInferenceModel model = new ExtendedInferenceModel();
+model.loadPyTorch(modelPath);
+```
+
+**Scala**
+
+```scala
+val model = new InferenceModel()
+model.doLoadPyTorch(modelPath)
+```
+
+**Python**
+
+```python
+model = InferenceModel()
+model.load_pytorch(modelPath)
+```
+
+* `modelPath`: String. Path of pre-trained model.
+* `modelBytes`: Array[Byte]. Bytes of the torch script.
 
 ## **Predict with loaded model**
 After loading pre-trained models with load methods, we can make prediction with unified `predict` method.
