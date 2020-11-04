@@ -179,7 +179,7 @@ Then load PyTorch model:
 
 ```python
 model = InferenceModel()
-model.load_pytorch(modelPath, weightPath)
+model.load_pytorch(modelPath)
 ```
 
 **Scala**
@@ -199,7 +199,6 @@ model.doLoadPyTorch(modelBytes)
 ```
 
 * `modelPath`: String. Path of pre-trained PyTorch model.
-* `weightPath`: String. Path of pre-trained PyTorch model weight.
 * `modelBytes`: Array[Byte]. Bytes of the torch script.
 
 ## **Predict with loaded model**
