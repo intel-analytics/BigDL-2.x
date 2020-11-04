@@ -24,7 +24,10 @@ import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.net.TorchModel
 import org.apache.log4j.{Level, Logger}
-import Thread.UncaughtExceptionHandler
+
+import com.intel.analytics.zoo.common.NNContext.initNNContext
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
+import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.language.postfixOps
 
@@ -36,11 +39,42 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
   var model2: InferenceModel = _
   val currentNum = 10
   var modelPath: String = _
-  var modelPathMulti: String = _
-  val h: UncaughtExceptionHandler = new UncaughtExceptionHandler {
-    override def uncaughtException(t: Thread, e: Throwable): Unit = {
-      println("Uncaught exception:" + e)
-    }
+  var sc: SparkContext = _
+
+  override def doBefore() = {
+    ifskipTest()
+    val conf = new SparkConf().setAppName("SimpleTorchModel").setMaster("local[4]")
+    sc = initNNContext(conf)
+    model = new InferenceModel(currentNum) { }
+    model2 = new InferenceModel(currentNum) { }
+    modelPath = ZooSpecHelper.createTmpFile().getAbsolutePath()
+    val resnetModel =
+      s"""
+         |import torch
+         |import torch.nn as nn
+         |import torchvision.models as models
+         |from zoo.pipeline.api.torch import zoo_pickle_module
+         |
+         |class SimpleTorchModel(nn.Module):
+         |    def __init__(self):
+         |        super(SimpleTorchModel, self).__init__()
+         |        self.dense1 = nn.Linear(2, 1)
+         |        list(self.dense1.parameters())[0][0][0] = 0.2
+         |        list(self.dense1.parameters())[0][0][1] = 0.5
+         |        list(self.dense1.parameters())[1][0] = 0.3
+         |    def forward(self, x):
+         |        x = self.dense1(x)
+         |        return x
+         |
+         |model = SimpleTorchModel()
+         |torch.save(model, "$modelPath", pickle_module=zoo_pickle_module)
+         |""".stripMargin
+    PythonInterpreter.exec(resnetModel)
+  }
+
+  override def doAfter() = {
+    model.doRelease()
+    model2.doRelease()
   }
 
   protected def ifskipTest(): Unit = {
@@ -55,35 +89,8 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
     }
   }
 
-  protected def beforeAll()  {
-    println("before get path")
-    model = new InferenceModel(currentNum) { }
-    model2 = new InferenceModel(currentNum) { }
-    modelPath = ZooSpecHelper.createTmpFile().getAbsolutePath()
-    modelPathMulti = ZooSpecHelper.createTmpFile().getAbsolutePath()
-    val resnetModel =
-    s"""
-       |import torch
-       |import torchvision.models as models
-       |from zoo.pipeline.api.torch import zoo_pickle_module
-       |
-       |model = models.resnet18(pretrained = True)
-       |torch.save(model, "$modelPath", pickle_module=zoo_pickle_module)
-       |modelMulti = models.resnet50(pretrained = True)
-       |torch.save(modelMulti, "$modelPathMulti", pickle_module=zoo_pickle_module)
-       |""".stripMargin
-    PythonInterpreter.exec(resnetModel)
-  }
-
-  protected def afterAll() {
-    model.doRelease()
-    model2.doRelease()
-  }
 
   "PyTorch Model" should "be loaded" in {
-    ifskipTest()
-    beforeAll()
-
     val modelone = TorchModel.loadModel(modelPath)
     modelone.evaluate()
 
@@ -91,183 +98,46 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
     PyTorchModel.evaluate()
     val metaModel = makeMetaModel(PyTorchModel)
     val floatFromPyTorch = new FloatModel(PyTorchModel, metaModel, true)
-    println(floatFromPyTorch)
     floatFromPyTorch shouldNot be(null)
 
     model.doLoadPyTorch(modelPath)
-    println(model)
     model shouldNot be(null)
 
     val modelBytes = Files.readAllBytes(Paths.get(modelPath))
     model2.doLoadPyTorch(modelBytes)
-    println(model2)
     model2 shouldNot be(null)
 
-    val threads = List.range(0, currentNum).map(i => {
-      new Thread() {
-        override def run(): Unit = {
-          try{
-            model.doLoadPyTorch(modelPath)
-            println(model)
-            model shouldNot be(null)
+    EngineRef.getDefaultThreadPool.invokeAndWait[Float](
+      (0 until currentNum).map(i => () => {
+        model.doLoadPyTorch(modelPath)
+        model shouldNot be(null)
 
-            model2.doLoadPyTorch(modelBytes)
-            println(model2)
-            model2 shouldNot be(null)
-          }
-          catch {
-            case ex: InterruptedException =>{
-              println("Interrupted.")
-            }
-          }
-          throw new RuntimeException()
-        }
-      }
-    })
-    threads.foreach((_.setUncaughtExceptionHandler(h)))
-    threads.foreach(_.start())
-    threads.foreach(_.join())
+        model2.doLoadPyTorch(modelBytes)
+        model2 shouldNot be(null)
+        1f
+      })
+    )
 
-
-    afterAll()
   }
 
   "PyTorch Model" should "do predict" in {
-    ifskipTest()
-    beforeAll()
-
-    val inputTensor = Tensor[Float](1, 3, 224, 224).rand()
     model.doLoadPyTorch(modelPath)
-    model2.doLoadPyTorch(modelPathMulti)
-    val results = model.doPredict(inputTensor)
-    println(results)
-    val threads = List.range(0, currentNum).map(i => {
-      new Thread() {
-        override def run(): Unit = {
-          try {
-            val r = model.doPredict(inputTensor)
-            println(r)
-            r should be(results)
+    model2.doLoadPyTorch(modelPath)
 
-            val r2 = model2.doPredict(inputTensor)
-            println(r2)
-            r2 should be(results)
-          }
-          catch {
-            case ex: InterruptedException =>{
-              println("Interrupted.")
-            }
-          }
-          throw new RuntimeException()
-        }
-      }
-    })
-    threads.foreach((_.setUncaughtExceptionHandler(h)))
-    threads.foreach(_.start())
-    threads.foreach(_.join())
+    EngineRef.getDefaultThreadPool.invokeAndWait[Float](
+      (0 until currentNum * 10).map(i => () => {
+        val inputTensor = Tensor[Float](1, 2).rand()
+        val exceptedResult = inputTensor.valueAt(1, 1) * 0.2f +
+          inputTensor.valueAt(1, 2) * 0.5f + 0.3f
+        val r = model.doPredict(inputTensor)
+        r should be(Tensor[Float](Array(exceptedResult), Array(1, 1)))
 
-    afterAll()
-  }
+        val r2 = model2.doPredict(inputTensor)
+        r2 should be(Tensor[Float](Array(exceptedResult), Array(1, 1)))
+        1f
+      })
+    )
 
-  "PyTorch Models' weights" should "be the same" in {
-    ifskipTest()
-    beforeAll()
-
-    val threads = List.range(0, currentNum).map(i => {
-      new Thread() {
-        override def run(): Unit = {
-          try {
-            val PyTorchModel = ModelLoader.loadFloatModelForPyTorch(modelPath)
-            PyTorchModel.evaluate()
-            var weightsOfTorchModel = PyTorchModel.parameters()
-            val metaModel = makeMetaModel(PyTorchModel)
-            val floatFromPyTorch = new FloatModel(PyTorchModel, metaModel, true)
-            val weightsOfFloatModel = floatFromPyTorch.model.parameters()
-            println(floatFromPyTorch)
-            floatFromPyTorch shouldNot be(null)
-
-            if (weightsOfTorchModel == weightsOfFloatModel) {
-              println("weights of torch == weights of float")
-            }
-            else {
-              println("weights of torch != weights of float")
-            }
-
-            // multi model test
-            val PyTorchModel2 = ModelLoader.loadFloatModelForPyTorch(modelPathMulti)
-            PyTorchModel2.evaluate()
-            val weightsOfTorchModel2 = PyTorchModel2.parameters()
-            val metaModel2 = makeMetaModel(PyTorchModel2)
-            val floatFromPyTorch2 = new FloatModel(PyTorchModel2, metaModel2, true)
-            val weightsOfFloatModel2 = floatFromPyTorch2.model.parameters()
-            println(floatFromPyTorch2)
-            floatFromPyTorch2 shouldNot be(null)
-
-            if (weightsOfTorchModel2 == weightsOfFloatModel2) {
-              println("weights of torch2 == weights of float2")
-            }
-            else {
-              println("weights of torch2 != weights of float2")
-            }
-
-            val modelBytes = Files.readAllBytes(Paths.get(modelPath))
-            val PyTorchModel3 = ModelLoader.loadFloatModelForPyTorch(modelBytes)
-            PyTorchModel3.evaluate()
-            val weightsOfTorchModel3 = PyTorchModel3.parameters()
-            val metaModel3 = makeMetaModel(PyTorchModel3)
-            val floatFromPyTorch3 = new FloatModel(PyTorchModel3, metaModel3, true)
-            val weightsOfFloatModel3 = floatFromPyTorch3.model.parameters()
-            println(floatFromPyTorch3)
-            floatFromPyTorch3 shouldNot be(null)
-
-            if (weightsOfTorchModel3 == weightsOfFloatModel3) {
-              println("weights of torch3 == weights of float3")
-            }
-            else {
-              println("weights of torch3 != weights of float3")
-            }
-
-            // multi model test
-            println("before load fourth model")
-            val modelBytes2 = Files.readAllBytes(Paths.get(modelPathMulti))
-            val PyTorchModel4 = ModelLoader.loadFloatModelForPyTorch(modelBytes2)
-            PyTorchModel4.evaluate()
-            val weightsOfTorchModel4 = PyTorchModel4.parameters()
-            val metaModel4 = makeMetaModel(PyTorchModel4)
-            val floatFromPyTorch4 = new FloatModel(PyTorchModel4, metaModel4, true)
-            val weightsOfFloatModel4 = floatFromPyTorch4.model.parameters()
-            println(floatFromPyTorch4)
-            floatFromPyTorch4 shouldNot be(null)
-
-            if (weightsOfTorchModel4 == weightsOfFloatModel4) {
-              println("weights of torch4 == weights of float4")
-            }
-            else {
-              println("weights of torch4 != weights of float4")
-            }
-
-            // weights of path vs weights of bytes
-            if (weightsOfTorchModel2 == weightsOfTorchModel4) {
-              println("weights of path == weights of bytes")
-            }
-            else {
-              println("weights of path != weights of bytes")
-            }
-          }
-          catch {
-            case ex: InterruptedException =>{
-              println("Interrupted.")
-            }
-          }
-          throw new RuntimeException()
-        }
-      }
-    })
-    threads.foreach((_.setUncaughtExceptionHandler(h)))
-    threads.foreach(_.start())
-    threads.foreach(_.join())
-
-    afterAll()
   }
 
 }
