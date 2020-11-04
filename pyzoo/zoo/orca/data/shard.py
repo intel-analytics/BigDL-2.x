@@ -20,7 +20,7 @@ from zoo.orca import OrcaContext
 from zoo.common.nncontext import init_nncontext
 from zoo import ZooContext, get_node_and_core_number
 from zoo.util import nest
-from zoo.orca.data.file import load_numpy, save_numpy, exists, makedirs, save_pickle, load_pickle
+from zoo.orca.data.file import load_numpy, save_numpy, exists, makedirs
 
 
 class XShards(object):
@@ -59,29 +59,7 @@ class XShards(object):
         :return: SparkXShards object
         """
         sc = init_nncontext()
-        file_paths = get_file_list(path)
-        if not file_paths:
-            raise Exception("The file path is invalid or empty, please check your data")
-        if minPartitions is None:
-            num_files = len(file_paths)
-            node_num, core_num = get_node_and_core_number()
-            total_cores = node_num * core_num
-            num_partitions = num_files if num_files < total_cores else total_cores
-        else:
-            num_partitions = minPartitions
-        rdd = sc.parallelize(file_paths, num_partitions)
-
-        def load_pkl(iter):
-            data_list = []
-            for path in iter:
-                print(path)
-                data = load_pickle(path)
-                data_list.append(data)
-            yield merge(data_list)
-        rdd = rdd.mapPartitions(load_pkl)
-
-        return SparkXShards(rdd)
-        # return SparkXShards(sc.pickleFile(path, minPartitions))
+        return SparkXShards(sc.pickleFile(path, minPartitions))
 
     @classmethod
     def load_numpy(cls, path, minPartitions=None):
@@ -522,23 +500,7 @@ class SparkXShards(XShards):
         :param path: target path.
         :param batchSize: batch size for each sequence file chunk.
         """
-        if not exists(path):
-            makedirs(path)
-
-        def save(path):
-            def save_func(index, iterator):
-                data = list(iterator)
-                assert len(data) <= 1
-
-                if len(data) == 1:
-                    print("data 0 is :", data[0])
-                    save_pickle(os.path.join(path, str(index) + ".pkl"), data[0])
-                yield 0
-
-            return save_func
-
-        self.rdd.mapPartitionsWithIndex(save(path)).collect()
-        # self.rdd.saveAsPickleFile(path, batchSize)
+        self.rdd.saveAsPickleFile(path, batchSize)
         return self
 
     def save_numpy(self, path):
@@ -559,8 +521,9 @@ class SparkXShards(XShards):
                 return save_func
 
             self.rdd.mapPartitionsWithIndex(save(path)).collect()
+            return self
         else:
-            raise Exception("save_numpy can only XShards of support numpy ndarray")
+            raise Exception("save_numpy can only support XShards of numpy ndarray")
 
     def __del__(self):
         self.uncache()
