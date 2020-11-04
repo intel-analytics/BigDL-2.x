@@ -50,6 +50,9 @@ class TestTimeSequenceFeature(ZooTestCase):
                                      'IS_WEEKEND(datetime)',
                                      'WEEKDAY(datetime)',
                                      'MONTH(datetime)',
+                                     'DAYOFYEAR(datetime)',
+                                     'WEEKOFYEAR(datetime)',
+                                     'MINUTE(datetime)',
                                      'A',
                                      'B'}
 
