@@ -150,10 +150,7 @@ class BasePredictor(object):
                    resources_per_trial,
                    remote_dir):
         ft = self.create_feature_transformer()
-        if isinstance(input_df, list):
-            feature_list = ft.get_feature_list(input_df[0])
-        else:
-            feature_list = ft.get_feature_list(input_df)
+        feature_list = ft.get_feature_list()
 
         model_fn = partial(self.create_model, resources_per_trial=resources_per_trial)
 

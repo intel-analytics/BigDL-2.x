@@ -42,7 +42,7 @@ class TestTimeSequenceFeature(ZooTestCase):
                                               target_col="values",
                                               extra_features_col=["A", "B"],
                                               drop_missing=True)
-        feature_list = feat.get_feature_list(df)
+        feature_list = feat.get_feature_list()
         assert set(feature_list) == {'IS_AWAKE(datetime)',
                                      'IS_BUSY_HOURS(datetime)',
                                      'HOUR(datetime)',
@@ -306,7 +306,7 @@ class TestTimeSequenceFeature(ZooTestCase):
                                               target_col=target_col,
                                               drop_missing=drop_missing)
 
-        feature_list = feat.get_feature_list(df)
+        feature_list = feat.get_feature_list()
         config = {"selected_features": json.dumps(feature_list),
                   "past_seq_len": 2
                   }

@@ -329,7 +329,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         # self.scaler.scale_ = np.asarray(result["scale"])
         # print(self.scaler.transform(input_data))
 
-    def get_feature_list(self, input_df):
+    def get_feature_list(self):
         feature_list = []
         for feature in (TIME_ATTR + ADDITIONAL_TIME_ATTR):
             feature_list.append(feature + "({})".format(self.dt_col))
