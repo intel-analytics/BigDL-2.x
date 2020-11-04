@@ -287,7 +287,7 @@ class TrainingOperator:
         with self.timers.record("apply"):
             self.optimizer.step()
 
-        return {"train_loss": loss.item(), NUM_SAMPLES: features[0].size(0)}
+        return {"train_loss": loss.item()/target.size(0), NUM_SAMPLES: features[0].size(0)}
 
     def validate(self, val_iterator, info):
         """Runs one standard validation pass over the val_iterator.
@@ -349,10 +349,12 @@ class TrainingOperator:
         """
         # unpack features into list to support multiple inputs model
         *features, target = batch
-        if len(target.size()) > 1:
-            # Can't directly call torch.squeeze() in case batch size is 1.
-            for i in reversed(range(1, len(target.size()))):
-                target = torch.squeeze(target, i)
+        # if len(target.size()) > 1:
+        #     # Can't directly call torch.squeeze() in case batch size is 1.
+        #     print(range(1,len(target.size())))
+        #     for i in reversed(range(1, len(target.size()))):
+        #         target = torch.squeeze(target, i)
+        #         print(target.size())
 
         if self.use_gpu:
             features = [
@@ -388,8 +390,9 @@ class TrainingOperator:
 
         num_correct = np.sum(np_output == np_target)
         num_samples = target.size(0)
+        # print("val_size: "+str(num_samples))
         return {
-            "val_loss": loss.item(),
+            "val_loss": loss.item()/num_samples,
             "val_accuracy": num_correct / num_samples,
             NUM_SAMPLES: num_samples
         }
