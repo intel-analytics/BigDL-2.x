@@ -166,6 +166,7 @@ model.load_openvino(modelPath, weightPath)
 Load Pytorch model with corresponding `loadPyTorch` methods (`load_pytorch` for Python and `doLoadPyTorch` for Scala).
 
 **Python**
+
 Before loading PyTorch model with path in python, user should save it using zoo_pickle_module in python, like:
 
 ```python
@@ -183,7 +184,8 @@ model.load_pytorch(modelPath, weightPath)
 
 **Scala**
 
-***load with model path***
+***load PyTorch model in scala with model path***
+
 Before loading PyTorch model with path in scala, user should save it using zoo_pickle_module in python, like:
 
 ```python
@@ -199,7 +201,8 @@ val model = new InferenceModel()
 model.doLoadPyTorch(modelPath)
 ```
 
-***load with model bytes***
+***load PyTorch model in scala with model bytes***
+
 Before loading PyTorch model with model bytes in scala, user should save it using zoo_pickle_module, like:
 
 ```scala
