@@ -42,7 +42,6 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
   var sc: SparkContext = _
 
   override def doBefore() = {
-    ifskipTest()
     val conf = new SparkConf().setAppName("SimpleTorchModel").setMaster("local[4]")
     sc = initNNContext(conf)
     model = new InferenceModel(currentNum) { }
@@ -91,6 +90,7 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
 
 
   "PyTorch Model" should "be loaded" in {
+    ifskipTest()
     val modelone = TorchModel.loadModel(modelPath)
     modelone.evaluate()
 
@@ -121,6 +121,7 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
   }
 
   "PyTorch Model" should "do predict" in {
+    ifskipTest()
     model.doLoadPyTorch(modelPath)
     model2.doLoadPyTorch(modelPath)
 
