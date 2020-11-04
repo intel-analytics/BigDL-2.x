@@ -108,12 +108,11 @@ class XShards(object):
             data_list = []
             for path in iter:
                 print(path)
-                data = load_numpy(path, allow_pickle=True)
+                data = load_numpy(path, allow_pickle=False)
                 data_list.append(data)
             yield merge(data_list)
         rdd = rdd.mapPartitions(load_np)
         return SparkXShards(rdd)
-        # return SparkXShards(sc.pickleFile(path, minPartitions))
 
     @staticmethod
     def partition(data):
@@ -540,22 +539,25 @@ class SparkXShards(XShards):
         return self
 
     def save_numpy(self, path):
-        if not exists(path):
-            makedirs(path)
+        if self._get_class_name() == "numpy.ndarray":
+            if not exists(path):
+                makedirs(path)
 
-        def save(path):
-            def save_func(index, iterator):
-                data = list(iterator)
-                assert len(data) <= 1
+            def save(path):
+                def save_func(index, iterator):
+                    data = list(iterator)
+                    assert len(data) <= 1
 
-                if len(data) == 1:
-                    print("data 0 is :", data[0])
-                    save_numpy(os.path.join(path, str(index) + ".npy"), data[0])
-                yield 0
+                    if len(data) == 1:
+                        print("data 0 is :", data[0])
+                        save_numpy(os.path.join(path, str(index) + ".npy"), data[0])
+                    yield 0
 
-            return save_func
+                return save_func
 
-        self.rdd.mapPartitionsWithIndex(save(path)).collect()
+            self.rdd.mapPartitionsWithIndex(save(path)).collect()
+        else:
+            raise Exception("save_numpy can only XShards of support numpy ndarray")
 
     def __del__(self):
         self.uncache()
