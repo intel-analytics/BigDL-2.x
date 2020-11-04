@@ -127,20 +127,6 @@ class TestTimeSequenceFeature(ZooTestCase):
         with pytest.raises(ValueError, match=r".* datetime .*"):
             feat.fit_transform(df, **config)
 
-        # if the last datetime is larger than current time, raise an error
-        dates = pd.date_range('1/1/2119', periods=8)
-        values = np.random.randn(8)
-        df = pd.DataFrame({"datetime": dates, "values": values})
-        config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
-                                                   'IS_BUSY_HOURS(datetime)',
-                                                   'HOUR(datetime)']),
-                  "past_seq_len": 2}
-        feat = TimeSequenceFeatureTransformer(future_seq_len=1, dt_col="datetime",
-                                              target_col="values", drop_missing=True)
-
-        with pytest.raises(ValueError, match=r".* current .*"):
-            feat.fit_transform(df, **config)
-
     def test_input_data_len(self):
         sample_num = 100
         past_seq_len = 20
@@ -513,6 +499,28 @@ class TestTimeSequenceFeature(ZooTestCase):
 
         finally:
             shutil.rmtree(dirname)
+
+    def test_future_time_validation(self):
+        sample_num = 8
+        dates = pd.date_range('1/1/2100', periods=sample_num)
+        values = np.random.randn(sample_num)
+        dt_col = "datetime"
+        value_col = "values"
+        df = pd.DataFrame({dt_col: dates, value_col: values})
+
+        past_seq_len = 2
+        future_seq_len = 1
+        config = {"selected_features": json.dumps(['IS_AWAKE(datetime)',
+                                                   'IS_BUSY_HOURS(datetime)',
+                                                   'HOUR(datetime)']),
+                  "past_seq_len": past_seq_len}
+        feat = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len, dt_col="datetime",
+                                              target_col="values", drop_missing=True)
+        x, y = feat.fit_transform(df, **config)
+        assert x.shape == (sample_num - past_seq_len,
+                           past_seq_len,
+                           len(json.loads(config["selected_features"])) + 1)
+        assert y.shape == (sample_num - past_seq_len, 1)
 
 
 if __name__ == "__main__":

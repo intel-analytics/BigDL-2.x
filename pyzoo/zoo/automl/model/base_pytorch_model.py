@@ -29,9 +29,10 @@ class PytorchBaseModel(BaseModel):
         self.criterion = loss_creator(config)
         self.config = config
 
-    def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, epochs=1, metric=["mse"],
+    def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
                  **config):
         epoch_losses = []
+        x, y, validation_data = PytorchBaseModel.covert_input(x, y, validation_data)
         for i in range(epochs):
             train_loss = self._train_epoch(x, y)
             epoch_losses.append(train_loss)
@@ -39,7 +40,24 @@ class PytorchBaseModel(BaseModel):
         # todo: support input validation data None
         assert validation_data is not None, "You must input validation data!"
         val_stats = self._validate(validation_data[0], validation_data[1], metric=metric)
-        return train_stats.update(val_stats)
+        return val_stats[metric]
+
+    @staticmethod
+    def to_torch(inp):
+        if isinstance(inp, np.ndarray):
+            return torch.from_numpy(inp)
+        if isinstance(inp, (pd.DataFrame, pd.Series)):
+            return torch.from_numpy(inp.values)
+        return inp
+
+    @staticmethod
+    def covert_input(x, y, validation_data):
+        x = PytorchBaseModel.to_torch(x)
+        y = PytorchBaseModel.to_torch(y)
+        if validation_data is not None:
+            validation_data = (PytorchBaseModel.to_torch(validation_data[0]),
+                               PytorchBaseModel.to_torch(validation_data[1]))
+        return x, y, validation_data
 
     def _train_epoch(self, x, y):
         # todo: support torch data loader
@@ -49,12 +67,12 @@ class PytorchBaseModel(BaseModel):
         total_loss = 0
         for i in range(0, x.size(0), batch_size):
             if i + batch_size > x.size(0):
-                x, y = x[i:], y[i:]
+                xi, yi = x[i:], y[i:]
             else:
-                x, y = x[i:(i + batch_size)], y[i:(i + batch_size)]
+                xi, yi = x[i:(i + batch_size)], y[i:(i + batch_size)]
             self.optimizer.zero_grad()
-            yhat = self._forward(x, y)
-            loss = self.criterion(yhat, y)
+            yhat = self._forward(xi, yi)
+            loss = self.criterion(yhat, yi)
             loss.backward()
             self.optimizer.step()
             batch_idx += 1
@@ -71,7 +89,7 @@ class PytorchBaseModel(BaseModel):
             yhat = self.model(x)
             val_loss = self.criterion(yhat, y)
             eval_result = Evaluator.evaluate(metric=metric,
-                                             y_true=y, y_pred=yhat.numpy(),
+                                             y_true=y.numpy(), y_pred=yhat.numpy(),
                                              multioutput='uniform_average')
         return {"val_loss": val_loss.item(),
                 metric: eval_result}
@@ -90,11 +108,12 @@ class PytorchBaseModel(BaseModel):
         return eval_result
 
     def predict(self, x, mc=False):
+        x = PytorchBaseModel.to_torch(x)
         if mc:
             self.model.train()
         else:
             self.model.eval()
-        yhat = self.model(x)
+        yhat = self.model(x).detach().numpy()
         return yhat
 
     def predict_with_uncertainty(self, x, n_iter=100):

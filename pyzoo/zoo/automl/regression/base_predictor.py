@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-from zoo.automl.search.RayTuneSearchEngine import RayTuneSearchEngine
+from zoo.automl.search.ray_tune_search_engine import RayTuneSearchEngine
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
 from zoo.automl.common.util import *
