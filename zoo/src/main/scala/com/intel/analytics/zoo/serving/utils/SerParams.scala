@@ -22,20 +22,21 @@ import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 
 class SerParams(helper: ClusterServingHelper) extends Serializable {
   var redisHost = helper.redisHost
-  var redisPort = helper.redisPort.toInt
+  var redisPort: Int = if (helper.redisPort != null) helper.redisPort.toInt else 6379
+  var redisTimeout: Int = if (helper.redisTimeout != null) helper.redisTimeout.toInt else 5000
   val coreNum = helper.coreNum
   val jobName = helper.jobName
   val filter = helper.filter
   val chwFlag = helper.chwFlag
   val modelType = helper.modelType
   val modelDir = helper.modelDir
-  val lastModified = FileUtils.getLastModified(helper.modelDir)
+//  val lastModified = FileUtils.getLastModified(helper.modelDir)
   val sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss")
   val redisSecureEnabled = helper.redisSecureEnabled
   val redisSecureTrustStorePath = helper.redisSecureTrustStorePath
   val redisSecureTrustStorePassword = helper.redisSecureTrustStorePassword
   var timerMode: Boolean = false
-  println(s"loading params, time is ${sdf.format(lastModified)}")
+//  println(s"loading params, time is ${sdf.format(lastModified)}")
 
   val resize = helper.resize
 

@@ -17,14 +17,18 @@
 import ray
 from ray import tune
 from copy import deepcopy
-
+import os
 
 from zoo.automl.search.abstract import *
 from zoo.automl.common.util import *
+from zoo.automl.common.metrics import Evaluator
 from zoo.automl.impute.impute import *
 from ray.tune import Trainable
 import ray.tune.track
 from ray.tune.suggest.bayesopt import BayesOptSearch
+from zoo.automl.logger import TensorboardXLogger
+from zoo.automl.model.model_builder import ModelBuilder
+from zoo.automl.feature.identity_transformer import IdentityTransformer
 
 
 class RayTuneSearchEngine(SearchEngine):
@@ -49,19 +53,19 @@ class RayTuneSearchEngine(SearchEngine):
         self.trials = None
         self.remote_dir = remote_dir
         self.name = name
+        self.logs_dir = os.path.abspath(os.path.expanduser(logs_dir))
 
     def compile(self,
                 input_df,
                 model_create_func,
-                search_space,
                 recipe,
+                feature_cols=None,
+                target_col=None,
+                search_space=None,
                 feature_transformers=None,
-                # model=None,
-                future_seq_len=1,
                 validation_df=None,
                 mc=False,
-                metric="mse",
-                metric_mode="min"):
+                metric="mse"):
         """
         Do necessary preparations for the engine
         :param input_df:
@@ -87,7 +91,8 @@ class RayTuneSearchEngine(SearchEngine):
         fixed_params = recipe.fixed_params()
         schedule_algorithm = recipe.scheduler_algorithm()
         del stop['num_samples']
-
+        if search_space is None:
+            search_space = recipe.search_space(all_available_features=None)
         self.search_space = self._prepare_tune_config(search_space)
         self.stop_criteria = stop
         self.num_samples = num_samples
@@ -128,14 +133,14 @@ class RayTuneSearchEngine(SearchEngine):
             self.search_algorithm = None
 
         self.fixed_params = fixed_params
+        if feature_transformers is None:
+            feature_transformers = IdentityTransformer(feature_cols, target_col)
 
         self.train_func = self._prepare_train_func(input_df=input_df,
                                                    model_create_func=model_create_func,
                                                    feature_transformers=feature_transformers,
-                                                   future_seq_len=future_seq_len,
                                                    validation_df=validation_df,
                                                    metric=metric,
-                                                   metric_mode=metric_mode,
                                                    mc=mc,
                                                    remote_dir=self.remote_dir
                                                    )
@@ -156,6 +161,7 @@ class RayTuneSearchEngine(SearchEngine):
         if not self.search_algorithm:
             analysis = tune.run(
                 self.train_func,
+                local_dir=self.logs_dir,
                 name=self.name,
                 stop=self.stop_criteria,
                 config=self.search_space,
@@ -168,6 +174,7 @@ class RayTuneSearchEngine(SearchEngine):
         else:
             analysis = tune.run(
                 self.train_func,
+                local_dir=self.logs_dir,
                 name=self.name,
                 config=self.fixed_params,
                 stop=self.stop_criteria,
@@ -180,6 +187,19 @@ class RayTuneSearchEngine(SearchEngine):
             )
 
         self.trials = analysis.trials
+
+        # Visualization code for ray (leaderboard)
+        # catch the ImportError Since it has been processed in TensorboardXLogger
+        tf_config, tf_metric = self._log_adapt(analysis)
+        try:
+            self.logger = TensorboardXLogger(os.path.join(self.logs_dir, self.name+"_leaderboard"))
+            self.logger.run(tf_config, tf_metric)
+            self.logger.close()
+        except ImportError:
+            pass
+        except:
+            raise
+
         return analysis
 
     def get_best_trials(self, k=1):
@@ -239,9 +259,7 @@ class RayTuneSearchEngine(SearchEngine):
     def _prepare_train_func(input_df,
                             model_create_func,
                             feature_transformers,
-                            future_seq_len,
                             metric,
-                            metric_mode,
                             validation_df=None,
                             mc=False,
                             remote_dir=None,
@@ -253,7 +271,6 @@ class RayTuneSearchEngine(SearchEngine):
         :param model: model or model selector
         :param validation_df: validation dataframe
         :param metric: the rewarding metric
-        :param metric_mode: the mode of rewarding metric. "min" or "max"
         :return: the train function
         """
         input_df_id = ray.put(input_df)
@@ -281,8 +298,11 @@ class RayTuneSearchEngine(SearchEngine):
             # else:
             #     trial_model = TimeSequenceModel(check_optional_config=False,
             #
-            trial_model = model_create_func
-
+            print(config.keys())
+            if isinstance(model_create_func, ModelBuilder):
+                trial_model = model_create_func.build(config)
+            else:
+                trial_model = model_create_func(config=config)
             imputer = None
             if "imputation" in config:
                 if config["imputation"] == "LastFillImpute":
@@ -311,7 +331,6 @@ class RayTuneSearchEngine(SearchEngine):
             # callbacks = [TuneCallback(tune_reporter)]
             # fit model
             best_reward_m = -999
-            metric_op = 1 if metric_mode is "max" else -1
             # print("config:", config)
             for i in range(1, 101):
                 result = trial_model.fit_eval(x_train,
@@ -321,7 +340,7 @@ class RayTuneSearchEngine(SearchEngine):
                                               metric=metric,
                                               # verbose=1,
                                               **config)
-                reward_m = metric_op * result
+                reward_m = result if Evaluator.get_metric_mode(metric) == "max" else -result
                 ckpt_name = "best.ckpt"
                 if reward_m > best_reward_m:
                     best_reward_m = reward_m
@@ -340,7 +359,6 @@ class RayTuneSearchEngine(SearchEngine):
                                  feature_transformers,
                                  future_seq_len,
                                  metric,
-                                 metric_mode,
                                  validation_df=None,
                                  mc=False,
                                  remote_dir=None
@@ -352,7 +370,6 @@ class RayTuneSearchEngine(SearchEngine):
         :param model: model or model selector
         :param validation_df: validation dataframe
         :param metric: the rewarding metric
-        :param metric_mode: the mode of rewarding metric. "min" or "max"
         :return: the train function
         """
         input_df_id = ray.put(input_df)
@@ -407,7 +424,7 @@ class RayTuneSearchEngine(SearchEngine):
                                                    validation_data=self.validation_data,
                                                    # verbose=1,
                                                    **self.config)
-                self.reward_m = self.metric_op * result
+                self.reward_m = result if Evaluator.get_metric_mode(metric) == "max" else -result
                 # if metric == "mean_squared_error":
                 #     self.reward_m = (-1) * result
                 #     # print("running iteration: ",i)
@@ -452,3 +469,13 @@ class RayTuneSearchEngine(SearchEngine):
             else:
                 tune_config[k] = v
         return tune_config
+
+    def _log_adapt(self, analysis):
+        # config
+        config = analysis.get_all_configs()
+        # metric
+        metric_raw = analysis.fetch_trial_dataframes()
+        metric = {}
+        for key, value in metric_raw.items():
+                metric[key] = dict(zip(list(value.columns), list(value.iloc[-1].values)))
+        return config, metric

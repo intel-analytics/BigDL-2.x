@@ -15,3 +15,4 @@
 #
 
 from .shard import SparkXShards, SharedValue, XShards
+from .elastic_search import elastic_search

@@ -40,8 +40,8 @@ class ClusterServingInference(preProcessing: PreProcessing,
   def multiThreadPipeline(in: List[(String, String)]): List[(String, String)] = {
     multiThreadInference(preProcess(in, true))
   }
-  
-  def preProcess(in: List[(String, String)], 
+
+  def preProcess(in: List[(String, String)],
                  multiThread: Boolean = false): List[(String, Activity)] = {
     if (!multiThread) {
       in.map(item => {
@@ -61,7 +61,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
     }
   }
   def singleThreadInference(in: List[(String, Activity)]): List[(String, String)] = {
-    
+
     val postProcessed = in.map(pathByte => {
       try {
         val t = typeCheck(pathByte._2)
@@ -88,7 +88,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
    * fixed size of input, thus mutable batch size is not supported
    */
   def singleThreadBatchInference(in: List[(String, Activity)]): List[(String, String)] = {
-    
+
     val postProcessed = in.grouped(batchSize).flatMap(pathByte => {
       try {
         val thisBatchSize = pathByte.size
@@ -121,7 +121,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
   }
 
   def multiThreadInference(in: List[(String, Activity)]): List[(String, String)] = {
-    
+
     val postProcessed = in.grouped(batchSize).flatMap(itemBatch => {
       try {
         val size = itemBatch.size
