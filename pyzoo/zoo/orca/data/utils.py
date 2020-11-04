@@ -19,7 +19,7 @@ import tempfile
 import shutil
 import pickle
 
-from zoo.common import get_file_list, put_local_file_to_remote, get_remote_file_to_local
+from zoo.common import get_file_list
 
 
 def list_s3_file(file_path, env):
