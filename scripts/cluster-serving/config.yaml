@@ -22,6 +22,7 @@ flink:
 redis:
   # default, 4g
   maxmem:
+  timeout: 5000
 secure:
   # default: false
   secure_enabled:

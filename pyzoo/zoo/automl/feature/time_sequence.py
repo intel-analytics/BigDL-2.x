@@ -391,13 +391,6 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
             if is_nan.any(axis=None):
                 raise ValueError("Missing values in input dataframe!")
 
-        # check if the last datetime is large than current time.
-        # In that case, feature tools generate NaN.
-        last_datetime = dt.iloc[-1]
-        current_time = np.datetime64('today', 's')
-        if last_datetime > current_time:
-            raise ValueError("Last date time is bigger than current time!")
-
         # check if the length of input data is smaller than requested.
         if mode == "test":
             min_input_len = self.past_seq_len
@@ -541,6 +534,8 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         df = input_df.copy()
         df["id"] = df.index + 1
 
+        cutoff_time = df[self.dt_col].max().to_numpy()
+
         es = ft.EntitySet(id="data")
         es = es.entity_from_dataframe(entity_id="time_seq",
                                       dataframe=df,
@@ -563,6 +558,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
                                            return_type=Numeric)
 
         feature_matrix, feature_defs = ft.dfs(entityset=es,
+                                              cutoff_time=cutoff_time,
                                               target_entity="time_seq",
                                               agg_primitives=["count"],
                                               trans_primitives=["month", "weekday", "day", "hour",
