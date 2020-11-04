@@ -111,8 +111,10 @@ def main():
     #model.train()
     criterion = nn.CrossEntropyLoss()
     zoo_estimator = Estimator.from_torch(model=model_creator, optimizer=optimizer_creator, loss=criterion, config={}, backend="pytorch")
-    zoo_estimator.fit(train_data_creator, epochs=args.epochs)
-    zoo_estimator.evaluate(validation_data_creator)
+    stats = zoo_estimator.fit(train_data_creator, epochs=args.epochs)
+    print("Train stats: {}".format(stats))
+    val_stats = zoo_estimator.evaluate(validation_data_creator)
+    print("validation stats: {}".format(val_stats))
     stop_orca_context()
 
 
