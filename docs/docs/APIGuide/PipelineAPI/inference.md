@@ -166,27 +166,19 @@ model.load_openvino(modelPath, weightPath)
 ### **Load pre-trained PyTorch model**
 Load Pytorch model with corresponding `loadPyTorch` methods (`loadPyTorch` for Java and Python, `doLoadPyTorch` for Scala).
 
-**Java**
-
-```java
-public class ExtendedInferenceModel extends AbstractInferenceModel {
-}
-ExtendedInferenceModel model = new ExtendedInferenceModel();
-model.loadPyTorch(modelPath);
-```
-
 **Scala**
+
+***load with model path***
 
 ```scala
 val model = new InferenceModel()
 model.doLoadPyTorch(modelPath)
 ```
+***load with model bytes***
 
-**Python**
-
-```python
-model = InferenceModel()
-model.load_pytorch(modelPath)
+```scala
+val model = new InferenceModel()
+model.doLoadPyTorch(modelBytes)
 ```
 
 * `modelPath`: String. Path of pre-trained model.
