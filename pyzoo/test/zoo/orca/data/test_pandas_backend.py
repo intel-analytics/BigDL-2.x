@@ -344,13 +344,14 @@ class TestSparkXShards(TestCase):
         temp = tempfile.mkdtemp()
         file_path = os.path.join(self.resource_path, "orca/data/csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path)
+
         def transform(df):
             result = df['ID'].to_numpy()
             return result
 
         data_shard = data_shard.transform_shard(transform)
         path = os.path.join(temp, "data_np")
-        data_shard.save_numpy(path)
+        data_shard.save_as_numpy(path)
 
         shards = XShards.load_numpy(path)
         assert shards._get_class_name() == "numpy.ndarray"

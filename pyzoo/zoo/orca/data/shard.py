@@ -475,7 +475,7 @@ class SparkXShards(XShards):
         self.rdd.saveAsPickleFile(path, batchSize)
         return self
 
-    def save_numpy(self, path):
+    def save_as_numpy(self, path):
         if self._get_class_name() == "numpy.ndarray":
             if not exists(path):
                 makedirs(path)
