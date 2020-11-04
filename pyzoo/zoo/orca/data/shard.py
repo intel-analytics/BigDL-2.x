@@ -86,7 +86,6 @@ class XShards(object):
         def load_np(iter):
             data_list = []
             for path in iter:
-                print(path)
                 data = load_numpy(path, allow_pickle=False)
                 data_list.append(data)
             if len(data_list) > 0 :
@@ -487,7 +486,6 @@ class SparkXShards(XShards):
                     assert len(data) <= 1
 
                     if len(data) == 1:
-                        print("data 0 is :", data[0])
                         save_numpy(os.path.join(path, str(index) + ".npy"), data[0])
                     yield 0
 

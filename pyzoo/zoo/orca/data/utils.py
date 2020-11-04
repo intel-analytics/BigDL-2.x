@@ -300,14 +300,9 @@ def merge(data_list):
             elif isinstance(data_list[0][key], np.ndarray):
                 merged_value = np.concatenate([data[key] for data in data_list], axis=0)
                 result[key] = merged_value
-            print("key is: ", key)
-            print("result after set is: ", result)
-        print("result is: ", result)
         return result
     elif get_class_name(data_list[0]) == 'pandas.core.frame.DataFrame':
         import pandas as pd
         return pd.concat(data_list)
     else:
-        print("type")
-        print(type(data_list[0]))
         raise Exception("Only support merge numpy.ndarray and dictionary of numpy ndarray and pandas dataframe.")
