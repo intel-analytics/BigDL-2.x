@@ -27,6 +27,8 @@ from ray.tune import Trainable
 import ray.tune.track
 from ray.tune.suggest.bayesopt import BayesOptSearch
 from zoo.automl.logger import TensorboardXLogger
+from zoo.automl.model.model_builder import ModelBuilder
+from zoo.automl.feature.identity_transformer import IdentityTransformer
 
 
 class RayTuneSearchEngine(SearchEngine):
@@ -56,8 +58,10 @@ class RayTuneSearchEngine(SearchEngine):
     def compile(self,
                 input_df,
                 model_create_func,
-                search_space,
                 recipe,
+                feature_cols=None,
+                target_col=None,
+                search_space=None,
                 feature_transformers=None,
                 validation_df=None,
                 mc=False,
@@ -87,7 +91,8 @@ class RayTuneSearchEngine(SearchEngine):
         fixed_params = recipe.fixed_params()
         schedule_algorithm = recipe.scheduler_algorithm()
         del stop['num_samples']
-
+        if search_space is None:
+            search_space = recipe.search_space(all_available_features=None)
         self.search_space = self._prepare_tune_config(search_space)
         self.stop_criteria = stop
         self.num_samples = num_samples
@@ -128,6 +133,8 @@ class RayTuneSearchEngine(SearchEngine):
             self.search_algorithm = None
 
         self.fixed_params = fixed_params
+        if feature_transformers is None:
+            feature_transformers = IdentityTransformer(feature_cols, target_col)
 
         self.train_func = self._prepare_train_func(input_df=input_df,
                                                    model_create_func=model_create_func,
@@ -292,7 +299,10 @@ class RayTuneSearchEngine(SearchEngine):
             #     trial_model = TimeSequenceModel(check_optional_config=False,
             #
             print(config.keys())
-            trial_model = model_create_func(config=config)
+            if isinstance(model_create_func, ModelBuilder):
+                trial_model = model_create_func.build(config)
+            else:
+                trial_model = model_create_func(config=config)
             imputer = None
             if "imputation" in config:
                 if config["imputation"] == "LastFillImpute":
