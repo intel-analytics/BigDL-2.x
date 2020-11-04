@@ -134,7 +134,6 @@ model.load_tensorflow(modelPath, modelType)
 ```
 
 ### **Load OpenVINO model**
-
 Load OpenVINO model with `loadOpenVINO` methods (`loadOpenVINO` for Java, `doLoadOpenVINO` for Scala and `load_openvino` Python).
 
 **Java**
@@ -164,24 +163,61 @@ model.load_openvino(modelPath, weightPath)
 * `weightPath`: String. Path of pre-trained OpenVINO model weight.
 
 ### **Load pre-trained PyTorch model**
-Load Pytorch model with corresponding `loadPyTorch` methods (`loadPyTorch` for Java and Python, `doLoadPyTorch` for Scala).
+Load Pytorch model with corresponding `loadPyTorch` methods (`load_pytorch` for Python and `doLoadPyTorch` for Scala).
+
+**Python**
+Before loading PyTorch model with path in python, user should save it using zoo_pickle_module in python, like:
+
+```python
+from zoo.pipeline.api.torch import zoo_pickle_module
+model = models.resnet18(pretrained = True)
+torch.save(model, "$modelPath", pickle_module=zoo_pickle_module)
+```
+
+Then load PyTorch model:
+
+```python
+model = InferenceModel()
+model.load_pytorch(modelPath, weightPath)
+```
 
 **Scala**
 
 ***load with model path***
+Before loading PyTorch model with path in scala, user should save it using zoo_pickle_module in python, like:
+
+```python
+from zoo.pipeline.api.torch import zoo_pickle_module
+model = models.resnet18(pretrained = True)
+torch.save(model, "$modelPath", pickle_module=zoo_pickle_module)
+```
+
+Then load PyTorch model:
 
 ```scala
 val model = new InferenceModel()
 model.doLoadPyTorch(modelPath)
 ```
+
 ***load with model bytes***
+Before loading PyTorch model with model bytes in scala, user should save it using zoo_pickle_module, like:
+
+```scala
+from zoo.pipeline.api.torch import zoo_pickle_module
+model = models.resnet18(pretrained = True)
+torch.save(model, "$modelPath", pickle_module=zoo_pickle_module)
+val modelBytes = Files.readAllBytes(Paths.get(modelPath))
+```
+
+Then load PyTorch model:
 
 ```scala
 val model = new InferenceModel()
 model.doLoadPyTorch(modelBytes)
 ```
 
-* `modelPath`: String. Path of pre-trained model.
+* `modelPath`: String. Path of pre-trained PyTorch model.
+* `weightPath`: String. Path of pre-trained PyTorch model weight.
 * `modelBytes`: Array[Byte]. Bytes of the torch script.
 
 ## **Predict with loaded model**
