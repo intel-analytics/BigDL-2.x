@@ -81,8 +81,9 @@ object MockSinglePipelineBaseline extends Supportive {
 
     val model = helper.loadInferenceModel()
     val warmT = makeTensorFromShape(param.inputShape)
-    ClusterServingInference.typeCheck(warmT)
-    ClusterServingInference.dimCheck(warmT, "add", sParam.modelType)
+    val clusterServingInference = new ClusterServingInference(null, "openvino")
+    clusterServingInference.typeCheck(warmT)
+    clusterServingInference.dimCheck(warmT, "add", sParam.modelType)
     (0 until 10).foreach(_ => {
       val result = model.doPredict(warmT)
     })
@@ -111,14 +112,14 @@ object MockSinglePipelineBaseline extends Supportive {
         }
         preprocessed.grouped(batch.size).flatMap(b => {
           val t = timer.timing("Batch input", batch.size) {
-            ClusterServingInference.batchInput(b, sParam.coreNum, true, sParam.resize)
+            clusterServingInference.batchInput(b, sParam.coreNum, true, sParam.resize)
           }
-          ClusterServingInference.dimCheck(t, "add", sParam.modelType)
+          clusterServingInference.dimCheck(t, "add", sParam.modelType)
           val result = timer.timing("Inference", batch.size) {
             model.doPredict(t)
           }
-          ClusterServingInference.dimCheck(t, "remove", sParam.modelType)
-          ClusterServingInference.dimCheck(result, "remove", sParam.modelType)
+          clusterServingInference.dimCheck(t, "remove", sParam.modelType)
+          clusterServingInference.dimCheck(result, "remove", sParam.modelType)
           val postprocessed = timer.timing("Postprocess", batch.size) {
             (0 until sParam.coreNum).map(i => {
               ArrowSerializer.activityBatchToByte(result, i + 1)

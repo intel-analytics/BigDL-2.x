@@ -25,10 +25,10 @@ import org.apache.flink.configuration.Configuration
 import org.apache.log4j.Logger
 
 
-class ClusterServingInferenceOperator(var params: ClusterServingParams = null)
+class ClusterServingInferenceOperator(var params: ClusterServingParams = new ClusterServingParams())
   extends RichMapFunction[List[(String, Activity)], List[(String, String)]] {
   var logger: Logger = null
-  var pre: PreProcessing = null
+  var inference: ClusterServingInference = null
 
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
@@ -48,7 +48,7 @@ class ClusterServingInferenceOperator(var params: ClusterServingParams = null)
         }
       }
     }
-
+    inference = new ClusterServingInference(null, params._modelType)
   }
 
   /**
@@ -71,7 +71,7 @@ class ClusterServingInferenceOperator(var params: ClusterServingParams = null)
   override def map(in: List[(String, Activity)]): List[(String, String)] = {
     val t1 = System.nanoTime()
     val postProcessed =
-      ClusterServingInference.singleThreadInference(in.toIterator, params._modelType, "").toList
+      inference.singleThreadInference(in).toList
     val t2 = System.nanoTime()
     logger.info(s"${postProcessed.size} records backend time ${(t2 - t1) / 1e9} s. " +
       s"Throughput ${postProcessed.size / ((t2 - t1) / 1e9)}")

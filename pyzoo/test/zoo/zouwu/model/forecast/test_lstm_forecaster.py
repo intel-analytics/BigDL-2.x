@@ -62,14 +62,16 @@ class TestZouwuModelLSTMForecaster(TestCase):
 
     def test_forecast_lstm(self):
         # TODO hacking to fix a bug
-        model = LSTMForecaster(target_dim=1, feature_dim=self.x_train.shape[-1])
+        target_dim = 1
+        model = LSTMForecaster(target_dim=target_dim, feature_dim=self.x_train.shape[-1])
         model.fit(self.x_train,
                   self.y_train,
                   validation_data=(self.x_val, self.y_val),
                   batch_size=8,
                   distributed=False)
-        model.evaluate(self.x_val, self.y_val)
-        model.predict(self.x_test)
+        assert model.evaluate(self.x_val, self.y_val)
+        predict_result = model.predict(self.x_test)
+        assert predict_result.shape == (self.x_test.shape[0], target_dim)
 
 
 if __name__ == "__main__":

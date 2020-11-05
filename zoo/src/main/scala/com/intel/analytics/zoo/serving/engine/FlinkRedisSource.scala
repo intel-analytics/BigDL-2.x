@@ -49,14 +49,17 @@ class FlinkRedisSource(params: SerParams)
     }
 
     redisPool = new JedisPool(new JedisPoolConfig(),
-      params.redisHost, params.redisPort, 5000, params.redisSecureEnabled)
+      params.redisHost, params.redisPort, params.redisTimeout, params.redisSecureEnabled)
+    logger.info(
+      s"FlinkRedisSource connect to Redis: redis://${params.redisHost}:${params.redisPort} " +
+      s"with timeout: ${params.redisTimeout} and redisSecureEnabled: ${params.redisSecureEnabled}")
     params.redisSecureEnabled match {
       case true => logger.info(s"FlinkRedisSource connect to secured Redis successfully.")
       case false => logger.info(s"FlinkRedisSource connect to plain Redis successfully.")
     }
     jedis = RedisIO.getRedisClient(redisPool)
     try {
-      jedis.xgroupCreate(Conventions.SERVING_STREAM_DEFAULT_NAME,
+      jedis.xgroupCreate(params.jobName,
         "serving", new StreamEntryID(0, 0), true)
     } catch {
       case e: Exception =>
@@ -78,7 +81,7 @@ class FlinkRedisSource(params: SerParams)
       readNumPerTime,
       1,
       false,
-      new SimpleEntry(Conventions.SERVING_STREAM_DEFAULT_NAME, StreamEntryID.UNRECEIVED_ENTRY))
+      new SimpleEntry(params.jobName, StreamEntryID.UNRECEIVED_ENTRY))
     if (response != null) {
       for (streamMessages <- response.asScala) {
         val key = streamMessages.getKey

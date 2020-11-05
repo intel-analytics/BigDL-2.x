@@ -21,10 +21,10 @@ from zoo.automl.feature.abstract import BaseFeatureTransformer
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import pandas as pd
 import numpy as np
-import featuretools as ft
-from featuretools.primitives import make_agg_primitive, make_trans_primitive
-from featuretools.variable_types import Text, Numeric, DatetimeTimeIndex
 import json
+
+TIME_ATTR = ("MINUTE", "DAY", "DAYOFYEAR", "HOUR", "WEEKDAY", "WEEKOFYEAR", "MONTH")
+ADDITIONAL_TIME_ATTR = ("IS_AWAKE", "IS_BUSY_HOURS", "IS_WEEKEND")
 
 
 class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
@@ -34,7 +34,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
 
     def __init__(self, future_seq_len=1,
                  dt_col="datetime",
-                 target_col="value",
+                 target_col=["value"],
                  extra_features_col=None,
                  drop_missing=True):
         """
@@ -51,7 +51,10 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         self.scaler = StandardScaler()
         self.config = None
         self.dt_col = dt_col
-        self.target_col = target_col
+        if isinstance(target_col, str):
+            self.target_col = [target_col]
+        else:
+            self.target_col = target_col
         self.extra_features_col = extra_features_col
         self.feature_data = None
         self.drop_missing = drop_missing
@@ -200,9 +203,12 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
 
     def _unscale(self, y):
         # for standard scalar
-        value_mean = self.scaler.mean_[0]
-        value_scale = self.scaler.scale_[0]
-        y_unscale = y * value_scale + value_mean
+        y_unscale = np.zeros(y.shape)
+        for i in range(len(self.target_col)):
+            value_mean = self.scaler.mean_[i]
+            value_scale = self.scaler.scale_[i]
+            y_unscale[:, i:i+self.future_seq_len] = \
+                y[:, i:i+self.future_seq_len] * value_scale + value_mean
         return y_unscale
 
     def unscale_uncertainty(self, y_uncertainty):
@@ -221,10 +227,12 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         """
         y_pred_df = y_pred_dt_df
         if self.future_seq_len > 1:
-            columns = ["{}_{}".format(self.target_col, i) for i in range(self.future_seq_len)]
-            y_pred_df[columns] = pd.DataFrame(y_pred_unscale)
+            for i in range(self.future_seq_len):
+                for j in range(len(self.target_col)):
+                    column = self.target_col[j] + "_" + str(i)
+                    y_pred_df[column] = pd.DataFrame(y_pred_unscale[:, i])
         else:
-            y_pred_df[self.target_col] = y_pred_unscale
+            y_pred_df[self.target_col] = pd.DataFrame(y_pred_unscale)
         return y_pred_df
 
     def post_processing(self, input_df, y_pred, is_train):
@@ -246,13 +254,13 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
             if isinstance(input_df, list):
                 y_unscale_list = []
                 for df in input_df:
-                    _, y_unscale = self._roll_train(df[[self.target_col]],
+                    _, y_unscale = self._roll_train(df[self.target_col],
                                                     self.past_seq_len,
                                                     self.future_seq_len)
                     y_unscale_list.append(y_unscale)
                 output_y_unscale = np.concatenate(y_unscale_list, axis=0)
             else:
-                _, output_y_unscale = self._roll_train(input_df[[self.target_col]],
+                _, output_y_unscale = self._roll_train(input_df[self.target_col],
                                                        self.past_seq_len,
                                                        self.future_seq_len)
             return output_y_unscale, y_pred_unscale
@@ -321,21 +329,12 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         # self.scaler.scale_ = np.asarray(result["scale"])
         # print(self.scaler.transform(input_data))
 
-    def get_feature_list(self, input_df):
-        if isinstance(input_df, list):
-            feature_matrix, feature_defs = self._generate_features(input_df[0])
-        else:
-            feature_matrix, feature_defs = self._generate_features(input_df)
-    # return [feat.generate_name() for feat in feature_defs if isinstance(feat, TransformFeature)]
+    def get_feature_list(self):
         feature_list = []
-        for feat in feature_defs:
-            feature_name = feat.generate_name()
-            # print(feature_name)
-            # todo: need to change if more than one target cols are supported
-            if isinstance(feat, TransformFeature) \
-                    or (self.extra_features_col and feature_name in self.extra_features_col):
-                # if feature_name != self.target_col:
-                feature_list.append(feature_name)
+        for feature in (TIME_ATTR + ADDITIONAL_TIME_ATTR):
+            feature_list.append(feature + "({})".format(self.dt_col))
+        if self.extra_features_col:
+            feature_list += self.extra_features_col
         return feature_list
 
     def _get_feat_config(self, **config):
@@ -383,13 +382,6 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
             if is_nan.any(axis=None):
                 raise ValueError("Missing values in input dataframe!")
 
-        # check if the last datetime is large than current time.
-        # In that case, feature tools generate NaN.
-        last_datetime = dt.iloc[-1]
-        current_time = np.datetime64('today', 's')
-        if last_datetime > current_time:
-            raise ValueError("Last date time is bigger than current time!")
-
         # check if the length of input data is smaller than requested.
         if mode == "test":
             min_input_len = self.past_seq_len
@@ -415,8 +407,12 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
     def _roll_data(self, data, seq_len):
         result = []
         mask = []
+
         for i in range(len(data) - seq_len + 1):
-            result.append(data[i: i + seq_len])
+            if seq_len == 1 and len(self.target_col) > 1:
+                result.append(data[i])
+            else:
+                result.append(data[i: i + seq_len])
 
             if pd.isna(data[i: i + seq_len]).any(axis=None):
                 mask.append(0)
@@ -442,7 +438,10 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
             length = 1
         """
         x = dataframe[0:-future_seq_len].values
-        y = dataframe.iloc[past_seq_len:, 0].values
+        if len(self.target_col) == 1:
+            y = dataframe.iloc[past_seq_len:, 0].values
+        else:
+            y = dataframe.iloc[past_seq_len:, list(range(0, len(self.target_col)))].values
         output_x, mask_x = self._roll_data(x, past_seq_len)
         output_y, mask_y = self._roll_data(y, future_seq_len)
         # assert output_x.shape[0] == output_y.shape[0],
@@ -517,51 +516,39 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         :return:
         """
         cols = input_df.columns.tolist()
-        new_cols = [self.dt_col,
-                    self.target_col] + [col for col in cols
-                                        if col != self.dt_col and col != self.target_col]
+        new_cols = [self.dt_col] + self.target_col +\
+                   [col for col in cols if col != self.dt_col and col not in self.target_col]
         rearranged_data = input_df[new_cols].copy
         return rearranged_data
 
     def _generate_features(self, input_df):
         df = input_df.copy()
         df["id"] = df.index + 1
+        field = df[self.dt_col]
 
-        es = ft.EntitySet(id="data")
-        es = es.entity_from_dataframe(entity_id="time_seq",
-                                      dataframe=df,
-                                      index="id",
-                                      time_index=self.dt_col)
+        # built in attr
+        for attr in TIME_ATTR:
+            df[attr + "({})".format(self.dt_col)] = getattr(field.dt, attr.lower())
 
-        def is_awake(column):
-            hour = column.dt.hour
-            return (((hour >= 6) & (hour <= 23)) | (hour == 0)).astype(int)
+        # additional attr
+        hour = field.dt.hour
+        weekday = field.dt.weekday
+        df["IS_AWAKE" + "({})".format(self.dt_col)] =\
+            (((hour >= 6) & (hour <= 23)) | (hour == 0)).astype(int).values
+        df["IS_BUSY_HOURS" + "({})".format(self.dt_col)] =\
+            (((hour >= 7) & (hour <= 9)) | (hour >= 16) & (hour <= 19)).astype(int).values
+        df["IS_WEEKEND" + "({})".format(self.dt_col)] =\
+            (weekday >= 5).values
 
-        def is_busy_hours(column):
-            hour = column.dt.hour
-            return (((hour >= 7) & (hour <= 9)) | (hour >= 16) & (hour <= 19)).astype(int)
-
-        IsAwake = make_trans_primitive(function=is_awake,
-                                       input_types=[DatetimeTimeIndex],
-                                       return_type=Numeric)
-        IsBusyHours = make_trans_primitive(function=is_busy_hours,
-                                           input_types=[DatetimeTimeIndex],
-                                           return_type=Numeric)
-
-        feature_matrix, feature_defs = ft.dfs(entityset=es,
-                                              target_entity="time_seq",
-                                              agg_primitives=["count"],
-                                              trans_primitives=["month", "weekday", "day", "hour",
-                                                                "is_weekend", IsAwake, IsBusyHours])
-        return feature_matrix, feature_defs
+        return df
 
     def _get_features(self, input_df, config):
-        feature_matrix, feature_defs = self._generate_features(input_df)
+        feature_matrix = self._generate_features(input_df)
         # self.write_generate_feature_list(feature_defs)
         feature_cols = np.asarray(json.loads(config.get("selected_features")))
         # we do not include target col in candidates.
         # the first column is designed to be the default position of target column.
-        target_col = np.array([self.target_col])
+        target_col = np.array(self.target_col)
         cols = np.concatenate([target_col, feature_cols])
         target_feature_matrix = feature_matrix[cols]
         return target_feature_matrix.astype(float)

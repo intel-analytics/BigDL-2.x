@@ -27,18 +27,18 @@ import os
 from tempfile import TemporaryDirectory
 
 
-class TestPyTorchTrainer(TestCase):
+class TestPyTorchEstimator(TestCase):
     def test_train(self):
         estimator = Estimator.from_torch(
             model=model_creator,
             optimizer=optimizer_creator,
-            loss=nn.MSELoss,
+            loss=nn.MSELoss(),
             scheduler_creator=scheduler_creator,
             config={
                 "lr": 1e-2,  # used in optimizer_creator
                 "hidden_size": 1,  # used in model_creator
                 "batch_size": 4,  # used in data_creator
-            })
+            }, backend="horovod")
         stats1 = estimator.fit(train_data_creator, epochs=5)
         train_loss1 = stats1[-1]["train_loss"]
         validation_loss1 = estimator.evaluate(validation_data_creator)["val_loss"]
@@ -56,13 +56,13 @@ class TestPyTorchTrainer(TestCase):
         estimator1 = Estimator.from_torch(
             model=model_creator,
             optimizer=optimizer_creator,
-            loss=nn.MSELoss,
+            loss=nn.MSELoss(),
             scheduler_creator=scheduler_creator,
             config={
                 "lr": 1e-2,  # used in optimizer_creator
                 "hidden_size": 1,  # used in model_creator
                 "batch_size": 4,  # used in data_creator
-            })
+            }, backend="horovod")
         with TemporaryDirectory() as tmp_path:
             estimator1.fit(train_data_creator, epochs=1)
             checkpoint_path = os.path.join(tmp_path, "checkpoint")
@@ -75,13 +75,13 @@ class TestPyTorchTrainer(TestCase):
             estimator2 = Estimator.from_torch(
                 model=model_creator,
                 optimizer=optimizer_creator,
-                loss=nn.MSELoss,
+                loss=nn.MSELoss(),
                 scheduler_creator=scheduler_creator,
                 config={
                     "lr": 1e-2,  # used in optimizer_creator
                     "hidden_size": 1,  # used in model_creator
                     "batch_size": 4,  # used in data_creator
-                })
+                }, backend="horovod")
             estimator2.load(checkpoint_path)
 
             model2 = estimator2.get_model()

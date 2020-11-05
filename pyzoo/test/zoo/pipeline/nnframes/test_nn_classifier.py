@@ -14,25 +14,25 @@
 # limitations under the License.
 #
 
-import pytest
-import shutil
 import errno
-import string
+import shutil
+
+import pytest
 from bigdl.nn.criterion import *
 from bigdl.nn.layer import *
 from bigdl.optim.optimizer import *
 from numpy.testing import assert_allclose
-from pyspark.ml import Pipeline
+from pyspark.ml import Pipeline, PipelineModel
 from pyspark.ml.feature import MinMaxScaler
+from pyspark.ml.tuning import ParamGridBuilder
 from pyspark.sql.types import *
-
 from zoo.common.nncontext import *
-from zoo.pipeline.nnframes import *
-from zoo.pipeline.api.keras.optimizers import Adam as KAdam
-from zoo.pipeline.api.keras import layers as ZLayer
-from zoo.pipeline.api.keras.models import Model as ZModel
 from zoo.feature.common import *
 from zoo.feature.image import *
+from zoo.pipeline.api.keras import layers as ZLayer
+from zoo.pipeline.api.keras.models import Model as ZModel
+from zoo.pipeline.api.keras.optimizers import Adam as KAdam
+from zoo.pipeline.nnframes import *
 from zoo.util.tf import *
 
 
@@ -75,6 +75,20 @@ class TestNNClassifer():
         schema = StructType([
             StructField("features", ArrayType(DoubleType(), False), False),
             StructField("label", DoubleType(), False)])
+        df = self.sqlContext.createDataFrame(data, schema)
+        return df
+
+    def get_pipeline_df(self):
+        data = self.sc.parallelize([
+            ((2.0, 1.0), (1.0, 2.0), 1.0),
+            ((1.0, 2.0), (2.0, 1.0), 2.0),
+            ((2.0, 1.0), (1.0, 2.0), 1.0),
+            ((1.0, 2.0), (2.0, 1.0), 2.0)])
+
+        schema = StructType([
+            StructField("features", ArrayType(DoubleType(), False), False),
+            StructField("label1", ArrayType(DoubleType(), False), False),
+            StructField("label2", DoubleType(), False)])
         df = self.sqlContext.createDataFrame(data, schema)
         return df
 
@@ -610,6 +624,80 @@ class TestNNClassifer():
         assert len(lr_result) == 5
         assert len(top1_result) == 4
 
+    def test_nnestimator_with_param_maps(self):
+        model = Sequential().add(Linear(2, 2))
+        criterion = MSECriterion()
+        data = self.sc.parallelize([
+            ((2.0, 1.0), 1.0),
+            ((1.0, 2.0), 2.0),
+            ((2.0, 1.0), 1.0),
+            ((1.0, 2.0), 2.0)])
+
+        val_data = self.sc.parallelize([
+            ((2.0, 1.0), 1.0),
+            ((1.0, 2.0), 2.0)])
+
+        schema = StructType([
+            StructField("features", ArrayType(DoubleType(), False), False),
+            StructField("label", DoubleType(), False)])
+        df = self.sqlContext.createDataFrame(data, schema)
+        val_df = self.sqlContext.createDataFrame(val_data, schema)
+
+        classfier = NNEstimator(model, criterion, SeqToTensor([2]))\
+            .setBatchSize(4).setMaxEpoch(5) \
+            .setValidation(EveryEpoch(), val_df, [Top1Accuracy()], 2)
+
+        param = ParamGridBuilder().addGrid(classfier.learningRate, [1e-3, 1.0]).build()
+
+        print(param)
+        models = classfier.fit(df, params=param)
+        # print(models.model.get_weights())
+        assert len(models) == 2
+
+        w1 = models[0].model.get_weights()
+        w2 = models[1].model.get_weights()
+
+        for ww1, ww2 in zip(w1, w2):
+            diff = np.sum((ww1 - ww2) ** 2)
+            assert diff > 1e-2
+
+    def test_nnclassifier_with_param_maps(self):
+        model = Sequential().add(Linear(2, 2))
+        criterion = MSECriterion()
+        data = self.sc.parallelize([
+            ((2.0, 1.0), 1.0),
+            ((1.0, 2.0), 2.0),
+            ((2.0, 1.0), 1.0),
+            ((1.0, 2.0), 2.0)])
+
+        val_data = self.sc.parallelize([
+            ((2.0, 1.0), 1.0),
+            ((1.0, 2.0), 2.0)])
+
+        schema = StructType([
+            StructField("features", ArrayType(DoubleType(), False), False),
+            StructField("label", DoubleType(), False)])
+        df = self.sqlContext.createDataFrame(data, schema)
+        val_df = self.sqlContext.createDataFrame(val_data, schema)
+
+        print(model.get_weights())
+
+        classfier = NNClassifier(model, criterion, SeqToTensor([2]))\
+            .setBatchSize(4).setMaxEpoch(5) \
+            .setValidation(EveryEpoch(), val_df, [Top1Accuracy()], 2)
+
+        param = ParamGridBuilder().addGrid(classfier.learningRate, [1e-3, 1.0]).build()
+
+        models = classfier.fit(df, params=param)
+        assert len(models) == 2
+
+        w1 = models[0].model.get_weights()
+        w2 = models[1].model.get_weights()
+
+        for ww1, ww2 in zip(w1, w2):
+            diff = np.sum((ww1 - ww2) ** 2)
+            assert diff > 1e-2
+
     def test_nnclassifier_in_pipeline(self):
 
         if self.sc.version.startswith("1"):
@@ -679,6 +767,49 @@ class TestNNClassifer():
                 if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
                     raise  # re-raise exception
 
+    def test_NNModel_NNClassifier_pipeline_save_load(self):
+        if self.sc.version.startswith("2.3") or self.sc.version.startswith("2.4"):
+            from pyspark.ml.feature import MinMaxScaler
+            from pyspark.ml.linalg import Vectors
+
+            df = self.sqlContext.createDataFrame(
+                [(Vectors.dense([2.0, 1.0]), 1.0),
+                 (Vectors.dense([1.0, 2.0]), 2.0),
+                 (Vectors.dense([2.0, 1.0]), 1.0),
+                 (Vectors.dense([1.0, 2.0]), 2.0),
+                 ], ["features", "label"])
+
+            scaler = MinMaxScaler().setInputCol("features").setOutputCol("scaled")
+            model = Sequential().add(Linear(2, 2))
+            criterion = ClassNLLCriterion()
+            classifier = NNClassifier(model, criterion)\
+                .setBatchSize(4) \
+                .setLearningRate(0.01).setMaxEpoch(1).setFeaturesCol("scaled")
+
+            pipeline = Pipeline(stages=[scaler, classifier])
+
+            pipeline_model = pipeline.fit(df)
+
+            try:
+                tmp_dir = tempfile.mkdtemp()
+                modelPath = os.path.join(tmp_dir, "model")
+                pipeline_model.save(modelPath)
+                loaded_model = PipelineModel.load(modelPath)
+                df2 = self.sqlContext.createDataFrame(
+                    [(Vectors.dense([2.0, 1.0]), 1.0),
+                     (Vectors.dense([1.0, 2.0]), 2.0),
+                     (Vectors.dense([2.0, 1.0]), 1.0),
+                     (Vectors.dense([1.0, 2.0]), 2.0),
+                     ], ["features", "label"])
+
+                assert loaded_model.transform(df2).count() == 4
+            finally:
+                try:
+                    shutil.rmtree(tmp_dir)  # delete directory
+                except OSError as exc:
+                    if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
+                        raise  # re-raise exception
+
     def test_input_node_of_tfnet_from_session(self):
         import tensorflow as tff
         input1 = tff.placeholder(dtype=tff.float32, shape=(None, 2))
@@ -706,6 +837,10 @@ class TestNNClassifer():
             raise ValueError("we do not find this error, test failed")
 
     def test_XGBClassifierModel_predict(self):
+        from sys import platform
+        if platform in ("darwin", "win32"):
+            return
+
         resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
         path = os.path.join(resource_path, "xgbclassifier/")
         modelPath = path + "XGBClassifer.bin"

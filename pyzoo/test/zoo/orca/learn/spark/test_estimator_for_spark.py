@@ -27,7 +27,7 @@ import zoo.orca.data.pandas
 from zoo import init_nncontext
 from zoo.orca.data.tf.data import Dataset
 from zoo.orca.learn.tf.estimator import Estimator
-from zoo.orca.learn.tf.utils import save_tf_checkpoint, load_tf_checkpoint, get_checkpoint_state
+from zoo.util.tf import save_tf_checkpoint, load_tf_checkpoint, get_checkpoint_state
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
@@ -425,10 +425,6 @@ class TestEstimatorForGraph(TestCase):
 
         dataset = dataset_creator()
 
-        dataset = tf.data.Dataset.from_tensor_slices((np.random.randint(0, 200, size=(100,)),
-                                                      np.random.randint(0, 50, size=(100,)),
-                                                      np.ones(shape=(100,), dtype=np.int32)))
-
         est = Estimator.from_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
@@ -443,12 +439,6 @@ class TestEstimatorForGraph(TestCase):
 
         result = est.evaluate(dataset, batch_size=4)
         assert 'loss' in result
-
-        predict_dataset = tf.data.Dataset.from_tensor_slices((
-            np.random.randint(0, 200, size=(20,)),
-            np.random.randint(0, 50, size=(20,))))
-        predictions = est.predict(predict_dataset).collect()
-        assert predictions[0]['prediction'].shape[1] == 2
 
     def test_estimator_graph_tf_dataset(self):
 

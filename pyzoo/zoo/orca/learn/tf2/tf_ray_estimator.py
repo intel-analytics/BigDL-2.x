@@ -13,17 +13,47 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+import itertools
 import logging
 import pickle
 
 import numpy as np
 import ray
 
+from zoo.orca.data.shard import RayXShards
+from zoo.orca.data.utils import ray_partition_get_data_label
+
 from zoo.orca.learn.tf2.tf_runner import TFRunner
 from zoo.ray import RayContext
 
 logger = logging.getLogger(__name__)
+
+
+def shards_ref_to_creator(shards_ref):
+    def data_creator(config):
+        return shards_ref
+    return data_creator
+
+
+def data_length(data):
+    x = data["x"]
+    if isinstance(x, np.ndarray):
+        return x.shape[0]
+    else:
+        return x[0].shape[0]
+
+
+def process_spark_xshards(spark_xshards, num_workers):
+    data = spark_xshards
+    if data.num_partitions() != num_workers:
+        data = data.repartition(num_workers)
+
+    # todo currently we need this information to pad the short partitions
+    # so that every model run exactly the same number of steps in one epoch
+    max_length = data.rdd.map(data_length) \
+        .mapPartitions(lambda iterator: [sum(iterator)]).max()
+    ray_xshards = RayXShards.from_spark_xshards(data)
+    return max_length, ray_xshards
 
 
 class Estimator:
@@ -32,7 +62,7 @@ class Estimator:
                  compile_args_creator=None,
                  config=None,
                  verbose=False,
-                 backend="tf",
+                 backend="tf2",
                  workers_per_node=1):
         """Sets up the TensorFlow trainer.
 
@@ -75,7 +105,7 @@ class Estimator:
             "verbose": self.verbose,
         }
 
-        if backend == "tf":
+        if backend == "tf2":
             cores_per_node = ray_ctx.ray_node_cpu_cores // workers_per_node
             num_nodes = ray_ctx.num_ray_nodes * workers_per_node
 
@@ -107,8 +137,10 @@ class Estimator:
                 worker.setup_horovod.remote()
                 for i, worker in enumerate(self.remote_workers)])
         else:
-            raise Exception("Only \"tf\" and \"horovod\" are legal "
-                            "value of backend, but got {}".format(backend))
+            raise Exception("Only \"tf2\" and \"horovod\" are legal "
+                            "values of backend, but got {}".format(backend))
+
+        self.num_workers = len(self.remote_workers)
 
     @classmethod
     def from_keras(cls, model_creator,
@@ -116,47 +148,132 @@ class Estimator:
                    verbose=False,
                    workers_per_node=1,
                    compile_args_creator=None,
-                   backend="tf"):
+                   backend="tf2"):
         return cls(model_creator, config=config,
                    verbose=verbose, workers_per_node=workers_per_node,
                    backend=backend, compile_args_creator=compile_args_creator)
 
     def fit(self, data_creator, epochs=1, verbose=1,
             callbacks=None, validation_data_creator=None, class_weight=None,
-            steps_per_epoch=None, validation_steps=None, validation_freq=1):
+            steps_per_epoch=None, validation_steps=None, validation_freq=1,
+            data_config=None):
         """Runs a training epoch."""
-
         params = dict(
-            data_creator=data_creator,
             epochs=epochs,
             verbose=verbose,
             callbacks=callbacks,
-            validation_data_creator=validation_data_creator,
             class_weight=class_weight,
             steps_per_epoch=steps_per_epoch,
             validation_steps=validation_steps,
             validation_freq=validation_freq,
+            data_config=data_config
         )
-        worker_stats = ray.get([w.step.remote(**params) for w in self.remote_workers])
+
+        from zoo.orca.data import SparkXShards
+        if isinstance(data_creator, SparkXShards):
+            max_length, ray_xshards = process_spark_xshards(data_creator, self.num_workers)
+
+            if validation_data_creator is None:
+                def transform_func(worker, shards_ref):
+                    params["data_creator"] = shards_ref_to_creator(shards_ref)
+                    return worker.step.remote(**params)
+
+                stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
+                                                                        transform_func,
+                                                                        gang_scheduling=True)
+            else:
+                val_max_length, val_ray_xshards = process_spark_xshards(validation_data_creator,
+                                                                        self.num_workers)
+
+                def zip_func(worker, this_shards_ref, that_shards_ref):
+                    params["data_creator"] = shards_ref_to_creator(this_shards_ref)
+                    params["validation_data_creator"] =\
+                        shards_ref_to_creator(that_shards_ref)
+                    return worker.step.remote(**params)
+
+                stats_shards = ray_xshards.zip_shards_with_actors(val_ray_xshards,
+                                                                  self.remote_workers,
+                                                                  zip_func,
+                                                                  gang_scheduling=True)
+            worker_stats = stats_shards.collect()
+        else:
+            params["data_creator"] = data_creator
+            params["validation_data_creator"] = validation_data_creator
+            params_list = [params] * self.num_workers
+
+            worker_stats = ray.get([self.remote_workers[i].step.remote(**params_list[i])
+                                    for i in range(self.num_workers)])
+            worker_stats = list(itertools.chain.from_iterable(worker_stats))
         stats = worker_stats[0].copy()
         return stats
 
     def evaluate(self, data_creator, verbose=1, sample_weight=None,
-                 steps=None, callbacks=None):
+                 steps=None, callbacks=None, data_config=None):
         """Evaluates the model on the validation data set."""
         logger.info("Starting validation step.")
         params = dict(
-            data_creator=data_creator,
             verbose=verbose,
             sample_weight=sample_weight,
             steps=steps,
-            callbacks=callbacks
+            callbacks=callbacks,
+            data_config=data_config,
         )
-        # see ./tf_runner.py:setup_distributed
-        # for an explanation of only taking the first worker's data
-        stats = ray.get([w.validate.remote(**params) for w in self.remote_workers])
-        stats = stats[0].copy()
+        from zoo.orca.data import SparkXShards
+        if isinstance(data_creator, SparkXShards):
+            data = data_creator
+            if data.num_partitions() != self.num_workers:
+                data = data.repartition(self.num_workers)
+            max_length = data.rdd.map(data_length).max()
+
+            ray_xshards = RayXShards.from_spark_xshards(data)
+
+            def transform_func(worker, shards_ref):
+                params["data_creator"] = shards_ref_to_creator(shards_ref)
+                return worker.validate.remote(**params)
+
+            stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
+                                                                    transform_func,
+                                                                    gang_scheduling=True)
+            worker_stats = stats_shards.collect()
+
+        else:  # data_creator functions; should return Iter or DataLoader
+            params["data_creator"] = data_creator
+            params_list = [params] * self.num_workers
+
+            worker_stats = ray.get([w.validate.remote(**params_list[i])
+                                    for i, w in enumerate(self.remote_workers)])
+            worker_stats = list(itertools.chain.from_iterable(worker_stats))
+        stats = worker_stats[0].copy()
         return stats
+
+    def predict(self, data_creator, batch_size=None, verbose=1,
+                steps=None, callbacks=None, data_config=None):
+        """Evaluates the model on the validation data set."""
+        logger.info("Starting predict step.")
+        params = dict(
+            verbose=verbose,
+            batch_size=batch_size,
+            steps=steps,
+            callbacks=callbacks,
+            data_config=data_config,
+        )
+        from zoo.orca.data import SparkXShards
+        if isinstance(data_creator, SparkXShards):
+            ray_xshards = RayXShards.from_spark_xshards(data_creator)
+
+            def transform_func(worker, shards_ref):
+                params["data_creator"] = shards_ref_to_creator(shards_ref)
+                return worker.predict.remote(**params)
+
+            stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
+                                                                    transform_func,
+                                                                    gang_scheduling=False)
+            spark_xshards = stats_shards.to_spark_xshards()
+
+        else:
+            raise ValueError("Only xshards is supported for predict")
+
+        return spark_xshards
 
     def get_model(self):
         """Returns the learned model."""

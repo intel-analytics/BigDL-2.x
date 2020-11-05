@@ -13,6 +13,8 @@ conda activate analytics-zoo
 pip install analytics_zoo-${VERSION}-${TIMESTAMP}-py2.py3-none-${OS}_x86_64.whl
 pip install tensorflow==1.15.0
 pip install psutil
+pip install pandas
+pip install scikit-learn
 ```
 
 Note: conda environment is required to run on Yarn, but not strictly necessary for running on local.
@@ -20,20 +22,13 @@ Note: conda environment is required to run on Yarn, but not strictly necessary f
 ## Run examples on local
 
 ```bash
-python lenet_mnist_graph.py --cluster_mode local 
-```
-
-```bash
-python lenet_mnist_keras.py --cluster_mode local
+python ncf.py --cluster_mode local
 ```
 
 ## Run examples on yarn cluster
-```bash
-python lenet_mnist_graph.py --cluster_mode yarn
-```
 
 ```bash
-python lenet_mnist_keras.py --cluster_mode yarn
+python ncf.py --cluster_mode yarn
 ```
 
 ## Additional Resources
@@ -42,4 +37,3 @@ Please refer to the following links to learn more details.
 
 1. [Orca Overview](https://analytics-zoo.github.io/master/#Orca/overview/) and [Orca Context](https://analytics-zoo.github.io/master/#Orca/context/)
 2. [Download and install Analytics Zoo](https://analytics-zoo.github.io/master/#PythonUserGuide/install/)
-

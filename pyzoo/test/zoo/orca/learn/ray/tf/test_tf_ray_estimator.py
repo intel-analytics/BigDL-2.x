@@ -16,10 +16,14 @@
 from unittest import TestCase
 
 import numpy as np
+import pytest
 import tensorflow as tf
+from zoo.orca.data import XShards
 
+import zoo.orca.data.pandas
 from zoo.orca.learn.tf2 import Estimator
 from zoo.ray import RayContext
+import ray
 
 NUM_TRAIN_SAMPLES = 1000
 NUM_TEST_SAMPLES = 400
@@ -87,6 +91,15 @@ def compile_args(config):
 def model_creator(config):
     model = simple_model(config)
     model.compile(**compile_args(config))
+    return model
+
+
+def identity_model_creator(config):
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.InputLayer(input_shape=(1)),
+        tf.keras.layers.Lambda(lambda x: tf.identity(x))
+    ])
+    model.compile()
     return model
 
 
@@ -205,7 +218,7 @@ class TestTFRayEstimator(TestCase):
         assert dloss < 0 and dmse < 0, "training sanity check failed. loss increased!"
 
     def test_fit_and_evaluate_tf(self):
-        self.impl_test_fit_and_evaluate(backend="tf")
+        self.impl_test_fit_and_evaluate(backend="tf2")
 
     def test_fit_and_evaluate_horovod(self):
         self.impl_test_fit_and_evaluate(backend="horovod")
@@ -225,7 +238,7 @@ class TestTFRayEstimator(TestCase):
             model_creator=auto_shard_model_creator,
             verbose=True,
             config={"batch_size": 4},
-            backend="tf", workers_per_node=2)
+            backend="tf2", workers_per_node=2)
         stats = trainer.fit(create_auto_shard_datasets, epochs=1, steps_per_epoch=2)
         assert stats["train_loss"] == 0.0
 
@@ -292,3 +305,121 @@ class TestTFRayEstimator(TestCase):
         else:
             # skip tests in horovod lower version
             pass
+
+    def test_sparkxshards(self):
+
+        train_data_shard = XShards.partition({"x": np.random.randn(100, 1),
+                                              "y": np.random.randint(0, 1, size=(100))})
+
+        config = {
+            "batch_size": 4,
+            "lr": 0.8
+        }
+        trainer = Estimator(
+            model_creator=model_creator,
+            verbose=True,
+            config=config,
+            workers_per_node=2)
+
+        trainer.fit(train_data_shard, epochs=1, steps_per_epoch=25)
+        trainer.evaluate(train_data_shard, steps=25)
+
+    def test_sparkxshards_with_inbalanced_data(self):
+
+        train_data_shard = XShards.partition({"x": np.random.randn(100, 1),
+                                              "y": np.random.randint(0, 1, size=(100))})
+
+        def random_pad(data):
+            import numpy as np
+            import random
+            times = random.randint(1, 10)
+            data["x"] = np.concatenate([data["x"]] * times)
+            data["y"] = np.concatenate([data["y"]] * times)
+            return data
+
+        train_data_shard = train_data_shard.transform_shard(random_pad)
+
+        config = {
+            "batch_size": 4,
+            "lr": 0.8
+        }
+        trainer = Estimator(
+            model_creator=model_creator,
+            verbose=True,
+            config=config,
+            workers_per_node=2)
+
+        trainer.fit(train_data_shard, epochs=1, steps_per_epoch=25)
+        trainer.evaluate(train_data_shard, steps=25)
+
+    def test_require_batch_size(self):
+        train_data_shard = XShards.partition({"x": np.random.randn(100, 1),
+                                              "y": np.random.randint(0, 1, size=(100,))})
+        config = {
+            "lr": 0.8
+        }
+        trainer = Estimator(
+            model_creator=model_creator,
+            verbose=True,
+            config=config,
+            workers_per_node=2)
+        with pytest.raises(ray.exceptions.RayTaskError,
+                           match=r".*batch_size must be set in config*."):
+            trainer.fit(train_data_shard, epochs=1, steps_per_epoch=25)
+
+    def test_changing_config_during_fit(self):
+        train_data_shard = XShards.partition({"x": np.random.randn(100, 1),
+                                              "y": np.random.randint(0, 1, size=(100,))})
+        config = {
+            "lr": 0.8
+        }
+        trainer = Estimator(
+            model_creator=model_creator,
+            verbose=True,
+            config=config,
+            workers_per_node=2)
+
+        trainer.fit(train_data_shard, epochs=1, steps_per_epoch=25,  data_config={"batch_size": 8})
+
+    def test_changing_config_during_evaluate(self):
+        train_data_shard = XShards.partition({"x": np.random.randn(100, 1),
+                                              "y": np.random.randint(0, 1, size=(100,))})
+
+        config = {
+            "lr": 0.8
+        }
+        trainer = Estimator(
+            model_creator=model_creator,
+            verbose=True,
+            config=config,
+            workers_per_node=2)
+
+        trainer.evaluate(train_data_shard, steps=12, data_config={"batch_size": 8})
+
+    def test_predict_xshards(self):
+        train_data_shard = XShards.partition({"x": np.random.randn(100, 1),
+                                              "y": np.random.randint(0, 1, size=(100,))})
+        expected = train_data_shard.collect()
+
+        expected = [shard["x"] for shard in expected]
+
+        for x in expected:
+            print(x.shape)
+
+        expected = np.concatenate(expected)
+
+        config = {
+        }
+        trainer = Estimator(
+            model_creator=identity_model_creator,
+            verbose=True,
+            config=config,
+            workers_per_node=2)
+
+        result = trainer.predict(train_data_shard, batch_size=10).collect()
+
+        result = [shard["x"] for shard in result]
+
+        result = np.concatenate(result)
+
+        assert np.allclose(expected, result)
