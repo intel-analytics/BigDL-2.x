@@ -87,36 +87,6 @@
         </profile>
 
         <profile>
-            <id>spark_3.x</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>net.alchim31.maven</groupId>
-                        <artifactId>scala-maven-plugin</artifactId>
-                        <configuration>
-                            <excludes>
-                                <exclude>**/com/intel/analytics/zoo/examples/serving/**</exclude>
-                                <exclude>**/com/intel/analytics/zoo/serving/**</exclude>
-                                <exclude>**/com/intel/analytics/zoo/pipeline/nnframes/XgboostTrainSpec.scala</exclude>
-                            </excludes>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-            <properties>
-                <java.version>1.8</java.version>
-                <javac.version>1.8</javac.version>
-                <spark-version.project>3.0</spark-version.project>
-                <spark.version>3.0.0</spark.version>
-                <scala.major.version>2.12</scala.major.version>
-                <scala.version>2.12.8</scala.version>
-                <scala.macros.version>2.1.0</scala.macros.version>
-                <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
-
-            </properties>
-        </profile>
-
-        <profile>
             <id>spark_2.4+</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -136,6 +106,45 @@
                 <spark.version>2.4.3</spark.version>
                 <scala.major.version>2.11</scala.major.version>
                 <scala.version>2.11.8</scala.version>
+                <scala.macros.version>2.1.0</scala.macros.version>
+                <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
+                <scala-library-scope>compile</scala-library-scope>
+                <spark-scope>compile</spark-scope>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-all</artifactId>
+                    <version>4.1.48.Final</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                    <version>1.7.5</version>
+                </dependency>
+            </dependencies>
+        </profile>
+ 
+        <profile>
+            <id>spark_3.x</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+            <properties>
+                <java.version>1.8</java.version>
+                <javac.version>1.8</javac.version>
+                <spark-version.project>3.0</spark-version.project>
+                <spark.version>3.0.0</spark.version>
+                <scala.major.version>2.12</scala.major.version>
+                <scala.version>2.12.8</scala.version>
                 <scala.macros.version>2.1.0</scala.macros.version>
                 <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
                 <scala-library-scope>compile</scala-library-scope>
