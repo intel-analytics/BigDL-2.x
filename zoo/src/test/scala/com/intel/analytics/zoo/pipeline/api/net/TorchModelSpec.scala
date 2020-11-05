@@ -170,7 +170,7 @@ class TorchModelSpec extends ZooSpecHelper{
 
     val input = Tensor[Float](4, 1, 28, 28).rand()
     val target = Tensor[Float](Array(0f, 1f, 3f, 4f), Array(4))
-    val output= model.forward(input)
+    val output = model.forward(input)
     criterion.forward(output, target)
     val gradOutput = criterion.backward(output, target)
     model.backward(input, gradOutput)

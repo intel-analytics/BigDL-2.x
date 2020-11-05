@@ -41,7 +41,7 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
   var modelPath: String = _
   var sc: SparkContext = _
 
-  override def doBefore() = {
+  override def doBefore(): Unit = {
     val conf = new SparkConf().setAppName("SimpleTorchModel").setMaster("local[4]")
     sc = initNNContext(conf)
     model = new InferenceModel(currentNum) { }
@@ -49,7 +49,7 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
     modelPath = ZooSpecHelper.createTmpFile().getAbsolutePath()
   }
 
-  override def doAfter() = {
+  override def doAfter(): Unit = {
     model.doRelease()
     model2.doRelease()
   }
