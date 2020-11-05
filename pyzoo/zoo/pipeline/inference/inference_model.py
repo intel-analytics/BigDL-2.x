@@ -116,6 +116,17 @@ class InferenceModel(JavaValue):
                     inputs, outputs, intra_op_parallelism_threads,
                     inter_op_parallelism_threads, use_per_session_threads)
 
+    def load_pytorch(self, model):
+        """
+        Load an TensorFlow model using tensorflow.
+
+        :param model: pytorch model
+           """
+        if isinstance(model, str):
+
+        callZooFunc(self.bigdl_type, "inferenceModelLoadPytorch",
+                    self.value, model)
+
     def predict(self, inputs):
         """
         Do prediction on inputs.
