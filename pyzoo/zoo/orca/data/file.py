@@ -79,79 +79,6 @@ def open_image(path):
         return Image.open(path)
 
 
-def load_numpy(path, allow_pickle=False):
-    """
-    Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.
-    It supports local, hdfs, s3 file systems.
-    :param path: file path
-    :return: array, tuple, dict, etc.
-        Data stored in the file. For ``.npz`` files, the returned instance
-        of NpzFile class must be closed to avoid leaking file descriptors.
-    """
-    import numpy as np
-    if path.startswith("hdfs"):  # hdfs://url:port/file_path
-        import pyarrow as pa
-        fs = pa.hdfs.connect()
-        with fs.open(path, 'rb') as f:
-            return np.load(f, allow_pickle=allow_pickle)
-    elif path.startswith("s3"):  # s3://bucket/file_path
-        access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
-        secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
-        import boto3
-        from io import BytesIO
-        s3_client = boto3.Session(
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key).client('s3', verify=False)
-        path_parts = path.split("://")[1].split('/')
-        bucket = path_parts.pop(0)
-        key = "/".join(path_parts)
-        data = s3_client.get_object(Bucket=bucket, Key=key)
-        return np.load(BytesIO(data["Body"].read()), allow_pickle=allow_pickle)
-    else:  # Local path
-        if path.startswith("file"):
-            path = path.split(":")[1]
-        return np.load(path, allow_pickle=allow_pickle)
-
-
-def save_numpy(path, data):
-    """
-    Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.
-    It supports local, hdfs, s3 file systems.
-    :param path: file path
-    :return: array, tuple, dict, etc.
-        Data stored in the file. For ``.npz`` files, the returned instance
-        of NpzFile class must be closed to avoid leaking file descriptors.
-    """
-    import numpy as np
-    if path.startswith("hdfs"):  # hdfs://url:port/file_path
-        import pyarrow as pa
-        fs = pa.hdfs.connect()
-        with fs.open(path, 'wb') as f:
-            np.save(f, data)
-    elif path.startswith("s3"):  # s3://bucket/file_path
-        access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
-        secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
-        import boto3
-        from io import BytesIO
-        s3_client = boto3.Session(
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key).client('s3', verify=False)
-        path_parts = path.split("://")[1].split('/')
-        bucket = path_parts.pop(0)
-        key = "/".join(path_parts)
-        import tempfile
-        import shutil
-        from zoo.common.utils import put_local_file_to_remote
-        temp_dir = tempfile.mkdtemp()
-        filename = os.path.basename(path)
-        file_path = os.path.join(temp_dir, filename)
-        np.save(file_path, data)
-        s3_client.upload_file(file_path, Bucket=bucket, Key=os.path.join(key, filename))
-        shutil.rmtree(temp_dir)
-    else:  # Local path
-        np.save(path, data)
-
-
 def exists(path):
     """
     Check if a path exists or not. It supports local, hdfs, s3 file systems.
@@ -183,12 +110,11 @@ def exists(path):
 
 def save_pickle(path, data):
     """
-    Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.
+    Write a pickled representation of obj to the file.
     It supports local, hdfs, s3 file systems.
     :param path: file path
-    :return: array, tuple, dict, etc.
-        Data stored in the file. For ``.npz`` files, the returned instance
-        of NpzFile class must be closed to avoid leaking file descriptors.
+    :param data: object to be pickled
+
     """
     import pickle
     if path.startswith("hdfs"):  # hdfs://url:port/file_path
@@ -212,9 +138,9 @@ def save_pickle(path, data):
         temp_dir = tempfile.mkdtemp()
         filename = os.path.basename(path)
         file_path = os.path.join(temp_dir, filename)
-        with open(os.path.join(file_path, "wb")) as f:
+        with open(file_path, "wb") as f:
             pickle.dump(data, f)
-        s3_client.upload_file(file_path, Bucket=bucket, Key=os.path.join(key, filename))
+        s3_client.upload_file(file_path, Bucket=bucket, Key=key)
         shutil.rmtree(temp_dir)
     else:
         # Local path
@@ -224,37 +150,12 @@ def save_pickle(path, data):
 
 def load_pickle(data):
     """
-    Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.
+    Load pickled objects from bytes.
     It supports local, hdfs, s3 file systems.
     :param path: file path
-    :return: array, tuple, dict, etc.
-        Data stored in the file. For ``.npz`` files, the returned instance
-        of NpzFile class must be closed to avoid leaking file descriptors.
+    :return: unpickle objects
     """
     import pickle
-    # if path.startswith("hdfs"):  # hdfs://url:port/file_path
-    #     import pyarrow as pa
-    #     fs = pa.hdfs.connect()
-    #     with fs.open(path, 'rb') as f:
-    #         return pickle.load(f)
-    # elif path.startswith("s3"):  # s3://bucket/file_path
-    #     access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
-    #     secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
-    #     import boto3
-    #     from io import BytesIO
-    #     s3_client = boto3.Session(
-    #         aws_access_key_id=access_key_id,
-    #         aws_secret_access_key=secret_access_key).client('s3', verify=False)
-    #     path_parts = path.split("://")[1].split('/')
-    #     bucket = path_parts.pop(0)
-    #     key = "/".join(path_parts)
-    #     data = s3_client.get_object(Bucket=bucket, Key=key)
-    #     return pickle.load(BytesIO(data["Body"].read()))
-    # else:  # Local path
-    #     if path.startswith("file"):
-    #         path = path.split(":")[1]
-    #     with open(path, 'rb') as f:
-    #         return pickle.load(f)
     from io import BytesIO
     result = pickle.load(BytesIO(data))
     return result
