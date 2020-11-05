@@ -19,7 +19,7 @@ import tempfile
 import shutil
 import pickle
 
-from zoo.common import get_file_list, put_local_file_to_remote, get_remote_file_to_local
+from zoo.common import get_file_list
 
 
 def list_s3_file(file_path, env):
@@ -293,7 +293,8 @@ def merge(data_list):
         for key in data_list[0]:
             if isinstance(data_list[0][key], (list, tuple)):
                 value_list = [data[key] for data in data_list]
-                merged_value = [np.concatenate([value[i] for value in value_list], axis=0) for i in range(len(value_list[0]))]
+                merged_value = [np.concatenate([value[i] for value in value_list], axis=0)
+                                for i in range(len(value_list[0]))]
                 if isinstance(data_list[0][key], tuple):
                     merged_value = tuple(merged_value)
                 result[key] = merged_value
@@ -308,6 +309,5 @@ def merge(data_list):
         import pandas as pd
         return pd.concat(data_list)
     else:
-        print("type")
-        print(type(data_list[0]))
-        raise Exception("Only support merge numpy.ndarray and dictionary of numpy ndarray and pandas dataframe.")
+        raise Exception("Only support merge numpy.ndarray, dictionary of numpy ndarray "
+                        "and pandas dataframe.")
