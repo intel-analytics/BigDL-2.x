@@ -182,12 +182,32 @@ class TestSparkXShards(TestCase):
         import pandas as pd
         assert isinstance(data, pd.DataFrame)
 
-        path = os.path.join(temp, "data.np")
-        data_shard.save_numpy(path)
-        shards = zoo.orca.data.XShards.load_numpy(path)
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
+
+        def transform(df):
+            result = {
+                "x": (df['ID'].to_numpy(),
+                      df['sale_price'].to_numpy()),
+                "y": df['location'].to_numpy()
+            }
+            return result
+
+        data_shard = data_shard.transform_shard(transform)
+
+        path = os.path.join(temp, "data2.pkl")
+        data_shard.save_pickle(path)
+        shards = zoo.orca.data.XShards.load_pickle(path)
         assert isinstance(shards, zoo.orca.data.SparkXShards)
         data = shards.rdd.first()
         import pandas as pd
+        assert isinstance(data, dict)
+
+        # path = os.path.join(temp, "data.np")
+        # data_shard.save_numpy(path)
+        # shards = zoo.orca.data.XShards.load_numpy(path)
+        # assert isinstance(shards, zoo.orca.data.SparkXShards)
+        # data = shards.rdd.first()
+        # import pandas as pd
         shutil.rmtree(temp)
 
     def test_transform(self):

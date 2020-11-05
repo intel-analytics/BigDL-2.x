@@ -222,7 +222,7 @@ def save_pickle(path, data):
             pickle.dump(data, f)
 
 
-def load_pickle(path):
+def load_pickle(data):
     """
     Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.
     It supports local, hdfs, s3 file systems.
@@ -232,29 +232,32 @@ def load_pickle(path):
         of NpzFile class must be closed to avoid leaking file descriptors.
     """
     import pickle
-    if path.startswith("hdfs"):  # hdfs://url:port/file_path
-        import pyarrow as pa
-        fs = pa.hdfs.connect()
-        with fs.open(path, 'rb') as f:
-            return pickle.load(f)
-    elif path.startswith("s3"):  # s3://bucket/file_path
-        access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
-        secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
-        import boto3
-        from io import BytesIO
-        s3_client = boto3.Session(
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key).client('s3', verify=False)
-        path_parts = path.split("://")[1].split('/')
-        bucket = path_parts.pop(0)
-        key = "/".join(path_parts)
-        data = s3_client.get_object(Bucket=bucket, Key=key)
-        return pickle.load(BytesIO(data["Body"].read()))
-    else:  # Local path
-        if path.startswith("file"):
-            path = path.split(":")[1]
-        with open(path, 'rb') as f:
-            return pickle.load(f)
+    # if path.startswith("hdfs"):  # hdfs://url:port/file_path
+    #     import pyarrow as pa
+    #     fs = pa.hdfs.connect()
+    #     with fs.open(path, 'rb') as f:
+    #         return pickle.load(f)
+    # elif path.startswith("s3"):  # s3://bucket/file_path
+    #     access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
+    #     secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
+    #     import boto3
+    #     from io import BytesIO
+    #     s3_client = boto3.Session(
+    #         aws_access_key_id=access_key_id,
+    #         aws_secret_access_key=secret_access_key).client('s3', verify=False)
+    #     path_parts = path.split("://")[1].split('/')
+    #     bucket = path_parts.pop(0)
+    #     key = "/".join(path_parts)
+    #     data = s3_client.get_object(Bucket=bucket, Key=key)
+    #     return pickle.load(BytesIO(data["Body"].read()))
+    # else:  # Local path
+    #     if path.startswith("file"):
+    #         path = path.split(":")[1]
+    #     with open(path, 'rb') as f:
+    #         return pickle.load(f)
+    from io import BytesIO
+    result = pickle.load(BytesIO(data))
+    return result
 
 
 def makedirs(path):

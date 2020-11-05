@@ -69,17 +69,28 @@ class XShards(object):
             num_partitions = num_files if num_files < total_cores else total_cores
         else:
             num_partitions = minPartitions
-        rdd = sc.parallelize(file_paths, num_partitions)
-
+        # rdd = sc.parallelize(file_paths, num_partitions)
+        #
+        # def load_pkl(iter):
+        #     data_list = []
+        #     for path in iter:
+        #         print(path)
+        #         data = load_pickle(path)
+        #         data_list.append(data)
+        #     yield merge(data_list)
+        # rdd = rdd.mapPartitions(load_pkl)
+        rdd = sc.binaryFiles(path, num_partitions)
         def load_pkl(iter):
             data_list = []
-            for path in iter:
-                print(path)
-                data = load_pickle(path)
-                data_list.append(data)
-            yield merge(data_list)
-        rdd = rdd.mapPartitions(load_pkl)
+            for data in iter:
+                result = load_pickle(data[1])
+                data_list.append(result)
+            if len(data_list) > 0:
+                yield merge(data_list)
+            else:
+                yield []
 
+        rdd = rdd.mapPartitions(load_pkl)
         return SparkXShards(rdd)
         # return SparkXShards(sc.pickleFile(path, minPartitions))
 
