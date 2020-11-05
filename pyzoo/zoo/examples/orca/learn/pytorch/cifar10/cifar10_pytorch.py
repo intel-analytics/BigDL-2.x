@@ -55,7 +55,7 @@ def train_data_creator(config):
 
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                             download=True, transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=config.get("batch_size",32),
                                               shuffle=True, num_workers=2)
     return trainloader
 
@@ -65,7 +65,7 @@ def validation_data_creator(config):
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
     testset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                            download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=4,
+    testloader = torch.utils.data.DataLoader(testset, batch_size=config.get("batch_size",32),
                                              shuffle=False, num_workers=2)
     return testloader
 
@@ -89,6 +89,8 @@ def main():
                         help="The number of workers to run on each node")
     parser.add_argument('--epochs', type=int, default=2, metavar='N',
                         help='number of epochs to train (default: 2)')
+    parser.add_argument('--worker_batch', type=int, default=16, metavar='N',
+                        help='input worker batch for training per executor(default: 16)')
     args = parser.parse_args()
 
     #torch.manual_seed(args.seed)
@@ -110,7 +112,8 @@ def main():
 
     #model.train()
     criterion = nn.CrossEntropyLoss()
-    zoo_estimator = Estimator.from_torch(model=model_creator, optimizer=optimizer_creator, loss=criterion, config={}, backend="pytorch")
+    zoo_estimator = Estimator.from_torch(model=model_creator, optimizer=optimizer_creator, loss=criterion, config={
+        "batch_size":args.total_batch}, backend="pytorch")
     stats = zoo_estimator.fit(train_data_creator, epochs=args.epochs)
     print("Train stats: {}".format(stats))
     val_stats = zoo_estimator.evaluate(validation_data_creator)
