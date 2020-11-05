@@ -364,7 +364,6 @@ class TrainingOperator:
                 # Can't directly call torch.squeeze() in case batch size is 1.
                 for i in reversed(range(1, len(target.size()))):
                     target = torch.squeeze(target, i)
-                    print(target.size())
             if len(output.size()) > 1:
                 # In case there is extra trailing dimensions.
                 for i in reversed(range(1, len(output.size()))):
