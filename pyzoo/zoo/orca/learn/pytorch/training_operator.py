@@ -287,7 +287,7 @@ class TrainingOperator:
         with self.timers.record("apply"):
             self.optimizer.step()
 
-        return {"train_loss": loss.item()/target.size(0), NUM_SAMPLES: features[0].size(0)}
+        return {"train_loss": loss.item(), NUM_SAMPLES: features[0].size(0)}
 
     def validate(self, val_iterator, info):
         """Runs one standard validation pass over the val_iterator.
@@ -350,7 +350,6 @@ class TrainingOperator:
         # unpack features into list to support multiple inputs model
         *features, target = batch
 
-
         if self.use_gpu:
             features = [
                 feature.cuda(non_blocking=True) for feature in features
@@ -358,18 +357,18 @@ class TrainingOperator:
             target = target.cuda(non_blocking=True)
 
         # compute output
-            with self.timers.record("eval_fwd"):
-                output = self.model(*features)
-                loss = self.criterion(output, target)
-                if len(target.size()) > 1:
-                    # Can't directly call torch.squeeze() in case batch size is 1.
-                    for i in reversed(range(1, len(target.size()))):
-                        target = torch.squeeze(target, i)
-                        print(target.size())
-                if len(output.size()) > 1:
-                    # In case there is extra trailing dimensions.
-                    for i in reversed(range(1, len(output.size()))):
-                        output = torch.squeeze(output, i)
+        with self.timers.record("eval_fwd"):
+            output = self.model(*features)
+            loss = self.criterion(output, target)
+            if len(target.size()) > 1:
+                # Can't directly call torch.squeeze() in case batch size is 1.
+                for i in reversed(range(1, len(target.size()))):
+                    target = torch.squeeze(target, i)
+                    print(target.size())
+            if len(output.size()) > 1:
+                # In case there is extra trailing dimensions.
+                for i in reversed(range(1, len(output.size()))):
+                    output = torch.squeeze(output, i)
 
         np_output = output.detach().numpy()
         np_target = target.detach().numpy()
@@ -392,7 +391,7 @@ class TrainingOperator:
         num_samples = target.size(0)
 
         return {
-            "val_loss": loss.item()/num_samples,
+            "val_loss": loss.item(),
             "val_accuracy": num_correct / num_samples,
             NUM_SAMPLES: num_samples
         }
