@@ -127,6 +127,9 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
     } else {
       output = T(outputNd)
     }
+    // This output_hashcode will be used in TorchLoss when compute loss.
+    PythonInterpreter.exec(s"output_" +
+      s"${Integer.toHexString(output.hashCode())} = output_${postId}")
     println(s"forward total cost: ${(System.nanoTime() - startTime) / 1e9}")
     output
   }
