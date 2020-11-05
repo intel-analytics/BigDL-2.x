@@ -22,7 +22,6 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.{List => JList}
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.zoo.serving.engine.ModelHolder
 
 import scala.collection.JavaConverters._
 
@@ -235,20 +234,40 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   }
 
   /**
-   * load a Torch model as TorchNet
+   * load a Torch model as TorchModel
+   * The torch model should be saved using zoo_pickle_module in python.
+   * {{{
+   * from zoo.pipeline.api.torch import zoo_pickle_module
+   * model = models.resnet18(pretrained = True)
+   * torch.save(model, path, pickle_module=zoo_pickle_module)
+   * }}}
    *
-   * @param modelPath the path of the torch script
+   * @param modelPath the path of the torch model
    */
   def doLoadPyTorch(modelPath: String): Unit = {
+    if (concurrentNum > 1) {
+      InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
+        s"we recommend use only one copy for Torch Model.")
+    }
     doLoadPyTorchModel(modelPath)
   }
 
   /**
-   * load a Torch model as TorchNet
+   * load a Torch model as TorchModel
+   * The torch model should be saved using zoo_pickle_module in python.
+   * {{{
+   * from zoo.pipeline.api.torch import zoo_pickle_module
+   * model = models.resnet18(pretrained = True)
+   * torch.save(model, "$modelPath", pickle_module=zoo_pickle_module)
+   * }}}
    *
-   * @param modelBytes the bytes of the torch script
+   * @param modelBytes the bytes of the torch model
    */
   def doLoadPyTorch(modelBytes: Array[Byte]): Unit = {
+    if (concurrentNum > 1) {
+      InferenceSupportive.logger.warn(s"concurrentNum is $concurrentNum > 1, " +
+        s"we recommend use only one copy for Torch Model.")
+    }
     doLoadPyTorchModel(modelBytes)
   }
 

@@ -13,8 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from pyspark.sql import DataFrame
 
 from bigdl.optim.optimizer import MaxEpoch
+from zoo.orca.data.tf.data import Dataset, TFDataDataset2
 
 from zoo.orca.learn.tf.utils import *
 from zoo.orca.learn.utils import find_latest_checkpoint
@@ -23,6 +25,7 @@ from zoo.tfpark import TFOptimizer, TFNet, ZooOptimizer
 from zoo.tfpark.tf_optimizer import StatelessMetric
 from zoo.tfpark.utils import evaluate_metrics
 from zoo.util import nest
+from zoo.util.tf import save_tf_checkpoint
 
 
 class Estimator(object):
@@ -193,6 +196,66 @@ class Estimator(object):
         raise NotImplementedError()
 
 
+def is_tf_data_dataset(data):
+    is_dataset = isinstance(data, tf.data.Dataset)
+    is_dataset_v2 = isinstance(data, tf.python.data.ops.dataset_ops.DatasetV2)
+    return is_dataset or is_dataset_v2
+
+
+def to_dataset(data, batch_size, batch_per_thread, validation_data,
+               feature_cols, labels_cols, hard_code_batch_size,
+               sequential_order, shuffle, auto_shard_files):
+    # todo wrap argument into kwargs
+    if validation_data:
+        if isinstance(data, SparkXShards):
+            assert isinstance(validation_data, SparkXShards), \
+                "train data and validation data should be both SparkXShards"
+        if isinstance(data, Dataset):
+            assert isinstance(validation_data, Dataset), \
+                "train data and validation data should be both orca.data.tf.Dataset"
+        if isinstance(data, DataFrame):
+            assert isinstance(validation_data, DataFrame), \
+                "train data and validation data should be both Spark DataFrame"
+        if isinstance(data, tf.data.Dataset):
+            assert isinstance(validation_data, tf.data.Dataset), \
+                "train data and validation data should be both tf.data.Dataset"
+
+    if isinstance(data, SparkXShards):
+        dataset = xshards_to_tf_dataset(data,
+                                        batch_size,
+                                        batch_per_thread,
+                                        validation_data,
+                                        hard_code_batch_size=hard_code_batch_size,
+                                        sequential_order=sequential_order,
+                                        shuffle=shuffle)
+    elif isinstance(data, Dataset):
+        dataset = TFDataDataset2(data, batch_size=batch_size,
+                                 batch_per_thread=batch_per_thread,
+                                 validation_dataset=validation_data)
+    elif isinstance(data, DataFrame):
+        dataset = TFDataset.from_dataframe(data, feature_cols, labels_cols,
+                                           batch_size,
+                                           batch_per_thread,
+                                           hard_code_batch_size,
+                                           validation_data,
+                                           sequential_order,
+                                           shuffle
+                                           )
+    elif is_tf_data_dataset(data):
+        dataset = TFDataset.from_tf_data_dataset(data,
+                                                 batch_size,
+                                                 batch_per_thread,
+                                                 hard_code_batch_size,
+                                                 validation_data,
+                                                 sequential_order,
+                                                 shuffle, auto_shard_files=auto_shard_files)
+    else:
+        raise ValueError("data must be SparkXShards or orca.data.tf.Dataset or "
+                         "Spark DataFrame or tf.data.Dataset")
+
+    return dataset
+
+
 class TFOptimizerWrapper(Estimator):
     def __init__(self, *, inputs, outputs, labels, loss,
                  optimizer, clip_norm, clip_value,
@@ -337,10 +400,9 @@ class TFOptimizerWrapper(Estimator):
                 ):
         """
         Predict input data
-        :param data: data to be predicted. It can be XShards, Spark DataFrame, or tf.data.Dataset.
+        :param data: data to be predicted. It can be XShards, Spark DataFrame.
         If data is XShards, each element needs to be {'x': a feature numpy array
          or a tuple of feature numpy arrays}.
-        If data is tf.data.Dataset, each element is a tuple of input tensors.
         :param batch_size: batch size per thread
         :param feature_cols: list of feature column names if input data is Spark DataFrame.
         :param hard_code_batch_size: whether to hard code batch size for prediction.
@@ -359,6 +421,9 @@ class TFOptimizerWrapper(Estimator):
         if isinstance(data, DataFrame):
             assert feature_cols is not None, \
                 "feature columns is None; it should not be None in prediction"
+
+        assert not is_tf_data_dataset(data), "tf.data.Dataset currently cannot be used for" \
+                                             "estimator prediction"
 
         dataset = to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
                              validation_data=None,
@@ -493,7 +558,7 @@ class TFKerasWrapper(Estimator):
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=hard_code_batch_size,
                              sequential_order=False, shuffle=True,
-                             auto_shard_files=auto_shard_files,)
+                             auto_shard_files=auto_shard_files)
 
         self.tf_optimizer = TFOptimizer.from_keras(self.model.model, dataset,
                                                    model_dir=self.model.model_dir,

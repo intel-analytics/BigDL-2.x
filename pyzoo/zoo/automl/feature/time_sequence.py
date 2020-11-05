@@ -21,10 +21,10 @@ from zoo.automl.feature.abstract import BaseFeatureTransformer
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import pandas as pd
 import numpy as np
-import featuretools as ft
-from featuretools.primitives import make_agg_primitive, make_trans_primitive
-from featuretools.variable_types import Text, Numeric, DatetimeTimeIndex
 import json
+
+TIME_ATTR = ("MINUTE", "DAY", "DAYOFYEAR", "HOUR", "WEEKDAY", "WEEKOFYEAR", "MONTH")
+ADDITIONAL_TIME_ATTR = ("IS_AWAKE", "IS_BUSY_HOURS", "IS_WEEKEND")
 
 
 class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
@@ -329,21 +329,12 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         # self.scaler.scale_ = np.asarray(result["scale"])
         # print(self.scaler.transform(input_data))
 
-    def get_feature_list(self, input_df):
-        if isinstance(input_df, list):
-            feature_matrix, feature_defs = self._generate_features(input_df[0])
-        else:
-            feature_matrix, feature_defs = self._generate_features(input_df)
-    # return [feat.generate_name() for feat in feature_defs if isinstance(feat, TransformFeature)]
+    def get_feature_list(self):
         feature_list = []
-        for feat in feature_defs:
-            feature_name = feat.generate_name()
-            # print(feature_name)
-            # todo: need to change if more than one target cols are supported
-            if isinstance(feat, TransformFeature) \
-                    or (self.extra_features_col and feature_name in self.extra_features_col):
-                # if feature_name != self.target_col:
-                feature_list.append(feature_name)
+        for feature in (TIME_ATTR + ADDITIONAL_TIME_ATTR):
+            feature_list.append(feature + "({})".format(self.dt_col))
+        if self.extra_features_col:
+            feature_list += self.extra_features_col
         return feature_list
 
     def _get_feat_config(self, **config):
@@ -390,13 +381,6 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
             is_nan = pd.isna(input_df)
             if is_nan.any(axis=None):
                 raise ValueError("Missing values in input dataframe!")
-
-        # check if the last datetime is large than current time.
-        # In that case, feature tools generate NaN.
-        last_datetime = dt.iloc[-1]
-        current_time = np.datetime64('today', 's')
-        if last_datetime > current_time:
-            raise ValueError("Last date time is bigger than current time!")
 
         # check if the length of input data is smaller than requested.
         if mode == "test":
@@ -540,37 +524,26 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
     def _generate_features(self, input_df):
         df = input_df.copy()
         df["id"] = df.index + 1
+        field = df[self.dt_col]
 
-        es = ft.EntitySet(id="data")
-        es = es.entity_from_dataframe(entity_id="time_seq",
-                                      dataframe=df,
-                                      index="id",
-                                      time_index=self.dt_col)
+        # built in attr
+        for attr in TIME_ATTR:
+            df[attr + "({})".format(self.dt_col)] = getattr(field.dt, attr.lower())
 
-        def is_awake(column):
-            hour = column.dt.hour
-            return (((hour >= 6) & (hour <= 23)) | (hour == 0)).astype(int)
+        # additional attr
+        hour = field.dt.hour
+        weekday = field.dt.weekday
+        df["IS_AWAKE" + "({})".format(self.dt_col)] =\
+            (((hour >= 6) & (hour <= 23)) | (hour == 0)).astype(int).values
+        df["IS_BUSY_HOURS" + "({})".format(self.dt_col)] =\
+            (((hour >= 7) & (hour <= 9)) | (hour >= 16) & (hour <= 19)).astype(int).values
+        df["IS_WEEKEND" + "({})".format(self.dt_col)] =\
+            (weekday >= 5).values
 
-        def is_busy_hours(column):
-            hour = column.dt.hour
-            return (((hour >= 7) & (hour <= 9)) | (hour >= 16) & (hour <= 19)).astype(int)
-
-        IsAwake = make_trans_primitive(function=is_awake,
-                                       input_types=[DatetimeTimeIndex],
-                                       return_type=Numeric)
-        IsBusyHours = make_trans_primitive(function=is_busy_hours,
-                                           input_types=[DatetimeTimeIndex],
-                                           return_type=Numeric)
-
-        feature_matrix, feature_defs = ft.dfs(entityset=es,
-                                              target_entity="time_seq",
-                                              agg_primitives=["count"],
-                                              trans_primitives=["month", "weekday", "day", "hour",
-                                                                "is_weekend", IsAwake, IsBusyHours])
-        return feature_matrix, feature_defs
+        return df
 
     def _get_features(self, input_df, config):
-        feature_matrix, feature_defs = self._generate_features(input_df)
+        feature_matrix = self._generate_features(input_df)
         # self.write_generate_feature_list(feature_defs)
         feature_cols = np.asarray(json.loads(config.get("selected_features")))
         # we do not include target col in candidates.

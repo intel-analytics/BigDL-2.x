@@ -15,3 +15,11 @@
 #
 
 from .abstract import *
+from .ray_tune_search_engine import RayTuneSearchEngine
+
+
+class SearchEngineFactory:
+    @staticmethod
+    def create_engine(backend="ray", *args, **kwargs):
+        if backend == "ray":
+            return RayTuneSearchEngine(*args, **kwargs)
