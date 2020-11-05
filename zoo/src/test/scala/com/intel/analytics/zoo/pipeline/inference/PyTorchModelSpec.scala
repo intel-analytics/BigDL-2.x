@@ -47,28 +47,6 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
     model = new InferenceModel(currentNum) { }
     model2 = new InferenceModel(currentNum) { }
     modelPath = ZooSpecHelper.createTmpFile().getAbsolutePath()
-    val resnetModel =
-      s"""
-         |import torch
-         |import torch.nn as nn
-         |import torchvision.models as models
-         |from zoo.pipeline.api.torch import zoo_pickle_module
-         |
-         |class SimpleTorchModel(nn.Module):
-         |    def __init__(self):
-         |        super(SimpleTorchModel, self).__init__()
-         |        self.dense1 = nn.Linear(2, 1)
-         |        list(self.dense1.parameters())[0][0][0] = 0.2
-         |        list(self.dense1.parameters())[0][0][1] = 0.5
-         |        list(self.dense1.parameters())[1][0] = 0.3
-         |    def forward(self, x):
-         |        x = self.dense1(x)
-         |        return x
-         |
-         |model = SimpleTorchModel()
-         |torch.save(model, "$modelPath", pickle_module=zoo_pickle_module)
-         |""".stripMargin
-    PythonInterpreter.exec(resnetModel)
   }
 
   override def doAfter() = {
@@ -85,6 +63,28 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
       Logger.getLogger(PythonInterpreter.getClass()).setLevel(Level.DEBUG)
       // Load TFNet before create interpreter, or the TFNet will throw an OMP error #13
       TFNetNative.isLoaded
+      val resnetModel =
+        s"""
+           |import torch
+           |import torch.nn as nn
+           |import torchvision.models as models
+           |from zoo.pipeline.api.torch import zoo_pickle_module
+           |
+           |class SimpleTorchModel(nn.Module):
+           |    def __init__(self):
+           |        super(SimpleTorchModel, self).__init__()
+           |        self.dense1 = nn.Linear(2, 1)
+           |        list(self.dense1.parameters())[0][0][0] = 0.2
+           |        list(self.dense1.parameters())[0][0][1] = 0.5
+           |        list(self.dense1.parameters())[1][0] = 0.3
+           |    def forward(self, x):
+           |        x = self.dense1(x)
+           |        return x
+           |
+           |model = SimpleTorchModel()
+           |torch.save(model, "$modelPath", pickle_module=zoo_pickle_module)
+           |""".stripMargin
+      PythonInterpreter.exec(resnetModel)
     }
   }
 
