@@ -80,7 +80,7 @@ class InferenceModel(JavaValue):
     def load_tensorflow(self, model_path, model_type="frozenModel", intra_op_parallelism_threads=1,
                         inter_op_parallelism_threads=1, use_per_session_threads=True):
         """
-        Load an TensorFlow model using tensorflow.
+        Load a TensorFlow model using tensorflow.
 
         :param model_path: String. The file path to the TensorFlow model.
         :param model_type: String. The type of the tensorflow model file. Default is "frozenModel"
@@ -98,7 +98,7 @@ class InferenceModel(JavaValue):
                         inputs, outputs, intra_op_parallelism_threads=1,
                         inter_op_parallelism_threads=1, use_per_session_threads=True):
         """
-        Load an TensorFlow model using tensorflow.
+        Load a TensorFlow model using tensorflow.
 
         :param model_path: String. The file path to the TensorFlow model.
         :param model_type: String. The type of the tensorflow model file: "frozenModel" or
@@ -116,16 +116,23 @@ class InferenceModel(JavaValue):
                     inputs, outputs, intra_op_parallelism_threads,
                     inter_op_parallelism_threads, use_per_session_threads)
 
-    def load_pytorch(self, model):
+    def load_pytorch(self, model_path):
         """
-        Load an TensorFlow model using tensorflow.
+        Load a pytorch model.
 
-        :param model: pytorch model
+        :param model_path: the path of saved pytorch model
            """
-        if isinstance(model, str):
-
+        assert(model_path, str)
+        import os
+        import io
+        assert(os.path.exists(str))
+        import torch
+        from zoo.pipeline.api.torch import zoo_pickle_module
+        model = torch.load(model_path, pickle_module=zoo_pickle_module)
+        bys = io.BytesIO()
+        torch.save(model, bys, pickle_module=zoo_pickle_module)
         callZooFunc(self.bigdl_type, "inferenceModelLoadPytorch",
-                    self.value, model)
+                    self.value, bys.getvalue())
 
     def predict(self, inputs):
         """
