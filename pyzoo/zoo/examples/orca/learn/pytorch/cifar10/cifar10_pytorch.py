@@ -93,21 +93,10 @@ def main():
                         help='input worker batch for training per executor(default: 16)')
     args = parser.parse_args()
 
-    #torch.manual_seed(args.seed)
 
     classes = ('plane', 'car', 'bird', 'cat',
                'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-    '''               
-    if args.cluster_mode == "local":
-        init_orca_context(cores=1, memory="20g")
-    elif args.cluster_mode == "yarn":
-        init_orca_context(
-            cluster_mode="yarn-client", cores=4, num_nodes=2, memory="2g",
-            driver_memory="10g", driver_cores=1,
-            conf={"spark.rpc.message.maxSize": "1024",
-                  "spark.task.maxFailures": "1",
-                  "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"})
-    '''
+
     init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores, num_nodes=args.num_nodes, memory=args.memory)
 
     criterion = nn.CrossEntropyLoss()
