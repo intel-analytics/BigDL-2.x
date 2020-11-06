@@ -108,12 +108,11 @@ def main():
                   "spark.task.maxFailures": "1",
                   "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"})
     '''
-    init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores, num_nodes=args.num_nodes, memory=args.memory,  env={"http_proxy": "http://10.239.4.100:913", "https_proxy": "https://10.239.4.100:913"} )
+    init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores, num_nodes=args.num_nodes, memory=args.memory)
 
-    #model.train()
     criterion = nn.CrossEntropyLoss()
     zoo_estimator = Estimator.from_torch(model=model_creator, optimizer=optimizer_creator, loss=criterion, config={
-        "batch_size":args.total_batch}, backend="pytorch")
+        "batch_size":args.worker_batch}, backend="pytorch")
     stats = zoo_estimator.fit(train_data_creator, epochs=args.epochs)
     print("Train stats: {}".format(stats))
     val_stats = zoo_estimator.evaluate(validation_data_creator)
