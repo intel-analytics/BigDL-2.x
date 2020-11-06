@@ -26,3 +26,4 @@ python -m pytest -v ../test/zoo/orca/learn/jep/test_pytorch_estimator_for_spark_
 python -m pytest -v ../test/zoo/pipeline/api/torch/test_torch_estimator.py
 python -m pytest -v ../test/zoo/pipeline/api/torch/test_torch.py
 python -m pytest -v ../test/zoo/pipeline/api/torch/test_torch_optim.py
+python -m pytest -v ../test/zoo/pipeline/inference/test_inference_model_torch.py

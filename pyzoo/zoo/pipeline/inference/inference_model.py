@@ -116,7 +116,7 @@ class InferenceModel(JavaValue):
                     inputs, outputs, intra_op_parallelism_threads,
                     inter_op_parallelism_threads, use_per_session_threads)
 
-    def load_pytorch(self, model_path):
+    def load_torch(self, model_path):
         """
         Load a pytorch model.
 
