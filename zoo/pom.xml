@@ -127,9 +127,6 @@
  
         <profile>
             <id>spark_3.x</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <build>
                 <plugins>
                     <plugin>
@@ -363,7 +360,7 @@
         <!--        </dependency>-->
         <dependency>
             <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-actor_2.11</artifactId>
+            <artifactId>akka-actor_${scala.major.version}</artifactId>
             <version>2.5.26</version>
         </dependency>
         <dependency>
@@ -546,7 +543,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-table-api-scala-bridge_2.11</artifactId>
+            <artifactId>flink-table-api-scala-bridge_${scala.major.version}</artifactId>
             <version>1.11.2</version>
             <scope>provided</scope>
         </dependency>
@@ -558,7 +555,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-table-planner-blink_2.11</artifactId>
+            <artifactId>flink-table-planner-blink_${scala.major.version}</artifactId>
             <version>1.11.2</version>
             <scope>provided</scope>
         </dependency>
@@ -834,7 +831,7 @@
                                     <exclude>com.intel.analytics.zoo:zoo-core-torchnet-java-mac</exclude>
                                     <exclude>com.intel.analytics.bigdl.core.dist:all</exclude>
                                     <exclude>com.intel.analytics.bigdl.spark-version</exclude>
-                                    <exclude>org.scalanlp:breeze_2.11</exclude>
+                                    <exclude>org.scalanlp:breeze_${scala.major.version}</exclude>
                                     <exclude>it.unimi.dsi:fastutil</exclude>
                                 </excludes>
                             </artifactSet>
