@@ -54,10 +54,16 @@ class elastic_search:
         return df
 
     @staticmethod
-    def flatten(df, prefix=None):
+    def flatten_df(df):
+        fields = elastic_search.flatten(df.schema)
+        flatten_df = df.select(fields)
+        return flatten_df
+
+    @staticmethod
+    def flatten(schema, prefix=None):
         from pyspark.sql.types import StructType
         fields = []
-        for field in df.schema.fields:
+        for field in schema.fields:
             name = prefix + '.' + field.name if prefix else field.name
             dtype = field.dataType
 
@@ -65,9 +71,7 @@ class elastic_search:
                 fields += elastic_search.flatten(dtype, prefix=name)
             else:
                 fields.append(name)
-
-        flatten_df = df.select(fields)
-        return flatten_df
+        return fields
 
     @staticmethod
     def write(esConfig, esResource, df):
