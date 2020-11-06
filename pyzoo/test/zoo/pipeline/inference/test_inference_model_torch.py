@@ -18,8 +18,7 @@ import os
 import pytest
 import numpy as np
 
-from bigdl.dataset.base import maybe_download
-from test.zoo.pipeline.utils.test_utils import ZooTestCase
+from unittest import TestCase
 from zoo.pipeline.inference import InferenceModel
 
 from zoo.pipeline.api.torch import zoo_pickle_module
@@ -28,7 +27,7 @@ import torchvision
 from bigdl.util.common import create_tmp_path
 
 
-class TestInferenceModelTorch(ZooTestCase):
+class TestInferenceModelTorch(TestCase):
 
     def test_load_torch(self):
         torch_model = torchvision.models.resnet18()
