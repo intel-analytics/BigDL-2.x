@@ -54,9 +54,25 @@ class elastic_search:
         return df
 
     @staticmethod
+    def flatten(df, prefix=None):
+        from pyspark.sql.types import StructType
+        fields = []
+        for field in df.schema.fields:
+            name = prefix + '.' + field.name if prefix else field.name
+            dtype = field.dataType
+
+            if isinstance(dtype, StructType):
+                fields += elastic_search.flatten(dtype, prefix=name)
+            else:
+                fields.append(name)
+
+        flatten_df = df.select(fields)
+        return flatten_df
+
+    @staticmethod
     def write(esConfig, esResource, df):
         """
-        Read the data from elastic search into DataFrame.
+        Write the Spark DataFrame to elastic search.
         :param esConfig Dictionary which represents configuration for
                elastic search(eg. ip, port etc).
         :param esResource resource file in elastic search.

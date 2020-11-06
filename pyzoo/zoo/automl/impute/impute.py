@@ -42,3 +42,35 @@ class FillZeroImpute(BaseImputation):
     def impute(self, input_df):
         input_df.fillna(0)
         return input_df
+
+
+class MergeImpute(BaseImputation):
+    """
+    Merge rows whose timestamp are seconds apart
+    """
+    def __init__(self, time_interval, timestamp_column_name, mode="max"):
+        self.time_interval = time_interval
+        self.timestamp_column_name = timestamp_column_name
+        self.mode = mode
+
+    def impute(self, input_df):
+        import pyspark.sql.functions as f
+
+        merged_df = input_df.withColumn("add_seconds",
+                                       (f.round(f.second(self.timestamp_column_name) / self.time_interval)
+                                        * self.time_interval) - f.second(self.timestamp_column_name))\
+            .withColumn("adjust_timestamp",
+                        f.from_unixtime(f.unix_timestamp(self.timestamp_column_name)
+                                        + f.col("add_seconds"))).drop("add_seconds")
+        if self.mode == "max":
+            merged_df = merged_df.groupby("adjust_timestamp").max()
+        elif self.mode == "min":
+            merged_df = merged_df.groupby("adjust_timestamp").min()
+        elif self.mode == "mean":
+            merged_df = merged_df.groupby("adjust_timestamp").min()
+        elif self.mode == "sum":
+            merged_df = merged_df.groupby("adjust_timestamp").min()
+        else:
+            raise Exception(f"Doesn't support mode {self.mode}. Currently only support max/min/mean/sum mode")
+
+        return merged_df
