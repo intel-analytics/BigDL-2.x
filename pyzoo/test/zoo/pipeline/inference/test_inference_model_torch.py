@@ -16,7 +16,6 @@
 
 import os
 import pytest
-import numpy as np
 
 from unittest import TestCase
 from zoo.pipeline.inference import InferenceModel
@@ -24,10 +23,22 @@ from zoo.pipeline.inference import InferenceModel
 from zoo.pipeline.api.torch import zoo_pickle_module
 import torch
 import torchvision
-from bigdl.util.common import create_tmp_path
+from zoo.common.nncontext import *
 
 
 class TestInferenceModelTorch(TestCase):
+
+    def setUp(self):
+        """ setup any state tied to the execution of the given method in a
+        class.  setup_method is invoked for every test method of a class.
+        """
+        self.sc = init_spark_on_local(4)
+
+    def tearDown(self):
+        """ teardown any state that was previously setup with a setup_method
+        call.
+        """
+        self.sc.stop()
 
     def test_load_torch(self):
         torch_model = torchvision.models.resnet18()
