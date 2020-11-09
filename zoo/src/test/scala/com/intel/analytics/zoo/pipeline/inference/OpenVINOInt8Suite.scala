@@ -136,7 +136,6 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       .getLines().map(_.toFloat).toArray)
     val indata2 = fromHWC2CHW(Source.fromFile(image_input_970_filePath)
       .getLines().map(_.toFloat).toArray)
-    // val labels = Array(65f, 795f)
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
     val input2 = new JTensor(data, resnet_v1_50_shape)
@@ -158,7 +157,6 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     classes.foreach { output =>
       val outputTensor = Tensor[Float](output, Array(2, 1))
       assert(labels == outputTensor)
-      // assert(almostEqual(output, labels, 0.1f))
     }
   }
 
@@ -174,7 +172,6 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     val indata2 = fromHWC2CHW(Source.fromFile(image_input_970_filePath)
       .getLines().map(_.toFloat).toArray)
     // 65's top1 is 65, 970's top1 is 795
-    // val labels = Array(65f, 795f)
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
     val input2 = new JTensor(data, resnet_v1_50_shape)
@@ -199,7 +196,6 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     classesInt8.foreach { output =>
       val outputTensor = Tensor[Float](output, Array(2, 1))
       assert(labels == outputTensor)
-      // assert(almostEqual(output, labels, 0.1f))
     }
   }
 
@@ -218,7 +214,6 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       "ILSVRC2012_val_00000002.bmp"), indata2)
     indata1 = fromHWC2CHW(indata1)
     indata2 = fromHWC2CHW(indata2)
-    // val labels = Array(65f, 795f)
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
     val input2 = new JTensor(data, resnet_v1_50_shape)
@@ -242,7 +237,6 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     classes.foreach { output =>
       val outputTensor = Tensor[Float](output, Array(2, 1))
       assert(labels == outputTensor)
-      // assert(almostEqual(output, labels, 0.1f))
     }
   }
 
@@ -257,7 +251,6 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       .getLines().map(_.toFloat).toArray)
     val indata2 = fromHWC2CHW(Source.fromFile(image_input_970_filePath)
       .getLines().map(_.toFloat).toArray)
-    // val labels = Array(65f, 795f)
     // batchSize = 4, but given 3 and 5
     val data1 = indata1 ++ indata2 ++ indata1
     val data2 = indata2 ++ indata1 ++ indata2 ++ indata1 ++ indata2
@@ -279,7 +272,6 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     })
     val classInt8Tensor = Tensor[Float](classesInt8, Array(2, 1))
     assert(labels == classInt8Tensor)
-    // assert(almostEqual(classesInt8, labels, 0.1f))
     println(classesInt8.mkString(","))
   }
 
@@ -305,19 +297,5 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       }
     }
     resArray
-  }
-
-  def almostEqual(x: Float, y: Float, precision: Float): Boolean = {
-    (x - y).abs <= precision match {
-      case true => true
-      case false => println(x, y); false
-    }
-  }
-
-  def almostEqual(x: Array[Float], y: Array[Float], precision: Float): Boolean = {
-    x.length == y.length match {
-      case true => x.zip(y).filter(t => !almostEqual(t._1, t._2, precision)).length == 0
-      case false => println(x.length, y.length); false
-    }
   }
 }
