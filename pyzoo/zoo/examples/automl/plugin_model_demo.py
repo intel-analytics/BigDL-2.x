@@ -79,12 +79,10 @@ if __name__ == "__main__":
     # pass input data, modelbuilder and recipe into searcher.compile. Note that if user doesn't pass
     # feature transformer, the default identity feature transformer will be used.
     df, val_df = get_data()
-    searcher.compile(df,
-                     modelBuilder,
+    searcher.compile(data={'df':df, 'feature_cols':["x"], 'target_col':"y"}, # TODO: change to ndarray support
+                     model_create_func=modelBuilder,
                      recipe=SimpleRecipe(),
-                     feature_cols=["x"],
-                     target_col="y",
-                     validation_df=val_df)
+                     validation_data={'df':val_df}) # TODO: change to ndarray support
 
     searcher.run()
     best_trials = searcher.get_best_trials(k=1)
