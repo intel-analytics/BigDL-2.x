@@ -20,6 +20,7 @@ import java.io.{File, FileInputStream}
 import java.util
 import java.util.{Arrays, Properties}
 
+import com.intel.analytics.bigdl.tensor.Tensor
 import org.scalatest._
 import org.slf4j.LoggerFactory
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
@@ -59,6 +60,8 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
   val image_input_970_url = s"$s3Url/analytics-zoo-models/openvino/ic_input_970"
   var image_input_65_filePath: String = _
   var image_input_970_filePath: String = _
+
+  val labels = Tensor[Float](Array(65f, 795f), Array(2, 1))
 
   override def beforeAll() {
     System.clearProperty("bigdl.localMode")
@@ -133,7 +136,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       .getLines().map(_.toFloat).toArray)
     val indata2 = fromHWC2CHW(Source.fromFile(image_input_970_filePath)
       .getLines().map(_.toFloat).toArray)
-    val labels = Array(65f, 795f)
+    // val labels = Array(65f, 795f)
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
     val input2 = new JTensor(data, resnet_v1_50_shape)
@@ -153,7 +156,9 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       Array(class1.toFloat, class2.toFloat)
     })
     classes.foreach { output =>
-      assert(almostEqual(output, labels, 0.1f))
+      val outputTensor = Tensor[Float](output, Array(2, 1))
+      assert(labels == outputTensor)
+      // assert(almostEqual(output, labels, 0.1f))
     }
   }
 
@@ -169,7 +174,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     val indata2 = fromHWC2CHW(Source.fromFile(image_input_970_filePath)
       .getLines().map(_.toFloat).toArray)
     // 65's top1 is 65, 970's top1 is 795
-    val labels = Array(65f, 795f)
+    // val labels = Array(65f, 795f)
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
     val input2 = new JTensor(data, resnet_v1_50_shape)
@@ -192,7 +197,9 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       Array(class1.toFloat, class2.toFloat)
     })
     classesInt8.foreach { output =>
-      assert(almostEqual(output, labels, 0.1f))
+      val outputTensor = Tensor[Float](output, Array(2, 1))
+      assert(labels == outputTensor)
+      // assert(almostEqual(output, labels, 0.1f))
     }
   }
 
@@ -211,7 +218,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       "ILSVRC2012_val_00000002.bmp"), indata2)
     indata1 = fromHWC2CHW(indata1)
     indata2 = fromHWC2CHW(indata2)
-    val labels = Array(65f, 795f)
+    // val labels = Array(65f, 795f)
     val data = indata1 ++ indata2 ++ indata1 ++ indata2
     val input1 = new JTensor(data, resnet_v1_50_shape)
     val input2 = new JTensor(data, resnet_v1_50_shape)
@@ -233,7 +240,9 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       Array(class1.toFloat, class2.toFloat)
     })
     classes.foreach { output =>
-      assert(almostEqual(output, labels, 0.1f))
+      val outputTensor = Tensor[Float](output, Array(2, 1))
+      assert(labels == outputTensor)
+      // assert(almostEqual(output, labels, 0.1f))
     }
   }
 
@@ -248,7 +257,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       .getLines().map(_.toFloat).toArray)
     val indata2 = fromHWC2CHW(Source.fromFile(image_input_970_filePath)
       .getLines().map(_.toFloat).toArray)
-    val labels = Array(65f, 795f)
+    // val labels = Array(65f, 795f)
     // batchSize = 4, but given 3 and 5
     val data1 = indata1 ++ indata2 ++ indata1
     val data2 = indata2 ++ indata1 ++ indata2 ++ indata1 ++ indata2
@@ -268,7 +277,9 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
       val class1 = inner.getData.slice(0, 1000).zipWithIndex.maxBy(_._1)._2
       class1.toFloat
     })
-    assert(almostEqual(classesInt8, labels, 0.1f))
+    val classInt8Tensor = Tensor[Float](classesInt8, Array(2, 1))
+    assert(labels == classInt8Tensor)
+    // assert(almostEqual(classesInt8, labels, 0.1f))
     println(classesInt8.mkString(","))
   }
 
