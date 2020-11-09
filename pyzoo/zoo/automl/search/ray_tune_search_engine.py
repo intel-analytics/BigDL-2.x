@@ -59,18 +59,20 @@ class RayTuneSearchEngine(SearchEngine):
         self.logs_dir = os.path.abspath(os.path.expanduser(logs_dir))
 
     def compile(self,
-                input_df,
+                data,
+                # input_df,
                 model_create_func,
                 recipe,
-                feature_cols=None,
-                target_col=None,
+                # feature_cols=None,
+                # target_col=None,
                 search_space=None,
                 search_alg=None,
                 search_alg_params=None,
                 scheduler=None,
                 scheduler_params=None,
                 feature_transformers=None,
-                validation_df=None,
+                validation_data=None,
+                # validation_df=None,
                 mc=False,
                 metric="mse"):
         """
@@ -88,6 +90,32 @@ class RayTuneSearchEngine(SearchEngine):
         :param metric:
         :return:
         """
+        
+        # data mode detection
+        assert isinstance(data, dict), 'ERROR: Argument \'data\' should be a dictionary.'
+        data_mode = None # data_mode can only be 'dataframe' or 'ndarray'
+        data_schema = set(data.keys())
+        if set(["df"]).issubset(data_schema):
+            assert validation_data is None or "df" in validation_data.keys(),\
+                 'ERROR: Argument \'validation_data\' should fit dataframe schema.'
+            data_mode = 'dataframe'
+        if set(["x", "y"]).issubset(data_schema):
+            assert validation_data is None or set(["x", "y"]).issubset(validation_data.keys()),\
+                 'ERROR: Argument \'validation_data\' should fit dataframe schema.'
+            data_mode = 'ndarray'
+        assert data_mode in ['dataframe', 'ndarray'],\
+             'ERROR: Argument \'data\' should fit either dataframe schema or ndarray schema.'
+
+        # data extract
+        input_df = None
+        feature_cols = None
+        target_col = None
+        validation_df = None
+        if data_mode == 'dataframe':
+            input_df = data['df']
+            feature_cols = data['feature_cols'] if 'feature_cols' in data.keys() else None
+            target_col = data['target_col'] if 'target_col' in data.keys() else None
+            validation_df = validation_data['df'] if validation_data else None
 
         # prepare parameters for search engine
         runtime_params = recipe.runtime_params()
