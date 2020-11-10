@@ -212,13 +212,12 @@ class PyTorchRayEstimator:
 
             def transform_func(worker, shards_ref):
                 data_creator = shards_ref_to_creator(shards_ref)
-                # Wrap DistributedSampler on DataLoader should be False for SparkXShards.
+                # Should not wrap DistributedSampler on DataLoader for SparkXShards input.
                 return worker.train_epochs.remote(data_creator, epochs, profile, info, False)
 
             stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
                                                                     transform_func,
                                                                     gang_scheduling=True)
-            # TODO: verify this
             worker_stats = stats_shards.collect_partitions()
         else:
             assert isinstance(data, types.FunctionType), \
