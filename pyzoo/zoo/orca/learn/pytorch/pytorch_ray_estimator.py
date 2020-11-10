@@ -69,8 +69,9 @@ def shards_ref_to_creator(shards_ref):
         # TODO: refactor batch_size in fit
         assert "batch_size" in config, "batch_size must be set in config"
         params = {"batch_size": config["batch_size"], "shuffle": True}
-        for arg in ["shuffle", "sampler", "batch_sampler", "num_workers", "collate_fn", "pin_memory",
-                    "drop_last", "timeout", "worker_init_fn", "multiprocessing_context"]:
+        for arg in ["shuffle", "sampler", "batch_sampler", "num_workers", "collate_fn",
+                    "pin_memory", "drop_last", "timeout", "worker_init_fn",
+                    "multiprocessing_context"]:
             if arg in config:
                 params[arg] = config[arg]
         data, label = ray_partition_get_data_label(ray.get(shards_ref),
@@ -184,31 +185,7 @@ class PyTorchRayEstimator:
               reduce_results=True,
               info=None):
         """
-        Trains a PyTorch model given training data for several epochs.
-
-        Calls `operator.train_epoch()` on N parallel workers simultaneously
-        underneath the hood.
-        :param data: An instance of SparkXShards or a function that takes config as
-        argument and returns a PyTorch DataLoader for training.
-        :param epochs: The number of epochs to train the model. Default is 1.
-        :param batch_size: The number of samples per batch for each worker. Default is 32.
-        The total batch size would be workers_per_node*num_nodes.
-        If you training data is a function, you can set batch_size to be config["batch_size"]
-        for the PyTorch DataLoader.
-        :param profile: Boolean. Whether to return time stats for the training procedure.
-        Default is False.
-        :param reduce_results: Boolean. Whether to average all metrics across all workers into
-        one dict. If a metric is a non-numerical value (or nested dictionaries), one value will
-        be randomly selected among the workers. If False, returns a list of dicts for all workers.
-        Default is True.
-        :param info: An optional dictionary that can be passed to the training operator
-        for train_epoch and train_batch.
-
-        :return A list of dictionary of metrics for every training epoch. If reduce_results is False,
-        this will return a nested list of metric dictionaries whose length will be equal to the total
-        number of workers.
-        You can also provide custom metrics by passing in a custom training_operator_cls when creating
-        the Estimator.
+        See the documentation in zoo.orca.learn.pytorch.estimator.PyTorchRayEstimatorWrapper.fit.
         """
         from zoo.orca.data import SparkXShards
         if isinstance(data, SparkXShards):
@@ -218,7 +195,8 @@ class PyTorchRayEstimator:
             def transform_func(worker, shards_ref):
                 data_creator = shards_ref_to_creator(shards_ref)
                 # Should not wrap DistributedSampler on DataLoader for SparkXShards input.
-                return worker.train_epochs.remote(data_creator, epochs, batch_size, profile, info, False)
+                return worker.train_epochs.remote(
+                    data_creator, epochs, batch_size, profile, info, False)
 
             stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
                                                                     transform_func,

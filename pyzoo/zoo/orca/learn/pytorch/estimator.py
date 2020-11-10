@@ -132,11 +132,11 @@ class PyTorchRayEstimatorWrapper(Estimator):
         :param info: An optional dictionary that can be passed to the training operator
         for train_epoch and train_batch.
 
-        :return A list of dictionary of metrics for every training epoch. If reduce_results is False,
-        this will return a nested list of metric dictionaries whose length will be equal to the total
-        number of workers.
-        You can also provide custom metrics by passing in a custom training_operator_cls when creating
-        the Estimator.
+        :return A list of dictionary of metrics for every training epoch. If reduce_results is
+        False, this will return a nested list of metric dictionaries whose length will be equal
+        to the total number of workers.
+        You can also provide custom metrics by passing in a custom training_operator_cls when
+        creating the Estimator.
         """
         return self.estimator.train(data=data, epochs=epochs, batch_size=batch_size,
                                     profile=profile, reduce_results=reduce_results, info=info)
