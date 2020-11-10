@@ -23,6 +23,7 @@ import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 class SerParams(helper: ClusterServingHelper) extends Serializable {
   var redisHost = helper.redisHost
   var redisPort: Int = if (helper.redisPort != null) helper.redisPort.toInt else 6379
+  var redisTimeout: Int = if (helper.redisTimeout != null) helper.redisTimeout.toInt else 5000
   val coreNum = helper.coreNum
   val jobName = helper.jobName
   val filter = helper.filter

@@ -1,16 +1,26 @@
 #!/bin/bash
 
-if [ -z "$CS_PATH" ]; then
-  # try call py script, otherwise error
-  # pip install will add following script to path, but no pip would not
-  if cluster-serving-py-setup.py ; then
-    echo "You are installing Cluster Serving by pip, downloading..."
-  else
-    echo "You must provide CS_PATH variable to get prepared in a new working directory"
-    exit 1
-  fi
+
+# try call py script
+# pip install will add following script to path, but no pip would not
+if cluster-serving-py-setup.py ; then
+  echo "You are installing Cluster Serving by pip, downloading..."
 else
-  cp $CS_PATH/zoo.jar .
-  cp $CS_PATH/config.yaml .
-  echo "Cluster Serving environment is set up."
+  if [ -f config.yaml ]; then
+    echo "Cluster Serving config file prepared."
+  else
+    echo "Failed to find config file. Initialization failed."
+  fi
+
+  if mv *-serving.jar zoo.jar ; then
+      echo "Cluster Serving environment set up. Initialization success."
+  else
+    if [ -f zoo.jar ]; then
+      echo "Cluster Serving environment already set up. Initialization success."
+    else
+      echo "Failed to find *-serving jar in current directory, please make sure this is the directory you unzip the cluster-serving-all.zip package."
+      exit 1
+    fi
+  fi
 fi
+

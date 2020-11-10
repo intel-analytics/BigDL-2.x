@@ -28,7 +28,11 @@ class AutoTSTrainer:
                  horizon=1,
                  dt_col="datetime",
                  target_col="value",
-                 extra_features_col=None
+                 extra_features_col=None,
+                 search_alg=None,
+                 search_alg_params=None,
+                 scheduler=None,
+                 scheduler_params=None,
                  ):
         """
         Initialize the AutoTS Trainer.
@@ -46,6 +50,10 @@ class AutoTSTrainer:
             target_col=target_col_list,
             future_seq_len=horizon,
             extra_features_col=extra_features_col,
+            search_alg=search_alg,
+            search_alg_params=search_alg_params,
+            scheduler=scheduler,
+            scheduler_params=scheduler_params
         )
 
     def fit(self,

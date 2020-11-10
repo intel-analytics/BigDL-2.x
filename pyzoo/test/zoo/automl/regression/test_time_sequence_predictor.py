@@ -86,7 +86,16 @@ class TestTimeSequencePredictor(ZooTestCase):
         tsp = TimeSequencePredictor(dt_col="datetime",
                                     target_col="value",
                                     future_seq_len=future_seq_len,
-                                    extra_features_col=None, )
+                                    extra_features_col=None,
+                                    search_alg="BayesOpt",
+                                    search_alg_params={
+                                        "utility_kwargs": {
+                                            "kind": "ucb",
+                                            "kappa": 2.5,
+                                            "xi": 0.0
+                                        }
+                                    }
+                                    )
         pipeline = tsp.fit(
             train_df, recipe=BayesRecipe(
                 num_samples=1,
@@ -101,8 +110,6 @@ class TestTimeSequencePredictor(ZooTestCase):
         assert isinstance(pipeline.model, BaseModel)
         assert pipeline.config is not None
         assert "epochs" in pipeline.config
-        assert [config_name for config_name in pipeline.config
-                if config_name.startswith('bayes_feature')] == []
         assert [config_name for config_name in pipeline.config
                 if config_name.endswith('float')] == []
         assert 'past_seq_len' in pipeline.config

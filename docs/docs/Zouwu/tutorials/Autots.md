@@ -45,6 +45,12 @@ To create an AutoTSTrainer. Specify below arguments in constructor. See below ex
 * ```target_col```: target column to predict
 * ```horizon``` : num of steps to look forward 
 * ```extra_feature_col```: a list of columns which are also included in input as features except target column
+* ```search_alg```: Optional(str). The search algorithm to use. We only support "bayesopt" and "skopt" for now.
+                The default search_alg is None and variants will be generated according to the search method in search space.
+* ```search_alg_params```: Optional(Dict). params of search_alg.
+* ```scheduler```: Optional(str). Scheduler name. Allowed scheduler names are "fifo", "async_hyperband",
+    "asynchyperband", "median_stopping_rule", "medianstopping", "hyperband", "hb_bohb", "pbt". The default scheduler is "fifo".
+* ```scheduler_params```: Optional(Dict). Necessary params of scheduler.
 
 ```python
  from zoo.zouwu.autots.forecast import AutoTSTrainer
@@ -71,6 +77,8 @@ Both AutoTSTrainer and TSPipeline accepts data frames as input. An exmaple data 
 |2019-06-07|2.3|0|2|
 
 **Note:** you should call `stop_orca_context()` when your distributed automated training finishes.
+
+For visualization, please refer to [here](../../ProgrammingGuide/AutoML/visualization.md).
 
 ### **Step 4: Further deployment with TSPipeline**
 Use ```TSPipeline.fit/evaluate/predict``` to train pipeline (incremental fitting), evaluate or predict. 

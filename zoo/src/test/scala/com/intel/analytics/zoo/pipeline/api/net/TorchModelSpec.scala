@@ -15,13 +15,16 @@
  */
 package com.intel.analytics.zoo.pipeline.api.net
 
+import com.intel.analytics.bigdl.dataset.Sample
 import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.utils.RandomGenerator
 import com.intel.analytics.zoo.common.{PythonInterpreter, PythonInterpreterTest}
 import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import jep.NDArray
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
+import com.intel.analytics.zoo.common.NNContext.initNNContext
 
 @PythonInterpreterTest
 class TorchModelSpec extends ZooSpecHelper{
@@ -96,9 +99,9 @@ class TorchModelSpec extends ZooSpecHelper{
         |_data = (input, target)
         |""".stripMargin
     PythonInterpreter.exec(genInputCode)
-    model.forward(Tensor[Float]())
-    criterion.forward(Tensor[Float](), Tensor[Float]())
-    criterion.backward(Tensor[Float](), Tensor[Float]())
+    val output = model.forward(Tensor[Float]())
+    criterion.forward(output, Tensor[Float]())
+    criterion.backward(output, Tensor[Float]())
     model.backward(Tensor[Float](), Tensor[Float]())
   }
 
@@ -154,7 +157,8 @@ class TorchModelSpec extends ZooSpecHelper{
          |bys = io.BytesIO()
          |torch.save(model, bys, pickle_module=zoo_pickle_module)
          |bym = bys.getvalue()
-         |del _data
+         |if '_data' in locals():
+         |  del _data
          |""".stripMargin
     PythonInterpreter.exec(code)
 
@@ -166,9 +170,9 @@ class TorchModelSpec extends ZooSpecHelper{
 
     val input = Tensor[Float](4, 1, 28, 28).rand()
     val target = Tensor[Float](Array(0f, 1f, 3f, 4f), Array(4))
-    model.forward(input)
-    criterion.forward(input, target)
-    val gradOutput = criterion.backward(input, target)
+    val output = model.forward(input)
+    criterion.forward(output, target)
+    val gradOutput = criterion.backward(output, target)
     model.backward(input, gradOutput)
   }
 
@@ -231,5 +235,49 @@ class TorchModelSpec extends ZooSpecHelper{
          |""".stripMargin
     PythonInterpreter.exec(genInputCode)
     model.forward(Tensor[Float]())
+  }
+
+  "SimpleTorchModel" should "predict without error" in {
+    ifskipTest()
+    val conf = new SparkConf().setAppName("SimpleTorchModel").setMaster("local[4]")
+    val sc = initNNContext(conf)
+    val tmpname = createTmpFile().getAbsolutePath()
+    val code =
+      s"""
+         |import torch
+         |from torch import nn
+         |from zoo.pipeline.api.torch import zoo_pickle_module
+         |if '_data' in locals():
+         |  del _data
+         |
+         |class SimpleTorchModel(nn.Module):
+         |    def __init__(self):
+         |        super(SimpleTorchModel, self).__init__()
+         |        self.dense1 = nn.Linear(2, 1)
+         |        list(self.dense1.parameters())[0][0][0] = 0.2
+         |        list(self.dense1.parameters())[0][0][1] = 0.5
+         |        list(self.dense1.parameters())[1][0] = 0.3
+         |    def forward(self, x):
+         |        x = self.dense1(x)
+         |        return x
+         |
+         |model = SimpleTorchModel()
+         |torch.save(model, "$tmpname", pickle_module=zoo_pickle_module)
+         |""".stripMargin
+    PythonInterpreter.exec(code)
+    val model = TorchModel.loadModel(tmpname)
+    model.evaluate()
+    RandomGenerator.RNG.setSeed(1L)
+    val input = Array.tabulate(1024)(_ =>
+      (RandomGenerator.RNG.uniform(0, 1).toFloat,
+        RandomGenerator.RNG.uniform(0, 1).toFloat))
+    val exceptedTarget = input.map(v => 0.2f * v._1 + 0.5f * v._2 + 0.3f)
+    val rddSample = sc.parallelize(input, 4).map(v =>
+      Sample(Tensor[Float](Array(v._1, v._2), Array(2))))
+    val results = model.predict(rddSample, batchSize = 16).collect()
+    (0 until 1024).foreach{i =>
+      results(i).toTensor[Float].value() should be (exceptedTarget(i))
+    }
+    sc.stop()
   }
 }

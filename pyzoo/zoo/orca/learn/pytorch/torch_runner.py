@@ -47,6 +47,7 @@ from zoo.orca import OrcaContext
 from zoo.orca.learn.pytorch.constants import SCHEDULER_STEP, NUM_STEPS
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.pytorch import utils
+from zoo.orca.learn.pytorch.utils import find_free_port
 
 logger = logging.getLogger(__name__)
 
@@ -95,10 +96,12 @@ class TorchRunner:
         if not self.loss_creator:
             return
         logger.debug("Creating loss.")
-        if inspect.isclass(self.loss_creator) and issubclass(
-                self.loss_creator, torch.nn.modules.loss._Loss):
-            self.criterion = self.loss_creator()
-        else:
+        if isinstance(self.loss_creator, torch.nn.modules.loss._Loss):
+            self.criterion = self.loss_creator
+        else:  # Torch loss is also callable.
+            import types
+            assert isinstance(self.loss_creator, types.FunctionType), \
+                "Must provide a torch loss instance or a loss_creator function"
             self.criterion = self.loss_creator(self.config)
 
     def _create_schedulers_if_available(self):
@@ -123,6 +126,11 @@ class TorchRunner:
         self.size = hvd.size()
         self.setup_components_horovod()
         self.setup_operator()
+
+    def setup_address(self):
+        ip = ray.services.get_node_ip_address()
+        port = find_free_port()
+        return f"tcp://{ip}:{port}"
 
     def setup_torch_distribute(self, url, world_rank, world_size):
         import torch.distributed as dist
