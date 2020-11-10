@@ -219,10 +219,7 @@ class PyTorchRayEstimator:
                                                                     transform_func,
                                                                     gang_scheduling=True)
             # TODO: verify this
-            stats = stats_shards.collect()
-            worker_stats = []
-            for i in range(self.num_workers):
-                worker_stats.append(stats[i])
+            worker_stats = stats_shards.collect_partitions()
         else:
             assert isinstance(data, types.FunctionType), \
                 "data should be either an instance of SparkXShards or a callable function"
