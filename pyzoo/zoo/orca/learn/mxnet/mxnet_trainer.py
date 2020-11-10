@@ -13,25 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import itertools
+
 import os
+import types
+import itertools
 import subprocess
 import ray
 from dmlc_tracker.tracker import get_host_ip
 
-from zoo.orca.data.shard import RayXShards
-from zoo.orca.data.utils import ray_partition_get_data_label
+from zoo.orca.data.utils import ray_partition_get_data_label, process_spark_xshards
 from zoo.ray import RayContext
 from zoo.orca.learn.mxnet.mxnet_runner import MXNetRunner
 from zoo.orca.learn.mxnet.utils import find_free_port
-
-
-def process_spark_xshards(spark_xshards, num_workers):
-    data = spark_xshards
-    if data.num_partitions() != num_workers:
-        data = data.repartition(num_workers)
-    ray_xshards = RayXShards.from_spark_xshards(data)
-    return ray_xshards
 
 
 def shards_ref_to_creator(shards_ref, shuffle=False):
@@ -232,11 +225,11 @@ class Estimator(object):
             stats = worker_stats + server_stats
 
         else:  # data_creator functions; should return Iter or DataLoader
-            assert callable(data),\
+            assert isinstance(data, types.FunctionType),\
                 "train_data should be either an instance of SparkXShards or a callable function"
             train_data_list = [data] * self.num_workers
             if validation_data:
-                assert callable(validation_data),\
+                assert isinstance(validation_data, types.FunctionType),\
                     "val_data should be either an instance of SparkXShards or a callable function"
             val_data_list = [validation_data] * self.num_workers
             self.runners = self.workers + self.servers

@@ -214,6 +214,7 @@ class TorchRunner:
         return utils.find_free_port()
 
     def with_sampler(self, loader):
+        logger.debug("Wrapping DistributedSampler on DataLoader")
         data_loader_args = {
             "dataset": loader.dataset,
             "batch_size": loader.batch_size,
@@ -241,7 +242,7 @@ class TorchRunner:
         return (isinstance(loader, DataLoader)
                 and not_iterable)
 
-    def train_epochs(self, data_creator, epochs=1, profile=False, info=None):
+    def train_epochs(self, data_creator, epochs=1, profile=False, info=None, wrap_dataloader=None):
         if OrcaContext.serialize_data_creation:
             with FileLock(
                     os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
@@ -249,7 +250,10 @@ class TorchRunner:
         else:
             loader = data_creator(self.config)
 
-        if TorchRunner.should_wrap_dataloader(loader):
+        if wrap_dataloader is None:
+            if TorchRunner.should_wrap_dataloader(loader):
+                loader = self.with_sampler(loader)
+        elif wrap_dataloader is True:
             loader = self.with_sampler(loader)
         stats_list = list()
         for i in range(epochs):

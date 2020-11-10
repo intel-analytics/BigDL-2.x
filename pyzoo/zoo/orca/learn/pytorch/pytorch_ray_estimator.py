@@ -14,23 +14,21 @@
 # limitations under the License.
 #
 
-import logging
-import torch
-import torch.nn as nn
-import collections
-import numpy as np
-import numbers
 import io
+import types
+import logging
+import numbers
+import torch
+import numpy as np
 
-from zoo.orca.learn.pytorch import utils
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.pytorch.torch_runner import TorchRunner
 from zoo.ray import RayContext
+
 import ray
+from ray.exceptions import RayActorError
 
 logger = logging.getLogger(__name__)
-
-from ray.exceptions import RayActorError
 
 
 def check_for_failure(remote_values):
@@ -51,6 +49,41 @@ def check_for_failure(remote_values):
     return False
 
 
+def shards_ref_to_creator(shards_ref):
+
+    def data_creator(config):
+        from zoo.orca.data.utils import ray_partition_get_data_label, index_data, get_size
+        from torch.utils.data import Dataset, DataLoader
+
+        class NDArrayDataset(Dataset):
+            def __init__(self, x, y):
+                self.x = x  # features
+                self.y = y  # labels
+
+            def __len__(self):
+                return get_size(self.y)
+
+            def __getitem__(self, i):
+                return index_data(self.x, i), index_data(self.y, i)
+
+        # TODO: refactor batch_size in fit
+        assert "batch_size" in config, "batch_size must be set in config"
+        params = {"batch_size": config["batch_size"], "shuffle": True}
+        for arg in ["shuffle", "sampler", "batch_sampler", "num_workers", "collate_fn", "pin_memory",
+                    "drop_last", "timeout", "worker_init_fn", "multiprocessing_context"]:
+            if arg in config:
+                params[arg] = config[arg]
+        data, label = ray_partition_get_data_label(ray.get(shards_ref),
+                                                   allow_tuple=False,
+                                                   allow_list=False)
+        print("Data size on worker: ", len(label))
+        dataset = NDArrayDataset(data, label)
+        data_loader = DataLoader(dataset, **params)
+        return data_loader
+
+    return data_creator
+
+
 class PyTorchRayEstimator:
     def __init__(
             self,
@@ -69,7 +102,6 @@ class PyTorchRayEstimator:
 
         # todo remove ray_ctx to run on workers
         ray_ctx = RayContext.get()
-        import types
         if not (isinstance(model_creator, types.FunctionType) and
                 isinstance(optimizer_creator, types.FunctionType)):  # Torch model is also callable.
             raise ValueError(
@@ -142,20 +174,22 @@ class PyTorchRayEstimator:
         else:
             raise Exception("Only \"pytorch\" and \"horovod\" are legal "
                             "values of backend, but got {}".format(backend))
+        self.num_workers = len(self.remote_workers)
 
     def train(self,
-              data_creator,
+              data,
               epochs=1,
               profile=False,
               reduce_results=True,
               info=None):
-        """Runs a training epoch.
+        """
+        Trains a PyTorch model given training data for several epochs.
 
         Calls `operator.train_epoch()` on N parallel workers simultaneously
         underneath the hood.
-        :param data_creator: (callable) a funtion that takes a config dict as input
-                  and return a data loader containing the training data.
-        :param epochs: (int) Number of epochs to train the model
+        :param data: An instance of SparkXShards or a function that takes config as
+        argument and returns a PyTorch DataLoader for training.
+        :param epochs: (int) Number of epochs to train the model.
         :param profile: (bool) Returns time stats for the training procedure.
         :param reduce_results: (bool) Whether to average all metrics across
                 all workers into one dict. If a metric is a non-numerical
@@ -171,17 +205,34 @@ class PyTorchRayEstimator:
                 this will return a list of metric dictionaries whose
                 length will be equal to ``num_workers``.
         """
-        if not callable(data_creator):
-            raise ValueError(
-                "Must provide a callable data_creator, "
-                "but got a data_creator of type: {}".format(type(data_creator)))
+        from zoo.orca.data import SparkXShards
+        if isinstance(data, SparkXShards):
+            from zoo.orca.data.utils import process_spark_xshards
+            ray_xshards = process_spark_xshards(data, self.num_workers)
 
-        success, worker_stats = self._train_epochs(data_creator,
-                                                   epochs=epochs,
-                                                   profile=profile,
-                                                   info=info)
+            def transform_func(worker, shards_ref):
+                data_creator = shards_ref_to_creator(shards_ref)
+                # Wrap DistributedSampler on DataLoader should be False for SparkXShards.
+                return worker.train_epochs.remote(data_creator, epochs, profile, info, False)
+
+            stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
+                                                                    transform_func,
+                                                                    gang_scheduling=True)
+            # TODO: verify this
+            stats = stats_shards.collect()
+            worker_stats = []
+            for i in range(self.num_workers):
+                worker_stats.append(stats[i])
+        else:
+            assert isinstance(data, types.FunctionType), \
+                "data should be either an instance of SparkXShards or a callable function"
+
+            success, worker_stats = self._train_epochs(data,
+                                                       epochs=epochs,
+                                                       profile=profile,
+                                                       info=info)
+
         epoch_stats = list(map(list, zip(*worker_stats)))
-
         if reduce_results:
             for i in range(len(epoch_stats)):
                 epoch_stats[i] = self._process_stats(epoch_stats[i])

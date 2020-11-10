@@ -183,8 +183,8 @@ def ray_partition_get_data_label(partition_data,
             return data
         else:
             raise ValueError(
-                "value of x and y should be a ndarray, a dict of ndarrays, a tuple of ndarrays"
-                " or a list of ndarrays, please check")
+                "value of x and y should be an ndarray, a dict of ndarrays, a tuple of ndarrays"
+                " or a list of ndarrays, please check your input")
 
     data_list = [data['x'] for data in partition_data]
     label_list = [data['y'] for data in partition_data]
@@ -277,3 +277,44 @@ def _convert_list_tuple(data, allow_tuple, allow_list):
         if not allow_tuple and allow_list:
             return list(data)
     return data
+
+
+def process_spark_xshards(spark_xshards, num_workers):
+    from zoo.orca.data.shard import RayXShards
+    data = spark_xshards
+    if data.num_partitions() != num_workers:
+        data = data.repartition(num_workers)
+    ray_xshards = RayXShards.from_spark_xshards(data)
+    return ray_xshards
+
+
+def index_data(x, i):
+    if isinstance(x, np.ndarray):
+        return x[i]
+    elif isinstance(x, dict):
+        res = {}
+        for k, v in x.items():
+            res[k] = v[i]
+        return res
+    elif isinstance(x, tuple):
+        return tuple(item[i] for item in x)
+    elif isinstance(x, list):
+        return [item[i] for item in x]
+    else:
+        raise ValueError(
+            "data should be an ndarray, a dict of ndarrays, a tuple of ndarrays"
+            " or a list of ndarrays, please check your input")
+
+
+def get_size(x):
+    if isinstance(x, np.ndarray):
+        return len(x)
+    elif isinstance(x, dict):
+        for k, v in x.items():
+            return len(v)
+    elif isinstance(x, tuple) or isinstance(x, list):
+        return len(x[0])
+    else:
+        raise ValueError(
+            "data should be an ndarray, a dict of ndarrays, a tuple of ndarrays"
+            " or a list of ndarrays, please check your input")

@@ -129,7 +129,7 @@ class PyTorchRayEstimatorWrapper(Estimator):
                     this will return a list of metric dictionaries whose
                     length will be equal to ``num_workers``.
         """
-        return self.estimator.train(data_creator=data, epochs=epochs,
+        return self.estimator.train(data=data, epochs=epochs,
                                     profile=profile, reduce_results=reduce_results, info=info)
 
     def predict(self, data, **kwargs):
