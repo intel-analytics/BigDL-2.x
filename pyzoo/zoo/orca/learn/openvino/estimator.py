@@ -83,7 +83,7 @@ class OpenvinoEstimatorWrapper(Estimator):
             assert "x" in dict_data, "key x should in each shard"
             feature_data = dict_data["x"]
             if isinstance(feature_data, np.ndarray):
-                assert feature_data.shape[1] >= batch_size, \
+                assert feature_data.shape[1] <= batch_size, \
                     "The batch size of input data (the second dim) should be less than the model " \
                     "batch size, otherwise some inputs will be ignored."
             elif isinstance(feature_data, list):
@@ -91,7 +91,7 @@ class OpenvinoEstimatorWrapper(Estimator):
                     assert isinstance(elem, np.ndarray), "Each element in the x list should be " \
                                                          "a ndarray, but get " + \
                                                          elem.__class__.__name__
-                    assert elem.shape[1] >= batch_size, "The batch size of each input data (the " \
+                    assert elem.shape[1] <= batch_size, "The batch size of each input data (the " \
                                                         "second dim) should be less than the " \
                                                         "model batch size, otherwise some inputs " \
                                                         "will be ignored."
