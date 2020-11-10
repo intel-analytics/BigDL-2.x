@@ -179,6 +179,7 @@ class PyTorchRayEstimator:
     def train(self,
               data,
               epochs=1,
+              batch_size=32,
               profile=False,
               reduce_results=True,
               info=None):
@@ -189,21 +190,25 @@ class PyTorchRayEstimator:
         underneath the hood.
         :param data: An instance of SparkXShards or a function that takes config as
         argument and returns a PyTorch DataLoader for training.
-        :param epochs: (int) Number of epochs to train the model.
-        :param profile: (bool) Returns time stats for the training procedure.
-        :param reduce_results: (bool) Whether to average all metrics across
-                all workers into one dict. If a metric is a non-numerical
-                value (or nested dictionaries), one value will be randomly
-                selected among the workers. If False, returns a list of dicts.
-        :param info: (dict) Optional dictionary passed to the training
-                operator for ``train_epoch`` and ``train_batch``.
+        :param epochs: The number of epochs to train the model. Default is 1.
+        :param batch_size: The number of samples per batch for each worker. Default is 32.
+        The total batch size would be workers_per_node*num_nodes.
+        If you training data is a function, you can set batch_size to be config["batch_size"]
+        for the PyTorch DataLoader.
+        :param profile: Boolean. Whether to return time stats for the training procedure.
+        Default is False.
+        :param reduce_results: Boolean. Whether to average all metrics across all workers into
+        one dict. If a metric is a non-numerical value (or nested dictionaries), one value will
+        be randomly selected among the workers. If False, returns a list of dicts for all workers.
+        Default is True.
+        :param info: An optional dictionary that can be passed to the training operator
+        for train_epoch and train_batch.
 
-        :return
-            (dict | list) A dictionary of metrics for training.
-                You can provide custom metrics by passing in a custom
-                ``training_operator_cls``. If ``reduce_results=False``,
-                this will return a list of metric dictionaries whose
-                length will be equal to ``num_workers``.
+        :return A list of dictionary of metrics for every training epoch. If reduce_results is False,
+        this will return a nested list of metric dictionaries whose length will be equal to the total
+        number of workers.
+        You can also provide custom metrics by passing in a custom training_operator_cls when creating
+        the Estimator.
         """
         from zoo.orca.data import SparkXShards
         if isinstance(data, SparkXShards):
@@ -213,7 +218,7 @@ class PyTorchRayEstimator:
             def transform_func(worker, shards_ref):
                 data_creator = shards_ref_to_creator(shards_ref)
                 # Should not wrap DistributedSampler on DataLoader for SparkXShards input.
-                return worker.train_epochs.remote(data_creator, epochs, profile, info, False)
+                return worker.train_epochs.remote(data_creator, epochs, batch_size, profile, info, False)
 
             stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
                                                                     transform_func,
@@ -225,6 +230,7 @@ class PyTorchRayEstimator:
 
             success, worker_stats = self._train_epochs(data,
                                                        epochs=epochs,
+                                                       batch_size=batch_size,
                                                        profile=profile,
                                                        info=info)
 
@@ -250,8 +256,9 @@ class PyTorchRayEstimator:
                 stats[stat_key] = worker_stats[0][stat_key]
         return stats
 
-    def _train_epochs(self, data_creator, epochs=1, profile=False, info=None):
-        params = dict(data_creator=data_creator, epochs=epochs, profile=profile, info=info)
+    def _train_epochs(self, data_creator, epochs=1, batch_size=32, profile=False, info=None):
+        params = dict(data_creator=data_creator, epochs=epochs,
+                      batch_size=batch_size, profile=profile, info=info)
         remote_worker_stats = []
         for i, w in enumerate(self.remote_workers):
             stats = w.train_epochs.remote(**params)

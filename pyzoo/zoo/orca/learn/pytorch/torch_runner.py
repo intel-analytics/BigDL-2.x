@@ -242,13 +242,17 @@ class TorchRunner:
         return (isinstance(loader, DataLoader)
                 and not_iterable)
 
-    def train_epochs(self, data_creator, epochs=1, profile=False, info=None, wrap_dataloader=None):
+    def train_epochs(self, data_creator, epochs=1, batch_size=32, profile=False,
+                     info=None, wrap_dataloader=None):
+        config = self.config.copy()
+        if "batch_size" not in config:
+            config["batch_size"] = batch_size
         if OrcaContext.serialize_data_creation:
             with FileLock(
                     os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
-                loader = data_creator(self.config)
+                loader = data_creator(config)
         else:
-            loader = data_creator(self.config)
+            loader = data_creator(config)
 
         if wrap_dataloader is None:
             if TorchRunner.should_wrap_dataloader(loader):

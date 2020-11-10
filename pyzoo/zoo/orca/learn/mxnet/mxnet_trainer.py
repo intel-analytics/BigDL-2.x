@@ -91,7 +91,10 @@ class Estimator(object):
         ray_ctx = RayContext.get()
         if not num_workers:
             num_workers = ray_ctx.num_ray_nodes
-        self.config = config
+        self.config = {} if config is None else config
+        assert isinstance(config, dict), "config must be a dict"
+        for param in ["optimizer", "optimizer_params", "log_interval"]:
+            assert param in config, param + " must be specified in config"
         self.model_creator = model_creator
         self.loss_creator = loss_creator
         self.validation_metrics_creator = validation_metrics_creator
