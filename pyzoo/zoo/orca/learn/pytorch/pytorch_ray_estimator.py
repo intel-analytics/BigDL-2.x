@@ -66,7 +66,6 @@ def shards_ref_to_creator(shards_ref):
             def __getitem__(self, i):
                 return index_data(self.x, i), index_data(self.y, i)
 
-        # TODO: refactor batch_size in fit
         assert "batch_size" in config, "batch_size must be set in config"
         params = {"batch_size": config["batch_size"], "shuffle": True}
         for arg in ["shuffle", "sampler", "batch_sampler", "num_workers", "collate_fn",
