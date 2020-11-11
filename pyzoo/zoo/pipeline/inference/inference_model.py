@@ -144,4 +144,3 @@ class InferenceModel(JavaValue):
                              jinputs,
                              input_is_table)
         return output.map(lambda x: KerasNet.convert_output(x))
-

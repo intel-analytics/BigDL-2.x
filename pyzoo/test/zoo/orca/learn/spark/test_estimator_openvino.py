@@ -31,7 +31,7 @@ class TestEstimatorForOpenVINO(TestCase):
     def test_openvino_numpy(self):
         with tempfile.TemporaryDirectory() as local_path:
             model_url = "http://10.239.45.10:8081/repository/raw/analytics-zoo-data/" \
-                   "openvino2020_resnet50.tar"
+                        "openvino2020_resnet50.tar"
             model_path = maybe_download("openvino2020_resnet50.tar",
                                         local_path, model_url)
             cmd = "tar -xvf " + model_path + " -C " + local_path
@@ -45,7 +45,7 @@ class TestEstimatorForOpenVINO(TestCase):
     def test_openvino_xshards(self):
         with tempfile.TemporaryDirectory() as local_path:
             model_url = "http://10.239.45.10:8081/repository/raw/analytics-zoo-data/" \
-                   "openvino2020_resnet50.tar"
+                        "openvino2020_resnet50.tar"
             model_path = maybe_download("openvino2020_resnet50.tar",
                                         local_path, model_url)
             cmd = "tar -xvf " + model_path + " -C " + local_path
