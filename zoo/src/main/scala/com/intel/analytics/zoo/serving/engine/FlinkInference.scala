@@ -53,7 +53,8 @@ class FlinkInference(params: SerParams)
         }
       }
     }
-    inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
+    inference = new ClusterServingInference(new PreProcessing(
+      params.chwFlag, params.redisHost, params.redisPort),
       params.modelType, params.filter, params.coreNum, params.resize)
   }
 
@@ -68,8 +69,8 @@ class FlinkInference(params: SerParams)
     }
 
     val t2 = System.nanoTime()
-    logger.info(s"${postProcessed.size} records backend time ${(t2 - t1) / 1e9} s. " +
-      s"Throughput ${postProcessed.size / ((t2 - t1) / 1e9)}")
+    logger.info(s"${in.size} records backend time ${(t2 - t1) / 1e9} s. " +
+      s"Throughput ${in.size / ((t2 - t1) / 1e9)}")
     if (params.timerMode) {
 //      Timer.print()
     }
