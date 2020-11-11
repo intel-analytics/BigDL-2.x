@@ -28,7 +28,7 @@ resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
 
 class TestEstimatorForOpenVINO(TestCase):
-    def test_openvino_numpy(self):
+    def test_openvino(self):
         with tempfile.TemporaryDirectory() as local_path:
             model_url = "http://10.239.45.10:8081/repository/raw/analytics-zoo-data/" \
                         "openvino2020_resnet50.tar"
@@ -38,20 +38,13 @@ class TestEstimatorForOpenVINO(TestCase):
             subprocess.Popen(cmd.split())
             model_path = os.path.join(local_path, "openvino2020_resnet50/resnet_v1_50.xml")
             est = Estimator.from_openvino(model_path=model_path)
+
+            # ndarray
             input_data = np.random.random([20, 4, 3, 224, 224])
             result = est.predict(input_data)
             print(result)
 
-    def test_openvino_xshards(self):
-        with tempfile.TemporaryDirectory() as local_path:
-            model_url = "http://10.239.45.10:8081/repository/raw/analytics-zoo-data/" \
-                        "openvino2020_resnet50.tar"
-            model_path = maybe_download("openvino2020_resnet50.tar",
-                                        local_path, model_url)
-            cmd = "tar -xvf " + model_path + " -C " + local_path
-            subprocess.Popen(cmd.split())
-            model_path = os.path.join(local_path, "openvino2020_resnet50/resnet_v1_50.xml")
-            est = Estimator.from_openvino(model_path=model_path)
+            # xshards
             input_data_list = [np.random.random([1, 4, 3, 224, 224]),
                                np.random.random([2, 4, 3, 224, 224])]
             sc = init_nncontext()
