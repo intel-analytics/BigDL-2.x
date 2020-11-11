@@ -46,7 +46,8 @@ class TestEstimatorForKeras(TestCase):
     def create_model_lr_schedule(self, init_lr, decay_steps, decay_rate):
         x = tf.keras.layers.Input(shape=[8])
 
-        predictions = tf.keras.layers.Dense(1, use_bias=False, kernel_initializer=tf.ones_initializer())(x)
+        predictions = tf.keras.layers.Dense(1, use_bias=False,
+                                            kernel_initializer=tf.ones_initializer())(x)
 
         model = tf.keras.models.Model(inputs=[x], outputs=predictions)
         schedule = tf.keras.optimizers.schedules.ExponentialDecay(init_lr, decay_steps, decay_rate)
