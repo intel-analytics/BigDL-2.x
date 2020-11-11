@@ -37,7 +37,7 @@ class FlinkInference(params: SerParams)
 
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
-    try{
+    try {
       if (ModelHolder.model == null) {
         ModelHolder.synchronized {
           if (ModelHolder.model == null) {
@@ -52,17 +52,16 @@ class FlinkInference(params: SerParams)
             ModelHolder.model = helper.loadInferenceModel()
           }
         }
-      }      
+      }
+      inference = new ClusterServingInference(new PreProcessing(
+        params.chwFlag, params.redisHost, params.redisPort),
+        params.modelType, params.filter, params.coreNum, params.resize)
     }
 
-    inference = new ClusterServingInference(new PreProcessing(
-      params.chwFlag, params.redisHost, params.redisPort),
-      params.modelType, params.filter, params.coreNum, params.resize)
-
-   catch {
-     case e: Exception => println(e)
+    catch {
+      case e: Exception => println(e)
        throw new Error("Model loading failed")
-   }
+    }
 
   }
 
