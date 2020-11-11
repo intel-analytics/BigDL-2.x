@@ -37,7 +37,7 @@ class FlinkInference(params: SerParams)
 
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
-    try{
+    try {
       if (ModelHolder.model == null) {
         ModelHolder.synchronized {
           if (ModelHolder.model == null) {
@@ -53,13 +53,16 @@ class FlinkInference(params: SerParams)
           }
         }
       }
-      inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
+      inference = new ClusterServingInference(new PreProcessing(
+        params.chwFlag, params.redisHost, params.redisPort),
         params.modelType, params.filter, params.coreNum, params.resize)
     }
-   catch {
-     case e: Exception => println(e)
+
+    catch {
+      case e: Exception => println(e)
        throw new Error("Model loading failed")
-   }
+    }
+
   }
 
   override def map(in: List[(String, String)]): List[(String, String)] = {
@@ -73,8 +76,8 @@ class FlinkInference(params: SerParams)
     }
 
     val t2 = System.nanoTime()
-    logger.info(s"${postProcessed.size} records backend time ${(t2 - t1) / 1e9} s. " +
-      s"Throughput ${postProcessed.size / ((t2 - t1) / 1e9)}")
+    logger.info(s"${in.size} records backend time ${(t2 - t1) / 1e9} s. " +
+      s"Throughput ${in.size / ((t2 - t1) / 1e9)}")
     if (params.timerMode) {
 //      Timer.print()
     }
