@@ -109,7 +109,7 @@ class Net(nn.Module):
 
 
 def train_data_creator(config):
-    train_set = get_training_set(config.get("upscale_factor", 3), config.get("dataset", "datas et"))
+    train_set = get_training_set(config.get("upscale_factor", 3), config.get("dataset", "dataset"))
     training_data_loader = DataLoader(dataset=train_set,
                                       num_workers=4,
                                       batch_size=config.get('batchSize', 64),
@@ -188,18 +188,14 @@ def train(opt):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='PyTorch Super Res Example')
     parser.add_argument('--upscale_factor', type=int, required=True, help="super resolution upscale factor")
-    parser.add_argument('--batchSize', type=int, default=64, help='training batch size')
-    parser.add_argument('--testBatchSize', type=int, default=10, help='testing batch size')
+    parser.add_argument('--batchSize', type=int, default=16, help='training batch size')
+    parser.add_argument('--testBatchSize', type=int, default=100, help='testing batch size')
     parser.add_argument('--nEpochs', type=int, default=2, help='number of epochs to train for')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate. Default=0.01')
-    parser.add_argument('--cuda', action='store_true', help='use cuda?')
-    parser.add_argument('--threads', type=int, default=4, help='number of threads for data loader to use')
-    parser.add_argument('--seed', type=int, default=123, help='random seed to use. Default=123')
     parser.add_argument('--mode', type=str, default='local', help='The mode of spark cluster.')
     parser.add_argument('--dataset', type=str, default='./dataset', help='The dir of dataset.')
     parser.add_argument('--node', type=int, default=1, help='number of working nodes')
     opt = parser.parse_args()
 
     print(opt)
-
     train(opt)
