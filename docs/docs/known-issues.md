@@ -19,7 +19,7 @@ pipe_fit = pip.fit(df)
 df = pipe_fit.transform(df)
 train_data = df.select('user_index','item_index','label')
 ```
-Then they can use a map to transform this `train_data` to RDD[Sample]:
+Then they use a map to transform this `train_data` to RDD[Sample]:
 ```
 def build_sample(user_id, item_id, rating):
     sample = Sample.from_ndarray(np.array([user_id, item_id]), np.array([rating]))
