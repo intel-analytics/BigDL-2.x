@@ -1,4 +1,4 @@
-* If you encounter the following exception when calling the Python API of Analytics Zoo when you are using Python 3.5 or 3.6:
+* If you encounter the following exception when calling the Python API of Analytics Zoo using Python 3.5 or 3.6:
 ```
 Py4JJavaError: An error occurred while calling z:org.apache.spark.bigdl.api.python.BigDLSerDe.loads.
 : net.razorvine.pickle.PickleException: expected zero arguments for construction of ClassDict (for numpy.dtype)
@@ -19,7 +19,7 @@ pipe_fit = pip.fit(df)
 df = pipe_fit.transform(df)
 train_data = df.select('user_index','item_index','label')
 ```
-The they can use a map to transform this `train_data` to RDD[Sample]:
+Then they can use a map to transform this `train_data` to RDD[Sample]:
 ```
 def build_sample(user_id, item_id, rating):
     sample = Sample.from_ndarray(np.array([user_id, item_id]), np.array([rating]))
