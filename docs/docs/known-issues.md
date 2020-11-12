@@ -32,4 +32,4 @@ It seems a bug of StringIndexer. But we find a good way to work around this, bef
 train_data = train_data.withColumn("user_index", df_r_new["user_index"].cast(FloatType()))
 train_data = train_data.withColumn("item_index", df_r_new["item_index"].cast(FloatType()))
 ```
-Then the job will finish in about 30s, the GC is also disappeared.
+Then the job finish in about 30s, the GC is also disappeared.
