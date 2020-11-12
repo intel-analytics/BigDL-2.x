@@ -26,7 +26,7 @@ def build_sample(user_id, item_id, rating):
     return UserItemFeature(user_id, item_id, sample)
 pairFeatureRdds = train_data.rdd.map(lambda x: build_sample(x[0], x[1], x[2]-1))
 ```
-If you execute a `pairFeatureRdds.count()`, this job will cost 12 hours if the dataset has 6,000,000 records.  
+If they execute a `pairFeatureRdds.count()`, this counting job will cost 12 hours when the dataset has 6,000,000 records.  
 We find a good way to work around this, before transform to `UserItemFeature` we need to cast the Double `index`s to Float, like this:
 ```
 train_data = train_data.withColumn("user_index", df_r_new["user_index"].cast(FloatType()))
