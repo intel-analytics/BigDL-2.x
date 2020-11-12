@@ -125,7 +125,6 @@ class InferenceModel(JavaValue):
         assert(model_path, str)
         import os
         import io
-        assert(os.path.exists(str))
         import torch
         from zoo.pipeline.api.torch import zoo_pickle_module
         model = torch.load(model_path, pickle_module=zoo_pickle_module)
