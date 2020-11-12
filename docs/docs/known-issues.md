@@ -11,8 +11,8 @@ For example, invoking `np.min`, `np.max`, `np.unique`, etc. will return type `nu
 For example，one of our customer change [NCF recommender](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/recommendation-ncf)'s preprocessing to match their data:
 ```
 df = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("xxx.csv") # The header is user, item, label. The type is string, string, int.
-user_id_indexer = StringIndexer(inputCol='user',outputCol='user_index',handleInvalid="skip")
-item_id_indexer = StringIndexer(inputCol='item',outputCol='item_index',handleInvalid="skip")
+user_indexer = StringIndexer(inputCol='user',outputCol='user_index',handleInvalid="skip")
+item_indexer = StringIndexer(inputCol='item',outputCol='item_index',handleInvalid="skip")
 pipe = Pipeline(stages=[user_indexer, item_indexer])
 pipe_fit = pip.fit(df)
 df = pipe_fit.transform(df)
