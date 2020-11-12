@@ -69,9 +69,9 @@ class TimeMergeImputor(BaseImputation):
         elif self.mode == "min":
             merged_df = merged_df.groupby(self.timestamp_column_name).min()
         elif self.mode == "mean":
-            merged_df = merged_df.groupby(self.timestamp_column_name).min()
+            merged_df = merged_df.groupby(self.timestamp_column_name).mean()
         elif self.mode == "sum":
-            merged_df = merged_df.groupby(self.timestamp_column_name).min()
+            merged_df = merged_df.groupby(self.timestamp_column_name).sum()
         elif self.mode == "":
             merged_df
         else:

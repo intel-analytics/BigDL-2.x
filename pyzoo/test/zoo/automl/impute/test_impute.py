@@ -38,10 +38,17 @@ class TestImpute(ZooTestCase):
         df = self.sqlContext.createDataFrame(dict)
         from pyspark.sql.functions import to_timestamp
         df = df.withColumn("timestamp", to_timestamp(df['str_timestamp']))
-        imputor = TimeMergeImputor(5, "timestamp", "max")
-        df = imputor.impute(df)
         df.show(20, False)
-
+        imputor = TimeMergeImputor(5, "timestamp", "max")
+        imputor.impute(df).show(20, False)
+        imputor = TimeMergeImputor(5, "timestamp")
+        imputor.impute(df).show(20, False)
+        imputor = TimeMergeImputor(5, "timestamp", "min")
+        imputor.impute(df).show(20, False)
+        imputor = TimeMergeImputor(5, "timestamp", "mean")
+        imputor.impute(df).show(20, False)
+        imputor = TimeMergeImputor(5, "timestamp", "sum")
+        imputor.impute(df).show(20, False)
 
 if __name__ == "__main__":
     pytest.main([__file__])
