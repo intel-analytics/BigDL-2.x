@@ -32,4 +32,4 @@ We find a good way to work around this, before transform to `UserItemFeature` we
 train_data = train_data.withColumn("user_index", df_r_new["user_index"].cast(FloatType()))
 train_data = train_data.withColumn("item_index", df_r_new["item_index"].cast(FloatType()))
 ```
-Then the job will ends in about 30s, the GC is also disappeared.
+Then the job will finish in about 30s, the GC is also disappeared.
