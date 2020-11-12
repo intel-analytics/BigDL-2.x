@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from featuretools import TransformFeature
 
 from zoo.automl.common.util import save_config
 from zoo.automl.feature.abstract import BaseFeatureTransformer
