@@ -8,6 +8,7 @@ you may need to check whether your input argument involves Numpy types (such as 
 For example, invoking `np.min`, `np.max`, `np.unique`, etc. will return type `numpy.int64`. One way to solve this is to use `int()` to convert a number of type `numpy.int64` to a Python int.
 
 * If you use two StringIndexs to convert String feature to index in Spark 2.4, it will be very slow in the next `dataframe.rdd.map` opteration. 6,000,000 records cost 12 hours, and 1/3 of the time is GC.  
+
 For example，one of our customer change [NCF recommender](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/recommendation-ncf)'s preprocessing to match their data:
 ```
 df = spark.read.format("csv").option("header", "true").option("inferSchema", "true").load("xxx.csv") # The header is user, item, label. The type is string, string, int.
