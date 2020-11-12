@@ -184,7 +184,8 @@ class PyTorchRayEstimator:
               reduce_results=True,
               info=None):
         """
-        See the documentation in zoo.orca.learn.pytorch.estimator.PyTorchRayEstimatorWrapper.fit.
+        See the documentation in
+        'zoo.orca.learn.pytorch.estimator.PyTorchRayEstimatorWrapper.fit'.
         """
         from zoo.orca.data import SparkXShards
         if isinstance(data, SparkXShards):
@@ -203,7 +204,8 @@ class PyTorchRayEstimator:
             worker_stats = stats_shards.collect_partitions()
         else:
             assert isinstance(data, types.FunctionType), \
-                "data should be either an instance of SparkXShards or a callable function"
+                "data should be either an instance of SparkXShards or a callable function, but " \
+                "got type: {}".format(type(data))
 
             success, worker_stats = self._train_epochs(data,
                                                        epochs=epochs,
@@ -247,35 +249,36 @@ class PyTorchRayEstimator:
         else:
             return success, None
 
-    def validate(self, data_creator, num_steps=None, profile=False, info=None):
-        """Evaluates the model on the validation data set.
-
-        :param data_creator: (callable) a funtion that takes a config dict as input
-                  and return a data loader containing the validation data.
-        :param num_steps: (int) Number of batches to compute update steps on.
-               This corresponds also to the number of times
-                ``TrainingOperator.validate_batch`` is called.
-        :param profile: (bool) Returns time stats for the evaluation procedure.
-        :param info: (dict) Optional dictionary passed to the training
-                operator for `validate` and `validate_batch`.
-        :return: A dictionary of metrics for validation.
-                You can provide custom metrics by passing in a custom
-                ``training_operator_cls``.
+    def validate(self, data, batch_size=32, num_steps=None, profile=False, info=None):
         """
-        if not callable(data_creator):
-            raise ValueError(
-                "Must provide a callable data_creator, "
-                "but got a data_creator of type: {}".format(type(data_creator)))
+        See the documentation in
+        'zoo.orca.learn.pytorch.estimator.PyTorchRayEstimatorWrapper.evaluate'.
+        """
+        from zoo.orca.data import SparkXShards
+        if isinstance(data, SparkXShards):
+            from zoo.orca.data.utils import process_spark_xshards
+            ray_xshards = process_spark_xshards(data, self.num_workers)
 
-        params = dict(data_creator=data_creator,
-                      num_steps=num_steps,
-                      profile=profile,
-                      info=info)
+            def transform_func(worker, shards_ref):
+                data_creator = shards_ref_to_creator(shards_ref)
+                # Should not wrap DistributedSampler on DataLoader for SparkXShards input.
+                return worker.validate.remote(
+                    data_creator, batch_size, num_steps, profile, info, False)
 
-        remote_worker_stats = [
-            w.validate.remote(**params) for w in self.remote_workers
-        ]
-        return self._process_stats(ray.get(remote_worker_stats))
+            stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
+                                                                    transform_func,
+                                                                    gang_scheduling=True)
+            worker_stats = stats_shards.collect_partitions()
+        else:
+            assert isinstance(data, types.FunctionType), \
+                "data should be either an instance of SparkXShards or a callable function, but " \
+                "got type: {}".format(type(data))
+
+            params = dict(data_creator=data, batch_size=batch_size, num_steps=num_steps,
+                          profile=profile, info=info)
+
+            worker_stats = ray.get([w.validate.remote(**params) for w in self.remote_workers])
+        return self._process_stats(worker_stats)
 
     def get_model(self):
         """Returns the learned model(s)."""
