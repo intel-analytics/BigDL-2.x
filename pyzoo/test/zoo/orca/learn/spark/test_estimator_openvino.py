@@ -24,14 +24,23 @@ from zoo.orca.data import SparkXShards
 from zoo.orca.learn.openvino.estimator import Estimator
 from bigdl.dataset.base import maybe_download
 
-resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+property_path = os.path.join(os.path.split(__file__)[0],
+                             "../../../../../../zoo/target/classes/app.properties")
+data_url = "http://10.239.45.10:8081/repository/raw"
+
+with open(property_path) as f:
+    for _ in range(2):  # skip the first two lines
+        next(f)
+    for line in f:
+        if "inner-ftp-uri" in line:
+            line = line.strip()
+            data_url = line.split("=")[1].replace("\\", "")
 
 
 class TestEstimatorForOpenVINO(TestCase):
     def test_openvino(self):
         with tempfile.TemporaryDirectory() as local_path:
-            model_url = "http://10.239.45.10:8081/repository/raw/analytics-zoo-data/" \
-                        "openvino2020_resnet50.tar"
+            model_url = data_url + "/analytics-zoo-data/openvino2020_resnet50.tar"
             model_path = maybe_download("openvino2020_resnet50.tar",
                                         local_path, model_url)
             cmd = "tar -xvf " + model_path + " -C " + local_path
