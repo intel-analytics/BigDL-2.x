@@ -26,7 +26,7 @@ import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
 import com.intel.analytics.bigdl.utils.{T, Table}
-import com.intel.analytics.zoo.serving.engine.Timer
+import com.intel.analytics.zoo.serving.engine.{JedisPoolHolder, Timer}
 import com.intel.analytics.zoo.serving.http.Instances
 import com.intel.analytics.zoo.serving.pipeline.RedisIO
 import com.intel.analytics.zoo.serving.utils.{Conventions, SerParams}
@@ -43,7 +43,7 @@ class PreProcessing(chwFlag: Boolean = true,
   var byteBuffer: Array[Byte] = null
 
   def writeNaNtoRedis(key: String): Unit = {
-    val jedis = new Jedis(redisHost, redisPort)
+    val jedis = RedisIO.getRedisClient(JedisPoolHolder.jedisPool)
     val ppl = jedis.pipelined()
     RedisIO.writeHashMap(ppl, key, "NaN", jobName)
     ppl.sync()
