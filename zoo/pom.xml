@@ -31,6 +31,7 @@
         <core.artifactId>zoo-core-dist-all</core.artifactId>
         <core.dependencyType>pom</core.dependencyType>
         <data-store-url>http://download.tensorflow.org</data-store-url>
+        <inner-ftp-uri>http://10.239.45.10:8081/repository/raw</inner-ftp-uri>
         <tf-shade>bushade</tf-shade>
     </properties>
 

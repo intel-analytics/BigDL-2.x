@@ -31,6 +31,7 @@ JavaCreator.add_creator_class("com.intel.analytics.zoo.feature.python.PythonFeat
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.net.python.PythonZooNet")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.inference.PythonInferenceModel")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.estimator.python.PythonEstimator")
+JavaCreator.add_creator_class("com.intel.analytics.zoo.orca.python.PythonOrca")
 for clz in creator_classes:
     JavaCreator.add_creator_class(clz)
 
