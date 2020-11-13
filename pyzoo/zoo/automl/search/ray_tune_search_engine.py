@@ -25,10 +25,13 @@ from zoo.automl.common.metrics import Evaluator
 from zoo.automl.impute.impute import *
 from ray.tune import Trainable
 import ray.tune.track
-from ray.tune.suggest.bayesopt import BayesOptSearch
 from zoo.automl.logger import TensorboardXLogger
 from zoo.automl.model.model_builder import ModelBuilder
 from zoo.automl.feature.identity_transformer import IdentityTransformer
+from zoo.automl.search.tune_utils import (create_searcher,
+                                          create_scheduler)
+
+SEARCH_ALG_ALLOWED = ("variant_generator", "skopt", "bayesopt")
 
 
 class RayTuneSearchEngine(SearchEngine):
@@ -62,6 +65,10 @@ class RayTuneSearchEngine(SearchEngine):
                 feature_cols=None,
                 target_col=None,
                 search_space=None,
+                search_alg=None,
+                search_alg_params=None,
+                scheduler=None,
+                scheduler_params=None,
                 feature_transformers=None,
                 validation_df=None,
                 mc=False,
@@ -84,55 +91,17 @@ class RayTuneSearchEngine(SearchEngine):
 
         # prepare parameters for search engine
         runtime_params = recipe.runtime_params()
-        num_samples = runtime_params['num_samples']
+        self.num_samples = runtime_params['num_samples']
         stop = dict(runtime_params)
-        search_algorithm_params = recipe.search_algorithm_params()
-        search_algorithm = recipe.search_algorithm()
-        fixed_params = recipe.fixed_params()
-        schedule_algorithm = recipe.scheduler_algorithm()
         del stop['num_samples']
+        self.stop_criteria = stop
         if search_space is None:
             search_space = recipe.search_space(all_available_features=None)
+        self._search_alg = RayTuneSearchEngine._set_search_alg(search_alg, search_alg_params,
+                                                               recipe, search_space)
+        self._scheduler = RayTuneSearchEngine._set_scheduler(scheduler, scheduler_params)
         self.search_space = self._prepare_tune_config(search_space)
-        self.stop_criteria = stop
-        self.num_samples = num_samples
-        if schedule_algorithm == 'AsyncHyperBand':
-            from ray.tune.schedulers import AsyncHyperBandScheduler
-            self.sched = AsyncHyperBandScheduler(
-                time_attr="training_iteration",
-                metric="reward_metric",
-                mode="max",
-                max_t=50,
-                grace_period=1,
-                reduction_factor=3,
-                brackets=3,
-            )
-        else:
-            from ray.tune.schedulers import FIFOScheduler
-            self.sched = FIFOScheduler()
 
-        if search_algorithm == 'BayesOpt':
-            self.search_algorithm = BayesOptSearch(
-                self.search_space,
-                metric="reward_metric",
-                mode="max",
-                utility_kwargs=search_algorithm_params["utility_kwargs"]
-            )
-        elif search_algorithm == 'SkOpt':
-            from skopt import Optimizer
-            from ray.tune.suggest.skopt import SkOptSearch
-            opt_params = recipe.opt_params()
-            optimizer = Optimizer(opt_params)
-            self.search_algorithm = SkOptSearch(
-                optimizer,
-                list(self.search_space.keys()),
-                metric="reward_metric",
-                mode="max",
-            )
-        else:
-            self.search_algorithm = None
-
-        self.fixed_params = fixed_params
         if feature_transformers is None:
             feature_transformers = IdentityTransformer(feature_cols, target_col)
 
@@ -152,40 +121,67 @@ class RayTuneSearchEngine(SearchEngine):
         #                                                      metric_op,
         #                                                      self.remote_dir)
 
+    @staticmethod
+    def _set_search_alg(search_alg, search_alg_params, recipe, search_space):
+        if search_alg:
+            if not isinstance(search_alg, str):
+                raise ValueError(f"search_alg should be of type str."
+                                 f" Got {search_alg.__class__.__name__}")
+            search_alg = search_alg.lower()
+            if search_alg not in SEARCH_ALG_ALLOWED:
+                raise ValueError(f"search_alg must be one of {SEARCH_ALG_ALLOWED}. "
+                                 f"Got: {search_alg}")
+            if search_alg == "skopt":
+                from skopt import Optimizer
+                opt_params = recipe.opt_params()
+                optimizer = Optimizer(opt_params)
+                search_alg_params.update(dict(
+                    optimizer=optimizer,
+                    parameter_names=list(search_space.keys()),
+                ))
+            if search_alg == "bayesopt":
+                search_alg_params.update({"space": recipe.manual_search_space()})
+
+            search_alg_params.update(dict(
+                metric="reward_metric",
+                mode="max",
+            ))
+            search_alg = create_searcher(search_alg,
+                                         **search_alg_params)
+        return search_alg
+
+    @staticmethod
+    def _set_scheduler(scheduler, scheduler_params):
+        if scheduler:
+            if not isinstance(scheduler, str):
+                raise ValueError(f"Scheduler should be of type str. "
+                                 f"Got {scheduler.__class__.__name__}")
+            scheduler_params.update(dict(
+                time_attr="training_iteration",
+                metric="reward_metric",
+                mode="max",
+            ))
+            scheduler = create_scheduler(scheduler, **scheduler_params)
+        return scheduler
+
     def run(self):
         """
         Run trials
         :return: trials result
         """
-        # function based
-        if not self.search_algorithm:
-            analysis = tune.run(
-                self.train_func,
-                local_dir=self.logs_dir,
-                name=self.name,
-                stop=self.stop_criteria,
-                config=self.search_space,
-                num_samples=self.num_samples,
-                scheduler=self.sched,
-                resources_per_trial=self.resources_per_trail,
-                verbose=1,
-                reuse_actors=True
-            )
-        else:
-            analysis = tune.run(
-                self.train_func,
-                local_dir=self.logs_dir,
-                name=self.name,
-                config=self.fixed_params,
-                stop=self.stop_criteria,
-                search_alg=self.search_algorithm,
-                scheduler=self.sched,
-                num_samples=self.num_samples,
-                resources_per_trial=self.resources_per_trail,
-                verbose=1,
-                reuse_actors=True
-            )
-
+        analysis = tune.run(
+            self.train_func,
+            local_dir=self.logs_dir,
+            name=self.name,
+            stop=self.stop_criteria,
+            config=self.search_space,
+            search_alg=self._search_alg,
+            num_samples=self.num_samples,
+            scheduler=self._scheduler,
+            resources_per_trial=self.resources_per_trail,
+            verbose=1,
+            reuse_actors=True
+        )
         self.trials = analysis.trials
 
         # Visualization code for ray (leaderboard)

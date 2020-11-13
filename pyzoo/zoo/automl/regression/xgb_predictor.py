@@ -40,7 +40,11 @@ class XgbPredictor(BasePredictor):
                  model_type="regressor",
                  config=None,
                  name="automl",
-                 logs_dir="~/zoo_automl_logs"
+                 logs_dir="~/zoo_automl_logs",
+                 search_alg=None,
+                 search_alg_params=None,
+                 scheduler=None,
+                 scheduler_params=None,
                  ):
         """
         Constructor of Time Sequence Predictor
@@ -56,7 +60,12 @@ class XgbPredictor(BasePredictor):
         self.target_col = target_col
         self.config = config
         self.model_type = model_type
-        super().__init__(name, logs_dir)
+        super().__init__(name=name,
+                         logs_dir=logs_dir,
+                         search_alg=search_alg,
+                         search_alg_params=search_alg_params,
+                         scheduler=scheduler,
+                         scheduler_params=scheduler_params)
 
     def create_feature_transformer(self):
         ft = IdentityTransformer(self.feature_cols, self.target_col)

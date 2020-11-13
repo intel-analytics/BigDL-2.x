@@ -24,9 +24,18 @@ class AutoXGBoost(object):
                   target_col,
                   config=None,
                   name="automl",
-                  logs_dir="~/zoo_automl_logs"):
+                  logs_dir="~/zoo_automl_logs",
+                  search_alg=None,
+                  search_alg_params=None,
+                  scheduler=None,
+                  scheduler_params=None,
+                  ):
         tsp = XgbPredictor(feature_cols, target_col, 'regressor',
-                           config, name, logs_dir)
+                           config, name, logs_dir,
+                           search_alg=search_alg,
+                           search_alg_params=search_alg_params,
+                           scheduler=scheduler,
+                           scheduler_params=scheduler_params)
         return tsp
 
     @staticmethod
@@ -34,7 +43,16 @@ class AutoXGBoost(object):
                    target_col,
                    config=None,
                    name="automl",
-                   logs_dir="~/zoo_automl_logs"):
+                   logs_dir="~/zoo_automl_logs",
+                   search_alg=None,
+                   search_alg_params=None,
+                   scheduler=None,
+                   scheduler_params=None,
+                   ):
         tsp = XgbPredictor(feature_cols, target_col, 'classifier',
-                           config, name, logs_dir)
+                           config, name, logs_dir,
+                           search_alg=search_alg,
+                           search_alg_params=search_alg_params,
+                           scheduler=scheduler,
+                           scheduler_params=scheduler_params)
         return tsp

@@ -82,15 +82,22 @@ if [ -z "${ZOO_JAR}" ]; then
     ZOO_JAR=zoo.jar
 fi
 
-
-echo "Starting Cluster Serving with Flink backend"
 if [ -z "${FLINK_HOME}" ]; then
   echo "FLINK_HOME variable is not set, you need to set it to start Cluster Serving with Flink backend."
   exit 1
 fi
+
+if [[ $($FLINK_HOME/bin/flink list) == *"Cluster Serving"* ]]; then
+  echo "Starting new Cluster Serving job. There exists Cluster Serving job, if not, please check."
+else
+  echo "Starting new Cluster Serving job."
+  rm -rf /tmp/cluster-serving-jobs.yaml
+fi
+
 ${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p $par_num zoo.jar -c $config_path >> $LOG_DIR &
 
 echo "Cluster Serving job submitted, check log in $LOG_DIR"
 echo "To list Cluster Serving job status, use cluster-serving-cli list"
 sleep 3
 tail -1 $LOG_DIR
+

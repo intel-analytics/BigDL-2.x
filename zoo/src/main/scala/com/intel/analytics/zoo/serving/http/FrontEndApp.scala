@@ -255,7 +255,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
       .action((x, c) => c.copy(port = x))
       .text("network port of frontend")
     opt[Int]('s', "securePort")
-      .action((x, c) => c.copy(port = x))
+      .action((x, c) => c.copy(securePort = x))
       .text("https port of frontend")
     opt[String]('h', "redisHost")
       .action((x, c) => c.copy(redisHost = x))

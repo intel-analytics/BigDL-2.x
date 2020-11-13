@@ -26,19 +26,29 @@ import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
 import com.intel.analytics.bigdl.utils.{T, Table}
-import com.intel.analytics.zoo.serving.engine.Timer
+import com.intel.analytics.zoo.serving.engine.{JedisPoolHolder, Timer}
 import com.intel.analytics.zoo.serving.http.Instances
-import com.intel.analytics.zoo.serving.utils.SerParams
+import com.intel.analytics.zoo.serving.pipeline.RedisIO
+import com.intel.analytics.zoo.serving.utils.{Conventions, SerParams}
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
+import redis.clients.jedis.Jedis
 
-class PreProcessing(chwFlag: Boolean = true) {
+class PreProcessing(chwFlag: Boolean = true,
+                    redisHost: String = "localhost",
+                    redisPort: Int = 6379,
+                    jobName: String = Conventions.SERVING_STREAM_DEFAULT_NAME) {
   val logger = Logger.getLogger(getClass)
 
   var byteBuffer: Array[Byte] = null
 
-
-  def decodeArrowBase64(s: String): Activity = {
+  def writeNaNtoRedis(key: String): Unit = {
+    val jedis = RedisIO.getRedisClient(JedisPoolHolder.jedisPool)
+    val ppl = jedis.pipelined()
+    RedisIO.writeHashMap(ppl, key, "NaN", jobName)
+    ppl.sync()
+  }
+  def decodeArrowBase64(key: String, s: String): Activity = {
     try {
       byteBuffer = java.util.Base64.getDecoder.decode(s)
       val instance = Instances.fromArrow(byteBuffer)
@@ -68,7 +78,8 @@ class PreProcessing(chwFlag: Boolean = true) {
       case e: Exception =>
         logger.error(s"Preprocessing error, msg ${e.getMessage}")
         logger.error(s"Error stack trace ${e.getStackTrace.mkString("\n")}")
-        T(Tensor[Float]())
+        writeNaNtoRedis(key)
+        null
     }
   }
   def decodeString(s: String): Tensor[String] = {
