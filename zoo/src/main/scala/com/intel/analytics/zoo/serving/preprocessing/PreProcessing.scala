@@ -78,7 +78,6 @@ class PreProcessing(chwFlag: Boolean = true,
       case e: Exception =>
         logger.error(s"Preprocessing error, msg ${e.getMessage}")
         logger.error(s"Error stack trace ${e.getStackTrace.mkString("\n")}")
-        writeNaNtoRedis(key)
         null
     }
   }
