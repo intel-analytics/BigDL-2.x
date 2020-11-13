@@ -31,7 +31,9 @@ def find_latest_checkpoint(model_dir, model_type="bigdl"):
         optim_regex = "TFParkTraining\.[0-9]+$"
     else:
         ValueError("Only bigdl, pytorch and tf are supported for now.")
-    for (root, dirs, files) in os.walk(model_dir, topdown=True):
+    from pyarrow import fs
+    file_system, model_dir = fs.FileSystem.from_uri(model_dir)
+    for (root, dirs, files) in file_system.walk(model_dir, topdown=True):
         temp_versions = []
         timestamps = []
         prefix = None
