@@ -43,10 +43,10 @@ class ClusterServingInference(preProcessing: PreProcessing,
 
   def preProcess(in: List[(String, String)],
                  multiThread: Boolean = false): List[(String, Activity)] = {
-    if (!multiThread) {
+    val preProcessed = if (!multiThread) {
       in.map(item => {
         val uri = item._1
-        val input = preProcessing.decodeArrowBase64(item._2)
+        val input = preProcessing.decodeArrowBase64(uri, item._2)
         (uri, input)
       })
     } else {
@@ -54,11 +54,12 @@ class ClusterServingInference(preProcessing: PreProcessing,
       in.grouped(size).flatMap(itemBatch => {
         (0 until size).toParArray.map(i => {
           val uri = itemBatch(i)._1
-          val input = preProcessing.decodeArrowBase64(itemBatch(i)._2)
+          val input = preProcessing.decodeArrowBase64(uri, itemBatch(i)._2)
           (uri, input)
         })
       }).toList
     }
+    preProcessed.filter(x => x._2 != null)
   }
   def singleThreadInference(in: List[(String, Activity)]): List[(String, String)] = {
 

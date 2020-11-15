@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.pipeline.inference
 
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.PythonZoo
-import java.util.{List => JList, ArrayList}
+import java.util.{List => JList}
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
@@ -89,6 +89,12 @@ class PythonInferenceModel[T: ClassTag](implicit ev: TensorNumeric[T]) extends P
     model.doLoadTensorflow(modelPath, modelType, Option(inputs).map(_.asScala.toArray).orNull,
       Option(outputs).map(_.asScala.toArray).orNull, intraOpParallelismThreads,
       interOpParallelismThreads, usePerSessionThreads)
+  }
+
+  def inferenceModelLoadPytorch(
+      model: InferenceModel,
+      modelBytes: Array[Byte]): Unit = {
+    model.doLoadPyTorch(modelBytes)
   }
 
   def inferenceModelPredict(

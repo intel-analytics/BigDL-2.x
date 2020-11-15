@@ -69,9 +69,11 @@ class PyTorchRayEstimator:
 
         # todo remove ray_ctx to run on workers
         ray_ctx = RayContext.get()
-        if not (callable(model_creator) and callable(optimizer_creator)):
+        import types
+        if not (isinstance(model_creator, types.FunctionType) and
+                isinstance(optimizer_creator, types.FunctionType)):  # Torch model is also callable.
             raise ValueError(
-                "Must provide a callable model_creator and optimizer_creator")
+                "Must provide a function for both model_creator and optimizer_creator")
 
         self.model_creator = model_creator
         self.optimizer_creator = optimizer_creator
@@ -101,7 +103,7 @@ class PyTorchRayEstimator:
         if backend == "pytorch":
             cores_per_node = ray_ctx.ray_node_cpu_cores // workers_per_node
             num_nodes = ray_ctx.num_ray_nodes * workers_per_node
-            RemoteRunner = ray.remote(num_cpus=1)(TorchRunner)
+            RemoteRunner = ray.remote(num_cpus=cores_per_node)(TorchRunner)
             self.remote_workers = [
                 RemoteRunner.remote(**params) for i in range(num_nodes)
             ]
@@ -110,9 +112,10 @@ class PyTorchRayEstimator:
                 for i, worker in enumerate(self.remote_workers)
             ])
 
-            ip = ray.services.get_node_ip_address()
-            port = utils.find_free_port()
-            address = "tcp://{ip}:{port}".format(ip=ip, port=port)
+            head_worker = self.remote_workers[0]
+            address = ray.get(head_worker.setup_address.remote())
+
+            logger.info(f"initializing pytorch process group on {address}")
 
             ray.get([
                 worker.setup_torch_distribute.remote(address, i, num_nodes)

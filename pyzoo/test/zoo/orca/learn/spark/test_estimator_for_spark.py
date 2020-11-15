@@ -425,10 +425,6 @@ class TestEstimatorForGraph(TestCase):
 
         dataset = dataset_creator()
 
-        dataset = tf.data.Dataset.from_tensor_slices((np.random.randint(0, 200, size=(100,)),
-                                                      np.random.randint(0, 50, size=(100,)),
-                                                      np.ones(shape=(100,), dtype=np.int32)))
-
         est = Estimator.from_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
@@ -443,12 +439,6 @@ class TestEstimatorForGraph(TestCase):
 
         result = est.evaluate(dataset, batch_size=4)
         assert 'loss' in result
-
-        predict_dataset = tf.data.Dataset.from_tensor_slices((
-            np.random.randint(0, 200, size=(20,)),
-            np.random.randint(0, 50, size=(20,))))
-        predictions = est.predict(predict_dataset).collect()
-        assert predictions[0]['prediction'].shape[1] == 2
 
     def test_estimator_graph_tf_dataset(self):
 
@@ -613,6 +603,42 @@ class TestEstimatorForGraph(TestCase):
             print(predictions)
 
         shutil.rmtree(temp)
+
+    def test_estimator_graph_with_bigdl_optim_method(self):
+        import zoo.orca.data.pandas
+
+        tf.reset_default_graph()
+
+        model = SimpleModel()
+        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
+
+        def transform(df):
+            result = {
+                "x": (df['user'].to_numpy(), df['item'].to_numpy()),
+                "y": df['label'].to_numpy()
+            }
+            return result
+
+        data_shard = data_shard.transform_shard(transform)
+        from bigdl.optim.optimizer import SGD
+        from bigdl.optim.optimizer import Plateau
+        sgd = SGD(learningrate=0.1,
+                  leaningrate_schedule=Plateau("score",
+                                               factor=0.1,
+                                               patience=10,
+                                               mode="min", ))
+        est = Estimator.from_graph(
+            inputs=[model.user, model.item],
+            labels=[model.label],
+            outputs=[model.logits],
+            loss=model.loss,
+            optimizer=sgd,
+            metrics={"loss": model.loss})
+        est.fit(data=data_shard,
+                batch_size=8,
+                epochs=10,
+                validation_data=data_shard)
 
 
 if __name__ == "__main__":

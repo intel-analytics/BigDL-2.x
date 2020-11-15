@@ -30,7 +30,6 @@ class TestEstimatorForKeras(TestCase):
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
     def create_model(self):
-
         user = tf.keras.layers.Input(shape=[1])
         item = tf.keras.layers.Input(shape=[1])
 
@@ -43,8 +42,20 @@ class TestEstimatorForKeras(TestCase):
                       metrics=['accuracy'])
         return model
 
-    def create_model_with_clip(self):
+    def create_model_lr_schedule(self, init_lr, decay_steps, decay_rate):
+        x = tf.keras.layers.Input(shape=[8])
 
+        predictions = tf.keras.layers.Dense(1, use_bias=False,
+                                            kernel_initializer=tf.ones_initializer())(x)
+
+        model = tf.keras.models.Model(inputs=[x], outputs=predictions)
+        schedule = tf.keras.optimizers.schedules.ExponentialDecay(init_lr, decay_steps, decay_rate)
+        optimizer = tf.keras.optimizers.SGD(schedule)
+        model.compile(optimizer=optimizer,
+                      loss=lambda label, pred: tf.reduce_mean(pred - label))
+        return model
+
+    def create_model_with_clip(self):
         user = tf.keras.layers.Input(shape=[1])
         item = tf.keras.layers.Input(shape=[1])
 
@@ -232,7 +243,6 @@ class TestEstimatorForKeras(TestCase):
         shutil.rmtree(temp)
 
     def test_estimator_keras_dataframe(self):
-
         tf.reset_default_graph()
 
         model = self.create_model()
@@ -261,7 +271,6 @@ class TestEstimatorForKeras(TestCase):
         assert len(predictions) == 10
 
     def test_estimator_keras_dataframe_no_fit(self):
-
         tf.reset_default_graph()
 
         model = self.create_model()
@@ -284,7 +293,6 @@ class TestEstimatorForKeras(TestCase):
         assert len(predictions) == 10
 
     def test_estimator_keras_tf_dataset(self):
-
         tf.reset_default_graph()
 
         model = self.create_model()
@@ -301,12 +309,6 @@ class TestEstimatorForKeras(TestCase):
 
         eval_result = est.evaluate(dataset)
         assert 'acc Top1Accuracy' in eval_result
-
-        dataset = tf.data.Dataset.from_tensor_slices((np.random.randint(0, 200, size=(100, 1)),
-                                                      np.random.randint(0, 50, size=(100, 1))))
-
-        predictions = est.predict(dataset).collect()
-        assert predictions[0]['prediction'].shape[1] == 2
 
     def test_estimator_keras_tensorboard(self):
         import zoo.orca.data.pandas
@@ -367,7 +369,6 @@ class TestEstimatorForKeras(TestCase):
         shutil.rmtree(temp)
 
     def test_convert_predict_list_of_array(self):
-
         tf.reset_default_graph()
 
         sc = init_nncontext()
@@ -503,6 +504,53 @@ class TestEstimatorForKeras(TestCase):
         predictions = est.predict(data_shard).collect()
         assert predictions[0]['prediction'].shape[1] == 2
         shutil.rmtree(temp)
+
+    def test_estimator_keras_learning_rate_schedule(self):
+        tf.reset_default_graph()
+
+        # loss = reduce_sum(w)
+        # dloss/dw = 1
+        model = self.create_model_lr_schedule(0.1, 1, 0.1)
+
+        dataset = tf.data.Dataset.from_tensor_slices((np.ones((16, 8)),
+                                                      np.zeros((16, 1))))
+        est = Estimator.from_keras(keras_model=model)
+        weights_before = model.get_weights()[0]
+        est.fit(data=dataset,
+                batch_size=8,
+                epochs=1,
+                validation_data=dataset)
+
+        sess = tf.keras.backend.get_session()
+        iteartion = sess.run(model.optimizer.iterations)
+        weights_after = model.get_weights()[0]
+        first_step = weights_before - 0.1
+        second_step = first_step - 0.01
+
+        assert iteartion == 2
+        assert np.allclose(second_step, weights_after)
+
+    def test_estimator_keras_with_bigdl_optim_method(self):
+        tf.reset_default_graph()
+
+        model = self.create_model()
+
+        dataset = tf.data.Dataset.from_tensor_slices((np.random.randint(0, 200, size=(100, 1)),
+                                                      np.random.randint(0, 50, size=(100, 1)),
+                                                      np.ones(shape=(100,), dtype=np.int32)))
+        dataset = dataset.map(lambda user, item, label: [(user, item), label])
+        from bigdl.optim.optimizer import SGD
+        from bigdl.optim.optimizer import Plateau
+        sgd = SGD(learningrate=0.1,
+                  leaningrate_schedule=Plateau("score",
+                                               factor=0.1,
+                                               patience=10,
+                                               mode="min", ))
+        est = Estimator.from_keras(keras_model=model, optimizer=sgd)
+        est.fit(data=dataset,
+                batch_size=8,
+                epochs=10,
+                validation_data=dataset)
 
 
 if __name__ == "__main__":

@@ -20,6 +20,7 @@ import java.util
 import java.util.UUID
 import java.nio.file.{Files, Paths}
 
+import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.{QuantizedTensor, QuantizedType, Storage, Tensor}
 import com.intel.analytics.bigdl.utils.T
@@ -27,15 +28,20 @@ import com.intel.analytics.zoo.common.PythonInterpreter
 import com.intel.analytics.zoo.feature.PythonFeatureSet
 import com.intel.analytics.zoo.pipeline.api.net.TorchModel.TorchModel2Holder
 import jep.{Jep, NDArray}
+import org.apache.spark.TaskContext
 
-import scala.collection.JavaConverters._
-
-import scala.reflect.ClassTag
-// TODO: support Train function
 class TorchModel private(private val modelHolder: TorchModel2Holder, init_weights: Array[Float])
   extends AbstractModule[Activity, Activity, Float]{
   import TorchModel._
+  def postId(): String = {
+    if (postfix == null) {
+      postfix = Integer.toHexString(java.util.UUID.randomUUID().hashCode())
+    }
+    taskId() + "_" + postfix
+  }
 
+  @transient
+  var postfix = Integer.toHexString(java.util.UUID.randomUUID().hashCode())
   protected var loaded = false
   @transient
   protected lazy val load = {
@@ -76,9 +82,9 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
         |
         |""".stripMargin
 
-  val forwardCode =
+  def forwardCode(): String =
     s"""
-       |output = ${getName()}(input)
+       |output_${postId} = ${getName()}(input_${postId})
        |""".stripMargin
 
   override def updateOutput(input: Activity): Activity = {
@@ -88,21 +94,21 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
     // _data is come from FeatureSet.
     val dataExisted = PythonInterpreter.getValue[Boolean]("'_data' in dir()")
     if (dataExisted) {
-      PythonInterpreter.exec("input = _data[0]")
+      PythonInterpreter.exec(s"input_${postId} = _data[0]")
     } else {
       // TODO: support table input
       require(input.isTensor, "only support tensor input")
       val i = input.toTensor[Float]
       if (i.nElement() == i.storage().array().length) {
-        PythonInterpreter.set("nd_input",
+        PythonInterpreter.set("nd_input_" + postId,
           new NDArray[Array[Float]](i.storage().array(), i.size(): _*))
       } else {
         // The last mini batch during evaluation is smaller.
-        PythonInterpreter.set("nd_input",
+        PythonInterpreter.set("nd_input_" + postId,
           new NDArray[Array[Float]](i.storage().array().slice(
             i.storageOffset() - 1, i.nElement()), i.size(): _*))
       }
-      PythonInterpreter.exec("input = torch.Tensor(nd_input)")
+      PythonInterpreter.exec(s"input_${postId} = torch.Tensor(nd_input_${postId})")
     }
 
     val forwardCode = if (train && weights.nElement() > 0) {
@@ -116,12 +122,15 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
     PythonInterpreter.exec(forwardCode)
     println(s"run forward cost: ${(System.nanoTime() - startTime) / 1e9}")
     val outputNd = PythonFeatureSet.toArrayTensor(
-      PythonInterpreter.getValue[NDArray[_]]("ptensor_to_numpy(output)"))
+      PythonInterpreter.getValue[NDArray[_]](s"ptensor_to_numpy(output_${postId})"))
     if (outputNd.length == 1) {
       output = outputNd(0)
     } else {
       output = T(outputNd)
     }
+    // This output_hashcode will be used in TorchLoss when compute loss.
+    PythonInterpreter.exec(s"output_" +
+      s"${Integer.toHexString(output.hashCode())} = output_${postId}")
     println(s"forward total cost: ${(System.nanoTime() - startTime) / 1e9}")
     output
   }
@@ -129,11 +138,6 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
   override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
     load
     val startTime = System.nanoTime()
-    val backwardCode =
-      s"""
-        |loss.backward(retain_graph=True)
-        |""".stripMargin
-    PythonInterpreter.exec(backwardCode)
     println(s"run backward cost: ${(System.nanoTime() - startTime) / 1e9}")
     val getWeightCode =
       s"""
@@ -298,6 +302,12 @@ object TorchModel {
     val bys = Files.readAllBytes(Paths.get(Path))
     val weights = new Array[Float](0)
     apply(bys, weights)
+  }
+
+  private[net] def taskId(): Int = TaskContext.getPartitionId()
+
+  def isTorch(module: Module[_]): Boolean = {
+    module.isInstanceOf[TorchModel]
   }
 }
 

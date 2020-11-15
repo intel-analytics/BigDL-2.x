@@ -43,7 +43,7 @@ class FlinkRedisSink(params: SerParams) extends RichSinkFunction[List[(String, S
       JedisPoolHolder.synchronized {
         if (JedisPoolHolder.jedisPool == null) {
           JedisPoolHolder.jedisPool = new JedisPool(new JedisPoolConfig(),
-            params.redisHost, params.redisPort, params.redisSecureEnabled)
+            params.redisHost, params.redisPort, params.redisTimeout, params.redisSecureEnabled)
         }
       }
     }
@@ -64,9 +64,15 @@ class FlinkRedisSink(params: SerParams) extends RichSinkFunction[List[(String, S
 
   override def invoke(value: List[(String, String)], context: SinkFunction.Context[_]): Unit = {
     val ppl = jedis.pipelined()
-    value.foreach(v => RedisIO.writeHashMap(ppl, v._1, v._2, params.jobName))
+    var cnt = 0
+    value.foreach(v => {
+      RedisIO.writeHashMap(ppl, v._1, v._2, params.jobName)
+      if (v._2 != "NaN") {
+        cnt += 1
+      }
+    })
     ppl.sync()
-    logger.debug(s"${value.size} records written to redis")
+    logger.debug(s"${cnt} valid records written to redis")
   }
 
 }

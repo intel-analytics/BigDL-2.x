@@ -26,16 +26,16 @@ export SPARK_HOME=the root directory of Spark
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
---master spark://xxx.xxx.xxx.xxx:xxxx \
---executor-cores cores_per_executor \
---total-executor-cores total_cores_for_the_job \
---class com.intel.analytics.zoo.examples.resnet.TrainImageNet \
--f hdfs://xxx.xxx.xxx.xxx:xxxx/imagenet \
---batchSize 8192 --nEpochs 90 --learningRate 0.1 --warmupEpoch 5 \
- --maxLr 3.2 --cache /cache  --depth 50 --classes 1000
+    --master spark://xxx.xxx.xxx.xxx:xxxx \
+    --executor-cores cores_per_executor \
+    --total-executor-cores total_cores_for_the_job \
+    --class com.intel.analytics.zoo.examples.resnet.TrainImageNet \
+    -f hdfs://xxx.xxx.xxx.xxx:xxxx/imagenet \
+    --batchSize 8192 --nEpochs 90 --learningRate 0.1 --warmupEpoch 5 \
+    --maxLr 3.2 --cache /cache  --depth 50 --classes 1000
 ```
 ### Parameters
-```
+    
     --folder | -f   [the directory to reach the data]
     --batchSize     [default 8192, should be n*nodeNumber*coreNumber]
     --nEpochs       [number of epochs to train]
@@ -45,7 +45,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --cache [directory to store snapshot]
     --depth         [number of layers for resnet, default to 50]
     --classes       [number of classes, default to 1000]
-```
+    
 ### Training reference
 #### Hyper Parameters
 
@@ -66,5 +66,3 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 **Top1 accuracy**: 0.76114
 
 **Top5 accuracy**: 0.92724
-
-

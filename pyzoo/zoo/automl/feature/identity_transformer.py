@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from featuretools import TransformFeature
 
 from zoo.automl.common.util import save_config
 from zoo.automl.feature.abstract import BaseFeatureTransformer
@@ -21,9 +20,6 @@ from zoo.automl.feature.abstract import BaseFeatureTransformer
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import pandas as pd
 import numpy as np
-import featuretools as ft
-from featuretools.primitives import make_agg_primitive, make_trans_primitive
-from featuretools.variable_types import Text, Numeric, DatetimeTimeIndex
 import json
 
 
