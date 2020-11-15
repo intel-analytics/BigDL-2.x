@@ -199,7 +199,7 @@ class Estimator(object):
         raise NotImplementedError()
 
     @staticmethod
-    def load_from_keras_model(path):
+    def load_keras_model(path):
         """
         Create Estimator by loading an existing keras model (with weights) from HDF5 file.
 

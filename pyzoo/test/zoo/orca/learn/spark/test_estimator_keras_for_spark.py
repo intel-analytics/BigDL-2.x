@@ -418,16 +418,7 @@ class TestEstimatorForKeras(TestCase):
 
         tf.reset_default_graph()
 
-        # from tensorflow.python.keras import models
-        # from zoo.common.utils import load_from_file
-        #
-        # def load_func(file_path):
-        #     return models.load_model(file_path)
-        #
-        # model = load_from_file(load_func, model_path)
-        # est = Estimator.from_keras(keras_model=model)
-
-        est = Estimator.load_from_keras_model(model_path)
+        est = Estimator.load_keras_model(model_path)
 
         data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
@@ -476,15 +467,6 @@ class TestEstimatorForKeras(TestCase):
         est.save_keras_model_weights(model_path)
 
         tf.reset_default_graph()
-
-        # from tensorflow.python.keras import models
-        # from zoo.common.utils import load_from_file
-        #
-        # def load_func(file_path):
-        #     return models.load_model(file_path)
-        #
-        # model = load_from_file(load_func, model_path)
-        # est = Estimator.from_keras(keras_model=model)
 
         model = self.create_model()
 
