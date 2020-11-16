@@ -476,6 +476,10 @@ class SparkXShards(XShards):
         return self
 
     def save_as_numpy(self, path):
+        if path.startswith("/"):
+            import re
+            if re.match(r"local\[(.*)\]", self.rdd.context.master) is None:
+                raise Exception("save XShards to local numpy files only support spark local mode.")
         if self._get_class_name() == "numpy.ndarray":
             if not exists(path):
                 makedirs(path)
