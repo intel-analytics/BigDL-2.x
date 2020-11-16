@@ -139,7 +139,7 @@ class RayTuneSearchEngine(SearchEngine):
                     optimizer=optimizer,
                     parameter_names=list(search_space.keys()),
                 ))
-            if search_alg == "bayesopt":
+            elif search_alg == "bayesopt":
                 search_alg_params.update({"space": recipe.manual_search_space()})
 
             search_alg_params.update(dict(
