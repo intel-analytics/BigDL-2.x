@@ -140,7 +140,7 @@ def setup_package():
         extras_require={'ray': ['ray==0.8.4', 'psutil', 'aiohttp',
                                 'setproctitle', 'pyarrow==0.17.0'],
                         'automl': ['tensorflow>=1.15.0,<2.0.0', 'ray[tune]==0.8.4', 'psutil',
-                                   'aiohttp', 'setproctitle', 'pandas', 'featuretools',
+                                   'aiohttp', 'setproctitle', 'pandas',
                                    'scikit-learn>=0.20.0,<=0.22.0', 'requests',
                                    'bayesian-optimization']},
         dependency_links=['https://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz'],

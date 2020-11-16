@@ -42,6 +42,10 @@ class TimeSequencePredictor(BasePredictor):
                  target_col=["value"],
                  extra_features_col=None,
                  drop_missing=True,
+                 search_alg=None,
+                 search_alg_params=None,
+                 scheduler=None,
+                 scheduler_params=None,
                  ):
         self.pipeline = None
         self.future_seq_len = future_seq_len
@@ -52,7 +56,12 @@ class TimeSequencePredictor(BasePredictor):
             self.target_col = target_col
         self.extra_features_col = extra_features_col
         self.drop_missing = drop_missing
-        super().__init__(name, logs_dir)
+        super().__init__(name=name,
+                         logs_dir=logs_dir,
+                         search_alg=search_alg,
+                         search_alg_params=search_alg_params,
+                         scheduler=scheduler,
+                         scheduler_params=scheduler_params)
 
     def create_feature_transformer(self):
         ft = TimeSequenceFeatureTransformer(self.future_seq_len,
