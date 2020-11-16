@@ -29,7 +29,7 @@ See [here](#Options) for more configurable options for this example.
 python async_parameter_server.py --hadoop_conf ...# path to your hadoop/yarn directory --conda_name ...# your conda name
 python sync_parameter_server --hadoop_conf ...# path to your hadoop/yarn directory --conda_name...# your conda name
 ```
- 
+
 See [here](#Options) for more configurable options for this example.
 
 ## Options
