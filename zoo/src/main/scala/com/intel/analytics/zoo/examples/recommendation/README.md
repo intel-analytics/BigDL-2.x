@@ -21,12 +21,12 @@ In NeuralCFexample and WideAndDeepExample, we demostrate how to use Analyticd Zo
 ``` bash
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 master=spark master
-${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh
-    --master $master
-    --driver-memory 4g
-    --executor-memory 4g
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+    --master $master \
+    --driver-memory 4g \
+    --executor-memory 4g \
     --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
-    --inputDir ./data/ml-1m
+    --inputDir ./data/ml-1m \
     --dataset ml-1m
 ```
 
@@ -34,14 +34,14 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh
 ``` bash
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 master=spark master
-${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh
-    --master $master
-    --driver-memory 4g
-    --executor-memory 4g
-    --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample
-    --inputDir ./data/census
-    --batchSize 320
-    --maxEpoch 20
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+    --master $master \
+    --driver-memory 4g \
+    --executor-memory 4g \
+    --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
+    --inputDir ./data/census \
+    --batchSize 320 \
+    --maxEpoch 20 \
     --dataset census
 ```
 
@@ -52,11 +52,11 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh
 ``` bash
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 master=spark master
-${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh
-    --master $master
-    --driver-memory 4g
-    --executor-memory 4g
-    --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+    --master $master \
+    --driver-memory 4g \
+    --executor-memory 4g \
+    --class com.intel.analytics.zoo.examples.recommendation.NeuralCFexample \
     --inputDir ./data/ml-1m 
 ```
 
@@ -67,12 +67,12 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh
 ``` bash
 export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
 master=spark master
-${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh
-    --master $master
-    --driver-memory 4g
-    --executor-memory 4g
-    --class com.intel.analytics.zoo.examples.recommendation.SessionRecExp
-    --input ./data/ecommerce
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+    --master $master \
+    --driver-memory 4g \
+    --executor-memory 4g \
+    --class com.intel.analytics.zoo.examples.recommendation.SessionRecExp \
+    --input ./data/ecommerce \
     --outputDir ./output/
 ```
 ## References: 
