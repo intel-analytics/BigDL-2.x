@@ -460,6 +460,11 @@ class SparkXShards(XShards):
         Save this SparkXShards to pickle files.        .
         :param path: target path.
         """
+        if path.startswith("/"):
+            import re
+            if re.match(r"local\[(.*)\]", self.rdd.context.master) is None:
+                raise Exception("save XShards to local pickle files only support spark local mode.")
+
         # no need to create directory s3
         if not path.startswith("s3"):
             if not exists(path):
