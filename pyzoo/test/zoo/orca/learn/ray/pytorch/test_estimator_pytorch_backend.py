@@ -106,14 +106,13 @@ class TestPyTorchEstimator(TestCase):
         estimator.shutdown()
 
     def test_linear_spark_xshards(self):
+        from zoo import init_nncontext
+        from zoo.orca.data import SparkXShards
         estimator = Estimator.from_torch(model=get_model,
                                          optimizer=get_optimizer,
                                          loss=nn.BCELoss(),
-                                         config={"lr": 1e-2,
-                                                 "batch_size": 128},
+                                         config={"lr": 1e-1},
                                          backend="pytorch")
-        from zoo import init_nncontext
-        from zoo.orca.data import SparkXShards
         sc = init_nncontext()
         x_rdd = sc.parallelize(np.random.rand(4000, 1, 50).astype(np.float32))
         y_rdd = sc.parallelize(np.random.randint(0, 2, size=(4000, 1)).astype(np.float32))
@@ -121,9 +120,9 @@ class TestPyTorchEstimator(TestCase):
         train_rdd, val_rdd = rdd.randomSplit([0.9, 0.1])
         train_xshards = SparkXShards(train_rdd)
         val_xshards = SparkXShards(val_rdd)
-        train_stats = estimator.fit(train_xshards, batch_size=128, epochs=2)
+        train_stats = estimator.fit(train_xshards, batch_size=256, epochs=2)
         print(train_stats)
-        val_stats = estimator.evaluate(val_xshards, batch_size=32)
+        val_stats = estimator.evaluate(val_xshards, batch_size=128)
         print(val_stats)
         estimator.shutdown()
 
