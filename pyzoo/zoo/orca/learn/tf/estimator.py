@@ -214,7 +214,7 @@ class Estimator(object):
         model = load_from_file(load_func, path)
         return Estimator.from_keras(keras_model=model)
 
-    def save_keras_model_weights(self, filepath, overwrite=True, save_format=None):
+    def save_keras_weights(self, filepath, overwrite=True, save_format=None):
         """
         Save tensorflow keras model weights in this estimator.
         :param path: keras model weights save path.
@@ -225,7 +225,7 @@ class Estimator(object):
         """
         raise NotImplementedError()
 
-    def load_keras_model_weights(self, filepath, by_name=False):
+    def load_keras_weights(self, filepath, by_name=False):
         """
         Save tensorflow keras model in this estimator.
         :param filepath: keras model weights save path.
@@ -719,8 +719,8 @@ class TFKerasWrapper(Estimator):
     def save_keras_model(self, path, overwrite=True):
         self.model.save_model(path, overwrite=overwrite)
 
-    def save_keras_model_weights(self, filepath, overwrite=True, save_format=None):
+    def save_keras_weights(self, filepath, overwrite=True, save_format=None):
         self.model.save_weights(filepath, overwrite, save_format)
 
-    def load_keras_model_weights(self, filepath, by_name=False):
+    def load_keras_weights(self, filepath, by_name=False):
         self.model.load_weights(filepath, by_name)

@@ -464,14 +464,14 @@ class TestEstimatorForKeras(TestCase):
 
         temp = tempfile.mkdtemp()
         model_path = os.path.join(temp, 'test.h5')
-        est.save_keras_model_weights(model_path)
+        est.save_keras_weights(model_path)
 
         tf.reset_default_graph()
 
         model = self.create_model()
 
         est = Estimator.from_keras(model)
-        est.load_keras_model_weights(model_path)
+        est.load_keras_weights(model_path)
 
         data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
