@@ -31,6 +31,7 @@
         <core.artifactId>zoo-core-dist-all</core.artifactId>
         <core.dependencyType>pom</core.dependencyType>
         <data-store-url>http://download.tensorflow.org</data-store-url>
+        <inner-ftp-uri>http://10.239.45.10:8081/repository/raw</inner-ftp-uri>
         <tf-shade>bushade</tf-shade>
     </properties>
 
@@ -779,11 +780,9 @@
                                     <exclude>com.intel.analytics.zoo:zoo-core-pmem-java-linux</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-tfnet-linux</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-mkl-linux</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-torchnet-java-linux</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-dist-mac</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-tfnet-mac</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-mac</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-torchnet-java-mac</exclude>
                                     <exclude>com.intel.analytics.bigdl.core.dist:all</exclude>
                                     <exclude>com.intel.analytics.bigdl.spark-version</exclude>
                                     <exclude>org.scalanlp:breeze_2.11</exclude>

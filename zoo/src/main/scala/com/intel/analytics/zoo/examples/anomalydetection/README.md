@@ -19,8 +19,8 @@ Remarks:
 
 ## Run the anomaly detection example
 
-``` bash
-   export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
+```bash
+export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
    nyc_path=the directory containing containing NBA nyc_taxi.csv data
    master=... // spark master
    ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \

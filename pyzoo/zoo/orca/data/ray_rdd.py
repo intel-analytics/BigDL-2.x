@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 import ray
+import ray.services
 import uuid
 import random
 
@@ -110,10 +112,14 @@ class RayRdd:
         return ray.get(self.meta_store.num_partitions.remote())
 
     def collect(self):
-        partition_refs = ray.get(self.meta_store.get_all_partition_refs.remote())
-        partitions = ray.get(partition_refs)
+        partitions = self.collect_partitions()
         data = [item for part in partitions for item in part]
         return data
+
+    def collect_partitions(self):
+        partition_refs = ray.get(self.meta_store.get_all_partition_refs.remote())
+        partitions = ray.get(partition_refs)
+        return partitions
 
     def to_spark_rdd(self):
         ray_ctx = RayContext.get()

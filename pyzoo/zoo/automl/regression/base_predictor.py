@@ -29,10 +29,19 @@ class BasePredictor(object):
 
     def __init__(self,
                  name="automl",
-                 logs_dir="~/zoo_automl_logs"):
+                 logs_dir="~/zoo_automl_logs",
+                 search_alg=None,
+                 search_alg_params=None,
+                 scheduler=None,
+                 scheduler_params=None,
+                 ):
 
         self.logs_dir = logs_dir
         self.name = name
+        self.search_alg = search_alg
+        self.search_alg_params = search_alg_params
+        self.scheduler = scheduler
+        self.scheduler_params = scheduler_params
 
     @abstractmethod
     def create_feature_transformer(self):
@@ -150,10 +159,7 @@ class BasePredictor(object):
                    resources_per_trial,
                    remote_dir):
         ft = self.create_feature_transformer()
-        if isinstance(input_df, list):
-            feature_list = ft.get_feature_list(input_df[0])
-        else:
-            feature_list = ft.get_feature_list(input_df)
+        feature_list = ft.get_feature_list()
 
         model_fn = partial(self.create_model, resources_per_trial=resources_per_trial)
 
@@ -169,6 +175,10 @@ class BasePredictor(object):
                          model_create_func=model_fn,
                          search_space=search_space,
                          recipe=recipe,
+                         search_alg=self.search_alg,
+                         search_alg_params=self.search_alg_params,
+                         scheduler=self.scheduler,
+                         scheduler_params=self.scheduler_params,
                          feature_transformers=ft,
                          validation_df=validation_df,
                          metric=metric,

@@ -26,7 +26,7 @@ See [here](#Options) for more configurable options for this example.
 ```
 python multiagent_two_trainers.py --hadoop_conf ... # path to your hadoop/yarn directory --conda_name ... #your conda name
 ```
- 
+
 See [here](#Options) for more configurable options for this example.
 
 ## Options

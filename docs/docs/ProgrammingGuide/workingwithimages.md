@@ -248,52 +248,52 @@ After training with *NNEstimator/NNCLassifier*, you'll get a trained *NNModel/NN
 
 After prediction, there is a new column `prediction` in the prediction image dataframe.
  
- **Scala example:**
- 
+**Scala example:**
+
 ```scala
- val batchsize = 128
- val nEpochs = 10
- val featureTransformer = RowToImageFeature() -> ImageResize(256, 256) ->
-                                    ImageCenterCrop(224, 224) ->
-                                    ImageChannelNormalize(123, 117, 104) ->
-                                    ImageMatToTensor() ->
-                                    ImageFeatureToTensor()
- val classifier = NNClassifier(model, CrossEntropyCriterion[Float](), featureTransformer)
-         .setFeaturesCol("image")
-         .setLearningRate(0.003)
-         .setBatchSize(batchsize)
-         .setMaxEpoch(nEpochs)
-         .setValidation(Trigger.everyEpoch, valDf, Array(new Top1Accuracy()), batchsize)
- val trainedModel = classifier.fit(trainDf)
- // predict with trained model
- val predictions = trainedModel.transform(testDf)
- predictions.select(col("image"), col("label"), col("prediction")).show(false)
- 
- // predict with loaded pre-trained model
- val model = Module.loadModule[Float](modelPath)
- val dlmodel = NNClassifierModel(model, featureTransformer)
-         .setBatchSize(batchsize)
-         .setFeaturesCol("image")
-         .setPredictionCol("prediction") 
- val resultDF = dlmodel.transform(testDf)
+val batchsize = 128
+val nEpochs = 10
+val featureTransformer = RowToImageFeature() -> ImageResize(256, 256) ->
+                                   ImageCenterCrop(224, 224) ->
+                                   ImageChannelNormalize(123, 117, 104) ->
+                                   ImageMatToTensor() ->
+                                   ImageFeatureToTensor()
+val classifier = NNClassifier(model, CrossEntropyCriterion[Float](), featureTransformer)
+        .setFeaturesCol("image")
+        .setLearningRate(0.003)
+        .setBatchSize(batchsize)
+        .setMaxEpoch(nEpochs)
+        .setValidation(Trigger.everyEpoch, valDf, Array(new Top1Accuracy()), batchsize)
+val trainedModel = classifier.fit(trainDf)
+// predict with trained model
+val predictions = trainedModel.transform(testDf)
+predictions.select(col("image"), col("label"), col("prediction")).show(false)
+
+// predict with loaded pre-trained model
+val model = Module.loadModule[Float](modelPath)
+val dlmodel = NNClassifierModel(model, featureTransformer)
+        .setBatchSize(batchsize)
+        .setFeaturesCol("image")
+        .setPredictionCol("prediction") 
+val resultDF = dlmodel.transform(testDf)
 ```
- 
- **Python example:**
+
+**Python example:**
 
 ```python
- batchsize = 128
- nEpochs = 10
- featureTransformer = ChainedPreprocessing([RowToImageFeature(), ImageResize(256, 256),
-                                    ImageCenterCrop(224, 224),
-                                    ImageChannelNormalize(123, 117, 104),
-                                    ImageMatToTensor(),
-                                    ImageFeatureToTensor()])
- classifier = NNClassifier(model, CrossEntropyCriterion(), featureTransformer)\
-         .setFeaturesCol("image")\
-         .setLearningRate(0.003)\
-         .setBatchSize(batchsize)\
-         .setMaxEpoch(nEpochs)\
-         .setValidation(EveryEpoch(), valDf, [Top1Accuracy()], batch_size)
+batchsize = 128
+nEpochs = 10
+featureTransformer = ChainedPreprocessing([RowToImageFeature(), ImageResize(256, 256),
+    ImageCenterCrop(224, 224),
+    ImageChannelNormalize(123, 117, 104),
+    ImageMatToTensor(),
+    ImageFeatureToTensor()])
+classifier = NNClassifier(model, CrossEntropyCriterion(), featureTransformer)\
+        .setFeaturesCol("image")\
+        .setLearningRate(0.003)\
+        .setBatchSize(batchsize)\
+        .setMaxEpoch(nEpochs)\
+        .setValidation(EveryEpoch(), valDf, [Top1Accuracy()], batch_size)
 trainedModel = classifier.fit(trainDf)
 # predict with trained model
 predictions = trainedModel.transform(testDf)
@@ -374,11 +374,11 @@ Here is a scala [example](https://github.com/intel-analytics/analytics-zoo/blob/
 
 In the InceptionV1 example, we use an new dataset called [FeatureSet](../APIGuide/FeatureEngineering/featureset.md) to cache the data. Only scala API is currently available.
 
- **Scala example:**
+**Scala example:**
  
- ```scala
+```scala
  val rawData = readFromSeqFiles(path, sc, classNumber)
  val featureSet = FeatureSet.rdd(rawData, memoryType = PMEM)
- ```
+```
  `readFromSeqFiles` read the Sequence File into `RDD[ByteRecord]`, then `FeatureSet.rdd(rawData, memoryType = PMEM)` will cache the data to Intel Optane DC Persistent Memory.
 
