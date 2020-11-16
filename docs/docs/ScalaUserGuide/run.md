@@ -54,47 +54,47 @@ You can run a analytics zoo program, e.g., the [Object Detection](https://github
 ```bash
 # Spark local mode
 spark-submit 
-  	dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
-	--master local[core_number] 
-	--class com.intel.analytics.zoo.examples.objectdetection.Predict
-	--image path_to_your_images 
-	--output path_to_output 
-	--model path_to_model
+  --master local[core_number] 
+  --class com.intel.analytics.zoo.examples.objectdetection.Predict
+  dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
+  --image path_to_your_images 
+  --output path_to_output 
+  --model path_to_model
 
 # Spark standalone mode
-spark-submit 
-	dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
-	--master spark://... 
-	--executor-cores cores_per_executor 
-	--total-executor-cores total_cores_for_the_job
-	--class com.intel.analytics.zoo.examples.objectdetection.Predict
-	--image path_to_your_images 
-	--output path_to_output 
-	--model path_to_model
+spark-submit
+  --master spark://... 
+  --executor-cores cores_per_executor 
+  --total-executor-cores total_cores_for_the_job
+  --class com.intel.analytics.zoo.examples.objectdetection.Predict
+  dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
+  --image path_to_your_images 
+  --output path_to_output 
+  --model path_to_model
 
 # Spark yarn client mode
 spark-submit 
-	dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
-	--master yarn 
-	--deploy-mode client
-	--executor-cores cores_per_executor 
-	--num-executors executors_number 
-	--class com.intel.analytics.zoo.examples.objectdetection.Predict
-	--image path_to_your_images
-	--output path_to_output 
-	--model path_to_model
+  --master yarn 
+  --deploy-mode client
+  --executor-cores cores_per_executor 
+  --num-executors executors_number 
+  --class com.intel.analytics.zoo.examples.objectdetection.Predict
+  dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
+  --image path_to_your_images
+  --output path_to_output 
+  --model path_to_model
 
 # Spark yarn cluster mode
 spark-submit 
-	dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
-	--master yarn 
-	--deploy-mode cluster
-	--executor-cores cores_per_executor
-	--num-executors executors_number
-	--class com.intel.analytics.zoo.examples.objectdetection.Predict
-	--image path_to_your_images 
-	--output path_to_output 
-	--model path_to_model
+  --master yarn 
+  --deploy-mode cluster
+  --executor-cores cores_per_executor
+  --num-executors executors_number
+  --class com.intel.analytics.zoo.examples.objectdetection.Predict
+  dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar
+  --image path_to_your_images 
+  --output path_to_output 
+  --model path_to_model
 ```
 
 If you are to run your own program, do remember to create SparkContext and initialize before calling other Analytics Zoo API's, as shown below.
