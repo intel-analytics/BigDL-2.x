@@ -49,7 +49,7 @@ class MXNetRunner(object):
                 mx.random.seed(self.config["seed"])
             import types
             if isinstance(self.model_creator, types.FunctionType):
-                self.models = self.model_creator(self.config)
+                self.model = self.model_creator(self.config)
             else:
                 self.model = self.model_creator
             self.loss = self.loss_creator(self.config) if self.loss_creator else None
