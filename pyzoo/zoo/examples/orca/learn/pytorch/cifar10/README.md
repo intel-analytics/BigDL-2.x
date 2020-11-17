@@ -33,29 +33,19 @@ See [here](#Options) for more configurable options for this example.
 
 # Options
 
-* ```
-  --cores The number of cores you want to use on each node. Default is 4.
-  ```
+* `--cores` The number of cores you want to use on each node. Default is 4.
 
-* ```
-  --num_nodes The number of nodes to be used in the cluster. Default is 1.
-  ```
+* `--num_nodes` The number of nodes to be used in the cluster. Default is 1.
+  
 
-* ```
-  --workers_per_node The number of workers to run on each node. Default is 2.
-  ```
+* `--workers_per_node` The number of workers to run on each node. Default is 2.
 
-* ```
-  --memory The memory you want to use on each node. Default is 10g.
-  ```
 
-* ```
-  --epochs The number of epochs to train. Default is 2.
-  ```
+* `--memory` The memory you want to use on each node. Default is 10g.
 
-* ```
-  --batch_size The worker batch size for training per executor. Default is 16.
-  ```
+* `--epochs` The number of epochs to train. Default is 2.
+
+* `--batch_size` The worker batch size for training per executor. Default is 16.
 
 # Results
 
