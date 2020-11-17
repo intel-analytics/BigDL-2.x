@@ -32,8 +32,6 @@ from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.learn.pytorch import Estimator
 
 
-
-
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
