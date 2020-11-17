@@ -50,6 +50,15 @@ fit(self, data, epochs, feature_cols="features", labels_cols="label", batch_size
 * `val_methods`: BigDL validation methods.
 * `checkpoint_trigger`: BigDL Trigger to set a checkpoint.
 
+### Inference with orca BigDL Estimator
+After training or loading trained model, you can call estimator API to inference:
+```
+predict(self, data, batch_size=8, feature_cols="features", sample_preprocessing=None)
+```
+* `data`: Inference data. SparkXShard and Spark DataFrame are supported.
+* `batch_size`: (int) Batch size used for inference. Default: 8.
+* `feature_cols`:  (string or list of string) Feature column name(s) of data. Only used when data is a Spark DataFrame.
+* `sample_preprocessing`: Used if the input data in predict function is Spark DataFrame. The user defined sample_preprocessing will directly compose Sample according to user-specified Preprocessing.
 
 ### Evaluate model
 After Training, you can call estimator API to evaluate BigDL model:
