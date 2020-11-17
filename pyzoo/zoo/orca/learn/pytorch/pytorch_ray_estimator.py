@@ -103,7 +103,7 @@ class PyTorchRayEstimator:
         # todo remove ray_ctx to run on workers
         ray_ctx = RayContext.get()
         assert isinstance(optimizer_creator, types.FunctionType), \
-            "Must provide a function for both model_creator and optimizer_creator"
+            "Must provide a function for optimizer_creator"
 
         self.model_creator = model_creator
         self.optimizer_creator = optimizer_creator
