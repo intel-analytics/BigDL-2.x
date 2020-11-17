@@ -1,6 +1,21 @@
+#
+# Copyright 2018 Analytics Zoo Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 from __future__ import print_function
 import argparse
-from math import ceil
 from os import listdir
 from os.path import join
 from PIL import Image
@@ -54,7 +69,7 @@ def get_training_set(upscale_factor, dir):
     root_dir = join(dir, "BSDS300/images")
     print("root dir is " + root_dir)
     train_dir = join(root_dir, "train")
-    crop_size = calculate_valid_crop_size(256, upscale_factor)
+    crop_size = 256 - (256 % upscale_factor)
 
     return DatasetFromFolder(train_dir,
                              input_transform=Compose([
@@ -69,7 +84,7 @@ def get_training_set(upscale_factor, dir):
 def get_test_set(upscale_factor, dir):
     root_dir = join(dir, "BSDS300/images")
     test_dir = join(root_dir, "test")
-    crop_size = calculate_valid_crop_size(256, upscale_factor)
+    crop_size = 256 - (256 % upscale_factor)
 
     return DatasetFromFolder(test_dir,
                              input_transform=Compose([
@@ -133,51 +148,45 @@ def model_creator(config):
     return net
 
 
-def Adam_creator(model, config):
+def optim_creator(model, config):
     return optim.Adam(model.parameters(), lr=config.get("lr", 0.001))
 
 
 def train(opt):
-    if opt.mode == "local":
+    if opt.cluster_mode == "local":
         init_orca_context(cores=1, memory="20g")
-    elif opt.mode == "yarn":
+    elif opt.cluster_mode == "yarn":
         init_orca_context(
-            cluster_mode="yarn-client", cores=4, num_nodes=opt.node, memory="2g",
+            cluster_mode="yarn-client", cores=opt.cores, num_nodes=opt.num_nodes, memory=opt.memory,
             driver_memory="10g", driver_cores=1,
-            conf={"spark.rpc.message.maxSize": "1024",
-                  "spark.task.maxFailures": "1"
-                  },
             additional_archive="dataset.zip#dataset")
     else:
         print("init orca context failed")
 
     print('===> Building model')
-    node_number=1 if opt.mode =="local" else opt.node
     estimator = Estimator.from_torch(
         model=model_creator,
-        optimizer=Adam_creator,
+        optimizer=optim_creator,
         loss=nn.MSELoss(),
         backend="pytorch",
         config={
             "lr": opt.lr,
             "upscale_factor": opt.upscale_factor,
-            "batchSize": ceil(opt.batchSize / node_number),
-            "testBatchSize": ceil(opt.testBatchSize / node_number),
-            "nEpochs": opt.nEpochs,
+            "batchSize": opt.batchSize,
+            "testBatchSize": opt.testBatchSize,
             "dataset": opt.dataset,
-            "mode": opt.mode
         }
     )
 
-    stats = estimator.fit(data=train_data_creator, epochs=opt.nEpochs)
+    stats = estimator.fit(data=train_data_creator, epochs=opt.epochs)
     val_stats = estimator.evaluate(data=validation_data_creator)
     for epochinfo in stats:
         print("train stats==> num_samples:" + str(epochinfo["num_samples"])
-              + " ,epoch:"+ str(epochinfo["epoch"])
+              + " ,epoch:" + str(epochinfo["epoch"])
               + " ,batch_count:" + str(epochinfo["batch_count"])
               + " ,train_loss" + str(epochinfo["train_loss"])
               + " ,last_train_loss" + str(epochinfo["last_train_loss"]))
-    print("validation stats==> num_samples:"+str(val_stats["num_samples"])
+    print("validation stats==> num_samples:" + str(val_stats["num_samples"])
           + " ,batch_count:" + str(val_stats["batch_count"])
           + " ,val_loss" + str(val_stats["val_loss"])
           + " ,last_val_loss" + str(val_stats["last_val_loss"]))
@@ -187,15 +196,20 @@ def train(opt):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='PyTorch Super Res Example')
-    parser.add_argument('--upscale_factor', type=int, required=True, help="super resolution upscale factor")
+    parser.add_argument('--cluster_mode', type=str, default='local', help='The mode of spark cluster.')
+    parser.add_argument("--num_nodes", type=int, default=1,help="The number of nodes to be used in the cluster. "
+                             "You can change it depending on your own cluster setting.")
+    parser.add_argument("--cores", type=int, default=4,
+                        help="The number of cpu cores you want to use on each node. ")
+    parser.add_argument("--memory", type=str, default="2g",
+                        help="The memory you want to use on each node. "
+                             "You can change it depending on your own cluster setting.")
+    parser.add_argument('--epochs', type=int, default=2, help='number of epochs to train for')
     parser.add_argument('--batchSize', type=int, default=16, help='training batch size')
     parser.add_argument('--testBatchSize', type=int, default=100, help='testing batch size')
-    parser.add_argument('--nEpochs', type=int, default=2, help='number of epochs to train for')
-    parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate. Default=0.01')
-    parser.add_argument('--mode', type=str, default='local', help='The mode of spark cluster.')
+    parser.add_argument('--upscale_factor', type=int, default=3,  help="super resolution upscale factor")
     parser.add_argument('--dataset', type=str, default='./dataset', help='The dir of dataset.')
-    parser.add_argument('--node', type=int, default=1, help='number of working nodes')
+    parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate. Default=0.01')
     opt = parser.parse_args()
 
-    print(opt)
     train(opt)

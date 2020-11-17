@@ -15,3 +15,7 @@
 #
 
 from .raycontext import RayContext
+
+
+from zoo.util import modulepickle
+modulepickle.extend_ray()
