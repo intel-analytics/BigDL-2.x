@@ -273,10 +273,10 @@ class TFOptimizerWrapper(Estimator):
         self.clip_norm = clip_norm
         self.clip_value = clip_value
         if optimizer is not None:
-            from bigdl.optim.optimizer import OptimMethod
-            if isinstance(optimizer, OptimMethod):
+            from zoo.orca.learn.optimizers import Optimizer
+            if isinstance(optimizer, Optimizer):
                 self.train_op = None
-                self.optimizer = optimizer
+                self.optimizer = optimizer.get_optimizer()
                 self.use_bigdl_optim = True
             else:
                 assert isinstance(optimizer, tf.train.Optimizer), \
@@ -521,6 +521,9 @@ class TFKerasWrapper(Estimator):
         self.metrics = metrics
         self.tf_optimizer = None
         self.optimizer = optimizer
+        from zoo.orca.learn.optimizers import Optimizer
+        if self.optimizer is not None and isinstance(self.optimizer, Optimizer):
+            self.optimizer = self.optimizer.get_optimizer()
         self.log_dir = None
         self.app_name = None
 

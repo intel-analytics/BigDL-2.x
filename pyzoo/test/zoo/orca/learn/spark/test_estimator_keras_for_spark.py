@@ -475,8 +475,8 @@ class TestEstimatorForKeras(TestCase):
                                                       np.random.randint(0, 50, size=(100, 1)),
                                                       np.ones(shape=(100,), dtype=np.int32)))
         dataset = dataset.map(lambda user, item, label: [(user, item), label])
-        from bigdl.optim.optimizer import SGD
-        from bigdl.optim.optimizer import Plateau
+        from zoo.orca.learn.optimizers import SGD
+        from zoo.orca.learn.schedule import Plateau
         sgd = SGD(learningrate=0.1,
                   leaningrate_schedule=Plateau("score",
                                                factor=0.1,

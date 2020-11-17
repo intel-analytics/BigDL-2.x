@@ -621,8 +621,8 @@ class TestEstimatorForGraph(TestCase):
             return result
 
         data_shard = data_shard.transform_shard(transform)
-        from bigdl.optim.optimizer import SGD
-        from bigdl.optim.optimizer import Plateau
+        from zoo.orca.learn.optimizers import SGD
+        from zoo.orca.learn.schedule import Plateau
         sgd = SGD(learningrate=0.1,
                   leaningrate_schedule=Plateau("score",
                                                factor=0.1,
