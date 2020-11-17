@@ -1,3 +1,19 @@
+#
+# Copyright 2018 Analytics Zoo Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 from __future__ import print_function
 import os
 import argparse
@@ -15,11 +31,7 @@ import torch.optim as optim
 
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.learn.pytorch import Estimator
-from zoo.orca.learn.metrics import Accuracy
-from zoo.orca.learn.trigger import EveryEpoch
 
-
-os.environ['KMP_DUPLICATE_LIB_OK']='True'
            
 class Net(nn.Module):
     def __init__(self):
@@ -89,23 +101,19 @@ def main():
                         help="The number of workers to run on each node")
     parser.add_argument('--epochs', type=int, default=2, metavar='N',
                         help='number of epochs to train (default: 2)')
-    parser.add_argument('--worker_batch', type=int, default=16, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=16, metavar='N',
                         help='input worker batch for training per executor(default: 16)')
     args = parser.parse_args()
-
-
-    classes = ('plane', 'car', 'bird', 'cat',
-               'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
     init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores, num_nodes=args.num_nodes, memory=args.memory)
 
     criterion = nn.CrossEntropyLoss()
-    zoo_estimator = Estimator.from_torch(model=model_creator, optimizer=optimizer_creator, loss=criterion, config={
-        "batch_size":args.worker_batch}, backend="pytorch")
-    stats = zoo_estimator.fit(train_data_creator, epochs=args.epochs)
+    zoo_estimator = Estimator.from_torch(model=model_creator, optimizer=optimizer_creator, loss=criterion, config={}, backend="pytorch")
+    stats = zoo_estimator.fit(train_data_creator, epochs=args.epochs, batch_size=args.batch_size)
     print("Train stats: {}".format(stats))
     val_stats = zoo_estimator.evaluate(validation_data_creator)
     print("validation stats: {}".format(val_stats))
+    zoo_estimator.shutdown()
     stop_orca_context()
 
 
