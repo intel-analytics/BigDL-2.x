@@ -1,24 +1,38 @@
+#
+# Copyright 2018 Analytics Zoo Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 from __future__ import print_function
 import os
 import argparse
+import numpy as np
 
 import torch
 import torchvision
 import torchvision.transforms as transforms
-
-import numpy as np
-
 import torch.nn as nn
 import torch.nn.functional as F
-
 import torch.optim as optim
 
 from tensorboardX import SummaryWriter
 
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.learn.pytorch import Estimator
-from zoo.orca.learn.metrics import Accuracy
-from zoo.orca.learn.trigger import EveryEpoch
+
+
+
 
 class Net(nn.Module):
     def __init__(self):
@@ -65,8 +79,8 @@ def validation_data_creator(config):
         [transforms.ToTensor(),
         transforms.Normalize((0.5,), (0.5,))])
     testset = torchvision.datasets.FashionMNIST(root='./data', train=False,
-                                           download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=config.get("batch_size",32),
+                                                download=True, transform=transform)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=config.get("batch_size", 32),
                                              shuffle=False, num_workers=2)
     return testloader
     
@@ -89,23 +103,19 @@ def main():
                         help="The number of workers to run on each node")
     parser.add_argument('--epochs', type=int, default=2, metavar='N',
                         help='number of epochs to train (default: 2)')
-    parser.add_argument('--worker_batch', type=int, default=16, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=16, metavar='N',
                         help='input worker batch for training per executor(default: 16)')
     args = parser.parse_args()
     
     init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores, num_nodes=args.num_nodes, memory=args.memory)
     
-    classes = ('T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
-            'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle Boot')
     criterion = nn.CrossEntropyLoss()
-    zoo_estimator = Estimator.from_torch(model=model_creator, optimizer=optimizer_creator, loss=criterion, config={
-        "batch_size":args.worker_batch}, backend="pytorch")
-    stats = zoo_estimator.fit(train_data_creator, epochs=args.epochs)
+    zoo_estimator = Estimator.from_torch(model=model_creator, optimizer=optimizer_creator, loss=criterion, config={}, backend="pytorch")
+    stats = zoo_estimator.fit(train_data_creator, epochs=args.epochs, batch_size=args.batch_size)
     writer = SummaryWriter('runs/fashion_mnist_experiment_1')
     print("start")
     for stat in stats:
         writer.add_scalar("training_loss", stat['train_loss'], stat['epoch'])
-    
     print("Train stats: {}".format(stats))
     val_stats = zoo_estimator.evaluate(validation_data_creator)
     print("validation stats: {}".format(val_stats))
