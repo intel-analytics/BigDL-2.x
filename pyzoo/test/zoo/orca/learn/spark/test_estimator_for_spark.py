@@ -20,10 +20,10 @@ from unittest import TestCase
 
 import numpy as np
 import tensorflow as tf
-from bigdl.optim.optimizer import SeveralIteration
 from pyspark.sql.context import SQLContext
 
 import zoo.orca.data.pandas
+from bigdl.optim.optimizer import SeveralIteration
 from zoo import init_nncontext
 from zoo.orca.data.tf.data import Dataset
 from zoo.orca.learn.tf.estimator import Estimator
@@ -622,7 +622,7 @@ class TestEstimatorForGraph(TestCase):
 
         data_shard = data_shard.transform_shard(transform)
         from zoo.orca.learn.optimizers import SGD
-        from zoo.orca.learn.schedule import Plateau
+        from zoo.orca.learn.optimizers.schedule import Plateau
         sgd = SGD(learningrate=0.1,
                   leaningrate_schedule=Plateau("score",
                                                factor=0.1,

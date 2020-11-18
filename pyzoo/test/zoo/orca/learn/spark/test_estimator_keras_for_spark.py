@@ -20,8 +20,8 @@ from unittest import TestCase
 import tensorflow as tf
 
 from bigdl.optim.optimizer import SeveralIteration
-from zoo.orca.learn.tf.estimator import Estimator
 from zoo.common.nncontext import *
+from zoo.orca.learn.tf.estimator import Estimator
 from zoo.orca.learn.tf.utils import convert_predict_to_dataframe
 
 
@@ -476,7 +476,7 @@ class TestEstimatorForKeras(TestCase):
                                                       np.ones(shape=(100,), dtype=np.int32)))
         dataset = dataset.map(lambda user, item, label: [(user, item), label])
         from zoo.orca.learn.optimizers import SGD
-        from zoo.orca.learn.schedule import Plateau
+        from zoo.orca.learn.optimizers.schedule import Plateau
         sgd = SGD(learningrate=0.1,
                   leaningrate_schedule=Plateau("score",
                                                factor=0.1,
