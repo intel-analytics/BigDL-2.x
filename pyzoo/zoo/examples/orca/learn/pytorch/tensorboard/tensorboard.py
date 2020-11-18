@@ -117,6 +117,7 @@ def main():
     print("Train stats: {}".format(stats))
     val_stats = zoo_estimator.evaluate(validation_data_creator)
     print("validation stats: {}".format(val_stats))
+    zoo_estimator.shutdown()
     stop_orca_context()
 
 if __name__ == '__main__':
