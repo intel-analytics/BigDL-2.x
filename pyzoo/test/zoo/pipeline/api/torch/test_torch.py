@@ -180,7 +180,6 @@ class TestPytorch(TestCase):
 
         trained_model = az_model.to_pytorch()
 
-
     def test_train_model_function_with_bn(self):
         class SimpleTorchModel(nn.Module):
             def __init__(self):
