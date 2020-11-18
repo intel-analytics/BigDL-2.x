@@ -46,7 +46,7 @@ class BaseModel(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def predict(self, x, mc=False):
+    def predict(self, x):
         """
         Prediction.
         :param x: input
