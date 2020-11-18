@@ -61,7 +61,7 @@ def get_data():
     # print(type(train_x), train_x.shape)
     train_data = {'x': train_x, 'y': train_y}
     val_x, val_y = get_linear_data(2, 5, 400)
-    val_data = {'x': val_x.reshape((400,1)), 'y': val_y.reshape((400,1))}
+    val_data = {'x': val_x, 'y': val_y}
     return train_data, val_data
 
 
