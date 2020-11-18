@@ -75,6 +75,7 @@ class TorchModel(Layer):
         assert(len(new_weight) == 1, "TorchModel's weights should be one tensor")
         # set weights
         m = torch.load(io.BytesIO(self.module_bytes), pickle_module=zoo_pickle_module)
+        import types
         if isinstance(m, types.FunctionType) or isinstance(m, types.ClassType):
             m = m()
         w = torch.Tensor(new_weight[0])
