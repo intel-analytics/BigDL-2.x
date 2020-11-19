@@ -17,6 +17,15 @@ from zoo.automl.model.abstract import BaseModel
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
 import pickle
+import tensorflow as tf
+from tensorflow.keras import backend as K
+
+
+def check_tf_version():
+    tf_version = tf.__version__
+    if tf_version >= "2.0":
+        raise RuntimeError(f"Currently running TensorFlow version {tf_version}. We only support"
+                           f"TensorFlow 1.x for now and has been tested on 1.15")
 
 
 class KerasBaseModel(BaseModel):
@@ -35,7 +44,7 @@ class KerasBaseModel(BaseModel):
             config.setdefault("output_dim", y.shape[-1])
             config.update({"metric": metric})
         update_config()
-        self._check_config(config)
+        self._check_config(**config)
         self.model = self.model_creator(config)
         self.config = config
 
@@ -46,10 +55,11 @@ class KerasBaseModel(BaseModel):
                               verbose=verbose
                               )
 
+        hist_metric_name = tf.keras.metrics.get(metric).__name__
         if validation_data is None:
-            result = hist.history.get(metric)[-1]
+            result = hist.history.get(hist_metric_name)[-1]
         else:
-            result = hist.history.get('val_' + str(metric))[-1]
+            result = hist.history.get('val_' + hist_metric_name)[-1]
         return result
 
     def evaluate(self, x, y, metrics=['mse']):
@@ -71,38 +81,43 @@ class KerasBaseModel(BaseModel):
         """
         if not self.model:
             raise RuntimeError("You must call fit_eval or restore first before calling predict!")
-        return self.model.predict(x, batch_size=self.config.get(["batch_size"], 32))
+        return self.model.predict(x, batch_size=self.config.get("batch_size", 32))
 
     def predict_with_uncertainty(self, x, n_iter=100):
         if not self.model:
             raise RuntimeError("You must call fit_eval or restore first before calling predict!")
-        result = np.stack([self.model(x, training=True) for _ in range(n_iter)])
+        check_tf_version()
+        f = K.function([self.model.layers[0].input, K.learning_phase()],
+                       [self.model.layers[-1].output])
+        result = np.array([f((x, 1))[0] for _ in range(n_iter)])
+
         prediction = result.mean(axis=0)
-        uncertainty = result.std(axis=0)
+        uncertainty = result.var(axis=0)
         return prediction, uncertainty
 
     def state_dict(self):
         state = {
             "config": self.config,
             "weights": self.model.get_weights(),
-            "optimizer_weights": self.model.optimizer.get_weights()
+            # "optimizer_weights": self.model.optimizer.get_weights()
         }
         return state
 
     def load_state_dict(self, state):
-        self.model.set_weights(state["weights"])
-        self.model.optimizer.set_weights(state["optimizer_weights"])
         self.config = state["config"]
+        self.model = self.model_creator(self.config)
+        self.model.set_weights(state["weights"])
+        # self.model.optimizer.set_weights(state["optimizer_weights"])
 
-    def save(self, model_path, config_path, **config):
+    def save(self, checkpoint_file):
         if not self.model:
             raise RuntimeError("You must call fit_eval or restore first before calling save!")
         state_dict = self.state_dict()
-        with open(model_path, "wb") as f:
+        with open(checkpoint_file, "wb") as f:
             pickle.dump(state_dict, f)
 
-    def restore(self, model_path, **config):
-        with open(model_path, "rb") as f:
+    def restore(self, checkpoint_file):
+        with open(checkpoint_file, "rb") as f:
             state_dict = pickle.load(f)
         self.load_state_dict(state_dict)
 

@@ -138,12 +138,12 @@ class PytorchBaseModel(BaseModel):
         self.config = state["config"]
         self.optimizer.load_state_dict(state["optimizer"])
 
-    def save(self, model_path, config_path, **config):
+    def save(self, checkpoint_file):
         state_dict = self.state_dict()
-        torch.save(state_dict, model_path)
+        torch.save(state_dict, checkpoint_file)
 
-    def restore(self, model_path, **config):
-        state_dict = torch.load(model_path)
+    def restore(self, checkpoint_file):
+        state_dict = torch.load(checkpoint_file)
         self.load_state_dict(state_dict)
 
     def _get_required_parameters(self):
