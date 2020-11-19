@@ -141,7 +141,7 @@ if __name__ == "__main__":
     mse, smape = model.evaluate(target_value=target_value, metric=['mse', 'smape'],
                                 num_workers=args.num_predict_workers if args.predict_local
                                 else args.num_workers)
-    print(f"Evaluation results: mse: {mse}, smape: {smape}")
+    print(f"Evaluation results:\nmse: {mse}, \nsmape: {smape}")
     logger.info("Evaluation ends")
 
     # incremental fitting
@@ -152,7 +152,7 @@ if __name__ == "__main__":
     mse, smape = model.evaluate(target_value=incr_target_value, metric=['mse', 'smape'],
                                 num_workers=args.num_predict_workers
                                 if args.predict_local else args.num_workers)
-    print(f"Evaluation results after incremental fitting: mse: {mse}, smape: {smape}")
+    print(f"Evaluation results after incremental fitting:\nmse: {mse}, \nsmape: {smape}")
     logger.info("Evaluation ends")
 
     stop_orca_context()

@@ -21,6 +21,7 @@ from zoo.tfpark.tf_dataset import TFNdarrayDataset
 from zoo.tfpark.model import _standarize_feature_label_dataset
 
 from zoo.orca.learn.tf.utils import *
+from zoo.orca.learn.trigger import Trigger
 from zoo.orca.learn.utils import find_latest_checkpoint, convert_predict_to_xshard
 from zoo.tfpark import KerasModel
 from zoo.tfpark import TFOptimizer, TFNet, ZooOptimizer
@@ -275,10 +276,10 @@ class TFOptimizerWrapper(Estimator):
         self.clip_norm = clip_norm
         self.clip_value = clip_value
         if optimizer is not None:
-            from bigdl.optim.optimizer import OptimMethod
-            if isinstance(optimizer, OptimMethod):
+            from zoo.orca.learn.optimizers import Optimizer
+            if isinstance(optimizer, Optimizer):
                 self.train_op = None
-                self.optimizer = optimizer
+                self.optimizer = optimizer.get_optimizer()
                 self.use_bigdl_optim = True
             else:
                 assert isinstance(optimizer, tf.train.Optimizer), \
@@ -355,7 +356,7 @@ class TFOptimizerWrapper(Estimator):
         the tuple is the value to feed to the tensor in training phase and the second one
         is the value to feed to the tensor in validation phase.
         :param checkpoint_trigger: when to trigger checkpoint during training.
-        Should be bigdl optimzer trigger, like EveryEpoch(), SeveralIteration(num_iterations),etc.
+        Should be a zoo.orca.learn.trigger, like EveryEpoch(), SeveralIteration(num_iterations),etc.
         """
 
         assert self.labels is not None, \
@@ -370,6 +371,9 @@ class TFOptimizerWrapper(Estimator):
                 "feature columns is None; it should not be None in training"
             assert labels_cols is not None, \
                 "label columns is None; it should not be None in training"
+
+        if checkpoint_trigger is not None:
+            checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
 
         dataset = to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                              validation_data=validation_data,
@@ -518,11 +522,14 @@ class TFOptimizerWrapper(Estimator):
 
 class TFKerasWrapper(Estimator):
     def __init__(self, keras_model, metrics, model_dir, optimizer):
-        self.model = KerasModel(keras_model, model_dir, optimizer)
+        self.model = KerasModel(keras_model, model_dir)
         self.load_checkpoint = False
-        if metrics:
-            self.model.add_metric(metrics['tensor'], metrics['name'])
+        self.metrics = metrics
         self.tf_optimizer = None
+        self.optimizer = optimizer
+        from zoo.orca.learn.optimizers import Optimizer
+        if self.optimizer is not None and isinstance(self.optimizer, Optimizer):
+            self.optimizer = self.optimizer.get_optimizer()
         self.log_dir = None
         self.app_name = None
 
@@ -554,7 +561,7 @@ class TFKerasWrapper(Estimator):
         :param session_config: tensorflow session configuration for training.
         Should be object of tf.ConfigProto
         :param checkpoint_trigger: when to trigger checkpoint during training.
-        Should be bigdl optimzer trigger, like EveryEpoch(), SeveralIteration(num_iterations),etc.
+        Should be a zoo.orca.learn.trigger, like EveryEpoch(), SeveralIteration(num_iterations),etc.
         """
 
         if isinstance(data, DataFrame):
@@ -576,6 +583,9 @@ class TFKerasWrapper(Estimator):
                     "(feature tensors, label tensor), where each feature/label tensor can be " \
                     "either a single tensor or a tuple of tensors"
 
+        if checkpoint_trigger is not None:
+            checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
+
         dataset = to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                              validation_data=validation_data,
                              feature_cols=feature_cols, labels_cols=labels_cols,
@@ -588,7 +598,7 @@ class TFKerasWrapper(Estimator):
         self.tf_optimizer = TFOptimizer.from_keras(self.model.model, dataset,
                                                    model_dir=self.model.model_dir,
                                                    session_config=session_config,
-                                                   metrics=self.model.metric_tensors,
+                                                   metrics=self.metrics,
                                                    optimizer=self.model.optimizer)
 
         if self.load_checkpoint:
