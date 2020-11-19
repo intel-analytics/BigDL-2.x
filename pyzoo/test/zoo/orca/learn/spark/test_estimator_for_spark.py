@@ -20,10 +20,11 @@ from unittest import TestCase
 
 import numpy as np
 import tensorflow as tf
+
+from zoo.orca.learn.trigger import SeveralIteration
 from pyspark.sql.context import SQLContext
 
 import zoo.orca.data.pandas
-from bigdl.optim.optimizer import SeveralIteration
 from zoo import init_nncontext
 from zoo.orca.data.tf.data import Dataset
 from zoo.orca.learn.tf.estimator import Estimator
