@@ -15,6 +15,7 @@
 #
 from zoo.automl.model.base_keras_model import KerasBaseModel
 from collections.abc import Iterable
+import numpy as np
 
 
 def model_creator(config):
@@ -23,8 +24,14 @@ def model_creator(config):
     import tensorflow as tf
 
     inp = Input(shape=(None, config["input_dim"]))
-    lstm_units = config.get("lstm_units", [32, 32])
-    dropout_rates = config.get("dropouts", 0.2)
+    if "lstm_1_units" in config and "lstm_2_units" in config:
+        lstm_units = (config["lstm_1_units"], config["lstm_2_units"])
+    else:
+        lstm_units = config.get("lstm_units", [32, 32])
+    if "dropout_1" in config and "dropout_2" in config:
+        dropout_rates = (config["dropout_1"], config["dropout_2"])
+    else:
+        dropout_rates = config.get("dropouts", 0.2)
     lstm_units = [lstm_units] if not isinstance(lstm_units, Iterable) else lstm_units
     for i, unit in enumerate(lstm_units):
         return_sequences = True if i != len(lstm_units) - 1 else False
@@ -34,7 +41,7 @@ def model_creator(config):
         dropout = Dropout(rate=dropout_rate)(lstm)
     out = Dense(config["output_dim"])(dropout)
     model = Model(inputs=inp, outputs=out)
-    model.compile(loss="mse",
+    model.compile(loss=config.get("loss", "mse"),
                   optimizer=getattr(tf.keras.optimizers, config.get("optim", "Adam"))
                   (learning_rate=config.get("lr", 0.001)),
                   metrics=[config["metric"]])
@@ -47,7 +54,7 @@ def check_iter_type(obj, type):
 
 
 class VanillaLSTM(KerasBaseModel):
-    def __init__(self, check_optional_config=False):
+    def __init__(self, check_optional_config=False, future_seq_len=1):
         super(VanillaLSTM, self).__init__(model_creator=model_creator,
                                           check_optional_config=check_optional_config)
 
@@ -58,11 +65,13 @@ class VanillaLSTM(KerasBaseModel):
         lstm_name = "lstm_units"
         dropout_name = "dropouts"
         if lstm_name in config:
-            if not check_iter_type(config[lstm_name], int):
-                raise ValueError(f"{lstm_name} should be int or a list of ints")
+            if not check_iter_type(config[lstm_name], (int, np.integer)):
+                raise ValueError(f"{lstm_name} should be int or an list/tuple of ints. "
+                                 f"Got {config[lstm_name]}")
         if dropout_name in config:
-            if not check_iter_type(config[dropout_name], float):
-                raise ValueError(f"{dropout_name} should be float or a list of floats")
+            if not check_iter_type(config[dropout_name], (float, np.float)):
+                raise ValueError(f"{dropout_name} should be float or a list/tuple of floats. "
+                                 f"Got {config[dropout_name]}")
         if lstm_name in config and dropout_name in config:
             if (isinstance(config[lstm_name], int) and isinstance(config[dropout_name], Iterable)) \
                 or (isinstance(config[lstm_name], Iterable) and
