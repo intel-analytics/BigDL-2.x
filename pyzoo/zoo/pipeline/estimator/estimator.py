@@ -27,7 +27,7 @@ class Estimator(JavaValue):
     both local host and distributed spark environment.
     """
 
-    def __init__(self, model, optim_methods=None, model_dir=None, compress_type="no",
+    def __init__(self, model, optim_methods=None, model_dir=None, compress_type="none",
                  jvalue=None, bigdl_type="float"):
         self.bigdl_type = bigdl_type
         self.value = jvalue if jvalue else callZooFunc(

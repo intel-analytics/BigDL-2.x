@@ -23,7 +23,7 @@ fi
 
 ${SPARK_HOME}/bin/${SPARK_CMD} \
     --properties-file ${ANALYTICS_ZOO_CONF} \
-    --jars ${ANALYTICS_ZOO_JAR},/home/yang/sources/bigdl/spark/dl/target/bigdl-0.11.1-jar-with-dependencies.jar \
-    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR},/home/yang/sources/bigdl/spark/dl/target/bigdl-0.11.1-jar-with-dependencies.jar \
-    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR},/home/yang/sources/bigdl/spark/dl/target/bigdl-0.11.1-jar-with-dependencies.jar \
+    --jars ${ANALYTICS_ZOO_JAR} \
+    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     "$@"

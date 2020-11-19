@@ -386,7 +386,7 @@ class TFOptimizer:
 
         self.estimator = Estimator(self.tf_model.training_helper_layer,
                                    self.optim_method,
-                                   self.model_dir, compress_type="no")
+                                   self.model_dir, compress_type="none")
 
         if self.clip_norm:
             self.estimator.set_l2_norm_gradient_clipping(self.clip_norm)
