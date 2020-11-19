@@ -626,9 +626,9 @@ class TestEstimatorForGraph(TestCase):
         from zoo.orca.learn.optimizers.schedule import Plateau
         sgd = SGD(learningrate=0.1,
                   learningrate_schedule=Plateau("score",
-                                               factor=0.1,
-                                               patience=10,
-                                               mode="min", ))
+                                                factor=0.1,
+                                                patience=10,
+                                                mode="min", ))
         est = Estimator.from_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
