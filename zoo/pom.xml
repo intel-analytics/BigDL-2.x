@@ -334,7 +334,9 @@
             <groupId>com.intel.analytics.bigdl</groupId>
             <artifactId>${bigdl.artifactId}</artifactId>
             <version>${bigdl.version}</version>
-            <scope>${bigdl-scope}</scope>
+            <scope>system</scope>
+            <systemPath>/home/yang/sources/bigdl/spark/dl/target/bigdl-0.11.1-jar-with-dependencies.jar</systemPath>
+
         </dependency>
         <dependency>
             <groupId>ml.dmlc</groupId>
