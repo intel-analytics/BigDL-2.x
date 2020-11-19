@@ -599,7 +599,7 @@ class TFKerasWrapper(Estimator):
                                                    model_dir=self.model.model_dir,
                                                    session_config=session_config,
                                                    metrics=self.metrics,
-                                                   optimizer=self.model.optimizer)
+                                                   optimizer=self.optimizer)
 
         if self.load_checkpoint:
             self.tf_optimizer.load_checkpoint(self.checkpoint_path, self.checkpoint_version)
