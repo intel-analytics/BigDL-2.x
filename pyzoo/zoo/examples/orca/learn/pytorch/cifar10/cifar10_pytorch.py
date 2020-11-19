@@ -108,7 +108,7 @@ def main():
     init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores, num_nodes=args.num_nodes, memory=args.memory)
 
     criterion = nn.CrossEntropyLoss()
-    zoo_estimator = Estimator.from_torch(model=model_creator, optimizer=optimizer_creator, loss=criterion, config={}, backend="pytorch")
+    zoo_estimator = Estimator.from_torch(model=model_creator, optimizer=optimizer_creator, loss=criterion, config={}, backend="torch_distributed")
     stats = zoo_estimator.fit(train_data_creator, epochs=args.epochs, batch_size=args.batch_size)
     print("Train stats: {}".format(stats))
     val_stats = zoo_estimator.evaluate(validation_data_creator)
