@@ -138,7 +138,7 @@ class Plateau(Scheduler):
         from bigdl.optim.optimizer import Plateau as BPlateau
 
         self.scheduler = BPlateau(monitor, factor, patience, mode, epsilon,
-                           cooldown, min_lr)
+                                  cooldown, min_lr)
 
     def get_scheduler(self):
         return self.scheduler
@@ -216,4 +216,3 @@ class SequentialSchedule(Scheduler):
         :param max_iteration: iteration numbers this scheduler will run
         """
         return self.get_scheduler().add(scheduler.get_scheduler(), max_iteration)
-
