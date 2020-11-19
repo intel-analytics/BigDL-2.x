@@ -17,6 +17,8 @@ from pyspark.sql import DataFrame
 
 from bigdl.optim.optimizer import MaxEpoch
 from zoo.orca.data.tf.data import Dataset, TFDataDataset2
+from zoo.tfpark.tf_dataset import TFNdarrayDataset
+from zoo.tfpark.model import _standarize_feature_label_dataset
 
 from zoo.orca.learn.tf.utils import *
 from zoo.orca.learn.utils import find_latest_checkpoint, convert_predict_to_xshard
@@ -516,11 +518,11 @@ class TFOptimizerWrapper(Estimator):
 
 class TFKerasWrapper(Estimator):
     def __init__(self, keras_model, metrics, model_dir, optimizer):
-        self.model = KerasModel(keras_model, model_dir)
+        self.model = KerasModel(keras_model, model_dir, optimizer)
         self.load_checkpoint = False
-        self.metrics = metrics
+        if metrics:
+            self.model.add_metric(metrics['tensor'], metrics['name'])
         self.tf_optimizer = None
-        self.optimizer = optimizer
         self.log_dir = None
         self.app_name = None
 
@@ -580,12 +582,14 @@ class TFKerasWrapper(Estimator):
                              hard_code_batch_size=hard_code_batch_size,
                              sequential_order=False, shuffle=True,
                              auto_shard_files=auto_shard_files)
+        if isinstance(dataset, TFNdarrayDataset):
+            dataset = _standarize_feature_label_dataset(dataset, self.model.model)
 
         self.tf_optimizer = TFOptimizer.from_keras(self.model.model, dataset,
                                                    model_dir=self.model.model_dir,
                                                    session_config=session_config,
-                                                   metrics=self.metrics,
-                                                   optimizer=self.optimizer)
+                                                   metrics=self.model.metric_tensors,
+                                                   optimizer=self.model.optimizer)
 
         if self.load_checkpoint:
             self.tf_optimizer.load_checkpoint(self.checkpoint_path, self.checkpoint_version)
