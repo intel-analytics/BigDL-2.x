@@ -15,7 +15,8 @@ It is recommended to use savedModel format, Frozen Graph is also supported.
 * Checkpoint to Frozen Graph:
 ### Data
 To transform following data type to Numpy Ndarray
-* TFDataSet: 
+* TFDataSet: [l08c08_forecasting_with_lstm.py](https:https://github.com/intel-analytics/analytics-zoo/tree/master/docs/docs/ClusterServingGuide/OtherFrameworkUsers/l08c08_forecasting_with_lstm.py)
+* Tokenizer: [l10c03_nlp_constructing_text_generation_model.py](https:https://github.com/intel-analytics/analytics-zoo/tree/master/docs/docs/ClusterServingGuide/OtherFrameworkUsers/l10c03_nlp_constructing_text_generation_model.py) 
 
 ## Pytorch
 
