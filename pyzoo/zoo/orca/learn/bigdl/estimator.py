@@ -15,99 +15,14 @@
 #
 from zoo.pipeline.nnframes import NNEstimator, NNModel
 from zoo.pipeline.estimator import Estimator as SparkEstimator
+from zoo.orca.learn.spark_estimator import Estimator as OrcaSparkEstimator
 from zoo.orca.data import SparkXShards
 from bigdl.optim.optimizer import MaxEpoch
 from zoo.feature.common import FeatureSet
 from pyspark.sql.dataframe import DataFrame
 
 
-class Estimator(object):
-    def fit(self, data, epochs, **kwargs):
-        pass
-
-    def predict(self, data, **kwargs):
-        pass
-
-    def evaluate(self, data, **kwargs):
-        pass
-
-    def get_model(self):
-        pass
-
-    def save(self, model_path):
-        pass
-
-    def load(self, checkpoint):
-        pass
-
-    def set_tensorboard(self, log_dir, app_name):
-        """
-        Set summary information during the training process for visualization purposes.
-        Saved summary can be viewed via TensorBoard.
-        In order to take effect, it needs to be called before fit.
-
-        Training summary will be saved to 'log_dir/app_name/train'
-        and validation summary (if any) will be saved to 'log_dir/app_name/validation'.
-
-        # Arguments
-        :param log_dir: The base directory path to store training and validation logs.
-        :param app_name: The name of the application.
-        """
-        pass
-
-    def clear_gradient_clipping(self):
-        pass
-
-    def set_constant_gradient_clipping(self, min, max):
-        pass
-
-    def set_l2_norm_gradient_clipping(self, clip_norm):
-        pass
-
-    def get_train_summary(self, tag=None):
-        pass
-
-    def get_validation_summary(self, tag=None):
-        pass
-
-    @staticmethod
-    def from_bigdl(*, model, loss=None, optimizer=None, feature_preprocessing=None,
-                   label_preprocessing=None, model_dir=None):
-        """
-        Construct an Estimator with BigDL model, loss function and Preprocessing for feature and
-        label data.
-        :param model: BigDL Model to be trained.
-        :param loss: BigDL criterion.
-        :param optimizer: BigDL optimizer.
-        :param feature_preprocessing: The param converts the data in feature column to a
-               Tensor or to a Sample directly. It expects a List of Int as the size of the
-               converted Tensor, or a Preprocessing[F, Tensor[T]]
-
-               If a List of Int is set as feature_preprocessing, it can only handle the case that
-               feature column contains the following data types:
-               Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The
-               feature data are converted to Tensors with the specified sizes before
-               sending to the model. Internally, a SeqToTensor is generated according to the
-               size, and used as the feature_preprocessing.
-
-               Alternatively, user can set feature_preprocessing as Preprocessing[F, Tensor[T]]
-               that transforms the feature data to a Tensor[T]. Some pre-defined Preprocessing are
-               provided in package zoo.feature. Multiple Preprocessing can be combined as a
-               ChainedPreprocessing.
-
-               The feature_preprocessing will also be copied to the generated NNModel and applied
-               to feature column during transform.
-        :param label_preprocessing: similar to feature_preprocessing, but applies to Label data.
-        :param model_dir: The path to save model. During the training, if checkpoint_trigger is
-            defined and triggered, the model will be saved to model_dir.
-        :return:
-        """
-        return BigDLEstimatorWrapper(model=model, loss=loss, optimizer=optimizer,
-                                     feature_preprocessing=feature_preprocessing,
-                                     label_preprocessing=label_preprocessing, model_dir=model_dir)
-
-
-class BigDLEstimatorWrapper(Estimator):
+class BigDLEstimatorWrapper(OrcaSparkEstimator):
     def __init__(self, *, model, loss, optimizer=None, feature_preprocessing=None,
                  label_preprocessing=None, model_dir=None):
         self.loss = loss

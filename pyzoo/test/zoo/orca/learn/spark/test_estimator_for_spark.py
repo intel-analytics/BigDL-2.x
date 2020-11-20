@@ -26,7 +26,7 @@ from pyspark.sql.context import SQLContext
 import zoo.orca.data.pandas
 from zoo import init_nncontext
 from zoo.orca.data.tf.data import Dataset
-from zoo.orca.learn.tf.estimator import Estimator
+from zoo.orca.learn.spark_estimator import Estimator
 from zoo.util.tf import save_tf_checkpoint, load_tf_checkpoint, get_checkpoint_state
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
@@ -64,7 +64,7 @@ class TestEstimatorForGraph(TestCase):
 
         data_shard = data_shard.transform_shard(transform)
 
-        est = Estimator.from_graph(
+        est = Estimator.from_tf_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
             outputs=[model.logits],
@@ -106,7 +106,7 @@ class TestEstimatorForGraph(TestCase):
 
         data_shard = data_shard.transform_shard(transform)
 
-        est = Estimator.from_graph(
+        est = Estimator.from_tf_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
             loss=model.loss,
@@ -134,7 +134,7 @@ class TestEstimatorForGraph(TestCase):
 
         data_shard = data_shard.transform_shard(transform)
 
-        est = Estimator.from_graph(
+        est = Estimator.from_tf_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
             loss=model.loss,
@@ -152,7 +152,7 @@ class TestEstimatorForGraph(TestCase):
         file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
-        est = Estimator.from_graph(
+        est = Estimator.from_tf_graph(
             inputs=[model.user, model.item],
             outputs=[model.logits])
 
@@ -183,7 +183,7 @@ class TestEstimatorForGraph(TestCase):
 
         data_shard = data_shard.transform_shard(transform)
 
-        est = Estimator.from_graph(
+        est = Estimator.from_tf_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
             loss=model.loss,
@@ -195,7 +195,7 @@ class TestEstimatorForGraph(TestCase):
                 epochs=10,
                 validation_data=data_shard)
 
-        est = Estimator.from_graph(
+        est = Estimator.from_tf_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
             loss=model.loss,
@@ -228,7 +228,7 @@ class TestEstimatorForGraph(TestCase):
         temp = tempfile.mkdtemp()
         model_dir = os.path.join(temp, "test_model")
 
-        est = Estimator.from_graph(
+        est = Estimator.from_tf_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
             loss=model.loss,
@@ -248,7 +248,7 @@ class TestEstimatorForGraph(TestCase):
 
         model = SimpleModel()
 
-        est = Estimator.from_graph(
+        est = Estimator.from_tf_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
             loss=model.loss,
@@ -287,7 +287,7 @@ class TestEstimatorForGraph(TestCase):
         data_shard = data_shard.transform_shard(transform)
         dataset = Dataset.from_tensor_slices(data_shard)
 
-        est = Estimator.from_graph(
+        est = Estimator.from_tf_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
             loss=model.loss,
@@ -308,7 +308,7 @@ class TestEstimatorForGraph(TestCase):
         file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
         data_shard = zoo.orca.data.pandas.read_csv(file_path)
 
-        est = Estimator.from_graph(
+        est = Estimator.from_tf_graph(
             inputs=[model.user, model.item],
             outputs=[model.logits])
 
@@ -332,7 +332,7 @@ class TestEstimatorForGraph(TestCase):
         sqlcontext = SQLContext(sc)
         df = sqlcontext.read.csv(file_path, header=True, inferSchema=True)
 
-        est = Estimator.from_graph(
+        est = Estimator.from_tf_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
             outputs=[model.logits],
@@ -365,7 +365,7 @@ class TestEstimatorForGraph(TestCase):
         sqlcontext = SQLContext(sc)
         df = sqlcontext.read.csv(file_path, header=True, inferSchema=True)
 
-        est = Estimator.from_graph(
+        est = Estimator.from_tf_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
             outputs=[model.logits],
@@ -425,7 +425,7 @@ class TestEstimatorForGraph(TestCase):
 
         dataset = dataset_creator()
 
-        est = Estimator.from_graph(
+        est = Estimator.from_tf_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
             outputs=[model.logits],
@@ -481,7 +481,7 @@ class TestEstimatorForGraph(TestCase):
         # only set model dir, summary generated under model dir
         model_dir = os.path.join(temp, "test_model")
 
-        est = Estimator.from_graph(
+        est = Estimator.from_tf_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
             loss=model.loss,
@@ -513,7 +513,7 @@ class TestEstimatorForGraph(TestCase):
         assert len(val_scores) > 0
 
         # no model dir, no tensorboard dir, no summary saved
-        est2 = Estimator.from_graph(
+        est2 = Estimator.from_tf_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
             loss=model.loss,
@@ -552,7 +552,7 @@ class TestEstimatorForGraph(TestCase):
 
         data_shard = data_shard.transform_shard(transform)
 
-        est = Estimator.from_graph(
+        est = Estimator.from_tf_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
             outputs=[model.logits],
@@ -580,7 +580,7 @@ class TestEstimatorForGraph(TestCase):
             saver = tf.train.Saver(tf.global_variables())
             saver.restore(sess, model_checkpoint)
 
-            est = Estimator.from_graph(
+            est = Estimator.from_tf_graph(
                 inputs=[model.user, model.item],
                 labels=[model.label],
                 outputs=[model.logits],
@@ -628,7 +628,7 @@ class TestEstimatorForGraph(TestCase):
                                                factor=0.1,
                                                patience=10,
                                                mode="min", ))
-        est = Estimator.from_graph(
+        est = Estimator.from_tf_graph(
             inputs=[model.user, model.item],
             labels=[model.label],
             outputs=[model.logits],

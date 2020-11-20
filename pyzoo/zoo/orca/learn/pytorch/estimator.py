@@ -15,11 +15,10 @@
 #
 from zoo.pipeline.estimator.estimator import Estimator as SparkEstimator
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
+from zoo.orca.learn.spark_estimator import Estimator as OrcaSparkEstimator
 from zoo.orca.data import SparkXShards
 from bigdl.optim.optimizer import MaxEpoch
 from zoo.feature.common import FeatureSet
-
-import torch
 from torch.optim.optimizer import Optimizer as TorchOptimizer
 from torch.utils.data import DataLoader
 
@@ -195,7 +194,7 @@ class PyTorchRayEstimatorWrapper(Estimator):
         return self.estimator.shutdown(force=force)
 
 
-class PytorchSparkEstimatorWrapper(Estimator):
+class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
     def __init__(self, model, loss, optimizer, model_dir=None, bigdl_type="float"):
         from zoo.pipeline.api.torch import TorchModel, TorchLoss, TorchOptim
         self.loss = loss
@@ -208,6 +207,8 @@ class PytorchSparkEstimatorWrapper(Estimator):
             optimizer = SGD()
         elif isinstance(optimizer, TorchOptimizer):
             optimizer = TorchOptim.from_pytorch(optimizer)
+        self.log_dir = None
+        self.app_name = None
         self.model_dir = model_dir
         self.model = TorchModel.from_pytorch(model)
         self.estimator = SparkEstimator(self.model, optimizer, model_dir, bigdl_type=bigdl_type)
@@ -222,6 +223,9 @@ class PytorchSparkEstimatorWrapper(Estimator):
         assert batch_size > 0, "batch_size should be greater than 0"
         validation_methods = Metrics.convert_metrics_list(validation_methods)
         checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
+
+        if self.log_dir is not None and self.app_name is not None:
+            self.estimator.set_tensorboad(self.log_dir, self.app_name)
 
         if isinstance(data, SparkXShards):
             train_rdd = data.rdd.flatMap(to_sample)
@@ -274,7 +278,7 @@ class PytorchSparkEstimatorWrapper(Estimator):
     def get_model(self):
         return self.model.to_pytorch()
 
-    def save(self, checkpoint):
+    def save(self, model_path):
         pass
 
     def load(self, checkpoint, loss=None):
@@ -296,8 +300,15 @@ class PytorchSparkEstimatorWrapper(Estimator):
                              "and checkpoint type.")
         self.estimator = SparkEstimator(self.model, optimizer, self.model_dir)
 
-    def shutdown(self, force=False):
-        pass
+    def get_train_summary(self, tag=None):
+        return self.estimator.get_train_summary(tag=tag)
+
+    def get_validation_summary(self, tag=None):
+        return self.estimator.get_validation_summary(tag=tag)
+
+    def set_tensorboard(self, log_dir, app_name):
+        self.log_dir = log_dir
+        self.app_name = app_name
 
     def clear_gradient_clipping(self):
         """
