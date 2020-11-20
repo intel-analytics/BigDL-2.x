@@ -94,7 +94,7 @@ class BasePredictor(object):
         self._check_df(input_df)
         if validation_df is not None:
             self._check_df(validation_df)
-        BasePredictor._check_fit_metric(metric)
+        # BasePredictor._check_fit_metric(metric)
         if distributed:
             if hdfs_url is not None:
                 remote_dir = os.path.join(hdfs_url, "ray_results", self.name)
@@ -159,7 +159,10 @@ class BasePredictor(object):
                    resources_per_trial,
                    remote_dir):
         ft = self.create_feature_transformer()
-        feature_list = ft.get_feature_list()
+        try:
+            feature_list = ft.get_feature_list()
+        except:
+            feature_list = None
 
         model_fn = partial(self.create_model, resources_per_trial=resources_per_trial)
 

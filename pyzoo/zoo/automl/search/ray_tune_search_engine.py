@@ -128,6 +128,8 @@ class RayTuneSearchEngine(SearchEngine):
                 raise ValueError(f"search_alg should be of type str."
                                  f" Got {search_alg.__class__.__name__}")
             search_alg = search_alg.lower()
+            if search_alg_params is None:
+                search_alg_params = dict()
             if search_alg not in SEARCH_ALG_ALLOWED:
                 raise ValueError(f"search_alg must be one of {SEARCH_ALG_ALLOWED}. "
                                  f"Got: {search_alg}")
@@ -156,6 +158,8 @@ class RayTuneSearchEngine(SearchEngine):
             if not isinstance(scheduler, str):
                 raise ValueError(f"Scheduler should be of type str. "
                                  f"Got {scheduler.__class__.__name__}")
+            if scheduler_params is None:
+                scheduler_params = dict()
             scheduler_params.update(dict(
                 time_attr="training_iteration",
                 metric="reward_metric",
