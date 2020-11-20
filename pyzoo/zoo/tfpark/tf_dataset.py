@@ -663,6 +663,21 @@ class TFDataset(object):
                                 sequential_order, shuffle)
 
 
+def _tf_get_types(dataset):
+    import tensorflow as tf
+    return tf.compat.v1.data.get_output_types(dataset)
+
+
+def _tf_get_shapes(dataset):
+    import tensorflow as tf
+    return tf.compat.v1.data.get_output_shapes(dataset)
+
+
+def _tf_make_iterator(dataset):
+    import tensorflow as tf
+    return tf.compat.v1.data.make_initializable_iterator(dataset)
+
+
 class TFDataDataset(TFDataset):
     def get_num_partitions(self):
         # only called in inference case
@@ -735,17 +750,17 @@ class TFDataDataset(TFDataset):
             from tensorflow.python.keras.engine import training_utils
             training_utils.verify_dataset_shuffled(tf_data_dataset)
 
-        flatten_shapes = nest.flatten(tf.compat.v1.data.get_output_shapes(tf_data_dataset))
+        flatten_shapes = nest.flatten(_tf_get_shapes(tf_data_dataset))
         if batch_outside:
             flatten_shapes = [shape[1:] for shape in flatten_shapes]
 
-        flatten_types = nest.flatten(tf.compat.v1.data.get_output_types(tf_data_dataset))
+        flatten_types = nest.flatten(_tf_get_types(tf_data_dataset))
 
         flatten_tensor_structure = [TensorMeta(dtype=flatten_types[i],
                                                shape=list(flatten_shapes[i]),
                                                name="zoo_input_{}".format(i))
                                     for i in range(len(flatten_shapes))]
-        structure = tf.compat.v1.data.get_output_types(tf_data_dataset)
+        structure = _tf_get_types(tf_data_dataset)
         if isinstance(structure, tf.DType):
             structure = (structure,)
         tensor_structure = nest.pack_sequence_as(structure,
@@ -807,11 +822,10 @@ class TFDataDataset(TFDataset):
 
         self.shard_index = shard_index
         self.train_dataset = tf_data_dataset
-        self.train_iterator = tf.compat.v1.data.make_initializable_iterator(self.train_dataset)
+        self.train_iterator = _tf_make_iterator(self.train_dataset)
         self.train_next_ops = nest.flatten(self.train_iterator.get_next())
         self.output_types = [t.as_datatype_enum
-                             for t in nest.flatten(
-                tf.compat.v1.data.get_output_types(self.train_dataset))]
+                             for t in nest.flatten(_tf_get_types(self.train_dataset))]
 
         self.validation_dataset = validation_dataset
         self.validation_iterator = None
@@ -820,7 +834,7 @@ class TFDataDataset(TFDataset):
         self._train_init_op_name = self.train_iterator.initializer.name
         self._train_output_names = [op.name for op in self.train_next_ops]
         if validation_dataset is not None:
-            self.validation_iterator = tf.compat.v1.data.make_initializable_iterator(
+            self.validation_iterator = _tf_make_iterator(
                 self.validation_dataset)
             self.validation_next_ops = nest.flatten(self.validation_iterator.get_next())
             self._val_init_op_name = self.validation_iterator.initializer.name
