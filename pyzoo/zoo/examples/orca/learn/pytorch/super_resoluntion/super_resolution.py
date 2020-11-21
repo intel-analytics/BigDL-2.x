@@ -30,6 +30,39 @@ from torchvision.transforms import Compose, CenterCrop, ToTensor, Resize
 from zoo.orca.learn.pytorch import Estimator
 from zoo.orca import init_orca_context, stop_orca_context
 
+import urllib
+import tarfile
+from os import makedirs, remove
+from os.path import exists, join, basename
+
+
+def download_report(count, block_size, total_size):
+    downloaded = count * block_size
+    percent = 100. * downloaded / total_size
+    percent = min(100, percent)
+    print('downloaded %d, %.2f%% completed' % (downloaded, percent))
+
+
+def download_bsd300(dest="dataset"):
+    output_image_dir = join(dest, "BSDS300/images")
+
+    if not exists(output_image_dir):
+        makedirs(dest)
+        url = "http://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/BSDS300-images.tgz"
+        print("downloading url ", url)
+
+        file_path = join(dest, basename(url))
+        urllib.request.urlretrieve(url, file_path, download_report)
+
+        print("Extracting data")
+        with tarfile.open(file_path) as tar:
+            for item in tar:
+                tar.extract(item, dest)
+
+        remove(file_path)
+
+    return output_image_dir
+
 
 def is_image_file(filename):
     return any(filename.endswith(extension) for extension in [".png", ".jpg", ".jpeg"])
@@ -65,8 +98,8 @@ class DatasetFromFolder(data.Dataset):
         return len(self.image_filenames)
 
 
-def get_training_set(upscale_factor, dir):
-    root_dir = join(dir, "BSDS300/images")
+def get_training_set(upscale_factor, dir, isDownload):
+    root_dir = download_bsd300(dir) if isDownload else join(dir, "BSDS300/images")
     print("root dir is " + root_dir)
     train_dir = join(root_dir, "train")
     crop_size = 256 - (256 % upscale_factor)
@@ -124,7 +157,8 @@ class Net(nn.Module):
 
 
 def train_data_creator(config):
-    train_set = get_training_set(config.get("upscale_factor", 3), config.get("dataset", "dataset"))
+    train_set = get_training_set(config.get("upscale_factor", 3), config.get("dataset", "dataset"),
+                                 config.get("download", False))
     training_data_loader = DataLoader(dataset=train_set,
                                       num_workers=4,
                                       batch_size=config.get('batchSize', 64),
@@ -156,10 +190,11 @@ def train(opt):
     if opt.cluster_mode == "local":
         init_orca_context(cores=1, memory="20g")
     elif opt.cluster_mode == "yarn":
+        additional = "" if opt.download else "BSDS300.zip#dataset"
         init_orca_context(
             cluster_mode="yarn-client", cores=opt.cores, num_nodes=opt.num_nodes, memory=opt.memory,
             driver_memory="10g", driver_cores=1,
-            additional_archive="dataset.zip#dataset")
+            additional_archive=additional)
     else:
         print("init orca context failed")
 
@@ -175,6 +210,7 @@ def train(opt):
             "batchSize": opt.batchSize,
             "testBatchSize": opt.testBatchSize,
             "dataset": opt.dataset,
+            "download": opt.download
         }
     )
 
@@ -197,8 +233,8 @@ def train(opt):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='PyTorch Super Res Example')
     parser.add_argument('--cluster_mode', type=str, default='local', help='The mode of spark cluster.')
-    parser.add_argument("--num_nodes", type=int, default=1,help="The number of nodes to be used in the cluster. "
-                             "You can change it depending on your own cluster setting.")
+    parser.add_argument("--num_nodes", type=int, default=1, help="The number of nodes to be used in the cluster. "
+                                                                 "You can change it depending on your own cluster setting.")
     parser.add_argument("--cores", type=int, default=4,
                         help="The number of cpu cores you want to use on each node. ")
     parser.add_argument("--memory", type=str, default="2g",
@@ -207,9 +243,10 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=2, help='number of epochs to train for')
     parser.add_argument('--batchSize', type=int, default=16, help='training batch size')
     parser.add_argument('--testBatchSize', type=int, default=100, help='testing batch size')
-    parser.add_argument('--upscale_factor', type=int, default=3,  help="super resolution upscale factor")
+    parser.add_argument('--upscale_factor', type=int, default=3, help="super resolution upscale factor")
     parser.add_argument('--dataset', type=str, default='./dataset', help='The dir of dataset.')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate. Default=0.01')
+    parser.add_argument('--download', action="store_true", default=False, help="Auto download dataset.")
     opt = parser.parse_args()
 
     train(opt)
