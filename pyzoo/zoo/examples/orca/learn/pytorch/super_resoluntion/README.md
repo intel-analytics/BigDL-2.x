@@ -11,7 +11,7 @@ This is an example to show you how to use analytics-zoo orca PyTorch Estimator t
 * PIL 8.0.0
 
 ## Prepare environments
-We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the enviroments, especially if you want to run on a yarn cluster(yarn-client mode only).
+We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the environments, especially if you want to run on a yarn cluster(yarn-client mode only).
 ```
 conda create -n zoo python=3.7 #zoo is conda enviroment name, you can set another name you like.
 conda activate zoo
@@ -23,7 +23,8 @@ conda install pytorch torchvision -c pytorch #command for macOS
 ```
 
 ## Prepare Dataset
-If your nodes can access internet, run the `prepare_dataset.sh` to prepare dataset automatically.
+You can specify runtime parameter `--download` in parser, then dataset will be auto-downloaded in each node.
+If your yarn nodes can't access internet, run the `prepare_dataset.sh` to prepare dataset automatically.
 ```
 bash prepare_dataset.sh
 ```
@@ -39,7 +40,7 @@ python super_resolution.py --upscale_factor 3 --cluster_mode local
 
 - Run with Yarn Client mode:
 ```bash
-python super_resolution.py --upscale_factor 3 --cluster_mode yarn --num_nodes 4 --dataset ./dataset/dataset
+python super_resolution.py --upscale_factor 3 --cluster_mode yarn --num_nodes 4 --download
 ```
 
 In above commands
@@ -53,3 +54,4 @@ In above commands
 * --num_nodes: The number of nodes to be used in the cluster. Default is 1.
 * --cores:The number of cpu cores you want to use on each node. Default is 4.
 * --memory:The memory you want to use on each node. Default is 2g.
+* --download: Auto-download dataset if you don't want to use `prepare_dataset.sh`. Default is False.

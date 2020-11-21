@@ -16,9 +16,11 @@
 
 from __future__ import print_function
 import argparse
-from os import listdir
-from os.path import join
 from PIL import Image
+import urllib
+import tarfile
+from os import makedirs, remove, listdir
+from os.path import exists, join, basename
 
 import torch.nn as nn
 import torch.optim as optim
@@ -30,10 +32,6 @@ from torchvision.transforms import Compose, CenterCrop, ToTensor, Resize
 from zoo.orca.learn.pytorch import Estimator
 from zoo.orca import init_orca_context, stop_orca_context
 
-import urllib
-import tarfile
-from os import makedirs, remove
-from os.path import exists, join, basename
 
 
 def download_report(count, block_size, total_size):
@@ -190,7 +188,7 @@ def train(opt):
     if opt.cluster_mode == "local":
         init_orca_context(cores=1, memory="20g")
     elif opt.cluster_mode == "yarn":
-        additional = "" if opt.download else "BSDS300.zip#dataset"
+        additional = "" if opt.download else "BSDS300.zip#"+opt.dataset
         init_orca_context(
             cluster_mode="yarn-client", cores=opt.cores, num_nodes=opt.num_nodes, memory=opt.memory,
             driver_memory="10g", driver_cores=1,
@@ -244,7 +242,7 @@ if __name__ == '__main__':
     parser.add_argument('--batchSize', type=int, default=16, help='training batch size')
     parser.add_argument('--testBatchSize', type=int, default=100, help='testing batch size')
     parser.add_argument('--upscale_factor', type=int, default=3, help="super resolution upscale factor")
-    parser.add_argument('--dataset', type=str, default='./dataset', help='The dir of dataset.')
+    parser.add_argument('--dataset', type=str, default='dataset', help='The dir of dataset.')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate. Default=0.01')
     parser.add_argument('--download', action="store_true", default=False, help="Auto download dataset.")
     opt = parser.parse_args()
