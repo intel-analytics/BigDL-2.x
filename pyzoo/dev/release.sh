@@ -103,7 +103,7 @@ if [ ${upload} == true ]; then
 fi
 # build and upload serving wheel
 cd ${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving
-python setup.py bdist_wheel
+python setup.py bdist_wheel --universal
 
 if [ -d "${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/build" ]; then
    echo "Removing serving/build"
