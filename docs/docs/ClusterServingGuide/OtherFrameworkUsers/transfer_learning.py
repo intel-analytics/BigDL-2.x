@@ -26,7 +26,7 @@ test_generator = test_datagen.flow_from_directory(
                 class_mode='binary')
 
 # Convert the next data of ImageDataGenerator to ndarray
-def convertToNarray(ImageGenerator):
+def convert_to_ndarray(ImageGenerator):
     return ImageGenerator.next()[0]
 
 # Load model from its path
@@ -35,6 +35,6 @@ model=tf.keras.models.load_model("path/to/model")
 # Convert each image in test_generator to ndarray and predict with model
 max_length=test_generator.__len__()
 for i in range(max_length): # number of image to predict can be altered
-    test_input=convertToNarray(test_generator)
+    test_input=convert_to_ndarray(test_generator)
     prediction=model.predict(test_input)
 
