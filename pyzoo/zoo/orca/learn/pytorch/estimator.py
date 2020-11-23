@@ -300,6 +300,36 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
                              "and checkpoint type.")
         self.estimator = SparkEstimator(self.model, optimizer, self.model_dir)
 
+    def load_orca_checkpoint(self, path, version, prefix=None):
+        import os
+        from bigdl.nn.layer import Model
+        from bigdl.optim.optimizer import OptimMethod
+        assert prefix is not None, "You should provide optimMethod prefix, " \
+                                   "for example 'optimMethod-TorchModelf53bddcc'"
+        try:
+            self.model = Model.load(os.path.join(path, "model.{}".format(version)))
+            optimizer = OptimMethod.load(os.path.join(path, "{}.{}".format(prefix, version)))
+        except Exception:
+            raise ValueError("Cannot load PyTorch checkpoint, please check your checkpoint path "
+                             "and checkpoint type.")
+        self.estimator = SparkEstimator(self.model, optimizer, self.model_dir)
+
+    def load_latest_orca_checkpoint(self, path):
+        from zoo.orca.learn.utils import find_latest_checkpoint
+        from bigdl.nn.layer import Model
+        from bigdl.optim.optimizer import OptimMethod
+        import os
+        path, prefix, version = find_latest_checkpoint(path, model_type="pytorch")
+        if path is None:
+            raise ValueError("Cannot find PyTorch checkpoint, please check your checkpoint path.")
+        try:
+            self.model = Model.load(os.path.join(path, "model.{}".format(version)))
+            optimizer = OptimMethod.load(os.path.join(path, "{}.{}".format(prefix, version)))
+        except Exception:
+            raise ValueError("Cannot load PyTorch checkpoint, please check your checkpoint path "
+                             "and checkpoint type.")
+        self.estimator = SparkEstimator(self.model, optimizer, self.model_dir)
+
     def get_train_summary(self, tag=None):
         return self.estimator.get_train_summary(tag=tag)
 
