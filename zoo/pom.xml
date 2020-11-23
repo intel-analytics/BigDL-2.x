@@ -698,18 +698,6 @@
                     </execution>
 
                     <execution>
-                        <id>serving</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>serving</shadedClassifierName>
-                        </configuration>
-                    </execution>
-
-                    <execution>
                         <id>without-spark</id>
                         <phase>package</phase>
                         <goals>
