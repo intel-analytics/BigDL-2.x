@@ -1,3 +1,5 @@
+# Related url: https://github.com/tensorflow/docs/blob/master/site/en/r1/tutorials/images/transfer_learning.ipynb
+# Categorize image to cat or dog   
 import os
 import tensorflow.compat.v1 as tf
 from tensorflow import keras
