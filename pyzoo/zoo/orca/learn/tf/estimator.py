@@ -118,7 +118,7 @@ class Estimator(object):
         model = load_from_file(load_func, path)
         return Estimator.from_keras(keras_model=model)
 
-        
+
 def is_tf_data_dataset(data):
     is_dataset = isinstance(data, tf.data.Dataset)
     is_dataset_v2 = isinstance(data, tf.python.data.ops.dataset_ops.DatasetV2)

@@ -310,4 +310,3 @@ class Estimator(ABC):
 
         model = load_from_file(load_func, path)
         return Estimator.from_keras(keras_model=model)
-
