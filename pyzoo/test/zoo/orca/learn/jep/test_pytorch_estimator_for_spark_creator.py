@@ -22,7 +22,7 @@ import torch.nn as nn
 from torch.utils.data import TensorDataset
 
 from zoo.orca import init_orca_context, stop_orca_context
-from zoo.orca.learn.pytorch import Estimator
+from zoo.orca.learn.spark_estimator import Estimator
 from zoo.orca.learn.metrics import Accuracy
 from zoo.orca.learn.trigger import EveryEpoch
 from bigdl.optim.optimizer import Adam

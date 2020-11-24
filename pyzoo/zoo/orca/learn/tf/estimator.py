@@ -29,6 +29,71 @@ from zoo.util.tf import save_tf_checkpoint
 from zoo.orca.learn.spark_estimator import Estimator as SparkEstimator
 
 
+class Estimator(object):
+    @staticmethod
+    def from_graph(*, inputs, outputs=None,
+                   labels=None, loss=None, optimizer=None,
+                   clip_norm=None, clip_value=None,
+                   metrics=None, updates=None,
+                   sess=None, model_dir=None, backend="bigdl"):
+        """
+        Create an Estimator for tesorflow graph.
+        :param inputs: input tensorflow tensors.
+        :param outputs: output tensorflow tensors.
+        :param labels: label tensorflow tensors.
+        :param loss: The loss tensor of the TensorFlow model, should be a scalar
+        :param optimizer: tensorflow optimization method.
+        :param clip_norm: float >= 0. Gradients will be clipped when their L2 norm exceeds
+        this value.
+        :param clip_value:  a float >= 0 or a tuple of two floats.
+        If clip_value is a float, gradients will be clipped when their absolute value
+        exceeds this value.
+        If clip_value is a tuple of two floats, gradients will be clipped when their value less
+        than clip_value[0] or larger than clip_value[1].
+        :param metrics: metric tensor.
+        :param sess: the current TensorFlow Session, if you want to used a pre-trained model,
+        you should use the Session to load the pre-trained variables and pass it to estimator
+        :param model_dir: location to save model checkpoint and summaries.
+        :param backend: backend for estimator. Now it only can be "bigdl".
+        :return: an Estimator object.
+        """
+        import warnings
+        warnings.warn("This method will be deprecated, please "
+                      "from zoo.orca.learn.spark_estimator import Estimator and use "
+                      "Estimator.from_tf_graph instead", DeprecationWarning)
+        assert backend == "bigdl", "only bigdl backend is supported for now"
+        return TFOptimizerWrapper(inputs=inputs,
+                                  outputs=outputs,
+                                  labels=labels,
+                                  loss=loss,
+                                  optimizer=optimizer,
+                                  clip_norm=clip_norm,
+                                  clip_value=clip_value,
+                                  metrics=metrics, updates=updates,
+                                  sess=sess,
+                                  model_dir=model_dir
+                                  )
+
+    @staticmethod
+    def from_keras(keras_model, metrics=None, model_dir=None, optimizer=None, backend="bigdl"):
+        """
+        Create an Estimator from a tensorflow.keras model. The model must be compiled.
+        :param keras_model: the tensorflow.keras model, which must be compiled.
+        :param metrics: user specified metric.
+        :param model_dir: location to save model checkpoint and summaries.
+        :param optimizer: an optional bigdl optimMethod that will override the optimizer in
+                          keras_model.compile
+        :param backend: backend for estimator. Now it only can be "bigdl".
+        :return: an Estimator object.
+        """
+        import warnings
+        warnings.warn("This method will be deprecated, please "
+                      "from zoo.orca.learn.spark_estimator import Estimator and use "
+                      "Estimator.from_keras instead", DeprecationWarning)
+        assert backend == "bigdl", "only bigdl backend is supported for now"
+        return TFKerasWrapper(keras_model, metrics, model_dir, optimizer)
+
+
 def is_tf_data_dataset(data):
     is_dataset = isinstance(data, tf.data.Dataset)
     is_dataset_v2 = isinstance(data, tf.python.data.ops.dataset_ops.DatasetV2)

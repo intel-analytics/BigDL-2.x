@@ -72,6 +72,10 @@ class Estimator(object):
                                               workers_per_node=workers_per_node,
                                               backend=backend)
         elif backend == "bigdl":
+            import warnings
+            warnings.warn("This method will be deprecated, please "
+                          "from zoo.orca.learn.spark_estimator import Estimator and use "
+                          "Estimator.from_torch instead", DeprecationWarning)
             return PytorchSparkEstimatorWrapper(model=model,
                                                 loss=loss,
                                                 optimizer=optimizer,
@@ -283,22 +287,13 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
 
     def load(self, checkpoint, loss=None):
         from zoo.orca.learn.utils import find_latest_checkpoint
-        from bigdl.nn.layer import Model
-        from bigdl.optim.optimizer import OptimMethod
-        import os
         if loss is not None:
             from zoo.pipeline.api.torch import TorchLoss
             self.loss = TorchLoss.from_pytorch(loss)
         path, prefix, version = find_latest_checkpoint(checkpoint, model_type="pytorch")
         if path is None:
             raise ValueError("Cannot find PyTorch checkpoint, please check your checkpoint path.")
-        try:
-            self.model = Model.load(os.path.join(path, "model.{}".format(version)))
-            optimizer = OptimMethod.load(os.path.join(path, "{}.{}".format(prefix, version)))
-        except Exception:
-            raise ValueError("Cannot load PyTorch checkpoint, please check your checkpoint path "
-                             "and checkpoint type.")
-        self.estimator = SparkEstimator(self.model, optimizer, self.model_dir)
+        self.load_orca_checkpoint(path, version=version, prefix=prefix)
 
     def load_orca_checkpoint(self, path, version, prefix=None):
         import os
@@ -315,20 +310,7 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
         self.estimator = SparkEstimator(self.model, optimizer, self.model_dir)
 
     def load_latest_orca_checkpoint(self, path):
-        from zoo.orca.learn.utils import find_latest_checkpoint
-        from bigdl.nn.layer import Model
-        from bigdl.optim.optimizer import OptimMethod
-        import os
-        path, prefix, version = find_latest_checkpoint(path, model_type="pytorch")
-        if path is None:
-            raise ValueError("Cannot find PyTorch checkpoint, please check your checkpoint path.")
-        try:
-            self.model = Model.load(os.path.join(path, "model.{}".format(version)))
-            optimizer = OptimMethod.load(os.path.join(path, "{}.{}".format(prefix, version)))
-        except Exception:
-            raise ValueError("Cannot load PyTorch checkpoint, please check your checkpoint path "
-                             "and checkpoint type.")
-        self.estimator = SparkEstimator(self.model, optimizer, self.model_dir)
+        self.load(checkpoint=path)
 
     def get_train_summary(self, tag=None):
         return self.estimator.get_train_summary(tag=tag)

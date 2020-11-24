@@ -22,7 +22,7 @@ import torch.nn.functional as F
 
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.data.pandas import read_csv
-from zoo.orca.learn.pytorch import Estimator
+from zoo.orca.learn.spark_estimator import Estimator
 from zoo.orca.learn.metrics import Accuracy
 from zoo.orca.learn.trigger import EveryEpoch
 from bigdl.optim.optimizer import SGD
