@@ -46,7 +46,7 @@ class BaseModel(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def predict(self, x, mc=False):
+    def predict(self, x):
         """
         Prediction.
         :param x: input
@@ -55,22 +55,20 @@ class BaseModel(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def save(self, model_path, config_path, **config):
+    def save(self, checkpoint_file):
         """
         save model to file.
-        :param model_path: the model file path to be saved to.
-        :param config_path: the config file path to be saved to.
+        :param checkpoint_file: checkpoint file name to be saved to.
         :return:
         """
         pass
 
     @abstractmethod
-    def restore(self, model_path, **config):
+    def restore(self, checkpoint_file):
         """
-        restore model from model file and config.
-        :param model_path: the model file
-        :param config: the config
-        :return: the restored model
+        restore model from model file.
+        :param checkpoint_file: checkpoint file name to restore from.
+        :return:
         """
         pass
 

@@ -18,7 +18,6 @@
         <java.version>1.7</java.version>
         <javac.version>1.7</javac.version>
         <spark-scope>provided</spark-scope>
-        <flink-scope>provided</flink-scope>
         <bigdl-scope>compile</bigdl-scope>
 
         <scala-library-scope>provided</scala-library-scope>
@@ -29,7 +28,7 @@
         <spark.version>2.4.3</spark.version>
         <bigdl.version>0.11.1</bigdl.version>
         <core.artifactId>zoo-core-dist-all</core.artifactId>
-        <core.dependencyType>pom</core.dependencyType>
+        <core.dependencyType>jar</core.dependencyType>
         <data-store-url>http://download.tensorflow.org</data-store-url>
         <inner-ftp-uri>http://10.239.45.10:8081/repository/raw</inner-ftp-uri>
         <tf-shade>bushade</tf-shade>
@@ -109,8 +108,6 @@
                 <scala.version>2.11.8</scala.version>
                 <scala.macros.version>2.1.0</scala.macros.version>
                 <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
-                <scala-library-scope>compile</scala-library-scope>
-                <spark-scope>compile</spark-scope>
             </properties>
             <dependencies>
                 <dependency>
@@ -156,6 +153,7 @@
             <id>all-in-one</id>
             <properties>
                 <spark-scope>compile</spark-scope>
+                <scala-library-scope>compile</scala-library-scope>
             </properties>
         </profile>
 
@@ -701,18 +699,6 @@
                     </execution>
 
                     <execution>
-                        <id>serving</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>serving</shadedClassifierName>
-                        </configuration>
-                    </execution>
-
-                    <execution>
                         <id>without-spark</id>
                         <phase>package</phase>
                         <goals>
@@ -721,19 +707,6 @@
                         <configuration>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>jar-with-dependencies</shadedClassifierName>
-                            <artifactSet>
-                                <excludes>
-                                    <exclude>org.apache.flink:*</exclude>
-                                    <exclude>org.apache.spark:*</exclude>
-                                    <exclude>org.apache.hadoop:*</exclude>
-                                    <exclude>org.apache.parquet:*</exclude>
-                                    <exclude>org.scala-lang:scala-compiler</exclude>
-                                    <exclude>org.scala-lang:scala-reflect</exclude>
-                                    <exclude>org.scala-lang:scala-library</exclude>
-                                    <exclude>org.scala-lang:scala-actors</exclude>
-                                    <exclude>org.scala-lang:scalap</exclude>
-                                </excludes>
-                            </artifactSet>
                         </configuration>
                     </execution>
 
@@ -760,14 +733,6 @@
                             </transformers>
                             <artifactSet>
                                 <excludes>
-                                    <exclude>org.apache.flink:*</exclude>
-                                    <exclude>org.apache.spark:*</exclude>
-                                    <exclude>org.apache.hadoop:*</exclude>
-                                    <exclude>org.apache.parquet:*</exclude>
-                                    <exclude>org.scala-lang:scala-compiler</exclude>
-                                    <exclude>org.scala-lang:scala-reflect</exclude>
-                                    <exclude>org.scala-lang:scala-actors</exclude>
-                                    <exclude>org.scala-lang:scalap</exclude>
                                     <exclude>com.intel.analytics.bigdl:bigdl-SPARK_2.4</exclude>
                                     <exclude>ml.dmlc:xgboost4j</exclude>
                                     <exclude>org.spark-project.spark:unused</exclude>
