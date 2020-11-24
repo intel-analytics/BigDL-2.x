@@ -153,6 +153,7 @@
             <id>all-in-one</id>
             <properties>
                 <spark-scope>compile</spark-scope>
+                <scala-library-scope>compile</scala-library-scope>
             </properties>
         </profile>
 
