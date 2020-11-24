@@ -17,7 +17,7 @@ import argparse
 
 import tensorflow as tf
 import tensorflow_datasets as tfds
-from zoo.orca.learn.tf.estimator import Estimator
+from zoo.orca.learn.spark_estimator import Estimator
 from zoo.orca import init_orca_context, stop_orca_context
 
 
@@ -64,12 +64,12 @@ def main(max_epoch, dataset_dir):
     acc = accuracy(logits, labels)
 
     # create an estimator
-    est = Estimator.from_graph(inputs=images,
-                               outputs=logits,
-                               labels=labels,
-                               loss=loss,
-                               optimizer=tf.train.AdamOptimizer(),
-                               metrics={"acc": acc})
+    est = Estimator.from_tf_graph(inputs=images,
+                                  outputs=logits,
+                                  labels=labels,
+                                  loss=loss,
+                                  optimizer=tf.train.AdamOptimizer(),
+                                  metrics={"acc": acc})
     est.fit(data=mnist_train,
             batch_size=320,
             epochs=max_epoch,
