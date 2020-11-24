@@ -13,7 +13,6 @@ chmod +x ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh
 
 set -e
 
-if [ $RUN_PART3 = 1 ]; then
 echo "#15 start app test for pytorch face-generation"
 #timer
 start=$(date "+%s")
@@ -31,4 +30,3 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
 now=$(date "+%s")
 time15=$((now-start))
 echo "#15 pytorch face-generation time used:$time15 seconds"
-fi
