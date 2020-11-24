@@ -172,3 +172,9 @@ class OpenvinoEstimatorWrapper(SparkEstimator):
 
     def get_validation_summary(self, tag=None):
         raise NotImplementedError
+
+    def load_orca_checkpoint(self, path, version):
+        raise NotImplementedError
+
+    def load_latest_orca_checkpoint(self, path):
+        raise NotImplementedError
