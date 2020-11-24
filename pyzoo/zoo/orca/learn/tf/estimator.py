@@ -106,6 +106,10 @@ class Estimator(object):
         :param path: String. The path to the pre-defined model.
         :return: Orca TF Estimator.
         """
+        import warnings
+        warnings.warn("This method will be deprecated, please "
+                      "from zoo.orca.learn.spark_estimator import Estimator and use "
+                      "Estimator.load_keras_model instead", DeprecationWarning)
         from tensorflow.python.keras import models
 
         def load_func(file_path):
@@ -113,27 +117,6 @@ class Estimator(object):
 
         model = load_from_file(load_func, path)
         return Estimator.from_keras(keras_model=model)
-
-    def save_keras_weights(self, filepath, overwrite=True, save_format=None):
-        """
-        Save tensorflow keras model weights in this estimator.
-        :param path: keras model weights save path.
-        :param overwrite: Whether to silently overwrite any existing file at the target location.
-        :param save_format: Either 'tf' or 'h5'. A `filepath` ending in '.h5' or
-            '.keras' will default to HDF5 if `save_format` is `None`. Otherwise
-            `None` defaults to 'tf'.
-        """
-        raise NotImplementedError()
-
-    def load_keras_weights(self, filepath, by_name=False):
-        """
-        Save tensorflow keras model in this estimator.
-        :param filepath: keras model weights save path.
-        :param by_name: Boolean, whether to load weights by name or by topological
-            order. Only topological loading is supported for weight files in
-            TensorFlow format.
-        """
-        raise NotImplementedError()
 
         
 def is_tf_data_dataset(data):
