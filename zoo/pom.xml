@@ -144,8 +144,6 @@
                 <scala.version>2.12.8</scala.version>
                 <scala.macros.version>2.1.0</scala.macros.version>
                 <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
-                <scala-library-scope>compile</scala-library-scope>
-                <spark-scope>compile</spark-scope>
             </properties>
             <dependencies>
                 <dependency>
