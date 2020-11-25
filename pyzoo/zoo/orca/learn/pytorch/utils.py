@@ -189,10 +189,10 @@ def find_free_port():
 class AverageMeter:
     """Computes and stores the average and current value."""
 
-    def __init__(self, class_num=1):
-        self.reset(class_num)
+    def __init__(self):
+        self.reset()
 
-    def reset(self, class_num):
+    def reset(self):
         self.val = 0
         self.avg = 0
         self.sum = 0
