@@ -54,7 +54,7 @@ resolvers += "ossrh repository" at "https://oss.sonatype.org/content/repositorie
 
 ## **Download Analytics Zoo Source**
 
-Analytics Zoo source code is available at [GitHub](https://github.com/intel-analytics/analytics-zoo)
+Analytics Zoo source code is available at [GitHub](https://github.com/intel-analytics/analytics-zoo).
 
 ```bash
 $ git clone https://github.com/intel-analytics/analytics-zoo.git
