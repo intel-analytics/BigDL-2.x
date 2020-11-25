@@ -13,7 +13,7 @@ chmod +x ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh
 
 set -e
 
-echo "#15 start app test for pytorch face-generation"
+echo "#start app test for pytorch face-generation"
 #timer
 start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/pytorch/face_generation
@@ -28,5 +28,5 @@ then
     exit $exit_status
 fi
 now=$(date "+%s")
-time15=$((now-start))
-echo "#15 pytorch face-generation time used:$time15 seconds"
+time=$((now-start))
+echo "#pytorch face-generation time used:$time seconds"
