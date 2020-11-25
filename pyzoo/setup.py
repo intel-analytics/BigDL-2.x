@@ -143,8 +143,7 @@ def setup_package():
                                    'aiohttp', 'setproctitle', 'pandas', 'featuretools',
                                    'scikit-learn>=0.20.0,<=0.22.0', 'requests',
                                    'bayesian-optimization']},
-        dependency_links=['https://archive.apache.org/dist/spark/spark-3.0.0/' \
-        'spark-3.0.0-bin-hadoop2.7.tgz'],
+        dependency_links=['https://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz'],
         include_package_data=True,
         package_data={"zoo.share": ['lib/analytics-zoo*with-dependencies.jar', 'conf/*', 'bin/*',
                                     'bin/standalone/*', 'bin/standalone/sbin/*',
