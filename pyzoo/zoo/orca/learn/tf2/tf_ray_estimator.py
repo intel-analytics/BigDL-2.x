@@ -24,6 +24,7 @@ from zoo.orca.data.shard import RayXShards
 from zoo.orca.data.utils import ray_partition_get_data_label
 
 from zoo.orca.learn.tf2.tf_runner import TFRunner
+from zoo.orca.learn.ray_estimator import Estimator as OrcaRayEstimator
 from zoo.ray import RayContext
 from zoo.tfpark.tf_dataset import convert_row_to_numpy
 
@@ -93,7 +94,7 @@ def arrays2dict(iter, feature_cols, label_cols):
     return [{"x": feature_arrs}]
 
 
-class Estimator:
+class Estimator(OrcaRayEstimator):
     def __init__(self,
                  model_creator,
                  compile_args_creator=None,
@@ -392,6 +393,15 @@ class Estimator:
 
         state_id = ray.put(state)
         ray.get([worker.set_state.remote(state_id) for worker in self.remote_workers])
+
+    def load(self, checkpoint):
+        """Restores the model from the provided checkpoint.
+
+        Args:
+            checkpoint (str): Path to target checkpoint file.
+
+        """
+        self.restore(checkpoint=checkpoint)
 
     def shutdown(self):
         """Shuts down workers and releases resources."""

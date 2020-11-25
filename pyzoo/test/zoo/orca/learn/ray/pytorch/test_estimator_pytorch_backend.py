@@ -20,7 +20,7 @@ import pytest
 
 import torch
 import torch.nn as nn
-from zoo.orca.learn.pytorch import Estimator
+from zoo.orca.learn.ray_estimator import Estimator
 
 np.random.seed(1337)  # for reproducibility
 

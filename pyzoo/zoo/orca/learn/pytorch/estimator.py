@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 from zoo.pipeline.estimator.estimator import Estimator as SparkEstimator
+from zoo.orca.learn.ray_estimator import Estimator as OrcaRayEstimator
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.data import SparkXShards
 from bigdl.optim.optimizer import MaxEpoch
@@ -61,6 +62,10 @@ class Estimator(object):
                    model_dir=None,
                    backend="bigdl"):
         if backend in {"horovod", "torch_distributed"}:
+            import warnings
+            warnings.warn("This method will be deprecated, please "
+                          "from zoo.orca.learn.ray_estimator import Estimator and use "
+                          "Estimator.from_torch instead", DeprecationWarning)
             return PyTorchRayEstimatorWrapper(model_creator=model,
                                               optimizer_creator=optimizer,
                                               loss_creator=loss,
@@ -83,7 +88,7 @@ class Estimator(object):
                              f" got backend: {backend}")
 
 
-class PyTorchRayEstimatorWrapper(Estimator):
+class PyTorchRayEstimatorWrapper(OrcaRayEstimator):
     def __init__(self,
                  *,
                  model_creator,
