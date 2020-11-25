@@ -93,7 +93,7 @@ The instructions above will build Analytics Zoo with Spark 2.1.0. It is highly r
 
 ## **Build with Spark version**
 By default, `make-dist.sh` uses Spark 2.1.0. To override the default behaviors, for example building analytics-zoo with spark 2.2.0, you can use `bash make-dist.sh -Dspark.version=2.2.0 -Dbigdl.artifactId=bigdl_SPARK_2.2`.  
-Additionally, we provide a profile to build with spark 2.4, you can use `bash make-dist.sh -P spark_2.4+`
+Additionally, we provide a profile to build with spark 2.4, you can use `bash make-dist.sh -P spark_2.4+`.
 
 ---
 ## **Build with Maven**
