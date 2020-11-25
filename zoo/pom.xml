@@ -24,9 +24,9 @@
         <scala.major.version>2.11</scala.major.version>
         <scala.version>2.11.8</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
-        <scalatest.version>2.2.4</scalatest.version>
+        <scalatest.version>3.0.7</scalatest.version>
         <spark.version>2.4.3</spark.version>
-        <bigdl.version>0.11.1</bigdl.version>
+        <bigdl.version>0.12.0</bigdl.version>
         <core.artifactId>zoo-core-dist-all</core.artifactId>
         <core.dependencyType>jar</core.dependencyType>
         <data-store-url>http://download.tensorflow.org</data-store-url>
@@ -40,7 +40,7 @@
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
-
+   
     <profiles>
 
         <profile>
@@ -88,9 +88,6 @@
 
         <profile>
             <id>spark_2.4+</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <build>
                 <plugins>
                     <plugin>
@@ -122,6 +119,43 @@
                 </dependency>
             </dependencies>
         </profile>
+ 
+        <profile>
+            <id>spark_3.x</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+            <properties>
+                <java.version>1.8</java.version>
+                <javac.version>1.8</javac.version>
+                <spark-version.project>3.0</spark-version.project>
+                <spark.version>3.0.0</spark.version>
+                <scala.major.version>2.12</scala.major.version>
+                <scala.version>2.12.8</scala.version>
+                <scala.macros.version>2.1.0</scala.macros.version>
+                <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-all</artifactId>
+                    <version>4.1.48.Final</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                    <version>1.7.5</version>
+                </dependency>
+            </dependencies>
+        </profile>
 
         <profile>
             <id>without_bigdl</id>
@@ -130,6 +164,15 @@
                 <tf-shade>org.tensorflow</tf-shade>
             </properties>
         </profile>
+
+        <profile>
+            <id>scala_2.12</id>
+            <properties>
+                <scala.major.version>2.12</scala.major.version>
+                <scala.version>2.12.8</scala.version>
+                <scala.macros.version>2.1.0</scala.macros.version>
+            </properties>
+        </profile>       
 
         <profile>
             <id>scala_2.11</id>
@@ -296,7 +339,7 @@
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-actors</artifactId>
-            <version>${scala.version}</version>
+            <version>2.11.8</version>
             <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
@@ -314,13 +357,13 @@
         <!--        </dependency>-->
         <dependency>
             <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-actor_2.11</artifactId>
+            <artifactId>akka-actor_${scala.major.version}</artifactId>
             <version>2.5.26</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-scala_2.11</artifactId>
-            <version>2.6.7.1</version>
+            <artifactId>jackson-module-scala_${scala.major.version}</artifactId>
+            <version>2.10.2</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -336,12 +379,12 @@
         </dependency>
         <dependency>
             <groupId>ml.dmlc</groupId>
-            <artifactId>xgboost4j_2.11</artifactId>
+            <artifactId>xgboost4j_${scala.major.version}</artifactId>
             <version>1.2.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>ml.dmlc</groupId>
-            <artifactId>xgboost4j-spark_2.11</artifactId>
+            <artifactId>xgboost4j-spark_${scala.major.version}</artifactId>
             <version>1.2.0-SNAPSHOT</version>
         </dependency>
         <dependency>
@@ -417,12 +460,12 @@
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-http_2.11</artifactId>
+            <artifactId>akka-http_${scala.major.version}</artifactId>
             <version>10.1.11</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-stream_2.11</artifactId>
+            <artifactId>akka-stream_${scala.major.version}</artifactId>
             <version>2.5.26</version>
         </dependency>
         <dependency>
@@ -437,7 +480,7 @@
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-scala_2.11</artifactId>
+            <artifactId>jackson-module-scala_${scala.major.version}</artifactId>
             <version>2.10.2</version>
         </dependency>
         <dependency>
@@ -479,25 +522,25 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-scala_2.11</artifactId>
+            <artifactId>flink-scala_${scala.major.version}</artifactId>
             <version>1.11.2</version>
             <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-streaming-scala_2.11</artifactId>
+            <artifactId>flink-streaming-scala_${scala.major.version}</artifactId>
             <version>1.11.2</version>
             <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-clients_2.11</artifactId>
+            <artifactId>flink-clients_${scala.major.version}</artifactId>
             <version>1.11.2</version>
             <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-table-api-scala-bridge_2.11</artifactId>
+            <artifactId>flink-table-api-scala-bridge_${scala.major.version}</artifactId>
             <version>1.11.2</version>
             <scope>provided</scope>
         </dependency>
@@ -509,7 +552,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-table-planner-blink_2.11</artifactId>
+            <artifactId>flink-table-planner-blink_${scala.major.version}</artifactId>
             <version>1.11.2</version>
             <scope>provided</scope>
         </dependency>
@@ -750,7 +793,7 @@
                                     <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-mac</exclude>
                                     <exclude>com.intel.analytics.bigdl.core.dist:all</exclude>
                                     <exclude>com.intel.analytics.bigdl.spark-version</exclude>
-                                    <exclude>org.scalanlp:breeze_2.11</exclude>
+                                    <exclude>org.scalanlp:breeze_${scala.major.version}</exclude>
                                     <exclude>it.unimi.dsi:fastutil</exclude>
                                 </excludes>
                             </artifactSet>
