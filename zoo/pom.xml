@@ -738,10 +738,16 @@
                             <artifactSet>
                                 <includes>
                                     <include>com.typesafe.akka</include>
-                                    <include>io.dropwizard.metrices</include>
+                                    <include>io.dropwizard.metrics:metrecs-core</include>
                                     <include>org.slf4j</include>
+                                    <include>log4j:log4j</include>
                                     <include>com.google.guava:guava</include>
+                                    <include>com.google.flatbuffers:flatbuffers-java</include>
                                     <include>org.scala-lang:scala-library</include>
+                                    <include>com.github.scopt</include>
+                                    <include>com.typesafe:config</include>
+                                    <include>com.fasterxml.jackson.module</include>
+                                    <include>com.fasterxml.jackson.core</include>
                                 </includes>
                             </artifactSet>
                         </configuration>
