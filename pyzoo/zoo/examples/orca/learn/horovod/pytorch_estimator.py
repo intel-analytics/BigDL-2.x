@@ -21,7 +21,7 @@ import torch
 import torch.nn as nn
 
 from zoo.orca import init_orca_context, stop_orca_context
-from zoo.orca.learn.pytorch import Estimator
+from zoo.orca.learn.ray_estimator import Estimator
 
 
 class LinearDataset(torch.utils.data.Dataset):

@@ -358,7 +358,7 @@ parser.add_argument("--data_dir", type=str, help="the directory of tfrecords of 
 parser.add_argument("--log_dir", type=str, default="./logs")
 parser.add_argument("--use_bf16", action='store_true', default=False,
                     help="Whether to use bfloat16 type for computations.")
-parser.add_argument("--use_dummy_data", action='store_true', default=False,
+parser.add_argument("--use_dummy_data", action='store_true', default=True,
                     help="Whether to use dummy data")
 parser.add_argument("--benchmark", action='store_true', default=False)
 parser.add_argument("--enable_numa_binding", action='store_true', default=False)
@@ -377,7 +377,7 @@ if __name__ == "__main__":
     if not os.path.exists(args.log_dir):
         os.mkdir(args.log_dir)
 
-    from zoo.orca.learn.tf2 import Estimator
+    from zoo.orca.learn.ray_estimator import Estimator
     import tensorflow as tf
 
     global_batch_size = args.worker_num * args.batch_size_per_worker
@@ -400,7 +400,7 @@ if __name__ == "__main__":
         "lr": initial_lr,
     }
 
-    trainer = Estimator(
+    trainer = Estimator.from_tf2(
         model_creator=model_creator,
         compile_args_creator=compile_args_creator,
         verbose=True,
