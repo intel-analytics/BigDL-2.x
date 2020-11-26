@@ -22,7 +22,8 @@ import mxnet as mx
 from mxnet import gluon
 from mxnet.gluon import nn
 from zoo.ray import RayContext
-from zoo.orca.learn.mxnet import Estimator, create_config
+from zoo.orca.learn.mxnet import create_config
+from zoo.orca.learn.ray_estimator import Estimator
 
 np.random.seed(1337)  # for reproducibility
 
@@ -75,10 +76,12 @@ class TestMXNetGluon(TestCase):
         assert "object_store_address" in address_info
         config = create_config(log_interval=2, optimizer="adam",
                                optimizer_params={'learning_rate': 0.02})
-        estimator = Estimator(config, get_model, get_loss,
-                              eval_metrics_creator=get_metrics,
-                              validation_metrics_creator=get_metrics,
-                              num_workers=2)
+        estimator = Estimator.from_mxnet(config=config,
+                                         model_creator=get_model,
+                                         loss_creator=get_loss,
+                                         eval_metrics_creator=get_metrics,
+                                         validation_metrics_creator=get_metrics,
+                                         num_workers=2)
         estimator.fit(get_train_data_iter, validation_data=get_test_data_iter, epochs=2)
         estimator.shutdown()
 

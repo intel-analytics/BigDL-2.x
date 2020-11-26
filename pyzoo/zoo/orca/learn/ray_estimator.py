@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 from abc import ABC, abstractmethod
-from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 
 
 class Estimator(ABC):
@@ -52,7 +51,7 @@ class Estimator(ABC):
                    optimizer,
                    loss=None,
                    scheduler_creator=None,
-                   training_operator_cls=TrainingOperator,
+                   training_operator_cls=None,
                    initialization_hook=None,
                    config=None,
                    scheduler_step_freq="batch",
@@ -61,6 +60,9 @@ class Estimator(ABC):
                    backend="horovod"):
         from zoo.orca.learn.pytorch.estimator import PyTorchRayEstimatorWrapper
         if backend in {"horovod", "torch_distributed"}:
+            if training_operator_cls is None:
+                from zoo.orca.learn.pytorch import TrainingOperator
+                training_operator_cls = TrainingOperator
             return PyTorchRayEstimatorWrapper(model_creator=model,
                                               optimizer_creator=optimizer,
                                               loss_creator=loss,
@@ -135,3 +137,23 @@ class Estimator(ABC):
                                     workers_per_node=workers_per_node,
                                     compile_args_creator=compile_args_creator,
                                     backend=backend)
+
+    @staticmethod
+    def from_mxnet(*,
+                   config,
+                   model_creator,
+                   loss_creator=None,
+                   eval_metrics_creator=None,
+                   validation_metrics_creator=None,
+                   num_workers=None,
+                   num_servers=None,
+                   runner_cores=None):
+        from zoo.orca.learn.mxnet import Estimator
+        return Estimator(config=config,
+                         model_creator=model_creator,
+                         loss_creator=loss_creator,
+                         eval_metrics_creator=eval_metrics_creator,
+                         validation_metrics_creator=validation_metrics_creator,
+                         num_workers=num_workers,
+                         num_servers=num_servers,
+                         runner_cores=runner_cores)

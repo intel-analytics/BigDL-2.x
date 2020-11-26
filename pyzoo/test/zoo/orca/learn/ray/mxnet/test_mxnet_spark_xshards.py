@@ -24,7 +24,8 @@ from mxnet import gluon
 from mxnet.gluon import nn
 from zoo.orca import OrcaContext
 import zoo.orca.data.pandas
-from zoo.orca.learn.mxnet import Estimator, create_config
+from zoo.orca.learn.mxnet import create_config
+from zoo.orca.learn.ray_estimator import Estimator
 
 
 def prepare_data_symbol(df):
@@ -98,8 +99,11 @@ class TestMXNetSparkXShards(TestCase):
         test_data_shard = zoo.orca.data.pandas.read_json(
             test_file_path, orient='records', lines=False).transform_shard(prepare_data_symbol)
         config = create_config(log_interval=1, seed=42)
-        estimator = Estimator(config, get_symbol_model, validation_metrics_creator=get_metrics,
-                              eval_metrics_creator=get_metrics, num_workers=2)
+        estimator = Estimator.from_mxnet(config=config,
+                                         model_creator=get_symbol_model,
+                                         validation_metrics_creator=get_metrics,
+                                         eval_metrics_creator=get_metrics,
+                                         num_workers=2)
         estimator.fit(train_data_shard, epochs=2)
         train_data_shard2 = zoo.orca.data.pandas.read_json(
             train_file_path, orient='records', lines=False).transform_shard(prepare_data_symbol)
@@ -112,8 +116,10 @@ class TestMXNetSparkXShards(TestCase):
         train_data_shard = zoo.orca.data.pandas.read_json(
             train_file_path, orient='records', lines=False).transform_shard(prepare_data_symbol)
         config = create_config(log_interval=1, seed=42)
-        estimator = Estimator(config, get_symbol_model,
-                              eval_metrics_creator=get_metrics, num_workers=2)
+        estimator = Estimator.from_mxnet(config=config,
+                                         model_creator=get_symbol_model,
+                                         eval_metrics_creator=get_metrics,
+                                         num_workers=2)
         estimator.fit(train_data_shard, epochs=2, batch_size=16)
         estimator.shutdown()
 
@@ -126,10 +132,12 @@ class TestMXNetSparkXShards(TestCase):
         test_data_shard = zoo.orca.data.pandas.read_json(
             test_file_path, orient='records', lines=False).transform_shard(prepare_data_gluon)
         config = create_config(log_interval=1, seed=42)
-        estimator = Estimator(config, get_gluon_model, get_loss,
-                              validation_metrics_creator=get_gluon_metrics,
-                              eval_metrics_creator=get_gluon_metrics,
-                              num_workers=2)
+        estimator = Estimator.from_mxnet(config=config,
+                                         model_creator=get_gluon_model,
+                                         loss_creator=get_loss,
+                                         validation_metrics_creator=get_gluon_metrics,
+                                         eval_metrics_creator=get_gluon_metrics,
+                                         num_workers=2)
         estimator.fit(train_data_shard, validation_data=test_data_shard, epochs=2, batch_size=8)
         estimator.shutdown()
 
