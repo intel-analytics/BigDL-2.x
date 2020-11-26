@@ -736,19 +736,27 @@
                                 </transformer>
                             </transformers>
                             <artifactSet>
-                                <includes>
-                                    <include>com.typesafe.akka</include>
-                                    <include>io.dropwizard.metrics:metrecs-core</include>
-                                    <include>org.slf4j</include>
-                                    <include>log4j:log4j</include>
-                                    <include>com.google.guava:guava</include>
-                                    <include>com.google.flatbuffers:flatbuffers-java</include>
-                                    <include>org.scala-lang:scala-library</include>
-                                    <include>com.github.scopt</include>
-                                    <include>com.typesafe:config</include>
-                                    <include>com.fasterxml.jackson.module</include>
-                                    <include>com.fasterxml.jackson.core</include>
-                                </includes>
+                                <excludes>
+                                    <exclude>com.intel.analytics.bigdl:bigdl-SPARK_2.4</exclude>
+                                    <exclude>ml.dmlc:xgboost4j</exclude>
+                                    <exclude>org.spark-project.spark:unused</exclude>
+                                    <exclude>org.tensorflow:libtensorflow</exclude>
+                                    <exclude>org.tensorflow:proto</exclude>
+                                    <exclude>black.ninia:jep</exclude>
+                                    <exclude>org.tensorflow:tensorflow-hadoop</exclude>
+                                    <exclude>com.intel.analytics.zoo:zoo-core-dist-all</exclude>
+                                    <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-linux</exclude>
+                                    <exclude>com.intel.analytics.zoo:zoo-core-pmem-java-linux</exclude>
+                                    <exclude>com.intel.analytics.zoo:zoo-core-tfnet-linux</exclude>
+                                    <exclude>com.intel.analytics.zoo:zoo-core-mkl-linux</exclude>
+                                    <exclude>com.intel.analytics.zoo:zoo-core-dist-mac</exclude>
+                                    <exclude>com.intel.analytics.zoo:zoo-core-tfnet-mac</exclude>
+                                    <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-mac</exclude>
+                                    <exclude>com.intel.analytics.bigdl.core.dist:all</exclude>
+                                    <exclude>com.intel.analytics.bigdl.spark-version</exclude>
+                                    <exclude>org.scalanlp:breeze_${scala.major.version}</exclude>
+                                    <exclude>it.unimi.dsi:fastutil</exclude>
+                                </excludes>
                             </artifactSet>
                         </configuration>
                     </execution>
