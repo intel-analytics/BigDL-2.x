@@ -12,7 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+# ==============================================================================
+# Most of the pytorch code is adapted from Pytorch's tutorial for 
+# neural networks training on Cifar10
+# https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
 
 from __future__ import print_function
 import os
