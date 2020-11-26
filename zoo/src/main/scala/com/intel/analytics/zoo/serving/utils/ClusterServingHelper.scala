@@ -81,7 +81,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
    */
   var redisSecureEnabled: Boolean = false
   var redisSecureTrustStorePath: String = null
-  var redisSecureTrustStorePassword: String = null
+  var redisSecureTrustStoreToken: String = null
 
   var modelEncrypted: Boolean = false
 
@@ -135,7 +135,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
     redisSecureTrustStorePath = getYaml(
       secureConfig, "secure_trust_store_path", defaultPath)
       .asInstanceOf[String]
-    redisSecureTrustStorePassword = getYaml(
+    redisSecureTrustStoreToken = getYaml(
       secureConfig, "secure_struct_store_password", "1234qwer").asInstanceOf[String]
     modelEncrypted = getYaml(secureConfig, "model_encrypted", false).asInstanceOf[Boolean]
 
