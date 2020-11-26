@@ -1,0 +1,86 @@
+
+
+class ParquetDataset:
+
+    @staticmethod
+    def write(path, generator, schema, **kwargs):
+        """
+        Take each record in the generator and write it to a parquet file.
+        
+        **generator**
+        Each record in the generator is a dict, the key is a string and will be the column name of saved parquet record and
+        the value is the data.
+        
+        (
+        Other options:
+        
+        1. generator output a two-element tuple representing feature and label. feature and label are both lists contain
+           the actual data. The columns in the saved parquet file will be "feature_col_1", "feature_col_2", ..., "label_col_1", "label_col_2"
+        2. enforce feature number to be one and it must be a image.
+        )
+        
+        **schema**
+        schema defines the name, dtype, shape of a column, as well as the feature type of a column. The feature type, defines
+        how to encode and decode the column value.
+        
+        There are three kinds of feature type:
+        1. Scalar, such as a int or float number, or a string, which can be directly mapped to a parquet type
+        2. NDarray, which takes a np.ndarray and save it serialized bytes. The corresponding parquet type is BYTE_ARRAY .
+        3. Image, which takes a string representing a image file in local file system and save the raw file content bytes.
+           The corresponding parquet type is BYTE_ARRAY.
+           
+        (
+        Other options:
+        1. enforce all types to be ndarray. For images, it may takes much larger space to save ndarray then image file bytes. 
+        2. enforce feature to a image, and labels are ndarrays.  
+        )
+           
+        We can save the schema info to file in the output path.
+        
+        (
+        Other options:
+        1. infer from data when reading?
+        2. save schema info as a column?
+        )
+        
+        
+        :param path: the output path, e.g. file:///output/path, hdfs:///output/path
+        :param generator: generate a dict, whose key is a string and value is one of (a scalar value, ndarray, image file path)
+        :param schema: a dict, whose key is a string, value is one of (schema_field.Scalar, schema_field.NDarray, schema_field.Image)
+        :param kwargs: other args
+        """
+
+    @staticmethod
+    def read_as_tf(path):
+        """
+        return a orca.data.tf.data.Dataset
+        :param path: 
+        :return: 
+        """
+
+    @staticmethod
+    def read_as_torch(path):
+        """
+        return a orca.data.torch.data.DataLoader
+        :param path: 
+        :return: 
+        """
+
+    @staticmethod
+    def write_imagenet(input_path, output_path, **kwargs):
+        pass
+
+    @staticmethod
+    def write_coco(input_path, output_path, **kwargs):
+        pass
+
+    @staticmethod
+    def write_voc(input_path, output_path, **kwargs):
+        pass
+
+    @staticmethod
+    def write_mnist(images, labels, output_path):
+        pass
+
+    @staticmethod
+    def write_fashion_mnist(images, labels, output_path):
