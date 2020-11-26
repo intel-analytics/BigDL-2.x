@@ -69,7 +69,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
           arguments.timeWindow, arguments.countWindow,
           arguments.redisSecureEnabled,
           arguments.redissTrustStorePath,
-          arguments.redissTrustStorePassword))
+          arguments.redissTrustStoreToken))
         system.actorOf(redisPutterProps, name = redisPutterName)
       }
 
@@ -82,7 +82,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
           arguments.redisOutputQueue,
           arguments.redisSecureEnabled,
           arguments.redissTrustStorePath,
-          arguments.redissTrustStorePassword))
+          arguments.redissTrustStoreToken))
         system.actorOf(redisGetterProps, name = redisGetterName)
       }
 
@@ -305,8 +305,8 @@ object FrontEndApp extends Supportive with EncryptSupportive {
     opt[String]('p', "redissTrustStorePath")
       .action((x, c) => c.copy(redissTrustStorePath = x))
       .text("rediss trustStore path")
-    opt[String]('w', "redissTrustStorePassword")
-      .action((x, c) => c.copy(redissTrustStorePassword = x))
+    opt[String]('w', "redissTrustStoreToken")
+      .action((x, c) => c.copy(redissTrustStoreToken = x))
       .text("rediss trustStore password")
   }
 
@@ -353,5 +353,5 @@ case class FrontEndAppArguments(
   httpsKeyStorePassword: String = "1234qwer",
   redisSecureEnabled: Boolean = false,
   redissTrustStorePath: String = null,
-  redissTrustStorePassword: String = "1234qwer"
+  redissTrustStoreToken: String = "1234qwer"
 )
