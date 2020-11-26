@@ -72,7 +72,9 @@ class XgbPredictor(BasePredictor):
         return ft
 
     def create_model(self, resources_per_trial, config):
-        _model = XGBoost(model_type=self.model_type, config=config)
+        all_config = self.config.copy()
+        all_config.update(config)
+        _model = XGBoost(model_type=self.model_type, config=all_config)
         if "cpu" in resources_per_trial:
             _model.set_params(n_jobs=resources_per_trial.get("cpu"))
         return _model
