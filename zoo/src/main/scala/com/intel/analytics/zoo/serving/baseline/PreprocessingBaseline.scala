@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.serving.PreProcessing
 import com.intel.analytics.zoo.serving.arrow.{ArrowDeserializer, ArrowSerializer}
 import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, ModelHolder, Timer}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams, Supportive}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Supportive}
 import scopt.OptionParser
 
 object PreprocessingBaseline extends Supportive {

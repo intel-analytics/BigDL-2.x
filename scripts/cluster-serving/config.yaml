@@ -2,7 +2,7 @@
 
 model:
   # model path must be provided
-  path: /path/to/model
+  path: /home/litchy/models/openvino_res50
   # name, default is serving_stream, you need to specify if running multiple servings
   name:
 data:

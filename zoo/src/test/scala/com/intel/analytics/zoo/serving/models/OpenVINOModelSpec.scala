@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.serving.models
 import com.intel.analytics.zoo.serving.PreProcessing
 import com.intel.analytics.zoo.serving.arrow.ArrowDeserializer
 import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, ModelHolder}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams}
+import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
 import org.scalatest.{FlatSpec, Matchers}
 
 import sys.process._
@@ -42,9 +42,8 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     ("rm -rf /tmp/openvino_inception_v1*").!
     "rm -rf /tmp/openvino_inception_v1*".!
     "rm -rf /tmp/config.yaml".!
-    val params = new SerParams(helper)
-    val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
-      params.modelType, "", params.coreNum, params.resize)
+    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
+      helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -71,9 +70,9 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     ("rm -rf /tmp/openvino_mobilenet_v1*").!
     "rm -rf /tmp/openvino_mobilenet_v1*".!
     "rm -rf /tmp/config.yaml".!
-    val params = new SerParams(helper)
-    val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
-      params.modelType, "", params.coreNum, params.resize)
+    
+    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
+      helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -101,9 +100,9 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     ("rm -rf /tmp/openvino_mobilenet_v2*").!
     "rm -rf /tmp/openvino_mobilenet_v2*".!
     "rm -rf /tmp/config.yaml".!
-    val params = new SerParams(helper)
-    val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
-      params.modelType, "", params.coreNum, params.resize)
+    
+    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
+      helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -131,9 +130,9 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     ("rm -rf /tmp/openvino2020_resnet50*").!
     "rm -rf /tmp/openvino2020_resnet50*".!
     "rm -rf /tmp/config.yaml".!
-    val params = new SerParams(helper)
-    val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
-      params.modelType, "", params.coreNum, params.resize)
+    
+    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
+      helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -161,9 +160,9 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     ("rm -rf /tmp/openvino_resnet50*").!
     "rm -rf /tmp/openvino_resnet50*".!
     "rm -rf /tmp/config.yaml".!
-    val params = new SerParams(helper)
-    val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
-      params.modelType, "", params.coreNum, params.resize)
+    
+    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
+      helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -192,9 +191,9 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     ("rm -rf /tmp/openvino_vgg16*").!
     "rm -rf /tmp/openvino_vgg16*".!
     "rm -rf /tmp/config.yaml".!
-    val params = new SerParams(helper)
-    val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
-      params.modelType, "", params.coreNum, params.resize)
+    
+    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
+      helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 

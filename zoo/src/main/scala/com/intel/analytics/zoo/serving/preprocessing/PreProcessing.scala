@@ -29,7 +29,7 @@ import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.serving.engine.{JedisPoolHolder, Timer}
 import com.intel.analytics.zoo.serving.http.Instances
 import com.intel.analytics.zoo.serving.pipeline.RedisIO
-import com.intel.analytics.zoo.serving.utils.{Conventions, SerParams}
+import com.intel.analytics.zoo.serving.utils.Conventions
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 import redis.clients.jedis.Jedis

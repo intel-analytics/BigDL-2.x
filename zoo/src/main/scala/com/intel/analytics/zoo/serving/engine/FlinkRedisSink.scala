@@ -18,14 +18,14 @@
 package com.intel.analytics.zoo.serving.engine
 
 import com.intel.analytics.zoo.serving.pipeline.RedisIO
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions, SerParams}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
 import org.apache.log4j.Logger
 import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig}
 
 
-class FlinkRedisSink(params: SerParams) extends RichSinkFunction[List[(String, String)]] {
+class FlinkRedisSink(params: ClusterServingHelper) extends RichSinkFunction[List[(String, String)]] {
   var jedis: Jedis = null
   var logger: Logger = null
 

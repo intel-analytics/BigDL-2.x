@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.serving.PreProcessing
 import com.intel.analytics.zoo.serving.arrow.{ArrowDeserializer, ArrowSerializer}
 import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, ModelHolder, Timer}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams, Supportive}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Supportive}
 import scopt.OptionParser
 
 object MockParallelPipelineBaseline extends Supportive {
@@ -76,14 +76,13 @@ object MockParallelPipelineBaseline extends Supportive {
   def main(args: Array[String]): Unit = {
     val param = parser.parse(args, Params()).head
     val helper = new ClusterServingHelper()
-    helper.initArgs()
-    val sParam = new SerParams(helper)
+    helper.loadConfig()
 
     ModelHolder.model = helper.loadInferenceModel()
     val warmT = makeTensorFromShape(param.inputShape)
     val clusterServingInference = new ClusterServingInference(null, "openvino")
     clusterServingInference.typeCheck(warmT)
-    clusterServingInference.dimCheck(warmT, "add", sParam.modelType)
+    clusterServingInference.dimCheck(warmT, "add", helper.modelType)
     (0 until 10).foreach(_ => {
       val result = ModelHolder.model.doPredict(warmT)
     })
@@ -101,16 +100,16 @@ object MockParallelPipelineBaseline extends Supportive {
         val timer = new Timer()
         var a = Seq[(String, String)]()
         val pre = new PreProcessing(true)
-        (0 until sParam.coreNum).foreach( i =>
+        (0 until helper.coreNum).foreach( i =>
           a = a :+ (i.toString(), b64string)
         )
-        (0 until param.testNum).grouped(sParam.coreNum).flatMap(i => {
+        (0 until param.testNum).grouped(helper.coreNum).flatMap(i => {
           val preprocessed = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Preprocess", sParam.coreNum) {
+            s"Thread ${Thread.currentThread().getId} Preprocess", helper.coreNum) {
             a.map(item => {
               println(s"${ModelHolder.modelQueueing} threads are queueing inference")
               val tensor = timer.timing(
-                s"Thread ${Thread.currentThread().getId} Preprocess one record", sParam.coreNum) {
+                s"Thread ${Thread.currentThread().getId} Preprocess one record", helper.coreNum) {
                 val deserializer = new ArrowDeserializer()
                 val arr = deserializer.create(b64string)
                 Tensor(arr(0)._1, arr(0)._2)
@@ -121,20 +120,20 @@ object MockParallelPipelineBaseline extends Supportive {
           }
 
           val t = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Batch input", sParam.coreNum) {
+            s"Thread ${Thread.currentThread().getId} Batch input", helper.coreNum) {
               clusterServingInference.batchInput(
-                preprocessed, sParam.coreNum, false, sParam.resize)
+                preprocessed, helper.coreNum, false, helper.resize)
           }
-          clusterServingInference.dimCheck(t, "add", sParam.modelType)
+          clusterServingInference.dimCheck(t, "add", helper.modelType)
           val result = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Inference", sParam.coreNum) {
+            s"Thread ${Thread.currentThread().getId} Inference", helper.coreNum) {
             ModelHolder.model.doPredict(t)
           }
-          clusterServingInference.dimCheck(t, "remove", sParam.modelType)
-          clusterServingInference.dimCheck(result, "remove", sParam.modelType)
+          clusterServingInference.dimCheck(t, "remove", helper.modelType)
+          clusterServingInference.dimCheck(result, "remove", helper.modelType)
           val postprocessed = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Postprocess", sParam.coreNum) {
-            (0 until sParam.coreNum).map(i => {
+            s"Thread ${Thread.currentThread().getId} Postprocess", helper.coreNum) {
+            (0 until helper.coreNum).map(i => {
               ArrowSerializer.activityBatchToByte(result, i + 1)
             })
           }
