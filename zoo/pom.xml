@@ -20,7 +20,7 @@
         <spark-scope>provided</spark-scope>
         <bigdl-scope>compile</bigdl-scope>
 
-        <scala-library-scope>provided</scala-library-scope>
+        <scala-library-scope>compile</scala-library-scope>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>2.11.8</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
@@ -153,7 +153,6 @@
             <id>all-in-one</id>
             <properties>
                 <spark-scope>compile</spark-scope>
-                <scala-library-scope>compile</scala-library-scope>
             </properties>
         </profile>
 
@@ -707,6 +706,11 @@
                         <configuration>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>jar-with-dependencies</shadedClassifierName>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>org.scala-lang:scala-library</exclude>
+                                </excludes>
+                            </artifactSet>
                         </configuration>
                     </execution>
 
@@ -732,27 +736,13 @@
                                 </transformer>
                             </transformers>
                             <artifactSet>
-                                <excludes>
-                                    <exclude>com.intel.analytics.bigdl:bigdl-SPARK_2.4</exclude>
-                                    <exclude>ml.dmlc:xgboost4j</exclude>
-                                    <exclude>org.spark-project.spark:unused</exclude>
-                                    <exclude>org.tensorflow:libtensorflow</exclude>
-                                    <exclude>org.tensorflow:proto</exclude>
-                                    <exclude>black.ninia:jep</exclude>
-                                    <exclude>org.tensorflow:tensorflow-hadoop</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-dist-all</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-linux</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-pmem-java-linux</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-tfnet-linux</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-mkl-linux</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-dist-mac</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-tfnet-mac</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-mac</exclude>
-                                    <exclude>com.intel.analytics.bigdl.core.dist:all</exclude>
-                                    <exclude>com.intel.analytics.bigdl.spark-version</exclude>
-                                    <exclude>org.scalanlp:breeze_2.11</exclude>
-                                    <exclude>it.unimi.dsi:fastutil</exclude>
-                                </excludes>
+                                <includes>
+                                    <include>com.typesafe.akka</include>
+                                    <include>io.dropwizard.metrices</include>
+                                    <include>org.slf4j</include>
+                                    <include>com.google.guava:guava</include>
+                                    <include>org.scala-lang:scala-library</include>
+                                </includes>
                             </artifactSet>
                         </configuration>
                     </execution>
