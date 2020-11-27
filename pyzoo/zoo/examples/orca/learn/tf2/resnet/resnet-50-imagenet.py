@@ -358,7 +358,7 @@ parser.add_argument("--data_dir", type=str, help="the directory of tfrecords of 
 parser.add_argument("--log_dir", type=str, default="./logs")
 parser.add_argument("--use_bf16", action='store_true', default=False,
                     help="Whether to use bfloat16 type for computations.")
-parser.add_argument("--use_dummy_data", action='store_true', default=True,
+parser.add_argument("--use_dummy_data", action='store_true', default=False,
                     help="Whether to use dummy data")
 parser.add_argument("--benchmark", action='store_true', default=False)
 parser.add_argument("--enable_numa_binding", action='store_true', default=False)
