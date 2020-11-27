@@ -74,7 +74,7 @@ def train_data_creator(config):
                                               shuffle=True, num_workers=2)
     return trainloader
 
-def validation_data_creator(config):
+def test_data_creator(config):
     transform = transforms.Compose(
         [transforms.ToTensor(),
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
@@ -114,8 +114,8 @@ def main():
     zoo_estimator = Estimator.from_torch(model=model_creator, optimizer=optimizer_creator, loss=criterion, config={}, backend="torch_distributed")
     stats = zoo_estimator.fit(train_data_creator, epochs=args.epochs, batch_size=args.batch_size)
     print("Train stats: {}".format(stats))
-    val_stats = zoo_estimator.evaluate(validation_data_creator)
-    print("validation stats: {}".format(val_stats))
+    test_stats = zoo_estimator.evaluate(test_data_creator)
+    print("test accuracy: {}".format(test_stats["val_accuracy"]))
     zoo_estimator.shutdown()
     stop_orca_context()
 
