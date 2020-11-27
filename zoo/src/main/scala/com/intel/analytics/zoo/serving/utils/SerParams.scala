@@ -34,7 +34,7 @@ class SerParams(helper: ClusterServingHelper) extends Serializable {
   val sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss")
   val redisSecureEnabled = helper.redisSecureEnabled
   val redisSecureTrustStorePath = helper.redisSecureTrustStorePath
-  val redisSecureTrustStorePassword = helper.redisSecureTrustStoreToken
+  val redisSecureTrustStoreToken = helper.redisSecureTrustStoreToken
   var timerMode: Boolean = false
 //  println(s"loading params, time is ${sdf.format(lastModified)}")
 
