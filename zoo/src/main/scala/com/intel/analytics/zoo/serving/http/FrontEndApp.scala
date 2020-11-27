@@ -223,7 +223,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
         }
       }
       if (arguments.httpsEnabled) {
-        val serverContext = defineServerContext(arguments.httpsKeyStorePassword,
+        val serverContext = defineServerContext(arguments.httpsKeyStoreToken,
           arguments.httpsKeyStorePath)
         Http().bindAndHandle(route, arguments.interface, port = arguments.securePort,
           connectionContext = serverContext)
@@ -293,9 +293,9 @@ object FrontEndApp extends Supportive with EncryptSupportive {
     opt[String]('p', "httpsKeyStorePath")
       .action((x, c) => c.copy(httpsKeyStorePath = x))
       .text("https keyStore path")
-    opt[String]('w', "httpsKeyStorePassword")
-      .action((x, c) => c.copy(httpsKeyStorePassword = x))
-      .text("https keyStore password")
+    opt[String]('w', "httpsKeyStoreToken")
+      .action((x, c) => c.copy(httpsKeyStoreToken = x))
+      .text("https keyStore token")
     opt[Boolean]('s', "redisSecureEnabled")
       .action((x, c) => c.copy(redisSecureEnabled = x))
       .text("redis secure enabled or not")
@@ -310,17 +310,17 @@ object FrontEndApp extends Supportive with EncryptSupportive {
       .text("rediss trustStore password")
   }
 
-  def defineServerContext(httpsKeyStorePassword: String,
+  def defineServerContext(httpsKeyStoreToken: String,
       httpsKeyStorePath: String): ConnectionContext = {
-    val password = httpsKeyStorePassword.toCharArray
+    val token = httpsKeyStoreToken.toCharArray
 
     val keyStore = KeyStore.getInstance("PKCS12")
     val keystoreInputStream = new File(httpsKeyStorePath).toURI().toURL().openStream()
     require(keystoreInputStream != null, "Keystore required!")
-    keyStore.load(keystoreInputStream, password)
+    keyStore.load(keystoreInputStream, token)
 
     val keyManagerFactory = KeyManagerFactory.getInstance("SunX509")
-    keyManagerFactory.init(keyStore, password)
+    keyManagerFactory.init(keyStore, token)
 
     val trustManagerFactory = TrustManagerFactory.getInstance("SunX509")
     trustManagerFactory.init(keyStore)
@@ -350,7 +350,7 @@ case class FrontEndAppArguments(
   tokenAcquireTimeout: Int = 100,
   httpsEnabled: Boolean = false,
   httpsKeyStorePath: String = null,
-  httpsKeyStorePassword: String = "1234qwer",
+  httpsKeyStoreToken: String = "1234qwer",
   redisSecureEnabled: Boolean = false,
   redissTrustStorePath: String = null,
   redissTrustStoreToken: String = "1234qwer"
