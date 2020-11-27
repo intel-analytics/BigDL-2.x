@@ -88,6 +88,9 @@
 
         <profile>
             <id>spark_2.4+</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <build>
                 <plugins>
                     <plugin>
@@ -122,9 +125,6 @@
  
         <profile>
             <id>spark_3.x</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <build>
                 <plugins>
                     <plugin>
