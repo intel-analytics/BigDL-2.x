@@ -20,7 +20,7 @@
         <spark-scope>provided</spark-scope>
         <bigdl-scope>compile</bigdl-scope>
 
-        <scala-library-scope>provided</scala-library-scope>
+        <scala-library-scope>compile</scala-library-scope>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>2.11.8</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
@@ -196,7 +196,6 @@
             <id>all-in-one</id>
             <properties>
                 <spark-scope>compile</spark-scope>
-                <scala-library-scope>compile</scala-library-scope>
             </properties>
         </profile>
 
@@ -750,6 +749,11 @@
                         <configuration>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>jar-with-dependencies</shadedClassifierName>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>org.scala-lang:scala-library</exclude>
+                                </excludes>
+                            </artifactSet>
                         </configuration>
                     </execution>
 
