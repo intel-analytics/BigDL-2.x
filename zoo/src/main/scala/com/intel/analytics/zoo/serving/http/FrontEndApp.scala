@@ -307,7 +307,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
       .text("rediss trustStore path")
     opt[String]('w', "redissTrustStoreToken")
       .action((x, c) => c.copy(redissTrustStoreToken = x))
-      .text("rediss trustStore token")
+      .text("rediss trustStore password")
   }
 
   def defineServerContext(httpsKeyStoreToken: String,
