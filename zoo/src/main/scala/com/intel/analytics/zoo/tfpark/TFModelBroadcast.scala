@@ -164,7 +164,7 @@ private[zoo] class ModelInfo[T: ClassTag](val uuid: String, @transient var model
     val vin = new ModelInfoObjectInputStream(in)
     model = vin.readObject().asInstanceOf[Module[T]]
     CachedModels.add(uuid, model)
-  }git 
+  }
 }
 
 
