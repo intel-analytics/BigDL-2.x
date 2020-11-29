@@ -178,8 +178,9 @@ private class ModelInfoObjectInputStream[T: ClassTag](val inputStream: InputStre
   @throws[IOException]
   @throws[ClassNotFoundException]
   override protected def resolveClass(desc: ObjectStreamClass): Class[_] = {
-    if (!desc.getName.equals(classOf[ModelInfo[T]].getName))
+    if (!desc.getName.equals(classOf[ModelInfo[T]].getName)) {
       throw new InvalidClassException("Unrecognized Class", desc.getName)
+    }
     super.resolveClass(desc)
   }
 }
