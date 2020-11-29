@@ -173,11 +173,13 @@ private[zoo] object ModelInfo {
     implicit ev: TensorNumeric[T]): ModelInfo[T] = new ModelInfo[T](uuid, model)
 }
 
-private class ModelInfoObjectInputStream[T: ClassTag](val inputStream: InputStream) extends ObjectInputStream(inputStream) {
+private class ModelInfoObjectInputStream[T: ClassTag](val inputStream: InputStream)
+  extends ObjectInputStream(inputStream) {
   @throws[IOException]
   @throws[ClassNotFoundException]
   override protected def resolveClass(desc: ObjectStreamClass): Class[_] = {
-    if (!desc.getName.equals(classOf[ModelInfo[T]].getName)) throw new InvalidClassException("Unrecognized Class", desc.getName)
+    if (!desc.getName.equals(classOf[ModelInfo[T]].getName))
+      throw new InvalidClassException("Unrecognized Class", desc.getName)
     super.resolveClass(desc)
   }
 }
