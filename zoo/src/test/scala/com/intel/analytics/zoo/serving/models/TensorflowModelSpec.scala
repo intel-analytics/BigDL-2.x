@@ -26,7 +26,10 @@ import scala.collection.JavaConverters._
 
 class TensorflowModelSpec extends FlatSpec with Matchers {
 
-  "TensorflowModel Inception v1" should "work" in {
+  "Tensorflow Inception v1" should "work" in {
+    ("wget -O /tmp/tensorflow_inception_v1.tar http://10.239.45.10:8081" +
+      "/repository/raw/analytics-zoo-data/tensorflow_inception_v1.tar").!
+    "tar -xvf /tmp/tensorflow_inception_v1.tar -C /tmp/".!
     val resource = getClass().getClassLoader().getResource("serving")
     val dataPath = resource.getPath + "/image-3_224_224-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
@@ -34,9 +37,11 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val helper = new ClusterServingHelper()
     helper.chwFlag=false
     helper.modelType = "tensorflowFrozenModel"
-    helper.weightPath = "/home/arda/intel-analytics/model/models/inception_v1/tensorflow/tf_inception/"
+    helper.weightPath = "/tmp/tensorflow_inception_v1/"
     ModelHolder.model = helper.loadInferenceModel()
-
+    ("rm -rf /tmp/tensorflow_inception_v1*").!
+    "rm -rf /tmp/tensorflow_inception_v1*".!
+    "rm -rf /tmp/config.yaml".!
     val params = new SerParams(helper)
     val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
       params.modelType, "", params.coreNum, params.resize)
@@ -50,8 +55,10 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     })
   }
 
-
-  "TensorflowModel MobileNet v1" should "work" in {
+  "Tensorflow MobileNet v1" should "work" in {
+    ("wget -O /tmp/tensorflow_mobilenet_v1.tar http://10.239.45.10:8081" +
+      "/repository/raw/analytics-zoo-data/tensorflow_mobilenet_v1.tar").!
+    "tar -xvf /tmp/tensorflow_mobilenet_v1.tar -C /tmp/".!
     val resource = getClass().getClassLoader().getResource("serving")
     val dataPath = resource.getPath + "/image-3_224_224-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
@@ -59,9 +66,11 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val helper = new ClusterServingHelper()
     helper.chwFlag=false
     helper.modelType = "tensorflowFrozenModel"
-    helper.weightPath = "/home/arda/intel-analytics/model/models/mobilenet_v1/tensorflow/tf_mobilenet/"
+    helper.weightPath = "/tmp/tensorflow_mobilenet_v1/"
     ModelHolder.model = helper.loadInferenceModel()
-
+    ("rm -rf /tmp/tensorflow_mobilenet_v1*").!
+    "rm -rf /tmp/tensorflow_mobilenet_v1*".!
+    "rm -rf /tmp/config.yaml".!
     val params = new SerParams(helper)
     val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
       params.modelType, "", params.coreNum, params.resize)
@@ -77,6 +86,9 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
 
   "TensorflowModel MobileNet v2" should "work" in {
+    ("wget -O /tmp/tensorflow_mobilenet_v2.tar http://10.239.45.10:8081" +
+      "/repository/raw/analytics-zoo-data/tensorflow_mobilenet_v2.tar").!
+    "tar -xvf /tmp/tensorflow_mobilenet_v2.tar -C /tmp/".!
     val resource = getClass().getClassLoader().getResource("serving")
     val dataPath = resource.getPath + "/image-3_224_224-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
@@ -84,9 +96,11 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val helper = new ClusterServingHelper()
     helper.chwFlag=false
     helper.modelType = "tensorflowFrozenModel"
-    helper.weightPath = "/home/arda/intel-analytics/model/models/mobilenet_v2/tensorflow/tf_mobilenet/"
+    helper.weightPath = "/tmp/tensorflow_mobilenet_v2/"
     ModelHolder.model = helper.loadInferenceModel()
-
+    ("rm -rf /tmp/tensorflow_mobilenet_v2*").!
+    "rm -rf /tmp/tensorflow_mobilenet_v2*".!
+    "rm -rf /tmp/config.yaml".!
     val params = new SerParams(helper)
     val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
       params.modelType, "", params.coreNum, params.resize)
@@ -102,6 +116,9 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
 
   "TensorflowModel ResNet 50" should "work" in {
+    ("wget -O /tmp/tensorflow_resnet50.tar http://10.239.45.10:8081" +
+      "/repository/raw/analytics-zoo-data/tensorflow_resnet50.tar").!
+    "tar -xvf /tmp/tensorflow_resnet50.tar -C /tmp/".!
     val resource = getClass().getClassLoader().getResource("serving")
     val dataPath = resource.getPath + "/image-3_224_224-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
@@ -109,9 +126,11 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val helper = new ClusterServingHelper()
     helper.chwFlag=false
     helper.modelType = "tensorflowFrozenModel"
-    helper.weightPath = "/home/arda/intel-analytics/model/models/resnet50/tf_res50/"
+    helper.weightPath = "/tmp/tensorflow_resnet50/"
     ModelHolder.model = helper.loadInferenceModel()
-
+    ("rm -rf /tmp/tensorflow_resnet50*").!
+    "rm -rf /tmp/tensorflow_resnet50*".!
+    "rm -rf /tmp/config.yaml".!
     val params = new SerParams(helper)
     val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
       params.modelType, "", params.coreNum, params.resize)
@@ -127,6 +146,9 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
 
   "TensorflowModel tf auto" should "work" in {
+    ("wget -O /tmp/tensorflow_tfauto.tar http://10.239.45.10:8081" +
+      "/repository/raw/analytics-zoo-data/tensorflow_tfauto.tar").!
+    "tar -xvf /tmp/tensorflow_tfauto.tar -C /tmp/".!
     val resource = getClass().getClassLoader().getResource("serving")
     val dataPath = resource.getPath + "/ndarray-128-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
@@ -134,9 +156,11 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val helper = new ClusterServingHelper()
     helper.chwFlag=false
     helper.modelType = "tensorflowSavedModel"
-    helper.weightPath = "/home/arda/intel-analytics/model/models/tf_auto/"
+    helper.weightPath = "/tmp/tensorflow_tfauto/"
     ModelHolder.model = helper.loadInferenceModel()
-
+    ("rm -rf /tmp/tensorflow_tfauto*").!
+    "rm -rf /tmp/tensorflow_tfauto*".!
+    "rm -rf /tmp/config.yaml".!
     val params = new SerParams(helper)
     val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
       params.modelType, "", params.coreNum, params.resize)
@@ -152,6 +176,9 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
 
   "TensorflowModel VGG16" should "work" in {
+    ("wget -O /tmp/tensorflow_vgg16.tar http://10.239.45.10:8081" +
+      "/repository/raw/analytics-zoo-data/tensorflow_vgg16.tar").!
+    "tar -xvf /tmp/tensorflow_vgg16.tar -C /tmp/".!
     val resource = getClass().getClassLoader().getResource("serving")
     val dataPath = resource.getPath + "/image-3_224_224-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
@@ -159,9 +186,11 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val helper = new ClusterServingHelper()
     helper.chwFlag=false
     helper.modelType = "tensorflowFrozenModel"
-    helper.weightPath = "/home/arda/intel-analytics/model/models/vgg16/tensorflow/tf_vgg16/"
+    helper.weightPath = "/tmp/tensorflow_vgg16/"
     ModelHolder.model = helper.loadInferenceModel()
-
+    ("rm -rf /tmp/tensorflow_vgg16*").!
+    "rm -rf /tmp/tensorflow_vgg16*".!
+    "rm -rf /tmp/config.yaml".!
     val params = new SerParams(helper)
     val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
       params.modelType, "", params.coreNum, params.resize)
@@ -177,6 +206,9 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
 
   "TensorflowModel tf_2out" should "work" in {
+    ("wget -O /tmp/tensorflow_tf_2out.tar http://10.239.45.10:8081" +
+      "/repository/raw/analytics-zoo-data/tensorflow_tf_2out.tar").!
+    "tar -xvf /tmp/tensorflow_tf_2out.tar -C /tmp/".!
     val resource = getClass().getClassLoader().getResource("serving")
     val dataPath = resource.getPath + "/ndarray-2-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
@@ -184,9 +216,11 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val helper = new ClusterServingHelper()
     helper.chwFlag=false
     helper.modelType = "tensorflowSavedModel"
-    helper.weightPath = "/home/arda/intel-analytics/model/models/tf_2out/"
+    helper.weightPath = "/tmp/tensorflow_tf_2out/"
     ModelHolder.model = helper.loadInferenceModel()
-
+    ("rm -rf /tmp/tensorflow_tf_2out*").!
+    "rm -rf /tmp/tensorflow_tf_2out*".!
+    "rm -rf /tmp/config.yaml".!
     val params = new SerParams(helper)
     val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
       params.modelType, "", params.coreNum, params.resize)
