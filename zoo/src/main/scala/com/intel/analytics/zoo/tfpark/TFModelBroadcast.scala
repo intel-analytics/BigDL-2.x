@@ -113,19 +113,18 @@ class TFModelBroadcast[T: ClassTag]()
     CachedModels.add(uuid, localModel)
 
     val parameters = if (shareWeight) {
-    // init gradient
-    broadcastParameters.value
-  } else {
-    SerializationUtils.clone(broadcastParameters.value)
-  }
-  //
-  // share weight
-  putWeightBias(parameters, localModel)
+      broadcastParameters.value
+    } else {
+      SerializationUtils.clone(broadcastParameters.value)
+    }
 
-  //    // share Consts
-  //    if (localModel.isInstanceOf[Container[_, _, T]] && broadcastConsts.value.nonEmpty) {
-  //      putConsts(localModel.asInstanceOf[Container[_, _, T]], broadcastConsts.value)
-  //    }
+    // share weight
+    putWeightBias(parameters, localModel)
+
+    //    // share Consts
+    //    if (localModel.isInstanceOf[Container[_, _, T]] && broadcastConsts.value.nonEmpty) {
+    //      putConsts(localModel.asInstanceOf[Container[_, _, T]], broadcastConsts.value)
+    //    }
     if (initGradient) {
       initGradWeightBias(broadcastParameters.value, localModel)
     }
@@ -166,7 +165,6 @@ private[zoo] class ModelInfo[T: ClassTag](val uuid: String, @transient var model
     CachedModels.add(uuid, model)
   }
 }
-
 
 private[zoo] object ModelInfo {
   def apply[T: ClassTag](uuid: String, model: Module[T])(
