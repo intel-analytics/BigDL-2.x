@@ -1,9 +1,19 @@
+import json
+
+from pyspark import SparkContext
+from pyspark.sql import SparkSession
+
+from zoo.orca.data.image.utils import chunks, dict_to_row
+from bigdl.util.common import get_node_and_core_number
+import os
+
+
 
 
 class ParquetDataset:
 
     @staticmethod
-    def write(path, generator, schema, **kwargs):
+    def write(path, generator, schema, block_size=1000, write_mode="overwrite", **kwargs):
         """
         Take each record in the generator and write it to a parquet file.
         
@@ -50,6 +60,20 @@ class ParquetDataset:
         :param kwargs: other args
         """
 
+        sc = SparkContext.getOrCreate()
+        spark = SparkSession(sc)
+        node_num, core_num = get_node_and_core_number()
+        for i, chunk in enumerate(chunks(generator, block_size)):
+            chunk_path = os.path.join(path, f"chunk={i}")
+            rows_rdd = sc.parallelize(chunk, core_num * node_num).map(lambda x: dict_to_row(schema, x))
+            spark.createDataFrame(rows_rdd).write.mode(write_mode).parquet(chunk_path)
+
+        metadata_path = os.path.join(path, "_orca_metadata")
+        with open(metadata_path, "w") as f:
+            f.write(json.dumps(schema))
+
+
+
     @staticmethod
     def read_as_tf(path):
         """
@@ -84,3 +108,4 @@ class ParquetDataset:
 
     @staticmethod
     def write_fashion_mnist(images, labels, output_path):
+        pass
