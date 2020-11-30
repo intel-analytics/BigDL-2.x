@@ -289,20 +289,12 @@ class RayTuneSearchEngine(SearchEngine):
         def train_func(config):
             # make a copy from global variables for trial to make changes
             global_ft = ray.get(ft_id)
-            # global_model = ray.get(model_id)
             trial_ft = deepcopy(global_ft)
-            # trial_model = deepcopy(global_model)
-            # print("config is ", config)
-            # if 'model' in config.keys() and config['model'] == 'XGBRegressor':
-            #     trial_model = XGBoostRegressor()
-            # else:
-            #     trial_model = TimeSequenceModel(check_optional_config=False,
-            #
-            print(config.keys())
             if isinstance(model_create_func, ModelBuilder):
                 trial_model = model_create_func.build(config)
             else:
-                trial_model = model_create_func(config=config)
+                trial_model = model_create_func()
+
             imputer = None
             if "imputation" in config:
                 if config["imputation"] == "LastFillImpute":
