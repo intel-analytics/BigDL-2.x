@@ -71,8 +71,13 @@ class XgbPredictor(BasePredictor):
         ft = IdentityTransformer(self.feature_cols, self.target_col)
         return ft
 
-    def create_model(self, resources_per_trial, config):
-        _model = XGBoost(model_type=self.model_type, config=config)
-        if "cpu" in resources_per_trial:
-            _model.set_params(n_jobs=resources_per_trial.get("cpu"))
-        return _model
+    def make_model_fn(self, resources_per_trial):
+        model_type = self.model_type
+        config = self.config
+
+        def create_model():
+            _model = XGBoost(model_type=model_type, config=config)
+            if "cpu" in resources_per_trial:
+                _model.set_params(n_jobs=resources_per_trial.get("cpu"))
+            return _model
+        return create_model

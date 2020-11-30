@@ -20,7 +20,6 @@ from zoo.automl.common.metrics import Evaluator
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
 from zoo.automl.common.util import *
 from zoo.automl.config.recipe import *
-from functools import partial
 
 ALLOWED_FIT_METRICS = ("mse", "mae", "r2")
 
@@ -48,7 +47,7 @@ class BasePredictor(object):
         raise NotImplementedError
 
     @abstractmethod
-    def create_model(self, resource_per_trail, config):
+    def make_model_fn(self, resource_per_trail):
         raise NotImplementedError
 
     def _check_df(self, df):
@@ -94,7 +93,7 @@ class BasePredictor(object):
         self._check_df(input_df)
         if validation_df is not None:
             self._check_df(validation_df)
-        BasePredictor._check_fit_metric(metric)
+        # BasePredictor._check_fit_metric(metric)
         if distributed:
             if hdfs_url is not None:
                 remote_dir = os.path.join(hdfs_url, "ray_results", self.name)
@@ -159,9 +158,12 @@ class BasePredictor(object):
                    resources_per_trial,
                    remote_dir):
         ft = self.create_feature_transformer()
-        feature_list = ft.get_feature_list()
+        try:
+            feature_list = ft.get_feature_list()
+        except:
+            feature_list = None
 
-        model_fn = partial(self.create_model, resources_per_trial=resources_per_trial)
+        model_fn = self.make_model_fn(resources_per_trial)
 
         # prepare parameters for search engine
         search_space = recipe.search_space(feature_list)
@@ -189,7 +191,7 @@ class BasePredictor(object):
 
         pipeline = self._make_pipeline(analysis,
                                        feature_transformers=ft,
-                                       model_create_fn=model_fn,
+                                       model=model_fn(),
                                        remote_dir=remote_dir)
         return pipeline
 
@@ -198,7 +200,7 @@ class BasePredictor(object):
         for name, value in best_config.items():
             print(name, ":", value)
 
-    def _make_pipeline(self, analysis, feature_transformers, model_create_fn,
+    def _make_pipeline(self, analysis, feature_transformers, model,
                        remote_dir):
         metric = "reward_metric"
         best_config = analysis.get_best_config(metric=metric, mode="max")
@@ -209,7 +211,6 @@ class BasePredictor(object):
         model_path = os.path.join(best_logdir, dataframe["checkpoint"].iloc[0])
         config = convert_bayes_configs(best_config).copy()
         self._print_config(config)
-        model = model_create_fn(config=config)
         if remote_dir is not None:
             all_config = restore_hdfs(model_path,
                                       remote_dir,
