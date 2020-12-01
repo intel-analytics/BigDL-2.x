@@ -1,4 +1,5 @@
 import copy
+from collections import namedtuple
 from io import BytesIO
 import numpy as np
 from itertools import chain, islice
@@ -24,6 +25,20 @@ PUBLIC_ENUMS = {
 }
 
 
+class SchemaField(namedtuple("SchemaField", ("feature_type", "dtype", "shape"))):
+
+    def to_dict(self):
+        return {
+            "feature_type": self.feature_type,
+            "dtype": self.dtype,
+            "shape": self.shape
+        }
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(**d)
+
+
 class EnumEncoder(json.JSONEncoder):
     def default(self, obj):
         if type(obj) in PUBLIC_ENUMS.values():
@@ -39,6 +54,24 @@ def as_enum(d):
         return d
 
 
+def encode_schema(schema):
+
+    copy_schema = schema.copy()
+
+    for k, v in copy_schema.items():
+        copy_schema[k] = v.to_dict()
+
+    return json.dumps(copy_schema, cls=EnumEncoder)
+
+
+def decode_schema(fp):
+    schema_dict = json.load(fp, object_hook=as_enum)
+    schema = {}
+    for k, v in schema_dict.items():
+        schema[k] = SchemaField.from_dict(v)
+    return schema
+
+
 def decode_ndarray(bs):
     return np.load(BytesIO(bs))['arr']
 
@@ -47,9 +80,9 @@ def row_to_dict(schema, row):
 
     row_dict = {}
     for k, field in schema.items():
-        if field["type"] == FeatureType.IMAGE:
+        if field.feature_type == FeatureType.IMAGE:
             row_dict[k] = row[k]
-        elif field["type"] == FeatureType.NDARRAY:
+        elif field.feature_type == FeatureType.NDARRAY:
             row_dict[k] = decode_ndarray(row[k])
         else:
             row_dict[k] = row[k]
@@ -66,12 +99,12 @@ def dict_to_row(schema, row_dict):
     row = {}
     for k, v in row_dict.items():
         schema_field = schema[k]
-        if schema_field["type"] == FeatureType.IMAGE:
+        if schema_field.feature_type == FeatureType.IMAGE:
             image_path = v
             with open(image_path, "rb") as f:
                 img_bytes = f.read()
             row[k] = img_bytes
-        elif schema_field["type"] == FeatureType.NDARRAY:
+        elif schema_field.feature_type == FeatureType.NDARRAY:
             memfile = BytesIO()
             np.savez_compressed(memfile, arr=v)
             row[k] = bytearray(memfile.getvalue())

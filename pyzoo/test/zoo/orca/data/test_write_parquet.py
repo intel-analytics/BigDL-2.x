@@ -21,7 +21,7 @@ from io import BytesIO
 import numpy as np
 from pyspark.sql import SparkSession
 from zoo.orca.data.image.parquet_dataset import ParquetDataset
-from zoo.orca.data.image.utils import DType, FeatureType
+from zoo.orca.data.image.utils import DType, FeatureType, SchemaField
 
 
 def test_write_parquet_simple(orca_context_fixture):
@@ -33,9 +33,9 @@ def test_write_parquet_simple(orca_context_fixture):
             yield {"id": i, "feature": np.zeros((10,)), "label": np.ones((4,))}
 
     schema = {
-        "id": {"type": FeatureType.SCALAR, "dtype": DType.INT32, "shape": ()},
-        "feature": {"type": FeatureType.NDARRAY, "dtype": DType.FLOAT32, "shape": (10,)},
-        "label": {"type": FeatureType.NDARRAY, "dtype": DType.FLOAT32, "shape": (4,)}
+        "id": SchemaField(feature_type=FeatureType.SCALAR, dtype=DType.INT32, shape=()),
+        "feature": SchemaField(feature_type=FeatureType.NDARRAY, dtype=DType.FLOAT32, shape=(10,)),
+        "label": SchemaField(feature_type=FeatureType.NDARRAY, dtype=DType.FLOAT32, shape=(4,))
     }
 
     try:
