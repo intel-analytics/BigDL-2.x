@@ -3,7 +3,7 @@ import json
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
-from zoo.orca.data.image.utils import chunks, dict_to_row, EnumEncoder
+from zoo.orca.data.image.utils import chunks, dict_to_row, EnumEncoder, as_enum, row_to_dict
 from bigdl.util.common import get_node_and_core_number
 import os
 
@@ -73,6 +73,17 @@ class ParquetDataset:
             f.write(json.dumps(schema, cls=EnumEncoder))
 
 
+    @staticmethod
+    def _read_as_dict_rdd(path):
+        sc = SparkContext.getOrCreate()
+        spark = SparkSession(sc)
+        df = spark.read.parquet(path)
+        schema_path = os.path.join(path, "_orca_metadata")
+        with open(schema_path, "r") as fp:
+            schema = json.load(fp, object_hook=as_enum)
+
+        rdd = df.rdd.map(lambda r: row_to_dict(schema, r))
+        return rdd
 
     @staticmethod
     def read_as_tf(path):

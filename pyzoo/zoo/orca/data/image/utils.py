@@ -39,6 +39,24 @@ def as_enum(d):
         return d
 
 
+def decode_ndarray(bs):
+    return np.load(BytesIO(bs))['arr']
+
+
+def row_to_dict(schema, row):
+
+    row_dict = {}
+    for k, field in schema.items():
+        if field["type"] == FeatureType.IMAGE:
+            row_dict[k] = row[k]
+        elif field["type"] == FeatureType.NDARRAY:
+            row_dict[k] = decode_ndarray(row[k])
+        else:
+            row_dict[k] = row[k]
+
+    return row_dict
+
+
 def dict_to_row(schema, row_dict):
     import pyspark
     err_msg = 'Dictionary fields \n{}\n do not match schema fields \n{}'.format(

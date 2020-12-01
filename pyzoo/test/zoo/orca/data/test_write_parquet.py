@@ -41,20 +41,10 @@ def test_write_parquet_simple(orca_context_fixture):
     try:
 
         ParquetDataset.write(temp_dir, generator(100), schema)
-
-        spark = SparkSession(sc)
-
-        df = spark.read.parquet(temp_dir)
-
-        def decode(row):
-            feature_file = BytesIO(row["feature"])
-            label_file = BytesIO(row["label"])
-            return row["id"], np.load(feature_file)['arr'], np.load(label_file)['arr']
-
-        data = df.rdd.map(lambda r: decode(r)).collect()[0]
-        assert data[0] == 0
-        assert np.all(data[1] == np.zeros((10,), dtype=np.float32))
-        assert np.all(data[2] == np.ones((4,), dtype=np.float32))
+        data = ParquetDataset._read_as_dict_rdd(temp_dir).collect()[0]
+        assert data['id'] == 0
+        assert np.all(data['feature'] == np.zeros((10,), dtype=np.float32))
+        assert np.all(data['label'] == np.ones((4,), dtype=np.float32))
 
     finally:
         shutil.rmtree(temp_dir)
