@@ -3,7 +3,7 @@ import json
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
-from zoo.orca.data.image.utils import chunks, dict_to_row
+from zoo.orca.data.image.utils import chunks, dict_to_row, EnumEncoder
 from bigdl.util.common import get_node_and_core_number
 import os
 
@@ -70,7 +70,7 @@ class ParquetDataset:
 
         metadata_path = os.path.join(path, "_orca_metadata")
         with open(metadata_path, "w") as f:
-            f.write(json.dumps(schema))
+            f.write(json.dumps(schema, cls=EnumEncoder))
 
 
 
