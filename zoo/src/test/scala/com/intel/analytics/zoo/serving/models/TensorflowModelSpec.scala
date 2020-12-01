@@ -36,7 +36,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     val helper = new ClusterServingHelper()
-    helper.chwFlag=false
+    helper.chwFlag = false
     helper.modelType = "tensorflowFrozenModel"
     helper.weightPath = "/tmp/tensorflow_inception_v1/"
     ModelHolder.model = helper.loadInferenceModel()
@@ -66,7 +66,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     val helper = new ClusterServingHelper()
-    helper.chwFlag=false
+    helper.chwFlag = false
     helper.modelType = "tensorflowFrozenModel"
     helper.weightPath = "/tmp/tensorflow_mobilenet_v1/"
     ModelHolder.model = helper.loadInferenceModel()
@@ -97,7 +97,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     val helper = new ClusterServingHelper()
-    helper.chwFlag=false
+    helper.chwFlag = false
     helper.modelType = "tensorflowFrozenModel"
     helper.weightPath = "/tmp/tensorflow_mobilenet_v2/"
     ModelHolder.model = helper.loadInferenceModel()
@@ -128,7 +128,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     val helper = new ClusterServingHelper()
-    helper.chwFlag=false
+    helper.chwFlag = false
     helper.modelType = "tensorflowFrozenModel"
     helper.weightPath = "/tmp/tensorflow_resnet50/"
     ModelHolder.model = helper.loadInferenceModel()
@@ -158,7 +158,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     val helper = new ClusterServingHelper()
-    helper.chwFlag=false
+    helper.chwFlag = false
     helper.modelType = "tensorflowSavedModel"
     helper.weightPath = "/tmp/tensorflow_tfauto/"
     ModelHolder.model = helper.loadInferenceModel()
@@ -188,7 +188,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     val helper = new ClusterServingHelper()
-    helper.chwFlag=false
+    helper.chwFlag = false
     helper.modelType = "tensorflowFrozenModel"
     helper.weightPath = "/tmp/tensorflow_vgg16/"
     ModelHolder.model = helper.loadInferenceModel()
@@ -218,7 +218,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     val helper = new ClusterServingHelper()
-    helper.chwFlag=false
+    helper.chwFlag = false
     helper.modelType = "tensorflowSavedModel"
     helper.weightPath = "/tmp/tensorflow_tf_2out/"
     ModelHolder.model = helper.loadInferenceModel()
