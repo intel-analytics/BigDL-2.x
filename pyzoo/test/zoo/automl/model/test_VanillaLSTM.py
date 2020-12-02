@@ -15,111 +15,88 @@
 #
 
 import pytest
-
-from test.zoo.pipeline.utils.test_utils import ZooTestCase
+from unittest import TestCase
 from zoo.automl.model.VanillaLSTM import VanillaLSTM
-from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
-from numpy.testing import assert_array_almost_equal
 import numpy as np
-import pandas as pd
-from zoo.automl.common.util import save, restore
 import tempfile
-import shutil
+import os
 
 
-class TestVanillaLSTM(ZooTestCase):
+def create_data():
+    num_train_samples = 1000
+    num_val_samples = 400
+    num_test_samples = 400
+    input_time_steps = 7
+    input_feature_dim = 4
+    output_dim = np.random.randint(1, 5)
 
-    def setup_method(self, method):
-        # super().setup_method(method)
-        train_data = pd.DataFrame(data=np.random.randn(64, 4))
-        val_data = pd.DataFrame(data=np.random.randn(16, 4))
-        test_data = pd.DataFrame(data=np.random.randn(16, 4))
+    def get_x_y(num_samples):
+        x = np.random.rand(num_samples, input_time_steps, input_feature_dim)
+        y = np.random.randn(num_samples, output_dim)
+        return x, y
 
-        future_seq_len = 1
-        past_seq_len = 6
+    train_data = get_x_y(num_train_samples)
+    val_data = get_x_y(num_val_samples)
+    test_data = get_x_y(num_test_samples)
+    return train_data, val_data, test_data
 
-        # use roll method in time_sequence
-        tsft = TimeSequenceFeatureTransformer()
-        self.x_train, self.y_train = tsft._roll_train(train_data,
-                                                      past_seq_len=past_seq_len,
-                                                      future_seq_len=future_seq_len)
-        self.x_val, self.y_val = tsft._roll_train(val_data,
-                                                  past_seq_len=past_seq_len,
-                                                  future_seq_len=future_seq_len)
-        self.x_test = tsft._roll_test(test_data, past_seq_len=past_seq_len)
-        self.config = {
-            'epochs': 1,
-            "lr": 0.001,
-            "lstm_1_units": 16,
-            "dropout_1": 0.2,
-            "lstm_2_units": 10,
-            "dropout_2": 0.2,
-            "batch_size": 32,
-        }
-        self.model = VanillaLSTM(check_optional_config=False, future_seq_len=future_seq_len)
 
-    def teardown_method(self, method):
-        pass
+class TestVanillaLSTM(TestCase):
+    train_data, val_data, test_data = create_data()
+    model = VanillaLSTM()
 
-    def test_fit_eval(self):
-        print("fit_eval:", self.model.fit_eval(self.x_train,
-                                               self.y_train,
-                                               **self.config))
+    def test_fit_evaluate(self):
+        config = {"batch_size": 128}
+        self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
+        mse, smape = self.model.evaluate(self.val_data[0], self.val_data[1],
+                                         metrics=["mse", "smape"])
+        assert len(mse) == self.val_data[1].shape[-1]
+        assert len(smape) == self.val_data[1].shape[-1]
 
-    def test_fit_eval_mc(self):
-        print("fit_eval:", self.model.fit_eval(self.x_train,
-                                               self.y_train,
-                                               mc=True,
-                                               **self.config))
+    def test_config(self):
+        config = {"lstm_units": [128] * 2,
+                  "dropouts": [0.2] * 2}
+        self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
 
-    def test_evaluate(self):
-        self.model.fit_eval(self.x_train, self.y_train, **self.config)
-        mse, rs = self.model.evaluate(self.x_val,
-                                      self.y_val,
-                                      metric=['mse', 'r2'])
-        print("Mean squared error is:", mse)
-        print("R square is:", rs)
+        config = {"lstm_units": 128,
+                  "dropouts": 0.2}
+        self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
 
-    def test_predict(self):
-        self.model.fit_eval(self.x_train, self.y_train, **self.config)
-        self.y_pred = self.model.predict(self.x_test)
-        assert self.y_pred.shape == (self.x_test.shape[0], 1)
+        with pytest.raises(ValueError):
+            config = {"lstm_units": 0.1,
+                      "dropouts": 0.2}
+            self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
 
-    def test_save_restore(self):
-        new_model = VanillaLSTM(check_optional_config=False)
-        self.model.fit_eval(self.x_train, self.y_train, **self.config)
-        predict_before = self.model.predict(self.x_test)
+        with pytest.raises(ValueError):
+            config = {"lstm_units": [128] * 2,
+                      "dropouts": [0.2] * 3}
+            self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
 
-        dirname = tempfile.mkdtemp(prefix="automl_test_vanilla")
-        try:
-            save(dirname, model=self.model)
-            restore(dirname, model=new_model, config=self.config)
-            predict_after = new_model.predict(self.x_test)
-            assert_array_almost_equal(predict_before, predict_after, decimal=2)
-            new_config = {'epochs': 2}
-            new_model.fit_eval(self.x_train, self.y_train, **new_config)
+        with pytest.raises(ValueError):
+            config = {"lstm_units": 128,
+                      "dropouts": [0.2] * 2}
+            self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
 
-        finally:
-            shutil.rmtree(dirname)
+    def test_predict_save_restore(self):
+        config = {"batch_size": 128}
+        self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
+        pred = self.model.predict(self.test_data[0])
+        assert pred.shape == self.test_data[1].shape
+        with tempfile.TemporaryDirectory() as tmp_dir_name:
+            ckpt_name = os.path.join(tmp_dir_name, "ckpt")
+            self.model.save(ckpt_name)
+            model_1 = VanillaLSTM()
+            model_1.restore(ckpt_name)
+            pred_1 = model_1.predict(self.test_data[0])
+            assert np.allclose(pred, pred_1)
 
-    def test_predict_with_uncertainty(self,):
-        self.model.fit_eval(self.x_train, self.y_train, mc=True, **self.config)
-        prediction, uncertainty = self.model.predict_with_uncertainty(self.x_test, n_iter=10)
-        assert prediction.shape == (self.x_test.shape[0], 1)
-        assert uncertainty.shape == (self.x_test.shape[0], 1)
+    def test_predict_with_uncertainty(self):
+        config = {"batch_size": 128}
+        self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
+        prediction, uncertainty = self.model.predict_with_uncertainty(self.test_data[0], n_iter=100)
+        assert prediction.shape == self.test_data[1].shape
+        assert uncertainty.shape == self.test_data[1].shape
         assert np.any(uncertainty)
-
-        new_model = VanillaLSTM(check_optional_config=False)
-        dirname = tempfile.mkdtemp(prefix="automl_test_feature")
-        try:
-            save(dirname, model=self.model)
-            restore(dirname, model=new_model, config=self.config)
-            prediction, uncertainty = new_model.predict_with_uncertainty(self.x_test, n_iter=2)
-            assert prediction.shape == (self.x_test.shape[0], 1)
-            assert uncertainty.shape == (self.x_test.shape[0], 1)
-            assert np.any(uncertainty)
-        finally:
-            shutil.rmtree(dirname)
 
 
 if __name__ == '__main__':

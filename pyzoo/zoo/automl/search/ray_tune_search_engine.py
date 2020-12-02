@@ -128,6 +128,8 @@ class RayTuneSearchEngine(SearchEngine):
                 raise ValueError(f"search_alg should be of type str."
                                  f" Got {search_alg.__class__.__name__}")
             search_alg = search_alg.lower()
+            if search_alg_params is None:
+                search_alg_params = dict()
             if search_alg not in SEARCH_ALG_ALLOWED:
                 raise ValueError(f"search_alg must be one of {SEARCH_ALG_ALLOWED}. "
                                  f"Got: {search_alg}")
@@ -139,7 +141,7 @@ class RayTuneSearchEngine(SearchEngine):
                     optimizer=optimizer,
                     parameter_names=list(search_space.keys()),
                 ))
-            if search_alg == "bayesopt":
+            elif search_alg == "bayesopt":
                 search_alg_params.update({"space": recipe.manual_search_space()})
 
             search_alg_params.update(dict(
@@ -156,6 +158,8 @@ class RayTuneSearchEngine(SearchEngine):
             if not isinstance(scheduler, str):
                 raise ValueError(f"Scheduler should be of type str. "
                                  f"Got {scheduler.__class__.__name__}")
+            if scheduler_params is None:
+                scheduler_params = dict()
             scheduler_params.update(dict(
                 time_attr="training_iteration",
                 metric="reward_metric",
@@ -285,20 +289,12 @@ class RayTuneSearchEngine(SearchEngine):
         def train_func(config):
             # make a copy from global variables for trial to make changes
             global_ft = ray.get(ft_id)
-            # global_model = ray.get(model_id)
             trial_ft = deepcopy(global_ft)
-            # trial_model = deepcopy(global_model)
-            # print("config is ", config)
-            # if 'model' in config.keys() and config['model'] == 'XGBRegressor':
-            #     trial_model = XGBoostRegressor()
-            # else:
-            #     trial_model = TimeSequenceModel(check_optional_config=False,
-            #
-            print(config.keys())
             if isinstance(model_create_func, ModelBuilder):
                 trial_model = model_create_func.build(config)
             else:
-                trial_model = model_create_func(config=config)
+                trial_model = model_create_func()
+
             imputer = None
             if "imputation" in config:
                 if config["imputation"] == "LastFillImpute":
