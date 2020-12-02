@@ -19,6 +19,7 @@ package com.intel.analytics.zoo.serving.engine
 import java.util.AbstractMap.SimpleEntry
 import java.util.UUID
 
+import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.pipeline.{RedisIO, RedisUtils}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions, FileUtils}
 import org.apache.flink.configuration.Configuration
@@ -44,10 +45,10 @@ class FlinkRedisSource(params: ClusterServingHelper)
       System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
       System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStorePassword)
     }
-    if (JedisPoolHolder.jedisPool == null) {
-      JedisPoolHolder.synchronized {
-        if (JedisPoolHolder.jedisPool == null) {
-          JedisPoolHolder.jedisPool = new JedisPool(new JedisPoolConfig(),
+    if (ClusterServing.jedisPool == null) {
+      ClusterServing.synchronized {
+        if (ClusterServing.jedisPool == null) {
+          ClusterServing.jedisPool = new JedisPool(new JedisPoolConfig(),
             params.redisHost, params.redisPort, params.redisTimeout, params.redisSecureEnabled)
         }
       }
@@ -60,7 +61,7 @@ class FlinkRedisSource(params: ClusterServingHelper)
       case true => logger.info(s"FlinkRedisSource connect to secured Redis successfully.")
       case false => logger.info(s"FlinkRedisSource connect to plain Redis successfully.")
     }
-    jedis = RedisIO.getRedisClient(JedisPoolHolder.jedisPool)
+    jedis = RedisIO.getRedisClient(ClusterServing.jedisPool)
     try {
       jedis.xgroupCreate(params.jobName,
         "serving", new StreamEntryID(0, 0), true)

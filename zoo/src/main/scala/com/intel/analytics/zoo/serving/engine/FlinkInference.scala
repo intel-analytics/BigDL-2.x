@@ -21,7 +21,7 @@ import java.util.concurrent.locks.ReentrantLock
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import com.intel.analytics.zoo.serving.PreProcessing
+import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.flink.api.common.functions.RichMapFunction
@@ -38,15 +38,15 @@ class FlinkInference(helper: ClusterServingHelper)
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
     try {
-      if (ModelHolder.model == null) {
-        ModelHolder.synchronized {
-          if (ModelHolder.model == null) {
+      if (ClusterServing.model == null) {
+        ClusterServing.synchronized {
+          if (ClusterServing.model == null) {
             val localModelDir = getRuntimeContext.getDistributedCache
               .getFile(Conventions.SERVING_MODEL_TMP_DIR).getPath
             
             logger.info(s"Model loaded at executor at path ${localModelDir}")
             helper.modelDir = localModelDir
-            ModelHolder.model = helper.loadInferenceModel()
+            ClusterServing.model = helper.loadInferenceModel()
           }
         }
       }
@@ -73,13 +73,9 @@ class FlinkInference(helper: ClusterServingHelper)
     }
 
     val t2 = System.nanoTime()
-    logger.info(s"${in.size} records backend time ${(t2 - t1) / 1e9} s. " +
+    logger.debug(s"${in.size} records backend time ${(t2 - t1) / 1e9} s. " +
       s"Throughput ${in.size / ((t2 - t1) / 1e9)}")
     postProcessed
   }
 }
-object ModelHolder {
-  var model: InferenceModel = null
-  var modelQueueing = 0
-  var nonOMP = 0
-}
+

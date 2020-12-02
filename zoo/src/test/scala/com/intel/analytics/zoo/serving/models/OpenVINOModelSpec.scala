@@ -16,9 +16,9 @@
 
 package com.intel.analytics.zoo.serving.models
 
-import com.intel.analytics.zoo.serving.PreProcessing
+import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
 import com.intel.analytics.zoo.serving.arrow.ArrowDeserializer
-import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, ModelHolder}
+import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -38,7 +38,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     helper.modelType = "openvino"
     helper.weightPath = "/tmp/openvino_inception_v1/inception_v1.bin"
     helper.defPath = "/tmp/openvino_inception_v1/inception_v1.xml"
-    ModelHolder.model = helper.loadInferenceModel()
+    ClusterServing.model = helper.loadInferenceModel()
     ("rm -rf /tmp/openvino_inception_v1*").!
     "rm -rf /tmp/openvino_inception_v1*".!
     "rm -rf /tmp/config.yaml".!
@@ -66,7 +66,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     helper.modelType = "openvino"
     helper.weightPath = "/tmp/openvino_mobilenet_v1/mobilenet_v1_1.0_224_frozen.bin"
     helper.defPath = "/tmp/openvino_mobilenet_v1/mobilenet_v1_1.0_224_frozen.xml"
-    ModelHolder.model = helper.loadInferenceModel()
+    ClusterServing.model = helper.loadInferenceModel()
     ("rm -rf /tmp/openvino_mobilenet_v1*").!
     "rm -rf /tmp/openvino_mobilenet_v1*".!
     "rm -rf /tmp/config.yaml".!
@@ -96,7 +96,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     helper.modelType = "openvino"
     helper.weightPath = "/tmp/openvino_mobilenet_v2/mobilenet_v2.bin"
     helper.defPath = "/tmp/openvino_mobilenet_v2/mobilenet_v2.xml"
-    ModelHolder.model = helper.loadInferenceModel()
+    ClusterServing.model = helper.loadInferenceModel()
     ("rm -rf /tmp/openvino_mobilenet_v2*").!
     "rm -rf /tmp/openvino_mobilenet_v2*".!
     "rm -rf /tmp/config.yaml".!
@@ -126,7 +126,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     helper.modelType = "openvino"
     helper.weightPath = "/tmp/openvino2020_resnet50/resnet_v1_50.bin"
     helper.defPath = "/tmp/openvino2020_resnet50/resnet_v1_50.xml"
-    ModelHolder.model = helper.loadInferenceModel()
+    ClusterServing.model = helper.loadInferenceModel()
     ("rm -rf /tmp/openvino2020_resnet50*").!
     "rm -rf /tmp/openvino2020_resnet50*".!
     "rm -rf /tmp/config.yaml".!
@@ -156,7 +156,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     helper.modelType = "openvino"
     helper.weightPath = "/tmp/openvino_resnet50/frozen_inference_graph.bin"
     helper.defPath = "/tmp/openvino_resnet50/frozen_inference_graph.xml"
-    ModelHolder.model = helper.loadInferenceModel()
+    ClusterServing.model = helper.loadInferenceModel()
     ("rm -rf /tmp/openvino_resnet50*").!
     "rm -rf /tmp/openvino_resnet50*".!
     "rm -rf /tmp/config.yaml".!
@@ -187,7 +187,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     helper.modelType = "openvino"
     helper.weightPath = "/tmp/openvino_vgg16/vgg_16.bin"
     helper.defPath = "/tmp/openvino_vgg16/vgg_16.xml"
-    ModelHolder.model = helper.loadInferenceModel()
+    ClusterServing.model = helper.loadInferenceModel()
     ("rm -rf /tmp/openvino_vgg16*").!
     "rm -rf /tmp/openvino_vgg16*".!
     "rm -rf /tmp/config.yaml".!

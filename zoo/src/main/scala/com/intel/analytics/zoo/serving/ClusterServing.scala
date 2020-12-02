@@ -18,11 +18,13 @@
 package com.intel.analytics.zoo.serving
 
 
+import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.engine.{FlinkInference, FlinkRedisSink, FlinkRedisSource}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.flink.core.execution.JobClient
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.log4j.{Level, Logger}
+import redis.clients.jedis.JedisPool
 import scopt.OptionParser
 
 
@@ -33,6 +35,8 @@ object ClusterServing {
   var argv: ServingParams = _
   var helper: ClusterServingHelper = _
   var streamingEnv: StreamExecutionEnvironment = _
+  var model: InferenceModel = _
+  var jedisPool: JedisPool = _
   val parser = new OptionParser[ServingParams]("Text Classification Example") {
     opt[String]('c', "configPath")
       .text("Config Path of Cluster Serving")

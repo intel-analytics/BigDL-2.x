@@ -17,6 +17,7 @@
 
 package com.intel.analytics.zoo.serving.engine
 
+import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.pipeline.RedisIO
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.flink.configuration.Configuration
@@ -39,10 +40,10 @@ class FlinkRedisSink(params: ClusterServingHelper) extends RichSinkFunction[List
       System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
       System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStorePassword)
     }
-    if (JedisPoolHolder.jedisPool == null) {
-      JedisPoolHolder.synchronized {
-        if (JedisPoolHolder.jedisPool == null) {
-          JedisPoolHolder.jedisPool = new JedisPool(new JedisPoolConfig(),
+    if (ClusterServing.jedisPool == null) {
+      ClusterServing.synchronized {
+        if (ClusterServing.jedisPool == null) {
+          ClusterServing.jedisPool = new JedisPool(new JedisPoolConfig(),
             params.redisHost, params.redisPort, params.redisTimeout, params.redisSecureEnabled)
         }
       }
@@ -52,7 +53,7 @@ class FlinkRedisSink(params: ClusterServingHelper) extends RichSinkFunction[List
       case true => logger.info(s"FlinkRedisSink connect to secured Redis successfully.")
       case false => logger.info(s"FlinkRedisSink connect to plain Redis successfully.")
     }
-    jedis = RedisIO.getRedisClient(JedisPoolHolder.jedisPool)
+    jedis = RedisIO.getRedisClient(ClusterServing.jedisPool)
 
   }
 
@@ -76,6 +77,4 @@ class FlinkRedisSink(params: ClusterServingHelper) extends RichSinkFunction[List
   }
 
 }
-object JedisPoolHolder {
-  var jedisPool: JedisPool = null
-}
+
