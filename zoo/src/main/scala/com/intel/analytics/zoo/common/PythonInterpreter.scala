@@ -85,7 +85,7 @@ object PythonInterpreter {
   }
 
   private def threadExecute[T](task: () => T,
-                               timeout: Duration = Duration.Inf): T = {
+                               timeout: Duration = Duration("100s")): T = {
     try {
       val re = Array(task).map(t => Future {
         t()
