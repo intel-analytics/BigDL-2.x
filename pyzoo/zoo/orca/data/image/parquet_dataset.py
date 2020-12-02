@@ -3,6 +3,7 @@ import json
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
+from zoo.orca.data.file import open_text, write_text
 from zoo.orca.data.image.utils import chunks, dict_to_row, EnumEncoder, as_enum, row_to_dict, encode_schema, \
     decode_schema
 from bigdl.util.common import get_node_and_core_number
@@ -66,10 +67,9 @@ class ParquetDataset:
             chunk_path = os.path.join(path, f"chunk={i}")
             rows_rdd = sc.parallelize(chunk, core_num * node_num).map(lambda x: dict_to_row(schema, x))
             spark.createDataFrame(rows_rdd).write.mode(write_mode).parquet(chunk_path)
-
         metadata_path = os.path.join(path, "_orca_metadata")
-        with open(metadata_path, "w") as f:
-            f.write(encode_schema(schema))
+
+        write_text(metadata_path, encode_schema(schema))
 
     @staticmethod
     def _read_as_dict_rdd(path):
@@ -77,11 +77,13 @@ class ParquetDataset:
         spark = SparkSession(sc)
         df = spark.read.parquet(path)
         schema_path = os.path.join(path, "_orca_metadata")
-        with open(schema_path, "r") as fp:
-            schema = decode_schema(fp)
+
+        j_str = open_text(schema_path)[0]
+
+        schema = decode_schema(j_str)
 
         rdd = df.rdd.map(lambda r: row_to_dict(schema, r))
-        return rdd
+        return rdd, schema
 
     @staticmethod
     def read_as_tf(path):

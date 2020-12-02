@@ -64,8 +64,8 @@ def encode_schema(schema):
     return json.dumps(copy_schema, cls=EnumEncoder)
 
 
-def decode_schema(fp):
-    schema_dict = json.load(fp, object_hook=as_enum)
+def decode_schema(j_str):
+    schema_dict = json.loads(j_str, object_hook=as_enum)
     schema = {}
     for k, v in schema_dict.items():
         schema[k] = SchemaField.from_dict(v)

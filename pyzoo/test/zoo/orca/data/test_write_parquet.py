@@ -41,7 +41,7 @@ def test_write_parquet_simple(orca_context_fixture):
     try:
 
         ParquetDataset.write(temp_dir, generator(100), schema)
-        data = ParquetDataset._read_as_dict_rdd(temp_dir).collect()[0]
+        data, schema = ParquetDataset._read_as_dict_rdd(temp_dir).collect()[0]
         assert data['id'] == 0
         assert np.all(data['feature'] == np.zeros((10,), dtype=np.float32))
         assert np.all(data['label'] == np.ones((4,), dtype=np.float32))
