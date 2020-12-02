@@ -3,6 +3,7 @@ import json
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
+from zoo.orca.data import XShards, SparkXShards
 from zoo.orca.data.file import open_text, write_text
 from zoo.orca.data.image.utils import chunks, dict_to_row, EnumEncoder, as_enum, row_to_dict, encode_schema, \
     decode_schema
@@ -86,12 +87,36 @@ class ParquetDataset:
         return rdd, schema
 
     @staticmethod
+    def _read_as_xshards(path):
+        rdd, schema = ParquetDataset._read_as_dict_rdd(path)
+
+        def merge_records(schema, iter):
+
+            l = list(iter)
+            result = {}
+            for k in schema.keys():
+                result[k] = []
+            for i, rec in enumerate(l):
+
+                for k in schema.keys():
+                    result[k].append(rec[k])
+            return [result]
+
+        result_rdd = rdd.mapPartitions(lambda iter: merge_records(schema, iter))
+        xshards = SparkXShards(result_rdd)
+        return xshards
+
+
+    @staticmethod
     def read_as_tf(path):
         """
         return a orca.data.tf.data.Dataset
         :param path: 
         :return: 
         """
+        from zoo.orca.data.tf.data import Dataset
+        xshards = ParquetDataset._read_as_xshards(path)
+        return Dataset.from_tensor_slices(xshards)
 
     @staticmethod
     def read_as_torch(path):
