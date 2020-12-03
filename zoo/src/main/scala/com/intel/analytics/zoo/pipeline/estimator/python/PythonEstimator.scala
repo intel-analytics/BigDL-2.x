@@ -59,9 +59,7 @@ class PythonEstimator[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
     val sample2batch = SampleToMiniBatch(batchSize)
     val validationMiniBatch = validationSet -> sample2batch
     val evalResult = estimator.evaluate(validationMiniBatch, validationMethod.asScala.toArray)
-    val evalResultArray = evalResult.map(result => EvaluatedResult(result._2.result()._1, result
-      ._2.result()._2, result._1.toString()))
-    evalResultArray.toList.asJava
+    toEvaluatedResult(evalResult)
   }
 
   def estimatorEvaluateImageFeature(estimator: Estimator[T],
@@ -72,9 +70,7 @@ class PythonEstimator[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
     val imageFeature2batch = ImageFeatureToMiniBatch(batchSize)
     val validationMiniBatch = validationSet -> imageFeature2batch
     val evalResult = estimator.evaluate(validationMiniBatch, validationMethod.asScala.toArray)
-    val evalResultArray = evalResult.map(result => EvaluatedResult(result._2.result()._1, result
-      ._2.result()._2, result._1.toString()))
-    evalResultArray.toList.asJava
+    toEvaluatedResult(evalResult)
   }
 
   def estimatorEvaluateMiniBatch(
@@ -82,9 +78,7 @@ class PythonEstimator[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
       validationSet: FeatureSet[MiniBatch[T]],
       validationMethod: JList[ValidationMethod[T]]): JList[EvaluatedResult] = {
     val evalResult = estimator.evaluate(validationSet, validationMethod.asScala.toArray)
-    val evalResultArray = evalResult.map(result => EvaluatedResult(result._2.result()._1, result
-      ._2.result()._2, result._1.toString()))
-    evalResultArray.toList.asJava
+    toEvaluatedResult(evalResult)
   }
 
   def estimatorTrain(estimator: Estimator[T], trainSet: FeatureSet[Sample[T]],
@@ -185,5 +179,12 @@ class PythonEstimator[T: ClassTag](implicit ev: TensorNumeric[T]) extends Python
     } else {
       null
     }
+  }
+
+  protected def toEvaluatedResult(evalResult: Map[ValidationMethod[T], ValidationResult]
+                                ):JList[EvaluatedResult] = {
+    val evalResultArray = evalResult.map(result =>
+      EvaluatedResult(result._2.result()._1, result._2.result()._2, result._1.toString()))
+    evalResultArray.toList.asJava
   }
 }
