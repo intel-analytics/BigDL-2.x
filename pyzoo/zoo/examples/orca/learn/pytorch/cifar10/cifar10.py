@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-# Most of the pytorch code is adapted from Pytorch's tutorial for 
+# Most of the pytorch code is adapted from Pytorch's tutorial for
 # neural networks training on Cifar10
 # https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
 #
@@ -38,9 +38,18 @@ from zoo.orca.learn.trigger import EveryEpoch
 
 parser = argparse.ArgumentParser(description='PyTorch Cifar10 Example')
 parser.add_argument('--cluster_mode', type=str, default="local",
-                    help='The mode for the Spark cluster. local or yarn.')
+                    help='The cluster mode, such as local, yarn or k8s.')
 args = parser.parse_args()
-    
+
+if args.cluster_mode == "local":
+    init_orca_context(memory="4g")
+elif args.cluster_mode == "yarn":
+    init_orca_context(
+        cluster_mode="yarn-client", num_nodes=2, driver_memory="4g",
+        conf={"spark.rpc.message.maxSize": "1024",
+              "spark.task.maxFailures": "1",
+              "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"})
+
 transform = transforms.Compose(
     [transforms.ToTensor(),
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
@@ -58,12 +67,13 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=4,
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
+
 def imshow(img):
     img = img / 2 + 0.5     # unnormalize
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
-               
+
 dataiter = iter(trainloader)
 images, labels = dataiter.next()
 
@@ -71,16 +81,7 @@ images, labels = dataiter.next()
 imshow(torchvision.utils.make_grid(images))
 # print labels
 print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
-               
-if args.cluster_mode == "local":
-    init_orca_context(cores=1, memory="20g")
-elif args.cluster_mode == "yarn":
-    init_orca_context(
-        cluster_mode="yarn-client", cores=4, num_nodes=2, memory="2g",
-        driver_memory="10g", driver_cores=1,
-        conf={"spark.rpc.message.maxSize": "1024",
-            "spark.task.maxFailures": "1",
-            "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"})
+
 
 class Net(nn.Module):
     def __init__(self):
@@ -100,18 +101,17 @@ class Net(nn.Module):
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
-   
+
 net = Net()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-net.train()  
-zoo_estimator = Estimator.from_torch(model=net, optimizer=optimizer, loss=criterion,
-                                     backend="bigdl")
-zoo_estimator.fit(data=trainloader, epochs=2, validation_data=testloader,
-                  validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
+net.train()
+orca_estimator = Estimator.from_torch(model=net, optimizer=optimizer, loss=criterion,
+                                      backend="bigdl")
+orca_estimator.fit(data=trainloader, epochs=2, validation_data=testloader,
+                   validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
 print('Finished Training')
-    
 dataiter = iter(testloader)
 images, labels = dataiter.next()
 
@@ -119,6 +119,6 @@ images, labels = dataiter.next()
 imshow(torchvision.utils.make_grid(images))
 print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
-zoo_estimator.evaluate(data=testloader, validation_methods=[Accuracy()])
-zoo_estimator.shutdown()
+result = orca_estimator.evaluate(data=testloader, validation_methods=[Accuracy()])
+orca_estimator.shutdown()
 stop_orca_context()
