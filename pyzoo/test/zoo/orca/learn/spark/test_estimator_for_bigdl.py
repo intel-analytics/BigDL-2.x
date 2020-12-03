@@ -23,7 +23,7 @@ from pyspark.sql.types import *
 
 from zoo.common.nncontext import *
 from zoo.feature.common import *
-from zoo.orca.learn.spark_estimator import Estimator
+from zoo.orca.learn.bigdl import Estimator
 from bigdl.optim.optimizer import *
 from zoo.pipeline.api.keras import layers as ZLayer
 from zoo.pipeline.api.keras.models import Model as ZModel

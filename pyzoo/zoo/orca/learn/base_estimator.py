@@ -13,4 +13,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .estimator import Estimator
+
+from abc import ABC, abstractmethod
+
+
+class BaseEstimator(ABC):
+    @abstractmethod
+    def fit(self, data, epochs, **kwargs):
+        pass
+
+    @abstractmethod
+    def predict(self, data, **kwargs):
+        pass
+
+    @abstractmethod
+    def evaluate(self, data, **kwargs):
+        pass
+
+    @abstractmethod
+    def get_model(self):
+        pass
+
+    @abstractmethod
+    def save(self, model_path):
+        pass
+
+    @abstractmethod
+    def load(self, checkpoint, **kwargs):
+        pass

@@ -72,10 +72,6 @@ class Estimator(object):
                                               workers_per_node=workers_per_node,
                                               backend=backend)
         elif backend == "bigdl":
-            import warnings
-            warnings.warn("This method will be deprecated, please "
-                          "from zoo.orca.learn.spark_estimator import Estimator and use "
-                          "Estimator.from_torch instead", DeprecationWarning)
             return PytorchSparkEstimatorWrapper(model=model,
                                                 loss=loss,
                                                 optimizer=optimizer,
@@ -317,10 +313,6 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
 
     def get_validation_summary(self, tag=None):
         return self.estimator.get_validation_summary(tag=tag)
-
-    def set_tensorboard(self, log_dir, app_name):
-        self.log_dir = log_dir
-        self.app_name = app_name
 
     def clear_gradient_clipping(self):
         """

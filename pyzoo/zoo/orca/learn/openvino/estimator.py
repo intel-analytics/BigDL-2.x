@@ -23,6 +23,18 @@ from zoo.common.nncontext import init_nncontext
 import numpy as np
 
 
+class Estimator(object):
+    @staticmethod
+    def from_openvino(*, model_path, batch_size=0):
+        """
+        Load an openVINO Estimator.
+
+        :param model_path: String. The file path to the OpenVINO IR xml file.
+        :param batch_size: Int. Set batch Size, default is 0 (use default batch size).
+        """
+        return OpenvinoEstimatorWrapper(model_path=model_path, batch_size=batch_size)
+
+
 class OpenvinoEstimatorWrapper(SparkEstimator):
     def __init__(self,
                  *,

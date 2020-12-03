@@ -22,6 +22,44 @@ from zoo.feature.common import FeatureSet
 from pyspark.sql.dataframe import DataFrame
 
 
+class Estimator(object):
+    @staticmethod
+    def from_bigdl(*, model, loss=None, optimizer=None, feature_preprocessing=None,
+                   label_preprocessing=None, model_dir=None):
+        """
+        Construct an Estimator with BigDL model, loss function and Preprocessing for feature and
+        label data.
+        :param model: BigDL Model to be trained.
+        :param loss: BigDL criterion.
+        :param optimizer: BigDL optimizer.
+        :param feature_preprocessing: The param converts the data in feature column to a
+               Tensor or to a Sample directly. It expects a List of Int as the size of the
+               converted Tensor, or a Preprocessing[F, Tensor[T]]
+
+               If a List of Int is set as feature_preprocessing, it can only handle the case that
+               feature column contains the following data types:
+               Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The
+               feature data are converted to Tensors with the specified sizes before
+               sending to the model. Internally, a SeqToTensor is generated according to the
+               size, and used as the feature_preprocessing.
+
+               Alternatively, user can set feature_preprocessing as Preprocessing[F, Tensor[T]]
+               that transforms the feature data to a Tensor[T]. Some pre-defined Preprocessing are
+               provided in package zoo.feature. Multiple Preprocessing can be combined as a
+               ChainedPreprocessing.
+
+               The feature_preprocessing will also be copied to the generated NNModel and applied
+               to feature column during transform.
+        :param label_preprocessing: similar to feature_preprocessing, but applies to Label data.
+        :param model_dir: The path to save model. During the training, if checkpoint_trigger is
+            defined and triggered, the model will be saved to model_dir.
+        :return:
+        """
+        return BigDLEstimatorWrapper(model=model, loss=loss, optimizer=optimizer,
+                                     feature_preprocessing=feature_preprocessing,
+                                     label_preprocessing=label_preprocessing, model_dir=model_dir)
+
+
 class BigDLEstimatorWrapper(OrcaSparkEstimator):
     def __init__(self, *, model, loss, optimizer=None, feature_preprocessing=None,
                  label_preprocessing=None, model_dir=None):

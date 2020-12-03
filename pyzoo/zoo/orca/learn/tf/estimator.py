@@ -62,10 +62,6 @@ class Estimator(object):
         :param backend: backend for estimator. Now it only can be "bigdl".
         :return: an Estimator object.
         """
-        import warnings
-        warnings.warn("This method will be deprecated, please "
-                      "from zoo.orca.learn.spark_estimator import Estimator and use "
-                      "Estimator.from_tf_graph instead", DeprecationWarning)
         assert backend == "bigdl", "only bigdl backend is supported for now"
         return TFOptimizerWrapper(inputs=inputs,
                                   outputs=outputs,
@@ -91,11 +87,6 @@ class Estimator(object):
         :param backend: backend for estimator. Now it only can be "bigdl".
         :return: an Estimator object.
         """
-        import warnings
-        warnings.warn("This method will be deprecated, please "
-                      "from zoo.orca.learn.spark_estimator import Estimator and use "
-                      "Estimator.from_keras instead", DeprecationWarning)
-        assert backend == "bigdl", "only bigdl backend is supported for now"
         return TFKerasWrapper(keras_model, metrics, model_dir, optimizer)
 
     @staticmethod
@@ -681,10 +672,6 @@ class TFKerasWrapper(SparkEstimator):
 
     def load(self, checkpoint, **kwargs):
         self.load_latest_orca_checkpoint(checkpoint)
-
-    def set_tensorboard(self, log_dir, app_name):
-        self.log_dir = log_dir
-        self.app_name = app_name
 
     def clear_gradient_clipping(self):
         self.clip_norm = None
