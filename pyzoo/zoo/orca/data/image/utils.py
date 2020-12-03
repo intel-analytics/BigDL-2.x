@@ -11,6 +11,7 @@ import json
 class DType(Enum):
     INT32 = 1
     FLOAT32 = 2
+    STRING = 3
 
 
 class FeatureType(Enum):
@@ -103,7 +104,7 @@ def dict_to_row(schema, row_dict):
             image_path = v
             with open(image_path, "rb") as f:
                 img_bytes = f.read()
-            row[k] = img_bytes
+            row[k] = bytearray(img_bytes)
         elif schema_field.feature_type == FeatureType.NDARRAY:
             memfile = BytesIO()
             np.savez_compressed(memfile, arr=v)
