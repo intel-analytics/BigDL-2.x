@@ -58,7 +58,7 @@ def find_latest_checkpoint(model_dir, model_type="bigdl"):
     if optim_dict:
         latest_timestamp = max(optim_dict)
         latest_version, ckpt_path, optim_prefix = max(optim_dict[latest_timestamp],
-                                                   key=lambda version_path: version_path[0])
+                                                      key=lambda version_path: version_path[0])
 
     return ckpt_path, optim_prefix, latest_version
 
