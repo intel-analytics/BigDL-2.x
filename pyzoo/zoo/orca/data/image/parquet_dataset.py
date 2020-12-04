@@ -1,3 +1,18 @@
+#
+# Copyright 2018 Analytics Zoo Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 import json
 
 from pyspark import SparkContext
@@ -6,9 +21,10 @@ from pyspark.sql import SparkSession
 from zoo.orca.data import XShards, SparkXShards
 from zoo.orca.data.file import open_text, write_text
 from zoo.orca.data.image.utils import chunks, dict_to_row, EnumEncoder, as_enum, row_to_dict, encode_schema, \
-    decode_schema
+    decode_schema, SchemaField, FeatureType, DType, ndarray_dtype_to_dtype
 from bigdl.util.common import get_node_and_core_number
 import os
+import random
 
 
 class ParquetDataset:
@@ -22,14 +38,6 @@ class ParquetDataset:
         Each record in the generator is a dict, the key is a string and will be the column name of saved parquet record and
         the value is the data.
         
-        (
-        Other options:
-        
-        1. generator output a two-element tuple representing feature and label. feature and label are both lists contain
-           the actual data. The columns in the saved parquet file will be "feature_col_1", "feature_col_2", ..., "label_col_1", "label_col_2"
-        2. enforce feature number to be one and it must be a image.
-        )
-        
         **schema**
         schema defines the name, dtype, shape of a column, as well as the feature type of a column. The feature type, defines
         how to encode and decode the column value.
@@ -39,21 +47,6 @@ class ParquetDataset:
         2. NDarray, which takes a np.ndarray and save it serialized bytes. The corresponding parquet type is BYTE_ARRAY .
         3. Image, which takes a string representing a image file in local file system and save the raw file content bytes.
            The corresponding parquet type is BYTE_ARRAY.
-           
-        (
-        Other options:
-        1. enforce all types to be ndarray. For images, it may takes much larger space to save ndarray then image file bytes. 
-        2. enforce feature to a image, and labels are ndarrays.  
-        )
-           
-        We can save the schema info to file in the output path.
-        
-        (
-        Other options:
-        1. infer from data when reading?
-        2. save schema info as a column?
-        )
-        
         
         :param path: the output path, e.g. file:///output/path, hdfs:///output/path
         :param generator: generate a dict, whose key is a string and value is one of (a scalar value, ndarray, image file path)
@@ -127,21 +120,52 @@ class ParquetDataset:
         """
 
     @staticmethod
-    def write_imagenet(input_path, output_path, **kwargs):
-        pass
+    def write_from_image_directory(directory, label_map, output_path,
+                                   shuffle=True,
+                                   **kwargs):
+        labels = os.listdir(directory)
+        valid_labels = [label for label in labels if label in label_map]
+        generator = []
+        for label in valid_labels:
+            label_path = os.path.join(directory, label)
+            images = os.listdir(label_path)
+            for image in images:
+                image_path = os.path.join(label_path, image)
+                generator.append({"image": image_path,
+                                  "label": label_map[label],
+                                  "image_id": image_path,
+                                  "label_str": label})
+        if shuffle:
+            random.shuffle(generator)
+
+        schema = {"image": SchemaField(feature_type=FeatureType.IMAGE,
+                                       dtype=DType.BYTES,
+                                       shape=()),
+                  "label": SchemaField(feature_type=FeatureType.SCALAR,
+                                       dtype=DType.INT32,
+                                       shape=()),
+                  "image_id": SchemaField(feature_type=FeatureType.SCALAR,
+                                          dtype=DType.STRING,
+                                          shape=()),
+                  "label_str": SchemaField(feature_type=FeatureType.SCALAR,
+                                           dtype=DType.STRING,
+                                           shape=())}
+
+        ParquetDataset.write(output_path, generator, schema, **kwargs)
 
     @staticmethod
-    def write_coco(input_path, output_path, **kwargs):
-        pass
+    def write_ndarrays(images, labels, output_path, **kwargs):
+        schema = {
+            "image": SchemaField(feature_type=FeatureType.NDARRAY,
+                                 dtype=ndarray_dtype_to_dtype(images.dtype),
+                                 shape=images.shape[1:])
+            "labels": SchemaField(feature_type=FeatureType.NDARRAY,
+                                  dtype=ndarray_dtype_to_dtype(labels.dtype),
+                                  shape=labels[1:])
+        }
 
-    @staticmethod
-    def write_voc(input_path, output_path, **kwargs):
-        pass
+        def make_generator():
+            for i in range(images.shape[0]):
+                yield {"image": images[i], "labels": labels[i]}
 
-    @staticmethod
-    def write_mnist(images, labels, output_path):
-        pass
-
-    @staticmethod
-    def write_fashion_mnist(images, labels, output_path):
-        pass
+        ParquetDataset.write(output_path, make_generator(), schema, **kwargs)
