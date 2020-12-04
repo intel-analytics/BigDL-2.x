@@ -56,9 +56,16 @@ python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/mxnet/lenet_mnist.py 
 now=$(date "+%s")
 time5=$((now-start))
 
+echo "#6 Start tf2 estimator lenet"
+start=$(date "+%s")
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf2/mnist/lenet_mnist_keras.py --cluster_mode local --max_epoch 1
+now=$(date "+%s")
+time6=$((now-start))
+
 echo "Ray example tests finished"
 echo "#1 rl_pong time used:$time1 seconds"
 echo "#2 async_parameter_server time used:$time2 seconds"
 echo "#3 sync_parameter_server time used:$time3 seconds"
 echo "#4 multiagent_two_trainers time used:$time4 seconds"
 echo "#5 mxnet_lenet time used:$time5 seconds"
+echo "#6 tf2 estimator lenet time used:$time6 seconds"
