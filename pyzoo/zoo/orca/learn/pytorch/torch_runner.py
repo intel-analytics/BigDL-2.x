@@ -195,10 +195,15 @@ class TorchRunner:
 
     def setup_operator(self):
         """Create the training operator."""
+        from torch.nn.parallel import DistributedDataParallel
+        training_models = [
+            DistributedDataParallel(model)
+            for model in self.models
+        ]
         self.training_operator =\
             self.training_operator_cls(
                 self.config,
-                models=self.models,
+                models=training_models,
                 optimizers=self.optimizers,
                 criterion=self.criterion,
                 world_rank=self.rank,
