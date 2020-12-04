@@ -46,10 +46,14 @@ unzip -q ${ANALYTICS_ZOO_ROOT}/data/mnist.zip -d ${ANALYTICS_ZOO_ROOT}/data
 execute_ray_test lenet_mnist ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/mxnet/lenet_mnist.py -e 1 -b 256
 time5=$?
 
+execute_ray_test tf2_mnist ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf2/mnist/lenet_mnist_keras.py --cluster_mode local --max_epoch 1
+time6=$?
+
 echo "#1 rl_pong time used:$time1 seconds"
 echo "#2 sync_parameter_server time used:$time2 seconds"
 echo "#3 async_parameter_server time used:$time3 seconds"
 echo "#4 multiagent_two_trainers time used:$time4 seconds"
 echo "#5 mxnet_lenet time used:$time5 seconds"
+echo "#6 tf2 estimator lenet time used:$time6 seconds"
 
 clear_up
