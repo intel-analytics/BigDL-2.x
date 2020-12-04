@@ -15,7 +15,9 @@ else
     wget -nv $FTP_URI/analytics-zoo-data/mnist/t10k-images-idx3-ubyte.gz -P analytics-zoo-data/data/MNIST/raw
 fi
 
+export ZOO_NUM_MKLTHREADS=4
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/mnist/main.py --dir analytics-zoo-data/data
+unset ZOO_NUM_MKLTHREADS
 
 echo "start example for orca MNIST"
 #timer
@@ -30,7 +32,9 @@ else
     wget -nv $FTP_URI/analytics-zoo-data/mnist/t10k-images-idx3-ubyte.gz -P analytics-zoo-data/data/MNIST/raw
 fi
 
+export ZOO_NUM_MKLTHREADS=4
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/mnist/lenet_mnist.py --dir analytics-zoo-data/data
+unset ZOO_NUM_MKLTHREADS
 
 echo "start example for imagenet"
 #timer
@@ -43,7 +47,9 @@ else
     tar zxf analytics-zoo-data/data/imagenet-1k.tar.gz -C analytics-zoo-data/data/
 fi
 
+export ZOO_NUM_MKLTHREADS=all
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/imagenet/main.py analytics-zoo-data/data/imagenet-small
+unset ZOO_NUM_MKLTHREADS
 
 echo "start example for resnet_finetune"
 #timer
@@ -56,4 +62,6 @@ else
     unzip -q analytics-zoo-data/data/dogs_cats.zip -C analytics-zoo-data/data/dogs_cats
 fi
 
+export ZOO_NUM_MKLTHREADS=all
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/resnet_finetune/resnet_finetune.py analytics-zoo-data/data/dogs_cats
+unset ZOO_NUM_MKLTHREADS
