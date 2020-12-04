@@ -31,7 +31,7 @@ import numpy as np
 
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.data import XShards
-from zoo.orca.learn.spark_estimator import Estimator
+from zoo.orca.learn.tf.estimator import Estimator
 
 
 def load_data_from_zip(file_path, file):
