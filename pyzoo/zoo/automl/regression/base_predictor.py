@@ -20,6 +20,8 @@ from zoo.automl.common.metrics import Evaluator
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
 from zoo.automl.common.util import *
 from zoo.automl.config.recipe import *
+from zoo.ray import RayContext
+
 
 ALLOWED_FIT_METRICS = ("mse", "mae", "r2")
 
@@ -67,8 +69,6 @@ class BasePredictor(object):
             recipe=SmokeRecipe(),
             mc=False,
             resources_per_trial={"cpu": 2},
-            distributed=False,
-            hdfs_url=None
             ):
         """
         Trains the model for time sequence prediction.
@@ -84,21 +84,17 @@ class BasePredictor(object):
                       criteria. Default is SmokeRecipe().
         :param resources_per_trial: Machine resources to allocate per trial,
             e.g. ``{"cpu": 64, "gpu": 8}`
-        :param distributed: bool. Indicate if running in distributed mode. If true, we will upload
-                            models to HDFS.
-        :param hdfs_url: the hdfs url used to save file in distributed model. If None, the default
-                         hdfs_url will be used.
-        :return: self
+        :return: a pipeline constructed with the best model and configs.
         """
         self._check_df(input_df)
         if validation_df is not None:
             self._check_df(validation_df)
+
+        ray_ctx = RayContext.get()
+        is_local = ray_ctx.is_local
         # BasePredictor._check_fit_metric(metric)
-        if distributed:
-            if hdfs_url is not None:
-                remote_dir = os.path.join(hdfs_url, "ray_results", self.name)
-            else:
-                remote_dir = os.path.join(os.sep, "ray_results", self.name)
+        if not is_local:
+            remote_dir = os.path.join(os.sep, "ray_results", self.name)
             if self.name not in get_remote_list(os.path.dirname(remote_dir)):
                 cmd = "hadoop fs -mkdir -p {}".format(remote_dir)
                 process(cmd)

@@ -322,7 +322,7 @@ class RayTuneSearchEngine(SearchEngine):
             # no need to call build since it is called the first time fit_eval is called.
             # callbacks = [TuneCallback(tune_reporter)]
             # fit model
-            best_reward_m = -999
+            best_reward_m = None
             # print("config:", config)
             for i in range(1, 101):
                 result = trial_model.fit_eval(x_train,
@@ -334,7 +334,7 @@ class RayTuneSearchEngine(SearchEngine):
                                               **config)
                 reward_m = result if Evaluator.get_metric_mode(metric) == "max" else -result
                 ckpt_name = "best.ckpt"
-                if reward_m > best_reward_m:
+                if best_reward_m is None or reward_m > best_reward_m:
                     best_reward_m = reward_m
                     save_zip(ckpt_name, trial_ft, trial_model, config)
                     if remote_dir is not None:
