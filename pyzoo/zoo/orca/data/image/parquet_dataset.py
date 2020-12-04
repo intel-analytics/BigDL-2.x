@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import json
 
+import json
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
@@ -119,53 +119,51 @@ class ParquetDataset:
         :return: 
         """
 
-    @staticmethod
-    def write_from_image_directory(directory, label_map, output_path,
-                                   shuffle=True,
-                                   **kwargs):
-        labels = os.listdir(directory)
-        valid_labels = [label for label in labels if label in label_map]
-        generator = []
-        for label in valid_labels:
-            label_path = os.path.join(directory, label)
-            images = os.listdir(label_path)
-            for image in images:
-                image_path = os.path.join(label_path, image)
-                generator.append({"image": image_path,
-                                  "label": label_map[label],
-                                  "image_id": image_path,
-                                  "label_str": label})
-        if shuffle:
-            random.shuffle(generator)
+def write_from_image_directory(directory, label_map, output_path,
+                               shuffle=True,
+                               **kwargs):
+    labels = os.listdir(directory)
+    valid_labels = [label for label in labels if label in label_map]
+    generator = []
+    for label in valid_labels:
+        label_path = os.path.join(directory, label)
+        images = os.listdir(label_path)
+        for image in images:
+            image_path = os.path.join(label_path, image)
+            generator.append({"image": image_path,
+                              "label": label_map[label],
+                              "image_id": image_path,
+                              "label_str": label})
+    if shuffle:
+        random.shuffle(generator)
 
-        schema = {"image": SchemaField(feature_type=FeatureType.IMAGE,
-                                       dtype=DType.BYTES,
-                                       shape=()),
-                  "label": SchemaField(feature_type=FeatureType.SCALAR,
-                                       dtype=DType.INT32,
-                                       shape=()),
-                  "image_id": SchemaField(feature_type=FeatureType.SCALAR,
-                                          dtype=DType.STRING,
-                                          shape=()),
-                  "label_str": SchemaField(feature_type=FeatureType.SCALAR,
-                                           dtype=DType.STRING,
-                                           shape=())}
+    schema = {"image": SchemaField(feature_type=FeatureType.IMAGE,
+                                   dtype=DType.BYTES,
+                                   shape=()),
+              "label": SchemaField(feature_type=FeatureType.SCALAR,
+                                   dtype=DType.INT32,
+                                   shape=()),
+              "image_id": SchemaField(feature_type=FeatureType.SCALAR,
+                                      dtype=DType.STRING,
+                                      shape=()),
+              "label_str": SchemaField(feature_type=FeatureType.SCALAR,
+                                       dtype=DType.STRING,
+                                       shape=())}
 
-        ParquetDataset.write(output_path, generator, schema, **kwargs)
+    ParquetDataset.write(output_path, generator, schema, **kwargs)
 
-    @staticmethod
-    def write_ndarrays(images, labels, output_path, **kwargs):
-        schema = {
-            "image": SchemaField(feature_type=FeatureType.NDARRAY,
-                                 dtype=ndarray_dtype_to_dtype(images.dtype),
-                                 shape=images.shape[1:])
-            "labels": SchemaField(feature_type=FeatureType.NDARRAY,
-                                  dtype=ndarray_dtype_to_dtype(labels.dtype),
-                                  shape=labels[1:])
-        }
+def write_ndarrays(images, labels, output_path, **kwargs):
+    schema = {
+        "image": SchemaField(feature_type=FeatureType.NDARRAY,
+                             dtype=ndarray_dtype_to_dtype(images.dtype),
+                             shape=images.shape[1:])
+        "labels": SchemaField(feature_type=FeatureType.NDARRAY,
+                              dtype=ndarray_dtype_to_dtype(labels.dtype),
+                              shape=labels[1:])
+    }
 
-        def make_generator():
-            for i in range(images.shape[0]):
-                yield {"image": images[i], "labels": labels[i]}
+    def make_generator():
+        for i in range(images.shape[0]):
+            yield {"image": images[i], "labels": labels[i]}
 
-        ParquetDataset.write(output_path, make_generator(), schema, **kwargs)
+    ParquetDataset.write(output_path, make_generator(), schema, **kwargs)
