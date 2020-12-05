@@ -51,6 +51,29 @@ class TestPyTorchEstimator(TestCase):
                                                       validation_loss1)
         estimator.shutdown()
 
+    def test_horovod_initialized_correctly(TestCase):
+        estimator = Estimator.from_torch(
+            model=model_creator,
+            optimizer=optimizer_creator,
+            loss=nn.MSELoss(),
+            scheduler_creator=scheduler_creator,
+            config={
+                "lr": 1e-2,  # used in optimizer_creator
+                "hidden_size": 1  # used in model_creator
+            }, backend="horovod", workers_per_node=2)
+        def get_size():
+            import horovod.torch as hvd
+            return hvd.size()
+        results = estimator.estimator.horovod_runner.run(get_size)
+        assert results == [2, 2]
+        
+        def get_rank():
+            import horovod.torch as hvd
+            return hvd.rank()
+        results = estimator.estimator.horovod_runner.run(get_rank)
+        results = sorted(results)
+        assert results == [0, 1]
+
     def test_save_and_restore(self):
         estimator1 = Estimator.from_torch(
             model=model_creator,
