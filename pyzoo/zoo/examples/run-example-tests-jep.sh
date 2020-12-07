@@ -47,7 +47,7 @@ else
     tar zxf analytics-zoo-data/data/imagenet-1k.tar.gz -C analytics-zoo-data/data/
 fi
 
-export ZOO_NUM_MKLTHREADS=all
+export ZOO_NUM_MKLTHREADS=4
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/imagenet/main.py analytics-zoo-data/data/imagenet-small --batch-size=4 --epochs=1
 unset ZOO_NUM_MKLTHREADS
 
@@ -62,6 +62,6 @@ else
     unzip -q analytics-zoo-data/data/dogs_cats.zip -C analytics-zoo-data/data/dogs_cats
 fi
 
-export ZOO_NUM_MKLTHREADS=all
+export ZOO_NUM_MKLTHREADS=4
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/resnet_finetune/resnet_finetune.py analytics-zoo-data/data/dogs_cats
 unset ZOO_NUM_MKLTHREADS
