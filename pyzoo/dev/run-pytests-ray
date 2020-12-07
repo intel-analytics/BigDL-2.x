@@ -25,18 +25,6 @@ export PYSPARK_DRIVER_PYTHON=python
 
 ray stop -f
 
-echo "Running RayOnSpark tests"
-python -m pytest -v ../test/zoo/ray/ \
-       --ignore=../test/zoo/ray/integration/ \
-       --ignore=../test/zoo/ray/test_reinit_raycontext.py
-exit_status_1=$?
-if [ $exit_status_1 -ne 0 ];
-then
-    exit $exit_status_1
-fi
-
-ray stop -f
-
 echo "Running orca learn ray tests"
 python -m pytest -v ../test/zoo/orca/learn/ray \
        --ignore=../test/zoo/orca/learn/ray/pytorch/test_estimator_horovod_backend.py \
@@ -78,3 +66,16 @@ then
     exit $exit_status_5
 fi
 
+ray stop -f
+
+echo "Running RayOnSpark tests"
+python -m pytest -v ../test/zoo/ray/ \
+	--ignore=../test/zoo/ray/integration/ \
+	--ignore=../test/zoo/ray/test_reinit_raycontext.py
+exit_status_1=$?
+if [ $exit_status_1 -ne 0 ];
+then
+    exit $exit_status_1
+fi
+
+ray stop -f
