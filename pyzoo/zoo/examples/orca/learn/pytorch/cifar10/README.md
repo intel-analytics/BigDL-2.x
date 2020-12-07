@@ -6,9 +6,9 @@ We demostrate how to easily run synchronous distributed Pytorch training using P
 We recommend you to use Anaconda to prepare the environments, especially if you want to run on a yarn cluster
 
 ```
-conda create -n zoo python=3.7 #zoo is conda environment name, you can set another name you like.
+conda create -n zoo python=3.7 # zoo is conda environment name, you can set another name you like.
 conda activate zoo
-pip install analytics-zoo==0.9.0.dev0 # or above
+pip install analytics-zoo # Need to install 0.9.0.dev0 or above
 pip install torch
 pip install torchvision
 ```
