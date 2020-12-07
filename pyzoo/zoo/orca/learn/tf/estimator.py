@@ -87,6 +87,7 @@ class Estimator(object):
         :param backend: backend for estimator. Now it only can be "bigdl".
         :return: an Estimator object.
         """
+        assert backend == "bigdl", "only bigdl backend is supported for now"
         return TFKerasWrapper(keras_model, metrics, model_dir, optimizer)
 
     @staticmethod
@@ -97,10 +98,6 @@ class Estimator(object):
         :param path: String. The path to the pre-defined model.
         :return: Orca TF Estimator.
         """
-        import warnings
-        warnings.warn("This method will be deprecated, please "
-                      "from zoo.orca.learn.spark_estimator import Estimator and use "
-                      "Estimator.load_keras_model instead", DeprecationWarning)
         from tensorflow.python.keras import models
 
         def load_func(file_path):
