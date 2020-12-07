@@ -54,6 +54,5 @@ echo "#2 sync_parameter_server time used:$time2 seconds"
 echo "#3 async_parameter_server time used:$time3 seconds"
 echo "#4 multiagent_two_trainers time used:$time4 seconds"
 echo "#5 mxnet_lenet time used:$time5 seconds"
-echo "#6 tf2 estimator lenet time used:$time6 seconds"
 
 clear_up
