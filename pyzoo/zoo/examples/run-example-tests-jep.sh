@@ -48,7 +48,7 @@ else
 fi
 
 export ZOO_NUM_MKLTHREADS=all
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/imagenet/main.py analytics-zoo-data/data/imagenet-small --batch-size=16 --epochs=1
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/imagenet/main.py analytics-zoo-data/data/imagenet-small --batch-size=8 --epochs=1
 unset ZOO_NUM_MKLTHREADS
 
 echo "start example for resnet_finetune"
