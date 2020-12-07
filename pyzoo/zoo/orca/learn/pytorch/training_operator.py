@@ -200,7 +200,6 @@ class TrainingOperator:
             }
             batch_info.update(info)
             metrics = self.train_batch(batch, batch_info=batch_info)
-            # print("Worker {} trained batch {}".format(self.world_rank, batch_idx))
 
             if self.use_tqdm and self.world_rank == 0:
                 _progress_bar.n = batch_idx + 1
