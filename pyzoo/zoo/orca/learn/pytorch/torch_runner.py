@@ -125,7 +125,7 @@ class TorchRunner:
         self.rank = hvd.rank()
         self.size = hvd.size()
         self.setup_components_horovod()
-        self.setup_operator()
+        self.setup_operator(self.models)
 
     def setup_address(self):
         ip = ray.services.get_node_ip_address()
@@ -134,6 +134,7 @@ class TorchRunner:
 
     def setup_torch_distribute(self, url, world_rank, world_size):
         import torch.distributed as dist
+        from torch.nn.parallel import DistributedDataParallel
         dist.init_process_group(
             backend="gloo",
             init_method=url,
@@ -143,7 +144,11 @@ class TorchRunner:
         self.rank = world_rank
         self.size = world_size
         self.setup_components()
-        self.setup_operator()
+        training_models = [
+            DistributedDataParallel(model)
+            for model in self.models
+        ]
+        self.setup_operator(training_models)
 
     def setup_components(self):
         """Runs the creator functions without any distributed coordination."""
@@ -193,13 +198,8 @@ class TorchRunner:
         self._create_schedulers_if_available()
         self._create_loss()
 
-    def setup_operator(self):
+    def setup_operator(self, training_models):
         """Create the training operator."""
-        from torch.nn.parallel import DistributedDataParallel
-        training_models = [
-            DistributedDataParallel(model)
-            for model in self.models
-        ]
         self.training_operator =\
             self.training_operator_cls(
                 self.config,
