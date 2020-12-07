@@ -7,11 +7,11 @@ from zoo.orca.learn.tf.estimator import Estimator
 
 
 def train_val(cluster_mode, epochs, batch_size):
-
-    zip_file = tf.keras.utils.get_file(
+    dataset_dir = "./"
+    tf.keras.utils.get_file(
         origin="https://storage.googleapis.com/mledu-datasets/cats_and_dogs_filtered.zip",
-        fname="cats_and_dogs_filtered.zip", extract=True)
-    base_dir, _ = os.path.splitext(zip_file)
+        fname="cats_and_dogs_filtered.zip", extract=True, cache_dir=dataset_dir)
+    base_dir = "datasets/cats_and_dogs_filtered"
 
     if cluster_mode == "local":
         init_orca_context(cluster_mode="local", cores=4, memory="3g")
