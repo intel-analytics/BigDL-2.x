@@ -18,7 +18,7 @@ sc = None
 ray_ctx = None
 
 
-@pytest.fixture(autouse=True, scope='package')
+@pytest.fixture(autouse=True, scope='function')
 def automl_fixture():
     from zoo import init_spark_on_local
     from zoo.ray import RayContext
