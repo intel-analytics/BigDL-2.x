@@ -53,6 +53,6 @@ python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10/cifar
 now=${data "+%s")
 time3=$((now-start))
 
-echo "#1 mnist example time used:$time1 seconds"
-echo "#2 orca MNIST example time used:#time2 seconds"
+echo "#1 MNIST example time used:$time1 seconds"
+echo "#2 orca MNIST example time used:$time2 seconds"
 echo "#3 orca Cifar10 example time used:$time3 seconds"
