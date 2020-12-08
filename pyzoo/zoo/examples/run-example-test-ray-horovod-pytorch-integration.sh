@@ -21,8 +21,8 @@ fi
 now=$(date "+%s")
 time1=$((now-start))
 
-# This should be done at the very end after all tests finish.
-clear_up
+# This should be done at the very end after all tests finish. Or put the uninstalling at jenkins configure.
+# clear_up
 
 echo "#1 pytorch estimator example time used:$time1 seconds"
 
