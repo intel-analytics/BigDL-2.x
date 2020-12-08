@@ -21,27 +21,27 @@ from zoo.orca.learn.base_estimator import BaseEstimator
 class Estimator(BaseEstimator):
     @abstractmethod
     def fit(self, data, epochs, **kwargs):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def predict(self, data, **kwargs):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def evaluate(self, data, **kwargs):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def get_model(self):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def save(self, model_path):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def load(self, checkpoint, **kwargs):
-        pass
+        raise NotImplementedError
 
     def set_tensorboard(self, log_dir, app_name):
         """
@@ -66,7 +66,7 @@ class Estimator(BaseEstimator):
         In order to take effect, it needs to be called before fit.
         :return:
          """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def set_constant_gradient_clipping(self, min, max):
@@ -77,7 +77,7 @@ class Estimator(BaseEstimator):
         :param max: The maximum value to clip by.
         :return:
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def set_l2_norm_gradient_clipping(self, clip_norm):
@@ -87,7 +87,7 @@ class Estimator(BaseEstimator):
         :param clip_norm: Gradient L2-Norm threshold.
         :return:
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def get_train_summary(self, tag=None):
@@ -97,7 +97,7 @@ class Estimator(BaseEstimator):
         # Arguments
         tag: The string variable represents the scalar wanted
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def get_validation_summary(self, tag=None):
@@ -127,14 +127,14 @@ class Estimator(BaseEstimator):
         # Arguments
         tag: The string variable represents the scalar wanted
         """
-        pass
+        raise NotImplementedError
 
     def save_tf_checkpoint(self, path):
         """
         Save tensorflow checkpoint in this estimator.
         :param path: tensorflow checkpoint path.
         """
-        pass
+        raise NotImplementedError
 
     def save_keras_model(self, path, overwrite=True):
         """
@@ -142,7 +142,7 @@ class Estimator(BaseEstimator):
         :param path: keras model save path.
         :param overwrite: Whether to silently overwrite any existing file at the target location.
         """
-        pass
+        raise NotImplementedError
 
     def save_keras_weights(self, filepath, overwrite=True, save_format=None):
         """
@@ -153,7 +153,7 @@ class Estimator(BaseEstimator):
             '.keras' will default to HDF5 if `save_format` is `None`. Otherwise
             `None` defaults to 'tf'.
         """
-        pass
+        raise NotImplementedError
 
     def load_keras_weights(self, filepath, by_name=False):
         """
@@ -174,7 +174,7 @@ class Estimator(BaseEstimator):
         :param version: checkpoint version, which is the suffix of model.* file,
         i.e., for modle.4 file, the version is 4.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def load_latest_orca_checkpoint(self, path):
@@ -182,4 +182,4 @@ class Estimator(BaseEstimator):
         Load latest Orca checkpoint under specified directory.
         :param path: directory containing Orca checkpoint files.
         """
-        pass
+        raise NotImplementedError

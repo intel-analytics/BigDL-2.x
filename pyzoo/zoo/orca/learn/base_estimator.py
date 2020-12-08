@@ -20,24 +20,24 @@ from abc import ABC, abstractmethod
 class BaseEstimator(ABC):
     @abstractmethod
     def fit(self, data, epochs, **kwargs):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def predict(self, data, **kwargs):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def evaluate(self, data, **kwargs):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def get_model(self):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def save(self, model_path):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def load(self, checkpoint, **kwargs):
-        pass
+        raise NotImplementedError
