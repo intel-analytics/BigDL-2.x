@@ -15,4 +15,4 @@
 #
 
 
-from .parquet_dataset import write_from_image_directory, write_ndarrays
+from .parquet_dataset import write_mnist

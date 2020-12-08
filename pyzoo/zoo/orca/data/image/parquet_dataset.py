@@ -25,10 +25,10 @@ from zoo.orca.data.image.utils import chunks, dict_to_row, EnumEncoder, as_enum,
 from bigdl.util.common import get_node_and_core_number
 import os
 import random
+import numpy as np
 
 
 class ParquetDataset:
-
     @staticmethod
     def write(path, generator, schema, block_size=1000, write_mode="overwrite", **kwargs):
         """
@@ -93,12 +93,15 @@ class ParquetDataset:
 
                 for k in schema.keys():
                     result[k].append(rec[k])
+
+            for k in schema.keys():
+                result[k] = np.stack(result[k])
+
             return [result]
 
         result_rdd = rdd.mapPartitions(lambda iter: merge_records(schema, iter))
         xshards = SparkXShards(result_rdd)
         return xshards
-
 
     @staticmethod
     def read_as_tf(path):
@@ -119,21 +122,62 @@ class ParquetDataset:
         :return: 
         """
 
+
+def _read32(bytestream):
+    dt = np.dtype(np.uint32).newbyteorder('>')
+    return np.frombuffer(bytestream.read(4), dtype=dt)[0]
+
+
+def _extract_mnist_images(image_filepath):
+    with open(image_filepath, "rb") as bytestream:
+        magic = _read32(bytestream)
+        if magic != 2051:
+            raise ValueError(
+                'Invalid magic number %d in MNIST image file: %s' %
+                (magic, image_filepath))
+        num_images = _read32(bytestream)
+        rows = _read32(bytestream)
+        cols = _read32(bytestream)
+        buf = bytestream.read(rows * cols * num_images)
+        data = np.frombuffer(buf, dtype=np.uint8)
+        data = data.reshape(num_images, rows, cols, 1)
+        return data
+
+
+def _extract_mnist_labels(labels_filepath):
+    with open(labels_filepath, "rb") as bytestream:
+        magic = _read32(bytestream)
+        if magic != 2049:
+            raise ValueError(
+                'Invalid magic number %d in MNIST label file: %s' %
+                (magic, labels_filepath.name))
+        num_items = _read32(bytestream)
+        buf = bytestream.read(num_items)
+        labels = np.frombuffer(buf, dtype=np.uint8)
+        return labels
+
+
 def _write_ndarrays(images, labels, output_path, **kwargs):
+
+    images_shape = [int(x) for x in images.shape[1:]]
+    labels_shape = [int(x) for x in labels.shape[1:]]
     schema = {
         "image": SchemaField(feature_type=FeatureType.NDARRAY,
                              dtype=ndarray_dtype_to_dtype(images.dtype),
-                             shape=images.shape[1:])
-        "labels": SchemaField(feature_type=FeatureType.NDARRAY,
-                              dtype=ndarray_dtype_to_dtype(labels.dtype),
-                              shape=labels[1:])
+                             shape=images_shape),
+        "label": SchemaField(feature_type=FeatureType.NDARRAY,
+                             dtype=ndarray_dtype_to_dtype(labels.dtype),
+                             shape=labels_shape)
     }
 
     def make_generator():
         for i in range(images.shape[0]):
-            yield {"image": images[i], "labels": labels[i]}
+            yield {"image": images[i], "label": labels[i]}
 
     ParquetDataset.write(output_path, make_generator(), schema, **kwargs)
 
-def write_mnist(images, labels, output_path, **kwargs):
+
+def write_mnist(image_file, label_file, output_path, **kwargs):
+    images = _extract_mnist_images(image_filepath=image_file)
+    labels = _extract_mnist_labels(labels_filepath=label_file)
     _write_ndarrays(images, labels, output_path, **kwargs)

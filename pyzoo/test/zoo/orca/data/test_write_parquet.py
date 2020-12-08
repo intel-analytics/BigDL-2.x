@@ -19,10 +19,11 @@ import shutil
 
 import numpy as np
 import os
-from pyspark.sql import SparkSession
 from zoo.orca.data.image.parquet_dataset import ParquetDataset
+from zoo.orca.data.image.parquet_dataset import _write_ndarrays
 from zoo.orca.data.image.utils import DType, FeatureType, SchemaField
-
+from zoo.orca.learn.tf.estimator import Estimator
+from zoo.orca.data.image import write_mnist
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
 
@@ -86,6 +87,100 @@ def test_write_parquet_images(orca_context_fixture):
             image_bytes = f.read()
 
         assert image_bytes == data['image']
+
+    finally:
+        shutil.rmtree(temp_dir)
+
+
+def _images_to_mnist_file(images, filepath):
+
+    assert len(images.shape) == 3
+    assert images.dtype == np.uint8
+
+    with open(filepath, "wb") as f:
+        f.write(int(2051).to_bytes(4, "big"))
+        f.write(np.array(images.shape).astype(np.int32).byteswap().tobytes())
+        f.write(images.byteswap().tobytes())
+
+
+def _labels_to_mnist_file(labels, filepath):
+
+    assert len(labels.shape) == 1
+    assert labels.dtype == np.uint8
+
+    with open(filepath, "wb") as f:
+        f.write(int(2049).to_bytes(4, "big"))
+
+        f.write(np.array(labels.shape).astype(np.int32).byteswap().tobytes())
+        f.write(labels.byteswap().tobytes())
+
+
+def test_write_mnist(orca_context_fixture):
+    sc = orca_context_fixture
+    temp_dir = tempfile.mkdtemp()
+
+    try:
+        train_image_file = os.path.join(temp_dir, "train-images")
+        train_label_file = os.path.join(temp_dir, "train-labels")
+        output_path = os.path.join(temp_dir, "output_dataset")
+
+        images = np.array([[i] * 16 for i in range(20)]).reshape((20, 4, 4)).astype(np.uint8)
+        labels = np.array(list(range(20))).reshape((20,)).astype(np.uint8)
+
+        _images_to_mnist_file(images, train_image_file)
+        _labels_to_mnist_file(labels, train_label_file)
+
+        write_mnist(image_file=train_image_file,
+                    label_file=train_label_file,
+                    output_path=output_path)
+        data, schema = ParquetDataset._read_as_dict_rdd(output_path)
+        data = data.sortBy(lambda x: x['label']).collect()
+        images_load = np.reshape(np.stack([d['image'] for d in data]), (-1, 4, 4))
+        labels_load = np.stack([d['label'] for d in data])
+
+        assert np.all(images_load == images)
+        assert np.all(labels_load == labels_load)
+
+    finally:
+        shutil.rmtree(temp_dir)
+
+
+def test_train_simple(orca_context_fixture):
+    sc = orca_context_fixture
+    temp_dir = tempfile.mkdtemp()
+
+    try:
+        _write_ndarrays(images=np.random.randn(500, 28, 28, 1).astype(np.float32),
+                        labels=np.random.randint(0, 10, (500,)).astype(np.int32),
+                        output_path=temp_dir)
+        dataset = ParquetDataset.read_as_tf(temp_dir)
+
+        def preprocess(data):
+            return data['image'], data["label"]
+        dataset = dataset.map(preprocess)
+
+        import tensorflow as tf
+        model = tf.keras.Sequential(
+            [tf.keras.layers.Conv2D(20, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
+                                    input_shape=(28, 28, 1), padding='valid'),
+             tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
+             tf.keras.layers.Conv2D(50, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
+                                    padding='valid'),
+             tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
+             tf.keras.layers.Flatten(),
+             tf.keras.layers.Dense(500, activation='tanh'),
+             tf.keras.layers.Dense(10, activation='softmax'),
+             ]
+        )
+
+        model.compile(optimizer=tf.keras.optimizers.RMSprop(),
+                      loss='sparse_categorical_crossentropy',
+                      metrics=['accuracy'])
+
+        est = Estimator.from_keras(keras_model=model)
+        est.fit(data=dataset,
+                batch_size=100,
+                epochs=1)
 
     finally:
         shutil.rmtree(temp_dir)

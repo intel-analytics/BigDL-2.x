@@ -25,10 +25,11 @@ import json
 
 
 class DType(Enum):
-    INT32 = 1
-    FLOAT32 = 2
-    STRING = 3
-    BYTES = 4
+    STRING = 1
+    BYTES = 2
+    INT32 = 3
+    FLOAT32 = 4
+    UINT8 = 5
 
 
 def ndarray_dtype_to_dtype(dtype):
@@ -38,6 +39,9 @@ def ndarray_dtype_to_dtype(dtype):
 
     if dtype == np.float32:
         return DType.FLOAT32
+
+    if dtype == np.uint8:
+        return DType.UINT8
 
     raise ValueError(f"{dtype} is not supported")
 
