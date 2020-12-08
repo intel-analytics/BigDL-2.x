@@ -17,7 +17,8 @@
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
-from zoo.orca.data import XShards, SparkXShards
+from zoo import init_nncontext
+from zoo.orca.data import SparkXShards
 from zoo.orca.data.file import open_text, write_text
 from zoo.orca.data.image.utils import chunks, dict_to_row, row_to_dict, encode_schema, \
     decode_schema, SchemaField, FeatureType, ndarray_dtype_to_dtype
@@ -57,7 +58,7 @@ class ParquetDataset:
         :param kwargs: other args
         """
 
-        sc = SparkContext.getOrCreate()
+        sc = init_nncontext()
         spark = SparkSession(sc)
         node_num, core_num = get_node_and_core_number()
         for i, chunk in enumerate(chunks(generator, block_size)):
