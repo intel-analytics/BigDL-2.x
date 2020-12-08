@@ -17,7 +17,7 @@ from zoo.pipeline.estimator.estimator import Estimator as SparkEstimator
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.spark_estimator import Estimator as OrcaSparkEstimator
 from zoo.orca.data import SparkXShards
-from bigdl.optim.optimizer import MaxEpoch
+from bigdl.optim.optimizer import MaxEpoch, OptimMethod
 from zoo.feature.common import FeatureSet
 from torch.optim.optimizer import Optimizer as TorchOptimizer
 from torch.utils.data import DataLoader
@@ -207,6 +207,8 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
             optimizer = SGD()
         elif isinstance(optimizer, TorchOptimizer):
             optimizer = TorchOptim.from_pytorch(optimizer)
+        elif isinstance(optimizer, OptimMethod):
+            optimizer = optimizer
         self.log_dir = None
         self.app_name = None
         self.model_dir = model_dir

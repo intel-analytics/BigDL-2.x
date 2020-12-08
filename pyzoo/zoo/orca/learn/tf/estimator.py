@@ -34,7 +34,115 @@ from zoo.util.tf import save_tf_checkpoint
 from zoo.orca.learn.spark_estimator import Estimator as SparkEstimator
 
 
-class Estimator(object):
+class Estimator(SparkEstimator):
+    def fit(self, data, epochs, **kwargs):
+        raise NotImplementedError
+
+    def predict(self, data, **kwargs):
+        raise NotImplementedError
+
+    def evaluate(self, data, **kwargs):
+        raise NotImplementedError
+
+    def get_model(self):
+        raise NotImplementedError
+
+    def save(self, model_path):
+        raise NotImplementedError
+
+    def load(self, checkpoint, **kwargs):
+        self.load_latest_orca_checkpoint(checkpoint)
+
+    def clear_gradient_clipping(self):
+        raise NotImplementedError
+
+    def set_constant_gradient_clipping(self, min, max):
+        raise NotImplementedError
+
+    def set_l2_norm_gradient_clipping(self, clip_norm):
+        raise NotImplementedError
+
+    def get_train_summary(self, tag=None):
+        """
+        Get the scalar from model train summary
+        Return list of summary data of [iteration_number, scalar_value, timestamp]
+        # Arguments
+        tag: The string variable represents the scalar wanted
+        """
+        if self.tf_optimizer:
+            return self.tf_optimizer.estimator.get_train_summary(tag)
+
+        return None
+
+    def get_validation_summary(self, tag=None):
+        """
+        Get the scalar from model validation summary
+        Return list of summary data of [iteration_number, scalar_value, timestamp]
+        Note: The metric and tag may not be consistent
+        Please look up following form to pass tag parameter
+        Left side is your metric during compile
+        Right side is the tag you should pass
+        'Accuracy'                  |   'Top1Accuracy'
+        'BinaryAccuracy'            |   'Top1Accuracy'
+        'CategoricalAccuracy'       |   'Top1Accuracy'
+        'SparseCategoricalAccuracy' |   'Top1Accuracy'
+        'AUC'                       |   'AucScore'
+        'HitRatio'                  |   'HitRate@k' (k is Top-k)
+        'Loss'                      |   'Loss'
+        'MAE'                       |   'MAE'
+        'NDCG'                      |   'NDCG'
+        'TFValidationMethod'        |   '${name + " " + valMethod.toString()}'
+        'Top5Accuracy'              |   'Top5Accuracy'
+        'TreeNNAccuracy'            |   'TreeNNAccuracy()'
+        'MeanAveragePrecision'      |   'MAP@k' (k is Top-k) (BigDL)
+        'MeanAveragePrecision'      |   'PascalMeanAveragePrecision' (Zoo)
+        'StatelessMetric'           |   '${name}'
+        # Arguments
+        tag: The string variable represents the scalar wanted
+        """
+        if self.tf_optimizer:
+            for val_method in self.tf_optimizer.tf_model.val_methods:
+                if isinstance(val_method, StatelessMetric):
+                    if tag == val_method.name:
+                        return self.tf_optimizer.estimator.get_validation_summary(tag)
+                else:
+                    if tag == str(val_method.val_method):
+                        return self.tf_optimizer.estimator.\
+                            get_validation_summary("{} {}".format(val_method.name, tag))
+                continue
+        return None
+
+    def save_tf_checkpoint(self, path):
+        raise NotImplementedError
+
+    def save_keras_model(self, path, overwrite=True):
+        raise NotImplementedError
+
+    def save_keras_weights(self, filepath, overwrite=True, save_format=None):
+        raise NotImplementedError
+
+    def load_orca_checkpoint(self, path, version):
+        """
+        Load specified Orca checkpoint.
+        :param path: checkpoint directory which contains model.* and
+        optimMethod-TFParkTraining.* files.
+        :param version: checkpoint version, which is the suffix of model.* file,
+        i.e., for modle.4 file, the version is 4.
+        """
+        self.load_checkpoint = True
+        self.checkpoint_path = path
+        self.checkpoint_version = version
+
+    def load_latest_orca_checkpoint(self, path):
+        """
+        Load latest Orca checkpoint under specified directory.
+        :param path: directory containing Orca checkpoint files.
+        """
+        ckpt_path, _, version = find_latest_checkpoint(path, model_type="tf")
+        if ckpt_path is None:
+            raise Exception("Cannot find checkpoint")
+        self.load_orca_checkpoint(ckpt_path, version)
+
     @staticmethod
     def from_graph(*, inputs, outputs=None,
                    labels=None, loss=None, optimizer=None,
@@ -167,7 +275,7 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
     return dataset
 
 
-class TFOptimizerWrapper(SparkEstimator):
+class TFOptimizerWrapper(Estimator):
     def __init__(self, *, inputs, outputs, labels, loss,
                  optimizer, clip_norm, clip_value,
                  metrics,
@@ -431,9 +539,6 @@ class TFOptimizerWrapper(SparkEstimator):
     def save(self, model_path):
         self.save_tf_checkpoint(model_path)
 
-    def load(self, checkpoint, **kwargs):
-        self.load_latest_orca_checkpoint(checkpoint)
-
     def clear_gradient_clipping(self):
         raise NotImplementedError
 
@@ -443,38 +548,8 @@ class TFOptimizerWrapper(SparkEstimator):
     def set_l2_norm_gradient_clipping(self, clip_norm):
         raise NotImplementedError
 
-    def get_train_summary(self, tag=None):
-        if self.tf_optimizer:
-            return self.tf_optimizer.estimator.get_train_summary(tag)
 
-        return None
-
-    def get_validation_summary(self, tag=None):
-        if self.tf_optimizer:
-            for val_method in self.tf_optimizer.tf_model.val_methods:
-                if isinstance(val_method, StatelessMetric):
-                    if tag == val_method.name:
-                        return self.tf_optimizer.estimator.get_validation_summary(tag)
-                else:
-                    if tag == str(val_method.val_method):
-                        return self.tf_optimizer.estimator.\
-                            get_validation_summary("{} {}".format(val_method.name, tag))
-                continue
-        return None
-
-    def load_orca_checkpoint(self, path, version):
-        self.load_checkpoint = True
-        self.checkpoint_path = path
-        self.checkpoint_version = version
-
-    def load_latest_orca_checkpoint(self, path):
-        ckpt_path, _, version = find_latest_checkpoint(path, model_type="tf")
-        if ckpt_path is None:
-            raise Exception("Cannot find checkpoint")
-        self.load_orca_checkpoint(ckpt_path, version)
-
-
-class TFKerasWrapper(SparkEstimator):
+class TFKerasWrapper(Estimator):
     def __init__(self, keras_model, metrics, model_dir, optimizer):
         self.model = KerasModel(keras_model, model_dir)
         self.load_checkpoint = False
@@ -663,9 +738,6 @@ class TFKerasWrapper(SparkEstimator):
     def save(self, model_path, overwrite=True):
         self.save_keras_model(model_path, overwrite=True)
 
-    def load(self, checkpoint, **kwargs):
-        self.load_latest_orca_checkpoint(checkpoint)
-
     def clear_gradient_clipping(self):
         self.clip_norm = None
         self.clip_min = None
@@ -679,36 +751,6 @@ class TFKerasWrapper(SparkEstimator):
 
     def set_l2_norm_gradient_clipping(self, clip_norm):
         self.clip_norm = clip_norm
-
-    def get_train_summary(self, tag=None):
-        if self.tf_optimizer:
-            return self.tf_optimizer.estimator.get_train_summary(tag)
-
-        return None
-
-    def get_validation_summary(self, tag=None):
-        if self.tf_optimizer:
-            for val_method in self.tf_optimizer.tf_model.val_methods:
-                if isinstance(val_method, StatelessMetric):
-                    if tag == val_method.name:
-                        return self.tf_optimizer.estimator.get_validation_summary(tag)
-                else:
-                    if tag == str(val_method.val_method):
-                        return self.tf_optimizer.estimator.\
-                            get_validation_summary("{} {}".format(val_method.name, tag))
-                continue
-        return None
-
-    def load_orca_checkpoint(self, path, version):
-        self.load_checkpoint = True
-        self.checkpoint_path = path
-        self.checkpoint_version = version
-
-    def load_latest_orca_checkpoint(self, path):
-        ckpt_path, _, version = find_latest_checkpoint(path, model_type="tf")
-        if ckpt_path is None:
-            raise Exception("Cannot find checkpoint")
-        self.load_orca_checkpoint(ckpt_path, version)
 
     def save_keras_weights(self, filepath, overwrite=True, save_format=None):
         self.model.save_weights(filepath, overwrite, save_format)
