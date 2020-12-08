@@ -9,7 +9,7 @@ clear_up () {
 echo "#1 Start ray horovod pytorch example tests"
 start=$(date "+%s")
 # run example
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/horovod/pytorch_estimator.py --cluster_mode yarn-client
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/horovod/pytorch_estimator.py --cluster_mode yarn-client --num_nodes 2 
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
@@ -20,6 +20,9 @@ fi
 
 now=$(date "+%s")
 time1=$((now-start))
+
+# This should be done at the very end after all tests finish.
+clear_up
 
 echo "#1 pytorch estimator example time used:$time1 seconds"
 
