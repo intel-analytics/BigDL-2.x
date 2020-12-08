@@ -14,17 +14,15 @@
 # limitations under the License.
 #
 
-import json
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
 from zoo.orca.data import XShards, SparkXShards
 from zoo.orca.data.file import open_text, write_text
-from zoo.orca.data.image.utils import chunks, dict_to_row, EnumEncoder, as_enum, row_to_dict, encode_schema, \
-    decode_schema, SchemaField, FeatureType, DType, ndarray_dtype_to_dtype
+from zoo.orca.data.image.utils import chunks, dict_to_row, row_to_dict, encode_schema, \
+    decode_schema, SchemaField, FeatureType, ndarray_dtype_to_dtype
 from bigdl.util.common import get_node_and_core_number
 import os
-import random
 import numpy as np
 
 
@@ -33,24 +31,29 @@ class ParquetDataset:
     def write(path, generator, schema, block_size=1000, write_mode="overwrite", **kwargs):
         """
         Take each record in the generator and write it to a parquet file.
-        
+
         **generator**
-        Each record in the generator is a dict, the key is a string and will be the column name of saved parquet record and
-        the value is the data.
-        
+        Each record in the generator is a dict, the key is a string and will be the
+        column name of saved parquet record and the value is the data.
+
         **schema**
-        schema defines the name, dtype, shape of a column, as well as the feature type of a column. The feature type, defines
-        how to encode and decode the column value.
-        
+        schema defines the name, dtype, shape of a column, as well as the feature
+        type of a column. The feature type, defines how to encode and decode the column value.
+
         There are three kinds of feature type:
-        1. Scalar, such as a int or float number, or a string, which can be directly mapped to a parquet type
-        2. NDarray, which takes a np.ndarray and save it serialized bytes. The corresponding parquet type is BYTE_ARRAY .
-        3. Image, which takes a string representing a image file in local file system and save the raw file content bytes.
+        1. Scalar, such as a int or float number, or a string, which can be directly mapped
+           to a parquet type
+        2. NDarray, which takes a np.ndarray and save it serialized bytes. The corresponding
+           parquet type is BYTE_ARRAY .
+        3. Image, which takes a string representing a image file in local file system and save
+           the raw file content bytes.
            The corresponding parquet type is BYTE_ARRAY.
-        
+
         :param path: the output path, e.g. file:///output/path, hdfs:///output/path
-        :param generator: generate a dict, whose key is a string and value is one of (a scalar value, ndarray, image file path)
-        :param schema: a dict, whose key is a string, value is one of (schema_field.Scalar, schema_field.NDarray, schema_field.Image)
+        :param generator: generate a dict, whose key is a string and value is one of
+                          (a scalar value, ndarray, image file path)
+        :param schema: a dict, whose key is a string, value is one of
+                      (schema_field.Scalar, schema_field.NDarray, schema_field.Image)
         :param kwargs: other args
         """
 
@@ -59,7 +62,8 @@ class ParquetDataset:
         node_num, core_num = get_node_and_core_number()
         for i, chunk in enumerate(chunks(generator, block_size)):
             chunk_path = os.path.join(path, f"chunk={i}")
-            rows_rdd = sc.parallelize(chunk, core_num * node_num).map(lambda x: dict_to_row(schema, x))
+            rows_rdd = sc.parallelize(chunk, core_num * node_num)\
+                .map(lambda x: dict_to_row(schema, x))
             spark.createDataFrame(rows_rdd).write.mode(write_mode).parquet(chunk_path)
         metadata_path = os.path.join(path, "_orca_metadata")
 
@@ -107,8 +111,8 @@ class ParquetDataset:
     def read_as_tf(path):
         """
         return a orca.data.tf.data.Dataset
-        :param path: 
-        :return: 
+        :param path:
+        :return:
         """
         from zoo.orca.data.tf.data import Dataset
         xshards = ParquetDataset._read_as_xshards(path)
@@ -118,9 +122,10 @@ class ParquetDataset:
     def read_as_torch(path):
         """
         return a orca.data.torch.data.DataLoader
-        :param path: 
-        :return: 
+        :param path:
+        :return:
         """
+        raise NotImplementedError()
 
 
 def _read32(bytestream):

@@ -125,8 +125,8 @@ def row_to_dict(schema, row):
 
 def dict_to_row(schema, row_dict):
     import pyspark
-    err_msg = 'Dictionary fields \n{}\n do not match schema fields \n{}'.format(
-            '\n'.join(sorted(row_dict.keys())), '\n'.join(schema.keys()))
+    err_msg = 'Dictionary fields \n{}\n do not match schema fields \n{}'\
+        .format('\n'.join(sorted(row_dict.keys())), '\n'.join(schema.keys()))
     assert set(row_dict.keys()) == set(schema.keys()), err_msg
 
     row = {}
