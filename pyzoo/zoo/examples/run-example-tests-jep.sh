@@ -59,7 +59,7 @@ then
     echo "dogs_cats.zip already exists"
 else
     wget -nv $FTP_URI/analytics-zoo-data/dogs_cats.zip -P analytics-zoo-data/data
-    unzip -q analytics-zoo-data/data/dogs_cats.zip -C analytics-zoo-data/data/dogs_cats
+    unzip -q analytics-zoo-data/data/dogs_cats.zip -d analytics-zoo-data/data/dogs_cats
 fi
 
 export ZOO_NUM_MKLTHREADS=4
