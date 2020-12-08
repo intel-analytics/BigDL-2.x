@@ -36,7 +36,6 @@ from zoo.orca.learn.metrics import Accuracy
 from zoo.orca.learn.trigger import EveryEpoch
 
 
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 parser = argparse.ArgumentParser(description='PyTorch Cifar10 Example')
 parser.add_argument('--cluster_mode', type=str, default="local",
                     help='The cluster mode, such as local, yarn or k8s.')
@@ -121,5 +120,6 @@ imshow(torchvision.utils.make_grid(images))
 print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
 result = orca_estimator.evaluate(data=testloader, validation_methods=[Accuracy()])
+print("Test results: {}".format(result[0]))
 orca_estimator.shutdown()
 stop_orca_context()
