@@ -17,7 +17,7 @@ fi
 
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/pytorch/train/mnist/main.py --dir analytics-zoo-data/data
 
-now=${data "+%s")
+now=$(date "+%s")
 time1=$((now-start))
 
 echo "#2 start example for orca MNIST"
@@ -35,7 +35,7 @@ fi
 
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/mnist/lenet_mnist.py --dir analytics-zoo-data/data
 
-now=${data "+%s")
+now=$(date "+%s")
 time2=$((now-start))
 
 echo "#3 start example for orca Cifar10"
@@ -50,7 +50,7 @@ else
 fi
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10/cifar10.py
 
-now=${data "+%s")
+now=$(date "+%s")
 time3=$((now-start))
 
 echo "#1 MNIST example time used:$time1 seconds"
