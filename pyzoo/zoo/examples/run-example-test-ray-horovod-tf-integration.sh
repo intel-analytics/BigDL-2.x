@@ -11,7 +11,7 @@ echo "Start ray horovod tf example tests"
 
 echo "#1 Start tf2 estimator lenet"
 start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf2/mnist/lenet_mnist_keras.py --cluster_mode local --max_epoch 1
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf2/mnist/lenet_mnist_keras.py --cluster_mode yarn-client --max_epoch 1
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
