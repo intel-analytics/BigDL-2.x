@@ -457,6 +457,7 @@ class RayContext(object):
                 self._address_info = ray.init(num_cpus=self.ray_node_cpu_cores,
                                               redis_password=self.redis_password,
                                               object_store_memory=self.object_store_memory,
+                                              include_webui=False,
                                               resources=self.extra_params)
             else:
                 self.cluster_ips = self._gather_cluster_ips()
