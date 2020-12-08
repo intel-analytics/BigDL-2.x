@@ -86,7 +86,6 @@ def main():
     # init on yarn when HADOOP_CONF_DIR and ZOO_CONDA_NAME is provided.
     if os.environ.get('HADOOP_CONF_DIR') is None:
         sc = init_spark_on_local(cores=1, conf={"spark.driver.memory": "20g"})
-        sc.setLogLevel("DEBUG")
     else:
         num_executors = 2
         num_cores_per_executor = 4

@@ -85,7 +85,6 @@ def main():
     args = parser.parse_args()
     if os.environ.get('HADOOP_CONF_DIR') is None:
         sc = init_spark_on_local(cores=args.cores, conf={"spark.driver.memory": "20g"})
-        sc.setLogLevel("DEBUG")
     else:
         hadoop_conf_dir = os.environ.get('HADOOP_CONF_DIR')
         num_executors = args.nodes
