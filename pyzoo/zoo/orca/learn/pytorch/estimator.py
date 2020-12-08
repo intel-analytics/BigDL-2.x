@@ -225,7 +225,7 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
         checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
 
         if self.log_dir is not None and self.app_name is not None:
-            self.estimator.set_tensorboad(self.log_dir, self.app_name)
+            self.estimator.set_tensorboard(self.log_dir, self.app_name)
 
         if isinstance(data, SparkXShards):
             train_rdd = data.rdd.flatMap(to_sample)
@@ -256,7 +256,7 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
         return self
 
     def predict(self, data, **kwargs):
-        pass
+        raise NotImplementedError
 
     def evaluate(self, data, validation_methods=None, batch_size=32):
         from zoo.orca.data.utils import to_sample
@@ -279,7 +279,7 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
         return self.model.to_pytorch()
 
     def save(self, model_path):
-        pass
+        raise NotImplementedError
 
     def load(self, checkpoint, loss=None):
         from zoo.orca.learn.utils import find_latest_checkpoint

@@ -319,7 +319,7 @@ class TFOptimizerWrapper(SparkEstimator):
             self.tf_optimizer.load_checkpoint(self.checkpoint_path, self.checkpoint_version)
 
         if self.log_dir and self.app_name:
-            self.tf_optimizer.estimator.set_tensorboad(self.log_dir, self.app_name)
+            self.tf_optimizer.estimator.set_tensorboard(self.log_dir, self.app_name)
 
         self.tf_optimizer.optimize(end_trigger=MaxEpoch(epochs),
                                    checkpoint_trigger=checkpoint_trigger)
@@ -426,17 +426,13 @@ class TFOptimizerWrapper(SparkEstimator):
         save_tf_checkpoint(self.sess, path)
 
     def get_model(self):
-        pass
+        raise NotImplementedError
 
     def save(self, model_path):
         self.save_tf_checkpoint(model_path)
 
     def load(self, checkpoint, **kwargs):
         self.load_latest_orca_checkpoint(checkpoint)
-
-    def set_tensorboard(self, log_dir, app_name):
-        self.log_dir = log_dir
-        self.app_name = app_name
 
     def clear_gradient_clipping(self):
         raise NotImplementedError
@@ -571,7 +567,7 @@ class TFKerasWrapper(SparkEstimator):
             self.tf_optimizer.load_checkpoint(self.checkpoint_path, self.checkpoint_version)
 
         if self.log_dir and self.app_name:
-            self.tf_optimizer.estimator.set_tensorboad(self.log_dir, self.app_name)
+            self.tf_optimizer.estimator.set_tensorboard(self.log_dir, self.app_name)
 
         self.tf_optimizer.optimize(MaxEpoch(epochs), checkpoint_trigger=checkpoint_trigger)
 
@@ -662,7 +658,7 @@ class TFKerasWrapper(SparkEstimator):
         self.model.save_model(path, overwrite=overwrite)
 
     def get_model(self):
-        pass
+        raise NotImplementedError
 
     def save(self, model_path, overwrite=True):
         self.save_keras_model(model_path, overwrite=True)

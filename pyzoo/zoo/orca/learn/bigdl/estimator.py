@@ -140,7 +140,7 @@ class BigDLEstimatorWrapper(OrcaSparkEstimator):
                     assert isinstance(val_data, SparkXShards), "val_data should be a XShards"
                     val_feature_set = FeatureSet.sample_rdd(val_data.rdd.flatMap(to_sample))
                 if self.log_dir is not None and self.app_name is not None:
-                    self.estimator.set_tensorboad(self.log_dir, self.app_name)
+                    self.estimator.set_tensorboard(self.log_dir, self.app_name)
                 self.estimator.train(train_feature_set, self.loss, end_trigger, checkpoint_trigger,
                                      val_feature_set, val_methods, batch_size)
                 self.is_nnframe_fit = False
@@ -186,10 +186,6 @@ class BigDLEstimatorWrapper(OrcaSparkEstimator):
         else:
             raise ValueError("Data should be XShards or Spark DataFrame, but get " +
                              data.__class__.__name__)
-
-    def set_tensorboard(self, log_dir, app_name):
-        self.log_dir = log_dir
-        self.app_name = app_name
 
     def get_model(self):
         return self.model
