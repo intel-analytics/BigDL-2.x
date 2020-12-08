@@ -38,7 +38,6 @@ python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/mnist/lenet_m
 now=${data "+%s")
 time2=$((now-start))
 
-
 echo "#3 start example for orca Cifar10"
 #timer
 start=$(date "+%s")
