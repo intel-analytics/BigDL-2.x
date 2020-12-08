@@ -119,7 +119,9 @@ images, labels = dataiter.next()
 imshow(torchvision.utils.make_grid(images))
 print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
-result = orca_estimator.evaluate(data=testloader, validation_methods=[Accuracy()])
-print("Test results: {}".format(result[0]))
+res = orca_estimator.evaluate(data=testloader, validation_methods=[Accuracy()])[0]
+total_num = res.total_num
+result = res.result
+print("Accuracy of the network on the %s test images: %s" % (total_num, result))
 orca_estimator.shutdown()
 stop_orca_context()

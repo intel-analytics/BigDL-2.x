@@ -35,5 +35,5 @@ You can find the logs for training.
 
 Final test results will be seen at the end.
 ```
-Test results: Map(Top1Accuracy -> Accuracy(correct: 5521, count: 10000, accuracy: 0.5521)) 
+Accuracy of the network on the 10000 test images: 0.541100025177002 
 ```
