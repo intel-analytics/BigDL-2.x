@@ -62,8 +62,6 @@ class AutoTSTrainer:
             metric="mse",
             recipe: Recipe = SmokeRecipe(),
             uncertainty: bool = False,
-            distributed: bool = False,
-            hdfs_url=None
             ):
         """
         Fit a time series forecasting pipeline w/ automl
@@ -73,17 +71,13 @@ class AutoTSTrainer:
         :param metric: the evaluation metric to optimize
         :param uncertainty: whether to enable uncertainty calculation
                             (will output an uncertainty sigma)
-        :param hdfs_url: the hdfs_url to use for storing trail and intermediate results
-        :param distributed: whether to enable distributed training
         :return a TSPipeline
         """
         zoo_pipeline = self.internal.fit(train_df,
                                          validation_df,
                                          metric,
                                          recipe,
-                                         mc=uncertainty,
-                                         distributed=distributed,
-                                         hdfs_url=hdfs_url)
+                                         mc=uncertainty)
         ppl = TSPipeline()
         ppl.internal = zoo_pipeline
         return ppl

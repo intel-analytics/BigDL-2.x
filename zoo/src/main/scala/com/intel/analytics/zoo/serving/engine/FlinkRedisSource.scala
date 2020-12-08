@@ -42,10 +42,10 @@ class FlinkRedisSource(params: SerParams)
 
     if (params.redisSecureEnabled) {
       System.setProperty("javax.net.ssl.trustStore", params.redisSecureTrustStorePath)
-      System.setProperty("javax.net.ssl.trustStorePassword", params.redisSecureTrustStorePassword)
+      System.setProperty("javax.net.ssl.trustStorePassword", params.redisSecureTrustStoreToken)
       System.setProperty("javax.net.ssl.keyStoreType", "JKS")
       System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
-      System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStorePassword)
+      System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStoreToken)
     }
 
     redisPool = new JedisPool(new JedisPoolConfig(),

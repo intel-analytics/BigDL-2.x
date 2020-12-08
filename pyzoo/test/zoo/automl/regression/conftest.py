@@ -13,14 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import ray
 import pytest
+sc = None
+ray_ctx = None
 
 
 @pytest.fixture(autouse=True, scope='function')
-def orca_context_fixture():
-    from zoo.orca import init_orca_context, stop_orca_context
-    init_orca_context(cores=8, init_ray_on_spark=True,
-                      object_store_memory="1g")
+def automl_fixture():
+    from zoo import init_spark_on_local
+    from zoo.ray import RayContext
+    sc = init_spark_on_local(cores=4, spark_log_level="INFO")
+    ray_ctx = RayContext(sc=sc, object_store_memory="1g")
+    ray_ctx.init()
     yield
-    stop_orca_context()
+    ray_ctx.stop()
+    sc.stop()
+
+
+# @pytest.fixture()
+# def setUpModule():
+#     sc = init_spark_on_local(cores=4, spark_log_level="INFO")
+#     ray_ctx = RayContext(sc=sc)
+#     ray_ctx.init()
+#
+#
+# def tearDownModule():
+#     ray_ctx.stop()
+#     sc.stop()
