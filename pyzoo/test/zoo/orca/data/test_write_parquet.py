@@ -99,7 +99,7 @@ def _images_to_mnist_file(images, filepath):
 
     with open(filepath, "wb") as f:
         f.write(int(2051).to_bytes(4, "big"))
-        f.write(np.array(images.shape).astype(np.int32).newbyteorder(">").tobytes())
+        f.write(np.array(images.shape).astype(np.int32).byteswap().tobytes())
         f.write(images.tobytes())
 
 
@@ -111,7 +111,7 @@ def _labels_to_mnist_file(labels, filepath):
     with open(filepath, "wb") as f:
         f.write(int(2049).to_bytes(4, "big"))
 
-        f.write(np.array(labels.shape).astype(np.int32).newbyteorder(">").tobytes())
+        f.write(np.array(labels.shape).astype(np.int32).byteswap().tobytes())
         f.write(labels.tobytes())
 
 
