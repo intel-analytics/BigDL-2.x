@@ -19,8 +19,7 @@ import numpy as np
 import pytest
 
 import mxnet as mx
-from zoo.orca.learn.mxnet import create_config
-from zoo.orca.learn.ray_estimator import Estimator
+from zoo.orca.learn.mxnet import Estimator, create_config
 
 np.random.seed(1337)  # for reproducibility
 
@@ -61,10 +60,8 @@ def get_metrics(config):
 class TestMXNetSymbol(TestCase):
     def test_symbol(self):
         config = create_config(log_interval=2, seed=42)
-        estimator = Estimator.from_mxnet(config=config,
-                                         model_creator=get_model,
-                                         validation_metrics_creator=get_metrics,
-                                         eval_metrics_creator=get_metrics)
+        estimator = Estimator(config, get_model, validation_metrics_creator=get_metrics,
+                              eval_metrics_creator=get_metrics)
         estimator.fit(get_train_data_iter, validation_data=get_test_data_iter,
                       epochs=2, batch_size=16)
         estimator.shutdown()

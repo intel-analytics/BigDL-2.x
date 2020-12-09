@@ -62,10 +62,6 @@ class Estimator(object):
                    model_dir=None,
                    backend="bigdl"):
         if backend in {"horovod", "torch_distributed"}:
-            import warnings
-            warnings.warn("This method will be deprecated, please "
-                          "from zoo.orca.learn.ray_estimator import Estimator and use "
-                          "Estimator.from_torch instead", DeprecationWarning)
             return PyTorchRayEstimatorWrapper(model_creator=model,
                                               optimizer_creator=optimizer,
                                               loss_creator=loss,

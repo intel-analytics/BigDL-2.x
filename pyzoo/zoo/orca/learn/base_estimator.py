@@ -13,35 +13,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from abc import abstractmethod
-from zoo.orca.learn.base_estimator import BaseEstimator
+
+from abc import ABC, abstractmethod
 
 
-class Estimator(BaseEstimator):
+class BaseEstimator(ABC):
     @abstractmethod
     def fit(self, data, epochs, **kwargs):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def predict(self, data, **kwargs):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def evaluate(self, data, **kwargs):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def get_model(self):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
-    def save(self, checkpoint):
-        pass
+    def save(self, model_path):
+        raise NotImplementedError
 
     @abstractmethod
-    def load(self, checkpoint):
-        pass
-
-    @abstractmethod
-    def shutdown(self, **kwargs):
-        pass
+    def load(self, checkpoint, **kwargs):
+        raise NotImplementedError

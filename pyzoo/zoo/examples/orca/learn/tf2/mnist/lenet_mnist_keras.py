@@ -17,7 +17,7 @@ import argparse
 
 import tensorflow as tf
 from zoo.orca import init_orca_context, stop_orca_context
-from zoo.orca.learn.ray_estimator import Estimator
+from zoo.orca.learn.tf2 import Estimator
 
 
 def preprocess(x, y):
@@ -74,7 +74,7 @@ def main(max_epoch):
     config = {
         "batch_size": batch_size
     }
-    est = Estimator.from_keras(model_creator=model_creator, config=config, workers_per_node=2)
+    est = Estimator.from_keras(model_creator, config=config, workers_per_node=2)
     stats = est.fit(train_data_creator,
                     epochs=max_epoch,
                     steps_per_epoch=60000 // batch_size,

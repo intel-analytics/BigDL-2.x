@@ -23,7 +23,7 @@ from zoo import init_nncontext
 from zoo.orca.data import XShards
 
 import zoo.orca.data.pandas
-from zoo.orca.learn.ray_estimator import Estimator
+from zoo.orca.learn.tf2 import Estimator
 from zoo.ray import RayContext
 import ray
 
@@ -236,7 +236,7 @@ class TestTFRayEstimator(TestCase):
         # case will return non-zero.
 
         ray_ctx = RayContext.get()
-        trainer = Estimator.from_tf2(
+        trainer = Estimator(
             model_creator=auto_shard_model_creator,
             verbose=True,
             config={"batch_size": 4},
@@ -255,7 +255,7 @@ class TestTFRayEstimator(TestCase):
         # case will return non-zero.
 
         ray_ctx = RayContext.get()
-        trainer = Estimator.from_tf2(
+        trainer = Estimator(
             model_creator=create_auto_shard_model,
             compile_args_creator=create_auto_shard_compile_args,
             verbose=True,
@@ -282,7 +282,7 @@ class TestTFRayEstimator(TestCase):
                 "batch_size": global_batch_size,
                 "lr": 0.8
             }
-            trainer = Estimator.from_tf2(
+            trainer = Estimator(
                 model_creator=simple_model,
                 compile_args_creator=compile_args,
                 verbose=True,
@@ -317,7 +317,7 @@ class TestTFRayEstimator(TestCase):
             "batch_size": 4,
             "lr": 0.8
         }
-        trainer = Estimator.from_tf2(
+        trainer = Estimator(
             model_creator=model_creator,
             verbose=True,
             config=config,
@@ -340,7 +340,7 @@ class TestTFRayEstimator(TestCase):
             "batch_size": 4,
             "lr": 0.8
         }
-        trainer = Estimator.from_tf2(
+        trainer = Estimator(
             model_creator=model_creator,
             verbose=True,
             config=config,
@@ -371,7 +371,7 @@ class TestTFRayEstimator(TestCase):
             "batch_size": 4,
             "lr": 0.8
         }
-        trainer = Estimator.from_tf2(
+        trainer = Estimator(
             model_creator=model_creator,
             verbose=True,
             config=config,
@@ -386,7 +386,7 @@ class TestTFRayEstimator(TestCase):
         config = {
             "lr": 0.8
         }
-        trainer = Estimator.from_tf2(
+        trainer = Estimator(
             model_creator=model_creator,
             verbose=True,
             config=config,
@@ -401,7 +401,7 @@ class TestTFRayEstimator(TestCase):
         config = {
             "lr": 0.8
         }
-        trainer = Estimator.from_tf2(
+        trainer = Estimator(
             model_creator=model_creator,
             verbose=True,
             config=config,
@@ -416,7 +416,7 @@ class TestTFRayEstimator(TestCase):
         config = {
             "lr": 0.8
         }
-        trainer = Estimator.from_tf2(
+        trainer = Estimator(
             model_creator=model_creator,
             verbose=True,
             config=config,
@@ -438,7 +438,7 @@ class TestTFRayEstimator(TestCase):
 
         config = {
         }
-        trainer = Estimator.from_tf2(
+        trainer = Estimator(
             model_creator=identity_model_creator,
             verbose=True,
             config=config,
