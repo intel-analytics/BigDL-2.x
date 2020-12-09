@@ -49,7 +49,7 @@ else
     unzip ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10/cifar10.zip
 fi
 
-sed "s/epochs=2/epochs=1/g;s/batch_size=4/batch_size=16/g" \
+sed "s/epochs=2/epochs=1/g;s/batch_size=4/batch_size=256/g" \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10/cifar10.py \
     > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10/cifar10_tmp.py
 
