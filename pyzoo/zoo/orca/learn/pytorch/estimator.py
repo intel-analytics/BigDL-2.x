@@ -16,7 +16,7 @@
 from zoo.pipeline.estimator.estimator import Estimator as SparkEstimator
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.spark_estimator import Estimator as OrcaSparkEstimator
-from zoo.orca.learn.optimizers import Optimizer as OrcaOptimizer
+from zoo.orca.learn.optimizers import Optimizer as OrcaOptimizer, SGD
 from zoo.orca.data import SparkXShards
 from bigdl.optim.optimizer import MaxEpoch, OptimMethod
 from zoo.feature.common import FeatureSet
@@ -204,17 +204,13 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
         else:
             self.loss = TorchLoss.from_pytorch(loss)
         if optimizer is None:
-            from bigdl.optim.optimizer import SGD
             optimizer = SGD()
-        elif isinstance(optimizer, TorchOptimizer):
+        if isinstance(optimizer, TorchOptimizer):
             optimizer = TorchOptim.from_pytorch(optimizer)
-        elif isinstance(optimizer, OptimMethod):
-            optimizer = optimizer
         elif isinstance(optimizer, OrcaOptimizer):
             optimizer = optimizer.get_optimizer()
         else:
-            raise ValueError("Only PyTorch optimizer, bigdl optimizer and orca optimizer are "
-                             "supported")
+            raise ValueError("Only PyTorch optimizer and orca optimizer are supported")
         self.log_dir = None
         self.app_name = None
         self.model_dir = model_dir
