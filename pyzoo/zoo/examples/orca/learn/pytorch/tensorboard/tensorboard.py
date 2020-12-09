@@ -36,7 +36,7 @@ from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.learn.pytorch import Estimator
 
     
-def train_data_creator(config):
+def train_data_creator(config={}):
     transform = transforms.Compose(
         [transforms.ToTensor(),
         transforms.Normalize((0.5,), (0.5,))])
@@ -45,19 +45,29 @@ def train_data_creator(config):
         download=True,
         train=True,
         transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=config.get("batch_size",32),
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
                                               shuffle=True, num_workers=2)
     return trainloader
     
-def validation_data_creator(config):
+def validation_data_creator(config={}):
     transform = transforms.Compose(
         [transforms.ToTensor(),
         transforms.Normalize((0.5,), (0.5,))])
     testset = torchvision.datasets.FashionMNIST(root='./data', train=False,
                                                 download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=config.get("batch_size", 32),
+    testloader = torch.utils.data.DataLoader(testset, batch_size=4,
                                              shuffle=False, num_workers=2)
     return testloader
+
+def matplotlib_imshow(img, one_channel=False):
+    if one_channel:
+        img = img.mean(dim=0)
+    img = img / 2 + 0.5     # unnormalize
+    npimg = img.numpy()
+    if one_channel:
+        plt.imshow(npimg, cmap="Greys")
+    else:
+        plt.imshow(np.transpose(npimg, (1, 2, 0)))
     
 class Net(nn.Module):
     def __init__(self):
@@ -78,7 +88,7 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
 
-def model_creator(config):
+def model_creator(config={}):
     model = Net()
     return model
     
@@ -87,6 +97,7 @@ def optimizer_creator(model, config):
     return optimizer
     
 def main():
+    """
     parser = argparse.ArgumentParser(description='PyTorch Tensorboard Example')
 
     parser.add_argument('--cluster_mode', type=str, default="local",
@@ -96,18 +107,41 @@ def main():
         init_orca_context(memory="4g")
     elif args.cluster_mode == "yarn":
         init_orca_context(cluster_mode=args.cluster_mode, cores=4, num_nodes=2, memory="4g")
+    """
+
+    writer = SummaryWriter('runs/fashion_mnist_experiment_1')
+    # constant for classes
+    classes = ('T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
+            'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle Boot')
+
+    # plot some random training images
+    dataiter = iter(train_data_creator())
+    images, labels = dataiter.next()
+    img_grid = torchvision.utils.make_grid(images)
+    matplotlib_imshow(img_grid, one_channel=True)
+
+    # write to tensorboard
+    writer.add_image('four_fashion_mnist_images', img_grid)
     
+    # inspect model using tensorboard
+    net = Net()
+    writer.add_graph(net, images)
+    writer.close()
+    
+    # training loss vs. epochs
+    """
     criterion = nn.CrossEntropyLoss()
     zoo_estimator = Estimator.from_torch(model=model_creator, optimizer=optimizer_creator, loss=criterion, config={}, backend="torch_distributed")
-    stats = zoo_estimator.fit(train_data_creator, epochs=1, batch_size=4)
-    writer = SummaryWriter('runs/fashion_mnist_experiment_1')
+    stats = zoo_estimator.fit(train_data_creator, epochs=5, batch_size=4)
+    
     for stat in stats:
         writer.add_scalar("training_loss", stat['train_loss'], stat['epoch'])
     print("Train stats: {}".format(stats))
     val_stats = zoo_estimator.evaluate(validation_data_creator)
     print("validation stats: {}".format(val_stats))
     zoo_estimator.shutdown()
-    stop_orca_context()
+    """
+    #stop_orca_context()
 
 if __name__ == '__main__':
     main()
