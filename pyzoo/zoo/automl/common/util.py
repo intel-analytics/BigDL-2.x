@@ -148,7 +148,6 @@ def process(cmd):
 
 
 def get_remote_list(dir_in):
-    # dir_in = "hdfs://172.16.0.103:9000/yushan/"
     args = "hdfs dfs -ls " + dir_in + " | awk '{print $8}'"
     s_output, _ = process(args)
 
@@ -181,7 +180,6 @@ def upload_ppl_hdfs(upload_dir, ckpt_name):
         cmd = " hadoop fs -put -f {local_file} {remote_log_dir}".format(
             local_file=ckpt_name,
             remote_log_dir=remote_log_dir)
-    # print("upload hdfs cmd is:", sync_cmd)
     process(cmd)
 
 
@@ -220,11 +218,9 @@ def restore_hdfs(model_path, remote_dir, feature_transformers=None, model=None, 
     tmp_dir = tempfile.mkdtemp(prefix="automl_save_")
     try:
         cmd = "hadoop fs -get {} {}".format(remote_model, tmp_dir)
-        # print("get hdfs cmd is:", cmd)
         process(cmd)
         with zipfile.ZipFile(os.path.join(tmp_dir, model_name)) as zf:
             zf.extractall(tmp_dir)
-            # print(os.listdir(tmp_dir))
 
         all_config = restore(tmp_dir, feature_transformers, model, config)
     finally:

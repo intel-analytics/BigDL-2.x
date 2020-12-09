@@ -29,6 +29,7 @@ import com.intel.analytics.zoo.feature.PythonFeatureSet
 import com.intel.analytics.zoo.pipeline.api.net.TorchModel.TorchModel2Holder
 import jep.{Jep, NDArray}
 import org.apache.spark.TaskContext
+import com.intel.analytics.bigdl.nn.Utils._
 
 class TorchModel private(private val modelHolder: TorchModel2Holder, init_weights: Array[Float])
   extends AbstractModule[Activity, Activity, Float]{
@@ -59,6 +60,10 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
          |
          |by = bytes(b % 256 for b in model_bytes)
          |${getName()} = torch.load(io.BytesIO(by), pickle_module=zoo_pickle_module)
+         |import types
+         |if isinstance(${getName()}, types.FunctionType) or \\
+         |   isinstance(${getName()}, types.ClassType):
+         |    ${getName()} = ${getName()}()
          |""".stripMargin
     PythonInterpreter.exec(loadModelCode)
     if (extraParams.length != 0) {
@@ -90,7 +95,6 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
   override def updateOutput(input: Activity): Activity = {
     load
     // TODO: delete this time counting
-    val startTime = System.nanoTime()
     // _data is come from FeatureSet.
     val dataExisted = PythonInterpreter.getValue[Boolean]("'_data' in dir()")
     if (dataExisted) {
@@ -114,31 +118,37 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
     val forwardCode = if (train && weights.nElement() > 0) {
       PythonInterpreter.set("newWeight", new NDArray[Array[Float]](weights.storage().array()))
       PythonInterpreter.exec(setWeightCode)
-      println(s"setWeight time is ${(System.nanoTime() - startTime) / 1e9}")
       this.forwardCode
     } else {
       this.forwardCode
     }
     PythonInterpreter.exec(forwardCode)
-    println(s"run forward cost: ${(System.nanoTime() - startTime) / 1e9}")
     val outputNd = PythonFeatureSet.toArrayTensor(
       PythonInterpreter.getValue[NDArray[_]](s"ptensor_to_numpy(output_${postId})"))
     if (outputNd.length == 1) {
-      output = outputNd(0)
+      if (output == null) {
+        output = outputNd(0)
+      } else {
+        output.toTensor[Float].resizeAs(outputNd(0)).copy(outputNd(0))
+      }
     } else {
-      output = T(outputNd)
+      if (output != null && output.isTable &&
+        output.toTable.length() == outputNd.length) {
+        val t = T.array(outputNd)
+        recursiveResizeAs[Float](output, t)
+        recursiveCopy[Float](output, t)
+      } else {
+        output = T.array(outputNd)
+      }
     }
     // This output_hashcode will be used in TorchLoss when compute loss.
     PythonInterpreter.exec(s"output_" +
-      s"${Integer.toHexString(output.hashCode())} = output_${postId}")
-    println(s"forward total cost: ${(System.nanoTime() - startTime) / 1e9}")
+      s"${Integer.toHexString(System.identityHashCode(output))} = output_${postId}")
     output
   }
 
   override def updateGradInput(input: Activity, gradOutput: Activity): Activity = {
     load
-    val startTime = System.nanoTime()
-    println(s"run backward cost: ${(System.nanoTime() - startTime) / 1e9}")
     val getWeightCode =
       s"""
         |grads = []
@@ -167,7 +177,6 @@ class TorchModel private(private val modelHolder: TorchModel2Holder, init_weight
     val grad = PythonFeatureSet.ndArrayToTensor(
       PythonInterpreter.getValue("grad.data.numpy()").asInstanceOf[NDArray[_]])
     gradients.copy(grad)
-    println(s"backward total cost: ${(System.nanoTime() - startTime) / 1e9}")
     gradInput
   }
 

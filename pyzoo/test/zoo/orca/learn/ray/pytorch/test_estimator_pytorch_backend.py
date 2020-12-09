@@ -91,19 +91,51 @@ def get_optimizer(model, config):
 
 
 class TestPyTorchEstimator(TestCase):
-    def test_linear(self):
+    def test_data_creator(self):
         estimator = Estimator.from_torch(model=get_model,
                                          optimizer=get_optimizer,
                                          loss=nn.BCELoss(),
-                                         config={"lr": 1e-2,
-                                                 "batch_size": 128},
-                                         backend="pytorch")
-        train_stats = estimator.fit(train_data_loader, epochs=2)
+                                         config={"lr": 1e-2},
+                                         workers_per_node=2,
+                                         backend="torch_distributed")
+        train_stats = estimator.fit(train_data_loader, epochs=2, batch_size=128)
         print(train_stats)
-        val_stats = estimator.evaluate(val_data_loader)
+        val_stats = estimator.evaluate(val_data_loader, batch_size=64)
         print(val_stats)
         assert 0 < val_stats["val_accuracy"] < 1
         assert estimator.get_model()
+
+        # Verify syncing weights, i.e. the two workers have the same weights after training
+        import ray
+        remote_workers = estimator.estimator.remote_workers
+        state_dicts = ray.get([worker.state_dict.remote() for worker in remote_workers])
+        weights = [state["models"] for state in state_dicts]
+        worker1_weights = weights[0][0]
+        worker2_weights = weights[1][0]
+        for layer in list(worker1_weights.keys()):
+            assert np.allclose(worker1_weights[layer].numpy(),
+                               worker2_weights[layer].numpy())
+        estimator.shutdown()
+
+    def test_spark_xshards(self):
+        from zoo import init_nncontext
+        from zoo.orca.data import SparkXShards
+        estimator = Estimator.from_torch(model=get_model,
+                                         optimizer=get_optimizer,
+                                         loss=nn.BCELoss(),
+                                         config={"lr": 1e-1},
+                                         backend="torch_distributed")
+        sc = init_nncontext()
+        x_rdd = sc.parallelize(np.random.rand(4000, 1, 50).astype(np.float32))
+        y_rdd = sc.parallelize(np.random.randint(0, 2, size=(4000, 1)).astype(np.float32))
+        rdd = x_rdd.zip(y_rdd).map(lambda x_y: {'x': x_y[0], 'y': x_y[1]})
+        train_rdd, val_rdd = rdd.randomSplit([0.9, 0.1])
+        train_xshards = SparkXShards(train_rdd)
+        val_xshards = SparkXShards(val_rdd)
+        train_stats = estimator.fit(train_xshards, batch_size=256, epochs=2)
+        print(train_stats)
+        val_stats = estimator.evaluate(val_xshards, batch_size=128)
+        print(val_stats)
         estimator.shutdown()
 
 

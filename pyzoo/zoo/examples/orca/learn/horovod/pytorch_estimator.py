@@ -85,12 +85,11 @@ def train_example(workers_per_node):
         workers_per_node=workers_per_node,
         config={
             "lr": 1e-2,  # used in optimizer_creator
-            "hidden_size": 1,  # used in model_creator
-            "batch_size": 4,  # used in data_creator
+            "hidden_size": 1  # used in model_creator
         }, backend="horovod")
 
     # train 5 epochs
-    stats = estimator.fit(train_data_creator, epochs=5)
+    stats = estimator.fit(train_data_creator, batch_size=4, epochs=5)
     print("train stats: {}".format(stats))
     val_stats = estimator.evaluate(validation_data_creator)
     print("validation stats: {}".format(val_stats))
@@ -114,7 +113,7 @@ if __name__ == "__main__":
     parser.add_argument("--memory", type=str, default="10g",
                         help="The memory you want to use on each node. "
                              "You can change it depending on your own cluster setting.")
-    parser.add_argument("--workers_per_node", type=int, default=1,
+    parser.add_argument("--workers_per_node", type=int, default=2,
                         help="The number of workers to run on each node")
 
     args = parser.parse_args()

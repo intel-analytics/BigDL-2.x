@@ -57,7 +57,7 @@ images/254.png annotations/254.xml
 
 ```bash
 export ANALYTICS_ZOO=where the zoo is located
-export ZOO_JAR_SPARK_PATH=${ANALYTICS_ZOO}/zoo/target/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies-and-spark.jar
+export ZOO_JAR_SPARK_PATH=${ANALYTICS_ZOO}/zoo/target/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-serving.jar
 export ZOO_JAR_PATH=${ANALYTICS_ZOO}/dist/lib/analytics-zoo-bigdl_BIGDL_VERSION-spark_SPARK_VERSION-ZOO_VERSION-jar-with-dependencies.jar
 
 java -cp ${ZOO_JAR_SPARK_PATH} \
