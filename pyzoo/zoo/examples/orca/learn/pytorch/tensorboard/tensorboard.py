@@ -12,12 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
+# Most of the Pytorch code is adapted from Pytorch's tutorial for
+# visualizing training with tensorboard
+# https://pytorch.org/tutorials/intermediate/tensorboard_tutorial.html
 #
-
 from __future__ import print_function
 import os
 import argparse
 import numpy as np
+import matplotlib.pyplot as plt
 
 import torch
 import torchvision
@@ -31,7 +35,30 @@ from tensorboardX import SummaryWriter
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.learn.pytorch import Estimator
 
+    
+def train_data_creator(config):
+    transform = transforms.Compose(
+        [transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))])
 
+    trainset = torchvision.datasets.FashionMNIST('./data',
+        download=True,
+        train=True,
+        transform=transform)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=config.get("batch_size",32),
+                                              shuffle=True, num_workers=2)
+    return trainloader
+    
+def validation_data_creator(config):
+    transform = transforms.Compose(
+        [transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))])
+    testset = torchvision.datasets.FashionMNIST(root='./data', train=False,
+                                                download=True, transform=transform)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=config.get("batch_size", 32),
+                                             shuffle=False, num_workers=2)
+    return testloader
+    
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
@@ -59,59 +86,21 @@ def optimizer_creator(model, config):
     optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     return optimizer
     
-def train_data_creator(config):
-    transform = transforms.Compose(
-        [transforms.ToTensor(),
-        transforms.Normalize((0.5,), (0.5,))])
-
-    trainset = torchvision.datasets.FashionMNIST('./data',
-        download=True,
-        train=True,
-        transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=config.get("batch_size",32),
-                                              shuffle=True, num_workers=2)
-    return trainloader
-    
-def validation_data_creator(config):
-    transform = transforms.Compose(
-        [transforms.ToTensor(),
-        transforms.Normalize((0.5,), (0.5,))])
-    testset = torchvision.datasets.FashionMNIST(root='./data', train=False,
-                                                download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=config.get("batch_size", 32),
-                                             shuffle=False, num_workers=2)
-    return testloader
-    
 def main():
-    parser = argparse.ArgumentParser(description='PyTorch Cifar10 Example')
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='PyTorch Tensorboard Example')
 
     parser.add_argument('--cluster_mode', type=str, default="local",
                         help='The mode for the Spark cluster.')
-    parser.add_argument("--num_nodes", type=int, default=1,
-                        help="The number of nodes to be used in the cluster. "
-                             "You can change it depending on your own cluster setting.")
-    parser.add_argument("--cores", type=int, default=4,
-                        help="The number of cpu cores you want to use on each node. "
-                             "You can change it depending on your own cluster setting.")
-    parser.add_argument("--memory", type=str, default="10g",
-                        help="The memory you want to use on each node. "
-                             "You can change it depending on your own cluster setting.")
-    parser.add_argument("--workers_per_node", type=int, default=1,
-                        help="The number of workers to run on each node")
-    parser.add_argument('--epochs', type=int, default=2, metavar='N',
-                        help='number of epochs to train (default: 2)')
-    parser.add_argument('--batch_size', type=int, default=16, metavar='N',
-                        help='input worker batch for training per executor(default: 16)')
     args = parser.parse_args()
-    
-    init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores, num_nodes=args.num_nodes, memory=args.memory)
+    if args.cluster_mode == "local":
+        init_orca_context(memory="4g")
+    elif args.cluster_mode == "yarn":
+        init_orca_context(cluster_mode=args.cluster_mode, cores=4, num_nodes=2, memory="4g")
     
     criterion = nn.CrossEntropyLoss()
     zoo_estimator = Estimator.from_torch(model=model_creator, optimizer=optimizer_creator, loss=criterion, config={}, backend="torch_distributed")
-    stats = zoo_estimator.fit(train_data_creator, epochs=args.epochs, batch_size=args.batch_size)
+    stats = zoo_estimator.fit(train_data_creator, epochs=1, batch_size=4)
     writer = SummaryWriter('runs/fashion_mnist_experiment_1')
-    print("start")
     for stat in stats:
         writer.add_scalar("training_loss", stat['train_loss'], stat['epoch'])
     print("Train stats: {}".format(stats))
