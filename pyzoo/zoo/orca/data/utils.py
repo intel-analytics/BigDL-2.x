@@ -194,8 +194,12 @@ def to_sample(data):
     from bigdl.util.common import Sample
     data = check_type_and_convert(data, allow_list=True, allow_tuple=False)
     features = data["x"]
-    labels = data["y"]
     length = features[0].shape[0]
+    has_label = "y" in data
+    if has_label:
+        labels = data["y"]
+    else:
+        labels = np.zeros([1, length])
 
     for i in range(length):
         fs = [feat[i] for feat in features]
