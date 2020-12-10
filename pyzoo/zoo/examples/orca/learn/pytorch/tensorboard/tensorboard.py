@@ -35,7 +35,7 @@ from tensorboardX import SummaryWriter
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.learn.pytorch import Estimator
 
-    
+
 def train_data_creator(config={}):
     transform = transforms.Compose(
         [transforms.ToTensor(),
@@ -48,7 +48,7 @@ def train_data_creator(config={}):
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
                                               shuffle=True, num_workers=2)
     return trainloader
-    
+
 def validation_data_creator(config={}):
     transform = transforms.Compose(
         [transforms.ToTensor(),
@@ -68,7 +68,7 @@ def matplotlib_imshow(img, one_channel=False):
         plt.imshow(npimg, cmap="Greys")
     else:
         plt.imshow(np.transpose(npimg, (1, 2, 0)))
-    
+
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
@@ -91,13 +91,12 @@ class Net(nn.Module):
 def model_creator(config={}):
     model = Net()
     return model
-    
+
 def optimizer_creator(model, config):
     optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     return optimizer
-    
+
 def main():
-    """
     parser = argparse.ArgumentParser(description='PyTorch Tensorboard Example')
 
     parser.add_argument('--cluster_mode', type=str, default="local",
@@ -107,7 +106,6 @@ def main():
         init_orca_context(memory="4g")
     elif args.cluster_mode == "yarn":
         init_orca_context(cluster_mode=args.cluster_mode, cores=4, num_nodes=2, memory="4g")
-    """
 
     writer = SummaryWriter('runs/fashion_mnist_experiment_1')
     # constant for classes
@@ -122,26 +120,20 @@ def main():
 
     # write to tensorboard
     writer.add_image('four_fashion_mnist_images', img_grid)
-    
-    # inspect model using tensorboard
-    net = Net()
-    writer.add_graph(net, images)
-    writer.close()
-    
+
     # training loss vs. epochs
-    """
     criterion = nn.CrossEntropyLoss()
-    zoo_estimator = Estimator.from_torch(model=model_creator, optimizer=optimizer_creator, loss=criterion, config={}, backend="torch_distributed")
-    stats = zoo_estimator.fit(train_data_creator, epochs=5, batch_size=4)
-    
+    orca_estimator = Estimator.from_torch(model=model_creator, optimizer=optimizer_creator, loss=criterion, config={}, backend="torch_distributed")
+    stats = orca_estimator.fit(train_data_creator, epochs=5, batch_size=4)
+
     for stat in stats:
         writer.add_scalar("training_loss", stat['train_loss'], stat['epoch'])
     print("Train stats: {}".format(stats))
-    val_stats = zoo_estimator.evaluate(validation_data_creator)
+    val_stats = orca_estimator.evaluate(validation_data_creator)
     print("validation stats: {}".format(val_stats))
-    zoo_estimator.shutdown()
-    """
-    #stop_orca_context()
+    orca_estimator.shutdown()
+
+    stop_orca_context()
 
 if __name__ == '__main__':
     main()
