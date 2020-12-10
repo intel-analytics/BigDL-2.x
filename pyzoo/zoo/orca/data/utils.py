@@ -195,11 +195,10 @@ def to_sample(data):
     data = check_type_and_convert(data, allow_list=True, allow_tuple=False)
     features = data["x"]
     length = features[0].shape[0]
-    has_label = "y" in data
-    if has_label:
+    if "y" in data:
         labels = data["y"]
     else:
-        labels = np.zeros([1, length])
+        labels = np.array([[-1] * length])
 
     for i in range(length):
         fs = [feat[i] for feat in features]
