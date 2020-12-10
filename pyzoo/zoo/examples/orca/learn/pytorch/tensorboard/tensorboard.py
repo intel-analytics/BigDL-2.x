@@ -36,7 +36,7 @@ from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.learn.pytorch import Estimator
 
 
-def train_data_creator(config={}):
+def train_data_creator(config):
     transform = transforms.Compose(
         [transforms.ToTensor(),
         transforms.Normalize((0.5,), (0.5,))])
@@ -49,7 +49,7 @@ def train_data_creator(config={}):
                                               shuffle=True, num_workers=2)
     return trainloader
 
-def validation_data_creator(config={}):
+def validation_data_creator(config):
     transform = transforms.Compose(
         [transforms.ToTensor(),
         transforms.Normalize((0.5,), (0.5,))])
@@ -88,7 +88,7 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
 
-def model_creator(config={}):
+def model_creator(config):
     model = Net()
     return model
 
@@ -113,7 +113,7 @@ def main():
             'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle Boot')
 
     # plot some random training images
-    dataiter = iter(train_data_creator())
+    dataiter = iter(train_data_creator(config={}))
     images, labels = dataiter.next()
     img_grid = torchvision.utils.make_grid(images)
     matplotlib_imshow(img_grid, one_channel=True)
