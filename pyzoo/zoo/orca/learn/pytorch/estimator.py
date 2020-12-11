@@ -257,8 +257,8 @@ class PytorchSparkEstimatorWrapper(Estimator):
             from zoo.orca.data.utils import to_sample
             data_rdd = data.rdd.flatMap(to_sample)
         else:
-            raise ValueError("Data should be SparkXShards, each element needs to be {'x': a "
-                             "feature numpy array}.")
+            raise ValueError("Data should be XShards, each element needs to be {'x': a feature "
+                             "numpy array}.")
         predicted_rdd = self.model.predict(data_rdd, batch_size=batch_size)
         return convert_predict_to_xshard(predicted_rdd)
 
