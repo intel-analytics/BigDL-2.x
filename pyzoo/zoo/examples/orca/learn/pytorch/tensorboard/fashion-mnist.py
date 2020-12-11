@@ -45,7 +45,7 @@ def train_data_creator(config):
         download=True,
         train=True,
         transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=config["batch_size"],
                                               shuffle=True, num_workers=2)
     return trainloader
 
@@ -55,10 +55,11 @@ def validation_data_creator(config):
         transforms.Normalize((0.5,), (0.5,))])
     testset = torchvision.datasets.FashionMNIST(root='./data', train=False,
                                                 download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=4,
+    testloader = torch.utils.data.DataLoader(testset, batch_size=config["batch_size"],
                                              shuffle=False, num_workers=2)
     return testloader
 
+# helper function to show an image
 def matplotlib_imshow(img, one_channel=False):
     if one_channel:
         img = img.mean(dim=0)
@@ -113,9 +114,13 @@ def main():
             'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle Boot')
 
     # plot some random training images
-    dataiter = iter(train_data_creator(config={}))
+    dataiter = iter(train_data_creator(config={"batch_size":4}))
     images, labels = dataiter.next()
+
+    # create grid of images
     img_grid = torchvision.utils.make_grid(images)
+
+    # show images
     matplotlib_imshow(img_grid, one_channel=True)
 
     # write to tensorboard
@@ -127,7 +132,7 @@ def main():
 
     # training loss vs. epochs
     criterion = nn.CrossEntropyLoss()
-    orca_estimator = Estimator.from_torch(model=model_creator, optimizer=optimizer_creator, loss=criterion, config={}, backend="torch_distributed")
+    orca_estimator = Estimator.from_torch(model=model_creator, optimizer=optimizer_creator, loss=criterion, config={"batch_size":4}, backend="torch_distributed")
     stats = orca_estimator.fit(train_data_creator, epochs=5, batch_size=4)
 
     for stat in stats:
