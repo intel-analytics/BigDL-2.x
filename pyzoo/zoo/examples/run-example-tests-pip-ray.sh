@@ -49,10 +49,27 @@ time5=$?
 execute_ray_test tf2_mnist ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf2/mnist/lenet_mnist_keras.py --cluster_mode local --max_epoch 1
 time6=$?
 
+if [ -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/tensorboard/data ]
+then
+    echo "fashion-mnist already exists"
+else
+    wget -nv $FTP_URI/analytics-zoo-data/fashion-mnist.zip -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/tensorboard
+    unzip ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/tensorboard/fashion-mnist.zip
+fi
+
+sed "s/epochs=5/epochs=1/g;s/batch_size=4/batch_size=256/g;s/config={\"batch_size\":4}/config={\"batch_size\":256}/g" \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/tensorboard/fashion-mnist.py \
+    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/tensorboard/fashion-mnist_tmp.py
+
+execute_ray_test tb-fashion-mnist ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/tensorboard/fashion-mnist_tmp.py
+time7=$?
+
 echo "#1 rl_pong time used:$time1 seconds"
 echo "#2 sync_parameter_server time used:$time2 seconds"
 echo "#3 async_parameter_server time used:$time3 seconds"
 echo "#4 multiagent_two_trainers time used:$time4 seconds"
 echo "#5 mxnet_lenet time used:$time5 seconds"
+echo "#6 tf2_lenet time used:$time6 seconds"
+echo "#7 tensorboard time used:$time7 seconds"
 
 clear_up
