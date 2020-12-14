@@ -65,7 +65,7 @@ if [ -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/tensorboard/
 then
     echo "fashion-mnist already exists"
 else
-    wget -nv $FTP_URI/analytics-zoo-data/fashion-mnist.zip -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/tensorboard
+    wget -nv $FTP_URI/analytics-zoo-data/data/fashion-mnist.zip -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/tensorboard
     unzip ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/tensorboard/fashion-mnist.zip
 fi
 
