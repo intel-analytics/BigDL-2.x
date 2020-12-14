@@ -71,11 +71,15 @@ class TimeSequencePredictor(BasePredictor):
                                             self.drop_missing)
         return ft
 
-    def create_model(self, resources_per_trial, config):
-        _model = TimeSequenceModel(
-            check_optional_config=False,
-            future_seq_len=self.future_seq_len)
-        return _model
+    def make_model_fn(self, resources_per_trial):
+        future_seq_len = self.future_seq_len
+
+        def create_model():
+            _model = TimeSequenceModel(
+                check_optional_config=False,
+                future_seq_len=future_seq_len)
+            return _model
+        return create_model
 
     def _check_missing_col(self, df):
         cols_list = [self.dt_col] + self.target_col

@@ -79,8 +79,8 @@ class Estimator(object):
                                                 model_dir=model_dir,
                                                 bigdl_type="float")
         else:
-            raise ValueError("only horovod, pytorch and bigdl backend are supported for now,"
-                             f" got backend: {backend}")
+            raise ValueError("Only horovod, torch_distributed and bigdl backends are supported"
+                             f" for now, got backend: {backend}")
 
 
 class PyTorchRayEstimatorWrapper(Estimator):
@@ -259,8 +259,16 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
                              "callable data_creators but get " + data.__class__.__name__)
         return self
 
-    def predict(self, data, **kwargs):
-        raise NotImplementedError
+    def predict(self, data, batch_size=4):
+        from zoo.orca.learn.utils import convert_predict_to_xshard
+        if isinstance(data, SparkXShards):
+            from zoo.orca.data.utils import to_sample
+            data_rdd = data.rdd.flatMap(to_sample)
+        else:
+            raise ValueError("Data should be XShards, each element needs to be {'x': a feature "
+                             "numpy array}.")
+        predicted_rdd = self.model.predict(data_rdd, batch_size=batch_size)
+        return convert_predict_to_xshard(predicted_rdd)
 
     def evaluate(self, data, validation_methods=None, batch_size=32):
         from zoo.orca.data.utils import to_sample

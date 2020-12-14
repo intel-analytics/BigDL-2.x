@@ -46,14 +46,14 @@ trait JedisEnabledActor extends Actor with Supportive {
       redisPort: Int,
       redisSecureEnabled: Boolean,
       redissTrustStorePath: String,
-      redissTrustStorePassword: String): Jedis =
+      redissTrustStoreToken: String): Jedis =
     timing(s"$actorName retrieve redis connection")() {
       if (redisSecureEnabled) {
         System.setProperty("javax.net.ssl.trustStore", redissTrustStorePath)
-        System.setProperty("javax.net.ssl.trustStorePassword", redissTrustStorePassword)
+        System.setProperty("javax.net.ssl.trustStorePassword", redissTrustStoreToken)
         System.setProperty("javax.net.ssl.keyStoreType", "JKS")
         System.setProperty("javax.net.ssl.keyStore", redissTrustStorePath)
-        System.setProperty("javax.net.ssl.keyStorePassword", redissTrustStorePassword)
+        System.setProperty("javax.net.ssl.keyStorePassword", redissTrustStoreToken)
       }
       val jedisPoolConfig = new JedisPoolConfig()
       val jedisPool = new JedisPool(new JedisPoolConfig(), redisHost, redisPort, redisSecureEnabled)
@@ -75,10 +75,10 @@ class RedisPutActor(
     countWindow: Int,
     redisSecureEnabled: Boolean,
     redissTrustStorePath: String,
-    redissTrustStorePassword: String) extends JedisEnabledActor {
+    redissTrustStoreToken: String) extends JedisEnabledActor {
   override val logger = LoggerFactory.getLogger(classOf[RedisPutActor])
   val jedis = retrieveJedis(redisHost, redisPort,
-    redisSecureEnabled, redissTrustStorePath, redissTrustStorePassword)
+    redisSecureEnabled, redissTrustStorePath, redissTrustStoreToken)
 
   var start = System.currentTimeMillis()
   val cache = MutableSet[PredictionInput]()
@@ -154,10 +154,10 @@ class RedisGetActor(
     redisOutputQueue: String,
     redisSecureEnabled: Boolean,
     redissTrustStorePath: String,
-    redissTrustStorePassword: String) extends JedisEnabledActor {
+    redissTrustStoreToken: String) extends JedisEnabledActor {
   override val logger = LoggerFactory.getLogger(classOf[RedisGetActor])
   val jedis = retrieveJedis(redisHost, redisPort,
-    redisSecureEnabled, redissTrustStorePath, redissTrustStorePassword)
+    redisSecureEnabled, redissTrustStorePath, redissTrustStoreToken)
 
   override def receive: Receive = {
     case message: PredictionQueryMessage =>
