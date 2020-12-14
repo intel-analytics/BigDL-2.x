@@ -57,7 +57,7 @@ else
     unzip ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/tensorboard/fashion-mnist.zip
 fi
 
-sed "s/epochs=5/epochs=1/g;s/batch_size=4/batch_size=256/g;s/config={\"batch_size\":4}/config={\"batch_size\":256}/g" \
+sed "s/epochs=5/epochs=1/g;s/batch_size=4/batch_size=256/g" \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/tensorboard/fashion-mnist.py \
     > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/tensorboard/fashion-mnist_tmp.py
 

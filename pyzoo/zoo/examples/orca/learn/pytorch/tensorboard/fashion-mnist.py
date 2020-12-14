@@ -45,7 +45,7 @@ def train_data_creator(config):
                                                  download=True,
                                                  train=True,
                                                  transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=config["batch_size"],
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
                                               shuffle=True, num_workers=2)
     return trainloader
 
@@ -56,7 +56,7 @@ def validation_data_creator(config):
          transforms.Normalize((0.5,), (0.5,))])
     testset = torchvision.datasets.FashionMNIST(root='./data', train=False,
                                                 download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=config["batch_size"],
+    testloader = torch.utils.data.DataLoader(testset, batch_size=4,
                                              shuffle=False, num_workers=2)
     return testloader
 
@@ -141,7 +141,7 @@ def main():
     orca_estimator = Estimator.from_torch(model=model_creator,
                                           optimizer=optimizer_creator,
                                           loss=criterion,
-                                          config={"batch_size": 4},
+                                          config={},
                                           backend="torch_distributed")
     stats = orca_estimator.fit(train_data_creator, epochs=5, batch_size=4)
 
