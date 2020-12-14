@@ -204,7 +204,8 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
         else:
             self.loss = TorchLoss.from_pytorch(loss)
         if optimizer is None:
-            optimizer = SGD()
+            from zoo.orca.learn.optimizers.schedule import Default
+            optimizer = SGD(learningrate_schedule=Default())
         if isinstance(optimizer, TorchOptimizer):
             optimizer = TorchOptim.from_pytorch(optimizer)
         elif isinstance(optimizer, OrcaOptimizer):
