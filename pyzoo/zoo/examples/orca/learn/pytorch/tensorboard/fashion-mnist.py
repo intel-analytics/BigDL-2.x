@@ -120,7 +120,7 @@ def main():
                'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle Boot')
 
     # plot some random training images
-    dataiter = iter(train_data_creator(config={"batch_size": 4}))
+    dataiter = iter(train_data_creator(config={}))
     images, labels = dataiter.next()
 
     # create grid of images
