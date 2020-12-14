@@ -26,7 +26,7 @@ from zoo.orca.data import SparkXShards
 from zoo.orca.learn.pytorch import Estimator
 from zoo.orca.learn.metrics import Accuracy
 from zoo.orca.learn.trigger import EveryEpoch
-from bigdl.optim.optimizer import SGD
+from zoo.orca.learn.optimizers import SGD
 from zoo.orca import OrcaContext
 import tempfile
 
