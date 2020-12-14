@@ -141,7 +141,6 @@ def main():
     orca_estimator = Estimator.from_torch(model=model_creator,
                                           optimizer=optimizer_creator,
                                           loss=criterion,
-                                          config={},
                                           backend="torch_distributed")
     stats = orca_estimator.fit(train_data_creator, epochs=5, batch_size=4)
 
