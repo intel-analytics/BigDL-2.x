@@ -43,7 +43,7 @@ class elastic_search:
         sqlContext = SQLContext.getOrCreate(sc)
         spark = sqlContext.sparkSession
 
-        reader = spark.read_df.format("org.elasticsearch.spark.sql")
+        reader = spark.read.format("org.elasticsearch.spark.sql")
 
         for key in esConfig:
             reader.option(key, esConfig[key])
@@ -82,7 +82,7 @@ class elastic_search:
         :param esResource resource file in elastic search.
         :param df Spark DataFrame that will be saved.
         """
-        wdf = df.write_df.format("org.elasticsearch.spark.sql")\
+        wdf = df.write.format("org.elasticsearch.spark.sql")\
             .option("es.resource", esResource)
 
         for key in esConfig:
@@ -91,18 +91,24 @@ class elastic_search:
         wdf.save()
 
     @staticmethod
-    def read_rdd(esConfig, esResource=None):
+    def read_rdd(esConfig, esResource=None, filter=None, esQuery=None):
         """
         Read the data from elastic search into Spark RDD.
         :param esConfig Dictionary which represents configuration for
                elastic search(eg. ip, port, es query etc).
         :param esResource Optional. resource file in elastic search.
                It also can be set in esConfig
+        :param filter Optional. Request only those fields from Elasticsearch
+        :param esQuery Optional. es query
         :return Spark DataFrame. Each row represents a document in ES.
         """
         sc = init_nncontext()
         if "es.resource" not in esConfig:
             esConfig["es.resource"] = esResource
+        if filter is not None:
+            esConfig["es.read.source.filter"] = filter
+        if esQuery is not None:
+            esConfig["es.query"] = esQuery
         rdd = sc.newAPIHadoopRDD("org.elasticsearch.hadoop.mr.EsInputFormat",
                                  "org.apache.hadoop.io.NullWritable",
                                  "org.elasticsearch.hadoop.mr.LinkedMapWritable",

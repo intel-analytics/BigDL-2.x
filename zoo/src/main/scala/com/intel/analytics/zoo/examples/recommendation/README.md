@@ -19,9 +19,9 @@ In NeuralCFexample and WideAndDeepExample, we demostrate how to use Analyticd Zo
    WND Learning Model, proposed by ([Google, 2016](https://arxiv.org/pdf/1606.07792.pdf)), is a DNN-Linear mixed model. WND combines the strength of memorization and generalization. It's useful for generic large-scale regression and classification problems with sparse input features(e.g., categorical features with a large number of possible feature values). It has been used for Google App Store for their app recommendation.
 ### Run the wide and deep example with ml-1m dataset
 ``` bash
-export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package \
-    master=spark master \
-    ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
+master=spark master
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --master $master \
     --driver-memory 4g \
     --executor-memory 4g \
@@ -32,9 +32,9 @@ export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics 
 
 ### Run the wide and deep example with Census Income dataset
 ``` bash
-export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package \
-    master=spark master \
-    ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
+master=spark master
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --master $master \
     --driver-memory 4g \
     --executor-memory 4g \
@@ -50,9 +50,9 @@ export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics 
    NCF([He, 2015](https://www.comp.nus.edu.sg/~xiangnan/papers/ncf.pdf)) leverages a multi-layer perceptrons to learn the user–item interaction function, at the mean time, NCF can express and generalize matrix factorization under its framework. includeMF(Boolean) is provided for users to build a NCF with or without matrix factorization. 
 ### Run the NCF example
 ``` bash
-export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package \
-    master=spark master \
-    ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
+master=spark master
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --master $master \
     --driver-memory 4g \
     --executor-memory 4g \
@@ -65,9 +65,9 @@ export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics 
    Session Recommender ([Hidasi, 2015](https://arxiv.org/pdf/1511.06939.pdf)) uses an RNN-based approach for session-based recommendations. The model is enhanced in NetEase ([Wu, 2016](https://ieeexplore.ieee.org/document/7498326)) by adding multiple layers to model users' purchase history. In Analytics Zoo, `includeHistory`(Boolean) is provided for users to build a `SessionRecommender` model with or without history. 
 ### Run the Session Recommender example
 ``` bash
-export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package \
-    master=spark master \
-    ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+export ANALYTICS_ZOO_HOME=the folder where you extract the downloaded Analytics Zoo zip package
+master=spark master
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
     --master $master \
     --driver-memory 4g \
     --executor-memory 4g \

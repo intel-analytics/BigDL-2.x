@@ -160,7 +160,6 @@ class ClusterServingInference(preProcessing: PreProcessing,
                  useMultiThreading: Boolean,
                  resizeFlag: Boolean = true): Activity = {
     val thisBatchSize = seq.size
-    println(s"This batch size is ${thisBatchSize.toString}")
 
     val inputSample = seq.head._2.toTable
     val kvTuples = inputSample.keySet.map(key => {

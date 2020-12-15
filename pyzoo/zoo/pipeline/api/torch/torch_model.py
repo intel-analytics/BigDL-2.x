@@ -21,7 +21,6 @@ import torch
 from bigdl.nn.layer import Layer
 from bigdl.util.common import JTensor
 from zoo.common.utils import callZooFunc
-from pyspark.serializers import CloudPickleSerializer
 from zoo.pipeline.api.torch.utils import trainable_param
 from zoo.pipeline.api.torch import zoo_pickle_module
 from importlib.util import find_spec
@@ -38,9 +37,6 @@ class TorchModel(Layer):
     """
     TorchModel wraps a PyTorch model as a single layer, thus the PyTorch model can be used for
     distributed inference or training.
-    The implement of TorchModel is different from TorchNet, this TorchModel is running running
-    pytorch model in an embedding Cpython interpreter, while TorchNet transfer the pytorch model
-    to TorchScript and run with libtorch.
     """
 
     def __init__(self, module_bytes, weights, bigdl_type="float"):
@@ -53,12 +49,17 @@ class TorchModel(Layer):
     @staticmethod
     def from_pytorch(model):
         """
-        Create a TorchNet directly from PyTorch model, e.g. model in torchvision.models.
-        :param model: a PyTorch model
+        Create a TorchModel directly from PyTorch model, e.g. model in torchvision.models.
+        :param model: a PyTorch model, or a function to create PyTorch model
         """
         weights = []
-        for param in trainable_param(model):
-            weights.append(param.view(-1))
+        import types
+        if isinstance(model, types.FunctionType) or isinstance(model, types.ClassType):
+            for param in trainable_param(model()):
+                weights.append(param.view(-1))
+        else:
+            for param in trainable_param(model):
+                weights.append(param.view(-1))
         flatten_weight = torch.nn.utils.parameters_to_vector(weights).data.numpy()
         bys = io.BytesIO()
         torch.save(model, bys, pickle_module=zoo_pickle_module)
@@ -74,6 +75,9 @@ class TorchModel(Layer):
         assert(len(new_weight) == 1, "TorchModel's weights should be one tensor")
         # set weights
         m = torch.load(io.BytesIO(self.module_bytes), pickle_module=zoo_pickle_module)
+        import types
+        if isinstance(m, types.FunctionType) or isinstance(m, types.ClassType):
+            m = m()
         w = torch.Tensor(new_weight[0])
         torch.nn.utils.vector_to_parameters(w, trainable_param(m))
 

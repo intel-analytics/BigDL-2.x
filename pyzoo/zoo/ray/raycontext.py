@@ -72,13 +72,13 @@ def kill_redundant_log_monitors(redis_address):
             is_same_redis = "--redis-address={}".format(redis_address)
             if is_log_monitor and is_same_redis in cmdline:
                 log_monitor_processes.append(proc)
-        except psutil.AccessDenied:
-            # psutil may encounter AccessDenied exceptions
-            # when it's trying to visit core services
+        except (psutil.AccessDenied, psutil.ZombieProcess, psutil.ProcessLookupError):
+            # psutil may encounter AccessDenied or ZombieProcess exceptions
+            # when it's trying to visit some MacOS core services
             if psutil.MACOS:
                 continue
             else:
-                raise
+                raise Exception("List process with list2cmdline failed!")
 
     if len(log_monitor_processes) > 1:
         for proc in log_monitor_processes[1:]:
@@ -102,8 +102,6 @@ class RayServiceFuncGenerator(object):
             modified_env["PATH"] = "{}:{}".format(executor_python_path, os.environ["PATH"])
         else:
             modified_env["PATH"] = executor_python_path
-        modified_env["LC_ALL"] = "C.UTF-8"
-        modified_env["LANG"] = "C.UTF-8"
         modified_env.pop("MALLOC_ARENA_MAX", None)
         modified_env.pop("RAY_BACKEND_LOG_LEVEL", None)
         # Unset all MKL setting as Analytics Zoo would give default values when init env.
@@ -125,6 +123,7 @@ class RayServiceFuncGenerator(object):
 
     def __init__(self, python_loc, redis_port, ray_node_cpu_cores,
                  password, object_store_memory, verbose=False, env=None,
+                 include_webui=False,
                  extra_params=None):
         """object_store_memory: integer in bytes"""
         self.env = env
@@ -135,6 +134,7 @@ class RayServiceFuncGenerator(object):
         self.ray_exec = self._get_ray_exec()
         self.object_store_memory = object_store_memory
         self.extra_params = extra_params
+        self.include_webui = include_webui
         self.verbose = verbose
         # _mxnet_worker and _mxnet_server are resource tags for distributed MXNet training only
         # in order to diff worker from server.
@@ -163,10 +163,11 @@ class RayServiceFuncGenerator(object):
         return command
 
     def _gen_master_command(self):
+        webui = "true" if self.include_webui else "false"
         command = "{} start --head " \
-                  "--include-webui true --redis-port {} " \
+                  "--include-webui {} --redis-port {} " \
                   "--redis-password {} --num-cpus {}". \
-            format(self.ray_exec, self.redis_port, self.password,
+            format(self.ray_exec, webui, self.redis_port, self.password,
                    self.ray_node_cpu_cores)
         if self.labels:
             command = command + " " + self.labels
@@ -262,7 +263,7 @@ class RayContext(object):
     _active_ray_context = None
 
     def __init__(self, sc, redis_port=None, password="123456", object_store_memory=None,
-                 verbose=False, env=None, extra_params=None,
+                 verbose=False, env=None, extra_params=None, include_webui=False,
                  num_ray_nodes=None, ray_node_cpu_cores=None):
         """
         The RayContext would initiate a ray cluster on top of the configuration of SparkContext.
@@ -277,16 +278,17 @@ class RayContext(object):
         to start raylets.
 
         :param sc: An instance of SparkContext.
-        :param redis_port: redis port for the "head" node.
+        :param redis_port: The redis port for the ray head node. Default is None.
         The value would be randomly picked if not specified.
-        :param password: Password for the redis. Default to be "123456" if not specified.
+        :param password: The password for redis. Default to be "123456" if not specified.
         :param object_store_memory: The memory size for ray object_store in string.
         This can be specified in bytes(b), kilobytes(k), megabytes(m) or gigabytes(g).
-        For example, 50b, 100k, 250m, 30g.
+        For example, "50b", "100k", "250m", "30g".
         :param verbose: True for more logs when starting ray. Default is False.
         :param env: The environment variable dict for running ray processes. Default is None.
         :param extra_params: The key value dict for extra options to launch ray.
         For example, extra_params={"temp-dir": "/tmp/ray/"}
+        :param include_webui: True for including web ui when starting ray. Default is False.
         :param num_ray_nodes: The number of raylets to start across the cluster.
         For Spark local mode, you don't need to specify this value.
         For Spark cluster mode, it is default to be the number of Spark executors. If
@@ -311,6 +313,7 @@ class RayContext(object):
         self.ray_processesMonitor = None
         self.env = env
         self.extra_params = extra_params
+        self.include_webui = include_webui
         self._address_info = None
         if self.is_local:
             self.num_ray_nodes = 1
@@ -375,6 +378,7 @@ class RayContext(object):
                 object_store_memory=self.object_store_memory,
                 verbose=self.verbose,
                 env=self.env,
+                include_webui=self.include_webui,
                 extra_params=self.extra_params)
         RayContext._active_ray_context = self
 
@@ -459,6 +463,7 @@ class RayContext(object):
                 self._address_info = ray.init(num_cpus=self.ray_node_cpu_cores,
                                               redis_password=self.redis_password,
                                               object_store_memory=self.object_store_memory,
+                                              include_webui=self.include_webui,
                                               resources=self.extra_params)
             else:
                 self.cluster_ips = self._gather_cluster_ips()

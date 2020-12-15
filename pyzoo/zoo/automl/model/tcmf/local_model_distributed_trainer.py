@@ -22,7 +22,6 @@ import torch.distributed as dist
 from zoo.automl.model.tcmf.local_model import TemporalConvNet
 
 import ray
-from ray.tune.logger import pretty_print
 import horovod.torch as hvd
 
 
@@ -143,27 +142,6 @@ def model_creator(config):
     )
 
 
-def train_yseq_dist(num_workers, epochs, **config):
-    from zoo.orca.learn.pytorch.pytorch_trainer import PyTorchTrainer
-    trainer = PyTorchTrainer(
-        model_creator=model_creator,
-        data_creator=data_creator,
-        optimizer_creator=optimizer_creator,
-        loss_creator=loss_creator,
-        num_workers=num_workers,
-        config=config)
-
-    stats = trainer.train(nb_epoch=epochs)
-    for s in stats:
-        print(pretty_print(s))
-
-    worker_stats = trainer.validate(reduce_results=True)
-    val_loss = worker_stats['val_loss']
-    yseq = trainer.get_model()
-    trainer.shutdown()
-    return yseq, val_loss
-
-
 def train_yseq_hvd(workers_per_node, epochs, **config):
     from zoo.orca.learn.pytorch import Estimator
     estimator = Estimator.from_torch(
@@ -175,7 +153,8 @@ def train_yseq_hvd(workers_per_node, epochs, **config):
 
     stats = estimator.fit(train_data_creator, epochs=epochs)
     for s in stats:
-        print(pretty_print(s))
+        for k, v in s.items():
+            print(f"{k}: {v}")
     val_stats = estimator.evaluate(val_data_creator)
     val_loss = val_stats['val_loss']
 

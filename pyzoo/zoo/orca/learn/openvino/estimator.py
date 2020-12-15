@@ -15,6 +15,7 @@
 #
 from zoo.pipeline.inference import InferenceModel
 from zoo.orca.data import SparkXShards
+from zoo.orca.learn.spark_estimator import Estimator as SparkEstimator
 from zoo import get_node_and_core_number
 from zoo.util import nest
 from zoo.common.nncontext import init_nncontext
@@ -23,36 +24,18 @@ import numpy as np
 
 
 class Estimator(object):
-    def fit(self, data, epochs, **kwargs):
-        pass
-
-    def predict(self, data, **kwargs):
-        pass
-
-    def evaluate(self, data, **kwargs):
-        pass
-
-    def get_model(self):
-        pass
-
-    def save(self, model_path):
-        pass
-
-    def load(self, model_path):
-        pass
-
     @staticmethod
     def from_openvino(*, model_path, batch_size=0):
         """
         Load an openVINO Estimator.
 
         :param model_path: String. The file path to the OpenVINO IR xml file.
-        :param batch_size: Int.
+        :param batch_size: Int. Set batch Size, default is 0 (use default batch size).
         """
         return OpenvinoEstimatorWrapper(model_path=model_path, batch_size=batch_size)
 
 
-class OpenvinoEstimatorWrapper(Estimator):
+class OpenvinoEstimatorWrapper(SparkEstimator):
     def __init__(self,
                  *,
                  model_path,
@@ -159,12 +142,51 @@ class OpenvinoEstimatorWrapper(Estimator):
     def save(self, model_path):
         raise NotImplementedError
 
-    def load(self, model_path):
+    def load(self, model_path, batch_size=0):
         """
         Load an openVINO model.
 
         :param model_path: String. The file path to the OpenVINO IR xml file.
+        :param batch_size: Int. Set batch Size, default is 0 (use default batch size).
         :return:
         """
+        self.node_num, self.core_num = get_node_and_core_number()
+        self.path = model_path
+        if batch_size != 0:
+            self.batch_size = batch_size
+        else:
+            import xml.etree.ElementTree as ET
+            tree = ET.parse(model_path)
+            root = tree.getroot()
+            shape_item = root.find('./layers/layer/output/port/dim[1]')
+            if shape_item is None:
+                raise ValueError("Invalid openVINO IR xml file, please check your model_path")
+            self.batch_size = int(shape_item.text)
+        self.model = InferenceModel(supported_concurrent_num=self.core_num)
         self.model.load_openvino(model_path=model_path,
-                                 weight_path=model_path[:model_path.rindex(".")] + ".bin")
+                                 weight_path=model_path[:model_path.rindex(".")] + ".bin",
+                                 batch_size=batch_size)
+
+    def set_tensorboard(self, log_dir, app_name):
+        raise NotImplementedError
+
+    def clear_gradient_clipping(self):
+        raise NotImplementedError
+
+    def set_constant_gradient_clipping(self, min, max):
+        raise NotImplementedError
+
+    def set_l2_norm_gradient_clipping(self, clip_norm):
+        raise NotImplementedError
+
+    def get_train_summary(self, tag=None):
+        raise NotImplementedError
+
+    def get_validation_summary(self, tag=None):
+        raise NotImplementedError
+
+    def load_orca_checkpoint(self, path, version):
+        raise NotImplementedError
+
+    def load_latest_orca_checkpoint(self, path):
+        raise NotImplementedError

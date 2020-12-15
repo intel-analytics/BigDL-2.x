@@ -16,12 +16,13 @@
 import os
 import tempfile
 import subprocess
+import tarfile
 from unittest import TestCase
 
 import numpy as np
 from zoo import init_nncontext
 from zoo.orca.data import SparkXShards
-from zoo.orca.learn.openvino.estimator import Estimator
+from zoo.orca.learn.openvino import Estimator
 from bigdl.dataset.base import maybe_download
 
 property_path = os.path.join(os.path.split(__file__)[0],
@@ -43,8 +44,9 @@ class TestEstimatorForOpenVINO(TestCase):
             model_url = data_url + "/analytics-zoo-data/openvino2020_resnet50.tar"
             model_path = maybe_download("openvino2020_resnet50.tar",
                                         local_path, model_url)
-            cmd = "tar -xvf " + model_path + " -C " + local_path
-            subprocess.Popen(cmd.split())
+            tar = tarfile.open(model_path)
+            tar.extractall(path=local_path)
+            tar.close()
             model_path = os.path.join(local_path, "openvino2020_resnet50/resnet_v1_50.xml")
             est = Estimator.from_openvino(model_path=model_path)
 
