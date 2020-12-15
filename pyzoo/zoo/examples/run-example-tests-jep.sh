@@ -58,6 +58,18 @@ python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10/cifar
 now=$(date "+%s")
 time3=$((now-start))
 
+echo "#4 start example for orca super-resolution"
+#timer
+start=$(date "+%s")
+
+bash ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/prepare_dataset.sh
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/super_resolution.py
+
+now=$(date "+%s")
+time4=$((now-start))
+
 echo "#1 MNIST example time used:$time1 seconds"
 echo "#2 orca MNIST example time used:$time2 seconds"
 echo "#3 orca Cifar10 example time used:$time3 seconds"
+echo "#3 orca super-resolution example time used:$time4 seconds"
