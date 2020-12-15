@@ -107,7 +107,7 @@ def main():
     parser = argparse.ArgumentParser(description='PyTorch Tensorboard Example')
 
     parser.add_argument('--cluster_mode', type=str, default="local",
-                        help='The mode for the Spark cluster.')
+                        help='The cluster mode, such as local, yarn or k8s.')
     args = parser.parse_args()
     if args.cluster_mode == "local":
         init_orca_context()

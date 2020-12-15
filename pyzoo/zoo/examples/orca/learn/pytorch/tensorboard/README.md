@@ -1,4 +1,4 @@
-# Pytorch Tensorboard example
+# Pytorch Fashion-MNIST example on Tensorboard
 We demostrate how to easily show the graphical results of runing synchronous distributed Pytorch training using Pytorch Estimator of Project Orca in Analytics Zoo. We use a simple convolutional nueral network model to train on fashion-MNIST dataset. See [here](https://pytorch.org/tutorials/intermediate/tensorboard_tutorial.html) for the original single-node version of this example provided by Pytorch.
 
 ## Prepare environments
@@ -8,18 +8,16 @@ We recommend you to use Anaconda to prepare the environments, especially if you 
 ```
 conda create -n zoo python=3.7 # zoo is conda environment name, you can set another name you like.
 conda activate zoo
-pip install analytics-zoo # 0.9.0.dev0 or above
+pip install analytics-zoo[ray] # 0.9.0.dev0 or above
 pip install torch
 pip install torchvision
-pip install ray==0.8.4
-pip install tensorboardX
 pip install matplotlib
 ```
 
 # Run on local after pip install
 
 ```
-python tensorboard.py
+python fashion-mnist.py
 tensorboard --logdir=runs
 ```
 
@@ -29,7 +27,7 @@ Then open `https://localhost:6006` to see the result figures.
 
 ```
 export HADOOP_CONF_DIR=path to your hadoop conf directory
-python cifar10_pytorch.py --cluster_mode yarn-client
+python fashion-mnist.py --cluster_mode yarn
 ```
 
 Then open `https://localhost:6006` to see the result figures.
