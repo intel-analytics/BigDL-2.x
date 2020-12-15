@@ -110,7 +110,6 @@ def decode_ndarray(bs):
 
 
 def row_to_dict(schema, row):
-
     row_dict = {}
     for k, field in schema.items():
         if field.feature_type == FeatureType.IMAGE:
