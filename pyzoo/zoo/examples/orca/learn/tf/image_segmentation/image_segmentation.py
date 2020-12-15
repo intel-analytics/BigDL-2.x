@@ -48,7 +48,7 @@ def load_data(file_path):
 
 def main(cluster_mode, max_epoch, file_path, batch_size, platform, non_interactive):
     import matplotlib
-    if platform == "mac":
+    if not non_interactive and platform == "mac":
         matplotlib.use('qt5agg')
 
     if cluster_mode == "local":
