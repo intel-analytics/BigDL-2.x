@@ -47,6 +47,8 @@ def load_data(file_path):
 
 
 def main(cluster_mode, max_epoch, file_path, batch_size):
+    import matplotlib
+    matplotlib.use('qt5agg')
     if cluster_mode == "local":
         init_orca_context(cluster_mode="local", cores=4, memory="3g")
     elif cluster_mode == "yarn":
