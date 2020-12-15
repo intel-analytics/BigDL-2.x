@@ -58,16 +58,25 @@ python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/mxnet/lenet_mnist.py 
 now=$(date "+%s")
 time5=$((now-start))
 
-echo "#6 Start tensorboard example"
-start=$(date "+%s")
+# This example will be enabled after the environment upgrades pytorch
+#echo "#6 Start fashion-mnist example on tensorboard"
+#start=$(date "+%s")
 
-sed "s/epochs=5/epochs=1/g;s/batch_size=4/batch_size=256/g" \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/tensorboard/fashion-mnist.py \
-    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/tensorboard/fashion-mnist_tmp.py
+#if [ -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/data ]
+#then
+#    echo "fashion-mnist already exists"
+#else
+#    wget -nv $FTP_URI/analytics-zoo-data/data/fashion-mnist.zip -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/
+#    unzip ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/fashion-mnist.zip
+#fi
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/tensorboard/fashion-mnist_tmp.py
-now=$(date "+%s")
-time6=$((now-start))
+#sed "s/epochs=5/epochs=1/g;s/batch_size=4/batch_size=256/g" \
+#    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/fashion-mnist.py \
+#    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/fashion-mnist_tmp.py
+
+#python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/fashion-mnist_tmp.py
+#now=$(date "+%s")
+#time6=$((now-start))
 
 echo "Ray example tests finished"
 echo "#1 rl_pong time used:$time1 seconds"
@@ -75,4 +84,4 @@ echo "#2 async_parameter_server time used:$time2 seconds"
 echo "#3 sync_parameter_server time used:$time3 seconds"
 echo "#4 multiagent_two_trainers time used:$time4 seconds"
 echo "#5 mxnet_lenet time used:$time5 seconds"
-echo "#6 tensorboard time used:$time6 seconds"
+#echo "#6 fashion-mnist time used:$time6 seconds"
