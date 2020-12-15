@@ -59,7 +59,7 @@ now=$(date "+%s")
 time5=$((now-start))
 
 # This example will be enabled after the environment upgrades pytorch
-#echo "#6 Start fashion-mnist example on tensorboard"
+#echo "#6 Start fashion-mnist example with Tensorboard visualization"
 #start=$(date "+%s")
 
 #if [ -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/data ]

@@ -62,7 +62,7 @@ time6=$?
 #    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/fashion-mnist.py \
 #    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/fashion-mnist_tmp.py
 
-3execute_ray_test tb-fashion-mnist ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/fashion-mnist_tmp.py
+#execute_ray_test tb-fashion-mnist ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/fashion-mnist_tmp.py
 #time7=$?
 
 echo "#1 rl_pong time used:$time1 seconds"

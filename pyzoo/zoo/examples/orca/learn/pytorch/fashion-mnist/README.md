@@ -1,4 +1,4 @@
-# Pytorch Fashion-MNIST example on Tensorboard
+# Pytorch Fashion-MNIST example with Tensorboard visualization
 We demostrate how to easily show the graphical results of runing synchronous distributed Pytorch training using Pytorch Estimator of Project Orca in Analytics Zoo. We use a simple convolutional nueral network model to train on fashion-MNIST dataset. See [here](https://pytorch.org/tutorials/intermediate/tensorboard_tutorial.html) for the original single-node version of this example provided by Pytorch.
 
 ## Prepare environments
