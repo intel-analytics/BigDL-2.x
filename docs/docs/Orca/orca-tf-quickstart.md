@@ -1,5 +1,5 @@
 
-**In this guide we will describe how to scale out TensorFlow programs using Orca in 4 simple steps.**
+**In this guide we will describe how to scale out TensorFlow (v1.15) programs using Orca in 4 simple steps.**
 
 ### **Step 0: Prepare Environment**
 
@@ -10,7 +10,7 @@ We recommend using [Conda](https://docs.conda.io/projects/conda/en/latest/user-g
 ```bash
 conda create -n zoo python=3.7 # "zoo" is conda enviroment name, you can use any name you like.
 conda activate zoo
-pip install analytics_zoo-${VERSION}# install either version 0.9 or latest nighly build
+pip install analytics_zoo-${VERSION}# install either version 0.9 or latest nightly build
 pip install tensorflow==1.15.0
 pip install psutil
 ```
@@ -62,7 +62,7 @@ acc = accuracy(logits, labels)
 ```
 ### **Step 3: Define Train Dataset**
 
-You can define the dataset using standard [tf.data.Dataset](https://www.tensorflow.org/api_docs/python/tf/data/Dataset). Orca also supports [Spark DataFrame](https://spark.apache.org/docs/latest/sql-programming-guide.html) or [Orca XShards](./data).
+You can define the dataset using standard [tf.data.Dataset](https://www.tensorflow.org/api_docs/python/tf/data/Dataset). Orca also supports [Spark DataFrame](https://spark.apache.org/docs/latest/sql-programming-guide.html) and [Orca XShards](./data).
 
 ```python
 def preprocess(x, y):
