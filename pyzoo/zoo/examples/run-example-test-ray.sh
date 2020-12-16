@@ -58,6 +58,17 @@ python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/mxnet/lenet_mnist.py 
 now=$(date "+%s")
 time5=$((now-start))
 
+echo "#6 start example for orca super-resolution"
+#timer
+start=$(date "+%s")
+
+bash ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/prepare_dataset.sh
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/super_resolution.py
+
+now=$(date "+%s")
+time6=$((now-start))
+
 # This example will be enabled after the environment upgrades pytorch
 #echo "#6 Start fashion-mnist example with Tensorboard visualization"
 #start=$(date "+%s")
@@ -78,10 +89,13 @@ time5=$((now-start))
 #now=$(date "+%s")
 #time6=$((now-start))
 
+
 echo "Ray example tests finished"
 echo "#1 rl_pong time used:$time1 seconds"
 echo "#2 async_parameter_server time used:$time2 seconds"
 echo "#3 sync_parameter_server time used:$time3 seconds"
 echo "#4 multiagent_two_trainers time used:$time4 seconds"
 echo "#5 mxnet_lenet time used:$time5 seconds"
+echo "#6 orca super-resolution example time used:$time6 seconds"
+
 #echo "#6 fashion-mnist time used:$time6 seconds"

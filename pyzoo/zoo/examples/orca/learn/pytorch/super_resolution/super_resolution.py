@@ -12,6 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
+# This example trains a super-resolution network on the BSD300 dataset,
+# using crops from the 200 training images, and evaluating on crops of the 100 test images.
+# https://github.com/leonardozcm/examples/tree/master/super_resolution
 #
 
 from __future__ import print_function
@@ -46,8 +50,8 @@ parser.add_argument("--memory", type=str, default="2g",
                     help="The memory you want to use on each node. "
                          "You can change it depending on your own cluster setting.")
 parser.add_argument('--epochs', type=int, default=2, help='number of epochs to train for')
-parser.add_argument('--batchSize', type=int, default=16, help='training batch size')
-parser.add_argument('--testBatchSize', type=int, default=100, help='testing batch size')
+parser.add_argument('--batch_size', type=int, default=16, help='training batch size')
+parser.add_argument('--test_batch_size', type=int, default=100, help='testing batch size')
 parser.add_argument('--upscale_factor', type=int,
                     default=3, help="super resolution upscale factor")
 parser.add_argument('--dataset', type=str, default='dataset', help='The dir of dataset.')
@@ -145,7 +149,7 @@ def train_data_creator(config):
                                  config.get("download", False))
     training_data_loader = DataLoader(dataset=train_set,
                                       num_workers=4,
-                                      batch_size=config.get('batchSize', 64),
+                                      batch_size=config.get('batch_size', 64),
                                       shuffle=True)
     return training_data_loader
 
@@ -168,7 +172,7 @@ def validation_data_creator(config):
     test_set = get_test_set(config.get("upscale_factor", 3), config.get("dataset", "dataset"))
     testing_data_loader = DataLoader(dataset=test_set,
                                      num_workers=4,
-                                     batch_size=config.get("testBatchSize", 100),
+                                     batch_size=config.get("test_batch_size", 100),
                                      shuffle=False)
     return testing_data_loader
 
@@ -235,8 +239,8 @@ estimator = Estimator.from_torch(
     config={
         "lr": opt.lr,
         "upscale_factor": opt.upscale_factor,
-        "batchSize": opt.batchSize,
-        "testBatchSize": opt.testBatchSize,
+        "batch_size": opt.batch_size,
+        "test_batch_size": opt.test_batch_size,
         "dataset": opt.dataset,
         "download": opt.download
     }
