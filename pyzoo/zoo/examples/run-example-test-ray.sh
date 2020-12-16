@@ -97,5 +97,4 @@ echo "#3 sync_parameter_server time used:$time3 seconds"
 echo "#4 multiagent_two_trainers time used:$time4 seconds"
 echo "#5 mxnet_lenet time used:$time5 seconds"
 echo "#6 orca super-resolution example time used:$time6 seconds"
-
 #echo "#6 fashion-mnist time used:$time6 seconds"
