@@ -62,7 +62,13 @@ echo "#6 start example for orca super-resolution"
 #timer
 start=$(date "+%s")
 
-bash ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/prepare_dataset.sh
+if [ ! -f "BSDS300-images.tgz" ]; then
+  wget https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/BSDS300-images.tgz
+fi
+if [ ! -d "dataset" ]; then
+  mkdir dataset
+  tar -xzf BSDS300-images.tgz -C ./dataset
+fi
 
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/super_resolution.py
 
