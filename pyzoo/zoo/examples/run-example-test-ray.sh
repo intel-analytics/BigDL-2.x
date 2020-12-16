@@ -89,7 +89,6 @@ time6=$((now-start))
 #now=$(date "+%s")
 #time6=$((now-start))
 
-
 echo "Ray example tests finished"
 echo "#1 rl_pong time used:$time1 seconds"
 echo "#2 async_parameter_server time used:$time2 seconds"
