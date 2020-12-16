@@ -7,7 +7,7 @@
     <parent>
         <artifactId>zoo-parent</artifactId>
         <groupId>com.intel.analytics.zoo</groupId>
-        <version>0.9.0-SNAPSHOT</version>
+        <version>0.10.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>analytics-zoo-bigdl_${bigdl.version}-spark_${spark.version}</artifactId>
@@ -208,7 +208,7 @@
         <dependency>
             <groupId>com.intel.analytics.zoo</groupId>
             <artifactId>${core.artifactId}</artifactId>
-            <version>0.9.0-SNAPSHOT</version>
+            <version>0.10.0-SNAPSHOT</version>
             <type>${core.dependencyType}</type>
         </dependency>
         <dependency>
