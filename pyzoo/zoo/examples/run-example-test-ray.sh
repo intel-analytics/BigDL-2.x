@@ -63,7 +63,7 @@ echo "#6 start example for orca super-resolution"
 start=$(date "+%s")
 
 if [ ! -f "BSDS300-images.tgz" ]; then
-  wget https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/BSDS300-images.tgz
+  wget https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/BSDS300-images.tgz --no-check-certificate
 fi
 if [ ! -d "dataset" ]; then
   mkdir dataset
