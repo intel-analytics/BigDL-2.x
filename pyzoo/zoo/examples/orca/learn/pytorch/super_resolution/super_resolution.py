@@ -35,9 +35,11 @@ from zoo.orca.learn.pytorch import Estimator
 from zoo.orca import init_orca_context, stop_orca_context
 
 parser = argparse.ArgumentParser(description='PyTorch Super Res Example')
-parser.add_argument('--cluster_mode', type=str, default='local', help='The mode of spark cluster.')
-parser.add_argument("--num_nodes", type=int, default=1, help="The number of nodes to be used in the cluster. "
-                                                             "You can change it depending on your own cluster setting.")
+parser.add_argument('--cluster_mode', type=str,
+                    default='local', help='The mode of spark cluster.')
+parser.add_argument("--num_nodes", type=int, default=1,
+                    help="The number of nodes to be used in the cluster. "
+                         "You can change it depending on your own cluster setting.")
 parser.add_argument("--cores", type=int, default=4,
                     help="The number of cpu cores you want to use on each node. ")
 parser.add_argument("--memory", type=str, default="2g",
@@ -46,10 +48,12 @@ parser.add_argument("--memory", type=str, default="2g",
 parser.add_argument('--epochs', type=int, default=2, help='number of epochs to train for')
 parser.add_argument('--batchSize', type=int, default=16, help='training batch size')
 parser.add_argument('--testBatchSize', type=int, default=100, help='testing batch size')
-parser.add_argument('--upscale_factor', type=int, default=3, help="super resolution upscale factor")
+parser.add_argument('--upscale_factor', type=int,
+                    default=3, help="super resolution upscale factor")
 parser.add_argument('--dataset', type=str, default='dataset', help='The dir of dataset.')
 parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate. Default=0.01')
-parser.add_argument('--download', action="store_true", default=False, help="Auto download dataset.")
+parser.add_argument('--download', action="store_true",
+                    default=False, help="Auto download dataset.")
 opt = parser.parse_args()
 
 print(opt)
@@ -92,7 +96,8 @@ def is_image_file(filename):
 class DatasetFromFolder(data.Dataset):
     def __init__(self, image_dir, input_transform=None, target_transform=None):
         super(DatasetFromFolder, self).__init__()
-        self.image_filenames = [join(image_dir, x) for x in listdir(image_dir) if is_image_file(x)]
+        self.image_filenames = \
+                [join(image_dir, x) for x in listdir(image_dir) if is_image_file(x)]
         self.input_transform = input_transform
         self.target_transform = target_transform
 
@@ -135,7 +140,8 @@ def train_data_creator(config):
                                      CenterCrop(crop_size),
                                      ToTensor()]))
 
-    train_set = get_training_set(config.get("upscale_factor", 3), config.get("dataset", "dataset"),
+    train_set = get_training_set(config.get("upscale_factor", 3),
+                                 config.get("dataset", "dataset"),
                                  config.get("download", False))
     training_data_loader = DataLoader(dataset=train_set,
                                       num_workers=4,
@@ -213,7 +219,7 @@ def optim_creator(model, config):
 if opt.cluster_mode == "local":
     init_orca_context(cores=1, memory="20g")
 elif opt.cluster_mode == "yarn":
-    additional = "" if opt.download else "BSDS300.zip#" + opt.dataset
+    additional = "" if opt.download else "dataset/BSDS300.zip#" + opt.dataset
     init_orca_context(
         cluster_mode="yarn-client", cores=opt.cores, num_nodes=opt.num_nodes, memory=opt.memory,
         driver_memory="10g", driver_cores=1,

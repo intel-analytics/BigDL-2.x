@@ -7,5 +7,6 @@ if [ ! -d "dataset" ]; then
 fi
 if [ ! -f "BSDS300.zip" ]; then
   zip -q -r BSDS300.zip dataset/BSDS300/
+  mv BSDS300.zip dataset/
 fi
 
