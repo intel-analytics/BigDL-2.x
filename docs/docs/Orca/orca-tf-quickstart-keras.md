@@ -12,7 +12,7 @@ conda create -n zoo python=3.7 # "zoo" is conda enviroment name, you can use any
 conda activate zoo
 pip install analytics_zoo-${VERSION} # install either version 0.9 or latest nightly build
 pip install tensorflow==1.15.0
-pip install tensorflow-datasets=2.0
+pip install tensorflow-datasets==2.0
 pip install psutil
 pip install pandas
 pip install scikit-learn
