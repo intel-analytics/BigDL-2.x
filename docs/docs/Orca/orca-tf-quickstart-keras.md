@@ -1,5 +1,5 @@
 
-**In this guide we will describe how to scale out TensorFlow (v1.15) programs using Orca in 4 simple steps.**
+**In this guide we will describe how to scale out TensorFlow (v1.15) Keras programs using Orca in 4 simple steps.**
 
 ### **Step 0: Prepare Environment**
 
@@ -14,52 +14,46 @@ pip install analytics_zoo-${VERSION} # install either version 0.9 or latest nigh
 pip install tensorflow==1.15.0
 pip install tensorflow-datasets=2.0
 pip install psutil
+pip install pandas
+pip install scikit-learn
 ```
 **Note:** The original [source code](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/examples/orca/learn/tf/lenet/lenet_mnist_graph.py) for the tutorial below only supports TensorFlow 1.15.
 
 ### **Step 1: Init Orca Context**
 ```python
-if args.cluster_mode == "local":  
+if args.cluster_mode == "local":
     init_orca_context(cluster_mode="local", cores=4)# run in local mode
-elif args.cluster_mode == "yarn":  
+elif args.cluster_mode == "yarn":
     init_orca_context(cluster_mode="k8s", num_nodes=2, cores=2) # run on K8s cluster
-elif args.cluster_mode == "yarn":  
-    init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2) # run on Hadoop YARN cluster
+elif args.cluster_mode == "yarn":
+    init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2, driver_memory="6g") # run on Hadoop YARN cluster
 ```
 
 This is the only place where you need to specify local or distributed mode. View [Orca Context](./context) for more details.
 
 ### **Step 2: Define the Model**
 
-You may define your model, loss and metrics in the same way as in any standard (single node) TensorFlow program.
+You may define your model, loss and metrics in the same way as in any standard (single node) TensorFlow Keras program.
 
 ```python
 import tensorflow as tf
 
-def accuracy(logits, labels):
-    predictions = tf.argmax(logits, axis=1, output_type=labels.dtype)
-    is_correct = tf.cast(tf.equal(predictions, labels), dtype=tf.float32)
-    return tf.reduce_mean(is_correct)
+model = tf.keras.Sequential(
+    [tf.keras.layers.Conv2D(20, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
+                            input_shape=(28, 28, 1), padding='valid'),
+     tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
+     tf.keras.layers.Conv2D(50, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
+                            padding='valid'),
+     tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
+     tf.keras.layers.Flatten(),
+     tf.keras.layers.Dense(500, activation='tanh'),
+     tf.keras.layers.Dense(10, activation='softmax'),
+     ]
+)
 
-def lenet(images):
-    with tf.variable_scope('LeNet', [images]):
-        net = tf.layers.conv2d(images, 32, (5, 5), activation=tf.nn.relu, name='conv1')
-        net = tf.layers.max_pooling2d(net, (2, 2), 2, name='pool1')
-        net = tf.layers.conv2d(net, 64, (5, 5), activation=tf.nn.relu, name='conv2')
-        net = tf.layers.max_pooling2d(net, (2, 2), 2, name='pool2')
-        net = tf.layers.flatten(net)
-        net = tf.layers.dense(net, 1024, activation=tf.nn.relu, name='fc3')
-        logits = tf.layers.dense(net, 10)
-        return logits
-
-# tensorflow inputs
-images = tf.placeholder(dtype=tf.float32, shape=(None, 28, 28, 1))
-# tensorflow labels
-labels = tf.placeholder(dtype=tf.int32, shape=(None,))
-
-logits = lenet(images)
-loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels))
-acc = accuracy(logits, labels)
+model.compile(optimizer=tf.keras.optimizers.RMSprop(),
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
 ```
 ### **Step 3: Define Train Dataset**
 
@@ -87,23 +81,15 @@ First, create an Estimator.
 ```python
 from zoo.orca.learn.tf.estimator import Estimator
 
-est = Estimator.from_graph(inputs=images,
-                           outputs=logits,
-                           labels=labels,
-                           loss=loss,
-                           optimizer=tf.train.AdamOptimizer(),
-                           metrics={"acc": acc})
+est = Estimator.from_keras(keras_model=model)
 ```
 
 Next, fit and evaluate using the Estimator.
 ```python
-est.fit(data=train_dataset,
+est.fit(data=mnist_train,
         batch_size=320,
         epochs=5,
-        validation_data=mnist_test,
-        # tfds mnist only has one file and cannot be sharded on files,
-        # falling back on sharding on records
-        auto_shard_files=False)
+        validation_data=mnist_test, auto_shard_files=False)
 
 result = est.evaluate(mnist_test, auto_shard_files=False)
 print(result)
