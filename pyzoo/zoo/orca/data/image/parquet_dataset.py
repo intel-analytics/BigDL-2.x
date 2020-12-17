@@ -22,11 +22,16 @@ from zoo import init_nncontext
 from zoo.orca.data import SparkXShards
 from zoo.orca.data.file import open_text, write_text
 from zoo.orca.data.image.utils import chunks, dict_to_row, row_to_dict, encode_schema, \
-    decode_schema, SchemaField, FeatureType,DType, ndarray_dtype_to_dtype
+    decode_schema, SchemaField, FeatureType, DType, ndarray_dtype_to_dtype
 from bigdl.util.common import get_node_and_core_number
 import os
 import numpy as np
 import random
+
+from tensorflow.io import decode_image, decode_jpeg
+import tensorflow as tf
+
+tf.enable_eager_execution()
 
 
 class ParquetDataset:
@@ -65,7 +70,7 @@ class ParquetDataset:
         node_num, core_num = get_node_and_core_number()
         for i, chunk in enumerate(chunks(generator, block_size)):
             chunk_path = os.path.join(path, f"chunk={i}")
-            rows_rdd = sc.parallelize(chunk, core_num * node_num)\
+            rows_rdd = sc.parallelize(chunk, core_num * node_num) \
                 .map(lambda x: dict_to_row(schema, x))
             spark.createDataFrame(rows_rdd).write.mode(write_mode).parquet(chunk_path)
         metadata_path = os.path.join(path, "_orca_metadata")
@@ -88,7 +93,7 @@ class ParquetDataset:
         return rdd, schema
 
     @staticmethod
-    def _read_as_xshards(path,_parse_method=None):
+    def _read_as_xshards(path, _parse_method=None):
         rdd, schema = ParquetDataset._read_as_dict_rdd(path)
 
         def merge_records(schema, iter):
@@ -102,13 +107,11 @@ class ParquetDataset:
                 for k in schema.keys():
                     result[k].append(rec[k])
             for k in schema.keys():
-                if k=="image" and _parse_method:
+                if k == "image" and _parse_method:
                     for index in range(len(result[k])):
-                        from PIL import Image
-                        from io import BytesIO
-                        img = np.array(Image.open(BytesIO(result[k][index])))
-                        result[k][index]=_parse_method(img)
-
+                        img_decode = bytes(result[k][index])
+                        tmp_tensor = _parse_method(decode_jpeg(img_decode))
+                        result[k][index] = tmp_tensor.numpy()
                 result[k] = np.stack(result[k])
 
             return [result]
@@ -118,14 +121,14 @@ class ParquetDataset:
         return xshards
 
     @staticmethod
-    def read_as_tf(path,_parse_method=None):
+    def read_as_tf(path, _parse_method=None):
         """
         return a orca.data.tf.data.Dataset
         :param path:
         :return:
         """
         from zoo.orca.data.tf.data import Dataset
-        xshards = ParquetDataset._read_as_xshards(path,_parse_method)
+        xshards = ParquetDataset._read_as_xshards(path, _parse_method)
         return Dataset.from_tensor_slices(xshards)
 
     @staticmethod
@@ -171,6 +174,7 @@ def _extract_mnist_labels(labels_filepath):
         labels = np.frombuffer(buf, dtype=np.uint8)
         return labels
 
+
 def write_from_image_directory(directory, label_map, output_path,
                                shuffle=True,
                                **kwargs):
@@ -202,11 +206,10 @@ def write_from_image_directory(directory, label_map, output_path,
                                        dtype=DType.STRING,
                                        shape=())}
 
-
     ParquetDataset.write(output_path, generator, schema, **kwargs)
 
-def _write_ndarrays(images, labels, output_path, **kwargs):
 
+def _write_ndarrays(images, labels, output_path, **kwargs):
     images_shape = [int(x) for x in images.shape[1:]]
     labels_shape = [int(x) for x in labels.shape[1:]]
     schema = {
