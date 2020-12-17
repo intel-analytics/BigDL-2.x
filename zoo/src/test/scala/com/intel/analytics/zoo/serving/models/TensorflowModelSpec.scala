@@ -16,10 +16,10 @@
 
 package com.intel.analytics.zoo.serving.models
 
-import com.intel.analytics.zoo.serving.PreProcessing
+import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
 import com.intel.analytics.zoo.serving.arrow.ArrowDeserializer
-import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, ModelHolder}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams}
+import com.intel.analytics.zoo.serving.engine.ClusterServingInference
+import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
 import org.scalatest.{FlatSpec, Matchers}
 
 import sys.process._
@@ -39,13 +39,13 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     helper.chwFlag = false
     helper.modelType = "tensorflowFrozenModel"
     helper.weightPath = "/tmp/tensorflow_inception_v1/"
-    ModelHolder.model = helper.loadInferenceModel()
+    ClusterServing.model = helper.loadInferenceModel()
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_inception_v1*").!
 
-    val params = new SerParams(helper)
-    val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
-      params.modelType, "", params.coreNum, params.resize)
+    
+    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
+      helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -69,13 +69,13 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     helper.chwFlag = false
     helper.modelType = "tensorflowFrozenModel"
     helper.weightPath = "/tmp/tensorflow_mobilenet_v1/"
-    ModelHolder.model = helper.loadInferenceModel()
+    ClusterServing.model = helper.loadInferenceModel()
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_mobilenet_v1*").!
 
-    val params = new SerParams(helper)
-    val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
-      params.modelType, "", params.coreNum, params.resize)
+    
+    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
+      helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -100,13 +100,13 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     helper.chwFlag = false
     helper.modelType = "tensorflowFrozenModel"
     helper.weightPath = "/tmp/tensorflow_mobilenet_v2/"
-    ModelHolder.model = helper.loadInferenceModel()
+    ClusterServing.model = helper.loadInferenceModel()
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_mobilenet_v2*").!
 
-    val params = new SerParams(helper)
-    val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
-      params.modelType, "", params.coreNum, params.resize)
+    
+    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
+      helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -131,13 +131,13 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     helper.chwFlag = false
     helper.modelType = "tensorflowFrozenModel"
     helper.weightPath = "/tmp/tensorflow_resnet50/"
-    ModelHolder.model = helper.loadInferenceModel()
+    ClusterServing.model = helper.loadInferenceModel()
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_resnet50*").!
 
-    val params = new SerParams(helper)
-    val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
-      params.modelType, "", params.coreNum, params.resize)
+    
+    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
+      helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -161,13 +161,13 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     helper.chwFlag = false
     helper.modelType = "tensorflowSavedModel"
     helper.weightPath = "/tmp/tensorflow_tfauto/"
-    ModelHolder.model = helper.loadInferenceModel()
+    ClusterServing.model = helper.loadInferenceModel()
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_tfauto*").!
 
-    val params = new SerParams(helper)
-    val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
-      params.modelType, "", params.coreNum, params.resize)
+    
+    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
+      helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -191,13 +191,13 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     helper.chwFlag = false
     helper.modelType = "tensorflowFrozenModel"
     helper.weightPath = "/tmp/tensorflow_vgg16/"
-    ModelHolder.model = helper.loadInferenceModel()
+    ClusterServing.model = helper.loadInferenceModel()
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_vgg16*").!
 
-    val params = new SerParams(helper)
-    val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
-      params.modelType, "", params.coreNum, params.resize)
+    
+    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
+      helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -221,13 +221,13 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     helper.chwFlag = false
     helper.modelType = "tensorflowSavedModel"
     helper.weightPath = "/tmp/tensorflow_tf_2out/"
-    ModelHolder.model = helper.loadInferenceModel()
+    ClusterServing.model = helper.loadInferenceModel()
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_tf_2out*").!
 
-    val params = new SerParams(helper)
-    val inference = new ClusterServingInference(new PreProcessing(params.chwFlag),
-      params.modelType, "", params.coreNum, params.resize)
+    
+    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
+      helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
