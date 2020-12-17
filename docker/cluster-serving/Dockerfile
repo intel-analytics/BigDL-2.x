@@ -5,8 +5,8 @@ MAINTAINER The Analytics Zoo Authors https://github.com/intel-analytics/analytic
 WORKDIR /opt/work
 
 ARG SPARK_VERSION=2.4.3 
-ARG BIGDL_VERSION=0.12.0
-ARG ANALYTICS_ZOO_VERSION=0.9.0-SNAPSHOT
+ARG BIGDL_VERSION=0.12.1
+ARG ANALYTICS_ZOO_VERSION=0.10.0-SNAPSHOT
 ARG FLINK_VERSION=1.10.0
 
 ENV FLINK_HOME			/opt/work/flink-${FLINK_VERSION}
@@ -24,7 +24,7 @@ RUN apt-get update && \
 #python
 RUN apt-get install -y python3-minimal && \
     apt-get install -y build-essential python3 python3-setuptools python3-dev python3-pip && \
-    pip3 install --upgrade pip && \
+    pip3 install --upgrade pip==20.2.4 && \
     pip install --upgrade setuptools && \
     pip install opencv-python && \
     pip install pyyaml && \

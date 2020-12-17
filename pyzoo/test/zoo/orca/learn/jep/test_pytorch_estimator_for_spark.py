@@ -22,10 +22,12 @@ import torch.nn.functional as F
 
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.data.pandas import read_csv
+from zoo.orca.data import SparkXShards
 from zoo.orca.learn.pytorch import Estimator
 from zoo.orca.learn.metrics import Accuracy
 from zoo.orca.learn.trigger import EveryEpoch
-from bigdl.optim.optimizer import SGD
+from zoo.orca.learn.optimizers import SGD
+from zoo.orca.learn.optimizers.schedule import Default
 from zoo.orca import OrcaContext
 import tempfile
 
@@ -68,6 +70,10 @@ class TestEstimatorForSpark(TestCase):
             }
             return result
 
+        def transform_del_y(d):
+            result = {"x": d["x"]}
+            return result
+
         OrcaContext.pandas_read_backend = "pandas"
         file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
         data_shard = read_csv(file_path)
@@ -75,7 +81,8 @@ class TestEstimatorForSpark(TestCase):
 
         with tempfile.TemporaryDirectory() as temp_dir_name:
             estimator = Estimator.from_torch(model=model, loss=loss_func,
-                                             optimizer=SGD(), model_dir=temp_dir_name)
+                                             optimizer=SGD(learningrate_schedule=Default()),
+                                             model_dir=temp_dir_name)
             estimator.fit(data=data_shard, epochs=4, batch_size=2, validation_data=data_shard,
                           validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
             estimator.evaluate(data_shard, validation_methods=[Accuracy()], batch_size=2)
@@ -84,6 +91,13 @@ class TestEstimatorForSpark(TestCase):
             est2.fit(data=data_shard, epochs=8, batch_size=2, validation_data=data_shard,
                      validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
             est2.evaluate(data_shard, validation_methods=[Accuracy()], batch_size=2)
+            pred_result = est2.predict(data_shard)
+            pred_c = pred_result.collect()
+            assert(pred_result, SparkXShards)
+            pred_shard = data_shard.transform_shard(transform_del_y)
+            pred_result2 = est2.predict(pred_shard)
+            pred_c_2 = pred_result2.collect()
+            assert (pred_c[0]["prediction"] == pred_c_2[0]["prediction"]).all()
 
 
 if __name__ == "__main__":

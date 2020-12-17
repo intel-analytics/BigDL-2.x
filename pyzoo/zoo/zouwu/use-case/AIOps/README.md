@@ -13,7 +13,7 @@ This use case example contains a notebook:
 
 ### Install
 
-You can refer to Zouwu installation document [here](https://analytics-zoo.github.io/master/#Zouwu/tutorial/#install).
+You can refer to Zouwu installation document [here](https://analytics-zoo.github.io/master/#Zouwu/tutorials/LSTMForecasterAndMTNetForecaster/#step-0-prepare-environment).
 
 ### Prepare dataset
 * run `get_data.sh` to download the full dataset. It will download the resource usage of each machine from m_1932 to m_2085. 
