@@ -718,10 +718,6 @@ class TFOptimizer:
             return cls(tf_model, optimizer, sess=sess, dataset=dataset,
                        clip_norm=clip_norm, clip_value=clip_value, model_dir=model_dir)
 
-        # print(metrics)
-        # print(keras_model.outputs)
-        #
-        # exit(0)
         return cls.from_train_op(train_op, loss, inputs=model_inputs, labels=model_targets,
                                  metrics=metrics, updates=updates, sess=sess, dataset=dataset,
                                  tensor_with_value=tensor_with_value, session_config=session_config,
