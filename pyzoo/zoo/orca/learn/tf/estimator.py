@@ -634,10 +634,10 @@ class TFKerasWrapper(Estimator):
                                                    metrics=self.metrics,
                                                    optimizer=self.optimizer)
 
-        if self.clip_norm:
-            self.tf_optimizer.set_gradient_clipping_by_l2_norm(clip_norm=self.clip_norm)
-        if self.clip_min and self.clip_max:
-            self.tf_optimizer.set_constant_gradient_clipping(self.clip_min, self.clip_max)
+        # if self.clip_norm:
+        #     self.tf_optimizer.set_gradient_clipping_by_l2_norm(clip_norm=self.clip_norm)
+        # if self.clip_min and self.clip_max:
+        #     self.tf_optimizer.set_constant_gradient_clipping(self.clip_min, self.clip_max)
 
         if self.load_checkpoint:
             self.tf_optimizer.load_checkpoint(self.checkpoint_path, self.checkpoint_version)

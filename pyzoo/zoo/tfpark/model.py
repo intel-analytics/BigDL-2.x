@@ -18,6 +18,7 @@ import numpy as np
 from bigdl.optim.optimizer import MaxEpoch
 
 from zoo.tfpark.utils import evaluate_string_metrics
+from zoo.tfpark.utils import _standarize_feature_label_dataset, _standarize_feature_dataset
 from zoo.common import load_from_file
 from zoo.common import save_file
 from zoo.common.nncontext import getOrCreateSparkContext
@@ -138,14 +139,14 @@ class KerasModel(object):
             if not x.has_batch:
                 raise ValueError("The batch_size of TFDataset must be " +
                                  "specified when used in KerasModel fit.")
-            if isinstance(x, TFNdarrayDataset):
-                x = _standarize_feature_label_dataset(x, self.model)
+            # if isinstance(x, TFNdarrayDataset):
+            #     x = _standarize_feature_label_dataset(x, self.model)
             self._fit_distributed(x, epochs, **kwargs)
 
         elif distributed:
             dataset = TFDataset.from_ndarrays((x, y), val_tensors=validation_data,
                                               batch_size=batch_size)
-            dataset = _standarize_feature_label_dataset(dataset, self.model)
+            # dataset = _standarize_feature_label_dataset(dataset, self.model)
             self._fit_distributed(dataset, epochs, **kwargs)
 
         else:
@@ -206,6 +207,7 @@ class KerasModel(object):
                                                   batch_per_thread=-1 if batch_per_thread is None
                                                   else batch_per_thread
                                                   )
+                dataset = _standarize_feature_label_dataset(dataset, self.model)
                 return self._evaluate_distributed(dataset)
             else:
                 results = self.model.evaluate(x=x,
@@ -258,8 +260,8 @@ class KerasModel(object):
             if not x.has_batch:
                 raise ValueError("The batch_per_thread of TFDataset" +
                                  " must be specified when used in KerasModel predict.")
-            if isinstance(x, TFNdarrayDataset):
-                x = _standarize_feature_dataset(x, self.model)
+            # if isinstance(x, TFNdarrayDataset):
+            #     x = _standarize_feature_dataset(x, self.model)
             return self._predict_distributed(x)
         else:
             if distributed:
@@ -272,6 +274,7 @@ class KerasModel(object):
                                              shapes=shapes,
                                              batch_per_thread=-1 if batch_per_thread is None
                                              else batch_per_thread)
+                # dataset = _standarize_feature_dataset(dataset, self.model)
                 results = self._predict_distributed(dataset).collect()
                 output_num = len(self.model.outputs)
                 if output_num == 1:
@@ -311,65 +314,65 @@ class KerasModel(object):
         return self.model.predict_on_batch(x)
 
 
-def _standarize_feature_label_dataset(dataset, model):
-    input_names = model.input_names
-    output_names = model.output_names
-
-    def _process_labels(ys):
-        if isinstance(ys, dict):
-            return {k: np.expand_dims(y, axis=-1) if y.ndim == 0 else y for k, y in ys.items()}
-        elif isinstance(ys, list):
-            return [np.expand_dims(y, axis=-1) if y.ndim == 0 else y for y in ys]
-        elif isinstance(ys, tuple):
-            return tuple([np.expand_dims(y, axis=-1) if y.ndim == 0 else y for y in ys])
-        else:
-            return np.expand_dims(ys, axis=-1) if ys.ndim == 0 else ys
-
-    def _training_reorder(x, input_names, output_names):
-        assert isinstance(x, tuple)
-
-        return (_reorder(x[0], input_names), _reorder(x[1], output_names))
-
-    def _reorder(x, names):
-        if isinstance(x, dict):
-            return [x[name] for name in names]
-        elif isinstance(x, list) or isinstance(x, tuple):
-            return x
-        else:
-            return [x]
-
-    rdd = dataset.rdd.map(lambda x: (x[0], _process_labels(x[1])))\
-        .map(lambda sample: _training_reorder(sample, input_names, output_names))
-    if dataset.val_rdd is not None:
-        val_rdd = dataset.val_rdd.map(lambda x: (x[0], _process_labels(x[1])))\
-            .map(lambda sample: _training_reorder(sample, input_names, output_names))
-    else:
-        val_rdd = None
-    tensor_structure = _training_reorder(dataset.tensor_structure, input_names, output_names)
-    new_dataset = TFNdarrayDataset(rdd, tensor_structure, dataset.batch_size,
-                                   -1, dataset.hard_code_batch_size, val_rdd)
-    new_dataset.batch_per_thread = dataset.batch_per_thread
-    return new_dataset
-
-
-def _standarize_feature_dataset(dataset, model):
-    input_names = model.input_names
-
-    def _reorder(x, names):
-        if isinstance(x, dict):
-            return [x[name] for name in names]
-        elif isinstance(x, list):
-            return x
-        elif isinstance(x, tuple):
-            return list(x)
-        return [x]
-
-    rdd = dataset.rdd.map(lambda sample: _reorder(sample, input_names))
-    feature_schema = _reorder(dataset.tensor_structure[0], input_names)
-
-    dataset = TFNdarrayDataset(rdd, feature_schema, dataset.batch_size,
-                               -1, dataset.hard_code_batch_size)
-    return dataset
+# def _standarize_feature_label_dataset(dataset, model):
+#     input_names = model.input_names
+#     output_names = model.output_names
+#
+#     def _process_labels(ys):
+#         if isinstance(ys, dict):
+#             return {k: np.expand_dims(y, axis=-1) if y.ndim == 0 else y for k, y in ys.items()}
+#         elif isinstance(ys, list):
+#             return [np.expand_dims(y, axis=-1) if y.ndim == 0 else y for y in ys]
+#         elif isinstance(ys, tuple):
+#             return tuple([np.expand_dims(y, axis=-1) if y.ndim == 0 else y for y in ys])
+#         else:
+#             return np.expand_dims(ys, axis=-1) if ys.ndim == 0 else ys
+#
+#     def _training_reorder(x, input_names, output_names):
+#         assert isinstance(x, tuple)
+#
+#         return (_reorder(x[0], input_names), _reorder(x[1], output_names))
+#
+#     def _reorder(x, names):
+#         if isinstance(x, dict):
+#             return [x[name] for name in names]
+#         elif isinstance(x, list) or isinstance(x, tuple):
+#             return x
+#         else:
+#             return [x]
+#
+#     rdd = dataset.rdd.map(lambda x: (x[0], _process_labels(x[1])))\
+#         .map(lambda sample: _training_reorder(sample, input_names, output_names))
+#     if dataset.val_rdd is not None:
+#         val_rdd = dataset.val_rdd.map(lambda x: (x[0], _process_labels(x[1])))\
+#             .map(lambda sample: _training_reorder(sample, input_names, output_names))
+#     else:
+#         val_rdd = None
+#     tensor_structure = _training_reorder(dataset.tensor_structure, input_names, output_names)
+#     new_dataset = TFNdarrayDataset(rdd, tensor_structure, dataset.batch_size,
+#                                    -1, dataset.hard_code_batch_size, val_rdd)
+#     new_dataset.batch_per_thread = dataset.batch_per_thread
+#     return new_dataset
+#
+#
+# def _standarize_feature_dataset(dataset, model):
+#     input_names = model.input_names
+#
+#     def _reorder(x, names):
+#         if isinstance(x, dict):
+#             return [x[name] for name in names]
+#         elif isinstance(x, list):
+#             return x
+#         elif isinstance(x, tuple):
+#             return list(x)
+#         return [x]
+#
+#     rdd = dataset.rdd.map(lambda sample: _reorder(sample, input_names))
+#     feature_schema = _reorder(dataset.tensor_structure[0], input_names)
+#
+#     dataset = TFNdarrayDataset(rdd, feature_schema, dataset.batch_size,
+#                                -1, dataset.hard_code_batch_size)
+#     return dataset
 
 
 def _create_rdd_x_y(x, y, input_names, output_names, sc):

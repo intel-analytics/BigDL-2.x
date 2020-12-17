@@ -45,6 +45,20 @@ class TestTFParkModel(ZooTestCase):
                       metrics=['accuracy'])
         return model
 
+    def create_model_dense_1(self):
+        tf.set_random_seed(1)
+        data = tf.keras.layers.Input(shape=[10])
+
+        x = tf.keras.layers.Flatten()(data)
+        x = tf.keras.layers.Dense(10, activation='relu')(x)
+        predictions = tf.keras.layers.Dense(1, activation='sigmoid')(x)
+
+        model = tf.keras.models.Model(inputs=data, outputs=predictions)
+        model.compile(optimizer='rmsprop',
+                      loss='binary_crossentropy',
+                      metrics=['accuracy'])
+        return model
+
     def create_multi_input_output_model(self):
         data1 = tf.keras.layers.Input(shape=[10])
         data2 = tf.keras.layers.Input(shape=[10])
@@ -59,7 +73,7 @@ class TestTFParkModel(ZooTestCase):
 
         model = tf.keras.models.Model(inputs=[data1, data2], outputs=[pred1, pred2])
         model.compile(optimizer='rmsprop',
-                      loss=['sparse_categorical_crossentropy', 'mse'])
+                      loss=['binary_crossentropy', 'mse'])
         return model
 
     def create_training_data(self):
@@ -203,6 +217,21 @@ class TestTFParkModel(ZooTestCase):
 
         assert results_pre["loss"] > results_after["loss"]
 
+    def test_evaluate_with_ndarray_distributed_2(self):
+
+        keras_model = self.create_model_dense_1()
+        model = KerasModel(keras_model)
+
+        x, y = self.create_training_data()
+
+        results_pre = model.evaluate(x, y, batch_per_thread=1)
+
+        model.fit(x, y, batch_size=4, epochs=10)
+
+        results_after = model.evaluate(x, y, distributed=True, batch_per_thread=1)
+
+        assert results_pre["loss"] > results_after["loss"]
+
     def test_evaluate_and_distributed_evaluate(self):
 
         keras_model = self.create_model()
@@ -264,6 +293,24 @@ class TestTFParkModel(ZooTestCase):
         print(results_pre)
 
         assert np.square(acc - results_pre["acc"]) < 0.000001
+
+    def test_predict_with_ndarray_distributed_2(self):
+
+        keras_model = self.create_model_dense_1()
+        model = KerasModel(keras_model)
+
+        x, y = self.create_training_data()
+
+        results_pre = model.evaluate(x, y)
+        result = model.predict(x, batch_per_thread=1, distributed=True)
+
+        # pred_y = np.argmax(model.predict(x, distributed=True), axis=1)
+        #
+        # acc = np.average((pred_y == y))
+
+        print(results_pre)
+
+        # assert np.square(acc - results_pre["acc"]) < 0.000001
 
     def test_predict_with_dataset(self):
 
