@@ -500,8 +500,6 @@ class TFOptimizer:
         if metrics is None:
             metrics = {}
 
-
-
         tf_model = TFModel.create(loss, sess, inputs, labels, [], grads, variables, graph,
                                   tensor_with_value, session_config, metrics,
                                   updates, model_dir=None, train_op=train_op)
