@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
-import json
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
