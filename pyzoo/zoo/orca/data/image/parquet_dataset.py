@@ -28,11 +28,6 @@ import os
 import numpy as np
 import random
 
-from tensorflow.io import decode_image, decode_jpeg
-import tensorflow as tf
-
-tf.enable_eager_execution()
-
 
 class ParquetDataset:
     @staticmethod
@@ -93,7 +88,7 @@ class ParquetDataset:
         return rdd, schema
 
     @staticmethod
-    def _read_as_xshards(path, _parse_method=None):
+    def _read_as_xshards(path):
         rdd, schema = ParquetDataset._read_as_dict_rdd(path)
 
         def merge_records(schema, iter):
@@ -106,13 +101,9 @@ class ParquetDataset:
 
                 for k in schema.keys():
                     result[k].append(rec[k])
-            for k in schema.keys():
-                if k == "image" and _parse_method:
-                    for index in range(len(result[k])):
-                        img_decode = bytes(result[k][index])
-                        tmp_tensor = _parse_method(decode_jpeg(img_decode))
-                        result[k][index] = tmp_tensor.numpy()
-                result[k] = np.stack(result[k])
+            for k, v in schema.items():
+                if not v.feature_type == FeatureType.IMAGE:
+                    result[k] = np.stack(result[k])
 
             return [result]
 
@@ -121,14 +112,14 @@ class ParquetDataset:
         return xshards
 
     @staticmethod
-    def read_as_tf(path, _parse_method=None):
+    def read_as_tf(path):
         """
         return a orca.data.tf.data.Dataset
         :param path:
         :return:
         """
         from zoo.orca.data.tf.data import Dataset
-        xshards = ParquetDataset._read_as_xshards(path, _parse_method)
+        xshards = ParquetDataset._read_as_xshards(path)
         return Dataset.from_tensor_slices(xshards)
 
     @staticmethod
