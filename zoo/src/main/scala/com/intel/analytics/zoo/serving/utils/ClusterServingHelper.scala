@@ -283,7 +283,9 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
    * @return
    */
   def loadInferenceModel(concurrentNum: Int = 0): InferenceModel = {
-    parseModelType(modelDir)
+    if (modelDir != null) {
+      parseModelType(modelDir)
+    }
     if (modelType.startsWith("tensorflow")) {
       chwFlag = false
     }
