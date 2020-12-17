@@ -199,7 +199,6 @@ def test_write_from_directory(orca_context_fixture):
             image_bytes = f.read()
 
         assert image_bytes == data['image'][0]
-
-        pass
+        
     finally:
         shutil.rmtree(temp_dir)
