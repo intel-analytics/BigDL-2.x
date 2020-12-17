@@ -500,6 +500,8 @@ class TFOptimizer:
         if metrics is None:
             metrics = {}
 
+
+
         tf_model = TFModel.create(loss, sess, inputs, labels, [], grads, variables, graph,
                                   tensor_with_value, session_config, metrics,
                                   updates, model_dir=None, train_op=train_op)
@@ -610,6 +612,7 @@ class TFOptimizer:
         import tensorflow.keras.backend as K
 
         model_inputs = keras_model.inputs
+
         if hasattr(keras_model, "targets"):
             model_targets = keras_model.targets
         else:
@@ -684,7 +687,11 @@ class TFOptimizer:
             K.learning_phase(): [True, False]
         }
 
-        updates = keras_model.updates
+        updates = []
+
+        updates += keras_model.get_updates_for(None)
+        # Conditional updates relevant to this model
+        updates += keras_model.get_updates_for(keras_model.inputs)
 
         if bigdl_val_methods is not None:
             val_methods = to_list(bigdl_val_methods)
@@ -713,6 +720,10 @@ class TFOptimizer:
             return cls(tf_model, optimizer, sess=sess, dataset=dataset,
                        clip_norm=clip_norm, clip_value=clip_value, model_dir=model_dir)
 
+        # print(metrics)
+        # print(keras_model.outputs)
+        #
+        # exit(0)
         return cls.from_train_op(train_op, loss, inputs=model_inputs, labels=model_targets,
                                  metrics=metrics, updates=updates, sess=sess, dataset=dataset,
                                  tensor_with_value=tensor_with_value, session_config=session_config,
