@@ -165,7 +165,7 @@ def _extract_mnist_labels(labels_filepath):
         return labels
 
 
-def write_from_image_directory(directory, label_map, output_path,
+def write_from_directory(directory, label_map, output_path,
                                shuffle=True,
                                **kwargs):
     labels = os.listdir(directory)
