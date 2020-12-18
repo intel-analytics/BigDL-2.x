@@ -1,5 +1,5 @@
 
-**In this guide we will describe how to scale out TensorFlow (v1.15) Keras programs using Orca in 4 simple steps.**
+**In this guide we will describe how to scale out Keras programs using Orca in 4 simple steps.**
 
 ### **Step 0: Prepare Environment**
 
@@ -17,7 +17,7 @@ pip install psutil
 pip install pandas
 pip install scikit-learn
 ```
-**Note:** The original [source code](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/examples/orca/learn/tf/lenet/lenet_mnist_graph.py) for the tutorial below only supports TensorFlow 1.15.
+**Note:** The original [source code](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/examples/orca/learn/tf/lenet/lenet_mnist_keras.py) for the tutorial below only supports TensorFlow 1.15.
 
 ### **Step 1: Init Orca Context**
 ```python
@@ -33,21 +33,21 @@ This is the only place where you need to specify local or distributed mode. View
 
 ### **Step 2: Define the Model**
 
-You may define your model, loss and metrics in the same way as in any standard (single node) TensorFlow Keras program.
+You may define your model, loss and metrics in the same way as in any standard (single node) Keras program.
 
 ```python
-import tensorflow as tf
+from tensorflow import keras
 
-model = tf.keras.Sequential(
-    [tf.keras.layers.Conv2D(20, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
-                            input_shape=(28, 28, 1), padding='valid'),
-     tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
-     tf.keras.layers.Conv2D(50, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
-                            padding='valid'),
-     tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
-     tf.keras.layers.Flatten(),
-     tf.keras.layers.Dense(500, activation='tanh'),
-     tf.keras.layers.Dense(10, activation='softmax'),
+model = keras.Sequential(
+    [keras.layers.Conv2D(20, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
+                         input_shape=(28, 28, 1), padding='valid'),
+     keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
+     keras.layers.Conv2D(50, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
+                         padding='valid'),
+     keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
+     keras.layers.Flatten(),
+     keras.layers.Dense(500, activation='tanh'),
+     keras.layers.Dense(10, activation='softmax'),
      ]
 )
 
@@ -60,6 +60,7 @@ model.compile(optimizer=tf.keras.optimizers.RMSprop(),
 You can define the dataset using standard [tf.data.Dataset](https://www.tensorflow.org/api_docs/python/tf/data/Dataset). Orca also supports [Spark DataFrame](https://spark.apache.org/docs/latest/sql-programming-guide.html) and [Orca XShards](./data).
 
 ```python
+import tensorflow as tf
 import tensorflow_datasets as tfds
 
 def preprocess(data):
