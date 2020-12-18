@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-import numpy as np
-
 from zoo.tfpark.tfnet import TFNet
 from zoo.tfpark.tf_optimizer import BigDLMetric, TFModel
 from zoo.pipeline.api.keras import metrics as zmetrics

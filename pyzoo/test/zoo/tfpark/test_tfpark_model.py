@@ -59,7 +59,7 @@ class TestTFParkModel(ZooTestCase):
 
         model = tf.keras.models.Model(inputs=[data1, data2], outputs=[pred1, pred2])
         model.compile(optimizer='rmsprop',
-                      loss=['binary_crossentropy', 'mse'])
+                      loss=['sparse_categorical_crossentropy', 'mse'])
         return model
 
     def create_training_data(self):
