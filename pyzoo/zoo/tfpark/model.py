@@ -18,14 +18,16 @@ import numpy as np
 from bigdl.optim.optimizer import MaxEpoch
 
 from zoo.tfpark.utils import evaluate_string_metrics
-from zoo.tfpark.utils import _standarize_feature_label_dataset, _standarize_feature_dataset
+
 from zoo.common import load_from_file
 from zoo.common import save_file
 from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.tfpark.tf_dataset import TFNdarrayDataset, TFDataset
+from zoo.tfpark.tf_dataset import _standarize_feature_label_dataset, _standarize_feature_dataset
 
 from zoo.tfpark.tf_optimizer import TFOptimizer
 from zoo.tfpark.tf_predictor import TFPredictor
+
 
 
 class KerasModel(object):
@@ -139,14 +141,11 @@ class KerasModel(object):
             if not x.has_batch:
                 raise ValueError("The batch_size of TFDataset must be " +
                                  "specified when used in KerasModel fit.")
-            # if isinstance(x, TFNdarrayDataset):
-            #     x = _standarize_feature_label_dataset(x, self.model)
             self._fit_distributed(x, epochs, **kwargs)
 
         elif distributed:
             dataset = TFDataset.from_ndarrays((x, y), val_tensors=validation_data,
                                               batch_size=batch_size)
-            # dataset = _standarize_feature_label_dataset(dataset, self.model)
             self._fit_distributed(dataset, epochs, **kwargs)
 
         else:
@@ -260,8 +259,6 @@ class KerasModel(object):
             if not x.has_batch:
                 raise ValueError("The batch_per_thread of TFDataset" +
                                  " must be specified when used in KerasModel predict.")
-            # if isinstance(x, TFNdarrayDataset):
-            #     x = _standarize_feature_dataset(x, self.model)
             return self._predict_distributed(x)
         else:
             if distributed:
@@ -274,7 +271,6 @@ class KerasModel(object):
                                              shapes=shapes,
                                              batch_per_thread=-1 if batch_per_thread is None
                                              else batch_per_thread)
-                # dataset = _standarize_feature_dataset(dataset, self.model)
                 results = self._predict_distributed(dataset).collect()
                 output_num = len(self.model.outputs)
                 if output_num == 1:

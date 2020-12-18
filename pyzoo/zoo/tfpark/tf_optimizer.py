@@ -30,8 +30,8 @@ from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss, OptimM
 from zoo.pipeline.api.net.utils import find_placeholders, to_bigdl_optim_method, find_tensors
 from zoo.pipeline.estimator import Estimator
 from zoo.util import nest
-from zoo.tfpark.tf_dataset import TFNdarrayDataset, TFDataset
-from zoo.tfpark.utils import _standarize_feature_label_dataset
+from zoo.tfpark.tf_dataset import TFNdarrayDataset
+from zoo.tfpark.tf_dataset import _standarize_feature_label_dataset
 
 
 if sys.version >= '3':
