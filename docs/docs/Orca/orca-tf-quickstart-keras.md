@@ -8,7 +8,7 @@ We recommend using [Conda](https://docs.conda.io/projects/conda/en/latest/user-g
 **Note:** Conda environment is required to run on the distributed cluster, but not strictly necessary for running on the local machine.
 
 ```bash
-conda create -n zoo python=3.7 # "zoo" is conda enviroment name, you can use any name you like.
+conda create -n zoo python=3.7 # "zoo" is conda environment name, you can use any name you like.
 conda activate zoo
 pip install analytics_zoo-${VERSION} # install either version 0.9 or latest nightly build
 pip install tensorflow==1.15.0
