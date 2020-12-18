@@ -195,7 +195,7 @@ class Estimator(OrcaRayEstimator):
             callbacks=None, validation_data_creator=None, class_weight=None,
             steps_per_epoch=None, validation_steps=None, validation_freq=1,
             data_config=None, feature_cols=None,
-            label_cols=None, ):
+            label_cols=None):
         """Runs a training epoch."""
         params = dict(
             epochs=epochs,

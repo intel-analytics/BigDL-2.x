@@ -320,7 +320,7 @@ class TestTFRayEstimator(TestCase):
             workers_per_node=2)
 
         trainer.fit(train_data_shard, epochs=1, batch_size=4, steps_per_epoch=25)
-        trainer.evaluate(train_data_shard, num_steps=25)
+        trainer.evaluate(train_data_shard, batch_size=4, num_steps=25)
 
     def test_dataframe(self):
 
