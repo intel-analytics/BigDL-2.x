@@ -26,7 +26,8 @@ import org.apache.log4j.Logger
 import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig}
 
 
-class FlinkRedisSink(params: ClusterServingHelper) extends RichSinkFunction[List[(String, String)]] {
+class FlinkRedisSink(params: ClusterServingHelper)
+  extends RichSinkFunction[List[(String, String)]] {
   var jedis: Jedis = null
   var logger: Logger = null
 

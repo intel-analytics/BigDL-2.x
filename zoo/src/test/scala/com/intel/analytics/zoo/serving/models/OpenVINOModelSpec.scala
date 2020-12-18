@@ -39,10 +39,9 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     helper.weightPath = "/tmp/openvino_inception_v1/inception_v1.bin"
     helper.defPath = "/tmp/openvino_inception_v1/inception_v1.xml"
 
-    ClusterServing.model = helper.loadInferenceModel()       
+    ClusterServing.model = helper.loadInferenceModel()
     Seq("sh", "-c", "rm -rf /tmp/openvino_inception_v1*").!
 
-    
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
@@ -72,7 +71,6 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/openvino_mobilenet_v1*").!
 
-    
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
@@ -103,7 +101,6 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/openvino_mobilenet_v2*").!
 
-    
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
@@ -134,7 +131,6 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/openvino2020_resnet50*").!
 
-    
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
@@ -165,7 +161,6 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/openvino_resnet50*").!
 
-    
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
@@ -197,7 +192,6 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/openvino_vgg16*").!
 
-    
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))

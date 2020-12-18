@@ -81,7 +81,6 @@ object InferenceBaseline extends Supportive {
     val param = parser.parse(args, Params()).head
     val helper = new ClusterServingHelper()
     helper.loadConfig()
-    
 
     val model = helper.loadInferenceModel()
     val warmT = makeTensorFromShape(param.inputShape)

@@ -43,7 +43,6 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_inception_v1*").!
 
-    
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
@@ -73,7 +72,6 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_mobilenet_v1*").!
 
-    
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
@@ -104,7 +102,6 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_mobilenet_v2*").!
 
-    
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
@@ -135,7 +132,6 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_resnet50*").!
 
-    
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
@@ -165,7 +161,6 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_tfauto*").!
 
-    
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
@@ -195,7 +190,6 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_vgg16*").!
 
-    
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
@@ -225,7 +219,6 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_tf_2out*").!
 
-    
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper.modelType, "", helper.coreNum, helper.resize)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
