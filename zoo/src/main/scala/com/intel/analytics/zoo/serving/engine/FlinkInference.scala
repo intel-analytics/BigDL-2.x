@@ -43,7 +43,7 @@ class FlinkInference(helper: ClusterServingHelper)
           if (ClusterServing.model == null) {
             val localModelDir = getRuntimeContext.getDistributedCache
               .getFile(Conventions.SERVING_MODEL_TMP_DIR).getPath
-            
+
             logger.info(s"Model loaded at executor at path ${localModelDir}")
             helper.modelDir = localModelDir
             ClusterServing.model = helper.loadInferenceModel()
