@@ -82,9 +82,10 @@ def main(max_epoch):
                     validation_steps=10000 // batch_size)
     print(stats)
     est.save("/tmp/mnist_keras.ckpt")
-    est.restore("/tmp/mnist_keras.ckpt")
+    est.load("/tmp/mnist_keras.ckpt")
     stats = est.evaluate(val_data_creator, num_steps=10000 // batch_size)
     print(stats)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
