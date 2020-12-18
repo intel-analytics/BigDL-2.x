@@ -83,7 +83,7 @@ def main(max_epoch):
     print(stats)
     est.save("/tmp/mnist_keras.ckpt")
     est.restore("/tmp/mnist_keras.ckpt")
-    stats = est.evaluate(val_data_creator, steps=10000 // batch_size)
+    stats = est.evaluate(val_data_creator, num_steps=10000 // batch_size)
     print(stats)
 
 if __name__ == '__main__':

@@ -26,27 +26,6 @@ from torch.utils.data import DataLoader
 
 
 class Estimator(object):
-    def fit(self, data, epochs, **kwargs):
-        pass
-
-    def predict(self, data, **kwargs):
-        pass
-
-    def evaluate(self, data, **kwargs):
-        pass
-
-    def get_model(self):
-        pass
-
-    def save(self, checkpoint):
-        pass
-
-    def load(self, checkpoint):
-        pass
-
-    def shutdown(self, force=False):
-        pass
-
     @staticmethod
     def from_torch(*,
                    model,
@@ -142,8 +121,8 @@ class PyTorchRayEstimatorWrapper(OrcaRayEstimator):
         return self.estimator.train(data=data, epochs=epochs, batch_size=batch_size,
                                     profile=profile, reduce_results=reduce_results, info=info)
 
-    def predict(self, data, **kwargs):
-        pass
+    def predict(self, data, batch_size=32, **kwargs):
+        raise NotImplementedError
 
     def evaluate(self, data, batch_size=32, num_steps=None, profile=False, info=None):
         """
@@ -184,7 +163,7 @@ class PyTorchRayEstimatorWrapper(OrcaRayEstimator):
         """
         return self.estimator.save(checkpoint=checkpoint)
 
-    def load(self, checkpoint):
+    def load(self, checkpoint, **kwargs):
         """Loads the Estimator and all workers from the provided checkpoint.
 
         :param checkpoint: (str) Path to target checkpoint file.
@@ -194,6 +173,24 @@ class PyTorchRayEstimatorWrapper(OrcaRayEstimator):
     def shutdown(self, force=False):
         """Shuts down workers and releases resources."""
         return self.estimator.shutdown(force=force)
+
+    def clear_gradient_clipping(self):
+        pass
+
+    def set_constant_gradient_clipping(self, min, max):
+        pass
+
+    def set_l2_norm_gradient_clipping(self, clip_norm):
+        pass
+
+    def get_train_summary(self, tag=None):
+        pass
+
+    def get_validation_summary(self, tag=None):
+        pass
+
+    def set_tensorboard(self, log_dir, app_name):
+        pass
 
 
 class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):

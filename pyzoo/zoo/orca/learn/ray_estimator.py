@@ -19,15 +19,15 @@ from zoo.orca.learn.base_estimator import BaseEstimator
 
 class Estimator(BaseEstimator):
     @abstractmethod
-    def fit(self, data, epochs, **kwargs):
+    def fit(self, data, epochs, batch_size, **kwargs):
         pass
 
     @abstractmethod
-    def predict(self, data, **kwargs):
+    def predict(self, data, batch_size, **kwargs):
         pass
 
     @abstractmethod
-    def evaluate(self, data, **kwargs):
+    def evaluate(self, data, batch_size, num_steps=None, **kwargs):
         pass
 
     @abstractmethod
@@ -39,9 +39,33 @@ class Estimator(BaseEstimator):
         pass
 
     @abstractmethod
-    def load(self, checkpoint):
+    def load(self, checkpoint, **kwargs):
         pass
 
     @abstractmethod
     def shutdown(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def clear_gradient_clipping(self):
+        pass
+
+    @abstractmethod
+    def set_constant_gradient_clipping(self, min, max):
+        pass
+
+    @abstractmethod
+    def set_l2_norm_gradient_clipping(self, clip_norm):
+        pass
+
+    @abstractmethod
+    def get_train_summary(self, tag=None):
+        pass
+
+    @abstractmethod
+    def get_validation_summary(self, tag=None):
+        pass
+
+    @abstractmethod
+    def set_tensorboard(self, log_dir, app_name):
         pass

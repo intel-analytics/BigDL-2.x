@@ -254,10 +254,10 @@ class Estimator(OrcaRayEstimator):
             runner.shutdown.remote()
             runner.__ray_terminate__.remote()
 
-    def predict(self, data, **kwargs):
+    def predict(self, data, batch_size=32, **kwargs):
         raise NotImplementedError
 
-    def evaluate(self, data, **kwargs):
+    def evaluate(self, data, batch_size=32, num_steps=None, **kwargs):
         raise NotImplementedError
 
     def get_model(self):
@@ -266,7 +266,25 @@ class Estimator(OrcaRayEstimator):
     def save(self, checkpoint):
         raise NotImplementedError
 
-    def load(self, checkpoint):
+    def load(self, checkpoint, **kwargs):
+        raise NotImplementedError
+
+    def clear_gradient_clipping(self):
+        raise NotImplementedError
+
+    def set_constant_gradient_clipping(self, min, max):
+        raise NotImplementedError
+
+    def set_l2_norm_gradient_clipping(self, clip_norm):
+        raise NotImplementedError
+
+    def get_train_summary(self, tag=None):
+        raise NotImplementedError
+
+    def get_validation_summary(self, tag=None):
+        raise NotImplementedError
+
+    def set_tensorboard(self, log_dir, app_name):
         raise NotImplementedError
 
 # TODO: add model save and restore

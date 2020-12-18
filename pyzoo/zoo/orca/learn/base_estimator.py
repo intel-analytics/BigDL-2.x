@@ -19,15 +19,15 @@ from abc import ABC, abstractmethod
 
 class BaseEstimator(ABC):
     @abstractmethod
-    def fit(self, data, epochs, **kwargs):
+    def fit(self, data, epochs, batch_size, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
-    def predict(self, data, **kwargs):
+    def predict(self, data, batch_size, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
-    def evaluate(self, data, **kwargs):
+    def evaluate(self, data, batch_size, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
@@ -40,4 +40,28 @@ class BaseEstimator(ABC):
 
     @abstractmethod
     def load(self, checkpoint, **kwargs):
+        raise NotImplementedError
+
+    @abstractmethod
+    def clear_gradient_clipping(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_constant_gradient_clipping(self, min, max):
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_l2_norm_gradient_clipping(self, clip_norm):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_train_summary(self, tag=None):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_validation_summary(self, tag=None):
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_tensorboard(self, log_dir, app_name):
         raise NotImplementedError
