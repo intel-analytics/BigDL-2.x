@@ -29,5 +29,3 @@ python transfer_learning.py --cluster_mode yarn
 
 Options
 * `--cluster_mode` The mode for the Spark cluster. local or yarn. Default to be `local`.
-* `--epochs` The number of epochs to train the model. Default to be 2.
-* `--batch_size` Batch size for training and prediction. Default to be 32.
