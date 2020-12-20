@@ -602,7 +602,7 @@ fi
 # Run the example
 export SPARK_DRIVER_MEMORY=3g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf/image_segmentation/image_segmentation.py \
-    --file_path analytics-zoo-data/data/carvana
+    --file_path analytics-zoo-data/data/carvana --epochs 1 --non_interactive
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
