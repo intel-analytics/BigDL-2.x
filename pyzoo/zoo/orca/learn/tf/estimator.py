@@ -224,7 +224,7 @@ def is_tf_data_dataset(data):
 
 def to_dataset(data, batch_size, batch_per_thread, validation_data,
                feature_cols, labels_cols, hard_code_batch_size,
-               sequential_order, shuffle, auto_shard_files):
+               sequential_order, shuffle, auto_shard_files, memory_type):
     # todo wrap argument into kwargs
     if validation_data:
         if isinstance(data, SparkXShards):
@@ -258,6 +258,7 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
                                            batch_per_thread,
                                            hard_code_batch_size,
                                            validation_data,
+                                           memory_type,
                                            sequential_order,
                                            shuffle
                                            )
@@ -342,6 +343,7 @@ class TFOptimizerWrapper(Estimator):
             feature_cols=None,
             labels_cols=None,
             validation_data=None,
+            memory_type="DRAM",
             hard_code_batch_size=False,
             auto_shard_files=True,
             session_config=None,
@@ -395,7 +397,8 @@ class TFOptimizerWrapper(Estimator):
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=hard_code_batch_size,
                              sequential_order=False, shuffle=True,
-                             auto_shard_files=auto_shard_files
+                             auto_shard_files=auto_shard_files,
+                             memory_type=memory_type
                              )
 
         if feed_dict is not None:
@@ -572,6 +575,7 @@ class TFKerasWrapper(Estimator):
             feature_cols=None,
             labels_cols=None,
             validation_data=None,
+            memory_type="DRAM",
             hard_code_batch_size=False,
             session_config=None,
             checkpoint_trigger=None,
@@ -624,7 +628,8 @@ class TFKerasWrapper(Estimator):
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=hard_code_batch_size,
                              sequential_order=False, shuffle=True,
-                             auto_shard_files=auto_shard_files)
+                             auto_shard_files=auto_shard_files,
+                             memory_type=memory_type)
         if isinstance(dataset, TFNdarrayDataset):
             dataset = _standarize_feature_label_dataset(dataset, self.model.model)
 

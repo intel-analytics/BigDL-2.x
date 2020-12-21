@@ -632,7 +632,7 @@ class TFDataset(object):
     @staticmethod
     def from_dataframe(df, feature_cols, labels_cols=None, batch_size=-1,
                        batch_per_thread=-1, hard_code_batch_size=False,
-                       validation_df=None,
+                       validation_df=None, memory_type="DRAM",
                        sequential_order=False, shuffle=True):
         """
         Create a TFDataset from a pyspark.sql.DataFrame.
@@ -660,7 +660,7 @@ class TFDataset(object):
         """
         return DataFrameDataset(df, feature_cols, labels_cols, batch_size,
                                 batch_per_thread, hard_code_batch_size, validation_df,
-                                sequential_order, shuffle)
+                                memory_type, sequential_order, shuffle)
 
 
 def _tf_get_types(dataset):
@@ -1065,7 +1065,8 @@ class TFParkSampleToMiniBatch(Preprocessing):
 class TFNdarrayDataset(TFDataset):
     def __init__(self, rdd, tensor_structure, batch_size,
                  batch_per_thread, hard_code_batch_size=False,
-                 val_rdd=None, sequential_order=True, shuffle=False):
+                 val_rdd=None, memory_type="DRAM",
+                 sequential_order=True, shuffle=False):
 
         super(TFNdarrayDataset, self).__init__(tensor_structure, batch_size,
                                                batch_per_thread, hard_code_batch_size)
@@ -1082,6 +1083,7 @@ class TFNdarrayDataset(TFDataset):
                             "pad your dataset so that the total number "
                             "of elements is divisible by the total batch size"
                             " to avoid this.")
+        self.memory_type = memory_type
 
     def _get_prediction_data(self):
         rdd = self.rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
@@ -1099,6 +1101,7 @@ class TFNdarrayDataset(TFDataset):
         sample_rdd = self.rdd.map(
             lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
         fs = FeatureSet.sample_rdd(sample_rdd,
+                                   self.memory_type,
                                    sequential_order=self.sequential_order,
                                    shuffle=self.shuffle)
         # for training there won't be any remainder, the input to SampleToMiniBatch
@@ -1111,6 +1114,7 @@ class TFNdarrayDataset(TFDataset):
             sample_rdd = self.val_rdd.map(
                 lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
             fs = FeatureSet.sample_rdd(sample_rdd,
+                                       self.memory_type,
                                        sequential_order=self.sequential_order,
                                        shuffle=self.shuffle)
             fs = fs.transform(TFParkSampleToMiniBatch(self.batch_size, self.hard_code_batch_size))
@@ -1245,7 +1249,7 @@ class DataFrameDataset(TFNdarrayDataset):
 
     def __init__(self, df, feature_cols, labels_cols=None, batch_size=-1,
                  batch_per_thread=-1, hard_code_batch_size=False,
-                 validation_df=None,
+                 validation_df=None, memory_type="DRAM",
                  sequential_order=False, shuffle=True):
         assert isinstance(feature_cols, list), "feature_cols should be a list"
         if labels_cols is not None:
@@ -1299,4 +1303,4 @@ class DataFrameDataset(TFNdarrayDataset):
 
         super(DataFrameDataset, self).__init__(rdd, tensor_structure, batch_size,
                                                batch_per_thread, hard_code_batch_size,
-                                               val_rdd, sequential_order, shuffle)
+                                               val_rdd, memory_type, sequential_order, shuffle)
