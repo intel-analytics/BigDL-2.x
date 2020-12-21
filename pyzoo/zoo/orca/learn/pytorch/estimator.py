@@ -218,8 +218,8 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
         self.model = TorchModel.from_pytorch(model)
         self.estimator = SparkEstimator(self.model, optimizer, model_dir, bigdl_type=bigdl_type)
 
-    def fit(self, data, epochs=1, batch_size=32, validation_data=None, validation_methods=None,
-            checkpoint_trigger=None):
+    def fit(self, data, epochs=1, batch_size=32, feature_cols=None, labels_cols=None,
+            validation_data=None, validation_methods=None, checkpoint_trigger=None):
         from zoo.orca.data.utils import to_sample
         from zoo.orca.learn.metrics import Metrics
         from zoo.orca.learn.trigger import Trigger
@@ -260,7 +260,7 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
                              "callable data_creators but get " + data.__class__.__name__)
         return self
 
-    def predict(self, data, batch_size=4):
+    def predict(self, data, batch_size=4, feature_cols=None):
         from zoo.orca.learn.utils import convert_predict_to_xshard
         if isinstance(data, SparkXShards):
             from zoo.orca.data.utils import to_sample
@@ -271,7 +271,8 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
         predicted_rdd = self.model.predict(data_rdd, batch_size=batch_size)
         return convert_predict_to_xshard(predicted_rdd)
 
-    def evaluate(self, data, validation_methods=None, batch_size=32):
+    def evaluate(self, data, batch_size=32, feature_cols=None, labels_cols=None,
+                 validation_methods=None):
         from zoo.orca.data.utils import to_sample
         from zoo.orca.learn.metrics import Metrics
 

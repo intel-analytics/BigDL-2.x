@@ -36,13 +36,17 @@ from zoo.orca.learn.spark_estimator import Estimator as SparkEstimator
 
 
 class Estimator(SparkEstimator):
-    def fit(self, data, epochs, **kwargs):
+    def fit(self, data, epochs, batch_size, feature_cols=None, labels_cols=None,
+            validation_data=None, hard_code_batch_size=False, session_config=None,
+            checkpoint_trigger=None, auto_shard_files=True):
         raise NotImplementedError
 
-    def predict(self, data, **kwargs):
+    def predict(self, data, batch_size, feature_cols=None, hard_code_batch_size=False,
+                auto_shard_files=True):
         raise NotImplementedError
 
-    def evaluate(self, data, **kwargs):
+    def evaluate(self, data, batch_size, feature_cols=None, labels_cols=None,
+                 hard_code_batch_size=False, auto_shard_files=True):
         raise NotImplementedError
 
     def get_model(self):
@@ -114,12 +118,39 @@ class Estimator(SparkEstimator):
         return None
 
     def save_tf_checkpoint(self, path):
+        """
+        Save tensorflow checkpoint in this estimator.
+        :param path: tensorflow checkpoint path.
+        """
         raise NotImplementedError
 
     def save_keras_model(self, path, overwrite=True):
+        """
+        Save tensorflow keras model in this estimator.
+        :param path: keras model save path.
+        :param overwrite: Whether to silently overwrite any existing file at the target location.
+        """
         raise NotImplementedError
 
     def save_keras_weights(self, filepath, overwrite=True, save_format=None):
+        """
+        Save tensorflow keras model weights in this estimator.
+        :param filepath: keras model weights save path.
+        :param overwrite: Whether to silently overwrite any existing file at the target location.
+        :param save_format: Either 'tf' or 'h5'. A `filepath` ending in '.h5' or
+            '.keras' will default to HDF5 if `save_format` is `None`. Otherwise
+            `None` defaults to 'tf'.
+        """
+        raise NotImplementedError
+
+    def load_keras_weights(self, filepath, by_name=False):
+        """
+        Save tensorflow keras model in this estimator.
+        :param filepath: keras model weights save path.
+        :param by_name: Boolean, whether to load weights by name or by topological
+            order. Only topological loading is supported for weight files in
+            TensorFlow format.
+        """
         raise NotImplementedError
 
     def load_orca_checkpoint(self, path, version):
@@ -343,10 +374,10 @@ class TFOptimizerWrapper(Estimator):
             labels_cols=None,
             validation_data=None,
             hard_code_batch_size=False,
-            auto_shard_files=True,
             session_config=None,
-            feed_dict=None,
-            checkpoint_trigger=None
+            checkpoint_trigger=None,
+            auto_shard_files=True,
+            feed_dict=None
             ):
         """
         Train this graph model with train data.
@@ -437,7 +468,7 @@ class TFOptimizerWrapper(Estimator):
     def predict(self, data, batch_size=4,
                 feature_cols=None,
                 hard_code_batch_size=False,
-                auto_shard_files=True,
+                auto_shard_files=True
                 ):
         """
         Predict input data
@@ -490,7 +521,7 @@ class TFOptimizerWrapper(Estimator):
                  feature_cols=None,
                  labels_cols=None,
                  hard_code_batch_size=False,
-                 auto_shard_files=True,
+                 auto_shard_files=True
                  ):
         """
         Evaluate model.

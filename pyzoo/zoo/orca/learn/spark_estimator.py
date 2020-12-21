@@ -20,15 +20,16 @@ from zoo.orca.learn.base_estimator import BaseEstimator
 
 class Estimator(BaseEstimator):
     @abstractmethod
-    def fit(self, data, epochs, **kwargs):
+    def fit(self, data, epochs, batch_size, feature_cols=None, labels_cols=None,
+            validation_data=None, checkpoint_trigger=None):
         raise NotImplementedError
 
     @abstractmethod
-    def predict(self, data, **kwargs):
+    def predict(self, data, batch_size, feature_cols=None):
         raise NotImplementedError
 
     @abstractmethod
-    def evaluate(self, data, **kwargs):
+    def evaluate(self, data, batch_size, feature_cols=None, labels_cols=None):
         raise NotImplementedError
 
     @abstractmethod
@@ -40,7 +41,7 @@ class Estimator(BaseEstimator):
         raise NotImplementedError
 
     @abstractmethod
-    def load(self, checkpoint, **kwargs):
+    def load(self, checkpoint):
         raise NotImplementedError
 
     def set_tensorboard(self, log_dir, app_name):
@@ -128,42 +129,6 @@ class Estimator(BaseEstimator):
         tag: The string variable represents the scalar wanted
         """
         raise NotImplementedError
-
-    def save_tf_checkpoint(self, path):
-        """
-        Save tensorflow checkpoint in this estimator.
-        :param path: tensorflow checkpoint path.
-        """
-        raise NotImplementedError
-
-    def save_keras_model(self, path, overwrite=True):
-        """
-        Save tensorflow keras model in this estimator.
-        :param path: keras model save path.
-        :param overwrite: Whether to silently overwrite any existing file at the target location.
-        """
-        raise NotImplementedError
-
-    def save_keras_weights(self, filepath, overwrite=True, save_format=None):
-        """
-        Save tensorflow keras model weights in this estimator.
-        :param filepath: keras model weights save path.
-        :param overwrite: Whether to silently overwrite any existing file at the target location.
-        :param save_format: Either 'tf' or 'h5'. A `filepath` ending in '.h5' or
-            '.keras' will default to HDF5 if `save_format` is `None`. Otherwise
-            `None` defaults to 'tf'.
-        """
-        raise NotImplementedError
-
-    def load_keras_weights(self, filepath, by_name=False):
-        """
-        Save tensorflow keras model in this estimator.
-        :param filepath: keras model weights save path.
-        :param by_name: Boolean, whether to load weights by name or by topological
-            order. Only topological loading is supported for weight files in
-            TensorFlow format.
-        """
-        pass
 
     @abstractmethod
     def load_orca_checkpoint(self, path, version):
