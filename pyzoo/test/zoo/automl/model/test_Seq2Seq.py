@@ -71,6 +71,35 @@ class TestSeq2Seq(ZooTestCase):
         assert self.model_1.future_seq_len == 1
         assert self.model_1.target_col_num == 1
 
+    def test_fit_eval(self):
+        past_seq_len = 6
+        future_seq_len = 2
+        input_dim = 5
+        output_dim = 4
+        x_train = np.random.rand(100, past_seq_len, input_dim)
+        y_train = np.random.rand(100, future_seq_len, output_dim)
+        x_test = np.random.rand(100, past_seq_len, input_dim)
+        y_test = np.random.rand(100, future_seq_len, output_dim)
+        model = LSTMSeq2Seq(check_optional_config=False,
+                            future_seq_len=future_seq_len)
+        model_config = {
+            'batch_size': 32,
+            'epochs': 1,
+            'latent_dim': 128,
+            'dropout': 0.2
+        }
+        model.fit_eval(x_train, y_train, **model_config)
+        y_pred = model.predict(x_test)
+        rmse, smape = model.evaluate(x=x_test, y=y_test, metric=["rmse", "smape"])
+        assert rmse.shape == smape.shape
+        assert rmse.shape == (future_seq_len, output_dim)
+
+        assert model.past_seq_len == past_seq_len
+        assert model.future_seq_len == future_seq_len
+        assert model.feature_num == input_dim
+        assert model.target_col_num == output_dim
+        assert y_pred.shape == y_test.shape
+
     def test_fit_eval_2(self):
         x_train_2, y_train_2 = self.feat._roll_train(self.train_data,
                                                      past_seq_len=self.past_seq_len,
