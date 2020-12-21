@@ -1,5 +1,5 @@
 
-**In this guide we will describe how to scale out Keras programs using Orca in 4 simple steps.**
+**In this guide we will describe how to scale out Keras (v2.3) programs using Orca in 4 simple steps.**
 
 ### **Step 0: Prepare Environment**
 
