@@ -72,16 +72,14 @@ batch_size = 32
 # Rescale all images by 1./255 and apply image augmentation
 def _parse_function(img, label):
     image_resized = tf.image.resize(img, [image_size, image_size])
-    return tf.cast(tf.reshape(image_resized, (image_size, image_size, 3)), dtype=tf.float32) / 255.0, label
+    return tf.cast(image_resized, dtype=tf.float32)/255.0, tf.cast(label, dtype=tf.uint8)
 
 
 builder = tfds.ImageFolder(base_dir)
 ds = builder.as_dataset(shuffle_files=True, as_supervised=True)
 train_dataset = ds['train'].map(_parse_function)
-train_dataset = train_dataset.map(_parse_function)
 
 validation_dataset = ds['validation'].map(_parse_function)
-validation_dataset = validation_dataset.map(_parse_function)
 
 IMG_SHAPE = (image_size, image_size, 3)
 
@@ -104,7 +102,7 @@ model.compile(optimizer=tf.keras.optimizers.RMSprop(lr=0.0001),
 model.summary()
 len(model.trainable_variables)
 
-epochs = 10
+epochs = 50
 est = Estimator.from_keras(keras_model=model)
 est.fit(train_dataset,
         batch_size=batch_size,
@@ -125,6 +123,11 @@ fine_tune_at = 100
 for layer in base_model.layers[:fine_tune_at]:
     layer.trainable = False
 
+model = tf.keras.Sequential([
+    base_model,
+    keras.layers.GlobalAveragePooling2D(),
+    keras.layers.Dense(1, activation='sigmoid')
+])
 model.compile(optimizer=tf.keras.optimizers.RMSprop(lr=2e-5),
               loss='binary_crossentropy',
               metrics=['accuracy'])
