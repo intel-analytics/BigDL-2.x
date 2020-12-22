@@ -327,7 +327,7 @@ def _standarize_feature_label_dataset(dataset, model):
         elif isinstance(ys, tuple):
             return tuple([np.expand_dims(y, axis=-1) if y.ndim == 0 else y for y in ys])
         else:
-            return np.expand_dims(ys, axis=(0, -1)) if ys.ndim == 0 else ys
+            return np.expand_dims(ys, axis=-1) if ys.ndim == 0 else ys
 
     def _training_reorder(x, input_names, output_names):
         assert isinstance(x, tuple)
