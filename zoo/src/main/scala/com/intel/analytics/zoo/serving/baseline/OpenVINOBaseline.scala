@@ -25,8 +25,8 @@ import com.intel.analytics.zoo.pipeline.api.net.TFNet
 import com.intel.analytics.zoo.pipeline.inference.{DeviceType, InferenceModelFactory, OpenVINOModel, OpenVinoInferenceSupportive}
 import com.intel.analytics.zoo.serving.PreProcessing
 import com.intel.analytics.zoo.serving.arrow.{ArrowDeserializer, ArrowSerializer}
-import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, ModelHolder, Timer}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams, Supportive}
+import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, Timer}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Supportive}
 import scopt.OptionParser
 
 object OpenVINOBaseline extends Supportive {
@@ -78,14 +78,11 @@ object OpenVINOBaseline extends Supportive {
   def main(args: Array[String]): Unit = {
     val param = parser.parse(args, Params()).head
     val helper = new ClusterServingHelper()
-    helper.initArgs()
-    val sParam = new SerParams(helper)
-
-
+    helper.loadConfig()
     val warmT = makeTensorFromShape(param.inputShape)
-    val clusterServingInference = new ClusterServingInference(null, sParam.modelType)
+    val clusterServingInference = new ClusterServingInference(null, helper.modelType)
     clusterServingInference.typeCheck(warmT)
-    clusterServingInference.dimCheck(warmT, "add", sParam.modelType)
+    clusterServingInference.dimCheck(warmT, "add", helper.modelType)
 
     println("Warming up finished, begin baseline test...generating Base64 string")
 
@@ -112,12 +109,12 @@ object OpenVINOBaseline extends Supportive {
         val timer = new Timer()
         var a = Seq[(String, String)]()
         val pre = new PreProcessing(true)
-        (0 until sParam.coreNum).foreach( i =>
+        (0 until helper.coreNum).foreach( i =>
           a = a :+ (i.toString(), b64string)
         )
-        (0 until param.testNum).grouped(sParam.coreNum).flatMap(i => {
+        (0 until param.testNum).grouped(helper.coreNum).flatMap(i => {
           val preprocessed = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Preprocess", sParam.coreNum) {
+            s"Thread ${Thread.currentThread().getId} Preprocess", helper.coreNum) {
             a.map(item => {
               val deserializer = new ArrowDeserializer()
               val arr = deserializer.create(b64string)
@@ -128,21 +125,21 @@ object OpenVINOBaseline extends Supportive {
             })
           }
           val t = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Batch input", sParam.coreNum) {
+            s"Thread ${Thread.currentThread().getId} Batch input", helper.coreNum) {
             clusterServingInference.batchInput(
-              preprocessed, sParam.coreNum, false, sParam.resize)
+              preprocessed, helper.coreNum, false, helper.resize)
           }
-          clusterServingInference.dimCheck(t, "add", sParam.modelType)
+          clusterServingInference.dimCheck(t, "add", helper.modelType)
           val result = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Inference", sParam.coreNum) {
+            s"Thread ${Thread.currentThread().getId} Inference", helper.coreNum) {
             model.predict(t)
 //              model.forward(t)
           }
-          clusterServingInference.dimCheck(t, "remove", sParam.modelType)
-          clusterServingInference.dimCheck(result, "remove", sParam.modelType)
+          clusterServingInference.dimCheck(t, "remove", helper.modelType)
+          clusterServingInference.dimCheck(result, "remove", helper.modelType)
           val postprocessed = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Postprocess", sParam.coreNum) {
-            (0 until sParam.coreNum).map(i => {
+            s"Thread ${Thread.currentThread().getId} Postprocess", helper.coreNum) {
+            (0 until helper.coreNum).map(i => {
               ArrowSerializer.activityBatchToByte(result, i + 1)
             })
           }
