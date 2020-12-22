@@ -7,7 +7,7 @@
     <parent>
         <artifactId>zoo-parent</artifactId>
         <groupId>com.intel.analytics.zoo</groupId>
-        <version>0.9.0-SNAPSHOT</version>
+        <version>0.10.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>analytics-zoo-bigdl_${bigdl.version}-spark_${spark.version}</artifactId>
@@ -53,11 +53,6 @@
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
-        </repository>
-        <repository>
-            <id>XGBoost4J Snapshot Repo</id>
-            <name>XGBoost4J Snapshot Repo</name>
-            <url>https://s3-us-west-2.amazonaws.com/xgboost-maven-repo/snapshot/</url>
         </repository>
     </repositories>
 
@@ -148,12 +143,24 @@
         <dependency>
             <groupId>ml.dmlc</groupId>
             <artifactId>xgboost4j_${scala.major.version}</artifactId>
-            <version>1.2.0-SNAPSHOT</version>
+            <version>1.1.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.esotericsoftware.kryo</groupId>
+                    <artifactId>kryo</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>ml.dmlc</groupId>
             <artifactId>xgboost4j-spark_${scala.major.version}</artifactId>
-            <version>1.2.0-SNAPSHOT</version>
+            <version>1.1.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.esotericsoftware.kryo</groupId>
+                    <artifactId>kryo</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch</groupId>
@@ -208,7 +215,7 @@
         <dependency>
             <groupId>com.intel.analytics.zoo</groupId>
             <artifactId>${core.artifactId}</artifactId>
-            <version>0.9.0-SNAPSHOT</version>
+            <version>0.10.0-SNAPSHOT</version>
             <type>${core.dependencyType}</type>
         </dependency>
         <dependency>
