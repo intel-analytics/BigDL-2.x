@@ -1,5 +1,5 @@
 
-**In this guide we will describe how to scale out PyTorch (v1.5 or later) programs using Orca in 4 simple steps.**
+**In this guide we will describe how to scale out PyTorch (v1.5 or above) programs using Orca in 4 simple steps.**
 
 ### **Step 0: Prepare Environment**
 
@@ -10,10 +10,10 @@ We recommend you to use [Conda](https://docs.conda.io/projects/conda/en/latest/u
 ```bash
 conda create -n zoo python=3.7 # zoo is conda environment name, you can use any name you like.
 conda activate zoo
-pip install analytics_zoo-${VERSION} # install either version 0.9 or latest nightly build
+pip install analytics-zoo # install either version 0.9 or latest nightly build
+pip install torch==1.7.1 torchvision==0.8.2
+pip install six cloudpickle
 pip install jep==3.9.0
-conda install pytorch torchvision cpuonly -c pytorch # command for linux
-conda install pytorch torchvision -c pytorch # command for macOS
 ```
 
 **Note:** The original [source code](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/examples/orca/learn/pytorch/mnist/lenet_mnist.py) for the tutorial below only supports torch version >= 1.5.
@@ -38,7 +38,7 @@ elif args.cluster_mode == "yarn":
 
 This is the only place where you need to specify local or distributed mode. View [Orca Context](./context) for more details.
 
-**Note:** You should `export HADOOP_CONF_DIR=/path/to/hadoop/conf/dir`.
+**Note:** You should `export HADOOP_CONF_DIR=/path/to/hadoop/conf/dir` when you run on Hadoop YARN cluster.
 
 ### **Step 2: Define the Model**
 
