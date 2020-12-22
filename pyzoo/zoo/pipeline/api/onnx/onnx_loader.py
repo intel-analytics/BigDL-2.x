@@ -23,17 +23,26 @@ from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
 
 
 class OnnxInput(object):
+    """
+    .. note:: `zoo.pipeline.api.onnx` is deprecated in 0.10.0
+    This will be removed in future releases.
+     """
     def __init__(self, name, zvalue, data=None):
+        warnings.warn("deprecated in 0.10.0, and will be removed in future release")
         self.name = name
         self.zvalue = zvalue  # zvalue is a Input or Parameter
         self.data = data  # data is a ndarray
 
 
 class OnnxLoader(object):
-
+    """
+    .. note:: `zoo.pipeline.api.onnx` is deprecated in 0.10.0
+    This will be removed in future releases.
+    """
     training = False
 
     def __init__(self, onnx_graph):
+        warnings.warn("deprecated in 0.10.0, and will be removed in future release")
         self.graph = onnx_graph
         self._all_tensors = {}  # including the original input tensor or the immediate tensor.
         self.initializer = {}  # name -> ndarray
