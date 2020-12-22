@@ -43,7 +43,7 @@ import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.http.{Instances, JsonUtil}
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams}
+import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
 
 import sys.env
 
@@ -90,9 +90,8 @@ class CorrectnessSpec extends FlatSpec with Matchers {
      "/repository/raw/analytics-zoo-data/imagenet_1k.tar").!
     "tar -xvf /tmp/serving_val.tar -C /tmp/".!
     val helper = new ClusterServingHelper(configPath)
-    helper.initArgs()
+    helper.loadConfig()
 //    helper.dataShape = Array(Array(3, 224, 224))
-    val param = new SerParams(helper)
     val model = helper.loadInferenceModel()
     val imagePath = "/tmp/imagenet_1k"
     val lsCmd = "ls " + imagePath
@@ -104,8 +103,8 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     val fileList = f.listFiles
     logger.info(s"${fileList.size} images about to enqueue...")
 
-    val pre = new PreProcessing(param.chwFlag)
-    val clusterServingInference = new ClusterServingInference(pre, param.modelType)
+    val pre = new PreProcessing(helper.chwFlag)
+    val clusterServingInference = new ClusterServingInference(pre, helper.modelType)
     var predictMap = Map[String, String]()
 
     for (file <- fileList) {
