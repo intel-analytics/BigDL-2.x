@@ -34,7 +34,7 @@
 import collections
 import torch
 
-from zoo.orca.learn.pytorch.utils import (TimerCollection, AverageMeterCollection,
+from zoo.orca.learn.pytorch.utils import (TimerCollection, AverageMeterCollection, AverageMeter,
                                           NUM_SAMPLES)
 from zoo.orca.learn.pytorch.constants import (SCHEDULER_STEP_EPOCH, NUM_STEPS,
                                               SCHEDULER_STEP_BATCH, SCHEDULER_STEP)
@@ -137,7 +137,7 @@ class TrainingOperator:
         """
         pass
 
-    def train_epoch(self, iterator, info):
+    def train_epoch(self, iterator, info, val_iter, val_steps):
         """Runs one standard training pass over the training dataloader.
 
         By default, this method will iterate over the given iterator and
@@ -214,6 +214,11 @@ class TrainingOperator:
 
             metric_meters.update(metrics, n=metrics.pop(NUM_SAMPLES, 1))
             self.global_step += 1
+
+            if val_iter:
+                if (val_steps is not None and (batch_idx + 1) % val_steps == 0) \
+                        or (batch_idx == len(iterator) - 1):
+                    print(self.validate(val_iter, {}))
 
         if self.scheduler and info.get(SCHEDULER_STEP) == SCHEDULER_STEP_EPOCH:
             self.scheduler.step()
@@ -316,13 +321,24 @@ class TrainingOperator:
 
         # switch to evaluate mode
         self.model.eval()
+        scores = []
+        targets = []
         with torch.no_grad():
             for batch_idx, batch in enumerate(val_iterator):
                 batch_info = {"batch_idx": batch_idx}
                 batch_info.update(info)
                 metrics = self.validate_batch(batch, batch_info)
+                scores.append(metrics.pop("output", None))
+                targets.append(metrics.pop("target", None))
                 metric_meters.update(metrics, n=metrics.pop(NUM_SAMPLES, 1))
-
+        import numpy as np
+        import sklearn.metrics
+        scores = np.concatenate(scores, axis=0)
+        targets = np.concatenate(targets, axis=0)
+        roc_auc = sklearn.metrics.roc_auc_score(targets, scores)
+        meter = AverageMeter()
+        meter.avg = roc_auc
+        metric_meters._meters["roc_auc"] = meter
         return metric_meters.summary()
 
     def validate_batch(self, batch, batch_info):
@@ -382,14 +398,16 @@ class TrainingOperator:
                           "validate_batch in TrainingOperator for other validation metrics")
         import numpy as np
         if len(np_output.shape) == 1:  # Binary classification
-            np_output = np.round(np_output, 0)
+            predictions = np.round(np_output, 0)
         else:  # Multi-class classification
-            np_output = np.argmax(np_output, axis=1)
+            predictions = np.argmax(np_output, axis=1)
 
-        num_correct = np.sum(np_output == np_target)
+        num_correct = np.sum(predictions == np_target)
         num_samples = target.size(0)
 
         return {
+            "output": np_output,
+            "target": np_target,
             "val_loss": loss.item(),
             "val_accuracy": num_correct / num_samples,
             NUM_SAMPLES: num_samples
