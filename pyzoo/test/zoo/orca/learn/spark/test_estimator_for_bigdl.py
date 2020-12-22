@@ -254,8 +254,8 @@ class TestEstimatorForKeras(TestCase):
             for idx in range(len(r0_c)):
                 assert abs(r0_c[idx]["prediction"][0] - result_c[0]["prediction"][idx][0]) == 0
                 assert abs(r0_c[idx]["prediction"][1] - result_c[0]["prediction"][idx][1]) == 0
-            estimator.fit(data=df, epochs=6, batch_size=8, validation_data=df, validation_methods=[Accuracy()],
-                          validation_trigger=EveryEpoch())
+            estimator.fit(data=df, epochs=6, batch_size=8, validation_data=df,
+                          validation_methods=[Accuracy()], validation_trigger=EveryEpoch())
             summary = estimator.get_train_summary()
 
             # test load from checkpoint

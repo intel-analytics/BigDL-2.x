@@ -105,12 +105,14 @@ class BigDLEstimatorWrapper(OrcaSparkEstimator):
                 .setLabelCol(labels_cols)
 
             if validation_data is not None:
-                assert isinstance(validation_data, DataFrame), "val_data should be a spark DataFrame."
+                assert isinstance(validation_data, DataFrame), \
+                    "val_data should be a spark DataFrame."
                 assert validation_trigger is not None and validation_methods is not None, \
                     "You should provide val_trigger and val_methods if you provide val_data."
                 validation_trigger = Trigger.convert_trigger(validation_trigger)
                 validation_methods = Metrics.convert_metrics_list(validation_methods)
-                self.nn_estimator.setValidation(validation_trigger, validation_data, validation_methods, batch_size)
+                self.nn_estimator.setValidation(validation_trigger, validation_data,
+                                                validation_methods, batch_size)
             if self.log_dir is not None and self.app_name is not None:
                 from bigdl.optim.optimizer import TrainSummary
                 from bigdl.optim.optimizer import ValidationSummary
