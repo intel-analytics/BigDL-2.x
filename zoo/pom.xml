@@ -499,18 +499,6 @@
                                     <include>org.apache.arrow</include>
                                 </includes>
                             </artifactSet>
-                            <transformers>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-                                    <resource>reference.conf</resource>
-                                </transformer>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <manifestEntries>
-                                        <Main-Class>com.intel.analytics.zoo.serving.http.FrontEndApp</Main-Class>
-                                    </manifestEntries>
-                                </transformer>
-                            </transformers>
                         </configuration>
                         <goals>
                             <goal>shade</goal>
@@ -593,7 +581,6 @@
                                 <descriptor>${project.basedir}/src/assembly/all-in-one.xml
                                 </descriptor>
                             </descriptors>
-
                         </configuration>
                         <phase>package</phase>
                         <goals>
