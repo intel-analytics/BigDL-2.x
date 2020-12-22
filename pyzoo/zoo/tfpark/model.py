@@ -57,12 +57,14 @@ class KerasModel(object):
 
         def save_func(file_path):
             self.model.save_weights(file_path, overwrite, save_format)
+
         save_file(save_func, filepath)
 
     def load_weights(self, filepath, by_name=False):
 
         def load_func(file_path):
             self.model.load_weights(file_path, by_name)
+
         load_from_file(load_func, filepath)
 
     def save_model(self, path, overwrite=True):
@@ -73,8 +75,10 @@ class KerasModel(object):
         :param overwrite: Boolean. Whether to silently overwrite any existing file at the target
                 location
         """
+
         def save_func(file_path, over_write=True):
             self.model.save(file_path, overwrite=over_write)
+
         save_file(save_func, path, over_write=overwrite)
 
     @staticmethod
@@ -323,7 +327,7 @@ def _standarize_feature_label_dataset(dataset, model):
         elif isinstance(ys, tuple):
             return tuple([np.expand_dims(y, axis=-1) if y.ndim == 0 else y for y in ys])
         else:
-            return np.expand_dims(ys, axis=-1) if ys.ndim == 0 else ys
+            return np.expand_dims(ys, axis=(0, -1)) if ys.ndim == 0 else ys
 
     def _training_reorder(x, input_names, output_names):
         assert isinstance(x, tuple)
@@ -338,10 +342,10 @@ def _standarize_feature_label_dataset(dataset, model):
         else:
             return [x]
 
-    rdd = dataset.rdd.map(lambda x: (x[0], _process_labels(x[1])))\
+    rdd = dataset.rdd.map(lambda x: (x[0], _process_labels(x[1]))) \
         .map(lambda sample: _training_reorder(sample, input_names, output_names))
     if dataset.val_rdd is not None:
-        val_rdd = dataset.val_rdd.map(lambda x: (x[0], _process_labels(x[1])))\
+        val_rdd = dataset.val_rdd.map(lambda x: (x[0], _process_labels(x[1]))) \
             .map(lambda sample: _training_reorder(sample, input_names, output_names))
     else:
         val_rdd = None
