@@ -1,5 +1,5 @@
 
-**In this guide we will describe how to scale out PyTorch programs using Orca in 4 simple steps.**
+**In this guide we will describe how to scale out PyTorch (v1.5 or later) programs using Orca in 4 simple steps.**
 
 ### **Step 0: Prepare Environment**
 
@@ -15,6 +15,8 @@ pip install jep==3.9.0
 conda install pytorch torchvision cpuonly -c pytorch # command for linux
 conda install pytorch torchvision -c pytorch # command for macOS
 ```
+
+**Note:** The original [source code](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/examples/orca/learn/pytorch/mnist/lenet_mnist.py) for the tutorial below only supports torch version >= 1.5.
 
 ### **Step 1: Init Orca Context**
 ```python
@@ -68,7 +70,7 @@ class LeNet(nn.Module):
 model = LeNet()
 model.train()
 criterion = nn.NLLLoss()
-adam = torch.optim.Adam(model.parameters(), args.lr)
+adam = torch.optim.Adam(model.parameters(), 0.001)
 ```
 
 ### **Step 3: Define Train Dataset**
