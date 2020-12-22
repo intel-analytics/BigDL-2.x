@@ -406,6 +406,7 @@ class TFDataset(object):
                        batch_size=-1, batch_per_thread=-1,
                        hard_code_batch_size=False,
                        validation_image_set=None,
+                       memory_type='DRAM',
                        sequential_order=False,
                        shuffle=True):
         """
@@ -435,6 +436,7 @@ class TFDataset(object):
         return TFImageDataset(image_set, tensor_structure, batch_size,
                               batch_per_thread, hard_code_batch_size,
                               validation_image_set,
+                              memory_type=memory_type,
                               sequential_order=sequential_order, shuffle=shuffle)
 
     @staticmethod
@@ -1010,6 +1012,7 @@ class TFImageDataset(TFDataset):
     def __init__(self, image_set, tensor_structure, batch_size,
                  batch_per_thread, hard_code_batch_size=False,
                  validation_image_set=None,
+                 memory_type='DRAM',
                  sequential_order=False, shuffle=True):
         super(TFImageDataset, self).__init__(tensor_structure, batch_size,
                                              batch_per_thread, hard_code_batch_size)
@@ -1017,6 +1020,7 @@ class TFImageDataset(TFDataset):
         self.validation_image_set = validation_image_set
         self.sequential_order = sequential_order
         self.shuffle = shuffle
+        self.memory_type = memory_type
 
     def _get_prediction_data(self):
         return self.image_set
@@ -1027,6 +1031,7 @@ class TFImageDataset(TFDataset):
 
     def _get_training_data(self):
         fs = FeatureSet.image_set(self.image_set,
+                                  self.memory_type,
                                   sequential_order=self.sequential_order,
                                   shuffle=self.shuffle)
         fs = fs.transform(MergeFeatureLabelImagePreprocessing())
@@ -1114,7 +1119,6 @@ class TFNdarrayDataset(TFDataset):
             sample_rdd = self.val_rdd.map(
                 lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
             fs = FeatureSet.sample_rdd(sample_rdd,
-                                       self.memory_type,
                                        sequential_order=self.sequential_order,
                                        shuffle=self.shuffle)
             fs = fs.transform(TFParkSampleToMiniBatch(self.batch_size, self.hard_code_batch_size))
@@ -1129,6 +1133,7 @@ class TFNdarrayDataset(TFDataset):
                  batch_size=-1, batch_per_thread=-1,
                  hard_code_batch_size=False, val_rdd=None,
                  features=None, labels=None,
+                 memory_type="DRAM",
                  sequential_order=False,
                  shuffle=True):
 
@@ -1166,12 +1171,13 @@ class TFNdarrayDataset(TFDataset):
         return TFNdarrayDataset(rdd, tensor_structure,
                                 batch_size, batch_per_thread,
                                 hard_code_batch_size, val_rdd,
+                                memory_type=memory_type,
                                 sequential_order=sequential_order, shuffle=shuffle)
 
     @staticmethod
     def from_ndarrays(tensors, batch_size=-1, batch_per_thread=-1,
                       hard_code_batch_size=False, val_tensors=None,
-                      sequential_order=False, shuffle=True):
+                      memory_type='DRAM', sequential_order=False, shuffle=True):
         sc = getOrCreateSparkContext()
         node_num, core_num = get_node_and_core_number()
         total_core_num = node_num * core_num
@@ -1184,7 +1190,8 @@ class TFNdarrayDataset(TFDataset):
 
         return TFNdarrayDataset(rdd, tensor_structure, batch_size,
                                 batch_per_thread, hard_code_batch_size,
-                                val_rdd, sequential_order=sequential_order, shuffle=shuffle)
+                                val_rdd, memory_type=memory_type,
+                                sequential_order=sequential_order, shuffle=shuffle)
 
 
 def convert_row_to_numpy(row, schema, feature_cols, labels_cols):
