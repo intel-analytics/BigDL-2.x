@@ -20,6 +20,7 @@ import onnx
 import zoo.pipeline.api.keras.models as zmodels
 from zoo.pipeline.api.onnx.mapper.operator_mapper import OperatorMapper
 from zoo.pipeline.api.onnx.onnx_helper import OnnxHelper
+import warnings
 
 
 class OnnxInput(object):
