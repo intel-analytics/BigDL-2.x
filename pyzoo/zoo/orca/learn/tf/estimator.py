@@ -224,7 +224,7 @@ def is_tf_data_dataset(data):
 
 def to_dataset(data, batch_size, batch_per_thread, validation_data,
                feature_cols, labels_cols, hard_code_batch_size,
-               sequential_order, shuffle, auto_shard_files, memory_type):
+               sequential_order, shuffle, auto_shard_files, memory_type="DRAM"):
     # todo wrap argument into kwargs
     if validation_data:
         if isinstance(data, SparkXShards):

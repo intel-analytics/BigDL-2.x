@@ -347,7 +347,8 @@ def _standarize_feature_label_dataset(dataset, model):
         val_rdd = None
     tensor_structure = _training_reorder(dataset.tensor_structure, input_names, output_names)
     new_dataset = TFNdarrayDataset(rdd, tensor_structure, dataset.batch_size,
-                                   -1, dataset.hard_code_batch_size, val_rdd)
+                                   -1, dataset.hard_code_batch_size, val_rdd,
+                                   dataset.memory_type, dataset.sequential_order, dataset.shuffle)
     new_dataset.batch_per_thread = dataset.batch_per_thread
     return new_dataset
 
@@ -368,7 +369,10 @@ def _standarize_feature_dataset(dataset, model):
     feature_schema = _reorder(dataset.tensor_structure[0], input_names)
 
     dataset = TFNdarrayDataset(rdd, feature_schema, dataset.batch_size,
-                               -1, dataset.hard_code_batch_size)
+                               -1, dataset.hard_code_batch_size,
+                               memory_type=dataset.memory_type,
+                               sequential_order=dataset.sequential_order,
+                               shuffle=dataset.shuffle)
     return dataset
 
 

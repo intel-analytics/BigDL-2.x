@@ -264,4 +264,8 @@ class PythonZoo[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonBigDLK
   def mkdirs(path: String): Unit = {
     Utils.mkdirs(path)
   }
+
+  def createEveryEpochZooTrigger(): EveryEpoch = {
+    new EveryEpoch()
+  }
 }
