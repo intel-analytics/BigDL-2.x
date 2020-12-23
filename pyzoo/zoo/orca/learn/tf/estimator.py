@@ -19,6 +19,7 @@ from bigdl.optim.optimizer import MaxEpoch
 
 from zoo.tfpark.tf_dataset import TFNdarrayDataset
 from zoo.tfpark.model import _standarize_feature_label_dataset
+from zoo.tfpark.tf_dataset import _standardize_keras_target_data
 
 from zoo.common.utils import load_from_file
 from zoo.orca.data.tf.data import Dataset, TFDataDataset2
@@ -620,13 +621,8 @@ class TFKerasWrapper(Estimator):
             checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
 
         if is_tf_data_dataset(data):
-            def standardize_target_data(x, y):
-                if y is not None and len(y.shape) == 0:
-                    y = tf.expand_dims(y, axis=0)
-                return x, y
-
-            data = data.map(standardize_target_data)
-            validation_data = validation_data.map(standardize_target_data)
+            data = data.map(_standardize_keras_target_data)
+            validation_data = validation_data.map(_standardize_keras_target_data)
 
         dataset = to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                              validation_data=validation_data,
