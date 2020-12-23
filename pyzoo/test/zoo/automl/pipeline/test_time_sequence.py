@@ -28,10 +28,9 @@ from zoo.automl.config.recipe import *
 
 import numpy as np
 import pandas as pd
-from pandas.util.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal
 from numpy.testing import assert_array_almost_equal
 import os
-from collections.abc import Iterable
 
 default_past_seq_len = 2
 
@@ -50,7 +49,7 @@ class TestTimeSequencePipeline(ZooTestCase):
     def get_input_tsp(self, future_seq_len, target_col):
         sample_num = np.random.randint(100, 200)
         test_sample_num = np.random.randint(20, 30)
-        if not isinstance(target_col, Iterable):
+        if isinstance(target_col, str):
             train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019',
                                                                periods=sample_num),
                                      target_col: np.random.randn(sample_num)})
