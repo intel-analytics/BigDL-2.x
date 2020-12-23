@@ -259,7 +259,12 @@ class LSTMSeq2Seq(BaseModel):
         """
         y_pred = self.predict(x)
         # y = np.squeeze(y, axis=2)
-        return [Evaluator.evaluate(m, y, y_pred) for m in metric]
+        if self.target_col_num == 1:
+            return [Evaluator.evaluate(m, y, y_pred) for m in metric]
+        else:
+            return [np.array([Evaluator.evaluate(m, y[:, i, :], y_pred[:, i, :])
+                              for i in range(self.future_seq_len)])
+                    for m in metric]
 
     def predict(self, x, mc=False):
         """
@@ -268,17 +273,14 @@ class LSTMSeq2Seq(BaseModel):
         :return: predicted y (expected dimension = 2)
         """
         y_pred = self._decode_sequence(x, mc=mc)
-        y_pred = np.squeeze(y_pred, axis=2)
+        if self.target_col_num == 1:
+            y_pred = np.squeeze(y_pred, axis=2)
         return y_pred
 
     def predict_with_uncertainty(self, x, n_iter=100):
-        result = np.zeros((n_iter,) + (x.shape[0], self.future_seq_len))
-
-        for i in range(n_iter):
-            result[i, :, :] = self.predict(x, mc=True)
-
+        result = np.array([self.predict(x, mc=True) for i in range(n_iter)])
         prediction = result.mean(axis=0)
-        uncertainty = result.std(axis=0)
+        uncertainty = result.var(axis=0)
         return prediction, uncertainty
 
     def save(self, model_path, config_path):

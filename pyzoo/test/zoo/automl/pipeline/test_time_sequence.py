@@ -28,7 +28,7 @@ from zoo.automl.config.recipe import *
 
 import numpy as np
 import pandas as pd
-from pandas.util.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal
 from numpy.testing import assert_array_almost_equal
 import os
 
@@ -48,13 +48,19 @@ class TestTimeSequencePipeline(ZooTestCase):
 
     def get_input_tsp(self, future_seq_len, target_col):
         sample_num = np.random.randint(100, 200)
-        train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019',
-                                                           periods=sample_num),
-                                 target_col: np.random.randn(sample_num)})
         test_sample_num = np.random.randint(20, 30)
-        test_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019',
-                                                          periods=test_sample_num),
-                                target_col: np.random.randn(test_sample_num)})
+        if isinstance(target_col, str):
+            train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019',
+                                                               periods=sample_num),
+                                     target_col: np.random.randn(sample_num)})
+            test_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019',
+                                                              periods=test_sample_num),
+                                    target_col: np.random.randn(test_sample_num)})
+        else:
+            train_df = pd.DataFrame({t: np.random.randn(sample_num) for t in target_col})
+            train_df["datetime"] = pd.date_range('1/1/2019', periods=sample_num)
+            test_df = pd.DataFrame({t: np.random.randn(test_sample_num) for t in target_col})
+            test_df["datetime"] = pd.date_range('1/1/2019', periods=test_sample_num)
         tsp = TimeSequencePredictor(dt_col="datetime",
                                     target_col=target_col,
                                     future_seq_len=future_seq_len,
@@ -274,18 +280,32 @@ class TestTimeSequencePipeline(ZooTestCase):
     #     assert reload_configs["batch_size"] == 64
     #     assert_frame_equal(y_pred, reload_y_pred, check_exact=False, check_less_precise=5)
 
-    # def test_predict_with_uncertainty(self):
-    #     target_col = "values"
+    def test_predict_with_uncertainty(self):
+        target_col = "values"
+        future_seq_len = np.random.randint(2, 6)
+        train_df, test_df, tsp, test_sample_num = self.get_input_tsp(future_seq_len, target_col)
+
+        # test future_seq_len = 3
+        pipeline = tsp.fit(train_df, mc=True, validation_df=test_df)
+        y_out, y_pred_uncertainty = pipeline.predict_with_uncertainty(test_df, n_iter=2)
+        assert y_out.shape == (test_sample_num - default_past_seq_len + 1,
+                               future_seq_len + 1)
+        assert y_pred_uncertainty.shape == (test_sample_num - default_past_seq_len + 1,
+                                            future_seq_len)
+        assert np.any(y_pred_uncertainty)
+
+    # def test_predict_with_uncertainty_multivariate(self):
+    #     target_cols = ["value1", "value2"]
     #     future_seq_len = np.random.randint(2, 6)
-    #     train_df, test_df, tsp, test_sample_num = self.get_input_tsp(future_seq_len, target_col)
+    #     train_df, test_df, tsp, test_sample_num = self.get_input_tsp(future_seq_len, target_cols)
     #
     #     # test future_seq_len = 3
-    #     pipeline = tsp.fit(train_df, mc=True, validation_df=test_df)
+    #     pipeline = tsp.fit(train_df, mc=True, validation_df=test_df, recipe=Seq2SeqRandomRecipe)
     #     y_out, y_pred_uncertainty = pipeline.predict_with_uncertainty(test_df, n_iter=2)
     #     assert y_out.shape == (test_sample_num - default_past_seq_len + 1,
-    #                            future_seq_len + 1)
+    #                            future_seq_len + 1, len(target_cols))
     #     assert y_pred_uncertainty.shape == (test_sample_num - default_past_seq_len + 1,
-    #                                         future_seq_len)
+    #                                         future_seq_len, len(target_cols))
     #     assert np.any(y_pred_uncertainty)
     #
     # def test_fit_predict_with_uncertainty(self):
