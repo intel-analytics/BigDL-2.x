@@ -17,7 +17,7 @@ from pyspark.sql import DataFrame
 
 from bigdl.optim.optimizer import MaxEpoch
 
-from zoo.tfpark.tf_dataset import TFNdarrayDataset, TFDataDataset
+from zoo.tfpark.tf_dataset import TFNdarrayDataset
 from zoo.tfpark.model import _standarize_feature_label_dataset
 
 from zoo.common.utils import load_from_file
