@@ -759,7 +759,7 @@ class TFOptimizer:
                 if isinstance(checkpoint_trigger, EveryEpoch):
                     checkpoint_trigger = ZEveryEpoch()
                 elif not isinstance(checkpoint_trigger, ZooTrigger):
-                    raise Exception("Excepted zoo.util.ZooTrigger." +
+                    raise Exception("Excepted zoo.util.triggers.ZooTrigger." +
                                     " Please change your trigger to an instance of ZooTrigger.")
 
         if self.tf_model.val_methods and self.val_data is not None:

@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 from abc import abstractmethod
-from bigdl.optim.optimizer import TriggerOr
 from bigdl.util.common import JavaValue
 
 class ZooTrigger(JavaValue):
