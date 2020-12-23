@@ -13,3 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+"""
+.. note:: `zoo.pipeline.api.onnx` is deprecated in 0.10.0
+This will be removed in future releases.
+"""
