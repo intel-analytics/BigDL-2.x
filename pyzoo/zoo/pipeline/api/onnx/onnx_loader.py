@@ -51,6 +51,7 @@ class OnnxLoader(object):
 
     @classmethod
     def from_path(cls, onnx_path, is_training=False):
+        warnings.warn("deprecated in 0.10.0, and will be removed in future release")
         onnx_model = onnx.load(onnx_path)
         try:
             zmodel = OnnxLoader(onnx_model.graph).to_keras()
@@ -63,6 +64,7 @@ class OnnxLoader(object):
     @staticmethod
     # inputs_dict is a list of batch data
     def run_node(node, inputs, is_training=False):
+        warnings.warn("deprecated in 0.10.0, and will be removed in future release")
         inputs_list = []
         assert len(inputs) == len(list(node.input))
         for node_input, input_data in zip(node.input, inputs):
@@ -86,6 +88,7 @@ class OnnxLoader(object):
     def to_keras(self):
         """Convert a Onnx model to KerasNet model.
       """
+        warnings.warn("deprecated in 0.10.0, and will be removed in future release")
         # parse network inputs, aka parameters
         for init_tensor in self.graph.initializer:
             if not init_tensor.name.strip():
