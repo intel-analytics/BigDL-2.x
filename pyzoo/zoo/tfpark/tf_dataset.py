@@ -1151,6 +1151,7 @@ class TFNdarrayDataset(TFDataset):
             return TFNdarrayDataset(rdd, tensor_structure,
                                     batch_size, batch_per_thread,
                                     hard_code_batch_size, val_rdd,
+                                    memory_type=memory_type,
                                     sequential_order=sequential_order,
                                     shuffle=shuffle)
 

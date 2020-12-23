@@ -246,6 +246,7 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
                                         batch_per_thread,
                                         validation_data,
                                         hard_code_batch_size=hard_code_batch_size,
+                                        memory_type=memory_type,
                                         sequential_order=sequential_order,
                                         shuffle=shuffle)
     elif isinstance(data, Dataset):
@@ -343,12 +344,12 @@ class TFOptimizerWrapper(Estimator):
             feature_cols=None,
             labels_cols=None,
             validation_data=None,
-            memory_type="DRAM",
             hard_code_batch_size=False,
             auto_shard_files=True,
             session_config=None,
             feed_dict=None,
-            checkpoint_trigger=None
+            checkpoint_trigger=None,
+            memory_type="DRAM"
             ):
         """
         Train this graph model with train data.
@@ -575,11 +576,11 @@ class TFKerasWrapper(Estimator):
             feature_cols=None,
             labels_cols=None,
             validation_data=None,
-            memory_type="DRAM",
             hard_code_batch_size=False,
             session_config=None,
             checkpoint_trigger=None,
             auto_shard_files=True,
+            memory_type="DRAM"
             ):
         """
         Train this keras model with train data.

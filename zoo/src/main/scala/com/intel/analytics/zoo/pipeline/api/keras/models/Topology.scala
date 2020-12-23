@@ -1436,6 +1436,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
       if (checkPointTrigger.isDefined) {
         if (checkPointTrigger.get.isInstanceOf[ZooTrigger]) {
           checkPointTrigger.get.asInstanceOf[ZooTrigger].setZooState(state)
+          validationTrigger.get.asInstanceOf[ZooTrigger].setZooState(state)
         } else {
           throw new IllegalArgumentException(
             s"Excepted com.intel.analytics.zoo.common.ZooTrigger." +

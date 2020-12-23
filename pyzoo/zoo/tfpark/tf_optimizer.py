@@ -31,6 +31,8 @@ from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss, OptimM
 from zoo.pipeline.api.net.utils import find_placeholders, to_bigdl_optim_method, find_tensors
 from zoo.pipeline.estimator import Estimator
 from zoo.util import nest
+from zoo.util.triggers import EveryEpoch as ZEveryEpoch
+from zoo.util.triggers import ZooTrigger
 
 
 if sys.version >= '3':
@@ -755,9 +757,9 @@ class TFOptimizer:
         if isinstance(self.train_data, FeatureSet):
             if self.train_data.value.getNumOfSlice() != 1:
                 if isinstance(checkpoint_trigger, EveryEpoch):
-                    checkpoint_trigger = callZooFunc("float", "createEveryEpochZooTrigger")
-                else:
-                    raise Exception("Excepted com.intel.analytics.zoo.common.ZooTrigger." +
+                    checkpoint_trigger = ZEveryEpoch()
+                elif not isinstance(checkpoint_trigger, ZooTrigger):
+                    raise Exception("Excepted zoo.util.ZooTrigger." +
                                     " Please change your trigger to an instance of ZooTrigger.")
 
         if self.tf_model.val_methods and self.val_data is not None:
