@@ -165,9 +165,7 @@ def _extract_mnist_labels(labels_filepath):
         return labels
 
 
-def write_from_directory(directory, label_map, output_path,
-                               shuffle=True,
-                               **kwargs):
+def write_from_directory(directory, label_map, output_path, shuffle=True, **kwargs):
     labels = os.listdir(directory)
     valid_labels = [label for label in labels if label in label_map]
     generator = []
