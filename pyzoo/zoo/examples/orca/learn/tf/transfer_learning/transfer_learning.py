@@ -72,7 +72,7 @@ batch_size = 32
 # Rescale all images by 1./255 and apply image augmentation
 def _parse_function(img, label):
     image_resized = tf.image.resize(img, [image_size, image_size])
-    return tf.cast(image_resized, dtype=tf.float32)/255.0, tf.cast(label, dtype=tf.uint8)
+    return tf.cast(image_resized, dtype=tf.float32) / 255., tf.cast(label, dtype=tf.uint8)
 
 
 builder = tfds.ImageFolder(base_dir)
