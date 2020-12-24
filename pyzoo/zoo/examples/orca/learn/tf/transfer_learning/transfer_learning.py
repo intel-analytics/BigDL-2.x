@@ -102,7 +102,7 @@ model.compile(optimizer=tf.keras.optimizers.RMSprop(lr=0.0001),
 model.summary()
 len(model.trainable_variables)
 
-epochs = 50
+epochs = 3
 est = Estimator.from_keras(keras_model=model)
 est.fit(train_dataset,
         batch_size=batch_size,
