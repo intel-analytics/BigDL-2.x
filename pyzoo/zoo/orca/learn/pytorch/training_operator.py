@@ -199,6 +199,8 @@ class TrainingOperator:
                 "global_step": self.global_step
             }
             batch_info.update(info)
+            import time
+            t1 = time.time()
             metrics = self.train_batch(batch, batch_info=batch_info)
 
             if self.use_tqdm and self.world_rank == 0:
@@ -211,6 +213,8 @@ class TrainingOperator:
             if self.scheduler and batch_info.get(
                     SCHEDULER_STEP) == SCHEDULER_STEP_BATCH:
                 self.scheduler.step()
+            t2 = time.time()
+            print((t2 - t1) * 1000)
 
             metric_meters.update(metrics, n=metrics.pop(NUM_SAMPLES, 1))
             self.global_step += 1
