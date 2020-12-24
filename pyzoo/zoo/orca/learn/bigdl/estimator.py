@@ -154,7 +154,7 @@ class BigDLEstimatorWrapper(OrcaSparkEstimator):
                              data.__class__.__name__)
         return self
 
-    def predict(self, data, batch_size=8, feature_cols="features", sample_preprocessing=None):
+    def predict(self, data, batch_size=4, feature_cols="features", sample_preprocessing=None):
         if isinstance(data, DataFrame):
             if isinstance(feature_cols, list):
                 data, _, feature_cols = \

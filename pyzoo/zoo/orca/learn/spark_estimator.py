@@ -20,16 +20,16 @@ from zoo.orca.learn.base_estimator import BaseEstimator
 
 class Estimator(BaseEstimator):
     @abstractmethod
-    def fit(self, data, epochs, batch_size, feature_cols=None, labels_cols=None,
+    def fit(self, data, epochs, batch_size=32, feature_cols=None, labels_cols=None,
             validation_data=None, checkpoint_trigger=None):
         raise NotImplementedError
 
     @abstractmethod
-    def predict(self, data, batch_size, feature_cols=None):
+    def predict(self, data, batch_size=4, feature_cols=None):
         raise NotImplementedError
 
     @abstractmethod
-    def evaluate(self, data, batch_size, feature_cols=None, labels_cols=None):
+    def evaluate(self, data, batch_size=32, feature_cols=None, labels_cols=None):
         raise NotImplementedError
 
     @abstractmethod

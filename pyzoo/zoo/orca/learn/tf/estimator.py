@@ -725,7 +725,7 @@ class TFKerasWrapper(Estimator):
         else:
             return predicted_rdd
 
-    def evaluate(self, data, batch_size=4,
+    def evaluate(self, data, batch_size=32,
                  feature_cols=None,
                  labels_cols=None,
                  hard_code_batch_size=False,
