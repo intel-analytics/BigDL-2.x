@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-# This example classifies movie reviews as positive or negative using the text of the review on Orca.
+# This example classifies movie reviews as positive or negative using the text of the review.
 # https://github.com/tensorflow/docs/blob/master/site/en/r1/tutorials/keras/basic_text_classification.ipynb
 
 import tensorflow as tf
