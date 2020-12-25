@@ -211,10 +211,14 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         return y_unscale
 
     def unscale_uncertainty(self, y_uncertainty):
-        value_scale = self.scaler.scale_[0]
-        # print(value_scale)
-        y_uncertainty_unscle = y_uncertainty * value_scale
-        return y_uncertainty_unscle
+        y_uncertainty_unscale = np.zeros(y_uncertainty.shape)
+        for i in range(len(self.target_col)):
+            value_scale = self.scaler.scale_[i]
+            if len(self.target_col) == 1:
+                y_uncertainty_unscale = y_uncertainty * value_scale
+            else:
+                y_uncertainty_unscale[:, :, i] = y_uncertainty[:, :, i] * value_scale
+        return y_uncertainty_unscale
 
     def _get_y_pred_df(self, y_pred_dt_df, y_pred_unscale):
         """
