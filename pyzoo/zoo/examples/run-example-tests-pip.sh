@@ -618,8 +618,7 @@ echo "#18 start test for orca tf transfer_learning"
 start=$(date "+%s")
 #run the example
 export SPARK_DRIVER_MEMORY=3g
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf/transfer_learning/transfer_learning.py \
-    --epochs 1
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf/transfer_learning/transfer_learning.py
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
