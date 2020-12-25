@@ -193,6 +193,7 @@ class TrainingOperator:
         metric_meters = AverageMeterCollection()
 
         self.model.train()
+        total_time = 0
         for batch_idx, batch in enumerate(iterator):
             batch_info = {
                 "batch_idx": batch_idx,
@@ -203,18 +204,26 @@ class TrainingOperator:
             t1 = time.time()
             metrics = self.train_batch(batch, batch_info=batch_info)
 
+            if self.scheduler and batch_info.get(
+                    SCHEDULER_STEP) == SCHEDULER_STEP_BATCH:
+                self.scheduler.step()
+
+            t2 = time.time()
+            batch_time = (t2 - t1) * 1000
+            print(batch_time)
+            total_time += batch_time
+
+            if (batch_idx + 1) % 50 == 0:
+                batch_time_average = total_time / 50
+                total_time = 0
+                print("Average for 100 batches: ", batch_time_average)
+
             if self.use_tqdm and self.world_rank == 0:
                 _progress_bar.n = batch_idx + 1
                 postfix = {}
                 if "train_loss" in metrics:
                     postfix.update(loss=metrics["train_loss"])
                 _progress_bar.set_postfix(postfix)
-
-            if self.scheduler and batch_info.get(
-                    SCHEDULER_STEP) == SCHEDULER_STEP_BATCH:
-                self.scheduler.step()
-            t2 = time.time()
-            print((t2 - t1) * 1000)
 
             metric_meters.update(metrics, n=metrics.pop(NUM_SAMPLES, 1))
             self.global_step += 1
