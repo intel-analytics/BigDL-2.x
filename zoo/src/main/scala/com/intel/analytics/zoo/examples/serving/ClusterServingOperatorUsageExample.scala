@@ -17,7 +17,6 @@
 package com.intel.analytics.zoo.examples.serving
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.zoo.serving.ClusterServing.params
 import com.intel.analytics.zoo.serving.arrow.ArrowDeserializer
 import com.intel.analytics.zoo.serving.operator.{ClusterServingInferenceOperator, ClusterServingInput, ClusterServingParams}
 import com.intel.analytics.zoo.serving.utils.Conventions

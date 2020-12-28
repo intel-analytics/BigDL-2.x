@@ -17,8 +17,8 @@
 package com.intel.analytics.zoo.serving.operator
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.zoo.serving.PreProcessing
-import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, ModelHolder}
+import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
+import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.configuration.Configuration
@@ -35,15 +35,15 @@ class ClusterServingInferenceOperator(var params: ClusterServingParams = new Clu
     if (params == null) {
       params = new ClusterServingParams()
     }
-    if (ModelHolder.model == null) {
-      ModelHolder.synchronized {
-        if (ModelHolder.model == null) {
+    if (ClusterServing.model == null) {
+      ClusterServing.synchronized {
+        if (ClusterServing.model == null) {
           logger.info("Loading Cluster Serving model...")
           val localModelDir = getRuntimeContext.getDistributedCache
             .getFile(Conventions.SERVING_MODEL_TMP_DIR).getPath
           val info = ClusterServingHelper
             .loadModelfromDir(localModelDir, params._modelConcurrent)
-          ModelHolder.model = info._1
+          ClusterServing.model = info._1
           params._modelType = info._2
         }
       }
