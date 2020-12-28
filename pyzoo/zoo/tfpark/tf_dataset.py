@@ -1302,6 +1302,7 @@ class DataFrameDataset(TFNdarrayDataset):
                                                batch_per_thread, hard_code_batch_size,
                                                val_rdd, sequential_order, shuffle)
 
+
 def _standarize_feature_label_dataset(dataset, model):
     input_names = model.input_names
     output_names = model.output_names
@@ -1361,6 +1362,7 @@ def _standarize_feature_dataset(dataset, model):
     dataset = TFNdarrayDataset(rdd, feature_schema, -1,
                                dataset.batch_per_thread, dataset.hard_code_batch_size)
     return dataset
+
 
 def _standardize_keras_target_data(x, ys):
     def check_y_dims(y):

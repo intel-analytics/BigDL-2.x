@@ -310,6 +310,7 @@ class KerasModel(object):
     def predict_on_batch(self, x):
         return self.model.predict_on_batch(x)
 
+
 def _create_rdd_x_y(x, y, input_names, output_names, sc):
     from tensorflow.python.keras.engine import training_utils
     x = training_utils.standardize_input_data(x, input_names,
