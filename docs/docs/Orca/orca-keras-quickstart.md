@@ -90,9 +90,9 @@ Next, fit and evaluate using the Estimator.
 est.fit(data=mnist_train,
         batch_size=320,
         epochs=5,
-        validation_data=mnist_test, auto_shard_files=False)
+        validation_data=mnist_test)
 
-result = est.evaluate(mnist_test, auto_shard_files=False)
+result = est.evaluate(mnist_test)
 print(result)
 ```
 

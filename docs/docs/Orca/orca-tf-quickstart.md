@@ -100,12 +100,9 @@ Next, fit and evaluate using the Estimator.
 est.fit(data=train_dataset,
         batch_size=320,
         epochs=5,
-        validation_data=mnist_test,
-        # tfds mnist only has one file and cannot be sharded on files,
-        # falling back on sharding on records
-        auto_shard_files=False)
+        validation_data=mnist_test)
 
-result = est.evaluate(mnist_test, auto_shard_files=False)
+result = est.evaluate(mnist_test)
 print(result)
 ```
 
