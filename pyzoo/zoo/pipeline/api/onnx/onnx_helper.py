@@ -13,12 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import warnings
 
 
 class OnnxHelper:
+    """
+    .. note:: `zoo.pipeline.api.onnx` is deprecated in 0.10.0
+    This will be removed in future releases.
+    """
     @staticmethod
     def parse_attr(attr_proto):
         """Convert a list of AttributeProto to a dict, with names as keys."""
+        warnings.warn("deprecated in 0.10.0, and will be removed in future release")
         attrs = {}
         for a in attr_proto:
             for f in ['f', 'i', 's']:
@@ -41,6 +47,7 @@ class OnnxHelper:
     @staticmethod
     def to_numpy(tensor_proto):
         """Grab data in TensorProto and to_tensor to numpy array."""
+        warnings.warn("deprecated in 0.10.0, and will be removed in future release")
         try:
             from onnx.numpy_helper import to_array
         except ImportError as e:
@@ -50,10 +57,12 @@ class OnnxHelper:
 
     @staticmethod
     def get_shape_from_node(valueInfoProto):
+        warnings.warn("deprecated in 0.10.0, and will be removed in future release")
         return [int(dim.dim_value) for dim in valueInfoProto.type.tensor_type.shape.dim]
 
     @staticmethod
     def get_padds(onnx_attr):
+        warnings.warn("deprecated in 0.10.0, and will be removed in future release")
         border_mode = None
         pads = None
 

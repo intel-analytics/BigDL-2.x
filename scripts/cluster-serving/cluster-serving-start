@@ -56,24 +56,24 @@ if [ -z "${redis_maxmem}" ]; then
     redis_maxmem=8G
 fi
 
-LOG_DIR=log-cluster_serving-${model_name}.txt
 # try to start redis server
 if [ -z "${REDIS_HOME}" ]; then
-    echo "REDIS_HOME variable is not set, skip redis start. Note that you need to set it otherwise Cluster Serving would not start or stop Redis for you."
+    echo "REDIS_HOME variable is not set, skip redis start. "
+    echo "Note that you need to set it otherwise Cluster Serving would not start or stop Redis for you."
 else
-    ${REDIS_HOME}/src/redis-server >> $LOG_DIR &
-    echo "redis server started, please check log in redis.log" && sleep 1
+    echo "Trying to start Redis server with default parameter"
+    ${REDIS_HOME}/src/redis-server &
+    sleep 1
 
     # sleep for 1 sec to ensure server is ready and client could connect
-    ${REDIS_HOME}/src/redis-cli config set stop-writes-on-bgsave-error no
-    ${REDIS_HOME}/src/redis-cli config set save ""
-    
-    ${REDIS_HOME}/src/redis-cli config set maxmemory ${redis_maxmem}
-    echo "redis config maxmemory set to ${redis_maxmem}"
+    echo "setting redis stop-writes-on-bgsave-error no: "`${REDIS_HOME}/src/redis-cli config set stop-writes-on-bgsave-error no`
+    echo "setting redis save \"\": "`${REDIS_HOME}/src/redis-cli config set save ""`
+    echo "setting redis maxmemory 4g: "`${REDIS_HOME}/src/redis-cli config set maxmemory 4g`
     # bind can not be set after redis starts
     # /opt/work/redis-5.0.5/src/redis-cli config set bind "0.0.0.0"
-    ${REDIS_HOME}/src/redis-cli config set protected-mode no
-    ${REDIS_HOME}/src/redis-cli config set maxclients 10000
+    echo "setting redis protected-mode no: "`${REDIS_HOME}/src/redis-cli config set protected-mode no`
+    echo "setting redis maxclients 10000: "`${REDIS_HOME}/src/redis-cli config set maxclients 10000`
+    echo "To set specific parameter, use \"\$REDIS_HOME/src/redis-cli config set key value\" later."
 fi
 
 
@@ -94,10 +94,6 @@ else
   rm -rf /tmp/cluster-serving-jobs.yaml
 fi
 
-${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p $par_num zoo.jar -c $config_path >> $LOG_DIR &
+${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p $par_num zoo.jar -c $config_path
 
-echo "Cluster Serving job submitted, check log in $LOG_DIR"
-echo "To list Cluster Serving job status, use cluster-serving-cli list"
-sleep 3
-tail -1 $LOG_DIR
 

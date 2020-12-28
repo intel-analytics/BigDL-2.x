@@ -26,10 +26,8 @@ import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
 import com.intel.analytics.bigdl.utils.{T, Table}
-import com.intel.analytics.zoo.serving.engine.{JedisPoolHolder, Timer}
 import com.intel.analytics.zoo.serving.http.Instances
-import com.intel.analytics.zoo.serving.pipeline.RedisIO
-import com.intel.analytics.zoo.serving.utils.{Conventions, SerParams}
+import com.intel.analytics.zoo.serving.utils.Conventions
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 import redis.clients.jedis.Jedis
@@ -41,13 +39,6 @@ class PreProcessing(chwFlag: Boolean = true,
   val logger = Logger.getLogger(getClass)
 
   var byteBuffer: Array[Byte] = null
-
-  def writeNaNtoRedis(key: String): Unit = {
-    val jedis = RedisIO.getRedisClient(JedisPoolHolder.jedisPool)
-    val ppl = jedis.pipelined()
-    RedisIO.writeHashMap(ppl, key, "NaN", jobName)
-    ppl.sync()
-  }
   def decodeArrowBase64(key: String, s: String): Activity = {
     try {
       byteBuffer = java.util.Base64.getDecoder.decode(s)

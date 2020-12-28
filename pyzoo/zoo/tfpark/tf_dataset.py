@@ -15,6 +15,7 @@
 #
 
 import numpy as np
+import tensorflow as tf
 import sys
 import functools
 import logging
@@ -596,7 +597,7 @@ class TFDataset(object):
                              sequential_order=False,
                              shuffle=True,
                              remove_checking=False, batch_outside=False,
-                             inter_threads=None, intra_threads=None, auto_shard_files=True):
+                             inter_threads=None, intra_threads=None, auto_shard_files=False):
         """
         Create a TFDataset from a tf.data.Dataset.
 
@@ -714,7 +715,7 @@ class TFDataDataset(TFDataset):
                  validation_dataset=None,
                  sequential_order=False, shuffle=True,
                  remove_checking=False, batch_outside=False,
-                 inter_threads=None, intra_threads=None, auto_shard_files=True):
+                 inter_threads=None, intra_threads=None, auto_shard_files=False):
 
         self.auto_shard_files = auto_shard_files
 
@@ -1360,3 +1361,18 @@ def _standarize_feature_dataset(dataset, model):
     dataset = TFNdarrayDataset(rdd, feature_schema, -1,
                                dataset.batch_per_thread, dataset.hard_code_batch_size)
     return dataset
+
+def _standardize_keras_target_data(x, ys):
+    def check_y_dims(y):
+        return y is not None and len(y.shape) == 0
+
+    if isinstance(ys, dict):
+        ys = {k: tf.expand_dims(y, axis=0) if check_y_dims(y) else y for k, y in ys.items()}
+    elif isinstance(ys, list):
+        ys = [tf.expand_dims(y, axis=0) if check_y_dims(y) else y for y in ys]
+    elif isinstance(ys, tuple):
+        ys = tuple(tf.expand_dims(y, axis=0) if check_y_dims(y) else y for y in ys)
+    else:
+        ys = tf.expand_dims(ys, axis=0) if check_y_dims(ys) else ys
+
+    return x, ys

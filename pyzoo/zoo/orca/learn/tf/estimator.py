@@ -19,6 +19,7 @@ from bigdl.optim.optimizer import MaxEpoch
 
 from zoo.tfpark.tf_dataset import TFNdarrayDataset
 from zoo.tfpark.tf_dataset import _standarize_feature_label_dataset
+from zoo.tfpark.tf_dataset import _standardize_keras_target_data
 
 from zoo.common.utils import load_from_file
 from zoo.orca.data.tf.data import Dataset, TFDataDataset2
@@ -108,7 +109,7 @@ class Estimator(SparkEstimator):
                         return self.tf_optimizer.estimator.get_validation_summary(tag)
                 else:
                     if tag == str(val_method.val_method):
-                        return self.tf_optimizer.estimator.\
+                        return self.tf_optimizer.estimator. \
                             get_validation_summary("{} {}".format(val_method.name, tag))
                 continue
         return None
@@ -343,7 +344,7 @@ class TFOptimizerWrapper(Estimator):
             labels_cols=None,
             validation_data=None,
             hard_code_batch_size=False,
-            auto_shard_files=True,
+            auto_shard_files=False,
             session_config=None,
             feed_dict=None,
             checkpoint_trigger=None
@@ -437,7 +438,7 @@ class TFOptimizerWrapper(Estimator):
     def predict(self, data, batch_size=4,
                 feature_cols=None,
                 hard_code_batch_size=False,
-                auto_shard_files=True,
+                auto_shard_files=False,
                 ):
         """
         Predict input data
@@ -490,7 +491,7 @@ class TFOptimizerWrapper(Estimator):
                  feature_cols=None,
                  labels_cols=None,
                  hard_code_batch_size=False,
-                 auto_shard_files=True,
+                 auto_shard_files=False,
                  ):
         """
         Evaluate model.
@@ -575,7 +576,7 @@ class TFKerasWrapper(Estimator):
             hard_code_batch_size=False,
             session_config=None,
             checkpoint_trigger=None,
-            auto_shard_files=True,
+            auto_shard_files=False,
             ):
         """
         Train this keras model with train data.
@@ -619,12 +620,17 @@ class TFKerasWrapper(Estimator):
         if checkpoint_trigger is not None:
             checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
 
+        if is_tf_data_dataset(data):
+            data = data.map(_standardize_keras_target_data)
+            validation_data = validation_data.map(_standardize_keras_target_data)
+
         dataset = to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                              validation_data=validation_data,
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=hard_code_batch_size,
                              sequential_order=False, shuffle=True,
                              auto_shard_files=auto_shard_files)
+
         if isinstance(dataset, TFNdarrayDataset):
             dataset = _standarize_feature_label_dataset(dataset, self.model.model)
 
@@ -652,7 +658,7 @@ class TFKerasWrapper(Estimator):
     def predict(self, data, batch_size=4,
                 feature_cols=None,
                 hard_code_batch_size=False,
-                auto_shard_files=True,
+                auto_shard_files=False,
                 ):
         """
         Predict input data
@@ -698,7 +704,7 @@ class TFKerasWrapper(Estimator):
                  feature_cols=None,
                  labels_cols=None,
                  hard_code_batch_size=False,
-                 auto_shard_files=True
+                 auto_shard_files=False
                  ):
         """
         Evaluate model.
