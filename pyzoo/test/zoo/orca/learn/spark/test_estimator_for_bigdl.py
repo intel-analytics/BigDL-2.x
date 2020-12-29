@@ -239,11 +239,11 @@ class TestEstimatorForKeras(TestCase):
             r_c = r1.collect()
             estimator.set_tensorboard(log_dir=temp_dir_name, app_name="test")
             estimator.fit(data=data_shard, epochs=5, batch_size=8, validation_data=data_shard,
-                          validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
+                          validation_metrics=[Accuracy()], checkpoint_trigger=EveryEpoch())
             summary = estimator.get_train_summary(tag="Loss")
             temp_path = os.path.join(temp_dir_name, "save_model")
             estimator.save(temp_path)
-            estimator.evaluate(data=data_shard, validation_methods=[Accuracy()], batch_size=8)
+            estimator.evaluate(data=data_shard, validation_metrics=[Accuracy()], batch_size=8)
             result = estimator.predict(data=data_shard)
             assert type(result).__name__ == 'SparkXShards'
             result_c = result.collect()
@@ -255,7 +255,7 @@ class TestEstimatorForKeras(TestCase):
                 assert abs(r0_c[idx]["prediction"][0] - result_c[0]["prediction"][idx][0]) == 0
                 assert abs(r0_c[idx]["prediction"][1] - result_c[0]["prediction"][idx][1]) == 0
             estimator.fit(data=df, epochs=6, batch_size=8, validation_data=df,
-                          validation_methods=[Accuracy()], validation_trigger=EveryEpoch())
+                          validation_metrics=[Accuracy()], validation_trigger=EveryEpoch())
             summary = estimator.get_train_summary()
 
             # test load from checkpoint
@@ -267,8 +267,8 @@ class TestEstimatorForKeras(TestCase):
             assert (result_c[0]["prediction"] == r2_c[0]["prediction"]).all()
             # resume training
             est2.fit(data=data_shard, epochs=10, batch_size=8, validation_data=data_shard,
-                     validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
-            est2.evaluate(data=data_shard, validation_methods=[Accuracy()], batch_size=8)
+                     validation_metrics=[Accuracy()], checkpoint_trigger=EveryEpoch())
+            est2.evaluate(data=data_shard, validation_metrics=[Accuracy()], batch_size=8)
             # test load from saved model
             est3 = Estimator.from_bigdl(model=Sequential(), optimizer=None, loss=None,
                                         model_dir=None)
