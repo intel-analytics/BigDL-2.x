@@ -630,10 +630,6 @@ class TFKerasWrapper(Estimator):
         """
 
         if isinstance(data, DataFrame):
-          
-          
-          
-          
             assert feature_cols is not None, \
                 "feature columns is None; it should not be None in training"
             assert labels_cols is not None, \
