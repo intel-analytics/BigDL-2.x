@@ -17,15 +17,17 @@
 
 package com.intel.analytics.zoo.serving.engine
 
+import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.pipeline.RedisIO
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions, SerParams}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
 import org.apache.log4j.Logger
 import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig}
 
 
-class FlinkRedisSink(params: SerParams) extends RichSinkFunction[List[(String, String)]] {
+class FlinkRedisSink(params: ClusterServingHelper)
+  extends RichSinkFunction[List[(String, String)]] {
   var jedis: Jedis = null
   var logger: Logger = null
 
@@ -39,10 +41,10 @@ class FlinkRedisSink(params: SerParams) extends RichSinkFunction[List[(String, S
       System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
       System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStoreToken)
     }
-    if (JedisPoolHolder.jedisPool == null) {
-      JedisPoolHolder.synchronized {
-        if (JedisPoolHolder.jedisPool == null) {
-          JedisPoolHolder.jedisPool = new JedisPool(new JedisPoolConfig(),
+    if (ClusterServing.jedisPool == null) {
+      ClusterServing.synchronized {
+        if (ClusterServing.jedisPool == null) {
+          ClusterServing.jedisPool = new JedisPool(new JedisPoolConfig(),
             params.redisHost, params.redisPort, params.redisTimeout, params.redisSecureEnabled)
         }
       }
@@ -52,7 +54,7 @@ class FlinkRedisSink(params: SerParams) extends RichSinkFunction[List[(String, S
       case true => logger.info(s"FlinkRedisSink connect to secured Redis successfully.")
       case false => logger.info(s"FlinkRedisSink connect to plain Redis successfully.")
     }
-    jedis = RedisIO.getRedisClient(JedisPoolHolder.jedisPool)
+    jedis = RedisIO.getRedisClient(ClusterServing.jedisPool)
 
   }
 
@@ -76,6 +78,4 @@ class FlinkRedisSink(params: SerParams) extends RichSinkFunction[List[(String, S
   }
 
 }
-object JedisPoolHolder {
-  var jedisPool: JedisPool = null
-}
+

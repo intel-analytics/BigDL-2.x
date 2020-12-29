@@ -19,8 +19,9 @@ package com.intel.analytics.zoo.serving.engine
 import java.util.AbstractMap.SimpleEntry
 import java.util.UUID
 
+import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.pipeline.{RedisIO, RedisUtils}
-import com.intel.analytics.zoo.serving.utils.{Conventions, FileUtils, SerParams}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions, FileUtils}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.source.{RichParallelSourceFunction, RichSourceFunction, SourceFunction}
 import org.apache.log4j.Logger
@@ -28,14 +29,11 @@ import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, StreamEntryID}
 
 import scala.collection.JavaConverters._
 
-class FlinkRedisSource(params: SerParams)
+class FlinkRedisSource(params: ClusterServingHelper)
   extends RichParallelSourceFunction[List[(String, String)]] {
   @volatile var isRunning = true
-
-  var redisPool: JedisPool = null
   var jedis: Jedis = null
   var logger: Logger = null
-
 
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
@@ -47,9 +45,15 @@ class FlinkRedisSource(params: SerParams)
       System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
       System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStoreToken)
     }
+    if (ClusterServing.jedisPool == null) {
+      ClusterServing.synchronized {
+        if (ClusterServing.jedisPool == null) {
+          ClusterServing.jedisPool = new JedisPool(new JedisPoolConfig(),
+            params.redisHost, params.redisPort, params.redisTimeout, params.redisSecureEnabled)
+        }
+      }
+    }
 
-    redisPool = new JedisPool(new JedisPoolConfig(),
-      params.redisHost, params.redisPort, params.redisTimeout, params.redisSecureEnabled)
     logger.info(
       s"FlinkRedisSource connect to Redis: redis://${params.redisHost}:${params.redisPort} " +
       s"with timeout: ${params.redisTimeout} and redisSecureEnabled: ${params.redisSecureEnabled}")
@@ -57,20 +61,19 @@ class FlinkRedisSource(params: SerParams)
       case true => logger.info(s"FlinkRedisSource connect to secured Redis successfully.")
       case false => logger.info(s"FlinkRedisSource connect to plain Redis successfully.")
     }
-    jedis = RedisIO.getRedisClient(redisPool)
+    jedis = RedisIO.getRedisClient(ClusterServing.jedisPool)
     try {
       jedis.xgroupCreate(params.jobName,
         "serving", new StreamEntryID(0, 0), true)
     } catch {
       case e: Exception =>
-        println(s"$e exist group")
+        logger.info(s"xgroupCreate raise [$e], " +
+          s"will not create new group.")
     }
   }
 
   override def run(sourceContext: SourceFunction
     .SourceContext[List[(String, String)]]): Unit = while (isRunning) {
-    // logger.info(s">>> get from source begin ${System.currentTimeMillis()} ms")
-    val start = System.nanoTime()
     val groupName = "serving"
     val consumerName = "consumer-" + UUID.randomUUID().toString
     val readNumPerTime = if (params.modelType == "openvino") params.coreNum else 4
@@ -97,7 +100,6 @@ class FlinkRedisSource(params: SerParams)
 
   override def cancel(): Unit = {
     jedis.close()
-    redisPool.close()
     logger.info("Flink source cancelled")
   }
 
