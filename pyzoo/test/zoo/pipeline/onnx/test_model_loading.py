@@ -57,20 +57,6 @@ class Transpose(torch.nn.Module):
 
 
 class TestModelLoading(OnnxTestCase):
-    def test_onnx_conv2d(self):
-        pytorch_model = torch.nn.Sequential(
-            torch.nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3)
-        )
-        input_shape_with_batch = (1, 3, 224, 224)
-        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
-
-    def test_onnx_conv2d_2(self):
-        pytorch_model = torch.nn.Sequential(
-            torch.nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3),
-            torch.nn.Conv2d(in_channels=64, out_channels=4, kernel_size=3)
-        )
-        input_shape_with_batch = (1, 3, 224, 224)
-        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
     def _batchnorm_test_mode(self, x, s, bias, mean, var, epsilon=1e-5):
         dims_x = len(x.shape)
@@ -80,22 +66,6 @@ class TestModelLoading(OnnxTestCase):
         mean = mean.reshape(-1, *dim_ones)
         var = var.reshape(-1, *dim_ones)
         return s * (x - mean) / np.sqrt(var + epsilon) + bias
-
-    # Momentum is always equal to 1 no matter what value we set
-    def test_onnx_batch_norm1(self):
-        pytorch_model = torch.nn.Sequential(
-            torch.nn.BatchNorm2d(num_features=3, momentum=1, affine=False)
-        )
-        input_shape_with_batch = (1, 3, 224, 224)
-        self.compare_with_pytorch(pytorch_model, input_shape_with_batch, rtol=1e-3, atol=1e-3)
-
-    # Momentum is always equal to 1 no matter what value we set
-    def test_onnx_batch_norm2(self):
-        pytorch_model = torch.nn.Sequential(
-            torch.nn.BatchNorm2d(num_features=3, momentum=1, affine=True)
-        )
-        input_shape_with_batch = (1, 3, 224, 224)
-        self.compare_with_pytorch(pytorch_model, input_shape_with_batch, rtol=1e-3, atol=1e-3)
 
     def test_batch_norm(self):
         x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32).reshape((3, 2, 1, 1))
@@ -163,14 +133,6 @@ class TestModelLoading(OnnxTestCase):
                                         [144., 153., 162.]]]]).astype(np.float32)
         output = OnnxLoader.run_node(node_without_padding, [x, W])
         np.testing.assert_almost_equal(output["y"], y_without_padding, decimal=5)
-
-    def test_onnx_gemm(self):
-        # TODO: Linear(bias = Flase) is mapped to Transpose + MatMul, not GEMM
-        pytorch_model = torch.nn.Sequential(
-            torch.nn.Linear(in_features=3, out_features=4, bias=True)
-        )
-        input_shape_with_batch = (1, 3)
-        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
     def test_onnx_add(self):
         class Add(torch.nn.Module):
@@ -297,21 +259,6 @@ class TestModelLoading(OnnxTestCase):
             output = OnnxLoader.run_node(node, [data, shape])
             reshaped = np.reshape(data, shape)
             np.testing.assert_almost_equal(output["reshaped"], reshaped, decimal=5)
-
-    def test_reshape_pytorch(self):
-        class View(torch.nn.Module):
-            def __init__(self, *shape):
-                super(View, self).__init__()
-                self.shape = shape
-
-            def forward(self, input):
-                return input.view(self.shape)
-
-        pytorch_model = torch.nn.Sequential(
-            torch.nn.Linear(20, 20),
-            View(2, 5, 4))
-        input_shape_with_batch = (2, 20)
-        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
     def test_constant(self):
         values = np.random.randn(5, 5).astype(np.float32)
@@ -540,32 +487,6 @@ class TestModelLoading(OnnxTestCase):
         output = OnnxLoader.run_node(node, [a, b])
         np.testing.assert_almost_equal(output["c"], c, decimal=5)
 
-    def test_minit(self):
-        import torch.nn as nn
-        import torch.nn.functional as F
-
-        class MnistNet(nn.Module):
-            def __init__(self):
-                super(MnistNet, self).__init__()
-                self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
-                self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
-                self.conv2_drop = nn.Dropout2d()
-                self.fc1 = nn.Linear(320, 50)
-                self.fc2 = nn.Linear(50, 10)
-
-            def forward(self, x):
-                x = F.relu(F.max_pool2d(self.conv1(x), 2))
-                x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
-                x = x.view(-1, 320)
-                x = F.relu(self.fc1(x))
-                x = F.dropout2d(x, training=self.training)
-                x = self.fc2(x)
-                return F.log_softmax(x, dim=1)
-
-        pytorch_model = MnistNet()
-        pytorch_model.train(mode=False)
-        self.compare_with_pytorch(pytorch_model, [(1, 1, 28, 28)])
-
     def test_onnx_sub(self):
         class Sub(torch.nn.Module):
             def forward(self, x):
@@ -593,11 +514,6 @@ class TestModelLoading(OnnxTestCase):
         z = x - y
         output = OnnxLoader.run_node(node, [x, y])
         np.testing.assert_almost_equal(output["z"], z, decimal=5)
-
-    def test_onnx_squeeze(self):
-        pytorch_model = Squeeze()
-        input_shape_with_batch = (2, 1, 2, 1, 2)
-        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
     def test_onnx_squeeze_dim0(self):
         pytorch_model = Squeeze(0)
@@ -677,20 +593,6 @@ class TestModelLoading(OnnxTestCase):
         y = 1.0 / (1.0 + np.exp(np.negative(x)))  # expected output [0.26894143, 0.5, 0.7310586]
         output = OnnxLoader.run_node(node, [x])
         np.testing.assert_almost_equal(output["y"], y, decimal=5)
-
-    def test_onnx_index_select(self):
-        class IndexSelect(torch.nn.Module):
-            def __init__(self, *parameter):
-                super(IndexSelect, self).__init__()
-                self.dim = parameter[0]
-                self.index = parameter[1]
-
-            def forward(self, x):
-                return torch.index_select(x, dim=self.dim, index=torch.tensor(self.index))
-
-        pytorch_model = IndexSelect(3, 2)
-        input_shape_with_batch = (3, 4, 5, 6)
-        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
 
     def test_index_select_axis0(self):
         import pytest
@@ -944,15 +846,6 @@ class TestModelLoading(OnnxTestCase):
         output = OnnxLoader.run_node(node, [x, y])
         np.testing.assert_almost_equal(output["z"], z, decimal=5)
 
-    def test_pow(self):
-        class Power(torch.nn.Module):
-            def forward(self, x):
-                return torch.pow(x, 2)
-
-        pytorch_model = Power()
-        input_shape_with_batch = (1, 2, 2)
-        self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
-
     def test_onnx_elu(self):
         node = onnx.helper.make_node(
             'Elu',
@@ -1015,14 +908,6 @@ class TestModelLoading(OnnxTestCase):
             )
             input_shape_with_batch = (1, 3, 32)
             self.compare_with_pytorch(pytorch_model, input_shape_with_batch)
-
-    def test_onnx_embedding(self):
-        pytorch_model = torch.nn.Sequential(
-            torch.nn.Embedding(num_embeddings=10, embedding_dim=3)
-        )
-        input_shape_with_batch = (2, 4)
-        input_data_with_batch = [[[1, 2, 4, 5], [4, 3, 2, 9]]]
-        self.compare_with_pytorch(pytorch_model, input_shape_with_batch, input_data_with_batch)
 
     def test_onnx_slice1(self):
         class Slice(torch.nn.Module):
