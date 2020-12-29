@@ -45,27 +45,22 @@ The user may use `XShards` to efficiently process large-size Pandas Dataframes i
 
 First, the user can read CVS, JSON or Parquet files (stored on local disk, HDFS, AWS S3, etc.) to obtain an `XShards` of Pandas Dataframe, as shown below:
 ```python
-import tempfile
-import numpy as np
-import pandas as pd
 from zoo.orca.data.pandas import read_csv
-with tempfile.NamedTemporaryFile() as temp:
-    data = np.random.rand(300, 480)
-    df = pd.DataFrame(data)
-    df.to_csv(temp.name)
-    shard = read_csv(temp.name)
+csv_path = "/path/to/csv_file_or_folder"
+shard = read_csv(csv_path)
 ```
 
 Each partition of the returned `XShards` stores a Pandas Dataframe object (containing a subset of the entire dataset), and then the user can apply Pandas operations as well as other (e.g., sklearn) operations on each partition, as shown below:   
 ```python
-def preprocessing(df, id_name, y_name):
-    id = df.index
-    data = df.to_numpy()
-    result = dict({id_name: id, y_name: data})
-    return result
+def negative(df, column_name):
+    df[column_name] = df[column_name] * (-1)
+    return df
     
-train_shards = shard.transform_shard(preprocessing, 'id', 'data')
+train_shards = shard.transform_shard(negative, 'value')
 ```
 
 In addition, some global operations  (such as `partition_by`, `unique`, etc.) are also supported on the `XShards` of Pandas Dataframe, as shown below:
-<TODO: shown a simple `partition_by`, `unique` example>
+```python
+shard.partition_by(cols="location", num_partitions=4)
+location_list = shard["location"].unique()
+```
