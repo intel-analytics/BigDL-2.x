@@ -37,17 +37,17 @@ from zoo.orca.learn.spark_estimator import Estimator as SparkEstimator
 
 
 class Estimator(SparkEstimator):
-    def fit(self, data, epochs, batch_size, feature_cols=None, labels_cols=None,
+    def fit(self, data, epochs, batch_size=32, feature_cols=None, labels_cols=None,
             validation_data=None, hard_code_batch_size=False, session_config=None,
-            checkpoint_trigger=None, auto_shard_files=True):
+            checkpoint_trigger=None, auto_shard_files=False):
         raise NotImplementedError
 
-    def predict(self, data, batch_size, feature_cols=None, hard_code_batch_size=False,
-                auto_shard_files=True):
+    def predict(self, data, batch_size=4, feature_cols=None, hard_code_batch_size=False,
+                auto_shard_files=False):
         raise NotImplementedError
 
-    def evaluate(self, data, batch_size, feature_cols=None, labels_cols=None,
-                 hard_code_batch_size=False, auto_shard_files=True):
+    def evaluate(self, data, batch_size=32, feature_cols=None, labels_cols=None,
+                 hard_code_batch_size=False, auto_shard_files=False):
         raise NotImplementedError
 
     def get_model(self):
