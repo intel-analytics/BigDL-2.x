@@ -295,9 +295,9 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         :return:
         """
         # for StandardScaler()
+        # num_features_input for 0.23 sklearn support, sklearn version >=0.24 will not check this
         data_to_save = {"mean": self.scaler.mean_.tolist(),
                         "scale": self.scaler.scale_.tolist(),
-                        # num_features_input for 0.23 sklearn support, sklearn version >=0.24 will not check this
                         "num_features_input": self.scaler.n_features_in_,
                         "future_seq_len": self.future_seq_len,
                         "dt_col": self.dt_col,
