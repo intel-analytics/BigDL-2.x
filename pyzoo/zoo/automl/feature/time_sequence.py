@@ -17,6 +17,7 @@
 from zoo.automl.common.util import save_config
 from zoo.automl.feature.abstract import BaseFeatureTransformer
 
+import sklearn
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import pandas as pd
 import numpy as np
@@ -295,10 +296,8 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         :return:
         """
         # for StandardScaler()
-        # num_features_input for 0.23 sklearn support, sklearn version >=0.24 will not check this
         data_to_save = {"mean": self.scaler.mean_.tolist(),
                         "scale": self.scaler.scale_.tolist(),
-                        "num_features_input": self.scaler.n_features_in_,
                         "future_seq_len": self.future_seq_len,
                         "dt_col": self.dt_col,
                         "target_col": self.target_col,
@@ -319,7 +318,6 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         self.scaler = StandardScaler()
         self.scaler.mean_ = np.asarray(config["mean"])
         self.scaler.scale_ = np.asarray(config["scale"])
-        self.scaler.n_features_in_ = config["num_features_input"]
 
         self.config = self._get_feat_config(**config)
 
@@ -511,6 +509,9 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         :param data:
         :return:
         """
+        # n_features_in_ only for 0.23 sklearn support, sklearn version >=0.24 will not check this
+        if sklearn.__version__[:4] == "0.23":
+            self.scaler.n_features_in_ = self.scaler.mean_.shape[0]
         np_scaled = self.scaler.transform(data)
         data_s = pd.DataFrame(np_scaled)
         return data_s
