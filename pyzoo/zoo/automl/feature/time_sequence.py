@@ -297,6 +297,8 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         # for StandardScaler()
         data_to_save = {"mean": self.scaler.mean_.tolist(),
                         "scale": self.scaler.scale_.tolist(),
+                        # num_features_input for 0.23 sklearn support, sklearn version >=0.24 will not check this
+                        "num_features_input": self.scaler.n_features_in_,
                         "future_seq_len": self.future_seq_len,
                         "dt_col": self.dt_col,
                         "target_col": self.target_col,
@@ -317,6 +319,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         self.scaler = StandardScaler()
         self.scaler.mean_ = np.asarray(config["mean"])
         self.scaler.scale_ = np.asarray(config["scale"])
+        self.scaler.n_features_in_ = config["num_features_input"]
 
         self.config = self._get_feat_config(**config)
 
