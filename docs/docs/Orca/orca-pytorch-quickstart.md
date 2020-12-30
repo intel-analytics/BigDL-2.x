@@ -117,10 +117,10 @@ Next, fit and evaluate using the Estimator
 from zoo.orca.learn.metrics import Accuracy
 from zoo.orca.learn.trigger import EveryEpoch 
 
-est.fit(data=train_loader, epochs=10, validation_data=test_loader,
-        validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
+est.fit(data=train_loader, epochs=args.epochs, validation_data=test_loader,
+        validation_metrics=[Accuracy()], checkpoint_trigger=EveryEpoch())
 
-result = est.evaluate(data=test_loader, validation_methods=[Accuracy()])
+result = est.evaluate(data=test_loader, validation_metrics=[Accuracy()])
 for r in result:
     print(str(r))
 ```

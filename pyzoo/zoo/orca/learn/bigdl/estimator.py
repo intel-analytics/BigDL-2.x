@@ -55,12 +55,12 @@ class Estimator(object):
             defined and triggered, the model will be saved to model_dir.
         :return:
         """
-        return BigDLEstimatorWrapper(model=model, loss=loss, optimizer=optimizer,
-                                     feature_preprocessing=feature_preprocessing,
-                                     label_preprocessing=label_preprocessing, model_dir=model_dir)
+        return BigDLEstimator(model=model, loss=loss, optimizer=optimizer,
+                              feature_preprocessing=feature_preprocessing,
+                              label_preprocessing=label_preprocessing, model_dir=model_dir)
 
 
-class BigDLEstimatorWrapper(OrcaSparkEstimator):
+class BigDLEstimator(OrcaSparkEstimator):
     def __init__(self, *, model, loss, optimizer=None, feature_preprocessing=None,
                  label_preprocessing=None, model_dir=None):
         self.loss = loss
@@ -92,13 +92,13 @@ class BigDLEstimatorWrapper(OrcaSparkEstimator):
         if isinstance(data, DataFrame):
             if isinstance(feature_cols, list):
                 data, validation_data, feature_cols = \
-                    BigDLEstimatorWrapper._combine_cols(data, feature_cols, col_name="features",
-                                                        val_data=validation_data)
+                    BigDLEstimator._combine_cols(data, feature_cols, col_name="features",
+                                                 val_data=validation_data)
 
             if isinstance(labels_cols, list):
                 data, validation_data, labels_cols = \
-                    BigDLEstimatorWrapper._combine_cols(data, labels_cols, col_name="label",
-                                                        val_data=validation_data)
+                    BigDLEstimator._combine_cols(data, labels_cols, col_name="label",
+                                                 val_data=validation_data)
 
             self.nn_estimator.setBatchSize(batch_size).setMaxEpoch(epochs)\
                 .setCachingSample(caching_sample).setFeaturesCol(feature_cols)\
@@ -160,7 +160,7 @@ class BigDLEstimatorWrapper(OrcaSparkEstimator):
         if isinstance(data, DataFrame):
             if isinstance(feature_cols, list):
                 data, _, feature_cols = \
-                    BigDLEstimatorWrapper._combine_cols(data, feature_cols, col_name="features")
+                    BigDLEstimator._combine_cols(data, feature_cols, col_name="features")
             self.nn_model.setBatchSize(batch_size).setFeaturesCol(feature_cols)
             if sample_preprocessing is not None:
                 self.nn_model.setSamplePreprocessing(sample_preprocessing)

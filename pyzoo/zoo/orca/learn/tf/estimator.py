@@ -204,17 +204,17 @@ class Estimator(SparkEstimator):
         :return: an Estimator object.
         """
         assert backend == "bigdl", "only bigdl backend is supported for now"
-        return TFOptimizerWrapper(inputs=inputs,
-                                  outputs=outputs,
-                                  labels=labels,
-                                  loss=loss,
-                                  optimizer=optimizer,
-                                  clip_norm=clip_norm,
-                                  clip_value=clip_value,
-                                  metrics=metrics, updates=updates,
-                                  sess=sess,
-                                  model_dir=model_dir
-                                  )
+        return TensorFlowEstimator(inputs=inputs,
+                                   outputs=outputs,
+                                   labels=labels,
+                                   loss=loss,
+                                   optimizer=optimizer,
+                                   clip_norm=clip_norm,
+                                   clip_value=clip_value,
+                                   metrics=metrics, updates=updates,
+                                   sess=sess,
+                                   model_dir=model_dir
+                                   )
 
     @staticmethod
     def from_keras(keras_model, metrics=None, model_dir=None, optimizer=None, backend="bigdl"):
@@ -229,7 +229,7 @@ class Estimator(SparkEstimator):
         :return: an Estimator object.
         """
         assert backend == "bigdl", "only bigdl backend is supported for now"
-        return TFKerasWrapper(keras_model, metrics, model_dir, optimizer)
+        return KerasEstimator(keras_model, metrics, model_dir, optimizer)
 
     @staticmethod
     def load_keras_model(path):
@@ -308,7 +308,7 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
     return dataset
 
 
-class TFOptimizerWrapper(Estimator):
+class TensorFlowEstimator(Estimator):
     def __init__(self, *, inputs, outputs, labels, loss,
                  optimizer, clip_norm, clip_value,
                  metrics,
@@ -582,7 +582,7 @@ class TFOptimizerWrapper(Estimator):
         raise NotImplementedError
 
 
-class TFKerasWrapper(Estimator):
+class KerasEstimator(Estimator):
     def __init__(self, keras_model, metrics, model_dir, optimizer):
         self.model = KerasModel(keras_model, model_dir)
         self.load_checkpoint = False

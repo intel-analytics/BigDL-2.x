@@ -73,11 +73,11 @@ class Estimator(object):
                                               workers_per_node=workers_per_node,
                                               backend=backend)
         elif backend == "bigdl":
-            return PytorchSparkEstimatorWrapper(model=model,
-                                                loss=loss,
-                                                optimizer=optimizer,
-                                                model_dir=model_dir,
-                                                bigdl_type="float")
+            return PyTorchSparkEstimator(model=model,
+                                         loss=loss,
+                                         optimizer=optimizer,
+                                         model_dir=model_dir,
+                                         bigdl_type="float")
         else:
             raise ValueError("Only horovod, torch_distributed and bigdl backends are supported"
                              f" for now, got backend: {backend}")
@@ -195,7 +195,7 @@ class PyTorchRayEstimatorWrapper(Estimator):
         return self.estimator.shutdown(force=force)
 
 
-class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
+class PyTorchSparkEstimator(OrcaSparkEstimator):
     def __init__(self, model, loss, optimizer, model_dir=None, bigdl_type="float"):
         from zoo.pipeline.api.torch import TorchModel, TorchLoss, TorchOptim
         self.loss = loss
