@@ -48,7 +48,7 @@ Under the hood, Orca will automatically replicate the _TensorFlow Dataset_ or _P
 1. TensorFlow Dataset pipeline that contains transformations defined in native python function, such as `tf.py_func`, `tf.py_function`
 and `tf.numpy_function` are currently not supported.
 2. TensorFlow Dataset pipeline created from generators, such as `Dataset.from_generators` are currently not supported.
-3. For TensorFlow Dataset and Pytorch DataLoader pipelines that read from files (including tf.data.TFRecordDataset and tf.data.TextLineDataset), one needs to ensure that the same file paths can be accessed on every node in the cluster.
+3. For TensorFlow Dataset and Pytorch DataLoader pipelines that read from files (including `tf.data.TFRecordDataset` and `tf.data.TextLineDataset`), one needs to ensure that the same file paths can be accessed on every node in the cluster.
 
 #### **1.1. Data Creator Function**
 Alternatively, the user may also pass a *Data Creator Function* as the input to the distributed training and inference. Inside the *Data Creator Function*, the user needs to create and return a `tf.data.Dataset` or `torch.utils.data.DataLoader` object, as shown below.
