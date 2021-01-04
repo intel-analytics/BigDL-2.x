@@ -30,6 +30,8 @@ from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss, OptimM
 from zoo.pipeline.api.net.utils import find_placeholders, to_bigdl_optim_method, find_tensors
 from zoo.pipeline.estimator import Estimator
 from zoo.util import nest
+from zoo.tfpark.tf_dataset import TFNdarrayDataset
+from zoo.tfpark.tf_dataset import _standarize_feature_label_dataset
 
 
 if sys.version >= '3':
@@ -610,6 +612,7 @@ class TFOptimizer:
         import tensorflow.keras.backend as K
 
         model_inputs = keras_model.inputs
+
         if hasattr(keras_model, "targets"):
             model_targets = keras_model.targets
         else:
@@ -617,6 +620,10 @@ class TFOptimizer:
 
         # target can be None if loss is None
         model_targets = list(filter(lambda x: x is not None, model_targets))
+
+        # standarize feature, labels to support keras model
+        if isinstance(dataset, TFNdarrayDataset):
+            dataset = _standarize_feature_label_dataset(dataset, keras_model)
 
         flatten_inputs = nest.flatten(dataset.feature_tensors)
         assert len(model_inputs) == len(flatten_inputs), \
@@ -684,7 +691,11 @@ class TFOptimizer:
             K.learning_phase(): [True, False]
         }
 
-        updates = keras_model.updates
+        updates = []
+
+        updates += keras_model.get_updates_for(None)
+        # Conditional updates relevant to this model
+        updates += keras_model.get_updates_for(keras_model.inputs)
 
         if bigdl_val_methods is not None:
             val_methods = to_list(bigdl_val_methods)

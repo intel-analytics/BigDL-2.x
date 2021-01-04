@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams}
+import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
 import org.scalatest.{FlatSpec, Matchers}
 
 import sys.process._

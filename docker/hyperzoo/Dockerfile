@@ -2,7 +2,7 @@ FROM ubuntu:18.04
 
 MAINTAINER The Analytics-Zoo Authors https://github.com/intel-analytics/analytics-zoo
 
-ARG ANALYTICS_ZOO_VERSION=0.9.0-SNAPSHOT
+ARG ANALYTICS_ZOO_VERSION=0.10.0-SNAPSHOT
 ARG BIGDL_VERSION=0.12.1
 ARG SPARK_VERSION=2.4.3
 ARG FLINK_VERSION=1.10.0
@@ -18,7 +18,7 @@ ENV NOTEBOOK_TOKEN                      1234qwer
 
 ENV RUNTIME_SPARK_MASTER                local[4]
 ENV RUNTIME_K8S_SERVICE_ACCOUNT         spark
-ENV RUNTIME_K8S_SPARK_IMAGE             intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3
+ENV RUNTIME_K8S_SPARK_IMAGE             intelanalytics/hyper-zoo:${ANALYTICS_ZOO_VERSION}-${SPARK_VERSION}
 ENV RUNTIME_DRIVER_HOST                 localhost
 ENV RUNTIME_DRIVER_PORT                 54321
 ENV RUNTIME_EXECUTOR_CORES              4

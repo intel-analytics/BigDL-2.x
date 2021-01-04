@@ -25,15 +25,13 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import java.util.{LinkedHashMap, UUID}
 
-import org.apache.log4j.Logger
-import org.apache.spark.SparkContext
-import org.apache.spark.sql.SparkSession
 import org.yaml.snakeyaml.Yaml
-import java.time.LocalDateTime
 import java.util
 
+import com.intel.analytics.zoo.serving.ClusterServing
 import org.apache.flink.core.execution.JobClient
 import redis.clients.jedis.Jedis
+
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
@@ -46,19 +44,18 @@ import scala.reflect.ClassTag
  * @param _configPath the path of Cluster Serving config YAML
  * @param _modelDir the path of model, if null, will read from config YAML
  */
-class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: String = null) {
+class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: String = null)
+  extends Serializable {
   type HM = LinkedHashMap[String, String]
 
   val configPath = _configPath
   var jobName: String = _
 
   var lastModTime: String = null
-  val logger: Logger = Logger.getLogger(getClass)
 
-  var sc: SparkContext = null
 
   var redisHost: String = null
-  var redisPort: String = null
+  var redisPort: Int = _
   var redisTimeout: Int = 5000
   var nodeNum: Int = 1
   var coreNum: Int = 1
@@ -90,8 +87,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
    * create log file, set backend engine type flag
    * create "running" flag, for listening the stop signal
    */
-  def initArgs(): Unit = {
-    println("Loading config at ", configPath)
+  def loadConfig(): Unit = {
     val yamlParser = new Yaml()
     val input = new FileInputStream(new File(configPath))
 
@@ -107,22 +103,20 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
     jobName = getYaml(modelConfig,
       "name", Conventions.SERVING_STREAM_DEFAULT_NAME).asInstanceOf[String]
 
-    parseModelType(modelDir)
+
 
     /**
      * Tensorflow usually use NHWC input
      * While others use NCHW
      */
-    if (modelType.startsWith("tensorflow")) {
-      chwFlag = false
-    }
+
     // parse data field
     val dataConfig = configList.get("data").asInstanceOf[HM]
     val redis = getYaml(dataConfig, "src", "localhost:6379").asInstanceOf[String]
     require(redis.split(":").length == 2, "Your redis host " +
       "and port are not valid, please check.")
     redisHost = redis.split(":").head.trim
-    redisPort = redis.split(":").last.trim
+    redisPort = redis.split(":").last.trim.toInt
 
     val secureConfig = configList.get("secure").asInstanceOf[HM]
     redisSecureEnabled = getYaml(secureConfig, "secure_enabled", false).asInstanceOf[Boolean]
@@ -163,6 +157,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
 
     val redisConfig = configList.get("redis").asInstanceOf[HM]
     redisTimeout = getYaml(redisConfig, "timeout", 5000).asInstanceOf[Int]
+    parseModelType(modelDir)
   }
 
   /**
@@ -241,17 +236,6 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
     val outputWriter = new FileWriter(Conventions.TMP_MANAGER_YAML)
     yamlParser.dump(configList, outputWriter)
   }
-  /**
-   * Check stop signal, return true if signal detected
-   * @return
-   */
-  def checkStop(): Boolean = {
-    if (!Files.exists(Paths.get("running"))) {
-      return true
-    }
-    return false
-
-  }
 
   /**
    * For dynamically update model, not used currently
@@ -260,7 +244,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
   def updateConfig(): Boolean = {
     val lastModTime = Files.getLastModifiedTime(Paths.get(configPath)).toString
     if (this.lastModTime != lastModTime) {
-      initArgs()
+      loadConfig()
       this.lastModTime = lastModTime
       return true
     }
@@ -287,23 +271,11 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
       }
     }
     else {
-      println(configList.toString + key + " getted: " + configValue)
+      ClusterServing.logger.debug(s"Config list ${configList.toString} " +
+        s"get key $key, value $configValue")
       configValue
     }
   }
-
-  /**
-   * Initialize the Spark Context
-   */
-  def initContext(): Unit = {
-    val conf = NNContext.createSparkConf().setAppName("Cluster Serving")
-      .set("spark.redis.host", redisHost)
-      .set("spark.redis.port", redisPort)
-    sc = NNContext.initNNContext(conf)
-    nodeNum = EngineRef.getNodeNumber()
-
-  }
-
   /**
    * Load inference model
    * The concurrent number of inference model depends on
@@ -311,11 +283,17 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
    * @return
    */
   def loadInferenceModel(concurrentNum: Int = 0): InferenceModel = {
+    if (modelDir != null) {
+      parseModelType(modelDir)
+    }
+    if (modelType.startsWith("tensorflow")) {
+      chwFlag = false
+    }
     // Allow concurrent number overwrite
     if (concurrentNum > 0) {
       modelPar = concurrentNum
     }
-    logger.info(s"Cluster Serving load Inference Model with Parallelism $modelPar")
+    ClusterServing.logger.info(s"Cluster Serving load Inference Model with Parallelism $modelPar")
     val model = new InferenceModel(modelPar)
 
     // Used for Tensorflow Model, it could not have intraThreadNum > 2^8
@@ -324,14 +302,14 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
     var secret: String = null
     var salt: String = null
     if (modelEncrypted) {
-      val jedis = new Jedis(redisHost, redisPort.toInt)
+      val jedis = new Jedis(redisHost, redisPort)
       while (secret == null || salt == null) {
         secret = jedis.hget(Conventions.MODEL_SECURED_KEY, Conventions.MODEL_SECURED_SECRET)
         salt = jedis.hget(Conventions.MODEL_SECURED_KEY, Conventions.MODEL_SECURED_SALT)
-        logger.info("Waiting for Model Encrypted Secret and Salt in Redis," +
+        ClusterServing.logger.info("Waiting for Model Encrypted Secret and Salt in Redis," +
           "please put them in model_secured -> secret and " +
           "model_secured -> salt")
-        logger.info("Retrying in 3 seconds...")
+        ClusterServing.logger.info("Retrying in 3 seconds...")
         Thread.sleep(3000)
       }
 
@@ -351,23 +329,8 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
         case false => model.doLoadOpenVINO(defPath, weightPath, coreNum)
       }
       case _ => logError("Invalid model type, please check your model directory")
-
     }
     model
-
-  }
-
-  /**
-   * Get spark session for structured streaming
-   * @return
-   */
-  def getSparkSession(): SparkSession = {
-    SparkSession
-      .builder
-      .master(sc.master)
-      .config("spark.redis.host", redisHost)
-      .config("spark.redis.port", redisPort)
-      .getOrCreate()
   }
 
   /**
@@ -393,7 +356,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
    * @param msg
    */
   def logError(msg: String): Unit = {
-    println("ERROR - " + msg + "\n")
+    ClusterServing.logger.error(msg)
     throw new Error(msg)
   }
 
@@ -433,7 +396,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
     val fileList = f.listFiles
 
     if (fileList == null) {
-      println("Your model path provided is empty, please check your model path.")
+      logError("Your model path provided in config is empty, please check your model path.")
     }
     // model type is always null, not support pass model type currently
     if (modelType == null) {
@@ -493,11 +456,8 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
         }
 
       }
-      if (modelType == null) logError("You did not specify modelType before running" +
-        " and the model type could not be inferred from the path" +
-        "Note that you should put only one model in your model directory" +
-        "And if you do not specify the modelType, it will be inferred " +
-        "according to your model file extension name")
+      if (modelType == null) logError("There is no model detected in your directory." +
+        "Please refer to document for supported model types.")
     }
     else {
       modelType = modelType.toLowerCase
@@ -508,16 +468,11 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
 }
 object ClusterServingHelper {
   /**
-   * This method is only used in executor node
-   * where model is distributed to remote in Flink tmp dir
-   * @param modelDir
+   * Method wrapped for external use only
+   * @param modelDir directory of model
+   * @param concurrentNumber model concurrent number
    * @return
    */
-  def loadModelfromDirAndConfig(confPath: String, modelDir: String): InferenceModel = {
-    val helper = new ClusterServingHelper(confPath, modelDir)
-    helper.initArgs()
-    helper.loadInferenceModel()
-  }
   def loadModelfromDir(modelDir: String, concurrentNumber: Int = 1): (InferenceModel, String) = {
     val helper = new ClusterServingHelper(_modelDir = modelDir)
     helper.parseModelType(modelDir)
