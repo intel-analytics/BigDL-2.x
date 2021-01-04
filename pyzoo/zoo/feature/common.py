@@ -261,7 +261,7 @@ class FeatureSet(DataSet):
         :param memory_type: string, DRAM, PMEM or a Int number.
                             If it's DRAM, will cache dataset into dynamic random-access memory
                             If it's PMEM, will cache dataset into Intel Optane DC Persistent Memory
-                            If it's a Int number n, will cache dataset into disk, and only hold 1/n
+                            If it's DISK_n where n is an int, will cache dataset into disk, and only hold 1/n
                               of the data into memory during the training. After going through the
                               1/n, we will release the current cache, and load another 1/n into
                               memory.
@@ -286,7 +286,7 @@ class FeatureSet(DataSet):
         :param memory_type: string, DRAM or PMEM
                             If it's DRAM, will cache dataset into dynamic random-access memory
                             If it's PMEM, will cache dataset into Intel Optane DC Persistent Memory
-                            If it's a Int number n, will cache dataset into disk, and only hold 1/n
+                            If it's DISK_n where n is an int, will cache dataset into disk, and only hold 1/n
                               of the data into memory during the training. After going through the
                               1/n, we will release the current cache, and load another 1/n into
                               memory.
@@ -312,7 +312,7 @@ class FeatureSet(DataSet):
         :param memory_type: string, DRAM or PMEM
                             If it's DRAM, will cache dataset into dynamic random-access memory
                             If it's PMEM, will cache dataset into Intel Optane DC Persistent Memory
-                            If it's a Int number n, will cache dataset into disk, and only hold 1/n
+                            If it's DISK_n where n is an int, will cache dataset into disk, and only hold 1/n
                               of the data into memory during the training. After going through the
                               1/n, we will release the current cache, and load another 1/n into
                               memory.
@@ -336,7 +336,7 @@ class FeatureSet(DataSet):
         :param memory_type: string, DRAM, PMEM or a Int number.
                             If it's DRAM, will cache dataset into dynamic random-access memory
                             If it's PMEM, will cache dataset into Intel Optane DC Persistent Memory
-                            If it's a Int number n, will cache dataset into disk, and only hold 1/n
+                            If it's DISK_n where n is an int, will cache dataset into disk, and only hold 1/n
                               of the data into memory during the training. After going through the
                               1/n, we will release the current cache, and load another 1/n into
                               memory.

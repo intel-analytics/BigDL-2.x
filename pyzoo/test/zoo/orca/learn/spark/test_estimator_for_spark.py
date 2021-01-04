@@ -26,6 +26,7 @@ from pyspark.sql.context import SQLContext
 
 import zoo.orca.data.pandas
 from zoo import init_nncontext
+from zoo.orca import OrcaContext
 from zoo.orca.data.tf.data import Dataset
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo.util.tf import save_tf_checkpoint, load_tf_checkpoint, get_checkpoint_state
@@ -664,11 +665,14 @@ class TestEstimatorForGraph(TestCase):
             loss=model.loss,
             optimizer=tf.train.AdamOptimizer(),
             metrics={"loss": model.loss})
+
+        OrcaContext.train_data_store = "DISK_2"
         est.fit(data=data_shard,
                 batch_size=4,
                 epochs=10,
-                validation_data=data_shard,
-                memory_type='2')
+                validation_data=data_shard
+                )
+        OrcaContext.train_data_store = "DRAM"
 
 
 if __name__ == "__main__":

@@ -22,6 +22,7 @@ from zoo.tfpark.model import _standarize_feature_label_dataset
 from zoo.tfpark.tf_dataset import _standardize_keras_target_data
 
 from zoo.common.utils import load_from_file
+from zoo.orca import OrcaContext
 from zoo.orca.data.tf.data import Dataset, TFDataDataset2
 from zoo.orca.data import SparkXShards
 from zoo.orca.learn.tf.utils import *
@@ -349,8 +350,7 @@ class TFOptimizerWrapper(Estimator):
             auto_shard_files=False,
             session_config=None,
             feed_dict=None,
-            checkpoint_trigger=None,
-            memory_type="DRAM"
+            checkpoint_trigger=None
             ):
         """
         Train this graph model with train data.
@@ -394,6 +394,7 @@ class TFOptimizerWrapper(Estimator):
         if checkpoint_trigger is not None:
             checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
 
+        memory_type = OrcaContext.train_data_store
         dataset = to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                              validation_data=validation_data,
                              feature_cols=feature_cols, labels_cols=labels_cols,
@@ -580,8 +581,7 @@ class TFKerasWrapper(Estimator):
             hard_code_batch_size=False,
             session_config=None,
             checkpoint_trigger=None,
-            auto_shard_files=True,
-            memory_type="DRAM"
+            auto_shard_files=True
             ):
         """
         Train this keras model with train data.
@@ -629,6 +629,7 @@ class TFKerasWrapper(Estimator):
             data = data.map(_standardize_keras_target_data)
             validation_data = validation_data.map(_standardize_keras_target_data)
 
+        memory_type = OrcaContext.train_data_store
         dataset = to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                              validation_data=validation_data,
                              feature_cols=feature_cols, labels_cols=labels_cols,

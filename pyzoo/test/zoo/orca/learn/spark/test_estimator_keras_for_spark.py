@@ -19,6 +19,7 @@ from unittest import TestCase
 
 import tensorflow as tf
 
+from zoo.orca import OrcaContext
 from zoo.orca.learn.trigger import SeveralIteration
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo.common.nncontext import *
@@ -577,14 +578,16 @@ class TestEstimatorForKeras(TestCase):
         data_shard = data_shard.transform_shard(transform)
 
         est = Estimator.from_keras(keras_model=model)
+        OrcaContext.train_data_store = "DISK_2"
         est.fit(data=data_shard,
                 batch_size=4,
                 epochs=10,
-                validation_data=data_shard,
-                memory_type='2')
+                validation_data=data_shard
+                )
 
         eval_result = est.evaluate(data_shard)
         print(eval_result)
+        OrcaContext.train_data_store = "DRAM"
 
     def test_estimator_keras_xshards_disk_featureset_trigger(self):
         import zoo.orca.data.pandas
@@ -609,22 +612,22 @@ class TestEstimatorForKeras(TestCase):
         from zoo.util.triggers import MinLoss as ZMinLoss
         from zoo.util.triggers import TriggerAnd as ZTriggerAnd
         est = Estimator.from_keras(keras_model=model)
+        OrcaContext.train_data_store = "DISK_2"
         with self.assertRaises(Exception) as context:
             est.fit(data=data_shard,
                     batch_size=4,
                     epochs=10,
                     validation_data=data_shard,
-                    memory_type='2',
                     checkpoint_trigger=SeveralIteration(2))
-        self.assertTrue('Please change your trigger to an instance of ZooTrigger'
+        self.assertTrue('Please use a trigger defined in zoo.util.triggers'
                         in str(context.exception))
 
         est.fit(data=data_shard,
                 batch_size=4,
                 epochs=10,
                 validation_data=data_shard,
-                memory_type='2',
                 checkpoint_trigger=ZTriggerAnd(ZSeveralIteration(2), ZMinLoss(0.2)))
+        OrcaContext.train_data_store = "DRAM"
 
     def test_estimator_keras_dataframe_mem_type(self):
         tf.reset_default_graph()
@@ -639,13 +642,13 @@ class TestEstimatorForKeras(TestCase):
             .withColumn('item', array('item'))
 
         est = Estimator.from_keras(keras_model=model)
+        OrcaContext.train_data_store = "DISK_2"
         est.fit(data=df,
                 batch_size=4,
                 epochs=4,
                 feature_cols=['user', 'item'],
                 labels_cols=['label'],
-                validation_data=df,
-                memory_type='2')
+                validation_data=df)
 
         eval_result = est.evaluate(df, feature_cols=['user', 'item'], labels_cols=['label'])
         assert 'acc Top1Accuracy' in eval_result
@@ -654,6 +657,7 @@ class TestEstimatorForKeras(TestCase):
         assert 'prediction' in prediction_df.columns
         predictions = prediction_df.collect()
         assert len(predictions) == 10
+        OrcaContext.train_data_store = "DRAM"
 
 
 if __name__ == "__main__":
