@@ -206,7 +206,10 @@ class TrainingOperator:
 
             if self.scheduler and batch_info.get(
                     SCHEDULER_STEP) == SCHEDULER_STEP_BATCH:
+                scheduler_start = time.time()
                 self.scheduler.step()
+                scheduler_end = time.time()
+                print("Scheduler time: ", (scheduler_end - scheduler_start) * 1000)
 
             t2 = time.time()
             batch_time = (t2 - t1) * 1000
@@ -283,14 +286,21 @@ class TrainingOperator:
             ]
             target = target.cuda(non_blocking=True)
 
+        import time
         # Compute output.
         with self.timers.record("fwd"):
+            forward_start = time.time()
             output = self.model(*features)
+            forward_end = time.time()
+            print("Forward time: ", (forward_end - forward_start) * 1000)
             if isinstance(output, tuple) or isinstance(output, list):
                 # Then target is also assumed to be a tuple or list.
                 loss = self.criterion(*output, *target)
             else:
+                loss_start = time.time()
                 loss = self.criterion(output, target)
+                loss_end = time.time()
+                print("Calculate loss time: ", (loss_end - loss_start) * 1000)
 
         # Compute gradients in a backward pass.
         with self.timers.record("grad"):
@@ -299,11 +309,17 @@ class TrainingOperator:
                 with amp.scale_loss(loss, self.optimizer) as scaled_loss:
                     scaled_loss.backward()
             else:
+                backward_start = time.time()
                 loss.backward()
+                backward_end = time.time()
+                print("Backward time: ", (backward_end - backward_start) * 1000)
 
         # Call step of optimizer to update model params.
         with self.timers.record("apply"):
+            optimize_start = time.time()
             self.optimizer.step()
+            optimize_end = time.time()
+            print("Optimize time: ", (optimize_end - optimize_start) * 1000)
 
         return {"train_loss": loss.item(), NUM_SAMPLES: features[0].size(0)}
 
