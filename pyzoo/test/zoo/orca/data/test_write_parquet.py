@@ -128,8 +128,8 @@ def test_write_mnist(orca_context_fixture):
         _labels_to_mnist_file(labels, train_label_file)
 
         write_mnist(image_file=train_image_file,
-                label_file=train_label_file,
-                output_path="file://" + output_path)
+                    label_file=train_label_file,
+                    output_path="file://" + output_path)
         data, schema = ParquetDataset._read_as_dict_rdd(output_path)
         data = data.sortBy(lambda x: x['label']).collect()
         images_load = np.reshape(np.stack([d['image'] for d in data]), (-1, 4, 4))
@@ -189,7 +189,8 @@ def test_write_from_directory(orca_context_fixture):
     temp_dir = tempfile.mkdtemp()
     try:
         label_map = {"cats": 0, "dogs": 1}
-        write_from_directory(os.path.join(resource_path, "cat_dog"), label_map, "file://" + temp_dir)
+        write_from_directory(os.path.join(resource_path, "cat_dog"),
+                             label_map, "file://" + temp_dir)
         train_xshard = ParquetDataset._read_as_xshards(temp_dir)
 
         data = train_xshard.collect()[0]
