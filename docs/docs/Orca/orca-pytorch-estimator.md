@@ -38,18 +38,18 @@ Estimator.from_torch(*,
                    model_dir=None,
                    backend="bigdl"):
 ```
-* `model`: PyTorch model if `backend="bigdl"`, PyTorch model creator if `backend="horovod"`
-* `optimizer`: bigdl optimizer if `backend="bigdl"`, PyTorch optimizer creator if `backend="horovod"`
-* `loss`: PyTorch loss if `backend="bigdl"`, PyTorch loss creator if `backend="horovod"`
-* `scheduler_creator`: parameter for horovod. a learning rate scheduler wrapping the optimizer. You will need to set ``TorchTrainer(scheduler_step_freq="epoch")`` for the scheduler to be incremented correctly. If using a scheduler for validation loss, be sure to call ``trainer.update_scheduler(validation_loss)``
-* `training_operator_cls`: parameter for horovod. Custom training operator class that subclasses the TrainingOperator class. This class will be copied onto all remote workers and used to specify custom training and validation operations. Defaults to TrainingOperator.
-* `initialization_hook`: parameter for horovod.
-* `config`: parameter for horovod. Config dict to create model, optimizer loss and data.
-* `scheduler_step_freq`: parameter for horovod. "batch", "epoch", "manual", or None. This will determine when ``scheduler.step`` is called. If "batch", ``step`` will be called after every optimizer step. If "epoch", ``step`` will be called after one pass of the DataLoader. If "manual", the scheduler will not be incremented automatically - you are expected to call ``trainer.update_schedulers`` manually. If a scheduler is passed in, this value is expected to not be None.
-* `use_tqdm`: parameter for horovod. You can monitor training progress if use_tqdm=True.
-* `workers_per_node`: parameter for horovod. worker number on each node. default: 1.
+* `model`: PyTorch model if `backend="bigdl"`, PyTorch model creator if `backend="horovod" or "torch_distributed"`
+* `optimizer`: Orca optimizer or PyTorch optimizer if `backend="bigdl"`, PyTorch optimizer creator if `backend="horovod" or "torch_distributed"`
+* `loss`: PyTorch loss if `backend="bigdl"`, PyTorch loss creator if `backend="horovod" or "torch_distributed"`
+* `scheduler_creator`: parameter for horovod and torch_distributed. a learning rate scheduler wrapping the optimizer. You will need to set ``TorchTrainer(scheduler_step_freq="epoch")`` for the scheduler to be incremented correctly. If using a scheduler for validation loss, be sure to call ``trainer.update_scheduler(validation_loss)``
+* `training_operator_cls`: parameter for horovod and torch_distributed. Custom training operator class that subclasses the TrainingOperator class. This class will be copied onto all remote workers and used to specify custom training and validation operations. Defaults to TrainingOperator.
+* `initialization_hook`: parameter for horovod and torch_distributed.
+* `config`: parameter for horovod and torch_distributed. Config dict to create model, optimizer loss and data.
+* `scheduler_step_freq`: parameter for horovod and torch_distributed. "batch", "epoch", "manual", or None. This will determine when ``scheduler.step`` is called. If "batch", ``step`` will be called after every optimizer step. If "epoch", ``step`` will be called after one pass of the DataLoader. If "manual", the scheduler will not be incremented automatically - you are expected to call ``trainer.update_schedulers`` manually. If a scheduler is passed in, this value is expected to not be None.
+* `use_tqdm`: parameter for horovod and torch_distributed. You can monitor training progress if use_tqdm=True.
+* `workers_per_node`: parameter for horovod and torch_distributed. worker number on each node. default: 1.
 * `model_dir`: parameter for `bigdl`. The path to save model. During the training, if checkpoint_trigger is defined and triggered, the model will be saved to model_dir.
-* `backend`: You can choose "horovod" or "bigdl" as backend. Default: bigdl.
+* `backend`: You can choose "horovod",  "torch_distributed" or "bigdl" as backend. Default: bigdl.
 
 ### Use horovod Estimator
 #### **Train model**
@@ -95,7 +95,7 @@ After an Estimator is created, you can call estimator API to train PyTorch model
 fit(self, data, epochs=1, batch_size=32, feature_cols=None, label_cols=None, validation_data=None, validation_metrics=None, checkpoint_trigger=None)
 ```
 * `data`: Training data. SparkXShard, PyTorch DataLoader and PyTorch DataLoader creator are supported.
-* `epochs`: Number of epochs to train the model.
+* `epochs`: Number of epochs to train the model.Default: 32.
 * `batch_size`: Batch size used for training. Only used when data is a SparkXShard.
 * `feature_cols`: (Not supported yet) Feature column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
 * `label_cols`: (Not supported yet) Label column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
@@ -111,8 +111,8 @@ evaluate(self, data, batch_size=32, feature_cols=None, label_cols=None, validati
 * `data`: Validation data. SparkXShard, PyTorch DataLoader and PyTorch DataLoader creator are supported.
 * `batch_size`: Batch size used for evaluation. Only used when data is a SparkXShard.
 * `feature_cols`: (Not supported yet) Feature column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
-* `label_cols`: (Not supported yet) Label column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
-* `validation_metrics`: Orca ovalidation methods.
+* `labels_cols`: (Not supported yet) Label column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
+* `validation_metrics`: Orca validation methods.
 
 #### **Inference**
 After training or loading trained model, you can call estimator API to inference:
