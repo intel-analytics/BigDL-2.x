@@ -54,7 +54,7 @@ Users can make extra configurations when using the functionalities of Project Or
 
 * `OrcaContext.log_output`: Setting log_output to be True would print all the program output in the jupyter notebook.
 * `OrcaContext.serialize_data_creator`: Setting serialize_data_creator to be True would add a file lock when initializing data for distributed training. This may be useful if you run multiple workers on a single node and they download data to the same destination. 
-* `OrcaContext.pandas_read_backend`: Setting pandas_read_backend for the backend to read data. See 
+* `OrcaContext.pandas_read_backend`: Setting pandas_read_backend for the backend to read data. See [here](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/readthedocs/Orca/Overview/data-parallel-processing.md#31-data-parallel-pandas) for more details.
 
 ---
 ### **5. Termination**
