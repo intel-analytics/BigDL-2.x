@@ -41,17 +41,17 @@ class Estimator(object):
                    model_dir=None,
                    backend="bigdl"):
         if backend in {"horovod", "torch_distributed"}:
-            return PyTorchRayEstimatorWrapper(model_creator=model,
-                                              optimizer_creator=optimizer,
-                                              loss_creator=loss,
-                                              scheduler_creator=scheduler_creator,
-                                              training_operator_cls=training_operator_cls,
-                                              initialization_hook=initialization_hook,
-                                              config=config,
-                                              scheduler_step_freq=scheduler_step_freq,
-                                              use_tqdm=use_tqdm,
-                                              workers_per_node=workers_per_node,
-                                              backend=backend)
+            return PyTorchRayEstimator(model_creator=model,
+                                       optimizer_creator=optimizer,
+                                       loss_creator=loss,
+                                       scheduler_creator=scheduler_creator,
+                                       training_operator_cls=training_operator_cls,
+                                       initialization_hook=initialization_hook,
+                                       config=config,
+                                       scheduler_step_freq=scheduler_step_freq,
+                                       use_tqdm=use_tqdm,
+                                       workers_per_node=workers_per_node,
+                                       backend=backend)
         elif backend == "bigdl":
             return PytorchSparkEstimatorWrapper(model=model,
                                                 loss=loss,
@@ -63,7 +63,7 @@ class Estimator(object):
                              f" for now, got backend: {backend}")
 
 
-class PyTorchRayEstimatorWrapper(OrcaRayEstimator):
+class PyTorchRayEstimator(OrcaRayEstimator):
     def __init__(self,
                  *,
                  model_creator,
@@ -163,7 +163,7 @@ class PyTorchRayEstimatorWrapper(OrcaRayEstimator):
         """
         return self.estimator.save(checkpoint=checkpoint)
 
-    def load(self, checkpoint, **kwargs):
+    def load(self, checkpoint):
         """Loads the Estimator and all workers from the provided checkpoint.
 
         :param checkpoint: (str) Path to target checkpoint file.
@@ -173,24 +173,6 @@ class PyTorchRayEstimatorWrapper(OrcaRayEstimator):
     def shutdown(self, force=False):
         """Shuts down workers and releases resources."""
         return self.estimator.shutdown(force=force)
-
-    def clear_gradient_clipping(self):
-        pass
-
-    def set_constant_gradient_clipping(self, min, max):
-        pass
-
-    def set_l2_norm_gradient_clipping(self, clip_norm):
-        pass
-
-    def get_train_summary(self, tag=None):
-        pass
-
-    def get_validation_summary(self, tag=None):
-        pass
-
-    def set_tensorboard(self, log_dir, app_name):
-        pass
 
 
 class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):

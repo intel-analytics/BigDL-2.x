@@ -19,53 +19,74 @@ from zoo.orca.learn.base_estimator import BaseEstimator
 
 class Estimator(BaseEstimator):
     @abstractmethod
-    def fit(self, data, epochs, batch_size, **kwargs):
+    def fit(self, data, epochs, batch_size):
+        """
+        Train the model with train data.
+
+        :param data: train data.
+        :param epochs: number of epochs to train.
+        :param batch_size: total batch size for each iteration.
+        """
         pass
 
     @abstractmethod
-    def predict(self, data, batch_size, **kwargs):
+    def predict(self, data, batch_size):
+        """
+        Predict input data.
+
+        :param data: data to be predicted.
+        :param batch_size: batch size per thread. Default: 4.
+        :return: predicted result.
+        """
         pass
 
     @abstractmethod
-    def evaluate(self, data, batch_size, num_steps=None, **kwargs):
+    def evaluate(self, data, batch_size, num_steps=None):
+        """
+        Evaluate model.
+
+        :param data: evaluation data.
+        :param batch_size: batch size per thread.
+        :param num_steps: Number of batches to compute update steps on. This corresponds also to
+        the number of times TrainingOperator.validate_batch is called.
+        :return: evaluation result as a dictionary of {'metric name': metric value}
+        """
         pass
 
     @abstractmethod
     def get_model(self):
+        """
+        Get the trained model.
+
+        :return: Trained model
+        """
         pass
 
     @abstractmethod
     def save(self, checkpoint):
+        """
+        Save model to model_path.
+
+        :param checkpoint: path to save the trained model.
+        :return:
+        """
         pass
 
     @abstractmethod
-    def load(self, checkpoint, **kwargs):
+    def load(self, checkpoint):
+        """
+        Load existing model or checkpoint.
+
+        :param checkpoint: Path to the existing model or checkpoint.
+        :return:
+        """
         pass
 
     @abstractmethod
-    def shutdown(self, **kwargs):
-        pass
+    def shutdown(self):
+        """
+        Shut down workers and releases resources.
 
-    @abstractmethod
-    def clear_gradient_clipping(self):
-        pass
-
-    @abstractmethod
-    def set_constant_gradient_clipping(self, min, max):
-        pass
-
-    @abstractmethod
-    def set_l2_norm_gradient_clipping(self, clip_norm):
-        pass
-
-    @abstractmethod
-    def get_train_summary(self, tag=None):
-        pass
-
-    @abstractmethod
-    def get_validation_summary(self, tag=None):
-        pass
-
-    @abstractmethod
-    def set_tensorboard(self, log_dir, app_name):
+        :return:
+        """
         pass

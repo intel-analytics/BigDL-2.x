@@ -48,7 +48,20 @@ def shards_ref_to_creator(shards_ref, shuffle=False):
     return data_creator
 
 
-class Estimator(OrcaRayEstimator):
+class Estimator(object):
+    @staticmethod
+    def from_mxnet(*, config, model_creator, loss_creator=None, eval_metrics_creator=None,
+                   validation_metrics_creator=None, num_workers=None, num_servers=None,
+                   runner_cores=None):
+        return MXNetEstimator(config=config, model_creator=model_creator,
+                              loss_creator=loss_creator,
+                              eval_metrics_creator=eval_metrics_creator,
+                              validation_metrics_creator=validation_metrics_creator,
+                              num_workers=num_workers, num_servers=num_servers,
+                              runner_cores=runner_cores)
+
+
+class MXNetEstimator(OrcaRayEstimator):
     """
     MXNet Estimator provides an automatic setup for synchronous distributed MXNet training.
 
@@ -267,24 +280,6 @@ class Estimator(OrcaRayEstimator):
         raise NotImplementedError
 
     def load(self, checkpoint, **kwargs):
-        raise NotImplementedError
-
-    def clear_gradient_clipping(self):
-        raise NotImplementedError
-
-    def set_constant_gradient_clipping(self, min, max):
-        raise NotImplementedError
-
-    def set_l2_norm_gradient_clipping(self, clip_norm):
-        raise NotImplementedError
-
-    def get_train_summary(self, tag=None):
-        raise NotImplementedError
-
-    def get_validation_summary(self, tag=None):
-        raise NotImplementedError
-
-    def set_tensorboard(self, log_dir, app_name):
         raise NotImplementedError
 
 # TODO: add model save and restore

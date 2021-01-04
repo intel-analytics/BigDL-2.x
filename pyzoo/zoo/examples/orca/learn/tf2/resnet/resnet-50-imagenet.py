@@ -399,7 +399,7 @@ if __name__ == "__main__":
         "lr": initial_lr,
     }
 
-    trainer = Estimator(
+    trainer = Estimator.from_keras(
         model_creator=model_creator,
         compile_args_creator=compile_args_creator,
         verbose=True,

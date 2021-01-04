@@ -235,7 +235,7 @@ class TestTFRayEstimator(TestCase):
         # case will return non-zero.
 
         ray_ctx = RayContext.get()
-        trainer = Estimator(
+        trainer = Estimator.from_keras(
             model_creator=auto_shard_model_creator,
             verbose=True,
             backend="tf2", workers_per_node=2)
@@ -253,7 +253,7 @@ class TestTFRayEstimator(TestCase):
         # case will return non-zero.
 
         ray_ctx = RayContext.get()
-        trainer = Estimator(
+        trainer = Estimator.from_keras(
             model_creator=create_auto_shard_model,
             compile_args_creator=create_auto_shard_compile_args,
             verbose=True,
@@ -278,7 +278,7 @@ class TestTFRayEstimator(TestCase):
             config = {
                 "lr": 0.8
             }
-            trainer = Estimator(
+            trainer = Estimator.from_keras(
                 model_creator=simple_model,
                 compile_args_creator=compile_args,
                 verbose=True,
@@ -313,7 +313,7 @@ class TestTFRayEstimator(TestCase):
         config = {
             "lr": 0.8
         }
-        trainer = Estimator(
+        trainer = Estimator.from_keras(
             model_creator=model_creator,
             verbose=True,
             config=config,
@@ -335,7 +335,7 @@ class TestTFRayEstimator(TestCase):
         config = {
             "lr": 0.8
         }
-        trainer = Estimator(
+        trainer = Estimator.from_keras(
             model_creator=model_creator,
             verbose=True,
             config=config,
@@ -366,7 +366,7 @@ class TestTFRayEstimator(TestCase):
         config = {
             "lr": 0.8
         }
-        trainer = Estimator(
+        trainer = Estimator.from_keras(
             model_creator=model_creator,
             verbose=True,
             config=config,
@@ -389,7 +389,7 @@ class TestTFRayEstimator(TestCase):
 
         config = {
         }
-        trainer = Estimator(
+        trainer = Estimator.from_keras(
             model_creator=identity_model_creator,
             verbose=True,
             config=config,

@@ -31,6 +31,21 @@ from zoo.tfpark.tf_dataset import convert_row_to_numpy
 logger = logging.getLogger(__name__)
 
 
+class Estimator(object):
+    @staticmethod
+    def from_keras(*,
+                   model_creator,
+                   config=None,
+                   verbose=False,
+                   workers_per_node=1,
+                   compile_args_creator=None,
+                   backend="tf2"
+                   ):
+        return TensorFlow2Estimator(model_creator=model_creator, config=config,
+                                    verbose=verbose, workers_per_node=workers_per_node,
+                                    backend=backend, compile_args_creator=compile_args_creator)
+
+
 def shards_ref_to_creator(shards_ref):
     def data_creator(config):
         return shards_ref
@@ -94,7 +109,7 @@ def arrays2dict(iter, feature_cols, label_cols):
     return [{"x": feature_arrs}]
 
 
-class Estimator(OrcaRayEstimator):
+class TensorFlow2Estimator(OrcaRayEstimator):
     def __init__(self,
                  model_creator,
                  compile_args_creator=None,
@@ -179,17 +194,6 @@ class Estimator(OrcaRayEstimator):
                             "values of backend, but got {}".format(backend))
 
         self.num_workers = len(self.remote_workers)
-
-    @classmethod
-    def from_keras(cls, model_creator,
-                   config=None,
-                   verbose=False,
-                   workers_per_node=1,
-                   compile_args_creator=None,
-                   backend="tf2"):
-        return cls(model_creator, config=config,
-                   verbose=verbose, workers_per_node=workers_per_node,
-                   backend=backend, compile_args_creator=compile_args_creator)
 
     def fit(self, data, epochs=1, batch_size=32, verbose=1,
             callbacks=None, validation_data_creator=None, class_weight=None,
@@ -417,21 +421,3 @@ class Estimator(OrcaRayEstimator):
         model.optimizer.set_weights(state["optimizer_weights"])
 
         return model
-
-    def clear_gradient_clipping(self):
-        pass
-
-    def set_constant_gradient_clipping(self, min, max):
-        pass
-
-    def set_l2_norm_gradient_clipping(self, clip_norm):
-        pass
-
-    def get_train_summary(self, tag=None):
-        pass
-
-    def get_validation_summary(self, tag=None):
-        pass
-
-    def set_tensorboard(self, log_dir, app_name):
-        pass
