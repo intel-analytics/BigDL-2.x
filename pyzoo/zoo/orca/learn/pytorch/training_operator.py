@@ -219,7 +219,9 @@ class TrainingOperator:
             if (batch_idx + 1) % 50 == 0:
                 batch_time_average = total_time / 50
                 total_time = 0
+                print("*********************************************")
                 print("Average for 100 batches: ", batch_time_average)
+                print("*********************************************")
 
             if self.use_tqdm and self.world_rank == 0:
                 _progress_bar.n = batch_idx + 1
