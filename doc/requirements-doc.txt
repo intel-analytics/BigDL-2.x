@@ -3,5 +3,4 @@ sphinx-version-warning
 sphinx-click
 sphinx-jsonschema
 sphinxemoji
-sphinx<2
 click
