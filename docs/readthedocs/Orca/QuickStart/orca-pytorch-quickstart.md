@@ -1,5 +1,9 @@
+# PyTorch Quickstart
 
-**In this guide we will describe how to scale out PyTorch (v1.5 or above) programs using Orca in 4 simple steps.**
+---
+
+
+**In this guide we will describe how to scale out PyTorch (v1.5+) programs using Orca in 4 simple steps.**
 
 ### **Step 0: Prepare Environment**
 
@@ -118,9 +122,9 @@ from zoo.orca.learn.metrics import Accuracy
 from zoo.orca.learn.trigger import EveryEpoch 
 
 est.fit(data=train_loader, epochs=10, validation_data=test_loader,
-        validation_metrics=[Accuracy()], checkpoint_trigger=EveryEpoch())
+        validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
 
-result = est.evaluate(data=test_loader, validation_metrics=[Accuracy()])
+result = est.evaluate(data=test_loader, validation_methods=[Accuracy()])
 for r in result:
     print(str(r))
 ```
