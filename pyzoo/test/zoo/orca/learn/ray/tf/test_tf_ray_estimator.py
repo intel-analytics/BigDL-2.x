@@ -496,4 +496,3 @@ class TestTFRayEstimator(TestCase):
             print("save success")
         finally:
             os.remove("/tmp/cifar10_keras.ckpt")
-
