@@ -20,38 +20,38 @@ Analytics Zoo includes the **Orca** library that seamlessly scale out your singl
    :maxdepth: 1
    :caption: Quick Start
 
-   readthedocs/Orca/QuickStart/orca-tf-quickstart.md
-   readthedocs/Orca/QuickStart/orca-keras-quickstart.md
-   readthedocs/Orca/QuickStart/orca-pytorch-quickstart.md
-   readthedocs/Orca/QuickStart/orca-tf2keras-quickstart.md
-   readthedocs/Orca/QuickStart/orca-mxnet-quickstart.md
-   readthedocs/Orca/QuickStart/orca-horovod-quickstart.md
+   doc/Orca/QuickStart/orca-tf-quickstart.md
+   doc/Orca/QuickStart/orca-keras-quickstart.md
+   doc/Orca/QuickStart/orca-pytorch-quickstart.md
+   doc/Orca/QuickStart/orca-tf2keras-quickstart.md
+   doc/Orca/QuickStart/orca-mxnet-quickstart.md
+   doc/Orca/QuickStart/orca-horovod-quickstart.md
 
 .. toctree::
    :maxdepth: 1
    :caption: User guide
 
-   readthedocs/UserGuide/python.md
-   readthedocs/UserGuide/colab.md
-   readthedocs/UserGuide/docker.md
-   readthedocs/UserGuide/k8s.md
-   readthedocs/UserGuide/hadoop.md
-   readthedocs/UserGuide/amazon.md
-   readthedocs/UserGuide/databricks.md
-   readthedocs/UserGuide/scala.md
-   readthedocs/UserGuide/develop.md
+   doc/UserGuide/python.md
+   doc/UserGuide/colab.md
+   doc/UserGuide/docker.md
+   doc/UserGuide/k8s.md
+   doc/UserGuide/hadoop.md
+   doc/UserGuide/amazon.md
+   doc/UserGuide/databricks.md
+   doc/UserGuide/scala.md
+   doc/UserGuide/develop.md
    
 .. toctree::
    :maxdepth: 1
    :caption: Orca Overview
 
-   readthedocs/Orca/Overview/orca-context.md
-   readthedocs/Orca/Overview/data-parallel-processing.md
-   readthedocs/Orca/Overview/distributed-training-inference.md
+   doc/Orca/Overview/orca-context.md
+   doc/Orca/Overview/data-parallel-processing.md
+   doc/Orca/Overview/distributed-training-inference.md
 
 .. toctree::
    :maxdepth: 1
    :caption: API reference
    
-   readthedocs/api/api.md
+   doc/api/api.md
    
