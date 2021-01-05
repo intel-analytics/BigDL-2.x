@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import shutil
 from unittest import TestCase
 
 import numpy as np
@@ -483,12 +484,16 @@ class TestTFRayEstimator(TestCase):
         config = {
             "batch_size": batch_size
         }
-        est = Estimator.from_keras(model_creator, config=config, workers_per_node=2)
+        try:
+            est = Estimator.from_keras(model_creator, config=config, workers_per_node=2)
 
-        history = est.fit(train_data_creator,
-                          epochs=1,
-                          steps_per_epoch=5)
-        print("start saving")
-        est.save("/tmp/cifar10_keras.ckpt")
-        est.restore("/tmp/cifar10_keras.ckpt")
-        print("save success")
+            history = est.fit(train_data_creator,
+                              epochs=1,
+                              steps_per_epoch=5)
+            print("start saving")
+            est.save("/tmp/cifar10_keras.ckpt")
+            est.restore("/tmp/cifar10_keras.ckpt")
+            print("save success")
+        finally:
+            os.remove("/tmp/cifar10_keras.ckpt")
+
