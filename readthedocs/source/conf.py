@@ -46,7 +46,7 @@ source_suffix = {'.rst': 'restructuredtext',
 
 master_doc = 'index'
 
-project = 'analytics-zoo'
+project = 'Analytics Zoo'
 copyright = '2020, analytice-zoo'
 author = 'analytice-zoo'
 
