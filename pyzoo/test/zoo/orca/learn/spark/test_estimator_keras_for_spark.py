@@ -29,6 +29,7 @@ from zoo.orca.learn.tf.utils import convert_predict_to_dataframe
 class TestEstimatorForKeras(TestCase):
     def setup_method(self, method):
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        OrcaContext.train_data_store = "DRAM"
 
     def create_model(self):
         user = tf.keras.layers.Input(shape=[1])
@@ -269,7 +270,7 @@ class TestEstimatorForKeras(TestCase):
         prediction_df = est.predict(df, batch_size=4, feature_cols=['user', 'item'])
         assert 'prediction' in prediction_df.columns
         predictions = prediction_df.collect()
-        assert len(predictions) == 10
+        assert len(predictions) == 16
 
     def test_estimator_keras_dataframe_no_fit(self):
         tf.reset_default_graph()
@@ -291,7 +292,7 @@ class TestEstimatorForKeras(TestCase):
         prediction_df = est.predict(df, batch_size=4, feature_cols=['user', 'item'])
         assert 'prediction' in prediction_df.columns
         predictions = prediction_df.collect()
-        assert len(predictions) == 10
+        assert len(predictions) == 16
 
     def test_estimator_keras_tf_dataset(self):
         tf.reset_default_graph()
@@ -656,7 +657,7 @@ class TestEstimatorForKeras(TestCase):
         prediction_df = est.predict(df, batch_size=4, feature_cols=['user', 'item'])
         assert 'prediction' in prediction_df.columns
         predictions = prediction_df.collect()
-        assert len(predictions) == 10
+        assert len(predictions) == 16
         OrcaContext.train_data_store = "DRAM"
 
 

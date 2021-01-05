@@ -48,6 +48,9 @@ class SimpleModel(object):
 
 
 class TestEstimatorForGraph(TestCase):
+    def setup_method(self, method):
+        OrcaContext.train_data_store = "DRAM"
+
     def test_estimator_graph(self):
         import zoo.orca.data.pandas
 
@@ -323,7 +326,7 @@ class TestEstimatorForGraph(TestCase):
         data_shard = data_shard.transform_shard(transform)
         dataset = Dataset.from_tensor_slices(data_shard)
         predictions = est.predict(dataset).collect()
-        assert len(predictions) == 10
+        assert len(predictions) == 16
 
     def test_estimator_graph_dataframe(self):
         tf.reset_default_graph()
@@ -356,7 +359,7 @@ class TestEstimatorForGraph(TestCase):
         prediction_df = est.predict(df, batch_size=4, feature_cols=['user', 'item'])
         assert 'prediction' in prediction_df.columns
         predictions = prediction_df.collect()
-        assert len(predictions) == 10
+        assert len(predictions) == 16
 
     def test_estimator_graph_dataframe_exception(self):
         tf.reset_default_graph()
