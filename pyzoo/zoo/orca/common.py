@@ -85,7 +85,7 @@ class OrcaContextMeta(type):
     @property
     def train_data_store(cls):
         """
-        The memory type for train data storage. Either 'DRAM', 'PMEM', 'DIRECT' or 'DISK_n'.
+        The memory type for train data storage. Either 'DRAM', 'PMEM', or 'DISK_n'.
         The default value is 'DRAM', you can change it to 'PMEM' if have AEP hardware.
         If you give 'DISK_n', in which 'n' is an integer, we will cache the data into disk,
         and hold only `1/n` of the data in memory. After going through the `1/n`,
