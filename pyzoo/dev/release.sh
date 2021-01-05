@@ -102,11 +102,10 @@ if [ ${upload} == true ]; then
     $upload_command
 fi
 # build and upload serving wheel
-
 if [ "$platform" == "linux" ]; then
     cd ${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving
     if [ -d "${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/dist" ]; then
-       rm -f ${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/dist
+       rm -r ${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/dist
     fi
     python setup.py bdist_wheel --universal
 
