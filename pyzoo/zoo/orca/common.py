@@ -97,7 +97,7 @@ class OrcaContextMeta(type):
     def train_data_store(cls, value):
         value = value.upper()
         import re
-        assert value == "DRAM" or value == "PMEM" or value == "DIRECT" or re.match("DISK_\d+", value) , \
+        assert value == "DRAM" or value == "PMEM" or re.match("DISK_\d+", value), \
             "train_data_store must be either DRAM or PMEM or DIRECT or DISK_n"
         cls._train_data_store = value
 

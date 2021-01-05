@@ -16,6 +16,7 @@
 from abc import abstractmethod
 from bigdl.util.common import JavaValue
 
+
 class ZooTrigger(JavaValue):
     def jvm_class_constructor(self):
         name = "createZoo" + self.__class__.__name__
@@ -39,7 +40,6 @@ class EveryEpoch(ZooTrigger):
         Create a EveryEpoch trigger.
         """
         ZooTrigger.__init__(self, None, "float")
-
 
 
 class SeveralIteration(ZooTrigger):
