@@ -139,10 +139,10 @@ class PyTorchRayEstimator:
             self.remote_workers = [
                 RemoteRunner.remote(**params) for i in range(num_nodes)
             ]
-            # ray.get([
-            #     worker.setup.remote(cores_per_node)
-            #     for i, worker in enumerate(self.remote_workers)
-            # ])
+            ray.get([
+                worker.setup.remote(cores_per_node)
+                for i, worker in enumerate(self.remote_workers)
+            ])
 
             head_worker = self.remote_workers[0]
             address = ray.get(head_worker.setup_address.remote())
