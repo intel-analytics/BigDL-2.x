@@ -36,8 +36,7 @@ Under the hood, `OrcaContext` will automatically provision Apache Spark and/or R
  - log_output: shall we always set it to true?
  - pandas_read_backend: we may describe it in xShards?
  - serialize_data_creation: shall we always set it to true?
- * `OrcaContext.train_data_store`: Setting memory type for train data storage. Either `DRAM`, `PMEM`, or `DISK_n`. The default value is `DRAM`, you can change it to `PMEM` if have AEP hardware. If you give `DISK_n`, in which `n` is an integer, we will cache the data into disk, and hold only `1/n` of the data in memory. After going through the `1/n`,
-  we will release the current cache, and load another `1/n` into memory.
+ * `OrcaContext.train_data_store`: Setting memory type for train data storage. Either `DRAM`, `PMEM`, or `DISK_n`. Default to `DRAM`; setting it to `DISK_n` (e.g., `DISK_2`) if the training data cannot fit in memory (this will store the data on disk, and cache only `1/n` of the data in memory; after going through the `1/n`, we will release the current cache, and load another `1/n` into memory). You can set it to `PMEM` if have AEP hardware. 
 
 ### **5. Stopping**
 After the Orca program finishes, the user can call `stop_orca_context` to release resources and shut down the underlying Spark and/Ray execution engine.
