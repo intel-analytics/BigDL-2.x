@@ -82,6 +82,7 @@ extensions = [
     'sphinxemoji.sphinxemoji',
     'sphinx_copybutton',
     'sphinx.ext.mathjax',
+    'recommonmark',
 ]
 
 
@@ -93,10 +94,15 @@ templates_path = ['_templates']
 from recommonmark.parser import CommonMarkParser
 
 # The suffix of source filenames.
-source_suffix = ['.rst', '.md']
+#source_suffix = ['.rst', '.md']
 
-source_parsers = {
-    '.md': CommonMarkParser,
+#source_parsers = {
+#    '.md': CommonMarkParser,
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.txt': 'markdown',
+    '.md': 'markdown',
+
 }
 
 # The master toctree document.
