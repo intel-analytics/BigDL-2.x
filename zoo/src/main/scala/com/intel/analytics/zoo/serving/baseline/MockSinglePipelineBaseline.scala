@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.serving.PreProcessing
 import com.intel.analytics.zoo.serving.arrow.{ArrowDeserializer, ArrowSerializer}
 import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, Timer}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams, Supportive}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Supportive}
 import scopt.OptionParser
 
 object MockSinglePipelineBaseline extends Supportive {
@@ -76,14 +76,13 @@ object MockSinglePipelineBaseline extends Supportive {
   def main(args: Array[String]): Unit = {
     val param = parser.parse(args, Params()).head
     val helper = new ClusterServingHelper()
-    helper.initArgs()
-    val sParam = new SerParams(helper)
+    helper.loadConfig()
 
     val model = helper.loadInferenceModel()
     val warmT = makeTensorFromShape(param.inputShape)
     val clusterServingInference = new ClusterServingInference(null, "openvino")
     clusterServingInference.typeCheck(warmT)
-    clusterServingInference.dimCheck(warmT, "add", sParam.modelType)
+    clusterServingInference.dimCheck(warmT, "add", helper.modelType)
     (0 until 10).foreach(_ => {
       val result = model.doPredict(warmT)
     })
@@ -98,10 +97,10 @@ object MockSinglePipelineBaseline extends Supportive {
       s"with input ${param.testNum.toString}") {
       var a = Seq[(String, String)]()
       val pre = new PreProcessing(true)
-      (0 until sParam.coreNum).foreach( i =>
+      (0 until helper.coreNum).foreach( i =>
         a = a :+ (i.toString(), b64string)
       )
-      (0 until param.testNum).grouped(sParam.coreNum).flatMap(batch => {
+      (0 until param.testNum).grouped(helper.coreNum).flatMap(batch => {
         val preprocessed = timer.timing("Preprocess", batch.size) {
           (0 until batch.size).toParArray.map(i => {
             val deserializer = new ArrowDeserializer()
@@ -112,16 +111,16 @@ object MockSinglePipelineBaseline extends Supportive {
         }
         preprocessed.grouped(batch.size).flatMap(b => {
           val t = timer.timing("Batch input", batch.size) {
-            clusterServingInference.batchInput(b, sParam.coreNum, true, sParam.resize)
+            clusterServingInference.batchInput(b, helper.coreNum, true, helper.resize)
           }
-          clusterServingInference.dimCheck(t, "add", sParam.modelType)
+          clusterServingInference.dimCheck(t, "add", helper.modelType)
           val result = timer.timing("Inference", batch.size) {
             model.doPredict(t)
           }
-          clusterServingInference.dimCheck(t, "remove", sParam.modelType)
-          clusterServingInference.dimCheck(result, "remove", sParam.modelType)
+          clusterServingInference.dimCheck(t, "remove", helper.modelType)
+          clusterServingInference.dimCheck(result, "remove", helper.modelType)
           val postprocessed = timer.timing("Postprocess", batch.size) {
-            (0 until sParam.coreNum).map(i => {
+            (0 until helper.coreNum).map(i => {
               ArrowSerializer.activityBatchToByte(result, i + 1)
             })
           }

@@ -17,8 +17,8 @@
 # neural networks training on Cifar10
 # https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
 #
+
 from __future__ import print_function
-import os
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
@@ -74,6 +74,7 @@ def imshow(img):
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
 
+
 dataiter = iter(trainloader)
 images, labels = dataiter.next()
 
@@ -102,6 +103,7 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
 
+
 net = Net()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
@@ -110,7 +112,7 @@ net.train()
 orca_estimator = Estimator.from_torch(model=net, optimizer=optimizer, loss=criterion,
                                       backend="bigdl")
 orca_estimator.fit(data=trainloader, epochs=2, validation_data=testloader,
-                   validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
+                   validation_metrics=[Accuracy()], checkpoint_trigger=EveryEpoch())
 print('Finished Training')
 dataiter = iter(testloader)
 images, labels = dataiter.next()
@@ -119,7 +121,7 @@ images, labels = dataiter.next()
 imshow(torchvision.utils.make_grid(images))
 print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
-res = orca_estimator.evaluate(data=testloader, validation_methods=[Accuracy()])[0]
+res = orca_estimator.evaluate(data=testloader, validation_metrics=[Accuracy()])[0]
 total_num = res.total_num
 result = res.result
 print("Accuracy of the network on the %s test images: %s" % (total_num, result))

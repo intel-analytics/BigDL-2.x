@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.serving.PreProcessing
 import com.intel.analytics.zoo.serving.arrow.{ArrowDeserializer, ArrowSerializer}
 import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, Timer}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, SerParams, Supportive}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Supportive}
 import scopt.OptionParser
 
 object InferenceBaseline extends Supportive {
@@ -80,14 +80,13 @@ object InferenceBaseline extends Supportive {
   def main(args: Array[String]): Unit = {
     val param = parser.parse(args, Params()).head
     val helper = new ClusterServingHelper()
-    helper.initArgs()
-    val sParam = new SerParams(helper)
+    helper.loadConfig()
 
     val model = helper.loadInferenceModel()
     val warmT = makeTensorFromShape(param.inputShape)
     val clusterServingInference = new ClusterServingInference(null, "openvino")
     clusterServingInference.typeCheck(warmT)
-    clusterServingInference.dimCheck(warmT, "add", sParam.modelType)
+    clusterServingInference.dimCheck(warmT, "add", helper.modelType)
     (0 until 10).foreach(_ => {
       val result = model.doPredict(warmT)
     })
@@ -103,19 +102,19 @@ object InferenceBaseline extends Supportive {
       s"with input ${param.testNum.toString}") {
       var a = Seq[(String, Table)]()
       val pre = new PreProcessing(true)
-      (0 until sParam.coreNum).foreach( i =>
+      (0 until helper.coreNum).foreach( i =>
         a = a :+ (i.toString(), T(warmT))
       )
-      (0 until param.testNum).grouped(sParam.coreNum).flatMap(batch => {
+      (0 until param.testNum).grouped(helper.coreNum).flatMap(batch => {
           val t = timer.timing("Batch input", batch.size) {
-            clusterServingInference.batchInput(a, sParam.coreNum, true, sParam.resize)
+            clusterServingInference.batchInput(a, helper.coreNum, true, helper.resize)
           }
-          clusterServingInference.dimCheck(t, "add", sParam.modelType)
+          clusterServingInference.dimCheck(t, "add", helper.modelType)
           val result = timer.timing("Inference", batch.size) {
             model.doPredict(t)
           }
-          clusterServingInference.dimCheck(t, "remove", sParam.modelType)
-          clusterServingInference.dimCheck(result, "remove", sParam.modelType)
+          clusterServingInference.dimCheck(t, "remove", helper.modelType)
+          clusterServingInference.dimCheck(result, "remove", helper.modelType)
 
           Seq()
       }).toArray

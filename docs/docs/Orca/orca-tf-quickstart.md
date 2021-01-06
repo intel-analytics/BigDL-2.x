@@ -17,10 +17,11 @@ We recommend using [Conda](https://docs.conda.io/projects/conda/en/latest/user-g
 **Note:** Conda environment is required to run on the distributed cluster, but not strictly necessary for running on the local machine.
 
 ```bash
-conda create -n zoo python=3.7 # "zoo" is conda enviroment name, you can use any name you like.
+conda create -n zoo python=3.7 # "zoo" is conda environment name, you can use any name you like.
 conda activate zoo
-pip install analytics_zoo-${VERSION} # install either version 0.9 or latest nightly build
+pip install analytics-zoo # install either version 0.9 or latest nightly build
 pip install tensorflow==1.15.0
+pip install tensorflow-datasets==2.0
 pip install psutil
 ```
 **Note:** The original [source code](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/examples/orca/learn/tf/lenet/lenet_mnist_graph.py) for the tutorial below only supports TensorFlow 1.15.
@@ -36,6 +37,8 @@ elif args.cluster_mode == "yarn":
 ```
 
 This is the only place where you need to specify local or distributed mode. View [Orca Context](./context) for more details.
+
+**Note:** You should `export HADOOP_CONF_DIR=/path/to/hadoop/conf/dir` when you run on Hadoop YARN cluster.
 
 ### **Step 2: Define the Model**
 
@@ -74,18 +77,18 @@ acc = accuracy(logits, labels)
 You can define the dataset using standard [tf.data.Dataset](https://www.tensorflow.org/api_docs/python/tf/data/Dataset). Orca also supports [Spark DataFrame](https://spark.apache.org/docs/latest/sql-programming-guide.html) and [Orca XShards](./data).
 
 ```python
-def preprocess(x, y):
-    return tf.to_float(tf.reshape(x, (-1, 28, 28, 1))) / 255.0, y
+import tensorflow_datasets as tfds
+
+def preprocess(data):
+    data['image'] = tf.cast(data["image"], tf.float32) / 255.
+    return data['image'], data['label']
 
 # get DataSet
-(train_feature, train_label), (val_feature, val_label) = tf.keras.datasets.mnist.load_data()
+mnist_train = tfds.load(name="mnist", split="train", data_dir=dataset_dir)
+mnist_test = tfds.load(name="mnist", split="test", data_dir=dataset_dir)
 
-# tf.data.Dataset.from_tensor_slices is for demo only. For production use, please use
-# file-based approach (e.g. tfrecord).
-train_dataset = tf.data.Dataset.from_tensor_slices((train_feature, train_label))
-train_dataset = train_dataset.map(preprocess)
-val_dataset = tf.data.Dataset.from_tensor_slices((val_feature, val_label))
-val_dataset = val_dataset.map(preprocess)
+mnist_train = mnist_train.map(preprocess)
+mnist_test = mnist_test.map(preprocess)
 ```
 
 ### **Step 4: Fit with Orca Estimator**
@@ -107,10 +110,10 @@ Next, fit and evaluate using the Estimator.
 ```python
 est.fit(data=train_dataset,
         batch_size=320,
-        epochs=100,
-        validation_data=val_dataset)
+        epochs=5,
+        validation_data=mnist_test)
 
-result = est.evaluate(val_dataset)
+result = est.evaluate(mnist_test)
 print(result)
 ```
 

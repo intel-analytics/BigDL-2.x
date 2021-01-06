@@ -26,11 +26,15 @@ from bigdl.optim.optimizer import MaxEpoch, EveryEpoch
 from bigdl.util.common import to_list, JavaValue
 
 from zoo.common.utils import callZooFunc
+from zoo.feature.common import FeatureSet
 from zoo.pipeline.api.keras.engine.topology import to_bigdl_metric, Loss, OptimMethod
 from zoo.pipeline.api.net.utils import find_placeholders, to_bigdl_optim_method, find_tensors
 from zoo.pipeline.estimator import Estimator
 from zoo.util import nest
-
+from zoo.util.triggers import EveryEpoch as ZEveryEpoch
+from zoo.util.triggers import ZooTrigger
+from zoo.tfpark.tf_dataset import TFNdarrayDataset
+from zoo.tfpark.tf_dataset import _standarize_feature_label_dataset
 
 if sys.version >= '3':
     long = int
@@ -619,6 +623,10 @@ class TFOptimizer:
         # target can be None if loss is None
         model_targets = list(filter(lambda x: x is not None, model_targets))
 
+        # standarize feature, labels to support keras model
+        if isinstance(dataset, TFNdarrayDataset):
+            dataset = _standarize_feature_label_dataset(dataset, keras_model)
+
         flatten_inputs = nest.flatten(dataset.feature_tensors)
         assert len(model_inputs) == len(flatten_inputs), \
             ("the keras model and TFDataset should have the same number of tensors" +
@@ -750,6 +758,13 @@ class TFOptimizer:
 
         if checkpoint_trigger is None:
             checkpoint_trigger = EveryEpoch()
+
+        if isinstance(self.train_data, FeatureSet):
+            if self.train_data.value.getNumOfSlice() != 1:
+                if isinstance(checkpoint_trigger, EveryEpoch):
+                    checkpoint_trigger = ZEveryEpoch()
+                elif not isinstance(checkpoint_trigger, ZooTrigger):
+                    raise Exception("Please use a trigger defined in zoo.util.triggers")
 
         if self.tf_model.val_methods and self.val_data is not None:
             self.estimator.train_minibatch(train_set=self.train_data,

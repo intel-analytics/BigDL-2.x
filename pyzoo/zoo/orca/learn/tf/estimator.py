@@ -17,10 +17,9 @@ from pyspark.sql import DataFrame
 
 from bigdl.optim.optimizer import MaxEpoch
 
-from zoo.tfpark.tf_dataset import TFNdarrayDataset
-from zoo.tfpark.model import _standarize_feature_label_dataset
-
+from zoo.tfpark.tf_dataset import _standardize_keras_target_data
 from zoo.common.utils import load_from_file
+from zoo.orca import OrcaContext
 from zoo.orca.data.tf.data import Dataset, TFDataDataset2
 from zoo.orca.data import SparkXShards
 from zoo.orca.learn.tf.utils import *
@@ -36,13 +35,17 @@ from zoo.orca.learn.spark_estimator import Estimator as SparkEstimator
 
 
 class Estimator(SparkEstimator):
-    def fit(self, data, epochs, **kwargs):
+    def fit(self, data, epochs, batch_size=32, feature_cols=None, labels_cols=None,
+            validation_data=None, hard_code_batch_size=False, session_config=None,
+            checkpoint_trigger=None, auto_shard_files=False):
         raise NotImplementedError
 
-    def predict(self, data, **kwargs):
+    def predict(self, data, batch_size=4, feature_cols=None, hard_code_batch_size=False,
+                auto_shard_files=False):
         raise NotImplementedError
 
-    def evaluate(self, data, **kwargs):
+    def evaluate(self, data, batch_size=32, feature_cols=None, labels_cols=None,
+                 hard_code_batch_size=False, auto_shard_files=False):
         raise NotImplementedError
 
     def get_model(self):
@@ -108,18 +111,45 @@ class Estimator(SparkEstimator):
                         return self.tf_optimizer.estimator.get_validation_summary(tag)
                 else:
                     if tag == str(val_method.val_method):
-                        return self.tf_optimizer.estimator.\
+                        return self.tf_optimizer.estimator. \
                             get_validation_summary("{} {}".format(val_method.name, tag))
                 continue
         return None
 
     def save_tf_checkpoint(self, path):
+        """
+        Save tensorflow checkpoint in this estimator.
+        :param path: tensorflow checkpoint path.
+        """
         raise NotImplementedError
 
     def save_keras_model(self, path, overwrite=True):
+        """
+        Save tensorflow keras model in this estimator.
+        :param path: keras model save path.
+        :param overwrite: Whether to silently overwrite any existing file at the target location.
+        """
         raise NotImplementedError
 
     def save_keras_weights(self, filepath, overwrite=True, save_format=None):
+        """
+        Save tensorflow keras model weights in this estimator.
+        :param filepath: keras model weights save path.
+        :param overwrite: Whether to silently overwrite any existing file at the target location.
+        :param save_format: Either 'tf' or 'h5'. A `filepath` ending in '.h5' or
+            '.keras' will default to HDF5 if `save_format` is `None`. Otherwise
+            `None` defaults to 'tf'.
+        """
+        raise NotImplementedError
+
+    def load_keras_weights(self, filepath, by_name=False):
+        """
+        Save tensorflow keras model in this estimator.
+        :param filepath: keras model weights save path.
+        :param by_name: Boolean, whether to load weights by name or by topological
+            order. Only topological loading is supported for weight files in
+            TensorFlow format.
+        """
         raise NotImplementedError
 
     def load_orca_checkpoint(self, path, version):
@@ -172,17 +202,17 @@ class Estimator(SparkEstimator):
         :return: an Estimator object.
         """
         assert backend == "bigdl", "only bigdl backend is supported for now"
-        return TFOptimizerWrapper(inputs=inputs,
-                                  outputs=outputs,
-                                  labels=labels,
-                                  loss=loss,
-                                  optimizer=optimizer,
-                                  clip_norm=clip_norm,
-                                  clip_value=clip_value,
-                                  metrics=metrics, updates=updates,
-                                  sess=sess,
-                                  model_dir=model_dir
-                                  )
+        return TensorFlowEstimator(inputs=inputs,
+                                   outputs=outputs,
+                                   labels=labels,
+                                   loss=loss,
+                                   optimizer=optimizer,
+                                   clip_norm=clip_norm,
+                                   clip_value=clip_value,
+                                   metrics=metrics, updates=updates,
+                                   sess=sess,
+                                   model_dir=model_dir
+                                   )
 
     @staticmethod
     def from_keras(keras_model, metrics=None, model_dir=None, optimizer=None, backend="bigdl"):
@@ -197,7 +227,7 @@ class Estimator(SparkEstimator):
         :return: an Estimator object.
         """
         assert backend == "bigdl", "only bigdl backend is supported for now"
-        return TFKerasWrapper(keras_model, metrics, model_dir, optimizer)
+        return KerasEstimator(keras_model, metrics, model_dir, optimizer)
 
     @staticmethod
     def load_keras_model(path):
@@ -224,7 +254,7 @@ def is_tf_data_dataset(data):
 
 def to_dataset(data, batch_size, batch_per_thread, validation_data,
                feature_cols, labels_cols, hard_code_batch_size,
-               sequential_order, shuffle, auto_shard_files):
+               sequential_order, shuffle, auto_shard_files, memory_type="DRAM"):
     # todo wrap argument into kwargs
     if validation_data:
         if isinstance(data, SparkXShards):
@@ -246,6 +276,7 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
                                         batch_per_thread,
                                         validation_data,
                                         hard_code_batch_size=hard_code_batch_size,
+                                        memory_type=memory_type,
                                         sequential_order=sequential_order,
                                         shuffle=shuffle)
     elif isinstance(data, Dataset):
@@ -258,6 +289,7 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
                                            batch_per_thread,
                                            hard_code_batch_size,
                                            validation_data,
+                                           memory_type,
                                            sequential_order,
                                            shuffle
                                            )
@@ -276,7 +308,7 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
     return dataset
 
 
-class TFOptimizerWrapper(Estimator):
+class TensorFlowEstimator(Estimator):
     def __init__(self, *, inputs, outputs, labels, loss,
                  optimizer, clip_norm, clip_value,
                  metrics,
@@ -343,10 +375,10 @@ class TFOptimizerWrapper(Estimator):
             labels_cols=None,
             validation_data=None,
             hard_code_batch_size=False,
-            auto_shard_files=True,
             session_config=None,
-            feed_dict=None,
-            checkpoint_trigger=None
+            checkpoint_trigger=None,
+            auto_shard_files=False,
+            feed_dict=None
             ):
         """
         Train this graph model with train data.
@@ -390,12 +422,14 @@ class TFOptimizerWrapper(Estimator):
         if checkpoint_trigger is not None:
             checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
 
+        memory_type = OrcaContext.train_data_store
         dataset = to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                              validation_data=validation_data,
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=hard_code_batch_size,
                              sequential_order=False, shuffle=True,
-                             auto_shard_files=auto_shard_files
+                             auto_shard_files=auto_shard_files,
+                             memory_type=memory_type
                              )
 
         if feed_dict is not None:
@@ -437,7 +471,7 @@ class TFOptimizerWrapper(Estimator):
     def predict(self, data, batch_size=4,
                 feature_cols=None,
                 hard_code_batch_size=False,
-                auto_shard_files=True,
+                auto_shard_files=False,
                 ):
         """
         Predict input data
@@ -490,7 +524,7 @@ class TFOptimizerWrapper(Estimator):
                  feature_cols=None,
                  labels_cols=None,
                  hard_code_batch_size=False,
-                 auto_shard_files=True,
+                 auto_shard_files=False,
                  ):
         """
         Evaluate model.
@@ -550,7 +584,7 @@ class TFOptimizerWrapper(Estimator):
         raise NotImplementedError
 
 
-class TFKerasWrapper(Estimator):
+class KerasEstimator(Estimator):
     def __init__(self, keras_model, metrics, model_dir, optimizer):
         self.model = KerasModel(keras_model, model_dir)
         self.load_checkpoint = False
@@ -575,7 +609,7 @@ class TFKerasWrapper(Estimator):
             hard_code_batch_size=False,
             session_config=None,
             checkpoint_trigger=None,
-            auto_shard_files=True,
+            auto_shard_files=True
             ):
         """
         Train this keras model with train data.
@@ -619,14 +653,18 @@ class TFKerasWrapper(Estimator):
         if checkpoint_trigger is not None:
             checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
 
+        if is_tf_data_dataset(data):
+            data = data.map(_standardize_keras_target_data)
+            validation_data = validation_data.map(_standardize_keras_target_data)
+
+        memory_type = OrcaContext.train_data_store
         dataset = to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                              validation_data=validation_data,
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=hard_code_batch_size,
                              sequential_order=False, shuffle=True,
-                             auto_shard_files=auto_shard_files)
-        if isinstance(dataset, TFNdarrayDataset):
-            dataset = _standarize_feature_label_dataset(dataset, self.model.model)
+                             auto_shard_files=auto_shard_files,
+                             memory_type=memory_type)
 
         self.tf_optimizer = TFOptimizer.from_keras(self.model.model, dataset,
                                                    model_dir=self.model.model_dir,
@@ -652,7 +690,7 @@ class TFKerasWrapper(Estimator):
     def predict(self, data, batch_size=4,
                 feature_cols=None,
                 hard_code_batch_size=False,
-                auto_shard_files=True,
+                auto_shard_files=False,
                 ):
         """
         Predict input data
@@ -694,11 +732,11 @@ class TFKerasWrapper(Estimator):
         else:
             return predicted_rdd
 
-    def evaluate(self, data, batch_size=4,
+    def evaluate(self, data, batch_size=32,
                  feature_cols=None,
                  labels_cols=None,
                  hard_code_batch_size=False,
-                 auto_shard_files=True
+                 auto_shard_files=False
                  ):
         """
         Evaluate model.
