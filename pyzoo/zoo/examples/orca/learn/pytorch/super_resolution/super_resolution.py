@@ -14,8 +14,9 @@
 # limitations under the License.
 # ==============================================================================
 # This example trains a super-resolution network on the BSD300 dataset,
-# using crops from the 200 training images, and evaluating on crops of the 100 test images.
-# https://github.com/leonardozcm/examples/tree/master/super_resolution
+# using crops from the 200 training images, and evaluating on crops of the 100 test images,
+# and is adapted from
+# https://github.com/pytorch/examples/tree/master/super_resolution
 #
 
 from __future__ import print_function
