@@ -404,7 +404,7 @@ class TestTFRayEstimator(TestCase):
 
         assert np.allclose(expected, result)
 
-    def test_save_and_restore(self):
+    def test_save_and_load(self):
         def model_creator(config):
             import tensorflow as tf
             model = tf.keras.Sequential([
@@ -436,14 +436,14 @@ class TestTFRayEstimator(TestCase):
             "batch_size": batch_size
         }
         try:
-            est = Estimator.from_keras(model_creator, config=config, workers_per_node=2)
+            est = Estimator.from_keras(model_creator=model_creator, config=config, workers_per_node=2)
 
             history = est.fit(train_data_creator,
                               epochs=1,
                               steps_per_epoch=5)
             print("start saving")
             est.save("/tmp/cifar10_keras.ckpt")
-            est.restore("/tmp/cifar10_keras.ckpt")
+            est.load("/tmp/cifar10_keras.ckpt")
             print("save success")
         finally:
             os.remove("/tmp/cifar10_keras.ckpt")
