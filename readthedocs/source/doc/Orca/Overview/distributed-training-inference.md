@@ -40,23 +40,10 @@ est = Estimator.from_graph(inputs=images,
 
 Keras API:
 ```python
-model = keras.Sequential(
-    [keras.layers.Conv2D(20, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
-                         input_shape=(28, 28, 1), padding='valid'),
-     keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
-     keras.layers.Conv2D(50, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
-                         padding='valid'),
-     keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
-     keras.layers.Flatten(),
-     keras.layers.Dense(500, activation='tanh'),
-     keras.layers.Dense(10, activation='softmax'),
-     ]
-)
-
+model = create_keras_lenet_model()
 model.compile(optimizer=keras.optimizers.RMSprop(),
               loss='sparse_categorical_crossentropy',
               metrics=['accuracy'])
-
 est = Estimator.from_keras(keras_model=model)
 ```
 
@@ -64,8 +51,8 @@ Then users can perform distributed model training and inference as follows:
 
 Distributed Training:
 ```python
-mnist_train = tfds.load(name="mnist", split="train", data_dir=dataset_dir)
-mnist_train = mnist_train.map(preprocess)
+dataset = tfds.load(name="mnist", split="train")
+dataset = dataset.map(preprocess)
 est.fit(data=mnist_train,
         batch_size=320,
         epochs=max_epoch)
@@ -74,7 +61,6 @@ The `data` argument in `fit` method can be a spark DataFrame, a XShards or a `tf
 
 Inference:
 ```python
-df = spark.read.parquet("data.parquet")
 predictions = est.predict(data=df,
                           feature_cols=['image'])
 ```
@@ -88,41 +74,24 @@ Users of TensorFlow 2.x can create a TensorFlow `Estimator` from a keras model. 
 
 ```python
 def model_creator(config):
-    import tensorflow as tf
-    model = tf.keras.Sequential(
-        [tf.keras.layers.Conv2D(20, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
-                                input_shape=(28, 28, 1), padding='valid'),
-         tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
-         tf.keras.layers.Conv2D(50, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
-                                padding='valid'),
-         tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
-         tf.keras.layers.Flatten(),
-         tf.keras.layers.Dense(500, activation='tanh'),
-         tf.keras.layers.Dense(10, activation='softmax'),
-         ]
-    )
-
-    model.compile(optimizer=tf.keras.optimizers.RMSprop(),
+    model = create_keras_lenet_model()
+    model.compile(optimizer=keras.optimizers.RMSprop(),
                   loss='sparse_categorical_crossentropy',
                   metrics=['accuracy'])
     return model
-
 est = Estimator.from_keras(model_creator=model_creator)
 ```
+
+The `model_creator` argument should be a function that takes a `config` dictionary and returns a compiled keras model
 
 Then users can perform distributed model training and inference as follows:
 
 Distributed Training:
 ```python
-import tensorflow as tf
-import tensorflow_datasets as tfds
 def train_data_creator(config):
-    dataset = tfds.load(name="mnist", split="train", data_dir=dataset_dir)
+    dataset = tfds.load(name="mnist", split="train")
     dataset = dataset.map(preprocess)
-    dataset = dataset.shuffle(1000)
-    dataset = dataset.batch(config["batch_size"])
     return dataset
-
 stats = est.fit(data=train_data_creator,
                 epochs=max_epoch,
                 steps_per_epoch=total_size // batch_size)
@@ -131,7 +100,6 @@ The `data` argument in `fit` method can be a spark DataFrame, a XShards or a fun
 
 Inference:
 ```python
-df = spark.read.parquet("data.parquet")
 predictions = est.predict(data=df,
                           feature_cols=['image'])
 ```
@@ -145,19 +113,64 @@ The complete example can be found in [here](https://github.com/intel-analytics/a
 
 **Using *BigDL* backend**
 
-The user may create a PyTorch `Estimator` using the *BigDL* backend (currently default for PyTorch) as follows: <TODO: add a simple example>
+Users may create a PyTorch `Estimator` using the *BigDL* backend (currently default for PyTorch) as follows:
 
-Then the user can perform distributed model training and inference as follows: <TODO: add a simple example>
+```python
+model = LeNet() # a torch.nn.Module
+model.train()
+criterion = nn.NLLLoss()
 
-The input to `fit` and `predict` methods can be `torch.utils.data.DataLoader`, *XShards*, or a *Data Creator Function* (which returns `torch.utils.data.DataLoader`). See the *data-parallel processing pipeline* [page]() for more details. <TODO: we need to add Spark Dataframe support too>
+adam = torch.optim.Adam(model.parameters(), args.lr)
+est = Estimator.from_torch(model=model, optimizer=adam, loss=criterion)
+```
 
-View the related [Python API doc]() for more details.
+Then users can perform distributed model training and inference as follows:
+
+Distributed Training:
+```python
+est.fit(data=train_loader, epochs=args.epochs)
+```
+The input to `fit` methods can be a `torch.utils.data.DataLoader`, a *XShards*, or a *Data Creator Function* (which returns `torch.utils.data.DataLoader`). See the *data-parallel processing pipeline* [page]() for more details. <TODO: we need to add Spark Dataframe support too>
+
+Inference:
+```python
+est.predict(xshards)
+```
+The input to `predict` methods should be a *XShards* (each element needs to be a `{"feature": a numpy ndarray}`). See the *data-parallel processing pipeline* [page]() for more details. <TODO: we need to add Spark Dataframe support too>
+
+View the related [Python API doc]() <TODO: link to be added> for more details.
 
 **Using `torch.distributed` or *Horovod* backend**
 
-<TODO: add description for `torch.distributed` or *Horovod* support>
+Alternatively, users can create a `Estimator` using `torch.distributed` or *Horovod* backend by specifying the `backend` argument to be "torch_distributed" or "horovod". In this case, the `model` and `optimizer` should be wrapped in a function. For example:
+```python
+def model_creator(config):
+    model = LeNet() # a torch.nn.Module
+    model.train()
+    return model
 
-***For more details, view the distributed PyTorch training/inference [page]().*** 
+def optimizer_creator(model, config):
+    return torch.optim.Adam(model.parameters(), config["lr"])
+
+est = Estimator.from_torch(model=model,
+                           optimizer=optimizer_creator,
+                           loss=nn.NLLLoss(),
+                           config={"lr": 1e-2},
+                           backend="torch_distributed") # or backend="horovod"
+```
+
+Then users can perform distributed model training as follows:
+
+Distributed Training:
+```python
+est.fit(data=train_loader_func, epochs=args.epochs)
+```
+The input to `fit` methods can be a *XShards*, or a *Data Creator Function* (which returns `torch.utils.data.DataLoader`). See the *data-parallel processing pipeline* [page]() for more details. <TODO: we need to add Spark Dataframe support too>
+
+Inference is currently not supported when using `torch.distributed` or *Horovod* backend.
+
+
+***For more details, view the distributed PyTorch training/inference [page]()<TODO: link to be added>.***
 
 ### **4. MXNet Estimator**
 
