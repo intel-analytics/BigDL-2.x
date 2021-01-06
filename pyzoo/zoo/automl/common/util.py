@@ -29,7 +29,8 @@ def train_val_test_split(df,
                          val_ratio=0,
                          test_ratio=0.1,
                          look_back=0,
-                         horizon=1):
+                         horizon=1,
+                         entity_column=None):
     """
     split input dataframe into train_df, val_df and test_df according to split ratio.
     The dataframe is splitted in its originally order in timeline.
@@ -39,8 +40,39 @@ def train_val_test_split(df,
     :param test_ratio: test ratio
     :param look_back: the length to look back
     :param horizon: num of steps to look forward
+    :param entity_column: name of the column that shows the id of multi-entity
     :return:
     """
+    # Trival entity_column or No entity_column
+    if entity_column is None or len(set(df[entity_column].values)) == 1:
+        return _single_train_val_test_split(df,
+                                            val_ratio=val_ratio,
+                                            test_ratio=test_ratio,
+                                            look_back=look_back,
+                                            horizon=horizon)
+
+    # Iter on entity_column
+    train_df = pd.DataFrame(columns=df.columns)
+    val_df = pd.DataFrame(columns=df.columns)
+    test_df = pd.DataFrame(columns=df.columns)
+    for entity_id in set(df[entity_column].values):
+        train_df_entity, val_df_entity, test_df_entity = _single_train_val_test_split(
+            df[df[entity_column] == entity_id],
+            val_ratio=val_ratio,
+            test_ratio=test_ratio,
+            look_back=look_back,
+            horizon=horizon)
+        train_df = train_df.append(train_df_entity, ignore_index=True)
+        val_df = val_df.append(val_df_entity, ignore_index=True)
+        test_df = test_df.append(test_df_entity, ignore_index=True)
+    return train_df, val_df, test_df
+
+
+def _single_train_val_test_split(df,
+                                 val_ratio=0,
+                                 test_ratio=0.1,
+                                 look_back=0,
+                                 horizon=1):
     # suitable to nyc taxi dataset.
 
     total_num = df.index.size
