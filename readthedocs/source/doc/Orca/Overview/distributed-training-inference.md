@@ -80,9 +80,65 @@ predictions = est.predict(data=df,
 ```
 The `data` argument in `predict` method can be a spark DataFrame or a XShards. See the *data-parallel processing pipeline* [page](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/data-parallel-processing.html) for more details.
 
-The complete example can be found in [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/orca/learn/tf)
+The complete example can be found in [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/orca/learn/tf).
 
 #### **2.2 TensorFlow 2.x and Keras 2.4+**
+
+Users of TensorFlow 2.x can create a TensorFlow `Estimator` from a keras model. The keras model should be created, compiled and returned in a python function. For example:
+
+```python
+def model_creator(config):
+    import tensorflow as tf
+    model = tf.keras.Sequential(
+        [tf.keras.layers.Conv2D(20, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
+                                input_shape=(28, 28, 1), padding='valid'),
+         tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
+         tf.keras.layers.Conv2D(50, kernel_size=(5, 5), strides=(1, 1), activation='tanh',
+                                padding='valid'),
+         tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid'),
+         tf.keras.layers.Flatten(),
+         tf.keras.layers.Dense(500, activation='tanh'),
+         tf.keras.layers.Dense(10, activation='softmax'),
+         ]
+    )
+
+    model.compile(optimizer=tf.keras.optimizers.RMSprop(),
+                  loss='sparse_categorical_crossentropy',
+                  metrics=['accuracy'])
+    return model
+
+est = Estimator.from_keras(model_creator=model_creator)
+```
+
+Then users can perform distributed model training and inference as follows:
+
+Distributed Training:
+```python
+import tensorflow as tf
+import tensorflow_datasets as tfds
+def train_data_creator(config):
+    dataset = tfds.load(name="mnist", split="train", data_dir=dataset_dir)
+    dataset = dataset.map(preprocess)
+    dataset = dataset.shuffle(1000)
+    dataset = dataset.batch(config["batch_size"])
+    return dataset
+
+stats = est.fit(data=train_data_creator,
+                epochs=max_epoch,
+                steps_per_epoch=total_size // batch_size)
+```
+The `data` argument in `fit` method can be a spark DataFrame, a XShards or a function that returns a `tf.data.Dataset`. See the *data-parallel processing pipeline* [page](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/data-parallel-processing.html) for more details.
+
+Inference:
+```python
+df = spark.read.parquet("data.parquet")
+predictions = est.predict(data=df,
+                          feature_cols=['image'])
+```
+The `data` argument in `predict` method can be a spark DataFrame or a XShards. See the *data-parallel processing pipeline* [page](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/data-parallel-processing.html) for more details.
+
+The complete example can be found in [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/orca/learn/tf2).
+
 
 ### **3. PyTorch Estimator**
 
