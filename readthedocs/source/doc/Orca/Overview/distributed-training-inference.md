@@ -139,6 +139,7 @@ The `data` argument in `predict` method can be a spark DataFrame or a XShards. S
 
 The complete example can be found in [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/orca/learn/tf2).
 
+***For more details, view the distributed TensorFlow training/inference [page](). <TODO: link to be added>***
 
 ### **3. PyTorch Estimator**
 
