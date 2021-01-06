@@ -47,8 +47,8 @@ source_suffix = {'.rst': 'restructuredtext',
 master_doc = 'index'
 
 project = 'Analytics Zoo'
-copyright = '2020, analytice-zoo'
-author = 'analytice-zoo'
+copyright = '2020, Analytics Zoo Authors'
+author = 'Analytics Zoo Authors'
 
 # The short X.Y version
 #version = ''
@@ -124,7 +124,7 @@ exclude_patterns = ['_build']
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-# Custom sidebar templates, must be a dictionary that maps document names
+# Custom sidebar templates, must be a dictionary that maps document namesan
 # to template names.
 #
 # The default sidebars (for documents that don't match any pattern) are
@@ -138,7 +138,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'analytics-zoodoc'
+htmlhelp_basename = 'Analytics Zoo Documentation'
 
 
 # -- Options for LaTeX output ------------------------------------------------
