@@ -436,7 +436,8 @@ class TestTFRayEstimator(TestCase):
             "batch_size": batch_size
         }
         try:
-            est = Estimator.from_keras(model_creator=model_creator, config=config, workers_per_node=2)
+            est = Estimator.from_keras(model_creator=model_creator,
+                                       config=config, workers_per_node=2)
 
             history = est.fit(train_data_creator,
                               epochs=1,
