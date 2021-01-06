@@ -35,8 +35,153 @@ View the related [Python API doc]() for more details.
 
 ### **4. MXNet Estimator**
 
+The user may create a MXNet `Estimator` as follows:
+```python
+import mxnet as mx
+from mxnet import gluon
+from mxnet.gluon import nn
+
+def get_model(config):
+    class SimpleModel(gluon.Block):
+        def __init__(self, **kwargs):
+            super(SimpleModel, self).__init__(**kwargs)
+            self.fc1 = nn.Dense(20)
+            self.fc2 = nn.Dense(10)
+
+        def forward(self, x):
+            x = self.fc1(x)
+            x = self.fc2(x)
+            return x
+
+    net = SimpleModel()
+    net.initialize(mx.init.Xavier(magnitude=2.24), ctx=[mx.cpu()])
+    return net
+
+
+def get_loss(config):
+    return gluon.loss.SoftmaxCrossEntropyLoss()
+
+
+def get_metrics(config):
+    return mx.metric.Accuracy()
+
+config = create_config(log_interval=2, optimizer="adam",
+                       optimizer_params={'learning_rate': 0.02})
+est = Estimator.from_mxnet(config=config,
+                           model_creator=get_model,
+                           loss_creator=get_loss,
+                           eval_metrics_creator=get_metrics,
+                           validation_metrics_creator=get_metrics,
+                           num_workers=2)
+```
+
+Then the user can perform distributed model training as follows:
+```python
+import numpy as np
+
+def get_train_data_iter(config, kv):
+    train_data = np.random.rand(200, 30)
+    train_label = np.random.randint(0, 10, (200,))
+    train = mx.io.NDArrayIter(train_data, train_label,
+                              batch_size=config["batch_size"], shuffle=True)
+    return train
+
+
+def get_test_data_iter(config, kv):
+    test_data = np.random.rand(80, 30)
+    test_label = np.random.randint(0, 10, (80,))
+    test = mx.io.NDArrayIter(test_data, test_label,
+                             batch_size=config["batch_size"], shuffle=True)
+    return test
+
+est.fit(get_train_data_iter, validation_data=get_test_data_iter, epochs=2)
+est.shutdown()
+```
+
 ### **5. Horovod Trainer**
 
 ### **6. BigDL Estimator**
 
+The user may create a BigDL `Estimator` as follows:
+```python
+from bigdl.nn.criterion import *
+from bigdl.nn.layer import *
+from bigdl.optim.optimizer import *
+from zoo.orca.learn.bigdl import Estimator
+
+linear_model = Sequential().add(Linear(2, 2))
+mse_criterion = MSECriterion()
+est = Estimator.from_bigdl(model=linear_model, loss=mse_criterion, optimizer=Adam(),
+                           feature_preprocessing=SeqToTensor([2]),
+                           label_preprocessing=SeqToTensor([2]))
+```
+
+Then the user can perform distributed model training and inference as follows:
+```python
+from zoo.common.nncontext import *
+from pyspark.sql.types import *
+
+# generate spark Dataframe
+sc = init_nncontext()
+data = sc.parallelize([
+    ((2.0, 1.0), (1.0, 2.0)),
+    ((1.0, 2.0), (2.0, 1.0)),
+    ((2.0, 1.0), (1.0, 2.0)),
+    ((1.0, 2.0), (2.0, 1.0))])
+
+schema = StructType([
+    StructField("features", ArrayType(DoubleType(), False), False),
+    StructField("label", ArrayType(DoubleType(), False), False)])
+sqlContext = SQLContext(sc)
+df = self.sqlContext.createDataFrame(data, schema)
+
+# distributed model training
+est.fit(df, 1, batch_size=4)
+
+#distributed model inference
+predict_result_shards = est.predict(df)
+predict_result = predict_result_shards.collect()
+```
+
+The input to `fit` and `predict` methods can be *XShards*, or a *Spark Dataframe*. See the *data-parallel processing pipeline* [page](./data-parallel-processing.html) for more details.
+
+View the related [Python API doc]() for more details.
+
 ### **7. OpenVINO Estimator**
+
+The user may create a OpenVINO `Estimator` as follows:
+```python
+from zoo.orca.learn.openvino import Estimator
+
+model_path = "The/file_path/to/the/OpenVINO_IR_xml_file"
+est = Estimator.from_openvino(model_path=model_path)
+```
+
+Then the user can perform distributed model inference as follows:
+```python
+# ndarray
+input_data = np.random.random([20, 4, 3, 224, 224])
+result = est.predict(input_data)
+print(result)
+
+# xshards
+input_data_list = [np.random.random([1, 4, 3, 224, 224]),
+                   np.random.random([2, 4, 3, 224, 224])]
+sc = init_nncontext()
+rdd = sc.parallelize(input_data_list, numSlices=2)
+shards = SparkXShards(rdd)
+
+def pre_processing(images):
+    return {"x": images}
+
+shards = shards.transform_shard(pre_processing)
+result = est.predict(shards)
+result_c = result.collect()
+print(result_c)
+```
+
+The input to `predict` methods can be *XShards*, or a *numpy array*. See the *data-parallel processing pipeline* [page](./data-parallel-processing.html) for more details.
+
+View the related [Python API doc]() for more details.
+
+
