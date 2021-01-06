@@ -66,7 +66,7 @@ predictions = est.predict(data=df,
 ```
 The `data` argument in `predict` method can be a spark DataFrame or a XShards. See the *data-parallel processing pipeline* [page](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/data-parallel-processing.html) for more details.
 
-The complete example can be found in [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/orca/learn/tf).
+View the related [Python API doc]() <TODO: link to be added> for more details.
 
 #### **2.2 TensorFlow 2.x and Keras 2.4+**
 
@@ -105,7 +105,8 @@ predictions = est.predict(data=df,
 ```
 The `data` argument in `predict` method can be a spark DataFrame or a XShards. See the *data-parallel processing pipeline* [page](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/data-parallel-processing.html) for more details.
 
-The complete example can be found in [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/orca/learn/tf2).
+View the related [Python API doc]() <TODO: link to be added> for more details.
+
 
 ***For more details, view the distributed TensorFlow training/inference [page](). <TODO: link to be added>***
 
@@ -167,8 +168,9 @@ est.fit(data=train_loader_func, epochs=args.epochs)
 ```
 The input to `fit` methods can be a *XShards*, or a *Data Creator Function* (which returns `torch.utils.data.DataLoader`). See the *data-parallel processing pipeline* [page]() for more details. <TODO: we need to add Spark Dataframe support too>
 
-Inference is currently not supported when using `torch.distributed` or *Horovod* backend.
+View the related [Python API doc]() <TODO: link to be added> for more details.
 
+Inference is currently not supported when using `torch.distributed` or *Horovod* backend.
 
 ***For more details, view the distributed PyTorch training/inference [page]()<TODO: link to be added>.***
 
