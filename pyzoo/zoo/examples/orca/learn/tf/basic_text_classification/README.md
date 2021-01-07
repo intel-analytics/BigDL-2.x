@@ -29,7 +29,7 @@ python basic_text_classification.py --cluster_mode yarn
 ```
 
 In above commands
-* `--cluster_mode` The mode of spark cluster. support local and yarn. Default is "local".
+* `--cluster_mode` The mode of spark cluster, supporting local and yarn. Default is "local".
 
 
 ## Results
