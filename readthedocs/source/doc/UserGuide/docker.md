@@ -95,7 +95,7 @@ After the Jupyter Notebook service is successfully started, you can connect to t
 2. Launch a browser, and connect to the Jupyter Notebook service with the URL: https://container-ip-address:port-number/?token=your-token
 As a result, you will see the Jupyter Notebook like this:
 
-![notebook1](images/notebook1.jpg)
+![](images/notebook1.jpg)
 
 #### **3.3 Run Analytics Zoo Jupyter Notebooks**
 
@@ -103,19 +103,19 @@ After connecting to the Jupyter Notebook in the browser, you can run multiple An
 
 1. Click into the "dogs-vs-cats" folder:
 
-![notebook2](images/notebook2.jpg)
+![](images/notebook2.jpg)
 
 2. Open the notebook file:
 
-![notebook3](notebook3.jpg)
+![](images/notebook3.jpg)
 
 * Start to run the "dogs-vs-cats" notebook:
 
-![notebook4](notebook4.jpg)
+![](images/notebook4.jpg)
 
 * Run through the example and check the prediction:
 
-![notebook5](notebook5.jpg)
+![](images/notebook5.jpg)
 
 ### **4. Shut Down Docker Container**
 
