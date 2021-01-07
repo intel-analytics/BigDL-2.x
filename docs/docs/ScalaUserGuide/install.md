@@ -9,7 +9,7 @@ Currently, Analytics Zoo releases are hosted on maven central; here's an example
 ```xml
 <dependency>
     <groupId>com.intel.analytics.zoo</groupId>
-    <artifactId>analytics-zoo-bigdl_0.10.0-[spark_2.1.1|spark_2.2.0|spark_2.3.1|spark_2.4.3]</artifactId>
+    <artifactId>analytics-zoo-bigdl_0.12.1-[spark_2.1.1|spark_2.2.0|spark_2.3.1|spark_2.4.3|spark_3.0.0]</artifactId>
     <version>${ANALYTICS_ZOO_VERSION}</version>
 </dependency>
 ```
@@ -17,7 +17,7 @@ You can find the latest ANALYTICS_ZOO_VERSION [here](https://search.maven.org/se
 
 SBT developers can use
 ```sbt
-libraryDependencies += "com.intel.analytics.zoo" % "analytics-zoo-bigdl_0.10.0-[spark_2.1.1|spark_2.2.0|spark_2.3.1|spark_2.4.3]" % "${ANALYTICS_ZOO_VERSION}"
+libraryDependencies += "com.intel.analytics.zoo" % "analytics-zoo-bigdl_0.12.1-[spark_2.1.1|spark_2.2.0|spark_2.3.1|spark_2.4.3|spark_3.0.0]" % "${ANALYTICS_ZOO_VERSION}"
 ```
 
 Remarks:
@@ -106,6 +106,24 @@ $ mvn clean package -DskipTests
 After that, you can find that jar packages in `PATH_TO_ANALYTICS_ZOO`/target/, where `PATH_TO_ANALYTICS_ZOO` is the path to the directory of the Analytics Zoo.
 
 Note that the instructions above will build Analytics Zoo with Spark 2.1.0 for Linux. Similarly, you may customize spark version like [above](#build-with-spark-version).
+
+---
+## **Build with JDK 11**
+
+It's recommended to download [Oracle JDK 11](https://www.oracle.com/java/technologies/javase-jdk11-downloads.html). And it will avoid possible incompatibility with maven plugins. Update PATH and make sure your JAVA_HOME environment variable is set to Java 11 if you're running from the command line. Or if you're running from an IDE, you need to make sure it is set to run maven with your current JDK.
+
+Jdk 11 supports few Scala versions. You can see scala version compatibility [description](https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html). Analytics Zoo supports Spark3 with Scala 2.12. You can use `-P spark_3.x` to specify Spark3 and scala 2.12. Additionally, `make-dist.sh` default uses Java 8. To compile with java 11, it requires to specify building opts `-Djava.version=11 -Djavac.version=11`. You can build with `make-dist.sh` or Maven with following command.
+
+Build with `make-dist.sh`:
+ 
+```bash
+$ bash make-dist.sh -P spark_3.x -Djava.version=11 -Djavac.version=11
+```
+
+Or build with Maven:
+```bash
+$ mvn clean package -DskipTests -P spark_3.x -Djava.version=11 -Djavac.version=11
+```
 
 ---
 ## **Setup IDE**

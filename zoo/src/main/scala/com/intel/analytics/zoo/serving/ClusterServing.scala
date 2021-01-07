@@ -18,18 +18,25 @@
 package com.intel.analytics.zoo.serving
 
 
+import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.engine.{FlinkInference, FlinkRedisSink, FlinkRedisSource}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions, SerParams}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.flink.core.execution.JobClient
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.log4j.{Level, Logger}
+import redis.clients.jedis.JedisPool
 import scopt.OptionParser
 
 
 object ClusterServing {
   case class ServingParams(configPath: String = "config.yaml", testMode: Int = -1,
                            timerMode: Boolean = false)
-
+  val logger = Logger.getLogger(getClass)
+  var argv: ServingParams = _
+  var helper: ClusterServingHelper = _
+  var streamingEnv: StreamExecutionEnvironment = _
+  var model: InferenceModel = _
+  var jedisPool: JedisPool = _
   val parser = new OptionParser[ServingParams]("Text Classification Example") {
     opt[String]('c', "configPath")
       .text("Config Path of Cluster Serving")
@@ -41,71 +48,30 @@ object ClusterServing {
       .text("Whether to open timer mode")
       .action((x, params) => params.copy(timerMode = x))
   }
-
-  Logger.getLogger("org").setLevel(Level.ERROR)
-  Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
-  var params: SerParams = null
-  val logger = Logger.getLogger(getClass)
-  def run(configPath: String = "config.yaml",
-          testMode: Int = -1,
-          timerMode: Boolean = false): Unit = {
-    val helper = new ClusterServingHelper(configPath)
-    helper.initArgs()
-    params = new SerParams(helper)
-    params.timerMode = timerMode
-    if (!helper.checkManagerYaml()) {
-      println(s"ERROR - Cluster Serving with name ${helper.jobName} already exists, exited.")
-      println("You should check that there is no other Cluster Serving job with this name" +
-        " exists on this machine already.")
-      println(s"Hint: The default name is ${Conventions.SERVING_STREAM_DEFAULT_NAME}," +
-        s"if this is the name reported, then make sure you have cancelled the job before run" +
-        s"another one. ")
-      println("If you are sure the job is cancelled but still meet this error, report bug to us." +
-        "And use 'rm -rf /tmp/cluster-serving*' to reset the Cluster Serving manager file.")
-      return
-    }
-    val serving = StreamExecutionEnvironment.getExecutionEnvironment
-    serving.registerCachedFile(configPath, Conventions.SERVING_CONF_TMP_PATH)
-    serving.registerCachedFile(params.modelDir, Conventions.SERVING_MODEL_TMP_DIR)
-    if (testMode > 0) {
+  def uploadModel(): Unit = {
+    streamingEnv = StreamExecutionEnvironment.getExecutionEnvironment
+    streamingEnv.registerCachedFile(helper.modelDir, Conventions.SERVING_MODEL_TMP_DIR)
+  }
+  def executeJob(): Unit = {
+    if (argv.testMode > 0) {
+      Logger.getLogger("org").setLevel(Level.INFO)
       Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.DEBUG)
-      println("Running Cluster Serving in test mode with parallelism 1")
-      serving.addSource(new FlinkRedisSource(params)).setParallelism(testMode)
-        .map(new FlinkInference(params)).setParallelism(testMode)
-        .addSink(new FlinkRedisSink(params)).setParallelism(testMode)
+      streamingEnv.addSource(new FlinkRedisSource(helper)).setParallelism(argv.testMode)
+        .map(new FlinkInference(helper)).setParallelism(argv.testMode)
+        .addSink(new FlinkRedisSink(helper)).setParallelism(argv.testMode)
     } else {
-      serving.addSource(new FlinkRedisSource(params))
-        .map(new FlinkInference(params))
-        .addSink(new FlinkRedisSink(params))
+      streamingEnv.addSource(new FlinkRedisSource(helper))
+        .map(new FlinkInference(helper))
+        .addSink(new FlinkRedisSink(helper))
     }
-
-    val jobClient = serving.executeAsync("Cluster Serving - " + helper.jobName)
-    val jobId = jobClient.getJobID.toHexString
-    Runtime.getRuntime.addShutdownHook(new ShutDownThrd(helper, jobId, jobClient))
-    helper.updateManagerYaml(jobId)
-    while (!jobClient.getJobStatus.get().isTerminalState) {
-//      println(s"Status is ${jobClient.getJobStatus.get().toString}, " +
-//        s"is terminate Boolean value is ${jobClient.getJobStatus.get().isTerminalState}")
-      Thread.sleep(3000)
-    }
-
-
+    streamingEnv.executeAsync()
   }
+
   def main(args: Array[String]): Unit = {
-    val param = parser.parse(args, ServingParams()).head
-    run(param.configPath, param.testMode, param.timerMode)
-  }
-}
-
-class ShutDownThrd(helper: ClusterServingHelper, jobId: String, jobClient: JobClient)
-  extends Thread {
-  override def run(): Unit = {
-    println(s"Shutdown hook triggered, removing job $jobId in yaml")
-    try {
-      jobClient.cancel()
-    } catch {
-      case _: Exception =>
-    }
-    helper.updateManagerYaml(jobId, remove = true)
+    argv = parser.parse(args, ServingParams()).head
+    helper = new ClusterServingHelper()
+    helper.loadConfig()
+    uploadModel()
+    executeJob()
   }
 }

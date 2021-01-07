@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 from zoo.pipeline.estimator.estimator import Estimator as SparkEstimator
+from zoo.orca.learn.ray_estimator import Estimator as OrcaRayEstimator
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.spark_estimator import Estimator as OrcaSparkEstimator
 from zoo.orca.learn.optimizers import Optimizer as OrcaOptimizer, SGD
@@ -25,27 +26,6 @@ from torch.utils.data import DataLoader
 
 
 class Estimator(object):
-    def fit(self, data, epochs, **kwargs):
-        pass
-
-    def predict(self, data, **kwargs):
-        pass
-
-    def evaluate(self, data, **kwargs):
-        pass
-
-    def get_model(self):
-        pass
-
-    def save(self, checkpoint):
-        pass
-
-    def load(self, checkpoint):
-        pass
-
-    def shutdown(self, force=False):
-        pass
-
     @staticmethod
     def from_torch(*,
                    model,
@@ -61,29 +41,29 @@ class Estimator(object):
                    model_dir=None,
                    backend="bigdl"):
         if backend in {"horovod", "torch_distributed"}:
-            return PyTorchRayEstimatorWrapper(model_creator=model,
-                                              optimizer_creator=optimizer,
-                                              loss_creator=loss,
-                                              scheduler_creator=scheduler_creator,
-                                              training_operator_cls=training_operator_cls,
-                                              initialization_hook=initialization_hook,
-                                              config=config,
-                                              scheduler_step_freq=scheduler_step_freq,
-                                              use_tqdm=use_tqdm,
-                                              workers_per_node=workers_per_node,
-                                              backend=backend)
+            return PyTorchRayEstimator(model_creator=model,
+                                       optimizer_creator=optimizer,
+                                       loss_creator=loss,
+                                       scheduler_creator=scheduler_creator,
+                                       training_operator_cls=training_operator_cls,
+                                       initialization_hook=initialization_hook,
+                                       config=config,
+                                       scheduler_step_freq=scheduler_step_freq,
+                                       use_tqdm=use_tqdm,
+                                       workers_per_node=workers_per_node,
+                                       backend=backend)
         elif backend == "bigdl":
-            return PytorchSparkEstimatorWrapper(model=model,
-                                                loss=loss,
-                                                optimizer=optimizer,
-                                                model_dir=model_dir,
-                                                bigdl_type="float")
+            return PyTorchSparkEstimator(model=model,
+                                         loss=loss,
+                                         optimizer=optimizer,
+                                         model_dir=model_dir,
+                                         bigdl_type="float")
         else:
             raise ValueError("Only horovod, torch_distributed and bigdl backends are supported"
                              f" for now, got backend: {backend}")
 
 
-class PyTorchRayEstimatorWrapper(Estimator):
+class PyTorchRayEstimator(OrcaRayEstimator):
     def __init__(self,
                  *,
                  model_creator,
@@ -141,8 +121,8 @@ class PyTorchRayEstimatorWrapper(Estimator):
         return self.estimator.train(data=data, epochs=epochs, batch_size=batch_size,
                                     profile=profile, reduce_results=reduce_results, info=info)
 
-    def predict(self, data, **kwargs):
-        pass
+    def predict(self, data, batch_size=32, **kwargs):
+        raise NotImplementedError
 
     def evaluate(self, data, batch_size=32, num_steps=None, profile=False, info=None):
         """
@@ -195,7 +175,7 @@ class PyTorchRayEstimatorWrapper(Estimator):
         return self.estimator.shutdown(force=force)
 
 
-class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
+class PyTorchSparkEstimator(OrcaSparkEstimator):
     def __init__(self, model, loss, optimizer, model_dir=None, bigdl_type="float"):
         from zoo.pipeline.api.torch import TorchModel, TorchLoss, TorchOptim
         self.loss = loss
@@ -218,15 +198,15 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
         self.model = TorchModel.from_pytorch(model)
         self.estimator = SparkEstimator(self.model, optimizer, model_dir, bigdl_type=bigdl_type)
 
-    def fit(self, data, epochs=1, batch_size=32, validation_data=None, validation_methods=None,
-            checkpoint_trigger=None):
+    def fit(self, data, epochs=1, batch_size=32, feature_cols=None, labels_cols=None,
+            validation_data=None, validation_metrics=None, checkpoint_trigger=None):
         from zoo.orca.data.utils import to_sample
         from zoo.orca.learn.metrics import Metrics
         from zoo.orca.learn.trigger import Trigger
 
         end_trigger = MaxEpoch(epochs)
         assert batch_size > 0, "batch_size should be greater than 0"
-        validation_methods = Metrics.convert_metrics_list(validation_methods)
+        validation_metrics = Metrics.convert_metrics_list(validation_metrics)
         checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
 
         if self.log_dir is not None and self.app_name is not None:
@@ -243,7 +223,7 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
                 val_feature_set = FeatureSet.sample_rdd(validation_data.rdd.flatMap(to_sample))
 
             self.estimator.train(train_feature_set, self.loss, end_trigger, checkpoint_trigger,
-                                 val_feature_set, validation_methods, batch_size)
+                                 val_feature_set, validation_metrics, batch_size)
         elif isinstance(data, DataLoader) or callable(data):
             train_feature_set = FeatureSet.pytorch_dataloader(data, "", "")
             if validation_data is None:
@@ -254,13 +234,13 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
                 val_feature_set = FeatureSet.pytorch_dataloader(validation_data)
 
             self.estimator.train_minibatch(train_feature_set, self.loss, end_trigger,
-                                           checkpoint_trigger, val_feature_set, validation_methods)
+                                           checkpoint_trigger, val_feature_set, validation_metrics)
         else:
             raise ValueError("Data and validation data should be SparkXShards, DataLoaders or "
                              "callable data_creators but get " + data.__class__.__name__)
         return self
 
-    def predict(self, data, batch_size=4):
+    def predict(self, data, batch_size=4, feature_cols=None):
         from zoo.orca.learn.utils import convert_predict_to_xshard
         if isinstance(data, SparkXShards):
             from zoo.orca.data.utils import to_sample
@@ -271,19 +251,20 @@ class PytorchSparkEstimatorWrapper(OrcaSparkEstimator):
         predicted_rdd = self.model.predict(data_rdd, batch_size=batch_size)
         return convert_predict_to_xshard(predicted_rdd)
 
-    def evaluate(self, data, validation_methods=None, batch_size=32):
+    def evaluate(self, data, batch_size=32, feature_cols=None, labels_cols=None,
+                 validation_metrics=None):
         from zoo.orca.data.utils import to_sample
         from zoo.orca.learn.metrics import Metrics
 
         assert data is not None, "validation data shouldn't be None"
-        validation_methods = Metrics.convert_metrics_list(validation_methods)
+        validation_metrics = Metrics.convert_metrics_list(validation_metrics)
 
         if isinstance(data, SparkXShards):
             val_feature_set = FeatureSet.sample_rdd(data.rdd.flatMap(to_sample))
-            return self.estimator.evaluate(val_feature_set, validation_methods, batch_size)
+            return self.estimator.evaluate(val_feature_set, validation_metrics, batch_size)
         elif isinstance(data, DataLoader) or callable(data):
             val_feature_set = FeatureSet.pytorch_dataloader(data)
-            return self.estimator.evaluate_minibatch(val_feature_set, validation_methods)
+            return self.estimator.evaluate_minibatch(val_feature_set, validation_metrics)
         else:
             raise ValueError("Data should be a SparkXShards, a DataLoader or a callable "
                              "data_creator, but get " + data.__class__.__name__)

@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import com.intel.analytics.zoo.serving.PreProcessing
+import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
 import org.apache.log4j.Logger
 
@@ -67,7 +67,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
       try {
         val t = typeCheck(pathByte._2)
         dimCheck(t, "add", modelType)
-        val result = ModelHolder.model.doPredict(t)
+        val result = ClusterServing.model.doPredict(t)
         dimCheck(result, "remove", modelType)
         val value = PostProcessing(result.toTensor[Float], filterType, 1)
         (pathByte._1, value)
@@ -93,18 +93,12 @@ class ClusterServingInference(preProcessing: PreProcessing,
     val postProcessed = in.grouped(batchSize).flatMap(pathByte => {
       try {
         val thisBatchSize = pathByte.size
-        ModelHolder.synchronized{
-          while (ModelHolder.modelQueueing != 0) ModelHolder.wait()
-        }
         val t = batchInput(pathByte, batchSize, useMultiThreading = false, resizeFlag = false)
         dimCheck(t, "add", modelType)
         val result =
-          ModelHolder.model.doPredict(t)
+          ClusterServing.model.doPredict(t)
         dimCheck(result, "remove", modelType)
         dimCheck(t, "remove", modelType)
-        ModelHolder.synchronized{
-          while (ModelHolder.modelQueueing != 0) ModelHolder.wait()
-        }
         val kvResult =
           (0 until thisBatchSize).map(i => {
             val value = PostProcessing(result, filterType, i + 1)
@@ -136,7 +130,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
          */
         dimCheck(t, "add", modelType)
         val result =
-          ModelHolder.model.doPredict(t)
+          ClusterServing.model.doPredict(t)
         dimCheck(result, "remove", modelType)
         dimCheck(t, "remove", modelType)
         val kvResult =
