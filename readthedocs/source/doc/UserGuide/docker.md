@@ -76,7 +76,7 @@ After a Docker container is launched and user login into the container, you can 
 
 In the `/opt/work` directory, run this command line to start the Jupyter Notebook service:
 ```
-start-notebook.sh
+./start-notebook.sh
 ```
 
 You will see the output message like below. This means the Jupyter Notebook service has started successfully within the container.
@@ -101,11 +101,11 @@ As a result, you will see the Jupyter Notebook like this:
 
 After connecting to the Jupyter Notebook in the browser, you can run multiple Analytics Zoo Jupyter Notebook examples. The example shown below is the “dogs-vs-cats”.
 
-1. Click into the "dogs-vs-cats" folder:
+* Click into the "dogs-vs-cats" folder:
 
 ![](images/notebook2.jpg)
 
-2. Open the notebook file:
+* Open the notebook file:
 
 ![](images/notebook3.jpg)
 
