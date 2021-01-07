@@ -40,6 +40,7 @@ The user may create a MXNet `Estimator` as follows:
 import mxnet as mx
 from mxnet import gluon
 from mxnet.gluon import nn
+from zoo.orca.learn.mxnet import Estimator, create_config
 
 def get_model(config):
     class SimpleModel(gluon.Block):
@@ -137,7 +138,7 @@ schema = StructType([
     StructField("features", ArrayType(DoubleType(), False), False),
     StructField("label", ArrayType(DoubleType(), False), False)])
 sqlContext = SQLContext(sc)
-df = self.sqlContext.createDataFrame(data, schema)
+df = sqlContext.createDataFrame(data, schema)
 
 # distributed model training
 est.fit(df, 1, batch_size=4)
