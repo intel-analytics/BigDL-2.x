@@ -575,6 +575,33 @@
                             </artifactSet>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>flink-udf</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>flink-udf</shadedClassifierName>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>com.intel.analytics.bigdl:bigdl-SPARK_2.4</exclude>
+                                    <exclude>ml.dmlc:xgboost4j</exclude>
+                                    <exclude>org.spark-project.spark:unused</exclude>
+                                    <exclude>black.ninia:jep</exclude>
+                                    <exclude>org.tensorflow:tensorflow-hadoop</exclude>
+                                    <exclude>com.intel.analytics.zoo:zoo-core-dist-mac</exclude>
+                                    <exclude>com.intel.analytics.zoo:zoo-core-tfnet-mac</exclude>
+                                    <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-mac</exclude>
+                                    <exclude>com.intel.analytics.bigdl.core.dist:all</exclude>
+                                    <exclude>com.intel.analytics.bigdl.spark-version</exclude>
+                                    <exclude>org.scalanlp:breeze_${scala.major.version}</exclude>
+                                    <exclude>it.unimi.dsi:fastutil</exclude>
+                                </excludes>
+                            </artifactSet>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
