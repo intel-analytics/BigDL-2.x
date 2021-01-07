@@ -69,6 +69,7 @@ class BasePredictor(object):
             recipe=SmokeRecipe(),
             mc=False,
             resources_per_trial={"cpu": 2},
+            upload_dir=None,
             ):
         """
         Trains the model for time sequence prediction.
@@ -84,6 +85,8 @@ class BasePredictor(object):
                       criteria. Default is SmokeRecipe().
         :param resources_per_trial: Machine resources to allocate per trial,
             e.g. ``{"cpu": 64, "gpu": 8}`
+        :param upload_dir: Optional URI to sync training results and checkpoints.(e.g hdfs://
+        )
         :return: a pipeline constructed with the best model and configs.
         """
         self._check_df(input_df)
@@ -94,12 +97,13 @@ class BasePredictor(object):
         is_local = ray_ctx.is_local
         # BasePredictor._check_fit_metric(metric)
         if not is_local:
-            remote_dir = os.path.join(os.sep, "ray_results", self.name)
-            if self.name not in get_remote_list(os.path.dirname(remote_dir)):
-                cmd = "hadoop fs -mkdir -p {}".format(remote_dir)
-                process(cmd)
+            if not upload_dir:
+                hadoop_user_name = os.getenv("HADOOP_USER_NAME")
+                upload_dir = os.path.join(os.sep, "user", hadoop_user_name, self.logs_dir, self.name)
+            cmd = "hadoop fs -mkdir -p {}".format(upload_dir)
+            process(cmd)
         else:
-            remote_dir = None
+            upload_dir = None
 
         self.pipeline = self._hp_search(
             input_df,
@@ -108,7 +112,7 @@ class BasePredictor(object):
             recipe=recipe,
             mc=mc,
             resources_per_trial=resources_per_trial,
-            remote_dir=remote_dir)
+            remote_dir=upload_dir)
         return self.pipeline
 
     def evaluate(self,
