@@ -31,7 +31,7 @@ A key challenge for scaling out Python program across a distributed cluster is h
 
 For K8s cluster, the user may install required Python packages in the container and specify the `container_image` argument when `init_orca_context`. For Hadoop/YARN cluster, the user may use `conda` to create the Python virtual environment with required dependencies on the local machine, and `init_orca_context` will automatically detect the active `conda` environment and provision it on each node in the cluster.
 
-View the user guide for [K8s]() and [Hadoop/YARN]() for more details.
+View the user guide for [K8s](../UserGuide/k8s) and [Hadoop/YARN](../UserGuide/hadoop) for more details.
 
 ---
 ### **3. Execution Engine**
@@ -54,7 +54,7 @@ Users can make extra configurations when using the functionalities of Project Or
 
 * `OrcaContext.log_output`: Default to be False. Setting it to True is recommended when running Jupyter notebook (this will display all the program output in the notebook). Make sure you set it before `init_orca_context`.
 * `OrcaContext.serialize_data_creator`: Default to be False. Setting it to True would add a file lock when initializing data for distributed training (this may be useful if you run multiple workers on a single node and they download data to the same destination).
-* `OrcaContext.pandas_read_backend`: Setting it to the backend to be used for reading data as Panda DataFrame. See [here](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/readthedocs/Orca/Overview/data-parallel-processing.md#31-data-parallel-pandas) for more details.
+* `OrcaContext.pandas_read_backend`: Setting it to the backend to be used for reading data as Panda DataFrame. See [here](data-parallel-processing/#31-data-parallel-pandas) for more details.
 * `OrcaContext.train_data_store`: Setting memory type for train data storage. Either `DRAM`, `PMEM`, or `DISK_n`. Default to `DRAM`; setting it to `DISK_n` (e.g., `DISK_2`) if the training data cannot fit in memory (this will store the data on disk, and cache only `1/n` of the data in memory; after going through the `1/n`, we will release the current cache, and load another `1/n` into memory). You can set it to `PMEM` if have AEP hardware.
 
 ---
