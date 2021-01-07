@@ -4,6 +4,15 @@
 
 **In this guide we will describe how to scale out Keras (v2.3) programs using Orca in 4 simple steps.**
 
+<table class="keras-notebook-buttons">
+  <td>
+    <a target="_blank" href="https://colab.research.google.com/github/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/keras_lenet_mnist.ipynb"><img src="https://www.tensorflow.org/images/colab_logo_32px.png" />Run in Google Colab</a>
+  </td>
+  <td>
+    <a target="_blank" href="https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/keras_lenet_mnist.ipynb"><img src="https://www.tensorflow.org/images/GitHub-Mark-32px.png" />View source on GitHub</a>
+  </td>
+</table>
+
 ### **Step 0: Prepare Environment**
 
 We recommend using [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the environment. Please refer to the [install guide](../PythonUserGuide/install/) for more details.
@@ -15,7 +24,7 @@ conda create -n zoo python=3.7 # "zoo" is conda environment name, you can use an
 conda activate zoo
 pip install analytics_zoo-${VERSION} # install either version 0.9 or latest nightly build
 pip install tensorflow==1.15.0
-pip install tensorflow-datasets==2.0
+pip install tensorflow-datasets==2.1.0
 pip install psutil
 pip install pandas
 pip install scikit-learn
