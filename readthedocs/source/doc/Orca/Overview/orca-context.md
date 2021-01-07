@@ -31,7 +31,7 @@ A key challenge for scaling out Python program across a distributed cluster is h
 
 For K8s cluster, the user may install required Python packages in the container and specify the `container_image` argument when `init_orca_context`. For Hadoop/YARN cluster, the user may use `conda` to create the Python virtual environment with required dependencies on the local machine, and `init_orca_context` will automatically detect the active `conda` environment and provision it on each node in the cluster.
 
-View the user guide for [K8s](../UserGuide/k8s) and [Hadoop/YARN](../UserGuide/hadoop) for more details.
+View the user guide for [K8s](../../UserGuide/k8s.html) and [Hadoop/YARN](../../UserGuide/hadoop.html) for more details.
 
 ---
 ### **3. Execution Engine**
