@@ -102,25 +102,27 @@ if [ ${upload} == true ]; then
     $upload_command
 fi
 # build and upload serving wheel
-cd ${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving
-if [ -d "${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/dist" ]; then
-   rm -r ${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/dist
-fi
-python setup.py bdist_wheel --universal
+if [ "$platform" == "linux" ]; then
+    cd ${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving
+    if [ -d "${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/dist" ]; then
+       rm -r ${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/dist
+    fi
+    python setup.py bdist_wheel --universal
 
-if [ -d "${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/build" ]; then
-   echo "Removing serving/build"
-   rm -r ${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/build
-fi
-if [ -d "${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/analytics_zoo_serving.egg-info" ]; then
-   echo "Removing serving/analytics_zoo_serving.egg-info"
-   rm -r ${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/analytics_zoo_serving.egg-info
-fi
+    if [ -d "${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/build" ]; then
+       echo "Removing serving/build"
+       rm -r ${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/build
+    fi
+    if [ -d "${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/analytics_zoo_serving.egg-info" ]; then
+       echo "Removing serving/analytics_zoo_serving.egg-info"
+       rm -r ${ANALYTICS_ZOO_PYTHON_DIR}/zoo/serving/analytics_zoo_serving.egg-info
+    fi
 
-if [ ${upload} == true ]; then
-    serving_whl=dist/analytics_zoo_serving-*.whl
-    serving_upload_command="twine upload ${serving_whl}"
-    echo "Command for uploading to pypi: $serving_upload_command"
-    $serving_upload_command
+    if [ ${upload} == true ]; then
+        serving_whl=dist/analytics_zoo_serving-*.whl
+        serving_upload_command="twine upload ${serving_whl}"
+        echo "Command for uploading to pypi: $serving_upload_command"
+        $serving_upload_command
+    fi
+    cd ${ANALYTICS_ZOO_PYTHON_DIR}
 fi
-cd ${ANALYTICS_ZOO_PYTHON_DIR}
