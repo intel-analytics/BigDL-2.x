@@ -8,7 +8,7 @@ We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux)
 conda create -n zoo python=3.7 #zoo is conda enviroment name, you can set another name you like.
 conda activate zoo
 pip install tensorflow==1.15
-pip install analytics-zoo==0.9.0.dev0 # or above
+pip install --pre analytics-zoo
 ```
 
 ## Prepare Dataset
