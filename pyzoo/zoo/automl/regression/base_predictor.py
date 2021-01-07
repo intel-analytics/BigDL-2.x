@@ -99,7 +99,8 @@ class BasePredictor(object):
         if not is_local:
             if not upload_dir:
                 hadoop_user_name = os.getenv("HADOOP_USER_NAME")
-                upload_dir = os.path.join(os.sep, "user", hadoop_user_name, self.logs_dir, self.name)
+                upload_dir = os.path.join(os.sep, "user", hadoop_user_name,
+                                          self.logs_dir, self.name)
             cmd = "hadoop fs -mkdir -p {}".format(upload_dir)
             process(cmd)
         else:
