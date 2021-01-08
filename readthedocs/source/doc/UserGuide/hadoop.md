@@ -15,6 +15,7 @@ conda activate zoo
 # Use conda or pip to install all the needed Python dependencies.
 ``` 
 
+
 2) You need to install JDK in the environment. __JDK8__ is highly recommended.
 You can download JDK8 and set the environment variable `JAVA_HOME` or install JDK8 via conda:
 
