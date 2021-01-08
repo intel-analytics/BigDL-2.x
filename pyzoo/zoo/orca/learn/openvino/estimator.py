@@ -57,25 +57,26 @@ class OpenvinoEstimator(SparkEstimator):
                                  weight_path=model_path[:model_path.rindex(".")] + ".bin",
                                  batch_size=batch_size)
 
-    def fit(self, data, epochs, **kwargs):
+    def fit(self, data, epochs, batch_size=32, feature_cols=None, labels_cols=None,
+            validation_data=None, checkpoint_trigger=None):
         """
-        Train the model with train data.
-
-        :param data: train data.
-        :param epochs: number of epochs to train.
+        Fit is not supported in OpenVINOEstimator
         """
         raise NotImplementedError
 
-    def predict(self, data, **kwargs):
+    def predict(self, data):
         """
         Predict input data
 
-        :param data: data to be predicted. XShards and ndarray are supported. If data is XShards,
-        each element needs to be {'x': a feature numpy array or a list of feature numpy arrays}.
+        :param data: data to be predicted. XShards, numpy array and list of numpy arrays are
+        supported. If data is XShards, each partition is a dictionary of  {'x': feature},
+        where feature(label) is a numpy array or a list of numpy arrays.
         :return: predicted result.
-         If input data is XShards, the predict result is a XShards, and the schema for each result
-         is: {'prediction': predicted numpy array or list of predicted numpy arrays}.
-         If input data is numpy arrays or list of numpy arrays, the predict result is a numpy array.
+         If the input data is XShards, the predict result is a XShards, each partition of the
+         XShards is a dictionary of {'prediction': result}, where the result is a numpy array or
+         a list of numpy arrays.
+         If the input data is numpy arrays or list of numpy arrays, the predict result is a numpy
+         array or a list of numpy arrays.
         """
         def predict_transform(dict_data, batch_size):
             assert isinstance(dict_data, dict), "each shard should be an dict"
@@ -149,29 +150,21 @@ class OpenvinoEstimator(SparkEstimator):
             raise ValueError("Only XShards, a numpy array and a list of numpy arrays are supported "
                              "as input data, but get " + data.__class__.__name__)
 
-    def evaluate(self, data, **kwargs):
+    def evaluate(self, data, batch_size=32, feature_cols=None, labels_cols=None):
         """
-        Evaluate model.
-
-        :param data: evaluation data.
-        :return: evaluation result as a dictionary of {'metric name': metric value}
+        Evaluate is not supported in OpenVINOEstimator
         """
         raise NotImplementedError
 
     def get_model(self):
         """
-        Get the trained model
-
-        :return: Trained model
+        Get_model is not supported in OpenVINOEstimator
         """
         raise NotImplementedError
 
     def save(self, model_path):
         """
-        Save model to model_path
-
-        :param model_path: path to save the trained model.
-        :return:
+        Save is not supported in OpenVINOEstimator
         """
         raise NotImplementedError
 
@@ -202,80 +195,48 @@ class OpenvinoEstimator(SparkEstimator):
 
     def set_tensorboard(self, log_dir, app_name):
         """
-        Set summary information during the training process for visualization purposes.
-        Saved summary can be viewed via TensorBoard.
-        In order to take effect, it needs to be called before fit.
-
-        Training summary will be saved to 'log_dir/app_name/train'
-        and validation summary (if any) will be saved to 'log_dir/app_name/validation'.
-
-        :param log_dir: The base directory path to store training and validation logs.
-        :param app_name: The name of the application.
+        Set_tensorboard is not supported in OpenVINOEstimator
         """
         raise NotImplementedError
 
     def clear_gradient_clipping(self):
         """
-        Clear gradient clipping parameters. In this case, gradient clipping will not be applied.
-        In order to take effect, it needs to be called before fit.
-
-        :return:
+        Clear_gradient_clipping is not supported in OpenVINOEstimator
         """
         raise NotImplementedError
 
     def set_constant_gradient_clipping(self, min, max):
         """
-        Set constant gradient clipping during the training process.
-        In order to take effect, it needs to be called before fit.
-
-        :param min: The minimum value to clip by.
-        :param max: The maximum value to clip by.
-        :return:
+        Set_constant_gradient_clipping is not supported in OpenVINOEstimator
         """
         raise NotImplementedError
 
     def set_l2_norm_gradient_clipping(self, clip_norm):
         """
-        Clip gradient to a maximum L2-Norm during the training process.
-        In order to take effect, it needs to be called before fit.
-
-        :param clip_norm: Gradient L2-Norm threshold.
-        :return:
+        Set_l2_norm_gradient_clipping is not supported in OpenVINOEstimator
         """
         raise NotImplementedError
 
     def get_train_summary(self, tag=None):
         """
-        Get the scalar from model train summary
-        Return list of summary data of [iteration_number, scalar_value, timestamp]
-
-        :param tag: The string variable represents the scalar wanted
+        Get_train_summary is not supported in OpenVINOEstimator
         """
         raise NotImplementedError
 
     def get_validation_summary(self, tag=None):
         """
-        Get the scalar from model validation summary
-        Return list of summary data of [iteration_number, scalar_value, timestamp]
-
-        :param tag: The string variable represents the scalar wanted
+        Get_validation_summary is not supported in OpenVINOEstimator
         """
         raise NotImplementedError
 
     def load_orca_checkpoint(self, path, version):
         """
-        Load specified Orca checkpoint.
-
-        :param path: checkpoint directory.
-        :param version: checkpoint version, which is the suffix of model.* file,
-        i.e., for modle.4 file, the version is 4.
+        Load_orca_checkpoint is not supported in OpenVINOEstimator
         """
         raise NotImplementedError
 
     def load_latest_orca_checkpoint(self, path):
         """
-        Load latest Orca checkpoint under specified directory.
-
-        :param path: directory containing Orca checkpoint files.
+        Load_latest_orca_checkpoint is not supported in OpenVINOEstimator
         """
         raise NotImplementedError

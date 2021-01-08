@@ -41,14 +41,14 @@ Estimator.from_torch(*,
 * `model`: PyTorch model if `backend="bigdl"`, PyTorch model creator if `backend="horovod" or "torch_distributed"`
 * `optimizer`: Orca optimizer or PyTorch optimizer if `backend="bigdl"`, PyTorch optimizer creator if `backend="horovod" or "torch_distributed"`
 * `loss`: PyTorch loss if `backend="bigdl"`, PyTorch loss creator if `backend="horovod" or "torch_distributed"`
-* `scheduler_creator`: parameter for horovod and torch_distributed. a learning rate scheduler wrapping the optimizer. You will need to set ``TorchTrainer(scheduler_step_freq="epoch")`` for the scheduler to be incremented correctly. If using a scheduler for validation loss, be sure to call ``trainer.update_scheduler(validation_loss)``
-* `training_operator_cls`: parameter for horovod and torch_distributed. Custom training operator class that subclasses the TrainingOperator class. This class will be copied onto all remote workers and used to specify custom training and validation operations. Defaults to TrainingOperator.
-* `initialization_hook`: parameter for horovod and torch_distributed.
-* `config`: parameter for horovod and torch_distributed. Config dict to create model, optimizer loss and data.
-* `scheduler_step_freq`: parameter for horovod and torch_distributed. "batch", "epoch", "manual", or None. This will determine when ``scheduler.step`` is called. If "batch", ``step`` will be called after every optimizer step. If "epoch", ``step`` will be called after one pass of the DataLoader. If "manual", the scheduler will not be incremented automatically - you are expected to call ``trainer.update_schedulers`` manually. If a scheduler is passed in, this value is expected to not be None.
-* `use_tqdm`: parameter for horovod and torch_distributed. You can monitor training progress if use_tqdm=True.
-* `workers_per_node`: parameter for horovod and torch_distributed. worker number on each node. default: 1.
-* `model_dir`: parameter for `bigdl`. The path to save model. During the training, if checkpoint_trigger is defined and triggered, the model will be saved to model_dir.
+* `scheduler_creator`: parameter for `horovod` and `torch_distributed` backends. a learning rate scheduler wrapping the optimizer. You will need to set ``scheduler_step_freq="epoch"`` for the scheduler to be incremented correctly.
+* `training_operator_cls`: parameter for `horovod` and `torch_distributed` backends. Custom training operator class that subclasses the TrainingOperator class. This class will be copied onto all remote workers and used to specify custom training and validation operations. Defaults to TrainingOperator.
+* `initialization_hook`: parameter for `horovod` and `torch_distributed` backends.
+* `config`: parameter for `horovod` and `torch_distributed` backends. Config dict to create model, optimizer loss and data.
+* `scheduler_step_freq`: parameter for `horovod` and `torch_distributed` backends. "batch", "epoch" or None. This will determine when ``scheduler.step`` is called. If "batch", ``step`` will be called after every optimizer step. If "epoch", ``step`` will be called after one pass of the DataLoader. If a scheduler is passed in, this value is expected to not be None.
+* `use_tqdm`: parameter for `horovod` and `torch_distributed` backends. You can monitor training progress if use_tqdm=True.
+* `workers_per_node`: parameter for `horovod` and `torch_distributed` backends. worker number on each node. default: 1.
+* `model_dir`: parameter for `bigdl` backend. The path to save model. During the training, if checkpoint_trigger is defined and triggered, the model will be saved to model_dir.
 * `backend`: You can choose "horovod",  "torch_distributed" or "bigdl" as backend. Default: bigdl.
 
 ### Use horovod Estimator
