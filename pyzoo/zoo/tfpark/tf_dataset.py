@@ -14,18 +14,17 @@
 # limitations under the License.
 #
 
+import logging
+import sys
+
 import numpy as np
 import tensorflow as tf
-import sys
-import functools
-import logging
-
-from pyspark.ml.linalg import DenseVector, SparseVector, VectorUDT
 from bigdl.transform.vision.image import FeatureTransformer
 from bigdl.util.common import get_node_and_core_number
-from zoo.common.utils import callZooFunc
+from pyspark.ml.linalg import DenseVector, SparseVector, VectorUDT
 from zoo.common import Sample, JTensor
 from zoo.common.nncontext import getOrCreateSparkContext
+from zoo.common.utils import callZooFunc
 from zoo.feature.common import FeatureSet, SampleToMiniBatch, Preprocessing
 from zoo.feature.image import ImagePreprocessing, ImageFeatureToSample
 from zoo.util import nest
@@ -1269,8 +1268,7 @@ class DataFrameDataset(TFNdarrayDataset):
         if labels_cols is None:
             labels_cols = []
 
-        selected_df = df.select(*(feature_cols + labels_cols))
-        schema = selected_df.schema
+        schema = df.schema
         feature_meta = []
         for feature_col in feature_cols:
             field = schema[feature_col]
@@ -1298,10 +1296,10 @@ class DataFrameDataset(TFNdarrayDataset):
         else:
             tensor_structure = (feature_meta,)
 
-        rdd = selected_df.rdd.map(lambda row: convert_row_to_numpy(row,
-                                                                   schema,
-                                                                   feature_cols,
-                                                                   labels_cols))
+        rdd = df.rdd.map(lambda row: convert_row_to_numpy(row,
+                                                          schema,
+                                                          feature_cols,
+                                                          labels_cols))
         if validation_df is not None:
             val_rdd = validation_df.rdd.map(lambda row: convert_row_to_numpy(row,
                                                                              schema,
