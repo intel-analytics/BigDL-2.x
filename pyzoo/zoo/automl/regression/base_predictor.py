@@ -85,7 +85,11 @@ class BasePredictor(object):
                       criteria. Default is SmokeRecipe().
         :param resources_per_trial: Machine resources to allocate per trial,
             e.g. ``{"cpu": 64, "gpu": 8}`
-        :param upload_dir: Optional URI to sync training results and checkpoints.(e.g hdfs://
+        :param upload_dir: Optional URI to sync training results and checkpoints. We only support
+            hdfs URI for now. It defaults to
+            "hdfs:///user/{hadoop_user_name}/ray_checkpoints/{predictor_name}".
+            Where hadoop_user_name is specified in init_orca_context or init_spark_on_yarn,
+            which defaults to "root". predictor_name is the name used in predictor instantiation.
         )
         :return: a pipeline constructed with the best model and configs.
         """
@@ -100,7 +104,7 @@ class BasePredictor(object):
             if not upload_dir:
                 hadoop_user_name = os.getenv("HADOOP_USER_NAME")
                 upload_dir = os.path.join(os.sep, "user", hadoop_user_name,
-                                          self.logs_dir, self.name)
+                                          "ray_checkpoints", self.name)
             cmd = "hadoop fs -mkdir -p {}".format(upload_dir)
             process(cmd)
         else:
