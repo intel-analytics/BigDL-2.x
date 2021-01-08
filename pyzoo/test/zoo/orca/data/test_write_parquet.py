@@ -44,8 +44,8 @@ def test_write_parquet_simple(orca_context_fixture):
 
     try:
 
-        ParquetDataset.write(temp_dir, generator(100), schema)
-        data, schema = ParquetDataset._read_as_dict_rdd(temp_dir)
+        ParquetDataset.write("file://" + temp_dir, generator(100), schema)
+        data, schema = ParquetDataset._read_as_dict_rdd("file://" + temp_dir)
         data = data.collect()[0]
         assert data['id'] == 0
         assert np.all(data['feature'] == np.zeros((10,), dtype=np.float32))
@@ -78,8 +78,8 @@ def test_write_parquet_images(orca_context_fixture):
     }
 
     try:
-        ParquetDataset.write(temp_dir, generator(), schema)
-        data, schema = ParquetDataset._read_as_dict_rdd(temp_dir)
+        ParquetDataset.write("file://" + temp_dir, generator(), schema)
+        data, schema = ParquetDataset._read_as_dict_rdd("file://" + temp_dir)
         data = data.collect()[0]
         image_path = data['id']
         with open(image_path, "rb") as f:
@@ -129,8 +129,8 @@ def test_write_mnist(orca_context_fixture):
 
         write_mnist(image_file=train_image_file,
                     label_file=train_label_file,
-                    output_path=output_path)
-        data, schema = ParquetDataset._read_as_dict_rdd(output_path)
+                    output_path="file://" + output_path)
+        data, schema = ParquetDataset._read_as_dict_rdd("file://" + output_path)
         data = data.sortBy(lambda x: x['label']).collect()
         images_load = np.reshape(np.stack([d['image'] for d in data]), (-1, 4, 4))
         labels_load = np.stack([d['label'] for d in data])
@@ -149,8 +149,8 @@ def test_train_simple(orca_context_fixture):
     try:
         _write_ndarrays(images=np.random.randn(500, 28, 28, 1).astype(np.float32),
                         labels=np.random.randint(0, 10, (500,)).astype(np.int32),
-                        output_path=temp_dir)
-        dataset = ParquetDataset.read_as_tf(temp_dir)
+                        output_path="file://" + temp_dir)
+        dataset = ParquetDataset.read_as_tf("file://" + temp_dir)
 
         def preprocess(data):
             return data['image'], data["label"]
@@ -189,8 +189,9 @@ def test_write_from_directory(orca_context_fixture):
     temp_dir = tempfile.mkdtemp()
     try:
         label_map = {"cats": 0, "dogs": 1}
-        write_from_directory(os.path.join(resource_path, "cat_dog"), label_map, temp_dir)
-        train_xshard = ParquetDataset._read_as_xshards(temp_dir)
+        write_from_directory(os.path.join(resource_path, "cat_dog"),
+                             label_map, "file://" + temp_dir)
+        train_xshard = ParquetDataset._read_as_xshards("file://" + temp_dir)
 
         data = train_xshard.collect()[0]
         image_path = data["image_id"][0]

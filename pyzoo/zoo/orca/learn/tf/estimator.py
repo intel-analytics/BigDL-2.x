@@ -17,11 +17,9 @@ from pyspark.sql import DataFrame
 
 from bigdl.optim.optimizer import MaxEpoch
 
-from zoo.tfpark.tf_dataset import TFNdarrayDataset
-from zoo.tfpark.tf_dataset import _standarize_feature_label_dataset
 from zoo.tfpark.tf_dataset import _standardize_keras_target_data
-
 from zoo.common.utils import load_from_file
+from zoo.orca import OrcaContext
 from zoo.orca.data.tf.data import Dataset, TFDataDataset2
 from zoo.orca.data import SparkXShards
 from zoo.orca.learn.tf.utils import *
@@ -355,7 +353,7 @@ def is_tf_data_dataset(data):
 
 def to_dataset(data, batch_size, batch_per_thread, validation_data,
                feature_cols, labels_cols, hard_code_batch_size,
-               sequential_order, shuffle, auto_shard_files):
+               sequential_order, shuffle, auto_shard_files, memory_type="DRAM"):
     # todo wrap argument into kwargs
     if validation_data:
         if isinstance(data, SparkXShards):
@@ -377,6 +375,7 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
                                         batch_per_thread,
                                         validation_data,
                                         hard_code_batch_size=hard_code_batch_size,
+                                        memory_type=memory_type,
                                         sequential_order=sequential_order,
                                         shuffle=shuffle)
     elif isinstance(data, Dataset):
@@ -389,6 +388,7 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
                                            batch_per_thread,
                                            hard_code_batch_size,
                                            validation_data,
+                                           memory_type,
                                            sequential_order,
                                            shuffle
                                            )
@@ -519,12 +519,14 @@ class TensorFlowEstimator(Estimator):
         if checkpoint_trigger is not None:
             checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
 
+        memory_type = OrcaContext.train_data_store
         dataset = to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                              validation_data=validation_data,
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=False,
                              sequential_order=False, shuffle=True,
-                             auto_shard_files=auto_shard_files
+                             auto_shard_files=auto_shard_files,
+                             memory_type=memory_type
                              )
 
         if feed_dict is not None:
@@ -728,7 +730,7 @@ class KerasEstimator(Estimator):
             validation_data=None,
             session_config=None,
             checkpoint_trigger=None,
-            auto_shard_files=False,
+            auto_shard_files=True
             ):
         """
         Train this keras model with train data.
@@ -777,15 +779,14 @@ class KerasEstimator(Estimator):
             data = data.map(_standardize_keras_target_data)
             validation_data = validation_data.map(_standardize_keras_target_data)
 
+        memory_type = OrcaContext.train_data_store
         dataset = to_dataset(data, batch_size=batch_size, batch_per_thread=-1,
                              validation_data=validation_data,
                              feature_cols=feature_cols, labels_cols=labels_cols,
                              hard_code_batch_size=False,
                              sequential_order=False, shuffle=True,
-                             auto_shard_files=auto_shard_files)
-
-        if isinstance(dataset, TFNdarrayDataset):
-            dataset = _standarize_feature_label_dataset(dataset, self.model.model)
+                             auto_shard_files=auto_shard_files,
+                             memory_type=memory_type)
 
         self.tf_optimizer = TFOptimizer.from_keras(self.model.model, dataset,
                                                    model_dir=self.model.model_dir,
@@ -904,7 +905,7 @@ class KerasEstimator(Estimator):
 
         :return: The trained Keras model
         """
-        raise NotImplementedError
+        return self.model.model
 
     def save(self, model_path, overwrite=True):
         """
