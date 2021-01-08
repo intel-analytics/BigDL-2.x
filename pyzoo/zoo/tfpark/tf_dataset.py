@@ -14,17 +14,18 @@
 # limitations under the License.
 #
 
-import logging
-import sys
-
 import numpy as np
 import tensorflow as tf
+import sys
+import functools
+import logging
+
+from pyspark.ml.linalg import DenseVector, SparseVector, VectorUDT
 from bigdl.transform.vision.image import FeatureTransformer
 from bigdl.util.common import get_node_and_core_number
-from pyspark.ml.linalg import DenseVector, SparseVector, VectorUDT
+from zoo.common.utils import callZooFunc
 from zoo.common import Sample, JTensor
 from zoo.common.nncontext import getOrCreateSparkContext
-from zoo.common.utils import callZooFunc
 from zoo.feature.common import FeatureSet, SampleToMiniBatch, Preprocessing
 from zoo.feature.image import ImagePreprocessing, ImageFeatureToSample
 from zoo.util import nest
