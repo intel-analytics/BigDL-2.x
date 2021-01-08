@@ -8,20 +8,19 @@ You can run Analytics Zoo programs on standard Hadoop/YARN clusters without any 
 
 1) You need to first use [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the Python environment _on the driver node_, and then install all the needed Python libraries in the conda environment:
 
-```bash
-conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
-conda activate zoo
+    ```bash
+    conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
+    conda activate zoo
+    
+    # Use conda or pip to install all the needed Python dependencies.
+    ``` 
 
-# Use conda or pip to install all the needed Python dependencies.
-``` 
 
+2) You need to install JDK in the environment. __JDK8__ is highly recommended. You can download JDK8 and set the environment variable `JAVA_HOME` or install JDK8 via conda:
 
-2) You need to install JDK in the environment. __JDK8__ is highly recommended.
-You can download JDK8 and set the environment variable `JAVA_HOME` or install JDK8 via conda:
-
-```bash
-conda install -c anaconda openjdk=8.0.152
-```
+    ```bash
+    conda install -c anaconda openjdk=8.0.152
+    ```
 
 ---
 ### **2. For YARN client mode**
