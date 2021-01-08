@@ -32,13 +32,13 @@ Alternatively, you can find the list of the nightly build versions [here](https:
 pip install analytics-zoo=version
 ```
 
-_Note: If you are using a custom URL of Python Package Index, you may need to check whether the packages have been keeping updated with pypi. 
+_Note: If you are using a custom URL of Python Package Index, you may need to check whether the latest packages have been sync'ed with pypi. 
 Or you can add the option `-i https://pypi.python.org/simple` when pip install to use pypi as the index-url._
 
 ---
 ### **2. Run**
 
-_**Note:**  Installing Analytics Zoo from pip will automatically install `pyspark`. To avoid possible conflicts, you are highly recommended to  **unset `SPARK_HOME`**  if it exists in your environment._
+_**Note:**  Installing Analytics Zoo from pip will automatically install `pyspark`. To avoid possible conflicts, you are highly recommended to  **unset the environment variable `SPARK_HOME`**  if it exists in your environment._
 
 
 #### **2.1 Interactive Shell**
@@ -46,31 +46,8 @@ _**Note:**  Installing Analytics Zoo from pip will automatically install `pyspar
 You may test if the installation is successful using the interactive Python shell as follows:
 
 * Type `python` in the command line to start a REPL.
-* Try to run the [example code](#example-code) to verify the installation.
+* Try to run the example code below to verify the installation:
 
-#### **2.2 Jupyter Notebook**
-
-You may test if the installation is successful using the Jupyter notebook as follows:
-
-* Start the Jupyter notebook as you normally do, e.g.
-
-```bash
-jupyter notebook --notebook-dir=./ --ip=* --no-browser
-```
-
-* Try to run the [example code](#example-code) to verify the installation.
-
-
-#### **2.3 Python Script**
-
-You may test if the installation is successful using a simple Python script as follows:
-
-* Create a Python file (e.g. test.py) with the [example code](#example-code).
-
-* Run `python test.py` in the command line to verify the installation.
-
-
-#### **Example code**
 ```python
 import zoo
 from zoo.orca import init_orca_context
@@ -79,20 +56,34 @@ print(zoo.__version__)  # Verify the version of analytics-zoo
 sc = init_orca_context()  # Initiation of analytics-zoo on the underlying cluster.
 ```
 
-### **3. Compatibility**
+#### **2.2 Jupyter Notebook**
 
-Analytics Zoo has been tested on __Python 3.7__ with the following library versions:
+You can start the Jupyter notebook as you normally do using the following command and run Analytics Zoo programs directly in a Jupyter notebook:
 
 ```bash
+jupyter notebook --notebook-dir=./ --ip=* --no-browser
+```
+
+#### **2.3 Python Script**
+
+You can directly write Analytics Zoo programs in a Python file (e.g. test.py) and run `python script.py` in the command line.
+
+---
+### **3. Compatibility**
+
+Analytics Zoo has been tested on __Python 3.6 and 3.7__ with the following library versions:
+
+```bash
+pyspark==2.4.3
+ray==0.8.4 or 0.8.6
+tensorflow==1.15.0 or >2.0
+pytorch>=1.5.0
+torchvision>=0.6.0
+horovod==0.19.2
+mxnet>=1.6.0
 bayesian-optimization==1.1.0
 dask==2.14.0
 h5py==2.10.0
-horovod==0.19.2
-imageio==2.8.0
-imageio-ffmpeg==0.4.1
-Keras==1.2.2
-moviepy==1.0.1
-mxnet==1.6.0
 numpy==1.18.1
 opencv-python==4.2.0.34
 pandas==1.0.3
@@ -101,15 +92,11 @@ protobuf==3.11.4
 psutil==5.7.0
 pyarrow==0.17.0
 py4j==0.10.7
-pyspark==2.4.3
-ray==0.8.4
 redis==3.4.1
 scikit-learn==0.22.2.post1
 scipy==1.4.1
-six==1.14.0
 tensorboard==1.15.0
 tensorboardX==2.0
-tensorflow==1.15.0
 tensorflow-datasets==3.2.0
 tensorflow-estimator==1.15.1
 tensorflow-gan==2.0.0
@@ -117,6 +104,4 @@ tensorflow-hub==0.8.0
 tensorflow-metadata==0.21.1
 tensorflow-probability==0.7.0
 Theano==1.0.4
-torch==1.7.1
-torchvision==0.8.2
 ```
