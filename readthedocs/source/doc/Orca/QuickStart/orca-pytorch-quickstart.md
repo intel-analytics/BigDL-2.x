@@ -14,13 +14,11 @@ We recommend you to use [Conda](https://docs.conda.io/projects/conda/en/latest/u
 ```bash
 conda create -n zoo python=3.7 # zoo is conda environment name, you can use any name you like.
 conda activate zoo
-pip install analytics-zoo # install either version 0.9 or latest nightly build
+pip install --pre analytics-zoo # install either version 0.9 or latest pre-release version
 pip install torch==1.7.1 torchvision==0.8.2
 pip install six cloudpickle
 pip install jep==3.9.0
 ```
-
-**Note:** The original [source code](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/examples/orca/learn/pytorch/mnist/lenet_mnist.py) for the tutorial below only supports torch version >= 1.5.
 
 ### **Step 1: Init Orca Context**
 ```python
@@ -29,7 +27,7 @@ from zoo.orca import init_orca_context, stop_orca_context
 
 if args.cluster_mode == "local":
     init_orca_context(cores=1, memory="2g")   # run in local mode
-elif args.cluster_mode == "yarn":
+elif args.cluster_mode == "k8s":
     init_orca_context(cluster_mode="k8s", num_nodes=2, cores=4) # run on K8s cluster
 elif args.cluster_mode == "yarn":
     init_orca_context(
@@ -122,9 +120,9 @@ from zoo.orca.learn.metrics import Accuracy
 from zoo.orca.learn.trigger import EveryEpoch 
 
 est.fit(data=train_loader, epochs=10, validation_data=test_loader,
-        validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
+        validation_metrics=[Accuracy()], checkpoint_trigger=EveryEpoch())
 
-result = est.evaluate(data=test_loader, validation_methods=[Accuracy()])
+result = est.evaluate(data=test_loader, validation_metrics=[Accuracy()])
 for r in result:
     print(str(r))
 ```
