@@ -41,6 +41,23 @@ class Estimator(object):
                    compile_args_creator=None,
                    backend="tf2"
                    ):
+        """
+        Create an Estimator for tensorflow 2.
+
+        :param model_creator: (dict -> Model) This function takes in the `config`
+                dict and returns a compiled TF model.
+        :param config: (dict) configuration passed to 'model_creator',
+                'data_creator'. Also contains `fit_config`, which is passed
+                into `model.fit(data, **fit_config)` and
+                `evaluate_config` which is passed into `model.evaluate`.
+        :param verbose: (bool) Prints output of one model if true.
+        :param workers_per_node: (Int) worker number on each node. default: 1.
+        :param compile_args_creator: (dict -> dict of loss, optimizer and metrics) Only used when
+                the backend="horovod". This function takes in the `config` dict and returns a
+                dictionary like {"optimizer": tf.keras.optimizers.SGD(lr), "loss":
+                "mean_squared_error", "metrics": ["mean_squared_error"]}
+        :param backend: (string) You can choose "horovod" or "tf2" as backend. Default: `tf2`.
+        """
         return TensorFlow2Estimator(model_creator=model_creator, config=config,
                                     verbose=verbose, workers_per_node=workers_per_node,
                                     backend=backend, compile_args_creator=compile_args_creator)
@@ -117,24 +134,6 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                  verbose=False,
                  backend="tf2",
                  workers_per_node=1):
-        """Sets up the TensorFlow trainer.
-
-        Args:
-            model_creator (dict -> Model): This function takes in the `config`
-                dict and returns a compiled TF model.
-            data_creator (dict -> tf.Dataset, tf.Dataset): Creates
-                the training and validation data sets using the config.
-                `config` dict is passed into the function.
-            config (dict): configuration passed to 'model_creator',
-                'data_creator'. Also contains `fit_config`, which is passed
-                into `model.fit(data, **fit_config)` and
-                `evaluate_config` which is passed into `model.evaluate`.
-            num_replicas (int): Sets number of workers used in distributed
-                training. Workers will be placed arbitrarily across the
-                cluster.
-            use_gpu (bool): Enables all workers to use GPU.
-            verbose (bool): Prints output of one model if true.
-        """
         self.model_creator = model_creator
         self.compile_args_creator = compile_args_creator
         self.config = {} if config is None else config
@@ -200,7 +199,32 @@ class TensorFlow2Estimator(OrcaRayEstimator):
             steps_per_epoch=None, validation_steps=None, validation_freq=1,
             data_config=None, feature_cols=None,
             label_cols=None):
-        """Runs a training epoch."""
+        """
+        Train this tensorflow model with train data.
+
+        :param data: train data. It can be XShards, Spark DataFrame or creator function which
+        returns Iter or DataLoader.
+        If data is XShards, each partition is a dictionary of  {'x': feature,
+        'y': label}, where feature(label) is a numpy array or a tuple of numpy arrays.
+        :param epochs: Number of epochs to train the model. Default: 1.
+        :param batch_size: Batch size used for training. Default: 32.
+        :param verbose: Prints output of one model if true.
+        :param callbacks: Keras compatible callbacks.
+        :param validation_data_creator: validation data. Validation data type should be the same
+        as train data.
+        :param class_weight: Optional dictionary mapping class indices (integers) to a weight
+        (float) value, used for weighting the loss function. This can be useful to tell the model
+        to "pay more attention" to samples from an under-represented class.
+        :param steps_per_epoch: Number of steps in one epoch.
+        :param validation_steps: Number of steps of validation.
+        :param validation_freq: Frequency of validation.
+        :param data_config: An optional dictionary that can be passed to data creator function.
+        :param feature_cols: Feature column name(s) of data. Only used when data is a Spark
+        DataFrame. Default: None.
+        :param label_cols: Label column name(s) of data. Only used when data is a Spark DataFrame.
+        Default: None.
+        :return:
+        """
         params = dict(
             epochs=epochs,
             batch_size=batch_size,
@@ -270,7 +294,28 @@ class TensorFlow2Estimator(OrcaRayEstimator):
     def evaluate(self, data, batch_size=32, num_steps=None, verbose=1,
                  sample_weight=None, callbacks=None, data_config=None,
                  feature_cols=None, label_cols=None):
-        """Evaluates the model on the validation data set."""
+        """
+        Evaluates the model on the validation data set.
+
+        :param data: evaluate data. It can be XShards, Spark DataFrame or creator function which
+        returns Iter or DataLoader.
+        If data is XShards, each partition is a dictionary of  {'x': feature,
+        'y': label}, where feature(label) is a numpy array or a tuple of numpy arrays.
+        :param batch_size: Batch size used for evaluation. Default: 32.
+        :param num_steps: Number of steps for evaluation.
+        :param verbose: Prints output of one model if true.
+        :param sample_weight: Optional Numpy array of weights for the training samples, used for
+        weighting the loss function. You can either pass a flat (1D) Numpy array with the same
+        length as the input samples (1:1 mapping between weights and samples), or in the case of
+        temporal data [...].
+        :param callbacks: Keras compatible callbacks.
+        :param data_config: An optional dictionary that can be passed to data creator function.
+        :param feature_cols: Feature column name(s) of data. Only used when data is a Spark
+        DataFrame. Default: None.
+        :param label_cols: Label column name(s) of data. Only used when data is a Spark DataFrame.
+        Default: None.
+        :return: validation result
+        """
         logger.info("Starting validation step.")
         params = dict(
             batch_size=batch_size,
@@ -327,7 +372,21 @@ class TensorFlow2Estimator(OrcaRayEstimator):
     def predict(self, data, batch_size=None, verbose=1,
                 steps=None, callbacks=None, data_config=None,
                 feature_cols=None):
-        """Evaluates the model on the validation data set."""
+        """
+        Predict the input data
+
+        :param data: predict input data.  It can be XShards or Spark DataFrame.
+        If data is XShards, each partition is a dictionary of  {'x': feature}, where feature is a
+        numpy array or a tuple of numpy arrays.
+        :param batch_size: Batch size used for inference. Default: None.
+        :param verbose: Prints output of one model if true.
+        :param steps:
+        :param callbacks: Keras compatible callbacks.
+        :param data_config: An optional dictionary that can be passed to data creator function.
+        :param feature_cols: Feature column name(s) of data. Only used when data is a Spark
+        DataFrame. Default: None.
+        :return:
+        """
         logger.info("Starting predict step.")
         params = dict(
             verbose=verbose,
@@ -368,16 +427,19 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         return spark_xshards
 
     def get_model(self):
-        """Returns the learned model."""
+        """
+        Returns the learned model.
+
+        :return: the learned model.
+        """
         state = ray.get(self.remote_workers[0].get_state.remote())
         return self._get_model_from_state(state)
 
     def save(self, checkpoint):
-        """Saves the model at the provided checkpoint.
+        """
+        Saves the model at the provided checkpoint.
 
-        Args:
-            checkpoint (str): Path to target checkpoint file.
-
+        :param checkpoint: (str) Path to the target checkpoint file.
         """
 
         # Some model might need to aggregate variables during checkpointing
@@ -395,10 +457,10 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         return checkpoint
 
     def load(self, checkpoint, **kwargs):
-        """Restores the model from the provided checkpoint.
+        """
+        Loads the model from the provided checkpoint.
 
-        Args:
-            checkpoint (str): Path to target checkpoint file.
+        :param checkpoint: (str) Path to target checkpoint file.
 
         """
         with open(checkpoint, "rb") as f:
@@ -408,7 +470,9 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         ray.get([worker.set_state.remote(state_id) for worker in self.remote_workers])
 
     def shutdown(self):
-        """Shuts down workers and releases resources."""
+        """
+        Shuts down workers and releases resources.
+        """
         for worker in self.remote_workers:
             worker.shutdown.remote()
             worker.__ray_terminate__.remote()
