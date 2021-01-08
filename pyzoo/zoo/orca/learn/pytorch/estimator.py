@@ -49,38 +49,31 @@ class Estimator(object):
         """
         Create an Estimator for torch.
 
-        :param model: PyTorch model if backend="bigdl", PyTorch model creator if backend="horovod"
-        or "torch_distributed"
+        :param model: PyTorch model if backend="bigdl", PyTorch model creator function if
+        backend="horovod" or "torch_distributed"
         :param optimizer: Orca or PyTorch optimizer if backend="bigdl", PyTorch optimizer creator
-        if backend="horovod" or "torch_distributed"
-        :param loss: PyTorch loss if backend="bigdl", PyTorch loss creator if backend="horovod"
-        or "torch_distributed"
-        :param scheduler_creator: parameter for horovod and torch_distributed. a learning rate
-        scheduler wrapping the optimizer. You will need to set
-        ``TorchTrainer(scheduler_step_freq="epoch")`` for the scheduler to be incremented correctly.
-        If using a scheduler for validation loss, be sure to call
-        ``trainer.update_scheduler(validation_loss)``
-        :param training_operator_cls: parameter for horovod and torch_distributed. Custom training
-        operator class that subclasses the TrainingOperator class. This class will be copied onto
-        all remote workers and used to specify custom training and validation operations.
-        Defaults to TrainingOperator.
-        :param initialization_hook: parameter for horovod and torch_distributed.
-        :param config: parameter for horovod and torch_distributed. Config dict to create model,
-        optimizer loss and data.
-        :param scheduler_step_freq: parameter for horovod and torch_distributed. "batch", "epoch",
-        "manual", or None. This will determine when ``scheduler.step`` is called. If "batch",
-        ``step`` will be called after every optimizer step. If "epoch", ``step`` will be called
-        after one pass of the DataLoader. If "manual", the scheduler will not be incremented
-        automatically - you are expected to call ``trainer.update_schedulers`` manually.
-        If a scheduler is passed in, this value is expected to not be None.
-        :param use_tqdm: parameter for horovod and torch_distributed. You can monitor training
-        progress if use_tqdm=True.
-        :param workers_per_node: parameter for horovod and torch_distributed. worker number on each
-        node. default: 1.
-        :param model_dir: parameter for bigdl. The path to save model. During the training, if
-        checkpoint_trigger is defined and triggered, the model will be saved to model_dir.
+        function if backend="horovod" or "torch_distributed"
+        :param loss: PyTorch loss if backend="bigdl", PyTorch loss creator function if
+        backend="horovod" or "torch_distributed"
+        :param scheduler_creator: parameter for `horovod` and `torch_distributed` backends. a
+        learning rate scheduler wrapping the optimizer. You will need to set
+        ``scheduler_step_freq="epoch"`` for the scheduler to be incremented correctly.
+        :param config: parameter for `horovod` and `torch_distributed` backends. Config dict to
+        create model, optimizer loss and data.
+        :param scheduler_step_freq: parameter for `horovod` and `torch_distributed` backends.
+        "batch", "epoch" or None. This will determine when ``scheduler.step`` is called. If
+        "batch", ``step`` will be called after every optimizer step. If "epoch", ``step`` will be
+        called after one pass of the DataLoader. If a scheduler is passed in, this value is expected
+        to not be None.
+        :param use_tqdm: parameter for `horovod` and `torch_distributed` backends. You can monitor
+        training progress if use_tqdm=True.
+        :param workers_per_node: parameter for `horovod` and `torch_distributed` backends. worker
+        number on each node. default: 1.
+        :param model_dir: parameter for `bigdl` backend. The path to save model. During the
+        training, if checkpoint_trigger is defined and triggered, the model will be saved to
+        model_dir.
         :param backend: You can choose "horovod",  "torch_distributed" or "bigdl" as backend.
-        Default: bigdl.
+        Default: `bigdl`.
         :return: an Estimator object.
         """
         if backend in {"horovod", "torch_distributed"}:
@@ -222,15 +215,15 @@ class PyTorchRayEstimator(OrcaRayEstimator):
 
     def get_model(self):
         """
-        Returns the learned model(s).
+        Returns the learned PyTorch model.
 
-        :return: The learned model(s).
+        :return: The learned PyTorch model.
         """
         return self.estimator.get_model()
 
     def save(self, checkpoint):
         """
-        Saves the Estimator state to the provided checkpoint path.
+        Saves the Estimator state (including model and optimizer) to the provided checkpoint path.
 
         :param checkpoint: (str) Path to target checkpoint file.
         :return:
@@ -239,7 +232,7 @@ class PyTorchRayEstimator(OrcaRayEstimator):
 
     def load(self, checkpoint):
         """
-        Loads the Estimator and all workers from the provided checkpoint.
+        Loads the Estimator state (including model and optimizer) from the provided checkpoint.
 
         :param checkpoint: (str) Path to target checkpoint file.
         """
@@ -322,17 +315,20 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         Train this torch model with train data.
 
         :param data: train data. It can be XShards, PyTorch DataLoader and PyTorch DataLoader
-        creator.
-        If data is XShards, each element needs to be {'x': a feature numpy array,
-        'y': a label numpy array}
-        :param epochs: Number of epochs to train the model. Default: 32.
+        creator function.
+        If data is an XShards, each partition is a dictionary of  {'x': feature,
+        'y': label}, where feature(label) is a numpy array or a list of numpy arrays.
+        :param epochs: Number of epochs to train the model. Default: 1.
         :param batch_size: Batch size used for training. Only used when data is an XShards.
+        Default: 32.
         :param feature_cols: Feature column name(s) of data. Only used when data
         is a Spark DataFrame. Default: None.
         :param label_cols: Label column name(s) of data. Only used when data is
         a Spark DataFrame. Default: None.
-        :param validation_data: Validation data. SparkXShard, PyTorch DataLoader and PyTorch
-        DataLoader creator are supported.
+        :param validation_data: Validation data. XShards, PyTorch DataLoader and PyTorch DataLoader
+        creator function are supported.
+        If data is XShards, each partition is a dictionary of  {'x': feature,
+        'y': label}, where feature(label) is a numpy array or a list of numpy arrays.
         :param checkpoint_trigger: Orca Trigger to set a checkpoint.
         :return: The trained estimator object.
         """
@@ -372,13 +368,14 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         """
         Predict input data.
 
-        :param data: data to be predicted. It can be XShards, each element needs to be {'x':
-        a feature numpy array}.
+        :param data: data to be predicted. It can be XShards, each partition is a dictionary of
+        {'x': feature}, where feature is a numpy array or a list of numpy arrays.
         :param batch_size: batch size used for inference.
         :param feature_cols: Feature column name(s) of data. Only used when data
         is a Spark DataFrame. Default: None.
-        :return: predicted result. The predict result is a XShards, and the schema for each result
-        is: {'prediction': predicted numpy array or list of predicted numpy arrays}.
+        :return: predicted result. The predict result is a XShards, each partition of the XShards
+        is a dictionary of {'prediction': result}, where result is a numpy array or a list of numpy
+        arrays.
         """
         from zoo.orca.learn.utils import convert_predict_rdd_to_xshard
         if isinstance(data, SparkXShards):
@@ -406,15 +403,15 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         Evaluate model.
 
         :param data: data: evaluation data. It can be XShards, PyTorch DataLoader and PyTorch
-        DataLoader creator.
-        If data is XShards, each element needs to be {'x': a feature numpy array,
-        'y': a label numpy}.
+        DataLoader creator function.
+        If data is an XShards, each partition is a dictionary of  {'x': feature,
+        'y': label}, where feature(label) is a numpy array or a list of numpy arrays.
         :param batch_size: Batch size used for evaluation. Only used when data is a SparkXShard.
         :param feature_cols: Feature column name(s) of data. Only used when data
         is a Spark DataFrame. Default: None.
         :param label_cols: Label column name(s) of data. Only used when data is
         a Spark DataFrame. Default: None.
-        :param validation_metrics: Orca validation methods.
+        :param validation_metrics: Orca validation metrics to be computed on validation_data.
         :return: validation results.
         """
         from zoo.orca.data.utils import xshard_to_sample
@@ -441,7 +438,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
 
     def get_model(self):
         """
-        Get the trained model.
+        Get the trained PyTorch model.
 
         :return: The trained PyTorch model.
         """
@@ -449,7 +446,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
 
     def save(self, model_path):
         """
-        Save model to model_path
+        Save is not supported in SparkPyTorchEstimator.
 
         :param model_path: path to save the trained model.
         :return:
@@ -545,6 +542,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         """
         Clear gradient clipping parameters. In this case, gradient clipping will not be applied.
         In order to take effect, it needs to be called before fit.
+
         :return:
         """
         self.estimator.clear_gradient_clipping()
@@ -553,6 +551,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         """
         Set constant gradient clipping during the training process.
         In order to take effect, it needs to be called before fit.
+
         :param min: The minimum value to clip by.
         :param max: The maximum value to clip by.
         :return:
@@ -563,6 +562,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         """
         Clip gradient to a maximum L2-Norm during the training process.
         In order to take effect, it needs to be called before fit.
+
         :param clip_norm: Gradient L2-Norm threshold.
         :return:
         """
