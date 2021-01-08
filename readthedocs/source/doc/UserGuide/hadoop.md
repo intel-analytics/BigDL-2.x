@@ -44,7 +44,7 @@ You can run Analytics Zoo programs on standard Hadoop/YARN clusters without any 
     By specifying cluster_mode to be "yarn-client", `init_orca_context` would automatically prepare the runtime Python environment and initiate the distributed execution engine on the underlying YARN cluster. 
     Then you can simply write and run your application as a normal Python script or in a Jupyter notebook.
     
-    View the [Orca Context](../../Orca/Overview/orca-context.html) for more details.
+    View the [Orca Context](../Orca/Overview/orca-context.html) for more details.
 
 ---
 ### **3. For YARN cluster mode**
@@ -74,7 +74,7 @@ Follow the steps below if you need to run in [YARN cluster mode](https://spark.a
     ```python
     from zoo.orca import init_orca_context
     
-    sc = init_orca_context(cluster_mode="spark-submit", ...)
+    sc = init_orca_context(cluster_mode="spark-submit")
     ```
 
 5) Use `spark-submit` to submit your application (e.g. script.py):
