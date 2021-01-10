@@ -7,14 +7,14 @@
 
 ### **Step 0: Prepare Environment**
 
-We recommend you to use [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the environment. Please refer to the [install guide](../PythonUserGuide/install/) for more details.
+We recommend you to use [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the environment. Please refer to the [install guide](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/python.html) for more details.
 
 **Note:** Conda environment is required to run on the distributed cluster, but not strictly necessary for running on the local machine.
 
 ```bash
 conda create -n zoo python=3.7 # zoo is conda environment name, you can use any name you like.
 conda activate zoo
-pip install --pre analytics-zoo # install either version 0.9 or latest pre-release version
+pip install analytics-zoo # install either version 0.9 or latest nightly build
 pip install torch==1.7.1 torchvision==0.8.2
 pip install six cloudpickle
 pip install jep==3.9.0
@@ -38,7 +38,7 @@ elif args.cluster_mode == "yarn":
         "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"})   # run on Hadoop YARN cluster
 ```
 
-This is the only place where you need to specify local or distributed mode. View [Orca Context](./context) for more details.
+This is the only place where you need to specify local or distributed mode. View [Orca Context](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/orca-context.html) for more details.
 
 **Note:** You should `export HADOOP_CONF_DIR=/path/to/hadoop/conf/dir` when you run on Hadoop YARN cluster.
 
