@@ -60,11 +60,8 @@ class RayTuneSearchEngine(SearchEngine):
 
     def compile(self,
                 data,
-                # input_df,
                 model_create_func,
                 recipe,
-                # feature_cols=None,
-                # target_col=None,
                 search_space=None,
                 search_alg=None,
                 search_alg_params=None,
@@ -72,7 +69,6 @@ class RayTuneSearchEngine(SearchEngine):
                 scheduler_params=None,
                 feature_transformers=None,
                 validation_data=None,
-                # validation_df=None,
                 mc=False,
                 metric="mse"):
         """
