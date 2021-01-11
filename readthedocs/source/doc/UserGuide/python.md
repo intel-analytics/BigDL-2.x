@@ -10,6 +10,13 @@ Install conda on your machine and create a conda environment as follows:
 conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
 conda activate zoo
 ```
+
+You need to install JDK in the environment. __JDK8__ is highly recommended. A preferred approach is to download JDK8 and set the environment variable `JAVA_HOME`. Alternatively, you may install JDK8 via conda:
+
+```bash
+conda install -c anaconda openjdk=8.0.152
+```
+
 #### **1.1 Official Release**
 
 You can install the latest release version of Analytics Zoo as follows:
