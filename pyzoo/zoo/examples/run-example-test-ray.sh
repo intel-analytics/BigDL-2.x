@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 export SPARK_HOME=$SPARK_HOME
@@ -77,6 +78,7 @@ python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist
 now=$(date "+%s")
 time6=$((now-start))
 
+
 echo "#7 start example for orca super-resolution"
 start=$(date "+%s")
 
@@ -92,6 +94,7 @@ python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolut
 
 now=$(date "+%s")
 time7=$((now-start))
+
 
 echo "Ray example tests finished"
 echo "#1 rl_pong time used:$time1 seconds"

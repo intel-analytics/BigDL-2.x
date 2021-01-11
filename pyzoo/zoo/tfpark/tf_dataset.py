@@ -15,6 +15,7 @@
 #
 
 import numpy as np
+import tensorflow as tf
 import sys
 import functools
 import logging
@@ -406,6 +407,7 @@ class TFDataset(object):
                        batch_size=-1, batch_per_thread=-1,
                        hard_code_batch_size=False,
                        validation_image_set=None,
+                       memory_type='DRAM',
                        sequential_order=False,
                        shuffle=True):
         """
@@ -435,6 +437,7 @@ class TFDataset(object):
         return TFImageDataset(image_set, tensor_structure, batch_size,
                               batch_per_thread, hard_code_batch_size,
                               validation_image_set,
+                              memory_type=memory_type,
                               sequential_order=sequential_order, shuffle=shuffle)
 
     @staticmethod
@@ -596,7 +599,7 @@ class TFDataset(object):
                              sequential_order=False,
                              shuffle=True,
                              remove_checking=False, batch_outside=False,
-                             inter_threads=None, intra_threads=None, auto_shard_files=True):
+                             inter_threads=None, intra_threads=None, auto_shard_files=False):
         """
         Create a TFDataset from a tf.data.Dataset.
 
@@ -632,7 +635,7 @@ class TFDataset(object):
     @staticmethod
     def from_dataframe(df, feature_cols, labels_cols=None, batch_size=-1,
                        batch_per_thread=-1, hard_code_batch_size=False,
-                       validation_df=None,
+                       validation_df=None, memory_type="DRAM",
                        sequential_order=False, shuffle=True):
         """
         Create a TFDataset from a pyspark.sql.DataFrame.
@@ -660,7 +663,7 @@ class TFDataset(object):
         """
         return DataFrameDataset(df, feature_cols, labels_cols, batch_size,
                                 batch_per_thread, hard_code_batch_size, validation_df,
-                                sequential_order, shuffle)
+                                memory_type, sequential_order, shuffle)
 
 
 def _tf_get_types(dataset):
@@ -714,7 +717,7 @@ class TFDataDataset(TFDataset):
                  validation_dataset=None,
                  sequential_order=False, shuffle=True,
                  remove_checking=False, batch_outside=False,
-                 inter_threads=None, intra_threads=None, auto_shard_files=True):
+                 inter_threads=None, intra_threads=None, auto_shard_files=False):
 
         self.auto_shard_files = auto_shard_files
 
@@ -1010,6 +1013,7 @@ class TFImageDataset(TFDataset):
     def __init__(self, image_set, tensor_structure, batch_size,
                  batch_per_thread, hard_code_batch_size=False,
                  validation_image_set=None,
+                 memory_type='DRAM',
                  sequential_order=False, shuffle=True):
         super(TFImageDataset, self).__init__(tensor_structure, batch_size,
                                              batch_per_thread, hard_code_batch_size)
@@ -1017,6 +1021,7 @@ class TFImageDataset(TFDataset):
         self.validation_image_set = validation_image_set
         self.sequential_order = sequential_order
         self.shuffle = shuffle
+        self.memory_type = memory_type
 
     def _get_prediction_data(self):
         return self.image_set
@@ -1027,6 +1032,7 @@ class TFImageDataset(TFDataset):
 
     def _get_training_data(self):
         fs = FeatureSet.image_set(self.image_set,
+                                  self.memory_type,
                                   sequential_order=self.sequential_order,
                                   shuffle=self.shuffle)
         fs = fs.transform(MergeFeatureLabelImagePreprocessing())
@@ -1065,7 +1071,8 @@ class TFParkSampleToMiniBatch(Preprocessing):
 class TFNdarrayDataset(TFDataset):
     def __init__(self, rdd, tensor_structure, batch_size,
                  batch_per_thread, hard_code_batch_size=False,
-                 val_rdd=None, sequential_order=True, shuffle=False):
+                 val_rdd=None, memory_type="DRAM",
+                 sequential_order=True, shuffle=False):
 
         super(TFNdarrayDataset, self).__init__(tensor_structure, batch_size,
                                                batch_per_thread, hard_code_batch_size)
@@ -1082,6 +1089,7 @@ class TFNdarrayDataset(TFDataset):
                             "pad your dataset so that the total number "
                             "of elements is divisible by the total batch size"
                             " to avoid this.")
+        self.memory_type = memory_type
 
     def _get_prediction_data(self):
         rdd = self.rdd.map(lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
@@ -1099,6 +1107,7 @@ class TFNdarrayDataset(TFDataset):
         sample_rdd = self.rdd.map(
             lambda t: Sample.from_ndarray(nest.flatten(t), np.array([0.0])))
         fs = FeatureSet.sample_rdd(sample_rdd,
+                                   self.memory_type,
                                    sequential_order=self.sequential_order,
                                    shuffle=self.shuffle)
         # for training there won't be any remainder, the input to SampleToMiniBatch
@@ -1125,6 +1134,7 @@ class TFNdarrayDataset(TFDataset):
                  batch_size=-1, batch_per_thread=-1,
                  hard_code_batch_size=False, val_rdd=None,
                  features=None, labels=None,
+                 memory_type="DRAM",
                  sequential_order=False,
                  shuffle=True):
 
@@ -1142,6 +1152,7 @@ class TFNdarrayDataset(TFDataset):
             return TFNdarrayDataset(rdd, tensor_structure,
                                     batch_size, batch_per_thread,
                                     hard_code_batch_size, val_rdd,
+                                    memory_type=memory_type,
                                     sequential_order=sequential_order,
                                     shuffle=shuffle)
 
@@ -1162,12 +1173,13 @@ class TFNdarrayDataset(TFDataset):
         return TFNdarrayDataset(rdd, tensor_structure,
                                 batch_size, batch_per_thread,
                                 hard_code_batch_size, val_rdd,
+                                memory_type=memory_type,
                                 sequential_order=sequential_order, shuffle=shuffle)
 
     @staticmethod
     def from_ndarrays(tensors, batch_size=-1, batch_per_thread=-1,
                       hard_code_batch_size=False, val_tensors=None,
-                      sequential_order=False, shuffle=True):
+                      memory_type='DRAM', sequential_order=False, shuffle=True):
         sc = getOrCreateSparkContext()
         node_num, core_num = get_node_and_core_number()
         total_core_num = node_num * core_num
@@ -1180,7 +1192,8 @@ class TFNdarrayDataset(TFDataset):
 
         return TFNdarrayDataset(rdd, tensor_structure, batch_size,
                                 batch_per_thread, hard_code_batch_size,
-                                val_rdd, sequential_order=sequential_order, shuffle=shuffle)
+                                val_rdd, memory_type=memory_type,
+                                sequential_order=sequential_order, shuffle=shuffle)
 
 
 def convert_row_to_numpy(row, schema, feature_cols, labels_cols):
@@ -1245,7 +1258,7 @@ class DataFrameDataset(TFNdarrayDataset):
 
     def __init__(self, df, feature_cols, labels_cols=None, batch_size=-1,
                  batch_per_thread=-1, hard_code_batch_size=False,
-                 validation_df=None,
+                 validation_df=None, memory_type="DRAM",
                  sequential_order=False, shuffle=True):
         assert isinstance(feature_cols, list), "feature_cols should be a list"
         if labels_cols is not None:
@@ -1256,8 +1269,7 @@ class DataFrameDataset(TFNdarrayDataset):
         if labels_cols is None:
             labels_cols = []
 
-        selected_df = df.select(*(feature_cols + labels_cols))
-        schema = selected_df.schema
+        schema = df.schema
         feature_meta = []
         for feature_col in feature_cols:
             field = schema[feature_col]
@@ -1285,10 +1297,10 @@ class DataFrameDataset(TFNdarrayDataset):
         else:
             tensor_structure = (feature_meta,)
 
-        rdd = selected_df.rdd.map(lambda row: convert_row_to_numpy(row,
-                                                                   schema,
-                                                                   feature_cols,
-                                                                   labels_cols))
+        rdd = df.rdd.map(lambda row: convert_row_to_numpy(row,
+                                                          schema,
+                                                          feature_cols,
+                                                          labels_cols))
         if validation_df is not None:
             val_rdd = validation_df.rdd.map(lambda row: convert_row_to_numpy(row,
                                                                              schema,
@@ -1299,4 +1311,86 @@ class DataFrameDataset(TFNdarrayDataset):
 
         super(DataFrameDataset, self).__init__(rdd, tensor_structure, batch_size,
                                                batch_per_thread, hard_code_batch_size,
-                                               val_rdd, sequential_order, shuffle)
+                                               val_rdd, memory_type, sequential_order, shuffle)
+
+
+def _standarize_feature_label_dataset(dataset, model):
+    input_names = model.input_names
+    output_names = model.output_names
+
+    def _process_labels(ys):
+        if isinstance(ys, dict):
+            return {k: np.expand_dims(y, axis=-1) if y.ndim == 0 else y for k, y in ys.items()}
+        elif isinstance(ys, list):
+            return [np.expand_dims(y, axis=-1) if y.ndim == 0 else y for y in ys]
+        elif isinstance(ys, tuple):
+            return tuple([np.expand_dims(y, axis=-1) if y.ndim == 0 else y for y in ys])
+        else:
+            return np.expand_dims(ys, axis=-1) if ys.ndim == 0 else ys
+
+    def _training_reorder(x, input_names, output_names):
+        assert isinstance(x, tuple)
+
+        return (_reorder(x[0], input_names), _reorder(x[1], output_names))
+
+    def _reorder(x, names):
+        if isinstance(x, dict):
+            return [x[name] for name in names]
+        elif isinstance(x, list) or isinstance(x, tuple):
+            return x
+        else:
+            return [x]
+
+    rdd = dataset.rdd.map(lambda x: (x[0], _process_labels(x[1])))\
+        .map(lambda sample: _training_reorder(sample, input_names, output_names))
+    if dataset.val_rdd is not None:
+        val_rdd = dataset.val_rdd.map(lambda x: (x[0], _process_labels(x[1])))\
+            .map(lambda sample: _training_reorder(sample, input_names, output_names))
+    else:
+        val_rdd = None
+    tensor_structure = _training_reorder(dataset.tensor_structure, input_names, output_names)
+    new_dataset = TFNdarrayDataset(rdd, tensor_structure, dataset.batch_size,
+                                   -1, dataset.hard_code_batch_size, val_rdd,
+                                   dataset.memory_type, dataset.sequential_order, dataset.shuffle)
+    new_dataset.batch_per_thread = dataset.batch_per_thread
+    return new_dataset
+
+
+def _standarize_feature_dataset(dataset, model):
+    input_names = model.input_names
+
+    def _reorder(x, names):
+        if isinstance(x, dict):
+            return [x[name] for name in names]
+        elif isinstance(x, list):
+            return x
+        elif isinstance(x, tuple):
+            return list(x)
+        return [x]
+
+    rdd = dataset.rdd.map(lambda sample: _reorder(sample, input_names))
+    feature_schema = _reorder(dataset.tensor_structure[0], input_names)
+
+    dataset = TFNdarrayDataset(rdd, feature_schema, -1,
+                               dataset.batch_per_thread, dataset.hard_code_batch_size,
+                               memory_type=dataset.memory_type,
+                               sequential_order=dataset.sequential_order,
+                               shuffle=dataset.shuffle
+                               )
+    return dataset
+
+
+def _standardize_keras_target_data(x, ys):
+    def check_y_dims(y):
+        return y is not None and len(y.shape) == 0
+
+    if isinstance(ys, dict):
+        ys = {k: tf.expand_dims(y, axis=0) if check_y_dims(y) else y for k, y in ys.items()}
+    elif isinstance(ys, list):
+        ys = [tf.expand_dims(y, axis=0) if check_y_dims(y) else y for y in ys]
+    elif isinstance(ys, tuple):
+        ys = tuple(tf.expand_dims(y, axis=0) if check_y_dims(y) else y for y in ys)
+    else:
+        ys = tf.expand_dims(ys, axis=0) if check_y_dims(ys) else ys
+
+    return x, ys

@@ -17,6 +17,7 @@
 from zoo.automl.common.util import save_config
 from zoo.automl.feature.abstract import BaseFeatureTransformer
 
+import sklearn
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import pandas as pd
 import numpy as np
@@ -211,10 +212,14 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         return y_unscale
 
     def unscale_uncertainty(self, y_uncertainty):
-        value_scale = self.scaler.scale_[0]
-        # print(value_scale)
-        y_uncertainty_unscle = y_uncertainty * value_scale
-        return y_uncertainty_unscle
+        y_uncertainty_unscale = np.zeros(y_uncertainty.shape)
+        for i in range(len(self.target_col)):
+            value_scale = self.scaler.scale_[i]
+            if len(self.target_col) == 1:
+                y_uncertainty_unscale = y_uncertainty * value_scale
+            else:
+                y_uncertainty_unscale[:, :, i] = y_uncertainty[:, :, i] * value_scale
+        return y_uncertainty_unscale
 
     def _get_y_pred_df(self, y_pred_dt_df, y_pred_unscale):
         """
@@ -504,6 +509,9 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         :param data:
         :return:
         """
+        # n_features_in_ only for 0.23 sklearn support, sklearn version >=0.24 will not check this
+        if sklearn.__version__[:4] == "0.23":
+            self.scaler.n_features_in_ = self.scaler.mean_.shape[0]
         np_scaled = self.scaler.transform(data)
         data_s = pd.DataFrame(np_scaled)
         return data_s

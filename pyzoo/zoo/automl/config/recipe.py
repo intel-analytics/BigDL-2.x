@@ -278,6 +278,72 @@ class LSTMGridRandomRecipe(Recipe):
         }
 
 
+class Seq2SeqRandomRecipe(Recipe):
+    """
+    A recipe involves both grid search and random search, only for LSTM.
+       tsp = TimeSequencePredictor(...,recipe = LSTMGridRandomRecipe(1))
+    """
+
+    def __init__(
+            self,
+            num_rand_samples=1,
+            epochs=5,
+            training_iteration=10,
+            look_back=2,
+            latent_dim=[32, 64, 128, 256],
+            batch_size=[32, 64]):
+        """
+        Constructor.
+        :param lstm_1_units: random search candidates for num of lstm_1_units
+        :param lstm_2_units: grid search candidates for num of lstm_1_units
+        :param batch_size: grid search candidates for batch size
+        :param num_rand_samples: number of hyper-param configurations sampled randomly
+        :param look_back: the length to look back, either a tuple with 2 int values,
+          which is in format is (min len, max len), or a single int, which is
+          a fixed length to look back.
+        :param training_iteration: no. of iterations for training (n epochs) in trials
+        :param epochs: no. of epochs to train in each iteration
+        """
+        super(self.__class__, self).__init__()
+        # -- runtime params
+        self.num_samples = num_rand_samples
+        self.training_iteration = training_iteration
+
+        # -- model params
+        self.past_seq_config = PastSeqParamHandler.get_past_seq_config(
+            look_back)
+        self.latent_dim = tune.choice(latent_dim)
+        self.dropout_config = tune.uniform(0.2, 0.5)
+
+        # -- optimization params
+        self.lr = tune.uniform(0.001, 0.01)
+        self.batch_size = tune.grid_search(batch_size)
+        self.epochs = epochs
+
+    def search_space(self, all_available_features):
+        return {
+            # -------- feature related parameters
+            "selected_features": tune.sample_from(lambda spec:
+                                                  json.dumps(
+                                                      list(np.random.choice(
+                                                          all_available_features,
+                                                          size=np.random.randint(
+                                                              low=3,
+                                                              high=len(all_available_features) + 1),
+                                                          replace=False)))),
+
+            "model": "Seq2Seq",
+            "latent_dim": self.latent_dim,
+            "dropout": self.dropout_config,
+
+            # ----------- optimization parameters
+            "lr": self.lr,
+            "batch_size": self.batch_size,
+            "epochs": self.epochs,
+            "past_seq_len": self.past_seq_config,
+        }
+
+
 class MTNetGridRandomRecipe(Recipe):
     """
     Grid+Random Recipe for MTNet

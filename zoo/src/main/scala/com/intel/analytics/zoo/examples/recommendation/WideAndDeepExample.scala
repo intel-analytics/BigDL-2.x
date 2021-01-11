@@ -50,7 +50,7 @@ object WideAndDeepExample {
         .text(s"logDir")
         .action((x, c) => c.copy(logDir = Some(x)))
       opt[String]("memoryType")
-        .text("memory type, DRAM, PMEM or a int number")
+        .text("memory type, DRAM, PMEM or DISK_n")
         .action((x, c) => c.copy(memoryType = x))
     }
     parser.parse(args, defaultParams).map {

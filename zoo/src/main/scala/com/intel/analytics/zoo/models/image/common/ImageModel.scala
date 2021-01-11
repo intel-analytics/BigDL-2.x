@@ -143,20 +143,23 @@ object ImageModel {
         "Quantize to an int8 model for better performance")
       labor.quantize()
     } else labor
-    val imageModel = if (model.isInstanceOf[ImageModel[T]]) {
-      model.asInstanceOf[ImageModel[T]]
+    val module = if (model.isInstanceOf[ImageModel[T]]) {
+      model.asInstanceOf[ImageModel[T]].model
     } else {
-      val specificModel = modelType.toLowerCase() match {
-        case "objectdetection" => new ObjectDetector[T]()
-        case "imageclassification" => new ImageClassifier[T]()
-        case _ => logger.error(s"model type $modelType is not defined in Analytics zoo." +
-          s"Only 'imageclassification' and 'objectdetection' are currently supported.")
-          throw new IllegalArgumentException(
-            s"model type $modelType is not defined in Analytics zoo." +
-              s"Only 'imageclassification' and 'objectdetection' are currently supported.")
-      }
-      specificModel.addModel(model)
-      specificModel.setName(modelName)
+      model
+    }
+    val imageModel = modelType.toLowerCase() match {
+        case "objectdetection" => new ObjectDetector[T]().addModel(module).setName(modelName)
+        case "imageclassification" => new ImageClassifier[T]().addModel(module).setName(modelName)
+        case _ => if (model.isInstanceOf[ImageModel[T]]) model.asInstanceOf[ImageModel[T]]
+                  else {
+                  logger.error(s"model type $modelType is not defined in Analytics zoo." +
+                    s"Only 'imageclassification' and 'objectdetection' are currently supported.")
+                  throw new IllegalArgumentException(
+                    s"model type $modelType is not defined in Analytics zoo." +
+                      s"Only 'imageclassification' and 'objectdetection' are currently supported.")
+
+                }
     }
     imageModel.config = ImageConfigure.parse(modelName)
     imageModel

@@ -1,17 +1,16 @@
 # Orca PyTorch Super Resolution example on BSDS300 dataset
 
-We demonstrate how to easily run synchronous distributed Pytorch training using Pytorch Estimator of Project Orca in Analytics Zoo. This is an example using the efficient sub-pixel convolution layer to train on BSDS3000 dataset, using crops from the 200 training images, and evaluating on crops of the 100 test images. See [here](https://github.com/leonardozcm/examples/tree/master/super_resolution) for the original single-node version of this example provided by Pytorch.
+We demonstrate how to easily run synchronous distributed Pytorch training using Pytorch Estimator of Project Orca in Analytics Zoo. This is an example using the efficient sub-pixel convolution layer to train on BSDS3000 dataset, using crops from the 200 training images, and evaluating on crops of the 100 test images. See [here]( https://github.com/pytorch/examples/tree/master/super_resolution) for the original single-node version of this example provided by Pytorch.
 
 ## Prepare environments
 We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the environments, especially if you want to run on a yarn cluster(yarn-client mode only).
 ```
-conda create -n zoo python=3.7 #zoo is conda enviroment name, you can set another name you like.
+conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
 conda activate zoo
-pip install analytics-zoo==0.9.0.dev0 # or above
+pip install analytics-zoo[ray]  # 0.9.0 or above
 pip install pillow
-pip install ray==0.8.4
-conda install pytorch torchvision cpuonly -c pytorch #command for linux
-conda install pytorch torchvision -c pytorch #command for macOS
+conda install pytorch torchvision cpuonly -c pytorch  #command for linux
+conda install pytorch torchvision -c pytorch  #command for macOS
 ```
 
 ## Prepare Dataset
