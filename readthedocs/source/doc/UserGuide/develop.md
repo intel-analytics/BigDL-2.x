@@ -42,7 +42,7 @@ Any IDE that support python should be able to run Analytics Zoo. PyCharm works f
 
 You need to do the following preparations before starting the IDE to successfully run an Analytics Zoo Python program in the IDE:
 
-- Build Analytics Zoo. See [here](#2.1-build) for more instructions.
+- Build Analytics Zoo. See [*2.1 Build*](#2.1-build) for more instructions.
 - Prepare Spark environment by either setting `SPARK_HOME` as the environment variable or pip install `pyspark`. Note that the Spark version should match the one you build Analytics Zoo on.
 - Set BIGDL_CLASSPATH:
 ```bash
