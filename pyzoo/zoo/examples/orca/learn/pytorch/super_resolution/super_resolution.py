@@ -153,7 +153,6 @@ def train_data_creator(config):
                                  config.get("download", False))
     training_data_loader = DataLoader(dataset=train_set,
                                       num_workers=4,
-                                      batch_size=config.get('batch_size', 64),
                                       shuffle=True)
     return training_data_loader
 
@@ -176,7 +175,6 @@ def validation_data_creator(config):
     test_set = get_test_set(config.get("upscale_factor", 3), config.get("dataset", "dataset"))
     testing_data_loader = DataLoader(dataset=test_set,
                                      num_workers=4,
-                                     batch_size=config.get("test_batch_size", 100),
                                      shuffle=False)
     return testing_data_loader
 
@@ -232,8 +230,6 @@ estimator = Estimator.from_torch(
     config={
         "lr": opt.lr,
         "upscale_factor": opt.upscale_factor,
-        "batch_size": opt.batch_size,
-        "test_batch_size": opt.test_batch_size,
         "dataset": opt.dataset,
         "download": opt.download
     }
@@ -243,7 +239,7 @@ print("===> training model")
 
 
 def train(epoch):
-    stats = estimator.fit(data=train_data_creator, epochs=epoch)
+    stats = estimator.fit(data=train_data_creator, epochs=epoch,batch_size=opt.batch_size)
     for epochinfo in stats:
         print("train stats==> num_samples:" + str(epochinfo["num_samples"])
               + " ,epoch:" + str(epochinfo["epoch"])
@@ -253,7 +249,7 @@ def train(epoch):
 
 
 def test():
-    val_stats = estimator.evaluate(data=validation_data_creator)
+    val_stats = estimator.evaluate(data=validation_data_creator,batch_size=opt.test_batch_size)
     print("validation stats==> num_samples:" + str(val_stats["num_samples"])
           + " ,batch_count:" + str(val_stats["batch_count"])
           + " ,val_loss" + str(val_stats["val_loss"])
