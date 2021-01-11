@@ -16,7 +16,7 @@ Under the hood, the Orca `Estimator` will replicate the model on each node in th
 
 There two ways to create a TensorFlow `Estimator` for users of TensorFlow 1.15. One is to create the Estimator from a low level graph and another from a keras model. Examples are as follows:
 
-Graph API:
+TensorFlow Computation Graph:
 ```python
 # define inputs to the graph
 images = tf.placeholder(dtype=tf.float32, shape=(None, 28, 28, 1))
@@ -38,7 +38,7 @@ est = Estimator.from_graph(inputs=images,
                            metrics={"acc": acc})
 ```
 
-Keras API:
+Keras Model:
 ```python
 model = create_keras_lenet_model()
 model.compile(optimizer=keras.optimizers.RMSprop(),
@@ -70,7 +70,7 @@ View the related [Python API doc]() <TODO: link to be added> for more details.
 
 #### **2.2 TensorFlow 2.x and Keras 2.4+**
 
-Users of TensorFlow 2.x can create a TensorFlow `Estimator` from a keras model. The keras model should be created, compiled and returned in a python function. For example:
+The user can create an `Estimator` for TensorFlow 2.x from a Keras model (using a _Model Creator Function_). For example:
 
 ```python
 def model_creator(config):
@@ -82,7 +82,7 @@ def model_creator(config):
 est = Estimator.from_keras(model_creator=model_creator)
 ```
 
-The `model_creator` argument should be a function that takes a `config` dictionary and returns a compiled keras model
+The `model_creator` argument should be a function that takes a `config` dictionary and returns a compiled Keras model.
 
 Then users can perform distributed model training and inference as follows:
 
@@ -143,7 +143,7 @@ View the related [Python API doc]() <TODO: link to be added> for more details.
 
 **Using `torch.distributed` or *Horovod* backend**
 
-Alternatively, users can create a `Estimator` using `torch.distributed` or *Horovod* backend by specifying the `backend` argument to be "torch_distributed" or "horovod". In this case, the `model` and `optimizer` should be wrapped in a function. For example:
+Alternatively, users can create a PyTorch `Estimator` using `torch.distributed` or *Horovod* backend by specifying the `backend` argument to be "torch_distributed" or "horovod". In this case, the `model` and `optimizer` should be wrapped in a function. For example:
 ```python
 def model_creator(config):
     model = LeNet() # a torch.nn.Module
