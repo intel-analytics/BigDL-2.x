@@ -30,7 +30,7 @@ conda install -c anaconda openjdk=8.0.152
 pip install analytics-zoo
 ```
 
-View the [Python User Guide](python.html) for more details.
+View the [Python User Guide](./python.md) for more details.
 
 - We recommend using `init_orca_context` in your code to initiate and run Analytics Zoo on standard Hadoop/YARN clusters in [YARN client mode](https://spark.apache.org/docs/latest/running-on-yarn.html#launching-spark-on-yarn):
 
@@ -41,7 +41,7 @@ sc = init_orca_context(cluster_mode="yarn-client", ...)
 ```
 
 By specifying cluster_mode to be "yarn-client", `init_orca_context` would automatically prepare the runtime Python environment and initiate the distributed execution engine on the underlying YARN cluster. 
-Then you can simply write and run your Analytics Zoo program as a normal Python script or in a Jupyter notebook.
+Then you can simply write and run your Analytics Zoo program in a [Jupyter notebook](./python.html#jupyter-notebook) or as a normal [Python script](./python.html#python-script).
 
 View the [Orca Context](../Orca/Overview/orca-context.html) for more details.
 
