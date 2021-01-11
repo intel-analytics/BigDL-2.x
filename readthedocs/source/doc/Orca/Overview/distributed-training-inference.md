@@ -35,8 +35,111 @@ View the related [Python API doc]() for more details.
 
 ### **4. MXNet Estimator**
 
+The user may create a MXNet `Estimator` as follows:
+```python
+import mxnet as mx
+from mxnet import gluon
+from mxnet.gluon import nn
+from zoo.orca.learn.mxnet import Estimator, create_config
+
+def get_model(config):
+    class SimpleModel(gluon.Block):
+        def __init__(self, **kwargs):
+            super(SimpleModel, self).__init__(**kwargs)
+            self.fc1 = nn.Dense(20)
+            self.fc2 = nn.Dense(10)
+
+        def forward(self, x):
+            x = self.fc1(x)
+            x = self.fc2(x)
+            return x
+
+    net = SimpleModel()
+    net.initialize(mx.init.Xavier(magnitude=2.24), ctx=[mx.cpu()])
+    return net
+
+def get_loss(config):
+    return gluon.loss.SoftmaxCrossEntropyLoss()
+
+config = create_config(log_interval=2, optimizer="adam",
+                       optimizer_params={'learning_rate': 0.02})
+est = Estimator.from_mxnet(config=config,
+                           model_creator=get_model,
+                           loss_creator=get_loss,
+                           num_workers=2)
+```
+
+Then the user can perform distributed model training as follows:
+```python
+import numpy as np
+
+def get_train_data_iter(config, kv):
+    train_data = np.random.rand(200, 30)
+    train_label = np.random.randint(0, 10, (200,))
+    train = mx.io.NDArrayIter(train_data, train_label,
+                              batch_size=config["batch_size"], shuffle=True)
+    return train
+
+est.fit(get_train_data_iter, epochs=2)
+```
+
+The input to `fit` methods can be *XShards*, or a *Data Creator Function* (which takes config and kv as arguments and returns an `MXNet DataIter/DataLoader` for training). See the *data-parallel processing pipeline* [page](./data-parallel-processing.html) for more details.
+
+View the related [Python API doc]() for more details.
+
 ### **5. Horovod Trainer**
 
 ### **6. BigDL Estimator**
 
+The user may create a BigDL `Estimator` as follows:
+```python
+from bigdl.nn.criterion import *
+from bigdl.nn.layer import *
+from bigdl.optim.optimizer import *
+from zoo.orca.learn.bigdl import Estimator
+
+linear_model = Sequential().add(Linear(2, 2))
+mse_criterion = MSECriterion()
+est = Estimator.from_bigdl(model=linear_model, loss=mse_criterion, optimizer=Adam())
+```
+
+Then the user can perform distributed model training and inference as follows:
+```python
+# read spark Dataframe
+df = spark.read.parquet("data.parquet")
+
+# distributed model training
+est.fit(df, 1, batch_size=4)
+
+#distributed model inference
+result_df = est.predict(df)
+```
+
+The input to `fit` and `predict` methods can be *XShards*, or a *Spark Dataframe*. See the *data-parallel processing pipeline* [page](./data-parallel-processing.html) for more details.
+
+View the related [Python API doc]() for more details.
+
 ### **7. OpenVINO Estimator**
+
+The user may create a OpenVINO `Estimator` as follows:
+```python
+from zoo.orca.learn.openvino import Estimator
+
+model_path = "The/file_path/to/the/OpenVINO_IR_xml_file"
+est = Estimator.from_openvino(model_path=model_path)
+```
+
+Then the user can perform distributed model inference as follows:
+```python
+# ndarray
+input_data = np.random.random([20, 4, 3, 224, 224])
+result = est.predict(input_data)
+
+# xshards
+shards = XShards.partition({"x": input_data})
+result_shards = est.predict(shards)
+```
+
+The input to `predict` methods can be *XShards*, or a *numpy array*. See the *data-parallel processing pipeline* [page](./data-parallel-processing.html) for more details.
+
+View the related [Python API doc]() for more details.
