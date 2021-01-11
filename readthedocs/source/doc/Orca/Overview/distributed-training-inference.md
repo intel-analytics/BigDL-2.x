@@ -58,21 +58,14 @@ def get_model(config):
     net.initialize(mx.init.Xavier(magnitude=2.24), ctx=[mx.cpu()])
     return net
 
-
 def get_loss(config):
     return gluon.loss.SoftmaxCrossEntropyLoss()
-
-
-def get_metrics(config):
-    return mx.metric.Accuracy()
 
 config = create_config(log_interval=2, optimizer="adam",
                        optimizer_params={'learning_rate': 0.02})
 est = Estimator.from_mxnet(config=config,
                            model_creator=get_model,
                            loss_creator=get_loss,
-                           eval_metrics_creator=get_metrics,
-                           validation_metrics_creator=get_metrics,
                            num_workers=2)
 ```
 
@@ -87,16 +80,7 @@ def get_train_data_iter(config, kv):
                               batch_size=config["batch_size"], shuffle=True)
     return train
 
-
-def get_test_data_iter(config, kv):
-    test_data = np.random.rand(80, 30)
-    test_label = np.random.randint(0, 10, (80,))
-    test = mx.io.NDArrayIter(test_data, test_label,
-                             batch_size=config["batch_size"], shuffle=True)
-    return test
-
-est.fit(get_train_data_iter, validation_data=get_test_data_iter, epochs=2)
-est.shutdown()
+est.fit(get_train_data_iter, epochs=2)
 ```
 
 The input to `fit` methods can be *XShards*, or a *Data Creator Function* (which takes config and kv as arguments and returns an `MXNet DataIter/DataLoader` for training). See the *data-parallel processing pipeline* [page](./data-parallel-processing.html) for more details.
@@ -116,36 +100,19 @@ from zoo.orca.learn.bigdl import Estimator
 
 linear_model = Sequential().add(Linear(2, 2))
 mse_criterion = MSECriterion()
-est = Estimator.from_bigdl(model=linear_model, loss=mse_criterion, optimizer=Adam(),
-                           feature_preprocessing=SeqToTensor([2]),
-                           label_preprocessing=SeqToTensor([2]))
+est = Estimator.from_bigdl(model=linear_model, loss=mse_criterion, optimizer=Adam())
 ```
 
 Then the user can perform distributed model training and inference as follows:
 ```python
-from zoo.common.nncontext import *
-from pyspark.sql.types import *
-
-# generate spark Dataframe
-sc = init_nncontext()
-data = sc.parallelize([
-    ((2.0, 1.0), (1.0, 2.0)),
-    ((1.0, 2.0), (2.0, 1.0)),
-    ((2.0, 1.0), (1.0, 2.0)),
-    ((1.0, 2.0), (2.0, 1.0))])
-
-schema = StructType([
-    StructField("features", ArrayType(DoubleType(), False), False),
-    StructField("label", ArrayType(DoubleType(), False), False)])
-sqlContext = SQLContext(sc)
-df = sqlContext.createDataFrame(data, schema)
+# read spark Dataframe
+df = spark.read.parquet("data.parquet")
 
 # distributed model training
 est.fit(df, 1, batch_size=4)
 
 #distributed model inference
-predict_result_shards = est.predict(df)
-predict_result = predict_result_shards.collect()
+result_df = est.predict(df)
 ```
 
 The input to `fit` and `predict` methods can be *XShards*, or a *Spark Dataframe*. See the *data-parallel processing pipeline* [page](./data-parallel-processing.html) for more details.
@@ -167,7 +134,6 @@ Then the user can perform distributed model inference as follows:
 # ndarray
 input_data = np.random.random([20, 4, 3, 224, 224])
 result = est.predict(input_data)
-print(result)
 
 # xshards
 input_data_list = [np.random.random([1, 4, 3, 224, 224]),
@@ -180,9 +146,7 @@ def pre_processing(images):
     return {"x": images}
 
 shards = shards.transform_shard(pre_processing)
-result = est.predict(shards)
-result_c = result.collect()
-print(result_c)
+result_shards = est.predict(shards)
 ```
 
 The input to `predict` methods can be *XShards*, or a *numpy array*. See the *data-parallel processing pipeline* [page](./data-parallel-processing.html) for more details.
