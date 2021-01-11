@@ -44,6 +44,7 @@ class SimpleRecipe(Recipe):
     def __init__(self):
         super().__init__()
         self.num_samples = 2
+        self.training_iteration = 20
 
     def search_space(self, all_available_features):
         return {
@@ -99,5 +100,5 @@ if __name__ == "__main__":
     val_result = model.fit_eval(x=train_data["x"],
                                 y=train_data["y"],
                                 validation_data=(val_data["x"], val_data["y"]),
-                                epochs=10)
+                                epochs=20)
     print(val_result)

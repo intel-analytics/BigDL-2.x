@@ -139,7 +139,7 @@ class PytorchBaseModel(BaseModel):
         self.config = state["config"]
         self.optimizer.load_state_dict(state["optimizer"])
 
-    def save(self, checkpoint_file):
+    def save(self, checkpoint_file, config_path=None):
         state_dict = self.state_dict()
         torch.save(state_dict, checkpoint_file)
 
