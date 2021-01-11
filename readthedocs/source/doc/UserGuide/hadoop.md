@@ -41,7 +41,7 @@ sc = init_orca_context(cluster_mode="yarn-client", ...)
 ```
 
 By specifying cluster_mode to be "yarn-client", `init_orca_context` would automatically prepare the runtime Python environment and initiate the distributed execution engine on the underlying YARN cluster. 
-Then you can simply write and run your Analytics Zoo program in a [Jupyter notebook](./python.md#jupyter-notebook) or as a normal [Python script](./python.md#python-script).
+Then you can simply write and run your Analytics Zoo program in a [Jupyter notebook](./python.html#jupyter-notebook) or as a normal [Python script](./python.html#python-script).
 
 View the [Orca Context](../Orca/Overview/orca-context.md) for more details.
 
