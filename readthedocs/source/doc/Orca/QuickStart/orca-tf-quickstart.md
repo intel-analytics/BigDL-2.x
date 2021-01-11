@@ -8,7 +8,7 @@
 
 ### **Step 0: Prepare Environment**
 
-We recommend using [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the environment. Please refer to the [install guide](./../UserGuide/python.md) for more details.
+We recommend using [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the environment. Please refer to the [install guide](../../UserGuide/python.md) for more details.
 
 **Note:** Conda environment is required to run on the distributed cluster, but not strictly necessary for running on the local machine.
 
