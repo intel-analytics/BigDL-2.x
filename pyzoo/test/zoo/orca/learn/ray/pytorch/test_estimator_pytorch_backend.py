@@ -20,6 +20,8 @@ import pytest
 
 import torch
 import torch.nn as nn
+
+from zoo import init_nncontext
 from zoo.orca.learn.pytorch import Estimator
 
 np.random.seed(1337)  # for reproducibility
@@ -89,15 +91,18 @@ def get_model(config):
 def get_optimizer(model, config):
     return torch.optim.SGD(model.parameters(), lr=config.get("lr", 1e-2))
 
+def get_estimator(workers_per_node=1):
+    estimator = Estimator.from_torch(model=get_model,
+                                     optimizer=get_optimizer,
+                                     loss=nn.BCELoss(),
+                                     config={"lr": 1e-2},
+                                     workers_per_node=workers_per_node,
+                                     backend="torch_distributed")
+    return estimator
 
 class TestPyTorchEstimator(TestCase):
     def test_data_creator(self):
-        estimator = Estimator.from_torch(model=get_model,
-                                         optimizer=get_optimizer,
-                                         loss=nn.BCELoss(),
-                                         config={"lr": 1e-2},
-                                         workers_per_node=2,
-                                         backend="torch_distributed")
+        estimator = get_estimator(workers_per_node=2)
         train_stats = estimator.fit(train_data_loader, epochs=2, batch_size=128)
         print(train_stats)
         val_stats = estimator.evaluate(val_data_loader, batch_size=64)
@@ -120,11 +125,7 @@ class TestPyTorchEstimator(TestCase):
     def test_spark_xshards(self):
         from zoo import init_nncontext
         from zoo.orca.data import SparkXShards
-        estimator = Estimator.from_torch(model=get_model,
-                                         optimizer=get_optimizer,
-                                         loss=nn.BCELoss(),
-                                         config={"lr": 1e-1},
-                                         backend="torch_distributed")
+        estimator = get_estimator(workers_per_node=1)
         sc = init_nncontext()
         x_rdd = sc.parallelize(np.random.rand(4000, 1, 50).astype(np.float32))
         # torch 1.7.1+ requires target size same as output size, which is (batch, 1)
@@ -139,6 +140,24 @@ class TestPyTorchEstimator(TestCase):
         print(val_stats)
         estimator.shutdown()
 
+    def test_dataframe(self):
+
+        sc = init_nncontext()
+        rdd = sc.range(0, 10)
+        from pyspark.sql import SparkSession
+        spark = SparkSession(sc)
+        from pyspark.ml.linalg import DenseVector
+        df = rdd.map(lambda x: (DenseVector(np.random.randn(1, 1, 50).astype(np.float)),
+                                int(np.random.randint(0, 2, size=(1, 1))))).toDF(["feature", "label"])
+
+        estimator = get_estimator(workers_per_node=2)
+
+        estimator.fit(df, batch_size=4, epochs=2,
+                      feature_cols=["feature"],
+                      label_cols=["label"])
+        estimator.evaluate(df, batch_size=4,
+                           feature_cols=["feature"],
+                           label_cols=["label"])
 
 if __name__ == "__main__":
     pytest.main([__file__])
