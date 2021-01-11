@@ -6,7 +6,12 @@
 
 You may pull a Docker image from the  [Analytics Zoo Docker Hub](https://hub.docker.com/r/intelanalytics/analytics-zoo).
 
-To pull the latest version, use
+To pull the latest release version, use
+```bash
+sudo docker pull intelanalytics/analytics-zoo:0.9.0-bigdl_0.12.1-spark_2.4.3
+```
+
+To pull the nightly build version, use
 ```bash
 sudo docker pull intelanalytics/analytics-zoo:latest
 ```
