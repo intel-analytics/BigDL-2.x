@@ -11,7 +11,7 @@ conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use a
 conda activate zoo
 ```
 
-You need to install JDK in the environment. __JDK8__ is highly recommended. A preferred approach is to download JDK8 and set the environment variable `JAVA_HOME`. Alternatively, you may install JDK8 via conda:
+You need to install JDK in the environment. __JDK8__ is highly recommended. A preferred approach is to download JDK8 and set the environment variable `JAVA_HOME` manually. Alternatively, you may install JDK8 via conda:
 
 ```bash
 conda install -c anaconda openjdk=8.0.152
@@ -39,7 +39,7 @@ Alternatively, you can find the list of the nightly build versions [here](https:
 pip install analytics-zoo=version
 ```
 
-_Note: If you are using a custom URL of Python Package Index, you may need to check whether the latest packages have been sync'ed with pypi. 
+_**Note:** If you are using a custom URL of Python Package Index, you may need to check whether the latest packages have been sync'ed with pypi. 
 Or you can add the option `-i https://pypi.python.org/simple` when pip install to use pypi as the index-url._
 
 ---
@@ -59,7 +59,7 @@ You may test if the installation is successful using the interactive Python shel
 import zoo
 from zoo.orca import init_orca_context
 
-print(zoo.__version__)  # Verify the version of analytics-zoo
+print(zoo.__version__)  # Verify the version of analytics-zoo.
 sc = init_orca_context()  # Initiation of analytics-zoo on the underlying cluster.
 ```
 
