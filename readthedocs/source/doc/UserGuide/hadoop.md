@@ -62,7 +62,7 @@ export SPARK_HOME=the root directory where you extract the downloaded Spark pack
 export ANALYTICS_ZOO_HOME=the root directory where you extract the downloaded Analytics Zoo package
 ```
 
-- Pack the current conda environment.
+- Pack the current conda environment:
 
 ```bash
 conda pack -o environment.tar.gz
