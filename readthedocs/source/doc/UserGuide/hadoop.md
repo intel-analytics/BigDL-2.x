@@ -90,4 +90,4 @@ PYSPARK_PYTHON=./environment/bin/python ${ANALYTICS_ZOO_HOME}/bin/spark-submit-p
     script.py
 ```
 
-You can adjust the configurations according your cluster settings.
+You can adjust the configurations according to your cluster settings.
