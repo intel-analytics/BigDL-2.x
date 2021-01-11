@@ -49,7 +49,6 @@ est = Estimator.from_keras(keras_model=model)
 
 Then users can perform distributed model training and inference as follows:
 
-Distributed Training and Inference:
 ```python
 dataset = tfds.load(name="mnist", split="train")
 dataset = dataset.map(preprocess)
@@ -83,7 +82,6 @@ The `model_creator` argument should be a function that takes a `config` dictiona
 
 Then users can perform distributed model training and inference as follows:
 
-Distributed Training and Inference:
 ```python
 def train_data_creator(config):
     dataset = tfds.load(name="mnist", split="train")
@@ -121,7 +119,6 @@ est = Estimator.from_torch(model=model, optimizer=adam, loss=criterion)
 
 Then users can perform distributed model training and inference as follows:
 
-Distributed Training and Inference:
 ```python
 est.fit(data=train_loader, epochs=args.epochs)
 est.predict(xshards)
@@ -153,7 +150,6 @@ est = Estimator.from_torch(model=model,
 
 Then users can perform distributed model training as follows:
 
-Distributed Training:
 ```python
 est.fit(data=train_loader_func, epochs=args.epochs)
 ```
