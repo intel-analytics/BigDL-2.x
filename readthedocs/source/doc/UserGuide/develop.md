@@ -49,7 +49,7 @@ You need to do the following preparations before starting the IDE to successfull
 export BIGDL_CLASSPATH=analytics-zoo/dist/lib/analytics-zoo-*-jar-with-dependencies.jar
 ```
 
-- Prepare BigDL Python environment by either downloading BigDL from [GitHub](https://github.com/intel-analytics/BigDL) or pip install `bigdl`. Note that the BigDL version should match the one you build Analytics Zoo on.
+- Prepare BigDL Python environment by either downloading BigDL source code from [GitHub](https://github.com/intel-analytics/BigDL) or pip install `bigdl`. Note that the BigDL version should match the one you build Analytics Zoo on.
 - Add `pyzoo` and `spark-analytics-zoo.conf` to `PYTHONPATH`:
 ```bash
 export PYTHONPATH=analytics-zoo/pyzoo:analytics-zoo/dist/conf/spark-analytics-zoo.conf:$PYTHONPATH
