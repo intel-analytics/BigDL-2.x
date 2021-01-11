@@ -5,12 +5,12 @@ We demonstrate how to easily run synchronous distributed Pytorch training using 
 ## Prepare environments
 We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the environments, especially if you want to run on a yarn cluster(yarn-client mode only).
 ```
-conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
+conda create -n zoo python=3.7  #  "zoo" is conda environment name, you can use any name you like.
 conda activate zoo
-pip install analytics-zoo[ray]  # 0.9.0 or above
+pip install analytics-zoo[ray]  #  0.9.0 or above
 pip install pillow
-conda install pytorch torchvision cpuonly -c pytorch  #command for linux
-conda install pytorch torchvision -c pytorch  #command for macOS
+conda install pytorch torchvision cpuonly -c pytorch  #  command for linux
+conda install pytorch torchvision -c pytorch  #  command for macOS
 ```
 
 ## Prepare Dataset
@@ -42,9 +42,6 @@ In above commands
 * `--epochs` The number of epochs to train for. Default is 2.
 * `--cluster_mode` The mode of spark cluster. support local and yarn. Default is "local".
 * `--dataset` The dir of dataset. Default is "./dataset".
-* `--num_nodes` The number of nodes to be used in the cluster. Default is 1.
-* `--cores` The number of cpu cores you want to use on each node. Default is 4.
-* `--memory` The memory you want to use on each node. Default is 2g.
 * `--download` Enable auto-download dataset if you don't want to use `prepare_dataset.sh`. Default is False.
 
 ## Results
