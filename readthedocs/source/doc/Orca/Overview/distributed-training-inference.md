@@ -136,16 +136,7 @@ input_data = np.random.random([20, 4, 3, 224, 224])
 result = est.predict(input_data)
 
 # xshards
-input_data_list = [np.random.random([1, 4, 3, 224, 224]),
-                   np.random.random([2, 4, 3, 224, 224])]
-sc = init_nncontext()
-rdd = sc.parallelize(input_data_list, numSlices=2)
-shards = SparkXShards(rdd)
-
-def pre_processing(images):
-    return {"x": images}
-
-shards = shards.transform_shard(pre_processing)
+shards = XShards.partition({"x": input_data})
 result_shards = est.predict(shards)
 ```
 
