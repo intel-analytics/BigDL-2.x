@@ -73,7 +73,7 @@ jupyter notebook --notebook-dir=./ --ip=* --no-browser
 
 #### **2.3 Python Script**
 
-You can directly write Analytics Zoo programs in a Python file (e.g. script.py) and run in the command line as a normal Python script:
+You can directly write Analytics Zoo programs in a Python file (e.g. script.py) and run in the command line as a normal Python program:
 
 ```bash
 python script.py
