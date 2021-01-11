@@ -84,8 +84,7 @@ if __name__ == "__main__":
     searcher.compile(data=train_data,
                      model_create_func=modelBuilder,
                      recipe=SimpleRecipe(),
-                     validation_data=val_data,
-                    )
+                     validation_data=val_data)
 
     searcher.run()
     best_trials = searcher.get_best_trials(k=1)

@@ -93,19 +93,19 @@ class RayTuneSearchEngine(SearchEngine):
 
         # data mode detection
         assert isinstance(data, dict), 'ERROR: Argument \'data\' should be a dictionary.'
-        data_mode = None # data_mode can only be 'dataframe' or 'ndarray'
+        data_mode = None  # data_mode can only be 'dataframe' or 'ndarray'
         data_schema = set(data.keys())
         if set(["df"]).issubset(data_schema):
             assert validation_data is None or "df" in validation_data.keys(),\
-                 'ERROR: Argument \'validation_data\' should fit dataframe schema.'
+                'ERROR: Argument \'validation_data\' should fit dataframe schema.'
             data_mode = 'dataframe'
         if set(["x", "y"]).issubset(data_schema):
             assert validation_data is None or set(["x", "y"]).issubset(validation_data.keys()),\
-                 'ERROR: Argument \'validation_data\' should fit dataframe schema.'
+                'ERROR: Argument \'validation_data\' should fit dataframe schema.'
             data_mode = 'ndarray'
         assert data_mode in ['dataframe', 'ndarray'],\
-             'ERROR: Argument \'data\' should fit either dataframe schema or ndarray schema.'
-        
+            'ERROR: Argument \'data\' should fit either dataframe schema or ndarray schema.'
+
         # data extract
         if data_mode == 'dataframe':
             input_df = data['df']
@@ -142,24 +142,24 @@ class RayTuneSearchEngine(SearchEngine):
 
         if data_mode == 'dataframe':
             self.train_func = self._prepare_train_func(input_data=input_df,
-                                                    model_create_func=model_create_func,
-                                                    feature_transformers=feature_transformers,
-                                                    validation_data=validation_df,
-                                                    metric=metric,
-                                                    mc=mc,
-                                                    remote_dir=self.remote_dir,
-                                                    numpy_format=False
-                                                    )
+                                                       model_create_func=model_create_func,
+                                                       feature_transformers=feature_transformers,
+                                                       validation_data=validation_df,
+                                                       metric=metric,
+                                                       mc=mc,
+                                                       remote_dir=self.remote_dir,
+                                                       numpy_format=False
+                                                       )
         else:
             self.train_func = self._prepare_train_func(input_data=input_data,
-                                                    model_create_func=model_create_func,
-                                                    feature_transformers=None,
-                                                    validation_data=validation_data,
-                                                    metric=metric,
-                                                    mc=mc,
-                                                    remote_dir=self.remote_dir,
-                                                    numpy_format=True
-                                                    )
+                                                       model_create_func=model_create_func,
+                                                       feature_transformers=None,
+                                                       validation_data=validation_data,
+                                                       metric=metric,
+                                                       mc=mc,
+                                                       remote_dir=self.remote_dir,
+                                                       numpy_format=True
+                                                       )
         # self.trainable_class = self._prepare_trainable_class(input_df,
         #                                                      feature_transformers,
         #                                                      # model,
@@ -303,11 +303,11 @@ class RayTuneSearchEngine(SearchEngine):
         return validation_df is not None and not (df_not_empty or df_list_not_empty)
 
     @staticmethod
-    def _prepare_train_func(input_data, #input_df
+    def _prepare_train_func(input_data,
                             model_create_func,
                             feature_transformers,
                             metric,
-                            validation_data=None, #validation_df
+                            validation_data=None,
                             mc=False,
                             remote_dir=None,
                             numpy_format=False,
