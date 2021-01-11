@@ -14,7 +14,7 @@ Under the hood, the Orca `Estimator` will replicate the model on each node in th
 
 #### **2.1 TensorFlow 1.15 and Keras 2.3**
 
-There two ways to create a TensorFlow `Estimator` for users of TensorFlow 1.15. One is to create the Estimator from a low level graph and another from a keras model. Examples are as follows:
+There are two ways to create an Estimator for TensorFlow 1.15, either from a low level computation graph or a Keras model. Examples are as follow:
 
 TensorFlow Computation Graph:
 ```python
