@@ -11,10 +11,12 @@ Analytics Zoo Documentation
 Analytics Zoo includes the **Orca** library that seamlessly scale out your single node Python notebook across large clusters (so as to process distributed Big Data).
 
 .. toctree::
-..  :maxdepth: 1
-..  :caption: Index
-..
-..   readthedocs/index.md
+   :maxdepth: 1
+   :caption: Release
+   :hidden:
+
+   release
+ 
 
 .. toctree::
    :maxdepth: 1
