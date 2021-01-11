@@ -15,7 +15,7 @@
 
 ### **Step 0: Prepare Environment**
 
-We recommend using [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the environment. Please refer to the [install guide](https://dev-guide.readthedocs.io/en/latest/doc/UserGuide/python.html) for more details.
+We recommend using [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the environment. Please refer to the [install guide](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/python.html) for more details.
 
 **Note:** Conda environment is required to run on the distributed cluster, but not strictly necessary for running on the local machine.
 
@@ -38,7 +38,7 @@ elif args.cluster_mode == "yarn":
     init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2) # run on Hadoop YARN cluster
 ```
 
-This is the only place where you need to specify local or distributed mode. View [Orca Context](https://dev-guide.readthedocs.io/en/latest/doc/Orca/Overview/orca-context.html) for more details.
+This is the only place where you need to specify local or distributed mode. View [Orca Context](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/orca-context.html) for more details.
 
 **Note:** You should `export HADOOP_CONF_DIR=/path/to/hadoop/conf/dir` when you run on Hadoop YARN cluster.
 
