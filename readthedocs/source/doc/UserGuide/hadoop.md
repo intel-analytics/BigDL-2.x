@@ -41,9 +41,9 @@ sc = init_orca_context(cluster_mode="yarn-client", ...)
 ```
 
 By specifying cluster_mode to be "yarn-client", `init_orca_context` would automatically prepare the runtime Python environment and initiate the distributed execution engine on the underlying YARN cluster. 
-Then you can simply write and run your Analytics Zoo program in a [Jupyter notebook](./python.html#jupyter-notebook) or as a normal [Python script](./python.html#python-script).
+Then you can simply write and run your Analytics Zoo program in a [Jupyter notebook](./python.md#jupyter-notebook) or as a normal [Python script](./python.md#python-script).
 
-View the [Orca Context](../Orca/Overview/orca-context.html) for more details.
+View the [Orca Context](../Orca/Overview/orca-context.md) for more details.
 
 ---
 ### **3. YARN Cluster Mode**
@@ -62,7 +62,7 @@ export SPARK_HOME=the root directory where you extract the downloaded Spark pack
 export ANALYTICS_ZOO_HOME=the root directory where you extract the downloaded Analytics Zoo package
 ```
 
-- Pack the current conda environment:
+- Pack the current conda environment to `environment.tar.gz` (you can use any name you like):
 
 ```bash
 conda pack -o environment.tar.gz
