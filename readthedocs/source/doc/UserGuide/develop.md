@@ -109,6 +109,6 @@ Analytics Zoo uses maven to organize project. You should choose an IDE that supp
 
 In IntelliJ, you can open Analytics Zoo project root directly, and the IDE will import the project automatically.
 
-We set the scopes of spark related libraries to `provided` in the maven pom.xml, which, however, will cause a problem in IDE  (throwing `NoClassDefFoundError` When you run applications). You can easily change the scopes by the `all-in-one` profile.
+We set the scopes of spark related libraries to `provided` in the maven pom.xml, which, however, will cause a problem in IDE  (throwing `NoClassDefFoundError` When you run applications). You can easily change the scopes using the `all-in-one` profile.
 
 * In Intellij, go to View -> Tools Windows -> Maven Projects. Then in the Maven Projects panel, Profiles -> click "all-in-one".
