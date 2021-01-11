@@ -103,7 +103,7 @@ class elastic_search:
                It also can be set in esConfig
         :param filter: Optional. Request only those fields from Elasticsearch
         :param esQuery: Optional. es query
-        :return: Spark DataFrame. Each row represents a document in ES.
+        :return: Spark RDD
         """
         sc = init_nncontext()
         if "es.resource" not in esConfig:
