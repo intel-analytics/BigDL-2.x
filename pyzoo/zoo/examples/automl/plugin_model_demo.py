@@ -58,10 +58,11 @@ def get_data():
         y = a*x + b
         return x, y
     train_x, train_y = get_linear_data(2, 5, 1000)
-    df = pd.DataFrame({'x': train_x, 'y': train_y})
+    # print(type(train_x), train_x.shape)
+    train_data = {'x': train_x, 'y': train_y}
     val_x, val_y = get_linear_data(2, 5, 400)
-    val_df = pd.DataFrame({'x': val_x, 'y': val_y})
-    return df, val_df
+    val_data = {'x': val_x, 'y': val_y}
+    return train_data, val_data
 
 
 if __name__ == "__main__":
@@ -78,13 +79,12 @@ if __name__ == "__main__":
 
     # pass input data, modelbuilder and recipe into searcher.compile. Note that if user doesn't pass
     # feature transformer, the default identity feature transformer will be used.
-    df, val_df = get_data()
-    searcher.compile(df,
-                     modelBuilder,
+    train_data, val_data = get_data()
+    searcher.compile(data=train_data,
+                     model_create_func=modelBuilder,
                      recipe=SimpleRecipe(),
-                     feature_cols=["x"],
-                     target_col="y",
-                     validation_df=val_df)
+                     validation_data=val_data,
+                    )
 
     searcher.run()
     best_trials = searcher.get_best_trials(k=1)
@@ -96,8 +96,8 @@ if __name__ == "__main__":
         "batch_size": 32,  # used in data_creator
     })
 
-    val_result = model.fit_eval(x=df[["x"]],
-                                y=df[["y"]],
-                                validation_data=(val_df[["x"]], val_df["y"]),
-                                epochs=1)
+    val_result = model.fit_eval(x=train_data["x"],
+                                y=train_data["y"],
+                                validation_data=(val_data["x"], val_data["y"]),
+                                epochs=10)
     print(val_result)
