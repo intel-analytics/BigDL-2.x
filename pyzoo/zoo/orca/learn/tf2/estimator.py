@@ -209,15 +209,24 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         :param epochs: Number of epochs to train the model. Default: 1.
         :param batch_size: Batch size used for training. Default: 32.
         :param verbose: Prints output of one model if true.
-        :param callbacks: Keras compatible callbacks.
+        :param callbacks: List of Keras compatible callbacks to apply during training.
         :param validation_data_creator: validation data. Validation data type should be the same
         as train data.
         :param class_weight: Optional dictionary mapping class indices (integers) to a weight
         (float) value, used for weighting the loss function. This can be useful to tell the model
         to "pay more attention" to samples from an under-represented class.
-        :param steps_per_epoch: Number of steps in one epoch.
-        :param validation_steps: Number of steps of validation.
-        :param validation_freq: Frequency of validation.
+        :param steps_per_epoch: Total number of steps (batches of samples) before declaring one
+        epoch finished and starting the next epoch. If `steps_pre_epoch` is `None`, the epoch will
+        run until the input dataset is exhausted. When passing an infinitely repeating dataset, you
+        must specify the `step_per_epoch` argument.
+        :param validation_steps: Total number of steps (batches of samples) to draw before stopping
+        when performing validation at the end of every epoch. Default: None.
+        :param validation_freq: Only relevant if validation data is provided. Integer of
+        `collections_abc.Container` instance (e.g. list, tuple, etc.). If an integer, specifies how
+        many training epochs to run before a new validation run is performed, e.g.
+        `validation_freq=2` runs validation every 2 epochs. If a Container, specifies the epochs on
+        which to run validation, e.g. `validation_freq=[1, 2, 10]` runs validation at the end of
+        the 1st, 2nd, and 10th epochs.
         :param data_config: An optional dictionary that can be passed to data creator function.
         :param feature_cols: Feature column name(s) of data. Only used when data is a Spark
         DataFrame. Default: None.
@@ -302,13 +311,15 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         If data is XShards, each partition is a dictionary of  {'x': feature,
         'y': label}, where feature(label) is a numpy array or a tuple of numpy arrays.
         :param batch_size: Batch size used for evaluation. Default: 32.
-        :param num_steps: Number of steps for evaluation.
+        :param num_steps: Total number of steps (batches of samples) before declaring the evaluation
+        round finished. Ignored with the default value of `None`.
         :param verbose: Prints output of one model if true.
         :param sample_weight: Optional Numpy array of weights for the training samples, used for
         weighting the loss function. You can either pass a flat (1D) Numpy array with the same
         length as the input samples (1:1 mapping between weights and samples), or in the case of
-        temporal data [...].
-        :param callbacks: Keras compatible callbacks.
+        temporal data, you can pass a 2D array with shape (samples, sequence_length), to apply a
+        different weight to every timestep of every sample.
+        :param callbacks: List of Keras compatible callbacks to apply during evaluation.
         :param data_config: An optional dictionary that can be passed to data creator function.
         :param feature_cols: Feature column name(s) of data. Only used when data is a Spark
         DataFrame. Default: None.
@@ -380,8 +391,9 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         numpy array or a tuple of numpy arrays.
         :param batch_size: Batch size used for inference. Default: None.
         :param verbose: Prints output of one model if true.
-        :param steps:
-        :param callbacks: Keras compatible callbacks.
+        :param steps: Total number of steps (batches of samples) before declaring the prediction
+        round finished. Ignored with the default value of None.
+        :param callbacks: List of Keras compatible callbacks to apply during prediction.
         :param data_config: An optional dictionary that can be passed to data creator function.
         :param feature_cols: Feature column name(s) of data. Only used when data is a Spark
         DataFrame. Default: None.
