@@ -105,7 +105,7 @@ class TestMXNetSparkXShards(TestCase):
                                          validation_metrics_creator=get_metrics,
                                          eval_metrics_creator=get_metrics, num_workers=2)
         estimator.fit(train_df, validation_data=test_df, epochs=1, batch_size=32,
-                      feature_cols=["data"], label_cols=["label"])
+                      feature_cols=["data"], labels_cols=["label"])
         estimator.shutdown()
 
     def test_xshards_symbol_with_val(self):

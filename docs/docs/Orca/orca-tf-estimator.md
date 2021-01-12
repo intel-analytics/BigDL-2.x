@@ -88,7 +88,7 @@ fit(data,
     epochs=1,
     batch_size=32,
     feature_cols=None,
-    label_cols=None,
+    labels_cols=None,
     validation_data=None,
     hard_code_batch_size=False,
     session_config=None,
@@ -107,7 +107,7 @@ fit(data,
 * `epochs`: number of epochs to train.
 * `batch_size`: total batch size for each iteration.
 * `feature_cols`: feature column names if train data is Spark DataFrame.
-* `label_cols`: label column names if train data is Spark DataFrame.
+* `labels_cols`: label column names if train data is Spark DataFrame.
 * `validation_data`: validation data. Validation data type should be the same as train data.
 * `hard_code_batch_size`: whether hard code batch size for training. Default is False.
 * `session_config`: tensorflow session configuration for training. Should be object of tf.ConfigProto
@@ -135,7 +135,7 @@ est.fit(data=df,
         batch_size=8,
         epochs=10,
         feature_cols=['user', 'item'],
-        label_cols=['label'],
+        labels_cols=['label'],
         validation_data=df)
 ```
 
@@ -200,7 +200,7 @@ fit(data,
     epochs=1,
     batch_size=32,
     feature_cols=None,
-    label_cols=None,
+    labels_cols=None,
     validation_data=None,
     hard_code_batch_size=False,
     session_config=None,

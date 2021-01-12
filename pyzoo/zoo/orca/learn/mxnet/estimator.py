@@ -170,7 +170,7 @@ class MXNetEstimator(OrcaRayEstimator):
         ])
 
     def fit(self, data, epochs=1, batch_size=32, validation_data=None,
-            train_resize_batch_num=None, feature_cols=None, label_cols=None):
+            train_resize_batch_num=None, feature_cols=None, labels_cols=None):
         """
         Trains an MXNet model given train_data (with val_data) for several epochs.
 
@@ -197,7 +197,7 @@ class MXNetEstimator(OrcaRayEstimator):
         See this issue for more details: https://github.com/apache/incubator-mxnet/issues/17651
 
         :param feature_cols: feature column names if data is Spark DataFrame.
-        :param label_cols: label column names if data is Spark DataFrame.
+        :param labels_cols: label column names if data is Spark DataFrame.
         """
         if validation_data:
             assert self.validation_metrics_creator,\
@@ -205,7 +205,7 @@ class MXNetEstimator(OrcaRayEstimator):
                 "when creating the Estimator"
         from zoo.orca.data import SparkXShards
         data, validation_data = maybe_dataframe_to_xshards(data, validation_data,
-                                                           feature_cols, label_cols,
+                                                           feature_cols, labels_cols,
                                                            mode="evaluate")
         if isinstance(data, SparkXShards):
 

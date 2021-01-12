@@ -154,10 +154,10 @@ class TestPyTorchEstimator(TestCase):
 
         estimator.fit(df, batch_size=4, epochs=2,
                       feature_cols=["feature"],
-                      label_cols=["label"])
+                      labels_cols=["label"])
         estimator.evaluate(df, batch_size=4,
                            feature_cols=["feature"],
-                           label_cols=["label"])
+                           labels_cols=["label"])
 
 if __name__ == "__main__":
     pytest.main([__file__])
