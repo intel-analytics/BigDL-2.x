@@ -176,10 +176,8 @@ class TestPyTorchEstimator(TestCase):
         sc = init_nncontext()
         rdd = sc.parallelize(range(100))
 
-        print(rdd.collect())
         from pyspark.sql import SparkSession
         spark = SparkSession(sc)
-        from pyspark.ml.linalg import DenseVector
         df = rdd.map(lambda x: ([float(x)] * 50,
                                 [int(np.random.randint(0, 2, size=()))])
                      ).toDF(["feature", "label"])
@@ -189,7 +187,6 @@ class TestPyTorchEstimator(TestCase):
         result = estimator.predict(df, batch_size=4,
                                    feature_cols=["feature"])
         result = np.concatenate([shard["prediction"] for shard in result.collect()])
-        print(result)
         assert np.array_equal(result, np.array(range(100)).astype(np.float))
 
 if __name__ == "__main__":
