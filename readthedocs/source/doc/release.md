@@ -43,7 +43,7 @@
 
 
 ### test
-<table border="2"
+<table border="1"
 cellpadding="10">
     <tr>
         <td></td>
