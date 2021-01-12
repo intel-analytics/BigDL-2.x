@@ -19,6 +19,7 @@ from zoo.orca.data import SparkXShards
 from zoo.tfpark.tf_dataset import convert_row_to_numpy
 import numpy as np
 
+
 def find_latest_checkpoint(model_dir, model_type="bigdl"):
     import os
     import re
