@@ -126,9 +126,20 @@ class PyTorchRayEstimator(OrcaRayEstimator):
                                     info=info, feature_cols=feature_cols,
                                     labels_cols=labels_cols)
 
-    def predict(self, data, batch_size=32, feature_cols=None, label_cols=None, profile=False):
-        return self.estimator.predict(data, batch_size=batch_size, feature_cols=feature_cols,
-                                      labels_cols=label_cols, profile=profile)
+    def predict(self, data, batch_size=32, feature_cols=None, profile=False):
+        """
+        Using this PyTorch model to make predictions on the data.
+
+        :param data: An instance of SparkXShards or a Spark DataFrame
+        :param batch_size: The number of samples per batch for each worker. Default is 32.
+        :param profile: Boolean. Whether to return time stats for the training procedure.
+        Default is False.
+        :param feature_cols: feature column names if train data is Spark DataFrame.
+        :return A SparkXShards that contains the predictions with key "prediction" in each shard
+        """
+        return self.estimator.predict(data, batch_size=batch_size,
+                                      feature_cols=feature_cols,
+                                      profile=profile)
 
     def evaluate(self, data, batch_size=32, num_steps=None, profile=False, info=None,
                  feature_cols=None, labels_cols=None):
