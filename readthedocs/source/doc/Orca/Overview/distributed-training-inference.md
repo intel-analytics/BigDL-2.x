@@ -125,7 +125,7 @@ View the related [Python API doc]() <TODO: link to be added> for more details.
 
 **Using `torch.distributed` or *Horovod* backend**
 
-Alternatively, users can create a PyTorch `Estimator` using `torch.distributed` or *Horovod* backend by specifying the `backend` argument to be "torch_distributed" or "horovod". In this case, the `model` and `optimizer` should be wrapped in a function. For example:
+Alternatively, users can create a PyTorch `Estimator` using `torch.distributed` or *Horovod* backend by specifying the `backend` argument to be "torch_distributed" or "horovod". In this case, the `model` and `optimizer` should be wrapped in _Creater Functions_. For example:
 ```python
 def model_creator(config):
     model = LeNet() # a torch.nn.Module
@@ -159,25 +159,10 @@ Inference is currently not supported when using `torch.distributed` or *Horovod*
 
 The user may create a MXNet `Estimator` as follows:
 ```python
-import mxnet as mx
-from mxnet import gluon
-from mxnet.gluon import nn
 from zoo.orca.learn.mxnet import Estimator, create_config
 
 def get_model(config):
-    class SimpleModel(gluon.Block):
-        def __init__(self, **kwargs):
-            super(SimpleModel, self).__init__(**kwargs)
-            self.fc1 = nn.Dense(20)
-            self.fc2 = nn.Dense(10)
-
-        def forward(self, x):
-            x = self.fc1(x)
-            x = self.fc2(x)
-            return x
-
-    net = SimpleModel()
-    net.initialize(mx.init.Xavier(magnitude=2.24), ctx=[mx.cpu()])
+    net = LeNet() # a mxnet.gluon.Block
     return net
 
 def get_loss(config):
@@ -196,8 +181,6 @@ Then the user can perform distributed model training as follows:
 import numpy as np
 
 def get_train_data_iter(config, kv):
-    train_data = np.random.rand(200, 30)
-    train_label = np.random.randint(0, 10, (200,))
     train = mx.io.NDArrayIter(train_data, train_label,
                               batch_size=config["batch_size"], shuffle=True)
     return train
