@@ -30,7 +30,7 @@ cellborder="1">
     </tr>
 </table>
 
----
+
 - **Release 0.9.0**
 <table border="1"
 cellpadding="10">
@@ -60,7 +60,7 @@ cellpadding="10">
     </tr>
 </table>
 
----
+
 - **Release 0.8.1**
 <table border="1"
 cellpadding="10">
@@ -86,7 +86,7 @@ cellpadding="10">
     </tr>
 </table>
 
----
+
 - **Release 0.7.0** 
 <table border="1"
 cellpadding="10">
@@ -112,5 +112,5 @@ cellpadding="10">
     </tr>
 </table>
 
----
+
 
