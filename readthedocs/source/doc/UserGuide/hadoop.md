@@ -15,7 +15,7 @@ conda activate zoo
 # Use conda or pip to install all the needed Python dependencies in the created conda environment.
 ```
 
-- You need to install [JDK](https://openjdk.java.net/install/) in the environment and set the environment variable `JAVA_HOME`, which is required by Spark. __JDK8__ is highly recommended.
+- You need to download and install [JDK](https://openjdk.java.net/install/) in the environment, and properly set the environment variable `JAVA_HOME`, which is required by Spark. __JDK8__ is highly recommended.
 
 - Check the Hadoop setup and configurations of your cluster. Make sure you properly set the environment variable `HADOOP_CONF_DIR`, which is needed to initialize Spark on YARN:
 
