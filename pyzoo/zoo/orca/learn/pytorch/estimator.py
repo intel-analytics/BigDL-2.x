@@ -134,7 +134,7 @@ class PyTorchRayEstimator(OrcaRayEstimator):
         :param batch_size: The number of samples per batch for each worker. Default is 32.
         :param profile: Boolean. Whether to return time stats for the training procedure.
         Default is False.
-        :param feature_cols: feature column names if train data is Spark DataFrame.
+        :param feature_cols: feature column names if data is a Spark DataFrame.
         :return A SparkXShards that contains the predictions with key "prediction" in each shard
         """
         return self.estimator.predict(data, batch_size=batch_size,
