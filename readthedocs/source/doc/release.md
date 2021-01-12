@@ -59,7 +59,7 @@ cellpadding="10">
        <td><a href="https://repo1.maven.org/maven2/com/intel/analytics/zoo/analytics-zoo-bigdl_0.12.1-spark_3.0.0/0.9.0/analytics-zoo-bigdl_0.12.1-spark_3.0.0-0.9.0-dist-all.zip">download</a></td> 
     </tr>
 </table>
-
+<br>
 
 - **Release 0.8.1**
 <table border="1"
@@ -85,7 +85,7 @@ cellpadding="10">
        <td><a href="https://repo1.maven.org/maven2/com/intel/analytics/zoo/analytics-zoo-bigdl_0.10.0-spark_2.4.3/0.8.1/analytics-zoo-bigdl_0.10.0-spark_2.4.3-0.8.1-dist-all.zip">download</a></td> 
     </tr>
 </table>
-
+<br>
 
 - **Release 0.7.0** 
 <table border="1"
@@ -111,6 +111,7 @@ cellpadding="10">
        <td><a href="https://repo1.maven.org/maven2/com/intel/analytics/zoo/analytics-zoo-bigdl_0.10.0-spark_2.4.3/0.7.0/analytics-zoo-bigdl_0.10.0-spark_2.4.3-0.7.0-dist-all.zip">download</a></td> 
     </tr>
 </table>
+<br>
 
 
 
