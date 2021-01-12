@@ -6,7 +6,7 @@ You can run Analytics Zoo programs on standard Hadoop/YARN clusters without any 
 
 ### **1. Prepare Python Environment**
 
-You need to first use [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the Python environment _**on the local client machine**_, and then install all the needed Python libraries in the conda environment:
+- You need to first use [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the Python environment _**on the local client machine**_, and then install all the needed Python libraries in the conda environment:
 
 ```bash
 conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
@@ -15,10 +15,16 @@ conda activate zoo
 # Use conda or pip to install all the needed Python dependencies.
 ```
 
-You need to install JDK in the environment. __JDK8__ is highly recommended. A preferred approach is to download JDK8 and set the environment variable `JAVA_HOME` manually. Alternatively, you may install JDK8 via conda:
+- You need to install JDK in the environment, which is required by Spark. __JDK8__ is highly recommended. A preferred approach is to download JDK8 and set the environment variable `JAVA_HOME` manually. Alternatively, you may install JDK8 via conda:
 
 ```bash
 conda install -c anaconda openjdk=8.0.152
+```
+
+- Check your Hadoop setup and configurations. Make sure you properly set the environment variable `HADOOP_CONF_DIR`, which is needed to initialize Spark on YARN:
+
+```bash
+export HADOOP_CONF_DIR=the directory of the yarn configurations
 ```
 
 ---

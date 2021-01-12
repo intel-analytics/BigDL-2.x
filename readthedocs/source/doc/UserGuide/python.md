@@ -11,7 +11,7 @@ conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use a
 conda activate zoo
 ```
 
-You need to install JDK in the environment. __JDK8__ is highly recommended. A preferred approach is to download JDK8 and set the environment variable `JAVA_HOME` manually. Alternatively, you may install JDK8 via conda:
+You need to install JDK in the environment, which is required by Spark. __JDK8__ is highly recommended. A preferred approach is to download JDK8 and set the environment variable `JAVA_HOME` manually. Alternatively, you may install JDK8 via conda:
 
 ```bash
 conda install -c anaconda openjdk=8.0.152
