@@ -1216,19 +1216,6 @@ class DataFrameDataset(TFNdarrayDataset):
             return (tf.float32, (None,))
         return None
 
-    @staticmethod
-    def is_scalar_type(dtype):
-        import pyspark.sql.types as df_types
-        if isinstance(dtype, df_types.FloatType):
-            return True
-        if isinstance(dtype, df_types.IntegerType):
-            return True
-        if isinstance(dtype, df_types.LongType):
-            return True
-        if isinstance(dtype, df_types.DoubleType):
-            return True
-        return False
-
     def __init__(self, df, feature_cols, labels_cols=None, batch_size=-1,
                  batch_per_thread=-1, hard_code_batch_size=False,
                  validation_df=None, memory_type="DRAM",

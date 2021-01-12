@@ -16,6 +16,8 @@
 
 import glob
 from zoo.common import Sample
+import numpy as np
+from pyspark.ml.linalg import DenseVector, SparseVector, VectorUDT
 
 
 def to_sample_rdd(x, y, sc, num_slices=None):
@@ -150,13 +152,26 @@ def set_python_home():
         os.environ['PYTHONHOME'] = "/".join(detect_python_location().split("/")[:-2])
 
 
+def _is_scalar_type(dtype):
+    import pyspark.sql.types as df_types
+    if isinstance(dtype, df_types.FloatType):
+        return True
+    if isinstance(dtype, df_types.IntegerType):
+        return True
+    if isinstance(dtype, df_types.LongType):
+        return True
+    if isinstance(dtype, df_types.DoubleType):
+        return True
+    return False
+
+
 def convert_row_to_numpy(row, schema, feature_cols, labels_cols):
     def convert_for_cols(row, cols):
         import pyspark.sql.types as df_types
         result = []
         for name in cols:
             feature_type = schema[name].dataType
-            if DataFrameDataset.is_scalar_type(feature_type):
+            if _is_scalar_type(feature_type):
                 result.append(np.array(row[name]))
             elif isinstance(feature_type, df_types.ArrayType):
                 result.append(np.array(row[name]).astype(np.float32))
