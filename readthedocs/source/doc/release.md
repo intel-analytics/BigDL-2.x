@@ -43,7 +43,8 @@
 
 
 ### test
-<table>
+<table border="2"
+cellpadding="10">
     <tr>
         <td></td>
         <td>BigDL 0.12.0</td>
