@@ -1,11 +1,12 @@
 # Release Download
 
 - **Release 0.10.0 nightly build**
-<table border="0"
-cellpadding="10">
+<table border="1"
+cellpadding="10"
+cellborder="1">
     <tr>
-        <td></td>
-        <td>BigDL 0.12.1</td>
+        <th></th>
+        <th>BigDL 0.12.1</th>
     </tr>
     <tr>
         <td>Spark 2.1.1 </td>
