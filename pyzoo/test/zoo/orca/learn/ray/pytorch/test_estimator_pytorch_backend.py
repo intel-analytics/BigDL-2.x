@@ -67,6 +67,16 @@ class Net(nn.Module):
         return y
 
 
+class IdentityNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        # need this line to avoid optimizer raise empty variable list
+        self.fc1 = nn.Linear(50, 50)
+
+    def forward(self, input_):
+        return input_[:, 0]
+
+
 def train_data_loader(config):
     train_dataset = LinearDataset(size=config.get("data_size", 1000))
     train_loader = torch.utils.data.DataLoader(
@@ -92,8 +102,8 @@ def get_optimizer(model, config):
     return torch.optim.SGD(model.parameters(), lr=config.get("lr", 1e-2))
 
 
-def get_estimator(workers_per_node=1):
-    estimator = Estimator.from_torch(model=get_model,
+def get_estimator(workers_per_node=1, model_fn=get_model):
+    estimator = Estimator.from_torch(model=model_fn,
                                      optimizer=get_optimizer,
                                      loss=nn.BCELoss(),
                                      config={"lr": 1e-2},
@@ -142,10 +152,10 @@ class TestPyTorchEstimator(TestCase):
         print(val_stats)
         estimator.shutdown()
 
-    def test_dataframe(self):
+    def test_dataframe_train_eval(self):
 
         sc = init_nncontext()
-        rdd = sc.range(0, 10)
+        rdd = sc.range(0, 100)
         from pyspark.sql import SparkSession
         spark = SparkSession(sc)
         from pyspark.ml.linalg import DenseVector
@@ -154,13 +164,33 @@ class TestPyTorchEstimator(TestCase):
                      ).toDF(["feature", "label"])
 
         estimator = get_estimator(workers_per_node=2)
-
         estimator.fit(df, batch_size=4, epochs=2,
                       feature_cols=["feature"],
                       labels_cols=["label"])
         estimator.evaluate(df, batch_size=4,
                            feature_cols=["feature"],
                            labels_cols=["label"])
+
+    def test_dataframe_predict(self):
+
+        sc = init_nncontext()
+        rdd = sc.parallelize(range(100))
+
+        print(rdd.collect())
+        from pyspark.sql import SparkSession
+        spark = SparkSession(sc)
+        from pyspark.ml.linalg import DenseVector
+        df = rdd.map(lambda x: ([float(x)] * 50,
+                                [int(np.random.randint(0, 2, size=()))])
+                     ).toDF(["feature", "label"])
+
+        estimator = get_estimator(workers_per_node=2,
+                                  model_fn=lambda config: IdentityNet())
+        result = estimator.predict(df, batch_size=4,
+                                   feature_cols=["feature"])
+        result = np.concatenate([shard["prediction"] for shard in result.collect()])
+        print(result)
+        assert np.array_equal(result, np.array(range(100)).astype(np.float))
 
 if __name__ == "__main__":
     pytest.main([__file__])

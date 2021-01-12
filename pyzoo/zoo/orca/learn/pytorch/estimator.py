@@ -126,8 +126,9 @@ class PyTorchRayEstimator(OrcaRayEstimator):
                                     info=info, feature_cols=feature_cols,
                                     labels_cols=labels_cols)
 
-    def predict(self, data, batch_size=32, **kwargs):
-        raise NotImplementedError
+    def predict(self, data, batch_size=32, feature_cols=None, label_cols=None, profile=False):
+        return self.estimator.predict(data, batch_size=batch_size, feature_cols=feature_cols,
+                                      labels_cols=label_cols, profile=profile)
 
     def evaluate(self, data, batch_size=32, num_steps=None, profile=False, info=None,
                  feature_cols=None, labels_cols=None):

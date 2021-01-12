@@ -21,6 +21,7 @@ import numbers
 import torch
 import numpy as np
 
+from zoo.orca.data.shard import RayXShards
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.pytorch.torch_runner import TorchRunner
 from zoo.orca.learn.utils import maybe_dataframe_to_xshards
@@ -50,7 +51,7 @@ def check_for_failure(remote_values):
     return False
 
 
-def shards_ref_to_creator(shards_ref, mode="train"):
+def shards_ref_to_creator(shards_ref):
 
     def data_creator(config):
         from zoo.orca.data.utils import ray_partition_get_data_label, index_data, get_size
@@ -63,19 +64,11 @@ def shards_ref_to_creator(shards_ref, mode="train"):
                     "multiprocessing_context"]:
             if arg in config:
                 params[arg] = config[arg]
-        if mode == "predict":
-            data, label = ray_partition_get_data_label(ray.get(shards_ref),
-                                                       allow_tuple=False,
-                                                       allow_list=False)
-            print("Data size on worker: ", len(label))
-            dataset = torch.utils.data.TensorDataset(data, label)
-        else:
-            data, _ = ray_partition_get_data_label(ray.get(shards_ref),
-                                                       allow_tuple=False,
-                                                       allow_list=False,
-                                                       has_label=False)
-            print("Data size on worker: ", len(data))
-            dataset = torch.utils.data.TensorDataset(data)
+        data, label = ray_partition_get_data_label(ray.get(shards_ref),
+                                                   allow_tuple=False,
+                                                   allow_list=False)
+        print("Data size on worker: ", len(label))
+        dataset = torch.utils.data.TensorDataset(torch.from_numpy(data), torch.from_numpy(label))
         data_loader = DataLoader(dataset, **params)
         return data_loader
 
@@ -200,7 +193,7 @@ class PyTorchRayEstimator:
             ray_xshards = process_spark_xshards(data, self.num_workers)
 
             def transform_func(worker, shards_ref):
-                data_creator = shards_ref_to_creator(shards_ref, mode="train")
+                data_creator = shards_ref_to_creator(shards_ref)
                 # Should not wrap DistributedSampler on DataLoader for SparkXShards input.
                 return worker.train_epochs.remote(
                     data_creator, epochs, batch_size, profile, info, False)
@@ -279,7 +272,7 @@ class PyTorchRayEstimator:
             ray_xshards = process_spark_xshards(data, self.num_workers)
 
             def transform_func(worker, shards_ref):
-                data_creator = shards_ref_to_creator(shards_ref, "evaluate")
+                data_creator = shards_ref_to_creator(shards_ref)
                 # Should not wrap DistributedSampler on DataLoader for SparkXShards input.
                 return worker.validate.remote(
                     data_creator, batch_size, num_steps, profile, info, False)
@@ -302,9 +295,9 @@ class PyTorchRayEstimator:
     def predict(self,
                 data,
                 batch_size=32,
-                profile=False,
                 feature_cols=None,
-                labels_cols=None):
+                labels_cols=None,
+                profile=False):
         """
         See the documentation in
         'zoo.orca.learn.pytorch.estimator.PyTorchRayEstimatorWrapper.evaluate'.
@@ -314,14 +307,12 @@ class PyTorchRayEstimator:
                                              validation_data=None,
                                              feature_cols=feature_cols,
                                              labels_cols=labels_cols,
-                                             mode="evaluate")
+                                             mode="predict")
         if isinstance(data, SparkXShards):
-            from zoo.orca.data.utils import process_spark_xshards
-            ray_xshards = process_spark_xshards(data, self.num_workers)
+            ray_xshards = RayXShards.from_spark_xshards(data)
 
             def transform_func(worker, shards_ref):
-                data_creator = shards_ref_to_creator(shards_ref, "evaluate")
-                # Should not wrap DistributedSampler on DataLoader for SparkXShards input.
+                data_creator = lambda config: shards_ref
                 return worker.predict.remote(
                     data_creator, batch_size, profile)
 

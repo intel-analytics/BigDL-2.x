@@ -332,16 +332,28 @@ class TorchRunner:
             config["batch_size"] = batch_size
         self._toggle_profiling(profile=profile)
 
-        if OrcaContext.serialize_data_creator:
-            with FileLock(
-                    os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
-                loaders = data_creator(config)
-        else:
-            loaders = data_creator(config)
+        shards_ref = data_creator(config)
+        if not isinstance(shards_ref, ray.ObjectID):
+            raise ValueError("Only xshards is supported for predict")
+
+        partition = ray.get(shards_ref)
+        params = {"batch_size": config["batch_size"], "shuffle": False}
+        for arg in ["shuffle", "sampler", "batch_sampler", "num_workers", "collate_fn",
+                    "pin_memory", "drop_last", "timeout", "worker_init_fn",
+                    "multiprocessing_context"]:
+            if arg in config:
+                params[arg] = config[arg]
+
+        def predict_fn(shard):
+            dataset = torch.utils.data.TensorDataset(torch.from_numpy(shard["x"].copy()))
+            data_loader = DataLoader(dataset, **params)
+            y = self.training_operator.predict(iter(data_loader))
+            shard["prediction"] = y
+            return shard
 
         with self.timers.record("predict"):
-            outputs = [self.training_operator.predict(iter(loader)) for loader in loaders]
-        return outputs
+            new_part = [predict_fn(shard) for shard in partition]
+        return new_part
 
     def _toggle_profiling(self, profile=False):
         """Enables/Disables and resets timing profiles."""
