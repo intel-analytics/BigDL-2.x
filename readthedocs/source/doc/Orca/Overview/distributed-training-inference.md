@@ -91,7 +91,7 @@ stats = est.fit(data=train_data_creator,
 predictions = est.predict(data=df,
                           feature_cols=['image'])
 ```
-The `data` argument in `fit` method can be a spark DataFrame, a XShards or a function that returns a `tf.data.Dataset`. The `data` argument in `predict` method can be a spark DataFrame or a XShards. See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details.
+The `data` argument in `fit` method can be a spark DataFrame, a XShards or a function that returns a `tf.data.Dataset`. The `data` argument in `predict` method can be a spark DataFrame or a XShards (each element needs to be a `{"x": a numpy ndarray}`). See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details.
 
 View the related [Python API doc]() <TODO: link to be added> for more details.
 
@@ -117,9 +117,9 @@ Then users can perform distributed model training and inference as follows:
 
 ```python
 est.fit(data=train_loader, epochs=args.epochs)
-est.predict(xshards)
+predictions = est.predict(xshards)
 ```
-The input to `fit` methods can be a `torch.utils.data.DataLoader`, a *XShards*, or a *Data Creator Function* (which returns `torch.utils.data.DataLoader`). The input to `predict` methods should be a *XShards* (each element needs to be a `{"feature": a numpy ndarray}`). See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details. <TODO: we need to add Spark Dataframe support too>
+The input to `fit` methods can be a `torch.utils.data.DataLoader`, a *XShards*, or a *Data Creator Function* (which returns `torch.utils.data.DataLoader`). The input to `predict` methods should be a *XShards* (each element needs to be a `{"x": a numpy ndarray}`). See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details. <TODO: we need to add Spark Dataframe support too>
 
 View the related [Python API doc]() <TODO: link to be added> for more details.
 
@@ -142,16 +142,16 @@ est = Estimator.from_torch(model=model,
                            backend="torch_distributed") # or backend="horovod"
 ```
 
-Then users can perform distributed model training as follows:
+Then users can perform distributed model training and inference as follows:
 
 ```python
 est.fit(data=train_loader_func, epochs=args.epochs)
+predictions = est.predict(data=df,
+                          feature_cols=['image'])
 ```
-The input to `fit` methods can be a *XShards*, or a *Data Creator Function* (which returns `torch.utils.data.DataLoader`). See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details. <TODO: we need to add Spark Dataframe support too>
+The input to `fit` methods can be a *XShards*, or a *Data Creator Function* (which returns `torch.utils.data.DataLoader`). The `data` argument in `predict` method can be a spark DataFrame or a XShards (each element needs to be a `{"x": a numpy ndarray}`). See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details.
 
 View the related [Python API doc]() <TODO: link to be added> for more details.
-
-Inference is currently not supported when using `torch.distributed` or *Horovod* backend.
 
 ***For more details, view the distributed PyTorch training/inference [page]()<TODO: link to be added>.***
 
