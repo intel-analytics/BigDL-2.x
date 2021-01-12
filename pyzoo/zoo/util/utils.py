@@ -148,3 +148,31 @@ def set_python_home():
     import os
     if "PYTHONHOME" not in os.environ:
         os.environ['PYTHONHOME'] = "/".join(detect_python_location().split("/")[:-2])
+
+
+def convert_row_to_numpy(row, schema, feature_cols, labels_cols):
+    def convert_for_cols(row, cols):
+        import pyspark.sql.types as df_types
+        result = []
+        for name in cols:
+            feature_type = schema[name].dataType
+            if DataFrameDataset.is_scalar_type(feature_type):
+                result.append(np.array(row[name]))
+            elif isinstance(feature_type, df_types.ArrayType):
+                result.append(np.array(row[name]).astype(np.float32))
+            elif isinstance(row[name], DenseVector):
+                result.append(row[name].values.astype(np.float32))
+            else:
+                assert isinstance(row[name], SparseVector), \
+                    "unsupported field {}, data {}".format(schema[name], row[name])
+                result.append(row[name].toArray())
+        if len(result) == 1:
+            return result[0]
+        return result
+
+    features = convert_for_cols(row, feature_cols)
+    if labels_cols:
+        labels = convert_for_cols(row, labels_cols)
+        return (features, labels)
+    else:
+        return (features,)

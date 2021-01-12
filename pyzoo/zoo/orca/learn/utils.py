@@ -16,7 +16,7 @@
 
 from zoo.common.utils import get_file_list
 from zoo.orca.data import SparkXShards
-from zoo.tfpark.tf_dataset import convert_row_to_numpy
+from zoo.util.utils import convert_row_to_numpy
 import numpy as np
 
 

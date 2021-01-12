@@ -29,6 +29,7 @@ from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.feature.common import FeatureSet, SampleToMiniBatch, Preprocessing
 from zoo.feature.image import ImagePreprocessing, ImageFeatureToSample
 from zoo.util import nest
+from zoo.util.utils import convert_row_to_numpy
 
 if sys.version >= '3':
     long = int
@@ -1194,34 +1195,6 @@ class TFNdarrayDataset(TFDataset):
                                 batch_per_thread, hard_code_batch_size,
                                 val_rdd, memory_type=memory_type,
                                 sequential_order=sequential_order, shuffle=shuffle)
-
-
-def convert_row_to_numpy(row, schema, feature_cols, labels_cols):
-    def convert_for_cols(row, cols):
-        import pyspark.sql.types as df_types
-        result = []
-        for name in cols:
-            feature_type = schema[name].dataType
-            if DataFrameDataset.is_scalar_type(feature_type):
-                result.append(np.array(row[name]))
-            elif isinstance(feature_type, df_types.ArrayType):
-                result.append(np.array(row[name]).astype(np.float32))
-            elif isinstance(row[name], DenseVector):
-                result.append(row[name].values.astype(np.float32))
-            else:
-                assert isinstance(row[name], SparseVector), \
-                    "unsupported field {}, data {}".format(schema[name], row[name])
-                result.append(row[name].toArray())
-        if len(result) == 1:
-            return result[0]
-        return result
-
-    features = convert_for_cols(row, feature_cols)
-    if labels_cols:
-        labels = convert_for_cols(row, labels_cols)
-        return (features, labels)
-    else:
-        return (features,)
 
 
 class DataFrameDataset(TFNdarrayDataset):
