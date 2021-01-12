@@ -4,7 +4,7 @@
 
 You can run Analytics Zoo programs on standard Hadoop/YARN clusters without any changes to the cluster (i.e., no need to pre-install Analytics Zoo or any Python libraries in the cluster).
 
-### **1. Prepare Python Environment**
+### **1. Prepare Environment**
 
 - You need to first use [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the Python environment _**on the local client machine**_, and then install all the needed Python libraries in the conda environment:
 
@@ -46,8 +46,9 @@ from zoo.orca import init_orca_context
 sc = init_orca_context(cluster_mode="yarn-client", ...)
 ```
 
-By specifying cluster_mode to be "yarn-client", `init_orca_context` would automatically prepare the runtime Python environment and initiate the distributed execution engine on the underlying YARN cluster. 
-Then you can simply write and run your Analytics Zoo program in a [Jupyter notebook](./python.html#jupyter-notebook) or as a normal [Python script](./python.html#python-script).
+By specifying cluster_mode to be "yarn-client", `init_orca_context` would automatically prepare the runtime Python environment and initiate the distributed execution engine on the underlying YARN cluster.
+Users can specify the amount of physical resources to be allocated for the Analytics Zoo program on the Hadoop/YARN cluster, including the number of nodes in the cluster, the cores and memory allocated for each node, etc.
+After the initialization, you can simply run your Analytics Zoo program in a [Jupyter notebook](./python.html#jupyter-notebook) or as a normal [Python script](./python.html#python-script).
 
 View the [Orca Context](../Orca/Overview/orca-context.md) for more details.
 

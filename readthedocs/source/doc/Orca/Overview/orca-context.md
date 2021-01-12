@@ -15,7 +15,7 @@ from zoo.orca import init_orca_context
 init_orca_context(...)
 ```
 
-In `init_orca_context`, the user may specify necessary runtime configurations for the program, including:
+In `init_orca_context`, the user may specify necessary runtime configurations for the Orca program, including:
 
 - *Cluster mode*: Users can specify the computing environment for the program (a local machine, K8s cluster, Hadoop/YARN cluster, etc.).
 - *Physical resources*: Users can specify the amount of physical resources to be allocated for the program on the underlying cluster, including the number of nodes in the cluster, the cores and memory allocated for each node, etc.
@@ -31,7 +31,7 @@ A key challenge for scaling out Python program across a distributed cluster is h
 
 For K8s cluster, the user may install required Python packages in the container and specify the `container_image` argument when `init_orca_context`. For Hadoop/YARN cluster, the user may use `conda` to create the Python virtual environment with required dependencies on the local machine, and `init_orca_context` will automatically detect the active `conda` environment and provision it on each node in the cluster.
 
-View the user guide for [K8s](../UserGuide/k8s.md) and [Hadoop/YARN](../UserGuide/hadoop.md) for more details.
+View the user guide for [K8s](../../UserGuide/k8s.md) and [Hadoop/YARN](../../UserGuide/hadoop.md) for more details.
 
 ---
 ### **3. Execution Engine**
