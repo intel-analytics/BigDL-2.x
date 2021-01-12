@@ -6,13 +6,13 @@ You can run Analytics Zoo programs on standard Hadoop/YARN clusters without any 
 
 ### **1. Prepare Environment**
 
-- You need to first use [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the Python environment _**on the local client machine**_, and then install all the needed Python libraries in the conda environment:
+- You need to first use [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the Python environment _**on the local client machine**_. Create a conda environment and install all the needed Python libraries in the created conda environment:
 
 ```bash
 conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
 conda activate zoo
 
-# Use conda or pip to install all the needed Python dependencies.
+# Use conda or pip to install all the needed Python dependencies in the created conda environment.
 ```
 
 - You need to install JDK in the environment, which is required by Spark. __JDK8__ is highly recommended. A preferred approach is to download JDK8 and set the environment variable `JAVA_HOME` manually. Alternatively, you may install JDK8 via conda:
@@ -21,10 +21,10 @@ conda activate zoo
 conda install -c anaconda openjdk=8.0.152
 ```
 
-- Check your Hadoop setup and configurations. Make sure you properly set the environment variable `HADOOP_CONF_DIR`, which is needed to initialize Spark on YARN:
+- Check the Hadoop setup and configurations of your cluster. Make sure you properly set the environment variable `HADOOP_CONF_DIR`, which is needed to initialize Spark on YARN:
 
 ```bash
-export HADOOP_CONF_DIR=the directory of the yarn configurations
+export HADOOP_CONF_DIR=the directory of the hadoop and yarn configurations
 ```
 
 ---
@@ -38,18 +38,27 @@ pip install analytics-zoo
 
 View the [Python User Guide](./python.md) for more details.
 
-- We recommend using `init_orca_context` in your code to initiate and run Analytics Zoo on standard Hadoop/YARN clusters in [YARN client mode](https://spark.apache.org/docs/latest/running-on-yarn.html#launching-spark-on-yarn):
+- We recommend using `init_orca_context` at the very beginning of your code to initiate and run Analytics Zoo on standard Hadoop/YARN clusters in [YARN client mode](https://spark.apache.org/docs/latest/running-on-yarn.html#launching-spark-on-yarn):
 
 ```python
 from zoo.orca import init_orca_context
 
-sc = init_orca_context(cluster_mode="yarn-client", ...)
+sc = init_orca_context(cluster_mode="yarn-client", cores=4, memory="10g", num_nodes=2)
 ```
 
-By specifying cluster_mode to be "yarn-client", `init_orca_context` would automatically prepare the runtime Python environment and initiate the distributed execution engine on the underlying YARN cluster.
+By specifying cluster_mode to be "yarn-client", `init_orca_context` would automatically prepare the runtime Python environment, detect the current Hadoop configurations from `HADOOP_CONF_DIR` and initiate the distributed execution engine on the underlying YARN cluster.
 
-Users can also specify the amount of physical resources to be allocated for the Analytics Zoo program on the Hadoop/YARN cluster, including the number of nodes in the cluster, the cores and memory allocated for each node, etc.
-After the initialization, you can simply run your Analytics Zoo program in a [Jupyter notebook](./python.html#jupyter-notebook) or as a normal [Python script](./python.html#python-script).
+You can simply run your Analytics Zoo program in a Jupyter notebook:
+
+```bash
+jupyter notebook --notebook-dir=./ --ip=* --no-browser
+```
+
+, or as a normal Python script (e.g. script.py):
+
+```bash
+python script.py
+```
 
 View the [Orca Context](../Orca/Overview/orca-context.md) for more details.
 
@@ -76,7 +85,7 @@ export ANALYTICS_ZOO_HOME=the root directory where you extract the downloaded An
 conda pack -o environment.tar.gz
 ```
 
-- In your Analytics Zoo Python script, you can call `init_orca_context` and specify cluster_mode to be "spark-submit":
+- _You need to write your Analytics Zoo program as a Python script._ In the script, you can call `init_orca_context` and specify cluster_mode to be "spark-submit":
 
 ```python
 from zoo.orca import init_orca_context
