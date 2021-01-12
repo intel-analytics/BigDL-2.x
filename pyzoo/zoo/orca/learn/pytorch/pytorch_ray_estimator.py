@@ -193,10 +193,10 @@ class PyTorchRayEstimator:
         from zoo.orca.data import SparkXShards
 
         data, _ = maybe_dataframe_to_xshards(data,
-                                          validation_data=None,
-                                          feature_cols=feature_cols,
-                                          labels_cols=labels_cols,
-                                          mode="fit")
+                                             validation_data=None,
+                                             feature_cols=feature_cols,
+                                             labels_cols=labels_cols,
+                                             mode="fit")
 
         if isinstance(data, SparkXShards):
             from zoo.orca.data.utils import process_spark_xshards
@@ -273,10 +273,10 @@ class PyTorchRayEstimator:
         """
         from zoo.orca.data import SparkXShards
         data, _ = maybe_dataframe_to_xshards(data,
-                                          validation_data=None,
-                                          feature_cols=feature_cols,
-                                          labels_cols=labels_cols,
-                                          mode="evaluate")
+                                             validation_data=None,
+                                             feature_cols=feature_cols,
+                                             labels_cols=labels_cols,
+                                             mode="evaluate")
         if isinstance(data, SparkXShards):
             from zoo.orca.data.utils import process_spark_xshards
             ray_xshards = process_spark_xshards(data, self.num_workers)

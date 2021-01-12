@@ -91,6 +91,7 @@ def get_model(config):
 def get_optimizer(model, config):
     return torch.optim.SGD(model.parameters(), lr=config.get("lr", 1e-2))
 
+
 def get_estimator(workers_per_node=1):
     estimator = Estimator.from_torch(model=get_model,
                                      optimizer=get_optimizer,
@@ -99,6 +100,7 @@ def get_estimator(workers_per_node=1):
                                      workers_per_node=workers_per_node,
                                      backend="torch_distributed")
     return estimator
+
 
 class TestPyTorchEstimator(TestCase):
     def test_data_creator(self):
@@ -148,7 +150,8 @@ class TestPyTorchEstimator(TestCase):
         spark = SparkSession(sc)
         from pyspark.ml.linalg import DenseVector
         df = rdd.map(lambda x: (DenseVector(np.random.randn(1, 1, 50).astype(np.float)),
-                                int(np.random.randint(0, 2, size=(1, 1))))).toDF(["feature", "label"])
+                                int(np.random.randint(0, 2, size=(1, 1))))
+                     ).toDF(["feature", "label"])
 
         estimator = get_estimator(workers_per_node=2)
 
