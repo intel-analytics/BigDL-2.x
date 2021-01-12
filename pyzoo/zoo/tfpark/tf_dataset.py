@@ -1205,9 +1205,9 @@ def convert_row_to_numpy(row, schema, feature_cols, labels_cols):
             if DataFrameDataset.is_scalar_type(feature_type):
                 result.append(np.array(row[name]))
             elif isinstance(feature_type, df_types.ArrayType):
-                result.append(np.array(row[name]))
+                result.append(np.array(row[name]).astype(np.float32))
             elif isinstance(row[name], DenseVector):
-                result.append(row[name].values)
+                result.append(row[name].values.astype(np.float32))
             else:
                 assert isinstance(row[name], SparseVector), \
                     "unsupported field {}, data {}".format(schema[name], row[name])

@@ -176,7 +176,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         )
 
         from zoo.orca.data import SparkXShards
-        data = maybe_dataframe_to_xshards(data, validation_data,
+        data, _ = maybe_dataframe_to_xshards(data, validation_data,
                                           feature_cols, labels_cols,
                                           mode="fit")
 

@@ -22,7 +22,6 @@ import ray
 from dmlc_tracker.tracker import get_host_ip
 
 from zoo.orca.data.utils import ray_partition_get_data_label, process_spark_xshards
-from zoo.orca.learn.utils import maybe_dataframe_to_xshards
 from zoo.ray import RayContext
 from zoo.orca.learn.mxnet.mxnet_runner import MXNetRunner
 from zoo.orca.learn.mxnet.utils import find_free_port
@@ -169,8 +168,7 @@ class MXNetEstimator(OrcaRayEstimator):
             for i, runner in enumerate(self.runners)
         ])
 
-    def fit(self, data, epochs=1, batch_size=32, validation_data=None,
-            train_resize_batch_num=None, feature_cols=None, labels_cols=None):
+    def fit(self, data, epochs=1, batch_size=32, validation_data=None, train_resize_batch_num=None):
         """
         Trains an MXNet model given train_data (with val_data) for several epochs.
 
@@ -195,18 +193,12 @@ class MXNetEstimator(OrcaRayEstimator):
         worker varies. MXNet distributed training would crash when the first worker finishes
         the training if the workers have unbalanced training data.
         See this issue for more details: https://github.com/apache/incubator-mxnet/issues/17651
-
-        :param feature_cols: feature column names if data is Spark DataFrame.
-        :param labels_cols: label column names if data is Spark DataFrame.
         """
         if validation_data:
             assert self.validation_metrics_creator,\
                 "Metrics not defined for validation, please specify validation_metrics_creator " \
                 "when creating the Estimator"
         from zoo.orca.data import SparkXShards
-        data, validation_data = maybe_dataframe_to_xshards(data, validation_data,
-                                                           feature_cols, labels_cols,
-                                                           mode="evaluate")
         if isinstance(data, SparkXShards):
 
             ray_xshards = process_spark_xshards(data, self.num_workers)

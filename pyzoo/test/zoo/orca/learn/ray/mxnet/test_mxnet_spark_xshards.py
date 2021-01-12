@@ -22,8 +22,6 @@ import numpy as np
 import mxnet as mx
 from mxnet import gluon
 from mxnet.gluon import nn
-
-from zoo import init_nncontext
 from zoo.orca import OrcaContext
 import zoo.orca.data.pandas
 from zoo.orca.learn.mxnet import Estimator, create_config
@@ -90,23 +88,6 @@ class TestMXNetSparkXShards(TestCase):
 
     def tearDown(self):
         OrcaContext.pandas_read_backend = "spark"
-
-    def test_dataframe_symbol_with_val(self):
-        sc = init_nncontext()
-        from pyspark.sql import SparkSession
-        spark = SparkSession(sc)
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../../../resources")
-        train_file_path = os.path.join(resource_path, "orca/learn/single_input_json/train")
-        test_file_path = os.path.join(resource_path, "orca/learn/single_input_json/test")
-        train_df = spark.read.json(train_file_path)
-        test_df = spark.read.json(test_file_path)
-        config = create_config(log_interval=1, seed=42)
-        estimator = Estimator.from_mxnet(config=config, model_creator=get_symbol_model,
-                                         validation_metrics_creator=get_metrics,
-                                         eval_metrics_creator=get_metrics, num_workers=2)
-        estimator.fit(train_df, validation_data=test_df, epochs=1, batch_size=32,
-                      feature_cols=["data"], labels_cols=["label"])
-        estimator.shutdown()
 
     def test_xshards_symbol_with_val(self):
         resource_path = os.path.join(os.path.split(__file__)[0], "../../../../resources")

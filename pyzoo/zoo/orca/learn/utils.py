@@ -17,7 +17,7 @@
 from zoo.common.utils import get_file_list
 from zoo.orca.data import SparkXShards
 from zoo.tfpark.tf_dataset import convert_row_to_numpy
-
+import numpy as np
 
 def find_latest_checkpoint(model_dir, model_type="bigdl"):
     import os
@@ -112,8 +112,12 @@ def arrays2dict(iter, feature_cols, labels_cols):
                 label_lists[i].append(arr)
 
     feature_arrs = [np.stack(l) for l in feature_lists]
+    if len(feature_arrs) == 1:
+        feature_arrs = feature_arrs[0]
     if label_lists is not None:
         label_arrs = [np.stack(l) for l in label_lists]
+        if len(label_arrs) == 1:
+            label_arrs = label_arrs[0]
         return [{"x": feature_arrs, "y": label_arrs}]
 
     return [{"x": feature_arrs}]

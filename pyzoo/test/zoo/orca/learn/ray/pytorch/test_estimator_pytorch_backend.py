@@ -149,8 +149,8 @@ class TestPyTorchEstimator(TestCase):
         from pyspark.sql import SparkSession
         spark = SparkSession(sc)
         from pyspark.ml.linalg import DenseVector
-        df = rdd.map(lambda x: (DenseVector(np.random.randn(1, 1, 50).astype(np.float)),
-                                int(np.random.randint(0, 2, size=(1, 1))))
+        df = rdd.map(lambda x: (np.random.randn(50).astype(np.float).tolist(),
+                                [int(np.random.randint(0, 2, size=()))])
                      ).toDF(["feature", "label"])
 
         estimator = get_estimator(workers_per_node=2)
