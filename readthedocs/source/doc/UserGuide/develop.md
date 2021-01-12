@@ -42,7 +42,7 @@ Any IDE that support python should be able to run Analytics Zoo. PyCharm works f
 
 You need to do the following preparations before starting the IDE to successfully run an Analytics Zoo Python program in the IDE:
 
-- Build Analytics Zoo. See the following **2. Scala 2.1 Build** for more instructions.
+- Build Analytics Zoo; see [here](#21-build) for more instructions.
 - Prepare Spark environment by either setting `SPARK_HOME` as the environment variable or pip install `pyspark`. Note that the Spark version should match the one you build Analytics Zoo on.
 - Set BIGDL_CLASSPATH:
 ```bash
@@ -72,12 +72,10 @@ After installing Maven 3, please set the environment variable MAVEN_OPTS as foll
 ```bash
 $ export MAVEN_OPTS="-Xmx2g -XX:ReservedCodeCacheSize=512m"
 ```
-When compiling with Java 7, you need to add the option “-XX:MaxPermSize=1G”.
-
 
 **Build using `make-dist.sh`**
 
-It is highly recommended that you build Analytics Zoo using the [make-dist.sh script](https://github.com/intel-analytics/analytics-zoo/blob/master/make-dist.sh). It will handle the MAVEN_OPTS variable.
+It is highly recommended that you build Analytics Zoo using the [make-dist.sh script](https://github.com/intel-analytics/analytics-zoo/blob/master/make-dist.sh) with **Java 8**.
 
 You can build Analytics Zoo with the following commands:
 ```bash
@@ -88,12 +86,11 @@ After that, you can find a `dist` folder, which contains all the needed files to
 * **dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar**: This jar package contains all dependencies except Spark classes.
 * **dist/lib/analytics-zoo-VERSION-python-api.zip**: This zip package contains all Python files of Analytics Zoo.
 
-The instructions above will build Analytics Zoo with Spark 2.4.3. It is highly recommended to use _**Java 8**_ when running with Spark 2.x; otherwise you may observe very poor performance.
-To build with other spark versions, for example building analytics-zoo with spark 2.2.0, you can use `bash make-dist.sh -Dspark.version=2.2.0 -Dbigdl.artifactId=bigdl_SPARK_2.2`.  
+The instructions above will build Analytics Zoo with Spark 2.4.3. To build with other spark versions, for example building analytics-zoo with spark 2.2.0, you can use `bash make-dist.sh -Dspark.version=2.2.0 -Dbigdl.artifactId=bigdl_SPARK_2.2`.  
 
 **Build with JDK 11**
 
-Spark starts to supports JDK 11 at Spark 3.0 and Scala starts at Scala 2.12, so you should use Spark and Scala versions above those. You can use `-P spark_3.x` to specify Spark3 and scala 2.12. Additionally, `make-dist.sh` default uses Java 8. To compile with java 11, it requires to specify building opts `-Djava.version=11 -Djavac.version=11`. You can build with `make-dist.sh` or Maven with following command.
+Spark starts to supports JDK 11 and Scala 2.12 at Spark 3.0. You can use `-P spark_3.x` to specify Spark3 and scala 2.12. Additionally, `make-dist.sh` default uses Java 8. To compile with Java 11, it is required to specify building opts `-Djava.version=11 -Djavac.version=11`. You can build with `make-dist.sh`.
 
 It's recommended to download [Oracle JDK 11](https://www.oracle.com/java/technologies/javase-jdk11-downloads.html). This will avoid possible incompatibilities with maven plugins. You should update `PATH` and make sure your `JAVA_HOME` environment variable is set to Java 11 if you're running from the command line. If you're running from an IDE, you need to make sure it is set to run maven with your current JDK. 
 
@@ -109,6 +106,6 @@ Analytics Zoo uses maven to organize project. You should choose an IDE that supp
 
 In IntelliJ, you can open Analytics Zoo project root directly, and the IDE will import the project automatically.
 
-We set the scopes of spark related libraries to `provided` in the maven pom.xml, which, however, will cause a problem in IDE  (throwing `NoClassDefFoundError` When you run applications). You can easily change the scopes using the `all-in-one` profile.
+We set the scopes of spark related libraries to `provided` in the maven pom.xml, which, however, will cause a problem in IDE  (throwing `NoClassDefFoundError` when you run applications). You can easily change the scopes using the `all-in-one` profile.
 
 * In Intellij, go to View -> Tools Windows -> Maven Projects. Then in the Maven Projects panel, Profiles -> click "all-in-one".
