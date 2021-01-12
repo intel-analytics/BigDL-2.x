@@ -181,7 +181,7 @@ Then the user can perform distributed model training as follows:
 import numpy as np
 
 def get_train_data_iter(config, kv):
-    train = mx.io.NDArrayIter(train_data, train_label,
+    train = mx.io.NDArrayIter(data_ndarray, label_ndarray,
                               batch_size=config["batch_size"], shuffle=True)
     return train
 
