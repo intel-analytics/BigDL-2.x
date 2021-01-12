@@ -3,10 +3,10 @@
 - **Release 0.10.0 nightly build**
 <table border="1"
 cellpadding="10"
-cellborder="1">
+>
     <tr>
-        <th></th>
-        <th>BigDL 0.12.1</th>
+        <td></td>
+        <td>BigDL 0.12.1</td>
     </tr>
     <tr>
         <td>Spark 2.1.1 </td>
@@ -29,7 +29,7 @@ cellborder="1">
        <td><a href="https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.12.1-spark_3.0.0/0.10.0-SNAPSHOT/">download</a></td> 
     </tr>
 </table>
-
+<br>
 
 - **Release 0.9.0**
 <table border="1"
