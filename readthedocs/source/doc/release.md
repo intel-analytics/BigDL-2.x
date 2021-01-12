@@ -1,7 +1,7 @@
 # Release Download
 
 - **Release 0.10.0 nightly build**
-<table border="1"
+<table border="0"
 cellpadding="10">
     <tr>
         <td></td>
