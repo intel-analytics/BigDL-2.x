@@ -325,6 +325,24 @@ class TorchRunner:
             validation_stats.update(profile=self.timers.stats())
         return validation_stats
 
+    def predict(self, data_creator, batch_size=32, profile=False):
+        """Evaluates the model on the validation data set."""
+        config = self.config.copy()
+        if "batch_size" not in config:
+            config["batch_size"] = batch_size
+        self._toggle_profiling(profile=profile)
+
+        if OrcaContext.serialize_data_creator:
+            with FileLock(
+                    os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
+                loaders = data_creator(config)
+        else:
+            loaders = data_creator(config)
+
+        with self.timers.record("predict"):
+            outputs = [self.training_operator.predict(iter(loader)) for loader in loaders]
+        return outputs
+
     def _toggle_profiling(self, profile=False):
         """Enables/Disables and resets timing profiles."""
         if profile:

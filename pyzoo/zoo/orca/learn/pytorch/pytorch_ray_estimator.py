@@ -50,22 +50,11 @@ def check_for_failure(remote_values):
     return False
 
 
-def shards_ref_to_creator(shards_ref):
+def shards_ref_to_creator(shards_ref, mode="train"):
 
     def data_creator(config):
         from zoo.orca.data.utils import ray_partition_get_data_label, index_data, get_size
         from torch.utils.data import Dataset, DataLoader
-
-        class NDArrayDataset(Dataset):
-            def __init__(self, x, y):
-                self.x = x  # features
-                self.y = y  # labels
-
-            def __len__(self):
-                return get_size(self.y)
-
-            def __getitem__(self, i):
-                return index_data(self.x, i), index_data(self.y, i)
 
         assert "batch_size" in config, "batch_size must be set in config"
         params = {"batch_size": config["batch_size"], "shuffle": True}
@@ -74,11 +63,19 @@ def shards_ref_to_creator(shards_ref):
                     "multiprocessing_context"]:
             if arg in config:
                 params[arg] = config[arg]
-        data, label = ray_partition_get_data_label(ray.get(shards_ref),
-                                                   allow_tuple=False,
-                                                   allow_list=False)
-        print("Data size on worker: ", len(label))
-        dataset = NDArrayDataset(data, label)
+        if mode == "predict":
+            data, label = ray_partition_get_data_label(ray.get(shards_ref),
+                                                       allow_tuple=False,
+                                                       allow_list=False)
+            print("Data size on worker: ", len(label))
+            dataset = torch.utils.data.TensorDataset(data, label)
+        else:
+            data, _ = ray_partition_get_data_label(ray.get(shards_ref),
+                                                       allow_tuple=False,
+                                                       allow_list=False,
+                                                       has_label=False)
+            print("Data size on worker: ", len(data))
+            dataset = torch.utils.data.TensorDataset(data)
         data_loader = DataLoader(dataset, **params)
         return data_loader
 
@@ -203,7 +200,7 @@ class PyTorchRayEstimator:
             ray_xshards = process_spark_xshards(data, self.num_workers)
 
             def transform_func(worker, shards_ref):
-                data_creator = shards_ref_to_creator(shards_ref)
+                data_creator = shards_ref_to_creator(shards_ref, mode="train")
                 # Should not wrap DistributedSampler on DataLoader for SparkXShards input.
                 return worker.train_epochs.remote(
                     data_creator, epochs, batch_size, profile, info, False)
@@ -282,7 +279,7 @@ class PyTorchRayEstimator:
             ray_xshards = process_spark_xshards(data, self.num_workers)
 
             def transform_func(worker, shards_ref):
-                data_creator = shards_ref_to_creator(shards_ref)
+                data_creator = shards_ref_to_creator(shards_ref, "evaluate")
                 # Should not wrap DistributedSampler on DataLoader for SparkXShards input.
                 return worker.validate.remote(
                     data_creator, batch_size, num_steps, profile, info, False)
@@ -301,6 +298,41 @@ class PyTorchRayEstimator:
 
             worker_stats = ray.get([w.validate.remote(**params) for w in self.remote_workers])
         return self._process_stats(worker_stats)
+
+    def predict(self,
+                data,
+                batch_size=32,
+                profile=False,
+                feature_cols=None,
+                labels_cols=None):
+        """
+        See the documentation in
+        'zoo.orca.learn.pytorch.estimator.PyTorchRayEstimatorWrapper.evaluate'.
+        """
+        from zoo.orca.data import SparkXShards
+        data, _ = maybe_dataframe_to_xshards(data,
+                                             validation_data=None,
+                                             feature_cols=feature_cols,
+                                             labels_cols=labels_cols,
+                                             mode="evaluate")
+        if isinstance(data, SparkXShards):
+            from zoo.orca.data.utils import process_spark_xshards
+            ray_xshards = process_spark_xshards(data, self.num_workers)
+
+            def transform_func(worker, shards_ref):
+                data_creator = shards_ref_to_creator(shards_ref, "evaluate")
+                # Should not wrap DistributedSampler on DataLoader for SparkXShards input.
+                return worker.predict.remote(
+                    data_creator, batch_size, profile)
+
+            pred_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
+                                                                   transform_func,
+                                                                   gang_scheduling=False)
+            spark_xshards = pred_shards.to_spark_xshards()
+        else:
+            raise ValueError("Only xshards or Spark DataFrame is supported for predict")
+
+        return spark_xshards
 
     def get_model(self):
         """Returns the learned model(s)."""

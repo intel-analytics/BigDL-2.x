@@ -176,9 +176,9 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         )
 
         from zoo.orca.data import SparkXShards
-        data, _ = maybe_dataframe_to_xshards(data, validation_data,
-                                             feature_cols, labels_cols,
-                                             mode="fit")
+        data, validation_data = maybe_dataframe_to_xshards(data, validation_data,
+                                                           feature_cols, labels_cols,
+                                                           mode="fit")
 
         if isinstance(data, SparkXShards):
             max_length, ray_xshards = process_spark_xshards(data, self.num_workers)
@@ -290,13 +290,13 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                 params["data_creator"] = shards_ref_to_creator(shards_ref)
                 return worker.predict.remote(**params)
 
-            stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
-                                                                    transform_func,
-                                                                    gang_scheduling=False)
-            spark_xshards = stats_shards.to_spark_xshards()
+            pred_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
+                                                                   transform_func,
+                                                                   gang_scheduling=False)
+            spark_xshards = pred_shards.to_spark_xshards()
 
         else:
-            raise ValueError("Only xshards is supported for predict")
+            raise ValueError("Only xshards or Spark DataFrame is supported for predict")
 
         return spark_xshards
 
