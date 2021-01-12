@@ -15,11 +15,7 @@ conda activate zoo
 # Use conda or pip to install all the needed Python dependencies in the created conda environment.
 ```
 
-- You need to install JDK in the environment, which is required by Spark. __JDK8__ is highly recommended. A preferred approach is to download JDK8 and set the environment variable `JAVA_HOME` manually. Alternatively, you may install JDK8 via conda:
-
-```bash
-conda install -c anaconda openjdk=8.0.152
-```
+- You need to install [JDK](https://openjdk.java.net/install/) in the environment and set the environment variable `JAVA_HOME`, which is required by Spark. __JDK8__ is highly recommended.
 
 - Check the Hadoop setup and configurations of your cluster. Make sure you properly set the environment variable `HADOOP_CONF_DIR`, which is needed to initialize Spark on YARN:
 
@@ -48,19 +44,19 @@ sc = init_orca_context(cluster_mode="yarn-client", cores=4, memory="10g", num_no
 
 By specifying cluster_mode to be "yarn-client", `init_orca_context` would automatically prepare the runtime Python environment, detect the current Hadoop configurations from `HADOOP_CONF_DIR` and initiate the distributed execution engine on the underlying YARN cluster.
 
+View the [Orca Context](../Orca/Overview/orca-context.md) for more details.
+
 You can simply run your Analytics Zoo program in a Jupyter notebook:
 
 ```bash
 jupyter notebook --notebook-dir=./ --ip=* --no-browser
 ```
 
-, or as a normal Python script (e.g. script.py):
+or as a normal Python script (e.g. script.py):
 
 ```bash
 python script.py
 ```
-
-View the [Orca Context](../Orca/Overview/orca-context.md) for more details.
 
 ---
 ### **3. YARN Cluster Mode**
