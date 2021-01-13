@@ -23,7 +23,6 @@ import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
 
 object ClusterServingFlinkSqlExample {
-
   case class ExampleParams(modelPath: String = null, inputFile: String = null)
 
   val parser = new OptionParser[ExampleParams]("Cluster Serving Operator Usage Example") {
@@ -54,5 +53,4 @@ object ClusterServingFlinkSqlExample {
     tableEnv.executeSql("INSERT INTO Print SELECT ClusterServingFunction(uri, data) FROM Input")
       .getJobClient.get().getJobExecutionResult(Thread.currentThread().getContextClassLoader).get()
   }
-
 }
