@@ -132,17 +132,25 @@ def data_dict_to_np(data_dict, feature_cols, label_cols):
             else:
                 data = np.concatenate([non_list_column_to_array(batch.column(i))
                                        for batch in batches])
-            result_dict[field] = data
-            return result_dict
+            if data.dtype == np.float64:
+                data = data.astype(np.float32)
+            result_dict[field.name] = data
+        return result_dict
 
     pa_batches = []
-    for i, part in data_dict:
+    for i, part in data_dict.items():
         pa_batches.extend(part)
 
     cols = feature_cols + label_cols
     result_dict = batches_to_np(pa_batches, cols)
-    data = [v for k, v in result_dict if k in feature_cols]
-    label = [v for k, v in result_dict if k in label_cols]
+    data = [v for k, v in result_dict.items() if k in feature_cols]
+    label = [v for k, v in result_dict.items() if k in label_cols]
+
+    if len(data) == 1:
+        data = data[0]
+
+    if len(label) == 1:
+        label = label[0]
 
     return data, label
 
