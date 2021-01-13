@@ -31,7 +31,7 @@ A key challenge for scaling out Python program across a distributed cluster is h
 
 For K8s cluster, the user may install required Python packages in the container and specify the `container_image` argument when `init_orca_context`. For Hadoop/YARN cluster, the user may use `conda` to create the Python virtual environment with required dependencies on the local machine, and `init_orca_context` will automatically detect the active `conda` environment and provision it on each node in the cluster.
 
-You can also add .py, .zip or .egg files to distribute with your application by specify `extra_python_lib` in `init_orca_context`. If you depend on multiple Python files we recommend packaging them into a .zip or .egg. Those files will be added to each node's python search path.
+You can also add .py, .zip or .egg files to distribute with your application by specifying `extra_python_lib` in `init_orca_context`. If you depend on multiple Python files we recommend packaging them into a .zip or .egg. Those files will be added to each node's python search path.
 
 ```python
 init_orca_context(..., extra_python_lib="func1.py,func2.py,lib3.zip")
