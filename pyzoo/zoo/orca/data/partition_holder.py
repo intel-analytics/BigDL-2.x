@@ -44,6 +44,11 @@ class PartitionHolder:
         # todo: handle port being used after find_free_port before listen
         port = find_free_port()
         address = ("localhost", port)
+        # todo: change port to random tmp file.
+        address = f"/tmp/partition_holder_{port}"
+        import os
+        if os.path.exists(address):
+            os.remove(address)
         listener = Listener(address)
         server_thread = threading.Thread(target=run_server,
                                          args=(listener, self.data_queue, self.executor))

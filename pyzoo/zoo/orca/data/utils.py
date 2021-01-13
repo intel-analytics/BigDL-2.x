@@ -313,6 +313,7 @@ def get_size(x):
             "data should be an ndarray, a dict of ndarrays, a tuple of ndarrays"
             " or a list of ndarrays, please check your input")
 
+
 class ArrowBatchBuilder:
 
     def __init__(self, schema):
@@ -372,6 +373,8 @@ def write_to_ray_python_client(idx, partition, redis_address, ip2port, schema):
     ip = get_node_ip(redis_host)
     port = ip2port[ip]
     address = ("localhost", port)
+    address = f"/tmp/partition_holder_{port}"
+
     pa_schema = to_arrow_schema(schema)
 
     import time
