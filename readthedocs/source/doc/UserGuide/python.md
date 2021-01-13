@@ -3,7 +3,7 @@
 ---
 
 ### **1. Install**
-We recommend using [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the environment, especially when running on distributed cluster. 
+- We recommend using [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the Python environment, especially when running on distributed cluster. 
 Install conda on your machine and create a conda environment as follows:
 
 ```bash
@@ -11,10 +11,18 @@ conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use a
 conda activate zoo
 ```
 
-You need to install JDK in the environment. __JDK8__ is highly recommended. A preferred approach is to download JDK8 and set the environment variable `JAVA_HOME` manually. Alternatively, you may install JDK8 via conda:
+- You need to download and install JDK in the environment, and properly set the environment variable `JAVA_HOME`, which is required by Spark. __JDK8__ is highly recommended.
+
+You may take the following commands as a reference for installing [OpenJKD](https://openjdk.java.net/install/):
 
 ```bash
-conda install -c anaconda openjdk=8.0.152
+sudo apt-get install openjdk-8-jre  # For Ubuntu
+su -c "yum install java-1.8.0-openjdk"  # For CentOS
+
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/
+export PATH=$PATH:$JAVA_HOME/bin
+
+java -version  # Verify the version of JDK.
 ```
 
 #### **1.1 Official Release**
