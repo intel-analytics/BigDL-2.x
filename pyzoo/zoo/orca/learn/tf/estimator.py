@@ -284,7 +284,7 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
                                  batch_per_thread=batch_per_thread,
                                  validation_dataset=validation_data)
     elif isinstance(data, DataFrame):
-        dataset = TFDataset.from_dataframe(data, feature_cols, labels_cols,
+        dataset = TFDataset.from_dataframe(data, feature_cols, label_cols,
                                            batch_size,
                                            batch_per_thread,
                                            hard_code_batch_size,
