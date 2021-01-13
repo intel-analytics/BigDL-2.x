@@ -2,11 +2,11 @@
 
 ---
 
-You can use Analytics Zoo without any installation by using  [Google Colab](https://colab.research.google.com/). Analytics Zoo also include a collection of [notebooks]() that can be directly opened and run in Colab.
+You can use Analytics Zoo without any installation by using  [Google Colab](https://colab.research.google.com/). Analytics Zoo also include a collection of [notebooks](./../../../../docs/docs/colab-notebook/notebooks.md) that can be directly opened and run in Colab.
 
 ### **1. Open a Colab Notebook**
 
-<TODO: add instructions for opening notebooks in `docs/colab-notebook/`>
+Find the [notebooks](./../../../../docs/docs/colab-notebook/notebooks.md) running on Colab.
 
 ### **2. Notebook Setup**
 
