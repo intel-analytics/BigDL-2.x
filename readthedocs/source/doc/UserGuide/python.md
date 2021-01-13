@@ -93,7 +93,6 @@ We recommend you to use conda to manage your python dependencies. Libraries inst
 
 For more detail, please refer to [orca-context](../Orca/Overview/orca-context.md#python-dependencies)
 
-
 ---
 ### **4. Compatibility**
 

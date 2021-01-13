@@ -37,7 +37,6 @@ You can also add .py, .zip or .egg files to distribute with your application by 
 init_orca_context(..., extra_python_lib="func1.py,func2.py,lib3.zip")
 ```
 
-
 View the user guide for [K8s](../../UserGuide/k8s.md) and [Hadoop/YARN](../../UserGuide/hadoop.md) for more details.
 
 ---
