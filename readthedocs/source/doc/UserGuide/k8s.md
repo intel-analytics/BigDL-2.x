@@ -34,6 +34,77 @@ sudo systemctl restart docker
 
 ### **2. Launch a K8s Client Container**
 
+Client container is for user to submit Analytics Zoo jobs from here, since it contains the required environment by Analytics Zoo.
+
+```bash
+sudo docker run -itd --net=host \
+    -v /etc/kubernetes:/etc/kubernetes \
+    -v /root/.kube:/root/.kube \
+    intelanalytics/hyper-zoo:latest bash
+```
+
+**Note:** to launch the client container, `-v /etc/kubernetes:/etc/kubernetes:` and `-v /root/.kube:/root/.kube` are required to specify the path of kube config and installation.
+
+To specify more arguments, use:
+
+```bash
+sudo docker run -itd --net=host \
+    -v /etc/kubernetes:/etc/kubernetes \
+    -v /root/.kube:/root/.kube \
+    -e NotebookPort=12345 \
+    -e NotebookToken="your-token" \
+    -e http_proxy=http://your-proxy-host:your-proxy-port \
+    -e https_proxy=https://your-proxy-host:your-proxy-port \
+    -e RUNTIME_SPARK_MASTER=k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port> \
+    -e RUNTIME_K8S_SERVICE_ACCOUNT=account \
+    -e RUNTIME_K8S_SPARK_IMAGE=intelanalytics/hyper-zoo:latest \
+    -e RUNTIME_PERSISTENT_VOLUME_CLAIM=myvolumeclaim \
+    -e RUNTIME_DRIVER_HOST=x.x.x.x \
+    -e RUNTIME_DRIVER_PORT=54321 \
+    -e RUNTIME_EXECUTOR_INSTANCES=1 \
+    -e RUNTIME_EXECUTOR_CORES=4 \
+    -e RUNTIME_EXECUTOR_MEMORY=20g \
+    -e RUNTIME_TOTAL_EXECUTOR_CORES=4 \
+    -e RUNTIME_DRIVER_CORES=4 \
+    -e RUNTIME_DRIVER_MEMORY=10g \
+    intelanalytics/hyper-zoo:latest bash 
+```
+
+- NotebookPort value 12345 is a user specified port number.
+- NotebookToken value "your-token" is a user specified string.
+- http_proxy/https_proxy is to specify http proxy/https_proxy.
+- RUNTIME_SPARK_MASTER is to specify spark master, which should be `k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port>` or `spark://<spark-master-host>:<spark-master-port>`. 
+- RUNTIME_K8S_SERVICE_ACCOUNT is service account for driver pod. Please refer to k8s [RBAC](https://spark.apache.org/docs/latest/running-on-kubernetes.html#rbac).
+- RUNTIME_K8S_SPARK_IMAGE is the k8s image.
+- RUNTIME_PERSISTENT_VOLUME_CLAIM is to specify [Kubernetes volume](https://spark.apache.org/docs/latest/running-on-kubernetes.html#volume-mounts) mount. We are supposed to use volume mount to store or receive data.
+- RUNTIME_DRIVER_HOST/RUNTIME_DRIVER_PORT is to specify driver localhost and port number (only required when submitting jobs via kubernetes client mode).
+- Other environment variables are for spark configuration setting. The default values in this image are listed above. Replace the values as you need.
+
+Once the container is created, launch the container by:
+
+```bash
+sudo docker exec -it <containerID> bash
+```
+
+You will login into the container and see this as the output:
+
+```
+root@[hostname]:/opt/spark/work-dir# 
+```
+
+`/opt/spark/work-dir` is the spark work path. 
+
+The `/opt` directory contains:
+
+- download-analytics-zoo.sh is used for downloading Analytics-Zoo distributions.
+- start-notebook-spark.sh is used for starting the jupyter notebook on standard spark cluster. 
+- start-notebook-k8s.sh is used for starting the jupyter notebook on k8s cluster.
+- analytics-zoo-x.x-SNAPSHOT is `ANALYTICS_ZOO_HOME`, which is the home of Analytics Zoo distribution.
+- analytics-zoo-examples directory contains downloaded python example code.
+- jdk is the jdk home.
+- spark is the spark home.
+- redis is the redis home.
+
 ### **3. Run Analytics Zoo Examples on k8s**
 
 _**Note**: Please make sure `kubectl` has appropriate permission to create, list and delete pod._
@@ -47,6 +118,48 @@ We recommend using `init_orca_context` in your code to run on standard K8s clust
 Alternatively, you may use `spark_submit` to run your program on K8s clusters.
 
 **Run Python programs**
+
+```bash
+${SPARK_HOME}/bin/spark-submit \
+  --master ${RUNTIME_SPARK_MASTER} \
+  --deploy-mode client \
+  --conf spark.kubernetes.authenticate.driver.serviceAccountName=${RUNTIME_K8S_SERVICE_ACCOUNT} \
+  --name analytics-zoo \
+  --conf spark.kubernetes.container.image=${RUNTIME_K8S_SPARK_IMAGE} \
+  --conf spark.executor.instances=${RUNTIME_EXECUTOR_INSTANCES} \
+  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
+  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
+  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
+  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
+  --conf spark.kubernetes.driver.label.<your-label>=true \
+  --conf spark.kubernetes.executor.label.<your-label>=true \
+  --executor-cores ${RUNTIME_EXECUTOR_CORES} \
+  --executor-memory ${RUNTIME_EXECUTOR_MEMORY} \
+  --total-executor-cores ${RUNTIME_TOTAL_EXECUTOR_CORES} \
+  --driver-cores ${RUNTIME_DRIVER_CORES} \
+  --driver-memory ${RUNTIME_DRIVER_MEMORY} \
+  --properties-file ${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf \
+  --py-files ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip,/opt/analytics-zoo-examples/python/anomalydetection/anomaly_detection.py \
+  --conf spark.driver.extraJavaOptions=-Dderby.stream.error.file=/tmp \
+  --conf spark.sql.catalogImplementation='in-memory' \
+  --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
+  --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
+  file:///opt/analytics-zoo-examples/python/anomalydetection/anomaly_detection.py \
+  --input_dir /zoo/data/nyc_taxi.csv
+```
+Above is a sample for submitting the python [anomalydetection](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/anomalydetection) example on client mode.
+
+Options:
+
+- --master: the spark mater, must be a URL with the format `k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port>`. 
+- --deploy-mode: submit application in cluster mode.
+- --name: the Spark application name.
+- --conf: require to specify k8s service account, container image to use for the Spark application, driver volumes name and path, label of pods, spark driver and executor configuration, etc.
+  check the argument settings in your environment and refer to the [spark configuration page](https://spark.apache.org/docs/latest/configuration.html) and [spark on k8s configuration page](https://spark.apache.org/docs/latest/running-on-kubernetes.html#configuration) for more details.
+- --properties-file: the customized conf properties.
+- --py-files: the extra python packages is needed.
+- file://: local file path of the python example file in the client container.
+- --input_dir: input data path of the anomaly detection example. The data path is the mounted filesystem of the host. Refer to more details by [Kubernetes Volumes](https://spark.apache.org/docs/latest/running-on-kubernetes.html#using-kubernetes-volumes).
 
 **Run Jupyter Notebooks**
 
