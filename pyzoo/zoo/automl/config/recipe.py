@@ -402,7 +402,7 @@ class MTNetGridRandomRecipe(Recipe):
 
         # -- optimization params
         self.lr = tune.uniform(0.001, 0.01)
-        self.batch_size = self.batch_size = tune.grid_search(batch_size)
+        self.batch_size = tune.grid_search(batch_size)
         self.epochs = epochs
 
         # ---- model params
@@ -440,6 +440,74 @@ class MTNetGridRandomRecipe(Recipe):
             "past_seq_len": self.past_seq_len,
             "cnn_hid_size": self.cnn_hid_size,
             "cnn_height": self.cnn_height
+        }
+
+
+class TCNGridRandomRecipe(Recipe):
+    """
+    Grid+Random Recipe for TCN
+    """
+    # TODO: use some more generalized exp hyperparameters
+
+    def __init__(self,
+                 past_seq_len,
+                 input_feature_num,
+                 future_seq_len,
+                 output_feature_num,
+                 num_rand_samples=1,
+                 training_iteration=40,
+                 batch_size=[256, 512],
+                 hidden_size=[32, 48],
+                 levels=[6,8],
+                 kernel_size=[3,5],
+                 dropout=[0,0.1]
+                ):
+        """
+        Constructor.
+        :param past_seq_len: the length of history(input) data, i.e. lookback
+        :param input_feature_num: the number of feature for each data point in history(input) data
+        :param future_seq_len: the length of data to be predicted, i.e. horizon
+        :param output_feature_num: the number of feature for each data point to be predicted
+        :param num_rand_samples: number of hyper-param configurations sampled randomly
+        :param training_iteration: no. of iterations for training (n epochs) in trials
+        :param batch_size: grid search candidates for batch size
+        :param hidden_size: grid search candidates for hidden size of each layer
+        :param levels: the number of layers
+        :param kernel_size: the kernel size of each layer
+        :param dropout: dropout rate (1 - keep probability)
+        """
+        super(self.__class__, self).__init__()
+        # -- run time params
+        self.num_samples = num_rand_samples
+        self.training_iteration = training_iteration
+
+        # -- optimization params
+        self.lr = tune.uniform(0.001, 0.003)
+        self.batch_size = tune.grid_search(batch_size)
+
+        # ---- model params
+        self.past_seq_len = past_seq_len
+        self.input_feature_num = input_feature_num
+        self.future_seq_len = future_seq_len
+        self.output_feature_num = output_feature_num
+        self.hidden_size = tune.grid_search(hidden_size)
+        self.levels = tune.grid_search(levels)
+        self.kernel_size = tune.grid_search(kernel_size)
+        self.dropout = tune.choice(kernel_size)
+
+
+    def search_space(self, all_available_features):
+        return {
+            "lr": self.lr,
+            "batch_size": self.batch_size,
+            "nhid": self.hidden_size,
+            "levels": self.levels,
+            "kernel_size": self.kernel_size,
+            "dropout": self.dropout,
+            'past_seq_len': self.past_seq_len,
+            "input_feature_num": self.input_feature_num,
+            "future_seq_len": self.future_seq_len,
+            "output_feature_num": self.output_feature_num
         }
 
 
