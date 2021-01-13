@@ -91,7 +91,7 @@ python script.py
 
 We recommend you to use conda to manage your python dependencies. Libraries installed in current conda environment will be distributed automatically to your cluster when calling `init_orca_context`. You can also add extra dependencies as .py, .zip and .egg files by specifying `extra_python_lib` argument in `init_orca_context`. 
 
-For more detail, please refer to [orca-context](../Orca/Overview/orca-context.md#python-dependencies)
+For more details, please refer to [orca-context](../Orca/Overview/orca-context.md)
 
 ---
 ### **4. Compatibility**
