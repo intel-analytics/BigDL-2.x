@@ -85,7 +85,7 @@ class PartitionHolder:
         self.deser_thread.join()
         total = 0
         for idx, data in self.data_dict.items():
-            total += len(data)
+            total += sum([batch.num_rows for batch in data])
 
         return total
 
@@ -183,22 +183,20 @@ def spark_rdd_python_server(df):
     resources = ray.cluster_resources()
     nodes = get_ray_node_ip()
 
-    partition_holders = [ray.remote(num_cpus=0, resources={node: 1e-4})(PartitionHolder).remote()
+    partition_holders = [ray.remote(num_cpus=0, resources={node: 1e-4})(PartitionHolder).remote(num_cores)
                          for node in nodes]
     ip_ports = ray.get([holder.start_data_receiver.remote() for holder in partition_holders])
 
     schema = df.schema
 
-    id_ip_counts = df.rdd.mapPartitionsWithIndex(lambda idx, part: write_to_ray_python_client(
+    counts = df.rdd.mapPartitionsWithIndex(lambda idx, part: write_to_ray_python_client(
         idx, part, address, dict(ip_ports), schema)).collect()
 
-    id_ips = [(i, ip) for i, ip, _ in id_ip_counts]
-
-    print(f"writing records {sum([count for _, _, count in id_ip_counts])}")
+    print(f"writing records {sum(counts)}")
     result = ray.get(
         [holder.done_with_sending.remote() for holder in partition_holders])
     print(f"getting records {sum(result)}")
-    return uuid_str, dict(id_ips), partition_holders
+    return uuid_str, counts, partition_holders
 
 
 if __name__ == "__main__":
