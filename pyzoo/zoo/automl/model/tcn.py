@@ -127,7 +127,7 @@ def model_creator(config):
     return TemporalConvNet(past_seq_len=config["past_seq_len"],
                            input_feature_num=config["input_feature_num"],
                            future_seq_len=config["future_seq_len"],
-                           output_feature_num=config["future_seq_len"],
+                           output_feature_num=config["output_feature_num"],
                            num_channels=[config.get("nhid", 30)] * config.get("levels", 8),
                            kernel_size=config.get("kernel_size", 7),
                            dropout=config.get("dropout", 0.2))

@@ -100,6 +100,30 @@ class MTNetSmokeRecipe(Recipe):
         }
 
 
+class TCNSmokeRecipe(Recipe):
+    """
+    A very simple Recipe for smoke test that runs one epoch and one iteration
+    with only 1 random sample.
+    """
+
+    def __init__(self):
+        super(self.__class__, self).__init__()
+
+    def search_space(self, all_available_features):
+        return {
+            "lr": 0.001,
+            "batch_size": 16,
+            "nhid": 8,
+            "levels": 8,
+            "kernel_size": 3,
+            "dropout": 0.1,
+            'past_seq_len': 80,
+            "input_feature_num": 2,
+            "future_seq_len": 40,
+            "output_feature_num": 2
+        }
+
+
 class PastSeqParamHandler(object):
     """
     Utility to handle PastSeq Param
