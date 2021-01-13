@@ -87,7 +87,15 @@ python script.py
 ```
 
 ---
-### **3. Compatibility**
+### **3. Python Dependencies**
+
+We recommend you to use conda to manage your python dependencies. Libraries installed in current conda environment will be distributed automatically to your cluster when calling `init_orca_context`. You can also add extra dependencies as .py, .zip and .egg files by specifying `extra_python_lib` argument in `init_orca_context`. 
+
+For more detail, please refer to [orca-context](../Orca/Overview/orca-context.md#python-dependencies)
+
+
+---
+### **4. Compatibility**
 
 Analytics Zoo has been tested on __Python 3.6 and 3.7__ with the following library versions:
 
