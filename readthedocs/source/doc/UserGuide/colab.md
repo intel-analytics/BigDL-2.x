@@ -14,6 +14,8 @@ The first few cells of the notebook contains the code necessary to set up Analyt
 
 **Install Java 8**
 
+**Install Conda**
+
 **Install Analytics Zoo**
 
-**Install Dependencies**
+**Install Python Dependencies**
