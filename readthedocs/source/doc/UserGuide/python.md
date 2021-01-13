@@ -1,7 +1,6 @@
 # Python User Guide
 
 ---
-
 ### **1. Install**
 - We recommend using [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the Python environment, especially when running on distributed cluster. 
 Install conda on your machine and create a conda environment as follows:
