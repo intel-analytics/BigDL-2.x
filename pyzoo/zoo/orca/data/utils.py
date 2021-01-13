@@ -409,6 +409,8 @@ def write_to_ray_python_client(idx, partition, redis_address, ip2port, schema):
             counter += len(batch)
         # use None as end indicator
         conn.send(None)
+        done_msg = conn.recv()
+        assert done_msg == "done"
         print(
             f"total serilaize time {serialize_time}, total send time {sending_time}, total records "
             f"{counter}, total bytes {total_bytes}")

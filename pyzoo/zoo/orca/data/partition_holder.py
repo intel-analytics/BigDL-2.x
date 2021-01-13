@@ -31,6 +31,7 @@ class PartitionHolder:
             while item is not None:
                 queue.put((idx, item))
                 item = conn.recv()
+            conn.send("done")
             conn.close()
 
         def run_server(listener, queue, executor):
