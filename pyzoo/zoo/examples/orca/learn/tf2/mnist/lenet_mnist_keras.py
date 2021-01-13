@@ -74,17 +74,18 @@ def main(max_epoch):
     config = {
         "batch_size": batch_size
     }
-    est = Estimator.from_keras(model_creator, config=config, workers_per_node=2)
+    est = Estimator.from_keras(model_creator=model_creator, config=config, workers_per_node=2)
     stats = est.fit(train_data_creator,
                     epochs=max_epoch,
                     steps_per_epoch=60000 // batch_size,
-                    validation_data_creator=val_data_creator,
+                    validation_data=val_data_creator,
                     validation_steps=10000 // batch_size)
     print(stats)
     est.save("/tmp/mnist_keras.ckpt")
-    est.restore("/tmp/mnist_keras.ckpt")
-    stats = est.evaluate(val_data_creator, steps=10000 // batch_size)
+    est.load("/tmp/mnist_keras.ckpt")
+    stats = est.evaluate(val_data_creator, num_steps=10000 // batch_size)
     print(stats)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
