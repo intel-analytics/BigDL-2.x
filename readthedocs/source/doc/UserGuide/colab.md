@@ -58,4 +58,4 @@ You can install the latest pre-release version using `pip install --pre analytic
 
 **Install Python Dependencies**
 
-As Colab python environment provides some built-in Python libraries, you should check if the library versions are compatible with your application. You may refer [compatibility](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/python.html#compatibility) to specify the python library version that Analytics Zoo supports.
+As Colab python environment provides some built-in Python libraries, you should check if the library versions are compatible with your application. You may refer [compatibility](./python.md#compatibility) to specify the python library version that Analytics Zoo supports.
