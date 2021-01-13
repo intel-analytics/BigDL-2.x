@@ -142,7 +142,8 @@ class BigDLEstimator(OrcaSparkEstimator):
                 else:
                     assert isinstance(validation_data, SparkXShards), \
                         "validation_data should be a XShards"
-                    val_feature_set = FeatureSet.sample_rdd(validation_data.rdd.flatMap(xshard_to_sample))
+                    val_feature_set = FeatureSet.sample_rdd(
+                        validation_data.rdd.flatMap(xshard_to_sample))
                 if self.log_dir is not None and self.app_name is not None:
                     self.estimator.set_tensorboard(self.log_dir, self.app_name)
                 self.estimator.train(train_feature_set, self.loss, end_trigger, checkpoint_trigger,
