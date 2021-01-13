@@ -35,6 +35,8 @@ java -version  # Verify the version of JDK.
 export HADOOP_CONF_DIR=the directory of the hadoop and yarn configurations
 ```
 
+### **1.1 Setup for CDH**
+
 ---
 ### **2. YARN Client Mode**
 
