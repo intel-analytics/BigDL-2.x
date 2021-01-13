@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from sklearn.metrics import mean_squared_error as MSE
+from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score as R2
 from sklearn.metrics import mean_absolute_error as MAE
 from sklearn.metrics import mean_squared_log_error as MSLE
@@ -210,6 +210,27 @@ def RMSE(y_true, y_pred, multioutput='raw_values'):
         array of floating point values, one for each individual target.
     """
     return np.sqrt(MSE(y_true, y_pred, multioutput=multioutput))
+
+
+def MSE(y_true, y_pred, multioutput='uniform_average'):
+    """
+    calculate the mean squared error (MSE).
+    :param y_true: array-like of shape = (n_samples, *)
+        Ground truth (correct) target values.
+    :param y_pred: array-like of shape = (n_samples, *)
+        Estimated target values.
+    :param multioutput: string in ['raw_values', 'uniform_average']
+    :return:float or ndarray of floats
+        A non-negative floating point value (the best value is 0.0), or an
+        array of floating point values, one for each individual target.
+    """
+    y_true, y_pred = check_input(y_true, y_pred, multioutput)
+    if y_true.ndim <= 2:
+        return mean_squared_error(y_true, y_pred, multioutput=multioutput)
+    else:
+        return mean_squared_error(y_true.reshape(y_true.shape[0], -1),
+                                  y_pred.reshape(y_pred.shape[0], -1),
+                                  multioutput=multioutput)
 
 
 def Accuracy(y_true, y_pred, multioutput=None):
