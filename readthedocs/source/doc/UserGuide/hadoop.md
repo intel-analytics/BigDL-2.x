@@ -81,7 +81,7 @@ Follow the steps below if you need to run Analytics Zoo in [YARN cluster mode](h
 export SPARK_HOME=the root directory where you extract the downloaded Spark package
 ```
 
-- Download and extract [Analytics Zoo](https://analytics-zoo.github.io/master/#release-download/). Make sure the Analytics Zoo package you download is built with the compatible version with your Spark. Set the environment variable `ANALYTICS_ZOO_HOME`:
+- Download and extract [Analytics Zoo](../release.md). Make sure the Analytics Zoo package you download is built with the compatible version with your Spark. Set the environment variable `ANALYTICS_ZOO_HOME`:
 
 ```bash
 export ANALYTICS_ZOO_HOME=the root directory where you extract the downloaded Analytics Zoo package
