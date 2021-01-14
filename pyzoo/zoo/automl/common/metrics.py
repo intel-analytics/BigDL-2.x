@@ -24,7 +24,12 @@ import numpy as np
 EPSILON = 1e-10
 
 
-def check_input(y_true, y_pred, multioutput):
+def legalize_input(y_true, y_pred, multioutput):
+    """
+    This function check the validation of the input
+    input should be one of list/tuple/ndarray and not be None 
+    input will be changed to corresponding 2-dim ndarray 
+    """
     if y_true is None or y_pred is None:
         raise ValueError("The input is None.")
     if not isinstance(y_true, (list, tuple, np.ndarray)):
@@ -36,9 +41,13 @@ def check_input(y_true, y_pred, multioutput):
 
     if y_true.ndim == 1:
         y_true = y_true.reshape((-1, 1))
+    else:
+        y_true = y_true.reshape((y_true.shape[0], -1))
 
     if y_pred.ndim == 1:
         y_pred = y_pred.reshape((-1, 1))
+    else:
+        y_pred = y_pred.reshape((y_pred.shape[0], -1))
 
     if y_true.shape[0] != y_pred.shape[0]:
         raise ValueError("y_true and y_pred have different number of samples "
@@ -70,7 +79,7 @@ def sMAPE(y_true, y_pred, multioutput='raw_values'):
         A non-negative floating point value (the best value is 0.0), or an
         array of floating point values, one for each individual target.
     """
-    y_true, y_pred = check_input(y_true, y_pred, multioutput)
+    y_true, y_pred = legalize_input(y_true, y_pred, multioutput)
     output_errors = np.mean(100 * np.abs(y_true - y_pred) /
                             (np.abs(y_true) + np.abs(y_pred) + EPSILON), axis=0,)
     if multioutput == 'raw_values':
@@ -91,7 +100,7 @@ def MPE(y_true, y_pred, multioutput='raw_values'):
         A non-negative floating point value (the best value is 0.0), or an
         array of floating point values, one for each individual target.
     """
-    y_true, y_pred = check_input(y_true, y_pred, multioutput)
+    y_true, y_pred = legalize_input(y_true, y_pred, multioutput)
     output_errors = np.mean(100 * (y_true - y_pred) / (y_true + EPSILON), axis=0,)
     if multioutput == 'raw_values':
         return output_errors
@@ -111,7 +120,7 @@ def MAPE(y_true, y_pred, multioutput='raw_values'):
         A non-negative floating point value (the best value is 0.0), or an
         array of floating point values, one for each individual target.
     """
-    y_true, y_pred = check_input(y_true, y_pred, multioutput)
+    y_true, y_pred = legalize_input(y_true, y_pred, multioutput)
     output_errors = np.mean(100 * np.abs((y_true - y_pred) / (y_true + EPSILON)), axis=0,)
     if multioutput == 'raw_values':
         return output_errors
@@ -130,7 +139,7 @@ def MDAPE(y_true, y_pred, multioutput='raw_values'):
         A non-negative floating point value (the best value is 0.0), or an
         array of floating point values, one for each individual target.
     """
-    y_true, y_pred = check_input(y_true, y_pred, multioutput)
+    y_true, y_pred = legalize_input(y_true, y_pred, multioutput)
     output_errors = np.median(100 * np.abs((y_true - y_pred) / (y_true + EPSILON)), axis=0,)
     if multioutput == 'raw_values':
         return output_errors
@@ -149,7 +158,7 @@ def sMDAPE(y_true, y_pred, multioutput='raw_values'):
         A non-negative floating point value (the best value is 0.0), or an
         array of floating point values, one for each individual target.
     """
-    y_true, y_pred = check_input(y_true, y_pred, multioutput)
+    y_true, y_pred = legalize_input(y_true, y_pred, multioutput)
     output_errors = np.median(100 * np.abs(y_true - y_pred) /
                               (np.abs(y_true) + np.abs(y_pred) + EPSILON), axis=0, )
     if multioutput == 'raw_values':
@@ -169,7 +178,7 @@ def ME(y_true, y_pred, multioutput='raw_values'):
         A non-negative floating point value (the best value is 0.0), or an
         array of floating point values, one for each individual target.
     """
-    y_true, y_pred = check_input(y_true, y_pred, multioutput)
+    y_true, y_pred = legalize_input(y_true, y_pred, multioutput)
     output_errors = np.mean(y_true - y_pred, axis=0,)
     if multioutput == 'raw_values':
         return output_errors
@@ -190,7 +199,7 @@ def MSPE(y_true, y_pred, multioutput='raw_values'):
         A non-negative floating point value (the best value is 0.0), or an
         array of floating point values, one for each individual target.
     """
-    y_true, y_pred = check_input(y_true, y_pred, multioutput)
+    y_true, y_pred = legalize_input(y_true, y_pred, multioutput)
     output_errors = np.mean(np.square(y_true - y_pred), axis=0,)
     if multioutput == 'raw_values':
         return output_errors
@@ -224,13 +233,8 @@ def MSE(y_true, y_pred, multioutput='uniform_average'):
         A non-negative floating point value (the best value is 0.0), or an
         array of floating point values, one for each individual target.
     """
-    y_true, y_pred = check_input(y_true, y_pred, multioutput)
-    if y_true.ndim <= 2:
-        return mean_squared_error(y_true, y_pred, multioutput=multioutput)
-    else:
-        return mean_squared_error(y_true.reshape(y_true.shape[0], -1),
-                                  y_pred.reshape(y_pred.shape[0], -1),
-                                  multioutput=multioutput)
+    y_true, y_pred = legalize_input(y_true, y_pred, multioutput)
+    return mean_squared_error(y_true, y_pred, multioutput=multioutput)
 
 
 def Accuracy(y_true, y_pred, multioutput=None):
