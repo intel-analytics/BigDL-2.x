@@ -209,9 +209,9 @@ def MSPE(y_true, y_pred, multioutput='raw_values'):
 def RMSE(y_true, y_pred, multioutput='raw_values'):
     """
     calculate square root of the mean squared error (RMSE).
-    :param y_true: array-like of shape = (n_samples) or (n_samples, n_outputs)
+    :param y_true: array-like of shape = (n_samples, *)
         Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples) or (n_samples, n_outputs)
+    :param y_pred: array-like of shape = (n_samples, *)
         Estimated target values.
     :param multioutput: string in ['raw_values', 'uniform_average']
     :return:float or ndarray of floats
