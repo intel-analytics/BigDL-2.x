@@ -78,8 +78,8 @@ class PytorchBaseModel(BaseModel):
             self.optimizer.step()
             total_loss += loss.item()
             batch_idx += 1
-        total_loss = total_loss/batch_idx
-        return total_loss
+        train_loss = total_loss/batch_idx
+        return train_loss
 
     def _forward(self, x, y):
         return self.model(x)
