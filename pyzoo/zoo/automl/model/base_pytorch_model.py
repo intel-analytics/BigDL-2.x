@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import TensorDataset, DataLoader
 
 from zoo.automl.model.abstract import BaseModel
 from zoo.automl.common.util import *
@@ -61,24 +61,13 @@ class PytorchBaseModel(BaseModel):
                                PytorchBaseModel.to_torch(validation_data[1]))
         return x, y, validation_data
 
-    def _train_epoch(self, x, y, num_workers=0):
+    def _train_epoch(self, x, y):
         # todo: support torch data loader
         batch_size = self.config["batch_size"]
         self.model.train()
         total_loss = 0
-        class TorchDataset(Dataset):
-            def __init__(self, x, y):
-                self.x = x
-                self.y = y
-            def __len__(self):
-                return self.x.shape[0]
-            def __getitem__(self, idx):
-                x = self.x[idx]
-                y = self.y[idx]
-                return x, y
-        train_loader = DataLoader(TorchDataset(x, y),
-                                  batch_size=int(batch_size), 
-                                  num_workers=num_workers, 
+        train_loader = DataLoader(TensorDataset(x, y),
+                                  batch_size=int(batch_size),
                                   shuffle=True)
         batch_idx = 0
         for x_batch, y_batch in train_loader:
