@@ -21,7 +21,7 @@ from zoo.automl.model import ModelBuilder
 from zoo.automl.model.VanillaLSTM_pytorch import LSTMModel
 import torch
 import torch.nn as nn
-from zoo.automl.config.recipe import Recipe, BayesRecipe
+from zoo.automl.config.recipe import Recipe
 from ray import tune
 import pandas as pd
 import numpy as np
@@ -155,4 +155,4 @@ class TestRayTuneSearchEngine(ZooTestCase):
                         search_space=recipe.search_space(ft.get_feature_list()))
         searcher.run()
         best_trials = searcher.get_best_trials(k=1)
-        print("test_ray_dataframe_with_val:", best_trials[0].config)
+        print("test_ray_dateframe_with_datetime_with_val:", best_trials[0].config)
