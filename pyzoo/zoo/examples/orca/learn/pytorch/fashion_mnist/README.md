@@ -4,7 +4,7 @@ We demonstrate how to easily show the graphical results of running synchronous d
 
 ## Prepare environments
 
-We recommend you to use Anaconda to prepare the environment, especially if you want to run on a yarn cluster
+We recommend you to use Anaconda to prepare the environment, especially if you want to run on a yarn cluster:
 
 ```
 conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
