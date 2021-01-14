@@ -119,7 +119,6 @@ def convert_predict_to_xshard(data, prediction_rdd):
                 buffer.clear()
                 this_index = 0
 
-
     def add_pred(shard_pred):
         shard, pred = shard_pred
         shard["prediction"] = pred
@@ -128,6 +127,40 @@ def convert_predict_to_xshard(data, prediction_rdd):
     grouped_pred = data.rdd.mapPartitions(group_index).zip(prediction_rdd).mapPartitions(group)
     result_rdd = data.rdd.zip(grouped_pred).map(add_pred)
     return SparkXShards(result_rdd)
+
+
+def update_predict_xshards(xshard, pred_xshards):
+    def updates(d1, d2):
+        d1.update(d2)
+        return d1
+
+    result = SparkXShards(xshard.rdd.zip(pred_xshards.rdd).map(updates))
+    return result
+
+
+def convert_predict_xshards_to_dataframe(df, pred_shards):
+    def flatten(data):
+        is_list = isinstance(data, list)
+        is_tuple = isinstance(data, tuple)
+        if is_list or is_tuple:
+            length = data[0].shape[0]
+            ls_data = data
+        else:
+            length = data.shape[0]
+            ls_data = [data]
+
+        for i in range(length):
+            row = [elem[i] for elem in ls_data]
+            if is_list:
+                yield row
+            if is_tuple:
+                yield tuple(row)
+            yield row[0]
+
+    pred_rdd = pred_shards.rdd.flatMap(flatten)
+    result = convert_predict_to_dataframe(df, pred_rdd)
+    return result
+
 
 def convert_predict_to_dataframe(df, prediction_rdd):
     from pyspark.sql import Row
@@ -155,6 +188,7 @@ def convert_predict_to_dataframe(df, prediction_rdd):
     schema = StructType(df.schema.fields + [StructField('prediction', type)])
     result_df = result_rdd.toDF(schema)
     return result_df
+
 
 def arrays2dict(iter, feature_cols, label_cols):
 
@@ -200,7 +234,7 @@ def arrays2dict(iter, feature_cols, label_cols):
     return [{"x": feature_arrs}]
 
 
-def dataframe_to_xshards(data, feature_cols, label_cols=None):
+def _dataframe_to_xshards(data, feature_cols, label_cols=None):
     schema = data.schema
     numpy_rdd = data.rdd.map(lambda row: convert_row_to_numpy(row,
                                                               schema,
@@ -212,22 +246,31 @@ def dataframe_to_xshards(data, feature_cols, label_cols=None):
     return SparkXShards(shard_rdd)
 
 
+def dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="fit"):
+    from pyspark.sql import DataFrame
+    valid_mode = {"fit", "evaluate", "predict"}
+    assert mode in valid_mode, f"invalid mode {mode} " \
+                               f"mode should be one of {valid_mode}"
+    assert validation_data is None or isinstance(validation_data, DataFrame), \
+        "validation data must be a spark DataFrame when data is a DataFrame"
+    assert feature_cols is not None, \
+        "feature_col must be provided if data is a spark dataframe"
+
+    if mode != "predict":
+        assert label_cols is not None, \
+            "label_cols must be provided if data is a spark dataframe"
+
+    data = _dataframe_to_xshards(data, feature_cols, label_cols)
+    if validation_data is not None:
+        validation_data = _dataframe_to_xshards(validation_data, feature_cols, label_cols)
+
+    return data, validation_data
+
+
 def maybe_dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="fit"):
     from pyspark.sql import DataFrame
     if isinstance(data, DataFrame):
-        valid_mode = {"fit", "evaluate", "predict"}
-        assert mode in valid_mode, f"invalid mode {mode} " \
-                                   f"mode should be one of {valid_mode}"
-        assert validation_data is None or isinstance(validation_data, DataFrame), \
-            "validation data must be a spark DataFrame when data is a DataFrame"
-        assert feature_cols is not None, \
-            "feature_col must be provided if data is a spark dataframe"
-
-        if mode != "predict":
-            assert label_cols is not None, \
-                "label_cols must be provided if data is a spark dataframe"
-
-        data = dataframe_to_xshards(data, feature_cols, label_cols)
-        if validation_data is not None:
-            validation_data = dataframe_to_xshards(validation_data, feature_cols, label_cols)
+        data, validation_data = dataframe_to_xshards(data, validation_data,
+                                                     feature_cols=feature_cols,
+                                                     label_cols=label_cols, mode=mode)
     return data, validation_data

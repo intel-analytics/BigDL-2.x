@@ -171,7 +171,7 @@ class BigDLEstimator(OrcaSparkEstimator):
             from zoo.orca.learn.utils import convert_predict_to_xshard
             sample_rdd = data.rdd.flatMap(xshard_to_sample)
             result_rdd = self.model.predict(sample_rdd)
-            return convert_predict_to_xshard(result_rdd)
+            return convert_predict_to_xshard(data, result_rdd)
         else:
             raise ValueError("Data should be XShards or Spark DataFrame, but get " +
                              data.__class__.__name__)
