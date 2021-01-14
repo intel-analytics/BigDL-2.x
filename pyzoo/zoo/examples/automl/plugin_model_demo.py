@@ -59,11 +59,9 @@ def get_data():
         y = a*x + b
         return x, y
     train_x, train_y = get_linear_data(2, 5, 1000)
-    # print(type(train_x), train_x.shape)
-    train_data = {'x': train_x, 'y': train_y}
     val_x, val_y = get_linear_data(2, 5, 400)
-    val_data = {'x': val_x, 'y': val_y}
-    return train_data, val_data
+    data = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
+    return data
 
 
 if __name__ == "__main__":
@@ -80,11 +78,10 @@ if __name__ == "__main__":
 
     # pass input data, modelbuilder and recipe into searcher.compile. Note that if user doesn't pass
     # feature transformer, the default identity feature transformer will be used.
-    train_data, val_data = get_data()
-    searcher.compile(data=train_data,
+    data = get_data()
+    searcher.compile(data=data,
                      model_create_func=modelBuilder,
-                     recipe=SimpleRecipe(),
-                     validation_data=val_data)
+                     recipe=SimpleRecipe())
 
     searcher.run()
     best_trials = searcher.get_best_trials(k=1)
@@ -96,8 +93,8 @@ if __name__ == "__main__":
         "batch_size": 32,  # used in data_creator
     })
 
-    val_result = model.fit_eval(x=train_data["x"],
-                                y=train_data["y"],
-                                validation_data=(val_data["x"], val_data["y"]),
+    val_result = model.fit_eval(x=data["x"],
+                                y=data["y"],
+                                validation_data=(data["val_x"], data["val_y"]),
                                 epochs=20)
     print(val_result)

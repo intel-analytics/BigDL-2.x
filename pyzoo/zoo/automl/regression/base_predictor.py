@@ -178,7 +178,7 @@ class BasePredictor(object):
                                        name=self.name,
                                        remote_dir=remote_dir,
                                        )
-        searcher.compile(data={'df': input_df},
+        searcher.compile(data={'df': input_df, 'val_df': validation_df},
                          model_create_func=model_fn,
                          search_space=search_space,
                          recipe=recipe,
@@ -187,7 +187,6 @@ class BasePredictor(object):
                          scheduler=self.scheduler,
                          scheduler_params=self.scheduler_params,
                          feature_transformers=ft,
-                         validation_data={'df': validation_df},
                          metric=metric,
                          mc=mc,
                          )
