@@ -42,5 +42,3 @@ Train stats: [{'num_samples': 60000, 'epoch': 1, 'batch_count': 3750, 'train_los
  
 Validation stats: {'num_samples': 10000, 'batch_count': 313, 'val_loss': 0.48876683268547055, 'last_val_loss': 0.4236503839492798, 'val_accuracy': 0.8217, 'last_val_accuracy': 0.75}
 ```
-
-
