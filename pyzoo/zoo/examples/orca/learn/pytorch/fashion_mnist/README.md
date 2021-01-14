@@ -2,7 +2,7 @@
 
 We demonstrate how to easily show the graphical results of running synchronous distributed Pytorch training using Pytorch Estimator of Project Orca in Analytics Zoo. We use a simple convolutional nueral network model to train on fashion-MNIST dataset. See [here](https://pytorch.org/tutorials/intermediate/tensorboard_tutorial.html) for the original single-node version of this example provided by Pytorch.
 
-## Prepare environments
+## Prepare the environment
 
 We recommend you to use Anaconda to prepare the environment, especially if you want to run on a yarn cluster:
 

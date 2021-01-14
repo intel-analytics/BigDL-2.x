@@ -1,7 +1,7 @@
 # Pytorch Cifar10 example
 We demonstrate how to easily run synchronous distributed Pytorch training using Pytorch Estimator of Project Orca in Analytics Zoo. We use a simple convolutional nueral network model to train on Cifar10 dataset, which is a dataset for image classification. See [here](https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html) for the original single-node version of this example provided by Pytorch.
 
-## Prepare environments
+## Prepare the environment
 
 We recommend you to use Anaconda to prepare the environment, especially if you want to run on a yarn cluster:
 
