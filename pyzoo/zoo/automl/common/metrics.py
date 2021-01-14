@@ -70,9 +70,9 @@ def sMAPE(y_true, y_pred, multioutput='raw_values'):
     """
     calculate Symmetric mean absolute percentage error (sMAPE).
     <math> \text{SMAPE} = \frac{100\%}{n} \sum_{t=1}^n \frac{|F_t-A_t|}{|A_t|+|F_t|}</math>
-    :param y_true: array-like of shape = (n_samples) or (n_samples, n_outputs)
+    :param y_true: array-like of shape = (n_samples, *)
         Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples) or (n_samples, n_outputs)
+    :param y_pred: array-like of shape = (n_samples, *)
         Estimated target values.
     :param multioutput: string in ['raw_values', 'uniform_average']
     :return:float or ndarray of floats
@@ -91,9 +91,9 @@ def MPE(y_true, y_pred, multioutput='raw_values'):
     """
     calculate mean percentage error (MPE).
     <math> \text{MPE} = \frac{100\%}{n}\sum_{t=1}^n \frac{a_t-f_t}{a_t} </math>
-    :param y_true: array-like of shape = (n_samples) or (n_samples, n_outputs)
+    :param y_true: array-like of shape = (n_samples, *)
         Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples) or (n_samples, n_outputs)
+    :param y_pred: array-like of shape = (n_samples, *)
         Estimated target values.
     :param multioutput: string in ['raw_values', 'uniform_average']
     :return:float or ndarray of floats
@@ -111,9 +111,9 @@ def MAPE(y_true, y_pred, multioutput='raw_values'):
     """
     calculate mean absolute percentage error (MAPE).
     <math>\mbox{M} = \frac{100\%}{n}\sum_{t=1}^n  \left|\frac{A_t-F_t}{A_t}\right|, </math>
-    :param y_true: array-like of shape = (n_samples) or (n_samples, n_outputs)
+    :param y_true: array-like of shape = (n_samples, *)
         Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples) or (n_samples, n_outputs)
+    :param y_pred: array-like of shape = (n_samples, *)
         Estimated target values.
     :param multioutput: string in ['raw_values', 'uniform_average']
     :return:float or ndarray of floats
@@ -130,9 +130,9 @@ def MAPE(y_true, y_pred, multioutput='raw_values'):
 def MDAPE(y_true, y_pred, multioutput='raw_values'):
     """
     calculate Median Absolute Percentage Error (MDAPE).
-    :param y_true: array-like of shape = (n_samples) or (n_samples, n_outputs)
+    :param y_true: array-like of shape = (n_samples, *)
         Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples) or (n_samples, n_outputs)
+    :param y_pred: array-like of shape = (n_samples, *)
         Estimated target values.
     :param multioutput: string in ['raw_values', 'uniform_average']
     :return:float or ndarray of floats
@@ -149,9 +149,9 @@ def MDAPE(y_true, y_pred, multioutput='raw_values'):
 def sMDAPE(y_true, y_pred, multioutput='raw_values'):
     """
     calculate Symmetric Median Absolute Percentage Error (sMDAPE).
-    :param y_true: array-like of shape = (n_samples) or (n_samples, n_outputs)
+    :param y_true: array-like of shape = (n_samples, *)
         Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples) or (n_samples, n_outputs)
+    :param y_pred: array-like of shape = (n_samples, *)
         Estimated target values.
     :param multioutput: string in ['raw_values', 'uniform_average']
     :return:float or ndarray of floats
@@ -169,9 +169,9 @@ def sMDAPE(y_true, y_pred, multioutput='raw_values'):
 def ME(y_true, y_pred, multioutput='raw_values'):
     """
     calculate Mean Error (ME).
-    :param y_true: array-like of shape = (n_samples) or (n_samples, n_outputs)
+    :param y_true: array-like of shape = (n_samples, *)
         Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples) or (n_samples, n_outputs)
+    :param y_pred: array-like of shape = (n_samples, *)
         Estimated target values.
     :param multioutput: string in ['raw_values', 'uniform_average']
     :return:float or ndarray of floats
@@ -190,9 +190,9 @@ def MSPE(y_true, y_pred, multioutput='raw_values'):
     calculate mean squared percentage error (MSPE).
     <math>\operatorname{MSPE}(L)=\operatorname{E}
     \left[\left( g(x_i)-\widehat{g}(x_i)\right)^2\right].</math>
-    :param y_true: array-like of shape = (n_samples) or (n_samples, n_outputs)
+    :param y_true: array-like of shape = (n_samples, *)
         Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples) or (n_samples, n_outputs)
+    :param y_pred: array-like of shape = (n_samples, *)
         Estimated target values.
     :param multioutput: string in ['raw_values', 'uniform_average']
     :return:float or ndarray of floats
