@@ -18,7 +18,7 @@ import pytest
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.search import SearchEngineFactory
 from zoo.automl.model import ModelBuilder
-from zoo.automl.model.VanillaLSTM_pytorch import LSTMModel
+from zoo.automl.model.VanillaLSTM_pytorch import model_creator as LSTM_model_creator
 import torch
 import torch.nn as nn
 from zoo.automl.config.recipe import Recipe
@@ -47,13 +47,6 @@ class SimpleRecipe(Recipe):
 def model_creator(config):
     """Returns a torch.nn.Module object."""
     return nn.Linear(1, config.get("hidden_size", 1))
-
-def LSTM_model_creator(config):
-    return LSTMModel(input_dim=config["input_dim"],
-                    hidden_dim=config.get("hidden_dim", 32),
-                    layer_num=config.get("layer_num", 2),
-                    dropout=config.get("dropout", 0.2),
-                    output_dim=config["output_dim"])
 
 def optimizer_creator(model, config):
     """Returns optimizer defined upon the model parameters."""
