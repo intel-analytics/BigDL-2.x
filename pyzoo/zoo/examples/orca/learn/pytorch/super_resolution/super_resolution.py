@@ -29,6 +29,7 @@ import tarfile
 from os import makedirs, remove, listdir
 from os.path import exists, join, basename
 
+import torch
 import torch.utils.data as data
 import torch.nn as nn
 import torch.optim as optim
@@ -36,37 +37,32 @@ import torch.nn.init as init
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose, CenterCrop, ToTensor, Resize
 
-from zoo.orca.learn.pytorch import Estimator
 from zoo.orca import init_orca_context, stop_orca_context
+from zoo.orca.learn.pytorch import Estimator
 
 parser = argparse.ArgumentParser(description='PyTorch Super Res Example')
 parser.add_argument('--upscale_factor', type=int,
-                    default=3, help="super resolution upscale factor")
-parser.add_argument('--batch_size', type=int, default=16, help='training batch size')
-parser.add_argument('--test_batch_size', type=int, default=100, help='testing batch size')
+                    default=10, help="super resolution upscale factor")
+parser.add_argument('--batch_size', type=int, default=64, help='training batch size')
+parser.add_argument('--test_batch_size', type=int, default=10, help='testing batch size')
 parser.add_argument('--epochs', type=int, default=2, help='number of epochs to train for')
-parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate. Default=0.01')
+parser.add_argument('--lr', type=float, default=0.01, help='Learning Rate. Default=0.01')
 parser.add_argument('--cluster_mode', type=str,
                     default='local', help='The mode of spark cluster.')
-parser.add_argument('--dataset', type=str, default='dataset', help='The dir of dataset.')
-parser.add_argument('--download', action="store_true",
-                    default=False, help="Auto download dataset.")
 opt = parser.parse_args()
 
 print(opt)
 
 if opt.cluster_mode == "local":
-    init_orca_context(cores=1, memory="20g")
+    init_orca_context(cores=2, memory="2g")
 elif opt.cluster_mode == "yarn":
-    additional = "" if opt.download else "dataset/BSDS300.zip#" + opt.dataset
+    additional = "" if not exists("dataset") else "dataset/BSDS300.zip#dataset"
     init_orca_context(
-        cluster_mode="yarn-client", cores=4, num_nodes=1, memory="2g",
-        driver_memory="10g", driver_cores=1,
+        cluster_mode="yarn-client", cores=4, num_nodes=2, memory="2g",
+        driver_memory="2 g", driver_cores=1,
         additional_archive=additional)
 else:
-    print("init orca context failed")
-
-print('===> Loading datasets')
+    print("init orca context failed.cluster_mode should be either local or yarn but got " + opt.cluster_mode)
 
 
 def download_report(count, block_size, total_size):
@@ -132,25 +128,32 @@ def calculate_valid_crop_size(crop_size, upscale_factor):
     return crop_size - (crop_size % upscale_factor)
 
 
+def input_transform(crop_size, upscale_factor):
+    return Compose([
+        CenterCrop(crop_size),
+        Resize(crop_size // upscale_factor),
+        ToTensor(),
+    ])
+
+
+def target_transform(crop_size):
+    return Compose([
+        CenterCrop(crop_size),
+        ToTensor(),
+    ])
+
+
 def train_data_creator(config):
-    def get_training_set(upscale_factor, dir, isDownload):
-        root_dir = download_bsd300(dir) if isDownload else join(dir, "BSDS300/images")
-        print("root dir is " + root_dir)
+    def get_training_set(upscale_factor):
+        root_dir = download_bsd300()
         train_dir = join(root_dir, "train")
-        crop_size = 256 - (256 % upscale_factor)
+        crop_size = calculate_valid_crop_size(256, upscale_factor)
 
         return DatasetFromFolder(train_dir,
-                                 input_transform=Compose([
-                                     CenterCrop(crop_size),
-                                     Resize(crop_size // upscale_factor),
-                                     ToTensor()]),
-                                 target_transform=Compose([
-                                     CenterCrop(crop_size),
-                                     ToTensor()]))
+                                 input_transform=input_transform(crop_size, upscale_factor),
+                                 target_transform=target_transform(crop_size))
 
-    train_set = get_training_set(config.get("upscale_factor", 3),
-                                 config.get("dataset", "dataset"),
-                                 config.get("download", False))
+    train_set = get_training_set(config.get("upscale_factor", 3))
     training_data_loader = DataLoader(dataset=train_set,
                                       num_workers=4,
                                       shuffle=True)
@@ -158,28 +161,20 @@ def train_data_creator(config):
 
 
 def validation_data_creator(config):
-    def get_test_set(upscale_factor, dir):
-        root_dir = join(dir, "BSDS300/images")
+    def get_test_set(upscale_factor):
+        root_dir = download_bsd300()
         test_dir = join(root_dir, "test")
-        crop_size = 256 - (256 % upscale_factor)
+        crop_size = calculate_valid_crop_size(256, upscale_factor)
 
         return DatasetFromFolder(test_dir,
-                                 input_transform=Compose([
-                                     CenterCrop(crop_size),
-                                     Resize(crop_size // upscale_factor),
-                                     ToTensor()]),
-                                 target_transform=Compose([
-                                     CenterCrop(crop_size),
-                                     ToTensor()]))
+                                 input_transform=input_transform(crop_size, upscale_factor),
+                                 target_transform=target_transform(crop_size))
 
-    test_set = get_test_set(config.get("upscale_factor", 3), config.get("dataset", "dataset"))
+    test_set = get_test_set(config.get("upscale_factor", 3))
     testing_data_loader = DataLoader(dataset=test_set,
                                      num_workers=4,
                                      shuffle=False)
     return testing_data_loader
-
-
-print('===> Building model')
 
 
 class Net(nn.Module):
@@ -230,33 +225,38 @@ estimator = Estimator.from_torch(
     config={
         "lr": opt.lr,
         "upscale_factor": opt.upscale_factor,
-        "dataset": opt.dataset,
-        "download": opt.download
     }
 )
 
-print("===> training model")
-
 
 def train(epoch):
-    stats = estimator.fit(data=train_data_creator, epochs=epoch,batch_size=opt.batch_size)
+    stats = estimator.fit(data=train_data_creator, epochs=epoch, batch_size=opt.batch_size)
     for epochinfo in stats:
         print("train stats==> num_samples:" + str(epochinfo["num_samples"])
               + " ,epoch:" + str(epochinfo["epoch"])
               + " ,batch_count:" + str(epochinfo["batch_count"])
               + " ,train_loss:" + str(epochinfo["train_loss"])
               + " ,last_train_loss:" + str(epochinfo["last_train_loss"]))
+        print("===> Epoch {} Complete: Avg. Loss: {:.4f}".format(epochinfo["epoch"], epochinfo["train_loss"]))
 
 
 def test():
-    val_stats = estimator.evaluate(data=validation_data_creator,batch_size=opt.test_batch_size)
+    val_stats = estimator.evaluate(data=validation_data_creator, batch_size=opt.test_batch_size)
     print("validation stats==> num_samples:" + str(val_stats["num_samples"])
           + " ,batch_count:" + str(val_stats["batch_count"])
           + " ,val_loss" + str(val_stats["val_loss"])
           + " ,last_val_loss" + str(val_stats["last_val_loss"]))
-    print("===> Avg. PSNR: {:.4f} dB".format(10 * log10(val_stats["val_loss"])))
+    print("===> Avg. PSNR: {:.4f} dB".format(10 * log10(1. / val_stats["val_loss"])))
+
+
+def checkpoint(epochs):
+    model_out_path = "model_epoch_{}.pth".format(epochs)
+    model = estimator.get_model()
+    torch.save(model, model_out_path)
+    print("Checkpoint saved to {}".format(model_out_path))
 
 
 train(opt.epochs)
 test()
+checkpoint(opt.epochs)
 stop_orca_context()
