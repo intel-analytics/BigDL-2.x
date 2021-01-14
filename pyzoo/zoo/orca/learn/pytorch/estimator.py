@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 from zoo.orca.data.utils import row_to_sample, xshard_to_sample
+from zoo.orca.learn.utils import convert_predict_to_dataframe
 from zoo.pipeline.estimator.estimator import Estimator as SparkEstimator
 from zoo.orca.learn.ray_estimator import Estimator as OrcaRayEstimator
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
@@ -303,7 +304,12 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
             raise ValueError("Data should be XShards, each element needs to be {'x': a feature "
                              "numpy array}.")
         predicted_rdd = self.model.predict(data_rdd, batch_size=batch_size)
-        return convert_predict_to_xshard(predicted_rdd)
+
+        if isinstance(data, SparkXShards):
+            result = convert_predict_to_xshard(data, predicted_rdd)
+        else:
+            result = convert_predict_to_dataframe(data, predicted_rdd)
+        return result
 
     def evaluate(self, data, batch_size=32, feature_cols=None, label_cols=None,
                  validation_metrics=None):

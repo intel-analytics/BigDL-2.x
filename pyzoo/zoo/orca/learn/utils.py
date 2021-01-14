@@ -16,6 +16,7 @@
 
 from zoo.common.utils import get_file_list
 from zoo.orca.data import SparkXShards
+from zoo.orca.data.utils import get_size
 from zoo.util.utils import convert_row_to_numpy
 import numpy as np
 
@@ -66,23 +67,94 @@ def find_latest_checkpoint(model_dir, model_type="bigdl"):
     return ckpt_path, optim_prefix, latest_version
 
 
-def convert_predict_to_xshard(prediction_rdd):
+def convert_predict_to_xshard(data, prediction_rdd):
     import numpy as np
     from zoo.orca.data import SparkXShards
 
-    def transform_predict(iter):
-        predictions = list(iter)
+    def group_index(iter):
+        for data in iter:
+            size = get_size(data)
+            for i in size:
+                yield size
+
+    def transform_predict(predictions):
         # list of np array
         if isinstance(predictions[0], list):
             predictions = np.array(predictions).T.tolist()
             result = [np.array(predict) for predict in predictions]
-            return [{'prediction': result}]
+            return result
         # np array
         else:
-            return [{'prediction': np.array(predictions)}]
+            return np.array(predictions)
 
-    return SparkXShards(prediction_rdd.mapPartitions(transform_predict))
+    # def group(iter):
+    #     pred_idx = -1
+    #     buffer = None
+    #     for data in iter:
+    #         idx, pred = data
+    #         if idx != pred_idx:
+    #             if buffer is not None:
+    #                 pred = transform_predict(buffer)
+    #                 yield pred
+    #                 buffer.clear()
+    #             else:
+    #                 buffer = []
+    #             buffer.append(pred)
+    #         else:
+    #             buffer.append(pred)
+    #     yield transform_predict(buffer)
 
+    def group(iter):
+        this_index = 0
+        buffer = []
+        this_count = None
+        for (count, pred) in iter:
+            if this_index == 0:
+                this_count = count
+            if this_index < this_count:
+                buffer.append(pred)
+                this_index += 1
+            if this_index == this_count:
+                yield transform_predict(buffer)
+                buffer.clear()
+                this_index = 0
+
+
+    def add_pred(shard_pred):
+        shard, pred = shard_pred
+        shard["prediction"] = pred
+        return shard
+
+    grouped_pred = data.rdd.mapPartitions(group_index).zip(prediction_rdd).mapPartitions(group)
+    result_rdd = data.rdd.zip(grouped_pred).map(add_pred)
+    return SparkXShards(result_rdd)
+
+def convert_predict_to_dataframe(df, prediction_rdd):
+    from pyspark.sql import Row
+    from pyspark.sql.types import StructType, StructField, FloatType, ArrayType
+    from pyspark.ml.linalg import VectorUDT, Vectors
+
+    def combine(pair):
+        # list of np array
+        if isinstance(pair[1], list):
+            row = Row(*([pair[0][col] for col in pair[0].__fields__] +
+                        [[Vectors.dense(elem) for elem in pair[1]]]))
+            return row, ArrayType(VectorUDT())
+        # scalar
+        elif len(pair[1].shape) == 0:
+            row = Row(*([pair[0][col] for col in pair[0].__fields__] + [float(pair[1].item(0))]))
+            return row, FloatType()
+        # np array
+        else:
+            row = Row(*([pair[0][col] for col in pair[0].__fields__] + [Vectors.dense(pair[1])]))
+            return row, VectorUDT()
+
+    combined_rdd = df.rdd.zip(prediction_rdd).map(combine)
+    type = combined_rdd.map(lambda data: data[1]).first()
+    result_rdd = combined_rdd.map(lambda data: data[0])
+    schema = StructType(df.schema.fields + [StructField('prediction', type)])
+    result_df = result_rdd.toDF(schema)
+    return result_df
 
 def arrays2dict(iter, feature_cols, label_cols):
 
