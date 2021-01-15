@@ -66,7 +66,7 @@ class TestRayTuneSearchEngine(ZooTestCase):
 
     def get_data(self):
         def get_linear_data(a, b, size):
-            x = np.arange(0, 10, 10 / size, dtype=np.float32)
+            x = np.arange(0, 10, 10 / size)
             y = a*x + b
             return x, y
         train_x, train_y = get_linear_data(2, 5, 1000)
@@ -76,10 +76,10 @@ class TestRayTuneSearchEngine(ZooTestCase):
     def create_date_dataset(self):
         sample_num = np.random.randint(100, 200)
         train_df = pd.DataFrame({"datetime": pd.date_range(
-            '1/1/2019', periods=sample_num), "value": np.random.randn(sample_num).astype(np.float32)})
+            '1/1/2019', periods=sample_num), "value": np.random.randn(sample_num)})
         val_sample_num = np.random.randint(20, 30)
         validation_df = pd.DataFrame({"datetime": pd.date_range(
-            '1/1/2019', periods=val_sample_num), "value": np.random.randn(val_sample_num).astype(np.float32)})
+            '1/1/2019', periods=val_sample_num), "value": np.random.randn(val_sample_num)})
         future_seq_len = 1
         return train_df, validation_df, future_seq_len
 
