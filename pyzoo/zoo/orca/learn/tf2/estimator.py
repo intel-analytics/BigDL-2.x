@@ -293,12 +293,12 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         from pyspark.sql import DataFrame
 
         if isinstance(data, DataFrame):
-            data, _ = dataframe_to_xshards(data,
+            xshards, _ = dataframe_to_xshards(data,
                                            validation_data=None,
                                            feature_cols=feature_cols,
                                            label_cols=None,
                                            mode="predict")
-            pred_shards = self._predict_spark_xshards(data, params)
+            pred_shards = self._predict_spark_xshards(xshards, params)
             result = convert_predict_xshards_to_dataframe(data, pred_shards)
         elif isinstance(data, SparkXShards):
             pred_shards = self._predict_spark_xshards(data, params)
