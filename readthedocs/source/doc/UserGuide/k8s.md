@@ -188,7 +188,6 @@ ${SPARK_HOME}/bin/spark-submit \
   file:///path/script.py \
   --input_dir /data
 ```
-Above is a sample for submitting the python [anomalydetection](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/anomalydetection) example on client mode.
 
 Options:
 
