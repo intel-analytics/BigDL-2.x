@@ -13,7 +13,7 @@ We recommend using [Conda](https://docs.conda.io/projects/conda/en/latest/user-g
 ```bash
 conda create -n zoo python=3.7 # "zoo" is conda environment name, you can use any name you like.
 conda activate zoo
-pip install analytics-zoo # install either version 0.9 or latest nightly build
+pip install analytics-zoo[ray] # install either version 0.9 or latest nightly build
 pip install tensorflow==2.3.0
 ```
 
@@ -104,6 +104,7 @@ stats = est.fit(train_data_creator,
                 steps_per_epoch=60000 // batch_size,
                 validation_data=val_data_creator,
                 validation_steps=10000 // batch_size)
+                
 est.save("/tmp/mnist_keras.ckpt")
 est.load("/tmp/mnist_keras.ckpt")
 
