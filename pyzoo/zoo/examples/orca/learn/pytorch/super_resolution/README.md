@@ -19,7 +19,7 @@ If your yarn nodes can't access internet, run the `prepare_dataset.sh` to prepar
 ```
 bash prepare_dataset.sh
 ```
-After the script runs, you will see folder **dataset(for local mode use)** and archive **dataset.zip(for yarn mode use)**.
+After the script runs, you will see folder **dataset (for local mode use)** and archive **dataset.zip (for yarn mode use)**.
 
 ## Run example
 You can run this example on local mode and yarn-client mode.

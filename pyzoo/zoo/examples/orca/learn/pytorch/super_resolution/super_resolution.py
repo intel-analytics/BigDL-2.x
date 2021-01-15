@@ -232,21 +232,14 @@ estimator = Estimator.from_torch(
 def train(epoch):
     stats = estimator.fit(data=train_data_creator, epochs=epoch, batch_size=opt.batch_size)
     for epochinfo in stats:
-        print("train stats==> num_samples:" + str(epochinfo["num_samples"])
-              + " ,epoch:" + str(epochinfo["epoch"])
-              + " ,batch_count:" + str(epochinfo["batch_count"])
-              + " ,train_loss:" + str(epochinfo["train_loss"])
-              + " ,last_train_loss:" + str(epochinfo["last_train_loss"]))
-        print("===> Epoch {} Complete: Avg. Loss: {:.4f}".format(epochinfo["epoch"], epochinfo["train_loss"]))
+        print("===> Epoch {} Complete: Avg. Loss: {:.4f}"
+              .format(epochinfo["epoch"], epochinfo["train_loss"]))
 
 
 def test():
     val_stats = estimator.evaluate(data=validation_data_creator, batch_size=opt.test_batch_size)
-    print("validation stats==> num_samples:" + str(val_stats["num_samples"])
-          + " ,batch_count:" + str(val_stats["batch_count"])
-          + " ,val_loss" + str(val_stats["val_loss"])
-          + " ,last_val_loss" + str(val_stats["last_val_loss"]))
-    print("===> Avg. PSNR: {:.4f} dB".format(10 * log10(1. / val_stats["val_loss"])))
+    print("===>validation Complete: Avg. PSNR: {:.4f} dB, Avg. Loss: {:.4f}"
+          .format(10 * log10(1. / val_stats["val_loss"]), val_stats["val_loss"]))
 
 
 def checkpoint(epochs):
