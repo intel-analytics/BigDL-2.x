@@ -65,7 +65,7 @@ execute_ray_test fashion_mnist ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/lea
 time7=$?
 
 if [ ! -f ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/BSDS300-images.tgz ]; then
-  wget -nv $FTP_URI/analytics-zoo-data/data/BSDS300-images.tgz -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/
+  wget -nv $FTP_URI/analytics-zoo-data/BSDS300-images.tgz -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/
 fi
 if [ ! -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/dataset ]; then
   mkdir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/dataset
