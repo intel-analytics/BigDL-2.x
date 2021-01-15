@@ -2,11 +2,11 @@
 
 ---
 
-You can use Analytics Zoo without any installation by using  [Google Colab](https://colab.research.google.com/). Analytics Zoo also include a collection of [notebooks](./../../../../docs/docs/colab-notebook/notebooks.md) that can be directly opened and run in Colab.
+You can use Analytics Zoo without any installation by using  [Google Colab](https://colab.research.google.com/). Analytics Zoo also include a collection of [notebooks](./notebooks.md) that can be directly opened and run in Colab.
 
 ### **1. Open a Colab Notebook**
 
-Find the [notebooks](./../../../../docs/docs/colab-notebook/notebooks.md) running on Colab.
+Find the [notebooks](./notebooks.md) running on Colab.
 
 ### **2. Notebook Setup**
 
@@ -58,4 +58,4 @@ You can install the latest pre-release version using `pip install --pre analytic
 
 **Install Python Dependencies**
 
-As Colab python environment provides some built-in Python libraries, you should check if the library versions are compatible with your application. You may refer [compatibility](./python.md#compatibility) to specify the python library version that Analytics Zoo supports.
+As Colab python environment provides some built-in Python libraries, you should check if the library versions are compatible with your application. You may refer [compatibility](./python.md) to specify the python library version that Analytics Zoo supports.
