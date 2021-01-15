@@ -95,14 +95,16 @@ class RayTuneSearchEngine(SearchEngine):
         if set(["x", "y"]).issubset(data_schema):
             data_mode = 'ndarray'
         assert data_mode in ['dataframe', 'ndarray'],\
-            'ERROR: Argument \'data\' should fit either dataframe schema or ndarray schema.'
+            'ERROR: Argument \'data\' should fit either \
+                dataframe schema (include \'df\' in keys) or\
+                     ndarray (include \'x\' and \'y\' in keys) schema.'
 
         # data extract
         if data_mode == 'dataframe':
             input_df = data['df']
-            feature_cols = data['feature_cols'] if 'feature_cols' in data.keys() else None
-            target_col = data['target_col'] if 'target_col' in data.keys() else None
-            validation_df = data['val_df'] if 'val_df' in data.keys() else None
+            feature_cols = data.get("feature_cols", None)
+            target_col = data.get("target_col", None)
+            validation_df = data.get("val_df", None)
         else:
             if data["x"].ndim == 1:
                 data["x"] = data["x"].reshape(-1, 1)
@@ -112,9 +114,12 @@ class RayTuneSearchEngine(SearchEngine):
                 data["val_x"] = data["val_x"].reshape(-1, 1)
             if "val_y" in data.keys() and data["val_y"].ndim == 1:
                 data["val_y"] = data["val_y"].reshape(-1, 1)
+
             input_data = {"x": data["x"], "y": data["y"]}
-            validation_data = {"x": data["val_x"], "y": data["val_y"]} \
-                                if 'val_x' in data.keys() and 'val_y' in data.keys() else None
+            if 'val_x' in data.keys():
+                validation_data = {"x": data["val_x"], "y": data["val_y"]}
+            else:
+                validation_data = None
 
         # prepare parameters for search engine
         runtime_params = recipe.runtime_params()
