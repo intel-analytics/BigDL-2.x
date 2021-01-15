@@ -230,10 +230,10 @@ estimator = Estimator.from_torch(
 
 
 def train(epoch):
-    stats = estimator.fit(data=train_data_creator, epochs=epoch, batch_size=opt.batch_size)
+    stats = estimator.fit(data=train_data_creator, epochs=1, batch_size=opt.batch_size)
     for epochinfo in stats:
         print("===> Epoch {} Complete: Avg. Loss: {:.4f}"
-              .format(epochinfo["epoch"], epochinfo["train_loss"]))
+              .format(epoch, epochinfo["train_loss"]))
 
 
 def test():
@@ -249,7 +249,9 @@ def checkpoint(epochs):
     print("Checkpoint saved to {}".format(model_out_path))
 
 
-train(opt.epochs)
-test()
-checkpoint(opt.epochs)
+for epoch in range(1, opt.epochs + 1):
+    train(epoch)
+    test()
+    checkpoint(epoch)
+
 stop_orca_context()

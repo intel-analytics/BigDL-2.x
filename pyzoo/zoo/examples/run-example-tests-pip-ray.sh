@@ -64,13 +64,13 @@ sed "s/epochs=5/epochs=1/g;s/batch_size=4/batch_size=256/g" \
 execute_ray_test tb-fashion-mnist ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/fashion-mnist_tmp.py
 time7=$?
 
-if [ -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/dataset ]
-then
-    echo "BSDS3000 already exists"
-else
-    wget https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/BSDS300-images.tgz --no-check-certificate
-    mkdir dataset
-    tar -xzf BSDS300-images.tgz -C ./dataset
+if [ ! -f ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/BSDS300-images.tgz ]; then
+  wget -nv $FTP_URI/analytics-zoo-data/data/BSDS300-images.tgz -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/
+fi
+if [ ! -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/dataset ]; then
+  mkdir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/dataset
+  tar -xzf ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/BSDS300-images.tgz \
+  -C ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/dataset
 fi
 
 execute_ray_test super_resolution_BSDS3000 ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/super_resolution.py

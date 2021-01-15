@@ -82,12 +82,13 @@ time6=$((now-start))
 echo "#7 start example for orca super-resolution"
 start=$(date "+%s")
 
-if [ ! -f "BSDS300-images.tgz" ]; then
-  wget https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/BSDS300-images.tgz --no-check-certificate
+if [ ! -f ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/BSDS300-images.tgz ]; then
+  wget -nv $FTP_URI/analytics-zoo-data/data/BSDS300-images.tgz -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/
 fi
-if [ ! -d "dataset" ]; then
-  mkdir dataset
-  tar -xzf BSDS300-images.tgz -C ./dataset
+if [ ! -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/dataset ]; then
+  mkdir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/dataset
+  tar -xzf ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/BSDS300-images.tgz \
+  -C ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/dataset
 fi
 
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/super_resolution.py
