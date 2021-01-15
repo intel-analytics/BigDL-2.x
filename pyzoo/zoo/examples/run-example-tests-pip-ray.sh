@@ -64,13 +64,12 @@ sed "s/epochs=5/epochs=1/g;s/batch_size=4/batch_size=256/g" \
 execute_ray_test fashion_mnist ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion_mnist/fashion_mnist_tmp.py
 time7=$?
 
-if [ ! -f ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/BSDS300-images.tgz ]; then
-  wget -nv $FTP_URI/analytics-zoo-data/BSDS300-images.tgz -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/
+if [ ! -f BSDS300-images.tgz ]; then
+  wget -nv $FTP_URI/analytics-zoo-data/BSDS300-images.tgz
 fi
-if [ ! -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/dataset ]; then
-  mkdir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/dataset
-  tar -xzf ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/BSDS300-images.tgz \
-  -C ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/dataset
+if [ ! -d dataset/BSDS300/images ]; then
+  mkdir dataset
+  tar -xzf BSDS300-images.tgz -C dataset
 fi
 
 execute_ray_test super_resolution_BSDS3000 ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/super_resolution.py

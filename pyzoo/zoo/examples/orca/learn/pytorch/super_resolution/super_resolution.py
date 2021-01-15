@@ -71,7 +71,7 @@ def download_report(count, block_size, total_size):
     print('downloaded %d, %.2f%% completed' % (downloaded, percent))
 
 
-def download_bsd300(dest="dataset"):
+def download_bsd300(dest="./dataset"):
     output_image_dir = join(dest, "BSDS300/images")
 
     if not exists(output_image_dir):
