@@ -24,7 +24,8 @@ from zoo.orca.data.tf.data import Dataset, TFDataDataset2
 from zoo.orca.data import SparkXShards
 from zoo.orca.learn.tf.utils import *
 from zoo.orca.learn.trigger import Trigger
-from zoo.orca.learn.utils import find_latest_checkpoint, convert_predict_rdd_to_xshard, convert_predict_rdd_to_dataframe
+from zoo.orca.learn.utils import find_latest_checkpoint, convert_predict_rdd_to_xshard, \
+    convert_predict_rdd_to_dataframe
 from zoo.tfpark import KerasModel
 from zoo.tfpark import TFOptimizer, TFNet, ZooOptimizer
 from zoo.tfpark.tf_optimizer import StatelessMetric

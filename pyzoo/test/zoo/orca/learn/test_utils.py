@@ -110,7 +110,8 @@ class TestUtil(TestCase):
         shards = SparkXShards(shards)
         pred_rdd = self.sc.range(0, 110).map(lambda x: [np.array([x]*24), np.array([x]*26)])
         result_shards = convert_predict_rdd_to_xshard(shards, pred_rdd)
-        result = np.concatenate([np.concatenate(shard["prediction"], axis=1) for shard in result_shards.collect()])
+        result = np.concatenate([np.concatenate(shard["prediction"], axis=1)
+                                 for shard in result_shards.collect()])
         expected_result = np.concatenate([shard["x"] for shard in result_shards.collect()])
 
         assert np.array_equal(result, expected_result)
@@ -119,7 +120,8 @@ class TestUtil(TestCase):
 
         def get_xshards(key):
             rdd = self.sc.range(0, 110).map(lambda x: np.array([x] * 50))
-            shards = rdd.mapPartitions(lambda iter: chunks(iter, 5)).map(lambda x: {key: np.stack(x)})
+            shards = rdd.mapPartitions(lambda iter: chunks(iter, 5)).map(
+                lambda x: {key: np.stack(x)})
             shards = SparkXShards(shards)
             return shards
 
@@ -135,7 +137,8 @@ class TestUtil(TestCase):
 
         def get_data_xshards(key):
             rdd = self.sc.range(0, 110).map(lambda x: np.array([x] * 50))
-            shards = rdd.mapPartitions(lambda iter: chunks(iter, 5)).map(lambda x: {key: np.stack(x)})
+            shards = rdd.mapPartitions(lambda iter: chunks(iter, 5)).map(
+                lambda x: {key: np.stack(x)})
             shards = SparkXShards(shards)
             return shards
 
@@ -150,7 +153,8 @@ class TestUtil(TestCase):
         pred_shards = get_pred_xshards("prediction")
 
         result_shards = update_predict_xshards(data_shards, pred_shards)
-        result = np.concatenate([np.concatenate(shard["prediction"], axis=1) for shard in result_shards.collect()])
+        result = np.concatenate([np.concatenate(shard["prediction"], axis=1)
+                                 for shard in result_shards.collect()])
         expected_result = np.concatenate([shard["x"] for shard in result_shards.collect()])
 
         assert np.array_equal(result, expected_result)

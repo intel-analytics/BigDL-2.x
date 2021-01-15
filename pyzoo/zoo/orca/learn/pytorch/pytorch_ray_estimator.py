@@ -24,8 +24,8 @@ import numpy as np
 from zoo.orca.data.shard import RayXShards
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.pytorch.torch_runner import TorchRunner
-from zoo.orca.learn.utils import maybe_dataframe_to_xshards, dataframe_to_xshards, convert_predict_xshards_to_dataframe, \
-    update_predict_xshards
+from zoo.orca.learn.utils import maybe_dataframe_to_xshards, dataframe_to_xshards, \
+    convert_predict_xshards_to_dataframe, update_predict_xshards
 from zoo.ray import RayContext
 
 import ray
@@ -331,10 +331,10 @@ class PyTorchRayEstimator:
         from pyspark.sql import DataFrame
         if isinstance(data, DataFrame):
             xshards, _ = dataframe_to_xshards(data,
-                                           validation_data=None,
-                                           feature_cols=feature_cols,
-                                           label_cols=None,
-                                           mode="predict")
+                                              validation_data=None,
+                                              feature_cols=feature_cols,
+                                              label_cols=None,
+                                              mode="predict")
             pred_shards = self._predict_spark_xshards(xshards, param)
             result = convert_predict_xshards_to_dataframe(data, pred_shards)
         elif isinstance(data, SparkXShards):

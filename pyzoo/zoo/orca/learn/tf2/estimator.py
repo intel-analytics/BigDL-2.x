@@ -23,8 +23,8 @@ import ray
 from zoo.orca.data.shard import RayXShards
 from zoo.orca.learn.tf2.tf_runner import TFRunner
 from zoo.orca.learn.ray_estimator import Estimator as OrcaRayEstimator
-from zoo.orca.learn.utils import maybe_dataframe_to_xshards, dataframe_to_xshards, convert_predict_rdd_to_dataframe, \
-    convert_predict_xshards_to_dataframe, update_predict_xshards
+from zoo.orca.learn.utils import maybe_dataframe_to_xshards, dataframe_to_xshards, \
+    convert_predict_rdd_to_dataframe, convert_predict_xshards_to_dataframe, update_predict_xshards
 from zoo.ray import RayContext
 
 logger = logging.getLogger(__name__)
@@ -267,6 +267,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
 
     def _predict_spark_xshards(self, xshards, params):
         ray_xshards = RayXShards.from_spark_xshards(xshards)
+
         def transform_func(worker, shards_ref):
             params["data_creator"] = shards_ref_to_creator(shards_ref)
             return worker.predict.remote(**params)
@@ -294,10 +295,10 @@ class TensorFlow2Estimator(OrcaRayEstimator):
 
         if isinstance(data, DataFrame):
             xshards, _ = dataframe_to_xshards(data,
-                                           validation_data=None,
-                                           feature_cols=feature_cols,
-                                           label_cols=None,
-                                           mode="predict")
+                                              validation_data=None,
+                                              feature_cols=feature_cols,
+                                              label_cols=None,
+                                              mode="predict")
             pred_shards = self._predict_spark_xshards(xshards, params)
             result = convert_predict_xshards_to_dataframe(data, pred_shards)
         elif isinstance(data, SparkXShards):
