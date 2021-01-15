@@ -315,7 +315,8 @@ class PyTorchRayEstimator:
         pred_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
                                                                transform_func,
                                                                gang_scheduling=False)
-        return pred_shards
+        spark_xshards = pred_shards.to_spark_xshards()
+        return spark_xshards
 
     def predict(self,
                 data,
@@ -329,12 +330,12 @@ class PyTorchRayEstimator:
         )
         from pyspark.sql import DataFrame
         if isinstance(data, DataFrame):
-            data, _ = dataframe_to_xshards(data,
+            xshards, _ = dataframe_to_xshards(data,
                                            validation_data=None,
                                            feature_cols=feature_cols,
                                            label_cols=None,
                                            mode="predict")
-            pred_shards = self._predict_spark_xshards(data, param)
+            pred_shards = self._predict_spark_xshards(xshards, param)
             result = convert_predict_xshards_to_dataframe(data, pred_shards)
         elif isinstance(data, SparkXShards):
             pred_shards = self._predict_spark_xshards(data, param)
