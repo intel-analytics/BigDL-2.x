@@ -24,11 +24,14 @@ from zoo.util import nest
 
 class XShards(object):
     """
+
     A collection of data which can be pre-processed in parallel.
     """
     def transform_shard(self, func, *args):
         """
+
         Transform each shard in the XShards using specified function.
+
         :param func: pre-processing function
         :param args: arguments for the pre-processing function
         :return: DataShard
@@ -37,14 +40,18 @@ class XShards(object):
 
     def collect(self):
         """
+
         Returns a list that contains all of the elements in this XShards
+
         :return: list of elements
         """
         pass
 
     def num_partitions(self):
         """
+
         return the number of partitions in this XShards
+
         :return: an int
         """
         pass
@@ -52,7 +59,9 @@ class XShards(object):
     @classmethod
     def load_pickle(cls, path, minPartitions=None):
         """
+
         Load XShards from pickle files.
+
         :param path: The pickle file path/directory
         :param minPartitions: The minimum partitions for the XShards
         :return: SparkXShards object
@@ -63,7 +72,9 @@ class XShards(object):
     @staticmethod
     def partition(data):
         """
+
         Partition local in memory data and form a SparkXShards
+
         :param data: np.ndarray, a tuple, list, dict of np.ndarray, or a nested structure
         made of tuple, list, dict with ndarray as the leaf value
         :return: a SparkXShards
@@ -108,6 +119,7 @@ But got data of type {}
 
 class RayXShards(XShards):
     """
+
     A collection of data which can be pre-processed in parallel on Ray
     """
     def __init__(self, ray_rdd):
@@ -119,6 +131,7 @@ class RayXShards(XShards):
     def transform_shards_with_actors(self, actors, func,
                                      gang_scheduling=True):
         """
+
         Assign each partition_ref (referencing a list of shards) to an actor,
         and run func for each actor and partition_ref pair.
 
@@ -170,6 +183,7 @@ class RayXShards(XShards):
 
 class SparkXShards(XShards):
     """
+
     A collection of data which can be pre-processed in parallel on Spark
     """
     def __init__(self, rdd, transient=False):
@@ -186,7 +200,9 @@ class SparkXShards(XShards):
 
     def transform_shard(self, func, *args):
         """
+
         Return a new SparkXShards by applying a function to each shard of this SparkXShards
+
         :param func: python function to process data. The first argument is the data shard.
         :param args: other arguments in this function.
         :return: a new SparkXShards.
@@ -202,14 +218,18 @@ class SparkXShards(XShards):
 
     def collect(self):
         """
+
         Returns a list that contains all of the elements in this SparkXShards
+
         :return: a list of data elements.
         """
         return self.rdd.collect()
 
     def cache(self):
         """
+
         Persist this SparkXShards in memory
+
         :return:
         """
         self.user_cached = True
@@ -218,7 +238,9 @@ class SparkXShards(XShards):
 
     def uncache(self):
         """
+
         Make this SparkXShards as non-persistent, and remove all blocks for it from memory
+
         :return:
         """
         self.user_cached = False
@@ -242,14 +264,18 @@ class SparkXShards(XShards):
 
     def num_partitions(self):
         """
+
         Get number of partitions for this SparkXShards.
+
         :return: number of partitions.
         """
         return self.rdd.getNumPartitions()
 
     def repartition(self, num_partitions):
         """
+
         Return a new SparkXShards that has exactly num_partitions partitions.
+
         :param num_partitions: target number of partitions
         :return: a new SparkXShards object.
         """
@@ -323,8 +349,10 @@ class SparkXShards(XShards):
 
     def partition_by(self, cols, num_partitions=None):
         """
+
         Return a new SparkXShards partitioned using the specified columns.
         This is only applicable for SparkXShards of Pandas DataFrame.
+
         :param cols: specified columns to partition by.
         :param num_partitions: target number of partitions. If not specified,
         the new SparkXShards would keep the current partition number.
@@ -367,8 +395,10 @@ class SparkXShards(XShards):
 
     def unique(self):
         """
+
         Return a unique list of elements of this SparkXShards.
         This is only applicable for SparkXShards of Pandas Series.
+
         :return: a unique list of elements of this SparkXShards.
         """
         if self._get_class_name() == 'pandas.core.series.Series':
@@ -386,6 +416,7 @@ class SparkXShards(XShards):
         """
         Split SparkXShards into multiple SparkXShards.
         Each element in the SparkXShards needs be a list or tuple with same length.
+
         :return: Splits of SparkXShards. If element in the input SparkDataShard is not
                 list or tuple, return list of input SparkDataShards.
         """
@@ -411,12 +442,14 @@ class SparkXShards(XShards):
 
     def zip(self, other):
         """
+
         Zips this SparkXShards with another one, returning key-value pairs with the first element
         in each SparkXShards, second element in each SparkXShards, etc. Assumes that the two
         SparkXShards have the *same number of partitions* and the *same number of elements
         in each partition*(e.g. one was made through a transform_shard on the other
+
         :param other: another SparkXShards
-        :return:
+        :return: zipped SparkXShards
         """
         assert isinstance(other, SparkXShards), "other should be a SparkXShards"
         assert self.num_partitions() == other.num_partitions(), \
@@ -437,8 +470,10 @@ class SparkXShards(XShards):
 
     def save_pickle(self, path, batchSize=10):
         """
+
         Save this SparkXShards as a SequenceFile of serialized objects.
         The serializer used is pyspark.serializers.PickleSerializer, default batch size is 10.
+
         :param path: target path.
         :param batchSize: batch size for each sequence file chunk.
         """
