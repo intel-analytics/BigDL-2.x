@@ -106,6 +106,9 @@ stats = est.fit(train_data_creator,
                 validation_steps=10000 // batch_size)
 est.save("/tmp/mnist_keras.ckpt")
 est.load("/tmp/mnist_keras.ckpt")
+
+stats = est.evaluate(val_data_creator, num_steps=10000 // batch_size)
+print(stats)
 ```
 
 That's it, the same code can run seamlessly in your local laptop and the distribute K8s or Hadoop cluster.
