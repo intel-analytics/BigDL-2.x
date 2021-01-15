@@ -187,7 +187,7 @@ def write_text(path, text):
     """
 
     Write text to a file. It supports local, hdfs, s3 file systems.
-    
+
     :param path: file path
     :param text: text string
     :return: number of bytes written or AWS response(s3 file systems)
