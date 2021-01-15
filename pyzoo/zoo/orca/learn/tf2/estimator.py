@@ -23,7 +23,7 @@ import ray
 from zoo.orca.data.shard import RayXShards
 from zoo.orca.learn.tf2.tf_runner import TFRunner
 from zoo.orca.learn.ray_estimator import Estimator as OrcaRayEstimator
-from zoo.orca.learn.utils import maybe_dataframe_to_xshards, dataframe_to_xshards, convert_predict_to_dataframe, \
+from zoo.orca.learn.utils import maybe_dataframe_to_xshards, dataframe_to_xshards, convert_predict_rdd_to_dataframe, \
     convert_predict_xshards_to_dataframe, update_predict_xshards
 from zoo.ray import RayContext
 

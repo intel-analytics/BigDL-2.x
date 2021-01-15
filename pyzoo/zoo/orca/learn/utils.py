@@ -67,14 +67,14 @@ def find_latest_checkpoint(model_dir, model_type="bigdl"):
     return ckpt_path, optim_prefix, latest_version
 
 
-def convert_predict_to_xshard(data, prediction_rdd):
+def convert_predict_rdd_to_xshard(data, prediction_rdd):
     import numpy as np
     from zoo.orca.data import SparkXShards
 
     def group_index(iter):
         for data in iter:
             size = get_size(data)
-            for i in size:
+            for i in range(size):
                 yield size
 
     def transform_predict(predictions):
@@ -86,23 +86,6 @@ def convert_predict_to_xshard(data, prediction_rdd):
         # np array
         else:
             return np.array(predictions)
-
-    # def group(iter):
-    #     pred_idx = -1
-    #     buffer = None
-    #     for data in iter:
-    #         idx, pred = data
-    #         if idx != pred_idx:
-    #             if buffer is not None:
-    #                 pred = transform_predict(buffer)
-    #                 yield pred
-    #                 buffer.clear()
-    #             else:
-    #                 buffer = []
-    #             buffer.append(pred)
-    #         else:
-    #             buffer.append(pred)
-    #     yield transform_predict(buffer)
 
     def group(iter):
         this_index = 0
@@ -130,7 +113,8 @@ def convert_predict_to_xshard(data, prediction_rdd):
 
 
 def update_predict_xshards(xshard, pred_xshards):
-    def updates(d1, d2):
+    def updates(d1_d2):
+        d1, d2 = d1_d2
         d1.update(d2)
         return d1
 
@@ -140,6 +124,7 @@ def update_predict_xshards(xshard, pred_xshards):
 
 def convert_predict_xshards_to_dataframe(df, pred_shards):
     def flatten(data):
+        data = data["prediction"]
         is_list = isinstance(data, list)
         is_tuple = isinstance(data, tuple)
         if is_list or is_tuple:
@@ -153,16 +138,17 @@ def convert_predict_xshards_to_dataframe(df, pred_shards):
             row = [elem[i] for elem in ls_data]
             if is_list:
                 yield row
-            if is_tuple:
+            elif is_tuple:
                 yield tuple(row)
-            yield row[0]
+            else:
+                yield row[0]
 
     pred_rdd = pred_shards.rdd.flatMap(flatten)
-    result = convert_predict_to_dataframe(df, pred_rdd)
+    result = convert_predict_rdd_to_dataframe(df, pred_rdd)
     return result
 
 
-def convert_predict_to_dataframe(df, prediction_rdd):
+def convert_predict_rdd_to_dataframe(df, prediction_rdd):
     from pyspark.sql import Row
     from pyspark.sql.types import StructType, StructField, FloatType, ArrayType
     from pyspark.ml.linalg import VectorUDT, Vectors
