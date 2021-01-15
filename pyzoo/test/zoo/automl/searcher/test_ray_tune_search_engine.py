@@ -40,11 +40,11 @@ class SimpleRecipe(Recipe):
             "lr": tune.uniform(0.001, 0.01),
             "batch_size": tune.choice([32, 64]),
             "selected_features": json.dumps(all_available_features),
-            "input_dim": len(all_available_features)+1 if all_available_features else None,
+            "input_dim": len(all_available_features)+1 if all_available_features else 1,
             "output_dim": 1
         }
 
-def model_creator(config):
+def linear_model_creator(config):
     """Returns a torch.nn.Module object."""
     return nn.Linear(1, config.get("hidden_size", 1))
 
@@ -52,10 +52,50 @@ def optimizer_creator(model, config):
     """Returns optimizer defined upon the model parameters."""
     return torch.optim.SGD(model.parameters(), lr=config.get("lr", 1e-2))
 
-
 def loss_creator(config):
     return nn.MSELoss()
 
+def prepare_searcher(data,
+                     model_creator=linear_model_creator,
+                     optimizer_creator=optimizer_creator,
+                     loss_creator=loss_creator,
+                     feature_transformer=None,
+                     recipe=SimpleRecipe(),
+                     name="demo"):
+    modelBuilder = ModelBuilder.from_pytorch(model_creator=model_creator,
+                                                optimizer_creator=optimizer_creator,
+                                                loss_creator=loss_creator)
+    searcher = SearchEngineFactory.create_engine(backend="ray",
+                                                logs_dir="~/zoo_automl_logs",
+                                                resources_per_trial={"cpu": 2},
+                                                name=name)
+    search_space = recipe.search_space(feature_transformer.get_feature_list())\
+        if feature_transformer else None
+    searcher.compile(data=data,
+                    model_create_func=modelBuilder,
+                    recipe=SimpleRecipe(),
+                    feature_transformers=feature_transformer,
+                    search_space=search_space)
+    return searcher
+
+def get_data():
+    def get_linear_data(a, b, size):
+        x = np.arange(0, 10, 10 / size)
+        y = a*x + b
+        return x, y
+    train_x, train_y = get_linear_data(2, 5, 1000)
+    val_x, val_y = get_linear_data(2, 5, 400)
+    return train_x, train_y, val_x, val_y
+
+def create_date_dataset():
+    sample_num = np.random.randint(100, 200)
+    train_df = pd.DataFrame({"datetime": pd.date_range(
+        '1/1/2019', periods=sample_num), "value": np.random.randn(sample_num)})
+    val_sample_num = np.random.randint(20, 30)
+    validation_df = pd.DataFrame({"datetime": pd.date_range(
+        '1/1/2019', periods=val_sample_num), "value": np.random.randn(val_sample_num)})
+    future_seq_len = 1
+    return train_df, validation_df, future_seq_len
 class TestRayTuneSearchEngine(ZooTestCase):
 
     def setup_method(self, method):
@@ -64,88 +104,35 @@ class TestRayTuneSearchEngine(ZooTestCase):
     def teardown_method(self, method):
         stop_orca_context()
 
-    def get_data(self):
-        def get_linear_data(a, b, size):
-            x = np.arange(0, 10, 10 / size)
-            y = a*x + b
-            return x, y
-        train_x, train_y = get_linear_data(2, 5, 1000)
-        val_x, val_y = get_linear_data(2, 5, 400)
-        return train_x, train_y, val_x, val_y
-    
-    def create_date_dataset(self):
-        sample_num = np.random.randint(100, 200)
-        train_df = pd.DataFrame({"datetime": pd.date_range(
-            '1/1/2019', periods=sample_num), "value": np.random.randn(sample_num)})
-        val_sample_num = np.random.randint(20, 30)
-        validation_df = pd.DataFrame({"datetime": pd.date_range(
-            '1/1/2019', periods=val_sample_num), "value": np.random.randn(val_sample_num)})
-        future_seq_len = 1
-        return train_df, validation_df, future_seq_len
-
     def test_numpy_input(self):
-        modelBuilder = ModelBuilder.from_pytorch(model_creator=model_creator,
-                                                optimizer_creator=optimizer_creator,
-                                                loss_creator=loss_creator)
-
-        train_x, train_y, val_x, val_y = self.get_data()
-
-        searcher = SearchEngineFactory.create_engine(backend="ray",
-                                                    logs_dir="~/zoo_automl_logs",
-                                                    resources_per_trial={"cpu": 2},
-                                                    name="test_ray_numpy_with_val")
+        train_x, train_y, val_x, val_y = get_data()
         data_with_val = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
-        searcher.compile(data=data_with_val,
-                        model_create_func=modelBuilder,
-                        recipe=SimpleRecipe())
+        searcher = prepare_searcher(data=data_with_val, name='test_ray_numpy_with_val')
         searcher.run()
         best_trials = searcher.get_best_trials(k=1)
-        print("test_ray_numpy_with_val:", best_trials[0].config)
-        
+        assert best_trials is not None
 
     def test_dataframe_input(self):
-        modelBuilder = ModelBuilder.from_pytorch(model_creator=model_creator,
-                                                optimizer_creator=optimizer_creator,
-                                                loss_creator=loss_creator)
-
-        train_x, train_y, val_x, val_y = self.get_data()
-
-        searcher = SearchEngineFactory.create_engine(backend="ray",
-                                                    logs_dir="~/zoo_automl_logs",
-                                                    resources_per_trial={"cpu": 2},
-                                                    name="test_ray_dateframe_with_val")
+        train_x, train_y, val_x, val_y = get_data()
         dataframe_with_val = {'df': pd.DataFrame({'x': train_x, 'y': train_y}), 
                               'val_df': pd.DataFrame({'x': val_x, 'y': val_y}),
                               'feature_cols': ['x'],
                               'target_col': 'y'}
-        searcher.compile(data=dataframe_with_val,
-                        model_create_func=modelBuilder,
-                        recipe=SimpleRecipe())
+        searcher = prepare_searcher(data=dataframe_with_val, name='test_ray_dataframe_with_val')
         searcher.run()
         best_trials = searcher.get_best_trials(k=1)
-        print("test_ray_dataframe_with_val:", best_trials[0].config)
+        assert best_trials is not None
 
     def test_dataframe_input_with_datetime(self):
-        modelBuilder = ModelBuilder.from_pytorch(model_creator=LSTM_model_creator,
-                                                optimizer_creator=optimizer_creator,
-                                                loss_creator=loss_creator)
-
-        train_df, validation_df, future_seq_len = self.create_date_dataset()
-
+        train_df, validation_df, future_seq_len = create_date_dataset()
+        dataframe_with_datetime = {'df': train_df, 'val_df': validation_df}
         ft = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len,
                                        dt_col="datetime",
                                        target_col="value")
-        dataframe_with_val = {'df': train_df, 'val_df': validation_df}
-        searcher = SearchEngineFactory.create_engine(backend="ray",
-                                                    logs_dir="~/zoo_automl_logs",
-                                                    resources_per_trial={"cpu": 2},
-                                                    name="test_ray_dateframe_with_datetime_with_val")
-        recipe = SimpleRecipe()
-        searcher.compile(data=dataframe_with_val,
-                        model_create_func=modelBuilder,
-                        recipe=recipe,
-                        feature_transformers=ft,
-                        search_space=recipe.search_space(ft.get_feature_list()))
+        searcher = prepare_searcher(data=dataframe_with_datetime,
+                                    model_creator=LSTM_model_creator,
+                                    name='test_ray_dateframe_with_datetime_with_val',
+                                    feature_transformer=ft)
         searcher.run()
         best_trials = searcher.get_best_trials(k=1)
-        print("test_ray_dateframe_with_datetime_with_val:", best_trials[0].config)
+        assert best_trials is not None
