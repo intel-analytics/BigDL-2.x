@@ -156,10 +156,14 @@ Alternatively, you may use `spark_submit` to run your program on K8s clusters.
 
 **Run Python programs**
 
+Use spark-submit to submit your Analytics Zoo program (e.g. script.py):
+
 ```bash
 ${SPARK_HOME}/bin/spark-submit \
   --master ${RUNTIME_SPARK_MASTER} \
   --deploy-mode client \
+  --conf spark.driver.host=${RUNTIME_DRIVER_HOST} \
+  --conf spark.driver.port=${RUNTIME_DRIVER_PORT} \
   --conf spark.kubernetes.authenticate.driver.serviceAccountName=${RUNTIME_K8S_SERVICE_ACCOUNT} \
   --name analytics-zoo \
   --conf spark.kubernetes.container.image=${RUNTIME_K8S_SPARK_IMAGE} \
@@ -181,17 +185,18 @@ ${SPARK_HOME}/bin/spark-submit \
   --conf spark.sql.catalogImplementation='in-memory' \
   --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
   --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
-  file:///opt/analytics-zoo-examples/python/anomalydetection/anomaly_detection.py \
-  --input_dir /zoo/data/nyc_taxi.csv
+  file:///path/script.py \
+  --input_dir /data
 ```
 Above is a sample for submitting the python [anomalydetection](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/anomalydetection) example on client mode.
 
 Options:
 
 - --master: the spark mater, must be a URL with the format `k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port>`. 
-- --deploy-mode: submit application in client mode.
+- --deploy-mode: submit application in client/cluster mode.
+
 - --name: the Spark application name.
-- --conf: require to specify k8s service account, container image to use for the Spark application, driver volumes name and path, label of pods, spark driver and executor configuration, etc.
+- --conf: require to specify k8s service account, container image to use for the Spark application, driver volumes name and path, label of pods, spark driver and executor configuration, etc. `--conf spark.driver.host/port` is required when submitting jobs via kubernetes client mode. 
   check the argument settings in your environment and refer to the [spark configuration page](https://spark.apache.org/docs/latest/configuration.html) and [spark on k8s configuration page](https://spark.apache.org/docs/latest/running-on-kubernetes.html#configuration) for more details.
 - --properties-file: the customized conf properties.
 - --py-files: the extra python packages is needed.
@@ -209,22 +214,25 @@ In the `/opt` directory, run this command line to start the Jupyter Notebook ser
 
 You will see the output message like below. This means the Jupyter Notebook service has started successfully within the container.
 ```
-[I 01:04:45.625 NotebookApp] Serving notebooks from local directory: /opt/work/analytics-zoo-0.5.0-SNAPSHOT/apps
-[I 01:04:45.625 NotebookApp] The Jupyter Notebook is running at:
-[I 01:04:45.625 NotebookApp] http://(the-host-name or 127.0.0.1):12345/?token=...
-[I 01:04:45.625 NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[I 23:51:08.456 NotebookApp] Serving notebooks from local directory: /opt/analytics-zoo-0.10.0-SNAPSHOT/apps
+[I 23:51:08.456 NotebookApp] Jupyter Notebook 6.2.0 is running at:
+[I 23:51:08.456 NotebookApp] http://xxxx:12345/?token=...
+[I 23:51:08.457 NotebookApp]  or http://127.0.0.1:12345/?token=...
+[I 23:51:08.457 NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
 ```
 
 Then, refer [docker guide](./docker.md) to open Jupyter Notebook service from a browser and run notebook.
 
 **Run Scala programs**
 
-Here is a sample for submitting the scala [anomalydetection](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/anomalydetection) example on cluster mode
+Use spark-submit to submit your Analytics Zoo program (e.g. script.scala):
 
 ```bash
 ${SPARK_HOME}/bin/spark-submit \
   --master ${RUNTIME_SPARK_MASTER} \
-  --deploy-mode cluster \
+  --deploy-mode client \
+  --conf spark.driver.host=${RUNTIME_DRIVER_HOST} \
+  --conf spark.driver.port=${RUNTIME_DRIVER_PORT} \
   --conf spark.kubernetes.authenticate.driver.serviceAccountName=${RUNTIME_K8S_SERVICE_ACCOUNT} \
   --name analytics-zoo \
   --conf spark.kubernetes.container.image=${RUNTIME_K8S_SPARK_IMAGE} \
@@ -246,18 +254,18 @@ ${SPARK_HOME}/bin/spark-submit \
   --conf spark.sql.catalogImplementation='in-memory' \
   --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
   --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
-  --class com.intel.analytics.zoo.examples.anomalydetection.AnomalyDetection \
+  --class your.class \
   ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip \
-  --inputDir /zoo/data
+  --inputDir /data
 ```
 
 Options:
 
 - --master: the spark mater, must be a URL with the format `k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port>`. 
-- --deploy-mode: submit application in cluster mode.
+- --deploy-mode: submit application in client/cluster mode.
 - --name: the Spark application name.
-- --conf: require to specify k8s service account, container image to use for the Spark application, driver volumes name and path, label of pods, spark driver and executor configuration, etc.
-  check the argument settings in your environment and refer to the [spark configuration page](https://spark.apache.org/docs/latest/configuration.html) and [spark on k8s configuration page](https://spark.apache.org/docs/latest/running-on-kubernetes.html#configuration) for more details.
+- --conf: require to specify k8s service account, container image to use for the Spark application, driver volumes name and path, label of pods, spark driver and executor configuration, etc. `--conf spark.driver.host/port` is required when submitting jobs via kubernetes client mode. 
+Check the argument settings in your environment and refer to the [spark configuration page](https://spark.apache.org/docs/latest/configuration.html) and [spark on k8s configuration page](https://spark.apache.org/docs/latest/running-on-kubernetes.html#configuration) for more details.
 - --properties-file: the customized conf properties.
 - --py-files: the extra python packages is needed.
 - --class: scala example class name.
