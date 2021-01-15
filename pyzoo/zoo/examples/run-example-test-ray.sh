@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 export SPARK_HOME=$SPARK_HOME

@@ -42,7 +42,7 @@ from zoo.orca.learn.pytorch import Estimator
 
 parser = argparse.ArgumentParser(description='PyTorch Super Res Example')
 parser.add_argument('--upscale_factor', type=int,
-                    default=10, help="super resolution upscale factor")
+                    default=3, help="super resolution upscale factor")
 parser.add_argument('--batch_size', type=int, default=64, help='training batch size')
 parser.add_argument('--test_batch_size', type=int, default=10, help='testing batch size')
 parser.add_argument('--epochs', type=int, default=2, help='number of epochs to train for')
@@ -54,15 +54,13 @@ opt = parser.parse_args()
 print(opt)
 
 if opt.cluster_mode == "local":
-    init_orca_context(cores=2, memory="2g")
+    init_orca_context()
 elif opt.cluster_mode == "yarn":
-    additional = "" if not exists("dataset") else "dataset/BSDS300.zip#dataset"
-    init_orca_context(
-        cluster_mode="yarn-client", cores=4, num_nodes=2, memory="2g",
-        driver_memory="2 g", driver_cores=1,
-        additional_archive=additional)
+    additional = None if not exists("dataset/BSDS300.zip") else "dataset/BSDS300.zip#dataset"
+    init_orca_context(cluster_mode="yarn-client", cores=4, num_nodes=2,
+                      additional_archive=additional)
 else:
-    print("init orca context failed.cluster_mode should be either local or yarn but got "
+    print("init orca context failed.cluster_mode should be either 'local' or 'yarn' but got "
           + opt.cluster_mode)
 
 
@@ -215,7 +213,7 @@ criterion = nn.MSELoss()
 
 
 def optim_creator(model, config):
-    return optim.Adam(model.parameters(), lr=config.get("lr", 0.001))
+    return optim.Adam(model.parameters(), lr=config.get("lr", 0.01))
 
 
 estimator = Estimator.from_torch(
@@ -243,8 +241,8 @@ def test():
           .format(10 * log10(1. / val_stats["val_loss"]), val_stats["val_loss"]))
 
 
-def checkpoint(epochs):
-    model_out_path = "model_epoch_{}.pth".format(epochs)
+def checkpoint(epoch):
+    model_out_path = "model_epoch_{}.pth".format(epoch)
     model = estimator.get_model()
     torch.save(model, model_out_path)
     print("Checkpoint saved to {}".format(model_out_path))
