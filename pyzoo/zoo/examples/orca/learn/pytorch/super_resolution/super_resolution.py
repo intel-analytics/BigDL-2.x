@@ -62,7 +62,8 @@ elif opt.cluster_mode == "yarn":
         driver_memory="2 g", driver_cores=1,
         additional_archive=additional)
 else:
-    print("init orca context failed.cluster_mode should be either local or yarn but got " + opt.cluster_mode)
+    print("init orca context failed.cluster_mode should be either local or yarn but got "
+          + opt.cluster_mode)
 
 
 def download_report(count, block_size, total_size):
