@@ -85,10 +85,11 @@ start=$(date "+%s")
 if [ ! -f ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/BSDS300-images.tgz ]; then
   wget -nv $FTP_URI/analytics-zoo-data/BSDS300-images.tgz -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/
 fi
-if [ ! -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/dataset ]; then
+if [ ! -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/dataset/BSDS300/images ]; then
   mkdir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/dataset
   tar -xzf ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/BSDS300-images.tgz \
   -C ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/dataset
+  echo "dataset build"
 fi
 
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/super_resolution.py
