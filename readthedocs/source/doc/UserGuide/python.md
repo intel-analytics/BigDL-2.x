@@ -1,21 +1,27 @@
 # Python User Guide
 
 ---
-
 ### **1. Install**
-We recommend using [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the environment, especially when running on distributed cluster. 
-Install conda on your machine and create a conda environment as follows:
+- We recommend using [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the Python environment as follows:
 
-```bash
-conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
-conda activate zoo
-```
+  ```bash
+  conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
+  conda activate zoo
+  ```
 
-You need to install JDK in the environment. __JDK8__ is highly recommended. A preferred approach is to download JDK8 and set the environment variable `JAVA_HOME` manually. Alternatively, you may install JDK8 via conda:
+- You need to install JDK in the environment, and properly set the environment variable `JAVA_HOME`. __JDK8__ is highly recommended.
 
-```bash
-conda install -c anaconda openjdk=8.0.152
-```
+  You may take the following commands as a reference for installing [OpenJKD](https://openjdk.java.net/install/):
+
+  ```bash
+  sudo apt-get install openjdk-8-jre  # For Ubuntu
+  su -c "yum install java-1.8.0-openjdk"  # For CentOS
+
+  export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/
+  export PATH=$PATH:$JAVA_HOME/bin
+
+  java -version  # Verify the version of JDK.
+  ```
 
 #### **1.1 Official Release**
 
@@ -55,13 +61,13 @@ You may test if the installation is successful using the interactive Python shel
 * Type `python` in the command line to start a REPL.
 * Try to run the example code below to verify the installation:
 
-```python
-import zoo
-from zoo.orca import init_orca_context
+  ```python
+  import zoo
+  from zoo.orca import init_orca_context
 
-print(zoo.__version__)  # Verify the version of analytics-zoo.
-sc = init_orca_context()  # Initiation of analytics-zoo on the underlying cluster.
-```
+  print(zoo.__version__)  # Verify the version of analytics-zoo.
+  sc = init_orca_context()  # Initiation of analytics-zoo on the underlying cluster.
+  ```
 
 #### **2.2 Jupyter Notebook**
 
@@ -80,7 +86,14 @@ python script.py
 ```
 
 ---
-### **3. Compatibility**
+### **3. Python Dependencies**
+
+We recommend using [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to manage your Python dependencies. Libraries installed in the current conda environment will be automatically distributed to the cluster when calling `init_orca_context`. You can also add extra dependencies as `.py`, `.zip` and `.egg` files by specifying `extra_python_lib` argument in `init_orca_context`. 
+
+For more details, please refer to [Orca Context](../Orca/Overview/orca-context.md).
+
+---
+### **4. Compatibility**
 
 Analytics Zoo has been tested on __Python 3.6 and 3.7__ with the following library versions:
 
