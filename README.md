@@ -2,14 +2,13 @@
 
 <p align="center"> <img src="docs/docs/Image/logo.jpg" height="160px"><br></p>
 
-**An open source _Big Data AI_ platform**<br>
-**for distributed TensorFlow, PyTorch and keras on Apache Spark & Ray**
+**Distributed TensorFlow, PyTorch and keras on Apache Spark & Ray**
 
 </div>
 
 ---
 
-Analytics Zoo includes the following libraries for scaling end-to-end AI to distributed Big Data: 
+Analytics Zoo is an open source **Big Data AI** platform, and includes the following libraries for scaling end-to-end AI to distributed Big Data: 
 
  - [Orca](https://analytics-zoo.readthedocs.io/): seamlessly scaling out TensorFlow, PyTorch and Keras programs for distributed Big Data
  - [Zouwu](): salable time series analysis using AutoML 
