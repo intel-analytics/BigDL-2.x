@@ -2,7 +2,8 @@
 
 <p align="center"> <img src="docs/docs/Image/logo.jpg" height="160px"><br></p>
 
-**An open source _Big Data AI_ platform (for distributed TensorFlow, PyTorch and keras on Apache Spark & Ray)**
+**An open source _Big Data AI_ platform**<br>
+**for distributed TensorFlow, PyTorch and keras on Apache Spark & Ray**
 
 </div>
 
