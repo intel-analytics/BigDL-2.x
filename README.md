@@ -23,7 +23,7 @@ You can use Analytics Zoo on [Google Colab]() without any installation. Analytic
 
 To install Analytics Zoo, we recommend using [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/)  environments.
 
-```python
+```bash
 conda create -n my_env 
 conda activate my_env
 pip install analytics-zoo 
@@ -37,7 +37,7 @@ Most AI projects start with a Python notebook running on a single laptop; howeve
 
 First, initialize [Orca Context]():
 
-```pyhton
+```python
 from zoo.orca import init_orca_context
 
 #cluster_mode can be "local" or "k8s" or "yarn"
@@ -46,7 +46,7 @@ sc = init_orca_context(cluster_mode="yarn", cores=4, memory="10g", num_nodes=2)
 
 Next, perform [data-parallel processing in Orca](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/data-parallel-processing.html) (using standard Spark Dataframes, TensorFlow Dataset, PyTorch DataLoader, Pandas, etc.):
 
-```pyhton
+```python
 from pyspark.sql.functions import array
 
 df = spark.read.parquet(file_path)
