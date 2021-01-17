@@ -46,7 +46,7 @@ class SimpleRecipe(Recipe):
 
 def linear_model_creator(config):
     """Returns a torch.nn.Module object."""
-    return nn.Linear(1, config.get("hidden_size", 1))
+    return nn.Linear(config.get("input_dim", 1), config.get("output_dim", 1))
 
 def optimizer_creator(model, config):
     """Returns optimizer defined upon the model parameters."""
@@ -96,6 +96,7 @@ def create_date_dataset():
         '1/1/2019', periods=val_sample_num), "value": np.random.randn(val_sample_num)})
     future_seq_len = 1
     return train_df, validation_df, future_seq_len
+
 class TestRayTuneSearchEngine(ZooTestCase):
 
     def setup_method(self, method):
