@@ -73,7 +73,7 @@ def prepare_searcher(data,
         if feature_transformer else None
     searcher.compile(data=data,
                     model_create_func=modelBuilder,
-                    recipe=SimpleRecipe(),
+                    recipe=recipe,
                     feature_transformers=feature_transformer,
                     search_space=search_space)
     return searcher
