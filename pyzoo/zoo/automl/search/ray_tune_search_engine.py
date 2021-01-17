@@ -319,31 +319,22 @@ class RayTuneSearchEngine(SearchEngine):
         :return: the train function
         """
         numpy_format_id = ray.put(numpy_format)
-        if not numpy_format:
-            input_df_id = ray.put(input_data)
-            ft_id = ray.put(feature_transformers)
-        else:
-            x_train_id = ray.put(input_data["x"])
-            y_train_id = ray.put(input_data["y"])
+        input_data_id = ray.put(input_data)
+        ft_id = ray.put(feature_transformers)
 
         # model_id = ray.put(model)
 
         # validation data processing
-        if not numpy_format:
-            df_not_empty = isinstance(validation_data, pd.DataFrame) and not validation_data.empty
-            df_list_not_empty = isinstance(validation_data, list) and validation_data \
-                and not all([d.empty for d in validation_data])
-            if validation_data is not None and (df_not_empty or df_list_not_empty):
-                validation_df_id = ray.put(validation_data)
-                is_val_df_valid = True
-            else:
-                is_val_df_valid = False
+        df_not_empty = isinstance(validation_data, dict) or\
+            (isinstance(validation_data, pd.DataFrame) and not validation_data.empty)
+        df_list_not_empty = isinstance(validation_data, dict) or\
+            (isinstance(validation_data, list) and validation_data
+                and not all([d.empty for d in validation_data]))
+        if validation_data is not None and (df_not_empty or df_list_not_empty):
+            validation_data_id = ray.put(validation_data)
+            is_val_valid = True
         else:
-            if validation_data is not None:
-                validation_data_id = ray.put(validation_data)
-                is_val_data_valid = True
-            else:
-                is_val_data_valid = False
+            is_val_valid = False
 
         def train_func(config):
             numpy_format = ray.get(numpy_format_id)
@@ -364,7 +355,7 @@ class RayTuneSearchEngine(SearchEngine):
                         imputer = FillZeroImpute()
 
                 # handling input
-                global_input_df = ray.get(input_df_id)
+                global_input_df = ray.get(input_data_id)
                 trial_input_df = deepcopy(global_input_df)
                 if imputer:
                     trial_input_df = imputer.impute(trial_input_df)
@@ -375,15 +366,15 @@ class RayTuneSearchEngine(SearchEngine):
 
                 # handling validation data
                 validation_data = None
-                if is_val_df_valid:
-                    global_validation_df = ray.get(validation_df_id)
+                if is_val_valid:
+                    global_validation_df = ray.get(validation_data_id)
                     trial_validation_df = deepcopy(global_validation_df)
                     validation_data = trial_ft.transform(trial_validation_df)
             else:
-                x_train = ray.get(x_train_id)
-                y_train = ray.get(y_train_id)
+                train_data = ray.get(input_data_id)
+                x_train, y_train = (train_data["x"], train_data["y"])
                 validation_data = None
-                if is_val_data_valid:
+                if is_val_valid:
                     validation_data = ray.get(validation_data_id)
                     validation_data = (validation_data["x"], validation_data["y"])
                 trial_ft = None
