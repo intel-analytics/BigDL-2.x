@@ -8,7 +8,7 @@
 
 ---
 
-Analytics Zoo is an open source **Big Data AI** platform, and includes the following libraries for scaling end-to-end AI to distributed Big Data: 
+Analytics Zoo is an open source _**Big Data AI**_ platform, and includes the following libraries for scaling end-to-end AI to distributed Big Data: 
 
  - [Orca](https://analytics-zoo.readthedocs.io/): seamlessly scaling out TensorFlow, PyTorch and Keras programs for distributed Big Data
  - [Zouwu](): scalable time series analysis using AutoML 
@@ -33,28 +33,28 @@ To install latest nightly build, use ```pip install --pre analytics-zoo```; see 
 
 ## Getting Started with Orca
 
-Most AI projects start with a Python notebook running on a single laptop; however, one usually needs to go through a mountain of pains to scale it to handle larger data set in a distributed fashion. The  **Orca**  library seamlessly scales out your single node Python notebook across large clusters (so as to process distributed Big Data).
+Most AI projects start with a Python notebook running on a single laptop; however, one usually needs to go through a mountain of pains to scale it to handle larger data set in a distributed fashion. The  _**Orca**_ library seamlessly scales out your single node Python notebook across large clusters (so as to process distributed Big Data).
 
 First, initialize [Orca Context]():
 
 ```python
 from zoo.orca import init_orca_context
 
-#cluster_mode can be "local" or "k8s" or "yarn"
+#cluster_mode can be "local", "k8s" or "yarn"
 sc = init_orca_context(cluster_mode="yarn", cores=4, memory="10g", num_nodes=2) 
 ```
 
-Next, perform [data-parallel processing in Orca](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/data-parallel-processing.html) (using standard Spark Dataframes, TensorFlow Dataset, PyTorch DataLoader, Pandas, etc.):
+Next, perform [data-parallel processing in Orca](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/data-parallel-processing.html) (supporting standard Spark Dataframes, TensorFlow Dataset, PyTorch DataLoader, Pandas, etc.):
 
 ```python
 from pyspark.sql.functions import array
 
 df = spark.read.parquet(file_path)
 df = df.withColumn('user', array('user')) \  
-    .withColumn('item', array('item'))
+       .withColumn('item', array('item'))
 ```
 
-Finally, use [sklearn-style Estimator APIs in Orca](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/distributed-training-inference.html) to perform distributed TensorFlow, PyTorch or Keras training and inference:
+Finally, use [sklearn-style Estimator APIs in Orca](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/distributed-training-inference.html) to perform distributed _TensorFlow_, _PyTorch_ or _Keras_ training and inference:
 
 ```python
 from tensorflow import keras
@@ -67,8 +67,8 @@ predictions = keras.layers.Dense(2, activation='softmax')(feat)
 model = keras.models.Model(inputs=[user, item], outputs=predictions)  
 
 model.compile(optimizer='rmsprop',  
-  loss='sparse_categorical_crossentropy',  
-  metrics=['accuracy'])
+              loss='sparse_categorical_crossentropy',  
+              metrics=['accuracy'])
 
 est = Estimator.from_keras(keras_model=model)  
 est.fit(data=df,  
@@ -82,13 +82,13 @@ See [TensorFlow 1.15](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Qu
 
 ## Getting Started with Zouwu
 
-Time series prediction takes observations from previous time steps as input and predicts the values at future time steps. The **Zouwu** library makes it easy to build end-to-end time series analysis by applying AutoML to extremely large-scale time series prediction.
+Time series prediction takes observations from previous time steps as input and predicts the values at future time steps. The _**Zouwu**_ library makes it easy to build end-to-end time series analysis by applying AutoML to extremely large-scale time series prediction.
 
 See the Zouwu [quick start]() and [user guide]() for more details.
 
 ## Getting Started with RayOnSpark
 
-Ray is an open source distributed framework for emerging AI applications. **RayOnSpark** allows users to directly run Ray programs on their existing Big Data clusters; it also allows Ray applications to seamlessly integrate into Big Data processing pipeline and directly process in-memory Spark RDDs or DataFrames.
+Ray is an open source distributed framework for emerging AI applications. _**RayOnSpark**_ allows users to directly run Ray programs on their existing Big Data clusters; it also allows Ray applications to seamlessly integrate into Big Data processing pipeline and directly process in-memory Spark RDDs or DataFrames.
 
 See the RayOnSpark [quick start]() and [user guide]() for more details.
 
