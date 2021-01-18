@@ -53,7 +53,7 @@ You can run a analytics zoo program, e.g., the [Object Detection](https://github
 3. Run the following command:
 ```bash
 # Spark local mode
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \ 
+spark-submit \ 
   --master local[core_number] \
   --class com.intel.analytics.zoo.examples.objectdetection.Predict \
   dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
@@ -62,7 +62,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
   --model path_to_model
 
 # Spark standalone mode
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
+spark-submit \
   --master spark://... \
   --executor-cores cores_per_executor \
   --total-executor-cores total_cores_for_the_job \
@@ -73,7 +73,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
   --model path_to_model
 
 # Spark yarn client mode
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
+spark-submit \
   --master yarn \
   --deploy-mode client \
   --executor-cores cores_per_executor \
@@ -85,7 +85,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
   --model path_to_model
 
 # Spark yarn cluster mode
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
+spark-submit \
   --master yarn \
   --deploy-mode cluster \
   --executor-cores cores_per_executor \
