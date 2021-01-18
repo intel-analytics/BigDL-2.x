@@ -1,6 +1,6 @@
-# Power-By
-
+# Powered By
 ---
+
 * __Alibaba__
   <br>[Deploy Analytics Zoo in Aliyun EMR](https://partners-intl.aliyun.com/help/doc-detail/93155.htm)
 * __Baosight__
