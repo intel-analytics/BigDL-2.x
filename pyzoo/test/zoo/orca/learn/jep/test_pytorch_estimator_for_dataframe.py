@@ -49,7 +49,7 @@ class TestEstimatorForDataFrame(TestCase):
         """
         stop_orca_context()
 
-    def test_bigdl_pytorch_estimator_dataframe(self):
+    def test_bigdl_pytorch_estimator_dataframe_predict(self):
         def loss_func(input, target):
             return nn.CrossEntropyLoss().forward(input, target.flatten().long())
 
@@ -78,7 +78,7 @@ class TestEstimatorForDataFrame(TestCase):
             result = np.concatenate([shard["prediction"] for shard in result.collect()])
             assert np.array_equal(result, np.array(range(100)).astype(np.float))
 
-    def test_bigdl_pytorch_estimator_shard(self):
+    def test_bigdl_pytorch_estimator_dataframe_fit_evaluate(self):
         class SimpleModel(nn.Module):
             def __init__(self):
                 super(SimpleModel, self).__init__()
