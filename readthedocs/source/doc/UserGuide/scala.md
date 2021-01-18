@@ -6,15 +6,16 @@ Currently, Analytics Zoo releases are hosted on maven central; here's an example
 ```xml
 <dependency>
     <groupId>com.intel.analytics.zoo</groupId>
-    <artifactId>analytics-zoo-bigdl_0.12.1-[spark_2.1.1|spark_2.2.0|spark_2.3.1|spark_2.4.3|spark_3.0.0]</artifactId>
+    <artifactId>analytics-zoo-[bigdl_0.10.0|bigdl_0.12.1]-[spark_2.1.1|spark_2.2.1|spark_2.3.1|spark_2.4.3|spark_3.0.0]</artifactId>
     <version>${ANALYTICS_ZOO_VERSION}</version>
 </dependency>
 ```
-You can find the latest ANALYTICS_ZOO_VERSION [here](https://search.maven.org/search?q=analytics-zoo-bigdl).  
+You can find the latest ANALYTICS_ZOO_VERSION [here](https://search.maven.org/search?q=analytics-zoo-bigdl).   
+Please note: BIGDL VERSION is bound to ANALYTICS_ZOO_VERSION, you may need to change BIGDL VERSION when you update ANALYTICS_ZOO_VERSION.
 
 SBT developers can use
 ```sbt
-libraryDependencies += "com.intel.analytics.zoo" % "analytics-zoo-bigdl_0.12.1-[spark_2.1.1|spark_2.2.0|spark_2.3.1|spark_2.4.3|spark_3.0.0]" % "${ANALYTICS_ZOO_VERSION}"
+libraryDependencies += "com.intel.analytics.zoo" % "analytics-zoo-[bigdl_0.10.0|bigdl_0.12.1]-[spark_2.1.1|spark_2.2.1|spark_2.3.1|spark_2.4.3|spark_3.0.0]" % "${ANALYTICS_ZOO_VERSION}"
 ```
 
 #### **1.2 Nightly Build**
