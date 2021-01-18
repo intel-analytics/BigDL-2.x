@@ -21,6 +21,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
+from pyspark.sql import SparkSession
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.data.pandas import read_csv
 from zoo.orca.data import SparkXShards
@@ -42,6 +43,18 @@ class TestEstimatorForDataFrame(TestCase):
         class.  setup_method is invoked for every test method of a class.
         """
         self.sc = init_orca_context(cores=4)
+        def to_array_(v):
+            return v.toArray().tolist()
+
+        def flatten_(v):
+            result = []
+            for elem in v:
+                result.extend(elem.toArray().tolist())
+            return result
+
+        self.spark = SparkSession(sc)
+        spark.udf.register("to_array", to_array_, ArrayType(DoubleType()))
+        spark.udf.register("flatten", flatten_, ArrayType(DoubleType()))
 
     def tearDown(self):
         """ teardown any state that was previously setup with a setup_method
@@ -64,19 +77,16 @@ class TestEstimatorForDataFrame(TestCase):
 
         model = IdentityNet()
         rdd = self.sc.range(0, 100)
-        from pyspark.sql import SparkSession
-        spark = SparkSession(self.sc)
-        df = rdd.map(lambda x: (np.random.randn(50).astype(np.float).tolist(),
-                                [int(np.random.randint(0, 2, size=()))])
-                     ).toDF(["feature", "label"])
+        df = rdd.map(lambda x: ([float(x)] * 5, [int(np.random.randint(0, 2, size=()))])
+                ).toDF(["feature", "label"])
 
         with tempfile.TemporaryDirectory() as temp_dir_name:
             estimator = Estimator.from_torch(model=model, loss=loss_func,
                                              optimizer=SGD(learningrate_schedule=Default()),
                                              model_dir=temp_dir_name)
             result = estimator.predict(df, feature_cols=["feature"])
-            result = np.concatenate([shard["prediction"] for shard in result.collect()])
-            assert np.array_equal(result, np.array(range(100)).astype(np.float))
+            expr = "sum(cast(feature <> to_array(prediction) as int)) as error"
+            assert result.selectExpr(expr).first()["error"] == 0
 
     def test_bigdl_pytorch_estimator_dataframe_fit_evaluate(self):
         class SimpleModel(nn.Module):
@@ -96,8 +106,7 @@ class TestEstimatorForDataFrame(TestCase):
         file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
 
         from pyspark.sql import SparkSession
-        spark = SparkSession(self.sc)
-        df = spark.read.csv(file_path)
+        df = self.spark.read.csv(file_path, header=True)
 
         with tempfile.TemporaryDirectory() as temp_dir_name:
             estimator = Estimator.from_torch(model=model, loss=loss_func,
