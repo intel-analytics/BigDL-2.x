@@ -44,6 +44,6 @@ resolvers += "ossrh repository" at "https://oss.sonatype.org/content/repositorie
 
 #### **1.3 Download Pre-Built Package**
 
-You can download the Analytics Zoo release and nightly build from the [Release Page](../release-download.md)
+You can download the Analytics Zoo release and nightly build from the [Release Page](../release.md)
 
 ### **2. Run**
