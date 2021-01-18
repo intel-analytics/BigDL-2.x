@@ -43,7 +43,7 @@ if cluster_mode == "local":
     init_orca_context(cluster_mode="local", cores=4, memory="3g")
 elif cluster_mode == "yarn":
     additional = "datasets/cats_and_dogs_filtered.zip#" + dataset_dir
-    init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2, driver_memory="3g",
+    init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=4, driver_memory="4g",memory='8g',
                       additional_archive=additional)
 
 train_dir = os.path.join(base_dir, 'train')
