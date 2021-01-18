@@ -47,11 +47,16 @@ parser.add_argument('--batch_size', type=int, default=64, help='training batch s
 parser.add_argument('--test_batch_size', type=int, default=10, help='testing batch size')
 parser.add_argument('--epochs', type=int, default=2, help='number of epochs to train for')
 parser.add_argument('--lr', type=float, default=0.01, help='Learning Rate. Default=0.01')
+parser.add_argument('--threads', type=int, default=4,
+                    help='number of threads for data loader to use')
+parser.add_argument('--seed', type=int, default=123, help='random seed to use. Default=123')
 parser.add_argument('--cluster_mode', type=str,
                     default='local', help='The mode of spark cluster.')
 opt = parser.parse_args()
 
 print(opt)
+
+torch.manual_seed(opt.seed)
 
 if opt.cluster_mode == "local":
     init_orca_context()
@@ -154,7 +159,8 @@ def train_data_creator(config):
 
     train_set = get_training_set(config.get("upscale_factor", 3))
     training_data_loader = DataLoader(dataset=train_set,
-                                      num_workers=4,
+                                      batch_size=config.get("batch_size", 64),
+                                      num_workers=config.get("threads", 4),
                                       shuffle=True)
     return training_data_loader
 
@@ -171,7 +177,8 @@ def validation_data_creator(config):
 
     test_set = get_test_set(config.get("upscale_factor", 3))
     testing_data_loader = DataLoader(dataset=test_set,
-                                     num_workers=4,
+                                     batch_size=config.get("batch_size", 64),
+                                     num_workers=config.get("threads", 4),
                                      shuffle=False)
     return testing_data_loader
 
@@ -205,7 +212,6 @@ class Net(nn.Module):
 
 def model_creator(config):
     net = Net(upscale_factor=config.get("upscale_factor", 3))
-    net.train()
     return net
 
 
@@ -224,6 +230,8 @@ estimator = Estimator.from_torch(
     config={
         "lr": opt.lr,
         "upscale_factor": opt.upscale_factor,
+        "batch_size": opt.batch_size,
+        "threads": opt.threads
     }
 )
 
