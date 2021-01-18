@@ -78,7 +78,7 @@ est.fit(data=df,
         label_cols=['label'])
 ```
 
-See [TensorFlow 1.15](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickStart/orca-tf-quickstart.html), [Keras 2.3](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickStart/orca-keras-quickstart.html), [PyTorch](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickStart/orca-pytorch-quickstart.html) and [TensorFlow 2.x]() quick start for more details.
+See [TensorFlow](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickStart/orca-tf-quickstart.html) and [PyTorch](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickStart/orca-pytorch-quickstart.html) quick start for more details.
 
 ## Getting Started with Zouwu
 
