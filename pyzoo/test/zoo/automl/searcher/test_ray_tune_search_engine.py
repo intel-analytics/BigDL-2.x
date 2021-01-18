@@ -78,7 +78,7 @@ def prepare_searcher(data,
                     search_space=search_space)
     return searcher
 
-def get_data():
+def get_np_input():
     def get_linear_data(a, b, size):
         x = np.arange(0, 10, 10 / size)
         y = a*x + b
@@ -87,7 +87,7 @@ def get_data():
     val_x, val_y = get_linear_data(2, 5, 400)
     return train_x, train_y, val_x, val_y
 
-def create_date_dataset():
+def get_ts_input():
     sample_num = np.random.randint(100, 200)
     train_df = pd.DataFrame({"datetime": pd.date_range(
         '1/1/2019', periods=sample_num), "value": np.random.randn(sample_num)})
@@ -106,7 +106,7 @@ class TestRayTuneSearchEngine(ZooTestCase):
         stop_orca_context()
 
     def test_numpy_input(self):
-        train_x, train_y, val_x, val_y = get_data()
+        train_x, train_y, val_x, val_y = get_np_input()
         data_with_val = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
         searcher = prepare_searcher(data=data_with_val, name='test_ray_numpy_with_val')
         searcher.run()
@@ -114,7 +114,7 @@ class TestRayTuneSearchEngine(ZooTestCase):
         assert best_trials is not None
 
     def test_dataframe_input(self):
-        train_x, train_y, val_x, val_y = get_data()
+        train_x, train_y, val_x, val_y = get_np_input()
         dataframe_with_val = {'df': pd.DataFrame({'x': train_x, 'y': train_y}), 
                               'val_df': pd.DataFrame({'x': val_x, 'y': val_y}),
                               'feature_cols': ['x'],
@@ -125,7 +125,7 @@ class TestRayTuneSearchEngine(ZooTestCase):
         assert best_trials is not None
 
     def test_dataframe_input_with_datetime(self):
-        train_df, validation_df, future_seq_len = create_date_dataset()
+        train_df, validation_df, future_seq_len = get_ts_input()
         dataframe_with_datetime = {'df': train_df, 'val_df': validation_df}
         ft = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len,
                                        dt_col="datetime",
