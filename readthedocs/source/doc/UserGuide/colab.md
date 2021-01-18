@@ -6,7 +6,7 @@ You can use Analytics Zoo without any installation by using  [Google Colab](http
 
 ### **1. Open a Colab Notebook**
 
-Analytics Zoo includes a collection of [notebooks](./notebooks.md) that can be directly opened and run in Colab. When you open the notebook, you can click ‘Runtime’ tab > 'Run all' to execute all notebook cells. Or click the "run" triangle on the left of each cell to run one by one. When you run the first cell, you may face a pop-up saying 'Warning: This notebook was not authored by Google'; you should click on 'Run Anyway' to get rid of the warning. 
+Analytics Zoo includes a collection of [notebooks](./notebooks.md) that can be directly opened and run in Colab. You can click 'Run in Google Colab' that opens the notebook on Colab directly. Click the "run" triangle on the left of each cell to run the notebook cell. When you run the first cell, you may face a pop-up saying 'Warning: This notebook was not authored by Google'; you should click on 'Run Anyway' to get rid of the warning. 
 
 ### **2. Notebook Setup**
 
@@ -27,7 +27,7 @@ os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-8-openjdk-amd64"
 
 **Install Conda**
 
-Run the code bellow to install [Conda](https://docs.conda.io/en/latest/) on Colab.
+Run the code bellow to install [conda](https://docs.conda.io/en/latest/) on Colab.
 
 ```bash
 # Install Miniconda
