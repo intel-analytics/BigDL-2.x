@@ -89,6 +89,7 @@ class OpenvinoEstimator(SparkEstimator):
             from zoo.orca.learn.utils import convert_predict_rdd_to_xshard
             transformed_data = data.transform_shard(predict_transform, self.batch_size)
             result_rdd = self.model.distributed_predict(transformed_data.rdd, sc)
+
             def update_shard(data):
                 shard, y = data
                 shard["prediction"] = y

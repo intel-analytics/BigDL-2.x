@@ -22,6 +22,8 @@ import torch.nn.functional as F
 import numpy as np
 
 from pyspark.sql import SparkSession
+from pyspark.sql.types import ArrayType, DoubleType
+from pyspark.sql import SparkSession
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.data.pandas import read_csv
 from zoo.orca.data import SparkXShards
@@ -53,9 +55,9 @@ class TestEstimatorForDataFrame(TestCase):
                 result.extend(elem.toArray().tolist())
             return result
 
-        self.spark = SparkSession(sc)
-        spark.udf.register("to_array", to_array_, ArrayType(DoubleType()))
-        spark.udf.register("flatten", flatten_, ArrayType(DoubleType()))
+        self.spark = SparkSession(self.sc)
+        self.spark.udf.register("to_array", to_array_, ArrayType(DoubleType()))
+        self.spark.udf.register("flatten", flatten_, ArrayType(DoubleType()))
 
     def tearDown(self):
         """ teardown any state that was previously setup with a setup_method
