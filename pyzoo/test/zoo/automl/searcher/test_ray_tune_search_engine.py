@@ -29,6 +29,7 @@ from zoo.orca import init_orca_context, stop_orca_context
 from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
 import json
 
+
 class SimpleRecipe(Recipe):
     def __init__(self):
         super().__init__()
@@ -44,16 +45,20 @@ class SimpleRecipe(Recipe):
             "output_dim": 1
         }
 
+
 def linear_model_creator(config):
     """Returns a torch.nn.Module object."""
     return nn.Linear(config.get("input_dim", 1), config.get("output_dim", 1))
+
 
 def optimizer_creator(model, config):
     """Returns optimizer defined upon the model parameters."""
     return torch.optim.SGD(model.parameters(), lr=config.get("lr", 1e-2))
 
+
 def loss_creator(config):
     return nn.MSELoss()
+
 
 def prepare_searcher(data,
                      model_creator=linear_model_creator,
@@ -63,20 +68,21 @@ def prepare_searcher(data,
                      recipe=SimpleRecipe(),
                      name="demo"):
     modelBuilder = ModelBuilder.from_pytorch(model_creator=model_creator,
-                                                optimizer_creator=optimizer_creator,
-                                                loss_creator=loss_creator)
+                                             optimizer_creator=optimizer_creator,
+                                             loss_creator=loss_creator)
     searcher = SearchEngineFactory.create_engine(backend="ray",
-                                                logs_dir="~/zoo_automl_logs",
-                                                resources_per_trial={"cpu": 2},
-                                                name=name)
+                                                 logs_dir="~/zoo_automl_logs",
+                                                 resources_per_trial={"cpu": 2},
+                                                 name=name)
     search_space = recipe.search_space(feature_transformer.get_feature_list())\
         if feature_transformer else None
     searcher.compile(data=data,
-                    model_create_func=modelBuilder,
-                    recipe=recipe,
-                    feature_transformers=feature_transformer,
-                    search_space=search_space)
+                     model_create_func=modelBuilder,
+                     recipe=recipe,
+                     feature_transformers=feature_transformer,
+                     search_space=search_space)
     return searcher
+
 
 def get_np_input():
     def get_linear_data(a, b, size):
@@ -87,6 +93,7 @@ def get_np_input():
     val_x, val_y = get_linear_data(2, 5, 400)
     return train_x, train_y, val_x, val_y
 
+
 def get_ts_input():
     sample_num = np.random.randint(100, 200)
     train_df = pd.DataFrame({"datetime": pd.date_range(
@@ -96,6 +103,7 @@ def get_ts_input():
         '1/1/2019', periods=val_sample_num), "value": np.random.randn(val_sample_num)})
     future_seq_len = 1
     return train_df, validation_df, future_seq_len
+
 
 class TestRayTuneSearchEngine(ZooTestCase):
 
@@ -115,7 +123,7 @@ class TestRayTuneSearchEngine(ZooTestCase):
 
     def test_dataframe_input(self):
         train_x, train_y, val_x, val_y = get_np_input()
-        dataframe_with_val = {'df': pd.DataFrame({'x': train_x, 'y': train_y}), 
+        dataframe_with_val = {'df': pd.DataFrame({'x': train_x, 'y': train_y}),
                               'val_df': pd.DataFrame({'x': val_x, 'y': val_y}),
                               'feature_cols': ['x'],
                               'target_col': 'y'}
@@ -128,8 +136,8 @@ class TestRayTuneSearchEngine(ZooTestCase):
         train_df, validation_df, future_seq_len = get_ts_input()
         dataframe_with_datetime = {'df': train_df, 'val_df': validation_df}
         ft = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len,
-                                       dt_col="datetime",
-                                       target_col="value")
+                                            dt_col="datetime",
+                                            target_col="value")
         searcher = prepare_searcher(data=dataframe_with_datetime,
                                     model_creator=LSTM_model_creator,
                                     name='test_ray_dateframe_with_datetime_with_val',
