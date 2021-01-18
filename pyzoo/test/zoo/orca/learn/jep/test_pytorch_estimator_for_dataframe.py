@@ -43,6 +43,7 @@ class TestEstimatorForDataFrame(TestCase):
         class.  setup_method is invoked for every test method of a class.
         """
         self.sc = init_orca_context(cores=4)
+
         def to_array_(v):
             return v.toArray().tolist()
 
@@ -77,8 +78,9 @@ class TestEstimatorForDataFrame(TestCase):
 
         model = IdentityNet()
         rdd = self.sc.range(0, 100)
-        df = rdd.map(lambda x: ([float(x)] * 5, [int(np.random.randint(0, 2, size=()))])
-                ).toDF(["feature", "label"])
+        df = rdd.map(lambda x: ([float(x)] * 5,
+                                [int(np.random.randint(0, 2,
+                                                       size=()))])).toDF(["feature", "label"])
 
         with tempfile.TemporaryDirectory() as temp_dir_name:
             estimator = Estimator.from_torch(model=model, loss=loss_func,
@@ -105,7 +107,6 @@ class TestEstimatorForDataFrame(TestCase):
 
         file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
 
-        from pyspark.sql import SparkSession
         df = self.spark.read.csv(file_path, header=True)
 
         with tempfile.TemporaryDirectory() as temp_dir_name:
