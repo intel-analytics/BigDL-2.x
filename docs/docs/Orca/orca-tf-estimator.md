@@ -88,7 +88,7 @@ fit(data,
     epochs=1,
     batch_size=32,
     feature_cols=None,
-    labels_cols=None,
+    label_cols=None,
     validation_data=None,
     session_config=None,
     feed_dict=None,
@@ -106,7 +106,7 @@ fit(data,
 * `epochs`: number of epochs to train.
 * `batch_size`: total batch size for each iteration.
 * `feature_cols`: feature column names if train data is Spark DataFrame.
-* `labels_cols`: label column names if train data is Spark DataFrame.
+* `label_cols`: label column names if train data is Spark DataFrame.
 * `validation_data`: validation data. Validation data type should be the same as train data.
 * `session_config`: tensorflow session configuration for training. Should be object of tf.ConfigProto
 * `feed_dict`: a dictionary. The key is TensorFlow tensor, usually a placeholder, the value of the dictionary is a tuple of two elements. 
@@ -133,7 +133,7 @@ est.fit(data=df,
         batch_size=8,
         epochs=10,
         feature_cols=['user', 'item'],
-        labels_cols=['label'],
+        label_cols=['label'],
         validation_data=df)
 ```
 
@@ -198,7 +198,7 @@ fit(data,
     epochs=1,
     batch_size=32,
     feature_cols=None,
-    labels_cols=None,
+    label_cols=None,
     validation_data=None,
     session_config=None,
     checkpoint_trigger=None
@@ -215,7 +215,7 @@ fit(data,
 * `epochs`: number of epochs to train.
 * `batch_size`: total batch size for each iteration.
 * `feature_cols`: feature column names if train data is Spark DataFrame.
-* `labels_cols`: label column names if train data is Spark DataFrame.
+* `label_cols`: label column names if train data is Spark DataFrame.
 * `validation_data`: validation data. Validation data type should be the same as train data.
 * `session_config`: tensorflow session configuration for training. Should be object of tf.ConfigProto
 * `checkpoint_trigger`: when to trigger checkpoint during training. Should be bigdl optimzer trigger, like EveryEpoch(), SeveralIteration(num_iterations),etc.
@@ -240,7 +240,7 @@ est.fit(data=df,
         batch_size=8,
         epochs=10,
         feature_cols=['user', 'item'],
-        labels_cols=['label'],
+        label_cols=['label'],
         validation_data=df)
 ```
 
@@ -272,7 +272,7 @@ You can call estimator's API to evaluate Tensorflow graph model or keras model.
 ```
 evaluate(data, batch_size=4,
          feature_cols=None,
-         labels_cols=None,
+         label_cols=None
         )
 ```
 * `data`: evaluation data. It can be XShards, Spark DataFrame, tf.data.Dataset.
@@ -283,7 +283,7 @@ evaluate(data, batch_size=4,
    
 * `batch_size`: batch size per thread.
 * `feature_cols`: feature_cols: feature column names if train data is Spark DataFrame.
-* `labels_cols`: label column names if train data is Spark DataFrame.
+* `label_cols`: label column names if train data is Spark DataFrame.
 
 This method returns evaluation result as a dictionary in the format of {'metric name': metric value}
 

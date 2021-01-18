@@ -92,7 +92,7 @@ df = spark.read.parquet("data.parquet")
 est = Estimator.from_keras(keras_model=model) # the model accept two inputs and one label
 est.fit(data=df,
         feature_cols=['user', 'item'], # specifies which column(s) to be used as inputs
-        labels_cols=['label']) # specifies which column(s) to be used as labels
+        label_cols=['label']) # specifies which column(s) to be used as labels
 ```
 
 ### **3. XShards (Distributed Data-Parallel Python Processing)**

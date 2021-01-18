@@ -261,16 +261,16 @@ class TestEstimatorForKeras(TestCase):
                 batch_size=8,
                 epochs=4,
                 feature_cols=['user', 'item'],
-                labels_cols=['label'],
+                label_cols=['label'],
                 validation_data=df)
 
-        eval_result = est.evaluate(df, feature_cols=['user', 'item'], labels_cols=['label'])
+        eval_result = est.evaluate(df, feature_cols=['user', 'item'], label_cols=['label'])
         assert 'acc Top1Accuracy' in eval_result
 
         prediction_df = est.predict(df, batch_size=4, feature_cols=['user', 'item'])
         assert 'prediction' in prediction_df.columns
         predictions = prediction_df.collect()
-        assert len(predictions) == 16
+        assert len(predictions) == 48
 
     def test_estimator_keras_dataframe_no_fit(self):
         tf.reset_default_graph()
@@ -286,13 +286,13 @@ class TestEstimatorForKeras(TestCase):
 
         est = Estimator.from_keras(keras_model=model)
 
-        eval_result = est.evaluate(df, feature_cols=['user', 'item'], labels_cols=['label'])
+        eval_result = est.evaluate(df, feature_cols=['user', 'item'], label_cols=['label'])
         assert 'acc Top1Accuracy' in eval_result
 
         prediction_df = est.predict(df, batch_size=4, feature_cols=['user', 'item'])
         assert 'prediction' in prediction_df.columns
         predictions = prediction_df.collect()
-        assert len(predictions) == 16
+        assert len(predictions) == 48
 
     def test_estimator_keras_tf_dataset(self):
         tf.reset_default_graph()
@@ -648,16 +648,16 @@ class TestEstimatorForKeras(TestCase):
                 batch_size=4,
                 epochs=4,
                 feature_cols=['user', 'item'],
-                labels_cols=['label'],
+                label_cols=['label'],
                 validation_data=df)
 
-        eval_result = est.evaluate(df, feature_cols=['user', 'item'], labels_cols=['label'])
+        eval_result = est.evaluate(df, feature_cols=['user', 'item'], label_cols=['label'])
         assert 'acc Top1Accuracy' in eval_result
 
         prediction_df = est.predict(df, batch_size=4, feature_cols=['user', 'item'])
         assert 'prediction' in prediction_df.columns
         predictions = prediction_df.collect()
-        assert len(predictions) == 16
+        assert len(predictions) == 48
         OrcaContext.train_data_store = "DRAM"
 
     def test_estimator_keras_get_model(self):
@@ -677,7 +677,7 @@ class TestEstimatorForKeras(TestCase):
                 batch_size=4,
                 epochs=4,
                 feature_cols=['user', 'item'],
-                labels_cols=['label'],
+                label_cols=['label'],
                 validation_data=df)
         assert est.get_model() is model
 

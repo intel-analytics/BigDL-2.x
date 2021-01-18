@@ -326,7 +326,7 @@ class TestEstimatorForGraph(TestCase):
         data_shard = data_shard.transform_shard(transform)
         dataset = Dataset.from_tensor_slices(data_shard)
         predictions = est.predict(dataset).collect()
-        assert len(predictions) == 16
+        assert len(predictions) == 48
 
     def test_estimator_graph_dataframe(self):
         tf.reset_default_graph()
@@ -349,17 +349,17 @@ class TestEstimatorForGraph(TestCase):
                 batch_size=8,
                 epochs=10,
                 feature_cols=['user', 'item'],
-                labels_cols=['label'],
+                label_cols=['label'],
                 validation_data=df)
 
         result = est.evaluate(df, batch_size=4, feature_cols=['user', 'item'],
-                              labels_cols=['label'])
+                              label_cols=['label'])
         print(result)
 
         prediction_df = est.predict(df, batch_size=4, feature_cols=['user', 'item'])
         assert 'prediction' in prediction_df.columns
         predictions = prediction_df.collect()
-        assert len(predictions) == 16
+        assert len(predictions) == 48
 
     def test_estimator_graph_dataframe_exception(self):
         tf.reset_default_graph()
@@ -391,7 +391,7 @@ class TestEstimatorForGraph(TestCase):
                 batch_size=8,
                 epochs=10,
                 feature_cols=['user', 'item'],
-                labels_cols=['label']
+                label_cols=['label']
                 )
         with self.assertRaises(Exception) as context:
             predictions = est.predict(df, batch_size=4).collect()
@@ -403,7 +403,7 @@ class TestEstimatorForGraph(TestCase):
                     batch_size=8,
                     epochs=10,
                     feature_cols=['user', 'item'],
-                    labels_cols=['label'],
+                    label_cols=['label'],
                     validation_data=[1, 2, 3])
         self.assertTrue('train data and validation data should be both Spark DataFrame'
                         in str(context.exception))

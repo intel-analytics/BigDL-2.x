@@ -29,6 +29,7 @@ from zoo.common.nncontext import getOrCreateSparkContext
 from zoo.feature.common import FeatureSet, SampleToMiniBatch, Preprocessing
 from zoo.feature.image import ImagePreprocessing, ImageFeatureToSample
 from zoo.util import nest
+from zoo.util.utils import convert_row_to_numpy
 
 if sys.version >= '3':
     long = int
@@ -1196,34 +1197,6 @@ class TFNdarrayDataset(TFDataset):
                                 sequential_order=sequential_order, shuffle=shuffle)
 
 
-def convert_row_to_numpy(row, schema, feature_cols, labels_cols):
-    def convert_for_cols(row, cols):
-        import pyspark.sql.types as df_types
-        result = []
-        for name in cols:
-            feature_type = schema[name].dataType
-            if DataFrameDataset.is_scalar_type(feature_type):
-                result.append(np.array(row[name]))
-            elif isinstance(feature_type, df_types.ArrayType):
-                result.append(np.array(row[name]))
-            elif isinstance(row[name], DenseVector):
-                result.append(row[name].values)
-            else:
-                assert isinstance(row[name], SparseVector), \
-                    "unsupported field {}, data {}".format(schema[name], row[name])
-                result.append(row[name].toArray())
-        if len(result) == 1:
-            return result[0]
-        return result
-
-    features = convert_for_cols(row, feature_cols)
-    if labels_cols:
-        labels = convert_for_cols(row, labels_cols)
-        return (features, labels)
-    else:
-        return (features,)
-
-
 class DataFrameDataset(TFNdarrayDataset):
     @staticmethod
     def df_datatype_to_tf(dtype):
@@ -1243,19 +1216,6 @@ class DataFrameDataset(TFNdarrayDataset):
             return (tf.float32, (None,))
         return None
 
-    @staticmethod
-    def is_scalar_type(dtype):
-        import pyspark.sql.types as df_types
-        if isinstance(dtype, df_types.FloatType):
-            return True
-        if isinstance(dtype, df_types.IntegerType):
-            return True
-        if isinstance(dtype, df_types.LongType):
-            return True
-        if isinstance(dtype, df_types.DoubleType):
-            return True
-        return False
-
     def __init__(self, df, feature_cols, labels_cols=None, batch_size=-1,
                  batch_per_thread=-1, hard_code_batch_size=False,
                  validation_df=None, memory_type="DRAM",
@@ -1269,8 +1229,7 @@ class DataFrameDataset(TFNdarrayDataset):
         if labels_cols is None:
             labels_cols = []
 
-        selected_df = df.select(*(feature_cols + labels_cols))
-        schema = selected_df.schema
+        schema = df.schema
         feature_meta = []
         for feature_col in feature_cols:
             field = schema[feature_col]
@@ -1298,10 +1257,10 @@ class DataFrameDataset(TFNdarrayDataset):
         else:
             tensor_structure = (feature_meta,)
 
-        rdd = selected_df.rdd.map(lambda row: convert_row_to_numpy(row,
-                                                                   schema,
-                                                                   feature_cols,
-                                                                   labels_cols))
+        rdd = df.rdd.map(lambda row: convert_row_to_numpy(row,
+                                                          schema,
+                                                          feature_cols,
+                                                          labels_cols))
         if validation_df is not None:
             val_rdd = validation_df.rdd.map(lambda row: convert_row_to_numpy(row,
                                                                              schema,
