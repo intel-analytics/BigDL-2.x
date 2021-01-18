@@ -73,8 +73,9 @@ def convert_predict_rdd_to_xshard(data, prediction_rdd):
 
     def group_index(iter):
         for data in iter:
-            size = get_size(data)
+            size = get_size(data["x"])
             for i in range(size):
+                print(size)
                 yield size
 
     def transform_predict(predictions):
@@ -107,7 +108,8 @@ def convert_predict_rdd_to_xshard(data, prediction_rdd):
         shard["prediction"] = pred
         return shard
 
-    grouped_pred = data.rdd.mapPartitions(group_index).zip(prediction_rdd).mapPartitions(group)
+    indexed_rdd = data.rdd.mapPartitions(group_index)
+    grouped_pred = indexed_rdd.zip(prediction_rdd).mapPartitions(group)
     result_rdd = data.rdd.zip(grouped_pred).map(add_pred)
     return SparkXShards(result_rdd)
 
