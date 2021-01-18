@@ -52,7 +52,7 @@ Analytics Zoo includes the **Orca** library that seamlessly scale out your singl
 
 .. toctree::
    :maxdepth: 1
-   :caption: Power-by
+   :caption: Powered By
    
    doc/powered-by.md  
    
