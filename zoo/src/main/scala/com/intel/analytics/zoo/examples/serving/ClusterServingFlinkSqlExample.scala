@@ -17,13 +17,14 @@
 package com.intel.analytics.zoo.examples.serving
 
 
-import com.intel.analytics.zoo.serving.operator.{ClusterServingFunction, ClusterServingInferenceOperator, ClusterServingInput, ClusterServingParams}
+import com.intel.analytics.zoo.serving.operator.ClusterServingFunction
 import org.apache.flink.table.api.{EnvironmentSettings, TableEnvironment}
 import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
 
 object ClusterServingFlinkSqlExample {
   case class ExampleParams(modelPath: String = null, inputFile: String = null)
+
   val parser = new OptionParser[ExampleParams]("Cluster Serving Operator Usage Example") {
     opt[String]('m', "modelPath")
       .text("Model Path of Cluster Serving")
@@ -35,6 +36,7 @@ object ClusterServingFlinkSqlExample {
       .required()
   }
   Logger.getLogger("org").setLevel(Level.ERROR)
+
   def main(args: Array[String]): Unit = {
     val arg = parser.parse(args, ExampleParams()).head
     val settings = EnvironmentSettings.newInstance().build()
@@ -51,5 +53,4 @@ object ClusterServingFlinkSqlExample {
     tableEnv.executeSql("INSERT INTO Print SELECT ClusterServingFunction(uri, data) FROM Input")
       .getJobClient.get().getJobExecutionResult(Thread.currentThread().getContextClassLoader).get()
   }
-
 }

@@ -28,6 +28,7 @@ class AutoTSTrainer:
                  horizon=1,
                  dt_col="datetime",
                  target_col="value",
+                 logs_dir="~/zoo_automl_logs",
                  extra_features_col=None,
                  search_alg=None,
                  search_alg_params=None,
@@ -48,6 +49,7 @@ class AutoTSTrainer:
         self.internal = TimeSequencePredictor(
             dt_col=dt_col,
             target_col=target_col_list,
+            logs_dir=logs_dir,
             future_seq_len=horizon,
             extra_features_col=extra_features_col,
             search_alg=search_alg,
@@ -62,6 +64,7 @@ class AutoTSTrainer:
             metric="mse",
             recipe: Recipe = SmokeRecipe(),
             uncertainty: bool = False,
+            upload_dir=None,
             ):
         """
         Fit a time series forecasting pipeline w/ automl
@@ -71,13 +74,16 @@ class AutoTSTrainer:
         :param metric: the evaluation metric to optimize
         :param uncertainty: whether to enable uncertainty calculation
                             (will output an uncertainty sigma)
+        :param upload_dir: Optional URI to sync training results and checkpoints. We only support
+            hdfs URI for now.
         :return a TSPipeline
         """
         zoo_pipeline = self.internal.fit(train_df,
                                          validation_df,
                                          metric,
                                          recipe,
-                                         mc=uncertainty)
+                                         mc=uncertainty,
+                                         upload_dir=upload_dir)
         ppl = TSPipeline()
         ppl.internal = zoo_pipeline
         return ppl

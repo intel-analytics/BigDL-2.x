@@ -2,14 +2,15 @@
 
 ---
 
+<a target="_blank" href="https://colab.research.google.com/github/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.ipynb"><img src="https://www.tensorflow.org/images/colab_logo_32px.png" />Run in Google Colab</a>&nbsp; <a target="_blank" href="https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.ipynb"><img src="https://www.tensorflow.org/images/GitHub-Mark-32px.png" />View source on GitHub</a>
 
-**In this guide we will describe how to scale out PyTorch (v1.5+) programs using Orca in 4 simple steps.**
+---
+
+**In this guide we will describe how to scale out _PyTorch_ programs using Orca in 4 simple steps.**
 
 ### **Step 0: Prepare Environment**
 
-We recommend you to use [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the environment. Please refer to the [install guide](../PythonUserGuide/install/) for more details.
-
-**Note:** Conda environment is required to run on the distributed cluster, but not strictly necessary for running on the local machine.
+[Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) is needed to prepare the Python environment for running this example. Please refer to the [install guide](../../UserGuide/python.md) for more details.
 
 ```bash
 conda create -n zoo python=3.7 # zoo is conda environment name, you can use any name you like.
@@ -20,8 +21,6 @@ pip install six cloudpickle
 pip install jep==3.9.0
 ```
 
-**Note:** The original [source code](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/examples/orca/learn/pytorch/mnist/lenet_mnist.py) for the tutorial below only supports torch version >= 1.5.
-
 ### **Step 1: Init Orca Context**
 ```python
 from zoo.orca import init_orca_context, stop_orca_context
@@ -29,7 +28,7 @@ from zoo.orca import init_orca_context, stop_orca_context
 
 if args.cluster_mode == "local":
     init_orca_context(cores=1, memory="2g")   # run in local mode
-elif args.cluster_mode == "yarn":
+elif args.cluster_mode == "k8s":
     init_orca_context(cluster_mode="k8s", num_nodes=2, cores=4) # run on K8s cluster
 elif args.cluster_mode == "yarn":
     init_orca_context(
@@ -40,9 +39,9 @@ elif args.cluster_mode == "yarn":
         "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"})   # run on Hadoop YARN cluster
 ```
 
-This is the only place where you need to specify local or distributed mode. View [Orca Context](./context) for more details.
+This is the only place where you need to specify local or distributed mode. View [Orca Context](./../Overview/orca-context.md) for more details.
 
-**Note:** You should `export HADOOP_CONF_DIR=/path/to/hadoop/conf/dir` when you run on Hadoop YARN cluster.
+**Note:** You should `export HADOOP_CONF_DIR=/path/to/hadoop/conf/dir` when running on Hadoop YARN cluster. View [Hadoop User Guide](./../../UserGuide/hadoop.md) for more details.
 
 ### **Step 2: Define the Model**
 
@@ -122,9 +121,9 @@ from zoo.orca.learn.metrics import Accuracy
 from zoo.orca.learn.trigger import EveryEpoch 
 
 est.fit(data=train_loader, epochs=10, validation_data=test_loader,
-        validation_methods=[Accuracy()], checkpoint_trigger=EveryEpoch())
+        validation_metrics=[Accuracy()], checkpoint_trigger=EveryEpoch())
 
-result = est.evaluate(data=test_loader, validation_methods=[Accuracy()])
+result = est.evaluate(data=test_loader, validation_metrics=[Accuracy()])
 for r in result:
     print(str(r))
 ```

@@ -84,6 +84,23 @@ class TestMetrics(ZooTestCase):
         assert_almost_equal(sMDAPE(y_true, y_pred, multioutput='uniform_average'),
                             [10.19], decimal=2)
 
+    def test_highdim_metrics(self):
+        y_true = ([[[3, -0.5], [2, 7]], [[3, -0.5], [2, 7]], [[3, -0.5], [2, 7]]])
+        y_pred = ([[[2.5, -0.3], [2, 8]], [[2.5, -0.3], [2, 8]], [[2.5, -0.3], [2, 8]]])
+        assert_almost_equal(sMAPE(y_true, y_pred, multioutput='uniform_average'),
+                            [10.19], decimal=2)
+        assert_almost_equal(MAPE(y_true, y_pred, multioutput='uniform_average'), [17.74], decimal=2)
+        assert_almost_equal(MPE(y_true, y_pred, multioutput='uniform_average'), [10.6], decimal=2)
+        assert_almost_equal(RMSE(y_true, y_pred, multioutput='uniform_average'), [0.57], decimal=2)
+
+        assert_almost_equal(ME(y_true, y_pred, multioutput='uniform_average'), [-0.18], decimal=2)
+        assert_almost_equal(MSPE(y_true, y_pred, multioutput='uniform_average'), [0.32], decimal=2)
+        assert_almost_equal(MDAPE(y_true, y_pred, multioutput='uniform_average'),
+                            [17.74], decimal=2)
+        assert_almost_equal(sMDAPE(y_true, y_pred, multioutput='uniform_average'),
+                            [10.19], decimal=2)
+        assert_almost_equal(MSE(y_true, y_pred, multioutput='uniform_average'), [0.32], decimal=2)
+
     def test_multioutput_array_metrics(self):
         y_true = [[1, 2], [2.5, -1], [4.5, 3], [5, 7]]
         y_pred = [[1, 1], [2, -1], [5, 4], [5, 6.5]]

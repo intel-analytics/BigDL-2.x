@@ -81,7 +81,7 @@ class BigDLEstimator(OrcaSparkEstimator):
         self.app_name = None
         self.is_nnframe_fit = False
 
-    def fit(self, data, epochs, batch_size=32, feature_cols="features", labels_cols="label",
+    def fit(self, data, epochs, batch_size=32, feature_cols="features", label_cols="label",
             caching_sample=True, validation_data=None, validation_trigger=None,
             validation_metrics=None, checkpoint_trigger=None):
         from zoo.orca.learn.metrics import Metrics
@@ -95,14 +95,14 @@ class BigDLEstimator(OrcaSparkEstimator):
                     BigDLEstimator._combine_cols(data, feature_cols, col_name="features",
                                                  val_data=validation_data)
 
-            if isinstance(labels_cols, list):
-                data, validation_data, labels_cols = \
-                    BigDLEstimator._combine_cols(data, labels_cols, col_name="label",
+            if isinstance(label_cols, list):
+                data, validation_data, label_cols = \
+                    BigDLEstimator._combine_cols(data, label_cols, col_name="label",
                                                  val_data=validation_data)
 
             self.nn_estimator.setBatchSize(batch_size).setMaxEpoch(epochs)\
                 .setCachingSample(caching_sample).setFeaturesCol(feature_cols)\
-                .setLabelCol(labels_cols)
+                .setLabelCol(label_cols)
 
             if validation_data is not None:
                 assert isinstance(validation_data, DataFrame), \
@@ -128,21 +128,22 @@ class BigDLEstimator(OrcaSparkEstimator):
             self.nn_model = self.nn_estimator.fit(data)
             self.is_nnframe_fit = True
         elif isinstance(data, SparkXShards):
-            from zoo.orca.data.utils import to_sample
+            from zoo.orca.data.utils import xshard_to_sample
 
             end_trigger = MaxEpoch(epochs)
             validation_metrics = Metrics.convert_metrics_list(validation_metrics)
             checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
 
             if isinstance(data, SparkXShards):
-                train_rdd = data.rdd.flatMap(to_sample)
+                train_rdd = data.rdd.flatMap(xshard_to_sample)
                 train_feature_set = FeatureSet.sample_rdd(train_rdd)
                 if validation_data is None:
                     val_feature_set = None
                 else:
                     assert isinstance(validation_data, SparkXShards), \
                         "validation_data should be a XShards"
-                    val_feature_set = FeatureSet.sample_rdd(validation_data.rdd.flatMap(to_sample))
+                    val_feature_set = FeatureSet.sample_rdd(
+                        validation_data.rdd.flatMap(xshard_to_sample))
                 if self.log_dir is not None and self.app_name is not None:
                     self.estimator.set_tensorboard(self.log_dir, self.app_name)
                 self.estimator.train(train_feature_set, self.loss, end_trigger, checkpoint_trigger,
@@ -166,27 +167,27 @@ class BigDLEstimator(OrcaSparkEstimator):
                 self.nn_model.setSamplePreprocessing(sample_preprocessing)
             return self.nn_model.transform(data)
         elif isinstance(data, SparkXShards):
-            from zoo.orca.data.utils import to_sample
+            from zoo.orca.data.utils import xshard_to_sample
             from zoo.orca.learn.utils import convert_predict_to_xshard
-            sample_rdd = data.rdd.flatMap(to_sample)
+            sample_rdd = data.rdd.flatMap(xshard_to_sample)
             result_rdd = self.model.predict(sample_rdd)
             return convert_predict_to_xshard(result_rdd)
         else:
             raise ValueError("Data should be XShards or Spark DataFrame, but get " +
                              data.__class__.__name__)
 
-    def evaluate(self, data, batch_size=32, feature_cols=None, labels_cols=None,
+    def evaluate(self, data, batch_size=32, feature_cols=None, label_cols=None,
                  validation_metrics=None):
         assert data is not None, "validation data shouldn't be None"
 
         if isinstance(data, DataFrame):
             raise NotImplementedError
         elif isinstance(data, SparkXShards):
-            from zoo.orca.data.utils import to_sample
+            from zoo.orca.data.utils import xshard_to_sample
             from zoo.orca.learn.metrics import Metrics
 
             validation_metrics = Metrics.convert_metrics_list(validation_metrics)
-            val_feature_set = FeatureSet.sample_rdd(data.rdd.flatMap(to_sample))
+            val_feature_set = FeatureSet.sample_rdd(data.rdd.flatMap(xshard_to_sample))
             return self.estimator.evaluate(val_feature_set, validation_metrics, batch_size)
         else:
             raise ValueError("Data should be XShards or Spark DataFrame, but get " +
