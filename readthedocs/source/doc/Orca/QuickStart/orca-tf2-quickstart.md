@@ -20,11 +20,11 @@ pip install tensorflow==2.3.0
 ### **Step 1: Init Orca Context**
 ```python
 if args.cluster_mode == "local":
-    init_orca_context(cluster_mode="local", cores=4, init_ray_on_spark=True)# run in local mode
+    init_orca_context(cluster_mode="local", cores=4) # run in local mode
 elif args.cluster_mode == "k8s":
-    init_orca_context(cluster_mode="k8s", num_nodes=2, cores=2, init_ray_on_spark=True) # run on K8s cluster
+    init_orca_context(cluster_mode="k8s", num_nodes=2, cores=2) # run on K8s cluster
 elif args.cluster_mode == "yarn":
-    init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2, init_ray_on_spark=True) # run on Hadoop YARN cluster
+    init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2) # run on Hadoop YARN cluster
 ```
 
 This is the only place where you need to specify local or distributed mode. View [Orca Context](./../Overview/orca-context.md) for more details.
@@ -33,7 +33,7 @@ This is the only place where you need to specify local or distributed mode. View
 
 ### **Step 2: Define the Model**
 
-You may define your model, loss and metrics in the same way as in any standard (single node) TensorFlow program.
+You can then define the Keras model in the _Creator Function_ using the standard TensroFlow 2 APIs.
 
 ```python
 import tensorflow as tf
@@ -59,7 +59,7 @@ def model_creator(config):
 ```
 ### **Step 3: Define Train Dataset**
 
-You can define the dataset using standard [tf.data.Dataset](https://www.tensorflow.org/api_docs/python/tf/data/Dataset). Orca also supports [Spark DataFrame](https://spark.apache.org/docs/latest/sql-programming-guide.html) and [Orca XShards](./data).
+You can define the dataset in the _Creator Function_ using standard [tf.data.Dataset](https://www.tensorflow.org/api_docs/python/tf/data/Dataset) APIs. Orca also supports [Spark DataFrame](https://spark.apache.org/docs/latest/sql-programming-guide.html) and [Orca XShards](./data).
 
 ```python
 def preprocess(x, y):
@@ -106,9 +106,9 @@ stats = est.fit(train_data_creator,
                 validation_steps=10000 // batch_size)
                 
 est.save("/tmp/mnist_keras.ckpt")
-est.load("/tmp/mnist_keras.ckpt")
 
 stats = est.evaluate(val_data_creator, num_steps=10000 // batch_size)
+est.shutdown()
 print(stats)
 ```
 
