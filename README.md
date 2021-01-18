@@ -1,6 +1,6 @@
 <div align="center">
 
-<p align="center"> <img src="docs/docs/Image/logo.jpg" height="160px"><br></p>
+<p align="center"> <img src="docs/docs/Image/logo.jpg" height="140px"><br></p>
 
 **Distributed TensorFlow, PyTorch and keras on Apache Spark & Ray**
 
@@ -84,13 +84,13 @@ See [TensorFlow](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickSt
 
 Time series prediction takes observations from previous time steps as input and predicts the values at future time steps. The _**Zouwu**_ library makes it easy to build end-to-end time series analysis by applying AutoML to extremely large-scale time series prediction.
 
-See the Zouwu [quick start]() and [user guide]() for more details.
+See the Zouwu [user guide]() for more details.
 
 ## Getting Started with RayOnSpark
 
 Ray is an open source distributed framework for emerging AI applications. _**RayOnSpark**_ allows users to directly run Ray programs on their existing Big Data clusters; it also allows Ray applications to seamlessly integrate into Big Data processing pipeline and directly process in-memory Spark RDDs or DataFrames.
 
-See the RayOnSpark [quick start]() and [user guide]() for more details.
+See the RayOnSpark [user guide]() for more details.
 
 ## More information
 
