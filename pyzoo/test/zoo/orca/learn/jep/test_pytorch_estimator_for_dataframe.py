@@ -74,15 +74,40 @@ class TestEstimatorForDataFrame(TestCase):
             estimator = Estimator.from_torch(model=model, loss=loss_func,
                                              optimizer=SGD(learningrate_schedule=Default()),
                                              model_dir=temp_dir_name)
-            estimator.fit(data=df, epochs=4, batch_size=2, validation_data=df,
-                          validation_metrics=[Accuracy()], checkpoint_trigger=EveryEpoch(),
-                          feature_cols=["feature"], label_cols=["label"])
-            estimator.evaluate(df, validation_metrics=[Accuracy()], batch_size=2,
-                               feature_cols=["feature"], label_cols=["label"])
             result = estimator.predict(df, feature_cols=["feature"])
             result = np.concatenate([shard["prediction"] for shard in result.collect()])
             assert np.array_equal(result, np.array(range(100)).astype(np.float))
 
+    def test_bigdl_pytorch_estimator_shard(self):
+        class SimpleModel(nn.Module):
+            def __init__(self):
+                super(SimpleModel, self).__init__()
+                self.fc = nn.Linear(2, 2)
+
+            def forward(self, x):
+                x = self.fc(x)
+                return F.log_softmax(x, dim=1)
+
+        model = SimpleModel()
+
+        def loss_func(input, target):
+            return nn.CrossEntropyLoss().forward(input, target.flatten().long())
+
+        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+
+        from pyspark.sql import SparkSession
+        spark = SparkSession(self.sc)
+        df = spark.read.csv(file_path)
+
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            estimator = Estimator.from_torch(model=model, loss=loss_func,
+                                             optimizer=SGD(learningrate_schedule=Default()),
+                                             model_dir=temp_dir_name)
+            estimator.fit(data=df, epochs=4, batch_size=2, validation_data=df,
+                          validation_metrics=[Accuracy()], checkpoint_trigger=EveryEpoch(),
+                          feature_cols=["user", "item"], label_cols=["label"])
+            estimator.evaluate(df, validation_metrics=[Accuracy()], batch_size=2,
+                               feature_cols=["user", "item"], label_cols=["label"])
 
 if __name__ == "__main__":
     pytest.main([__file__])
