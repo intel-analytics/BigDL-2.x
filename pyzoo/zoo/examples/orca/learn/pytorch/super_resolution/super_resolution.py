@@ -56,8 +56,6 @@ opt = parser.parse_args()
 
 print(opt)
 
-torch.manual_seed(opt.seed)
-
 if opt.cluster_mode == "local":
     init_orca_context()
 elif opt.cluster_mode == "yarn":
@@ -65,7 +63,7 @@ elif opt.cluster_mode == "yarn":
     init_orca_context(cluster_mode="yarn-client", cores=4, num_nodes=2,
                       additional_archive=additional)
 else:
-    print("init orca context failed.cluster_mode should be either 'local' or 'yarn' but got "
+    print("init_orca_context failed. cluster_mode should be either 'local' or 'yarn' but got "
           + opt.cluster_mode)
 
 
@@ -211,6 +209,7 @@ class Net(nn.Module):
 
 
 def model_creator(config):
+    torch.manual_seed(opt.seed)
     net = Net(upscale_factor=config.get("upscale_factor", 3))
     return net
 
