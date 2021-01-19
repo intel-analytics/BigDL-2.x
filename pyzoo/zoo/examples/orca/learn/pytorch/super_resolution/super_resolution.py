@@ -209,7 +209,7 @@ class Net(nn.Module):
 
 
 def model_creator(config):
-    torch.manual_seed(opt.seed)
+    torch.manual_seed(config.get("seed", 123))
     net = Net(upscale_factor=config.get("upscale_factor", 3))
     return net
 
@@ -230,7 +230,8 @@ estimator = Estimator.from_torch(
         "lr": opt.lr,
         "upscale_factor": opt.upscale_factor,
         "batch_size": opt.batch_size,
-        "threads": opt.threads
+        "threads": opt.threads,
+        "seed": opt.seed
     }
 )
 
@@ -244,7 +245,7 @@ def train(epoch):
 
 def test():
     val_stats = estimator.evaluate(data=validation_data_creator, batch_size=opt.test_batch_size)
-    print("===>validation Complete: Avg. PSNR: {:.4f} dB, Avg. Loss: {:.4f}"
+    print("===> Validation Complete: Avg. PSNR: {:.4f} dB, Avg. Loss: {:.4f}"
           .format(10 * log10(1. / val_stats["val_loss"]), val_stats["val_loss"]))
 
 
