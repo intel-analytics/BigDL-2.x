@@ -73,10 +73,10 @@ class TestEstimatorForDataFrame(TestCase):
             def __init__(self):
                 super().__init__()
                 # need this line to avoid optimizer raise empty variable list
-                self.fc1 = nn.Linear(50, 50)
+                self.fc1 = nn.Linear(5, 5)
 
             def forward(self, input_):
-                return input_[:, 0]
+                return input_
 
         model = IdentityNet()
         rdd = self.sc.range(0, 100)
@@ -96,7 +96,7 @@ class TestEstimatorForDataFrame(TestCase):
         class SimpleModel(nn.Module):
             def __init__(self):
                 super(SimpleModel, self).__init__()
-                self.fc = nn.Linear(2, 2)
+                self.fc = nn.Linear(5, 5)
 
             def forward(self, x):
                 x = self.fc(x)
@@ -107,9 +107,10 @@ class TestEstimatorForDataFrame(TestCase):
         def loss_func(input, target):
             return nn.CrossEntropyLoss().forward(input, target.flatten().long())
 
-        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
-
-        df = self.spark.read.csv(file_path, header=True)
+        rdd = self.sc.range(0, 100)
+        df = rdd.map(lambda x: ([float(x)] * 5,
+                                [int(np.random.randint(0, 2,
+                                                       size=()))])).toDF(["feature", "label"])
 
         with tempfile.TemporaryDirectory() as temp_dir_name:
             estimator = Estimator.from_torch(model=model, loss=loss_func,
@@ -117,9 +118,9 @@ class TestEstimatorForDataFrame(TestCase):
                                              model_dir=temp_dir_name)
             estimator.fit(data=df, epochs=4, batch_size=2, validation_data=df,
                           validation_metrics=[Accuracy()], checkpoint_trigger=EveryEpoch(),
-                          feature_cols=["user", "item"], label_cols=["label"])
+                          feature_cols=["feature"], label_cols=["label"])
             estimator.evaluate(df, validation_metrics=[Accuracy()], batch_size=2,
-                               feature_cols=["user", "item"], label_cols=["label"])
+                               feature_cols=["feature"], label_cols=["label"])
 
 if __name__ == "__main__":
     pytest.main([__file__])
