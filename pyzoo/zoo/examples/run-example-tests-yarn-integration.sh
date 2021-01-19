@@ -41,4 +41,4 @@ time2=$((now-start))
 
 
 echo "#1 orca tf transfer_learning time used:$time1 seconds"
-echo "#1 orca tf basic_text_classification time used:$time2 seconds"
+echo "#2 orca tf basic_text_classification time used:$time2 seconds"
