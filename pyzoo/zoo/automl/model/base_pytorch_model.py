@@ -54,11 +54,11 @@ class PytorchBaseModel(BaseModel):
 
     @staticmethod
     def covert_input(x, y, validation_data):
-        x = PytorchBaseModel.to_torch(x)
-        y = PytorchBaseModel.to_torch(y)
+        x = PytorchBaseModel.to_torch(x).float()
+        y = PytorchBaseModel.to_torch(y).float()
         if validation_data is not None:
-            validation_data = (PytorchBaseModel.to_torch(validation_data[0]),
-                               PytorchBaseModel.to_torch(validation_data[1]))
+            validation_data = (PytorchBaseModel.to_torch(validation_data[0]).float(),
+                               PytorchBaseModel.to_torch(validation_data[1]).float())
         return x, y, validation_data
 
     def _train_epoch(self, x, y):
@@ -139,7 +139,7 @@ class PytorchBaseModel(BaseModel):
         self.config = state["config"]
         self.optimizer.load_state_dict(state["optimizer"])
 
-    def save(self, checkpoint_file):
+    def save(self, checkpoint_file, config_path=None):
         state_dict = self.state_dict()
         torch.save(state_dict, checkpoint_file)
 
