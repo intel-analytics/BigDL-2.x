@@ -98,8 +98,7 @@ class TemporalConvNet(nn.Module):
                  dropout=0.1):
         super(TemporalConvNet, self).__init__()
 
-        if output_feature_num != num_channels[-1]:
-            num_channels[-1] = output_feature_num
+        num_channels.append(output_feature_num)
 
         layers = []
         num_levels = len(num_channels)
@@ -119,8 +118,11 @@ class TemporalConvNet(nn.Module):
         self.linear.weight.data.normal_(0, 0.01)
 
     def forward(self, x):
-        y1 = self.tcn(x)
-        return self.linear(y1)
+        x = x.permute(0,2,1)
+        y = self.tcn(x)
+        y = self.linear(y)
+        y = y.permute(0,2,1)
+        return y
 
 
 def model_creator(config):
