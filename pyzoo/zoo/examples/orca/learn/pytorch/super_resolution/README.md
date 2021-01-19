@@ -2,7 +2,7 @@
 
 We demonstrate how to easily run synchronous distributed Pytorch training using Pytorch Estimator of Project Orca in Analytics Zoo. This is an example using the efficient sub-pixel convolution layer to train on [BSDS3000 dataset](https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/), using crops from the 200 training images, and evaluating on crops of the 100 test images. See [here](https://github.com/pytorch/examples/tree/master/super_resolution) for the original single-node version of this example provided by Pytorch.
 
-## Prepare environment
+## Prepare the environment
 We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the environment, especially if you want to run on a yarn cluster (yarn-client mode only).
 ```
 conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
@@ -34,7 +34,7 @@ python super_resolution.py --cluster_mode local
 python super_resolution.py --cluster_mode yarn
 ```
 
-In above commands
+**Options**
 * `--upscale_factor` The upscale factor of super resolution. Default is 3.
 * `--batch_size` The number of samples per gradient update. Default is 64.
 * `--test_batch_size` The number of samples per batch validate. Default is 10.
@@ -43,11 +43,11 @@ In above commands
 * `--cluster_mode` The mode of spark cluster. Either "local" or "yarn". Default is "local".
 
 ## Results
-You can find the logs for training:
+You can find the result for training as follows:
 ```
 ===> Epoch 1 Complete: Avg. Loss: 9.2605
 ```
-And after validation, test results will be seen like:
+You can find the result for validation as follows:
 ```
 ===> Validation Complete: Avg. PSNR: 7.2006 dB, Avg. Loss: 0.1905
 ```
