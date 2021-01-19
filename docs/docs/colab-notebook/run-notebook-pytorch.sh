@@ -14,7 +14,11 @@ ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/docs/docs/colab-not
 sed -i "s/get_ipython()/#/g"  ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.py
 sed -i "s/import os/#import os/g" ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.py
 sed -i "s/import sys/#import sys/g" ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.py
+sed -i 's/^[^#].*environ*/#&/g' ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.py
 sed -i 's/^[^#].*__future__ */#&/g' ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.py
+sed -i "s/_ = (sys.path/#_ = (sys.path/g" ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.py
+sed -i 's/^[^#].*site-packages*/#&/g' ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.py
+
 python ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.py
 
 now=$(date "+%s")	
