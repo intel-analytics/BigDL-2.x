@@ -34,7 +34,7 @@ sudo systemctl restart docker
 
 ### **2. Launch a K8s Client Container**
 
-Client container is for user to submit Analytics Zoo jobs from here, since it contains the required environment by Analytics Zoo.
+You should submit Analytics Zoo application from client container, since it contains the required environment by Analytics Zoo.
 
 ```bash
 sudo docker run -itd --net=host \
@@ -180,7 +180,7 @@ ${SPARK_HOME}/bin/spark-submit \
   --driver-cores ${RUNTIME_DRIVER_CORES} \
   --driver-memory ${RUNTIME_DRIVER_MEMORY} \
   --properties-file ${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf \
-  --py-files ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip,/opt/analytics-zoo-examples/python/anomalydetection/anomaly_detection.py \
+  --py-files ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip,/path/script.py \
   --conf spark.driver.extraJavaOptions=-Dderby.stream.error.file=/tmp \
   --conf spark.sql.catalogImplementation='in-memory' \
   --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
