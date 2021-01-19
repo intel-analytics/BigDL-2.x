@@ -10,23 +10,23 @@ Currently, Analytics Zoo releases are hosted on maven central; here's an example
 ```xml
 <dependency>
     <groupId>com.intel.analytics.zoo</groupId>
-    <artifactId>analytics-zoo-[bigdl_0.10.0|bigdl_0.12.1]-[spark_2.1.1|spark_2.2.1|spark_2.3.1|spark_2.4.3|spark_3.0.0]</artifactId>
-    <version>${ANALYTICS_ZOO_VERSION}</version>
+    <artifactId>analytics-zoo-bigdl_0.12.1-spark_2.4.3</artifactId>
+    <version>0.9.0</version>
 </dependency>
 ```
-You can find the latest ANALYTICS_ZOO_VERSION [here](https://search.maven.org/search?q=analytics-zoo-bigdl).   
-Please note: BIGDL VERSION is bound to ANALYTICS_ZOO_VERSION, you may need to change BIGDL VERSION when you update ANALYTICS_ZOO_VERSION.
+You can find the other SPARK version [here](https://search.maven.org/search?q=analytics-zoo-bigdl), such as `spark_2.1.1, spark_2.2.1, spark_2.3.1, spark_3.0.0`.   
+
 
 SBT developers can use
 ```sbt
-libraryDependencies += "com.intel.analytics.zoo" % "analytics-zoo-[bigdl_0.10.0|bigdl_0.12.1]-[spark_2.1.1|spark_2.2.1|spark_2.3.1|spark_2.4.3|spark_3.0.0]" % "${ANALYTICS_ZOO_VERSION}"
+libraryDependencies += "com.intel.analytics.zoo" % "analytics-zoo-bigdl_0.12.1-spark_2.4.3" % "0.9.0"
 ```
 
 #### **1.2 Nightly Build**
 
 Currently, Analytics Zoo development version is hosted on [SonaType](https://oss.sonatype.org/content/groups/public/com/intel/analytics/zoo/).
 
-To link your application with the latest Analytics Zoo development version, you should add some dependencies like [official releases](#11-official-release), but set `${ANALYTICS_ZOO_VERSION}` to latest version, and add below repository to your pom.xml.
+To link your application with the latest Analytics Zoo development version, you should add some dependencies like [official releases](#11-official-release), but set `0.9.0` to snapshot version, and add below repository to your pom.xml.
 
 ```xml
 <repository>
