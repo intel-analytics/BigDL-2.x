@@ -81,12 +81,8 @@ class ImageBrightness(ImagePreprocessing):
 class ImageChannelNormalize(ImagePreprocessing):
     """
     image channel normalize
-    :param mean_r mean value in R channel
-    :param mean_g mean value in G channel
-    :param mean_b mean value in B channel
-    :param std_r std value in R channel
-    :param std_g std value in G channel
-    :param std_b std value in B channel
+    :param means: list of means for each channel
+    :param stds: list of stds for each channel
     """
     def __init__(self, means, stds, bigdl_type="float"):
         super(ImageChannelNormalize, self).__init__(bigdl_type, [float(mean) for mean in means],
@@ -113,8 +109,8 @@ class ImageChannelNormalize(ImagePreprocessing):
         :param mean: mean value in channel
         :param std: std value for channel
         """
-        super(ImageChannelNormalize, self).__init__(bigdl_type, [mean],
-                                                    [std])
+        super(ImageChannelNormalize, self).__init__(bigdl_type, [mean], [std])
+        
 
 class PerImageNormalize(ImagePreprocessing):
     """
