@@ -110,7 +110,7 @@ class TCNSmokeRecipe(Recipe):
         super(self.__class__, self).__init__(past_seq_len,
                                              input_feature_num,
                                              future_seq_len,
-                                             output_feature_num):
+                                             output_feature_num)
         self.past_seq_len = past_seq_len
         self.input_feature_num = input_feature_num
         self.future_seq_len = future_seq_len
@@ -465,10 +465,10 @@ class TCNGridRandomRecipe(Recipe):
                  training_iteration=40,
                  batch_size=[256, 512],
                  hidden_size=[32, 48],
-                 levels=[6,8],
-                 kernel_size=[3,5],
-                 dropout=[0,0.1]
-                ):
+                 levels=[6, 8],
+                 kernel_size=[3, 5],
+                 dropout=[0, 0.1]
+                 ):
         """
         Constructor.
         :param past_seq_len: the length of history(input) data, i.e. lookback
@@ -501,7 +501,6 @@ class TCNGridRandomRecipe(Recipe):
         self.levels = tune.grid_search(levels)
         self.kernel_size = tune.grid_search(kernel_size)
         self.dropout = tune.choice(kernel_size)
-
 
     def search_space(self, all_available_features):
         return {
