@@ -97,8 +97,8 @@ See the RayOnSpark [user guide]() for more details.
 - [Document Website](https://analytics-zoo.readthedocs.io/)
 - [Mail List](mailto:bigdl-user-group+subscribe@googlegroups.com)
 - [User Group](https://groups.google.com/forum/#!forum/bigdl-user-group)
-- [Powered-By]()
-- [Presentations]()
+- [Powered-By](https://analytics-zoo.readthedocs.io/en/latest/doc/Application/powered-by.html)
+- [Presentations](https://analytics-zoo.readthedocs.io/en/latest/doc/Application/presentations.html)
 
 _Older Documents_
 - [BigDL Paper](https://arxiv.org/abs/1804.05839)
