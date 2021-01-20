@@ -169,9 +169,9 @@ ${SPARK_HOME}/bin/spark-submit \
   --conf spark.kubernetes.container.image=${RUNTIME_K8S_SPARK_IMAGE} \
   --conf spark.executor.instances=${RUNTIME_EXECUTOR_INSTANCES} \
   --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
-  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
+  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/path \
   --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
-  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
+  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/path \
   --conf spark.kubernetes.driver.label.<your-label>=true \
   --conf spark.kubernetes.executor.label.<your-label>=true \
   --executor-cores ${RUNTIME_EXECUTOR_CORES} \
@@ -186,7 +186,7 @@ ${SPARK_HOME}/bin/spark-submit \
   --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
   --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
   file:///path/script.py \
-  --input_dir /data
+  --input_dir /path
 ```
 
 Options:
@@ -195,8 +195,7 @@ Options:
 - --deploy-mode: submit application in client/cluster mode.
 
 - --name: the Spark application name.
-- --conf: require to specify k8s service account, container image to use for the Spark application, driver volumes name and path, label of pods, spark driver and executor configuration, etc. `--conf spark.driver.host/port` is required when submitting jobs via kubernetes client mode. 
-  check the argument settings in your environment and refer to the [spark configuration page](https://spark.apache.org/docs/latest/configuration.html) and [spark on k8s configuration page](https://spark.apache.org/docs/latest/running-on-kubernetes.html#configuration) for more details.
+- --conf: require to specify k8s service account, container image to use for the Spark application, driver volumes name and path, label of pods, spark driver and executor configuration, etc. You can refer to [spark configuration](https://spark.apache.org/docs/latest/configuration.html) and [spark on k8s configuration](https://spark.apache.org/docs/latest/running-on-kubernetes.html#configuration) for more details.
 - --properties-file: the customized conf properties.
 - --py-files: the extra python packages is needed.
 - file://: local file path of the python example file in the client container.
@@ -237,9 +236,9 @@ ${SPARK_HOME}/bin/spark-submit \
   --conf spark.kubernetes.container.image=${RUNTIME_K8S_SPARK_IMAGE} \
   --conf spark.executor.instances=${RUNTIME_EXECUTOR_INSTANCES} \
   --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
-  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
+  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/path \
   --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
-  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/zoo \
+  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/path \
   --conf spark.kubernetes.driver.label.<your-label>=true \
   --conf spark.kubernetes.executor.label.<your-label>=true \
   --executor-cores ${RUNTIME_EXECUTOR_CORES} \
@@ -255,7 +254,7 @@ ${SPARK_HOME}/bin/spark-submit \
   --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
   --class your.class \
   ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip \
-  --inputDir /data
+  --inputDir /path
 ```
 
 Options:
@@ -263,8 +262,7 @@ Options:
 - --master: the spark mater, must be a URL with the format `k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port>`. 
 - --deploy-mode: submit application in client/cluster mode.
 - --name: the Spark application name.
-- --conf: require to specify k8s service account, container image to use for the Spark application, driver volumes name and path, label of pods, spark driver and executor configuration, etc. `--conf spark.driver.host/port` is required when submitting jobs via kubernetes client mode. 
-Check the argument settings in your environment and refer to the [spark configuration page](https://spark.apache.org/docs/latest/configuration.html) and [spark on k8s configuration page](https://spark.apache.org/docs/latest/running-on-kubernetes.html#configuration) for more details.
+- --conf: require to specify k8s service account, container image to use for the Spark application, driver volumes name and path, label of pods, spark driver and executor configuration, etc. You can refer to [spark configuration](https://spark.apache.org/docs/latest/configuration.html) and [spark on k8s configuration](https://spark.apache.org/docs/latest/running-on-kubernetes.html#configuration) for more details.
 - --properties-file: the customized conf properties.
 - --py-files: the extra python packages is needed.
 - --class: scala example class name.
