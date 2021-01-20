@@ -109,7 +109,7 @@ class PytorchBaseModel(BaseModel):
         return eval_result
 
     def predict(self, x, mc=False):
-        x = PytorchBaseModel.to_torch(x)
+        x = PytorchBaseModel.to_torch(x).float()
         if mc:
             self.model.train()
         else:
