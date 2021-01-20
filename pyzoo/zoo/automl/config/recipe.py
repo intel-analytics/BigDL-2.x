@@ -107,7 +107,14 @@ class TCNSmokeRecipe(Recipe):
     """
 
     def __init__(self):
-        super(self.__class__, self).__init__()
+        super(self.__class__, self).__init__(past_seq_len,
+                                             input_feature_num,
+                                             future_seq_len,
+                                             output_feature_num):
+        self.past_seq_len = past_seq_len
+        self.input_feature_num = input_feature_num
+        self.future_seq_len = future_seq_len
+        self.output_feature_num = output_feature_num
 
     def search_space(self, all_available_features):
         return {
@@ -117,10 +124,10 @@ class TCNSmokeRecipe(Recipe):
             "levels": 8,
             "kernel_size": 3,
             "dropout": 0.1,
-            'past_seq_len': 80,
-            "input_feature_num": 2,
-            "future_seq_len": 40,
-            "output_feature_num": 2
+            'past_seq_len': self.past_seq_len,
+            "input_feature_num": self.input_feature_num,
+            "future_seq_len": self.future_seq_len,
+            "output_feature_num": self.output_feature_num
         }
 
 
