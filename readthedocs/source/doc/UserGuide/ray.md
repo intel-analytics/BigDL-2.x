@@ -9,16 +9,14 @@ _**Note:** Analytics Zoo has been tested on Ray 0.8.4 and you are highly recomme
 
 ### **1. Install**
 
-- Follow the guide [here](./python.html#install) for environment preparation.
+Follow the guide [here](./python.html#install) for environment preparation. When installing analytics-zoo with pip, you can specify the extras key `[ray]` to additionally install the additional dependencies essential for running Ray (i.e. `ray==0.8.4`, `psutil`, `aiohttp`, `setproctitle`, `pyarrow==0.17.0`):
 
-- When installing analytics-zoo with pip, you can specify the extras key `[ray]` to additionally install the additional dependencies essential for running Ray (i.e. `ray==0.8.4`, `psutil`, `aiohttp`, `setproctitle`, `pyarrow==0.17.0`):
-
-  ```bash
-  pip install analytics-zoo[ray]
-  ```
+```bash
+pip install analytics-zoo[ray]
+```
 
 ---
-### **2. Initialization**
+### **2. Initialize**
 
 We recommend using `init_orca_context` to initiate and run Analytics Zoo on the underlying cluster. The Ray cluster would be launched as well by specifying `init_ray_on_spark=True`. For example, to launch Spark and Ray on standard Hadoop/YARN clusters in [YARN client mode](https://spark.apache.org/docs/latest/running-on-yarn.html#launching-spark-on-yarn):
 
