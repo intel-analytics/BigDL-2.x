@@ -30,7 +30,7 @@ sc = init_orca_context(cluster_mode="yarn-client", cores=4, memory="10g", num_no
 ---
 ### **3. Run**
 
-- After the initialization, you can directly run Ray applications on the underlying cluster. The following code shows a simple example:
+- After the initialization, you can directly run Ray applications on the underlying cluster. [Ray tasks](https://docs.ray.io/en/master/walkthrough.html#remote-functions-tasks) or [actors](https://docs.ray.io/en/master/actors.html) would be launched across the cluster. The following code shows a simple example:
 
   ```python
   import ray
@@ -49,9 +49,7 @@ sc = init_orca_context(cluster_mode="yarn-client", cores=4, memory="10g", num_no
   print(ray.get([c.increment.remote() for c in counters]))
   ```
 
-  In the code above, the [Ray actors](https://docs.ray.io/en/master/actors.html) would be created and located across the underlying cluster.
-
-- You can retrieve the Ray cluster information via [`OrcaContext`](../Orca/Overview/orca-context.md):
+- You can retrieve the information of the Ray cluster via [`OrcaContext`](../Orca/Overview/orca-context.md):
 
   ```python
   from zoo.orca import OrcaContext
@@ -64,7 +62,7 @@ sc = init_orca_context(cluster_mode="yarn-client", cores=4, memory="10g", num_no
 
 ---
 ### **4. FAQ**
-If you encounter the following error when launching Ray on the underlying cluster, especially when you are using a Spark standalone cluster:
+If you encounter the following error when launching Ray on the underlying cluster, especially when you are using a [Spark standalone](https://spark.apache.org/docs/latest/spark-standalone.html) cluster:
 
 ```
 This system supports the C.UTF-8 locale which is recommended. You might be able to resolve your issue by exporting the following environment variables:
