@@ -22,38 +22,47 @@ import random
 from zoo.ray import RayContext
 
 
-@ray.remote(num_cpus=0)
-class MetaStore:
-
-    def __init__(self):
-        self.partitions = {}
-
-    def set_partition_ref(self, idx, object_ref):
-        self.partitions[idx] = object_ref[0]
-        return 0
-
-    def get_partition_ref(self, idx):
-        return self.partitions[idx]
-
-    def get_multiple_partition_refs(self, idxs):
-        return [self.partitions[idx] for idx in idxs]
-
-    def get_all_partition_refs(self):
-        return [self.partitions[i] for i in range(len(self.partitions))]
-
-    def num_partitions(self):
-        return len(self.partitions)
+# @ray.remote(num_cpus=0)
+# class MetaStore:
+#
+#     def __init__(self):
+#         self.partitions = {}
+#
+#     def set_partition_ref(self, idx, object_ref):
+#         self.partitions[idx] = object_ref[0]
+#         return 0
+#
+#     def get_partition_ref(self, idx):
+#         return self.partitions[idx]
+#
+#     def get_multiple_partition_refs(self, idxs):
+#         return [self.partitions[idx] for idx in idxs]
+#
+#     def get_all_partition_refs(self):
+#         return [self.partitions[i] for i in range(len(self.partitions))]
+#
+#     def num_partitions(self):
+#         return len(self.partitions)
 
 
 class PartitionUploader:
 
-    def __init__(self, meta_store_handle):
-        self.meta_store_handle = meta_store_handle
+    def __init__(self):
+        self.partitions = {}
 
     def upload_partition(self, idx, partition):
-        partition_ref = ray.put(partition)
-        ray.get(self.meta_store_handle.set_partition_ref.remote(idx, [partition_ref]))
+        self.partitions[idx] = partition
         return 0
+
+    def upload_shards(self, shard_id, shard):
+        self.partitions[shard_id] = shard
+        return 0
+
+    def get_partitions(self):
+        return self.partitions
+
+    def get_partition(self, idx):
+        return self.partitions[idx]
 
     def upload_multiple_partitions(self, idxs, partitions):
         for idx, partition in zip(idxs, partitions):
@@ -64,8 +73,7 @@ class PartitionUploader:
         import pyarrow.plasma as plasma
         client = plasma.connect(object_store_address)
         partition = client.get(plasma_object_id)
-        partition_ref = ray.put(partition)
-        ray.get(self.meta_store_handle.set_partition_ref(partition_id, [partition_ref]))
+        self.partitions[partition_id] = partition
         return 0
 
 
@@ -89,27 +97,28 @@ def write_to_ray(idx, partition, redis_address, redis_password, partition_store_
     ray.get(local_store.upload_partition.remote(idx, partition))
     ray.shutdown()
 
-    return [(idx, local_store_name.split(":")[-1])]
+    return [(idx, local_store_name.split(":")[-1], local_store_name)]
 
 
-def get_from_ray(idx, redis_address, redis_password, meta_store_name):
-    ray.init(address=redis_address, redis_password=redis_password, ignore_reinit_error=True)
-    meta_store_handle = ray.util.get_actor(meta_store_name)
-    object_id = ray.get(meta_store_handle.get_partition_ref.remote(idx))
-    partition = ray.get(object_id)
+def get_from_ray(idx, redis_address, redis_password, idx_to_store_name):
+    if not ray.is_initialized():
+        ray.init(address=redis_address, redis_password=redis_password, ignore_reinit_error=True)
+    local_store_handle = ray.util.get_actor(idx_to_store_name[idx])
+    partition = ray.get(local_store_handle.get_partition.remote(idx))
     ray.shutdown()
     return partition
 
 
 class RayRdd:
 
-    def __init__(self, uuid, meta_store, partition2ip):
+    def __init__(self, uuid, partition2store, partition2ip, partition_stores):
         self.uuid = uuid
-        self.meta_store = meta_store
+        self.partition2store = partition2store
         self.partition2ip = partition2ip
+        self.partition_stores = partition_stores
 
     def num_partitions(self):
-        return ray.get(self.meta_store.num_partitions.remote())
+        return len(self.partition2ip.keys())
 
     def collect(self):
         partitions = self.collect_partitions()
@@ -117,22 +126,28 @@ class RayRdd:
         return data
 
     def collect_partitions(self):
-        partition_refs = ray.get(self.meta_store.get_all_partition_refs.remote())
-        partitions = ray.get(partition_refs)
-        return partitions
+        part_refs = [local_store.get_partitions.remote()
+                     for local_store in self.partition_stores.values()]
+        partitions = ray.get(part_refs)
+
+        result = {}
+        for part in partitions:
+            result.update(part)
+        return [result[idx] for idx in range(self.num_partitions())]
 
     def to_spark_rdd(self):
         ray_ctx = RayContext.get()
         sc = ray_ctx.sc
         address = ray_ctx.redis_address
         password = ray_ctx.redis_password
-        num_parts = ray.get(self.meta_store.num_partitions.remote())
-        meta_store_name = f"meta_store:{self.uuid}"
+        num_parts = self.num_partitions()
+        partition2store = self.partition2store
         rdd = sc.parallelize([0] * num_parts * 10, num_parts)\
             .mapPartitionsWithIndex(
-            lambda idx, _: get_from_ray(idx, address, password, meta_store_name))
+            lambda idx, _: get_from_ray(idx, address, password, partition2store))
         return rdd
 
+    # todo: remove meta_store
     def _get_multiple_partition_refs(self, ids):
         result = ray.get(self.meta_store.get_multiple_partition_refs.remote(ids))
         return result
@@ -176,6 +191,7 @@ class RayRdd:
         new_parts_ids = [idx for part_ids in assigned_partitions for idx in part_ids]
         return RayRdd.from_partition_refs(new_parts_refs, new_parts_ids, part_id2ip)
 
+    # todo: remove meta_store
     def assign_partitions_to_actors(self, actors, one_to_one=True):
         num_parts = ray.get(self.meta_store.num_partitions.remote())
         if num_parts < len(actors):
@@ -245,10 +261,17 @@ class RayRdd:
                     remainder -= 1
         return actor2assignments, actor_ips
 
+    # todo: remove meta store and fix instantiation
     @staticmethod
     def from_partition_refs(parts_refs, part_ids, part_id2ip):
         ray_ctx = RayContext.get()
         uuid_str = str(uuid.uuid4())
+        for idx, node in part_id2ip.items():
+            name = f"partition:{uuid_str}:{node}"
+            store = ray.remote(num_cpus=0, resources={node: 1e-4})(PartitionUploader) \
+                .options(name=name).remote()
+            store.upload_partition.remote(idx, )
+
         meta_store = MetaStore.options(name=f"meta_store:{uuid_str}").remote()
 
         results = []
@@ -270,7 +293,7 @@ class RayRdd:
         password = ray_ctx.redis_password
         driver_ip = ray.services.get_node_ip_address()
         uuid_str = str(uuid.uuid4())
-        meta_store = MetaStore.options(name=f"meta_store:{uuid_str}").remote()
+        # meta_store = MetaStore.options(name=f"meta_store:{uuid_str}").remote()
         resources = ray.cluster_resources()
         nodes = []
         for key, value in resources.items():
@@ -283,10 +306,12 @@ class RayRdd:
         for node in nodes:
             name = f"partition:{uuid_str}:{node}"
             store = ray.remote(num_cpus=0, resources={node: 1e-4})(PartitionUploader)\
-                .options(name=name).remote(meta_store)
+                .options(name=name).remote()
             partition_stores[name] = store
         partition_store_names = list(partition_stores.keys())
-        id2ip = rdd.mapPartitionsWithIndex(lambda idx, part: write_to_ray(
+        result = rdd.mapPartitionsWithIndex(lambda idx, part: write_to_ray(
             idx, part, address, password, partition_store_names)).collect()
+        id2ip = {idx: ip for idx, ip, _ in result}
+        id2store = {idx: store for idx, _, store in result}
 
-        return RayRdd(uuid_str, meta_store, dict(id2ip))
+        return RayRdd(uuid_str, dict(id2store), dict(id2ip), partition_stores)
