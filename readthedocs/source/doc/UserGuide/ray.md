@@ -2,7 +2,7 @@
 
 ---
 
-You can directly run [Ray](https://github.com/ray-project/ray) applications on the underlying cluster (such as K8s or Hadoop cluster) with Analytics Zoo.
+[Ray](https://github.com/ray-project/ray) is an open source distributed framework for emerging AI applications. Users can seamlessly integrate Ray applications into the big data processing pipeline on the underlying cluster (such as [K8s](./k8s.md) or [Hadoop/YARN](./hadoop.md) cluster) with Analytics Zoo.
 
 _**Note:** Analytics Zoo has been tested on Ray 0.8.4 and you are highly recommended to use this tested version._
 
@@ -11,7 +11,7 @@ _**Note:** Analytics Zoo has been tested on Ray 0.8.4 and you are highly recomme
 
 - Follow the guide [here](./python.html#install) for environment preparation.
 
-- When installing analytics-zoo with pip, you can specify the extras key `[ray]` to additionally install the additional dependencies required by Ray (i.e. `ray==0.8.4`, `psutil`, `aiohttp`, `setproctitle`, `pyarrow==0.17.0`):
+- When installing analytics-zoo with pip, you can specify the extras key `[ray]` to additionally install the additional dependencies essential for running Ray (i.e. `ray==0.8.4`, `psutil`, `aiohttp`, `setproctitle`, `pyarrow==0.17.0`):
 
   ```bash
   pip install analytics-zoo[ray]
