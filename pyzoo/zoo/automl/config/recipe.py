@@ -474,10 +474,6 @@ class TCNGridRandomRecipe(Recipe):
         self.batch_size = tune.grid_search(batch_size)
 
         # ---- model params
-        self.past_seq_len = past_seq_len
-        self.input_feature_num = input_feature_num
-        self.future_seq_len = future_seq_len
-        self.output_feature_num = output_feature_num
         self.hidden_size = tune.grid_search(hidden_size)
         self.levels = tune.grid_search(levels)
         self.kernel_size = tune.grid_search(kernel_size)
