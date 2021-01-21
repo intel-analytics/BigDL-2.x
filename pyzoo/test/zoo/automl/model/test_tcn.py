@@ -42,7 +42,7 @@ def create_data():
     return train_data, val_data, test_data
 
 
-class TestVanillaLSTM(TestCase):
+class TestTcn(TestCase):
     train_data, val_data, test_data = create_data()
     config = {"future_seq_len": train_data[1].shape[1],
               "output_feature_num": train_data[1].shape[2],
