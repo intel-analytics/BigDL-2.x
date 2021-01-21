@@ -44,33 +44,26 @@ def create_data():
 
 class TestTcn(TestCase):
     train_data, val_data, test_data = create_data()
-    config = {"future_seq_len": train_data[1].shape[1],
-              "output_feature_num": train_data[1].shape[2],
-              "past_seq_len": train_data[0].shape[1],
-              "input_feature_num": train_data[0].shape[2]}
+    model = TCNPytorch()
 
     def test_fit_evaluate(self):
-        additional_config = {"batch_size": 128}
-        config = {**self.config, **additional_config}
-        model = TCNPytorch(config)
-        model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
-        mse, smape = model.evaluate(self.val_data[0],
+        config = {"batch_size": 128}
+        self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
+        mse, smape = self.model.evaluate(self.val_data[0],
                                     self.val_data[1],
                                     metric=["mse", "smape"])
         assert len(mse) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
         assert len(smape) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
 
     def test_predict_save_restore(self):
-        additional_config = {"batch_size": 128}
-        config = {**self.config, **additional_config}
-        model = TCNPytorch(config)
-        model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
-        pred = model.predict(self.test_data[0])
+        config = {"batch_size": 128}
+        self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
+        pred = self.model.predict(self.test_data[0])
         assert pred.shape == self.test_data[1].shape
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             ckpt_name = os.path.join(tmp_dir_name, "ckpt")
-            model.save(ckpt_name)
-            model_1 = TCNPytorch(config)
+            self.model.save(ckpt_name)
+            model_1 = TCNPytorch()
             model_1.restore(ckpt_name)
             pred_1 = model_1.predict(self.test_data[0])
             assert np.allclose(pred, pred_1)

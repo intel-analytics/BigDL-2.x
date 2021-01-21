@@ -107,14 +107,7 @@ class TCNSmokeRecipe(Recipe):
     """
 
     def __init__(self):
-        super(self.__class__, self).__init__(past_seq_len,
-                                             input_feature_num,
-                                             future_seq_len,
-                                             output_feature_num)
-        self.past_seq_len = past_seq_len
-        self.input_feature_num = input_feature_num
-        self.future_seq_len = future_seq_len
-        self.output_feature_num = output_feature_num
+        super(self.__class__, self).__init__()
 
     def search_space(self, all_available_features):
         return {
@@ -123,11 +116,7 @@ class TCNSmokeRecipe(Recipe):
             "nhid": 8,
             "levels": 8,
             "kernel_size": 3,
-            "dropout": 0.1,
-            'past_seq_len': self.past_seq_len,
-            "input_feature_num": self.input_feature_num,
-            "future_seq_len": self.future_seq_len,
-            "output_feature_num": self.output_feature_num
+            "dropout": 0.1
         }
 
 
@@ -457,10 +446,6 @@ class TCNGridRandomRecipe(Recipe):
     # TODO: use some more generalized exp hyperparameters
 
     def __init__(self,
-                 past_seq_len,
-                 input_feature_num,
-                 future_seq_len,
-                 output_feature_num,
                  num_rand_samples=1,
                  training_iteration=40,
                  batch_size=[256, 512],
@@ -471,10 +456,6 @@ class TCNGridRandomRecipe(Recipe):
                  ):
         """
         Constructor.
-        :param past_seq_len: the length of history(input) data, i.e. lookback
-        :param input_feature_num: the number of feature for each data point in history(input) data
-        :param future_seq_len: the length of data to be predicted, i.e. horizon
-        :param output_feature_num: the number of feature for each data point to be predicted
         :param num_rand_samples: number of hyper-param configurations sampled randomly
         :param training_iteration: no. of iterations for training (n epochs) in trials
         :param batch_size: grid search candidates for batch size
@@ -509,11 +490,7 @@ class TCNGridRandomRecipe(Recipe):
             "nhid": self.hidden_size,
             "levels": self.levels,
             "kernel_size": self.kernel_size,
-            "dropout": self.dropout,
-            'past_seq_len': self.past_seq_len,
-            "input_feature_num": self.input_feature_num,
-            "future_seq_len": self.future_seq_len,
-            "output_feature_num": self.output_feature_num
+            "dropout": self.dropout
         }
 
 

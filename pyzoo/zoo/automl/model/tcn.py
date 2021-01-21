@@ -145,11 +145,10 @@ def loss_creator(config):
 
 
 class TCNPytorch(PytorchBaseModel):
-    def __init__(self, config, check_optional_config=False):
+    def __init__(self, check_optional_config=False):
         super().__init__(model_creator=model_creator,
                          optimizer_creator=optimizer_creator,
                          loss_creator=loss_creator,
-                         config=config,
                          check_optional_config=check_optional_config)
 
     def _get_required_parameters(self):
