@@ -360,7 +360,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
     def _get_model_from_state(self, state):
         """Creates model and load weights from state"""
 
-        # keep the same behavior as `set_state` in `load`
+        # keep the same behavior as `set_state` in `load` do
         model = self.model_creator(self.config)
         model.set_weights(state["weights"])
 
