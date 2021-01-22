@@ -19,7 +19,7 @@ conda activate zoo
 pip install analytics-zoo[ray]
 ```
 
-View [here](./python.html#install) for installation instructions. 
+View [here](./python.html#install) for more installation instructions.
 
 ---
 ### **2. Initialize**
