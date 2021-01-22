@@ -9,11 +9,17 @@ _**Note:** Analytics Zoo has been tested on Ray 0.8.4 and you are highly recomme
 
 ### **1. Install**
 
-Follow the guide [here](./python.html#install) for environment preparation. When installing analytics-zoo with pip, you can specify the extras key `[ray]` to additionally install the additional dependencies essential for running Ray (i.e. `ray==0.8.4`, `psutil`, `aiohttp`, `setproctitle`, `pyarrow==0.17.0`):
+We recommend using [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the Python environment. 
+When installing analytics-zoo with pip, you can specify the extras key `[ray]` to additionally install the additional dependencies essential for running Ray (i.e. `ray==0.8.4`, `psutil`, `aiohttp`, `setproctitle`, `pyarrow==0.17.0`):
 
 ```bash
+conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
+conda activate zoo
+
 pip install analytics-zoo[ray]
 ```
+
+View [here](./python.html#install) for installation instructions. 
 
 ---
 ### **2. Initialize**
@@ -26,6 +32,7 @@ from zoo.orca import init_orca_context
 sc = init_orca_context(cluster_mode="yarn-client", cores=4, memory="10g", num_nodes=2, init_ray_on_spark=True)
 ```
 
+View [Orca Context](../Orca/Overview/orca-context.md) for more details.
 
 ---
 ### **3. Run**
@@ -59,6 +66,13 @@ sc = init_orca_context(cluster_mode="yarn-client", cores=4, memory="10g", num_no
   redis_address = ray_ctx.redis_address  # The redis address of the ray cluster.
   ```
 
+- You should call `stop_orca_context()` when your program finishes:
+
+  ```python
+  from zoo.orca import stop_orca_context
+  
+  stop_orca_context()
+  ```
 
 ---
 ### **4. FAQ**
