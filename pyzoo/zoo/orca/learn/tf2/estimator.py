@@ -360,19 +360,8 @@ class TensorFlow2Estimator(OrcaRayEstimator):
     def _get_model_from_state(self, state):
         """Creates model and load weights from state"""
 
+        # keep the same behavior as `set_state` in `load`
         model = self.model_creator(self.config)
         model.set_weights(state["weights"])
-
-        # This part is due to ray.get() changing scalar np.int64 object to int
-        if state["optimizer_weights"]:
-            if model.optimizer.weights == []:
-                model.make_train_function()
-
-            if not len(model.optimizer.get_weights()) == 0 and \
-                    len(model.optimizer.get_weights()) == len(state["optimizer_weights"]):
-                optimizer_weight_dtype = model.optimizer.weights[0].dtype
-                state["optimizer_weights"][0] = np.array(
-                    state["optimizer_weights"][0], dtype=optimizer_weight_dtype)
-                model.optimizer.set_weights(state["optimizer_weights"])
 
         return model
