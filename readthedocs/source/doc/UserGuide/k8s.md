@@ -80,7 +80,7 @@ sudo docker run -itd --net=host \
 - RUNTIME_DRIVER_HOST/RUNTIME_DRIVER_PORT is to specify driver localhost and port number (only required when submitting jobs via kubernetes client mode).
 - Other environment variables are for spark configuration setting. The default values in this image are listed above. Replace the values as you need.
 
-Once the container is created, execute the container by:
+Once the container is created, execute the container:
 
 ```bash
 sudo docker exec -it <containerID> bash
@@ -109,7 +109,7 @@ The `/opt` directory contains:
 
 _**Note**: Please make sure `kubectl` has appropriate permission to create, list and delete pod._
 
-**K8s client mode (`init_orca_context` with "k8s")**
+#### **3.1 K8s client mode (use `init_orca_context` with "k8s")**
 
 We recommend using `init_orca_context` at the very beginning of your code (e.g. in script.py) to initiate and run Analytics Zoo on standard K8s clusters in [client mode](http://spark.apache.org/docs/latest/running-on-kubernetes.html#client-mode).
 
@@ -125,7 +125,7 @@ init_orca_context(cluster_mode="k8s", master="k8s://https://<k8s-apiserver-host>
 
 Execute `python script.py` to run your program on k8s cluster directly.
 
-**K8s cluster mode (`init_orca_context` with "spark-submit")**
+#### **3.2 K8s cluster mode (use `init_orca_context` with "spark-submit")**
 
 For k8s [cluster mode](https://spark.apache.org/docs/2.4.5/running-on-kubernetes.html#cluster-mode), you can call `init_orca_context` and specify cluster_mode to be "spark-submit" in your python script (e.g. in script.py):
 
@@ -151,7 +151,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
   file:///path/script.py
 ```
 
-**Run Jupyter Notebooks**
+#### **3.3 Run Jupyter Notebooks**
 
 After a Docker container is launched and user login into the container, you can start the Jupyter Notebook service inside the container.
 
@@ -171,7 +171,7 @@ You will see the output message like below. This means the Jupyter Notebook serv
 
 Then, refer [docker guide](./docker.md) to open Jupyter Notebook service from a browser and run notebook.
 
-**Run Scala programs**
+#### **3.4 Run Scala programs**
 
 Use spark-submit to submit your Analytics Zoo program (e.g. script.scala):
 
@@ -218,7 +218,7 @@ Options:
 - --class: scala example class name.
 - --input_dir: input data path of the anomaly detection example. The data path is the mounted filesystem of the host. Refer to more details by [Kubernetes Volumes](https://spark.apache.org/docs/latest/running-on-kubernetes.html#using-kubernetes-volumes).
 
-#### **3.3 Access logs and clear pods**
+#### **3.5 Access logs and clear pods**
 
 When application is running, it’s possible to stream logs on the driver pod:
 
