@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from collections import defaultdict
 
 import ray
 import ray.services
@@ -111,14 +112,14 @@ def get_from_ray(idx, redis_address, redis_password, idx_to_store_name):
 
 class RayRdd:
 
-    def __init__(self, uuid, partition2store, partition2ip, partition_stores):
+    def __init__(self, uuid, partition2store_name, partition2ip, partition_stores):
         self.uuid = uuid
-        self.partition2store = partition2store
+        self.partition2store_name = partition2store_name
         self.partition2ip = partition2ip
         self.partition_stores = partition_stores
 
     def num_partitions(self):
-        return len(self.partition2ip.keys())
+        return len(self.partition2ip)
 
     def collect(self):
         partitions = self.collect_partitions()
@@ -141,59 +142,57 @@ class RayRdd:
         address = ray_ctx.redis_address
         password = ray_ctx.redis_password
         num_parts = self.num_partitions()
-        partition2store = self.partition2store
+        partition2store = self.partition2store_name
         rdd = sc.parallelize([0] * num_parts * 10, num_parts)\
             .mapPartitionsWithIndex(
             lambda idx, _: get_from_ray(idx, address, password, partition2store))
         return rdd
 
-    # todo: remove meta_store
     def _get_multiple_partition_refs(self, ids):
-        result = ray.get(self.meta_store.get_multiple_partition_refs.remote(ids))
-        return result
+        refs = []
+        for idx in ids:
+            local_store_handle = self.partition_stores[self.partition2store_name[idx]]
+            partition_ref = local_store_handle.get_partition.remote(idx)
+            refs.append(partition_ref)
+        return refs
 
     def map_partitions_with_actors(self, actors, func, gang_scheduling=True):
         assigned_partitions, actor_ips = self.assign_partitions_to_actors(actors,
                                                                           gang_scheduling)
-        assigned_partition_refs = [self._get_multiple_partition_refs(part_ids)
+        assigned_partition_refs = [(part_ids, self._get_multiple_partition_refs(part_ids))
                                    for part_ids in assigned_partitions]
-        new_parts_refs = [func(actor, part_ref)
-                          for actor, part_ids in zip(actors, assigned_partition_refs)
-                          for part_ref in part_ids]
-        part_id2ip = {}
-        for actor_idx, parts in enumerate(assigned_partitions):
-            ip = actor_ips[actor_idx]
-            for part_id in parts:
-                part_id2ip[part_id] = ip
-        new_parts_ids = [idx for part_ids in assigned_partitions for idx in part_ids]
-        return RayRdd.from_partition_refs(new_parts_refs, new_parts_ids, part_id2ip)
+        new_part_id_refs = {part_id: func(actor, part_ref)
+                            for actor, (part_ids, part_refs) in zip(actors, assigned_partition_refs)
+                            for part_id, part_ref in zip(part_ids, part_refs)}
+
+        actor_ip2part_id = defaultdict(list)
+        for actor_ip, part_ids in zip(actor_ips, assigned_partitions):
+            actor_ip2part_id[actor_ip].extend(part_ids)
+
+        return RayRdd.from_partition_refs(actor_ip2part_id, new_part_id_refs)
 
     def zip_partitions_with_actors(self, ray_rdd, actors, func, gang_scheduling=True):
         assert self.num_partitions() == ray_rdd.num_partitions(),\
             "the rdds to be zipped must have the same number of partitions"
         assigned_partitions, actor_ips = self.assign_partitions_to_actors(actors,
                                                                           gang_scheduling)
-        assigned_partition_refs = [self._get_multiple_partition_refs(part_ids)
-                                   for part_ids in assigned_partitions]
-        assigned_partition_refs_other = [ray_rdd._get_multiple_partition_refs(part_ids)
-                                         for part_ids in assigned_partitions]
+        new_part_id_refs = {}
+        for actor, part_ids in zip(actors, assigned_partitions):
+            assigned_partition_refs = self._get_multiple_partition_refs(part_ids)
+            assigned_partition_refs_other = ray_rdd._get_multiple_partition_refs(part_ids)
+            for part_id, this_part_ref, that_part_ref in \
+                    zip(part_ids, assigned_partition_refs, assigned_partition_refs_other):
+                new_ref = func(actor, this_part_ref, that_part_ref)
+                new_part_id_refs[part_id] = new_ref
 
-        partitions_refs_tuple = zip(assigned_partition_refs, assigned_partition_refs_other)
-        new_parts_refs = [func(actor, this_part_ref, that_part_ref)
-                          for actor, (this_part_refs, that_part_refs) in zip(actors,
-                                                                             partitions_refs_tuple)
-                          for this_part_ref, that_part_ref in zip(this_part_refs, that_part_refs)]
-        part_id2ip = {}
-        for actor_idx, parts in enumerate(assigned_partitions):
-            ip = actor_ips[actor_idx]
-            for part_id in parts:
-                part_id2ip[part_id] = ip
-        new_parts_ids = [idx for part_ids in assigned_partitions for idx in part_ids]
-        return RayRdd.from_partition_refs(new_parts_refs, new_parts_ids, part_id2ip)
+        actor_ip2part_id = defaultdict(list)
+        for actor_ip, part_ids in zip(actor_ips, assigned_partitions):
+            actor_ip2part_id[actor_ip].extend(part_ids)
 
-    # todo: remove meta_store
+        return RayRdd.from_partition_refs(actor_ip2part_id, new_part_id_refs)
+
     def assign_partitions_to_actors(self, actors, one_to_one=True):
-        num_parts = ray.get(self.meta_store.num_partitions.remote())
+        num_parts = self.num_partitions()
         if num_parts < len(actors):
             raise ValueError(f"this rdd has {num_parts} partitions, which is smaller"
                              f"than actor number ({len(actors)} actors).")
@@ -232,7 +231,7 @@ class RayRdd:
                 ip2actors[ip] = []
             ip2actors[ip].append(idx)
 
-        unassinged = []
+        unassigned = []
         for part_idx, ip in part_id2ip.items():
             assigned = False
             if ip in ip2actors:
@@ -250,9 +249,9 @@ class RayRdd:
                         assigned = True
                         break
             if not assigned:
-                unassinged.append((part_idx, ip))
+                unassigned.append((part_idx, ip))
 
-        for part_idx, ip in unassinged:
+        for part_idx, ip in unassigned:
             for current_assignments in actor2assignments:
                 if len(current_assignments) < avg_part_num:
                     current_assignments.append(part_idx)
@@ -263,24 +262,22 @@ class RayRdd:
 
     # todo: remove meta store and fix instantiation
     @staticmethod
-    def from_partition_refs(parts_refs, part_ids, part_id2ip):
+    def from_partition_refs(ip2part_id, part_id2ref):
         ray_ctx = RayContext.get()
         uuid_str = str(uuid.uuid4())
-        for idx, node in part_id2ip.items():
+        id2store_name = {}
+        partition_stores = {}
+        part_id2ip = {}
+        for node, part_ids in ip2part_id.items():
             name = f"partition:{uuid_str}:{node}"
-            store = ray.remote(num_cpus=0, resources={node: 1e-4})(PartitionUploader) \
+            store = ray.remote(num_cpus=0, resources={f"node:{node}": 1e-4})(PartitionUploader) \
                 .options(name=name).remote()
-            store.upload_partition.remote(idx, )
-
-        meta_store = MetaStore.options(name=f"meta_store:{uuid_str}").remote()
-
-        results = []
-        for part_id, part_ref in zip(part_ids, parts_refs):
-            result = meta_store.set_partition_ref.remote(part_id, [part_ref])
-            results.append(result)
-        ray.get(results)
-
-        return RayRdd(uuid_str, meta_store, part_id2ip)
+            partition_stores[name] = store
+            for idx in part_ids:
+                store.upload_partition.remote(idx, part_id2ref[idx])
+                id2store_name[idx] = name
+                part_id2ip[idx] = node
+        return RayRdd(uuid_str, id2store_name, part_id2ip, partition_stores)
 
     @staticmethod
     def from_spark_rdd(rdd):
@@ -312,6 +309,6 @@ class RayRdd:
         result = rdd.mapPartitionsWithIndex(lambda idx, part: write_to_ray(
             idx, part, address, password, partition_store_names)).collect()
         id2ip = {idx: ip for idx, ip, _ in result}
-        id2store = {idx: store for idx, _, store in result}
+        id2store_name = {idx: store for idx, _, store in result}
 
-        return RayRdd(uuid_str, dict(id2store), dict(id2ip), partition_stores)
+        return RayRdd(uuid_str, dict(id2store_name), dict(id2ip), partition_stores)
