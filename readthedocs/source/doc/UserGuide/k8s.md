@@ -32,9 +32,9 @@ sudo systemctl daemon-reload
 sudo systemctl restart docker
 ```
 
-### **2. Launch a K8s Client Container**
+### **2. Launch a Client Container**
 
-You should submit Analytics Zoo application from client container, since it contains the required environment by Analytics Zoo.
+You can submit Analytics Zoo application from a client container that provides the required environment.
 
 ```bash
 sudo docker run -itd --net=host \
@@ -43,7 +43,7 @@ sudo docker run -itd --net=host \
     intelanalytics/hyper-zoo:latest bash
 ```
 
-**Note:** to launch the client container, `-v /etc/kubernetes:/etc/kubernetes:` and `-v /root/.kube:/root/.kube` are required to specify the path of kube config and installation.
+**Note:** to create the client container, `-v /etc/kubernetes:/etc/kubernetes:` and `-v /root/.kube:/root/.kube` are required to specify the path of kube config and installation.
 
 To specify more arguments, use:
 
@@ -80,7 +80,7 @@ sudo docker run -itd --net=host \
 - RUNTIME_DRIVER_HOST/RUNTIME_DRIVER_PORT is to specify driver localhost and port number (only required when submitting jobs via kubernetes client mode).
 - Other environment variables are for spark configuration setting. The default values in this image are listed above. Replace the values as you need.
 
-Once the container is created, launch the container by:
+Once the container is created, execute the container by:
 
 ```bash
 sudo docker exec -it <containerID> bash
@@ -109,11 +109,9 @@ The `/opt` directory contains:
 
 _**Note**: Please make sure `kubectl` has appropriate permission to create, list and delete pod._
 
-#### **3.1 Use `init_orca_context`**
+**K8s client mode (`init_orca_context` with "k8s")**
 
-- Client mode
-
-We recommend using `init_orca_context` at the very beginning of your code to initiate and run Analytics Zoo on standard K8s clusters in [client mode](http://spark.apache.org/docs/latest/running-on-kubernetes.html#client-mode).
+We recommend using `init_orca_context` at the very beginning of your code (e.g. in script.py) to initiate and run Analytics Zoo on standard K8s clusters in [client mode](http://spark.apache.org/docs/latest/running-on-kubernetes.html#client-mode).
 
 ```python
 from zoo.orca import init_orca_context
@@ -121,12 +119,15 @@ from zoo.orca import init_orca_context
 init_orca_context(cluster_mode="k8s", master="k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port>",
                   container_image="intelanalytics/hyper-zoo:latest",
                   num_nodes=2, cores=2,
-                  conf={"spark.driver.host": "x.x.x.x"})
+                  conf={"spark.driver.host": "x.x.x.x",
+                  "spark.driver.port": "x"})
 ```
 
-- Cluster mode
+Execute `python script.py` to run your program on k8s cluster directly.
 
-For k8s [cluster mode](https://spark.apache.org/docs/2.4.5/running-on-kubernetes.html#cluster-mode), you can call init_orca_context and specify cluster_mode to be "spark-submit" in your python script:
+**K8s cluster mode (`init_orca_context` with "spark-submit")**
+
+For k8s [cluster mode](https://spark.apache.org/docs/2.4.5/running-on-kubernetes.html#cluster-mode), you can call `init_orca_context` and specify cluster_mode to be "spark-submit" in your python script (e.g. in script.py):
 
 ```python
 from zoo.orca import init_orca_context
@@ -134,7 +135,7 @@ from zoo.orca import init_orca_context
 init_orca_context(cluster_mode="spark-submit")
 ```
 
-Use spark-submit to submit your Analytics Zoo program (e.g. script.py):
+Use spark-submit to submit your Analytics Zoo program:
 
 ```bash
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
@@ -147,59 +148,8 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
   --driver-memory 10g \
   --executor-cores 8 \
   --num-executors 2 \
-  file:///opt/script.py
+  file:///path/script.py
 ```
-
-#### **3.2 Use `spark_submit`**
-
-Alternatively, you may use `spark_submit` to run your program on K8s clusters.
-
-**Run Python programs**
-
-Use spark-submit to submit your Analytics Zoo program (e.g. script.py):
-
-```bash
-${SPARK_HOME}/bin/spark-submit \
-  --master ${RUNTIME_SPARK_MASTER} \
-  --deploy-mode client \
-  --conf spark.driver.host=${RUNTIME_DRIVER_HOST} \
-  --conf spark.driver.port=${RUNTIME_DRIVER_PORT} \
-  --conf spark.kubernetes.authenticate.driver.serviceAccountName=${RUNTIME_K8S_SERVICE_ACCOUNT} \
-  --name analytics-zoo \
-  --conf spark.kubernetes.container.image=${RUNTIME_K8S_SPARK_IMAGE} \
-  --conf spark.executor.instances=${RUNTIME_EXECUTOR_INSTANCES} \
-  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
-  --conf spark.kubernetes.driver.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/path \
-  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.options.claimName=${RUNTIME_PERSISTENT_VOLUME_CLAIM} \
-  --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.${RUNTIME_PERSISTENT_VOLUME_CLAIM}.mount.path=/path \
-  --conf spark.kubernetes.driver.label.<your-label>=true \
-  --conf spark.kubernetes.executor.label.<your-label>=true \
-  --executor-cores ${RUNTIME_EXECUTOR_CORES} \
-  --executor-memory ${RUNTIME_EXECUTOR_MEMORY} \
-  --total-executor-cores ${RUNTIME_TOTAL_EXECUTOR_CORES} \
-  --driver-cores ${RUNTIME_DRIVER_CORES} \
-  --driver-memory ${RUNTIME_DRIVER_MEMORY} \
-  --properties-file ${ANALYTICS_ZOO_HOME}/conf/spark-analytics-zoo.conf \
-  --py-files ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip,/path/script.py \
-  --conf spark.driver.extraJavaOptions=-Dderby.stream.error.file=/tmp \
-  --conf spark.sql.catalogImplementation='in-memory' \
-  --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
-  --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
-  file:///path/script.py \
-  --input_dir /path
-```
-
-Options:
-
-- --master: the spark mater, must be a URL with the format `k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port>`. 
-- --deploy-mode: submit application in client/cluster mode.
-
-- --name: the Spark application name.
-- --conf: require to specify k8s service account, container image to use for the Spark application, driver volumes name and path, label of pods, spark driver and executor configuration, etc. You can refer to [spark configuration](https://spark.apache.org/docs/latest/configuration.html) and [spark on k8s configuration](https://spark.apache.org/docs/latest/running-on-kubernetes.html#configuration) for more details.
-- --properties-file: the customized conf properties.
-- --py-files: the extra python packages is needed.
-- file://: local file path of the python example file in the client container.
-- --input_dir: input data path of the anomaly detection example. The data path is the mounted filesystem of the host. Refer to more details by [Kubernetes Volumes](https://spark.apache.org/docs/latest/running-on-kubernetes.html#using-kubernetes-volumes).
 
 **Run Jupyter Notebooks**
 
@@ -262,7 +212,7 @@ Options:
 - --master: the spark mater, must be a URL with the format `k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port>`. 
 - --deploy-mode: submit application in client/cluster mode.
 - --name: the Spark application name.
-- --conf: require to specify k8s service account, container image to use for the Spark application, driver volumes name and path, label of pods, spark driver and executor configuration, etc. You can refer to [spark configuration](https://spark.apache.org/docs/latest/configuration.html) and [spark on k8s configuration](https://spark.apache.org/docs/latest/running-on-kubernetes.html#configuration) for more details.
+- --conf: to specify k8s service account, container image to use for the Spark application, driver volumes name and path, label of pods, spark driver and executor configuration, etc. You can refer to [spark configuration](https://spark.apache.org/docs/latest/configuration.html) and [spark on k8s configuration](https://spark.apache.org/docs/latest/running-on-kubernetes.html#configuration) for more details.
 - --properties-file: the customized conf properties.
 - --py-files: the extra python packages is needed.
 - --class: scala example class name.
