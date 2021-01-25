@@ -23,29 +23,6 @@ import random
 from zoo.ray import RayContext
 
 
-# @ray.remote(num_cpus=0)
-# class MetaStore:
-#
-#     def __init__(self):
-#         self.partitions = {}
-#
-#     def set_partition_ref(self, idx, object_ref):
-#         self.partitions[idx] = object_ref[0]
-#         return 0
-#
-#     def get_partition_ref(self, idx):
-#         return self.partitions[idx]
-#
-#     def get_multiple_partition_refs(self, idxs):
-#         return [self.partitions[idx] for idx in idxs]
-#
-#     def get_all_partition_refs(self):
-#         return [self.partitions[i] for i in range(len(self.partitions))]
-#
-#     def num_partitions(self):
-#         return len(self.partitions)
-
-
 class PartitionUploader:
 
     def __init__(self):
@@ -290,7 +267,6 @@ class RayRdd:
         password = ray_ctx.redis_password
         driver_ip = ray.services.get_node_ip_address()
         uuid_str = str(uuid.uuid4())
-        # meta_store = MetaStore.options(name=f"meta_store:{uuid_str}").remote()
         resources = ray.cluster_resources()
         nodes = []
         for key, value in resources.items():
