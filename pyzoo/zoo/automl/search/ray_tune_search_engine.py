@@ -59,18 +59,15 @@ class RayTuneSearchEngine(SearchEngine):
         self.logs_dir = os.path.abspath(os.path.expanduser(logs_dir))
 
     def compile(self,
-                input_df,
+                data,
                 model_create_func,
                 recipe,
-                feature_cols=None,
-                target_col=None,
                 search_space=None,
                 search_alg=None,
                 search_alg_params=None,
                 scheduler=None,
                 scheduler_params=None,
                 feature_transformers=None,
-                validation_df=None,
                 mc=False,
                 metric="mse"):
         """
@@ -89,6 +86,41 @@ class RayTuneSearchEngine(SearchEngine):
         :return:
         """
 
+        # data mode detection
+        assert isinstance(data, dict), 'ERROR: Argument \'data\' should be a dictionary.'
+        data_mode = None  # data_mode can only be 'dataframe' or 'ndarray'
+        data_schema = set(data.keys())
+        if set(["df"]).issubset(data_schema):
+            data_mode = 'dataframe'
+        if set(["x", "y"]).issubset(data_schema):
+            data_mode = 'ndarray'
+        assert data_mode in ['dataframe', 'ndarray'],\
+            'ERROR: Argument \'data\' should fit either \
+                dataframe schema (include \'df\' in keys) or\
+                     ndarray (include \'x\' and \'y\' in keys) schema.'
+
+        # data extract
+        if data_mode == 'dataframe':
+            input_df = data['df']
+            feature_cols = data.get("feature_cols", None)
+            target_col = data.get("target_col", None)
+            validation_df = data.get("val_df", None)
+        else:
+            if data["x"].ndim == 1:
+                data["x"] = data["x"].reshape(-1, 1)
+            if data["y"].ndim == 1:
+                data["y"] = data["y"].reshape(-1, 1)
+            if "val_x" in data.keys() and data["val_x"].ndim == 1:
+                data["val_x"] = data["val_x"].reshape(-1, 1)
+            if "val_y" in data.keys() and data["val_y"].ndim == 1:
+                data["val_y"] = data["val_y"].reshape(-1, 1)
+
+            input_data = {"x": data["x"], "y": data["y"]}
+            if 'val_x' in data.keys():
+                validation_data = {"x": data["val_x"], "y": data["val_y"]}
+            else:
+                validation_data = None
+
         # prepare parameters for search engine
         runtime_params = recipe.runtime_params()
         self.num_samples = runtime_params['num_samples']
@@ -102,17 +134,29 @@ class RayTuneSearchEngine(SearchEngine):
         self._scheduler = RayTuneSearchEngine._set_scheduler(scheduler, scheduler_params)
         self.search_space = self._prepare_tune_config(search_space)
 
-        if feature_transformers is None:
+        if feature_transformers is None and data_mode == 'dataframe':
             feature_transformers = IdentityTransformer(feature_cols, target_col)
 
-        self.train_func = self._prepare_train_func(input_df=input_df,
-                                                   model_create_func=model_create_func,
-                                                   feature_transformers=feature_transformers,
-                                                   validation_df=validation_df,
-                                                   metric=metric,
-                                                   mc=mc,
-                                                   remote_dir=self.remote_dir
-                                                   )
+        if data_mode == 'dataframe':
+            self.train_func = self._prepare_train_func(input_data=input_df,
+                                                       model_create_func=model_create_func,
+                                                       feature_transformers=feature_transformers,
+                                                       validation_data=validation_df,
+                                                       metric=metric,
+                                                       mc=mc,
+                                                       remote_dir=self.remote_dir,
+                                                       numpy_format=False
+                                                       )
+        else:
+            self.train_func = self._prepare_train_func(input_data=input_data,
+                                                       model_create_func=model_create_func,
+                                                       feature_transformers=None,
+                                                       validation_data=validation_data,
+                                                       metric=metric,
+                                                       mc=mc,
+                                                       remote_dir=self.remote_dir,
+                                                       numpy_format=True
+                                                       )
         # self.trainable_class = self._prepare_trainable_class(input_df,
         #                                                      feature_transformers,
         #                                                      # model,
@@ -256,13 +300,14 @@ class RayTuneSearchEngine(SearchEngine):
         return validation_df is not None and not (df_not_empty or df_list_not_empty)
 
     @staticmethod
-    def _prepare_train_func(input_df,
+    def _prepare_train_func(input_data,
                             model_create_func,
                             feature_transformers,
                             metric,
-                            validation_df=None,
+                            validation_data=None,
                             mc=False,
                             remote_dir=None,
+                            numpy_format=False,
                             ):
         """
         Prepare the train function for ray tune
@@ -273,51 +318,66 @@ class RayTuneSearchEngine(SearchEngine):
         :param metric: the rewarding metric
         :return: the train function
         """
-        input_df_id = ray.put(input_df)
+        numpy_format_id = ray.put(numpy_format)
+        input_data_id = ray.put(input_data)
         ft_id = ray.put(feature_transformers)
+
         # model_id = ray.put(model)
 
-        df_not_empty = isinstance(validation_df, pd.DataFrame) and not validation_df.empty
-        df_list_not_empty = isinstance(validation_df, list) and validation_df \
-            and not all([d.empty for d in validation_df])
-        if validation_df is not None and (df_not_empty or df_list_not_empty):
-            validation_df_id = ray.put(validation_df)
-            is_val_df_valid = True
+        # validation data processing
+        df_not_empty = isinstance(validation_data, dict) or\
+            (isinstance(validation_data, pd.DataFrame) and not validation_data.empty)
+        df_list_not_empty = isinstance(validation_data, dict) or\
+            (isinstance(validation_data, list) and validation_data
+                and not all([d.empty for d in validation_data]))
+        if validation_data is not None and (df_not_empty or df_list_not_empty):
+            validation_data_id = ray.put(validation_data)
+            is_val_valid = True
         else:
-            is_val_df_valid = False
+            is_val_valid = False
 
         def train_func(config):
-            # make a copy from global variables for trial to make changes
-            global_ft = ray.get(ft_id)
-            trial_ft = deepcopy(global_ft)
+            numpy_format = ray.get(numpy_format_id)
+
             if isinstance(model_create_func, ModelBuilder):
                 trial_model = model_create_func.build(config)
             else:
                 trial_model = model_create_func()
 
-            imputer = None
-            if "imputation" in config:
-                if config["imputation"] == "LastFillImpute":
-                    imputer = LastFillImpute()
-                elif config["imputation"] == "FillZeroImpute":
-                    imputer = FillZeroImpute()
+            if not numpy_format:
+                global_ft = ray.get(ft_id)
+                trial_ft = deepcopy(global_ft)
+                imputer = None
+                if "imputation" in config:
+                    if config["imputation"] == "LastFillImpute":
+                        imputer = LastFillImpute()
+                    elif config["imputation"] == "FillZeroImpute":
+                        imputer = FillZeroImpute()
 
-            # handling input
-            global_input_df = ray.get(input_df_id)
-            trial_input_df = deepcopy(global_input_df)
-            if imputer:
-                trial_input_df = imputer.impute(trial_input_df)
-            config = convert_bayes_configs(config).copy()
-            # print("config is ", config)
-            (x_train, y_train) = trial_ft.fit_transform(trial_input_df, **config)
-            # trial_ft.fit(trial_input_df, **config)
+                # handling input
+                global_input_df = ray.get(input_data_id)
+                trial_input_df = deepcopy(global_input_df)
+                if imputer:
+                    trial_input_df = imputer.impute(trial_input_df)
+                config = convert_bayes_configs(config).copy()
+                # print("config is ", config)
+                (x_train, y_train) = trial_ft.fit_transform(trial_input_df, **config)
+                # trial_ft.fit(trial_input_df, **config)
 
-            # handling validation data
-            validation_data = None
-            if is_val_df_valid:
-                global_validation_df = ray.get(validation_df_id)
-                trial_validation_df = deepcopy(global_validation_df)
-                validation_data = trial_ft.transform(trial_validation_df)
+                # handling validation data
+                validation_data = None
+                if is_val_valid:
+                    global_validation_df = ray.get(validation_data_id)
+                    trial_validation_df = deepcopy(global_validation_df)
+                    validation_data = trial_ft.transform(trial_validation_df)
+            else:
+                train_data = ray.get(input_data_id)
+                x_train, y_train = (train_data["x"], train_data["y"])
+                validation_data = None
+                if is_val_valid:
+                    validation_data = ray.get(validation_data_id)
+                    validation_data = (validation_data["x"], validation_data["y"])
+                trial_ft = None
 
             # no need to call build since it is called the first time fit_eval is called.
             # callbacks = [TuneCallback(tune_reporter)]
