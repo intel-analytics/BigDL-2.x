@@ -57,7 +57,7 @@ You can run Analytics Zoo programs on standard Hadoop/YARN clusters without any 
   sc = init_orca_context(cluster_mode="yarn-client", cores=4, memory="10g", num_nodes=2)
   ```
 
-  By specifying cluster_mode to be "yarn-client", `init_orca_context` would automatically prepare the runtime Python environment, detect the current Hadoop configurations from `HADOOP_CONF_DIR` and initiate the distributed execution engine on the underlying YARN cluster. View the [Orca Context](../Orca/Overview/orca-context.md) for more details.
+  By specifying cluster_mode to be "yarn-client", `init_orca_context` would automatically prepare the runtime Python environment, detect the current Hadoop configurations from `HADOOP_CONF_DIR` and initiate the distributed execution engine on the underlying YARN cluster. View [Orca Context](../Orca/Overview/orca-context.md) for more details.
   
 
 - You can then simply run your Analytics Zoo program in a Jupyter notebook:
