@@ -109,7 +109,7 @@ The `/opt` directory contains:
 
 _**Note**: Please make sure `kubectl` has appropriate permission to create, list and delete pod._
 
-#### **3.1 K8s client mode (use `init_orca_context` with "k8s")**
+#### **3.1 K8s client mode**
 
 We recommend using `init_orca_context` at the very beginning of your code (e.g. in script.py) to initiate and run Analytics Zoo on standard K8s clusters in [client mode](http://spark.apache.org/docs/latest/running-on-kubernetes.html#client-mode).
 
@@ -125,7 +125,7 @@ init_orca_context(cluster_mode="k8s", master="k8s://https://<k8s-apiserver-host>
 
 Execute `python script.py` to run your program on k8s cluster directly.
 
-#### **3.2 K8s cluster mode (use `init_orca_context` with "spark-submit")**
+#### **3.2 K8s cluster mode**
 
 For k8s [cluster mode](https://spark.apache.org/docs/2.4.5/running-on-kubernetes.html#cluster-mode), you can call `init_orca_context` and specify cluster_mode to be "spark-submit" in your python script (e.g. in script.py):
 
@@ -218,7 +218,7 @@ Options:
 - --class: scala example class name.
 - --input_dir: input data path of the anomaly detection example. The data path is the mounted filesystem of the host. Refer to more details by [Kubernetes Volumes](https://spark.apache.org/docs/latest/running-on-kubernetes.html#using-kubernetes-volumes).
 
-#### **3.5 Access logs and clear pods**
+### **4. Access logs and clear pods**
 
 When application is running, it’s possible to stream logs on the driver pod:
 
