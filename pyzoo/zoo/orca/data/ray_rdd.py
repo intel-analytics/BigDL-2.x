@@ -237,7 +237,6 @@ class RayRdd:
                     remainder -= 1
         return actor2assignments, actor_ips
 
-    # todo: remove meta store and fix instantiation
     @staticmethod
     def from_partition_refs(ip2part_id, part_id2ref):
         ray_ctx = RayContext.get()
@@ -245,15 +244,17 @@ class RayRdd:
         id2store_name = {}
         partition_stores = {}
         part_id2ip = {}
+        result = []
         for node, part_ids in ip2part_id.items():
             name = f"partition:{uuid_str}:{node}"
             store = ray.remote(num_cpus=0, resources={f"node:{node}": 1e-4})(PartitionUploader) \
                 .options(name=name).remote()
             partition_stores[name] = store
             for idx in part_ids:
-                store.upload_partition.remote(idx, part_id2ref[idx])
+                result.append(store.upload_partition.remote(idx, part_id2ref[idx]))
                 id2store_name[idx] = name
                 part_id2ip[idx] = node
+        ray.get(result)
         return RayRdd(uuid_str, id2store_name, part_id2ip, partition_stores)
 
     @staticmethod
