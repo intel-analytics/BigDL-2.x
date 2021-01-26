@@ -235,14 +235,10 @@ class RayTuneSearchEngine(SearchEngine):
         # Visualization code for ray (leaderboard)
         # catch the ImportError Since it has been processed in TensorboardXLogger
         tf_config, tf_metric = self._log_adapt(analysis)
-        try:
-            self.logger = TensorboardXLogger(os.path.join(self.logs_dir, self.name+"_leaderboard"))
-            self.logger.run(tf_config, tf_metric)
-            self.logger.close()
-        except ImportError:
-            pass
-        except:
-            raise
+
+        self.logger = TensorboardXLogger(os.path.join(self.logs_dir, self.name+"_leaderboard"))
+        self.logger.run(tf_config, tf_metric)
+        self.logger.close()
 
         return analysis
 
@@ -529,5 +525,6 @@ class RayTuneSearchEngine(SearchEngine):
         metric_raw = analysis.fetch_trial_dataframes()
         metric = {}
         for key, value in metric_raw.items():
-                metric[key] = dict(zip(list(value.columns), list(value.iloc[-1].values)))
+            metric[key] = dict(zip(list(value.columns), list(map(list, value.values.T))))
+            config[key]["address"] = key
         return config, metric

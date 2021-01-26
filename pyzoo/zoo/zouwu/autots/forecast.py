@@ -34,6 +34,7 @@ class AutoTSTrainer:
                  search_alg_params=None,
                  scheduler=None,
                  scheduler_params=None,
+                 name="automl"
                  ):
         """
         Initialize the AutoTS Trainer.
@@ -55,7 +56,8 @@ class AutoTSTrainer:
             search_alg=search_alg,
             search_alg_params=search_alg_params,
             scheduler=scheduler,
-            scheduler_params=scheduler_params
+            scheduler_params=scheduler_params,
+            name=name
         )
 
     def fit(self,
