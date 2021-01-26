@@ -98,7 +98,7 @@ from zoo.orca.learn.tf2 import Estimator
 est = Estimator.from_keras(model_creator=model_creator, config={}, workers_per_node=2)
 ```
 
-Next, fit and evaluate using the Estimator.
+Next, fit and evaluate using the Estimator. Note that if `batch_size` is not specified in the `fit` function, it will be set to 32 by default.
 ```python
 batch_size = 320
 stats = est.fit(train_data_creator,
