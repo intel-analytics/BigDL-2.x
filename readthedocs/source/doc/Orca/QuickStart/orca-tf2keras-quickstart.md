@@ -96,13 +96,14 @@ First, create an Estimator.
 from zoo.orca.learn.tf2 import Estimator
 
 batch_size = 320
-est = Estimator.from_keras(model_creator=model_creator, config={"batch_size": batch_size}, workers_per_node=2)
+est = Estimator.from_keras(model_creator=model_creator, config={}, workers_per_node=2)
 ```
 
 Next, fit and evaluate using the Estimator.
 ```python
 stats = est.fit(train_data_creator,
                 epochs=5,
+                batch_size=batch_size,
                 steps_per_epoch=60000 // batch_size,
                 validation_data=val_data_creator,
                 validation_steps=10000 // batch_size)
