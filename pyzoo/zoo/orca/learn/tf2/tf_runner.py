@@ -337,7 +337,7 @@ class TFRunner:
             else:
                 config['batch_size'] = batch_size
         elif batch_size is not None and config['batch_size'] != batch_size:
-            warnings.warn("The input batch_size in the est.fit function is different from config['batch_size']. The "
+            warnings.warn("The input batch_size in the fit function is different from config['batch_size']. The "
                           "input batch_size is used in this case.")
             config['batch_size'] = batch_size
 
