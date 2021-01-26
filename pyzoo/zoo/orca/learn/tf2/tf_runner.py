@@ -334,16 +334,21 @@ class TFRunner:
         if 'batch_size' not in config:
             if batch_size is None:
                 config['batch_size'] = 32
+                warnings.warn("batch_size is not specified in the fit function. It is set to 32 by default.")
             else:
                 config['batch_size'] = batch_size
-        elif batch_size is not None and config['batch_size'] != batch_size:
-            warnings.warn("The input batch_size in the fit function is different from config['batch_size']. The "
-                          "input batch_size is used in this case.")
-            config['batch_size'] = batch_size
+        else:
+            if batch_size is not None:
+                config['batch_size'] = batch_size
+                warnings.warn("batch_size is specified in both the input of the fit function and config['batch_size']."
+                              " The input batch_size is used in this case.")
+            else:
+                warnings.warn(
+                    "batch_size is not specified in the fit function. config['batch_size'] is used in this case.")
 
         with self.strategy.scope():
             dataset_handler = DatasetHandler.get_handler(self.backend, self.rank, self.size)
-            train_dataset, test_dataset = dataset_handler\
+            train_dataset, test_dataset = dataset_handler \
                 .handle_datasets_train(data_creator,
                                        validation_data_creator,
                                        config=config, epochs=epochs,
