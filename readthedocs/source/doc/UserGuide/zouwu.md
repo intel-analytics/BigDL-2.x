@@ -329,6 +329,7 @@ model.fit(
         num_workers=num_workers_for_fit)
 ```
  * evaluate
+
 You can either call evalute directly
 
 ```python
