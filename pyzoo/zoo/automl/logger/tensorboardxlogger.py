@@ -81,10 +81,10 @@ class TensorboardXLogger():
         for key in metric.keys():
             new_metric[key] = {}
             for k, value in metric[key].items():
+                if not isinstance(value, list):
+                    value = [value]
                 if type(value[-1]) in VALID_SUMMARY_TYPES and not np.isnan(value[-1]):
                     new_metric[key]['AutoTS/' + k] = value
-                if k == "reward_metric":
-                    new_config[key]['AutoTS/' + k + "(Use this to sort)"] = float(value[-1])
 
         # hparams log write
         for key in new_metric.keys():
@@ -99,8 +99,6 @@ class TensorboardXLogger():
         w_hp.file_writer.add_summary(sei)
         for k, values in metric_dict.items():
             global_step = 0
-            if not isinstance(values, list):
-                values = [values]
             for v in values:
                 w_hp.add_scalar(k, v, global_step)
                 global_step += 1
