@@ -36,6 +36,7 @@ Analytics Zoo includes the **Orca** library that seamlessly scale out your singl
    doc/UserGuide/scala.md
    doc/UserGuide/ray.md
    doc/UserGuide/develop.md
+   doc/UserGuide/zouwu.md
    
 .. toctree::
    :maxdepth: 1
