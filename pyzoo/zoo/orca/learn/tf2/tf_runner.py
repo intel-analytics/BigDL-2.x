@@ -31,6 +31,8 @@
 import logging
 import json
 import os
+import warnings
+
 import numpy as np
 
 import ray
@@ -320,7 +322,7 @@ class TFRunner:
         self.size = world_size
         self.rank = world_rank
 
-    def step(self, data_creator, epochs=1, batch_size=32, verbose=1,
+    def step(self, data_creator, epochs=1, batch_size=None, verbose=1,
              callbacks=None, validation_data_creator=None, class_weight=None,
              steps_per_epoch=None, validation_steps=None, validation_freq=1,
              data_config=None):
@@ -328,7 +330,17 @@ class TFRunner:
         config = self.config.copy()
         if data_config is not None:
             config.update(data_config)
-        config['batch_size'] = batch_size
+
+        if 'batch_size' not in config:
+            if batch_size is None:
+                config['batch_size'] = 32
+            else:
+                config['batch_size'] = batch_size
+        elif batch_size is not None and config['batch_size'] != batch_size:
+            warnings.warn("The input batch_size in the est.fit function is different from config['batch_size']. The "
+                          "input batch_size is used in this case.")
+            config['batch_size'] = batch_size
+
         with self.strategy.scope():
             dataset_handler = DatasetHandler.get_handler(self.backend, self.rank, self.size)
             train_dataset, test_dataset = dataset_handler\
