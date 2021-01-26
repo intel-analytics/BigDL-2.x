@@ -89,9 +89,10 @@ class TensorboardXLogger():
         # hparams log write
         for key in new_metric.keys():
             self._write_hparams(new_config[key], new_metric[key], name=key.replace("/", "_"))
-    
+
     def _write_hparams(self, hparam_dict, metric_dict, name):
-        # adapted from 
+        # adapted from
+        # https://github.com/lanpa/tensorboardX/blob/master/tensorboardX/writer.py#L336-L376
         exp, ssi, sei = hparams(hparam_dict, metric_dict)
         w_hp = SummaryWriter(logdir=os.path.join(self._file_writer.logdir, name))
         w_hp.file_writer.add_summary(exp)
