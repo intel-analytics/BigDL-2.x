@@ -111,7 +111,7 @@ evaluate(self, data, batch_size=32, feature_cols=None, label_cols=None, validati
 * `data`: Validation data. SparkXShard, DataFrame, PyTorch DataLoader and PyTorch DataLoader creator are supported.
 * `batch_size`: Batch size used for evaluation. Only used when data is a SparkXShard.
 * `feature_cols`: Feature column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
-* `labels_cols`: Label column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
+* `label_cols`: Label column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
 * `validation_metrics`: Orca validation methods.
 
 #### **Inference**

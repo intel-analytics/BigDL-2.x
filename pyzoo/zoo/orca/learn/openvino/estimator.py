@@ -57,7 +57,7 @@ class OpenvinoEstimator(SparkEstimator):
                                  weight_path=model_path[:model_path.rindex(".")] + ".bin",
                                  batch_size=batch_size)
 
-    def fit(self, data, epochs, batch_size=32, feature_cols=None, labels_cols=None,
+    def fit(self, data, epochs, batch_size=32, feature_cols=None, label_cols=None,
             validation_data=None, checkpoint_trigger=None):
         """
         Fit is not supported in OpenVINOEstimator
@@ -155,7 +155,7 @@ class OpenvinoEstimator(SparkEstimator):
             raise ValueError("Only XShards, a numpy array and a list of numpy arrays are supported "
                              "as input data, but get " + data.__class__.__name__)
 
-    def evaluate(self, data, batch_size=32, feature_cols=None, labels_cols=None):
+    def evaluate(self, data, batch_size=32, feature_cols=None, label_cols=None):
         """
         Evaluate is not supported in OpenVINOEstimator
         """

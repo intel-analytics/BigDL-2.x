@@ -98,7 +98,7 @@ class BigDLEstimator(OrcaSparkEstimator):
         :param batch_size: Batch size used for training. Default: 32.
         :param feature_cols: Feature column name(s) of data. Only used when data is a Spark
         DataFrame. Default: "features".
-        :param labels_cols: Label column name(s) of data. Only used when data is a Spark DataFrame.
+        :param label_cols: Label column name(s) of data. Only used when data is a Spark DataFrame.
         Default: "label".
         :param caching_sample: whether to cache the Samples after preprocessing. Default: True
         :param validation_data: Validation data. XShards and Spark DataFrame are supported.
@@ -231,7 +231,7 @@ class BigDLEstimator(OrcaSparkEstimator):
         :param batch_size: Batch size used for validation. Default: 32.
         :param feature_cols: (Not supported yet) Feature column name(s) of data. Only used when
         data is a Spark  DataFrame. Default: None.
-        :param labels_cols: (Not supported yet) Label column name(s) of data. Only used when data
+        :param label_cols: (Not supported yet) Label column name(s) of data. Only used when data
         is a Spark DataFrame. Default: None.
         :param validation_metrics: Orca validation metrics to be computed on validation_data.
         :return:
