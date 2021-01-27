@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from zoo.orca.learn.utils import bigdl_metric_results_to_dict
 from zoo.pipeline.nnframes import NNEstimator, NNModel
 from zoo.pipeline.estimator import Estimator as SparkEstimator
 from zoo.orca.learn.spark_estimator import Estimator as OrcaSparkEstimator
@@ -212,10 +213,10 @@ class BigDLEstimator(OrcaSparkEstimator):
             return self.nn_model.transform(data)
         elif isinstance(data, SparkXShards):
             from zoo.orca.data.utils import xshard_to_sample
-            from zoo.orca.learn.utils import convert_predict_to_xshard
+            from zoo.orca.learn.utils import convert_predict_rdd_to_xshard
             sample_rdd = data.rdd.flatMap(xshard_to_sample)
             result_rdd = self.model.predict(sample_rdd)
-            return convert_predict_to_xshard(result_rdd)
+            return convert_predict_rdd_to_xshard(data, result_rdd)
         else:
             raise ValueError("Data should be XShards or Spark DataFrame, but get " +
                              data.__class__.__name__)
@@ -245,10 +246,12 @@ class BigDLEstimator(OrcaSparkEstimator):
 
             validation_metrics = Metrics.convert_metrics_list(validation_metrics)
             val_feature_set = FeatureSet.sample_rdd(data.rdd.flatMap(xshard_to_sample))
-            return self.estimator.evaluate(val_feature_set, validation_metrics, batch_size)
+            result = self.estimator.evaluate(val_feature_set, validation_metrics, batch_size)
         else:
             raise ValueError("Data should be XShards or Spark DataFrame, but get " +
                              data.__class__.__name__)
+
+        return bigdl_metric_results_to_dict(result)
 
     def get_model(self):
         """

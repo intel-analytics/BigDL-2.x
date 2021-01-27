@@ -23,7 +23,8 @@ import ray
 from zoo.orca.data.shard import RayXShards
 from zoo.orca.learn.tf2.tf_runner import TFRunner
 from zoo.orca.learn.ray_estimator import Estimator as OrcaRayEstimator
-from zoo.orca.learn.utils import maybe_dataframe_to_xshards
+from zoo.orca.learn.utils import maybe_dataframe_to_xshards, dataframe_to_xshards, \
+    convert_predict_rdd_to_dataframe, convert_predict_xshards_to_dataframe, update_predict_xshards
 from zoo.ray import RayContext
 
 logger = logging.getLogger(__name__)
@@ -64,6 +65,7 @@ class Estimator(object):
 def shards_ref_to_creator(shards_ref):
     def data_creator(config):
         return shards_ref
+
     return data_creator
 
 
@@ -230,7 +232,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
 
                 def zip_func(worker, this_shards_ref, that_shards_ref):
                     params["data_creator"] = shards_ref_to_creator(this_shards_ref)
-                    params["validation_data_creator"] =\
+                    params["validation_data_creator"] = \
                         shards_ref_to_creator(that_shards_ref)
                     return worker.step.remote(**params)
 
@@ -320,6 +322,19 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         stats = worker_stats[0].copy()
         return stats
 
+    def _predict_spark_xshards(self, xshards, params):
+        ray_xshards = RayXShards.from_spark_xshards(xshards)
+
+        def transform_func(worker, shards_ref):
+            params["data_creator"] = shards_ref_to_creator(shards_ref)
+            return worker.predict.remote(**params)
+
+        pred_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
+                                                               transform_func,
+                                                               gang_scheduling=False)
+        spark_xshards = pred_shards.to_spark_xshards()
+        return spark_xshards
+
     def predict(self, data, batch_size=None, verbose=1,
                 steps=None, callbacks=None, data_config=None,
                 feature_cols=None):
@@ -348,28 +363,23 @@ class TensorFlow2Estimator(OrcaRayEstimator):
             data_config=data_config,
         )
         from zoo.orca.data import SparkXShards
-        data, _ = maybe_dataframe_to_xshards(data,
-                                             validation_data=None,
-                                             feature_cols=feature_cols,
-                                             label_cols=None,
-                                             mode="predict")
+        from pyspark.sql import DataFrame
 
-        if isinstance(data, SparkXShards):
-            ray_xshards = RayXShards.from_spark_xshards(data)
-
-            def transform_func(worker, shards_ref):
-                params["data_creator"] = shards_ref_to_creator(shards_ref)
-                return worker.predict.remote(**params)
-
-            pred_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
-                                                                   transform_func,
-                                                                   gang_scheduling=False)
-            spark_xshards = pred_shards.to_spark_xshards()
-
+        if isinstance(data, DataFrame):
+            xshards, _ = dataframe_to_xshards(data,
+                                              validation_data=None,
+                                              feature_cols=feature_cols,
+                                              label_cols=None,
+                                              mode="predict")
+            pred_shards = self._predict_spark_xshards(xshards, params)
+            result = convert_predict_xshards_to_dataframe(data, pred_shards)
+        elif isinstance(data, SparkXShards):
+            pred_shards = self._predict_spark_xshards(data, params)
+            result = update_predict_xshards(data, pred_shards)
         else:
             raise ValueError("Only xshards or Spark DataFrame is supported for predict")
 
-        return spark_xshards
+        return result
 
     def get_model(self):
         """
@@ -377,7 +387,9 @@ class TensorFlow2Estimator(OrcaRayEstimator):
 
         :return: the learned model.
         """
-        state = ray.get(self.remote_workers[0].get_state.remote())
+        """Returns the learned model."""
+        state_refs = [w.get_state.remote() for w in self.remote_workers]
+        state = ray.get(state_refs[0])
         return self._get_model_from_state(state)
 
     def save(self, checkpoint):
@@ -425,15 +437,8 @@ class TensorFlow2Estimator(OrcaRayEstimator):
     def _get_model_from_state(self, state):
         """Creates model and load weights from state"""
 
+        # keep the same behavior as `set_state` in `load` do
         model = self.model_creator(self.config)
         model.set_weights(state["weights"])
-
-        # This part is due to ray.get() changing scalar np.int64 object to int
-        state["optimizer_weights"][0] = np.array(
-            state["optimizer_weights"][0], dtype=np.int64)
-
-        if model.optimizer.weights == []:
-            model._make_train_function()
-        model.optimizer.set_weights(state["optimizer_weights"])
 
         return model

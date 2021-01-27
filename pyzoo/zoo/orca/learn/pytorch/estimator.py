@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 from zoo.orca.data.utils import row_to_sample, xshard_to_sample
+from zoo.orca.learn.utils import convert_predict_rdd_to_dataframe, bigdl_metric_results_to_dict
 from zoo.pipeline.estimator.estimator import Estimator as SparkEstimator
 from zoo.orca.learn.ray_estimator import Estimator as OrcaRayEstimator
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
@@ -333,17 +334,21 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
 
         if isinstance(data, SparkXShards):
             train_fset, val_fset = self._handle_xshards(data, validation_data)
+            self.estimator.train(train_fset, self.loss, end_trigger, checkpoint_trigger,
+                                 val_fset, validation_metrics, batch_size)
         elif isinstance(data, DataFrame):
             train_fset, val_fset = self._handle_dataframe(data, validation_data,
                                                           feature_cols, label_cols)
+            self.estimator.train(train_fset, self.loss, end_trigger, checkpoint_trigger,
+                                 val_fset, validation_metrics, batch_size)
         elif isinstance(data, DataLoader) or callable(data):
             train_fset, val_fset = self._hanle_data_loader(data, validation_data)
+            self.estimator.train_minibatch(train_fset, self.loss, end_trigger,
+                                           checkpoint_trigger, val_fset, validation_metrics)
         else:
             raise ValueError("Data and validation data should be SparkXShards, DataLoaders or "
                              "callable data_creators but get " + data.__class__.__name__)
 
-        self.estimator.train(train_fset, self.loss, end_trigger, checkpoint_trigger,
-                             val_fset, validation_metrics, batch_size)
         return self
 
     def predict(self, data, batch_size=4, feature_cols=None):
@@ -360,7 +365,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         is a dictionary of {'prediction': result}, where result is a numpy array or a list of numpy
         arrays.
         """
-        from zoo.orca.learn.utils import convert_predict_to_xshard
+        from zoo.orca.learn.utils import convert_predict_rdd_to_xshard
         if isinstance(data, SparkXShards):
             from zoo.orca.data.utils import xshard_to_sample
             data_rdd = data.rdd.flatMap(xshard_to_sample)
@@ -373,7 +378,12 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
             raise ValueError("Data should be XShards, each element needs to be {'x': a feature "
                              "numpy array}.")
         predicted_rdd = self.model.predict(data_rdd, batch_size=batch_size)
-        return convert_predict_to_xshard(predicted_rdd)
+
+        if isinstance(data, SparkXShards):
+            result = convert_predict_rdd_to_xshard(data, predicted_rdd)
+        else:
+            result = convert_predict_rdd_to_dataframe(data, predicted_rdd)
+        return result
 
     def evaluate(self, data, batch_size=32, feature_cols=None, label_cols=None,
                  validation_metrics=None):
@@ -400,18 +410,19 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
 
         if isinstance(data, SparkXShards):
             val_feature_set = FeatureSet.sample_rdd(data.rdd.flatMap(xshard_to_sample))
-            return self.estimator.evaluate(val_feature_set, validation_metrics, batch_size)
+            result = self.estimator.evaluate(val_feature_set, validation_metrics, batch_size)
         elif isinstance(data, DataFrame):
             schema = data.schema
             val_feature_set = FeatureSet.sample_rdd(data.rdd.map(
                 lambda row: row_to_sample(row, schema, feature_cols, label_cols)))
-            return self.estimator.evaluate(val_feature_set, validation_metrics, batch_size)
+            result = self.estimator.evaluate(val_feature_set, validation_metrics, batch_size)
         elif isinstance(data, DataLoader) or callable(data):
             val_feature_set = FeatureSet.pytorch_dataloader(data)
-            return self.estimator.evaluate_minibatch(val_feature_set, validation_metrics)
+            result = self.estimator.evaluate_minibatch(val_feature_set, validation_metrics)
         else:
             raise ValueError("Data should be a SparkXShards, a DataLoader or a callable "
                              "data_creator, but get " + data.__class__.__name__)
+        return bigdl_metric_results_to_dict(result)
 
     def get_model(self):
         """

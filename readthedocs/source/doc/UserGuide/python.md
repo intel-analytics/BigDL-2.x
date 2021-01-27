@@ -51,7 +51,7 @@ Or you can add the option `-i https://pypi.python.org/simple` when pip install t
 ---
 ### **2. Run**
 
-_**Note:**  Installing Analytics Zoo from pip will automatically install `pyspark`. To avoid possible conflicts, you are highly recommended to  **unset the environment variable `SPARK_HOME`**  if it exists in your environment._
+_**Note:** Installing Analytics Zoo from pip will automatically install `pyspark`. To avoid possible conflicts, you are highly recommended to  **unset the environment variable `SPARK_HOME`**  if it exists in your environment._
 
 
 #### **2.1 Interactive Shell**
