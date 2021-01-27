@@ -115,10 +115,10 @@ class TestEstimatorForKeras(TestCase):
             ((1.0, 2.0), (2.0, 1.0))])
         data_shard = SparkXShards(data)
         data_shard = data_shard.transform_shard(lambda feature_label_tuple: {
-            "x": [np.expand_dims(np.array(feature_label_tuple[0][0]), axis=0),
-                  np.expand_dims(np.array(feature_label_tuple[0][1]), axis=0)],
-            "y": [np.expand_dims(np.array(feature_label_tuple[1][0]), axis=0),
-                  np.expand_dims(np.array(feature_label_tuple[1][1]), axis=0)]
+            "x": np.stack([np.expand_dims(np.array(feature_label_tuple[0][0]), axis=0),
+                  np.expand_dims(np.array(feature_label_tuple[0][1]), axis=0)], axis=1),
+            "y": np.stack([np.expand_dims(np.array(feature_label_tuple[1][0]), axis=0),
+                  np.expand_dims(np.array(feature_label_tuple[1][1]), axis=0)], axis=1)
         })
         res4 = est.predict(data_shard)
         res4_c = res4.collect()
@@ -217,7 +217,7 @@ class TestEstimatorForKeras(TestCase):
 
         def transform(df):
             result = {
-                "x": [df['user'].to_numpy(), df['item'].to_numpy()],
+                "x": np.stack([df['user'].to_numpy(), df['item'].to_numpy()], axis=1),
                 "y": df['label'].to_numpy()
             }
             return result
