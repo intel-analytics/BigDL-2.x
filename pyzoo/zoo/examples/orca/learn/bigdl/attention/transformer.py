@@ -62,10 +62,10 @@ O_seq = TransformerLayer.init(
 O_seq = SelectTable(0)(O_seq)
 O_seq = GlobalAveragePooling1D()(O_seq)
 O_seq = Dropout(0.2)(O_seq)
-# O_seq = merge([token_input, position_input], mode="concat")
 outputs = Dense(2, activation='softmax')(O_seq)
 
 model = Model([token_input, position_input], outputs)
+model.summary()
 batch_size = 128
 print('Train...')
 
