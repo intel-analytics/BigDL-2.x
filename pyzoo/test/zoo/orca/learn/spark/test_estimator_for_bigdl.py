@@ -320,3 +320,5 @@ class TestEstimatorForKeras(TestCase):
 
 if __name__ == "__main__":
     import pytest
+
+    pytest.main([__file__])
