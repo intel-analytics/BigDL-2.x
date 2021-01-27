@@ -10,7 +10,7 @@ There're 2 ways you can use Zouwu for time series analysis.
 
 Zouwu also provides reference time series use cases solutions in the Telco industry.
 
-- **Time series forecasting** Accurate forecast of telco KPIs (e.g. traffic, utilizations, user experience, etc.) for communication networks ( 2G/3G/4G/5G/wired) can help predict network failures, allocate resource, or save energy. And time series forecasti ng can also be used for log and metric analysis for data center IT operations for telco. Metrics to be analyzed can be hardware or VM utilizations, database metrics or servce quality indicators. We provided a reference use case where we forecast network traffic KPI's as a demo. Refer to [Network Traffic Notebook]().
+- **Time series forecasting** Accurate forecast of telco KPIs (e.g. traffic, utilizations, user experience, etc.) for communication networks ( 2G/3G/4G/5G/wired) can help predict network failures, allocate resource, or save energy. And time series forecasting can also be used for log and metric analysis for data center IT operations for telco. Metrics to be analyzed can be hardware or VM utilizations, database metrics or service quality indicators. We provided a reference use case where we forecast network traffic KPI's as a demo. Refer to [Network Traffic Notebook]().
 
 - **Anomaly detection** Detecting anomaly is also very common in telco. One way of doing anomaly detection is first do forecasting, and if the actual value diverges too much from the predicted value, it would be considered anomaly. We provided such a reference use case as a demo. Refer to [Anomaly Detection Notebook]()
 
@@ -29,7 +29,7 @@ psutil
 aiohttp
 setproctitle
 pandas
-scikit-learn>=0.20.0,<=0.22.0
+scikit-learn>=0.20.0,<0.24.0
 requests
 ```
 
@@ -51,7 +51,7 @@ The general workflow has two steps:
 * create a [AutoTSTrainer]() and train. It will return a [TSPipeline](). You can save it to file to use later or elsewhere.
 * use [TSPipeline]() to do prediction, evaluation, and incremental fitting.
 
-Refer to [AutoTS notebook demo]() for demonstration how to use AutoTS to build a time series forcasting pipeline.
+Refer to [AutoTS notebook demo]() for demonstration how to use AutoTS to build a time series forecasting pipeline.
 
 
 #### **3.1 Initialize Orca Context**
@@ -82,7 +82,7 @@ init_orca_context(cluster_mode="yarn-client",
 
 #### **3.2 Prepare Your data**
 
-You should prepare a training dataset, and/or a validation dataset. If you have one time series data and you want both a training dataset and a validation dataset, you can break it into two segments in time line. Usually the validation dataset should come later in time than training dataset.
+You should prepare a training dataset, and/or a validation dataset. If you have one time series data and you want both a training dataset and a validation dataset, you can break it into two segments in time line. Usually the validation dataset should come later in time than training dataset. We have provided a simple utility function to help you split your data into train/validation/test set (refer to [code](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/automl/common/util.py#L28))
 
 Both the training data and validation data must be provided in form of a **pandas dataframe**. And if validation data is provided, it should have the same column names as the training data. The dataframes should have at least two columns
 - the target column, containing all the historical data points which you want use to predict the future data points
@@ -117,7 +117,7 @@ Use ```AutoTSTrainer.fit``` on train on input data and/or validation data with A
 ```python
 ts_pipeline = trainer.fit(train_df, validation_df)
 ```
-You can use built-in [visualizaiton tool]() to inspect the training results after training stopped.
+You can use built-in [visualization tool]() to inspect the training results after training stopped.
 
 
 #### **3.5 Use a pipeline**
@@ -181,15 +181,15 @@ init_orca_context(cluster_mode="yarn-client",
 ```
 #### **4.2 LSTMForecaster**
 
-LSTMForecaster wraps a vanilla LSTM model. It is ralatively simple and light-weight.
+LSTMForecaster wraps a vanilla LSTM model. It is relatively simple and light-weight.
 
-LSTMForcaster is derived from [tfpark.KerasModels]().
+LSTMForecaster is derived from [tfpark.KerasModels]().
 
 Refer to [network traffic notebook]() for a real-world example and [LSTMForecaster API]() for more details.
 
 ##### **4.2.1 Prepare your data**
 
-Currently LSTMForecaster only supports univariant forecasting (i.e. to predict one series at a time). The input data can be numpy arrays or TFDataset. For more details on how to prepare the data, refer to [tfpark.KerasModels]().
+Currently LSTMForecaster only supports univariate forecasting (i.e. to predict one series at a time). The input data can be numpy arrays or TFDataset. For more details on how to prepare the data, refer to [tfpark.KerasModels]().
 
 You should prepare two dataset X and Y. The dimensions of X and Y should be as follows:
 
@@ -209,7 +209,7 @@ lstm_forecaster = LSTMForecaster(target_dim=1,
 ```
 ##### **4.2.3 Use a LSTMForecaster**
 
-The fit|evaluate|predict APIs are derived from tfpark.KerasModel, refer to [tfpark.KerasModel API]() for details.
+You can use LSTMForecaster to do fit, evaluation, and prediction. These APIs are derived from tfpark.KerasModel, refer to [tfpark.KerasModel API]() for details.
 
 ```python
 lstm_forecaster.fit(X,Y)
@@ -220,7 +220,7 @@ lstm_forecaster.evaluate(X,Y)
 #### **4.3 MTNetForecaster**
 
 MTNetForecaster wraps a MTNet model. The model architecture mostly follows the [MTNet paper](https://arxiv.org/abs/1809.02105) with slight modifications.
-is derived from [tfpark.KerasModels]().
+MTNetForecaster is derived from [tfpark.KerasModels]().
 
 Refer to [network traffic notebook]() for a real-world example and [MTNetForecaster API]() for more details.
 
@@ -228,7 +228,7 @@ Refer to [network traffic notebook]() for a real-world example and [MTNetForecas
 
 The input data can be numpy arrays or TFDataset. For more details on how to prepare the data, refer to [tfpark.KerasModels]().
 
-* For univariant forecasting (i.e. to predict one series at a time), the input data shape for fit/evaluation/predict should match the arguments you used to create the forecaster. Specifically:
+* For univariate forecasting (i.e. to predict one series at a time), the input data shape for fit/evaluation/predict should match the arguments you used to create the forecaster. Specifically:
 
   - X shape should be (num of samples, lookback, feature_dim)
   - Y shape should be (num of samples, target_dim)
@@ -254,7 +254,7 @@ mtnet_forecaster = MTNetForecaster(target_dim=1,
 ```
 ##### **4.3.3 Use a MTNetForecaster**
 
-The fit|evaluate|predict APIs are derived from tfpark.KerasModel, refer to [tfpark.KerasModel API]() for details.
+You can use MTNetForecaster to do fit, evaluation, and prediction. These APIs are derived from tfpark.KerasModel, refer to [tfpark.KerasModel API]() for details.
 
 ```python
 mtnet_forecaster.fit(X,Y)
@@ -264,7 +264,7 @@ mtnet_forecaster.evaluate(X,Y)
 
 #### **4.4 TCMFForecaster**
 
-TCMFForecaster wraps a model archtecture that follows implementation of the paper [DeepGLO paper](https://arxiv.org/abs/1905.03806) with slight modifications. It is especially suitable for extremely high dimentional multivariant time series forecasting.
+TCMFForecaster wraps a model architecture that follows implementation of the paper [DeepGLO paper](https://arxiv.org/abs/1905.03806) with slight modifications. It is especially suitable for extremely high dimensional multivariate time series forecasting.
 
 ##### **4.4.1 Prepare Your data**
 
@@ -287,9 +287,9 @@ array['ts-1','ts-10','ts-100']
 
 * When training distributedly in a cluster
 
-You need to prepare the data as a XShard for distributed training. For how to create an XShard, refer to [XShares User Guide]().
+You need to prepare the data as an XShards for distributed training. For how to create an XShards, refer to [XShards User Guide]().
 
-After preparation, each partiion in the XShards should contain a numpy array ```y```, y in the same shape as specified in the local mode. Or a tuple (id, y) where id and y are in the same shape as specified in the local mode.
+After preparation, each partition in the XShards should contain a dictionary of {'id': record id, 'y': sequential data}, where id and y are in the same shape as specified in the local mode.
 
 
 ##### **4.4.2 Create a TCMFForecaster**
