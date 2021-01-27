@@ -17,6 +17,7 @@ from unittest import TestCase
 
 import os
 import pytest
+import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 
