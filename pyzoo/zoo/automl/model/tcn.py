@@ -88,33 +88,48 @@ class TemporalBlock(nn.Module):
 
 
 class TemporalConvNet(nn.Module):
-    def __init__(self, input_size, output_size, num_channels, kernel_size=2, dropout=0.2):
+    def __init__(self,
+                 past_seq_len,
+                 input_feature_num,
+                 future_seq_len,
+                 output_feature_num,
+                 num_channels,
+                 kernel_size=3,
+                 dropout=0.1):
         super(TemporalConvNet, self).__init__()
+
+        num_channels.append(output_feature_num)
+
         layers = []
         num_levels = len(num_channels)
         for i in range(num_levels):
             dilation_size = 2 ** i
-            in_channels = input_size if i == 0 else num_channels[i - 1]
+            in_channels = input_feature_num if i == 0 else num_channels[i - 1]
             out_channels = num_channels[i]
             layers += [TemporalBlock(in_channels, out_channels, kernel_size,
                                      stride=1, dilation=dilation_size,
                                      padding=(kernel_size-1) * dilation_size, dropout=dropout)]
 
         self.tcn = nn.Sequential(*layers)
-        self.linear = nn.Linear(num_channels[-1], output_size)
+        self.linear = nn.Linear(past_seq_len, future_seq_len)
         self.init_weights()
 
     def init_weights(self):
         self.linear.weight.data.normal_(0, 0.01)
 
     def forward(self, x):
-        y1 = self.tcn(x)
-        return self.linear(y1[:, :, -1])
+        x = x.permute(0, 2, 1)
+        y = self.tcn(x)
+        y = self.linear(y)
+        y = y.permute(0, 2, 1)
+        return y
 
 
 def model_creator(config):
-    return TemporalConvNet(input_size=config["input_size"],
-                           output_size=config["output_size"],
+    return TemporalConvNet(past_seq_len=config["past_seq_len"],
+                           input_feature_num=config["input_feature_num"],
+                           future_seq_len=config["future_seq_len"],
+                           output_feature_num=config["output_feature_num"],
                            num_channels=[config.get("nhid", 30)] * config.get("levels", 8),
                            kernel_size=config.get("kernel_size", 7),
                            dropout=config.get("dropout", 0.2))
@@ -130,17 +145,18 @@ def loss_creator(config):
 
 
 class TCNPytorch(PytorchBaseModel):
-    def __init__(self, config, check_optional_config=False):
+    def __init__(self, check_optional_config=False):
         super().__init__(model_creator=model_creator,
                          optimizer_creator=optimizer_creator,
                          loss_creator=loss_creator,
-                         config=config,
                          check_optional_config=check_optional_config)
 
     def _get_required_parameters(self):
         return {
-            "input_size",
-            "output_size"
+            "past_seq_len",
+            "input_feature_num",
+            "future_seq_len",
+            "output_feature_num"
         }
 
     def _get_optional_parameters(self):

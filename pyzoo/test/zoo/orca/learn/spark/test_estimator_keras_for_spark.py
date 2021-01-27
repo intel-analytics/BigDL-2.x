@@ -19,15 +19,17 @@ from unittest import TestCase
 
 import tensorflow as tf
 
+from zoo.orca import OrcaContext
 from zoo.orca.learn.trigger import SeveralIteration
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo.common.nncontext import *
-from zoo.orca.learn.tf.utils import convert_predict_to_dataframe
+from zoo.orca.learn.utils import convert_predict_rdd_to_dataframe
 
 
 class TestEstimatorForKeras(TestCase):
     def setup_method(self, method):
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+        OrcaContext.train_data_store = "DRAM"
 
     def create_model(self):
         user = tf.keras.layers.Input(shape=[1])
@@ -259,16 +261,16 @@ class TestEstimatorForKeras(TestCase):
                 batch_size=8,
                 epochs=4,
                 feature_cols=['user', 'item'],
-                labels_cols=['label'],
+                label_cols=['label'],
                 validation_data=df)
 
-        eval_result = est.evaluate(df, feature_cols=['user', 'item'], labels_cols=['label'])
+        eval_result = est.evaluate(df, feature_cols=['user', 'item'], label_cols=['label'])
         assert 'acc Top1Accuracy' in eval_result
 
         prediction_df = est.predict(df, batch_size=4, feature_cols=['user', 'item'])
         assert 'prediction' in prediction_df.columns
         predictions = prediction_df.collect()
-        assert len(predictions) == 10
+        assert len(predictions) == 48
 
     def test_estimator_keras_dataframe_no_fit(self):
         tf.reset_default_graph()
@@ -284,13 +286,13 @@ class TestEstimatorForKeras(TestCase):
 
         est = Estimator.from_keras(keras_model=model)
 
-        eval_result = est.evaluate(df, feature_cols=['user', 'item'], labels_cols=['label'])
+        eval_result = est.evaluate(df, feature_cols=['user', 'item'], label_cols=['label'])
         assert 'acc Top1Accuracy' in eval_result
 
         prediction_df = est.predict(df, batch_size=4, feature_cols=['user', 'item'])
         assert 'prediction' in prediction_df.columns
         predictions = prediction_df.collect()
-        assert len(predictions) == 10
+        assert len(predictions) == 48
 
     def test_estimator_keras_tf_dataset(self):
         tf.reset_default_graph()
@@ -376,11 +378,11 @@ class TestEstimatorForKeras(TestCase):
         rdd = sc.parallelize([(1, 2, 3), (4, 5, 6), (7, 8, 9)])
         df = rdd.toDF(["feature", "label", "c"])
         predict_rdd = df.rdd.map(lambda row: [np.array([1, 2]), np.array(0)])
-        resultDF = convert_predict_to_dataframe(df, predict_rdd)
+        resultDF = convert_predict_rdd_to_dataframe(df, predict_rdd)
         resultDF.printSchema()
         print(resultDF.collect()[0])
         predict_rdd = df.rdd.map(lambda row: np.array(1))
-        resultDF = convert_predict_to_dataframe(df, predict_rdd)
+        resultDF = convert_predict_rdd_to_dataframe(df, predict_rdd)
         resultDF.printSchema()
         print(resultDF.collect()[0])
 
@@ -533,6 +535,151 @@ class TestEstimatorForKeras(TestCase):
                 batch_size=8,
                 epochs=10,
                 validation_data=dataset)
+
+    def test_submodel_in_keras_squential(self):
+        mnet = tf.keras.applications.MobileNetV2(input_shape=(160, 160, 3),
+                                                 include_top=False,
+                                                 weights='imagenet')
+
+        model = tf.keras.Sequential([
+            mnet,
+            tf.keras.layers.GlobalAveragePooling2D(),
+            tf.keras.layers.Dense(1, activation='sigmoid')
+        ])
+
+        model.compile(optimizer=tf.keras.optimizers.RMSprop(lr=0.0001),
+                      loss='binary_crossentropy',
+                      metrics=['accuracy'])
+
+        dataset = tf.data.Dataset.from_tensor_slices((np.random.randn(16, 160, 160, 3),
+                                                      np.random.randint(0, 1000, (16, 1))))
+        est = Estimator.from_keras(keras_model=model)
+        est.fit(data=dataset,
+                batch_size=4,
+                epochs=1,
+                validation_data=dataset)
+
+    def test_estimator_keras_xshards_with_mem_type(self):
+        import zoo.orca.data.pandas
+
+        tf.reset_default_graph()
+
+        model = self.create_model()
+        file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
+
+        def transform(df):
+            result = {
+                "x": (df['user'].to_numpy().reshape([-1, 1]),
+                      df['item'].to_numpy().reshape([-1, 1])),
+                "y": df['label'].to_numpy()
+            }
+            return result
+
+        data_shard = data_shard.transform_shard(transform)
+
+        est = Estimator.from_keras(keras_model=model)
+        OrcaContext.train_data_store = "DISK_2"
+        est.fit(data=data_shard,
+                batch_size=4,
+                epochs=10,
+                validation_data=data_shard
+                )
+
+        eval_result = est.evaluate(data_shard)
+        print(eval_result)
+        OrcaContext.train_data_store = "DRAM"
+
+    def test_estimator_keras_xshards_disk_featureset_trigger(self):
+        import zoo.orca.data.pandas
+
+        tf.reset_default_graph()
+
+        model = self.create_model()
+        file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
+        data_shard = zoo.orca.data.pandas.read_csv(file_path)
+
+        def transform(df):
+            result = {
+                "x": (df['user'].to_numpy().reshape([-1, 1]),
+                      df['item'].to_numpy().reshape([-1, 1])),
+                "y": df['label'].to_numpy()
+            }
+            return result
+
+        data_shard = data_shard.transform_shard(transform)
+        from bigdl.optim.optimizer import SeveralIteration
+        from zoo.util.triggers import SeveralIteration as ZSeveralIteration
+        from zoo.util.triggers import MinLoss as ZMinLoss
+        from zoo.util.triggers import TriggerAnd as ZTriggerAnd
+        est = Estimator.from_keras(keras_model=model)
+        OrcaContext.train_data_store = "DISK_2"
+        with self.assertRaises(Exception) as context:
+            est.fit(data=data_shard,
+                    batch_size=4,
+                    epochs=10,
+                    validation_data=data_shard,
+                    checkpoint_trigger=SeveralIteration(2))
+        self.assertTrue('Please use a trigger defined in zoo.util.triggers'
+                        in str(context.exception))
+
+        est.fit(data=data_shard,
+                batch_size=4,
+                epochs=10,
+                validation_data=data_shard,
+                checkpoint_trigger=ZTriggerAnd(ZSeveralIteration(2), ZMinLoss(0.2)))
+        OrcaContext.train_data_store = "DRAM"
+
+    def test_estimator_keras_dataframe_mem_type(self):
+        tf.reset_default_graph()
+
+        model = self.create_model()
+        sc = init_nncontext()
+        sqlcontext = SQLContext(sc)
+        file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
+        df = sqlcontext.read.csv(file_path, header=True, inferSchema=True)
+        from pyspark.sql.functions import array
+        df = df.withColumn('user', array('user')) \
+            .withColumn('item', array('item'))
+
+        est = Estimator.from_keras(keras_model=model)
+        OrcaContext.train_data_store = "DISK_2"
+        est.fit(data=df,
+                batch_size=4,
+                epochs=4,
+                feature_cols=['user', 'item'],
+                label_cols=['label'],
+                validation_data=df)
+
+        eval_result = est.evaluate(df, feature_cols=['user', 'item'], label_cols=['label'])
+        assert 'acc Top1Accuracy' in eval_result
+
+        prediction_df = est.predict(df, batch_size=4, feature_cols=['user', 'item'])
+        assert 'prediction' in prediction_df.columns
+        predictions = prediction_df.collect()
+        assert len(predictions) == 48
+        OrcaContext.train_data_store = "DRAM"
+
+    def test_estimator_keras_get_model(self):
+        tf.reset_default_graph()
+
+        model = self.create_model()
+        sc = init_nncontext()
+        sqlcontext = SQLContext(sc)
+        file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
+        df = sqlcontext.read.csv(file_path, header=True, inferSchema=True)
+        from pyspark.sql.functions import array
+        df = df.withColumn('user', array('user')) \
+            .withColumn('item', array('item'))
+
+        est = Estimator.from_keras(keras_model=model)
+        est.fit(data=df,
+                batch_size=4,
+                epochs=4,
+                feature_cols=['user', 'item'],
+                label_cols=['label'],
+                validation_data=df)
+        assert est.get_model() is model
 
 
 if __name__ == "__main__":

@@ -16,26 +16,43 @@
 
 package com.intel.analytics.zoo.serving.operator
 
+import java.nio.file.Files
+
+import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.arrow.ArrowDeserializer
-import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, ModelHolder}
+import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
+import org.apache.flink.core.fs.Path
 import org.apache.flink.table.functions.{FunctionContext, ScalarFunction}
+import org.apache.flink.util.FileUtils
+import org.slf4j.LoggerFactory
 
 class ClusterServingFunction()
   extends ScalarFunction {
   val clusterServingParams = new ClusterServingParams()
   var inference: ClusterServingInference = null
+  val logger = LoggerFactory.getLogger(getClass)
+
+  def copyFileToLocal(modelPath: String): String = {
+    val localModelPath =
+      Files.createTempDirectory("cluster-serving").toFile.toString + "/model"
+    logger.info(s"Copying model from $modelPath to local $localModelPath")
+    FileUtils.copy(new Path(modelPath), new Path(localModelPath), false)
+    logger.info("model copied")
+    localModelPath
+  }
 
   override def open(context: FunctionContext): Unit = {
-    if (ModelHolder.model == null) {
-      ModelHolder.synchronized {
-        if (ModelHolder.model == null) {
-          println("Loading Cluster Serving model...")
-          val modelPath = context.getJobParameter("modelPath", "")
-          require(modelPath != "", "You have not provide modelPath in job parameter.")
+    val modelPath = context.getJobParameter("modelPath", "")
+    require(modelPath != "", "You have not provide modelPath in job parameter.")
+    val modelLocalPath = copyFileToLocal(modelPath)
+    if (ClusterServing.model == null) {
+      ClusterServing.synchronized {
+        if (ClusterServing.model == null) {
+          logger.info("Loading Cluster Serving model...")
           val info = ClusterServingHelper
-            .loadModelfromDir(modelPath, clusterServingParams._modelConcurrent)
-          ModelHolder.model = info._1
+            .loadModelfromDir(modelLocalPath, clusterServingParams._modelConcurrent)
+          ClusterServing.model = info._1
           clusterServingParams._modelType = info._2
         }
       }
@@ -43,6 +60,7 @@ class ClusterServingFunction()
     inference = new ClusterServingInference(null, clusterServingParams._modelType)
 
   }
+
   def eval(uri: String, data: String): String = {
     val array = data.split(" +").map(_.toFloat)
     val input = ClusterServingInput(uri, array)
@@ -50,5 +68,3 @@ class ClusterServingFunction()
     ArrowDeserializer(result.head._2)
   }
 }
-
-

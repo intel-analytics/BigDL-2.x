@@ -14,23 +14,36 @@
 # limitations under the License.
 #
 import torch
+from torch.utils.data import TensorDataset, DataLoader
+
 from zoo.automl.model.abstract import BaseModel
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
 
 
 class PytorchBaseModel(BaseModel):
-    def __init__(self, model_creator, optimizer_creator, loss_creator, config,
+    def __init__(self, model_creator, optimizer_creator, loss_creator,
                  check_optional_config=False):
         self.check_optional_config = check_optional_config
-        self._check_config(**config)
-        self.model = model_creator(config)
-        self.optimizer = optimizer_creator(self.model, config)
-        self.criterion = loss_creator(config)
-        self.config = config
+        self.model_creator = model_creator
+        self.optimizer_creator = optimizer_creator
+        self.loss_creator = loss_creator
+        self.config = None
 
     def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
                  **config):
+        def update_config():
+            config.setdefault("past_seq_len", x.shape[-2])
+            config.setdefault("future_seq_len", y.shape[-2])
+            config.setdefault("input_feature_num", x.shape[-1])
+            config.setdefault("output_feature_num", y.shape[-1])
+        update_config()
+        self._check_config(**config)
+        self.model = self.model_creator(config)
+        self.config = config
+        self.optimizer = self.optimizer_creator(self.model, self.config)
+        self.criterion = self.loss_creator(self.config)
+
         epoch_losses = []
         x, y, validation_data = PytorchBaseModel.covert_input(x, y, validation_data)
         for i in range(epochs):
@@ -52,32 +65,31 @@ class PytorchBaseModel(BaseModel):
 
     @staticmethod
     def covert_input(x, y, validation_data):
-        x = PytorchBaseModel.to_torch(x)
-        y = PytorchBaseModel.to_torch(y)
+        x = PytorchBaseModel.to_torch(x).float()
+        y = PytorchBaseModel.to_torch(y).float()
         if validation_data is not None:
-            validation_data = (PytorchBaseModel.to_torch(validation_data[0]),
-                               PytorchBaseModel.to_torch(validation_data[1]))
+            validation_data = (PytorchBaseModel.to_torch(validation_data[0]).float(),
+                               PytorchBaseModel.to_torch(validation_data[1]).float())
         return x, y, validation_data
 
     def _train_epoch(self, x, y):
         # todo: support torch data loader
         batch_size = self.config["batch_size"]
         self.model.train()
-        batch_idx = 0
         total_loss = 0
-        for i in range(0, x.size(0), batch_size):
-            if i + batch_size > x.size(0):
-                xi, yi = x[i:], y[i:]
-            else:
-                xi, yi = x[i:(i + batch_size)], y[i:(i + batch_size)]
+        train_loader = DataLoader(TensorDataset(x, y),
+                                  batch_size=int(batch_size),
+                                  shuffle=True)
+        batch_idx = 0
+        for x_batch, y_batch in train_loader:
             self.optimizer.zero_grad()
-            yhat = self._forward(xi, yi)
-            loss = self.criterion(yhat, yi)
+            yhat = self._forward(x_batch, y_batch)
+            loss = self.criterion(yhat, y_batch)
             loss.backward()
             self.optimizer.step()
-            batch_idx += 1
             total_loss += loss.item()
-        train_loss = total_loss / batch_idx
+            batch_idx += 1
+        train_loss = total_loss/batch_idx
         return train_loss
 
     def _forward(self, x, y):
@@ -108,7 +120,7 @@ class PytorchBaseModel(BaseModel):
         return eval_result
 
     def predict(self, x, mc=False):
-        x = PytorchBaseModel.to_torch(x)
+        x = PytorchBaseModel.to_torch(x).float()
         if mc:
             self.model.train()
         else:
@@ -134,11 +146,14 @@ class PytorchBaseModel(BaseModel):
         return state
 
     def load_state_dict(self, state):
-        self.model.load_state_dict(state["model"])
         self.config = state["config"]
+        self.model = self.model_creator(self.config)
+        self.model.load_state_dict(state["model"])
+        self.optimizer = self.optimizer_creator(self.model, self.config)
         self.optimizer.load_state_dict(state["optimizer"])
+        self.criterion = self.loss_creator(self.config)
 
-    def save(self, checkpoint_file):
+    def save(self, checkpoint_file, config_path=None):
         state_dict = self.state_dict()
         torch.save(state_dict, checkpoint_file)
 

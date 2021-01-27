@@ -59,7 +59,7 @@ def init_spark_on_yarn(hadoop_conf,
                        executor_cores,
                        executor_memory="2g",
                        driver_cores=4,
-                       driver_memory="1g",
+                       driver_memory="2g",
                        extra_executor_memory_for_ray=None,
                        extra_python_lib=None,
                        penv_archive=None,
@@ -130,7 +130,7 @@ def init_spark_standalone(num_executors,
                           executor_cores,
                           executor_memory="2g",
                           driver_cores=4,
-                          driver_memory="1g",
+                          driver_memory="2g",
                           master=None,
                           extra_executor_memory_for_ray=None,
                           extra_python_lib=None,
@@ -282,9 +282,10 @@ class ZooContextMeta(type):
     @log_output.setter
     def log_output(cls, value):
         if SparkContext._active_spark_context is not None:
-            raise AttributeError("log_output cannot be set after SparkContext is created."
-                                 " Please set it before init_nncontext, init_spark_on_local"
-                                 "or init_spark_on_yarn")
+            msg = "Setting log_output takes no effect after the context has been initialized." \
+                  " You need to set log_output before initializing the context" \
+                  " (e.g., before calling init_orca_context, init_nncontext, etc.)"
+            warnings.warn(msg)
         assert isinstance(value, bool), "log_output should either be True or False"
         cls._log_output = value
 
@@ -335,10 +336,11 @@ def init_nncontext(conf=None, spark_log_level="WARN", redirect_spark_log=True):
 
     :return: An instance of SparkContext.
     """
+    has_activate_sc = SparkContext._active_spark_context is not None
     # The following code copied and modified from
     # https://github.com/Valassis-Digital-Media/spylon-kernel/blob/master/
     # spylon_kernel/scala_interpreter.py
-    if ZooContext.log_output:
+    if ZooContext.log_output and not has_activate_sc:
         import subprocess
         import pyspark.java_gateway
         spark_jvm_proc = None
@@ -367,7 +369,7 @@ def init_nncontext(conf=None, spark_log_level="WARN", redirect_spark_log=True):
         sc = getOrCreateSparkContext(conf=conf)
     sc.setLogLevel(spark_log_level)
 
-    if ZooContext.log_output:
+    if ZooContext.log_output and not has_activate_sc:
         if spark_jvm_proc.stdout is not None:
             stdout_reader = threading.Thread(target=_read_stream,
                                              daemon=True,

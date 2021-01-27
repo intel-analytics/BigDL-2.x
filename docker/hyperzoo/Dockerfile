@@ -2,7 +2,7 @@ FROM ubuntu:18.04
 
 MAINTAINER The Analytics-Zoo Authors https://github.com/intel-analytics/analytics-zoo
 
-ARG ANALYTICS_ZOO_VERSION=0.9.0-SNAPSHOT
+ARG ANALYTICS_ZOO_VERSION=0.10.0-SNAPSHOT
 ARG BIGDL_VERSION=0.12.1
 ARG SPARK_VERSION=2.4.3
 ARG FLINK_VERSION=1.10.0
@@ -18,7 +18,7 @@ ENV NOTEBOOK_TOKEN                      1234qwer
 
 ENV RUNTIME_SPARK_MASTER                local[4]
 ENV RUNTIME_K8S_SERVICE_ACCOUNT         spark
-ENV RUNTIME_K8S_SPARK_IMAGE             intelanalytics/hyper-zoo:0.8.0-SNAPSHOT-2.4.3
+ENV RUNTIME_K8S_SPARK_IMAGE             intelanalytics/hyper-zoo:${ANALYTICS_ZOO_VERSION}-${SPARK_VERSION}
 ENV RUNTIME_DRIVER_HOST                 localhost
 ENV RUNTIME_DRIVER_PORT                 54321
 ENV RUNTIME_EXECUTOR_CORES              4
@@ -55,11 +55,11 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-py37_4.8.3-Linux-x86_64.
     bash Miniconda3-py37_4.8.3-Linux-x86_64.sh -b && \
     rm -f Miniconda3-py37_4.8.3-Linux-x86_64.sh && \
 #java
-    wget https://enos.itcollege.ee/~jpoial/allalaadimised/jdk8/jdk-8u261-linux-x64.tar.gz  && \
-    gunzip jdk-8u261-linux-x64.tar.gz && \
-    tar -xf jdk-8u261-linux-x64.tar -C /opt && \
-    rm jdk-8u261-linux-x64.tar && \
-    ln -s /opt/jdk1.8.0_261 /opt/jdk && \
+    wget https://enos.itcollege.ee/~jpoial/allalaadimised/jdk8/jdk-8u281-linux-x64.tar.gz  && \
+    gunzip jdk-8u281-linux-x64.tar.gz && \
+    tar -xf jdk-8u281-linux-x64.tar -C /opt && \
+    rm jdk-8u281-linux-x64.tar && \
+    ln -s /opt/jdk1.8.0_281 /opt/jdk && \
 #spark
     wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     tar -zxvf spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \

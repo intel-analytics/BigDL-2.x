@@ -173,7 +173,7 @@ class XGBoost(BaseModel):
 
         self.model.n_jobs = self.n_jobs
         y_pred = self.predict(x)
-        return [Evaluator.evaluate(m, y, y_pred) for m in metrics]
+        return [Evaluator.evaluate(m, y.values, y_pred.values) for m in metrics]
 
     def save(self, model_file, config_path=None):
         pickle.dump(self.model, open(model_file, "wb"))

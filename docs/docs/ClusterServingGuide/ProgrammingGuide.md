@@ -40,11 +40,16 @@ This section provides a quick start example for you to run Analytics Zoo Cluster
 
 Use one command to run Cluster Serving container. (We provide quick start model in older version of docker image, for newest version, please refer to following sections and we remove the model to reduce the docker image size).
 ```
-docker run --name cluster-serving -itd --net=host intelanalytics/zoo-cluster-serving:0.9.0
+docker run --name cluster-serving -itd --net=host intelanalytics/zoo-cluster-serving:0.9.1
 ```
-Log into the container using `docker exec -it cluster-serving bash`, go to Cluster Serving working directory by `cd cluster-serving`.
+Log into the container using `docker exec -it cluster-serving bash`, and run
+```
+cd cluster-serving
+cluster-serving-init
+```
+`zoo.jar` and `config.yaml` is in your directory now.
 
-You can see prepared TensorFlow frozen ResNet50 model in `resources/model` directory with following structure.
+Also, you can see prepared TensorFlow frozen ResNet50 model in `resources/model` directory with following structure.
 
 ```
 cluster-serving | 
@@ -52,13 +57,11 @@ cluster-serving |
                  -- frozen_graph.pb
                  -- graph_meta.json
 ```
-Modify `config.yaml` and add following to `filter:` config
+Modify `config.yaml` and add following to `model` config
 ```
-data:
-  shape: [3,224,224]
-  filter: topN(1)
+model:
+    path: resources/model
 ```
-This will tell the shape of input image is [3,224,224] and rank Top-1 result of the model output.
 
 Start Cluster Serving using `cluster-serving-start`. 
 
@@ -66,9 +69,9 @@ Run python program `python3 image_classification_and_object_detection_quick_star
 
 Then you can see the inference output in console. 
 ```
-image: fish1.jpeg, classification-result:class: 5's prob: 0.18204997
-image: dog1.jpeg, classification-result:class: 267's prob: 0.27166227
-image: cat1.jpeg, classification-result:class: 292's prob: 0.32633427
+cat prediction layer shape:  (1000,)
+the class index of prediction of cat image result:  292
+cat prediction layer shape:  (1000,)
 ```
 Wow! You made it!
 
@@ -129,8 +132,8 @@ After preparing dependencies above, make sure the environment variable `$FLINK_H
 
 
 ##### Install Cluster Serving by download release
-For users who need to deploy and start Cluster Serving, download Cluster Serving zip `analytics-zoo-xxx-cluster-serving-all.zip` from [here](https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.10.0-spark_2.4.3/0.9.0-SNAPSHOT/) and unzip it, then run `source cluster-serving-setup.sh`.
-For users who need to do inference, aka. predict data only, download Analytics Zoo python zip `analytics-zoo-xxx-cluster-serving-python.zip` from [here](https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.10.0-spark_2.4.3/0.9.0-SNAPSHOT/) and run `export PYTHONPATH=$PYTHONPATH:/path/to/zip` to add this zip to `PYTHONPATH` environment variable.
+For users who need to deploy and start Cluster Serving, download Cluster Serving zip `analytics-zoo-xxx-cluster-serving-all.zip` from [here](https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.12.1-spark_2.4.3/0.10.0-SNAPSHOT/) and unzip it, then run `source cluster-serving-setup.sh`.
+For users who need to do inference, aka. predict data only, download Analytics Zoo python zip `analytics-zoo-xxx-cluster-serving-python.zip` from [here](https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.12.1-spark_2.4.3/0.10.0-SNAPSHOT/) and run `export PYTHONPATH=$PYTHONPATH:/path/to/zip` to add this zip to `PYTHONPATH` environment variable.
 
 ##### Install Cluster Serving by pip
 Download package from [here](https://sourceforge.net/projects/analytics-zoo/files/cluster-serving-py/), run following command to install Cluster Serving
@@ -185,6 +188,7 @@ Please refer to [freeze checkpoint example](https://github.com/intel-analytics/a
    |-- xx.pt
 ```
 Running Pytorch model needs extra dependency and config. Refer to [here](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/examples/pytorch/train/README.md) to install dependencies, and set environment variable `$PYTHONHOME` to your python, e.g. python could be run by `$PYTHONHOME/bin/python` and library is at `$PYTHONHOME/lib/`.
+
 **OpenVINO**
 
 ```

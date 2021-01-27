@@ -44,6 +44,8 @@ def open_text(path):
         data = s3_client.get_object(Bucket=bucket, Key=key)
         lines = data["Body"].read().decode("utf-8").strip().split("\n")
     else:  # Local path
+        if path.startswith("file://"):
+            path = path[len("file://"):]
         lines = []
         for line in open(path):
             lines.append(line)
@@ -76,6 +78,8 @@ def open_image(path):
         data = s3_client.get_object(Bucket=bucket, Key=key)
         return Image.open(BytesIO(data["Body"].read()))
     else:  # Local path
+        if path.startswith("file://"):
+            path = path[len("file://"):]
         return Image.open(path)
 
 
@@ -108,6 +112,8 @@ def load_numpy(path):
         data = s3_client.get_object(Bucket=bucket, Key=key)
         return np.load(BytesIO(data["Body"].read()))
     else:  # Local path
+        if path.startswith("file://"):
+            path = path[len("file://"):]
         return np.load(path)
 
 
@@ -137,6 +143,8 @@ def exists(path):
     elif path.startswith("hdfs://"):
         return callZooFunc("float", "exists", path)
     else:
+        if path.startswith("file://"):
+            path = path[len("file://"):]
         return os.path.exists(path)
 
 
@@ -160,6 +168,8 @@ def makedirs(path):
     elif path.startswith("hdfs://"):
         callZooFunc("float", "mkdirs", path)
     else:
+        if path.startswith("file://"):
+            path = path[len("file://"):]
         return os.makedirs(path)
 
 
@@ -189,6 +199,8 @@ def write_text(path, text):
         key = "/".join(path_parts)
         return s3_client.put_object(Bucket=bucket, Key=key, Body=text)
     else:
+        if path.startswith("file://"):
+            path = path[len("file://"):]
         with open(path, 'w') as f:
             result = f.write(text)
             f.close()

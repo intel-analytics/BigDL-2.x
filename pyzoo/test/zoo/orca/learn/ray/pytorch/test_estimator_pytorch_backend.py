@@ -20,7 +20,12 @@ import pytest
 
 import torch
 import torch.nn as nn
+
+from zoo import init_nncontext
 from zoo.orca.learn.pytorch import Estimator
+from zoo.orca.data import SparkXShards
+from zoo.orca.data.image.utils import chunks
+
 
 np.random.seed(1337)  # for reproducibility
 
@@ -65,6 +70,31 @@ class Net(nn.Module):
         return y
 
 
+class IdentityNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        # need this line to avoid optimizer raise empty variable list
+        self.fc1 = nn.Linear(50, 50)
+
+    def forward(self, input_):
+        return input_
+
+
+class MultiInputNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(50, 50)
+        self.out = nn.Linear(50, 1)
+        self.out_act = nn.Sigmoid()
+
+    def forward(self, input1, input2):
+        x = torch.cat((input1, input2), 1)
+        x = self.fc1(x)
+        x = self.out(x)
+        x = self.out_act(x)
+        return x
+
+
 def train_data_loader(config):
     train_dataset = LinearDataset(size=config.get("data_size", 1000))
     train_loader = torch.utils.data.DataLoader(
@@ -90,14 +120,19 @@ def get_optimizer(model, config):
     return torch.optim.SGD(model.parameters(), lr=config.get("lr", 1e-2))
 
 
+def get_estimator(workers_per_node=1, model_fn=get_model):
+    estimator = Estimator.from_torch(model=model_fn,
+                                     optimizer=get_optimizer,
+                                     loss=nn.BCELoss(),
+                                     config={"lr": 1e-2},
+                                     workers_per_node=workers_per_node,
+                                     backend="torch_distributed")
+    return estimator
+
+
 class TestPyTorchEstimator(TestCase):
     def test_data_creator(self):
-        estimator = Estimator.from_torch(model=get_model,
-                                         optimizer=get_optimizer,
-                                         loss=nn.BCELoss(),
-                                         config={"lr": 1e-2},
-                                         workers_per_node=2,
-                                         backend="torch_distributed")
+        estimator = get_estimator(workers_per_node=2)
         train_stats = estimator.fit(train_data_loader, epochs=2, batch_size=128)
         print(train_stats)
         val_stats = estimator.evaluate(val_data_loader, batch_size=64)
@@ -120,14 +155,11 @@ class TestPyTorchEstimator(TestCase):
     def test_spark_xshards(self):
         from zoo import init_nncontext
         from zoo.orca.data import SparkXShards
-        estimator = Estimator.from_torch(model=get_model,
-                                         optimizer=get_optimizer,
-                                         loss=nn.BCELoss(),
-                                         config={"lr": 1e-1},
-                                         backend="torch_distributed")
+        estimator = get_estimator(workers_per_node=1)
         sc = init_nncontext()
         x_rdd = sc.parallelize(np.random.rand(4000, 1, 50).astype(np.float32))
-        y_rdd = sc.parallelize(np.random.randint(0, 2, size=(4000, 1)).astype(np.float32))
+        # torch 1.7.1+ requires target size same as output size, which is (batch, 1)
+        y_rdd = sc.parallelize(np.random.randint(0, 2, size=(4000, 1, 1)).astype(np.float32))
         rdd = x_rdd.zip(y_rdd).map(lambda x_y: {'x': x_y[0], 'y': x_y[1]})
         train_rdd, val_rdd = rdd.randomSplit([0.9, 0.1])
         train_xshards = SparkXShards(train_rdd)
@@ -138,6 +170,74 @@ class TestPyTorchEstimator(TestCase):
         print(val_stats)
         estimator.shutdown()
 
+    def test_dataframe_train_eval(self):
+
+        sc = init_nncontext()
+        rdd = sc.range(0, 100)
+        df = rdd.map(lambda x: (np.random.randn(50).astype(np.float).tolist(),
+                                [int(np.random.randint(0, 2, size=()))])
+                     ).toDF(["feature", "label"])
+
+        estimator = get_estimator(workers_per_node=2)
+        estimator.fit(df, batch_size=4, epochs=2,
+                      feature_cols=["feature"],
+                      label_cols=["label"])
+        estimator.evaluate(df, batch_size=4,
+                           feature_cols=["feature"],
+                           label_cols=["label"])
+
+    def test_dataframe_predict(self):
+
+        sc = init_nncontext()
+        rdd = sc.parallelize(range(20))
+        df = rdd.map(lambda x: ([float(x)] * 5,
+                                [int(np.random.randint(0, 2, size=()))])
+                     ).toDF(["feature", "label"])
+
+        estimator = get_estimator(workers_per_node=2,
+                                  model_fn=lambda config: IdentityNet())
+        result = estimator.predict(df, batch_size=4,
+                                   feature_cols=["feature"])
+        expr = "sum(cast(feature <> to_array(prediction) as int)) as error"
+        assert result.selectExpr(expr).first()["error"] == 0
+
+    def test_xshards_predict(self):
+
+        sc = init_nncontext()
+        rdd = sc.range(0, 110).map(lambda x: np.array([x]*50))
+        shards = rdd.mapPartitions(lambda iter: chunks(iter, 5)).map(lambda x: {"x": np.stack(x)})
+        shards = SparkXShards(shards)
+
+        estimator = get_estimator(workers_per_node=2,
+                                  model_fn=lambda config: IdentityNet())
+        result_shards = estimator.predict(shards, batch_size=4)
+        result = np.concatenate([shard["prediction"] for shard in result_shards.collect()])
+        expected_result = np.concatenate([shard["x"] for shard in result_shards.collect()])
+
+        assert np.array_equal(result, expected_result)
+
+    def test_multiple_inputs_model(self):
+
+        sc = init_nncontext()
+        rdd = sc.parallelize(range(100))
+
+        from pyspark.sql import SparkSession
+        spark = SparkSession(sc)
+        df = rdd.map(lambda x: ([float(x)] * 25, [float(x)] * 25,
+                                [int(np.random.randint(0, 2, size=()))])
+                     ).toDF(["f1", "f2", "label"])
+
+        estimator = get_estimator(workers_per_node=2,
+                                  model_fn=lambda config: MultiInputNet())
+        estimator.fit(df, batch_size=4, epochs=2,
+                      feature_cols=["f1", "f2"],
+                      label_cols=["label"])
+        estimator.evaluate(df, batch_size=4,
+                           feature_cols=["f1", "f2"],
+                           label_cols=["label"])
+        result = estimator.predict(df, batch_size=4,
+                                   feature_cols=["f1", "f2"])
+        result.collect()
 
 if __name__ == "__main__":
     pytest.main([__file__])
