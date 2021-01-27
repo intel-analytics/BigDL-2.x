@@ -318,7 +318,6 @@ class TestEstimatorForKeras(TestCase):
                                              batch_size=8)
 
 
-
 if __name__ == "__main__":
     import pytest
 
