@@ -25,4 +25,3 @@ class TestSerialization:
         input_api = InputQueue()
         b64 = input_api.data_to_b64(t1=np.array([1, 2]), t2=np.array([3, 4]))
         byte = base64.b64decode(b64)
-
