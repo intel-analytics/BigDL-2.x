@@ -180,6 +180,9 @@ class BigDLEstimator(OrcaSparkEstimator):
     def evaluate(self, data, batch_size=32, feature_cols=None, label_cols=None,
                  validation_metrics=None):
         assert data is not None, "validation data shouldn't be None"
+        assert validation_metrics is not None, "validation_metrics shouldn't be None, please " \
+                                               "pass the metrics like: " \
+                                               "validation_metrics=[Accuracy()]."
 
         if isinstance(data, DataFrame):
             raise NotImplementedError
