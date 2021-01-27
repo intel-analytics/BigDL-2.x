@@ -1,4 +1,4 @@
-Inference Model is a package in Analytics Zoo aiming to provide high-level APIs to speed-up development. It allows user to conveniently use pre-trained models from Analytics Zoo, Caffe, Tensorflow and OpenVINO Intermediate Representation(IR). Inference Model provides Java, Scala and Python interfaces. In addition, it allows user to do inference without Spark. 
+Inference Model is a package in Analytics Zoo aiming to provide high-level APIs to speed-up development. It allows user to conveniently use pre-trained models from Analytics Zoo, Caffe, Tensorflow and OpenVINO Intermediate Representation(IR). Inference Model provides Java, Scala and Python interfaces. 
 
 **Highlights**
 
@@ -128,3 +128,5 @@ We provide examples based on InferenceModel.
 See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/model-inference-examples) for the Java example.
 
 See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/streaming/textclassification) for the Scala example.
+
+Additionally, InferenceModel described on this page allows user to do inference without Spark. See [example](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/model-inference-examples/recommendation-inference) for the usage without spark dependencies.
