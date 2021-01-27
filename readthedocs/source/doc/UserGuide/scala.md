@@ -157,31 +157,32 @@ scala> nnModel.transform(df).show(false)
 ---
 
 #### **2.2 Run as a Spark Program**
-You can run a analytics zoo program, e.g., the [Object Detection](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/objectdetection), as a standard Spark program (running in either local mode or cluster mode) as follows:
+You can run a analytics zoo program, e.g., the [Wide&Deep Recommendation](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/recommendation), as a standard Spark program (running in either local mode or cluster mode) as follows:
 
-1. Download the pre-trained model from [here](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/object-detection.md).
-2. Prepare predict images
-3. Run the following command:
+1. Download Census Income Data Set from [here](https://archive.ics.uci.edu/ml/datasets/Census+Income).
+2. Run the following command:
 ```bash
 # Spark local mode
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \ 
   --master local[core_number] \
-  --class com.intel.analytics.zoo.examples.objectdetection.Predict \
+  --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
   dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
-  --image path_to_your_images \
-  --output path_to_output \
-  --model path_to_model
+  --inputDir ./data/census \
+  --batchSize 320 \
+  --maxEpoch 20 \
+  --dataset census
 
 # Spark standalone mode
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
   --master spark://... \
   --executor-cores cores_per_executor \
   --total-executor-cores total_cores_for_the_job \
-  --class com.intel.analytics.zoo.examples.objectdetection.Predict \
+  --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
   dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
-  --image path_to_your_images \
-  --output path_to_output \
-  --model path_to_model
+  --inputDir ./data/census \
+  --batchSize 320 \
+  --maxEpoch 20 \
+  --dataset census
 
 # Spark yarn client mode
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
@@ -189,11 +190,12 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
   --deploy-mode client \
   --executor-cores cores_per_executor \
   --num-executors executors_number \
-  --class com.intel.analytics.zoo.examples.objectdetection.Predict \
+  --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
   dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
-  --image path_to_your_images \
-  --output path_to_output \
-  --model path_to_model
+  --inputDir ./data/census \
+  --batchSize 320 \
+  --maxEpoch 20 \
+  --dataset census
 
 # Spark yarn cluster mode
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
@@ -201,16 +203,11 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
   --deploy-mode cluster \
   --executor-cores cores_per_executor \
   --num-executors executors_number \
-  --class com.intel.analytics.zoo.examples.objectdetection.Predict \
+  --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
   dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
-  --image path_to_your_images \
-  --output path_to_output \
-  --model path_to_model
-```
-
-If you are to run your own program, do remember to create SparkContext and initialize before calling other Analytics Zoo API's, as shown below.
-```scala
-import com.intel.analytics.zoo.common.NNContext
-val sc = NNContext.initNNContext(conf)
+  --inputDir ./data/census \
+  --batchSize 320 \
+  --maxEpoch 20 \
+  --dataset census
 ```
 
