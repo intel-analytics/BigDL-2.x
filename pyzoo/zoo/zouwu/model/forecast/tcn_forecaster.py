@@ -22,6 +22,7 @@ import numpy as np
 import tempfile
 import os
 
+
 class TCNForecaster(Forecaster):
 
     def __init__(self,
@@ -38,7 +39,7 @@ class TCNForecaster(Forecaster):
             "optim": optimizer,
             "dropout": dropout
         }
-    
+
     def fit(self, x, y, epochs=1, metric="mse", batch_size=32):
         self.config.setdefault("batch_size", batch_size)
         return self.internal.fit_eval(x,
@@ -47,25 +48,24 @@ class TCNForecaster(Forecaster):
                                       epochs=epochs,
                                       metric=metric,
                                       **self.config)
-    
+
     def predict(self, x):
         assert "model" in dir(self.internal),\
-                 "Forecaster Error: You should call fit() or restore() \
-                  first before calling predict()"
+            "Forecaster Error: You should call fit() or restore() \
+            first before calling predict()"
         return self.internal.predict(x)
-    
+
     def evaluate(self, x, y, metric=['mse']):
         assert "model" in dir(self.internal),\
-                 "Forecaster Error: You should call fit() or restore() \
-                  first before calling evaluate()"
+            "Forecaster Error: You should call fit() or restore() \
+            first before calling evaluate()"
         return self.internal.evaluate(x, y, metric=metric)
-    
+
     def save(self, checkpoint_file):
         assert "model" in dir(self.internal),\
-                 "Forecaster Error: You should call fit() or restore() \
-                  first before calling save()"
+            "Forecaster Error: You should call fit() or restore() \
+            first before calling save()"
         self.internal.save(checkpoint_file)
-    
+
     def restore(self, checkpoint_file):
         self.internal.restore(checkpoint_file)
-    

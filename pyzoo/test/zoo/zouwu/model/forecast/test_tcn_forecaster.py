@@ -33,13 +33,15 @@ def create_data():
 
     def get_x_y(num_samples):
         x = np.random.rand(num_samples, input_time_steps, input_feature_dim)
-        y = x[:,-output_time_steps:,:]*2 + np.random.rand(num_samples, output_time_steps, output_feature_dim)
+        y = x[:, -output_time_steps:, :]*2 + \
+            np.random.rand(num_samples, output_time_steps, output_feature_dim)
         return x, y
 
     train_data = get_x_y(num_train_samples)
     val_data = get_x_y(num_val_samples)
     test_data = get_x_y(num_test_samples)
     return train_data, val_data, test_data
+
 
 class TestZouwuModelTCNForecaster(TestCase):
 
@@ -55,7 +57,7 @@ class TestZouwuModelTCNForecaster(TestCase):
         train_mse = forecaster.fit(train_data[0], train_data[1], epochs=2)
         forecaster.predict(test_data[0])
         test_mse = forecaster.evaluate(test_data[0], test_data[1])
-    
+
     def test_tcn_forecaster_save_restore(self):
         train_data, val_data, test_data = create_data()
         forecaster = TCNForecaster(kernel_size=3, lr=0.01)
