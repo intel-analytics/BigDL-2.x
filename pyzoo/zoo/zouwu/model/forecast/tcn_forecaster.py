@@ -17,11 +17,6 @@
 from zoo.zouwu.model.forecast.abstract import Forecaster
 from zoo.automl.model.tcn import TCNPytorch
 
-# test
-import numpy as np
-import tempfile
-import os
-
 
 class TCNForecaster(Forecaster):
 
