@@ -129,4 +129,4 @@ See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/mod
 
 See [here](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/streaming/textclassification) for the Scala example.
 
-InferenceModel described on this page allows user to do inference without Spark. See [example](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/model-inference-examples/recommendation-inference) for the usage without spark dependencies.
+InferenceModel described on this page allows user to do inference without Spark. See [this example](https://github.com/intel-analytics/analytics-zoo/tree/master/apps/model-inference-examples/recommendation-inference) for the usage without spark dependencies.
