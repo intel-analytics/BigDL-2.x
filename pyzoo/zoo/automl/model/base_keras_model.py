@@ -40,13 +40,15 @@ class KerasBaseModel(BaseModel):
     def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
                  **config):
         def update_config():
-            config.setdefault("input_dim", x.shape[-1])
-            config.setdefault("output_dim", y.shape[-1])
-            config.update({"metric": metric})
+                config.setdefault("input_dim", x.shape[-1])
+                config.setdefault("output_dim", y.shape[-1])
+                config.update({"metric": metric})
         update_config()
         self._check_config(**config)
-        self.model = self.model_creator(config)
-        self.config = config
+
+        if self.model is None or self.config != config:
+            self.model = self.model_creator(config)
+            self.config = config
 
         hist = self.model.fit(x, y,
                               validation_data=validation_data,

@@ -29,20 +29,23 @@ class PytorchBaseModel(BaseModel):
         self.optimizer_creator = optimizer_creator
         self.loss_creator = loss_creator
         self.config = None
+        self.model = None
 
     def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
                  **config):
         def update_config():
-            config.setdefault("past_seq_len", x.shape[-2])
-            config.setdefault("future_seq_len", y.shape[-2])
-            config.setdefault("input_feature_num", x.shape[-1])
-            config.setdefault("output_feature_num", y.shape[-1])
+                config.setdefault("past_seq_len", x.shape[-2])
+                config.setdefault("future_seq_len", y.shape[-2])
+                config.setdefault("input_feature_num", x.shape[-1])
+                config.setdefault("output_feature_num", y.shape[-1])
         update_config()
         self._check_config(**config)
-        self.model = self.model_creator(config)
-        self.config = config
-        self.optimizer = self.optimizer_creator(self.model, self.config)
-        self.criterion = self.loss_creator(self.config)
+
+        if self.model is None or self.config != config:
+            self.model = self.model_creator(config)
+            self.config = config
+            self.optimizer = self.optimizer_creator(self.model, self.config)
+            self.criterion = self.loss_creator(self.config)
 
         epoch_losses = []
         x, y, validation_data = PytorchBaseModel.covert_input(x, y, validation_data)
@@ -120,6 +123,8 @@ class PytorchBaseModel(BaseModel):
         return eval_result
 
     def predict(self, x, mc=False):
+        if not self.model:
+            raise RuntimeError("You must call fit_eval or restore first before calling predict!")
         x = PytorchBaseModel.to_torch(x).float()
         if mc:
             self.model.train()
@@ -154,6 +159,8 @@ class PytorchBaseModel(BaseModel):
         self.criterion = self.loss_creator(self.config)
 
     def save(self, checkpoint_file, config_path=None):
+        if not self.model:
+            raise RuntimeError("You must call fit_eval or restore first before calling save!")
         state_dict = self.state_dict()
         torch.save(state_dict, checkpoint_file)
 
