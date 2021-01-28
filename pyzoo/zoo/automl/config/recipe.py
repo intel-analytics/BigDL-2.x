@@ -452,7 +452,8 @@ class TCNGridRandomRecipe(Recipe):
                  hidden_size=[32, 48],
                  levels=[6, 8],
                  kernel_size=[3, 5],
-                 dropout=[0, 0.1]
+                 dropout=[0, 0.1],
+                 lr=[0, 0.1]
                  ):
         """
         Constructor.
@@ -463,6 +464,7 @@ class TCNGridRandomRecipe(Recipe):
         :param levels: the number of layers
         :param kernel_size: the kernel size of each layer
         :param dropout: dropout rate (1 - keep probability)
+        :param lr: learning rate
         """
         super(self.__class__, self).__init__()
         # -- run time params
@@ -470,14 +472,14 @@ class TCNGridRandomRecipe(Recipe):
         self.training_iteration = training_iteration
 
         # -- optimization params
-        self.lr = tune.uniform(0.001, 0.003)
+        self.lr = tune.choice(lr)
         self.batch_size = tune.grid_search(batch_size)
 
         # ---- model params
         self.hidden_size = tune.grid_search(hidden_size)
         self.levels = tune.grid_search(levels)
         self.kernel_size = tune.grid_search(kernel_size)
-        self.dropout = tune.choice(kernel_size)
+        self.dropout = tune.choice(dropout)
 
     def search_space(self, all_available_features):
         return {
