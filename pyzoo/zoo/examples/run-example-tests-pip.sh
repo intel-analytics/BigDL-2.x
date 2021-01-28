@@ -611,9 +611,12 @@ time17=$((now-start))
 echo "#18 start test for orca tf basic_text_classification"
 #timer
 start=$(date "+%s")
+sed "s/epochs=100/epochs=10/g" \
+  ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf/basic_text_classification/basic_text_classification.py \
+  >${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf/basic_text_classification/tmp.py
 #run the example
 export SPARK_DRIVER_MEMORY=3g
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf/basic_text_classification/basic_text_classification.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf/basic_text_classification/tmp.py
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then

@@ -92,15 +92,14 @@ batch_size = 128
 print('Train...')
 
 est = Estimator.from_bigdl(model=model, loss=SparseCategoricalCrossEntropy(),
-                           optimizer=Adam())
+                           optimizer=Adam(), metrics=[Accuracy()])
 est.fit(data=train_dataset,
         batch_size=batch_size,
         epochs=1)
 print("Train finished.")
 
 print('Evaluating...')
-result = est.evaluate(val_dataset,
-                      validation_metrics=[Accuracy()])
+result = est.evaluate(val_dataset)
 print(result)
 
 print("finished...")
