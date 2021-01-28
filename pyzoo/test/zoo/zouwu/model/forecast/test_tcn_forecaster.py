@@ -20,6 +20,7 @@ import os
 
 from zoo.zouwu.model.forecast.tcn_forecaster import TCNForecaster
 from unittest import TestCase
+import pytest
 
 
 def create_data():
@@ -67,3 +68,15 @@ class TestZouwuModelTCNForecaster(TestCase):
             forecaster.save(ckpt_name)
             forecaster.restore(ckpt_name)
             test_mse = forecaster.evaluate(test_data[0], test_data[1])
+    
+    def test_tcn_forecaster_runtime_error(self):
+        train_data, val_data, test_data = create_data()
+        forecaster = TCNForecaster(kernel_size=3, lr=0.01)
+        with pytest.raises(RuntimeError):
+            with tempfile.TemporaryDirectory() as tmp_dir_name:
+                ckpt_name = os.path.join(tmp_dir_name, "ckpt")
+                forecaster.save(ckpt_name)
+        with pytest.raises(RuntimeError):
+            forecaster.predict(test_data[0])
+        with pytest.raises(RuntimeError):
+            forecaster.evaluate(test_data[0], test_data[1])
