@@ -136,7 +136,6 @@ class BigDLEstimator(OrcaSparkEstimator):
             from zoo.orca.data.utils import xshard_to_sample
 
             end_trigger = MaxEpoch(epochs)
-            validation_metrics = Metrics.convert_metrics_list(validation_metrics)
             checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
 
             if isinstance(data, SparkXShards):
@@ -152,7 +151,7 @@ class BigDLEstimator(OrcaSparkEstimator):
                 if self.log_dir is not None and self.app_name is not None:
                     self.estimator.set_tensorboard(self.log_dir, self.app_name)
                 self.estimator.train(train_feature_set, self.loss, end_trigger, checkpoint_trigger,
-                                     val_feature_set, validation_metrics, batch_size)
+                                     val_feature_set, self.metrics, batch_size)
                 self.is_nnframe_fit = False
             else:
                 raise ValueError("Data and validation data should be XShards, but get " +

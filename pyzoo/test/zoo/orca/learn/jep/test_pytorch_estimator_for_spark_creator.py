@@ -61,7 +61,7 @@ class TestEstimatorForSparkCreator(TestCase):
         model = SimpleModel()
 
         estimator = Estimator.from_torch(model=model, loss=nn.BCELoss(),
-                                         metrics=Accuracy(),
+                                         metrics=[Accuracy()],
                                          optimizer=Adam())
 
         def get_dataloader():

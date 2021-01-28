@@ -82,14 +82,14 @@ class TestEstimatorForSpark(TestCase):
 
         with tempfile.TemporaryDirectory() as temp_dir_name:
             estimator = Estimator.from_torch(model=model, loss=loss_func,
-                                             metrics=Accuracy(),
+                                             metrics=[Accuracy()],
                                              optimizer=SGD(learningrate_schedule=Default()),
                                              model_dir=temp_dir_name)
             estimator.fit(data=data_shard, epochs=4, batch_size=2, validation_data=data_shard,
                           checkpoint_trigger=EveryEpoch())
             estimator.evaluate(data_shard, batch_size=2)
             est2 = Estimator.from_torch(model=model, loss=loss_func,
-                                        metrics=Accuracy(),
+                                        metrics=[Accuracy()],
                                         optimizer=None)
             est2.load(temp_dir_name, loss=loss_func)
             est2.fit(data=data_shard, epochs=8, batch_size=2, validation_data=data_shard,

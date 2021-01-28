@@ -232,7 +232,7 @@ class TestEstimatorForKeras(TestCase):
         with tempfile.TemporaryDirectory() as temp_dir_name:
             estimator = Estimator.from_bigdl(model=model, optimizer=optim_method,
                                              loss=ClassNLLCriterion(),
-                                             metrics=Accuracy(),
+                                             metrics=[Accuracy()],
                                              model_dir=temp_dir_name,
                                              feature_preprocessing=SeqToTensor([2]),
                                              label_preprocessing=SeqToTensor([1]))
@@ -305,7 +305,7 @@ class TestEstimatorForKeras(TestCase):
         with tempfile.TemporaryDirectory() as temp_dir_name:
             estimator = Estimator.from_bigdl(model=model, optimizer=optim_method,
                                              loss=ClassNLLCriterion(),
-                                             metrics=Accuracy(),
+                                             metrics=[Accuracy()],
                                              model_dir=temp_dir_name)
             estimator.set_constant_gradient_clipping(0.1, 1.2)
             r1 = estimator.predict(data=data_shard)
