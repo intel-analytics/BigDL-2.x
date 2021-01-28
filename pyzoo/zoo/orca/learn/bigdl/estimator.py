@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from orca.learn.metrics import Metrics
+from zoo.orca.learn.metrics import Metrics
 from zoo.orca.learn.utils import bigdl_metric_results_to_dict
 from zoo.pipeline.nnframes import NNEstimator, NNModel
 from zoo.pipeline.estimator import Estimator as SparkEstimator
