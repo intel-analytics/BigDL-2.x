@@ -264,6 +264,7 @@ class TestEstimatorForKeras(TestCase):
 
             # test load from checkpoint
             est2 = Estimator.from_bigdl(model=Sequential(), optimizer=None, loss=None,
+                                        metrics=[Accuracy()],
                                         model_dir=None)
             est2.load(temp_dir_name, loss=ClassNLLCriterion(), is_checkpoint=True)
             r2 = est2.predict(data=data_shard)
