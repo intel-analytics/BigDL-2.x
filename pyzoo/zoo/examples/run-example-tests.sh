@@ -574,7 +574,6 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
   --file_path analytics-zoo-data/data/carvana --epochs 1 --non_interactive
 exit_status=$?
 if [ $exit_status -ne 0 ]; then
-  clear_up
   echo "orca tf imagesegmentation failed"
   exit $exit_status
 fi
@@ -591,7 +590,6 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
   ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf/transfer_learning/transfer_learning.py
 exit_status=$?
 if [ $exit_status -ne 0 ]; then
-  clear_up
   echo "orca tf transfer_learning failed"
   exit $exit_status
 fi
@@ -608,7 +606,6 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
   ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf/basic_text_classification/basic_text_classification.py
 exit_status=$?
 if [ $exit_status -ne 0 ]; then
-  clear_up
   echo "orca tf basic_text_classification failed"
   exit $exit_status
 fi
@@ -630,14 +627,12 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
   ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/bigdl/attention/tmp.py
 exit_status=$?
 if [ $exit_status -ne 0 ]; then
-  clear_up
   echo "orca tf bigdl attention failed"
   exit $exit_status
 fi
 now=$(date "+%s")
 time19=$((now - start))
 
-clear_up
 
 echo "#1 textclassification time used: $time1 seconds"
 echo "#2 autograd time used: $time2 seconds"
