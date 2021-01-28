@@ -68,7 +68,7 @@ class TestZouwuModelTCNForecaster(TestCase):
             forecaster.save(ckpt_name)
             forecaster.restore(ckpt_name)
             test_mse = forecaster.evaluate(test_data[0], test_data[1])
-    
+
     def test_tcn_forecaster_runtime_error(self):
         train_data, val_data, test_data = create_data()
         forecaster = TCNForecaster(kernel_size=3, lr=0.01)
