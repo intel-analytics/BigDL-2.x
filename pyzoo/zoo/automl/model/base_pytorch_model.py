@@ -34,10 +34,10 @@ class PytorchBaseModel(BaseModel):
     def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
                  **config):
         def update_config():
-                config.setdefault("past_seq_len", x.shape[-2])
-                config.setdefault("future_seq_len", y.shape[-2])
-                config.setdefault("input_feature_num", x.shape[-1])
-                config.setdefault("output_feature_num", y.shape[-1])
+            config.setdefault("past_seq_len", x.shape[-2])
+            config.setdefault("future_seq_len", y.shape[-2])
+            config.setdefault("input_feature_num", x.shape[-1])
+            config.setdefault("output_feature_num", y.shape[-1])
         update_config()
         self._check_config(**config)
 

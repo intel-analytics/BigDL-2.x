@@ -40,9 +40,9 @@ class KerasBaseModel(BaseModel):
     def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
                  **config):
         def update_config():
-                config.setdefault("input_dim", x.shape[-1])
-                config.setdefault("output_dim", y.shape[-1])
-                config.update({"metric": metric})
+            config.setdefault("input_dim", x.shape[-1])
+            config.setdefault("output_dim", y.shape[-1])
+            config.update({"metric": metric})
         update_config()
         self._check_config(**config)
 
