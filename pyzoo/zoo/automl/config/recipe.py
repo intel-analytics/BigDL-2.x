@@ -453,7 +453,7 @@ class TCNGridRandomRecipe(Recipe):
                  levels=[6, 8],
                  kernel_size=[3, 5],
                  dropout=[0, 0.1],
-                 lr=[0, 0.1]
+                 lr=[0.001, 0.003]
                  ):
         """
         Constructor.
