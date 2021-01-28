@@ -561,26 +561,7 @@ done
 now=$(date "+%s")
 time14=$((now-start))
 
-echo "#15 start example test for attention"
-#timer
-start=$(date "+%s")
-sed "s/max_features = 20000/max_features = 100/g;s/max_len = 200/max_len = 10/g;s/hidden_size=128/hidden_size=8/g" \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/transformer.py \
-    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/tmp.py
-
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
-    --conf spark.executor.extraJavaOptions="-Xss512m" \
-    --conf spark.driver.extraJavaOptions="-Xss512m" \
-    --master ${MASTER} \
-    --driver-memory 20g \
-    --executor-memory 100g \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/tmp.py
-
-now=$(date "+%s")
-time15=$((now-start))
-echo "#15 attention time used:$time15 seconds"
-
-echo "#16 start example test for orca data"
+echo "#15 start example test for orca data"
 if [ -f analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv ]
 then
     echo "analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv already exists"
@@ -598,9 +579,9 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     -f analytics-zoo-data/data/NAB/nyc_taxi/nyc_taxi.csv
 
 now=$(date "+%s")
-time16=$((now-start))
+time15=$((now-start))
 
-echo "#17 start test for orca tf imagesegmentation"
+echo "#16 start test for orca tf imagesegmentation"
 #timer
 start=$(date "+%s")
 # prepare data
@@ -631,9 +612,9 @@ then
     exit $exit_status
 fi
 now=$(date "+%s")
-time17=$((now-start))
+time16=$((now-start))
 
-echo "#18 start test for orca tf transfer_learning"
+echo "#17 start test for orca tf transfer_learning"
 #timer
 start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
@@ -649,9 +630,9 @@ then
     exit $exit_status
 fi
 now=$(date "+%s")
-time18=$((now-start))
+time17=$((now-start))
 
-echo "#19 start test for orca tf basic_text_classification"
+echo "#18 start test for orca tf basic_text_classification"
 #timer
 start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
@@ -667,8 +648,30 @@ then
     exit $exit_status
 fi
 now=$(date "+%s")
+time18=$((now-start))
+
+echo "#19 start test for orca bigdl attention"
+#timer
+start=$(date "+%s")
+sed "s/max_features = 20000/max_features = 200/g;s/max_len = 200/max_len = 20/g;s/hidden_size=128/hidden_size=8/g;s/memory=\"100g\"/memory=\"20g\"/g;s/driver_memory=\"20g\"/driver_memory=\"3g\"/g" \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/transformer.py \
+    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/tmp.py
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
+    --master ${MASTER} \
+    --driver-memory 3g \
+    --executor-memory 20g \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/bigdl/attention/transformer.py
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "orca tf bigdl attention failed"
+    exit $exit_status
+fi
+now=$(date "+%s")
 time19=$((now-start))
 
+clear_up
 
 echo "#1 textclassification time used: $time1 seconds"
 echo "#2 autograd time used: $time2 seconds"
@@ -684,8 +687,8 @@ echo "#11 openvino time used: $time11 seconds"
 echo "#12 vnni/openvino time used: $time12 seconds"
 echo "#13 streaming Object Detection time used: $time13 seconds"
 echo "#14 streaming text classification time used: $time14 seconds"
-echo "#15 attention time used:$time15 seconds"
-echo "#16 orca data time used:$time16 seconds"
-echo "#17 orca tf imagesegmentation time used:$time17 seconds"
-echo "#18 orca tf transfer_learning time used:$time18 seconds"
-echo "#19 orca tf basic_text_classification time used:$time19 seconds"
+echo "#15 orca data time used:$time15 seconds"
+echo "#16 orca tf imagesegmentation time used:$time16 seconds"
+echo "#17 orca tf transfer_learning time used:$time17 seconds"
+echo "#18 orca tf basic_text_classification time used:$time18 seconds"
+echo "#19 orca bigdl attention time used:$time19 seconds"

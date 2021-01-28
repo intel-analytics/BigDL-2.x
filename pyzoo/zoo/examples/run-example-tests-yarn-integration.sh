@@ -39,6 +39,27 @@ fi
 now=$(date "+%s")
 time2=$((now-start))
 
+echo "#3 start test for orca bigdl attention"
+#timer
+start=$(date "+%s")
+#run the example
+start=$(date "+%s")
+sed "s/max_features = 20000/max_features = 200/g;s/max_len = 200/max_len = 20/g;s/hidden_size=128/hidden_size=8/g;s/memory=\"100g\"/memory=\"20g\"/g;s/driver_memory=\"20g\"/driver_memory=\"3g\"/g" \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/transformer.py \
+    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/tmp.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/attention/tmp.py --cluster_mode yarn
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "orca bigdl attention failed"
+    exit $exit_status
+fi
+now=$(date "+%s")
+time3=$((now-start))
+
+clear_up
 
 echo "#1 orca tf transfer_learning time used:$time1 seconds"
 echo "#2 orca tf basic_text_classification time used:$time2 seconds"
+echo "#3 orca bigdl attention time used:$time3 seconds"

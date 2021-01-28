@@ -33,21 +33,26 @@ parser.add_argument('--cluster_mode', type=str, default="local",
                     help='The mode for the Spark cluster. local or yarn.')
 args = parser.parse_args()
 cluster_mode = args.cluster_mode
-max_features = 1000
-max_len = 10
+conf = {"spark.executor.extraJavaOptions": "-Xss512m",
+        "spark.driver.extraJavaOptions": "-Xss512m"}
+max_features = 20000
+max_len = 200
 
 if cluster_mode == "local":
-    sc = init_orca_context(cluster_mode="local", cores=4, memory="10g",
-                           conf={"spark.executor.extraJavaOptions": "-Xss512m",
-                                 "spark.driver.extraJavaOptions": "-Xss512m"}
+    sc = init_orca_context(cluster_mode="local", cores=8,
+                           memory="100g",
+                           driver_memory="20g",
+                           conf=conf
                            )
 elif cluster_mode == "yarn":
     sc = init_orca_context(cluster_mode="yarn-client", num_nodes=8, cores=8,
-                           driver_memory="20g",
                            memory="100g",
-                           conf={"spark.executor.extraJavaOptions": "-Xss512m",
-                                 "spark.driver.extraJavaOptions": "-Xss512m"}
+                           driver_memory="20g",
+                           conf=conf
                            )
+else:
+    print("init_orca_context failed. cluster_mode should be either 'local' or 'yarn' but got "
+          + cluster_mode)
 
 print('Loading data...')
 (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=max_features)
