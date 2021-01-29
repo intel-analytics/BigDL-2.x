@@ -283,14 +283,24 @@ class BigDLEstimator(OrcaSparkEstimator):
         self.estimator.set_l2_norm_gradient_clipping(clip_norm)
 
     def get_train_summary(self, tag=None):
+        # Exception handle
+        if tag != "Loss" and tag != "LearningRate" and tag != "Throughput":
+            raise TypeError('Only "Loss", "LearningRate", "Throughput"'
+                            + 'are supported in train summary')
         if self.is_nnframe_fit:
-            return self.nn_estimator.getTrainSummary()
+            train_summary = self.nn_estimator.getTrainSummary()
+            return train_summary.read_scalar(tag=tag)
         else:
             return self.estimator.get_train_summary(tag=tag)
 
     def get_validation_summary(self, tag=None):
         if self.is_nnframe_fit:
-            return self.nn_estimator.getValidationSummary()
+            assert tag is not None, "You should provide tag which should match the name of " \
+                                    "the ValidationMethod set into the optimizer. " \
+                                    "e.g.'MAE', 'Top1AccuracyLoss', 'Top1Accuracy' or " \
+                                    "'Top5Accuracy'."
+            val_summary = self.nn_estimator.getValidationSummary()
+            return val_summary.read_scalar(tag=tag)
         else:
             return self.estimator.get_validation_summary(tag=tag)
 

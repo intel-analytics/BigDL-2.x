@@ -228,14 +228,10 @@ class TestEstimatorForKeras(TestCase):
 
         est.fit(df, epochs=5, batch_size=4, validation_data=val_df, validation_trigger=EveryEpoch(),
                 checkpoint_trigger=SeveralIteration(1))
-        assert (est.get_validation_summary() is not None)
 
         res = est.predict(df)
-        assert isinstance(est.get_validation_summary(), ValidationSummary)
-        val_summary = est.get_validation_summary()
-        train_summary = est.get_train_summary()
-        loss_result = train_summary.read_scalar("Loss")
-        mae_result = val_summary.read_scalar("MAE")
+        loss_result = est.get_train_summary("Loss")
+        mae_result = est.get_validation_summary("MAE")
         assert type(res).__name__ == 'DataFrame'
         assert len(loss_result) == 5
         assert len(mae_result) == 4
@@ -296,7 +292,7 @@ class TestEstimatorForKeras(TestCase):
                 assert abs(r0_c[idx]["prediction"][1] - result_c[0]["prediction"][idx][1]) <= 1e-06
             estimator.fit(data=df, epochs=6, batch_size=8, validation_data=df,
                           validation_trigger=EveryEpoch())
-            summary = estimator.get_train_summary()
+            summary = estimator.get_train_summary("Loss")
 
             # test load from checkpoint
             est2 = Estimator.from_bigdl(model=Sequential(), optimizer=None, loss=None,
