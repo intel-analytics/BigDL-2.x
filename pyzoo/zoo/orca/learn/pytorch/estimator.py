@@ -36,7 +36,7 @@ class Estimator(object):
                    model,
                    optimizer,
                    loss=None,
-                   metrics=Accuracy(),
+                   metrics=None,
                    scheduler_creator=None,
                    training_operator_cls=TrainingOperator,
                    initialization_hook=None,
@@ -207,7 +207,7 @@ class PyTorchRayEstimator(OrcaRayEstimator):
 
 
 class PyTorchSparkEstimator(OrcaSparkEstimator):
-    def __init__(self, model, loss, optimizer, metrics=Accuracy(), model_dir=None,
+    def __init__(self, model, loss, optimizer, metrics=None, model_dir=None,
                  bigdl_type="float"):
         from zoo.pipeline.api.torch import TorchModel, TorchLoss, TorchOptim
         self.loss = loss
@@ -225,6 +225,8 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         else:
             raise ValueError("Only PyTorch optimizer and orca optimizer are supported")
         from zoo.orca.learn.metrics import Metrics
+        if metrics is None:
+            metrics = Accuracy()
         self.metrics = Metrics.convert_metrics_list(metrics)
         self.log_dir = None
         self.app_name = None
@@ -278,6 +280,10 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
 
         if self.log_dir is not None and self.app_name is not None:
             self.estimator.set_tensorboard(self.log_dir, self.app_name)
+
+        if validation_data:
+            assert self.metrics is not None, "You should provide metrics when creating this " \
+                                             "estimator if you provide validation_data."
 
         if isinstance(data, SparkXShards):
             train_fset, val_fset = self._handle_xshards(data, validation_data)

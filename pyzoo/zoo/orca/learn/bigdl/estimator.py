@@ -27,7 +27,7 @@ from pyspark.sql.dataframe import DataFrame
 
 class Estimator(object):
     @staticmethod
-    def from_bigdl(*, model, loss=None, optimizer=None, metrics=Accuracy(),
+    def from_bigdl(*, model, loss=None, optimizer=None, metrics=None,
                    feature_preprocessing=None, label_preprocessing=None,
                    model_dir=None):
         """
@@ -67,10 +67,12 @@ class Estimator(object):
 
 
 class BigDLEstimator(OrcaSparkEstimator):
-    def __init__(self, *, model, loss, optimizer=None, metrics=Accuracy(),
+    def __init__(self, *, model, loss, optimizer=None, metrics=None,
                  feature_preprocessing=None, label_preprocessing=None, model_dir=None):
         self.loss = loss
         self.optimizer = optimizer
+        if metrics is None:
+            metrics = Accuracy()
         self.metrics = Metrics.convert_metrics_list(metrics)
         self.feature_preprocessing = feature_preprocessing
         self.label_preprocessing = label_preprocessing
@@ -97,7 +99,7 @@ class BigDLEstimator(OrcaSparkEstimator):
 
         if validation_data is not None:
             assert self.metrics is not None, \
-                "You should provide validation_metrics if you provide validation_data."
+                "You should provide metrics if you provide validation_data."
 
         if isinstance(data, DataFrame):
             if isinstance(feature_cols, list):
