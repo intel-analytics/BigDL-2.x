@@ -260,7 +260,6 @@ class TestEstimatorForKeras(TestCase):
         with tempfile.TemporaryDirectory() as temp_dir_name:
             estimator = Estimator.from_bigdl(model=model, optimizer=optim_method,
                                              loss=ClassNLLCriterion(),
-                                             metrics=[Accuracy()],
                                              model_dir=temp_dir_name,
                                              feature_preprocessing=SeqToTensor([2]),
                                              label_preprocessing=SeqToTensor([1]))
@@ -274,9 +273,12 @@ class TestEstimatorForKeras(TestCase):
             temp_path = os.path.join(temp_dir_name, "save_model")
             estimator.save(temp_path)
             with self.assertRaises(Exception) as context:
-                estimator.evaluate(data=data_shard,
-                                   validation_metrics=["accuracy"],
-                                   batch_size=8)
+                Estimator.from_bigdl(model=model, optimizer=optim_method,
+                                     loss=ClassNLLCriterion(),
+                                     metrics=['accuracy'],
+                                     model_dir=temp_dir_name,
+                                     feature_preprocessing=SeqToTensor([2]),
+                                     label_preprocessing=SeqToTensor([1]))
             self.assertTrue('Only orca metrics are supported, but get str' in
                             str(context.exception))
             eval_result = estimator.evaluate(data=data_shard,
