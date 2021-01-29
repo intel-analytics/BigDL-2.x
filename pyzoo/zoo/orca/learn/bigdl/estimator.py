@@ -20,6 +20,7 @@ from zoo.orca.learn.spark_estimator import Estimator as OrcaSparkEstimator
 from zoo.orca.data import SparkXShards
 from bigdl.optim.optimizer import MaxEpoch
 from zoo.feature.common import FeatureSet
+from zoo.orca.learn.metrics import Accuracy
 from pyspark.sql.dataframe import DataFrame
 
 
@@ -90,6 +91,14 @@ class BigDLEstimator(OrcaSparkEstimator):
 
         assert batch_size > 0, "batch_size should be greater than 0"
 
+        if validation_data is not None:
+            assert validation_metrics is not None, \
+                "You should provide validation_metrics if you provide validation_data."
+            assert isinstance(validation_metrics, list), "validation_metrics should be a " \
+                                                         "list of orca metrics, but get " + \
+                                                         validation_metrics.__class__.__name__
+            validation_metrics = Metrics.convert_metrics_list(validation_metrics)
+
         if isinstance(data, DataFrame):
             if isinstance(feature_cols, list):
                 data, validation_data, feature_cols = \
@@ -108,11 +117,9 @@ class BigDLEstimator(OrcaSparkEstimator):
             if validation_data is not None:
                 assert isinstance(validation_data, DataFrame), \
                     "validation_data should be a spark DataFrame."
-                assert validation_trigger is not None and validation_metrics is not None, \
-                    "You should provide validation_trigger and validation_metrics " \
-                    "if you provide validation_data."
+                assert validation_trigger is not None, \
+                    "You should provide validation_trigger if you provide validation_data."
                 validation_trigger = Trigger.convert_trigger(validation_trigger)
-                validation_metrics = Metrics.convert_metrics_list(validation_metrics)
                 self.nn_estimator.setValidation(validation_trigger, validation_data,
                                                 validation_metrics, batch_size)
             if self.log_dir is not None and self.app_name is not None:
@@ -120,7 +127,7 @@ class BigDLEstimator(OrcaSparkEstimator):
                 from bigdl.optim.optimizer import ValidationSummary
                 train_summary = TrainSummary(log_dir=self.log_dir, app_name=self.app_name)
                 self.nn_estimator.setTrainSummary(train_summary)
-                val_summary = ValidationSummary(log_dir=self.log_dir, app_name=self.log_dir)
+                val_summary = ValidationSummary(log_dir=self.log_dir, app_name=self.app_name)
                 self.nn_estimator.setValidationSummary(val_summary)
             if self.model_dir is not None and checkpoint_trigger is not None:
                 checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
@@ -132,7 +139,6 @@ class BigDLEstimator(OrcaSparkEstimator):
             from zoo.orca.data.utils import xshard_to_sample
 
             end_trigger = MaxEpoch(epochs)
-            validation_metrics = Metrics.convert_metrics_list(validation_metrics)
             checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
 
             if isinstance(data, SparkXShards):
@@ -180,10 +186,12 @@ class BigDLEstimator(OrcaSparkEstimator):
     def evaluate(self, data, batch_size=32, feature_cols=None, label_cols=None,
                  validation_metrics=None):
         assert data is not None, "validation data shouldn't be None"
-        assert validation_metrics is not None, "validation_metrics shouldn't be None, please " \
-                                               "pass the metrics like: " \
-                                               "validation_metrics=[Accuracy()]."
+        if validation_metrics is None:
+            validation_metrics = [Accuracy()]
 
+        assert isinstance(validation_metrics, list), "validation_metrics should be a " \
+                                                     "list of orca metrics, but get " + \
+                                                     validation_metrics.__class__.__name__
         if isinstance(data, DataFrame):
             raise NotImplementedError
         elif isinstance(data, SparkXShards):
