@@ -105,7 +105,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         self.verbose = verbose
 
         ray_ctx = RayContext.get()
-        if "batch_size" in config:
+        if "batch_size" in self.config:
             raise Exception("Please do not specify batch_size in config. Input batch_size in the fit/evaluate "
                             "function of the estimator instead.")
 
