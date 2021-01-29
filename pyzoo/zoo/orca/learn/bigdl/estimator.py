@@ -275,6 +275,12 @@ class BigDLEstimator(OrcaSparkEstimator):
         self.nn_estimator.setGradientClippingByL2Norm(clip_norm)
         self.estimator.set_l2_norm_gradient_clipping(clip_norm)
 
+    def set_tensorboard(self, log_dir, app_name):
+        assert log_dir is not None and app_name is not None, \
+            "Neither log_dir nor app_name should be None."
+        self.log_dir = log_dir
+        self.app_name = app_name
+        
     def get_train_summary(self, tag=None):
         if self.is_nnframe_fit:
             return self.nn_estimator.getTrainSummary()
