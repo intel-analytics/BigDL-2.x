@@ -28,7 +28,7 @@ object RedisUtils {
       redisInfo("maxmemory").toLong * inputThreshold) {
       ClusterServing.synchronized {
         redisInfo = RedisUtils.getMapFromInfo(db.info())
-        if (redisInfo("used_memory").toLong >=
+        if (redisInfo("maxmemory").toLong > 0 && redisInfo("used_memory").toLong >=
           redisInfo("maxmemory").toLong * inputThreshold) {
           ClusterServing.logger.info(s"Used memory ${redisInfo("used_memory")}, " +
             s"Max memory ${redisInfo("maxmemory")}. Your input data length is " +

@@ -36,7 +36,7 @@ class Metrics(ABC):
             return keras_metrics
         else:
             if isinstance(metrics, Metrics):
-                return metrics.get_metrics()
+                return [metrics.get_metrics()]
             else:
                 raise ValueError("Only orca metrics are supported, but get " +
                                  metrics.__class__.__name__)

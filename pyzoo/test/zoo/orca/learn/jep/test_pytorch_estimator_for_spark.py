@@ -17,6 +17,7 @@ from unittest import TestCase
 
 import os
 import pytest
+import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -65,7 +66,7 @@ class TestEstimatorForSpark(TestCase):
 
         def transform(df):
             result = {
-                "x": [df['user'].to_numpy(), df['item'].to_numpy()],
+                "x": np.stack([df['user'].to_numpy(), df['item'].to_numpy()], axis=1),
                 "y": df['label'].to_numpy()
             }
             return result
@@ -81,16 +82,19 @@ class TestEstimatorForSpark(TestCase):
 
         with tempfile.TemporaryDirectory() as temp_dir_name:
             estimator = Estimator.from_torch(model=model, loss=loss_func,
+                                             metrics=[Accuracy()],
                                              optimizer=SGD(learningrate_schedule=Default()),
                                              model_dir=temp_dir_name)
             estimator.fit(data=data_shard, epochs=4, batch_size=2, validation_data=data_shard,
-                          validation_metrics=[Accuracy()], checkpoint_trigger=EveryEpoch())
-            estimator.evaluate(data_shard, validation_metrics=[Accuracy()], batch_size=2)
-            est2 = Estimator.from_torch(model=model, loss=loss_func, optimizer=None)
+                          checkpoint_trigger=EveryEpoch())
+            estimator.evaluate(data_shard, batch_size=2)
+            est2 = Estimator.from_torch(model=model, loss=loss_func,
+                                        metrics=[Accuracy()],
+                                        optimizer=None)
             est2.load(temp_dir_name, loss=loss_func)
             est2.fit(data=data_shard, epochs=8, batch_size=2, validation_data=data_shard,
-                     validation_metrics=[Accuracy()], checkpoint_trigger=EveryEpoch())
-            est2.evaluate(data_shard, validation_metrics=[Accuracy()], batch_size=2)
+                     checkpoint_trigger=EveryEpoch())
+            est2.evaluate(data_shard, batch_size=2)
             pred_result = est2.predict(data_shard)
             pred_c = pred_result.collect()
             assert(pred_result, SparkXShards)

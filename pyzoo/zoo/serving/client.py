@@ -112,6 +112,11 @@ class InputQueue(API):
         return processed
 
     def enqueue(self, uri, **data):
+        b64str = self.data_to_b64(**data)
+        d = {"uri": uri, "data": b64str}
+        self.__enqueue_data(d)
+
+    def data_to_b64(self, **data):
         sink = pa.BufferOutputStream()
         field_list = []
         data_list = []
@@ -130,8 +135,7 @@ class InputQueue(API):
         buf = sink.getvalue()
         b = buf.to_pybytes()
         b64str = self.base64_encode_image(b)
-        d = {"uri": uri, "data": b64str}
-        self.__enqueue_data(d)
+        return b64str
 
     def enqueue_tensor(self, uri, data):
         """
@@ -176,7 +180,8 @@ class InputQueue(API):
     def __enqueue_data(self, data):
         inf = self.db.info()
         try:
-            if inf['used_memory'] >= inf['maxmemory'] * self.input_threshold:
+            if inf['used_memory'] >= inf['maxmemory'] * self.input_threshold\
+                    and inf['maxmemory'] != 0:
                 raise redis.exceptions.ConnectionError
             self.db.xadd(self.name, data)
             print("Write to Redis successful")
@@ -207,7 +212,7 @@ class OutputQueue(API):
             res_dict = self.db.hgetall(res.decode('utf-8'))
             res_id = res.decode('utf-8').split(":")[1]
             res_value = res_dict[b'value'].decode('utf-8')
-            decoded[res_id] = res_value
+            decoded[res_id] = self.get_ndarray_from_b64(res_value)
             self.db.delete(res)
         return decoded
 
