@@ -98,7 +98,7 @@ class DatasetHandler:
 
     def handle_dataset_validation(self, data_creator, config, steps):
         config, local_batch_size = self._handle_batch_size(config)
-        dataset = data_creator(config)
+        dataset = data_creator(config, local_batch_size)
         if isinstance(dataset, ray.ObjectID):
             assert steps is not None, "steps must be provided for xshard"
             dataset = self._handle_xshards(dataset,
@@ -428,7 +428,7 @@ class TFRunner:
         if data_config is not None:
             config.update(data_config)
 
-        dataset = data_creator(config)
+        dataset = data_creator(config, batch_size)
         if not isinstance(dataset, ray.ObjectID):
             raise ValueError("Only xshards is supported for predict")
 
