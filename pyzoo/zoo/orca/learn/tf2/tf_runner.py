@@ -329,11 +329,7 @@ class TFRunner:
         config = self.config.copy()
         if data_config is not None:
             config.update(data_config)
-
-        if 'batch_size' in config:
-            raise Exception("Please do not specify batch_size in config. Input batch_size in the fit function of the "
-                            "estimator instead.")
-        config['batch_size'] = batch_size
+        config["batch_size"] = batch_size
 
         with self.strategy.scope():
             dataset_handler = DatasetHandler.get_handler(self.backend, self.rank, self.size)

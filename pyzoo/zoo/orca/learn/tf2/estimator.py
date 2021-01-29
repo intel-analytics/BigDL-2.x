@@ -105,6 +105,10 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         self.verbose = verbose
 
         ray_ctx = RayContext.get()
+        if "batch_size" in config:
+            raise Exception("Please do not specify batch_size in config. Input batch_size in the fit/evaluate "
+                            "function of the estimator instead.")
+
         if "inter_op_parallelism" not in self.config:
             self.config["inter_op_parallelism"] = 1
 
