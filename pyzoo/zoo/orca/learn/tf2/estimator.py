@@ -159,7 +159,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
 
         self.num_workers = len(self.remote_workers)
 
-    def fit(self, data, epochs=1, batch_size=None, verbose=1,
+    def fit(self, data, epochs=1, batch_size=32, verbose=1,
             callbacks=None, validation_data=None, class_weight=None,
             steps_per_epoch=None, validation_steps=None, validation_freq=1,
             data_config=None, feature_cols=None,

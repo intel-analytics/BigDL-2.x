@@ -31,7 +31,6 @@
 import logging
 import json
 import os
-import warnings
 
 import numpy as np
 
@@ -322,7 +321,7 @@ class TFRunner:
         self.size = world_size
         self.rank = world_rank
 
-    def step(self, data_creator, epochs=1, batch_size=None, verbose=1,
+    def step(self, data_creator, epochs=1, batch_size=32, verbose=1,
              callbacks=None, validation_data_creator=None, class_weight=None,
              steps_per_epoch=None, validation_steps=None, validation_freq=1,
              data_config=None):
@@ -331,20 +330,10 @@ class TFRunner:
         if data_config is not None:
             config.update(data_config)
 
-        if 'batch_size' not in config:
-            if batch_size is None:
-                config['batch_size'] = 32
-                warnings.warn("batch_size is not specified in the fit function. It is set to 32 by default.")
-            else:
-                config['batch_size'] = batch_size
-        else:
-            if batch_size is not None:
-                config['batch_size'] = batch_size
-                warnings.warn("batch_size is specified in both the input of the fit function and config['batch_size']."
-                              " The input batch_size is used in this case.")
-            else:
-                warnings.warn(
-                    "batch_size is not specified in the fit function. config['batch_size'] is used in this case.")
+        if 'batch_size' in config:
+            raise Exception("Please do not specify batch_size in config. Input batch_size in the fit function of the "
+                            "estimator instead.")
+        config['batch_size'] = batch_size
 
         with self.strategy.scope():
             dataset_handler = DatasetHandler.get_handler(self.backend, self.rank, self.size)
