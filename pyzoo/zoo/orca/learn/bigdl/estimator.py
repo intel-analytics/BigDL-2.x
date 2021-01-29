@@ -71,8 +71,6 @@ class BigDLEstimator(OrcaSparkEstimator):
                  feature_preprocessing=None, label_preprocessing=None, model_dir=None):
         self.loss = loss
         self.optimizer = optimizer
-        if metrics is None:
-            metrics = Accuracy()
         self.metrics = Metrics.convert_metrics_list(metrics)
         self.feature_preprocessing = feature_preprocessing
         self.label_preprocessing = label_preprocessing
@@ -99,7 +97,8 @@ class BigDLEstimator(OrcaSparkEstimator):
 
         if validation_data is not None:
             assert self.metrics is not None, \
-                "You should provide metrics if you provide validation_data."
+                "You should provide metrics when creating this estimator if you provide " \
+                "validation_data."
 
         if isinstance(data, DataFrame):
             if isinstance(feature_cols, list):

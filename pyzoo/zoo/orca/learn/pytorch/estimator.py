@@ -225,8 +225,6 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         else:
             raise ValueError("Only PyTorch optimizer and orca optimizer are supported")
         from zoo.orca.learn.metrics import Metrics
-        if metrics is None:
-            metrics = Accuracy()
         self.metrics = Metrics.convert_metrics_list(metrics)
         self.log_dir = None
         self.app_name = None
