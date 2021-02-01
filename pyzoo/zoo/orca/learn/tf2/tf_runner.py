@@ -81,7 +81,7 @@ class DatasetHandler:
             train_dataset = self._handle_sharding(train_dataset)
 
         if validation_data_creator is not None:
-            test_dataset = validation_data_creator(config, local_batch_size)
+            test_dataset = validation_data_creator(config, config["batch_size"])
             if isinstance(test_dataset, ray.ObjectID):
                 assert validation_steps is not None, "validation_steps must be provided" \
                                                      "when use xshards for evaluate"
