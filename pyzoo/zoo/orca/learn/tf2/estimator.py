@@ -46,7 +46,7 @@ class Estimator(object):
 
 
 def shards_ref_to_creator(shards_ref):
-    def data_creator(config):
+    def data_creator(config, batch_size):
         return shards_ref
 
     return data_creator
