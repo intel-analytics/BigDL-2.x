@@ -70,7 +70,7 @@ class DatasetHandler:
                               validation_steps):
 
         config, local_batch_size = self._handle_batch_size(config)
-        train_dataset = data_creator(config, local_batch_size)
+        train_dataset = data_creator(config, config["batch_size"])
         if isinstance(train_dataset, ray.ObjectID):
             assert steps_per_epoch is not None, "steps_per_epoch must be provided for xshard"
             train_dataset = self._handle_xshards(train_dataset,
@@ -98,7 +98,7 @@ class DatasetHandler:
 
     def handle_dataset_validation(self, data_creator, config, steps):
         config, local_batch_size = self._handle_batch_size(config)
-        dataset = data_creator(config, local_batch_size)
+        dataset = data_creator(config, config["batch_size"])
         if isinstance(dataset, ray.ObjectID):
             assert steps is not None, "steps must be provided for xshard"
             dataset = self._handle_xshards(dataset,
