@@ -30,7 +30,7 @@ ${SPARK_HOME}/bin/spark-submit \
   --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
   --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
   file:///opt/analytics-zoo-examples/python/anomalydetection/anomaly_detection.py \
-  --input_dir file:///opt/nyc_taxi.csv
+  --input_dir file:///opt/nyc_taxi.csv --nb_epoch 1
 
 now=$(date "+%s")
 time1=$((now - start))
