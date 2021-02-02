@@ -68,23 +68,23 @@ def preprocess(x, y):
     x = tf.cast(tf.reshape(x, (28, 28, 1)), dtype=tf.float32) / 255.0
     return x, y
 
-def train_data_creator(config):
+def train_data_creator(config, batch_size):
     (train_feature, train_label), _ = tf.keras.datasets.mnist.load_data()
 
     dataset = tf.data.Dataset.from_tensor_slices((train_feature, train_label))
     dataset = dataset.repeat()
     dataset = dataset.map(preprocess)
     dataset = dataset.shuffle(1000)
-    dataset = dataset.batch(config["batch_size"])
+    dataset = dataset.batch(batch_size)
     return dataset
 
-def val_data_creator(config):
+def val_data_creator(config, batch_size):
     _, (val_feature, val_label) = tf.keras.datasets.mnist.load_data()
 
     dataset = tf.data.Dataset.from_tensor_slices((val_feature, val_label))
     dataset = dataset.repeat()
     dataset = dataset.map(preprocess)
-    dataset = dataset.batch(config["batch_size"])
+    dataset = dataset.batch(batch_size)
     return dataset
 ```
 
@@ -95,14 +95,15 @@ First, create an Estimator.
 ```python
 from zoo.orca.learn.tf2 import Estimator
 
-batch_size = 320
-est = Estimator.from_keras(model_creator=model_creator, config={"batch_size": batch_size}, workers_per_node=2)
+est = Estimator.from_keras(model_creator=model_creator, workers_per_node=2)
 ```
 
-Next, fit and evaluate using the Estimator.
+Next, fit and evaluate using the Estimator. 
 ```python
+batch_size = 320
 stats = est.fit(train_data_creator,
                 epochs=5,
+                batch_size=batch_size,
                 steps_per_epoch=60000 // batch_size,
                 validation_data=val_data_creator,
                 validation_steps=10000 // batch_size)
