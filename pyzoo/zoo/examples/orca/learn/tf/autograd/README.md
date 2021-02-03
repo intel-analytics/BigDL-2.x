@@ -1,6 +1,6 @@
 # Transfer Learning with Orca TF Estimator
 
-This is an example to illustrate how to define a custom loss function and ```Lambda``` layer in Analytics-Zoo's Orca TF Estimator API.
+This is an example to illustrate how to define a custom loss function and ```Lambda``` layer and set tensorboard in Analytics-Zoo's Orca TF Estimator API.
 
 ## Environment Preparation
 
@@ -42,3 +42,4 @@ You can find the result for predict as follows:
 [array([[-0.16453132],
        [-0.19646503]], dtype=float32), array([1.4993738], dtype=float32)]
 ```
+At last, you can find tensorboard log directory at './log'
