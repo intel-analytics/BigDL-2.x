@@ -1,6 +1,6 @@
 # Transfer Learning with Orca TF Estimator
 
-This is an example to illustrate how to define a custom loss function and ```Lambda``` layer and set tensorboard in Analytics-Zoo's Orca TF Estimator API.
+This is an example to illustrate how to define a custom loss function and ```Lambda``` layer and set tensorboard in Analytics-Zoo's Orca TF Estimator API. See original example [here](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/autograd).
 
 ## Environment Preparation
 
