@@ -70,5 +70,6 @@ if __name__ == "__main__":
     w = model.get_weights()
     print(w)
     pred = model.predict(X_)
+    print(pred)
     print("finished...")
     stop_orca_context()

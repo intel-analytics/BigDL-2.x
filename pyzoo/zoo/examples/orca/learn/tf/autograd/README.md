@@ -39,7 +39,11 @@ You can find the result for training as follows:
 ```
 You can find the result for predict as follows:
 ```
-[array([[-0.16453132],
-       [-0.19646503]], dtype=float32), array([1.4993738], dtype=float32)]
+[[1.9931875]
+ [2.110691 ]
+ [2.2392426]
+ [2.0116081]
+ [2.0122721]
+         ...]
 ```
 At last, you can find tensorboard log directory at './log'
