@@ -116,14 +116,14 @@ if __name__ == "__main__":
     parser.add_argument("--workers_per_node", type=int, default=2,
                         help="The number of workers to run on each node")
     parser.add_argument('--k8s_master', type=str, default="",
-                        help="The k8s master."
+                        help="The k8s master. "
                              "It should be k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port>.")
     parser.add_argument("--container_image", type=str, default="",
                         help="The runtime k8s image. "
                              "You can change it depending on your own cluster setting.")
     parser.add_argument('--k8s_driver_host', type=str, default="",
                         help="The k8s driver localhost.")
-    parser.add_argument('--k8s_driver_port', type=str, default="",
+    parser.add_argument('--k8s_driver_port', type=int, default="",
                         help="The k8s driver port.")
 
     args = parser.parse_args()
