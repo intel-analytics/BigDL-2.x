@@ -65,16 +65,6 @@ time3=$((now-start))
 echo "#4 start test for orca bigdl resnet-finetune"
 #timer
 start=$(date "+%s")
-#prepare model
-if [ -d ${HOME}/.cache/torch/hub/checkpoints/resnet18-5c106cde.pth ]
-then
-  echo "resnet model found."
-else
-  if [ ! -d ${HOME}/.cache/torch/hub/checkpoints ];then
-    mkdir ${HOME}/.cache/torch/hub/checkpoints
-  fi
-  wget $FTP_URI/analytics-zoo-models/pytorch/resnet18-5c106cde.pth -P ${HOME}/.cache/torch/hub/checkpoints
-fi
 #run the example
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/bigdl/resnet_finetune/resnet_finetune.py dogs_cats
 exit_status=$?
