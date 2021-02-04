@@ -19,12 +19,11 @@ import torch.nn.functional as F
 from pyspark.sql.types import StringType, DoubleType
 from pyspark.sql.functions import col, udf
 from bigdl.optim.optimizer import *
-from zoo.common.nncontext import *
+
 from zoo.feature.image import *
 from zoo.orca.learn.metrics import Accuracy
 from zoo.pipeline.api.torch import TorchModel, TorchLoss
 from zoo.pipeline.nnframes import *
-from zoo.util.utils import detect_conda_env_name
 
 from zoo.orca.learn.bigdl.estimator import Estimator
 from zoo.orca import init_orca_context, stop_orca_context
@@ -62,7 +61,7 @@ if __name__ == '__main__':
         num_cores_per_executor = 4
         sc = init_orca_context(cluster_mode="yarn-client", cores=num_cores_per_executor,
                                memory="8g", num_nodes=num_executors, driver_memory="2g",
-                               driver_cores=1, hadoop_conf=hadoop_conf_dir )
+                               driver_cores=1, hadoop_conf=hadoop_conf_dir)
     else:
         num_cores_per_executor = 4
         sc = init_orca_context(cores=num_cores_per_executor, conf={"spark.driver.memory": "10g"})
@@ -108,7 +107,7 @@ if __name__ == '__main__':
 
     shift = udf(lambda p: float(p.index(max(p))), DoubleType())
     predictionDF = est.predict(data=validationDF, feature_cols="image") \
-        .withColumn("prediction", shift(col('prediction')))
+        .withColumn("prediction", shift(col('prediction'))).cache()
 
     correct = predictionDF.filter("label=prediction").count()
     overall = predictionDF.count()
