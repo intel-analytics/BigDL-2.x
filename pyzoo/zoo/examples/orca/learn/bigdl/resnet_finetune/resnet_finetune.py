@@ -60,15 +60,6 @@ if __name__ == '__main__':
     if hadoop_conf_dir:
         num_executors = 2
         num_cores_per_executor = 4
-        zoo_conda_name = detect_conda_env_name()  # auto detect current conda env name
-        sc = init_spark_on_yarn(
-            hadoop_conf=hadoop_conf_dir,
-            conda_name=zoo_conda_name,
-            num_executors=num_executors,
-            executor_cores=num_cores_per_executor,
-            executor_memory="8g",
-            driver_memory="2g",
-            driver_cores=1)
         sc = init_orca_context(cluster_mode="yarn-client", cores=num_cores_per_executor,
                                memory="8g", num_nodes=num_executors, driver_memory="2g",
                                driver_cores=1, hadoop_conf=hadoop_conf_dir )
