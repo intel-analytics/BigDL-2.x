@@ -13,21 +13,6 @@ export BIGDL_CLASSPATH=${ANALYTICS_ZOO_JAR}
 
 set -e
 
-#run the example
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
-  --master ${MASTER} \
-  --driver-memory 2g \
-  --executor-memory 2g \
-  ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/bigdl/resnet_finetune/resnet_finetune.py \
-  analytics-zoo-data/data/cats_and_dogs_filtered/samples
-exit_status=$?
-if [ $exit_status -ne 0 ]; then
-  echo "orca bigdl resnet-finetune"
-  exit $exit_status
-fi
-now=$(date "+%s")
-time20=$((now - start))
-
 echo "#1 start example test for textclassification"
 #timer
 start=$(date "+%s")
