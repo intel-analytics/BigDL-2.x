@@ -120,7 +120,7 @@ if __name__ == "__main__":
                              "It should be k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port>.")
     parser.add_argument("--container_image", type=str, default="",
                         help="The runtime k8s image. "
-                             "You can change it depending on your own cluster setting.")
+                             "You can change it with your k8s image.")
     parser.add_argument('--k8s_driver_host', type=str, default="",
                         help="The k8s driver localhost.")
     parser.add_argument('--k8s_driver_port', type=int, default="",
@@ -132,6 +132,9 @@ if __name__ == "__main__":
     elif args.cluster_mode == "yarn":
         init_orca_context(cluster_mode="yarn-client", cores=args.cores, num_nodes=args.num_nodes, memory=args.memory)
     elif args.cluster_mode == "k8s":
+        if args.k8s_master == "" or args.container_image == "" or args.k8s_driver_host == "" or args.k8s_driver_port == "":
+            parser.print_help()
+            parser.error('k8s_master, container_image, k8s_driver_host/port are required not to be empty')
         init_orca_context(cluster_mode="k8s", master=args.k8s_master,
                   container_image=args.container_image,
                   num_nodes=args.num_nodes, cores=args.cores,

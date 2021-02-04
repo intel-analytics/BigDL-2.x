@@ -39,7 +39,7 @@ time1=$((now - start))
 echo "#2 start k8s example test for pytorch estimator (test 'init_orca_context')"
 start=$(date "+%s")
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/horovod/pytorch_estimator.py --cluster_mode k8s --k8s_master $k8s_master --container_image $container_image  --k8s_driver_host $k8s_driver_host --k8s_driver_port $k8s_driver_port
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/horovod/pytorch_estimator.py --cluster_mode k8s --k8s_master ${RUNTIME_SPARK_MASTER} --container_image ${RUNTIME_K8S_SPARK_IMAGE}  --k8s_driver_host ${RUNTIME_DRIVER_HOST} --k8s_driver_port ${RUNTIME_DRIVER_PORT}
 
 now=$(date "+%s")
 time2=$((now - start))
