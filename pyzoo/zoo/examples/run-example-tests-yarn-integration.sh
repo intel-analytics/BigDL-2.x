@@ -61,8 +61,25 @@ fi
 now=$(date "+%s")
 time3=$((now-start))
 
+
+echo "#4 start test for orca bigdl resnet-finetune"
+#timer
+start=$(date "+%s")
+#run the example
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/bigdl/resnet_finetune/resnet_finetune.py dogs_cats
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "orca bigdl resnet-finetune"
+    exit $exit_status
+fi
+now=$(date "+%s")
+time4=$((now-start))
+
 clear_up
 
 echo "#1 orca tf transfer_learning time used:$time1 seconds"
 echo "#2 orca tf basic_text_classification time used:$time2 seconds"
 echo "#3 orca bigdl attention time used:$time3 seconds"
+echo "#4 orca bigdl resnet-finetune time used:$time4 seconds"

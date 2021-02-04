@@ -21,7 +21,7 @@ If java is not installed, use command `java` to check if java is installed, you 
 Note: conda environment is required to run on Yarn, but not strictly necessary for running on local.
 
 ## Data Preparation
-For this example we use kaggle [Dogs vs. Cats](https://www.kaggle.com/c/dogs-vs-cats/data) train
+For this example we use [Dogs vs. Cats](https://storage.googleapis.com/mledu-datasets/cats_and_dogs_filtered.zip) train
 dataset. Download the data and run the following commands to copy about 222 images of cats
 and dogs into `samples` folder.
 
@@ -40,7 +40,7 @@ resnet_finetune.py takes 1 parameter: Path to the images.
 
 ### Run with Spark Local mode
 ```bash
-python resnet_finetune.py /tmp/zoo/dogs_cats/samples
+python resnet_finetune.py cats_and_dogs_filtered/samples
 ```
 
 ### Run with Yarn Client mode:

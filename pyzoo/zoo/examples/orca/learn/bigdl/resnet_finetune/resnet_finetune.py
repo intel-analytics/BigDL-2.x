@@ -64,7 +64,7 @@ if __name__ == '__main__':
                                driver_cores=1, hadoop_conf=hadoop_conf_dir)
     else:
         num_cores_per_executor = 4
-        sc = init_orca_context(cores=num_cores_per_executor, conf={"spark.driver.memory": "10g"})
+        sc = init_orca_context(cores=num_cores_per_executor, conf={"spark.driver.memory": "2g"})
 
     model = CatDogModel()
     zoo_model = TorchModel.from_pytorch(model)
