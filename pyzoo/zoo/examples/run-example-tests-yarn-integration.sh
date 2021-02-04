@@ -65,6 +65,17 @@ time3=$((now-start))
 echo "#4 start test for orca bigdl resnet-finetune"
 #timer
 start=$(date "+%s")
+hadoop fs -test -e dogs_cats
+if [ $? -ne 0 ]; then
+    echo "dogs_cats not exists"
+    #prepare dataset
+    wget $FTP_URI/analytics-zoo-data/data/cats_and_dogs_filtered.zip -P analytics-zoo-data/data
+    unzip analytics-zoo-data/data/cats_and_dogs_filtered.zip
+    mkdir analytics-zoo-data/data/cats_and_dogs_filtered/samples
+    cp analytics-zoo-data/data/cats_and_dogs_filtered/train/cats/cat.7* analytics-zoo-data/data/cats_and_dogs_filtered/samples
+    cp analytics-zoo-data/data/cats_and_dogs_filtered/train/dogs/dog.7* analytics-zoo-data/data/cats_and_dogs_filtered/samples
+    hdfs dfs -put analytics-zoo-data/data/cats_and_dogs_filtered/samples dogs_cats
+fi
 #run the example
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/bigdl/resnet_finetune/resnet_finetune.py dogs_cats
 exit_status=$?
