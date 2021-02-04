@@ -61,16 +61,17 @@ class XShards(object):
         return SparkXShards(sc.pickleFile(path, minPartitions))
 
     @staticmethod
-    def partition(data):
+    def partition(data, num_shards=None):
         """
         Partition local in memory data and form a SparkXShards
         :param data: np.ndarray, a tuple, list, dict of np.ndarray, or a nested structure
         made of tuple, list, dict with ndarray as the leaf value
+        :param num_shards: the number of shards that the data will be partitioned into
         :return: a SparkXShards
         """
         sc = init_nncontext()
         node_num, core_num = get_node_and_core_number()
-        total_core_num = node_num * core_num
+        total_core_num = node_num * core_num if num_shards == None else num_shards
         import numpy as np
         type_err_msg = """
 The types supported in zoo.orca.data.XShards.partition are
