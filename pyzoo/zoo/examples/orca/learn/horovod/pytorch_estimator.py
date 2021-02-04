@@ -132,7 +132,7 @@ if __name__ == "__main__":
     elif args.cluster_mode == "yarn":
         init_orca_context(cluster_mode="yarn-client", cores=args.cores, num_nodes=args.num_nodes, memory=args.memory)
     elif args.cluster_mode == "k8s":
-        if args.k8s_master == "" or args.container_image == "" or args.k8s_driver_host == "" or args.k8s_driver_port == "":
+        if not args.k8s_master or not args.container_image or not args.k8s_driver_host or not k8s_driver_port:
             parser.print_help()
             parser.error('k8s_master, container_image, k8s_driver_host/port are required not to be empty')
         init_orca_context(cluster_mode="k8s", master=args.k8s_master,
