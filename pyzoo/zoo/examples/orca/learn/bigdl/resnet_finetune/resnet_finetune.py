@@ -117,9 +117,9 @@ if __name__ == '__main__':
 
     shift = udf(lambda p: float(p.index(max(p))), DoubleType())
     predictionDF = est.predict(data=validationDF, feature_cols="image") \
-        .withColumn("prediction_res", shift(col('prediction')))
+        .withColumn("prediction", shift(col('prediction')))
 
-    correct = predictionDF.filter("label=prediction_res").count()
+    correct = predictionDF.filter("label=prediction").count()
     overall = predictionDF.count()
     accuracy = correct * 1.0 / overall
 
