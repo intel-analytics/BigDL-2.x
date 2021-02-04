@@ -18,7 +18,7 @@ echo "#20 start test for orca bigdl resnet-finetune"
 start=$(date "+%s")
 #prepare dataset
 wget $FTP_URI/analytics-zoo-data/data/cats_and_dogs_filtered.zip -P analytics-zoo-data/data
-unzip -q analytics-zoo-data/data/cats_and_dogs_filtered.zip -P analytics-zoo-data/data
+unzip -q analytics-zoo-data/data/cats_and_dogs_filtered.zip -d analytics-zoo-data/data
 mkdir analytics-zoo-data/data/cats_and_dogs_filtered/samples
 cp analytics-zoo-data/data/cats_and_dogs_filtered/train/cats/cat.7* analytics-zoo-data/data/cats_and_dogs_filtered/samples
 cp analytics-zoo-data/data/cats_and_dogs_filtered/train/dogs/dog.7* analytics-zoo-data/data/cats_and_dogs_filtered/samples
