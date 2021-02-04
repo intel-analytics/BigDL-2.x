@@ -70,7 +70,7 @@ if [ $? -ne 0 ]; then
     echo "dogs_cats not exists"
     #prepare dataset
     wget $FTP_URI/analytics-zoo-data/data/cats_and_dogs_filtered.zip -P analytics-zoo-data/data
-    unzip analytics-zoo-data/data/cats_and_dogs_filtered.zip
+    unzip -q analytics-zoo-data/data/cats_and_dogs_filtered.zip -P analytics-zoo-data/data
     mkdir analytics-zoo-data/data/cats_and_dogs_filtered/samples
     cp analytics-zoo-data/data/cats_and_dogs_filtered/train/cats/cat.7* analytics-zoo-data/data/cats_and_dogs_filtered/samples
     cp analytics-zoo-data/data/cats_and_dogs_filtered/train/dogs/dog.7* analytics-zoo-data/data/cats_and_dogs_filtered/samples

@@ -6,6 +6,38 @@ clear_up () {
     pip uninstall -y pyspark
 }
 
+echo "#20 start test for orca bigdl resnet-finetune"
+#timer
+start=$(date "+%s")
+#prepare dataset
+wget $FTP_URI/analytics-zoo-data/data/cats_and_dogs_filtered.zip -P analytics-zoo-data/data
+unzip -q analytics-zoo-data/data/cats_and_dogs_filtered.zip -P analytics-zoo-data/data
+mkdir analytics-zoo-data/data/cats_and_dogs_filtered/samples
+cp analytics-zoo-data/data/cats_and_dogs_filtered/train/cats/cat.7* analytics-zoo-data/data/cats_and_dogs_filtered/samples
+cp analytics-zoo-data/data/cats_and_dogs_filtered/train/dogs/dog.7* analytics-zoo-data/data/cats_and_dogs_filtered/samples
+#prepare model
+if [ -d ${HOME}/.cache/torch/hub/checkpoints/resnet18-5c106cde.pth ]
+then
+  echo "resnet model found."
+else
+  if [ ! -d ${HOME}/.cache/torch/hub/checkpoints ];then
+    mkdir ${HOME}/.cache/torch/hub/checkpoints
+  fi
+  wget $FTP_URI/analytics-zoo-models/pytorch/resnet18-5c106cde.pth -P ${HOME}/.cache/torch/hub/checkpoints
+fi
+#run the example
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/bigdl/resnet_finetune/resnet_finetune.py analytics-zoo-data/data/cats_and_dogs_filtered/samples
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "orca bigdl resnet-finetune"
+    exit $exit_status
+fi
+now=$(date "+%s")
+time20=$((now-start))
+
+
 echo "#1 start example test for textclassification"
 start=$(date "+%s")
 
@@ -646,36 +678,7 @@ fi
 now=$(date "+%s")
 time19=$((now-start))
 
-echo "#20 start test for orca bigdl resnet-finetune"
-#timer
-start=$(date "+%s")
-#prepare dataset
-wget $FTP_URI/analytics-zoo-data/data/cats_and_dogs_filtered.zip -P analytics-zoo-data/data
-unzip analytics-zoo-data/data/cats_and_dogs_filtered.zip
-mkdir analytics-zoo-data/data/cats_and_dogs_filtered/samples
-cp analytics-zoo-data/data/cats_and_dogs_filtered/train/cats/cat.7* analytics-zoo-data/data/cats_and_dogs_filtered/samples
-cp analytics-zoo-data/data/cats_and_dogs_filtered/train/dogs/dog.7* analytics-zoo-data/data/cats_and_dogs_filtered/samples
-#prepare model
-if [ -d ${HOME}/.cache/torch/hub/checkpoints/resnet18-5c106cde.pth ]
-then
-  echo "resnet model found."
-else
-  if [ ! -d ${HOME}/.cache/torch/hub/checkpoints ];then
-    mkdir ${HOME}/.cache/torch/hub/checkpoints
-  fi
-  wget $FTP_URI/analytics-zoo-models/pytorch/resnet18-5c106cde.pth -P ${HOME}/.cache/torch/hub/checkpoints
-fi
-#run the example
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/bigdl/resnet_finetune/resnet_finetune.py analytics-zoo-data/data/cats_and_dogs_filtered/samples
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "orca bigdl resnet-finetune"
-    exit $exit_status
-fi
-now=$(date "+%s")
-time20=$((now-start))
+
 
 clear_up
 
