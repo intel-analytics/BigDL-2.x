@@ -19,26 +19,36 @@ import ray
 from zoo.orca.data.ray_rdd import RayRdd
 
 
-def test_from_spark_rdd(orca_context_fixture):
-    sc = orca_context_fixture
-    rdd = sc.parallelize(range(1000))
+def get_ray_xshards():
+    from zoo.orca.data import XShards
+    import numpy as np
 
-    ray_rdd = RayRdd.from_spark_rdd(rdd)
+    ndarray_dict = {"x": np.random.randn(10, 4), "y": np.random.randn(10, 4)}
 
-    results = ray_rdd.collect()
+    spark_xshards = XShards.partition(ndarray_dict)
 
-    assert results == list(range(1000))
+    ray_rdd = RayRdd.from_spark_rdd(spark_xshards.rdd)
+
+    return ray_rdd, ndarray_dict
 
 
-def test_to_spark_rdd(orca_context_fixture):
-    sc = orca_context_fixture
-    rdd = sc.parallelize(range(1000))
+def verify_collect_results(data_parts, ndarray_dict):
+    import numpy as np
+    for k, array in ndarray_dict.items():
+        reconstructed = np.concatenate([part[k] for part in data_parts])
+        assert np.allclose(array, reconstructed)
 
-    ray_rdd = RayRdd.from_spark_rdd(rdd)
 
-    results = ray_rdd.to_spark_rdd().collect()
+def test_from_spark_xshards(orca_context_fixture):
+    ray_rdd, ndarray_dict = get_ray_xshards()
+    data_parts = ray_rdd.collect()
+    verify_collect_results(data_parts, ndarray_dict)
 
-    assert results == list(range(1000))
+
+def test_to_spark_xshards(orca_context_fixture):
+    ray_rdd, ndarray_dict = get_ray_xshards()
+    data_parts = ray_rdd.to_spark_rdd().collect()
+    verify_collect_results(data_parts, ndarray_dict)
 
 
 @ray.remote
@@ -49,35 +59,34 @@ class Add1Actor:
         return ray.services.get_node_ip_address()
 
     def add_one(self, partition):
-        return [i + 1 for i in partition]
+        return [{k: (value + 1) for k, value in shards.items()} for shards in partition]
 
 
 def test_assign_partitions_to_actors(orca_context_fixture):
+    ray_rdd, _ = get_ray_xshards()
+    part_num = ray_rdd.num_partitions()
 
-    sc = orca_context_fixture
-    rdd = sc.parallelize(range(1000), 7)
-
-    ray_rdd = RayRdd.from_spark_rdd(rdd)
-
-    actors = [Add1Actor.remote() for i in range(3)]
+    actor_num = 3
+    actors = [Add1Actor.remote() for i in range(actor_num)]
     parts_list, _ = ray_rdd.assign_partitions_to_actors(actors, one_to_one=False)
 
     print(parts_list)
 
-    assert len(parts_list) == 3
-    assert len(parts_list[0]) == 3
-    assert len(parts_list[1]) == 2
-    assert len(parts_list[2]) == 2
+    assert len(parts_list) == actor_num
+
+    div, mod = divmod(part_num, actor_num)
+    for counter in range(actor_num):
+        if counter < mod:
+            assert len(parts_list[counter]) == div + 1
+        else:
+            assert len(parts_list[counter]) == div
 
 
 def test_assign_partitions_to_actors_one_to_one_fail(orca_context_fixture):
+    ray_rdd, _ = get_ray_xshards()
+    part_num = ray_rdd.num_partitions()
 
-    sc = orca_context_fixture
-    rdd = sc.parallelize(range(1000), 7)
-
-    ray_rdd = RayRdd.from_spark_rdd(rdd)
-
-    actors = [Add1Actor.remote() for i in range(3)]
+    actors = [Add1Actor.remote() for i in range(part_num - 1)]
     with pytest.raises(AssertionError) as excinfo:
         parts_list, _ = ray_rdd.assign_partitions_to_actors(actors, one_to_one=True)
 
@@ -85,28 +94,21 @@ def test_assign_partitions_to_actors_one_to_one_fail(orca_context_fixture):
 
 
 def test_map_partitions_with_actors(orca_context_fixture):
-
-    sc = orca_context_fixture
-    rdd = sc.parallelize(range(1000), 7)
-
-    ray_rdd = RayRdd.from_spark_rdd(rdd)
+    ray_rdd, ndarray_dict = get_ray_xshards()
+    ndarray_dict_mapped = {k: value + 1 for k, value in ndarray_dict.items()}
 
     actors = [Add1Actor.remote() for i in range(3)]
     map_func = lambda actor, part_ref: actor.add_one.remote(part_ref)
     result_rdd = ray_rdd.map_partitions_with_actors(actors, map_func, gang_scheduling=False)
     results = result_rdd.collect()
-
-    assert results == list(range(1, 1001))
+    verify_collect_results(results, ndarray_dict_mapped)
 
 
 def test_map_partitions_with_actors_gang_scheduling_fail(orca_context_fixture):
+    ray_rdd, ndarray_dict = get_ray_xshards()
+    part_num = ray_rdd.num_partitions()
 
-    sc = orca_context_fixture
-    rdd = sc.parallelize(range(1000), 7)
-
-    ray_rdd = RayRdd.from_spark_rdd(rdd)
-
-    actors = [Add1Actor.remote() for i in range(3)]
+    actors = [Add1Actor.remote() for i in range(part_num - 1)]
     map_func = lambda actor, part_ref: actor.add_one.remote(part_ref)
     with pytest.raises(AssertionError) as excinfo:
         result_rdd = ray_rdd.map_partitions_with_actors(actors, map_func)
@@ -114,18 +116,16 @@ def test_map_partitions_with_actors_gang_scheduling_fail(orca_context_fixture):
 
 
 def test_map_partitions_with_actors_gang_scheduling(orca_context_fixture):
+    ray_rdd, ndarray_dict = get_ray_xshards()
+    part_num = ray_rdd.num_partitions()
+    ndarray_dict_mapped = {k: value + 1 for k, value in ndarray_dict.items()}
 
-    sc = orca_context_fixture
-    rdd = sc.parallelize(range(1000), 7)
-
-    ray_rdd = RayRdd.from_spark_rdd(rdd)
-
-    actors = [Add1Actor.remote() for i in range(7)]
+    actors = [Add1Actor.remote() for i in range(part_num)]
     map_func = lambda actor, part_ref: actor.add_one.remote(part_ref)
     result_rdd = ray_rdd.map_partitions_with_actors(actors, map_func, gang_scheduling=True)
     results = result_rdd.collect()
 
-    assert results == list(range(1, 1001))
+    verify_collect_results(results, ndarray_dict_mapped)
 
 
 if __name__ == "__main__":

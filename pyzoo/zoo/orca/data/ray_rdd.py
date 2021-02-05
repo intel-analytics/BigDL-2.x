@@ -26,38 +26,47 @@ from zoo.ray import RayContext
 class PartitionUploader:
 
     def __init__(self):
+        self.shards = {}
+        self.shard_count = {}
         self.partitions = {}
 
-    def upload_partition(self, idx, partition):
-        self.partitions[idx] = partition
+    def upload_shards(self, shard_id, shard):
+        partition_idx, shard_idx = shard_id
+        self.shards[shard_id] = shard
+        if partition_idx in self.shard_count:
+            self.shard_count[partition_idx] += 1
+        else:
+            self.shard_count[partition_idx] = 1
         return 0
 
-    def upload_shards(self, shard_id, shard):
-        self.partitions[shard_id] = shard
-        return 0
+    def upload_partition(self, partition_id, partition):
+        self.partitions[partition_id] = partition
+
+    def get_shards(self, shard_id):
+        return self.shards[shard_id]
+
+    def get_partition(self, partition_id):
+        if not self.partitions:
+            partition = []
+            for shard_idx in range(self.shard_count[partition_id]):
+                shard = self.shards[(partition_id, shard_idx)]
+                partition.append(shard)
+            return partition
+        else:
+            return self.partitions[partition_id]
 
     def get_partitions(self):
-        return self.partitions
-
-    def get_partition(self, idx):
-        return self.partitions[idx]
-
-    def upload_multiple_partitions(self, idxs, partitions):
-        for idx, partition in zip(idxs, partitions):
-            self.upload_partition(idx, partition)
-        return 0
-
-    def upload_partitions_from_plasma(self, partition_id, plasma_object_id, object_store_address):
-        import pyarrow.plasma as plasma
-        client = plasma.connect(object_store_address)
-        partition = client.get(plasma_object_id)
-        self.partitions[partition_id] = partition
-        return 0
+        if not self.partitions:
+            result = {partition_id: self.get_partition(partition_id)
+                      for partition_id in self.shard_count.keys()}
+            return result
+        else:
+            return self.partitions
 
 
 def write_to_ray(idx, partition, redis_address, redis_password, partition_store_names):
-    partition = list(partition)
-    ray.init(address=redis_address, redis_password=redis_password, ignore_reinit_error=True)
+    if not ray.is_initialized():
+        ray.init(address=redis_address, redis_password=redis_password, ignore_reinit_error=True)
     ip = ray.services.get_node_ip_address()
     local_store_name = None
     for name in partition_store_names:
@@ -67,12 +76,16 @@ def write_to_ray(idx, partition, redis_address, redis_password, partition_store_
     if local_store_name is None:
         local_store_name = random.choice(partition_store_names)
 
-    local_store = ray.util.get_actor(local_store_name)
+    local_store = ray.get_actor(local_store_name)
 
     # directly calling ray.put will set this driver as the owner of this object,
     # when the spark job finished, the driver might exit and make the object
     # eligible for deletion.
-    ray.get(local_store.upload_partition.remote(idx, partition))
+    result = []
+    for shard_id, shard in enumerate(partition):
+        shard_ref = ray.put(shard)
+        result.append(local_store.upload_shards.remote((idx, shard_id), shard_ref))
+    ray.get(result)
     ray.shutdown()
 
     return [(idx, local_store_name.split(":")[-1], local_store_name)]
