@@ -83,9 +83,9 @@ But got data of type {}
         """.format(type(data))
         supported_types = {list, tuple, dict}
         if isinstance(data, np.ndarray):
-            assert data.shape[0] >= total_core_num, "The length of data {} is smaller than the total " \
-                "number of shards {}. Please adjust the num_shards option to be at most {}.".format( \
-                data.shape[0], total_core_num, data.shape[0])
+            assert data_length >= total_core_num, "The length of data {} is smaller than " \
+                "the total number of shards {}. Please adjust the num_shards option to be " \
+                "at most {}.".format(data.shape[0], total_core_num, data.shape[0])
             arrays = np.array_split(data, total_core_num)
             rdd = sc.parallelize(arrays)
         else:
@@ -93,9 +93,9 @@ But got data of type {}
             flattened = nest.flatten(data)
             data_length = len(flattened[0])
             data_to_be_shard = []
-            assert data_length >= total_core_num, "The length of data {} is smaller than the total " \
-                "number of shards {}. Please adjust the num_shards option to be at most {}.".format( \
-                data_length, total_core_num, data_length)
+            assert data_length >= total_core_num, "The length of data {} is smaller than " \
+                "the total number of shards {}. Please adjust the num_shards option to be " \
+                "at most {}.".format(data_length, total_core_num, data_length)
             for i in range(total_core_num):
                 data_to_be_shard.append([])
             for x in flattened:
