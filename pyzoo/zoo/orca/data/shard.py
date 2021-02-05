@@ -71,7 +71,7 @@ class XShards(object):
         """
         sc = init_nncontext()
         node_num, core_num = get_node_and_core_number()
-        total_core_num = node_num * core_num if num_shards == None else num_shards
+        total_core_num = node_num * core_num if num_shards is None else num_shards
         import numpy as np
         type_err_msg = """
 The types supported in zoo.orca.data.XShards.partition are
