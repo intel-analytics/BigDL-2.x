@@ -97,7 +97,8 @@ def test_transform_shards_with_actors(orca_context_fixture):
 
     actors = [Add1Actor.remote() for i in range(3)]
     map_func = lambda actor, part_ref: actor.add_one.remote(part_ref)
-    result_xshards = ray_xshards.transform_shards_with_actors(actors, map_func, gang_scheduling=False)
+    result_xshards = ray_xshards.transform_shards_with_actors(actors, map_func,
+                                                              gang_scheduling=False)
     results = result_xshards.collect()
     verify_collect_results(results, ndarray_dict_mapped)
 
@@ -120,7 +121,8 @@ def test_transform_shards_with_actors_gang_scheduling(orca_context_fixture):
 
     actors = [Add1Actor.remote() for i in range(part_num)]
     map_func = lambda actor, part_ref: actor.add_one.remote(part_ref)
-    result_xshards = ray_xshards.transform_shards_with_actors(actors, map_func, gang_scheduling=True)
+    result_xshards = ray_xshards.transform_shards_with_actors(actors, map_func,
+                                                              gang_scheduling=True)
     results = result_xshards.collect()
 
     verify_collect_results(results, ndarray_dict_mapped)
