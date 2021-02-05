@@ -40,7 +40,7 @@ resnet_finetune.py takes 1 parameter: Path to the images.
 
 ### Run with Spark Local mode
 ```bash
-python resnet_finetune.py cats_and_dogs_filtered/samples
+python resnet_finetune.py --imagePath cats_and_dogs_filtered/samples
 ```
 
 ### Run with Yarn Client mode:
@@ -50,8 +50,12 @@ hdfs dfs -put cats_and_dogs_filtered/samples dogs_cats
 export HADOOP_CONF_DIR=[path to your hadoop conf directory]
 
 # run example
-python resnet_finetune.py dogs_cats
+python resnet_finetune.py --imagePath dogs_cats --cluster_mode yarn
 ```
+
+Options
+* `--imagePath` Path to the images.
+* `--cluster_mode` The mode for the Spark cluster. local or yarn. Default to be `local`.
 
 ## Results
 You can find the logs for training:
