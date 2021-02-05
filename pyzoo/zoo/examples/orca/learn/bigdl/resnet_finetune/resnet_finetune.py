@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+import argparse
 import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
@@ -49,22 +51,28 @@ class CatDogModel(nn.Module):
 
 if __name__ == '__main__':
 
-    if len(sys.argv) != 2:
-        print(sys.argv)
-        print("Need parameters: <imagePath>")
-        exit(-1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--cluster_mode', type=str, default="local",
+                        help='The mode for the Spark cluster. local or yarn.')
+    parser.add_argument('--imagePath', type=str,
+                        help='The path to your train samples.')
+    args = parser.parse_args()
 
-    hadoop_conf_dir = os.environ.get('HADOOP_CONF_DIR')
+    cluster_mode = args.cluster_mode
 
-    if hadoop_conf_dir:
+    if cluster_mode == "local":
+        num_cores_per_executor = 4
+        sc = init_orca_context(cores=num_cores_per_executor, conf={"spark.driver.memory": "2g"})
+    elif cluster_mode == "yarn":
         num_executors = 2
         num_cores_per_executor = 4
+        hadoop_conf_dir = os.environ.get('HADOOP_CONF_DIR')
         sc = init_orca_context(cluster_mode="yarn-client", cores=num_cores_per_executor,
                                memory="8g", num_nodes=num_executors, driver_memory="2g",
                                driver_cores=1, hadoop_conf=hadoop_conf_dir)
     else:
-        num_cores_per_executor = 4
-        sc = init_orca_context(cores=num_cores_per_executor, conf={"spark.driver.memory": "2g"})
+        print("init_orca_context failed. cluster_mode should be either 'local' or 'yarn' but got "
+              + cluster_mode)
 
     model = CatDogModel()
     zoo_model = TorchModel.from_pytorch(model)
@@ -77,7 +85,7 @@ if __name__ == '__main__':
     zoo_loss = TorchLoss.from_pytorch(lossFunc)
 
     # prepare training data as Spark DataFrame
-    image_path = sys.argv[1]
+    image_path = args.imagePath
     imageDF = NNImageReader.readImages(image_path, sc, resizeH=256, resizeW=256, image_codec=1)
     getName = udf(lambda row: os.path.basename(row[0]), StringType())
     getLabel = udf(lambda name: 1.0 if name.startswith('cat') else 0.0, DoubleType())
