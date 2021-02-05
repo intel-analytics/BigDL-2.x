@@ -13,39 +13,6 @@ export BIGDL_CLASSPATH=${ANALYTICS_ZOO_JAR}
 
 set -e
 
-echo "#20 start test for orca bigdl resnet-finetune"
-#timer
-start=$(date "+%s")
-#prepare dataset
-wget $FTP_URI/analytics-zoo-data/data/cats_and_dogs_filtered.zip -P analytics-zoo-data/data
-unzip -q analytics-zoo-data/data/cats_and_dogs_filtered.zip -d analytics-zoo-data/data
-mkdir analytics-zoo-data/data/cats_and_dogs_filtered/samples
-cp analytics-zoo-data/data/cats_and_dogs_filtered/train/cats/cat.7* analytics-zoo-data/data/cats_and_dogs_filtered/samples
-cp analytics-zoo-data/data/cats_and_dogs_filtered/train/dogs/dog.7* analytics-zoo-data/data/cats_and_dogs_filtered/samples
-#prepare model
-if [ -d ${HOME}/.cache/torch/hub/checkpoints/resnet18-5c106cde.pth ]; then
-  echo "resnet model found."
-else
-  if [ ! -d ${HOME}/.cache/torch/hub/checkpoints ]; then
-    mkdir ${HOME}/.cache/torch/hub/checkpoints
-  fi
-  wget $FTP_URI/analytics-zoo-models/pytorch/resnet18-5c106cde.pth -P ${HOME}/.cache/torch/hub/checkpoints
-fi
-#run the example
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
-  --master ${MASTER} \
-  --driver-memory 2g \
-  --executor-memory 2g \
-  ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/bigdl/resnet_finetune/resnet_finetune.py \
-  --imagePath analytics-zoo-data/data/cats_and_dogs_filtered/samples
-exit_status=$?
-if [ $exit_status -ne 0 ]; then
-  echo "orca bigdl resnet-finetune"
-  exit $exit_status
-fi
-now=$(date "+%s")
-time20=$((now - start))
-
 echo "#1 start example test for textclassification"
 #timer
 start=$(date "+%s")
@@ -669,8 +636,6 @@ fi
 now=$(date "+%s")
 time19=$((now - start))
 
-
-
 echo "#1 textclassification time used: $time1 seconds"
 echo "#2 autograd time used: $time2 seconds"
 echo "#3 image-classification time used: $time3 seconds"
@@ -690,4 +655,3 @@ echo "#16 orca tf imagesegmentation time used:$time16 seconds"
 echo "#17 orca tf transfer_learning time used:$time17 seconds"
 echo "#18 orca tf basic_text_classification time used:$time18 seconds"
 echo "#19 orca bigdl attention time used:$time19 seconds"
-echo "#20 orca bigdl resnet-finetune time used:$time20 seconds"
