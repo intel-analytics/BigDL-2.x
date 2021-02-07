@@ -48,7 +48,6 @@ class CatDogModel(nn.Module):
         x = F.log_softmax(self.dense1(x), dim=1)
         return x
 
-
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
@@ -77,10 +76,8 @@ if __name__ == '__main__':
     model = CatDogModel()
     zoo_model = TorchModel.from_pytorch(model)
 
-
     def lossFunc(input, target):
         return nn.NLLLoss().forward(input, target.flatten().long())
-
 
     zoo_loss = TorchLoss.from_pytorch(lossFunc)
 
