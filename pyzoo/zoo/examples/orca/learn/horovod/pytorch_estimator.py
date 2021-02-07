@@ -136,14 +136,14 @@ if __name__ == "__main__":
                           num_nodes=args.num_nodes, memory=args.memory)
     elif args.cluster_mode == "k8s":
         if not args.k8s_master or not args.container_image \
-              or not args.k8s_driver_host or not args.k8s_driver_port:
+                or not args.k8s_driver_host or not args.k8s_driver_port:
             parser.print_help()
-            parser.error('k8s_master, container_image, 
-                    k8s_driver_host/port are required not to be empty')
+            parser.error('k8s_master, container_image,'
+                         'k8s_driver_host/port are required not to be empty')
         init_orca_context(cluster_mode="k8s", master=args.k8s_master,
-                        container_image=args.container_image,
-                        num_nodes=args.num_nodes, cores=args.cores,
-                        conf={"spark.driver.host": args.k8s_driver_host,
-                              "spark.driver.port": str(args.k8s_driver_port)})
+                          container_image=args.container_image,
+                          num_nodes=args.num_nodes, cores=args.cores,
+                          conf={"spark.driver.host": args.k8s_driver_host,
+                                "spark.driver.port": str(args.k8s_driver_port)})
     train_example(workers_per_node=args.workers_per_node)
     stop_orca_context()
