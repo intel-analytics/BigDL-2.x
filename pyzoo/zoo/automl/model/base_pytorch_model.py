@@ -126,7 +126,7 @@ class PytorchBaseModel(BaseModel):
         return eval_result
 
     def predict(self, x, mc=False):
-        if not self.model:
+        if not self.model_built:
             raise RuntimeError("You must call fit_eval or restore first before calling predict!")
         x = PytorchBaseModel.to_torch(x).float()
         if mc:
@@ -163,7 +163,7 @@ class PytorchBaseModel(BaseModel):
         self.criterion = self.loss_creator(self.config)
 
     def save(self, checkpoint_file, config_path=None):
-        if not self.model:
+        if not self.model_built:
             raise RuntimeError("You must call fit_eval or restore first before calling save!")
         state_dict = self.state_dict()
         torch.save(state_dict, checkpoint_file)
