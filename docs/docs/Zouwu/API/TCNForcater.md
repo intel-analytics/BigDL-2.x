@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Temporal Convolutional Networks (TCN) is a neural network that use convolutional architecture rather than recurrent networks. It supports multi-step and multi-variant cases.
+Temporal Convolutional Networks (TCN) is a neural network that use convolutional architecture rather than recurrent networks. It supports multi-step and multi-variant cases. Causal Convolutions enables large scale parallel computing which makes TCN has less inference time than RNN based model such as LSTM.
 
 ## Method
 
@@ -10,7 +10,7 @@ Temporal Convolutional Networks (TCN) is a neural network that use convolutional
 
 - **`num_channels`**: Specify the convolutional layer filter number in TCN's encoder.
 - **`kernel_size`**: Specify convolutional layer filter height in TCN's encoder.
-- **`dropout`**: Specify the dropout close possibility.
+- **`dropout`**: Specify the dropout close possibility (i.e. the close possibility to a neuron).
 - **`optimizer`**: Specify the optimizer used for training. This value defaults to Adam.
 - **`lr`**: Specify the learning rate. This value defaults to 0.001.
 

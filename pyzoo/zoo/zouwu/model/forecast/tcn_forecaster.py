@@ -21,12 +21,22 @@ from zoo.automl.model.tcn import TCNPytorch
 class TCNForecaster(Forecaster):
 
     def __init__(self,
+                 past_seq_len,
+                 future_seq_len,
+                 input_feature_num,
+                 output_feature_num,
                  num_channels=[30]*8,
                  kernel_size=7,
                  dropout=0.2,
                  optimizer="Adam",
                  lr=0.001):
         self.internal = TCNPytorch(check_optional_config=False)
+        self.data_config = {
+            "past_seq_len": past_seq_len,
+            "future_seq_len": future_seq_len,
+            "input_feature_num": input_feature_num,
+            "output_feature_num": output_feature_num
+        }
         self.config = {
             "lr": lr,
             "num_channels": num_channels,
@@ -37,6 +47,14 @@ class TCNForecaster(Forecaster):
 
     def fit(self, x, y, epochs=1, metric="mse", batch_size=32):
         self.config.setdefault("batch_size", batch_size)
+        assert self.data_config["past_seq_len"] == x.shape[-2], \
+            "The x input size should be (batch_size, past_seq_len, input_feature_num)."
+        assert self.data_config["future_seq_len"] == y.shape[-2], \
+            "The y input size should be (batch_size, future_seq_len, output_feature_num)."
+        assert self.data_config["input_feature_num"] == x.shape[-1],\
+            "The x input size should be (batch_size, past_seq_len, input_feature_num)."
+        assert self.data_config["input_feature_num"] == y.shape[-1], \
+            "The y input size should be (batch_size, future_seq_len, output_feature_num)."
         return self.internal.fit_eval(x,
                                       y,
                                       validation_data=(x, y),
