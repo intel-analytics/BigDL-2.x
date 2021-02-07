@@ -46,7 +46,7 @@ class TCNForecaster(Forecaster):
         }
 
     def fit(self, x, y, epochs=1, metric="mse", batch_size=32):
-        self.config.setdefault("batch_size", batch_size)
+        self.config["batch_size"] = batch_size
         assert self.data_config["past_seq_len"] == x.shape[-2], \
             "The x input size should be (batch_size, past_seq_len, input_feature_num)."
         assert self.data_config["future_seq_len"] == y.shape[-2], \
