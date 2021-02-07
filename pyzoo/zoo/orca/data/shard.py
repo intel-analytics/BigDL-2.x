@@ -84,9 +84,9 @@ But got data of type {}
         supported_types = {list, tuple, dict}
         if isinstance(data, np.ndarray):
             if data.shape[0] < shard_num:
-                raise ValueError("The length of data {} is smaller than " 
-                "the total number of shards {}. Please adjust the num_shards option to be "
-                "at most {}.".format(data.shape[0], shard_num, data.shape[0]))
+                raise ValueError("The length of data {} is smaller than "
+                    "the total number of shards {}. Please adjust the num_shards option to be "
+                    "at most {}.".format(data.shape[0], shard_num, data.shape[0]))
             arrays = np.array_split(data, shard_num)
             rdd = sc.parallelize(arrays)
         else:
@@ -95,9 +95,9 @@ But got data of type {}
             data_length = len(flattened[0])
             data_to_be_shard = []
             if data_length < shard_num:
-                raise ValueError("The length of data {} is smaller than " 
-                "the total number of shards {}. Please adjust the num_shards option to be "
-                "at most {}.".format(data_length, shard_num, data_length))
+                raise ValueError("The length of data {} is smaller than "
+                    "the total number of shards {}. Please adjust the num_shards option to be "
+                    "at most {}.".format(data_length, shard_num, data_length))
             for i in range(shard_num):
                 data_to_be_shard.append([])
             for x in flattened:
