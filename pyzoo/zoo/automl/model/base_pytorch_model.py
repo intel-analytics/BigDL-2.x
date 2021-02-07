@@ -30,9 +30,11 @@ class PytorchBaseModel(BaseModel):
         self.loss_creator = loss_creator
         self.config = None
         self.model = None
+        self.model_built = False
 
     def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
                  **config):
+        # update config settings
         def update_config():
             config.setdefault("past_seq_len", x.shape[-2])
             config.setdefault("future_seq_len", y.shape[-2])
@@ -40,10 +42,11 @@ class PytorchBaseModel(BaseModel):
             config.setdefault("output_feature_num", y.shape[-1])
         update_config()
         self._check_config(**config)
+        self.config = config
 
-        if self.model is None or self.config != config:
+        if not self.model_built:
             self.model = self.model_creator(config)
-            self.config = config
+            self.model_built = True
             self.optimizer = self.optimizer_creator(self.model, self.config)
             self.criterion = self.loss_creator(self.config)
 
@@ -154,6 +157,7 @@ class PytorchBaseModel(BaseModel):
         self.config = state["config"]
         self.model = self.model_creator(self.config)
         self.model.load_state_dict(state["model"])
+        self.model_built = True
         self.optimizer = self.optimizer_creator(self.model, self.config)
         self.optimizer.load_state_dict(state["optimizer"])
         self.criterion = self.loss_creator(self.config)
