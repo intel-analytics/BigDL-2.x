@@ -72,7 +72,7 @@ if __name__ == "__main__":
     elif cluster_mode == "yarn":
         sc = init_orca_context(cluster_mode="yarn-client", num_nodes=2, memory="3g")
     else:
-        print("init_orca_context failed. cluster_mode should be either 'local' or 'yarn' but got "
+        print("init_orca_context failed. cluster    _mode should be either 'local' or 'yarn' but got "
               + cluster_mode)
 
     image_path = options.image_path
