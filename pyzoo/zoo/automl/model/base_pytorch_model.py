@@ -32,6 +32,16 @@ class PytorchBaseModel(BaseModel):
         self.model = None
         self.model_built = False
 
+    def build(self, config):
+        # check config and update
+        self._check_config(**config)
+        self.config = config
+        # build model
+        self.model = self.model_creator(config)
+        self.model_built = True
+        self.optimizer = self.optimizer_creator(self.model, self.config)
+        self.criterion = self.loss_creator(self.config)
+
     def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
                  **config):
         # update config settings
@@ -43,12 +53,7 @@ class PytorchBaseModel(BaseModel):
 
         if not self.model_built:
             update_config()
-            self._check_config(**config)
-            self.config = config
-            self.model = self.model_creator(config)
-            self.model_built = True
-            self.optimizer = self.optimizer_creator(self.model, self.config)
-            self.criterion = self.loss_creator(self.config)
+            self.build(config)
         else:
             self.config.update(config)
 

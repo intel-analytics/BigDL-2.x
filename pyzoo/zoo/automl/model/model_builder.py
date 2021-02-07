@@ -66,7 +66,9 @@ class ModelBuilder:
     def build(self, config):
         if self.backend == "pytorch":
             from zoo.automl.model.base_pytorch_model import PytorchBaseModel
-            return PytorchBaseModel(**self.params)
+            model = PytorchBaseModel(**self.params)
+            model.build(config)
+            return model
         # elif self.backend == "keras":
         #     from zoo.automl.model.base_keras_model import KerasBaseModel
         #     return KerasBaseModel(**self.params,
