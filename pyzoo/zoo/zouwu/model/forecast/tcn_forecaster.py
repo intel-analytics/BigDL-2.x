@@ -45,17 +45,17 @@ class TCNForecaster(Forecaster):
                                       **self.config)
 
     def predict(self, x):
-        if self.internal.model is None:
+        if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling predict!")
         return self.internal.predict(x)
 
     def evaluate(self, x, y, metric=['mse']):
-        if self.internal.model is None:
+        if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
         return self.internal.evaluate(x, y, metric=metric)
 
     def save(self, checkpoint_file):
-        if self.internal.model is None:
+        if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling save!")
         self.internal.save(checkpoint_file)
 
