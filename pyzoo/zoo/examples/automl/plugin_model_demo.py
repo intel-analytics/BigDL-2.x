@@ -88,13 +88,14 @@ if __name__ == "__main__":
     print(best_trials[0].config)
 
     # 2. you can also use the model builder with a fix config
-    model = modelBuilder.build(config={
+    model = modelBuilder.build(config=None)
+    config = {
         "lr": 1e-2,  # used in optimizer_creator
         "batch_size": 32,  # used in data_creator
-    })
-
+    }
     val_result = model.fit_eval(x=data["x"],
                                 y=data["y"],
                                 validation_data=(data["val_x"], data["val_y"]),
-                                epochs=20)
+                                epochs=20,
+                                **config)
     print(val_result)
