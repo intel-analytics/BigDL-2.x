@@ -36,7 +36,8 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
                  dt_col="datetime",
                  target_col=["value"],
                  extra_features_col=None,
-                 drop_missing=True):
+                 drop_missing=True,
+                 time_attributes=True):
         """
         Constructor.
         :param future_seq_len: the future sequence length to be predicted
@@ -61,6 +62,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         self.generate_feature_list = None
         self.past_seq_len = None
         self.future_seq_len = future_seq_len
+        self.time_attributes = time_attributes
 
     def _fit_transform(self, input_df):
         """
@@ -335,8 +337,9 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
 
     def get_feature_list(self):
         feature_list = []
-        for feature in (TIME_ATTR + ADDITIONAL_TIME_ATTR):
-            feature_list.append(feature + "({})".format(self.dt_col))
+        if self.time_attributes:
+            for feature in (TIME_ATTR + ADDITIONAL_TIME_ATTR):
+                feature_list.append(feature + "({})".format(self.dt_col))
         if self.extra_features_col:
             feature_list += self.extra_features_col
         return feature_list
