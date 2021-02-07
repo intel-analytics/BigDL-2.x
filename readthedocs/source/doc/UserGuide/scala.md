@@ -156,7 +156,7 @@ scala> nnModel.transform(df).show(false)
 
 ---
 
-#### **2.2 Run as a Spark Program**
+#### **2.2 Run Analytics Zoo's example**
 You can run a analytics zoo program, e.g., the [Wide&Deep Recommendation](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/recommendation), as a standard Spark program (running in either local mode or cluster mode) as follows:
 
 1. Download Census Income Data Set from [here](https://archive.ics.uci.edu/ml/datasets/Census+Income).
@@ -211,3 +211,5 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
   --dataset census
 ```
 
+### **2.3 Run user application**
+Here is a [simple MLP example](https://github.com/qiuxin2012/SimpleMlp) to show you how to intergate analytics zoo to your project with maven and sbt, and how to build and run your own deep learning application in IDEA and spark-submit.
