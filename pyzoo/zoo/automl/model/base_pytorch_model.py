@@ -40,15 +40,17 @@ class PytorchBaseModel(BaseModel):
             config.setdefault("future_seq_len", y.shape[-2])
             config.setdefault("input_feature_num", x.shape[-1])
             config.setdefault("output_feature_num", y.shape[-1])
-        update_config()
-        self._check_config(**config)
-        self.config = config
 
         if not self.model_built:
+            update_config()
+            self._check_config(**config)
+            self.config = config
             self.model = self.model_creator(config)
             self.model_built = True
             self.optimizer = self.optimizer_creator(self.model, self.config)
             self.criterion = self.loss_creator(self.config)
+        else:
+            self.config.update(config)
 
         epoch_losses = []
         x, y, validation_data = PytorchBaseModel.covert_input(x, y, validation_data)
