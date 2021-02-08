@@ -77,7 +77,7 @@ def write_to_ray(idx, partition, redis_address, redis_password, partition_store_
     if local_store_name is None:
         local_store_name = random.choice(partition_store_names)
 
-    local_store = ray.get_actor(local_store_name)
+    local_store = ray.util.get_actor(local_store_name)
 
     # directly calling ray.put will set this driver as the owner of this object,
     # when the spark job finished, the driver might exit and make the object
