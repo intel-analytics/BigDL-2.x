@@ -48,6 +48,12 @@ class KerasBaseModel(BaseModel):
 
     def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
                  **config):
+        """
+        fit_eval will build a model at the first time it is built
+        config will be updated for the second or later times with only non-model-arch
+        params be functional
+        TODO: check the updated params and decide if the model is needed to be rebuilt
+        """
         def update_config():
             config.setdefault("input_dim", x.shape[-1])
             config.setdefault("output_dim", y.shape[-1])
