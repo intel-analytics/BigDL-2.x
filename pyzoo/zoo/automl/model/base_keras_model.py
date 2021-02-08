@@ -90,12 +90,12 @@ class KerasBaseModel(BaseModel):
         :param x: input
         :return: predicted y
         """
-        if not self.model:
+        if not self.model_built:
             raise RuntimeError("You must call fit_eval or restore first before calling predict!")
         return self.model.predict(x, batch_size=self.config.get("batch_size", 32))
 
     def predict_with_uncertainty(self, x, n_iter=100):
-        if not self.model:
+        if not self.model_built:
             raise RuntimeError("You must call fit_eval or restore first before calling predict!")
         check_tf_version()
         f = K.function([self.model.layers[0].input, K.learning_phase()],
@@ -122,7 +122,7 @@ class KerasBaseModel(BaseModel):
         # self.model.optimizer.set_weights(state["optimizer_weights"])
 
     def save(self, checkpoint_file, config_path=None):
-        if not self.model:
+        if not self.model_built:
             raise RuntimeError("You must call fit_eval or restore first before calling save!")
         state_dict = self.state_dict()
         with open(checkpoint_file, "wb") as f:
