@@ -118,7 +118,6 @@ est = Estimator.from_torch(model=model, optimizer=adam, loss=criterion, metrics=
 Next, fit and evaluate using the Estimator
 
 ```python
-
 from zoo.orca.learn.trigger import EveryEpoch 
 
 est.fit(data=train_loader, epochs=10, validation_data=test_loader,
