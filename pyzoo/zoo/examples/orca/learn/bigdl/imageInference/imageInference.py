@@ -80,7 +80,8 @@ if __name__ == "__main__":
     batch_size = options.batch_size
 
     get_most_possible = udf(lambda p: float(p.index(max(p))), DoubleType())
-    predictionDF = inference(image_path, model_path, batch_size, sc).withColumn("prediction", get_most_possible(col("prediction")))
+    predictionDF = inference(image_path, model_path, batch_size, sc) \
+        .withColumn("prediction", get_most_possible(col("prediction")))
     predictionDF.select("name", "prediction").orderBy("name").show(20, False)
 
     print("finished...")

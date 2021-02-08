@@ -597,6 +597,44 @@ fi
 now=$(date "+%s")
 time19=$((now - start))
 
+echo "#20 start test for orca bigdl imageInference"
+#timer
+start=$(date "+%s")
+if [ -f analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model ]; then
+  echo "analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model already exists."
+else
+  wget -nv $FTP_URI/analytics-zoo-models/image-classification/bigdl_inception-v1_imagenet_0.4.0.model \
+    -P analytics-zoo-models
+fi
+if [ -f analytics-zoo-data/data/dogs-vs-cats/train.zip ]; then
+  echo "analytics-zoo-data/data/dogs-vs-cats/train.zip already exists."
+else
+  # echo "Downloading dogs and cats images"
+  wget -nv $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/train.zip \
+    -P analytics-zoo-data/data/dogs-vs-cats
+  unzip -q analytics-zoo-data/data/dogs-vs-cats/train.zip -d analytics-zoo-data/data/dogs-vs-cats
+  mkdir -p analytics-zoo-data/data/dogs-vs-cats/samples
+  cp analytics-zoo-data/data/dogs-vs-cats/train/cat.71* analytics-zoo-data/data/dogs-vs-cats/samples
+  cp analytics-zoo-data/data/dogs-vs-cats/train/dog.71* analytics-zoo-data/data/dogs-vs-cats/samples
+
+  mkdir -p analytics-zoo-data/data/dogs-vs-cats/demo/cats
+  mkdir -p analytics-zoo-data/data/dogs-vs-cats/demo/dogs
+  cp analytics-zoo-data/data/dogs-vs-cats/train/cat.71* analytics-zoo-data/data/dogs-vs-cats/demo/cats
+  cp analytics-zoo-data/data/dogs-vs-cats/train/dog.71* analytics-zoo-data/data/dogs-vs-cats/demo/dogs
+  # echo "Finished downloading images"
+fi
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/bigdl/imageInference/imageInference.py \
+  -m analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
+  -f ${HDFS_URI}/kaggle/train_100
+exit_status=$?
+if [ $exit_status -ne 0 ]; then
+  echo "orca bigdl imageInference failed"
+  exit $exit_status
+fi
+now=$(date "+%s")
+time20=$((now - start))
+
 clear_up
 
 echo "#1 textclassification time used: $time1 seconds"
@@ -617,3 +655,4 @@ echo "#16 orca tf imagesegmentation time used:$time16 seconds"
 echo "#17 orca tf transfer_learning time used:$time17 seconds"
 echo "#18 orca tf basic_text_classification time used:$time18 seconds"
 echo "#19 orca bigdl attention time used:$time19 seconds"
+echo "#20 orca bigdl imageInference time used:$time20 seconds"
