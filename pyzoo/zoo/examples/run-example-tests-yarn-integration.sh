@@ -83,9 +83,33 @@ fi
 now=$(date "+%s")
 time4=$((now - start))
 
+echo "#5 start test for orca bigdl imageInference"
+#timer
+start=$(date "+%s")
+if [ -f analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model ]; then
+  echo "analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model already exists."
+else
+  wget -nv $FTP_URI/analytics-zoo-models/image-classification/bigdl_inception-v1_imagenet_0.4.0.model \
+    -P analytics-zoo-models
+fi
+
+#run the example
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/bigdl/imageInference/imageInference.py \
+  -m analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model \
+  -f ${HDFS_URI}/kaggle/train_100 \
+  --cluster_mode yarn
+exit_status=$?
+if [ $exit_status -ne 0 ]; then
+  echo "orca bigdl imageInference failed"
+  exit $exit_status
+fi
+now=$(date "+%s")
+time5=$((now - start))
+
 clear_up
 
 echo "#1 orca tf transfer_learning time used:$time1 seconds"
 echo "#2 orca tf basic_text_classification time used:$time2 seconds"
 echo "#3 orca bigdl attention time used:$time3 seconds"
 echo "#4 orca bigdl resnet-finetune time used:$time4 seconds"
+echo "#5 orca bigdl imageInference time used:$time5 seconds"

@@ -645,23 +645,6 @@ else
   wget -nv $FTP_URI/analytics-zoo-models/image-classification/bigdl_inception-v1_imagenet_0.4.0.model \
     -P analytics-zoo-models
 fi
-if [ -f analytics-zoo-data/data/dogs-vs-cats/train.zip ]; then
-  echo "analytics-zoo-data/data/dogs-vs-cats/train.zip already exists."
-else
-  # echo "Downloading dogs and cats images"
-  wget -nv $FTP_URI/analytics-zoo-data/data/dogs-vs-cats/train.zip \
-    -P analytics-zoo-data/data/dogs-vs-cats
-  unzip -q analytics-zoo-data/data/dogs-vs-cats/train.zip -d analytics-zoo-data/data/dogs-vs-cats
-  mkdir -p analytics-zoo-data/data/dogs-vs-cats/samples
-  cp analytics-zoo-data/data/dogs-vs-cats/train/cat.71* analytics-zoo-data/data/dogs-vs-cats/samples
-  cp analytics-zoo-data/data/dogs-vs-cats/train/dog.71* analytics-zoo-data/data/dogs-vs-cats/samples
-
-  mkdir -p analytics-zoo-data/data/dogs-vs-cats/demo/cats
-  mkdir -p analytics-zoo-data/data/dogs-vs-cats/demo/dogs
-  cp analytics-zoo-data/data/dogs-vs-cats/train/cat.71* analytics-zoo-data/data/dogs-vs-cats/demo/cats
-  cp analytics-zoo-data/data/dogs-vs-cats/train/dog.71* analytics-zoo-data/data/dogs-vs-cats/demo/dogs
-  # echo "Finished downloading images"
-fi
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
   --master ${MASTER} \
