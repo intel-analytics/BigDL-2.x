@@ -57,8 +57,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
   var redisHost: String = null
   var redisPort: Int = _
   var redisTimeout: Int = 5000
-  var nodeNum: Int = 1
-  var coreNum: Int = 1
+  var thrdPerModel: Int = 1
   var modelPar: Int = 1
   var blasFlag: Boolean = false
   var chwFlag: Boolean = true
@@ -140,10 +139,9 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
     resize = getYaml(dataConfig, "resize", true).asInstanceOf[Boolean]
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
-    coreNum = getYaml(paramsConfig, "core_number", 4).asInstanceOf[Int]
+    thrdPerModel = getYaml(paramsConfig, "core_number", 4).asInstanceOf[Int]
 
-    val modelParDefault = if (modelType == "openvino") coreNum else coreNum
-    modelPar = getYaml(paramsConfig, "model_number", default = modelParDefault).asInstanceOf[Int]
+    modelPar = getYaml(paramsConfig, "model_number", default = 1).asInstanceOf[Int]
 
 
     if (modelType == "caffe" || modelType == "bigdl") {
@@ -325,8 +323,8 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
       case "keras" => logError("Keras currently not supported in Cluster Serving," +
         "consider transform it to Tensorflow")
       case "openvino" => modelEncrypted match {
-        case true => model.doLoadEncryptedOpenVINO(defPath, weightPath, secret, salt, coreNum)
-        case false => model.doLoadOpenVINO(defPath, weightPath, coreNum)
+        case true => model.doLoadEncryptedOpenVINO(defPath, weightPath, secret, salt, thrdPerModel)
+        case false => model.doLoadOpenVINO(defPath, weightPath, thrdPerModel)
       }
       case _ => logError("Invalid model type, please check your model directory")
     }
