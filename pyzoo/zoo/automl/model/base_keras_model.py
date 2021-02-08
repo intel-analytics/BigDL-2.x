@@ -37,6 +37,14 @@ class KerasBaseModel(BaseModel):
         self.model = None
         self.config = None
         self.model_built = False
+    
+    def build(self, config):
+        # update config
+        self._check_config(**config)
+        self.config = config
+        # build model
+        self.model = self.model_creator(config)
+        self.model_built = True
 
     def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
                  **config):
@@ -47,9 +55,7 @@ class KerasBaseModel(BaseModel):
 
         if not self.model_built:
             update_config()
-            self._check_config(**config)
-            self.config = config
-            self.model = self.model_creator(config)
+            self.build(config)
         else:
             self.config.update(config)
 
