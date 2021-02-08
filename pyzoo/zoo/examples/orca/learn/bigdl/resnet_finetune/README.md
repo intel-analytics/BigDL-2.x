@@ -1,4 +1,4 @@
-# Transfer Learning with Orca TF Estimator
+# Orca Bigdl Resnet finetune example
 
 This is an example to demonstrate how to use Analytics-Zoo's Orca Bigdl Estimator API to run distributed [ResNet finetune](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/examples/pytorch/train/resnet_finetune) training and inference task.In this example we use a pre-trained ResNet model, adding an extra layer to the end, to train a dog-vs-cat image classification model.
 
@@ -36,14 +36,14 @@ and dogs into `samples` folder.
     `7` is randomly chosen and can be replaced with other digit.
 
 ## Image Fine Tuning
-resnet_finetune.py takes 1 parameter: Path to the images.
+You can run this example on local mode and yarn client mode. Note that on local mode you need to ensure environment variable `HADOOP_CONF_DIR` is unset.
 
-### Run with Spark Local mode
+- Run with Spark Local mode
 ```bash
 python resnet_finetune.py --imagePath cats_and_dogs_filtered/samples
 ```
 
-### Run with Yarn Client mode:
+- Run with Yarn Client mode:
 ```bash
 # put dataset to hdfs
 hdfs dfs -put cats_and_dogs_filtered/samples dogs_cats 
