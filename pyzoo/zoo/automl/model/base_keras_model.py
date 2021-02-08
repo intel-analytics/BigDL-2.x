@@ -37,7 +37,7 @@ class KerasBaseModel(BaseModel):
         self.model = None
         self.config = None
         self.model_built = False
-    
+
     def build(self, config):
         # update config
         self._check_config(**config)

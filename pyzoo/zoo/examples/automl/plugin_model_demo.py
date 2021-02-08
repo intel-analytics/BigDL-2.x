@@ -31,15 +31,17 @@ def model_creator(config):
     """Returns a torch.nn.Module object."""
     return nn.Linear(1, config.get("hidden_size", 1))
 
+
 def model_creator_keras(config):
     """Returns a tf.keras model"""
     model = tf.keras.models.Sequential([
-    tf.keras.layers.Dense(1)
+        tf.keras.layers.Dense(1)
     ])
     model.compile(loss="mse",
                   optimizer='sgd',
                   metrics=["mse"])
     return model
+
 
 def optimizer_creator(model, config):
     """Returns optimizer defined upon the model parameters."""
@@ -110,8 +112,8 @@ if __name__ == "__main__":
     print(val_result)
 
     # 3. try another modelbuilder based on tfkeras
-    modelBuilder_kears = ModelBuilder.from_tfkeras(model_creator_keras)
-    model = modelBuilder_kears.build(config={
+    modelBuilder_keras = ModelBuilder.from_tfkeras(model_creator_keras)
+    model = modelBuilder_keras.build(config={
         "lr": 1e-2,  # used in optimizer_creator
         "batch_size": 32,  # used in data_creator
         "metric": "mse"

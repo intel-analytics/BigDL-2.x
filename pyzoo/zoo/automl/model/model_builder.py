@@ -31,10 +31,9 @@ class ModelBuilder:
                    )
 
     @classmethod
-    def from_tfkeras(cls, model_creator):#, compile_args_creator):
+    def from_tfkeras(cls, model_creator):
         return cls(backend="keras",
                    model_creator=model_creator)
-                   # compile_args_creator=compile_args_creator)
 
     @classmethod
     def from_name(cls, name, dev_option="pytorch"):

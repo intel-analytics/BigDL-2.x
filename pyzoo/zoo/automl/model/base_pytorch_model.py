@@ -42,8 +42,17 @@ class PytorchBaseModel(BaseModel):
         self.optimizer = self.optimizer_creator(self.model, self.config)
         self.criterion = self.loss_creator(self.config)
 
+    def _reshape_input(self, x):
+        if x.ndim == 1:
+            x = x.reshape(-1, 1)
+        return x
+
     def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
                  **config):
+        # reshape 1dim input
+        x = self._reshape_input(x)
+        y = self._reshape_input(y)
+
         # update config settings
         def update_config():
             config.setdefault("past_seq_len", x.shape[-2])
@@ -86,7 +95,6 @@ class PytorchBaseModel(BaseModel):
         return x, y, validation_data
 
     def _train_epoch(self, x, y):
-        # todo: support torch data loader
         batch_size = self.config["batch_size"]
         self.model.train()
         total_loss = 0
@@ -109,6 +117,8 @@ class PytorchBaseModel(BaseModel):
         return self.model(x)
 
     def _validate(self, x, y, metric):
+        x = self._reshape_input(x)
+        y = self._reshape_input(y)
         self.model.eval()
         with torch.no_grad():
             yhat = self.model(x)
