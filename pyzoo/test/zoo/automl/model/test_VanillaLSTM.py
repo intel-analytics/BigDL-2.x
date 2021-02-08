@@ -78,13 +78,16 @@ class TestVanillaLSTM(TestCase):
             self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
 
     def test_predict_save_restore(self):
-        config = {"batch_size": 128}
-        self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
-        pred = self.model.predict(self.test_data[0])
+        model = VanillaLSTM()
+        config = {"lstm_units": [128] * 2,
+                  "dropouts": [0.2] * 2,
+                  "batch_size": 128}
+        model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
+        pred = model.predict(self.test_data[0])
         assert pred.shape == self.test_data[1].shape
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             ckpt_name = os.path.join(tmp_dir_name, "ckpt")
-            self.model.save(ckpt_name)
+            model.save(ckpt_name)
             model_1 = VanillaLSTM()
             model_1.restore(ckpt_name)
             pred_1 = model_1.predict(self.test_data[0])
