@@ -60,7 +60,7 @@ class TestTimeSequenceFeature(ZooTestCase):
                                               target_col="values",
                                               extra_features_col=["A", "B"],
                                               drop_missing=True,
-                                              time_attributes=False)
+                                              time_features=False)
         feature_list = feat.get_feature_list()
         assert set(feature_list) == {'A', 'B'}
 
