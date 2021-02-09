@@ -29,20 +29,51 @@ class PytorchBaseModel(BaseModel):
         self.optimizer_creator = optimizer_creator
         self.loss_creator = loss_creator
         self.config = None
+        self.model = None
+        self.model_built = False
+
+    def build(self, config):
+        # check config and update
+        self._check_config(**config)
+        self.config = config
+        # build model
+        self.model = self.model_creator(config)
+        self.model_built = True
+        self.optimizer = self.optimizer_creator(self.model, self.config)
+        self.criterion = self.loss_creator(self.config)
+
+    def _reshape_input(self, x):
+        if x.ndim == 1:
+            x = x.reshape(-1, 1)
+        return x
 
     def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
                  **config):
+        """
+        fit_eval will build a model at the first time it is built
+        config will be updated for the second or later times with only non-model-arch
+        params be functional
+        TODO: check the updated params and decide if the model is needed to be rebuilt
+        """
+        # reshape 1dim input
+        x = self._reshape_input(x)
+        y = self._reshape_input(y)
+
+        # update config settings
         def update_config():
             config.setdefault("past_seq_len", x.shape[-2])
             config.setdefault("future_seq_len", y.shape[-2])
             config.setdefault("input_feature_num", x.shape[-1])
             config.setdefault("output_feature_num", y.shape[-1])
-        update_config()
-        self._check_config(**config)
-        self.model = self.model_creator(config)
-        self.config = config
-        self.optimizer = self.optimizer_creator(self.model, self.config)
-        self.criterion = self.loss_creator(self.config)
+
+        if not self.model_built:
+            update_config()
+            self.build(config)
+        else:
+            tmp_config = self.config.copy()
+            tmp_config.update(config)
+            self._check_config(**tmp_config)
+            self.config.update(config)
 
         epoch_losses = []
         x, y, validation_data = PytorchBaseModel.covert_input(x, y, validation_data)
@@ -73,7 +104,6 @@ class PytorchBaseModel(BaseModel):
         return x, y, validation_data
 
     def _train_epoch(self, x, y):
-        # todo: support torch data loader
         batch_size = self.config["batch_size"]
         self.model.train()
         total_loss = 0
@@ -96,6 +126,8 @@ class PytorchBaseModel(BaseModel):
         return self.model(x)
 
     def _validate(self, x, y, metric):
+        x = self._reshape_input(x)
+        y = self._reshape_input(y)
         self.model.eval()
         with torch.no_grad():
             yhat = self.model(x)
@@ -120,6 +152,8 @@ class PytorchBaseModel(BaseModel):
         return eval_result
 
     def predict(self, x, mc=False):
+        if not self.model_built:
+            raise RuntimeError("You must call fit_eval or restore first before calling predict!")
         x = PytorchBaseModel.to_torch(x).float()
         if mc:
             self.model.train()
@@ -149,11 +183,14 @@ class PytorchBaseModel(BaseModel):
         self.config = state["config"]
         self.model = self.model_creator(self.config)
         self.model.load_state_dict(state["model"])
+        self.model_built = True
         self.optimizer = self.optimizer_creator(self.model, self.config)
         self.optimizer.load_state_dict(state["optimizer"])
         self.criterion = self.loss_creator(self.config)
 
     def save(self, checkpoint_file, config_path=None):
+        if not self.model_built:
+            raise RuntimeError("You must call fit_eval or restore first before calling save!")
         state_dict = self.state_dict()
         torch.save(state_dict, checkpoint_file)
 
