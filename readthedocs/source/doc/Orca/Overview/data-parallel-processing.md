@@ -73,14 +73,14 @@ def train_data_creator(config):
 
 Pytorch:
 ```python
-def train_data_creator(config):
+def train_data_creator(config, batch_size):
     train_loader = torch.utils.data.DataLoader(
             datasets.MNIST(config["dir"], train=True, download=True,
                            transform=transforms.Compose([
                                transforms.ToTensor(),
                                transforms.Normalize((0.1307,), (0.3081,))
                            ])),
-            batch_size=config["batch_size"], shuffle=True)
+            batch_size=batch_size, shuffle=True)
     return train_loader
 ```
 
