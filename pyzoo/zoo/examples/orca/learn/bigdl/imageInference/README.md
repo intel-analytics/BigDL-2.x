@@ -31,7 +31,8 @@ Note that on local mode you need to ensure environment variable `HADOOP_CONF_DIR
 ```bash
 python imageInference.py \
 -m /tmp/zoo/bigdl_inception-v1_imagenet_0.4.0.model \
--f /tmp/zoo/infer_images
+-f /tmp/zoo/infer_images \
+--b 32
 ```
 
 - Run with Yarn Client mode:
@@ -43,13 +44,15 @@ export HADOOP_CONF_DIR=[path to your hadoop conf directory]
 # run example
 python imageInference.py \
 -m /tmp/zoo/bigdl_inception-v1_imagenet_0.4.0.model \
--f infer_images_small/
+-f infer_images_small \
+--b 32 \
 --cluster_mode yarn
 ```
 
 In above commands
-* `--f` Path to the images.
-* `--m` Path to the pre-trained model.
+* `-f` Path to the images.
+* `-m` Path to the pre-trained model.
+* `--b`, `--batch_size` The number of samples per gradient update. Default is 56.
 * `--cluster_mode` The mode of spark cluster, supporting local and yarn. Default is "local".
 
 
