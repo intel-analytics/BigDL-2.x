@@ -36,7 +36,7 @@ from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.learn.pytorch import Estimator
 
 
-def train_data_creator(config):
+def train_data_creator(config, batch_size):
     transform = transforms.Compose(
         [transforms.ToTensor(),
          transforms.Normalize((0.5,), (0.5,))])
@@ -50,7 +50,7 @@ def train_data_creator(config):
     return trainloader
 
 
-def validation_data_creator(config):
+def validation_data_creator(config, batch_size):
     transform = transforms.Compose(
         [transforms.ToTensor(),
          transforms.Normalize((0.5,), (0.5,))])
