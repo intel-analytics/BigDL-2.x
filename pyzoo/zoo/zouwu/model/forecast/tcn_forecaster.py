@@ -47,24 +47,31 @@ class TCNForecaster(Forecaster):
 
     def fit(self, x, y, epochs=1, metric="mse", batch_size=32):
         self.config["batch_size"] = batch_size
-        assert self.data_config["past_seq_len"] == x.shape[-2], \
-            "Got past_seq_len of {} in config while x input shape of {}"\
-            .format(self.data_config["past_seq_len"], x.shape[-2])
-        assert self.data_config["future_seq_len"] == y.shape[-2], \
-            "Got future_seq_len of {} in config while y input shape of {}"\
-            .format(self.data_config["future_seq_len"], y.shape[-2])
-        assert self.data_config["input_feature_num"] == x.shape[-1],\
-            "Got input_feature_num of {} in config while x input shape of {}"\
-            .format(self.data_config["input_feature_num"], x.shape[-1])
-        assert self.data_config["output_feature_num"] == y.shape[-1], \
-            "Got output_feature_num of {} in config while y input shape of {}"\
-            .format(self.data_config["output_feature_num"], y.shape[-1])
+        self._check_data(x, y)
         return self.internal.fit_eval(x,
                                       y,
                                       validation_data=(x, y),
                                       epochs=epochs,
                                       metric=metric,
                                       **self.config)
+
+    def _check_data(self, x, y):
+        assert self.data_config["past_seq_len"] == x.shape[-2], \
+            "The x shape should be (batch_size, past_seq_len, input_feature_num), \
+            Got past_seq_len of {} in config while x input shape of {}."\
+            .format(self.data_config["past_seq_len"], x.shape[-2])
+        assert self.data_config["future_seq_len"] == y.shape[-2], \
+            "The y shape should be (batch_size, future_seq_len, output_feature_num), \
+            Got future_seq_len of {} in config while y input shape of {}."\
+            .format(self.data_config["future_seq_len"], y.shape[-2])
+        assert self.data_config["input_feature_num"] == x.shape[-1],\
+            "The x shape should be (batch_size, past_seq_len, input_feature_num), \
+            Got input_feature_num of {} in config while x input shape of {}."\
+            .format(self.data_config["input_feature_num"], x.shape[-1])
+        assert self.data_config["output_feature_num"] == y.shape[-1], \
+            "The y shape should be (batch_size, future_seq_len, output_feature_num), \
+            Got output_feature_num of {} in config while y input shape of {}."\
+            .format(self.data_config["output_feature_num"], y.shape[-1])
 
     def predict(self, x):
         if not self.internal.model_built:
