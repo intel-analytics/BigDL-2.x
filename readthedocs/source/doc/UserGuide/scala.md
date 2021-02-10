@@ -38,66 +38,12 @@ For instance, to train a linear regression model, you may try below code:
 scala> import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.common.NNContext
 
-scala> import com.intel.analytics.bigdl.nn._
-import com.intel.analytics.bigdl.nn._
-
-scala> import com.intel.analytics.zoo.pipeline.nnframes.NNEstimator
-import com.intel.analytics.zoo.pipeline.nnframes.NNEstimator
-
-scala> import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-
-scala> import org.apache.spark.sql.{DataFrame, SQLContext}
-import org.apache.spark.sql.{DataFrame, SQLContext}
-
 scala> val sc = NNContext.initNNContext("Run Example")
 2021-01-26 10:19:52 WARN  SparkContext:66 - Using an existing SparkContext; some configuration may not take effect.
 2021-01-26 10:19:53 WARN  SparkContext:66 - Using an existing SparkContext; some configuration may not take effect.
 sc: org.apache.spark.SparkContext = org.apache.spark.SparkContext@487f025
-
-scala> val sqlContext = SQLContext.getOrCreate(sc)
-warning: there was one deprecation warning; re-run with -deprecation for details
-sqlContext: org.apache.spark.sql.SQLContext = org.apache.spark.sql.SQLContext@39d62e47
-
-scala> val model = Sequential().add(Linear(2, 2))
-model: com.intel.analytics.bigdl.nn.Sequential[Float] =
-Sequential[6f42ba4c]{
-  [input -> (1) -> output]
-  (1): Linear[1178e3b8](2 -> 2)
-}
-
-scala> val criterion = MSECriterion()
-criterion: com.intel.analytics.bigdl.nn.MSECriterion[Float] = com.intel.analytics.bigdl.nn.MSECriterion$mcF$sp@0
-
-scala> val estimator = NNEstimator(model, criterion).setLearningRate(0.2).setMaxEpoch(40).setBatchSize(2)
-warning: there was one deprecation warning; re-run with -deprecation for details
-estimator: com.intel.analytics.zoo.pipeline.nnframes.NNEstimator[Float] = nnestimator_628627bc59c2
-
-scala> val data = sc.parallelize(Seq(
-     |   (Array(2.0, 1.0), Array(1.0, 2.0)),
-     |   (Array(1.0, 2.0), Array(2.0, 1.0)),
-     |   (Array(2.0, 1.0), Array(1.0, 2.0)),
-     |   (Array(1.0, 2.0), Array(2.0, 1.0))))
-data: org.apache.spark.rdd.RDD[(Array[Double], Array[Double])] = ParallelCollectionRDD[0] at parallelize at <console>:32
-
-scala> val df = sqlContext.createDataFrame(data).toDF("features", "label")
-df: org.apache.spark.sql.DataFrame = [features: array<double>, label: array<double>]
-
-scala> val nnModel = estimator.fit(df)
-2021-01-26 10:19:56 WARN  BlockManager:66 - Asked to remove block test_0weights0, which does not exist
-2021-01-26 10:19:56 WARN  BlockManager:66 - Asked to remove block test_0gradients0, which does not exist
-nnModel: com.intel.analytics.zoo.pipeline.nnframes.NNModel[Float] = DLModel
-
-scala> nnModel.transform(df).show(false)
-+----------+----------+----------------------+
-|features  |label     |prediction            |
-+----------+----------+----------------------+
-|[2.0, 1.0]|[1.0, 2.0]|[1.0099465, 2.0036266]|
-|[1.0, 2.0]|[2.0, 1.0]|[2.013829, 1.0022666] |
-|[2.0, 1.0]|[1.0, 2.0]|[1.0099465, 2.0036266]|
-|[1.0, 2.0]|[2.0, 1.0]|[2.013829, 1.0022666] |
-+----------+----------+----------------------+
 ```
+
 #### **1.3 Run Analytics Zoo examples**
 You can run a analytics zoo program, e.g., the [Wide&Deep Recommendation](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/recommendation), as a standard Spark program (running in either local mode or cluster mode) as follows:
 
