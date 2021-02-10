@@ -16,7 +16,7 @@ export ANALYTICS_ZOO_HOME=folder path where you extract the analytics zoo packag
 #### **1.2 Use Spark interactive shell**
 You can try Analytics Zoo easily using the Spark interactive shell. Run below command to start spark shell with Analytics Zoo support:
 ```bash
-${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh --master local[1]
+${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh --master local[2]
 ```
 You will see a welcome message looking like below:
 ```
@@ -106,9 +106,9 @@ You can run a analytics zoo program, e.g., the [Wide&Deep Recommendation](https:
 ```bash
 # Spark local mode
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \ 
-  --master local[core_number] \
+  --master local[2] \
   --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
-  dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
+  dist/lib/analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.9.0-jar-with-dependencies.jar \   #change to your jar file if your download is not spark_2.4.3-0.9.0
   --inputDir ./data/census \
   --batchSize 320 \
   --maxEpoch 20 \
@@ -116,37 +116,37 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
 
 # Spark standalone mode
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
-  --master spark://... \
+  --master spark://... \         #add your spark master address
   --executor-cores cores_per_executor \
   --total-executor-cores total_cores_for_the_job \
   --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
-  dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
+  dist/lib/analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.9.0-jar-with-dependencies.jar \   #change to your jar file if your download is not spark_2.4.3-0.9.0
   --inputDir ./data/census \
   --batchSize 320 \
   --maxEpoch 20 \
   --dataset census
 
-# Spark yarn client mode
+# Spark yarn client mode, please make sure the right HADOOP_CONF_DIR is set
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
   --master yarn \
   --deploy-mode client \
   --executor-cores cores_per_executor \
   --num-executors executors_number \
   --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
-  dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
+  dist/lib/analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.9.0-jar-with-dependencies.jar \   #change to your jar file if your download is not spark_2.4.3-0.9.0
   --inputDir ./data/census \
   --batchSize 320 \
   --maxEpoch 20 \
   --dataset census
 
-# Spark yarn cluster mode
+# Spark yarn cluster mode, please make sure the right HADOOP_CONF_DIR is set
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
   --master yarn \
   --deploy-mode cluster \
   --executor-cores cores_per_executor \
   --num-executors executors_number \
   --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
-  dist/lib/analytics-zoo-VERSION-jar-with-dependencies.jar \
+  dist/lib/analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.9.0-jar-with-dependencies.jar \   #change to your jar file if your download is not spark_2.4.3-0.9.0
   --inputDir ./data/census \
   --batchSize 320 \
   --maxEpoch 20 \
