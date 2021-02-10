@@ -11,7 +11,7 @@
 
 - You need to install JDK in the environment, and properly set the environment variable `JAVA_HOME`. __JDK8__ is highly recommended.
 
-  You may take the following commands as a reference for installing [OpenJKD](https://openjdk.java.net/install/):
+  You may take the following commands as a reference for installing [OpenJDK](https://openjdk.java.net/install/):
 
   ```bash
   # For Ubuntu
