@@ -56,6 +56,14 @@ class TestTimeSequenceFeature(ZooTestCase):
                                      'A',
                                      'B'}
 
+        feat = TimeSequenceFeatureTransformer(dt_col="datetime",
+                                              target_col="values",
+                                              extra_features_col=["A", "B"],
+                                              drop_missing=True,
+                                              time_features=False)
+        feature_list = feat.get_feature_list()
+        assert set(feature_list) == {'A', 'B'}
+
     def test_fit_transform(self):
         sample_num = 8
         past_seq_len = 2
