@@ -32,8 +32,7 @@ Type in expressions to have them evaluated.
 Type :help for more information.
 ```
 
-Now you'll be able to play with Analytics Zoo API's.
-For instance, to train a linear regression model, you may try below code:
+Before you play with Analytics Zoo API's, you should use `initNNcontext` to verify your environment:
 ```scala
 scala> import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.common.NNContext
