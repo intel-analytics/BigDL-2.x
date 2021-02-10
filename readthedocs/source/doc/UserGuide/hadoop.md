@@ -17,7 +17,7 @@ You can run Analytics Zoo programs on standard Hadoop/YARN clusters without any 
 
 - You need to download and install JDK in the environment, and properly set the environment variable `JAVA_HOME`, which is required by Spark. __JDK8__ is highly recommended.
 
-  You may take the following commands as a reference for installing [OpenJKD](https://openjdk.java.net/install/):
+  You may take the following commands as a reference for installing [OpenJDK](https://openjdk.java.net/install/):
 
   ```bash
   # For Ubuntu
