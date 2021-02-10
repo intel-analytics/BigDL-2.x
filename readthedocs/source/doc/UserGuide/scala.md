@@ -101,7 +101,7 @@ scala> nnModel.transform(df).show(false)
 #### **1.3 Run Analytics Zoo examples**
 You can run a analytics zoo program, e.g., the [Wide&Deep Recommendation](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/recommendation), as a standard Spark program (running in either local mode or cluster mode) as follows:
 
-1. Download Census Income Data Set from [here](https://archive.ics.uci.edu/ml/datasets/Census+Income).
+1. Download Census Income Data Set to `./data/census` from [here](https://archive.ics.uci.edu/ml/datasets/Census+Income).
 2. Run the following command:
 ```bash
 # Spark local mode
