@@ -8,7 +8,7 @@ There are two ways to use _Zouwu_ for time series analysis:
 - AutoML enabled pipelines (i.e. [AutoTS](#3-use-autots-pipeline-with-automl))
 - Standalone [forecast pipeline](#4-use-standalone-forecaster-pipeline) without AutoML
 
-#### **2. Install**
+### **2. Install**
 
 _Zouwu_ depends on the Python libraries below:
 
