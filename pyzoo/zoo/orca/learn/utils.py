@@ -177,7 +177,7 @@ def convert_predict_rdd_to_dataframe(df, prediction_rdd):
     return result_df
 
 
-def arrays2dict(iter, feature_cols, label_cols, shard_size):
+def arrays2dict(iter, feature_cols, label_cols, shard_size=None):
     def init_result_lists():
         feature_lists = [[] for col in feature_cols]
         if label_cols is not None:
@@ -194,7 +194,6 @@ def arrays2dict(iter, feature_cols, label_cols, shard_size):
 
         for i, arr in enumerate(arrays):
             results[i].append(arr)
-        return results
 
     def merge_rows(results):
         result_arrs = [np.stack(l) for l in results]
@@ -217,11 +216,11 @@ def arrays2dict(iter, feature_cols, label_cols, shard_size):
 
     for row in iter:
         counter += 1
-        feature_lists = add_row(row[0], feature_lists)
+        add_row(row[0], feature_lists)
         if label_cols is not None:
-            label_lists = add_row(row[1], label_lists)
+            add_row(row[1], label_lists)
 
-        if counter % shard_size == 0:
+        if shard_size and counter % shard_size == 0:
             yield generate_output(feature_lists, label_lists)
             feature_lists, label_lists = init_result_lists()
 
@@ -229,13 +228,12 @@ def arrays2dict(iter, feature_cols, label_cols, shard_size):
         yield generate_output(feature_lists, label_lists)
 
 
-def _dataframe_to_xshards(data, feature_cols, label_cols=None, shard_size=10000):
+def _dataframe_to_xshards(data, feature_cols, label_cols=None, shard_size=None):
     schema = data.schema
     numpy_rdd = data.rdd.map(lambda row: convert_row_to_numpy(row,
                                                               schema,
                                                               feature_cols,
                                                               label_cols))
-    assert numpy_rdd.getNumPartitions() == 8
     shard_rdd = numpy_rdd.mapPartitions(lambda x: arrays2dict(x,
                                                               feature_cols,
                                                               label_cols,
@@ -243,7 +241,7 @@ def _dataframe_to_xshards(data, feature_cols, label_cols=None, shard_size=10000)
     return SparkXShards(shard_rdd)
 
 
-def dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="fit", shard_size=10000):
+def dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="fit", shard_size=None):
     from pyspark.sql import DataFrame
     valid_mode = {"fit", "evaluate", "predict"}
     assert mode in valid_mode, f"invalid mode {mode} " \
@@ -264,7 +262,7 @@ def dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="
     return data, validation_data
 
 
-def maybe_dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="fit", shard_size=10000):
+def maybe_dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="fit", shard_size=None):
     from pyspark.sql import DataFrame
     if isinstance(data, DataFrame):
         data, validation_data = dataframe_to_xshards(data, validation_data,
@@ -277,7 +275,3 @@ def maybe_dataframe_to_xshards(data, validation_data, feature_cols, label_cols, 
 
 def bigdl_metric_results_to_dict(results):
     return dict([(r.method, r.result) for r in results])
-
-if __name__ == '__main__':
-   for i in iter(arrays2dict([], feature_cols=["feature"], label_cols=["label"]), shard_size=1000):
-       print(i)
