@@ -88,7 +88,7 @@ class PyTorchRayEstimator(OrcaRayEstimator):
                  backend="torch_distributed",
                  workers_per_node=1):
 
-        if "batch_size" in config:
+        if config is not None and "batch_size" in config:
             raise Exception("Please do not specify batch_size in config. Input batch_size in the"
                             " fit/evaluate function of the estimator instead.")
 
