@@ -75,14 +75,12 @@ class Metric(ABC):
                 if isinstance(m, Metric):
                     metric_impls.append(m.get_metric(backend))
                 else:
-                    metric_impls.append(m)
+                    raise ValueError("Only orca metrics are supported, but get " +
+                                     m.__class__.__name__)
             return metric_impls
         else:
             if isinstance(metrics, Metric):
-                return metrics.get_metric(backend)
-            else:
-                raise ValueError("Only orca metrics are supported, but get " +
-                                 metrics.__class__.__name__)
+                return [metrics.get_metric(backend)]
 
     @staticmethod
     def convert_metrics_dict(metrics, backend="bigdl"):
