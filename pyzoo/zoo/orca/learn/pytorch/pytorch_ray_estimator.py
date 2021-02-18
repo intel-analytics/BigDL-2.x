@@ -54,7 +54,7 @@ def check_for_failure(remote_values):
 
 def shards_ref_to_creator(shards_ref):
 
-    def data_creator(config):
+    def data_creator(config, batch_size):
         from zoo.orca.data.utils import ray_partition_get_data_label, index_data, get_size
         from torch.utils.data import Dataset, DataLoader
 
@@ -70,7 +70,7 @@ def shards_ref_to_creator(shards_ref):
                 return index_data(self.x, i), index_data(self.y, i)
 
         assert "batch_size" in config, "batch_size must be set in config"
-        params = {"batch_size": config["batch_size"], "shuffle": True}
+        params = {"batch_size": batch_size, "shuffle": True}
         for arg in ["shuffle", "sampler", "batch_sampler", "num_workers", "collate_fn",
                     "pin_memory", "drop_last", "timeout", "worker_init_fn",
                     "multiprocessing_context"]:

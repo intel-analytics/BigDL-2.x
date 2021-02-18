@@ -329,7 +329,7 @@ class TorchRunner:
         config["batch_size"] = batch_size
         self._toggle_profiling(profile=profile)
 
-        shards_ref = data_creator(config, batch_size)
+        shards_ref = data_creator(config)
         if not isinstance(shards_ref, ray.ObjectID):
             raise ValueError("Only xshards is supported for predict")
 

@@ -229,7 +229,6 @@ estimator = Estimator.from_torch(
     config={
         "lr": opt.lr,
         "upscale_factor": opt.upscale_factor,
-        "batch_size": opt.batch_size,
         "threads": opt.threads,
         "seed": opt.seed
     }
