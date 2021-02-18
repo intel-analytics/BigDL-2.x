@@ -45,7 +45,7 @@ def train_data_creator(config, batch_size):
                                                  download=True,
                                                  train=True,
                                                  transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
                                               shuffle=True, num_workers=2)
     return trainloader
 
@@ -56,7 +56,7 @@ def validation_data_creator(config, batch_size):
          transforms.Normalize((0.5,), (0.5,))])
     testset = torchvision.datasets.FashionMNIST(root='./data', train=False,
                                                 download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=4,
+    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                              shuffle=False, num_workers=2)
     return testloader
 
@@ -120,7 +120,7 @@ def main():
                'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle Boot')
 
     # plot some random training images
-    dataiter = iter(train_data_creator(config={}))
+    dataiter = iter(train_data_creator(config={}, 4))
     images, labels = dataiter.next()
 
     # create grid of images
@@ -147,7 +147,7 @@ def main():
     for stat in stats:
         writer.add_scalar("training_loss", stat['train_loss'], stat['epoch'])
     print("Train stats: {}".format(stats))
-    val_stats = orca_estimator.evaluate(validation_data_creator)
+    val_stats = orca_estimator.evaluate(validation_data_creator, batch_size=4)
     print("Validation stats: {}".format(val_stats))
     orca_estimator.shutdown()
 
