@@ -227,7 +227,7 @@ class BigDLEstimator(OrcaSparkEstimator):
             raise ValueError("Data should be XShards or Spark DataFrame, but get " +
                              data.__class__.__name__)
 
-    def evaluate(self, data, batch_size=32, feature_cols=None, labels_cols=None):
+    def evaluate(self, data, batch_size=32, feature_cols=None, label_cols=None):
         """
         Evaluate model.
 

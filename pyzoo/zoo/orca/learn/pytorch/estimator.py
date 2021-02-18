@@ -55,6 +55,7 @@ class Estimator(object):
         function if backend="horovod" or "torch_distributed"
         :param loss: PyTorch loss if backend="bigdl", PyTorch loss creator function if
         backend="horovod" or "torch_distributed"
+        :param metrics: Orca validation methods for evaluate.
         :param scheduler_creator: parameter for `horovod` and `torch_distributed` backends. a
         learning rate scheduler wrapping the optimizer. You will need to set
         ``scheduler_step_freq="epoch"`` for the scheduler to be incremented correctly.
@@ -314,8 +315,8 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         """
         Train this torch model with train data.
 
-        :param data: train data. It can be XShards, PyTorch DataLoader and PyTorch DataLoader
-        creator function.
+        :param data: train data. It can be a XShards, Spark Dataframe, PyTorch DataLoader and
+        PyTorch DataLoader creator function.
         If data is an XShards, each partition is a dictionary of  {'x': feature,
         'y': label}, where feature(label) is a numpy array or a list of numpy arrays.
         :param epochs: Number of epochs to train the model. Default: 1.
@@ -368,7 +369,8 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         """
         Predict input data.
 
-        :param data: data to be predicted. It can be XShards, each partition is a dictionary of
+        :param data: data to be predicted. It can be an XShards or a Spark Dataframe.
+        If it is an XShards, each partition is a dictionary of
         {'x': feature}, where feature is a numpy array or a list of numpy arrays.
         :param batch_size: batch size used for inference.
         :param feature_cols: Feature column name(s) of data. Only used when data
@@ -402,8 +404,8 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         """
         Evaluate model.
 
-        :param data: data: evaluation data. It can be XShards, PyTorch DataLoader and PyTorch
-        DataLoader creator function.
+        :param data: data: evaluation data. It can be an XShards, Spark Dataframe,
+        PyTorch DataLoader and PyTorch DataLoader creator function.
         If data is an XShards, each partition is a dictionary of  {'x': feature,
         'y': label}, where feature(label) is a numpy array or a list of numpy arrays.
         :param batch_size: Batch size used for evaluation. Only used when data is a SparkXShard.

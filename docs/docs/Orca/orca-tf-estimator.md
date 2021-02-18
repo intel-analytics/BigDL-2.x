@@ -272,7 +272,7 @@ You can call estimator's API to evaluate Tensorflow graph model or keras model.
 ```
 evaluate(data, batch_size=4,
          feature_cols=None,
-         labels_cols=None,
+         label_cols=None,
         )
 ```
 * `data`: evaluation data. It can be XShards, Spark DataFrame, tf.data.Dataset.
@@ -283,7 +283,7 @@ evaluate(data, batch_size=4,
    
 * `batch_size`: batch size per thread.
 * `feature_cols`: feature_cols: feature column names if train data is Spark DataFrame.
-* `labels_cols`: label column names if train data is Spark DataFrame.
+* `label_cols`: label column names if train data is Spark DataFrame.
 
 This method returns evaluation result as a dictionary in the format of {'metric name': metric value}
 

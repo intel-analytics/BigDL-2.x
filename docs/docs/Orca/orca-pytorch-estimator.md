@@ -28,6 +28,7 @@ Estimator.from_torch(*,
                    model,
                    optimizer,
                    loss=None,
+                   metrics=None,
                    scheduler_creator=None,
                    training_operator_cls=TrainingOperator,
                    initialization_hook=None,
@@ -41,6 +42,7 @@ Estimator.from_torch(*,
 * `model`: PyTorch model if `backend="bigdl"`, PyTorch model creator if `backend="horovod" or "torch_distributed"`
 * `optimizer`: Orca optimizer or PyTorch optimizer if `backend="bigdl"`, PyTorch optimizer creator if `backend="horovod" or "torch_distributed"`
 * `loss`: PyTorch loss if `backend="bigdl"`, PyTorch loss creator if `backend="horovod" or "torch_distributed"`
+* `metrics`: Orca validation methods for evaluate.
 * `scheduler_creator`: parameter for `horovod` and `torch_distributed` backends. a learning rate scheduler wrapping the optimizer. You will need to set ``scheduler_step_freq="epoch"`` for the scheduler to be incremented correctly.
 * `training_operator_cls`: parameter for `horovod` and `torch_distributed` backends. Custom training operator class that subclasses the TrainingOperator class. This class will be copied onto all remote workers and used to specify custom training and validation operations. Defaults to TrainingOperator.
 * `initialization_hook`: parameter for `horovod` and `torch_distributed` backends.
@@ -92,27 +94,25 @@ You can shut down workers and releases resources using `shutdown(self, force=Fal
 #### **Train model**
 After an Estimator is created, you can call estimator API to train PyTorch model:
 ```
-fit(self, data, epochs=1, batch_size=32, feature_cols=None, label_cols=None, validation_data=None, validation_metrics=None, checkpoint_trigger=None)
+fit(self, data, epochs=1, batch_size=32, feature_cols=None, label_cols=None, validation_data=None, checkpoint_trigger=None)
 ```
 * `data`: Training data. SparkXShard, PyTorch DataLoader and PyTorch DataLoader creator are supported.
 * `epochs`: Number of epochs to train the model.Default: 32.
 * `batch_size`: Batch size used for training. Only used when data is a SparkXShard.
-* `feature_cols`: (Not supported yet) Feature column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
-* `label_cols`: (Not supported yet) Label column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
+* `feature_cols`: Feature column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
+* `label_cols`: Label column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
 * `validation_data`: Validation data. SparkXShard, PyTorch DataLoader and PyTorch DataLoader creator are supported.
-* `validation_metrics`: Orca validation methods.
 * `checkpoint_trigger`: Orca Trigger to set a checkpoint.
 
 #### **Evaluate model**
 After Training, you can call estimator API to evaluate PyTorch model:
 ```
-evaluate(self, data, batch_size=32, feature_cols=None, label_cols=None, validation_metrics=None)
+evaluate(self, data, batch_size=32, feature_cols=None, label_cols=None)
 ```
 * `data`: Validation data. SparkXShard, PyTorch DataLoader and PyTorch DataLoader creator are supported.
 * `batch_size`: Batch size used for evaluation. Only used when data is a SparkXShard.
-* `feature_cols`: Feature column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
-* `label_cols`: Label column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
-* `validation_metrics`: Orca validation methods.
+* `feature_cols`: (Not supported yet) Feature column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
+* `label_cols`: (Not supported yet) Label column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
 
 #### **Inference**
 After training or loading trained model, you can call estimator API to inference:
@@ -121,7 +121,7 @@ predict(self, data, batch_size=4, feature_cols=None)
 ```
 * `data`: Inference data. Only SparkXShards is supported.
 * `batch_size`: Batch size used for inference.
-* `feature_cols`: (Not supported yet) Feature column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
+* `feature_cols`: Feature column name(s) of data. Only used when data is a Spark DataFrame. Default: None.
 
 #### **Get model**
 You can get model using `get_model(self)`
