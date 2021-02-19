@@ -2,10 +2,11 @@
 
 ---
 
-
-**In this guide we will describe how to scale out PyTorch (v1.5+) programs using Orca in 4 simple steps.**
-
 <a target="_blank" href="https://colab.research.google.com/github/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.ipynb"><img src="https://www.tensorflow.org/images/colab_logo_32px.png" />Run in Google Colab</a>&nbsp; <a target="_blank" href="https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.ipynb"><img src="https://www.tensorflow.org/images/GitHub-Mark-32px.png" />View source on GitHub</a>
+
+---
+
+**In this guide we will describe how to scale out _PyTorch_ programs using Orca in 4 simple steps.**
 
 ### **Step 0: Prepare Environment**
 
@@ -109,20 +110,20 @@ First, Create an Estimator
 
 ```python
 from zoo.orca.learn.pytorch import Estimator 
+from zoo.orca.learn.metrics import Accuracy
 
-est = Estimator.from_torch(model=model, optimizer=adam, loss=criterion)
+est = Estimator.from_torch(model=model, optimizer=adam, loss=criterion, metrics=[Accuracy()])
 ```
 
 Next, fit and evaluate using the Estimator
 
 ```python
-from zoo.orca.learn.metrics import Accuracy
 from zoo.orca.learn.trigger import EveryEpoch 
 
 est.fit(data=train_loader, epochs=10, validation_data=test_loader,
-        validation_metrics=[Accuracy()], checkpoint_trigger=EveryEpoch())
+        checkpoint_trigger=EveryEpoch())
 
-result = est.evaluate(data=test_loader, validation_metrics=[Accuracy()])
+result = est.evaluate(data=test_loader)
 for r in result:
     print(str(r))
 ```

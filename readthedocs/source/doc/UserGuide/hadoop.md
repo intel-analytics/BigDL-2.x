@@ -17,15 +17,18 @@ You can run Analytics Zoo programs on standard Hadoop/YARN clusters without any 
 
 - You need to download and install JDK in the environment, and properly set the environment variable `JAVA_HOME`, which is required by Spark. __JDK8__ is highly recommended.
 
-  You may take the following commands as a reference for installing [OpenJKD](https://openjdk.java.net/install/):
+  You may take the following commands as a reference for installing [OpenJDK](https://openjdk.java.net/install/):
 
   ```bash
-  sudo apt-get install openjdk-8-jre  # For Ubuntu
-  su -c "yum install java-1.8.0-openjdk"  # For CentOS
-
+  # For Ubuntu
+  sudo apt-get install openjdk-8-jre
   export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/
-  export PATH=$PATH:$JAVA_HOME/bin
 
+  # For CentOS
+  su -c "yum install java-1.8.0-openjdk"
+  export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.282.b08-1.el7_9.x86_64/jre
+
+  export PATH=$PATH:$JAVA_HOME/bin
   java -version  # Verify the version of JDK.
   ```
 
@@ -57,7 +60,7 @@ You can run Analytics Zoo programs on standard Hadoop/YARN clusters without any 
   sc = init_orca_context(cluster_mode="yarn-client", cores=4, memory="10g", num_nodes=2)
   ```
 
-  By specifying cluster_mode to be "yarn-client", `init_orca_context` would automatically prepare the runtime Python environment, detect the current Hadoop configurations from `HADOOP_CONF_DIR` and initiate the distributed execution engine on the underlying YARN cluster. View the [Orca Context](../Orca/Overview/orca-context.md) for more details.
+  By specifying cluster_mode to be "yarn-client", `init_orca_context` would automatically prepare the runtime Python environment, detect the current Hadoop configurations from `HADOOP_CONF_DIR` and initiate the distributed execution engine on the underlying YARN cluster. View [Orca Context](../Orca/Overview/orca-context.md) for more details.
   
 
 - You can then simply run your Analytics Zoo program in a Jupyter notebook:

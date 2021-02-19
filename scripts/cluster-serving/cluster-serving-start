@@ -22,10 +22,7 @@ while [ "$1" != "" ]; do
         -c | --config_path )    shift
                                 config_path=$1
                                 ;;
-        -p | --parallelism )    shift
-                                par_num=$1
-                                ;;
-        -t | --omp )            shift
+        -o | --omp )            shift
                                 export OMP_NUM_THREADS=$1
                                 ;;
         -h | --help )           usage
@@ -40,9 +37,7 @@ done
 if [ -z "${config_path// }" ]; then
   config_path=config.yaml
 fi
-if [ -z "${par_num// }" ]; then
-  par_num=1
-fi
+
 
 parse_yaml $config_path
 eval $(parse_yaml $config_path)
@@ -94,6 +89,6 @@ else
   rm -rf /tmp/cluster-serving-jobs.yaml
 fi
 
-${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing -p $par_num zoo.jar -c $config_path
+${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing zoo.jar -c $config_path
 
 

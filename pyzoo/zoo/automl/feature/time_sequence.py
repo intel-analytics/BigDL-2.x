@@ -23,8 +23,8 @@ import pandas as pd
 import numpy as np
 import json
 
-TIME_ATTR = ("MINUTE", "DAY", "DAYOFYEAR", "HOUR", "WEEKDAY", "WEEKOFYEAR", "MONTH")
-ADDITIONAL_TIME_ATTR = ("IS_AWAKE", "IS_BUSY_HOURS", "IS_WEEKEND")
+TIME_FEATURE = ("MINUTE", "DAY", "DAYOFYEAR", "HOUR", "WEEKDAY", "WEEKOFYEAR", "MONTH")
+ADDITIONAL_TIME_FEATURE = ("IS_AWAKE", "IS_BUSY_HOURS", "IS_WEEKEND")
 
 
 class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
@@ -36,7 +36,8 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
                  dt_col="datetime",
                  target_col=["value"],
                  extra_features_col=None,
-                 drop_missing=True):
+                 drop_missing=True,
+                 time_features=True):
         """
         Constructor.
         :param future_seq_len: the future sequence length to be predicted
@@ -61,6 +62,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         self.generate_feature_list = None
         self.past_seq_len = None
         self.future_seq_len = future_seq_len
+        self.time_features = time_features
 
     def _fit_transform(self, input_df):
         """
@@ -335,8 +337,9 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
 
     def get_feature_list(self):
         feature_list = []
-        for feature in (TIME_ATTR + ADDITIONAL_TIME_ATTR):
-            feature_list.append(feature + "({})".format(self.dt_col))
+        if self.time_features:
+            for feature in (TIME_FEATURE + ADDITIONAL_TIME_FEATURE):
+                feature_list.append(feature + "({})".format(self.dt_col))
         if self.extra_features_col:
             feature_list += self.extra_features_col
         return feature_list
@@ -533,11 +536,11 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         df["id"] = df.index + 1
         field = df[self.dt_col]
 
-        # built in attr
-        for attr in TIME_ATTR:
+        # built in time features
+        for attr in TIME_FEATURE:
             df[attr + "({})".format(self.dt_col)] = getattr(field.dt, attr.lower())
 
-        # additional attr
+        # additional time features
         hour = field.dt.hour
         weekday = field.dt.weekday
         df["IS_AWAKE" + "({})".format(self.dt_col)] =\

@@ -36,17 +36,37 @@ class KerasBaseModel(BaseModel):
         self.model_creator = model_creator
         self.model = None
         self.config = None
+        self.model_built = False
+
+    def build(self, config):
+        # update config
+        self._check_config(**config)
+        self.config = config
+        # build model
+        self.model = self.model_creator(config)
+        self.model_built = True
 
     def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
                  **config):
+        """
+        fit_eval will build a model at the first time it is built
+        config will be updated for the second or later times with only non-model-arch
+        params be functional
+        TODO: check the updated params and decide if the model is needed to be rebuilt
+        """
         def update_config():
             config.setdefault("input_dim", x.shape[-1])
             config.setdefault("output_dim", y.shape[-1])
             config.update({"metric": metric})
-        update_config()
-        self._check_config(**config)
-        self.model = self.model_creator(config)
-        self.config = config
+
+        if not self.model_built:
+            update_config()
+            self.build(config)
+        else:
+            tmp_config = self.config.copy()
+            tmp_config.update(config)
+            self._check_config(**tmp_config)
+            self.config.update(config)
 
         hist = self.model.fit(x, y,
                               validation_data=validation_data,
@@ -79,12 +99,12 @@ class KerasBaseModel(BaseModel):
         :param x: input
         :return: predicted y
         """
-        if not self.model:
+        if not self.model_built:
             raise RuntimeError("You must call fit_eval or restore first before calling predict!")
         return self.model.predict(x, batch_size=self.config.get("batch_size", 32))
 
     def predict_with_uncertainty(self, x, n_iter=100):
-        if not self.model:
+        if not self.model_built:
             raise RuntimeError("You must call fit_eval or restore first before calling predict!")
         check_tf_version()
         f = K.function([self.model.layers[0].input, K.learning_phase()],
@@ -107,10 +127,11 @@ class KerasBaseModel(BaseModel):
         self.config = state["config"]
         self.model = self.model_creator(self.config)
         self.model.set_weights(state["weights"])
+        self.model_built = True
         # self.model.optimizer.set_weights(state["optimizer_weights"])
 
     def save(self, checkpoint_file, config_path=None):
-        if not self.model:
+        if not self.model_built:
             raise RuntimeError("You must call fit_eval or restore first before calling save!")
         state_dict = self.state_dict()
         with open(checkpoint_file, "wb") as f:

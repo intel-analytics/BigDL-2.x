@@ -2,9 +2,11 @@
 
 ---
 
-**In this guide we will describe how to scale out TensorFlow (v1.15) programs using Orca in 4 simple steps.**
-
 <a target="_blank" href="https://colab.research.google.com/github/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/tf_lenet_mnist.ipynb"><img src="https://www.tensorflow.org/images/colab_logo_32px.png" />Run in Google Colab</a>&nbsp; <a target="_blank" href="https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/tf_lenet_mnist.ipynb"><img src="https://www.tensorflow.org/images/GitHub-Mark-32px.png" />View source on GitHub</a>
+
+---
+
+**In this guide we will describe how to scale out _TensorFlow 1.15_ programs using Orca in 4 simple steps.** (_[Keras 2.3](./orca-keras-quickstart.md) and [TensorFlow 2](./orca-tf2keras-quickstart.md) guides are also available._)
 
 ### **Step 0: Prepare Environment**
 
