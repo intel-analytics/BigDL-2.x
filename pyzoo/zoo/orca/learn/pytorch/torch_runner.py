@@ -324,15 +324,14 @@ class TorchRunner:
     def predict(self, data_creator, batch_size=32, profile=False):
         """Evaluates the model on the validation data set."""
         config = self.config.copy()
-        config["batch_size"] = batch_size
         self._toggle_profiling(profile=profile)
 
-        shards_ref = data_creator(config)
+        shards_ref = data_creator(config, batch_size)
         if not isinstance(shards_ref, ray.ObjectID):
             raise ValueError("Only xshards is supported for predict")
 
         partition = ray.get(shards_ref)
-        params = {"batch_size": config["batch_size"], "shuffle": False}
+        params = {"batch_size": batch_size, "shuffle": False}
         for arg in ["shuffle", "sampler", "batch_sampler", "num_workers", "collate_fn",
                     "pin_memory", "drop_last", "timeout", "worker_init_fn",
                     "multiprocessing_context"]:

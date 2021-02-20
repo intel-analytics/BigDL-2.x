@@ -307,7 +307,7 @@ class PyTorchRayEstimator:
         ray_xshards = RayXShards.from_spark_xshards(xshards)
 
         def transform_func(worker, shards_ref):
-            data_creator = lambda config: shards_ref
+            data_creator = lambda config, batch_size: shards_ref
             return worker.predict.remote(
                 data_creator, **param)
 
