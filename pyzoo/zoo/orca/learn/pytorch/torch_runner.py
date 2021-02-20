@@ -249,7 +249,6 @@ class TorchRunner:
     def train_epochs(self, data_creator, epochs=1, batch_size=32, profile=False,
                      info=None, wrap_dataloader=None):
         config = self.config.copy()
-        config["batch_size"] = batch_size
         if OrcaContext.serialize_data_creator:
             with FileLock(
                     os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
@@ -298,7 +297,6 @@ class TorchRunner:
                  info=None, wrap_dataloader=None):
         """Evaluates the model on the validation data set."""
         config = self.config.copy()
-        config["batch_size"] = batch_size
         info = info or {}
         self._toggle_profiling(profile=profile)
 
