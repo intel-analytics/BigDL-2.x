@@ -107,11 +107,11 @@ def data_creator(config):
     return train_loader, val_loader
 
 
-def train_data_creator(config):
+def train_data_creator(config, batch_size):
     return DataLoader(TcmfTrainDatasetHorovod(config), batch_size=None)
 
 
-def val_data_creator(config):
+def val_data_creator(config, batch_size):
     return DataLoader(TcmfValDataset(config), batch_size=None)
 
 
