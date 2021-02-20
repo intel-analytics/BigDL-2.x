@@ -90,7 +90,7 @@ class PyTorchRayEstimator(OrcaRayEstimator):
 
         if config is not None and "batch_size" in config:
             raise Exception("Please do not specify batch_size in config. Input batch_size in the"
-                            " fit/evaluate function of the estimator instead.")
+                            " fit/evaluate/predict function of the estimator instead.")
 
         from zoo.orca.learn.pytorch.pytorch_ray_estimator import PyTorchRayEstimator
         self.estimator = PyTorchRayEstimator(model_creator=model_creator,
