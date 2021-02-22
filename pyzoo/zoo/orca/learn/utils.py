@@ -228,8 +228,10 @@ def arrays2dict(iter, feature_cols, label_cols, shard_size=None):
         yield generate_output(feature_lists, label_lists)
 
 
-def _dataframe_to_xshards(data, feature_cols, label_cols=None, shard_size=None):
+def _dataframe_to_xshards(data, feature_cols, label_cols=None):
+    from zoo.orca import OrcaContext
     schema = data.schema
+    shard_size = OrcaContext.shard_size
     numpy_rdd = data.rdd.map(lambda row: convert_row_to_numpy(row,
                                                               schema,
                                                               feature_cols,
@@ -241,7 +243,7 @@ def _dataframe_to_xshards(data, feature_cols, label_cols=None, shard_size=None):
     return SparkXShards(shard_rdd)
 
 
-def dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="fit", shard_size=None):
+def dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="fit"):
     from pyspark.sql import DataFrame
     valid_mode = {"fit", "evaluate", "predict"}
     assert mode in valid_mode, f"invalid mode {mode} " \
@@ -255,21 +257,20 @@ def dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="
         assert label_cols is not None, \
             "label_cols must be provided if data is a spark dataframe"
 
-    data = _dataframe_to_xshards(data, feature_cols, label_cols, shard_size=shard_size)
+    data = _dataframe_to_xshards(data, feature_cols, label_cols)
     if validation_data is not None:
-        validation_data = _dataframe_to_xshards(validation_data, feature_cols, label_cols, shard_size=shard_size)
+        validation_data = _dataframe_to_xshards(validation_data, feature_cols, label_cols)
 
     return data, validation_data
 
 
-def maybe_dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="fit", shard_size=None):
+def maybe_dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="fit"):
     from pyspark.sql import DataFrame
     if isinstance(data, DataFrame):
         data, validation_data = dataframe_to_xshards(data, validation_data,
                                                      feature_cols=feature_cols,
                                                      label_cols=label_cols,
-                                                     mode=mode,
-                                                     shard_size=shard_size)
+                                                     mode=mode)
     return data, validation_data
 
 

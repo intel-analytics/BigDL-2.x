@@ -187,8 +187,10 @@ class TestUtil(TestCase):
         from zoo.orca.learn.utils import arrays2dict
         record_num = 100
         shard_size = 30
-        data = [(np.float32(np.random.randn(1, 50)), np.float32([np.random.randint(0, 2,)])) for i in range(record_num)]
-        result = arrays2dict(data, feature_cols=["feature"], label_cols=["label"], shard_size=shard_size)
+        data = [(np.float32(np.random.randn(1, 50)), np.float32([np.random.randint(0, 2,)]))
+                for i in range(record_num)]
+        result = arrays2dict(data, feature_cols=["feature"], label_cols=["label"],
+                             shard_size=shard_size)
         for i, d in enumerate(result):
             if (record_num % shard_size == 0) or (i != record_num // shard_size):
                 assert d['x'].shape[0] == shard_size
@@ -200,7 +202,8 @@ class TestUtil(TestCase):
     def test_array2dict_shard_size_none(self):
         from zoo.orca.learn.utils import arrays2dict
         record_num = 100
-        data = [(np.float32(np.random.randn(1, 50)), np.float32([np.random.randint(0, 2,)])) for i in range(record_num)]
+        data = [(np.float32(np.random.randn(1, 50)), np.float32([np.random.randint(0, 2,)]))
+                for i in range(record_num)]
         result = arrays2dict(data, feature_cols=["feature"], label_cols=["label"], shard_size=None)
         for i, d in enumerate(result):
             assert d['x'].shape[0] == record_num
@@ -217,8 +220,9 @@ class TestUtil(TestCase):
         num_shards = shards.rdd.count()
         assert num_shards == num_partitions
 
-        shard_size = 1
-        shards = _dataframe_to_xshards(df, feature_cols=["feature"], label_cols=["label"], shard_size=shard_size)
+        from zoo.orca import OrcaContext
+        OrcaContext.shard_size = 1
+        shards = _dataframe_to_xshards(df, feature_cols=["feature"], label_cols=["label"])
         num_shards = shards.rdd.count()
         assert num_shards == df.rdd.count()
 
