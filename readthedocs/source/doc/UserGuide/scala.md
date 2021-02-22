@@ -147,5 +147,5 @@ resolvers += "ossrh repository" at "https://oss.sonatype.org/content/repositorie
 
 #### **2.2 Build a Scala project**
 To enable Analytics Zoo in project, you should add Analytics Zoo to your project's dependencies using maven or sbt. 
-Here is a [simple MLP example](https://github.com/intel-analytics/zoo-tutorials/tree/master/scala/SimpleMlp) to show you how to use analytics zoo to build your own deep learningown deep learning project with maven or sbt, and how to build and run your application in IDEA and spark-submit.
+Here is a [simple MLP example](https://github.com/intel-analytics/zoo-tutorials/tree/master/scala/SimpleMlp) to show you how to use analytics zoo to build your own deep learning project with maven or sbt, and how to build and run the simple example in IDEA and spark-submit.
 
