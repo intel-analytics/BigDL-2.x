@@ -1,8 +1,8 @@
-# Ray User Guide
+# RayOnSpark User Guide
 
 ---
 
-[Ray](https://github.com/ray-project/ray) is an open source distributed framework for emerging AI applications. Users can seamlessly integrate Ray applications into the big data processing pipeline on the underlying cluster (such as [K8s](./k8s.md) or [Hadoop/YARN](./hadoop.md) cluster) with Analytics Zoo.
+[Ray](https://github.com/ray-project/ray) is an open source distributed framework for emerging AI applications. With the _**RayOnSpark**_ support in Analytics Zoo, Users can seamlessly integrate Ray applications into the big data processing pipeline on the underlying Big Data cluster (such as [Hadoop/YARN](./hadoop.md) or [K8s](./k8s.md)).
 
 _**Note:** Analytics Zoo has been tested on Ray 0.8.4 and you are highly recommended to use this tested version._
 
@@ -75,7 +75,7 @@ View [Orca Context](../Orca/Overview/orca-context.md) for more details.
   ```
 
 ---
-### **4. FAQ**
+### **4. Known Issue**
 If you encounter the following error when launching Ray on the underlying cluster, especially when you are using a [Spark standalone](https://spark.apache.org/docs/latest/spark-standalone.html) cluster:
 
 ```
