@@ -24,7 +24,7 @@ class OrcaContextMeta(type):
     __eager_mode = True
     _serialize_data_creator = False
     _train_data_store = "DRAM"
-    _shard_size = None
+    __shard_size = None
 
     @property
     def log_output(cls):
@@ -103,17 +103,18 @@ class OrcaContextMeta(type):
         cls._train_data_store = value
 
     @property
-    def shard_size(cls):
+    def _shard_size(cls):
         """
         The number of Rows in Spark DataFrame to transform as one shard of SparkXShards. We convert
         Spark DataFrame input to SparkXShards internally in fit/predict/evaluate of
         PyTorchRayEstimator and TensorFlow2Estimator. This parameter may affect the performance in
         transferring an SparkXShards to an RayXShards.
+        Default to be None, in which case Rows in one partition will be transformed as one shard.
         """
         return cls._shard_size
 
-    @shard_size.setter
-    def shard_size(cls, value):
+    @_shard_size.setter
+    def _shard_size(cls, value):
         if value is not None:
             assert isinstance(value, int) and value > 0, \
                 "shard size should be either None or a positive integer."

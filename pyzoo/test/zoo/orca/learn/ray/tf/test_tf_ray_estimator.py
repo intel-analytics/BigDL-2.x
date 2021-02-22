@@ -349,7 +349,7 @@ class TestTFRayEstimator(TestCase):
 
     def test_dataframe_shard_size(self):
         from zoo.orca import OrcaContext
-        OrcaContext.shard_size = 3
+        OrcaContext._shard_size = 3
         sc = init_nncontext()
         rdd = sc.range(0, 10)
         from pyspark.sql import SparkSession

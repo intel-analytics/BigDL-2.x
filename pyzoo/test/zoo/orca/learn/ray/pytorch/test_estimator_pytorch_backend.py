@@ -188,7 +188,7 @@ class TestPyTorchEstimator(TestCase):
 
     def test_dataframe_shard_size_train_eval(self):
         from zoo.orca import OrcaContext
-        OrcaContext.shard_size = 30
+        OrcaContext._shard_size = 30
         sc = init_nncontext()
         rdd = sc.range(0, 100)
         df = rdd.map(lambda x: (np.random.randn(50).astype(np.float).tolist(),

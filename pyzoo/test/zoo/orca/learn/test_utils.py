@@ -221,7 +221,7 @@ class TestUtil(TestCase):
         assert num_shards == num_partitions
 
         from zoo.orca import OrcaContext
-        OrcaContext.shard_size = 1
+        OrcaContext._shard_size = 1
         shards = _dataframe_to_xshards(df, feature_cols=["feature"], label_cols=["label"])
         num_shards = shards.rdd.count()
         assert num_shards == df.rdd.count()
