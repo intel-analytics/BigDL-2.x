@@ -193,7 +193,7 @@ The input for training a LSTMForecaster can be two numpy arrays, X and Y, with s
 
 View Network Traffic Prediction [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_model_forecasting.ipynb) and [LSTMForecaster API Doc]() for more details.
 
-##### **4.2.2 MTNetForecaster**
+##### **4.2.3 MTNetForecaster**
 
 MTNetForecaster wraps a MTNet model. The model architecture mostly follows the [MTNet paper](https://arxiv.org/abs/1809.02105) with slight modifications, and is suitable for multivariate time series forecasting.
 
@@ -201,7 +201,7 @@ The input for training a MTNetForecaster can be two numpy arrays, X and Y, with 
 
 View Network Traffic Prediction [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_model_forecasting.ipynb) and [MTNetForecaster API Doc]() for more details.
 
-##### **4.2.3 TCMFForecaster**
+##### **4.2.4 TCMFForecaster**
 
 TCMFForecaster wraps a model architecture that follows implementation of the paper [DeepGLO paper](https://arxiv.org/abs/1905.03806) with slight modifications. It is especially suitable for extremely high dimensional (up-to millions) multivariate time series forecasting.
 
