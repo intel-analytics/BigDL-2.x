@@ -147,6 +147,8 @@ Zouwu also provides a set of standalone time series forecaster, which are based 
 * MTNetForecaster
 * TCMFForecaster
 
+Most of the Forecasters can deal with both local data (e.g. numpy arrays) and distributed datasets (e.g. XShards), refer to API docs for each Forecasters for details. 
+
 View [Network Traffic Prediction](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_model_forecasting.ipynb) and [Datacenter AIOps](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/zouwu/use-case/AIOps) notebooks for some examples.
 
 #### **4.1 Initialize Orca Context**
@@ -175,9 +177,19 @@ View [Orca Context](../Orca/Overview/orca-context.md) for more details.
 
 Next, create an appropriate Forecaster to fit, evaluate or predict on the input data.
 
-##### **4.2.1 LSTMForecaster**
+##### **4.2.1 TCNForecaster**
+
+TCNForecaster wraps a Temporal Convolution Network model, which is adapted from the implementation in [CMU's TCN github repo](https://github.com/locuslab/TCN). TCNForecaster can be used for both univariate and multivariate time series forecasting.
+
+The input for training a TCNForecaster can be two numpy arrays, X and Y, with shape (num of samples, lookback, feature_dim), and (num of samples, horizon, target_dim) respectively. ```feature_dim``` is the feature dimensions as specified in Forecaster constructors. ```lookback``` is the history time steps. ```horizon``` is the number of steps to predict. ```target_dim``` is the number of variates (series) to forecast. 
+
+View [TCNForecaster API Doc]() for more details.
+
+##### **4.2.2 LSTMForecaster**
 
 LSTMForecaster wraps a vanilla LSTM model, and is suitable for univariate time series forecasting.
+
+The input for training a LSTMForecaster can be two numpy arrays, X and Y, with shape (num of samples, lookback, feature_dim), and (num of samples, horizon) respectively. ```feature_dim``` is the feature dimensions as specified in Forecaster constructors. ```lookback``` is the history time steps. ```horizon``` is the number of steps to predict. 
 
 View Network Traffic Prediction [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_model_forecasting.ipynb) and [LSTMForecaster API Doc]() for more details.
 
@@ -185,10 +197,14 @@ View Network Traffic Prediction [notebook](https://github.com/intel-analytics/an
 
 MTNetForecaster wraps a MTNet model. The model architecture mostly follows the [MTNet paper](https://arxiv.org/abs/1809.02105) with slight modifications, and is suitable for multivariate time series forecasting.
 
+The input for training a MTNetForecaster can be two numpy arrays, X and Y, with shape (num of samples, lookback, feature_dim), and (num of samples, target_dim) respectively. ```feature_dim``` is the feature dimensions as specified in Forecaster constructors. ```lookback``` is the history time steps (refer to [MTNetForecaster API Doc]() for how to choose it appropriately). ```horizon``` is the number of steps to predict. ```target_dim``` is the number of variates (series) to forecast.
+
 View Network Traffic Prediction [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_model_forecasting.ipynb) and [MTNetForecaster API Doc]() for more details.
 
 ##### **4.2.3 TCMFForecaster**
 
 TCMFForecaster wraps a model architecture that follows implementation of the paper [DeepGLO paper](https://arxiv.org/abs/1905.03806) with slight modifications. It is especially suitable for extremely high dimensional (up-to millions) multivariate time series forecasting.
+
+The input for training a TCMFForecaster can be a python dict ```{'y': data}```, where data is a numpy array in shape (target_dim, lookback). ```target_dim``` is the number of variates (series) to forecast. ```lookback``` is the history time steps.  
 
 View High-dimensional Electricity Data Forecasting [example](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/zouwu/examples/run_electricity.py) and [TCMFForecaster API Doc]() for more details.
