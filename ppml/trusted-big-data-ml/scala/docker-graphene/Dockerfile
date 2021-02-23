@@ -79,3 +79,39 @@ RUN apt-get update --fix-missing && \
 RUN wget https://raw.githubusercontent.com/intel-analytics/analytics-zoo/master/docker/zoo/download-analytics-zoo.sh && \
     chmod a+x ./download-analytics-zoo.sh
 RUN ./download-analytics-zoo.sh
+
+# stage.5 az ppml
+FROM ubuntu:18.04
+ARG ANALYTICS_ZOO_VERSION=0.10.0-SNAPSHOT
+ARG BIGDL_VERSION=0.12.1
+ARG SPARK_VERSION=2.4.3
+ENV ANALYTICS_ZOO_VERSION		${ANALYTICS_ZOO_VERSION}
+ENV SPARK_VERSION			${SPARK_VERSION}
+ENV BIGDL_VERSION			${BIGDL_VERSION}
+ENV SPARK_HOME				/training/python_spark/work/spark-${SPARK_VERSION}
+ENV ANALYTICS_ZOO_HOME			/training/python_spark/work/analytics-zoo-${ANALYTICS_ZOO_VERSION}
+ENV JAVA_HOME				/opt/jdk8
+ENV PATH				${JAVA_HOME}/bin:${PATH}
+
+RUN mkdir -p /graphene && \
+    mkdir -p /graphene/Runtime && \
+    mkdir -p /graphene/python && \
+    mkdir -p /graphene/Tools && \
+    mkdir -p /graphene/Pal/src && \
+    mkdir -p /ppml/trusted-big-data-ml/work && \
+    mkdir -p /ppml/trusted-big-data-ml/work/data && \
+    mkdir -p /ppml/trusted-big-data-ml/work/models && \
+    mkdir -p /ppml/trusted-big-data-ml/work/apps && \
+    chmod a+x /ppml/trusted-big-data-ml/work
+
+COPY --from=graphene /graphene/Scripts /graphene/Scripts
+COPY --from=graphene /graphene/Runtime/ /graphene/Runtime
+COPY --from=graphene /graphene/python /graphene/python
+COPY --from=graphene /graphene/Pal /graphene/Pal
+COPY --from=graphene /graphene/Pal/src/host/Linux-SGX/generated_offsets.py /graphene/python/
+COPY --from=graphene /graphene/Examples/common_tools/get_deps.sh /graphene/get_deps.sh
+COPY --from=graphene /graphene/Tools/argv_serializer /graphene/Tools
+COPY --from=spark /opt/jdk  /opt/jdk8
+COPY --from=spark /opt/spark-${SPARK_VERSION} /ppml/trusted-big-data-ml/work/spark-${SPARK_VERSION}
+COPY --from=bigdl /BigDL/dist/lib/bigdl-0.13.0-SNAPSHOT-jar-with-dependencies.jar /ppml/trusted-big-data-ml/work/bigdl-0.13.0-SNAPSHOT-jar-with-dependencies.jar
+COPY --from=analytics-zoo /analytics-zoo-${ANALYTICS_ZOO_VERSION} /ppml/trusted-big-data-ml/work/analytics-zoo-${ANALYTICS_ZOO_VERSION}
