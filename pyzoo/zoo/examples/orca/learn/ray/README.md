@@ -1,6 +1,6 @@
 # Orca RayOnSpark example
 
-[Ray](https://github.com/ray-project/ray) is an open source distributed framework for emerging AI applications. With the _**RayOnSpark**_ support in Analytics Zoo, Users can seamlessly integrate Ray applications into the big data processing pipeline on the underlying Big Data cluster (such as [Hadoop/YARN](../../../../../../../readthedocs/source/doc/UserGuide/hadoop.md) or [K8s](../../../../../../../readthedocs/source/doc/UserGuide/k8s.md)).
+[Ray](https://github.com/ray-project/ray) is an open source distributed framework for emerging AI applications. With the _**RayOnSpark**_ support in Analytics Zoo, Users can seamlessly integrate Ray applications into the big data processing pipeline on the underlying Big Data cluster (such as [Hadoop/YARN](../../../../../../readthedocs/source/doc/UserGuide/hadoop.md) or [K8s](../../../../../../readthedocs/source/doc/UserGuide/k8s.md)).
 
 ## Prepare environments
 We recommend using [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the Python environment. 
