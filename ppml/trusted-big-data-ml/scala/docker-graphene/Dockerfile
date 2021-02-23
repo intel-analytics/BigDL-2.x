@@ -37,3 +37,45 @@ RUN cd /opt && \
     tar -zxvf spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     mv spark-${SPARK_VERSION}-bin-hadoop2.7 spark-${SPARK_VERSION} && \
     rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz
+
+# stage.3 bigdl
+FROM ubuntu:18.04 AS bigdl
+ARG HTTP_PROXY_HOST
+ARG HTTP_PROXY_PORT
+ARG HTTPS_PROXY_HOST
+ARG HTTPS_PROXY_PORT
+ENV JAVA_HOME           /opt/jdk8
+ENV PATH                ${JAVA_HOME}/bin:${PATH}
+
+ADD bigdl.lenet.training.patch /bigdl.lenet.training.patch
+COPY --from=spark /opt/jdk  /opt/jdk8
+
+RUN apt-get update --fix-missing && \
+    apt-get install -y apt-utils maven git
+
+#bigdl
+RUN git clone https://github.com/intel-analytics/BigDL.git && \
+    cd BigDL && \
+    git apply /bigdl.lenet.training.patch && \
+    git status && \
+    export MAVEN_OPTS="-Xmx2g -XX:ReservedCodeCacheSize=512m \
+        -Dhttp.proxyHost=$HTTP_PROXY_HOST \
+        -Dhttp.proxyPort=$HTTP_PROXY_PORT \
+        -Dhttps.proxyHost=$HTTPS_PROXY_HOST \
+        -Dhttps.proxyPort=$HTTPS_PROXY_PORT" && \
+    bash make-dist.sh -P spark_2.x
+
+# stage.4 analytics-zoo
+FROM ubuntu:18.04 as analytics-zoo
+ARG ANALYTICS_ZOO_VERSION=0.10.0-SNAPSHOT
+ARG BIGDL_VERSION=0.12.1
+ARG SPARK_VERSION=2.4.3
+ENV ANALYTICS_ZOO_VERSION	${ANALYTICS_ZOO_VERSION}
+ENV SPARK_VERSION		${SPARK_VERSION}
+ENV BIGDL_VERSION		${BIGDL_VERSION}
+ENV ANALYTICS_ZOO_HOME		/analytics-zoo-${ANALYTICS_ZOO_VERSION}
+RUN apt-get update --fix-missing && \
+    apt-get install -y apt-utils curl wget unzip
+RUN wget https://raw.githubusercontent.com/intel-analytics/analytics-zoo/master/docker/zoo/download-analytics-zoo.sh && \
+    chmod a+x ./download-analytics-zoo.sh
+RUN ./download-analytics-zoo.sh
