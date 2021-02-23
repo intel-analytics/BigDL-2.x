@@ -88,8 +88,8 @@ ARG SPARK_VERSION=2.4.3
 ENV ANALYTICS_ZOO_VERSION		${ANALYTICS_ZOO_VERSION}
 ENV SPARK_VERSION			${SPARK_VERSION}
 ENV BIGDL_VERSION			${BIGDL_VERSION}
-ENV SPARK_HOME				/training/python_spark/work/spark-${SPARK_VERSION}
-ENV ANALYTICS_ZOO_HOME			/training/python_spark/work/analytics-zoo-${ANALYTICS_ZOO_VERSION}
+ENV SPARK_HOME				/ppml/trusted-big-data-ml/work/spark-${SPARK_VERSION}
+ENV ANALYTICS_ZOO_HOME			/ppml/trusted-big-data-ml/work/analytics-zoo-${ANALYTICS_ZOO_VERSION}
 ENV JAVA_HOME				/opt/jdk8
 ENV PATH				${JAVA_HOME}/bin:${PATH}
 
@@ -115,3 +115,15 @@ COPY --from=spark /opt/jdk  /opt/jdk8
 COPY --from=spark /opt/spark-${SPARK_VERSION} /ppml/trusted-big-data-ml/work/spark-${SPARK_VERSION}
 COPY --from=bigdl /BigDL/dist/lib/bigdl-0.13.0-SNAPSHOT-jar-with-dependencies.jar /ppml/trusted-big-data-ml/work/bigdl-0.13.0-SNAPSHOT-jar-with-dependencies.jar
 COPY --from=analytics-zoo /analytics-zoo-${ANALYTICS_ZOO_VERSION} /ppml/trusted-big-data-ml/work/analytics-zoo-${ANALYTICS_ZOO_VERSION}
+
+RUN apt-get update --fix-missing && \
+    apt-get install -y apt-utils vim curl nano wget unzip maven git tree && \
+    apt-get install -y libsm6 make build-essential && \
+    apt-get install -y autoconf gawk bison libcurl4-openssl-dev python3-protobuf libprotobuf-c-dev protobuf-c-compiler && \
+    mkdir -p /graphene/Pal/src/host/Linux-SGX/signer && \
+    cd /graphene/Pal/src/host/Linux-SGX/signer && \
+    openssl genrsa -3 -out enclave-key.pem 3072
+
+ADD ./java.manifest.template /ppml/trusted-big-data-ml/java.manifest.template
+ADD ./Makefile /ppml/trusted-big-data-ml/Makefile
+ADD ./init.sh /ppml/trusted-big-data-ml/init.sh
