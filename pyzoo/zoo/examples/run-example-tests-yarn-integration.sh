@@ -106,6 +106,14 @@ fi
 now=$(date "+%s")
 time5=$((now - start))
 
+echo "#6 start example for orca raytest"
+start=$(date "+%s")
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray/raytest.py --cluster_mode yarn
+
+now=$(date "+%s")
+time6=$((now-start))
+
 clear_up
 
 echo "#1 orca tf transfer_learning time used:$time1 seconds"
@@ -113,3 +121,4 @@ echo "#2 orca tf basic_text_classification time used:$time2 seconds"
 echo "#3 orca bigdl attention time used:$time3 seconds"
 echo "#4 orca bigdl resnet-finetune time used:$time4 seconds"
 echo "#5 orca bigdl imageInference time used:$time5 seconds"
+echo "#6 orca raytest time used:$time6 seconds"
