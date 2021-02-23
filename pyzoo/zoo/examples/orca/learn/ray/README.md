@@ -13,8 +13,6 @@ conda activate zoo
 pip install analytics-zoo[ray]
 ```
 
-View [here](./python.html#install) for more installation instructions.
-
 ## Run example
 You can run this example on local mode and yarn client mode. Note that this example requires at least 10G of free memory, please check your hardware.
 
