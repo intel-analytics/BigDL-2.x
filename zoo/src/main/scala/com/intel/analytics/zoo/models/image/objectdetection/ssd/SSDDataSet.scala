@@ -21,6 +21,7 @@ import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.feature.image.roi.RoiRecordToFeature
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.Imdb
 import org.apache.spark.SparkContext
+import org.opencv.imgcodecs.Imgcodecs
 
 /**
  * SSD Dataset accession
@@ -37,11 +38,11 @@ object SSDDataSet {
    * @return distributec featureset for SSD training
    */
   def loadSSDTrainSet(folder: String, sc: SparkContext, resolution: Int, batchSize: Int,
-                      parNum: Option[Int])
+                      parNum: Option[Int], imageCodec: Int = Imgcodecs.CV_LOAD_IMAGE_COLOR)
   : FeatureSet[SSDMiniBatch] = {
     val trainRdd = Imdb.loadRoiSeqFiles(folder, sc, parNum)
     FeatureSet.rdd(trainRdd) -> RoiRecordToFeature(true) ->
-      ImageBytesToMat() ->
+      ImageBytesToMat(imageCodec) ->
       ImageRoiNormalize() ->
       ImageColorJitter() ->
       ImageRandomPreprocessing(ImageExpand() -> ImageRoiProject(), 0.5) ->
