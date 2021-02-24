@@ -83,15 +83,26 @@ RUN ./download-analytics-zoo.sh
 # stage.5 az ppml
 FROM ubuntu:18.04
 ARG ANALYTICS_ZOO_VERSION=0.10.0-SNAPSHOT
-ARG BIGDL_VERSION=0.12.1
 ARG SPARK_VERSION=2.4.3
 ENV ANALYTICS_ZOO_VERSION		${ANALYTICS_ZOO_VERSION}
 ENV SPARK_VERSION			${SPARK_VERSION}
-ENV BIGDL_VERSION			${BIGDL_VERSION}
 ENV SPARK_HOME				/ppml/trusted-big-data-ml/work/spark-${SPARK_VERSION}
 ENV ANALYTICS_ZOO_HOME			/ppml/trusted-big-data-ml/work/analytics-zoo-${ANALYTICS_ZOO_VERSION}
 ENV JAVA_HOME				/opt/jdk8
 ENV PATH				${JAVA_HOME}/bin:${PATH}
+ENV LOCAL_IP				127.0.0.1
+ENV SGX_MEM_SIZE			64G
+ENV SPARK_MASTER_IP			127.0.0.1
+ENV SPARK_MASTER_PORT			7077
+ENV SPARK_MASTER_WEBUI_PORT		8080
+ENV SPARK_MASTER			spark://$SPARK_MASTER_IP:$SPARK_MASTER_PORT
+ENV SPARK_WORKER_PORT			8082
+ENV SPARK_WORKER_WEBUI_PORT		8081
+ENV SPARK_DRIVER_PORT			10027
+ENV SPARK_DRIVER_BLOCK_MANAGER_PORT	10026
+ENV SPARK_DRIVER_IP			$LOCAL_IP
+ENV SPARK_BLOCK_MANAGER_PORT		10025
+ENV SPARK_SECURE_PASSWORD		1234qwer
 
 RUN mkdir -p /graphene && \
     mkdir -p /graphene/Runtime && \
@@ -113,7 +124,7 @@ COPY --from=graphene /graphene/Examples/common_tools/get_deps.sh /graphene/get_d
 COPY --from=graphene /graphene/Tools/argv_serializer /graphene/Tools
 COPY --from=spark /opt/jdk  /opt/jdk8
 COPY --from=spark /opt/spark-${SPARK_VERSION} /ppml/trusted-big-data-ml/work/spark-${SPARK_VERSION}
-COPY --from=bigdl /BigDL/dist/lib/bigdl-0.13.0-SNAPSHOT-jar-with-dependencies.jar /ppml/trusted-big-data-ml/work/bigdl-0.13.0-SNAPSHOT-jar-with-dependencies.jar
+COPY --from=bigdl /BigDL/dist/lib/bigdl-*-jar-with-dependencies.jar /ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar
 COPY --from=analytics-zoo /analytics-zoo-${ANALYTICS_ZOO_VERSION} /ppml/trusted-big-data-ml/work/analytics-zoo-${ANALYTICS_ZOO_VERSION}
 
 RUN apt-get update --fix-missing && \
@@ -127,3 +138,13 @@ RUN apt-get update --fix-missing && \
 ADD ./java.manifest.template /ppml/trusted-big-data-ml/java.manifest.template
 ADD ./Makefile /ppml/trusted-big-data-ml/Makefile
 ADD ./init.sh /ppml/trusted-big-data-ml/init.sh
+ADD ./start-spark-local-train-sgx.sh /ppml/trusted-big-data-ml/start-spark-local-train-sgx.sh
+ADD ./start-spark-standalone-master-sgx.sh /ppml/trusted-big-data-ml/start-spark-standalone-master-sgx.sh
+ADD ./start-spark-standalone-worker-sgx.sh /ppml/trusted-big-data-ml/start-spark-standalone-worker-sgx.sh
+ADD ./start-spark-standalone-driver-sgx.sh /ppml/trusted-big-data-ml/start-spark-standalone-driver-sgx.sh
+
+RUN chmod a+x /ppml/trusted-big-data-ml/init.sh && \
+    chmod a+x /ppml/trusted-big-data-ml/start-spark-local-train-sgx.sh && \
+    chmod a+x /ppml/trusted-big-data-ml/start-spark-standalone-master-sgx.sh && \
+    chmod a+x /ppml/trusted-big-data-ml/start-spark-standalone-worker-sgx.sh && \
+    chmod a+x /ppml/trusted-big-data-ml/start-spark-standalone-driver-sgx.sh
