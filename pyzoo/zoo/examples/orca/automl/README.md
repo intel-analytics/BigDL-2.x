@@ -14,10 +14,10 @@ bzip2 -d airline_14col.data.bz2
 
 we will get `airline_14col.data` for training
 
-For AutooXGBoostRegressor, download dataset from
+For AutoXGBoostRegressor, download dataset from [here] (https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/orca/automl/incd.csv)
 
 
-#### 5. Run the example
+#### 5. Run the AutoXGBoostClassifier example
 
 data_path=... // training data path. Local file system is supported.
 
@@ -42,7 +42,3 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     path/to/AutoXGBoostClassifier.py --path ${data_path}
 ```
 See [here](https://analytics-zoo.github.io/master/#PythonUserGuide/run/#run-without-pip-install) for more running guidance without pip install.
-
-
-### Results
-You can find new generated images stored in output_path, and the objects in the images are with a box around them [labeled "name"]

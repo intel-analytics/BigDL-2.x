@@ -72,7 +72,7 @@ if __name__ == '__main__':
     pred_df = pipeline.predict(val_df)
 
     rmse = pipeline.evaluate(val_df, metrics=["rmse"])
-    print("Evaluate: the mean square error is", rmse)
+    print("Evaluate: the square root of mean square error is", rmse)
 
     ray_ctx.stop()
     sc.stop()
