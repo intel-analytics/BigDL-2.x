@@ -106,13 +106,19 @@ fi
 now=$(date "+%s")
 time5=$((now - start))
 
-echo "#6 start example for orca raytest"
+echo "#start orca ray example tests"
+
+echo "#6 Start rl_pong example"
 start=$(date "+%s")
-
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray/raytest.py --cluster_mode yarn
-
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray/rl_pong/rl_pong.py --iterations 10 --cluster_mode yarn
 now=$(date "+%s")
 time6=$((now-start))
+
+echo "#7 Start multiagent example"
+start=$(date "+%s")
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray/rllib/multiagent_two_trainers.py --iterations 5 --cluster_mode yarn
+now=$(date "+%s")
+time7=$((now-start))
 
 clear_up
 
@@ -121,4 +127,5 @@ echo "#2 orca tf basic_text_classification time used:$time2 seconds"
 echo "#3 orca bigdl attention time used:$time3 seconds"
 echo "#4 orca bigdl resnet-finetune time used:$time4 seconds"
 echo "#5 orca bigdl imageInference time used:$time5 seconds"
-echo "#6 orca raytest time used:$time6 seconds"
+echo "#6 orca rl_pong time used:$time6 seconds"
+echo "#7 orca multiagent time used:$time7 seconds"

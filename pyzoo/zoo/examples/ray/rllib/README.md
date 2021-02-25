@@ -35,8 +35,6 @@ See [here](#Options) for more configurable options for this example.
 - `--iterations` The number of iterations to train the model. Default is 10.
 
 **Options for yarn only**
-- `--hadoop_conf` This option is **required** when you want to run on yarn. The path to your configuration folder of hadoop.
-- `--conda_name` This option is **required** when you want to run on yarn. Your conda environment's name.
 - `--slave_num` The number of slave nodes you want to to use. Default is 2.
 - `--executor_cores` The number of slave(executor)'s cpu cores you want to use. Default is 8.
 - `--executor_memory` The size of slave(executor)'s memory you want to use. Default is 10g.

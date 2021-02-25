@@ -94,13 +94,20 @@ python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolut
 now=$(date "+%s")
 time7=$((now-start))
 
-echo "#8 start example for orca raytest"
+echo "#start orca ray example tests"
+
+echo "#8 Start rl_pong example"
 start=$(date "+%s")
-
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray/raytest.py
-
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray/rl_pong/rl_pong.py --iterations 10
 now=$(date "+%s")
 time8=$((now-start))
+
+echo "#9 Start multiagent example"
+start=$(date "+%s")
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray/rllib/multiagent_two_trainers.py --iterations 5
+now=$(date "+%s")
+time9=$((now-start))
+
 
 echo "Ray example tests finished"
 echo "#1 rl_pong time used:$time1 seconds"
@@ -110,4 +117,5 @@ echo "#4 multiagent_two_trainers time used:$time4 seconds"
 echo "#5 mxnet_lenet time used:$time5 seconds"
 echo "#6 fashion-mnist time used:$time6 seconds"
 echo "#7 orca super-resolution example time used:$time7 seconds"
-echo "#8 orca raytest time used:$time8 seconds"
+echo "#8 orca rl_pong time used:$time8 seconds"
+echo "#9 orca multiagent time used:$time9 seconds"
