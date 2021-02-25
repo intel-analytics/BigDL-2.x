@@ -82,7 +82,6 @@ class Estimator(SparkEstimator):
         """
         raise NotImplementedError
 
-
     def evaluate(self, data, batch_size=32, feature_cols=None, label_cols=None,
                  auto_shard_files=False):
         """
