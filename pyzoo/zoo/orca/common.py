@@ -110,6 +110,15 @@ class OrcaContext(metaclass=OrcaContextMeta):
             return SparkContext.getOrCreate()
         else:
             raise Exception("No active SparkContext. Please create a SparkContext first")
+    
+    @staticmethod
+    def get_sql_context():
+        from pyspark.sql import SQLContext
+        return SQLContext.getOrCreate(OrcaContext.get_spark_context())
+
+    @staticmethod
+    def get_spark_session():
+        return OrcaContext.get_sql_context().sparkSession
 
     @staticmethod
     def get_ray_context():
