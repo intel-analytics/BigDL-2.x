@@ -17,6 +17,7 @@
 import ray
 import os
 
+
 class HorovodWorker:
 
     def ip_addr(self):
@@ -70,10 +71,12 @@ def make_worker(worker_cls, HorovodWorker):
         pass
     return Worker
 
+
 def get_horovod_version():
     import horovod
     major, minor, patch = horovod.__version__.split(".")
     return int(major), int(minor), int(patch), horovod.__version__
+
 
 class HorovodRayRunner:
 
@@ -102,7 +105,8 @@ class HorovodRayRunner:
             global_rendezv_port = global_rendezv.start_server(self.host_alloc_plan)
         else:
             from horovod.runner.gloo_run import RendezvousServer, parse_hosts, get_host_assignments
-            self.host_alloc_plan = get_host_assignments(parse_hosts(",".join(hosts_spec)), self.num_nodes)
+            self.host_alloc_plan = get_host_assignments(parse_hosts(",".join(hosts_spec)),
+                                                        self.num_nodes)
             self.global_rendezv = RendezvousServer(True)
             global_rendezv_port = self.global_rendezv.start()
             self.global_rendezv.init(self.host_alloc_plan)
