@@ -81,9 +81,10 @@ The `model_creator` argument should be a function that takes a `config` dictiona
 Then users can perform distributed model training and inference as follows:
 
 ```python
-def train_data_creator(config):
+def train_data_creator(config, batch_size):
     dataset = tfds.load(name="mnist", split="train")
     dataset = dataset.map(preprocess)
+    dataset = dataset.batch(batch_size)
     return dataset
 stats = est.fit(data=train_data_creator,
                 epochs=max_epoch,
@@ -91,7 +92,7 @@ stats = est.fit(data=train_data_creator,
 predictions = est.predict(data=df,
                           feature_cols=['image'])
 ```
-The `data` argument in `fit` method can be a spark DataFrame, a XShards or a function that returns a `tf.data.Dataset`. The `data` argument in `predict` method can be a spark DataFrame or a XShards (each element needs to be a `{"x": a numpy ndarray}`). See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details.
+The `data` argument in `fit` method can be a spark DataFrame, a XShards or a function that takes `config` and `batch_size` as input and returns a `tf.data.Dataset`. The `data` argument in `predict` method can be a spark DataFrame or a XShards (each element needs to be a `{"x": a numpy ndarray}`). See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details.
 
 View the related [Python API doc]() <TODO: link to be added> for more details.
 
@@ -119,7 +120,7 @@ Then users can perform distributed model training and inference as follows:
 est.fit(data=train_loader, epochs=args.epochs)
 predictions = est.predict(xshards)
 ```
-The input to `fit` methods can be a `torch.utils.data.DataLoader`, a *XShards*, or a *Data Creator Function* (which returns `torch.utils.data.DataLoader`). The input to `predict` methods should be a *XShards* (each element needs to be a `{"x": a numpy ndarray}`). See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details. <TODO: we need to add Spark Dataframe support too>
+The input to `fit` methods can be a `torch.utils.data.DataLoader`, a *XShards*, or a *Data Creator Function* (which takes `config` and `batch_size` as input and returns a `torch.utils.data.DataLoader`). The input to `predict` methods should be a *XShards* (each element needs to be a `{"x": a numpy ndarray}`). See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details. <TODO: we need to add Spark Dataframe support too>
 
 View the related [Python API doc]() <TODO: link to be added> for more details.
 
@@ -149,7 +150,7 @@ est.fit(data=train_loader_func, epochs=args.epochs)
 predictions = est.predict(data=df,
                           feature_cols=['image'])
 ```
-The input to `fit` methods can be a *XShards*, or a *Data Creator Function* (which returns `torch.utils.data.DataLoader`). The `data` argument in `predict` method can be a spark DataFrame or a XShards (each element needs to be a `{"x": a numpy ndarray}`). See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details.
+The input to `fit` methods can be a *XShards*, or a *Data Creator Function* (which takes `config` and `batch_size` as input and returns a `torch.utils.data.DataLoader`). The `data` argument in `predict` method can be a spark DataFrame or a XShards (each element needs to be a `{"x": a numpy ndarray}`). See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details.
 
 View the related [Python API doc]() <TODO: link to be added> for more details.
 
