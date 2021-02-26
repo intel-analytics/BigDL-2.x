@@ -79,8 +79,6 @@ class HorovodRayRunner:
 
     # todo check whether horovod is built with gloo
     def __init__(self, ray_ctx, worker_cls=None, worker_param=None, workers_per_node=1):
-        from horovod.runner.gloo_run import RendezvousServer, parse_hosts, get_host_assignments
-
         self.cores_per_node = ray_ctx.ray_node_cpu_cores // workers_per_node
         self.num_nodes = ray_ctx.num_ray_nodes * workers_per_node
         if worker_param is None:
@@ -98,10 +96,12 @@ class HorovodRayRunner:
             raise RuntimeError(f"We only support horovod version larger "
                                f"than 0.19.0, but got {version_str}")
         if major == 0 and minor == 19:
+            from horovod.run.gloo_run import RendezvousServer, _allocate
             self.host_alloc_plan = _allocate(",".join(hosts_spec), self.num_nodes)
             self.global_rendezv = RendezvousServer(True)
             global_rendezv_port = global_rendezv.start_server(self.host_alloc_plan)
         else:
+            from horovod.runner.gloo_run import RendezvousServer, parse_hosts, get_host_assignments
             self.host_alloc_plan = get_host_assignments(parse_hosts(",".join(hosts_spec)), self.num_nodes)
             self.global_rendezv = RendezvousServer(True)
             global_rendezv_port = self.global_rendezv.start()
