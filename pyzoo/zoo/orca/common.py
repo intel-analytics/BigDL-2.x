@@ -111,14 +111,14 @@ class OrcaContextMeta(type):
         transferring an SparkXShards to an RayXShards.
         Default to be None, in which case Rows in one partition will be transformed as one shard.
         """
-        return cls._shard_size
+        return cls.__shard_size
 
     @_shard_size.setter
     def _shard_size(cls, value):
         if value is not None:
             assert isinstance(value, int) and value > 0, \
                 "shard size should be either None or a positive integer."
-        cls._shard_size = value
+        cls.__shard_size = value
 
 
 class OrcaContext(metaclass=OrcaContextMeta):
