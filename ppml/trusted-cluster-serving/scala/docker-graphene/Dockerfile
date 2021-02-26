@@ -67,6 +67,7 @@ ENV JAVA_HOME			/opt/jdk8
 ENV PATH			${JAVA_HOME}/bin:${PATH}
 ENV LOCAL_IP			127.0.0.1
 ENV SGX_MEM_SIZE		64G
+ENV REDIS_PORT			6379
 
 RUN mkdir -p /graphene && \
     mkdir -p /graphene/Runtime && \
